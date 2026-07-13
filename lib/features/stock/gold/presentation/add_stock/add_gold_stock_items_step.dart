@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_batch_overview_card.dart';
+import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_intake_workflow_card.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_invoice_card.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_invoice_summary_panel.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_items_table.dart';
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_payment_record_card.dart';
-import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_supplier_panel.dart';
 
 class AddGoldStockItemsStep extends StatelessWidget {
   final GoldStockController ctrl;
@@ -31,12 +31,12 @@ class AddGoldStockItemsStep extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              GoldIntakeWorkflowCard(ctrl: ctrl),
+              const SizedBox(height: 16),
               if (desktopShell)
                 _GoldDesktopWorkspace(ctrl: ctrl)
               else ...[
                 _GoldTopCards(ctrl: ctrl),
-                const SizedBox(height: 16),
-                AddGoldStockSupplierPanel(ctrl: ctrl),
               ],
               const SizedBox(height: 16),
               GoldItemsTable(ctrl: ctrl),
@@ -62,8 +62,6 @@ class _GoldDesktopWorkspace extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(child: _GoldTopCards(ctrl: ctrl)),
-        const SizedBox(width: 16),
-        SizedBox(width: 360, child: AddGoldStockSupplierPanel(ctrl: ctrl)),
       ],
     );
   }

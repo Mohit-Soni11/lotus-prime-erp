@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lotus_erp/logic/dashboard/date_card/date_card_logic.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/supplier/add_supplier/add_supplier_screen.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
-import 'package:lotus_erp/features/stock/shared/presentation/add_stock/stock_metal_ui.dart';
 
 class GoldInvoiceCard extends StatefulWidget {
   final GoldStockController ctrl;
@@ -20,316 +21,974 @@ class GoldInvoiceCard extends StatefulWidget {
 }
 
 class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
-  late final DateCardLogic _dateLogic;
+  final LayerLink _mobileSuggestionLink = LayerLink();
+  final LayerLink _nameSuggestionLink = LayerLink();
+
+  OverlayEntry? _suggestionOverlay;
+  bool _isMobileActive = false;
+
+  GoldStockController get ctrl => widget.ctrl;
 
   @override
   void initState() {
     super.initState();
-    _dateLogic = DateCardLogic();
-    _dateLogic.init();
+    ctrl.supplierNameCtrl.addListener(_onNameChanged);
+    ctrl.supplierMobileCtrl.addListener(_onMobileChanged);
+    ctrl.addListener(_onControllerChanged);
+
+    if (!ctrl.sameForAll) {
+      ctrl.setSameForAll(true);
+    }
   }
 
   @override
   void dispose() {
-    _dateLogic.dispose();
+    _removeSuggestionOverlay();
+    ctrl.supplierNameCtrl.removeListener(_onNameChanged);
+    ctrl.supplierMobileCtrl.removeListener(_onMobileChanged);
+    ctrl.removeListener(_onControllerChanged);
     super.dispose();
+  }
+
+  List<SupplierListItemModel> get _activeSuggestions {
+    final query = _isMobileActive
+        ? ctrl.supplierMobileCtrl.text.trim().toLowerCase()
+        : ctrl.supplierNameCtrl.text.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return const [];
+    }
+
+    return ctrl.suppliers
+        .where(
+          (supplier) =>
+              supplier.businessName.toLowerCase().contains(query) ||
+              supplier.mobile.contains(query) ||
+              (supplier.contactPersonName ?? '').toLowerCase().contains(query),
+        )
+        .take(8)
+        .toList(growable: false);
+  }
+
+  bool get _notFound {
+    final text = _isMobileActive
+        ? ctrl.supplierMobileCtrl.text.trim()
+        : ctrl.supplierNameCtrl.text.trim();
+
+    return text.isNotEmpty &&
+        _activeSuggestions.isEmpty &&
+        !ctrl.hasLinkedSupplier;
+  }
+
+  void _onNameChanged() {
+    if (ctrl.isApplyingSupplierProfile) {
+      return;
+    }
+
+    _isMobileActive = false;
+    final linked = ctrl.linkedSupplier;
+    final text = ctrl.supplierNameCtrl.text;
+
+    if (linked != null && linked.businessName == text) {
+      return;
+    }
+
+    ctrl.setSessionSupplierText(text);
+  }
+
+  void _onMobileChanged() {
+    if (ctrl.isApplyingSupplierProfile) {
+      return;
+    }
+
+    _isMobileActive = true;
+    final linked = ctrl.linkedSupplier;
+    final text = ctrl.supplierMobileCtrl.text;
+
+    if (linked != null && linked.mobile == text) {
+      return;
+    }
+
+    ctrl.updateSupplierMobileText(text);
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {});
+
+    if (ctrl.hasLinkedSupplier) {
+      _removeSuggestionOverlay();
+      return;
+    }
+
+    if (_activeSuggestions.isEmpty) {
+      _removeSuggestionOverlay();
+    } else {
+      _showSuggestionOverlay();
+    }
+  }
+
+  void _removeSuggestionOverlay() {
+    _suggestionOverlay?.remove();
+    _suggestionOverlay = null;
+  }
+
+  void _showSuggestionOverlay() {
+    if (!mounted) {
+      return;
+    }
+
+    _removeSuggestionOverlay();
+    final activeLink =
+        _isMobileActive ? _mobileSuggestionLink : _nameSuggestionLink;
+
+    _suggestionOverlay = OverlayEntry(
+      builder: (context) {
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final width = screenWidth > 520
+            ? 420.0
+            : (screenWidth - 28).clamp(260.0, 420.0).toDouble();
+
+        return Positioned(
+          top: 0,
+          left: 0,
+          width: width,
+          child: CompositedTransformFollower(
+            link: activeLink,
+            showWhenUnlinked: false,
+            offset: const Offset(0, 52),
+            child: Material(
+              color: Colors.transparent,
+              elevation: 10,
+              borderRadius: BorderRadius.circular(12),
+              child: _SupplierLookupDropdown(
+                suppliers: _activeSuggestions,
+                onSelected: (supplier) {
+                  FocusScope.of(context).unfocus();
+                  ctrl.setSessionSupplier(supplier);
+                  _removeSuggestionOverlay();
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_suggestionOverlay!);
+  }
+
+  Future<void> _openCreateSupplier() async {
+    _removeSuggestionOverlay();
+    FocusScope.of(context).unfocus();
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddSupplierScreen(
+          onBack: () => Navigator.pop(context),
+          onSaved: () => Navigator.pop(context),
+        ),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await ctrl.reloadSuppliers();
   }
 
   @override
   Widget build(BuildContext context) {
-    final ui = stockMetalUiFor(widget.ctrl.selectedMetal);
-    final accent = widget.ctrl.gstEnabled ? AddStockColors.success : ui.accent;
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        ctrl,
+        ctrl.supplierNameCtrl,
+        ctrl.supplierMobileCtrl,
+        ctrl.supplierInvoiceNumberCtrl,
+      ]),
+      builder: (context, _) {
+        final accent = ctrl.gstEnabled
+            ? AddStockColors.brandGold
+            : AddStockColors.textDark;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      decoration: BoxDecoration(
-        color: AddStockColors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AddStockColors.cardBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: AddStockColors.shadowLight,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-          BoxShadow(
-            color: AddStockColors.shadowMedium,
-            blurRadius: 20,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _accentLine(20, accent, 1.0),
-                        const SizedBox(height: 3),
-                        _accentLine(13, accent, 0.45),
-                        const SizedBox(height: 3),
-                        _accentLine(7, accent, 0.18),
-                      ],
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'INVOICE NUMBER',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              color: AddStockColors.textDark,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.ctrl.gstEnabled
-                                ? 'Tax Intake Reference'
-                                : 'Standard Stock Intake',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: widget.ctrl.gstEnabled
-                                  ? AddStockColors.success
-                                  : AddStockColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+        return Container(
+          decoration: BoxDecoration(
+            color: AddStockColors.cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AddStockColors.cardBorder),
+            boxShadow: const [
+              BoxShadow(
+                color: AddStockColors.shadowLight,
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
-              const SizedBox(width: 16),
-              _StatusPill(
-                label: widget.ctrl.gstEnabled ? 'GST BATCH' : 'ESTIMATE',
-                color: accent,
+              BoxShadow(
+                color: AddStockColors.shadowMedium,
+                blurRadius: 20,
+                offset: Offset(0, 6),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            height: 1,
-            width: double.infinity,
-            color: AddStockColors.cardBorder,
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Header(
+                accent: accent,
+                gstEnabled: ctrl.gstEnabled,
+                hasSupplier: ctrl.hasLinkedSupplier,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SupplierLookupSection(
+                      ctrl: ctrl,
+                      mobileSuggestionLink: _mobileSuggestionLink,
+                      nameSuggestionLink: _nameSuggestionLink,
+                      notFound: _notFound,
+                      onCreateSupplier: _openCreateSupplier,
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFCF5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AddStockColors.cardBorder),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final stacked = constraints.maxWidth < 720;
+
+                          final purchaseType = _PurchaseTypeSelector(
+                            gstEnabled: ctrl.gstEnabled,
+                            gstRate: ctrl.gstRate,
+                            onChanged: ctrl.toggleGst,
+                          );
+                          final invoiceInput = _SupplierInvoiceInput(
+                            ctrl: ctrl,
+                            accent: AddStockColors.brandGold,
+                          );
+                          final billUpload = _BillPhotoPicker(
+                            ctrl: ctrl,
+                            accent: AddStockColors.brandGold,
+                          );
+
+                          if (stacked) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                purchaseType,
+                                const SizedBox(height: 12),
+                                invoiceInput,
+                                const SizedBox(height: 12),
+                                billUpload,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 34, child: purchaseType),
+                              const SizedBox(width: 12),
+                              Expanded(flex: 36, child: invoiceInput),
+                              const SizedBox(width: 12),
+                              Expanded(flex: 30, child: billUpload),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _Note(gstEnabled: ctrl.gstEnabled),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+        );
+      },
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final Color accent;
+  final bool gstEnabled;
+  final bool hasSupplier;
+
+  const _Header({
+    required this.accent,
+    required this.gstEnabled,
+    required this.hasSupplier,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 13, 16, 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AddStockColors.cardBorder)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: AddStockColors.brandGoldLight,
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(color: AddStockColors.brandGoldBorder),
+            ),
+            child: const Icon(
+              Icons.person_pin_circle_outlined,
+              size: 17,
+              color: AddStockColors.brandGold,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '2. Supplier & Invoice',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.1,
+                    color: AddStockColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  hasSupplier
+                      ? 'Supplier linked with this stock batch'
+                      : 'Select supplier and attach purchase reference',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AddStockColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          _StatusPill(
+            label: gstEnabled ? 'GST Purchase' : 'Non-GST',
+            color: gstEnabled
+                ? AddStockColors.brandGold
+                : AddStockColors.textMuted,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SupplierLookupSection extends StatelessWidget {
+  final GoldStockController ctrl;
+  final LayerLink mobileSuggestionLink;
+  final LayerLink nameSuggestionLink;
+  final bool notFound;
+  final VoidCallback onCreateSupplier;
+
+  const _SupplierLookupSection({
+    required this.ctrl,
+    required this.mobileSuggestionLink,
+    required this.nameSuggestionLink,
+    required this.notFound,
+    required this.onCreateSupplier,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AddStockColors.inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AddStockColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 700;
+              final stacked = constraints.maxWidth < 560;
 
-              final invoiceBlock = Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: accent.withValues(alpha: 0.25)),
-                    ),
-                    child: Icon(
-                      AddStockIcons.hsn,
-                      color: accent,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'BATCH CODE',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.4,
-                          color: AddStockColors.textMuted,
-                          height: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 230),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            widget.ctrl.batchCode,
-                            maxLines: 1,
-                            softWrap: false,
-                            style: GoogleFonts.manrope(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.0,
-                              color: accent,
-                              height: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              final mobileField = CompositedTransformTarget(
+                link: mobileSuggestionLink,
+                child: _SupplierTextField(
+                  label: 'Mobile Number',
+                  hint: 'Search by mobile number',
+                  controller: ctrl.supplierMobileCtrl,
+                  icon: Icons.phone_iphone_rounded,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                ),
               );
 
-              final dateTimeBlock = StreamBuilder<DateCardModel>(
-                stream: _dateLogic.timeStream,
-                initialData: _dateLogic.initialData,
-                builder: (_, snapshot) => _DateTimeRow(
-                  data: snapshot.data ?? DateCardModel.empty(),
+              final nameField = CompositedTransformTarget(
+                link: nameSuggestionLink,
+                child: _SupplierTextField(
+                  label: 'Supplier Name',
+                  hint: 'Search by supplier name',
+                  controller: ctrl.supplierNameCtrl,
+                  icon: AddStockIcons.supplier,
                 ),
               );
 
               if (stacked) {
                 return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    invoiceBlock,
+                    mobileField,
                     const SizedBox(height: 12),
-                    dateTimeBlock,
+                    nameField,
                   ],
                 );
               }
 
               return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  invoiceBlock,
-                  Container(
-                    width: 1,
-                    height: 34,
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          AddStockColors.cardBorder,
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(child: dateTimeBlock),
+                  Expanded(child: mobileField),
+                  const SizedBox(width: 12),
+                  Expanded(child: nameField),
                 ],
               );
             },
           ),
-          const SizedBox(height: 12),
-          // ── SUPPLIER INVOICE NUMBER INPUT ──
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'SUPPLIER INVOICE NO.',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  color: AddStockColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: widget.ctrl.supplierInvoiceNumberCtrl,
-                style: GoogleFonts.manrope(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AddStockColors.textDark,
-                  letterSpacing: 0.5,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'e.g. INV-2024-00123',
-                  hintStyle: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: AddStockColors.textHint,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Icon(
-                        Icons.receipt_long_rounded,
-                        size: 15,
-                        color: accent,
-                      ),
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: AddStockColors.inputBg,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 13,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: AddStockColors.cardBorder,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: AddStockColors.cardBorder,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: accent,
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _BillPhotoPicker(ctrl: widget.ctrl, accent: accent),
-          // NOTE: Applied Gold Rate moved to GoldPaymentRecordCard
-          //       (Rate is now entered manually per-batch in the Payment Record
-          //        section as 24K rate per 10g.)
+          if (notFound) ...[
+            const SizedBox(height: 12),
+            _SupplierStateBanner(
+              type: _SupplierStateType.notFound,
+              title: 'Supplier not found',
+              message:
+                  'Create a supplier profile once, then this batch will link to supplier ledger automatically.',
+              actionLabel: 'Create Supplier',
+              onAction: onCreateSupplier,
+            ),
+          ] else if (ctrl.hasLinkedSupplier) ...[
+            const SizedBox(height: 12),
+            _SupplierStateBanner(
+              type: _SupplierStateType.linked,
+              title: 'Supplier linked',
+              message: ctrl.supplierDisplayName.trim().isEmpty
+                  ? 'Selected supplier profile is linked to this batch.'
+                  : ctrl.supplierDisplayName,
+              actionLabel: 'Change',
+              onAction: () => ctrl.clearSessionSupplier(),
+            ),
+          ],
         ],
       ),
     );
   }
+}
 
-  Widget _accentLine(double width, Color color, double opacity) {
-    return Container(
-      width: width,
-      height: 3,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: opacity),
-        borderRadius: BorderRadius.circular(2),
+class _SupplierTextField extends StatelessWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  const _SupplierTextField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.icon,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 78,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: AddStockColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 42,
+            child: TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              style: GoogleFonts.manrope(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: AddStockColors.textDark,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AddStockColors.textHint,
+                ),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(9),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AddStockColors.brandGoldLight,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 14,
+                      color: AddStockColors.brandGold,
+                    ),
+                  ),
+                ),
+                filled: true,
+                fillColor: AddStockColors.cardBg,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 11,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(11),
+                  borderSide:
+                      const BorderSide(color: AddStockColors.cardBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(11),
+                  borderSide:
+                      const BorderSide(color: AddStockColors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(11),
+                  borderSide: const BorderSide(
+                    color: AddStockColors.brandGold,
+                    width: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+enum _SupplierStateType { linked, notFound }
+
+class _SupplierStateBanner extends StatelessWidget {
+  final _SupplierStateType type;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _SupplierStateBanner({
+    required this.type,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final linked = type == _SupplierStateType.linked;
+    final color = linked ? AddStockColors.success : AddStockColors.warning;
+    final bg = linked ? AddStockColors.successBg : AddStockColors.warningBg;
+    final icon =
+        linked ? Icons.check_circle_rounded : Icons.warning_amber_rounded;
+
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 19, color: color),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: AddStockColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  message,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AddStockColors.textBody,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          TextButton(
+            onPressed: onAction,
+            style: TextButton.styleFrom(
+              foregroundColor: color,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              actionLabel,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SupplierLookupDropdown extends StatelessWidget {
+  final List<SupplierListItemModel> suppliers;
+  final ValueChanged<SupplierListItemModel> onSelected;
+
+  const _SupplierLookupDropdown({
+    required this.suppliers,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 280),
+      decoration: BoxDecoration(
+        color: AddStockColors.cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AddStockColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: AddStockColors.shadowMedium,
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shrinkWrap: true,
+        itemCount: suppliers.length,
+        separatorBuilder: (_, __) =>
+            const Divider(height: 1, color: AddStockColors.cardBorder),
+        itemBuilder: (context, index) {
+          final supplier = suppliers[index];
+          final subtitle = [
+            supplier.mobile,
+            supplier.supplierType.label,
+          ].where((value) => value.isNotEmpty).join(' • ');
+
+          return ListTile(
+            dense: true,
+            leading: CircleAvatar(
+              radius: 18,
+              backgroundColor: AddStockColors.brandGoldLight,
+              child: Text(
+                supplier.avatarInitial,
+                style: GoogleFonts.inter(
+                  color: AddStockColors.brandGold,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            title: Text(
+              supplier.businessName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: AddStockColors.textDark,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            subtitle: Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: AddStockColors.textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            trailing: const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 13,
+              color: AddStockColors.textHint,
+            ),
+            onTap: () => onSelected(supplier),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PurchaseTypeSelector extends StatelessWidget {
+  final bool gstEnabled;
+  final double gstRate;
+  final ValueChanged<bool> onChanged;
+
+  const _PurchaseTypeSelector({
+    required this.gstEnabled,
+    required this.gstRate,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Purchase Type',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AddStockColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 42,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: AddStockColors.cardBg,
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: AddStockColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _PurchaseTypeButton(
+                  selected: gstEnabled,
+                  label: 'GST Purchase',
+                  helper: '${gstRate.toStringAsFixed(0)}%',
+                  icon: Icons.verified_user_outlined,
+                  onTap: () => onChanged(true),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: _PurchaseTypeButton(
+                  selected: !gstEnabled,
+                  label: 'Non-GST',
+                  helper: 'Estimate',
+                  icon: Icons.receipt_outlined,
+                  onTap: () => onChanged(false),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PurchaseTypeButton extends StatelessWidget {
+  final bool selected;
+  final String label;
+  final String helper;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _PurchaseTypeButton({
+    required this.selected,
+    required this.label,
+    required this.helper,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? Colors.white : AddStockColors.textDark;
+    final background = selected ? AddStockColors.brandGold : Colors.transparent;
+
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(9),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: onTap,
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: foreground),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: foreground,
+                  ),
+                ),
+              ),
+              if (selected) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    helper,
+                    style: GoogleFonts.inter(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: foreground,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SupplierInvoiceInput extends StatelessWidget {
+  final GoldStockController ctrl;
+  final Color accent;
+
+  const _SupplierInvoiceInput({
+    required this.ctrl,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Supplier Invoice No.',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AddStockColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 42,
+          child: TextFormField(
+            controller: ctrl.supplierInvoiceNumberCtrl,
+            style: GoogleFonts.manrope(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: AddStockColors.textDark,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Enter supplier invoice number',
+              hintStyle: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AddStockColors.textHint,
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(9),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Icon(
+                    AddStockIcons.hsn,
+                    size: 14,
+                    color: accent,
+                  ),
+                ),
+              ),
+              filled: true,
+              fillColor: AddStockColors.cardBg,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 11,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(11),
+                borderSide: const BorderSide(color: AddStockColors.cardBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(11),
+                borderSide: const BorderSide(color: AddStockColors.cardBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(11),
+                borderSide: BorderSide(color: accent, width: 1.4),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -338,97 +997,135 @@ class _BillPhotoPicker extends StatelessWidget {
   final GoldStockController ctrl;
   final Color accent;
 
-  const _BillPhotoPicker({required this.ctrl, required this.accent});
+  const _BillPhotoPicker({
+    required this.ctrl,
+    required this.accent,
+  });
 
   @override
   Widget build(BuildContext context) {
     final photoPath = ctrl.billPhotoPath;
     final hasPhoto = photoPath != null && photoPath.isNotEmpty;
+    final canPreview = hasPhoto && File(photoPath).existsSync();
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AddStockColors.inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AddStockColors.cardBorder),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: accent.withValues(alpha: 0.20)),
-            ),
-            child: hasPhoto && File(photoPath).existsSync()
-                ? Image.file(File(photoPath), fit: BoxFit.cover)
-                : Icon(Icons.image_outlined, color: accent, size: 24),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Supplier Bill',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AddStockColors.textDark,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SUPPLIER BILL PHOTO',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    color: AddStockColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  hasPhoto ? ctrl.billPhotoName : 'Attach supplier paper bill',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: hasPhoto
-                        ? AddStockColors.textDark
-                        : AddStockColors.textBody,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          if (hasPhoto)
-            IconButton(
-              tooltip: 'Remove bill photo',
-              onPressed: ctrl.clearBillPhoto,
-              icon: const Icon(Icons.close_rounded, size: 18),
-              color: AddStockColors.danger,
-            ),
-          OutlinedButton.icon(
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 42,
+          child: OutlinedButton(
             onPressed: ctrl.isPickingBillPhoto ? null : ctrl.pickBillPhoto,
-            icon: ctrl.isPickingBillPhoto
-                ? SizedBox(
-                    width: 14,
-                    height: 14,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: accent,
+              backgroundColor: AddStockColors.cardBg,
+              side: BorderSide(color: accent.withValues(alpha: 0.38)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(11),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (ctrl.isPickingBillPhoto)
+                  SizedBox(
+                    width: 15,
+                    height: 15,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: accent,
                     ),
                   )
-                : Icon(Icons.upload_file_rounded, size: 16, color: accent),
-            label: Text(hasPhoto ? 'CHANGE' : 'UPLOAD'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: accent,
-              side: BorderSide(color: accent.withValues(alpha: 0.35)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+                else if (canPreview)
+                  Container(
+                    width: 22,
+                    height: 22,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Image.file(File(photoPath), fit: BoxFit.cover),
+                  )
+                else
+                  Icon(Icons.upload_file_rounded, size: 17, color: accent),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    hasPhoto ? 'Change Supplier Bill' : 'Upload Supplier Bill',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (hasPhoto) ...[
+                  const SizedBox(width: 4),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: ctrl.clearBillPhoto,
+                    child: const Padding(
+                      padding: EdgeInsets.all(3),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 15,
+                        color: AddStockColors.danger,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Note extends StatelessWidget {
+  final bool gstEnabled;
+
+  const _Note({required this.gstEnabled});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Note:',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: AddStockColors.brandGold,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            gstEnabled
+                ? 'GST purchase will calculate tax in the final valuation and settlement.'
+                : 'Supplier profile is still required for stock ledger and purchase history.',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AddStockColors.textBody,
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -445,7 +1142,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
@@ -464,135 +1161,15 @@ class _StatusPill extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            label,
+            label.toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
+              letterSpacing: 0.7,
               color: color,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateTimeRow extends StatelessWidget {
-  final DateCardModel data;
-
-  const _DateTimeRow({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final timeParts = data.time.split(':');
-    final cleanTime =
-        timeParts.length >= 2 ? '${timeParts[0]} : ${timeParts[1]}' : data.time;
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _DateChip(
-          icon: Icons.calendar_today_rounded,
-          iconColor: AddStockColors.accentCompliance,
-          label: 'DATE',
-          value: data.date.toUpperCase(),
-          chipBg: AddStockColors.accentCompliance.withValues(alpha: 0.07),
-          chipBorder: AddStockColors.accentCompliance.withValues(alpha: 0.25),
-          valueColor: AddStockColors.textDark,
-        ),
-        _DateChip(
-          icon: Icons.access_time_rounded,
-          iconColor: AddStockColors.success,
-          label: 'TIME',
-          value: cleanTime,
-          chipBg: AddStockColors.success.withValues(alpha: 0.07),
-          chipBorder: AddStockColors.success.withValues(alpha: 0.25),
-          valueColor: AddStockColors.success,
-        ),
-      ],
-    );
-  }
-}
-
-class _DateChip extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
-  final Color chipBg;
-  final Color chipBorder;
-  final Color valueColor;
-
-  const _DateChip({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-    required this.chipBg,
-    required this.chipBorder,
-    required this.valueColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: chipBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: chipBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Icon(icon, color: iconColor, size: 14),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: iconColor.withValues(alpha: 0.8),
-                ),
-              ),
-              const SizedBox(height: 2),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  softWrap: false,
-                  style: GoogleFonts.manrope(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.3,
-                    color: valueColor,
-                    height: 1,
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),
