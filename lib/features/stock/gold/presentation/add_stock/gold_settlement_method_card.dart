@@ -462,7 +462,7 @@ class _MetalSettlementBoard extends StatelessWidget {
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final stacked = constraints.maxWidth < 820;
+              final stacked = constraints.maxWidth < 980;
               final fields = [
                 line == null
                     ? _AddMetalLineButton(payment: payment)
@@ -493,6 +493,14 @@ class _MetalSettlementBoard extends StatelessWidget {
                       ? GoldStockColors.danger
                       : GoldStockColors.success,
                   icon: GoldStockIcons.dueBalance,
+                ),
+                _ReadOnlyValue(
+                  label: 'Short Fine Value',
+                  value: _money(payment.fineShortageValue),
+                  tone: payment.fineShortageValue > 0
+                      ? GoldStockColors.danger
+                      : GoldStockColors.success,
+                  icon: GoldStockIcons.price,
                 ),
               ];
 

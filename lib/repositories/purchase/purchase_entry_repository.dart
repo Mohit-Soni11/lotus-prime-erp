@@ -39,6 +39,8 @@ class PurchaseVoucherItemDraft {
   final double netWeight;
   final double purity;
   final double fineWeight;
+  final double wastageFineWeight;
+  final double valuationFineWeight;
   final double rate;
   final double lineAmount;
   final String subCategory;
@@ -61,6 +63,8 @@ class PurchaseVoucherItemDraft {
     required this.netWeight,
     required this.purity,
     required this.fineWeight,
+    this.wastageFineWeight = 0.0,
+    this.valuationFineWeight = 0.0,
     required this.rate,
     required this.lineAmount,
     this.subCategory = 'Purchase Inward',
@@ -312,11 +316,13 @@ class PurchaseEntryRepository {
               net_weight,
               purity,
               fine_weight,
+              wastage_fine_weight,
+              valuation_fine_weight,
               rate,
               quantity,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -330,6 +336,10 @@ class PurchaseEntryRepository {
               item.netWeight,
               item.purity,
               item.fineWeight,
+              item.wastageFineWeight,
+              item.valuationFineWeight > 0
+                  ? item.valuationFineWeight
+                  : item.fineWeight + item.wastageFineWeight,
               item.rate,
               item.quantity,
               item.lineAmount,
@@ -407,6 +417,18 @@ class PurchaseEntryRepository {
             stockItemId: stockItemId,
             lineNo: index + 1,
             item: item,
+            createdAtMs: createdAtMs,
+          );
+          await _insertStockItemUnits(
+            voucherId: voucherId,
+            voucherNo: draft.voucherNo,
+            purchaseVoucherItemId: purchaseVoucherItemId,
+            stockItemId: stockItemId,
+            lineNo: index + 1,
+            sku: sku,
+            item: item,
+            supplierId: isSupplierPurchase ? draft.party.supplierId : null,
+            supplierName: isSupplierPurchase ? draft.party.name : null,
             createdAtMs: createdAtMs,
           );
           await _insertStockMovement(
@@ -581,6 +603,8 @@ class PurchaseEntryRepository {
       const {
         'quantity': 'INTEGER NOT NULL DEFAULT 1',
         'item_segment': 'TEXT',
+        'wastage_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
+        'valuation_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
       },
     );
     await _db.customStatement('''
@@ -602,6 +626,10 @@ class PurchaseEntryRepository {
     await _db.customStatement(
       'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_voucher" ON "purchase_item_huids" ("purchase_voucher_id")',
     );
+    await _db.customStatement(_createStockItemUnitsTableSql);
+    for (final statement in _stockItemUnitsIndexSql) {
+      await _db.customStatement(statement);
+    }
   }
 
   Future<void> _insertStockMovement({
@@ -725,6 +753,95 @@ class PurchaseEntryRepository {
           lineNo,
           index + 1,
           huids[index],
+          createdAtMs,
+        ],
+      );
+    }
+  }
+
+  Future<void> _insertStockItemUnits({
+    required int voucherId,
+    required String voucherNo,
+    required int purchaseVoucherItemId,
+    required int stockItemId,
+    required int lineNo,
+    required String sku,
+    required PurchaseVoucherItemDraft item,
+    required int? supplierId,
+    required String? supplierName,
+    required int createdAtMs,
+  }) async {
+    final quantity = item.quantity > 0 ? item.quantity : 1;
+    final huids = _normalizedHuids(item);
+    final unitCost = item.lineAmount / quantity;
+    final unitMaking = item.labourType == MakingChargesType.flat
+        ? item.labourCharge / quantity
+        : item.labourCharge;
+    final valuationFine = item.valuationFineWeight > 0
+        ? item.valuationFineWeight
+        : item.fineWeight + item.wastageFineWeight;
+
+    for (var index = 0; index < quantity; index++) {
+      final huid = index < huids.length ? huids[index] : null;
+      await _db.customStatement(
+        '''
+        INSERT INTO stock_item_units (
+          stock_item_id,
+          purchase_voucher_id,
+          purchase_voucher_item_id,
+          batch_code,
+          unit_code,
+          piece_no,
+          metal_type,
+          item_type,
+          segment,
+          item_name,
+          huid,
+          gross_weight,
+          less_weight,
+          net_weight,
+          purity_percent,
+          actual_fine_weight,
+          wastage_fine_weight,
+          valuation_fine_weight,
+          rate_per_gram,
+          making_amount,
+          unit_cost,
+          supplier_id,
+          supplier_name,
+          status,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          stockItemId,
+          voucherId,
+          purchaseVoucherItemId,
+          voucherNo,
+          '$sku-U${(index + 1).toString().padLeft(3, '0')}',
+          index + 1,
+          item.metal.displayName,
+          item.subCategory,
+          item.segmentLabel.trim(),
+          item.description.isNotEmpty
+              ? item.description
+              : '${item.subCategory} Purchase Item',
+          huid,
+          item.grossWeight,
+          item.lessWeight,
+          item.netWeight,
+          item.purity,
+          item.fineWeight,
+          item.wastageFineWeight,
+          valuationFine,
+          item.effectiveRatePerGram > 0 ? item.effectiveRatePerGram : item.rate,
+          unitMaking,
+          unitCost,
+          supplierId,
+          supplierName,
+          StockStatus.available.label,
+          createdAtMs,
           createdAtMs,
         ],
       );
@@ -891,3 +1008,48 @@ class PurchaseEntryRepository {
     return parts.join(' • ');
   }
 }
+
+const String _createStockItemUnitsTableSql = '''
+CREATE TABLE IF NOT EXISTS "stock_item_units" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "stock_item_id" INTEGER NOT NULL,
+  "purchase_voucher_id" INTEGER,
+  "purchase_voucher_item_id" INTEGER,
+  "batch_code" TEXT,
+  "unit_code" TEXT NOT NULL UNIQUE,
+  "piece_no" INTEGER NOT NULL,
+  "metal_type" TEXT NOT NULL,
+  "item_type" TEXT,
+  "segment" TEXT,
+  "item_name" TEXT NOT NULL,
+  "huid" TEXT,
+  "gross_weight" REAL NOT NULL DEFAULT 0.0,
+  "less_weight" REAL NOT NULL DEFAULT 0.0,
+  "net_weight" REAL NOT NULL DEFAULT 0.0,
+  "purity_percent" REAL NOT NULL DEFAULT 0.0,
+  "actual_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "rate_per_gram" REAL NOT NULL DEFAULT 0.0,
+  "making_amount" REAL NOT NULL DEFAULT 0.0,
+  "unit_cost" REAL NOT NULL DEFAULT 0.0,
+  "supplier_id" INTEGER,
+  "supplier_name" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'Available',
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER,
+  "sold_at" INTEGER,
+  FOREIGN KEY ("stock_item_id") REFERENCES "stock_items" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("purchase_voucher_id") REFERENCES "purchase_vouchers" ("id") ON DELETE SET NULL,
+  FOREIGN KEY ("purchase_voucher_item_id") REFERENCES "purchase_voucher_items" ("id") ON DELETE SET NULL
+)
+''';
+
+const List<String> _stockItemUnitsIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_stock_item" ON "stock_item_units" ("stock_item_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_huid" ON "stock_item_units" ("huid")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_status" ON "stock_item_units" ("status")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_item_name" ON "stock_item_units" ("item_name")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_net_weight" ON "stock_item_units" ("net_weight")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_batch" ON "stock_item_units" ("batch_code")',
+];

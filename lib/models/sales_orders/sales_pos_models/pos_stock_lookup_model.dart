@@ -10,6 +10,7 @@ import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
 class PosStockLookupModel {
   final int stockItemId;
+  final int? stockUnitId;
   final String sku;
   final String itemName;
   final String description;
@@ -17,14 +18,17 @@ class PosStockLookupModel {
   final String purity;
   final MetalType metal;
   final String categoryLabel;
+  final String segmentLabel;
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
+  final double unitCost;
   final int quantity;
   final String status;
 
   const PosStockLookupModel({
     required this.stockItemId,
+    this.stockUnitId,
     required this.sku,
     required this.itemName,
     required this.description,
@@ -32,9 +36,11 @@ class PosStockLookupModel {
     required this.purity,
     required this.metal,
     required this.categoryLabel,
+    this.segmentLabel = '',
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
+    this.unitCost = 0.0,
     required this.quantity,
     required this.status,
   });
@@ -44,9 +50,11 @@ class PosStockLookupModel {
   String get displaySubtitle {
     final parts = <String>[
       categoryLabel,
+      if (segmentLabel.trim().isNotEmpty) segmentLabel.trim(),
       if (huid != null && huid!.trim().isNotEmpty) 'HUID ${huid!.trim()}',
       if (purity.trim().isNotEmpty) purity.trim(),
       'GW ${grossWeight.toStringAsFixed(3)}',
+      if (unitCost > 0) 'Cost Rs ${unitCost.toStringAsFixed(2)}',
     ];
     return parts.join(' | ');
   }

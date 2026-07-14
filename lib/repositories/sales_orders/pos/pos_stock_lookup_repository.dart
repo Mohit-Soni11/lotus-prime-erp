@@ -1,11 +1,4 @@
-// ==========================================
-// FILE: pos_stock_lookup_repository.dart
-// TYPE: Repository
-// DESCRIPTION: Stock-aware lookup layer for the Sales POS screen. Handles
-//              name and HUID suggestions filtered by the currently selected
-//              metal and available stock only.
-// ==========================================
-
+import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../../helpers/search/fuzzy_search_helper.dart';
@@ -29,17 +22,17 @@ class PosStockLookupRepository {
       return const [];
     }
 
-    final stockRows = await _availableItemsForMetal(metal);
-    if (stockRows.isEmpty) {
+    final unitRows = await _availableUnitsForMetal(metal);
+    if (unitRows.isEmpty) {
       return const [];
     }
 
     final matches = term.length == 1
-        ? stockRows
+        ? unitRows
             .where((row) => _descriptionSearchText(row).contains(term))
             .toList(growable: false)
         : FuzzySearchHelper.searchObjects(
-            items: stockRows,
+            items: unitRows,
             query: term,
             getSearchText: _descriptionSearchText,
             maxResults: limit,
@@ -59,15 +52,16 @@ class PosStockLookupRepository {
       return const [];
     }
 
-    final stockRows = await _availableItemsForMetal(metal);
-    final matches = stockRows.where((row) {
-      final huid = (row.huid ?? '').toLowerCase();
-      final sku = row.sku.toLowerCase();
-      return huid.contains(term) || sku.contains(term);
+    final unitRows = await _availableUnitsForMetal(metal);
+    final matches = unitRows.where((row) {
+      final huid = row.huid.toLowerCase();
+      final unitCode = row.unitCode.toLowerCase();
+      return huid.contains(term) || unitCode.contains(term);
     }).toList();
 
     matches.sort(
-        (a, b) => _rankHuidMatch(a, term).compareTo(_rankHuidMatch(b, term)));
+      (a, b) => _rankHuidMatch(a, term).compareTo(_rankHuidMatch(b, term)),
+    );
     return matches.take(limit).map(_toLookupModel).toList(growable: false);
   }
 
@@ -80,90 +74,230 @@ class PosStockLookupRepository {
       return null;
     }
 
-    final stockRows = await _availableItemsForMetal(metal);
-    for (final row in stockRows) {
-      final huid = (row.huid ?? '').trim().toLowerCase();
-      final sku = row.sku.trim().toLowerCase();
-      if (huid == term || sku == term) {
+    final unitRows = await _availableUnitsForMetal(metal);
+    for (final row in unitRows) {
+      final huid = row.huid.trim().toLowerCase();
+      final unitCode = row.unitCode.trim().toLowerCase();
+      if (huid == term || unitCode == term) {
         return _toLookupModel(row);
       }
     }
     return null;
   }
 
-  Future<List<StockItem>> _availableItemsForMetal(MetalType metal) async {
-    final rows = await _db.select(_db.stockItems).get();
-    return rows.where((row) {
-      final isAvailable =
-          row.isActive && row.status == stock.StockStatus.available.label;
-      return isAvailable && _matchesMetal(row, metal);
-    }).toList(growable: false);
+  Future<List<_StockUnitLookupRow>> _availableUnitsForMetal(
+    MetalType metal,
+  ) async {
+    await _ensureStockItemUnitSchema();
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        u.id AS stock_unit_id,
+        u.stock_item_id AS stock_item_id,
+        u.unit_code AS unit_code,
+        u.batch_code AS batch_code,
+        u.metal_type AS metal_type,
+        u.item_type AS item_type,
+        u.segment AS segment,
+        u.item_name AS item_name,
+        u.huid AS huid,
+        u.gross_weight AS gross_weight,
+        u.less_weight AS less_weight,
+        u.net_weight AS net_weight,
+        u.purity_percent AS purity_percent,
+        u.unit_cost AS unit_cost,
+        u.status AS unit_status,
+        s.purity AS purity_label,
+        s.category AS category,
+        s.description AS description
+      FROM stock_item_units u
+      INNER JOIN stock_items s ON s.id = u.stock_item_id
+      WHERE u.status = ?
+        AND s.is_active = 1
+        AND s.status = ?
+        AND lower(u.metal_type) = ?
+      ORDER BY u.created_at DESC, u.id DESC
+      LIMIT 300
+      ''',
+      variables: [
+        Variable.withString(stock.StockStatus.available.label),
+        Variable.withString(stock.StockStatus.available.label),
+        Variable.withString(metal.displayName.toLowerCase()),
+      ],
+    ).get();
+
+    return rows.map(_StockUnitLookupRow.fromRow).toList(growable: false);
   }
 
-  bool _matchesMetal(StockItem row, MetalType metal) {
-    final expected = metal.displayName.toLowerCase();
-    final category = row.category.trim().toLowerCase();
-    final metalType = row.metalType.trim().toLowerCase();
-    return category == expected || metalType == expected;
+  Future<void> _ensureStockItemUnitSchema() async {
+    await _db.customStatement(_createStockItemUnitsTableSql);
+    for (final statement in _stockItemUnitsIndexSql) {
+      await _db.customStatement(statement);
+    }
   }
 
-  String _descriptionSearchText(StockItem row) {
+  String _descriptionSearchText(_StockUnitLookupRow row) {
     return [
       row.itemName,
-      row.description ?? '',
-      row.huid ?? '',
-      row.sku,
+      row.itemType,
+      row.segment,
+      row.huid,
+      row.unitCode,
+      row.batchCode,
+      row.netWeight.toStringAsFixed(3),
+      row.grossWeight.toStringAsFixed(3),
     ].join(' ').toLowerCase();
   }
 
-  int _rankHuidMatch(StockItem row, String term) {
-    final huid = (row.huid ?? '').trim().toLowerCase();
-    final sku = row.sku.trim().toLowerCase();
-    if (huid == term || sku == term) {
+  int _rankHuidMatch(_StockUnitLookupRow row, String term) {
+    final huid = row.huid.trim().toLowerCase();
+    final unitCode = row.unitCode.trim().toLowerCase();
+    if (huid == term || unitCode == term) {
       return 0;
     }
-    if (huid.startsWith(term) || sku.startsWith(term)) {
+    if (huid.startsWith(term) || unitCode.startsWith(term)) {
       return 1;
     }
     return 2;
   }
 
-  PosStockLookupModel _toLookupModel(StockItem row) {
+  PosStockLookupModel _toLookupModel(_StockUnitLookupRow row) {
     return PosStockLookupModel(
-      stockItemId: row.id,
-      sku: row.sku,
+      stockItemId: row.stockItemId,
+      stockUnitId: row.stockUnitId,
+      sku: row.unitCode,
       itemName: row.itemName,
-      description: row.description ?? '',
-      huid: row.huid,
-      purity: row.purity ?? '',
-      metal: _metalFromStockRow(row),
-      categoryLabel: row.category,
+      description: row.description,
+      huid: row.huid.isEmpty ? null : row.huid,
+      purity: row.purityLabel,
+      metal: _metalFromUnitRow(row),
+      categoryLabel: row.itemType.isEmpty ? row.category : row.itemType,
+      segmentLabel: row.segment,
       grossWeight: row.grossWeight,
-      lessWeight: row.stoneWeight,
+      lessWeight: row.lessWeight,
       netWeight: row.netWeight,
-      quantity: row.quantity,
+      unitCost: row.unitCost,
+      quantity: 1,
       status: row.status,
     );
   }
 
-  MetalType _metalFromStockRow(StockItem row) {
-    final value = row.category.trim().toLowerCase();
-    switch (value) {
-      case 'gold':
-        return MetalType.gold;
-      case 'silver':
-        return MetalType.silver;
-      case 'platinum':
-        return MetalType.platinum;
-      case 'diamond':
-        return MetalType.diamond;
-      default:
-        final metalValue = row.metalType.trim().toLowerCase();
-        if (metalValue == 'gold') return MetalType.gold;
-        if (metalValue == 'silver') return MetalType.silver;
-        if (metalValue == 'platinum') return MetalType.platinum;
-        if (metalValue == 'diamond') return MetalType.diamond;
-        return MetalType.gold;
-    }
+  MetalType _metalFromUnitRow(_StockUnitLookupRow row) {
+    final value = row.metalType.trim().toLowerCase();
+    if (value == 'gold') return MetalType.gold;
+    if (value == 'silver') return MetalType.silver;
+    if (value == 'platinum') return MetalType.platinum;
+    if (value == 'diamond') return MetalType.diamond;
+    return MetalType.gold;
   }
 }
+
+class _StockUnitLookupRow {
+  final int stockUnitId;
+  final int stockItemId;
+  final String unitCode;
+  final String batchCode;
+  final String metalType;
+  final String itemType;
+  final String segment;
+  final String itemName;
+  final String huid;
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double purityPercent;
+  final double unitCost;
+  final String status;
+  final String purityLabel;
+  final String category;
+  final String description;
+
+  const _StockUnitLookupRow({
+    required this.stockUnitId,
+    required this.stockItemId,
+    required this.unitCode,
+    required this.batchCode,
+    required this.metalType,
+    required this.itemType,
+    required this.segment,
+    required this.itemName,
+    required this.huid,
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.purityPercent,
+    required this.unitCost,
+    required this.status,
+    required this.purityLabel,
+    required this.category,
+    required this.description,
+  });
+
+  factory _StockUnitLookupRow.fromRow(QueryRow row) {
+    return _StockUnitLookupRow(
+      stockUnitId: row.read<int>('stock_unit_id'),
+      stockItemId: row.read<int>('stock_item_id'),
+      unitCode: row.read<String>('unit_code'),
+      batchCode: row.readNullable<String>('batch_code') ?? '',
+      metalType: row.read<String>('metal_type'),
+      itemType: row.readNullable<String>('item_type') ?? '',
+      segment: row.readNullable<String>('segment') ?? '',
+      itemName: row.read<String>('item_name'),
+      huid: row.readNullable<String>('huid') ?? '',
+      grossWeight: row.read<double>('gross_weight'),
+      lessWeight: row.read<double>('less_weight'),
+      netWeight: row.read<double>('net_weight'),
+      purityPercent: row.read<double>('purity_percent'),
+      unitCost: row.read<double>('unit_cost'),
+      status: row.read<String>('unit_status'),
+      purityLabel: row.readNullable<String>('purity_label') ?? '',
+      category: row.read<String>('category'),
+      description: row.readNullable<String>('description') ?? '',
+    );
+  }
+}
+
+const String _createStockItemUnitsTableSql = '''
+CREATE TABLE IF NOT EXISTS "stock_item_units" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "stock_item_id" INTEGER NOT NULL,
+  "purchase_voucher_id" INTEGER,
+  "purchase_voucher_item_id" INTEGER,
+  "batch_code" TEXT,
+  "unit_code" TEXT NOT NULL UNIQUE,
+  "piece_no" INTEGER NOT NULL,
+  "metal_type" TEXT NOT NULL,
+  "item_type" TEXT,
+  "segment" TEXT,
+  "item_name" TEXT NOT NULL,
+  "huid" TEXT,
+  "gross_weight" REAL NOT NULL DEFAULT 0.0,
+  "less_weight" REAL NOT NULL DEFAULT 0.0,
+  "net_weight" REAL NOT NULL DEFAULT 0.0,
+  "purity_percent" REAL NOT NULL DEFAULT 0.0,
+  "actual_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "rate_per_gram" REAL NOT NULL DEFAULT 0.0,
+  "making_amount" REAL NOT NULL DEFAULT 0.0,
+  "unit_cost" REAL NOT NULL DEFAULT 0.0,
+  "supplier_id" INTEGER,
+  "supplier_name" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'Available',
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER,
+  "sold_at" INTEGER,
+  FOREIGN KEY ("stock_item_id") REFERENCES "stock_items" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("purchase_voucher_id") REFERENCES "purchase_vouchers" ("id") ON DELETE SET NULL,
+  FOREIGN KEY ("purchase_voucher_item_id") REFERENCES "purchase_voucher_items" ("id") ON DELETE SET NULL
+)
+''';
+
+const List<String> _stockItemUnitsIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_stock_item" ON "stock_item_units" ("stock_item_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_huid" ON "stock_item_units" ("huid")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_status" ON "stock_item_units" ("status")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_item_name" ON "stock_item_units" ("item_name")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_net_weight" ON "stock_item_units" ("net_weight")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_batch" ON "stock_item_units" ("batch_code")',
+];

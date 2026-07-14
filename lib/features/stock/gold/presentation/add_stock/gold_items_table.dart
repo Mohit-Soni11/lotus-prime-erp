@@ -7,7 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors
 import 'gold_item_row.dart';
 
 class GoldItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 1900;
+  static const double _minTableWidth = 2020;
 
   final GoldStockController ctrl;
 
@@ -242,6 +242,8 @@ class GoldItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('ACTUAL FINE (g)', flex: 2, center: true),
           const SizedBox(width: 6),
+          _h('VALUATION FINE (g)', flex: 2, center: true),
+          const SizedBox(width: 6),
           _h('MAKING', flex: 3, center: true),
           const SizedBox(width: 6),
           _h('AMOUNT (Rs)', flex: 3, right: true),
@@ -449,8 +451,14 @@ class GoldItemsTable extends StatelessWidget {
       const SizedBox(width: 12),
       _buildTotalBox(
         'ACTUAL FINE',
-        '${_totalActualFineWeight().toStringAsFixed(3)} g',
+        '${ctrl.totalActualFineWeight.toStringAsFixed(3)} g',
         GoldStockColors.success,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'VALUATION FINE',
+        '${ctrl.totalValuationFineWeight.toStringAsFixed(3)} g',
+        GoldStockColors.brandGold,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
@@ -465,14 +473,6 @@ class GoldItemsTable extends StatelessWidget {
         GoldStockColors.success,
       ),
     ];
-  }
-
-  double _totalActualFineWeight() {
-    final total = ctrl.enteredGoldRows.fold<double>(
-      0,
-      (sum, row) => sum + (row.netWeight * (row.basePurityPercent / 100)),
-    );
-    return double.parse(total.toStringAsFixed(3));
   }
 
   Widget _buildTotalBox(String label, String value, Color color) {

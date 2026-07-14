@@ -16,7 +16,8 @@ class GoldPurchaseValuationCard extends StatelessWidget {
       listenable: Listenable.merge([ctrl, ctrl.payment]),
       builder: (context, _) {
         final payment = ctrl.payment;
-        final actualFine = _actualFineTotal();
+        final actualFine = ctrl.totalActualFineWeight;
+        final valuationFine = ctrl.totalValuationFineWeight;
         final finalAmount = payment.finalBillAmount;
 
         return _GoldCardShell(
@@ -105,6 +106,12 @@ class GoldPurchaseValuationCard extends StatelessWidget {
                               tone: GoldStockColors.success,
                             ),
                             _SummaryTile(
+                              label: 'Valuation Fine Total',
+                              value: '${valuationFine.toStringAsFixed(3)} g',
+                              icon: GoldStockIcons.rateChart,
+                              tone: GoldStockColors.brandGold,
+                            ),
+                            _SummaryTile(
                               label: 'Making Total',
                               value: _money(payment.totalMakingFromItems),
                               icon: GoldStockIcons.makingCharges,
@@ -157,14 +164,6 @@ class GoldPurchaseValuationCard extends StatelessWidget {
         );
       },
     );
-  }
-
-  double _actualFineTotal() {
-    final total = ctrl.enteredGoldRows.fold<double>(
-      0,
-      (sum, row) => sum + (row.netWeight * (row.basePurityPercent / 100)),
-    );
-    return double.parse(total.toStringAsFixed(3));
   }
 }
 

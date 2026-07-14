@@ -10,7 +10,7 @@ class GoldPaymentSnapshot {
   final double ratePer10g;
   final double ratePerGram;
   final double grossFineWeight;
-  final double payableFineWeight;
+  final double valuationFineWeight;
   final double fineDiscountWeight;
   final double cashDiscountAmount;
   final double fineValueAmount;
@@ -52,7 +52,7 @@ class GoldPaymentSnapshot {
     required this.ratePer10g,
     required this.ratePerGram,
     required this.grossFineWeight,
-    required this.payableFineWeight,
+    required this.valuationFineWeight,
     required this.fineDiscountWeight,
     required this.cashDiscountAmount,
     required this.fineValueAmount,
@@ -187,7 +187,7 @@ class GoldInvoiceSummaryData {
       rowCount: items.length,
       totalPieces: ctrl.totalQuantity,
       totalGrossWeight: ctrl.totalGrossWeight,
-      totalFineWeight: paymentSnapshot.payableFineWeight,
+      totalFineWeight: paymentSnapshot.valuationFineWeight,
       totalMakingAmount: ctrl.totalMakingAmount,
       itemSnapshotAmount: itemSnapshotAmount,
       invoiceSubtotal: paymentSnapshot.subtotalAmount,

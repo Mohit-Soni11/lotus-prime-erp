@@ -91,11 +91,18 @@ class GoldStockController extends AddStockController {
   double get totalFineWeight => _roundGoldWeight(
         enteredGoldRows.fold(0.0, (sum, row) => sum + row.fineWeight),
       );
+  double get totalActualFineWeight => totalFineWeight;
+  double get totalWastageFineWeight => _roundGoldWeight(
+        enteredGoldRows.fold(0.0, (sum, row) => sum + row.wastageFineWeight),
+      );
+  double get totalValuationFineWeight => _roundGoldWeight(
+        enteredGoldRows.fold(0.0, (sum, row) => sum + row.valuationFineWeight),
+      );
   double get totalMakingAmount =>
       enteredGoldRows.fold(0.0, (sum, row) => sum + row.makingAmount);
   GoldPaymentSnapshot get paymentSnapshot {
     payment.updateInvoiceSummary(
-      fine: totalFineWeight,
+      fine: totalValuationFineWeight,
       making: totalMakingAmount,
       notify: false,
     );
@@ -108,7 +115,7 @@ class GoldStockController extends AddStockController {
       ratePer10g: payment.todayRatePer10g,
       ratePerGram: payment.todayRatePerGram,
       grossFineWeight: payment.grossFineFromItems,
-      payableFineWeight: payment.totalFineFromItems,
+      valuationFineWeight: payment.totalFineFromItems,
       fineDiscountWeight: payment.fineDiscountWeight,
       cashDiscountAmount: payment.cashDiscountAmount,
       fineValueAmount: payment.fineValueAmount,
@@ -286,7 +293,9 @@ class GoldStockController extends AddStockController {
       row.huid = rowModel.huidValues.isEmpty ? '' : rowModel.huidValues.first;
       row.grossWeight = rowModel.grossWeight / lotDivisor;
       row.stoneWeight = rowModel.lessWeight / lotDivisor;
-      row.touchPercent = rowModel.effectiveTotalPurityPercent;
+      row.touchPercent = rowModel.basePurityPercent;
+      row.wastageFineWeight = rowModel.wastageFineWeight / lotDivisor;
+      row.valuationFineWeight = rowModel.valuationFineWeight / lotDivisor;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
       row.purchasePriceOverride = rowModel.totalAmount / lotDivisor;
@@ -382,9 +391,11 @@ class GoldStockController extends AddStockController {
     if (row.purityLabel.isEmpty) {
       return 'Base purity is required';
     }
-    if (row.effectiveTotalPurityPercent <= 0 ||
-        row.effectiveTotalPurityPercent > 100) {
-      return 'Total purity must be between 0 and 100';
+    if (row.basePurityPercent <= 0 || row.basePurityPercent > 100) {
+      return 'Actual purity must be between 0 and 100';
+    }
+    if (row.wastagePercent < 0) {
+      return 'Wastage cannot be negative';
     }
     if (row.purchaseRate <= 0) {
       return 'Gold daily rate is missing. Update Gold jewellery rate first.';
@@ -496,6 +507,9 @@ class GoldStockController extends AddStockController {
         'discountMode': payment.discountMode.name,
         'fineDiscountWeight': snapshot.fineDiscountWeight,
         'cashDiscountAmount': snapshot.cashDiscountAmount,
+        'actualFineWeight': totalActualFineWeight,
+        'wastageFineWeight': totalWastageFineWeight,
+        'valuationFineWeight': totalValuationFineWeight,
         'gstRatePercent': snapshot.gstPercent,
         'metalGstPercent': payment.metalGstPercent,
         'cashGstPercent': payment.cashGstPercent,
@@ -544,6 +558,12 @@ class GoldStockController extends AddStockController {
               purity: row.resolveTouch(selectedPurityBasePercent),
               fineWeight: _roundGoldWeight(
                 row.fineWeight(selectedPurityBasePercent),
+              ),
+              wastageFineWeight: _roundGoldWeight(
+                row.wastageFineWeight,
+              ),
+              valuationFineWeight: _roundGoldWeight(
+                row.valuationFine(selectedPurityBasePercent),
               ),
               rate: snapshot.ratePerGram > 0
                   ? snapshot.ratePerGram

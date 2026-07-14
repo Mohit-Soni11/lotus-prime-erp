@@ -314,13 +314,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     const SizedBox(width: 6),
                     Expanded(
                       flex: 3,
-                      child: _buildAutoCell(
-                        value:
-                            "Rs ${widget.item.totalValue.toStringAsFixed(2)}",
-                        color: SalesPosColors.bodyTextMain,
-                        align: TextAlign.right,
-                        isBold: true,
-                      ),
+                      child: _buildSaleTotalCell(),
                     ),
                     const SizedBox(width: 6),
                   ],
@@ -607,6 +601,61 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   isBold ? SalesPosStyles.fontValue : SalesPosStyles.fontInput,
               fontFeatures: const [FontFeature.tabularFigures()]),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSaleTotalCell() {
+    final warning = widget.item.shouldWarnStockCost;
+    final color = widget.item.isBelowStockCost
+        ? SalesPosColors.danger
+        : (widget.item.isAtStockCost
+            ? SalesPosColors.warning
+            : SalesPosColors.bodyTextMain);
+    final message = widget.item.isBelowStockCost
+        ? 'Selling below stock cost. Cost Rs ${widget.item.linkedStockUnitCost.toStringAsFixed(2)}'
+        : widget.item.isAtStockCost
+            ? 'Selling at stock cost. No profit on this item.'
+            : 'Item total';
+
+    return Tooltip(
+      message: message,
+      waitDuration: const Duration(milliseconds: 300),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _buildAutoCell(
+            value: "Rs ${widget.item.totalValue.toStringAsFixed(2)}",
+            color: color,
+            align: TextAlign.right,
+            isBold: true,
+          ),
+          if (warning)
+            Positioned(
+              top: -5,
+              right: -5,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.priority_high_rounded,
+                  color: Colors.white,
+                  size: 12,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

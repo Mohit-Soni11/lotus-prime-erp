@@ -51,7 +51,9 @@ class SaleItemModel extends ChangeNotifier {
   MakingChargeType _makingChargeType;
   bool _isLessPerPiece;
   int? _linkedStockItemId;
+  int? _linkedStockUnitId;
   String? _linkedStockSku;
+  double _linkedStockUnitCost = 0.0;
 
   final TextEditingController descCtrl = TextEditingController();
   final TextEditingController pcsCtrl = TextEditingController(text: '1');
@@ -159,8 +161,18 @@ class SaleItemModel extends ChangeNotifier {
   MakingChargeType get makingChargeType => _makingChargeType;
   bool get isLessPerPiece => _isLessPerPiece;
   int? get linkedStockItemId => _linkedStockItemId;
+  int? get linkedStockUnitId => _linkedStockUnitId;
   String? get linkedStockSku => _linkedStockSku;
+  double get linkedStockUnitCost => _linkedStockUnitCost;
   bool get hasLinkedStock => _linkedStockItemId != null;
+  bool get hasStockCost => _linkedStockUnitCost > 0;
+  double get stockProfitAmount =>
+      hasStockCost ? totalValue - _linkedStockUnitCost : 0.0;
+  bool get isBelowStockCost =>
+      hasStockCost && totalValue < _linkedStockUnitCost;
+  bool get isAtStockCost =>
+      hasStockCost && (totalValue - _linkedStockUnitCost).abs() <= 0.5;
+  bool get shouldWarnStockCost => isBelowStockCost || isAtStockCost;
   bool get rateFromMetalRateMaster => _rateFromMetalRateMaster;
   bool get makingFromMetalRateMaster => _makingFromMetalRateMaster;
   String? get rateSourceLabel => _rateSourceLabel;
@@ -333,23 +345,34 @@ class SaleItemModel extends ChangeNotifier {
   void attachStockReference({
     required int stockItemId,
     required String sku,
+    int? stockUnitId,
+    double stockUnitCost = 0.0,
   }) {
     final normalizedSku = sku.trim();
-    final didChange =
-        _linkedStockItemId != stockItemId || _linkedStockSku != normalizedSku;
+    final didChange = _linkedStockItemId != stockItemId ||
+        _linkedStockUnitId != stockUnitId ||
+        _linkedStockSku != normalizedSku ||
+        _linkedStockUnitCost != stockUnitCost;
     _linkedStockItemId = stockItemId;
+    _linkedStockUnitId = stockUnitId;
     _linkedStockSku = normalizedSku;
+    _linkedStockUnitCost = stockUnitCost;
     if (didChange) {
       notifyListeners();
     }
   }
 
   void clearStockReference() {
-    if (_linkedStockItemId == null && _linkedStockSku == null) {
+    if (_linkedStockItemId == null &&
+        _linkedStockUnitId == null &&
+        _linkedStockSku == null &&
+        _linkedStockUnitCost <= 0) {
       return;
     }
     _linkedStockItemId = null;
+    _linkedStockUnitId = null;
     _linkedStockSku = null;
+    _linkedStockUnitCost = 0.0;
     notifyListeners();
   }
 

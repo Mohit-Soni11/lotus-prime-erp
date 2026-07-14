@@ -6868,12 +6868,34 @@ class $BillItemsTable extends BillItems
   late final GeneratedColumn<int> linkedStockItemId = GeneratedColumn<int>(
       'linked_stock_item_id', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _linkedStockUnitIdMeta =
+      const VerificationMeta('linkedStockUnitId');
+  @override
+  late final GeneratedColumn<int> linkedStockUnitId = GeneratedColumn<int>(
+      'linked_stock_unit_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _linkedStockSkuMeta =
       const VerificationMeta('linkedStockSku');
   @override
   late final GeneratedColumn<String> linkedStockSku = GeneratedColumn<String>(
       'linked_stock_sku', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _stockUnitCostMeta =
+      const VerificationMeta('stockUnitCost');
+  @override
+  late final GeneratedColumn<double> stockUnitCost = GeneratedColumn<double>(
+      'stock_unit_cost', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _stockProfitAmountMeta =
+      const VerificationMeta('stockProfitAmount');
+  @override
+  late final GeneratedColumn<double> stockProfitAmount =
+      GeneratedColumn<double>('stock_profit_amount', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -6897,7 +6919,10 @@ class $BillItemsTable extends BillItems
         makingCharge,
         itemTotal,
         linkedStockItemId,
-        linkedStockSku
+        linkedStockUnitId,
+        linkedStockSku,
+        stockUnitCost,
+        stockProfitAmount
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7012,11 +7037,29 @@ class $BillItemsTable extends BillItems
           linkedStockItemId.isAcceptableOrUnknown(
               data['linked_stock_item_id']!, _linkedStockItemIdMeta));
     }
+    if (data.containsKey('linked_stock_unit_id')) {
+      context.handle(
+          _linkedStockUnitIdMeta,
+          linkedStockUnitId.isAcceptableOrUnknown(
+              data['linked_stock_unit_id']!, _linkedStockUnitIdMeta));
+    }
     if (data.containsKey('linked_stock_sku')) {
       context.handle(
           _linkedStockSkuMeta,
           linkedStockSku.isAcceptableOrUnknown(
               data['linked_stock_sku']!, _linkedStockSkuMeta));
+    }
+    if (data.containsKey('stock_unit_cost')) {
+      context.handle(
+          _stockUnitCostMeta,
+          stockUnitCost.isAcceptableOrUnknown(
+              data['stock_unit_cost']!, _stockUnitCostMeta));
+    }
+    if (data.containsKey('stock_profit_amount')) {
+      context.handle(
+          _stockProfitAmountMeta,
+          stockProfitAmount.isAcceptableOrUnknown(
+              data['stock_profit_amount']!, _stockProfitAmountMeta));
     }
     return context;
   }
@@ -7069,8 +7112,14 @@ class $BillItemsTable extends BillItems
           .read(DriftSqlType.double, data['${effectivePrefix}item_total'])!,
       linkedStockItemId: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}linked_stock_item_id']),
+      linkedStockUnitId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}linked_stock_unit_id']),
       linkedStockSku: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}linked_stock_sku']),
+      stockUnitCost: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}stock_unit_cost'])!,
+      stockProfitAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}stock_profit_amount'])!,
     );
   }
 
@@ -7102,7 +7151,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
   final double makingCharge;
   final double itemTotal;
   final int? linkedStockItemId;
+  final int? linkedStockUnitId;
   final String? linkedStockSku;
+  final double stockUnitCost;
+  final double stockProfitAmount;
   const BillItem(
       {required this.id,
       required this.createdAt,
@@ -7125,7 +7177,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       required this.makingCharge,
       required this.itemTotal,
       this.linkedStockItemId,
-      this.linkedStockSku});
+      this.linkedStockUnitId,
+      this.linkedStockSku,
+      required this.stockUnitCost,
+      required this.stockProfitAmount});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -7156,9 +7211,14 @@ class BillItem extends DataClass implements Insertable<BillItem> {
     if (!nullToAbsent || linkedStockItemId != null) {
       map['linked_stock_item_id'] = Variable<int>(linkedStockItemId);
     }
+    if (!nullToAbsent || linkedStockUnitId != null) {
+      map['linked_stock_unit_id'] = Variable<int>(linkedStockUnitId);
+    }
     if (!nullToAbsent || linkedStockSku != null) {
       map['linked_stock_sku'] = Variable<String>(linkedStockSku);
     }
+    map['stock_unit_cost'] = Variable<double>(stockUnitCost);
+    map['stock_profit_amount'] = Variable<double>(stockProfitAmount);
     return map;
   }
 
@@ -7189,9 +7249,14 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       linkedStockItemId: linkedStockItemId == null && nullToAbsent
           ? const Value.absent()
           : Value(linkedStockItemId),
+      linkedStockUnitId: linkedStockUnitId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedStockUnitId),
       linkedStockSku: linkedStockSku == null && nullToAbsent
           ? const Value.absent()
           : Value(linkedStockSku),
+      stockUnitCost: Value(stockUnitCost),
+      stockProfitAmount: Value(stockProfitAmount),
     );
   }
 
@@ -7220,7 +7285,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       makingCharge: serializer.fromJson<double>(json['makingCharge']),
       itemTotal: serializer.fromJson<double>(json['itemTotal']),
       linkedStockItemId: serializer.fromJson<int?>(json['linkedStockItemId']),
+      linkedStockUnitId: serializer.fromJson<int?>(json['linkedStockUnitId']),
       linkedStockSku: serializer.fromJson<String?>(json['linkedStockSku']),
+      stockUnitCost: serializer.fromJson<double>(json['stockUnitCost']),
+      stockProfitAmount: serializer.fromJson<double>(json['stockProfitAmount']),
     );
   }
   @override
@@ -7248,7 +7316,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       'makingCharge': serializer.toJson<double>(makingCharge),
       'itemTotal': serializer.toJson<double>(itemTotal),
       'linkedStockItemId': serializer.toJson<int?>(linkedStockItemId),
+      'linkedStockUnitId': serializer.toJson<int?>(linkedStockUnitId),
       'linkedStockSku': serializer.toJson<String?>(linkedStockSku),
+      'stockUnitCost': serializer.toJson<double>(stockUnitCost),
+      'stockProfitAmount': serializer.toJson<double>(stockProfitAmount),
     };
   }
 
@@ -7274,7 +7345,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           double? makingCharge,
           double? itemTotal,
           Value<int?> linkedStockItemId = const Value.absent(),
-          Value<String?> linkedStockSku = const Value.absent()}) =>
+          Value<int?> linkedStockUnitId = const Value.absent(),
+          Value<String?> linkedStockSku = const Value.absent(),
+          double? stockUnitCost,
+          double? stockProfitAmount}) =>
       BillItem(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -7299,8 +7373,13 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         linkedStockItemId: linkedStockItemId.present
             ? linkedStockItemId.value
             : this.linkedStockItemId,
+        linkedStockUnitId: linkedStockUnitId.present
+            ? linkedStockUnitId.value
+            : this.linkedStockUnitId,
         linkedStockSku:
             linkedStockSku.present ? linkedStockSku.value : this.linkedStockSku,
+        stockUnitCost: stockUnitCost ?? this.stockUnitCost,
+        stockProfitAmount: stockProfitAmount ?? this.stockProfitAmount,
       );
   BillItem copyWithCompanion(BillItemsCompanion data) {
     return BillItem(
@@ -7338,9 +7417,18 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       linkedStockItemId: data.linkedStockItemId.present
           ? data.linkedStockItemId.value
           : this.linkedStockItemId,
+      linkedStockUnitId: data.linkedStockUnitId.present
+          ? data.linkedStockUnitId.value
+          : this.linkedStockUnitId,
       linkedStockSku: data.linkedStockSku.present
           ? data.linkedStockSku.value
           : this.linkedStockSku,
+      stockUnitCost: data.stockUnitCost.present
+          ? data.stockUnitCost.value
+          : this.stockUnitCost,
+      stockProfitAmount: data.stockProfitAmount.present
+          ? data.stockProfitAmount.value
+          : this.stockProfitAmount,
     );
   }
 
@@ -7368,7 +7456,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ..write('makingCharge: $makingCharge, ')
           ..write('itemTotal: $itemTotal, ')
           ..write('linkedStockItemId: $linkedStockItemId, ')
-          ..write('linkedStockSku: $linkedStockSku')
+          ..write('linkedStockUnitId: $linkedStockUnitId, ')
+          ..write('linkedStockSku: $linkedStockSku, ')
+          ..write('stockUnitCost: $stockUnitCost, ')
+          ..write('stockProfitAmount: $stockProfitAmount')
           ..write(')'))
         .toString();
   }
@@ -7396,7 +7487,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         makingCharge,
         itemTotal,
         linkedStockItemId,
-        linkedStockSku
+        linkedStockUnitId,
+        linkedStockSku,
+        stockUnitCost,
+        stockProfitAmount
       ]);
   @override
   bool operator ==(Object other) =>
@@ -7423,7 +7517,10 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           other.makingCharge == this.makingCharge &&
           other.itemTotal == this.itemTotal &&
           other.linkedStockItemId == this.linkedStockItemId &&
-          other.linkedStockSku == this.linkedStockSku);
+          other.linkedStockUnitId == this.linkedStockUnitId &&
+          other.linkedStockSku == this.linkedStockSku &&
+          other.stockUnitCost == this.stockUnitCost &&
+          other.stockProfitAmount == this.stockProfitAmount);
 }
 
 class BillItemsCompanion extends UpdateCompanion<BillItem> {
@@ -7448,7 +7545,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
   final Value<double> makingCharge;
   final Value<double> itemTotal;
   final Value<int?> linkedStockItemId;
+  final Value<int?> linkedStockUnitId;
   final Value<String?> linkedStockSku;
+  final Value<double> stockUnitCost;
+  final Value<double> stockProfitAmount;
   const BillItemsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -7471,7 +7571,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.makingCharge = const Value.absent(),
     this.itemTotal = const Value.absent(),
     this.linkedStockItemId = const Value.absent(),
+    this.linkedStockUnitId = const Value.absent(),
     this.linkedStockSku = const Value.absent(),
+    this.stockUnitCost = const Value.absent(),
+    this.stockProfitAmount = const Value.absent(),
   });
   BillItemsCompanion.insert({
     this.id = const Value.absent(),
@@ -7495,7 +7598,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.makingCharge = const Value.absent(),
     this.itemTotal = const Value.absent(),
     this.linkedStockItemId = const Value.absent(),
+    this.linkedStockUnitId = const Value.absent(),
     this.linkedStockSku = const Value.absent(),
+    this.stockUnitCost = const Value.absent(),
+    this.stockProfitAmount = const Value.absent(),
   })  : billId = Value(billId),
         itemName = Value(itemName);
   static Insertable<BillItem> custom({
@@ -7520,7 +7626,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     Expression<double>? makingCharge,
     Expression<double>? itemTotal,
     Expression<int>? linkedStockItemId,
+    Expression<int>? linkedStockUnitId,
     Expression<String>? linkedStockSku,
+    Expression<double>? stockUnitCost,
+    Expression<double>? stockProfitAmount,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -7545,7 +7654,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       if (makingCharge != null) 'making_charge': makingCharge,
       if (itemTotal != null) 'item_total': itemTotal,
       if (linkedStockItemId != null) 'linked_stock_item_id': linkedStockItemId,
+      if (linkedStockUnitId != null) 'linked_stock_unit_id': linkedStockUnitId,
       if (linkedStockSku != null) 'linked_stock_sku': linkedStockSku,
+      if (stockUnitCost != null) 'stock_unit_cost': stockUnitCost,
+      if (stockProfitAmount != null) 'stock_profit_amount': stockProfitAmount,
     });
   }
 
@@ -7571,7 +7683,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       Value<double>? makingCharge,
       Value<double>? itemTotal,
       Value<int?>? linkedStockItemId,
-      Value<String?>? linkedStockSku}) {
+      Value<int?>? linkedStockUnitId,
+      Value<String?>? linkedStockSku,
+      Value<double>? stockUnitCost,
+      Value<double>? stockProfitAmount}) {
     return BillItemsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
@@ -7594,7 +7709,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       makingCharge: makingCharge ?? this.makingCharge,
       itemTotal: itemTotal ?? this.itemTotal,
       linkedStockItemId: linkedStockItemId ?? this.linkedStockItemId,
+      linkedStockUnitId: linkedStockUnitId ?? this.linkedStockUnitId,
       linkedStockSku: linkedStockSku ?? this.linkedStockSku,
+      stockUnitCost: stockUnitCost ?? this.stockUnitCost,
+      stockProfitAmount: stockProfitAmount ?? this.stockProfitAmount,
     );
   }
 
@@ -7664,8 +7782,17 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     if (linkedStockItemId.present) {
       map['linked_stock_item_id'] = Variable<int>(linkedStockItemId.value);
     }
+    if (linkedStockUnitId.present) {
+      map['linked_stock_unit_id'] = Variable<int>(linkedStockUnitId.value);
+    }
     if (linkedStockSku.present) {
       map['linked_stock_sku'] = Variable<String>(linkedStockSku.value);
+    }
+    if (stockUnitCost.present) {
+      map['stock_unit_cost'] = Variable<double>(stockUnitCost.value);
+    }
+    if (stockProfitAmount.present) {
+      map['stock_profit_amount'] = Variable<double>(stockProfitAmount.value);
     }
     return map;
   }
@@ -7694,7 +7821,10 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
           ..write('makingCharge: $makingCharge, ')
           ..write('itemTotal: $itemTotal, ')
           ..write('linkedStockItemId: $linkedStockItemId, ')
-          ..write('linkedStockSku: $linkedStockSku')
+          ..write('linkedStockUnitId: $linkedStockUnitId, ')
+          ..write('linkedStockSku: $linkedStockSku, ')
+          ..write('stockUnitCost: $stockUnitCost, ')
+          ..write('stockProfitAmount: $stockProfitAmount')
           ..write(')'))
         .toString();
   }
@@ -40584,7 +40714,10 @@ typedef $$BillItemsTableCreateCompanionBuilder = BillItemsCompanion Function({
   Value<double> makingCharge,
   Value<double> itemTotal,
   Value<int?> linkedStockItemId,
+  Value<int?> linkedStockUnitId,
   Value<String?> linkedStockSku,
+  Value<double> stockUnitCost,
+  Value<double> stockProfitAmount,
 });
 typedef $$BillItemsTableUpdateCompanionBuilder = BillItemsCompanion Function({
   Value<int> id,
@@ -40608,7 +40741,10 @@ typedef $$BillItemsTableUpdateCompanionBuilder = BillItemsCompanion Function({
   Value<double> makingCharge,
   Value<double> itemTotal,
   Value<int?> linkedStockItemId,
+  Value<int?> linkedStockUnitId,
   Value<String?> linkedStockSku,
+  Value<double> stockUnitCost,
+  Value<double> stockProfitAmount,
 });
 
 final class $$BillItemsTableReferences
@@ -40702,8 +40838,19 @@ class $$BillItemsTableFilterComposer
       column: $table.linkedStockItemId,
       builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get linkedStockUnitId => $composableBuilder(
+      column: $table.linkedStockUnitId,
+      builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get linkedStockSku => $composableBuilder(
       column: $table.linkedStockSku,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get stockUnitCost => $composableBuilder(
+      column: $table.stockUnitCost, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get stockProfitAmount => $composableBuilder(
+      column: $table.stockProfitAmount,
       builder: (column) => ColumnFilters(column));
 
   $$BillsTableFilterComposer get billId {
@@ -40801,8 +40948,20 @@ class $$BillItemsTableOrderingComposer
       column: $table.linkedStockItemId,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get linkedStockUnitId => $composableBuilder(
+      column: $table.linkedStockUnitId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get linkedStockSku => $composableBuilder(
       column: $table.linkedStockSku,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get stockUnitCost => $composableBuilder(
+      column: $table.stockUnitCost,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get stockProfitAmount => $composableBuilder(
+      column: $table.stockProfitAmount,
       builder: (column) => ColumnOrderings(column));
 
   $$BillsTableOrderingComposer get billId {
@@ -40895,8 +41054,17 @@ class $$BillItemsTableAnnotationComposer
   GeneratedColumn<int> get linkedStockItemId => $composableBuilder(
       column: $table.linkedStockItemId, builder: (column) => column);
 
+  GeneratedColumn<int> get linkedStockUnitId => $composableBuilder(
+      column: $table.linkedStockUnitId, builder: (column) => column);
+
   GeneratedColumn<String> get linkedStockSku => $composableBuilder(
       column: $table.linkedStockSku, builder: (column) => column);
+
+  GeneratedColumn<double> get stockUnitCost => $composableBuilder(
+      column: $table.stockUnitCost, builder: (column) => column);
+
+  GeneratedColumn<double> get stockProfitAmount => $composableBuilder(
+      column: $table.stockProfitAmount, builder: (column) => column);
 
   $$BillsTableAnnotationComposer get billId {
     final $$BillsTableAnnotationComposer composer = $composerBuilder(
@@ -40963,7 +41131,10 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<double> makingCharge = const Value.absent(),
             Value<double> itemTotal = const Value.absent(),
             Value<int?> linkedStockItemId = const Value.absent(),
+            Value<int?> linkedStockUnitId = const Value.absent(),
             Value<String?> linkedStockSku = const Value.absent(),
+            Value<double> stockUnitCost = const Value.absent(),
+            Value<double> stockProfitAmount = const Value.absent(),
           }) =>
               BillItemsCompanion(
             id: id,
@@ -40987,7 +41158,10 @@ class $$BillItemsTableTableManager extends RootTableManager<
             makingCharge: makingCharge,
             itemTotal: itemTotal,
             linkedStockItemId: linkedStockItemId,
+            linkedStockUnitId: linkedStockUnitId,
             linkedStockSku: linkedStockSku,
+            stockUnitCost: stockUnitCost,
+            stockProfitAmount: stockProfitAmount,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -41011,7 +41185,10 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<double> makingCharge = const Value.absent(),
             Value<double> itemTotal = const Value.absent(),
             Value<int?> linkedStockItemId = const Value.absent(),
+            Value<int?> linkedStockUnitId = const Value.absent(),
             Value<String?> linkedStockSku = const Value.absent(),
+            Value<double> stockUnitCost = const Value.absent(),
+            Value<double> stockProfitAmount = const Value.absent(),
           }) =>
               BillItemsCompanion.insert(
             id: id,
@@ -41035,7 +41212,10 @@ class $$BillItemsTableTableManager extends RootTableManager<
             makingCharge: makingCharge,
             itemTotal: itemTotal,
             linkedStockItemId: linkedStockItemId,
+            linkedStockUnitId: linkedStockUnitId,
             linkedStockSku: linkedStockSku,
+            stockUnitCost: stockUnitCost,
+            stockProfitAmount: stockProfitAmount,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

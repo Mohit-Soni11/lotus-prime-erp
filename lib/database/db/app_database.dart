@@ -144,6 +144,7 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (Migrator m) async {
           await m.createAll();
           await _ensurePurchaseItemHuidSchema();
+          await _ensureStockItemUnitSchema();
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
         },
@@ -699,6 +700,36 @@ class AppDatabase extends _$AppDatabase {
             }
             AppLogger.info('v36 purchase item segment field applied.');
           }
+
+          if (from < 37) {
+            try {
+              await customStatement(
+                'ALTER TABLE "purchase_voucher_items" ADD COLUMN "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0',
+              );
+              await customStatement(
+                'ALTER TABLE "purchase_voucher_items" ADD COLUMN "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0',
+              );
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
+            AppLogger.info('v37 purchase item valuation fine fields applied.');
+          }
+
+          if (from < 38) {
+            await _ensureStockItemUnitSchema();
+            AppLogger.info('v38 stock item unit tracking schema applied.');
+          }
+
+          if (from < 39) {
+            try {
+              await m.addColumn(billItems, billItems.linkedStockUnitId);
+              await m.addColumn(billItems, billItems.stockUnitCost);
+              await m.addColumn(billItems, billItems.stockProfitAmount);
+            } catch (e, s) {
+              _handleMigrationError(e, s);
+            }
+            AppLogger.info('v39 sales stock valuation fields applied.');
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -713,6 +744,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureGirviNoticeActionSchema();
           await _ensureCustomerAccountLedgerSchema();
           await _ensurePurchaseItemHuidSchema();
+          await _ensureStockItemUnitSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -834,6 +866,13 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _ensurePurchaseItemHuidSchema() async {
     await customStatement(_createPurchaseItemHuidTableSql);
     for (final statement in _purchaseItemHuidIndexSql) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _ensureStockItemUnitSchema() async {
+    await customStatement(_createStockItemUnitsTableSql);
+    for (final statement in _stockItemUnitsIndexSql) {
       await customStatement(statement);
     }
   }
@@ -1478,6 +1517,8 @@ const String _createPurchaseVoucherItemsTableSql = '''
     "net_weight" REAL NOT NULL DEFAULT 0.0,
     "purity" REAL NOT NULL DEFAULT 0.0,
     "fine_weight" REAL NOT NULL DEFAULT 0.0,
+    "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
+    "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
     "rate" REAL NOT NULL DEFAULT 0.0,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "line_amount" REAL NOT NULL DEFAULT 0.0,
@@ -1492,6 +1533,51 @@ const List<String> _purchaseVoucherIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_customer_id" ON "purchase_vouchers" ("customer_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_vouchers_supplier_id" ON "purchase_vouchers" ("supplier_id")',
   'CREATE INDEX IF NOT EXISTS "idx_purchase_voucher_items_voucher_id" ON "purchase_voucher_items" ("purchase_voucher_id")',
+];
+
+const String _createStockItemUnitsTableSql = '''
+CREATE TABLE IF NOT EXISTS "stock_item_units" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "stock_item_id" INTEGER NOT NULL,
+  "purchase_voucher_id" INTEGER,
+  "purchase_voucher_item_id" INTEGER,
+  "batch_code" TEXT,
+  "unit_code" TEXT NOT NULL UNIQUE,
+  "piece_no" INTEGER NOT NULL,
+  "metal_type" TEXT NOT NULL,
+  "item_type" TEXT,
+  "segment" TEXT,
+  "item_name" TEXT NOT NULL,
+  "huid" TEXT,
+  "gross_weight" REAL NOT NULL DEFAULT 0.0,
+  "less_weight" REAL NOT NULL DEFAULT 0.0,
+  "net_weight" REAL NOT NULL DEFAULT 0.0,
+  "purity_percent" REAL NOT NULL DEFAULT 0.0,
+  "actual_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "rate_per_gram" REAL NOT NULL DEFAULT 0.0,
+  "making_amount" REAL NOT NULL DEFAULT 0.0,
+  "unit_cost" REAL NOT NULL DEFAULT 0.0,
+  "supplier_id" INTEGER,
+  "supplier_name" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'Available',
+  "created_at" INTEGER NOT NULL,
+  "updated_at" INTEGER,
+  "sold_at" INTEGER,
+  FOREIGN KEY ("stock_item_id") REFERENCES "stock_items" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("purchase_voucher_id") REFERENCES "purchase_vouchers" ("id") ON DELETE SET NULL,
+  FOREIGN KEY ("purchase_voucher_item_id") REFERENCES "purchase_voucher_items" ("id") ON DELETE SET NULL
+)
+''';
+
+const List<String> _stockItemUnitsIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_stock_item" ON "stock_item_units" ("stock_item_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_huid" ON "stock_item_units" ("huid")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_status" ON "stock_item_units" ("status")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_item_name" ON "stock_item_units" ("item_name")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_net_weight" ON "stock_item_units" ("net_weight")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_batch" ON "stock_item_units" ("batch_code")',
 ];
 
 const String _createPurchaseItemHuidTableSql = '''

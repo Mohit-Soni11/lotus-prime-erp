@@ -192,8 +192,19 @@ class _GoldItemRowState extends State<GoldItemRow> {
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
-                      value: _actualFineWeight().toStringAsFixed(3),
+                      value: widget.model.actualFineWeight.toStringAsFixed(3),
                       color: GoldStockColors.success,
+                      align: TextAlign.center,
+                      isBold: true,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: _buildAutoCell(
+                      value:
+                          widget.model.valuationFineWeight.toStringAsFixed(3),
+                      color: GoldStockColors.brandGold,
                       align: TextAlign.center,
                       isBold: true,
                     ),
@@ -205,7 +216,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                     flex: 3,
                     child: Tooltip(
                       message:
-                          'Fine ${widget.model.fineWeight.toStringAsFixed(3)} g at ${widget.model.effectiveTotalPurityLabel}% purity x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
+                          'Valuation fine ${widget.model.valuationFineWeight.toStringAsFixed(3)} g includes wastage and is used only for cost calculation.',
                       waitDuration: const Duration(milliseconds: 400),
                       child: _buildAutoCell(
                         value:
@@ -328,12 +339,6 @@ class _GoldItemRowState extends State<GoldItemRow> {
     controller.selection = TextSelection.fromPosition(
       TextPosition(offset: value.length),
     );
-  }
-
-  double _actualFineWeight() {
-    final fine =
-        widget.model.netWeight * (widget.model.basePurityPercent / 100);
-    return double.parse(fine.toStringAsFixed(3));
   }
 
   Widget _buildSNo() {

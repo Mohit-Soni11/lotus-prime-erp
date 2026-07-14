@@ -31,6 +31,7 @@ import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/add_stock_hub_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/inventory/inventory_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
 
 import '../../ui/customer/customer_list/customer_list_screen.dart';
 import '../../ui/customer/add_customer/add_customer_screen.dart';
@@ -458,6 +459,12 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.stockInventory,
             builder: (context, state) => InventoryScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.stockValuation,
+            builder: (context, state) => StockValuationScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),

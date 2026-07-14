@@ -30,5 +30,8 @@ class BillItems extends Table with BaseTable {
   RealColumn get makingCharge => real().withDefault(const Constant(0.0))();
   RealColumn get itemTotal => real().withDefault(const Constant(0.0))();
   IntColumn get linkedStockItemId => integer().nullable()();
+  IntColumn get linkedStockUnitId => integer().nullable()();
   TextColumn get linkedStockSku => text().nullable()();
+  RealColumn get stockUnitCost => real().withDefault(const Constant(0.0))();
+  RealColumn get stockProfitAmount => real().withDefault(const Constant(0.0))();
 }

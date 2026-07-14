@@ -71,6 +71,7 @@ class SidebarMenu {
       icon: Icons.inventory_2_outlined,
       subItems: [
         MenuItemData(AppRoutes.inventoryRoute),
+        MenuItemData(AppRoutes.stockValuationRoute),
         MenuItemData(AppRoutes.addStockRoute),
         MenuItemData(AppRoutes.barcodePrintRoute),
         MenuItemData(AppRoutes.stockTransferRoute),

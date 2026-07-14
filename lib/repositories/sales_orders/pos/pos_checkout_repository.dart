@@ -146,7 +146,10 @@ class PosCheckoutRepository {
                 makingCharge: Value(item.makingAmt),
                 itemTotal: Value(item.totalValue),
                 linkedStockItemId: Value(item.linkedStockItemId),
+                linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
+                stockUnitCost: Value(item.linkedStockUnitCost),
+                stockProfitAmount: Value(item.stockProfitAmount),
               ),
             );
       }
@@ -330,7 +333,10 @@ class PosCheckoutRepository {
                 makingCharge: Value(item.makingAmt),
                 itemTotal: Value(item.totalValue),
                 linkedStockItemId: Value(item.linkedStockItemId),
+                linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
+                stockUnitCost: Value(item.linkedStockUnitCost),
+                stockProfitAmount: Value(item.stockProfitAmount),
               ),
             );
       }
@@ -757,6 +763,8 @@ class PosCheckoutRepository {
 
       await _deductStock(
         stockItemId: stockItemId,
+        stockUnitId: item.linkedStockUnitId,
+        stockUnitCode: item.linkedStockSku,
         quantityToSell: _unitsForItem(item),
         sourceId: sourceId,
         sourceNumber: sourceNumber,
@@ -778,6 +786,8 @@ class PosCheckoutRepository {
 
       await _restoreStock(
         stockItemId: stockItemId,
+        stockUnitId: item.linkedStockUnitId,
+        stockUnitCode: item.linkedStockSku,
         quantityToRestore: _unitsForQuantity(item.quantity),
         sourceId: sourceId,
         sourceNumber: sourceNumber,
@@ -983,6 +993,8 @@ class PosCheckoutRepository {
 
   Future<void> _restoreStock({
     required int stockItemId,
+    required int? stockUnitId,
+    required String? stockUnitCode,
     required int quantityToRestore,
     required String sourceId,
     required String sourceNumber,
@@ -1010,6 +1022,11 @@ class PosCheckoutRepository {
       ),
     );
     final now = DateTime.now();
+    await _markStockUnitAvailable(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+      restoredAt: now,
+    );
     await _insertStockMovement(
       stockRow: stockRow,
       movementType: 'SALE_RESTORE',
@@ -1025,6 +1042,8 @@ class PosCheckoutRepository {
 
   Future<void> _deductStock({
     required int stockItemId,
+    required int? stockUnitId,
+    required String? stockUnitCode,
     required int quantityToSell,
     required String sourceId,
     required String sourceNumber,
@@ -1054,6 +1073,12 @@ class PosCheckoutRepository {
       );
     }
 
+    await _markStockUnitSold(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+      soldAt: DateTime.now(),
+    );
+
     final remainingQty = stockRow.quantity - quantityToSell;
     await (_db.update(_db.stockItems)
           ..where((tbl) => tbl.id.equals(stockItemId)))
@@ -1081,6 +1106,126 @@ class PosCheckoutRepository {
       reason: 'POS sale stock deduction',
       occurredAt: now,
     );
+  }
+
+  Future<void> _markStockUnitSold({
+    required int? stockUnitId,
+    required String? stockUnitCode,
+    required DateTime soldAt,
+  }) async {
+    final whereClause = _stockUnitWhereClause(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+    );
+    if (whereClause == null) {
+      return;
+    }
+
+    final variables = _stockUnitWhereVariables(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+    );
+    final whereArgs = _stockUnitWhereArgs(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+    );
+    final existing = await _db.customSelect(
+      '''
+      SELECT id, status
+      FROM stock_item_units
+      WHERE $whereClause
+      LIMIT 1
+      ''',
+      variables: variables,
+    ).getSingleOrNull();
+
+    if (existing == null) {
+      return;
+    }
+
+    final status = existing.read<String>('status');
+    if (status != stock.StockStatus.available.label) {
+      throw StateError('Selected stock unit is no longer available for sale.');
+    }
+
+    await _db.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET status = ?, sold_at = ?, updated_at = ?
+      WHERE $whereClause
+      ''',
+      [
+        stock.StockStatus.sold.label,
+        soldAt.millisecondsSinceEpoch,
+        soldAt.millisecondsSinceEpoch,
+        ...whereArgs,
+      ],
+    );
+  }
+
+  Future<void> _markStockUnitAvailable({
+    required int? stockUnitId,
+    required String? stockUnitCode,
+    required DateTime restoredAt,
+  }) async {
+    final whereClause = _stockUnitWhereClause(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+    );
+    if (whereClause == null) {
+      return;
+    }
+    final whereArgs = _stockUnitWhereArgs(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+    );
+
+    await _db.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET status = ?, sold_at = NULL, updated_at = ?
+      WHERE $whereClause
+      ''',
+      [
+        stock.StockStatus.available.label,
+        restoredAt.millisecondsSinceEpoch,
+        ...whereArgs,
+      ],
+    );
+  }
+
+  String? _stockUnitWhereClause({
+    required int? stockUnitId,
+    required String? stockUnitCode,
+  }) {
+    if (stockUnitId != null) {
+      return 'id = ?';
+    }
+    final normalized = stockUnitCode?.trim();
+    if (normalized != null && normalized.isNotEmpty) {
+      return 'unit_code = ?';
+    }
+    return null;
+  }
+
+  List<Variable<Object>> _stockUnitWhereVariables({
+    required int? stockUnitId,
+    required String? stockUnitCode,
+  }) {
+    if (stockUnitId != null) {
+      return [Variable<int>(stockUnitId)];
+    }
+    return [Variable<String>(stockUnitCode!.trim())];
+  }
+
+  List<Object> _stockUnitWhereArgs({
+    required int? stockUnitId,
+    required String? stockUnitCode,
+  }) {
+    if (stockUnitId != null) {
+      return [stockUnitId];
+    }
+    return [stockUnitCode!.trim()];
   }
 
   Future<void> _insertStockMovement({
@@ -1295,6 +1440,8 @@ class PosCheckoutRepository {
     if (row.linkedStockItemId != null && row.linkedStockSku != null) {
       item.attachStockReference(
         stockItemId: row.linkedStockItemId!,
+        stockUnitId: row.linkedStockUnitId,
+        stockUnitCost: row.stockUnitCost,
         sku: row.linkedStockSku!,
       );
     }

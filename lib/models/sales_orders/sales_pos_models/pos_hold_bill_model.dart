@@ -173,7 +173,9 @@ class PosHoldSaleItemSnapshot {
   final MakingChargeType makingChargeType;
   final bool isLessPerPiece;
   final int? stockItemId;
+  final int? stockUnitId;
   final String stockSku;
+  final double stockUnitCost;
   final String description;
   final String pcsInput;
   final String huid;
@@ -188,7 +190,9 @@ class PosHoldSaleItemSnapshot {
     required this.makingChargeType,
     required this.isLessPerPiece,
     required this.stockItemId,
+    required this.stockUnitId,
     required this.stockSku,
+    required this.stockUnitCost,
     required this.description,
     required this.pcsInput,
     required this.huid,
@@ -205,7 +209,9 @@ class PosHoldSaleItemSnapshot {
       makingChargeType: item.makingChargeType,
       isLessPerPiece: item.isLessPerPiece,
       stockItemId: item.linkedStockItemId,
+      stockUnitId: item.linkedStockUnitId,
       stockSku: item.linkedStockSku ?? '',
+      stockUnitCost: item.linkedStockUnitCost,
       description: item.descCtrl.text,
       pcsInput: item.pcsCtrl.text,
       huid: item.huidCtrl.text,
@@ -223,7 +229,9 @@ class PosHoldSaleItemSnapshot {
       'makingChargeType': makingChargeType.name,
       'isLessPerPiece': isLessPerPiece,
       'stockItemId': stockItemId,
+      'stockUnitId': stockUnitId,
       'stockSku': stockSku,
+      'stockUnitCost': stockUnitCost,
       'description': description,
       'pcsInput': pcsInput,
       'huid': huid,
@@ -247,7 +255,9 @@ class PosHoldSaleItemSnapshot {
       ),
       isLessPerPiece: json['isLessPerPiece'] == true,
       stockItemId: (json['stockItemId'] as num?)?.toInt(),
+      stockUnitId: (json['stockUnitId'] as num?)?.toInt(),
       stockSku: (json['stockSku'] ?? '').toString(),
+      stockUnitCost: (json['stockUnitCost'] as num?)?.toDouble() ?? 0.0,
       description: (json['description'] ?? '').toString(),
       pcsInput: (json['pcsInput'] ?? '1').toString(),
       huid: (json['huid'] ?? '').toString(),
@@ -276,6 +286,8 @@ class PosHoldSaleItemSnapshot {
     if (stockItemId != null && stockSku.trim().isNotEmpty) {
       item.attachStockReference(
         stockItemId: stockItemId!,
+        stockUnitId: stockUnitId,
+        stockUnitCost: stockUnitCost,
         sku: stockSku,
       );
     }

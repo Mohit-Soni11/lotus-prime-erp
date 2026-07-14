@@ -25,6 +25,8 @@ class StockRowEntry {
   double stoneWeight = 0.0;
   double stoneValue = 0.0;
   double touchPercent = 0.0;
+  double wastageFineWeight = 0.0;
+  double valuationFineWeight = 0.0;
   String purityLabel = '';
 
   StoneType stoneType = StoneType.none;
@@ -60,6 +62,13 @@ class StockRowEntry {
 
   double fineWeight(double fallbackTouch) =>
       netWeight * (resolveTouch(fallbackTouch) / 100.0);
+
+  double valuationFine(double fallbackTouch) {
+    if (valuationFineWeight > 0) {
+      return valuationFineWeight;
+    }
+    return fineWeight(fallbackTouch) + wastageFineWeight;
+  }
 
   double labourAmount({
     required double metalAmount,
@@ -100,6 +109,8 @@ class StockRowEntry {
         stoneWeight > 0 ||
         stoneValue > 0 ||
         touchPercent > 0 ||
+        wastageFineWeight > 0 ||
+        valuationFineWeight > 0 ||
         stoneCarats > 0 ||
         stonePieces > 0 ||
         purchaseRate > 0 ||

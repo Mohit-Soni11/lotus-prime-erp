@@ -455,6 +455,8 @@ class PosBillingController extends ChangeNotifier {
     item.makingCtrl.clear();
     item.attachStockReference(
       stockItemId: suggestion.stockItemId,
+      stockUnitId: suggestion.stockUnitId,
+      stockUnitCost: suggestion.unitCost,
       sku: suggestion.sku,
     );
     activeRowIndex = rowIndex;

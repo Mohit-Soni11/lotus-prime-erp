@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lotus_erp/features/stock/gold/domain/calculation/gold_stock_calculation_input.dart';
+import 'package:lotus_erp/features/stock/gold/domain/calculation/gold_stock_calculation_result.dart';
+import 'package:lotus_erp/features/stock/gold/domain/calculation/gold_stock_calculator.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
 class GoldItemModel extends ChangeNotifier {
@@ -108,8 +111,7 @@ class GoldItemModel extends ChangeNotifier {
 
   double get grossWeight => _parseNumeric(grossCtrl.text);
   double get lessWeight => _parseNumeric(lessCtrl.text);
-  double get netWeight =>
-      (grossWeight - lessWeight).clamp(0.0, double.infinity);
+  double get netWeight => calculation.netWeight;
 
   String get categoryLabel => categoryCtrl.text.trim();
   String get segmentLabel => segmentCtrl.text.trim();
@@ -133,32 +135,43 @@ class GoldItemModel extends ChangeNotifier {
   double get basePurityPercent => _purityLabelToPercent(purityLabel);
   double get wastagePercent => _parseNumeric(wastageCtrl.text);
   double get totalPurityPercent => basePurityPercent + wastagePercent;
-  double get effectiveTotalPurityPercent => totalPurityPercent;
+  double get effectiveTotalPurityPercent => basePurityPercent;
 
   bool get hasValidTotalPurity =>
-      effectiveTotalPurityPercent > 0 && effectiveTotalPurityPercent <= 100;
+      basePurityPercent > 0 && basePurityPercent <= 100;
   String get totalPurityLabel =>
       totalPurityPercent <= 0 ? '--' : _formatDecimal(totalPurityPercent);
   String get effectiveTotalPurityLabel => effectiveTotalPurityPercent <= 0
       ? '--'
       : _formatDecimal(effectiveTotalPurityPercent);
 
-  double get computedFineWeight => netWeight * (totalPurityPercent / 100.0);
-  double get fineWeight => _roundGoldWeight(computedFineWeight);
+  GoldStockCalculationResult get calculation => GoldStockCalculator.calculate(
+        GoldStockCalculationInput(
+          grossWeight: grossWeight,
+          lessWeight: lessWeight,
+          purityPercent: basePurityPercent,
+          wastagePercent: wastagePercent,
+          ratePerGram: purchaseRate,
+          makingType: makingChargesType,
+          makingValue: makingValue,
+        ),
+      );
+
+  double get computedFineWeight => calculation.actualFineWeight;
+  double get fineWeight => calculation.actualFineWeight;
+  double get actualFineWeight => calculation.actualFineWeight;
+  double get wastageFineWeight => calculation.wastageFineWeight;
+  double get valuationFineWeight => calculation.valuationFineWeight;
 
   double get purchaseRate => _parseNumeric(rateCtrl.text);
   double get makingValue => _parseNumeric(makingCtrl.text);
-  double get metalCost => fineWeight * purchaseRate;
+  double get metalCost => calculation.metalCost;
 
   double get makingAmount {
-    return switch (makingChargesType) {
-      MakingChargesType.perGram => netWeight * makingValue,
-      MakingChargesType.flat => makingValue,
-      MakingChargesType.percent => metalCost * makingValue / 100.0,
-    };
+    return calculation.makingAmount;
   }
 
-  double get totalAmount => metalCost + makingAmount;
+  double get totalAmount => calculation.taxableAmount;
 
   bool get hasAnyInput =>
       categoryLabel.isNotEmpty ||
@@ -368,12 +381,5 @@ class GoldItemModel extends ChangeNotifier {
   String _formatDecimal(double value, {int maxFraction = 2}) {
     final fixed = value.toStringAsFixed(maxFraction);
     return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
-  }
-
-  double _roundGoldWeight(double value) {
-    if (value <= 0) {
-      return 0.0;
-    }
-    return (value * 1000).roundToDouble() / 1000.0;
   }
 }
