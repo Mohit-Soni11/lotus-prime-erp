@@ -1493,6 +1493,16 @@ class _PurchaseHistoryCard extends StatelessWidget {
                         '${_weight(item.metalPaidFine)} g fine',
                         SupplierProfileColors.metalText,
                       ),
+                    if (item.hasMetalFineDue)
+                      _MiniBadge(
+                        'Fine due ${_weight(item.metalFineDue)} g',
+                        dueColor,
+                      ),
+                    if (item.hasMetalFineCredit)
+                      _MiniBadge(
+                        'Fine credit ${_weight(item.metalFineCredit)} g',
+                        SupplierProfileColors.success,
+                      ),
                   ],
                 ),
               ],
@@ -1561,6 +1571,20 @@ class _MetalSettlementCard extends StatelessWidget {
             label: 'Value',
             value: _money(item.metalPaidValue),
           ),
+          if (item.hasMetalFineDue) ...[
+            const SizedBox(width: 10),
+            _SettlementMetric(
+              label: 'Fine Due',
+              value: '${_weight(item.metalFineDue)} g',
+            ),
+          ],
+          if (item.hasMetalFineCredit) ...[
+            const SizedBox(width: 10),
+            _SettlementMetric(
+              label: 'Fine Credit',
+              value: '${_weight(item.metalFineCredit)} g',
+            ),
+          ],
         ],
       ),
     );

@@ -220,6 +220,9 @@ class SupplierRepository {
 
   SupplierPurchaseHistoryItem _toPurchaseHistoryItem(drift.QueryRow row) {
     final meta = _decodeMeta(row.readNullable<String>('payment_meta'));
+    final balanceDue = _resolvePurchaseBalanceDue(row, meta);
+    final metalFineDue = _resolveMetalFineDue(row, meta);
+    final metalFineCredit = _resolveMetalFineCredit(row, meta);
     return SupplierPurchaseHistoryItem(
       voucherId: row.read<int>('id'),
       voucherNo: row.read<String>('voucher_no'),
@@ -235,12 +238,16 @@ class SupplierRepository {
       grossAmount: row.read<double>('gross_amount'),
       grandTotal: row.read<double>('grand_total'),
       totalPaid: row.read<double>('total_paid'),
-      balanceDue: row.read<double>('balance_due'),
+      balanceDue: balanceDue,
       ratePerKg: row.read<double>('rate_per_kg'),
       metalPaidGrossWeight: row.read<double>('metal_paid_gross_weight'),
       metalPaidPurity: row.read<double>('metal_paid_purity'),
       metalPaidFine: row.read<double>('metal_paid_fine'),
       metalPaidValue: row.read<double>('metal_paid_value'),
+      metalFineDue: metalFineDue,
+      metalFineDueValue: _resolveMetalFineDueValue(meta, metalFineDue),
+      metalFineCredit: metalFineCredit,
+      metalFineCreditValue: _resolveMetalFineCreditValue(meta, metalFineCredit),
       dueMode: row.readNullable<String>('due_mode'),
       excessMode: row.readNullable<String>('excess_mode'),
       promiseDate: _dateFromMillis(row.readNullable<int>('promise_date')),
@@ -253,6 +260,102 @@ class SupplierRepository {
       oldDueAdjustedAmount: _readDouble(meta['oldDueAdjustedAmount']),
       metalLineCount: (meta['metalLines'] as List?)?.length ?? 0,
     );
+  }
+
+  double _resolvePurchaseBalanceDue(
+    drift.QueryRow row,
+    Map<String, dynamic> meta,
+  ) {
+    final storedDue = row.read<double>('balance_due');
+    if (storedDue > 0.005) {
+      return storedDue;
+    }
+
+    final settlementPreference =
+        (meta['settlementPreference'] as String?)?.trim() ??
+            row.readNullable<String>('due_mode')?.trim();
+    final savedDue = _readDouble(meta['dueAmount']);
+    if (savedDue > 0.005 && settlementPreference != 'metal') {
+      return savedDue;
+    }
+
+    final cashTarget = _readDouble(meta['cashTargetAmount']);
+    final cashPaid = _readDouble(meta['cashBankPaidTotal']);
+    final cashDue = (cashTarget - cashPaid).clamp(0.0, double.infinity);
+
+    return cashDue.clamp(0.0, double.infinity).toDouble();
+  }
+
+  double _resolveMetalFineDue(
+    drift.QueryRow row,
+    Map<String, dynamic> meta,
+  ) {
+    final settlementPreference =
+        (meta['settlementPreference'] as String?)?.trim() ??
+            row.readNullable<String>('due_mode')?.trim();
+    if (settlementPreference != 'metal') {
+      return 0.0;
+    }
+
+    final savedFineDue = _readDouble(meta['fineDueWeight']);
+    if (savedFineDue > 0.005) {
+      return savedFineDue;
+    }
+
+    return _readDouble(meta['metalFineShortage']);
+  }
+
+  double _resolveMetalFineDueValue(
+    Map<String, dynamic> meta,
+    double metalFineDue,
+  ) {
+    final savedValue = _readDouble(meta['fineDueValue']);
+    if (savedValue > 0.005) {
+      return savedValue;
+    }
+
+    final shortageValue = _readDouble(meta['metalFineShortageValue']);
+    if (shortageValue > 0.005) {
+      return shortageValue;
+    }
+
+    return metalFineDue * _readDouble(meta['ratePerGram']);
+  }
+
+  double _resolveMetalFineCredit(
+    drift.QueryRow row,
+    Map<String, dynamic> meta,
+  ) {
+    final settlementPreference =
+        (meta['settlementPreference'] as String?)?.trim() ??
+            row.readNullable<String>('excess_mode')?.trim();
+    if (settlementPreference != 'credit') {
+      return 0.0;
+    }
+
+    final savedCredit = _readDouble(meta['supplierCreditFineWeight']);
+    if (savedCredit > 0.005) {
+      return savedCredit;
+    }
+
+    return _readDouble(meta['metalFineExcess']);
+  }
+
+  double _resolveMetalFineCreditValue(
+    Map<String, dynamic> meta,
+    double metalFineCredit,
+  ) {
+    final savedValue = _readDouble(meta['supplierCreditValue']);
+    if (savedValue > 0.005) {
+      return savedValue;
+    }
+
+    final excessValue = _readDouble(meta['metalFineExcessValue']);
+    if (excessValue > 0.005) {
+      return excessValue;
+    }
+
+    return metalFineCredit * _readDouble(meta['ratePerGram']);
   }
 
   Map<String, dynamic> _decodeMeta(String? raw) {
@@ -393,6 +496,10 @@ class SupplierPurchaseHistoryItem {
   final double metalPaidPurity;
   final double metalPaidFine;
   final double metalPaidValue;
+  final double metalFineDue;
+  final double metalFineDueValue;
+  final double metalFineCredit;
+  final double metalFineCreditValue;
   final String? dueMode;
   final String? excessMode;
   final DateTime? promiseDate;
@@ -421,6 +528,10 @@ class SupplierPurchaseHistoryItem {
     required this.metalPaidPurity,
     required this.metalPaidFine,
     required this.metalPaidValue,
+    this.metalFineDue = 0.0,
+    this.metalFineDueValue = 0.0,
+    this.metalFineCredit = 0.0,
+    this.metalFineCreditValue = 0.0,
     this.dueMode,
     this.excessMode,
     this.promiseDate,

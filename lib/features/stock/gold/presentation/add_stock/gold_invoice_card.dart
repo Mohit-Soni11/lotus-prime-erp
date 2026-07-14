@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_stock_controller.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/supplier/add_supplier/add_supplier_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/supplier/supplier_profile/supplier_profile_screen.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 
 class GoldInvoiceCard extends StatefulWidget {
@@ -202,6 +203,38 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
     await ctrl.reloadSuppliers();
   }
 
+  Future<void> _openLinkedSupplierProfile() async {
+    final supplierId = ctrl.linkedSupplier?.id ?? ctrl.sessionSupplierId;
+    if (supplierId == null) {
+      return;
+    }
+
+    _removeSuggestionOverlay();
+    FocusScope.of(context).unfocus();
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SupplierProfileScreen(
+          supplierId: supplierId,
+          onBack: () => Navigator.pop(context),
+        ),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await ctrl.reloadSuppliers();
+    final refreshedSupplier = ctrl.suppliers
+        .where((supplier) => supplier.id == supplierId)
+        .firstOrNull;
+    if (refreshedSupplier != null) {
+      ctrl.setSessionSupplier(refreshedSupplier);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -255,6 +288,7 @@ class _GoldInvoiceCardState extends State<GoldInvoiceCard> {
                       nameSuggestionLink: _nameSuggestionLink,
                       notFound: _notFound,
                       onCreateSupplier: _openCreateSupplier,
+                      onOpenSupplierProfile: _openLinkedSupplierProfile,
                     ),
                     const SizedBox(height: 14),
                     Container(
@@ -405,6 +439,7 @@ class _SupplierLookupSection extends StatelessWidget {
   final LayerLink nameSuggestionLink;
   final bool notFound;
   final VoidCallback onCreateSupplier;
+  final VoidCallback onOpenSupplierProfile;
 
   const _SupplierLookupSection({
     required this.ctrl,
@@ -412,6 +447,7 @@ class _SupplierLookupSection extends StatelessWidget {
     required this.nameSuggestionLink,
     required this.notFound,
     required this.onCreateSupplier,
+    required this.onOpenSupplierProfile,
   });
 
   @override
@@ -493,8 +529,10 @@ class _SupplierLookupSection extends StatelessWidget {
               message: ctrl.supplierDisplayName.trim().isEmpty
                   ? 'Selected supplier profile is linked to this batch.'
                   : ctrl.supplierDisplayName,
-              actionLabel: 'Change',
-              onAction: () => ctrl.clearSessionSupplier(),
+              actionLabel: 'Open Profile',
+              onAction: onOpenSupplierProfile,
+              secondaryActionLabel: 'Change',
+              onSecondaryAction: () => ctrl.clearSessionSupplier(),
             ),
           ],
         ],
@@ -612,6 +650,8 @@ class _SupplierStateBanner extends StatelessWidget {
   final String message;
   final String actionLabel;
   final VoidCallback onAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
 
   const _SupplierStateBanner({
     required this.type,
@@ -619,6 +659,8 @@ class _SupplierStateBanner extends StatelessWidget {
     required this.message,
     required this.actionLabel,
     required this.onAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
   });
 
   @override
@@ -669,21 +711,47 @@ class _SupplierStateBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          TextButton(
-            onPressed: onAction,
-            style: TextButton.styleFrom(
-              foregroundColor: color,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              actionLabel,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            alignment: WrapAlignment.end,
+            children: [
+              TextButton(
+                onPressed: onAction,
+                style: TextButton.styleFrom(
+                  foregroundColor: color,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  actionLabel,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-            ),
+              if (secondaryActionLabel != null && onSecondaryAction != null)
+                TextButton(
+                  onPressed: onSecondaryAction,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AddStockColors.textMuted,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    secondaryActionLabel!,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -1090,7 +1158,7 @@ class _Note extends StatelessWidget {
         Expanded(
           child: Text(
             gstEnabled
-                ? 'GST purchase requires supplier GSTIN, invoice number and bill photo/PDF for ITC-safe records.'
+                ? 'GST purchase requires invoice number and bill photo/PDF. Supplier GSTIN can be updated later from supplier profile.'
                 : 'Non-GST purchases stay separate as No ITC records in supplier history.',
             style: GoogleFonts.inter(
               fontSize: 10,

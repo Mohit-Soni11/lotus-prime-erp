@@ -193,6 +193,7 @@ class PurchaseEntryRepository {
         final paymentStatus = _resolvePaymentStatus(
           draft.balanceDue,
           draft.totalPaid,
+          draft.dueMode,
         );
 
         await _db.customStatement(
@@ -586,7 +587,21 @@ class PurchaseEntryRepository {
       'purchase_vouchers',
       const {
         'supplier_invoice_no': 'TEXT',
+        'discount_type': "TEXT NOT NULL DEFAULT 'FLAT'",
+        'discount_value': 'REAL NOT NULL DEFAULT 0.0',
+        'discount_amount': 'REAL NOT NULL DEFAULT 0.0',
+        'gross_amount': 'REAL NOT NULL DEFAULT 0.0',
+        'taxable_amount': 'REAL NOT NULL DEFAULT 0.0',
+        'gst_amount': 'REAL NOT NULL DEFAULT 0.0',
+        'cgst_amount': 'REAL NOT NULL DEFAULT 0.0',
+        'sgst_amount': 'REAL NOT NULL DEFAULT 0.0',
+        'grand_total': 'REAL NOT NULL DEFAULT 0.0',
+        'cash_paid': 'REAL NOT NULL DEFAULT 0.0',
         'upi_paid': 'REAL NOT NULL DEFAULT 0.0',
+        'bank_paid': 'REAL NOT NULL DEFAULT 0.0',
+        'card_paid': 'REAL NOT NULL DEFAULT 0.0',
+        'total_paid': 'REAL NOT NULL DEFAULT 0.0',
+        'balance_due': 'REAL NOT NULL DEFAULT 0.0',
         'rate_per_kg': 'REAL NOT NULL DEFAULT 0.0',
         'metal_paid_gross_weight': 'REAL NOT NULL DEFAULT 0.0',
         'metal_paid_purity': 'REAL NOT NULL DEFAULT 0.0',
@@ -596,6 +611,9 @@ class PurchaseEntryRepository {
         'excess_mode': 'TEXT',
         'promise_date': 'INTEGER',
         'payment_meta': 'TEXT',
+        'payment_status': "TEXT NOT NULL DEFAULT 'UNPAID'",
+        'stock_entry_count': 'INTEGER NOT NULL DEFAULT 0',
+        'status': "TEXT NOT NULL DEFAULT 'SAVED'",
       },
     );
     await _ensureTableColumns(
@@ -958,11 +976,15 @@ class PurchaseEntryRepository {
     return 'PUR-${metal.name.toUpperCase()}-$batchTimestamp-$lineNo';
   }
 
-  String _resolvePaymentStatus(double balanceDue, double totalPaid) {
+  String _resolvePaymentStatus(
+    double balanceDue,
+    double totalPaid,
+    String? dueMode,
+  ) {
     if (totalPaid <= 0) {
       return 'UNPAID';
     }
-    if (balanceDue <= 0.005) {
+    if (balanceDue <= 0.005 && (dueMode == null || dueMode.trim().isEmpty)) {
       return 'PAID';
     }
     return 'PARTIAL';

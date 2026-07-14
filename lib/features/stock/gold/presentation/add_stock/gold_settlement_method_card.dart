@@ -449,6 +449,16 @@ class _MetalSettlementBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final line = payment.metalLines.isEmpty ? null : payment.metalLines.first;
+    final hasExcessFine = payment.fineExcess > 0;
+    final balanceFine =
+        hasExcessFine ? payment.fineExcess : payment.fineShortage;
+    final balanceFineValue =
+        hasExcessFine ? payment.fineExcessValue : payment.fineShortageValue;
+    final balanceTone = hasExcessFine
+        ? GoldStockColors.paymentReturn
+        : balanceFine > 0
+            ? GoldStockColors.danger
+            : GoldStockColors.success;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -487,19 +497,18 @@ class _MetalSettlementBoard extends StatelessWidget {
                   icon: GoldStockIcons.fineWeight,
                 ),
                 _ReadOnlyValue(
-                  label: 'Short Fine',
-                  value: '${payment.fineShortage.toStringAsFixed(3)} g',
-                  tone: payment.fineShortage > 0
-                      ? GoldStockColors.danger
-                      : GoldStockColors.success,
-                  icon: GoldStockIcons.dueBalance,
+                  label: hasExcessFine ? 'Excess Fine' : 'Short Fine',
+                  value: '${balanceFine.toStringAsFixed(3)} g',
+                  tone: balanceTone,
+                  icon: hasExcessFine
+                      ? GoldStockIcons.returnBalance
+                      : GoldStockIcons.dueBalance,
                 ),
                 _ReadOnlyValue(
-                  label: 'Short Fine Value',
-                  value: _money(payment.fineShortageValue),
-                  tone: payment.fineShortageValue > 0
-                      ? GoldStockColors.danger
-                      : GoldStockColors.success,
+                  label:
+                      hasExcessFine ? 'Excess Fine Value' : 'Short Fine Value',
+                  value: _money(balanceFineValue),
+                  tone: balanceTone,
                   icon: GoldStockIcons.price,
                 ),
               ];
@@ -536,7 +545,7 @@ class _MetalSettlementBoard extends StatelessWidget {
             },
           ),
           const SizedBox(height: 12),
-          _ShortFineHandling(payment: payment),
+          _MetalBalanceHandling(payment: payment),
         ],
       ),
     );
@@ -620,13 +629,45 @@ class _CashSettlementBoard extends StatelessWidget {
   }
 }
 
-class _ShortFineHandling extends StatelessWidget {
+class _MetalBalanceHandling extends StatelessWidget {
   final GoldPaymentController payment;
 
-  const _ShortFineHandling({required this.payment});
+  const _MetalBalanceHandling({required this.payment});
 
   @override
   Widget build(BuildContext context) {
+    final hasExcessFine = payment.fineExcess > 0;
+    final actions = hasExcessFine
+        ? [
+            _ChoiceButton(
+              label: 'Return Fine',
+              active: payment.metalDueReturnType == DueReturnType.metal,
+              onTap: () => payment.setMetalDueReturnType(DueReturnType.metal),
+            ),
+            _ChoiceButton(
+              label: 'Return Cash Value',
+              active: payment.metalDueReturnType == DueReturnType.cash,
+              onTap: () => payment.setMetalDueReturnType(DueReturnType.cash),
+            ),
+            _ChoiceButton(
+              label: 'Keep Supplier Credit',
+              active: payment.metalDueReturnType == DueReturnType.credit,
+              onTap: () => payment.setMetalDueReturnType(DueReturnType.credit),
+            ),
+          ]
+        : [
+            _ChoiceButton(
+              label: 'Keep Fine Due',
+              active: payment.metalDueReturnType != DueReturnType.cash,
+              onTap: () => payment.setMetalDueReturnType(DueReturnType.metal),
+            ),
+            _ChoiceButton(
+              label: 'Convert to Cash Due',
+              active: payment.metalDueReturnType == DueReturnType.cash,
+              onTap: () => payment.setMetalDueReturnType(DueReturnType.cash),
+            ),
+          ];
+
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -635,10 +676,11 @@ class _ShortFineHandling extends StatelessWidget {
         border: Border.all(color: GoldStockColors.cardBorder),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
-              'Short Fine Handling',
+              hasExcessFine ? 'Excess Fine Handling' : 'Short Fine Handling',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
@@ -649,16 +691,14 @@ class _ShortFineHandling extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          _ChoiceButton(
-            label: 'Keep Fine Due',
-            active: payment.metalDueReturnType == DueReturnType.metal,
-            onTap: () => payment.setMetalDueReturnType(DueReturnType.metal),
-          ),
-          const SizedBox(width: 8),
-          _ChoiceButton(
-            label: 'Convert to Cash Due',
-            active: payment.metalDueReturnType == DueReturnType.cash,
-            onTap: () => payment.setMetalDueReturnType(DueReturnType.cash),
+          Flexible(
+            flex: 2,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: actions,
+            ),
           ),
         ],
       ),

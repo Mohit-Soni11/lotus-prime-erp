@@ -37,12 +37,14 @@ class GoldPurchaseValuationCard extends StatelessWidget {
                   children: [
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        final stacked = constraints.maxWidth < 680;
+                        final stacked = constraints.maxWidth < 860;
                         final children = [
                           _RateInput(
                             label: '24K Rate / 10g',
                             controller: payment.todayRatePer10gCtrl,
                             icon: GoldStockIcons.rateChart,
+                            prefixText: 'Rs ',
+                            suffixText: '/10g',
                           ),
                           _ReadOnlyMetric(
                             label: 'Rate / Gram',
@@ -56,6 +58,20 @@ class GoldPurchaseValuationCard extends StatelessWidget {
                             icon: GoldStockIcons.makingCharges,
                             tone: GoldStockColors.textDark,
                           ),
+                          if (ctrl.gstEnabled)
+                            _RateInput(
+                              label: 'Metal GST Rate',
+                              controller: payment.metalGstPercentCtrl,
+                              icon: Icons.percent_rounded,
+                              suffixText: '%',
+                            ),
+                          if (ctrl.gstEnabled)
+                            _RateInput(
+                              label: 'Cash GST Rate',
+                              controller: payment.cashGstPercentCtrl,
+                              icon: Icons.percent_rounded,
+                              suffixText: '%',
+                            ),
                         ];
 
                         if (stacked) {
@@ -117,6 +133,13 @@ class GoldPurchaseValuationCard extends StatelessWidget {
                               icon: GoldStockIcons.makingCharges,
                               tone: GoldStockColors.textDark,
                             ),
+                            if (ctrl.gstEnabled)
+                              _SummaryTile(
+                                label: 'GST Total',
+                                value: _money(payment.taxAmount),
+                                icon: Icons.receipt_long_rounded,
+                                tone: GoldStockColors.paymentReturn,
+                              ),
                             _SummaryTile(
                               label: 'Final Purchase Amount',
                               value: _money(finalAmount),
@@ -259,11 +282,15 @@ class _RateInput extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final IconData icon;
+  final String? prefixText;
+  final String? suffixText;
 
   const _RateInput({
     required this.label,
     required this.controller,
     required this.icon,
+    this.prefixText,
+    this.suffixText,
   });
 
   @override
@@ -289,8 +316,8 @@ class _RateInput extends StatelessWidget {
             decoration: _inputDecoration(
               icon: icon,
               hint: '0.00',
-              prefixText: 'Rs ',
-              suffixText: '/10g',
+              prefixText: prefixText,
+              suffixText: suffixText,
             ),
           ),
         ),

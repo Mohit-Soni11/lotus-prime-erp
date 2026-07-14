@@ -8,12 +8,14 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_theme.
 class GoldBatchActionBar extends StatelessWidget {
   final GoldStockController ctrl;
   final Future<void> Function() onSave;
+  final VoidCallback onDoneExit;
   final VoidCallback onResetBatch;
 
   const GoldBatchActionBar({
     super.key,
     required this.ctrl,
     required this.onSave,
+    required this.onDoneExit,
     required this.onResetBatch,
   });
 
@@ -63,6 +65,7 @@ class GoldBatchActionBar extends StatelessWidget {
                       _ActionButtons(
                         ctrl: ctrl,
                         onSave: onSave,
+                        onDoneExit: onDoneExit,
                         onResetBatch: onResetBatch,
                         accent: accent,
                       ),
@@ -86,6 +89,7 @@ class GoldBatchActionBar extends StatelessWidget {
                       child: _ActionButtons(
                         ctrl: ctrl,
                         onSave: onSave,
+                        onDoneExit: onDoneExit,
                         onResetBatch: onResetBatch,
                         accent: accent,
                       ),
@@ -104,6 +108,35 @@ class GoldBatchActionBar extends StatelessWidget {
     GoldInvoiceSummaryData summary,
     GoldPaymentSnapshot snapshot,
   ) {
+    final balanceIcon = snapshot.hasFineReturn
+        ? GoldStockIcons.fineWeight
+        : snapshot.hasSupplierCredit
+            ? Icons.savings_rounded
+            : snapshot.hasReturn
+                ? GoldStockIcons.returnBalance
+                : GoldStockIcons.dueBalance;
+    final balanceLabel = snapshot.hasFineReturn
+        ? 'Fine Return'
+        : snapshot.hasSupplierCredit
+            ? 'Supplier Credit'
+            : snapshot.hasReturn
+                ? GoldStockStrings.supplierReturnLabel
+                : snapshot.hasFineDue
+                    ? 'Cash Due'
+                    : GoldStockStrings.currentDueLabel;
+    final balanceValue = snapshot.hasFineReturn
+        ? '${snapshot.fineReturnWeight.toStringAsFixed(3)} g'
+        : snapshot.hasSupplierCredit
+            ? '${snapshot.supplierCreditFineWeight.toStringAsFixed(3)} g'
+            : snapshot.hasReturn
+                ? _money(snapshot.returnAmount)
+                : _money(snapshot.dueAmount);
+    final balanceTone = snapshot.hasReturn
+        ? GoldStockColors.paymentReturn
+        : snapshot.hasDue
+            ? GoldStockColors.paymentDue
+            : GoldStockColors.success;
+
     return [
       _FooterMetric(
         icon: GoldStockIcons.lineSnapshot,
@@ -129,21 +162,20 @@ class GoldBatchActionBar extends StatelessWidget {
       ),
       const SizedBox(width: 12),
       _FooterMetric(
-        icon: snapshot.hasReturn
-            ? GoldStockIcons.returnBalance
-            : GoldStockIcons.dueBalance,
-        label: snapshot.hasReturn
-            ? GoldStockStrings.supplierReturnLabel
-            : GoldStockStrings.currentDueLabel,
-        value: snapshot.hasReturn
-            ? _money(snapshot.returnAmount)
-            : _money(snapshot.dueAmount),
-        tone: snapshot.hasReturn
-            ? GoldStockColors.paymentReturn
-            : snapshot.hasDue
-                ? GoldStockColors.paymentDue
-                : GoldStockColors.success,
+        icon: balanceIcon,
+        label: balanceLabel,
+        value: balanceValue,
+        tone: balanceTone,
       ),
+      if (snapshot.hasFineDue) ...[
+        const SizedBox(width: 12),
+        _FooterMetric(
+          icon: GoldStockIcons.fineWeight,
+          label: 'Fine Due',
+          value: '${snapshot.fineDueWeight.toStringAsFixed(3)} g',
+          tone: GoldStockColors.paymentDue,
+        ),
+      ],
     ];
   }
 }
@@ -225,18 +257,21 @@ class _FooterMetric extends StatelessWidget {
 class _ActionButtons extends StatelessWidget {
   final GoldStockController ctrl;
   final Future<void> Function() onSave;
+  final VoidCallback onDoneExit;
   final VoidCallback onResetBatch;
   final Color accent;
 
   const _ActionButtons({
     required this.ctrl,
     required this.onSave,
+    required this.onDoneExit,
     required this.onResetBatch,
     required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
+    final posted = ctrl.isCurrentBatchPosted;
     return Row(
       children: [
         Expanded(
@@ -260,7 +295,7 @@ class _ActionButtons extends StatelessWidget {
           child: SizedBox(
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: ctrl.isSaving ? null : onSave,
+              onPressed: ctrl.isSaving ? null : (posted ? onDoneExit : onSave),
               icon: ctrl.isSaving
                   ? const SizedBox(
                       width: 16,
@@ -270,9 +305,16 @@ class _ActionButtons extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(GoldStockIcons.save, size: 18),
+                  : Icon(
+                      posted ? Icons.done_all_rounded : GoldStockIcons.save,
+                      size: 18,
+                    ),
               label: Text(
-                ctrl.isSaving ? AddStockStrings.btnSaving : 'Save Gold Batch',
+                ctrl.isSaving
+                    ? AddStockStrings.btnSaving
+                    : posted
+                        ? AddStockStrings.btnDone
+                        : 'Save Gold Batch',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.manrope(

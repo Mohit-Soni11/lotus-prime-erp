@@ -25,9 +25,19 @@ class GoldPaymentSnapshot {
   final double cardPaid;
   final double cashBankPaidTotal;
   final double totalPaidValue;
+  final double cashDueAmount;
   final double dueAmount;
+  final double fineDueWeight;
+  final double fineDueValue;
+  final double fineReturnWeight;
+  final double fineReturnValue;
+  final double supplierCreditFineWeight;
+  final double supplierCreditValue;
   final double returnAmount;
   final bool hasDue;
+  final bool hasFineDue;
+  final bool hasFineReturn;
+  final bool hasSupplierCredit;
   final bool hasReturn;
   final bool isSettled;
   final double metalGrossWeight;
@@ -67,9 +77,19 @@ class GoldPaymentSnapshot {
     required this.cardPaid,
     required this.cashBankPaidTotal,
     required this.totalPaidValue,
+    required this.cashDueAmount,
     required this.dueAmount,
+    required this.fineDueWeight,
+    required this.fineDueValue,
+    required this.fineReturnWeight,
+    required this.fineReturnValue,
+    required this.supplierCreditFineWeight,
+    required this.supplierCreditValue,
     required this.returnAmount,
     required this.hasDue,
+    required this.hasFineDue,
+    required this.hasFineReturn,
+    required this.hasSupplierCredit,
     required this.hasReturn,
     required this.isSettled,
     required this.metalGrossWeight,

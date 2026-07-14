@@ -43,6 +43,10 @@ class SupplierProfilePurchaseModel {
   final double metalPaidPurity;
   final double metalPaidFine;
   final double metalPaidValue;
+  final double metalFineDue;
+  final double metalFineDueValue;
+  final double metalFineCredit;
+  final double metalFineCreditValue;
   final String? dueMode;
   final String? excessMode;
   final DateTime? promiseDate;
@@ -71,6 +75,10 @@ class SupplierProfilePurchaseModel {
     required this.metalPaidPurity,
     required this.metalPaidFine,
     required this.metalPaidValue,
+    this.metalFineDue = 0.0,
+    this.metalFineDueValue = 0.0,
+    this.metalFineCredit = 0.0,
+    this.metalFineCreditValue = 0.0,
     this.dueMode,
     this.excessMode,
     this.promiseDate,
@@ -90,7 +98,9 @@ class SupplierProfilePurchaseModel {
   bool get isNonGstPurchase => !isGstPurchase;
   bool get isInputCreditEligible =>
       inputCreditStatus.trim().toUpperCase() == 'ITC_ELIGIBLE';
-  bool get hasDue => balanceDue > 0.005;
+  bool get hasDue => balanceDue > 0.005 || hasMetalFineDue;
+  bool get hasMetalFineDue => metalFineDue > 0.005;
+  bool get hasMetalFineCredit => metalFineCredit > 0.005;
   bool get hasOldDueAdjustment => oldDueAdjustedAmount > 0.005;
   bool get hasMetalSettlement =>
       metalPaidFine > 0.005 || metalPaidValue > 0.005 || metalLineCount > 0;
@@ -176,16 +186,20 @@ class SupplierProfileModel {
   String get statusLabel => status.label;
   bool get isActive => status == SupplierStatus.active;
   bool get hasOutstandingDue => outstandingDue > 0.005;
-  SupplierLedgerHealth get ledgerHealth =>
-      SupplierLedgerHealth.calculate(outstandingDue);
+  bool get hasOutstandingMetalFineDue => totalMetalFineDue > 0.005;
+  SupplierLedgerHealth get ledgerHealth {
+    if (hasOutstandingMetalFineDue && outstandingDue <= 25000) {
+      return SupplierLedgerHealth.due;
+    }
+    return SupplierLedgerHealth.calculate(outstandingDue);
+  }
 
   int get purchaseCount => purchases.length;
   int get gstPurchaseCount => gstPurchases.length;
   int get nonGstPurchaseCount => nonGstPurchases.length;
   int get totalStockEntries =>
       purchases.fold(0, (sum, item) => sum + item.stockEntryCount);
-  int get dueVoucherCount =>
-      purchases.where((item) => item.balanceDue > 0.005).length;
+  int get dueVoucherCount => purchases.where((item) => item.hasDue).length;
   int get billPhotoCount => purchases.where((item) => item.hasBillPhoto).length;
   int get metalSettlementCount =>
       purchases.where((item) => item.hasMetalSettlement).length;
@@ -202,6 +216,8 @@ class SupplierProfileModel {
       purchases.fold(0.0, (sum, item) => sum + item.metalPaidFine);
   double get totalMetalValue =>
       purchases.fold(0.0, (sum, item) => sum + item.metalPaidValue);
+  double get totalMetalFineDue =>
+      purchases.fold(0.0, (sum, item) => sum + item.metalFineDue);
 
   List<SupplierProfilePurchaseModel> get duePurchases =>
       purchases.where((item) => item.hasDue).toList(growable: false);

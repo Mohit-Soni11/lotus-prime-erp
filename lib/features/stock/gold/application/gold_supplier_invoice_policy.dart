@@ -46,11 +46,9 @@ final class GoldSupplierInvoicePolicy {
     }
 
     final gstin = supplierGstin.trim().toUpperCase();
-    if (gstEnabled && gstin.isEmpty) {
-      return 'Supplier GSTIN is required for GST purchase. Update the supplier profile first.';
-    }
-
-    if (gstEnabled && !RegExp(r'^[0-9A-Z]{15}$').hasMatch(gstin)) {
+    if (gstEnabled &&
+        gstin.isNotEmpty &&
+        !RegExp(r'^[0-9A-Z]{15}$').hasMatch(gstin)) {
       return 'Supplier GSTIN must be a valid 15-character GSTIN for GST purchase.';
     }
 

@@ -11,6 +11,8 @@ import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_batch_
 import 'package:lotus_erp/features/stock/gold/presentation/add_stock/gold_purity_step.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
+enum _GoldSaveAction { addMoreOnly, newBatch, exit }
+
 class GoldStockScreen extends StatefulWidget {
   const GoldStockScreen({super.key});
 
@@ -56,6 +58,7 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
                 ? GoldBatchActionBar(
                     ctrl: _ctrl,
                     onSave: _onSave,
+                    onDoneExit: _doneAndExit,
                     onResetBatch: _showResetDialog,
                   )
                 : null,
@@ -149,6 +152,16 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
   }
 
   Future<void> _onSave() async {
+    final action = await _showSaveActionDialog();
+    if (!mounted || action == null) {
+      return;
+    }
+
+    if (action == _GoldSaveAction.addMoreOnly) {
+      _ctrl.addRow(requestFocus: true);
+      return;
+    }
+
     final success = await _ctrl.saveAll();
     if (!mounted) {
       return;
@@ -163,110 +176,203 @@ class _GoldStockScreenState extends State<GoldStockScreen> {
       return;
     }
 
-    await _showSavedDialog();
+    final message =
+        _ctrl.successMessage ?? 'Gold stock batch has been saved successfully.';
+
+    switch (action) {
+      case _GoldSaveAction.addMoreOnly:
+        break;
+      case _GoldSaveAction.newBatch:
+        AppFeedback.success(context, message: message);
+        _ctrl.resetForNewBatch();
+      case _GoldSaveAction.exit:
+        AppFeedback.success(context, message: message);
+        Navigator.of(context).pop();
+    }
   }
 
-  Future<void> _showSavedDialog() async {
-    await showDialog<void>(
+  void _doneAndExit() {
+    Navigator.of(context).pop();
+  }
+
+  Future<_GoldSaveAction?> _showSaveActionDialog() async {
+    return showDialog<_GoldSaveAction>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-          content: SizedBox(
-            width: 420,
+        return Dialog(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Container(
+            width: 500,
+            decoration: BoxDecoration(
+              color: GoldStockColors.cardBg,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: GoldStockColors.brandGoldBorder),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x26000000),
+                  blurRadius: 32,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                  padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFFDDE7ED), Color(0xFF8BA1AF)],
+                      colors: [
+                        Color(0xFFFFF8E1),
+                        Color(0xFFFFFFFF),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    border: Border(
+                      bottom: BorderSide(color: GoldStockColors.cardBorder),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: Colors.white,
-                    size: 28,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color: GoldStockColors.successBg,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: GoldStockColors.successBorder,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.save_alt_rounded,
+                          color: GoldStockColors.paymentPrimary,
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Save Gold Batch',
+                              style: GoogleFonts.manrope(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                                color: GoldStockColors.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Choose what should happen after this batch is saved. The stock will be posted only after you select one option.',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                height: 1.55,
+                                fontWeight: FontWeight.w600,
+                                color: GoldStockColors.textBody,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  AddStockStrings.savedTitle,
-                  style: GoogleFonts.manrope(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AddStockColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _ctrl.successMessage ?? '',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    height: 1.6,
-                    color: AddStockColors.textBody,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                  child: Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(
+                            _GoldSaveAction.addMoreOnly,
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: GoldStockColors.paymentPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 13,
+                          ),
+                        ),
+                        child: Text(
+                          AddStockStrings.btnAddMore,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(
+                            _GoldSaveAction.newBatch,
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: GoldStockColors.textDark,
+                          side: const BorderSide(
+                            color: GoldStockColors.brandGoldBorder,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                        ),
+                        child: Text(
+                          'Save & New Batch',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(
+                            _GoldSaveAction.exit,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: GoldStockColors.paymentPrimary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                        ),
+                        icon: const Icon(Icons.done_all_rounded, size: 18),
+                        label: Text(
+                          'Save & Exit',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _ctrl.resetAllRows();
-              },
-              child: Text(
-                AddStockStrings.btnAddMore,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF748A98),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _ctrl.resetForNewBatch();
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF8BA1AF)),
-              ),
-              child: Text(
-                AddStockStrings.btnNewBatch,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF748A98),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF748A98),
-                foregroundColor: Colors.white,
-              ),
-              child: Text(
-                AddStockStrings.btnDone,
-                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
         );
       },
     );

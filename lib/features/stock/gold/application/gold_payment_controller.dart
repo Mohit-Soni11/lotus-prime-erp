@@ -4,7 +4,7 @@ enum PaymentMode { metalToMetal, cash }
 
 enum TaxMode { estimate, gst }
 
-enum DueReturnType { metal, cash }
+enum DueReturnType { metal, cash, credit }
 
 enum GoldDiscountMode { fine, cash }
 
@@ -105,6 +105,7 @@ extension DueReturnTypeLabel on DueReturnType {
     return switch (this) {
       DueReturnType.metal => 'Fine Due',
       DueReturnType.cash => 'Cash Due',
+      DueReturnType.credit => 'Fine Due',
     };
   }
 
@@ -115,6 +116,7 @@ extension DueReturnTypeLabel on DueReturnType {
     return switch (this) {
       DueReturnType.metal => 'Fine Return',
       DueReturnType.cash => 'Value Return',
+      DueReturnType.credit => 'Supplier Credit',
     };
   }
 }
@@ -218,11 +220,9 @@ class GoldPaymentController extends ChangeNotifier {
   double get cardPaid => _parseAmount(cardCtrl.text);
   double get metalGstPercent => _boundedPercent(
         _parseAmount(metalGstPercentCtrl.text),
-        fallback: metalGstRatePercent,
       );
   double get cashGstPercent => _boundedPercent(
         _parseAmount(cashGstPercentCtrl.text),
-        fallback: cashGstRatePercent,
       );
   double get amountPaid => cashPaid;
   double get cashBankPaidTotal => cashPaid + upiPaid + bankPaid + cardPaid;
@@ -248,16 +248,42 @@ class GoldPaymentController extends ChangeNotifier {
           .clamp(0.0, double.infinity)
           .toDouble();
 
-  double get taxPercentage {
+  double get metalTaxableAmount {
+    if (!_gstEnabled || _paymentMode != PaymentMode.metalToMetal) {
+      return 0.0;
+    }
+    return metalAppliedValue.clamp(0.0, subTotalAmount).toDouble();
+  }
+
+  double get cashTaxableAmount {
     if (!_gstEnabled) {
       return 0.0;
     }
-    return _paymentMode == PaymentMode.metalToMetal
-        ? metalGstPercent
-        : cashGstPercent;
+    if (_paymentMode == PaymentMode.cash) {
+      return subTotalAmount;
+    }
+    return (subTotalAmount - metalTaxableAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
-  double get taxAmount => subTotalAmount * (taxPercentage / 100.0);
+  double get metalTaxAmount =>
+      _gstEnabled ? metalTaxableAmount * (metalGstPercent / 100.0) : 0.0;
+
+  double get cashTaxAmount =>
+      _gstEnabled ? cashTaxableAmount * (cashGstPercent / 100.0) : 0.0;
+
+  double get taxPercentage {
+    if (!_gstEnabled || subTotalAmount <= 0) {
+      return 0.0;
+    }
+    if (_paymentMode == PaymentMode.cash) {
+      return cashGstPercent;
+    }
+    return taxAmount / subTotalAmount * 100.0;
+  }
+
+  double get taxAmount => metalTaxAmount + cashTaxAmount;
   double get finalBillAmount => subTotalAmount + taxAmount;
 
   double get fineReceived {
@@ -278,6 +304,60 @@ class GoldPaymentController extends ChangeNotifier {
   double get differenceInCashValue => fineDifference.abs() * todayRatePerGram;
   double get fineShortageValue => fineShortage * todayRatePerGram;
   double get fineExcessValue => fineExcess * todayRatePerGram;
+  double get fineReturnCashAdjustment {
+    if (_paymentMode != PaymentMode.metalToMetal ||
+        !isExtraMetal ||
+        _metalDueReturnType == DueReturnType.cash ||
+        todayRatePerGram <= 0) {
+      return 0.0;
+    }
+
+    return (cashBankPaidTotal - cashSettlementBaseAmount)
+        .clamp(0.0, fineExcessValue)
+        .toDouble();
+  }
+
+  double get fineReturnRemainingValue {
+    if (_paymentMode != PaymentMode.metalToMetal ||
+        !isExtraMetal ||
+        _metalDueReturnType == DueReturnType.cash) {
+      return 0.0;
+    }
+
+    return (fineExcessValue - fineReturnCashAdjustment)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+  }
+
+  double get fineReturnWeight => _paymentMode == PaymentMode.metalToMetal &&
+          isExtraMetal &&
+          _metalDueReturnType == DueReturnType.metal
+      ? _roundGoldWeight(
+          fineReturnRemainingValue > 0 && todayRatePerGram > 0
+              ? fineReturnRemainingValue / todayRatePerGram
+              : 0.0,
+        )
+      : 0.0;
+
+  double get fineReturnValue => _metalDueReturnType == DueReturnType.metal
+      ? fineReturnRemainingValue
+      : 0.0;
+
+  double get supplierCreditFineWeight =>
+      _paymentMode == PaymentMode.metalToMetal &&
+              isExtraMetal &&
+              _metalDueReturnType == DueReturnType.credit
+          ? _roundGoldWeight(
+              fineReturnRemainingValue > 0 && todayRatePerGram > 0
+                  ? fineReturnRemainingValue / todayRatePerGram
+                  : 0.0,
+            )
+          : 0.0;
+
+  double get supplierCreditValue => _metalDueReturnType == DueReturnType.credit
+      ? fineReturnRemainingValue
+      : 0.0;
+
   double get metalReceivedValue => fineReceived * todayRatePerGram;
   double get metalAppliedFine {
     if (_paymentMode != PaymentMode.metalToMetal) {
@@ -294,25 +374,70 @@ class GoldPaymentController extends ChangeNotifier {
       .toDouble();
   DateTime? get promiseDate => _promiseDate;
 
-  double get cashTargetAmount {
+  double get cashSettlementBaseAmount {
     if (_paymentMode == PaymentMode.cash) {
       return finalBillAmount + previousDueAdjustment;
     }
 
-    final shortageAsCash =
-        isDueMetal && _metalDueReturnType == DueReturnType.cash
-            ? fineShortageValue
-            : 0.0;
     return (_totalMakingFromItems +
             taxAmount +
-            shortageAsCash +
             previousDueAdjustment -
             cashDiscountAmount)
         .clamp(0.0, double.infinity)
         .toDouble();
   }
 
+  double get cashTargetAmount {
+    if (_paymentMode == PaymentMode.cash) {
+      return cashSettlementBaseAmount;
+    }
+
+    final shortageAsCash =
+        isDueMetal && _metalDueReturnType == DueReturnType.cash
+            ? fineShortageValue
+            : 0.0;
+    return (cashSettlementBaseAmount + shortageAsCash)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+  }
+
   double get cashBalance => cashBankPaidTotal - cashTargetAmount;
+  double get cashDueAmount => (cashTargetAmount - cashBankPaidTotal)
+      .clamp(0.0, double.infinity)
+      .toDouble();
+  double get fineDueCashAdjustment {
+    if (_paymentMode != PaymentMode.metalToMetal ||
+        !isDueMetal ||
+        _metalDueReturnType == DueReturnType.cash ||
+        todayRatePerGram <= 0) {
+      return 0.0;
+    }
+
+    return (cashBankPaidTotal - cashSettlementBaseAmount)
+        .clamp(0.0, fineShortageValue)
+        .toDouble();
+  }
+
+  double get fineDueWeight => _paymentMode == PaymentMode.metalToMetal &&
+          isDueMetal &&
+          _metalDueReturnType != DueReturnType.cash
+      ? _roundGoldWeight(
+          fineDueValue > 0 && todayRatePerGram > 0
+              ? fineDueValue / todayRatePerGram
+              : 0.0,
+        )
+      : 0.0;
+  double get fineDueValue {
+    if (_paymentMode != PaymentMode.metalToMetal ||
+        !isDueMetal ||
+        _metalDueReturnType == DueReturnType.cash) {
+      return 0.0;
+    }
+
+    return (fineShortageValue - fineDueCashAdjustment)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+  }
 
   double get totalPaidValue {
     if (_paymentMode == PaymentMode.cash) {
@@ -325,19 +450,10 @@ class GoldPaymentController extends ChangeNotifier {
 
   double get dueAmount {
     if (_paymentMode == PaymentMode.cash) {
-      return (cashTargetAmount - cashBankPaidTotal)
-          .clamp(0.0, double.infinity)
-          .toDouble();
+      return cashDueAmount;
     }
 
-    final cashDue = (cashTargetAmount - cashBankPaidTotal)
-        .clamp(0.0, double.infinity)
-        .toDouble();
-    final metalDueValue =
-        isDueMetal && _metalDueReturnType == DueReturnType.metal
-            ? fineShortageValue
-            : 0.0;
-    return cashDue + metalDueValue;
+    return cashDueAmount;
   }
 
   double get returnAmount {
@@ -347,14 +463,26 @@ class GoldPaymentController extends ChangeNotifier {
           .toDouble();
     }
 
-    final cashOverpay = (cashBankPaidTotal - cashTargetAmount)
+    final cashOverpay = (cashBankPaidTotal -
+            cashTargetAmount -
+            (isDueMetal && _metalDueReturnType != DueReturnType.cash
+                ? fineShortageValue
+                : 0.0))
         .clamp(0.0, double.infinity)
         .toDouble();
-    return cashOverpay + fineExcessValue;
+    final excessAsCash =
+        isExtraMetal && _metalDueReturnType == DueReturnType.cash
+            ? fineExcessValue
+            : 0.0;
+    return cashOverpay + excessAsCash;
   }
 
-  bool get hasDue => dueAmount > _epsilon;
-  bool get hasReturn => returnAmount > _epsilon;
+  bool get hasFineDue => fineDueWeight > _epsilon;
+  bool get hasFineReturn => fineReturnWeight > _epsilon;
+  bool get hasSupplierCredit => supplierCreditFineWeight > _epsilon;
+  bool get hasDue => dueAmount > _epsilon || hasFineDue;
+  bool get hasReturn =>
+      returnAmount > _epsilon || hasFineReturn || hasSupplierCredit;
   bool get isSettled => !hasDue && !hasReturn && finalBillAmount > 0;
 
   String get balanceLabel {
@@ -578,9 +706,8 @@ class GoldPaymentController extends ChangeNotifier {
 
   bool _near(double left, double right) => (left - right).abs() < 0.0001;
 
-  double _boundedPercent(double value, {required double fallback}) {
-    final next = value <= 0 ? fallback : value;
-    return next.clamp(0.0, 100.0).toDouble();
+  double _boundedPercent(double value) {
+    return value.clamp(0.0, 100.0).toDouble();
   }
 
   @override

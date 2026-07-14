@@ -49,6 +49,7 @@ class GoldStockController extends AddStockController {
   DateTime? _goldRateDate;
   bool _isLoadingGoldRate = false;
   bool _isLoadingBatchCode = false;
+  bool _currentBatchPosted = false;
 
   GoldStockController() : super(initialMetal: StockCategory.gold) {
     _startNewBatchIdentity(notify: false);
@@ -63,6 +64,7 @@ class GoldStockController extends AddStockController {
   bool get isLoadingBatchCode => _isLoadingBatchCode;
 
   List<GoldItemModel> get goldRows => List.unmodifiable(_goldRows);
+  bool get isCurrentBatchPosted => _currentBatchPosted;
 
   List<GoldItemModel> get enteredGoldRows =>
       _goldRows.where((row) => row.hasAnyInput).toList(growable: false);
@@ -130,9 +132,19 @@ class GoldStockController extends AddStockController {
       cardPaid: payment.cardPaid,
       cashBankPaidTotal: payment.cashBankPaidTotal,
       totalPaidValue: payment.totalPaidValue,
+      cashDueAmount: payment.cashDueAmount,
       dueAmount: payment.dueAmount,
+      fineDueWeight: payment.fineDueWeight,
+      fineDueValue: payment.fineDueValue,
+      fineReturnWeight: payment.fineReturnWeight,
+      fineReturnValue: payment.fineReturnValue,
+      supplierCreditFineWeight: payment.supplierCreditFineWeight,
+      supplierCreditValue: payment.supplierCreditValue,
       returnAmount: payment.returnAmount,
       hasDue: payment.hasDue,
+      hasFineDue: payment.hasFineDue,
+      hasFineReturn: payment.hasFineReturn,
+      hasSupplierCredit: payment.hasSupplierCredit,
       hasReturn: payment.hasReturn,
       isSettled: payment.isSettled,
       metalGrossWeight: payment.metalGivenWeight,
@@ -422,6 +434,9 @@ class GoldStockController extends AddStockController {
     if (rowsToSave.isEmpty) {
       return null;
     }
+    if (_currentBatchPosted || await _isCurrentBatchAlreadyPosted()) {
+      return 'This gold batch has already been saved. Use Add More Items or Start New Batch before saving again.';
+    }
     final supplierValidation = await _supplierInvoicePolicy.validate(
       supplierId: linkedSupplier?.id ?? sessionSupplierId,
       gstEnabled: gstEnabled,
@@ -437,6 +452,36 @@ class GoldStockController extends AddStockController {
       return 'Enter the Gold invoice rate before saving this batch.';
     }
     return null;
+  }
+
+  @override
+  Future<bool> saveAll() async {
+    final saved = await super.saveAll();
+    if (saved) {
+      _currentBatchPosted = true;
+    }
+    return saved;
+  }
+
+  Future<bool> _isCurrentBatchAlreadyPosted() async {
+    final code = batchCode.trim();
+    if (code.isEmpty) {
+      return false;
+    }
+    try {
+      final rows = await _rateDb.customSelect(
+        '''
+        SELECT 1
+        FROM purchase_vouchers
+        WHERE voucher_no = ?
+        LIMIT 1
+        ''',
+        variables: [drift.Variable.withString(code)],
+      ).get();
+      return rows.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
@@ -505,6 +550,8 @@ class GoldStockController extends AddStockController {
         'supplierBillAttachmentPath': _billPhotoPath,
         'supplierBillAttachmentRequired': gstEnabled,
         'discountMode': payment.discountMode.name,
+        'ratePerGram': snapshot.ratePerGram,
+        'ratePer10g': snapshot.ratePer10g,
         'fineDiscountWeight': snapshot.fineDiscountWeight,
         'cashDiscountAmount': snapshot.cashDiscountAmount,
         'actualFineWeight': totalActualFineWeight,
@@ -513,11 +560,25 @@ class GoldStockController extends AddStockController {
         'gstRatePercent': snapshot.gstPercent,
         'metalGstPercent': payment.metalGstPercent,
         'cashGstPercent': payment.cashGstPercent,
+        'metalTaxableAmount': payment.metalTaxableAmount,
+        'cashTaxableAmount': payment.cashTaxableAmount,
+        'metalGstAmount': payment.metalTaxAmount,
+        'cashGstAmount': payment.cashTaxAmount,
         'settlementPreference': snapshot.settlementPreference.name,
         'promiseDate':
             snapshot.hasDue ? payment.promiseDate?.toIso8601String() : null,
         'cashBankPaidTotal': snapshot.cashBankPaidTotal,
         'cashTargetAmount': snapshot.cashTargetAmount,
+        'cashDueAmount': snapshot.cashDueAmount,
+        'dueAmount': snapshot.dueAmount,
+        'fineDueWeight': snapshot.fineDueWeight,
+        'fineDueValue': snapshot.fineDueValue,
+        'fineReturnWeight': snapshot.fineReturnWeight,
+        'fineReturnValue': snapshot.fineReturnValue,
+        'supplierCreditFineWeight': snapshot.supplierCreditFineWeight,
+        'supplierCreditValue': snapshot.supplierCreditValue,
+        'returnAmount': snapshot.returnAmount,
+        'isSettled': snapshot.isSettled,
         'metalFineShortage': snapshot.metalFineShortage,
         'metalFineExcess': snapshot.metalFineExcess,
         'metalFineShortageValue': snapshot.metalFineShortageValue,
@@ -712,8 +773,21 @@ class GoldStockController extends AddStockController {
     notifyListeners();
   }
 
+  void prepareAdditionalItemsAfterSave() {
+    _currentBatchPosted = false;
+    _startNewBatchIdentity(notify: false);
+    supplierInvoiceNumberCtrl.clear();
+    _billPhotoPath = null;
+    payment.resetSettlement();
+    _clearGoldRows();
+    _addGoldModel(requestFocus: true);
+    _loadGoldRateSnapshot();
+    notifyListeners();
+  }
+
   @override
   void resetForNewBatch() {
+    _currentBatchPosted = false;
     _startNewBatchIdentity(notify: false);
     supplierInvoiceNumberCtrl.clear();
     _billPhotoPath = null;
