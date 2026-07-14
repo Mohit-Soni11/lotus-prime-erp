@@ -151,11 +151,34 @@ class PurchaseSaveResult {
   final int voucherId;
   final String voucherNo;
   final int stockEntryCount;
+  final int stockUnitCount;
+  final int huidCount;
 
   const PurchaseSaveResult({
     required this.voucherId,
     required this.voucherNo,
     required this.stockEntryCount,
+    this.stockUnitCount = 0,
+    this.huidCount = 0,
+  });
+}
+
+class PurchasePostingException implements Exception {
+  final String message;
+
+  const PurchasePostingException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class _PostingVerificationResult {
+  final int stockUnitCount;
+  final int huidCount;
+
+  const _PostingVerificationResult({
+    required this.stockUnitCount,
+    required this.huidCount,
   });
 }
 
@@ -166,6 +189,20 @@ class PurchaseEntryRepository {
   PurchaseEntryRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   String? get lastErrorMessage => _lastErrorMessage;
+
+  String _formatSaveError(Object error) {
+    if (error is PurchasePostingException) {
+      return error.message;
+    }
+
+    final detail = error.toString();
+    final lower = detail.toLowerCase();
+    if (lower.contains('unique constraint') ||
+        lower.contains('constraint failed')) {
+      return 'This purchase could not be saved because a duplicate voucher, unit code or HUID already exists.';
+    }
+    return detail;
+  }
 
   Future<int> getNextSequence() async {
     try {
@@ -187,6 +224,10 @@ class PurchaseEntryRepository {
     try {
       await _ensurePurchaseSchemaCompatibility();
       return await _db.transaction(() async {
+        _assertDraftCanBePosted(draft);
+        await _assertVoucherNoAvailable(draft.voucherNo);
+        await _assertHuidsAvailable(_draftHuids(draft));
+
         final now = DateTime.now();
         final createdAtMs = now.millisecondsSinceEpoch;
         final isSupplierPurchase = draft.source == PurchaseSource.fromSupplier;
@@ -536,14 +577,22 @@ class PurchaseEntryRepository {
           [stockEntryCount, createdAtMs, voucherId],
         );
 
+        final verification = await _verifyPurchasePosting(
+          voucherId: voucherId,
+          draft: draft,
+          stockEntryCount: stockEntryCount,
+        );
+
         return PurchaseSaveResult(
           voucherId: voucherId,
           voucherNo: draft.voucherNo,
           stockEntryCount: stockEntryCount,
+          stockUnitCount: verification.stockUnitCount,
+          huidCount: verification.huidCount,
         );
       });
     } catch (error) {
-      _lastErrorMessage = error.toString();
+      _lastErrorMessage = _formatSaveError(error);
       AppLogger.debug('PurchaseEntryRepository.savePurchase: $error');
       return null;
     }
@@ -648,6 +697,263 @@ class PurchaseEntryRepository {
     for (final statement in _stockItemUnitsIndexSql) {
       await _db.customStatement(statement);
     }
+    await _createUniqueHuidIndexWhenClean(
+      tableName: 'purchase_item_huids',
+      indexName: 'uq_purchase_item_huids_huid',
+    );
+    await _createUniqueHuidIndexWhenClean(
+      tableName: 'stock_item_units',
+      indexName: 'uq_stock_item_units_huid',
+    );
+  }
+
+  void _assertDraftCanBePosted(PurchaseVoucherDraft draft) {
+    if (draft.voucherNo.trim().isEmpty) {
+      throw const PurchasePostingException('Voucher number is required.');
+    }
+    if (draft.items.isEmpty) {
+      throw const PurchasePostingException(
+        'At least one purchase item is required before saving.',
+      );
+    }
+
+    final seenHuids = <String>{};
+    for (var index = 0; index < draft.items.length; index++) {
+      final item = draft.items[index];
+      final rowNo = index + 1;
+      final quantity = item.quantity > 0 ? item.quantity : 1;
+      final huids = _normalizedHuids(item);
+
+      if (item.description.trim().isEmpty) {
+        throw PurchasePostingException('Row $rowNo item name is required.');
+      }
+      if (quantity < 1) {
+        throw PurchasePostingException('Row $rowNo quantity must be valid.');
+      }
+      if (huids.length > quantity) {
+        throw PurchasePostingException(
+          'Row $rowNo has more HUID numbers than pieces.',
+        );
+      }
+
+      for (final huid in huids) {
+        if (!RegExp(r'^[A-Z0-9]{6}$').hasMatch(huid)) {
+          throw PurchasePostingException(
+            'Row $rowNo HUID must be exactly 6 letters or digits.',
+          );
+        }
+        if (!seenHuids.add(huid)) {
+          throw PurchasePostingException(
+            'HUID $huid is repeated in this batch.',
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _assertVoucherNoAvailable(String voucherNo) async {
+    final normalized = voucherNo.trim();
+    if (normalized.isEmpty) {
+      return;
+    }
+
+    final rows = await _db.customSelect(
+      '''
+      SELECT 1
+      FROM purchase_vouchers
+      WHERE UPPER(TRIM(voucher_no)) = UPPER(TRIM(?))
+      LIMIT 1
+      ''',
+      variables: [drift.Variable.withString(normalized)],
+    ).get();
+    if (rows.isNotEmpty) {
+      throw PurchasePostingException(
+        'Purchase voucher $normalized is already posted. Start a new batch before saving again.',
+      );
+    }
+  }
+
+  Future<void> _assertHuidsAvailable(List<String> huids) async {
+    if (huids.isEmpty) {
+      return;
+    }
+
+    final placeholders = List.filled(huids.length, '?').join(', ');
+    final variables = huids.map(drift.Variable.withString).toList();
+    final existingRows = await _db.customSelect(
+      '''
+      SELECT huid
+      FROM stock_items
+      WHERE huid IS NOT NULL
+        AND UPPER(TRIM(huid)) IN ($placeholders)
+      LIMIT 1
+      ''',
+      variables: variables,
+    ).get();
+    if (existingRows.isNotEmpty) {
+      final huid =
+          existingRows.first.readNullable<String>('huid') ?? huids.first;
+      throw PurchasePostingException('HUID already exists in stock ($huid).');
+    }
+
+    final unitRows = await _db.customSelect(
+      '''
+      SELECT huid
+      FROM stock_item_units
+      WHERE huid IS NOT NULL
+        AND UPPER(TRIM(huid)) IN ($placeholders)
+      LIMIT 1
+      ''',
+      variables: variables,
+    ).get();
+    if (unitRows.isNotEmpty) {
+      final huid = unitRows.first.readNullable<String>('huid') ?? huids.first;
+      throw PurchasePostingException('HUID already exists in stock ($huid).');
+    }
+
+    final purchaseHuidRows = await _db.customSelect(
+      '''
+      SELECT huid
+      FROM purchase_item_huids
+      WHERE huid IS NOT NULL
+        AND UPPER(TRIM(huid)) IN ($placeholders)
+      LIMIT 1
+      ''',
+      variables: variables,
+    ).get();
+    if (purchaseHuidRows.isNotEmpty) {
+      final huid =
+          purchaseHuidRows.first.readNullable<String>('huid') ?? huids.first;
+      throw PurchasePostingException(
+        'HUID already exists in purchase history ($huid).',
+      );
+    }
+  }
+
+  Future<_PostingVerificationResult> _verifyPurchasePosting({
+    required int voucherId,
+    required PurchaseVoucherDraft draft,
+    required int stockEntryCount,
+  }) async {
+    final expectedLines = draft.items.length;
+    final expectedUnits = draft.items.fold<int>(
+      0,
+      (sum, item) => sum + (item.quantity > 0 ? item.quantity : 1),
+    );
+    final expectedHuids = _draftHuids(draft).length;
+    final voucherIdValue = drift.Variable.withInt(voucherId);
+
+    final voucherRow = await _db.customSelect(
+      '''
+      SELECT stock_entry_count
+      FROM purchase_vouchers
+      WHERE id = ?
+      LIMIT 1
+      ''',
+      variables: [voucherIdValue],
+    ).getSingleOrNull();
+    final savedStockEntryCount =
+        voucherRow?.readNullable<int>('stock_entry_count') ?? -1;
+
+    final purchaseLines = await _countInt(
+      '''
+      SELECT COUNT(*) AS total
+      FROM purchase_voucher_items
+      WHERE purchase_voucher_id = ?
+      ''',
+      [voucherIdValue],
+    );
+    final stockUnits = await _countInt(
+      '''
+      SELECT COUNT(*) AS total
+      FROM stock_item_units
+      WHERE purchase_voucher_id = ?
+      ''',
+      [voucherIdValue],
+    );
+    final huidCount = await _countInt(
+      '''
+      SELECT COUNT(*) AS total
+      FROM purchase_item_huids
+      WHERE purchase_voucher_id = ?
+      ''',
+      [voucherIdValue],
+    );
+    final movementRows = await _countInt(
+      '''
+      SELECT COUNT(*) AS total
+      FROM stock_movements
+      WHERE source_type = 'PURCHASE'
+        AND source_id = ?
+      ''',
+      [drift.Variable.withString(voucherId.toString())],
+    );
+    final movementQuantity = await _countInt(
+      '''
+      SELECT COALESCE(SUM(quantity_delta), 0) AS total
+      FROM stock_movements
+      WHERE source_type = 'PURCHASE'
+        AND source_id = ?
+      ''',
+      [drift.Variable.withString(voucherId.toString())],
+    );
+
+    if (savedStockEntryCount != stockEntryCount ||
+        stockEntryCount != expectedLines ||
+        purchaseLines != expectedLines ||
+        stockUnits != expectedUnits ||
+        huidCount != expectedHuids ||
+        movementRows != expectedLines ||
+        movementQuantity != expectedUnits) {
+      throw const PurchasePostingException(
+        'Purchase posting verification failed. No stock was posted. Please save again.',
+      );
+    }
+
+    return _PostingVerificationResult(
+      stockUnitCount: stockUnits,
+      huidCount: huidCount,
+    );
+  }
+
+  Future<int> _countInt(
+    String sql,
+    List<drift.Variable<Object>> variables,
+  ) async {
+    final row = await _db.customSelect(sql, variables: variables).getSingle();
+    return row.read<int>('total');
+  }
+
+  Future<void> _createUniqueHuidIndexWhenClean({
+    required String tableName,
+    required String indexName,
+  }) async {
+    try {
+      final duplicates = await _db.customSelect(
+        '''
+        SELECT UPPER(TRIM(huid)) AS huid_key, COUNT(*) AS total
+        FROM "$tableName"
+        WHERE huid IS NOT NULL AND TRIM(huid) <> ''
+        GROUP BY UPPER(TRIM(huid))
+        HAVING COUNT(*) > 1
+        LIMIT 1
+        ''',
+      ).get();
+      if (duplicates.isNotEmpty) {
+        return;
+      }
+      await _db.customStatement(
+        '''
+        CREATE UNIQUE INDEX IF NOT EXISTS "$indexName"
+        ON "$tableName" (UPPER(TRIM("huid")))
+        WHERE "huid" IS NOT NULL AND TRIM("huid") <> ''
+        ''',
+      );
+    } catch (error) {
+      AppLogger.debug(
+        'PurchaseEntryRepository._createUniqueHuidIndexWhenClean: $error',
+      );
+    }
   }
 
   Future<void> _insertStockMovement({
@@ -735,6 +1041,14 @@ class PurchaseEntryRepository {
     return values
         .map((value) => value.trim().toUpperCase())
         .where((value) => value.isNotEmpty && seen.add(value))
+        .toList(growable: false);
+  }
+
+  List<String> _draftHuids(PurchaseVoucherDraft draft) {
+    final seen = <String>{};
+    return draft.items
+        .expand(_normalizedHuids)
+        .where((huid) => seen.add(huid))
         .toList(growable: false);
   }
 
