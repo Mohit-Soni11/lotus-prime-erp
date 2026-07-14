@@ -359,14 +359,18 @@ class _ReadOnlyMetric extends StatelessWidget {
               Icon(icon, size: 16, color: tone),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: GoldStockColors.textDark,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: GoldStockColors.textDark,
+                    ),
                   ),
                 ),
               ),
@@ -429,14 +433,18 @@ class _SummaryTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    fontSize: emphasized ? 18 : 16,
-                    fontWeight: FontWeight.w900,
-                    color: tone,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: GoogleFonts.manrope(
+                      fontSize: emphasized ? 18 : 16,
+                      fontWeight: FontWeight.w900,
+                      color: tone,
+                    ),
                   ),
                 ),
               ],

@@ -5,8 +5,8 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors
 
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
 
-const double _invoiceFieldHeight = 42;
-const double _invoiceFieldRadius = 9;
+const double _invoiceFieldHeight = 40;
+const double _invoiceFieldRadius = 8;
 
 class GoldItemRow extends StatefulWidget {
   final int index;
@@ -90,11 +90,11 @@ class _GoldItemRowState extends State<GoldItemRow> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(flex: 2, child: _buildSNo()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(flex: 3, child: _buildCategoryField()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(flex: 3, child: _buildSegmentField()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 4,
                     child: _GoldTextField(
@@ -106,7 +106,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                           widget.model.piecesFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _GoldTextField(
@@ -124,9 +124,9 @@ class _GoldItemRowState extends State<GoldItemRow> {
                           widget.model.huidFocusNodes.first.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(flex: 5, child: _buildHuidFields()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
+                  Expanded(flex: 4, child: _buildHuidFields()),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _GoldTextField(
@@ -138,7 +138,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       onSubmitted: (_) => widget.model.lessFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _GoldTextField(
@@ -151,7 +151,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                           widget.model.purityFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -160,7 +160,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       align: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _GoldTextField(
@@ -174,7 +174,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                           widget.model.wastageFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _GoldTextField(
@@ -188,7 +188,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                           widget.model.makingFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -198,7 +198,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       isBold: true,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -208,7 +208,7 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       isBold: true,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -219,9 +219,9 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       isBold: true,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(flex: 3, child: _buildMakingField()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 3,
                     child: Tooltip(
@@ -237,8 +237,8 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(flex: 2, child: _buildRowActions()),
+                  const SizedBox(width: 4),
+                  Expanded(flex: 1, child: _buildRowActions()),
                 ],
               ),
             ),
@@ -252,37 +252,27 @@ class _GoldItemRowState extends State<GoldItemRow> {
     final controllers = widget.model.huidControllers;
     final focusNodes = widget.model.huidFocusNodes;
 
-    return SizedBox(
-      height: _invoiceFieldHeight,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: controllers.length > 2
-            ? const BouncingScrollPhysics()
-            : const NeverScrollableScrollPhysics(),
-        itemCount: controllers.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 5),
-        itemBuilder: (context, index) {
-          final isLast = index == controllers.length - 1;
-          return SizedBox(
-            width: controllers.length == 1 ? 150 : 92,
-            child: _GoldTextField(
-              controller: controllers[index],
-              focusNode: focusNodes[index],
-              hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
-              textCapitalization: TextCapitalization.characters,
-              textInputAction:
-                  isLast ? TextInputAction.next : TextInputAction.next,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                LengthLimitingTextInputFormatter(6),
-              ],
-              onSubmitted: (_) => isLast
-                  ? widget.model.grossFocus.requestFocus()
-                  : focusNodes[index + 1].requestFocus(),
-            ),
-          );
-        },
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < controllers.length; index++) ...[
+          _GoldTextField(
+            controller: controllers[index],
+            focusNode: focusNodes[index],
+            hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.next,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+              LengthLimitingTextInputFormatter(6),
+            ],
+            onSubmitted: (_) => index == controllers.length - 1
+                ? widget.model.grossFocus.requestFocus()
+                : focusNodes[index + 1].requestFocus(),
+          ),
+          if (index != controllers.length - 1) const SizedBox(height: 6),
+        ],
+      ],
     );
   }
 
