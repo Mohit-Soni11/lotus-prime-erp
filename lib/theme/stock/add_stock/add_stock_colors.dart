@@ -50,9 +50,9 @@ class AddStockColors {
 
   // ── TYPOGRAPHY ────────────────────────────────────────────────
   static const Color textDark = Color(0xFF111827); // Headings
-  static const Color textBody = Color(0xFF374151); // Body text
-  static const Color textMuted = Color(0xFF6B7280); // Secondary
-  static const Color textHint = Color(0xFF9CA3AF); // Placeholders
+  static const Color textBody = Color(0xFF111827); // Body text
+  static const Color textMuted = Color(0xFF1E293B); // Secondary
+  static const Color textHint = Color(0xFF475569); // Placeholders
   static const Color textBlack = Color(0xFF000000);
 
   // ── MODULE BADGE ─────────────────────────────────────────────

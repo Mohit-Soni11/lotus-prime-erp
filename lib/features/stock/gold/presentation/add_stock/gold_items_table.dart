@@ -6,12 +6,27 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors
 
 import 'gold_item_row.dart';
 
-class GoldItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 2020;
+class GoldItemsTable extends StatefulWidget {
+  static const double _minTableWidth = 2180;
 
   final GoldStockController ctrl;
 
   const GoldItemsTable({super.key, required this.ctrl});
+
+  @override
+  State<GoldItemsTable> createState() => _GoldItemsTableState();
+}
+
+class _GoldItemsTableState extends State<GoldItemsTable> {
+  final ScrollController _horizontalCtrl = ScrollController();
+
+  GoldStockController get ctrl => widget.ctrl;
+
+  @override
+  void dispose() {
+    _horizontalCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +47,11 @@ class GoldItemsTable extends StatelessWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final needsHorizontalScroll =
-                    constraints.maxWidth < _minTableWidth;
-                final tableWidth = constraints.maxWidth > _minTableWidth
-                    ? constraints.maxWidth
-                    : _minTableWidth;
+                    constraints.maxWidth < GoldItemsTable._minTableWidth;
+                final tableWidth =
+                    constraints.maxWidth > GoldItemsTable._minTableWidth
+                        ? constraints.maxWidth
+                        : GoldItemsTable._minTableWidth;
 
                 return Container(
                   decoration: BoxDecoration(
@@ -58,32 +74,40 @@ class GoldItemsTable extends StatelessWidget {
                     children: [
                       _buildHeader(rows.length, needsHorizontalScroll),
                       ClipRRect(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          physics: needsHorizontalScroll
-                              ? const BouncingScrollPhysics()
-                              : const NeverScrollableScrollPhysics(),
-                          child: SizedBox(
-                            width: tableWidth,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (rows.isNotEmpty) _buildColumnRow(),
-                                rows.isEmpty
-                                    ? _buildEmptyState()
-                                    : ListView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        itemCount: rows.length,
-                                        itemBuilder: (_, i) => GoldItemRow(
-                                          key: ObjectKey(rows[i]),
-                                          index: i,
-                                          model: rows[i],
-                                          ctrl: ctrl,
+                        child: Scrollbar(
+                          controller: _horizontalCtrl,
+                          thumbVisibility: needsHorizontalScroll,
+                          trackVisibility: needsHorizontalScroll,
+                          notificationPredicate: (notification) =>
+                              notification.metrics.axis == Axis.horizontal,
+                          child: SingleChildScrollView(
+                            controller: _horizontalCtrl,
+                            scrollDirection: Axis.horizontal,
+                            physics: needsHorizontalScroll
+                                ? const BouncingScrollPhysics()
+                                : const NeverScrollableScrollPhysics(),
+                            child: SizedBox(
+                              width: tableWidth,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (rows.isNotEmpty) _buildColumnRow(),
+                                  rows.isEmpty
+                                      ? _buildEmptyState()
+                                      : ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: rows.length,
+                                          itemBuilder: (_, i) => GoldItemRow(
+                                            key: ObjectKey(rows[i]),
+                                            index: i,
+                                            model: rows[i],
+                                            ctrl: ctrl,
+                                          ),
                                         ),
-                                      ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -157,8 +181,8 @@ class GoldItemsTable extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: GoldStockColors.textMuted,
+                    fontWeight: FontWeight.w800,
+                    color: GoldStockColors.textBody,
                   ),
                 ),
               ],
@@ -240,6 +264,8 @@ class GoldItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h('WASTAGE (%)', flex: 2, center: true),
           const SizedBox(width: 6),
+          _h('TOTAL PURITY (%)', flex: 2, center: true),
+          const SizedBox(width: 6),
           _h('ACTUAL FINE (g)', flex: 2, center: true),
           const SizedBox(width: 6),
           _h('VALUATION FINE (g)', flex: 2, center: true),
@@ -316,8 +342,8 @@ class GoldItemsTable extends StatelessWidget {
               'Press F2 or click Add New Item to begin gold stock entry.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: GoldStockColors.textMuted,
+                fontWeight: FontWeight.w800,
+                color: GoldStockColors.textBody,
               ),
             ),
           ],
@@ -477,8 +503,8 @@ class GoldItemsTable extends StatelessWidget {
 
   Widget _buildTotalBox(String label, String value, Color color) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 92, maxWidth: 152),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      constraints: const BoxConstraints(minWidth: 128, maxWidth: 178),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         border: Border.all(color: color.withValues(alpha: 0.30), width: 1.5),
@@ -493,7 +519,7 @@ class GoldItemsTable extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w900,
-              fontSize: 10,
+              fontSize: 11,
               color: color,
               letterSpacing: 1.0,
             ),
@@ -508,7 +534,7 @@ class GoldItemsTable extends StatelessWidget {
               softWrap: false,
               style: GoogleFonts.manrope(
                 fontWeight: FontWeight.w900,
-                fontSize: 14,
+                fontSize: 15,
                 color: color,
               ),
             ),

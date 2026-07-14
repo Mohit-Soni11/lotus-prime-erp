@@ -420,12 +420,12 @@ class _SummaryTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w900,
-                    color: GoldStockColors.textMuted,
+                    color: GoldStockColors.textBody,
                   ),
                 ),
                 const SizedBox(height: 4),

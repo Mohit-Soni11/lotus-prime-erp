@@ -5,8 +5,8 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_gold/gold_stock_colors
 
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
 
-const double _invoiceFieldHeight = 38;
-const double _invoiceFieldRadius = 8;
+const double _invoiceFieldHeight = 42;
+const double _invoiceFieldRadius = 9;
 
 class GoldItemRow extends StatefulWidget {
   final int index;
@@ -186,6 +186,16 @@ class _GoldItemRowState extends State<GoldItemRow> {
                       textInputAction: TextInputAction.next,
                       onSubmitted: (_) =>
                           widget.model.makingFocus.requestFocus(),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 2,
+                    child: _buildAutoCell(
+                      value: widget.model.totalPurityLabel,
+                      color: GoldStockColors.brandGold,
+                      align: TextAlign.center,
+                      isBold: true,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -545,8 +555,8 @@ class _GoldTextField extends StatelessWidget {
           maxLines: 1,
           onFieldSubmitted: onSubmitted,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
             color: GoldStockColors.textDark,
             fontFeatures: [FontFeature.tabularFigures()],
           ),
@@ -554,10 +564,10 @@ class _GoldTextField extends StatelessWidget {
             isDense: true,
             isCollapsed: true,
             hintText: hint,
-            hintStyle: TextStyle(
-              color: GoldStockColors.textMuted.withValues(alpha: 0.50),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+            hintStyle: const TextStyle(
+              color: GoldStockColors.textHint,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
@@ -628,8 +638,8 @@ class _GoldPopupField extends StatelessWidget {
                 textAlignVertical: TextAlignVertical.center,
                 maxLines: 1,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
                   color: GoldStockColors.textDark,
                   fontFeatures: [FontFeature.tabularFigures()],
                 ),
@@ -637,10 +647,10 @@ class _GoldPopupField extends StatelessWidget {
                   isDense: true,
                   isCollapsed: true,
                   hintText: hint,
-                  hintStyle: TextStyle(
-                    color: GoldStockColors.textMuted.withValues(alpha: 0.50),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                  hintStyle: const TextStyle(
+                    color: GoldStockColors.textHint,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -677,8 +687,8 @@ class _GoldPopupField extends StatelessWidget {
                           choice,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
                             color: GoldStockColors.textDark,
                           ),
                         ),
