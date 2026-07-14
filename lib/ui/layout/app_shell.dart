@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../constants/app_routes.dart';
 import '../../theme/dashboard/app/uv.dart';
 import 'sidebar/custom_sidebar.dart';
 
@@ -27,12 +28,15 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSmallScreen = MediaQuery.of(context).size.width < 900;
+    final location = GoRouterState.of(context).matchedLocation;
+    final showShellNavigation =
+        location == RoutePaths.dashboard || location == RoutePaths.settings;
 
     return Scaffold(
       backgroundColor: UV.colors.bgPrimary,
 
       // ── Mobile Drawer ────────────────────────────────────────────────────────
-      drawer: isSmallScreen
+      drawer: isSmallScreen && showShellNavigation
           ? Drawer(
               child: CustomSidebar(
                 onExitApp: () {
@@ -47,7 +51,7 @@ class AppShell extends StatelessWidget {
           : null,
 
       // ── Mobile AppBar ────────────────────────────────────────────────────────
-      appBar: isSmallScreen
+      appBar: isSmallScreen && showShellNavigation
           ? AppBar(
               backgroundColor: UV.colors.bgPrimary,
               title: Text(
@@ -71,7 +75,7 @@ class AppShell extends StatelessWidget {
       body: Row(
         children: [
           // Desktop Sidebar
-          if (!isSmallScreen)
+          if (!isSmallScreen && showShellNavigation)
             CustomSidebar(
               onExitApp: () {
                 if (Platform.isAndroid || Platform.isIOS) {
@@ -90,12 +94,14 @@ class AppShell extends StatelessWidget {
                 color: UV.colors.bgSecondary.withValues(alpha: 0.5),
                 border: Border(
                   left: BorderSide(
-                    color: UV.colors.glassBorder,
-                    width: 1,
+                    color: showShellNavigation
+                        ? UV.colors.glassBorder
+                        : Colors.transparent,
+                    width: showShellNavigation ? 1 : 0,
                   ),
                 ),
                 boxShadow: [
-                  if (!isSmallScreen)
+                  if (!isSmallScreen && showShellNavigation)
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
