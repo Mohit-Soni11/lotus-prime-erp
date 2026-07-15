@@ -72,6 +72,7 @@ class SidebarMenu {
       subItems: [
         MenuItemData(AppRoutes.inventoryRoute),
         MenuItemData(AppRoutes.stockActivityRoute),
+        MenuItemData(AppRoutes.stockSearchRoute),
         MenuItemData(AppRoutes.stockValuationRoute),
         MenuItemData(AppRoutes.addStockRoute),
         MenuItemData(AppRoutes.barcodePrintRoute),

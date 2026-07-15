@@ -133,6 +133,85 @@ class _ActivityMetricCard extends StatelessWidget {
   }
 }
 
+class _DateRangeChip extends StatefulWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _DateRangeChip({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  State<_DateRangeChip> createState() => _DateRangeChipState();
+}
+
+class _DateRangeChipState extends State<_DateRangeChip> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.isActive;
+    final color = active ? InvColors.brandGold : InvColors.textMuted;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: active
+                ? InvColors.brandGold
+                : _hovered
+                    ? InvColors.brandGoldLight
+                    : const Color(0xFFFBFAF7),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: active
+                  ? InvColors.brandGold
+                  : InvColors.brandGold.withValues(alpha: 0.25),
+            ),
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: InvColors.brandGold.withValues(alpha: 0.25),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : const [],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                active ? Icons.check_circle_rounded : Icons.circle_outlined,
+                size: 15,
+                color: active ? Colors.white : color,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                widget.label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: active ? Colors.white : InvColors.textDark,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MetalMovementCard extends StatelessWidget {
   final StockMetalActivitySummary summary;
 

@@ -42,6 +42,7 @@ class AppRoutes {
   // Stock
   static const String inventoryRoute = '/stock/inventory';
   static const String stockActivityRoute = '/stock/activity';
+  static const String stockSearchRoute = '/stock/search';
   static const String stockValuationRoute = '/stock/valuation';
   static const String addStockRoute = '/stock/add';
   static const String barcodePrintRoute = '/stock/barcode';
@@ -103,6 +104,7 @@ class AppRoutes {
     purchaseReturnRoute: 'Purchase Return',
     inventoryRoute: 'Inventory Ledger',
     stockActivityRoute: 'Stock Activity Ledger',
+    stockSearchRoute: 'Stock Search Center',
     stockValuationRoute: 'Stock Valuation',
     addStockRoute: 'Add Stock',
     barcodePrintRoute: 'Print Barcodes',
@@ -178,6 +180,7 @@ class RoutePaths {
   // Stock
   static const String stockInventory = '/app/stock/inventory';
   static const String stockActivity = '/app/stock/activity';
+  static const String stockSearch = '/app/stock/search';
   static const String stockValuation = '/app/stock/valuation';
   static const String stockAdd = '/app/stock/add';
   static const String stockBarcode = '/app/stock/barcode';
@@ -255,6 +258,7 @@ class RouteMapper {
     AppRoutes.purchaseReturnRoute: RoutePaths.purchaseReturn,
     AppRoutes.inventoryRoute: RoutePaths.stockInventory,
     AppRoutes.stockActivityRoute: RoutePaths.stockActivity,
+    AppRoutes.stockSearchRoute: RoutePaths.stockSearch,
     AppRoutes.stockValuationRoute: RoutePaths.stockValuation,
     AppRoutes.addStockRoute: RoutePaths.stockAdd,
     AppRoutes.barcodePrintRoute: RoutePaths.stockBarcode,

@@ -2,8 +2,12 @@ part of '../inventory_screen.dart';
 
 class _InventoryMetalGradeScreen extends StatefulWidget {
   final StockCategory metal;
+  final String? initialBatchCode;
 
-  const _InventoryMetalGradeScreen({required this.metal});
+  const _InventoryMetalGradeScreen({
+    required this.metal,
+    this.initialBatchCode,
+  });
 
   @override
   State<_InventoryMetalGradeScreen> createState() =>
@@ -15,11 +19,72 @@ class _InventoryMetalGradeScreenState
   final AppDatabase _db = AppDatabase();
   late final Future<List<_InventoryGradeSummary>> _gradeFuture;
   String? _selectedGrade;
+  bool _openedInitialBatch = false;
 
   @override
   void initState() {
     super.initState();
     _gradeFuture = _loadGradeSummary();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _openInitialBatchIfNeeded());
+  }
+
+  Future<void> _openInitialBatchIfNeeded() async {
+    if (_openedInitialBatch || !mounted) return;
+    final batchCode = widget.initialBatchCode?.trim();
+    if (batchCode == null || batchCode.isEmpty) return;
+    _openedInitialBatch = true;
+    final grade = await _loadGradeForBatch(batchCode);
+    if (!mounted || grade == null) return;
+    _openGradeLedger(grade, initialBatchCode: batchCode);
+  }
+
+  Future<_InventoryGradeSummary?> _loadGradeForBatch(String batchCode) async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        COALESCE(
+          NULLIF(TRIM(s.purity), ''),
+          CASE
+            WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
+            ELSE 'Custom Grade'
+          END
+        ) AS grade_label,
+        COUNT(*) AS total_units,
+        SUM(CASE WHEN lower(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
+        SUM(CASE WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_units,
+        COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
+        COALESCE(SUM(u.net_weight), 0.0) AS net_weight,
+        COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
+        COALESCE(SUM(u.valuation_fine_weight), 0.0) AS valuation_fine,
+        COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
+      FROM stock_item_units u
+      INNER JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+      WHERE lower(u.metal_type) = ?
+        AND lower(COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Unbatched Stock')) = lower(?)
+      GROUP BY grade_label
+      LIMIT 1
+      ''',
+      variables: [
+        Variable.withString(widget.metal.label.toLowerCase()),
+        Variable.withString(batchCode),
+      ],
+    ).get();
+
+    if (rows.isEmpty) return null;
+    final row = rows.first;
+    return _InventoryGradeSummary(
+      gradeLabel: _readString(row, 'grade_label', 'Custom Grade'),
+      totalUnits: _readInt(row, 'total_units'),
+      availableUnits: _readInt(row, 'available_units'),
+      soldUnits: _readInt(row, 'sold_units'),
+      grossWeight: _readDouble(row, 'gross_weight'),
+      netWeight: _readDouble(row, 'net_weight'),
+      actualFine: _readDouble(row, 'actual_fine'),
+      valuationFine: _readDouble(row, 'valuation_fine'),
+      stockValue: _readDouble(row, 'stock_value'),
+    );
   }
 
   Future<List<_InventoryGradeSummary>> _loadGradeSummary() async {
@@ -337,12 +402,16 @@ class _InventoryMetalGradeScreenState
     return NumberFormat('##,##0.000', 'en_IN').format(value);
   }
 
-  void _openGradeLedger(_InventoryGradeSummary grade) {
+  void _openGradeLedger(
+    _InventoryGradeSummary grade, {
+    String? initialBatchCode,
+  }) {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
         pageBuilder: (_, animation, __) => _InventoryGradeDetailScreen(
           metal: widget.metal,
           grade: grade,
+          initialBatchCode: initialBatchCode,
         ),
         transitionsBuilder: (_, animation, __, child) {
           final curved = CurvedAnimation(

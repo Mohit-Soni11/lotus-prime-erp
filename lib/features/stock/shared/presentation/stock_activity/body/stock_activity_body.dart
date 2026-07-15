@@ -45,6 +45,8 @@ class _StockActivityBodyState extends State<_StockActivityBody> {
             children: [
               _StockActivityHero(summary: controller.summary),
               const SizedBox(height: 18),
+              _DateQuickFilterPanel(controller: controller),
+              const SizedBox(height: 18),
               _SummaryGrid(summary: controller.summary),
               const SizedBox(height: 18),
               _MetalMovementSnapshot(metals: controller.metalSummaries),
@@ -208,6 +210,56 @@ class _SummaryGrid extends StatelessWidget {
           background: InvColors.brandGoldLight,
         ),
       ],
+    );
+  }
+}
+
+class _DateQuickFilterPanel extends StatelessWidget {
+  final StockActivityController controller;
+
+  const _DateQuickFilterPanel({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return _ActivitySurface(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const _SectionIcon(Icons.calendar_month_rounded, InvColors.brandGold),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Activity Period', style: _titleText(16)),
+                const SizedBox(height: 3),
+                Text(
+                  'Choose the time range for metal movement, summary and timeline.',
+                  style: _mutedText(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Flexible(
+            flex: 2,
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 9,
+              runSpacing: 9,
+              children: StockActivityController.dateFilters
+                  .map(
+                    (filter) => _DateRangeChip(
+                      label: filter,
+                      isActive: controller.dateFilter == filter,
+                      onTap: () => controller.setDateFilter(filter),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -35,8 +35,15 @@ part 'sections/inventory_detail_sections.dart';
 
 class InventoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
+  final String? initialMetalLabel;
+  final String? initialBatchCode;
 
-  const InventoryScreen({super.key, this.onBack});
+  const InventoryScreen({
+    super.key,
+    this.onBack,
+    this.initialMetalLabel,
+    this.initialBatchCode,
+  });
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -52,6 +59,7 @@ class _InventoryScreenState extends State<InventoryScreen>
   late final List<Animation<Offset>> _sectionSlide;
 
   final AppDatabase _db = AppDatabase();
+  bool _openedInitialTarget = false;
 
   @override
   void initState() {
@@ -91,6 +99,26 @@ class _InventoryScreenState extends State<InventoryScreen>
     }
 
     _ctrl.loadStats();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openInitialTarget());
+  }
+
+  void _openInitialTarget() {
+    if (_openedInitialTarget || !mounted) return;
+    final metalLabel = widget.initialMetalLabel?.trim();
+    if (metalLabel == null || metalLabel.isEmpty) return;
+    final metal = _stockCategoryFromSearchLabel(metalLabel);
+    if (metal == StockCategory.other) return;
+    _openedInitialTarget = true;
+    _openMetalLedger(metal, initialBatchCode: widget.initialBatchCode);
+  }
+
+  StockCategory _stockCategoryFromSearchLabel(String value) {
+    final normalized = value.trim().toLowerCase();
+    for (final category in StockCategory.values) {
+      if (category.label.toLowerCase() == normalized) return category;
+      if (category.name.toLowerCase() == normalized) return category;
+    }
+    return StockCategory.other;
   }
 
   void _rebuild() {
@@ -130,11 +158,13 @@ class _InventoryScreenState extends State<InventoryScreen>
     );
   }
 
-  void _openMetalLedger(StockCategory metal) {
+  void _openMetalLedger(StockCategory metal, {String? initialBatchCode}) {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
-        pageBuilder: (_, animation, __) =>
-            _InventoryMetalGradeScreen(metal: metal),
+        pageBuilder: (_, animation, __) => _InventoryMetalGradeScreen(
+          metal: metal,
+          initialBatchCode: initialBatchCode,
+        ),
         transitionsBuilder: (_, animation, __, child) {
           final curved = CurvedAnimation(
             parent: animation,

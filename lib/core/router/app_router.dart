@@ -32,6 +32,7 @@ import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/add_stock_hub_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/inventory/inventory_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_activity/stock_activity_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/stock_search/stock_search_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
 
 import '../../ui/customer/customer_list/customer_list_screen.dart';
@@ -461,11 +462,19 @@ GoRouter createAppRouter() {
             path: RoutePaths.stockInventory,
             builder: (context, state) => InventoryScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
+              initialMetalLabel: state.uri.queryParameters['metal'],
+              initialBatchCode: state.uri.queryParameters['batch'],
             ),
           ),
           GoRoute(
             path: RoutePaths.stockActivity,
             builder: (context, state) => StockActivityScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.stockSearch,
+            builder: (context, state) => StockSearchScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),

@@ -10,6 +10,7 @@ class StockActivityController extends ChangeNotifier {
   StockActivityController(this._db);
 
   bool _isLoading = false;
+  String _dateFilter = 'All Time';
   String _movementFilter = 'All';
   String _metalFilter = 'All';
   String _searchText = '';
@@ -19,6 +20,7 @@ class StockActivityController extends ChangeNotifier {
   List<StockActivityRecord> _records = const [];
 
   bool get isLoading => _isLoading;
+  String get dateFilter => _dateFilter;
   String get movementFilter => _movementFilter;
   String get metalFilter => _metalFilter;
   String get searchText => _searchText;
@@ -26,6 +28,14 @@ class StockActivityController extends ChangeNotifier {
   StockActivitySummary get summary => _summary;
   List<StockMetalActivitySummary> get metalSummaries => _metalSummaries;
   List<StockActivityRecord> get records => _records;
+
+  static const List<String> dateFilters = [
+    'All Time',
+    'Today',
+    'Yesterday',
+    'Last 7 Days',
+    'This Month',
+  ];
 
   static const List<String> movementFilters = [
     'All',
@@ -150,6 +160,12 @@ class StockActivityController extends ChangeNotifier {
     load();
   }
 
+  void setDateFilter(String value) {
+    if (_dateFilter == value) return;
+    _dateFilter = value;
+    load();
+  }
+
   void setMetalFilter(String value) {
     if (_metalFilter == value) return;
     _metalFilter = value;
@@ -176,6 +192,14 @@ class StockActivityController extends ChangeNotifier {
     if (includeMetalFilter && _metalFilter != 'All') {
       clauses.add('LOWER(sm.metal_type_snapshot) = LOWER(?)');
       variables.add(drift.Variable.withString(_metalFilter));
+    }
+
+    final dateRange = _dateRangeForFilter(_dateFilter);
+    if (dateRange != null) {
+      clauses.add('sm.occurred_at >= ?');
+      variables.add(drift.Variable.withDateTime(dateRange.start));
+      clauses.add('sm.occurred_at < ?');
+      variables.add(drift.Variable.withDateTime(dateRange.end));
     }
 
     if (_searchText.isNotEmpty) {
@@ -211,6 +235,31 @@ class StockActivityController extends ChangeNotifier {
     };
   }
 
+  _StockActivityDateRange? _dateRangeForFilter(String filter) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return switch (filter) {
+      'Today' => _StockActivityDateRange(
+          start: today,
+          end: today.add(const Duration(days: 1)),
+        ),
+      'Yesterday' => _StockActivityDateRange(
+          start: today.subtract(const Duration(days: 1)),
+          end: today,
+        ),
+      'Last 7 Days' => _StockActivityDateRange(
+          start: today.subtract(const Duration(days: 6)),
+          end: today.add(const Duration(days: 1)),
+        ),
+      'This Month' => _StockActivityDateRange(
+          start: DateTime(now.year, now.month),
+          end: DateTime(now.year, now.month + 1),
+        ),
+      _ => null,
+    };
+  }
+
   String _activityFromClause() {
     return '''
       FROM stock_movements sm
@@ -233,5 +282,15 @@ class _StockActivityWhere {
   const _StockActivityWhere({
     required this.sql,
     required this.variables,
+  });
+}
+
+class _StockActivityDateRange {
+  final DateTime start;
+  final DateTime end;
+
+  const _StockActivityDateRange({
+    required this.start,
+    required this.end,
   });
 }

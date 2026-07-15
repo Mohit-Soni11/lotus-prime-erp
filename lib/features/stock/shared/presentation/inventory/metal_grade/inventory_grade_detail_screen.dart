@@ -3,10 +3,12 @@ part of '../inventory_screen.dart';
 class _InventoryGradeDetailScreen extends StatefulWidget {
   final StockCategory metal;
   final _InventoryGradeSummary grade;
+  final String? initialBatchCode;
 
   const _InventoryGradeDetailScreen({
     required this.metal,
     required this.grade,
+    this.initialBatchCode,
   });
 
   @override
@@ -21,10 +23,16 @@ class _InventoryGradeDetailScreenState
   String _batchSearch = '';
   String _batchFilter = 'All';
   late Future<List<_InventoryBatchGroup>> _batchesFuture;
+  bool _openedInitialBatchDossier = false;
 
   @override
   void initState() {
     super.initState();
+    final batchCode = widget.initialBatchCode?.trim();
+    if (batchCode != null && batchCode.isNotEmpty) {
+      _batchSearch = batchCode;
+      _batchSearchCtrl.text = batchCode;
+    }
     _batchesFuture = _loadBatchGroups();
   }
 
@@ -142,6 +150,7 @@ class _InventoryGradeDetailScreenState
         future: _batchesFuture,
         builder: (context, snapshot) {
           final batches = snapshot.data ?? const <_InventoryBatchGroup>[];
+          _openInitialBatchDossierWhenReady(batches);
           final visibleBatches = _filterBatches(batches);
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
@@ -502,6 +511,25 @@ class _InventoryGradeDetailScreenState
 
   String _weight(double value) {
     return NumberFormat('##,##0.000', 'en_IN').format(value);
+  }
+
+  void _openInitialBatchDossierWhenReady(List<_InventoryBatchGroup> batches) {
+    if (_openedInitialBatchDossier || batches.isEmpty || !mounted) return;
+    final targetBatch = widget.initialBatchCode?.trim();
+    if (targetBatch == null || targetBatch.isEmpty) return;
+    _InventoryBatchGroup? matchedBatch;
+    for (final batch in batches) {
+      if (batch.batchCode.toLowerCase() == targetBatch.toLowerCase()) {
+        matchedBatch = batch;
+        break;
+      }
+    }
+    if (matchedBatch == null) return;
+    _openedInitialBatchDossier = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _openBatchDossier(matchedBatch!);
+    });
   }
 
   Future<void> _openBatchDossier(_InventoryBatchGroup batch) async {
