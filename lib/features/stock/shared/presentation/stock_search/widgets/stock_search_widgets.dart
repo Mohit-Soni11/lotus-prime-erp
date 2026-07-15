@@ -1095,54 +1095,115 @@ class _StockDossierActions extends StatelessWidget {
         color: Color(0xFFFAF7EF),
         border: Border(top: BorderSide(color: InvColors.divider)),
       ),
-      child: Row(
-        children: [
-          _DossierActionButton(
-            label: 'Copy Stock Card',
-            icon: Icons.copy_rounded,
-            onTap: () => _copyStockCard(context, item),
-          ),
-          const SizedBox(width: 10),
-          _DossierActionButton(
-            label: 'View Supplier',
-            icon: Icons.storefront_rounded,
-            enabled: item.supplierId != null && item.supplierId! > 0,
-            onTap: () {
-              final router = GoRouter.of(context);
-              final path = RoutePaths.supplierProfileFor(item.supplierId!);
-              Navigator.of(context).pop();
-              router.push(path);
-            },
-          ),
-          const SizedBox(width: 10),
-          _DossierActionButton(
-            label: 'Open Inventory',
-            icon: Icons.inventory_2_rounded,
-            onTap: () {
-              final router = GoRouter.of(context);
-              final path = Uri(
-                path: RoutePaths.stockInventory,
-                queryParameters: {
-                  'metal': item.metalType,
-                  'batch': item.batchCode,
-                },
-              ).toString();
-              Navigator.of(context).pop();
-              router.push(path);
-            },
-          ),
-          const Spacer(),
-          _DossierActionButton(
-            label: 'Stock Activity',
-            icon: Icons.timeline_rounded,
-            primary: true,
-            onTap: () {
-              final router = GoRouter.of(context);
-              Navigator.of(context).pop();
-              router.push(RoutePaths.stockActivity);
-            },
-          ),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _DossierActionButton(
+              label: 'Copy Stock Card',
+              icon: Icons.copy_rounded,
+              onTap: () => _copyStockCard(context, item),
+            ),
+            const SizedBox(width: 10),
+            _DossierActionButton(
+              label: 'Preview PDF',
+              icon: Icons.visibility_rounded,
+              onTap: () {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                navigator.push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => _StockCardPdfPreviewScreen(item: item),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 10),
+            _DossierActionButton(
+              label: 'Print Card',
+              icon: Icons.print_rounded,
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.of(context).pop();
+                try {
+                  await _printStockCard(item);
+                } catch (error) {
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text('Print failed: $error'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.red.shade700,
+                      ),
+                    );
+                }
+              },
+            ),
+            const SizedBox(width: 10),
+            _DossierActionButton(
+              label: 'Export PDF',
+              icon: Icons.picture_as_pdf_rounded,
+              primary: true,
+              onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.of(context).pop();
+                try {
+                  await _exportStockCard(item);
+                } catch (error) {
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        content: Text('Export failed: $error'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.red.shade700,
+                      ),
+                    );
+                }
+              },
+            ),
+            const SizedBox(width: 10),
+            _DossierActionButton(
+              label: 'View Supplier',
+              icon: Icons.storefront_rounded,
+              enabled: item.supplierId != null && item.supplierId! > 0,
+              onTap: () {
+                final router = GoRouter.of(context);
+                final path = RoutePaths.supplierProfileFor(item.supplierId!);
+                Navigator.of(context).pop();
+                router.push(path);
+              },
+            ),
+            const SizedBox(width: 10),
+            _DossierActionButton(
+              label: 'Open Inventory',
+              icon: Icons.inventory_2_rounded,
+              onTap: () {
+                final router = GoRouter.of(context);
+                final path = Uri(
+                  path: RoutePaths.stockInventory,
+                  queryParameters: {
+                    'metal': item.metalType,
+                    'batch': item.batchCode,
+                  },
+                ).toString();
+                Navigator.of(context).pop();
+                router.push(path);
+              },
+            ),
+            const SizedBox(width: 10),
+            _DossierActionButton(
+              label: 'Stock Activity',
+              icon: Icons.timeline_rounded,
+              onTap: () {
+                final router = GoRouter.of(context);
+                Navigator.of(context).pop();
+                router.push(RoutePaths.stockActivity);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

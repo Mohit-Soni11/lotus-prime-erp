@@ -5,6 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -14,6 +17,7 @@ import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/stock_search_app_bar.dart';
 part 'body/stock_search_body.dart';
+part 'pdf/stock_card_pdf_service.dart';
 part 'widgets/stock_search_widgets.dart';
 
 class StockSearchScreen extends StatefulWidget {
