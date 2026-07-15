@@ -30,6 +30,7 @@ class _InventoryBatchDossierScreen extends StatelessWidget {
                 title: title,
                 batch: batch,
                 onDocuments: () => _openDocumentCenter(context),
+                onCleanup: () => _openCleanupCenter(context),
               ),
             ),
           ),
@@ -146,6 +147,31 @@ class _InventoryBatchDossierScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _openCleanupCenter(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => _InventoryBatchCleanupDialog(
+        batchCode: batch.batchCode,
+        onCleanupConfirmed: () async {
+          final service = InventoryBatchCleanupService(AppDatabase());
+          final result = await service.deleteSafeTestBatch(batch.batchCode);
+          if (!dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Cleaned ${result.batchCode}: ${result.removedUnits} stock unit(s) removed.',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          Navigator.of(context).pop(true);
+        },
+      ),
+    );
+  }
 }
 
 class _BatchDossierHeader extends StatelessWidget {
@@ -153,12 +179,14 @@ class _BatchDossierHeader extends StatelessWidget {
   final String title;
   final _InventoryBatchGroup batch;
   final VoidCallback onDocuments;
+  final VoidCallback onCleanup;
 
   const _BatchDossierHeader({
     required this.ui,
     required this.title,
     required this.batch,
     required this.onDocuments,
+    required this.onCleanup,
   });
 
   @override
@@ -256,6 +284,12 @@ class _BatchDossierHeader extends StatelessWidget {
                 icon: Icons.description_rounded,
                 textColor: ui.textOnGradient,
                 onTap: onDocuments,
+              ),
+              _HeaderActionButton(
+                label: 'Cleanup',
+                icon: Icons.cleaning_services_rounded,
+                textColor: ui.textOnGradient,
+                onTap: onCleanup,
               ),
             ],
           ),

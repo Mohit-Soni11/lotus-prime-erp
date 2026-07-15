@@ -1,0 +1,237 @@
+import 'package:drift/drift.dart' as drift;
+import 'package:flutter/foundation.dart';
+
+import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_activity/stock_activity_models.dart';
+
+class StockActivityController extends ChangeNotifier {
+  final AppDatabase _db;
+
+  StockActivityController(this._db);
+
+  bool _isLoading = false;
+  String _movementFilter = 'All';
+  String _metalFilter = 'All';
+  String _searchText = '';
+  String? _errorMessage;
+  StockActivitySummary _summary = StockActivitySummary.empty();
+  List<StockMetalActivitySummary> _metalSummaries = const [];
+  List<StockActivityRecord> _records = const [];
+
+  bool get isLoading => _isLoading;
+  String get movementFilter => _movementFilter;
+  String get metalFilter => _metalFilter;
+  String get searchText => _searchText;
+  String? get errorMessage => _errorMessage;
+  StockActivitySummary get summary => _summary;
+  List<StockMetalActivitySummary> get metalSummaries => _metalSummaries;
+  List<StockActivityRecord> get records => _records;
+
+  static const List<String> movementFilters = [
+    'All',
+    'Stock Added',
+    'Sold',
+    'Restored',
+  ];
+
+  static const List<String> metalFilters = [
+    'All',
+    'Gold',
+    'Silver',
+    'Diamond',
+    'Platinum',
+  ];
+
+  Future<void> load() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final where = _buildWhere();
+      final metalWhere = _buildWhere(includeMetalFilter: false);
+      final summaryRow = await _db.customSelect(
+        '''
+        SELECT
+          COUNT(sm.id) AS total_movements,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'IN' THEN ABS(sm.quantity_delta) ELSE 0 END), 0) AS stock_added,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE' THEN ABS(sm.quantity_delta) ELSE 0 END), 0) AS stock_sold,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE_RESTORE' THEN ABS(sm.quantity_delta) ELSE 0 END), 0) AS stock_restored,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'IN' THEN ABS(sm.net_weight_delta) ELSE 0 END), 0.0) AS added_weight,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE' THEN ABS(sm.net_weight_delta) ELSE 0 END), 0.0) AS sold_weight
+        ${_activityFromClause()}
+        ${where.sql}
+        ''',
+        variables: where.variables,
+      ).getSingle();
+
+      final metalRows = await _db.customSelect(
+        '''
+        SELECT
+          CASE
+            WHEN LOWER(sm.metal_type_snapshot) = 'gold' THEN 'Gold'
+            WHEN LOWER(sm.metal_type_snapshot) = 'silver' THEN 'Silver'
+            WHEN LOWER(sm.metal_type_snapshot) = 'diamond' THEN 'Diamond'
+            WHEN LOWER(sm.metal_type_snapshot) = 'platinum' THEN 'Platinum'
+            ELSE sm.metal_type_snapshot
+          END AS metal_type,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'IN' THEN ABS(sm.quantity_delta) ELSE 0 END), 0) AS inward_quantity,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE' THEN ABS(sm.quantity_delta) ELSE 0 END), 0) AS outward_quantity,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE_RESTORE' THEN ABS(sm.quantity_delta) ELSE 0 END), 0) AS restored_quantity,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'IN' THEN ABS(sm.net_weight_delta) ELSE 0 END), 0.0) AS inward_weight,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE' THEN ABS(sm.net_weight_delta) ELSE 0 END), 0.0) AS outward_weight,
+          COALESCE(SUM(CASE WHEN sm.movement_type = 'SALE_RESTORE' THEN ABS(sm.net_weight_delta) ELSE 0 END), 0.0) AS restored_weight
+        ${_activityFromClause()}
+        ${metalWhere.sql}
+        GROUP BY LOWER(sm.metal_type_snapshot)
+        ''',
+        variables: metalWhere.variables,
+      ).get();
+
+      final rows = await _db.customSelect(
+        '''
+        SELECT
+          sm.id,
+          sm.stock_item_id,
+          sm.movement_type,
+          sm.source_type,
+          sm.source_id,
+          sm.source_number,
+          sm.sku_snapshot,
+          sm.metal_type_snapshot,
+          sm.item_name_snapshot,
+          sm.quantity_delta,
+          sm.gross_weight_delta,
+          sm.net_weight_delta,
+          sm.fine_weight_delta,
+          sm.reason,
+          sm.occurred_at,
+          u.batch_code,
+          u.unit_code,
+          u.huid,
+          u.status AS unit_status,
+          pv.party_name AS supplier_name,
+          pv.tax_type
+        ${_activityFromClause()}
+        ${where.sql}
+        ORDER BY sm.occurred_at DESC, sm.id DESC
+        LIMIT 250
+        ''',
+        variables: where.variables,
+      ).get();
+
+      _summary = StockActivitySummary(
+        totalMovements: summaryRow.read<int>('total_movements'),
+        stockAdded: summaryRow.read<int>('stock_added'),
+        stockSold: summaryRow.read<int>('stock_sold'),
+        stockRestored: summaryRow.read<int>('stock_restored'),
+        addedWeight: summaryRow.read<double>('added_weight'),
+        soldWeight: summaryRow.read<double>('sold_weight'),
+      );
+      _metalSummaries = metalRows
+          .map(StockMetalActivitySummary.fromRow)
+          .where((summary) => summary.hasMovement)
+          .toList(growable: false);
+      _records = rows.map(StockActivityRecord.fromRow).toList();
+    } catch (error) {
+      _summary = StockActivitySummary.empty();
+      _metalSummaries = const [];
+      _records = const [];
+      _errorMessage = 'Stock activity could not be loaded.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void setMovementFilter(String value) {
+    if (_movementFilter == value) return;
+    _movementFilter = value;
+    load();
+  }
+
+  void setMetalFilter(String value) {
+    if (_metalFilter == value) return;
+    _metalFilter = value;
+    load();
+  }
+
+  void setSearchText(String value) {
+    final normalized = value.trim();
+    if (_searchText == normalized) return;
+    _searchText = normalized;
+    load();
+  }
+
+  _StockActivityWhere _buildWhere({bool includeMetalFilter = true}) {
+    final clauses = <String>['1 = 1'];
+    final variables = <drift.Variable<Object>>[];
+
+    final movementType = _movementTypeForFilter(_movementFilter);
+    if (movementType != null) {
+      clauses.add('sm.movement_type = ?');
+      variables.add(drift.Variable.withString(movementType));
+    }
+
+    if (includeMetalFilter && _metalFilter != 'All') {
+      clauses.add('LOWER(sm.metal_type_snapshot) = LOWER(?)');
+      variables.add(drift.Variable.withString(_metalFilter));
+    }
+
+    if (_searchText.isNotEmpty) {
+      clauses.add('''
+        (
+          LOWER(sm.source_number) LIKE LOWER(?)
+          OR LOWER(sm.sku_snapshot) LIKE LOWER(?)
+          OR LOWER(sm.item_name_snapshot) LIKE LOWER(?)
+          OR LOWER(COALESCE(u.batch_code, '')) LIKE LOWER(?)
+          OR LOWER(COALESCE(u.huid, '')) LIKE LOWER(?)
+          OR LOWER(COALESCE(u.unit_code, '')) LIKE LOWER(?)
+          OR LOWER(COALESCE(pv.party_name, '')) LIKE LOWER(?)
+        )
+      ''');
+      final searchValue = '%$_searchText%';
+      for (int index = 0; index < 7; index++) {
+        variables.add(drift.Variable.withString(searchValue));
+      }
+    }
+
+    return _StockActivityWhere(
+      sql: 'WHERE ${clauses.join(' AND ')}',
+      variables: variables,
+    );
+  }
+
+  String? _movementTypeForFilter(String filter) {
+    return switch (filter) {
+      'Stock Added' => 'IN',
+      'Sold' => 'SALE',
+      'Restored' => 'SALE_RESTORE',
+      _ => null,
+    };
+  }
+
+  String _activityFromClause() {
+    return '''
+      FROM stock_movements sm
+      LEFT JOIN stock_item_units u ON u.id = (
+        SELECT su.id
+        FROM stock_item_units su
+        WHERE su.stock_item_id = sm.stock_item_id
+        ORDER BY su.id ASC
+        LIMIT 1
+      )
+      LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+    ''';
+  }
+}
+
+class _StockActivityWhere {
+  final String sql;
+  final List<drift.Variable<Object>> variables;
+
+  const _StockActivityWhere({
+    required this.sql,
+    required this.variables,
+  });
+}

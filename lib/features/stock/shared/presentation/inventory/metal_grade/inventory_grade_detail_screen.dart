@@ -20,7 +20,7 @@ class _InventoryGradeDetailScreenState
   final TextEditingController _batchSearchCtrl = TextEditingController();
   String _batchSearch = '';
   String _batchFilter = 'All';
-  late final Future<List<_InventoryBatchGroup>> _batchesFuture;
+  late Future<List<_InventoryBatchGroup>> _batchesFuture;
 
   @override
   void initState() {
@@ -504,9 +504,9 @@ class _InventoryGradeDetailScreenState
     return NumberFormat('##,##0.000', 'en_IN').format(value);
   }
 
-  void _openBatchDossier(_InventoryBatchGroup batch) {
-    Navigator.of(context).push(
-      PageRouteBuilder<void>(
+  Future<void> _openBatchDossier(_InventoryBatchGroup batch) async {
+    final cleaned = await Navigator.of(context).push<bool>(
+      PageRouteBuilder<bool>(
         pageBuilder: (_, animation, __) => _InventoryBatchDossierScreen(
           metal: widget.metal,
           grade: widget.grade,
@@ -530,5 +530,10 @@ class _InventoryGradeDetailScreenState
         },
       ),
     );
+    if (cleaned == true && mounted) {
+      setState(() {
+        _batchesFuture = _loadBatchGroups();
+      });
+    }
   }
 }
