@@ -110,6 +110,11 @@ class _InventoryBatchPdfService {
                       pw.SizedBox(width: 8),
                       _tag('GST PURCHASE', PdfColors.green700),
                     ],
+                    pw.SizedBox(width: 8),
+                    _tag(
+                      batch.stockStatusLabel.toUpperCase(),
+                      _batchStatusPdfColor(batch),
+                    ),
                   ],
                 ),
                 pw.SizedBox(height: 4),
@@ -152,6 +157,7 @@ class _InventoryBatchPdfService {
             DateTime.fromMillisecondsSinceEpoch(batch.createdAt),
           ),
         ),
+      _infoRow('Stock Status', batch.stockStatusLabel),
     ];
 
     return _section(
@@ -166,6 +172,7 @@ class _InventoryBatchPdfService {
             _metric('Total Items', '${batch.totalItems} pcs'),
             _metric('Available', '${batch.availableItems} pcs'),
             _metric('Sold', '${batch.totalItems - batch.availableItems} pcs'),
+            _metric('Stock Status', batch.stockStatusLabel),
             _metric('Gross Wt', '${_weight(batch.grossWeight)} g'),
             _metric('Net Wt', '${_weight(batch.netWeight)} g'),
             _metric('Purity', '${_percent(batch.purityPercent)}%'),
@@ -604,6 +611,12 @@ class _InventoryBatchPdfService {
 
   static PdfColor _pdfColor(Color color) {
     return PdfColor.fromInt(color.toARGB32());
+  }
+
+  static PdfColor _batchStatusPdfColor(_InventoryBatchGroup batch) {
+    if (batch.isSoldOut) return PdfColors.red700;
+    if (batch.isPartiallySold) return PdfColors.amber800;
+    return PdfColors.green700;
   }
 
   static bool _hasText(String value) => value.trim().isNotEmpty;

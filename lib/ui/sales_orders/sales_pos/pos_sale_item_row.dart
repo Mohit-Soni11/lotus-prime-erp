@@ -207,9 +207,8 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                   const SizedBox(width: 6),
 
                   if (!isWholesale) ...[
-                    // HUID suggestions are handled by a dedicated widget.
                     Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: _HuidWithSuggestions(
                         item: widget.item,
                         ctrl: widget.ctrl,
@@ -813,10 +812,26 @@ class _HuidWithSuggestions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final huidTokens = _huidTokens(item.huidCtrl.text);
+    if (item.hasLinkedStock && huidTokens.length > 1) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < huidTokens.length; index++) ...[
+            _HuidSetBox(
+              label: 'HUID ${index + 1}',
+              value: huidTokens[index],
+            ),
+            if (index < huidTokens.length - 1) const SizedBox(height: 5),
+          ],
+        ],
+      );
+    }
+
     return PosStockLookupField(
       listenable: ctrl,
-      controller: item.huidCtrl, // Ensure item.huidCtrl exists in your model
-      hint: "HUID",
+      controller: item.huidCtrl,
+      hint: item.pcs > 1 ? "HUID Set" : "HUID",
       focusNode: item.huidFocus,
       textInputAction: TextInputAction.next,
       onSubmitted: onSubmitted,
@@ -833,7 +848,77 @@ class _HuidWithSuggestions extends StatelessWidget {
       onClearSuggestions: () {
         ctrl.clearHuidSuggestions();
       },
-      overlayWidth: 260,
+      overlayWidth: 360,
+    );
+  }
+
+  List<String> _huidTokens(String value) {
+    return value
+        .split(RegExp(r'[,;/\n]+'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
+  }
+}
+
+class _HuidSetBox extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _HuidSetBox({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SalesPosColors.brandGold, width: 1.4),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 20,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: SalesPosColors.brandGold.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Text(
+              label.replaceFirst('HUID ', ''),
+              style: SalesPosStyles.subTitleMuted.copyWith(
+                color: SalesPosColors.brandGold,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                maxLines: 1,
+                softWrap: false,
+                style: SalesPosStyles.inputText.copyWith(
+                  color: SalesPosColors.bodyTextMain,
+                  fontSize: SalesPosStyles.fontBody,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

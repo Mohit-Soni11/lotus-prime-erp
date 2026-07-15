@@ -81,13 +81,23 @@ class _InventoryBatchStatusPdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(
-                  'Stock Status Report',
-                  style: pw.TextStyle(
-                    fontSize: 17,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
-                  ),
+                pw.Row(
+                  children: [
+                    pw.Expanded(
+                      child: pw.Text(
+                        'Stock Status Report',
+                        style: pw.TextStyle(
+                          fontSize: 17,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.black,
+                        ),
+                      ),
+                    ),
+                    _statusBadge(
+                      batch.stockStatusLabel.toUpperCase(),
+                      _batchStatusPdfColor(batch),
+                    ),
+                  ],
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text(
@@ -121,6 +131,7 @@ class _InventoryBatchStatusPdfService {
             _statusMetric('Available', '${batch.availableItems} pcs'),
             _statusMetric(
                 'Sold', '${batch.totalItems - batch.availableItems} pcs'),
+            _statusMetric('Stock Status', batch.stockStatusLabel),
             _statusMetric('Gross Wt', '${_weight(batch.grossWeight)} g'),
             _statusMetric('Net Wt', '${_weight(batch.netWeight)} g'),
             _statusMetric('Actual Fine', '${_weight(batch.actualFine)} g'),
@@ -293,5 +304,11 @@ class _InventoryBatchStatusPdfService {
         ),
       ),
     );
+  }
+
+  static PdfColor _batchStatusPdfColor(_InventoryBatchGroup batch) {
+    if (batch.isSoldOut) return PdfColors.red700;
+    if (batch.isPartiallySold) return PdfColors.amber800;
+    return PdfColors.green700;
   }
 }

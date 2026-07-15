@@ -163,6 +163,7 @@ class _BatchDossierHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusAccent = _dossierBatchStatusAccent(batch);
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -211,6 +212,11 @@ class _BatchDossierHeader extends StatelessWidget {
                       const SizedBox(width: 10),
                       _HeaderGstTag(textColor: ui.textOnGradient),
                     ],
+                    const SizedBox(width: 10),
+                    _DossierHeaderStatusTag(
+                      label: batch.stockStatusLabel,
+                      accent: statusAccent,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -233,6 +239,11 @@ class _BatchDossierHeader extends StatelessWidget {
               _HeaderMetric(
                 label: 'Items',
                 value: '${batch.availableItems}/${batch.totalItems}',
+                textColor: ui.textOnGradient,
+              ),
+              _HeaderMetric(
+                label: 'Stock Status',
+                value: batch.stockStatusLabel,
                 textColor: ui.textOnGradient,
               ),
               _HeaderMetric(
@@ -518,6 +529,7 @@ class _BatchOverviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusAccent = _dossierBatchStatusAccent(batch);
     return _DossierPanel(
       icon: Icons.inventory_2_rounded,
       title: 'Batch Overview',
@@ -541,6 +553,10 @@ class _BatchOverviewPanel extends StatelessWidget {
                   )
                 : 'Not recorded',
           ),
+          _DossierInfoRow(
+            label: 'Stock Status',
+            value: batch.stockStatusLabel,
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -558,6 +574,10 @@ class _BatchOverviewPanel extends StatelessWidget {
                   label: 'Sold',
                   value: '${batch.totalItems - batch.availableItems} pcs',
                   accent: InvColors.danger),
+              _DossierMetric(
+                  label: 'Stock Status',
+                  value: batch.stockStatusLabel,
+                  accent: statusAccent),
               _DossierMetric(
                   label: 'Gross Wt',
                   value: '${_weight(batch.grossWeight)} g',
@@ -778,10 +798,16 @@ class _BatchStockLedgerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final availableUnits = batch.units
+        .where((unit) => unit.status.toLowerCase() == 'available')
+        .toList();
+    final soldUnits = batch.units
+        .where((unit) => unit.status.toLowerCase() != 'available')
+        .toList();
     return _DossierPanel(
       icon: Icons.view_list_rounded,
       title: 'Batch Item Ledger',
-      subtitle: 'Available and sold stock units from this batch',
+      subtitle: '${batch.stockStatusLabel} stock movement from this batch',
       accent: ui.accent,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -790,19 +816,119 @@ class _BatchStockLedgerPanel extends StatelessWidget {
               : constraints.maxWidth >= 760
                   ? (constraints.maxWidth - 12) / 2
                   : constraints.maxWidth;
-          return Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final unit in batch.units)
-                SizedBox(
-                  width: itemWidth,
-                  child: _InventoryGradeUnitCard(unit: unit, ui: ui),
+              if (availableUnits.isNotEmpty)
+                _DossierLedgerSection(
+                  title: 'Available Stock Units',
+                  subtitle: 'Ready for sale and stock movement',
+                  units: availableUnits,
+                  itemWidth: itemWidth,
+                  ui: ui,
+                  accent: InvColors.success,
+                ),
+              if (availableUnits.isNotEmpty && soldUnits.isNotEmpty)
+                const SizedBox(height: 18),
+              if (soldUnits.isNotEmpty)
+                _DossierLedgerSection(
+                  title: 'Sold Stock Units',
+                  subtitle: 'Linked with sales invoices or closed movement',
+                  units: soldUnits,
+                  itemWidth: itemWidth,
+                  ui: ui,
+                  accent: InvColors.danger,
                 ),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+class _DossierLedgerSection extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final List<_InventoryGradeUnit> units;
+  final double itemWidth;
+  final StockMetalUiData ui;
+  final Color accent;
+
+  const _DossierLedgerSection({
+    required this.title,
+    required this.subtitle,
+    required this.units,
+    required this.itemWidth,
+    required this.ui,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: InvColors.textDark,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: accent.withValues(alpha: 0.18)),
+              ),
+              child: Text(
+                '${units.length} pcs',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: accent,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: InvColors.textMuted,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final unit in units)
+              SizedBox(
+                width: itemWidth,
+                child: _InventoryGradeUnitCard(unit: unit, ui: ui),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -1051,4 +1177,55 @@ class _HeaderGstTag extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DossierHeaderStatusTag extends StatelessWidget {
+  final String label;
+  final Color accent;
+
+  const _DossierHeaderStatusTag({
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.36)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: accent,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: accent,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Color _dossierBatchStatusAccent(_InventoryBatchGroup batch) {
+  if (batch.isSoldOut) return InvColors.danger;
+  if (batch.isPartiallySold) return const Color(0xFFF59E0B);
+  return InvColors.success;
 }

@@ -42,6 +42,16 @@ class _InventoryBatchGroup {
   });
 
   bool get isGst => taxType.toUpperCase().contains('GST');
+  int get soldItems => totalItems - availableItems;
+  bool get hasAvailableStock => availableItems > 0;
+  bool get isSoldOut => totalItems > 0 && availableItems == 0;
+  bool get isPartiallySold => availableItems > 0 && soldItems > 0;
+
+  String get stockStatusLabel {
+    if (isSoldOut) return 'Sold Out';
+    if (isPartiallySold) return 'Partially Sold';
+    return 'Available';
+  }
 
   String get searchText {
     return [
@@ -50,6 +60,7 @@ class _InventoryBatchGroup {
       supplierInvoiceNo,
       taxType,
       payment.paymentStatus,
+      stockStatusLabel,
       for (final unit in units) ...[
         unit.itemName,
         unit.itemType,

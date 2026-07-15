@@ -1,16 +1,3 @@
-// =============================================================================
-// FILE        : inventory_screen.dart
-// MODULE      : Stock & Inventory
-// LAYER       : UI / Screen
-// DESCRIPTION : Production Inventory Ledger screen.
-//               Design matches Customer List header exactly:
-//               - Dark shell AppBar with Gold Gradient module icon
-//               - Pill-shaped Animated System Online Radar
-//               - Cream body background (0xFFF9F6F0)
-//               - Staggered entry animations
-//               - Icons properly extracted to InvIcons
-// =============================================================================
-
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -26,7 +13,6 @@ import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/application/inventory_controller.dart';
-//import 'package:lotus_erp/features/stock/shared/domain/models/inventory/inventory_stats_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/stock_metal_ui.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/inventory/metal_hub/inventory_metal_summary_grid.dart';
@@ -42,19 +28,12 @@ part 'metal_grade/batch_detail/inventory_batch_status_pdf_service.dart';
 part 'metal_grade/batch_detail/inventory_batch_helpers.dart';
 part 'metal_grade/inventory_grade_summary_card.dart';
 part 'metal_grade/inventory_metal_grade_screen.dart';
-part 'movements/inventory_movement_widgets.dart';
 part 'screen_body/inventory_body.dart';
 part 'sections/inventory_detail_sections.dart';
-part 'stock_list/gold_inventory_group_widgets.dart';
-part 'stock_list/inventory_stock_item_widgets.dart';
-part 'widgets/inventory_summary_widgets.dart';
-
-// =============================================================================
-// MASTER SCREEN
-// =============================================================================
 
 class InventoryScreen extends StatefulWidget {
   final VoidCallback? onBack;
+
   const InventoryScreen({super.key, this.onBack});
 
   @override
@@ -63,23 +42,14 @@ class InventoryScreen extends StatefulWidget {
 
 class _InventoryScreenState extends State<InventoryScreen>
     with TickerProviderStateMixin {
-  late final InventoryController _ctrl;
-  final AppDatabase _db = AppDatabase();
+  static const int _sectionCount = 2;
 
-  // â”€â”€ Section entry animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  static const int _sectionCount = 6;
+  late final InventoryController _ctrl;
   late final List<AnimationController> _sectionAnim;
   late final List<Animation<double>> _sectionFade;
   late final List<Animation<Offset>> _sectionSlide;
 
-  // â”€â”€ Currency formatter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  final _rupee = NumberFormat.currency(
-    locale: 'en_IN',
-    symbol: 'Rs ',
-    decimalDigits: 0,
-  );
-  final _wt = NumberFormat('##0.00', 'en_IN');
-  StockCategory? _selectedMetal;
+  final AppDatabase _db = AppDatabase();
 
   @override
   void initState() {
@@ -87,29 +57,34 @@ class _InventoryScreenState extends State<InventoryScreen>
     _ctrl = InventoryController(_db);
     _ctrl.addListener(_rebuild);
 
-    // Staggered entry animations
     _sectionAnim = List.generate(
       _sectionCount,
-      (i) => AnimationController(
+      (index) => AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 500),
       ),
     );
     _sectionFade = _sectionAnim
-        .map((ac) => CurvedAnimation(parent: ac, curve: Curves.easeInOut))
-        .toList();
+        .map((controller) => CurvedAnimation(
+              parent: controller,
+              curve: Curves.easeInOut,
+            ))
+        .toList(growable: false);
     _sectionSlide = _sectionAnim
         .map(
-          (ac) => Tween<Offset>(
+          (controller) => Tween<Offset>(
             begin: const Offset(0, 0.10),
             end: Offset.zero,
-          ).animate(CurvedAnimation(parent: ac, curve: Curves.easeOutCubic)),
+          ).animate(
+            CurvedAnimation(parent: controller, curve: Curves.easeOutCubic),
+          ),
         )
-        .toList();
+        .toList(growable: false);
 
-    for (int i = 0; i < _sectionCount; i++) {
-      Future.delayed(Duration(milliseconds: 60 + i * 90), () {
-        if (mounted) _sectionAnim[i].forward();
+    for (int index = 0; index < _sectionCount; index++) {
+      Future.delayed(Duration(milliseconds: 60 + index * 90), () {
+        if (!mounted) return;
+        _sectionAnim[index].forward();
       });
     }
 
@@ -117,7 +92,9 @@ class _InventoryScreenState extends State<InventoryScreen>
   }
 
   void _rebuild() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -125,8 +102,8 @@ class _InventoryScreenState extends State<InventoryScreen>
     _ctrl
       ..removeListener(_rebuild)
       ..dispose();
-    for (final a in _sectionAnim) {
-      a.dispose();
+    for (final controller in _sectionAnim) {
+      controller.dispose();
     }
     super.dispose();
   }
@@ -137,10 +114,6 @@ class _InventoryScreenState extends State<InventoryScreen>
       child: SlideTransition(position: _sectionSlide[index], child: child),
     );
   }
-
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // BUILD
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   @override
   Widget build(BuildContext context) {
@@ -154,10 +127,6 @@ class _InventoryScreenState extends State<InventoryScreen>
           : _buildBody(),
     );
   }
-
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // PAGE HEADER
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
   void _openMetalLedger(StockCategory metal) {
     Navigator.of(context).push(
@@ -182,11 +151,5 @@ class _InventoryScreenState extends State<InventoryScreen>
         },
       ),
     );
-  }
-
-  void _selectInventoryCategory(String category) {
-    setState(() {
-      _ctrl.setCategory(category);
-    });
   }
 }

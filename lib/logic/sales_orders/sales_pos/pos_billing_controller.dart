@@ -433,6 +433,41 @@ class PosBillingController extends ChangeNotifier {
     );
   }
 
+  Future<void> resolvePendingHuidStockSelections() async {
+    for (var rowIndex = 0; rowIndex < saleItems.length; rowIndex++) {
+      final item = saleItems[rowIndex];
+      if (item.hasLinkedStock) {
+        continue;
+      }
+
+      final query = _firstHuidToken(item.huidCtrl.text);
+      if (query.isEmpty) {
+        continue;
+      }
+
+      final match = await _stockLookupRepo.findExactByHuid(
+        query: query,
+        metal: item.metal,
+      );
+      if (_isDisposed || match == null) {
+        continue;
+      }
+
+      applyStockSuggestionToRow(
+        rowIndex: rowIndex,
+        suggestion: match,
+      );
+    }
+  }
+
+  String _firstHuidToken(String value) {
+    final parts = value
+        .split(RegExp(r'[,;/\s]+'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty);
+    return parts.isEmpty ? '' : parts.first;
+  }
+
   void applyStockSuggestionToRow({
     required int rowIndex,
     required PosStockLookupModel suggestion,

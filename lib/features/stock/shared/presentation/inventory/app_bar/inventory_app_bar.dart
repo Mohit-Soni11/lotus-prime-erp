@@ -1,9 +1,5 @@
 part of '../inventory_screen.dart';
 
-// =============================================================================
-// APP BAR â€” Premium Design Match
-// =============================================================================
-
 class _InventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
 
@@ -18,7 +14,7 @@ class _InventoryAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _InventoryAppBarState extends State<_InventoryAppBar>
     with SingleTickerProviderStateMixin {
-  late AnimationController _blinkCtrl;
+  late final AnimationController _blinkCtrl;
 
   @override
   void initState() {
@@ -59,15 +55,10 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // â”€â”€ 1. Animated Back Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _HoverBackButton(onTap: widget.onBack),
             const SizedBox(width: 18),
-
-            // â”€â”€ 2. Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _buildVerticalDivider(),
             const SizedBox(width: 18),
-
-            // â”€â”€ 3. Premium Gradient Module Icon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Container(
               width: 34,
               height: 34,
@@ -93,8 +84,6 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
               ),
             ),
             const SizedBox(width: 14),
-
-            // â”€â”€ 4. Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Text(
               InvStrings.screenTitle,
               style: InvStyles.shellTitle.copyWith(
@@ -102,11 +91,7 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
                 letterSpacing: 1.2,
               ),
             ),
-
-            // Spacer pushes the radar widget to the right end
             const Spacer(),
-
-            // â”€â”€ 5. Premium Radar Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _RadarWidget(blinkCtrl: _blinkCtrl),
           ],
         ),
@@ -133,11 +118,9 @@ class _InventoryAppBarState extends State<_InventoryAppBar>
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ANIMATED BACK BUTTON
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBackButton extends StatefulWidget {
   final VoidCallback onTap;
+
   const _HoverBackButton({required this.onTap});
 
   @override
@@ -181,7 +164,7 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
                         offset: const Offset(0, 3),
                       ),
                     ]
-                  : [],
+                  : const [],
             ),
             child: Icon(
               InvIcons.backArrow,
@@ -196,11 +179,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// RADAR / ONLINE WIDGET (Pill shape added)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RadarWidget extends StatelessWidget {
   final AnimationController blinkCtrl;
+
   const _RadarWidget({required this.blinkCtrl});
 
   @override

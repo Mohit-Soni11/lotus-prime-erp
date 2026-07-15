@@ -13,19 +13,26 @@ class _InventoryBatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _batchStatusColor();
+    final statusBg = _batchStatusBg();
+    final soldOut = batch.isSoldOut;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: soldOut ? const Color(0xFFFFFBFA) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: InvColors.cardBorder,
-          width: 1,
+          color: soldOut
+              ? InvColors.danger.withValues(alpha: 0.26)
+              : InvColors.cardBorder,
+          width: soldOut ? 1.2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: ui.accent.withValues(alpha: 0.07),
+            color: (soldOut ? InvColors.danger : ui.accent)
+                .withValues(alpha: 0.07),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -71,6 +78,12 @@ class _InventoryBatchCard extends StatelessWidget {
                           const SizedBox(width: 10),
                           _GstTag(accent: ui.accent),
                         ],
+                        const SizedBox(width: 10),
+                        _BatchStatusTag(
+                          label: batch.stockStatusLabel,
+                          color: statusColor,
+                          background: statusBg,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 5),
@@ -90,7 +103,12 @@ class _InventoryBatchCard extends StatelessWidget {
               _BatchMetric(
                 label: 'Items',
                 value: '${batch.availableItems}/${batch.totalItems}',
-                accent: ui.accent,
+                accent: statusColor,
+                helper: batch.isSoldOut
+                    ? 'All sold'
+                    : batch.isPartiallySold
+                        ? '${batch.soldItems} sold'
+                        : 'In stock',
               ),
               _BatchMetric(
                 label: 'Gross Weight',
@@ -131,6 +149,18 @@ class _InventoryBatchCard extends StatelessWidget {
       if (batch.createdAt > 0) _date(batch.createdAt),
     ];
     return parts.join(' - ');
+  }
+
+  Color _batchStatusColor() {
+    if (batch.isSoldOut) return InvColors.danger;
+    if (batch.isPartiallySold) return const Color(0xFFF59E0B);
+    return InvColors.success;
+  }
+
+  Color _batchStatusBg() {
+    if (batch.isSoldOut) return InvColors.dangerBg;
+    if (batch.isPartiallySold) return const Color(0xFFFFF7E6);
+    return InvColors.successBg;
   }
 
   String _date(int millis) {
@@ -262,11 +292,13 @@ class _BatchMetric extends StatelessWidget {
   final String label;
   final String value;
   final Color accent;
+  final String? helper;
 
   const _BatchMetric({
     required this.label,
     required this.value,
     required this.accent,
+    this.helper,
   });
 
   @override
@@ -304,7 +336,53 @@ class _BatchMetric extends StatelessWidget {
               color: InvColors.textDark,
             ),
           ),
+          if (helper != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              helper!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                color: accent,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _BatchStatusTag extends StatelessWidget {
+  final String label;
+  final Color color;
+  final Color background;
+
+  const _BatchStatusTag({
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.26)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w900,
+          color: color,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

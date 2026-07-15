@@ -64,6 +64,29 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     super.dispose();
   }
 
+  Future<void> _handleGenerateInvoicePressed() async {
+    await widget.ctrl.resolvePendingHuidStockSelections();
+    if (!mounted) {
+      return;
+    }
+
+    final validationMessage = widget.ctrl.validateInvoiceReadiness();
+    if (validationMessage != null) {
+      widget.ctrl.focusFirstInvoiceIssue();
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: validationMessage,
+      );
+      return;
+    }
+
+    PosInvoicePreviewScreen.push(
+      context,
+      billingCtrl: widget.ctrl,
+    );
+  }
+
   Future<void> _pickPromiseDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -1530,25 +1553,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   height: 54,
                   child: ElevatedButton.icon(
                     //  Generate invoice action
-                    onPressed: () {
-                      final validationMessage =
-                          widget.ctrl.validateInvoiceReadiness();
-                      if (validationMessage != null) {
-                        widget.ctrl.focusFirstInvoiceIssue();
-                        AppFeedback.show(
-                          context,
-                          type: AppFeedbackType.error,
-                          message: validationMessage,
-                        );
-                        return;
-                      }
-
-                      // Open the invoice preview when the cart contains billable items.
-                      PosInvoicePreviewScreen.push(
-                        context,
-                        billingCtrl: widget.ctrl,
-                      );
-                    },
+                    onPressed: _handleGenerateInvoicePressed,
 
                     icon: const Icon(SalesPosIcons.printReceipt,
                         color: Colors.white, size: 20),

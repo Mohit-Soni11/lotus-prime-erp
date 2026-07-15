@@ -444,7 +444,8 @@ class _InventoryGradeDetailScreenState
               for (final filter in const [
                 'All',
                 'Available',
-                'Sold',
+                'Partially Sold',
+                'Sold Out',
                 'GST',
                 'Due',
                 'Attachment',
@@ -483,9 +484,11 @@ class _InventoryGradeDetailScreenState
   bool _matchesBatchFilter(_InventoryBatchGroup batch) {
     switch (_batchFilter) {
       case 'Available':
-        return batch.availableItems > 0;
-      case 'Sold':
-        return batch.totalItems - batch.availableItems > 0;
+        return batch.hasAvailableStock;
+      case 'Partially Sold':
+        return batch.isPartiallySold;
+      case 'Sold Out':
+        return batch.isSoldOut;
       case 'GST':
         return batch.isGst;
       case 'Due':

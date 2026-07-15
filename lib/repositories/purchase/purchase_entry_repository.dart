@@ -1112,6 +1112,14 @@ class PurchaseEntryRepository {
     final valuationFine = item.valuationFineWeight > 0
         ? item.valuationFineWeight
         : item.fineWeight + item.wastageFineWeight;
+    final unitGrossWeight = _divideForStockUnit(item.grossWeight, quantity);
+    final unitLessWeight = _divideForStockUnit(item.lessWeight, quantity);
+    final unitNetWeight = _divideForStockUnit(item.netWeight, quantity);
+    final unitFineWeight = _divideForStockUnit(item.fineWeight, quantity);
+    final unitWastageFineWeight =
+        _divideForStockUnit(item.wastageFineWeight, quantity);
+    final unitValuationFineWeight =
+        _divideForStockUnit(valuationFine, quantity);
 
     for (var index = 0; index < quantity; index++) {
       final huid = index < huids.length ? huids[index] : null;
@@ -1160,13 +1168,13 @@ class PurchaseEntryRepository {
               ? item.description
               : '${item.subCategory} Purchase Item',
           huid,
-          item.grossWeight,
-          item.lessWeight,
-          item.netWeight,
+          unitGrossWeight,
+          unitLessWeight,
+          unitNetWeight,
           item.purity,
-          item.fineWeight,
-          item.wastageFineWeight,
-          valuationFine,
+          unitFineWeight,
+          unitWastageFineWeight,
+          unitValuationFineWeight,
           item.effectiveRatePerGram > 0 ? item.effectiveRatePerGram : item.rate,
           unitMaking,
           unitCost,
@@ -1178,6 +1186,13 @@ class PurchaseEntryRepository {
         ],
       );
     }
+  }
+
+  double _divideForStockUnit(double value, int quantity) {
+    if (quantity <= 1) {
+      return value;
+    }
+    return double.parse((value / quantity).toStringAsFixed(3));
   }
 
   Future<void> _ensureTableColumns(
