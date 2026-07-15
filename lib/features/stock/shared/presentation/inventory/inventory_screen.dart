@@ -13,11 +13,16 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' show QueryRow, Variable;
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/application/inventory_controller.dart';
@@ -29,6 +34,12 @@ import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/inventory_app_bar.dart';
 part 'metal_grade/inventory_grade_detail_screen.dart';
+part 'metal_grade/batch_detail/inventory_batch_models.dart';
+part 'metal_grade/batch_detail/inventory_batch_list_widgets.dart';
+part 'metal_grade/batch_detail/inventory_batch_dossier_screen.dart';
+part 'metal_grade/batch_detail/inventory_batch_pdf_service.dart';
+part 'metal_grade/batch_detail/inventory_batch_status_pdf_service.dart';
+part 'metal_grade/batch_detail/inventory_batch_helpers.dart';
 part 'metal_grade/inventory_grade_summary_card.dart';
 part 'metal_grade/inventory_metal_grade_screen.dart';
 part 'movements/inventory_movement_widgets.dart';
