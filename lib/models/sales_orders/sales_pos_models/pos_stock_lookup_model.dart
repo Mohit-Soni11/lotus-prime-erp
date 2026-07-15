@@ -15,6 +15,7 @@ class PosStockLookupModel {
   final String itemName;
   final String description;
   final String? huid;
+  final List<String> huids;
   final String purity;
   final MetalType metal;
   final String categoryLabel;
@@ -33,6 +34,7 @@ class PosStockLookupModel {
     required this.itemName,
     required this.description,
     required this.huid,
+    this.huids = const [],
     required this.purity,
     required this.metal,
     required this.categoryLabel,
@@ -51,7 +53,11 @@ class PosStockLookupModel {
     final parts = <String>[
       categoryLabel,
       if (segmentLabel.trim().isNotEmpty) segmentLabel.trim(),
-      if (huid != null && huid!.trim().isNotEmpty) 'HUID ${huid!.trim()}',
+      if (huids.isNotEmpty)
+        'HUID ${huids.join(', ')}'
+      else if (huid != null && huid!.trim().isNotEmpty)
+        'HUID ${huid!.trim()}',
+      if (quantity > 1) '$quantity pcs set',
       if (purity.trim().isNotEmpty) purity.trim(),
       'GW ${grossWeight.toStringAsFixed(3)}',
       if (unitCost > 0) 'Cost Rs ${unitCost.toStringAsFixed(2)}',

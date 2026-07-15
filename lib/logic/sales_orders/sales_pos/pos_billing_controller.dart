@@ -443,11 +443,13 @@ class PosBillingController extends ChangeNotifier {
 
     final item = saleItems[rowIndex];
     item.updateMetal(suggestion.metal);
-    item.pcsCtrl.text = '1';
+    item.pcsCtrl.text = suggestion.quantity.toString();
     item.descCtrl.text = suggestion.itemName.trim().isEmpty
         ? suggestion.sku
         : suggestion.itemName;
-    item.huidCtrl.text = suggestion.huid?.trim() ?? '';
+    item.huidCtrl.text = suggestion.huids.isNotEmpty
+        ? suggestion.huids.join(', ')
+        : suggestion.huid?.trim() ?? '';
     item.purityCtrl.text = suggestion.purity.trim();
     item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
     item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);

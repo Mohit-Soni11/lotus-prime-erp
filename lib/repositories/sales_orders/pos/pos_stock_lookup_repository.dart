@@ -39,7 +39,7 @@ class PosStockLookupRepository {
             threshold: 0.25,
           );
 
-    return matches.take(limit).map(_toLookupModel).toList(growable: false);
+    return _toLookupModels(matches, unitRows, limit);
   }
 
   Future<List<PosStockLookupModel>> searchByHuid({
@@ -62,7 +62,7 @@ class PosStockLookupRepository {
     matches.sort(
       (a, b) => _rankHuidMatch(a, term).compareTo(_rankHuidMatch(b, term)),
     );
-    return matches.take(limit).map(_toLookupModel).toList(growable: false);
+    return _toLookupModels(matches, unitRows, limit);
   }
 
   Future<PosStockLookupModel?> findExactByHuid({
@@ -79,7 +79,10 @@ class PosStockLookupRepository {
       final huid = row.huid.trim().toLowerCase();
       final unitCode = row.unitCode.trim().toLowerCase();
       if (huid == term || unitCode == term) {
-        return _toLookupModel(row);
+        return _toLookupModel(
+          row,
+          _stockItemGroupRows(row, unitRows),
+        );
       }
     }
     return null;
@@ -161,23 +164,95 @@ class PosStockLookupRepository {
     return 2;
   }
 
-  PosStockLookupModel _toLookupModel(_StockUnitLookupRow row) {
+  List<PosStockLookupModel> _toLookupModels(
+    List<_StockUnitLookupRow> matches,
+    List<_StockUnitLookupRow> allRows,
+    int limit,
+  ) {
+    final results = <PosStockLookupModel>[];
+    final groupedStockItems = <int>{};
+    final singleUnits = <int>{};
+
+    for (final row in matches) {
+      final groupRows = _stockItemGroupRows(row, allRows);
+      if (_shouldSellAsSet(row, groupRows)) {
+        if (!groupedStockItems.add(row.stockItemId)) {
+          continue;
+        }
+        results.add(_toLookupModel(row, groupRows));
+      } else {
+        if (!singleUnits.add(row.stockUnitId)) {
+          continue;
+        }
+        results.add(_toLookupModel(row, [row]));
+      }
+      if (results.length >= limit) {
+        break;
+      }
+    }
+
+    return results;
+  }
+
+  List<_StockUnitLookupRow> _stockItemGroupRows(
+    _StockUnitLookupRow row,
+    List<_StockUnitLookupRow> allRows,
+  ) {
+    return allRows
+        .where((candidate) => candidate.stockItemId == row.stockItemId)
+        .toList(growable: false);
+  }
+
+  bool _shouldSellAsSet(
+    _StockUnitLookupRow row,
+    List<_StockUnitLookupRow> groupRows,
+  ) {
+    if (groupRows.length <= 1) {
+      return false;
+    }
+    final text = [
+      row.itemType,
+      row.itemName,
+      row.category,
+      row.description,
+    ].join(' ').toLowerCase();
+    return text.contains('jhumka') ||
+        text.contains('earring') ||
+        text.contains('tops') ||
+        text.contains('pair') ||
+        text.contains('set');
+  }
+
+  PosStockLookupModel _toLookupModel(
+    _StockUnitLookupRow row,
+    List<_StockUnitLookupRow> groupRows,
+  ) {
+    final sellAsSet = _shouldSellAsSet(row, groupRows);
+    final effectiveRows = sellAsSet ? groupRows : [row];
+    final huids = effectiveRows
+        .map((unit) => unit.huid.trim())
+        .where((huid) => huid.isNotEmpty)
+        .toList(growable: false);
+
     return PosStockLookupModel(
       stockItemId: row.stockItemId,
       stockUnitId: row.stockUnitId,
       sku: row.unitCode,
       itemName: row.itemName,
       description: row.description,
-      huid: row.huid.isEmpty ? null : row.huid,
+      huid: huids.isEmpty ? null : huids.first,
+      huids: huids,
       purity: row.purityLabel,
       metal: _metalFromUnitRow(row),
       categoryLabel: row.itemType.isEmpty ? row.category : row.itemType,
       segmentLabel: row.segment,
-      grossWeight: row.grossWeight,
-      lessWeight: row.lessWeight,
-      netWeight: row.netWeight,
-      unitCost: row.unitCost,
-      quantity: 1,
+      grossWeight:
+          effectiveRows.fold(0.0, (sum, unit) => sum + unit.grossWeight),
+      lessWeight:
+          effectiveRows.fold(0.0, (sum, unit) => sum + unit.lessWeight),
+      netWeight: effectiveRows.fold(0.0, (sum, unit) => sum + unit.netWeight),
+      unitCost: effectiveRows.fold(0.0, (sum, unit) => sum + unit.unitCost),
+      quantity: effectiveRows.length,
       status: row.status,
     );
   }

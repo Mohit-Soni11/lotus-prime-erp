@@ -29,6 +29,7 @@ class _InventoryBatchStatusPdfService {
           pw.SizedBox(height: 14),
           _statusSummary(batch),
           pw.SizedBox(height: 12),
+          pw.NewPage(freeSpace: 170),
           _statusLedger(batch),
         ],
         footer: (context) => pw.Container(

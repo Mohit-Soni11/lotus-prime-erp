@@ -1022,9 +1022,11 @@ class PosCheckoutRepository {
       ),
     );
     final now = DateTime.now();
-    await _markStockUnitAvailable(
+    await _markStockUnitsAvailable(
+      stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
+      quantityToRestore: quantityToRestore,
       restoredAt: now,
     );
     await _insertStockMovement(
@@ -1073,11 +1075,18 @@ class PosCheckoutRepository {
       );
     }
 
-    await _markStockUnitSold(
+    final soldUnitCount = await _markStockUnitsSold(
+      stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
+      quantityToSell: quantityToSell,
       soldAt: DateTime.now(),
     );
+    if (soldUnitCount < quantityToSell) {
+      throw StateError(
+        'Only $soldUnitCount stock unit(s) could be reserved for ${stockRow.sku}.',
+      );
+    }
 
     final remainingQty = stockRow.quantity - quantityToSell;
     await (_db.update(_db.stockItems)
@@ -1108,28 +1117,120 @@ class PosCheckoutRepository {
     );
   }
 
-  Future<void> _markStockUnitSold({
+  Future<int> _markStockUnitsSold({
+    required int stockItemId,
     required int? stockUnitId,
     required String? stockUnitCode,
+    required int quantityToSell,
     required DateTime soldAt,
+  }) async {
+    final unitsToSell = await _stockUnitsForSale(
+      stockItemId: stockItemId,
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+      quantityToSell: quantityToSell,
+    );
+    if (unitsToSell.length < quantityToSell) {
+      return unitsToSell.length;
+    }
+
+    for (final unit in unitsToSell) {
+      final status = unit.read<String>('status');
+      if (status != stock.StockStatus.available.label) {
+        throw StateError('Selected stock unit is no longer available for sale.');
+      }
+    }
+
+    final ids = unitsToSell.map((row) => row.read<int>('id')).toList();
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    await _db.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET status = ?, sold_at = ?, updated_at = ?
+      WHERE id IN ($placeholders)
+      ''',
+      [
+        stock.StockStatus.sold.label,
+        soldAt.millisecondsSinceEpoch,
+        soldAt.millisecondsSinceEpoch,
+        ...ids,
+      ],
+    );
+    return ids.length;
+  }
+
+  Future<List<QueryRow>> _stockUnitsForSale({
+    required int stockItemId,
+    required int? stockUnitId,
+    required String? stockUnitCode,
+    required int quantityToSell,
+  }) async {
+    final selected = await _selectedStockUnit(
+      stockUnitId: stockUnitId,
+      stockUnitCode: stockUnitCode,
+    );
+    final selectedId = selected?.read<int>('id');
+    final units = <QueryRow>[
+      if (selected != null) selected,
+    ];
+
+    final remaining = quantityToSell - units.length;
+    if (remaining > 0) {
+      final rows = selectedId == null
+          ? await _db.customSelect(
+              '''
+              SELECT id, status
+              FROM stock_item_units
+              WHERE stock_item_id = ?
+                AND status = ?
+              ORDER BY piece_no ASC, id ASC
+              LIMIT ?
+              ''',
+              variables: [
+                Variable<int>(stockItemId),
+                Variable<String>(stock.StockStatus.available.label),
+                Variable<int>(remaining),
+              ],
+            ).get()
+          : await _db.customSelect(
+              '''
+              SELECT id, status
+              FROM stock_item_units
+              WHERE stock_item_id = ?
+                AND status = ?
+                AND id <> ?
+              ORDER BY piece_no ASC, id ASC
+              LIMIT ?
+              ''',
+              variables: [
+                Variable<int>(stockItemId),
+                Variable<String>(stock.StockStatus.available.label),
+                Variable<int>(selectedId),
+                Variable<int>(remaining),
+              ],
+            ).get();
+      units.addAll(rows);
+    }
+
+    return units;
+  }
+
+  Future<QueryRow?> _selectedStockUnit({
+    required int? stockUnitId,
+    required String? stockUnitCode,
   }) async {
     final whereClause = _stockUnitWhereClause(
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
     );
     if (whereClause == null) {
-      return;
+      return null;
     }
-
     final variables = _stockUnitWhereVariables(
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
     );
-    final whereArgs = _stockUnitWhereArgs(
-      stockUnitId: stockUnitId,
-      stockUnitCode: stockUnitCode,
-    );
-    final existing = await _db.customSelect(
+    return _db.customSelect(
       '''
       SELECT id, status
       FROM stock_item_units
@@ -1138,58 +1239,78 @@ class PosCheckoutRepository {
       ''',
       variables: variables,
     ).getSingleOrNull();
-
-    if (existing == null) {
-      return;
-    }
-
-    final status = existing.read<String>('status');
-    if (status != stock.StockStatus.available.label) {
-      throw StateError('Selected stock unit is no longer available for sale.');
-    }
-
-    await _db.customStatement(
-      '''
-      UPDATE stock_item_units
-      SET status = ?, sold_at = ?, updated_at = ?
-      WHERE $whereClause
-      ''',
-      [
-        stock.StockStatus.sold.label,
-        soldAt.millisecondsSinceEpoch,
-        soldAt.millisecondsSinceEpoch,
-        ...whereArgs,
-      ],
-    );
   }
 
-  Future<void> _markStockUnitAvailable({
+  Future<void> _markStockUnitsAvailable({
+    required int stockItemId,
     required int? stockUnitId,
     required String? stockUnitCode,
+    required int quantityToRestore,
     required DateTime restoredAt,
   }) async {
-    final whereClause = _stockUnitWhereClause(
+    final selected = await _selectedStockUnit(
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
     );
-    if (whereClause == null) {
+    final selectedId = selected?.read<int>('id');
+    final units = <QueryRow>[
+      if (selected != null) selected,
+    ];
+
+    final remaining = quantityToRestore - units.length;
+    if (remaining > 0) {
+      final rows = selectedId == null
+          ? await _db.customSelect(
+              '''
+              SELECT id, status
+              FROM stock_item_units
+              WHERE stock_item_id = ?
+                AND status = ?
+              ORDER BY sold_at DESC, id DESC
+              LIMIT ?
+              ''',
+              variables: [
+                Variable<int>(stockItemId),
+                Variable<String>(stock.StockStatus.sold.label),
+                Variable<int>(remaining),
+              ],
+            ).get()
+          : await _db.customSelect(
+              '''
+              SELECT id, status
+              FROM stock_item_units
+              WHERE stock_item_id = ?
+                AND status = ?
+                AND id <> ?
+              ORDER BY sold_at DESC, id DESC
+              LIMIT ?
+              ''',
+              variables: [
+                Variable<int>(stockItemId),
+                Variable<String>(stock.StockStatus.sold.label),
+                Variable<int>(selectedId),
+                Variable<int>(remaining),
+              ],
+            ).get();
+      units.addAll(rows);
+    }
+
+    if (units.isEmpty) {
       return;
     }
-    final whereArgs = _stockUnitWhereArgs(
-      stockUnitId: stockUnitId,
-      stockUnitCode: stockUnitCode,
-    );
 
+    final ids = units.map((row) => row.read<int>('id')).toList();
+    final placeholders = List.filled(ids.length, '?').join(', ');
     await _db.customStatement(
       '''
       UPDATE stock_item_units
       SET status = ?, sold_at = NULL, updated_at = ?
-      WHERE $whereClause
+      WHERE id IN ($placeholders)
       ''',
       [
         stock.StockStatus.available.label,
         restoredAt.millisecondsSinceEpoch,
-        ...whereArgs,
+        ...ids,
       ],
     );
   }
@@ -1216,16 +1337,6 @@ class PosCheckoutRepository {
       return [Variable<int>(stockUnitId)];
     }
     return [Variable<String>(stockUnitCode!.trim())];
-  }
-
-  List<Object> _stockUnitWhereArgs({
-    required int? stockUnitId,
-    required String? stockUnitCode,
-  }) {
-    if (stockUnitId != null) {
-      return [stockUnitId];
-    }
-    return [stockUnitCode!.trim()];
   }
 
   Future<void> _insertStockMovement({
