@@ -30,7 +30,7 @@ Future<Uint8List> _buildStockCardPdfBytes(StockSearchResult item) async {
               item.hasHuid ? item.huid : item.unitCode,
             ),
             _StockPdfField('Unit Code', item.unitCode),
-            _StockPdfField('Batch Code', item.batchCode),
+            _StockPdfField('Batch Code', item.inventoryBatchCode),
             _StockPdfField('Piece No.', item.pieceNo.toString()),
             _StockPdfField('Status', item.status),
           ],
@@ -99,10 +99,7 @@ Future<Uint8List> _buildStockCardPdfBytes(StockSearchResult item) async {
                 'Bill Amount',
                 _currencyFormat.format(item.soldBillAmount),
               ),
-              _StockPdfField(
-                'Profit Snapshot',
-                _currencyFormat.format(item.soldProfitAmount),
-              ),
+              _StockPdfField('Stock Status', item.status),
             ],
           ),
         ],
@@ -157,7 +154,7 @@ pw.Widget _stockPdfHeader(
               ),
               pw.SizedBox(height: 5),
               pw.Text(
-                '${item.metalType.toUpperCase()} | ${item.trackingLabel} | ${item.batchCode}',
+                '${item.metalType.toUpperCase()} | ${item.trackingLabel} | ${item.inventoryBatchCode}',
                 style: pw.TextStyle(
                   fontSize: 10,
                   fontWeight: pw.FontWeight.bold,

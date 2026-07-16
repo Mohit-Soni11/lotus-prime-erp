@@ -193,43 +193,10 @@ class _InventoryGradeSummaryCardState
                   ],
                 ),
                 const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 13,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFBF7EF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEADCC5)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet_rounded,
-                        color: widget.ui.accent,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Stock Value',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: InvColors.textMuted,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _money(widget.grade.stockValue),
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: InvColors.textDark,
-                        ),
-                      ),
-                    ],
-                  ),
+                _GradeAvailabilityStrip(
+                  availableUnits: widget.grade.availableUnits,
+                  soldUnits: widget.grade.soldUnits,
+                  accent: widget.ui.accent,
                 ),
               ],
             ),
@@ -242,13 +209,115 @@ class _InventoryGradeSummaryCardState
   String _weight(double value) {
     return NumberFormat('##,##0.000', 'en_IN').format(value);
   }
+}
 
-  String _money(double value) {
-    return NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: 'Rs ',
-      decimalDigits: 0,
-    ).format(value);
+class _GradeAvailabilityStrip extends StatelessWidget {
+  final int availableUnits;
+  final int soldUnits;
+  final Color accent;
+
+  const _GradeAvailabilityStrip({
+    required this.availableUnits,
+    required this.soldUnits,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSoldOut = availableUnits == 0 && soldUnits > 0;
+    final statusText = isSoldOut
+        ? 'Sold Out'
+        : soldUnits > 0
+            ? 'Partially Sold'
+            : 'Ready Stock';
+    final statusColor = isSoldOut
+        ? InvColors.danger
+        : soldUnits > 0
+            ? const Color(0xFFF59E0B)
+            : InvColors.success;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBF7EF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEADCC5)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.inventory_2_rounded, color: accent, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _AvailabilityText(
+              label: 'Available',
+              value: '$availableUnits pcs',
+              color: InvColors.success,
+            ),
+          ),
+          Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
+          Expanded(
+            child: _AvailabilityText(
+              label: 'Sold',
+              value: '$soldUnits pcs',
+              color: InvColors.danger,
+            ),
+          ),
+          Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
+          Expanded(
+            child: _AvailabilityText(
+              label: 'Status',
+              value: statusText,
+              color: statusColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvailabilityText extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _AvailabilityText({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: InvColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

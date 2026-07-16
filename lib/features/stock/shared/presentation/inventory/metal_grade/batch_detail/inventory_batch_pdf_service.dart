@@ -206,8 +206,6 @@ class _InventoryBatchPdfService {
                 'Valuation Fine Total', '${_weight(batch.valuationFine)} g'),
             if (_hasMoney(batch.makingAmount))
               _metric('Making Total', _money(batch.makingAmount)),
-            if (_hasMoney(batch.stockValue))
-              _metric('Stock Cost Value', _money(batch.stockValue)),
             if (_hasMoney(batch.payment.gstAmount))
               _metric('GST Total', _money(batch.payment.gstAmount)),
             if (_hasMoney(batch.payment.grandTotal))

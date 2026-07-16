@@ -116,4 +116,10 @@ class StockSearchResult {
     if (voucherNo.trim().isNotEmpty) return voucherNo;
     return 'Not recorded';
   }
+
+  String get inventoryBatchCode {
+    if (batchCode.trim().isNotEmpty) return batchCode.trim();
+    if (voucherNo.trim().isNotEmpty) return voucherNo.trim();
+    return '';
+  }
 }

@@ -71,6 +71,7 @@ class SidebarMenu {
       icon: Icons.inventory_2_outlined,
       subItems: [
         MenuItemData(AppRoutes.inventoryRoute),
+        MenuItemData(AppRoutes.stockSummaryRoute),
         MenuItemData(AppRoutes.stockActivityRoute),
         MenuItemData(AppRoutes.stockSearchRoute),
         MenuItemData(AppRoutes.stockValuationRoute),
@@ -141,7 +142,6 @@ class SidebarMenu {
         MenuItemData(AppRoutes.dayBookRoute), // Daily Activity
         MenuItemData(AppRoutes.salesReportRoute), // Trading
         MenuItemData(AppRoutes.purchaseReportRoute), // Trading
-        MenuItemData(AppRoutes.stockSummaryRoute), // Trading
         MenuItemData(AppRoutes.profitLossRoute), // Financials
         MenuItemData(AppRoutes.gstReportRoute), // Taxation
       ],

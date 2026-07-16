@@ -213,9 +213,15 @@ class _InventoryBatchStatusPdfService {
               _statusMetric('Net', '${_weight(unit.netWeight)} g'),
               _statusMetric('Purity', '${_percent(unit.purityPercent)}%'),
               _statusMetric('Wastage', '${_percent(unit.wastagePercent)}%'),
+              _statusMetric(
+                'Total Purity',
+                '${_percent(unit.totalPurityPercent)}%',
+              ),
               _statusMetric('Actual Fine', '${_weight(unit.actualFine)} g'),
-              if (unit.unitCost > 0)
-                _statusMetric('Cost', _money(unit.unitCost)),
+              _statusMetric(
+                'Valuation Fine',
+                '${_weight(unit.valuationFine)} g',
+              ),
             ],
           ),
         ],

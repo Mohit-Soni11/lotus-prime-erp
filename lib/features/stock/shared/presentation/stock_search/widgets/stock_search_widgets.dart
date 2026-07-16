@@ -210,7 +210,11 @@ class _SearchResultsPanel extends StatelessWidget {
                 final item = controller.results[index];
                 return _StockSearchCard(
                   item: item,
-                  onTap: () => _showStockDetail(context, item),
+                  onTap: () => _showStockDetail(
+                    context,
+                    item,
+                    onChanged: controller.load,
+                  ),
                 );
               },
             ),
@@ -302,7 +306,10 @@ class _StockSearchCardState extends State<_StockSearchCard> {
                         _SmallPill(
                             label: item.hasHuid ? 'HUID' : 'Unit Code',
                             value: item.hasHuid ? item.huid : item.unitCode),
-                        _SmallPill(label: 'Batch', value: item.batchCode),
+                        _SmallPill(
+                          label: 'Batch',
+                          value: item.inventoryBatchCode,
+                        ),
                         _SmallPill(
                             label: 'Supplier',
                             value: _clean(item.supplierName)),
@@ -810,14 +817,18 @@ class _OnlineBadge extends StatelessWidget {
   }
 }
 
-void _showStockDetail(BuildContext context, StockSearchResult item) {
+void _showStockDetail(
+  BuildContext context,
+  StockSearchResult item, {
+  VoidCallback? onChanged,
+}) {
   showDialog<void>(
     context: context,
     builder: (context) {
       return Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(28),
-        child: _StockDetailDossier(item: item),
+        child: _StockDetailDossier(item: item, onChanged: onChanged),
       );
     },
   );
@@ -825,8 +836,9 @@ void _showStockDetail(BuildContext context, StockSearchResult item) {
 
 class _StockDetailDossier extends StatelessWidget {
   final StockSearchResult item;
+  final VoidCallback? onChanged;
 
-  const _StockDetailDossier({required this.item});
+  const _StockDetailDossier({required this.item, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -871,7 +883,9 @@ class _StockDetailDossier extends StatelessWidget {
                                 _DetailTile(
                                     label: 'Unit Code', value: item.unitCode),
                                 _DetailTile(
-                                    label: 'Batch Code', value: item.batchCode),
+                                  label: 'Batch Code',
+                                  value: item.inventoryBatchCode,
+                                ),
                                 _DetailTile(
                                     label: 'Piece No.',
                                     value: item.pieceNo.toString()),
@@ -940,6 +954,13 @@ class _StockDetailDossier extends StatelessWidget {
                           Expanded(child: _SaleSection(item: item)),
                         ],
                       ),
+                      const SizedBox(height: 14),
+                      _UnitMovementHistorySection(item: item),
+                      const SizedBox(height: 14),
+                      _StockLifecycleActionSection(
+                        item: item,
+                        onChanged: onChanged,
+                      ),
                     ],
                   ),
                 ),
@@ -990,7 +1011,7 @@ class _StockDossierHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  '${item.metalType.toUpperCase()} • ${item.trackingLabel} • ${item.batchCode}',
+                  '${item.metalType.toUpperCase()} • ${item.trackingLabel} • ${item.inventoryBatchCode}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -1055,7 +1076,7 @@ class _SaleSection extends StatelessWidget {
           _DetailTile(label: 'Sale Invoice', value: 'Not sold yet'),
           _DetailTile(label: 'Customer', value: 'Stock is currently available'),
           _DetailTile(label: 'Sale Date', value: 'Not recorded'),
-          _DetailTile(label: 'Profit Snapshot', value: 'Available after sale'),
+          _DetailTile(label: 'Stock Status', value: 'Ready for sale'),
         ],
       );
     }
@@ -1074,12 +1095,739 @@ class _SaleSection extends StatelessWidget {
         _DetailTile(
             label: 'Bill Amount',
             value: _currencyFormat.format(item.soldBillAmount)),
-        _DetailTile(
-            label: 'Profit Snapshot',
-            value: _currencyFormat.format(item.soldProfitAmount)),
+        _DetailTile(label: 'Stock Status', value: item.status),
       ],
     );
   }
+}
+
+class _UnitMovementHistorySection extends StatefulWidget {
+  final StockSearchResult item;
+
+  const _UnitMovementHistorySection({required this.item});
+
+  @override
+  State<_UnitMovementHistorySection> createState() =>
+      _UnitMovementHistorySectionState();
+}
+
+class _UnitMovementHistorySectionState
+    extends State<_UnitMovementHistorySection> {
+  late final Future<List<StockUnitHistoryEvent>> _historyFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _historyFuture =
+        StockUnitHistoryController(AppDatabase()).loadFor(widget.item);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: InvColors.brandGold.withValues(alpha: 0.26)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _SectionIcon(
+                icon: Icons.account_tree_rounded,
+                accent: InvColors.brandGold,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Unit Movement History',
+                  style: InvStyles.sectionTitle.copyWith(fontSize: 16),
+                ),
+              ),
+              _LifecycleBadge(status: widget.item.status),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FutureBuilder<List<StockUnitHistoryEvent>>(
+            future: _historyFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const _UnitMovementLoadingState();
+              }
+              if (snapshot.hasError) {
+                return const _UnitMovementMessage(
+                  icon: Icons.error_outline_rounded,
+                  title: 'Movement History Unavailable',
+                  message: 'This unit history could not be loaded right now.',
+                );
+              }
+              final events = snapshot.data ?? const <StockUnitHistoryEvent>[];
+              if (events.isEmpty) {
+                return const _UnitMovementMessage(
+                  icon: Icons.timeline_rounded,
+                  title: 'No Movement Recorded',
+                  message:
+                      'This unit has no linked intake or sale movement yet.',
+                );
+              }
+              return Column(
+                children: [
+                  for (int index = 0; index < events.length; index++) ...[
+                    _UnitMovementTimelineRow(
+                      event: events[index],
+                      isLast: index == events.length - 1,
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LifecycleBadge extends StatelessWidget {
+  final String status;
+
+  const _LifecycleBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = _stockLifecycleLabel(status);
+    final color = _stockLifecycleColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          color: color,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _UnitMovementTimelineRow extends StatelessWidget {
+  final StockUnitHistoryEvent event;
+  final bool isLast;
+
+  const _UnitMovementTimelineRow({
+    required this.event,
+    required this.isLast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _movementColor(event);
+    final icon = _movementIcon(event);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: color.withValues(alpha: 0.28)),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            if (!isLast)
+              Container(
+                width: 2,
+                height: 34,
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                color: InvColors.cardBorder,
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF7EF),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: InvColors.cardBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.businessStatus,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: InvColors.textDark,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatDateTime(event.occurredAt),
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: InvColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MovementMetricChip(
+                      label: 'Source',
+                      value: event.sourceLabel,
+                      icon: Icons.receipt_long_rounded,
+                    ),
+                    _MovementMetricChip(
+                      label: event.isSale ? 'Customer' : 'Supplier',
+                      value: event.partyLabel,
+                      icon: event.isSale
+                          ? Icons.person_rounded
+                          : Icons.storefront_rounded,
+                    ),
+                    _MovementMetricChip(
+                      label: 'Quantity',
+                      value: _signedQuantity(event.quantityDelta),
+                      icon: Icons.numbers_rounded,
+                    ),
+                    _MovementMetricChip(
+                      label: 'Net Weight',
+                      value: _signedWeight(event.netWeightDelta),
+                      icon: Icons.scale_rounded,
+                    ),
+                    _MovementMetricChip(
+                      label: 'Fine Weight',
+                      value: _signedWeight(event.fineWeightDelta),
+                      icon: Icons.verified_rounded,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MovementMetricChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _MovementMetricChip({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: InvColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: InvColors.brandGold),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _UnitMovementLoadingState extends StatelessWidget {
+  const _UnitMovementLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      height: 86,
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.2,
+            color: InvColors.brandGold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnitMovementMessage extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _UnitMovementMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF7EF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: InvColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: InvColors.brandGold, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  message,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: InvColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StockLifecycleActionSection extends StatefulWidget {
+  final StockSearchResult item;
+  final VoidCallback? onChanged;
+
+  const _StockLifecycleActionSection({
+    required this.item,
+    this.onChanged,
+  });
+
+  @override
+  State<_StockLifecycleActionSection> createState() =>
+      _StockLifecycleActionSectionState();
+}
+
+class _StockLifecycleActionSectionState
+    extends State<_StockLifecycleActionSection> {
+  late final StockLifecycleController _controller;
+  late final StockSaleRestoreController _saleRestoreController;
+  bool _isWorking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = StockLifecycleController(AppDatabase());
+    _saleRestoreController = StockSaleRestoreController(AppDatabase());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = _controller.actionsFor(widget.item);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF7EF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: InvColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _SectionIcon(
+                icon: Icons.admin_panel_settings_rounded,
+                accent: InvColors.brandGold,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Stock Status Control',
+                      style: InvStyles.sectionTitle.copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Every status change requires a reason and is stored in the unit audit trail.',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: InvColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (widget.item.isSold)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _UnitMovementMessage(
+                  icon: Icons.lock_rounded,
+                  title: 'Sold Stock Is Locked',
+                  message:
+                      'Use controlled restore only when this sale stock needs to return into available inventory.',
+                ),
+                const SizedBox(height: 10),
+                _LifecycleActionButton(
+                  action: const StockLifecycleAction(
+                    label: 'Restore To Inventory',
+                    targetStatus: 'Available',
+                    reasonHint:
+                        'Enter sale return number, customer note or restore reason.',
+                  ),
+                  busy: _isWorking,
+                  onTap: _confirmAndRestoreSale,
+                ),
+              ],
+            )
+          else if (actions.isEmpty)
+            const _UnitMovementMessage(
+              icon: Icons.info_outline_rounded,
+              title: 'No Status Action Available',
+              message: 'This stock unit does not allow a direct status change.',
+            )
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final action in actions)
+                  _LifecycleActionButton(
+                    action: action,
+                    busy: _isWorking,
+                    onTap: () => _confirmAndApply(action),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmAndApply(StockLifecycleAction action) async {
+    final reason = await _showLifecycleReasonDialog(
+      context,
+      action: action,
+      item: widget.item,
+    );
+    if (reason == null || reason.trim().isEmpty || !mounted) return;
+    setState(() => _isWorking = true);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _controller.applyAction(
+        item: widget.item,
+        action: action,
+        reason: reason,
+      );
+      widget.onChanged?.call();
+      if (!mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('Stock status updated to ${action.targetStatus}.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: InvColors.shellPanelBg,
+          ),
+        );
+      navigator.pop();
+    } catch (error) {
+      if (!mounted) return;
+      _showActionNotice(context, 'Status update failed: $error');
+    } finally {
+      if (mounted) setState(() => _isWorking = false);
+    }
+  }
+
+  Future<void> _confirmAndRestoreSale() async {
+    const action = StockLifecycleAction(
+      label: 'Restore To Inventory',
+      targetStatus: 'Available',
+      reasonHint: 'Enter sale return number, customer note or restore reason.',
+    );
+    final reason = await _showLifecycleReasonDialog(
+      context,
+      action: action,
+      item: widget.item,
+    );
+    if (reason == null || reason.trim().isEmpty || !mounted) return;
+    setState(() => _isWorking = true);
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await _saleRestoreController.restoreToInventory(
+        item: widget.item,
+        reason: reason,
+      );
+      widget.onChanged?.call();
+      if (!mounted) return;
+      final source = result.sourceNumber.trim();
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              source.isEmpty
+                  ? 'Stock restored to inventory.'
+                  : 'Stock restored from sale $source.',
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: InvColors.shellPanelBg,
+          ),
+        );
+      navigator.pop();
+    } catch (error) {
+      if (!mounted) return;
+      _showActionNotice(context, 'Sale restore failed: $error');
+    } finally {
+      if (mounted) setState(() => _isWorking = false);
+    }
+  }
+}
+
+class _LifecycleActionButton extends StatelessWidget {
+  final StockLifecycleAction action;
+  final bool busy;
+  final VoidCallback onTap;
+
+  const _LifecycleActionButton({
+    required this.action,
+    required this.busy,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = action.danger ? InvColors.danger : InvColors.brandGold;
+    return InkWell(
+      onTap: busy ? null : onTap,
+      borderRadius: BorderRadius.circular(13),
+      child: Opacity(
+        opacity: busy ? 0.55 : 1,
+        child: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          decoration: BoxDecoration(
+            color: action.danger ? const Color(0xFFFFF7F7) : Colors.white,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: color.withValues(alpha: 0.42)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                action.danger
+                    ? Icons.warning_amber_rounded
+                    : Icons.task_alt_rounded,
+                size: 18,
+                color: color,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                action.label,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: action.danger ? InvColors.danger : InvColors.textDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<String?> _showLifecycleReasonDialog(
+  BuildContext context, {
+  required StockLifecycleAction action,
+  required StockSearchResult item,
+}) async {
+  final controller = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          action.label,
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: InvColors.textDark,
+          ),
+        ),
+        content: SizedBox(
+          width: 460,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${item.displayName} will move from ${item.status} to ${action.targetStatus}.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: InvColors.textBody,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                maxLines: 3,
+                minLines: 3,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: InvColors.textDark,
+                ),
+                decoration: InputDecoration(
+                  hintText: action.reasonHint,
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: InvColors.textHint,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFAF7EF),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: InvColors.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                        color: InvColors.brandGold, width: 1.4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w900),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              final reason = controller.text.trim();
+              if (reason.length < 3) return;
+              Navigator.of(context).pop(reason);
+            },
+            icon: const Icon(Icons.save_rounded, size: 18),
+            label: const Text('Save Status'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  action.danger ? InvColors.danger : InvColors.brandGold,
+              foregroundColor: Colors.white,
+              textStyle: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  ).whenComplete(controller.dispose);
 }
 
 class _StockDossierActions extends StatelessWidget {
@@ -1181,11 +1929,12 @@ class _StockDossierActions extends StatelessWidget {
               icon: Icons.inventory_2_rounded,
               onTap: () {
                 final router = GoRouter.of(context);
+                final batchCode = item.inventoryBatchCode;
                 final path = Uri(
                   path: RoutePaths.stockInventory,
                   queryParameters: {
                     'metal': item.metalType,
-                    'batch': item.batchCode,
+                    if (batchCode.isNotEmpty) 'batch': batchCode,
                   },
                 ).toString();
                 Navigator.of(context).pop();
@@ -1402,7 +2151,7 @@ Future<void> _copyStockCard(
     'Metal: ${item.metalType}',
     'HUID / Serial: ${item.hasHuid ? item.huid : item.unitCode}',
     'Unit Code: ${item.unitCode}',
-    'Batch Code: ${item.batchCode}',
+    'Batch Code: ${item.inventoryBatchCode}',
     'Supplier: ${_clean(item.supplierName)}',
     'Supplier Invoice: ${item.sourceInvoice}',
     'Gross Weight: ${_grams(item.grossWeight)}',
@@ -1471,7 +2220,80 @@ String _clean(String value) {
 
 String _formatDateTime(DateTime? value) {
   if (value == null) return 'Not recorded';
-  return '${_dateFormat.format(value)} • ${_timeFormat.format(value)}';
+  return '${_dateFormat.format(value)}, ${_timeFormat.format(value)}';
+}
+
+String _signedQuantity(int value) {
+  if (value > 0) return '+$value pcs';
+  if (value < 0) return '$value pcs';
+  return '0 pcs';
+}
+
+String _signedWeight(double value) {
+  if (value > 0) return '+${_grams(value)}';
+  if (value < 0) return '-${_grams(value.abs())}';
+  return _grams(0);
+}
+
+String _stockLifecycleLabel(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'sold':
+      return 'Sold';
+    case 'reserved':
+      return 'Reserved';
+    case 'on hold':
+    case 'hold':
+      return 'On Hold';
+    case 'returned':
+      return 'Returned';
+    case 'transferred':
+      return 'Transferred';
+    case 'damaged':
+      return 'Damaged';
+    case 'with karigar':
+      return 'With Karigar';
+    case 'archived':
+    case 'deleted':
+      return 'Archived';
+    default:
+      return 'Available';
+  }
+}
+
+Color _stockLifecycleColor(String status) {
+  switch (status.trim().toLowerCase()) {
+    case 'sold':
+      return InvColors.danger;
+    case 'reserved':
+    case 'on hold':
+    case 'hold':
+      return const Color(0xFFF59E0B);
+    case 'returned':
+    case 'transferred':
+      return const Color(0xFF2563EB);
+    case 'damaged':
+    case 'archived':
+    case 'deleted':
+      return const Color(0xFF64748B);
+    case 'with karigar':
+      return const Color(0xFF7C3AED);
+    default:
+      return InvColors.success;
+  }
+}
+
+Color _movementColor(StockUnitHistoryEvent event) {
+  if (event.isSale) return InvColors.danger;
+  if (event.isRestore) return const Color(0xFF2563EB);
+  if (event.isInbound) return InvColors.success;
+  return InvColors.brandGold;
+}
+
+IconData _movementIcon(StockUnitHistoryEvent event) {
+  if (event.isSale) return Icons.point_of_sale_rounded;
+  if (event.isRestore) return Icons.restore_rounded;
+  if (event.isInbound) return Icons.add_business_rounded;
+  return Icons.timeline_rounded;
 }
 
 Color _metalColor(String metal) {

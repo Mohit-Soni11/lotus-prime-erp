@@ -11,8 +11,12 @@ import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_lifecycle_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_sale_restore_controller.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_search_controller.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_unit_history_controller.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_search/stock_search_models.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_search/stock_unit_history_models.dart';
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/stock_search_app_bar.dart';

@@ -33,6 +33,7 @@ import 'package:lotus_erp/features/stock/shared/presentation/add_stock/add_stock
 import 'package:lotus_erp/features/stock/shared/presentation/inventory/inventory_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_activity/stock_activity_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_search/stock_search_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/stock_summary/stock_summary_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
 
 import '../../ui/customer/customer_list/customer_list_screen.dart';
@@ -467,6 +468,12 @@ GoRouter createAppRouter() {
             ),
           ),
           GoRoute(
+            path: RoutePaths.stockSummary,
+            builder: (context, state) => StockSummaryScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
+          ),
+          GoRoute(
             path: RoutePaths.stockActivity,
             builder: (context, state) => StockActivityScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
@@ -602,12 +609,6 @@ GoRouter createAppRouter() {
             path: RoutePaths.reportPurchase,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.purchaseReportRoute),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.reportStock,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.stockSummaryRoute),
             ),
           ),
           GoRoute(

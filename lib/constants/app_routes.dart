@@ -41,6 +41,7 @@ class AppRoutes {
 
   // Stock
   static const String inventoryRoute = '/stock/inventory';
+  static const String stockSummaryRoute = '/stock/summary';
   static const String stockActivityRoute = '/stock/activity';
   static const String stockSearchRoute = '/stock/search';
   static const String stockValuationRoute = '/stock/valuation';
@@ -74,7 +75,6 @@ class AppRoutes {
   static const String dayBookRoute = '/reports/daybook';
   static const String salesReportRoute = '/reports/sales';
   static const String purchaseReportRoute = '/reports/purchase';
-  static const String stockSummaryRoute = '/reports/stock';
   static const String profitLossRoute = '/reports/pnl';
   static const String gstReportRoute = '/reports/gst';
 
@@ -179,6 +179,7 @@ class RoutePaths {
 
   // Stock
   static const String stockInventory = '/app/stock/inventory';
+  static const String stockSummary = '/app/stock/summary';
   static const String stockActivity = '/app/stock/activity';
   static const String stockSearch = '/app/stock/search';
   static const String stockValuation = '/app/stock/valuation';
@@ -214,7 +215,6 @@ class RoutePaths {
   static const String reportDayBook = '/app/reports/daybook';
   static const String reportSales = '/app/reports/sales';
   static const String reportPurchase = '/app/reports/purchase';
-  static const String reportStock = '/app/reports/stock';
   static const String reportPnl = '/app/reports/pnl';
   static const String reportGst = '/app/reports/gst';
 
@@ -257,6 +257,7 @@ class RouteMapper {
     AppRoutes.oldGoldBuyRoute: RoutePaths.purchaseOldGold,
     AppRoutes.purchaseReturnRoute: RoutePaths.purchaseReturn,
     AppRoutes.inventoryRoute: RoutePaths.stockInventory,
+    AppRoutes.stockSummaryRoute: RoutePaths.stockSummary,
     AppRoutes.stockActivityRoute: RoutePaths.stockActivity,
     AppRoutes.stockSearchRoute: RoutePaths.stockSearch,
     AppRoutes.stockValuationRoute: RoutePaths.stockValuation,
@@ -282,7 +283,6 @@ class RouteMapper {
     AppRoutes.dayBookRoute: RoutePaths.reportDayBook,
     AppRoutes.salesReportRoute: RoutePaths.reportSales,
     AppRoutes.purchaseReportRoute: RoutePaths.reportPurchase,
-    AppRoutes.stockSummaryRoute: RoutePaths.reportStock,
     AppRoutes.profitLossRoute: RoutePaths.reportPnl,
     AppRoutes.gstReportRoute: RoutePaths.reportGst,
     AppRoutes.newSchemeRoute: RoutePaths.schemesNew,

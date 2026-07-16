@@ -135,6 +135,12 @@ enum StoneType {
 enum StockStatus {
   available('Available'),
   sold('Sold'),
+  reserved('Reserved'),
+  onHold('On Hold'),
+  returned('Returned'),
+  transferred('Transferred'),
+  damaged('Damaged'),
+  archived('Archived'),
   onOrder('On Order'),
   withKarigar('With Karigar'),
   repaired('Repaired');
