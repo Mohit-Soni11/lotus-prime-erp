@@ -1,13 +1,3 @@
-// =============================================================================
-// FILE        : silver_app_bar.dart
-// MODULE      : Stock & Inventory (Silver)
-// LAYER       : UI / Components
-// DESCRIPTION : Premium App Bar for Silver Stock module.
-//               âœ… 100% Isolated Silver Theme.
-//               âœ… Stepper Removed completely (Purity/Items/Save).
-//               âœ… SYSTEM ONLINE green dot radar widget.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
@@ -23,8 +13,7 @@ class SilverAppBar extends StatefulWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(70.0); // Strict 70px height, no stepper
+  Size get preferredSize => const Size.fromHeight(70.0);
 
   @override
   State<SilverAppBar> createState() => _SilverAppBarState();
@@ -66,23 +55,57 @@ class _SilverAppBarState extends State<SilverAppBar>
       ),
       child: Row(
         children: [
-          // â”€â”€ BACK BUTTON â”€â”€
           _buildBackButton(),
           const SizedBox(width: 16),
-
-          // â”€â”€ TITLE â”€â”€
-          Text(
-            SilverStockStrings.headerTitle,
-            style: SilverStockStyles.shellTitle,
+          Expanded(
+            child: Text(
+              _headerTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SilverStockStyles.shellTitle.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.9,
+              ),
+            ),
           ),
-
-          const Spacer(),
-
-          // â”€â”€ SYSTEM ONLINE RADAR â”€â”€
+          const SizedBox(width: 16),
           _buildSystemOnlineBadge(),
         ],
       ),
     );
+  }
+
+  String get _headerTitle {
+    final grade = widget.ctrl.purityDisplay.trim();
+    if (grade.isEmpty || widget.ctrl.step.name == 'purity') {
+      return SilverStockStrings.headerTitle;
+    }
+    return '${_professionalGradeName(grade).toUpperCase()} STOCK';
+  }
+
+  String _professionalGradeName(String grade) {
+    final normalized = grade.trim().toUpperCase();
+    if (normalized.contains('SILVER') &&
+        !RegExp(r'^(999|925|800|700|600)\b').hasMatch(normalized)) {
+      return grade;
+    }
+    if (normalized.contains('99.9') || normalized.contains('999')) {
+      return '999 Fine Silver';
+    }
+    if (normalized.contains('92.5') || normalized.contains('925')) {
+      return '925 Sterling Silver';
+    }
+    if (normalized.contains('80') || normalized.contains('800')) {
+      return '800 Premium Silver';
+    }
+    if (normalized.contains('70') || normalized.contains('700')) {
+      return '700 Utility Silver';
+    }
+    if (normalized.contains('60')) {
+      return '600 Lightweight Silver';
+    }
+    return normalized.contains('SILVER') ? grade : '$grade Silver';
   }
 
   Widget _buildBackButton() {

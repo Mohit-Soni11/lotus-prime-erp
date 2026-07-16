@@ -16,61 +16,60 @@ class SilverPurityStep extends StatefulWidget {
 class _SilverPurityStepState extends State<SilverPurityStep>
     with SingleTickerProviderStateMixin {
   late final TextEditingController _customCtrl;
+  late final TextEditingController _companyNameCtrl;
+  late final TextEditingController _companyPurityCtrl;
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
+  bool _showPurityBuilder = false;
+  bool _showCompanyBuilder = false;
+  String? _customError;
+
   static const List<_SilverPurityOption> _presets = [
     _SilverPurityOption(
-      label: 'Fine Silver',
-      value: '99.99%',
-      detail: 'Highest purity stock',
+      label: '999 Fine Silver',
+      value: '99.90%',
+      detail: 'Coins, bullion and premium silver articles',
       icon: Icons.workspace_premium_rounded,
       accent: Color(0xFF526677),
     ),
     _SilverPurityOption(
-      label: 'Sterling',
+      label: '925 Sterling Silver',
       value: '92.50%',
-      detail: 'Standard sterling articles',
+      detail: 'Hallmarked jewellery and premium ornaments',
       icon: Icons.verified_rounded,
       accent: Color(0xFF0F8A72),
     ),
     _SilverPurityOption(
-      label: 'Idols',
+      label: '800 Premium Silver',
       value: '80.00%',
-      detail: 'High-purity crafted pieces',
+      detail: 'Pooja articles, idols and crafted stock',
       icon: Icons.temple_hindu_rounded,
       accent: Color(0xFF8B5CF6),
     ),
     _SilverPurityOption(
-      label: 'Utensils',
+      label: '700 Utility Silver',
       value: '70.00%',
-      detail: 'Tableware and utility stock',
+      detail: 'Utensils, tableware and durable articles',
       icon: Icons.soup_kitchen_rounded,
       accent: Color(0xFF2563EB),
     ),
     _SilverPurityOption(
-      label: 'Jewellery',
+      label: '600 Lightweight Silver',
       value: '60.00%',
-      detail: 'Low-purity daily wear',
+      detail: 'Daily wear and lightweight commercial stock',
       icon: Icons.diamond_rounded,
       accent: Color(0xFFB7791F),
-    ),
-    _SilverPurityOption(
-      label: 'Custom',
-      value: 'Custom',
-      detail: 'Enter any purity percentage',
-      icon: Icons.edit_rounded,
-      accent: Color(0xFF64748B),
     ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _customCtrl = TextEditingController(
-      text: widget.ctrl.isCustomPurity ? widget.ctrl.purityDisplay : '',
-    );
+    _customCtrl = TextEditingController();
+    _companyNameCtrl = TextEditingController();
+    _companyPurityCtrl = TextEditingController(text: '92.50');
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 460),
@@ -84,17 +83,10 @@ class _SilverPurityStepState extends State<SilverPurityStep>
   }
 
   @override
-  void didUpdateWidget(covariant SilverPurityStep oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.ctrl.isCustomPurity &&
-        _customCtrl.text != widget.ctrl.purityDisplay) {
-      _customCtrl.text = widget.ctrl.purityDisplay;
-    }
-  }
-
-  @override
   void dispose() {
     _customCtrl.dispose();
+    _companyNameCtrl.dispose();
+    _companyPurityCtrl.dispose();
     _animCtrl.dispose();
     super.dispose();
   }
@@ -153,16 +145,16 @@ class _SilverPurityStepState extends State<SilverPurityStep>
           _HeroBanner(ctrl: ctrl),
           const SizedBox(height: 24),
           Text(
-            'Select Stock Grade',
+            'Select Silver Purity Grade',
             style: SilverStockStyles.pageTitle,
           ),
           const SizedBox(height: 6),
           Text(
-            'Choose the base purity for this silver batch. Item rows can still add wastage, and the final purity is used for billing and stock classification.',
+            'Choose the base purity for this silver stock batch. Item rows can add wastage later, and the final purity will be used for valuation, billing and inventory classification.',
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 14,
               height: 1.6,
-              color: SilverStockColors.textBody,
+              color: SilverStockColors.textDark,
             ),
           ),
           const SizedBox(height: 22),
@@ -180,10 +172,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                 spacing: 12,
                 runSpacing: 12,
                 children: _presets.map((preset) {
-                  final isCustom = preset.value == 'Custom';
-                  final isSelected = isCustom
-                      ? ctrl.isCustomPurity
-                      : ctrl.purityDisplay == preset.value;
+                  final isSelected = ctrl.purityDisplay == preset.value;
 
                   return SizedBox(
                     width: itemWidth,
@@ -192,10 +181,11 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                       isSelected: isSelected,
                       onTap: () {
                         ctrl.setPurity(preset.value);
-                        if (isCustom) {
-                          _customCtrl.clear();
-                        }
-                        setState(() {});
+                        setState(() {
+                          _showPurityBuilder = false;
+                          _showCompanyBuilder = false;
+                          _customError = null;
+                        });
                       },
                     ),
                   );
@@ -203,38 +193,62 @@ class _SilverPurityStepState extends State<SilverPurityStep>
               );
             },
           ),
-          if (ctrl.isCustomPurity) ...[
-            const SizedBox(height: 20),
-            Text('Custom Purity', style: SilverStockStyles.inputLabel),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _customCtrl,
-              onChanged: ctrl.setCustomPurity,
-              style: SilverStockStyles.inputText,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                hintText: 'Enter purity percentage, e.g. 76.50%',
-                hintStyle: SilverStockStyles.fieldHint,
-                prefixIcon: const Icon(
-                  Icons.percent_rounded,
-                  color: SilverStockColors.brandSilver,
-                  size: 18,
-                ),
-                suffixText: '%',
-                filled: true,
-                fillColor: SilverStockColors.inputBg,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                border: _inputBorder(SilverStockColors.borderLight),
-                enabledBorder: _inputBorder(SilverStockColors.borderLight),
-                focusedBorder: _inputBorder(
-                  SilverStockColors.brandSilver,
-                  width: 1.5,
-                ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              _CreateSilverGradeButton(
+                expanded: _showPurityBuilder,
+                icon: Icons.add_rounded,
+                label: _showPurityBuilder
+                    ? 'Close Custom Purity Builder'
+                    : 'Create Custom Silver Purity',
+                onTap: () => setState(() {
+                  _showPurityBuilder = !_showPurityBuilder;
+                  _showCompanyBuilder = false;
+                  _customError = null;
+                }),
               ),
-            ),
-          ],
+              _CreateSilverGradeButton(
+                expanded: _showCompanyBuilder,
+                icon: Icons.business_center_rounded,
+                label: _showCompanyBuilder
+                    ? 'Close Company Grade Builder'
+                    : 'Create Company Silver Grade',
+                onTap: () => setState(() {
+                  _showCompanyBuilder = !_showCompanyBuilder;
+                  _showPurityBuilder = false;
+                  _customError = null;
+                }),
+              ),
+            ],
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: _showPurityBuilder
+                ? Padding(
+                    key: const ValueKey('custom-silver-purity-builder'),
+                    padding: const EdgeInsets.only(top: 14),
+                    child: _CustomSilverPurityPanel(
+                      purityCtrl: _customCtrl,
+                      errorText: _customError,
+                      onCreate: _createCustomPurity,
+                    ),
+                  )
+                : _showCompanyBuilder
+                    ? Padding(
+                        key: const ValueKey('company-silver-grade-builder'),
+                        padding: const EdgeInsets.only(top: 14),
+                        child: _CompanySilverGradePanel(
+                          companyNameCtrl: _companyNameCtrl,
+                          purityCtrl: _companyPurityCtrl,
+                          errorText: _customError,
+                          onCreate: _createCompanyGrade,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+          ),
           const SizedBox(height: 24),
           ListenableBuilder(
             listenable: ctrl,
@@ -276,8 +290,8 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                   'Select a stock grade to continue.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: SilverStockColors.textMuted,
+                    fontSize: 13,
+                    color: SilverStockColors.textDark,
                   ),
                 ),
               );
@@ -286,6 +300,59 @@ class _SilverPurityStepState extends State<SilverPurityStep>
         ],
       ),
     );
+  }
+
+  void _createCustomPurity() {
+    final purity = _parsePurity(_customCtrl.text);
+    if (purity <= 0 || purity > 100) {
+      setState(() {
+        _customError = 'Enter a valid silver purity between 1 and 100.';
+      });
+      return;
+    }
+
+    final display = '${_formatPurity(purity)}%';
+    widget.ctrl.setPurity('Custom');
+    widget.ctrl.setCustomPurity(display);
+    _customCtrl.clear();
+    setState(() {
+      _showPurityBuilder = false;
+      _customError = null;
+    });
+  }
+
+  void _createCompanyGrade() {
+    final company = _companyNameCtrl.text.trim();
+    final purity = _parsePurity(_companyPurityCtrl.text);
+    if (company.length < 2 || purity <= 0 || purity > 100) {
+      setState(() {
+        _customError =
+            'Enter a company name and a valid purity between 1 and 100.';
+      });
+      return;
+    }
+
+    final normalizedCompany =
+        company.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
+    final display = '$normalizedCompany ${_formatPurity(purity)}% Silver';
+    widget.ctrl.setPurity('Custom');
+    widget.ctrl.setCustomPurity(display);
+    _companyNameCtrl.clear();
+    _companyPurityCtrl.text = '92.50';
+    setState(() {
+      _showCompanyBuilder = false;
+      _customError = null;
+    });
+  }
+
+  double _parsePurity(String value) {
+    final normalized = value.replaceAll('%', '').trim();
+    return double.tryParse(normalized) ?? 0.0;
+  }
+
+  String _formatPurity(double value) {
+    final fixed = value.toStringAsFixed(2);
+    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 
   Widget _buildSidePanel() {
@@ -370,19 +437,15 @@ class _SilverPurityStepState extends State<SilverPurityStep>
             ),
           ),
           const SizedBox(height: 10),
-          _guideline('Sterling: total purity close to 92.50%.'),
-          _guideline('Jewellery: total purity up to 60.00%.'),
-          _guideline('Utensils and idols: total purity above 60.00%.'),
-          _guideline('Other grades stay grouped separately for review.'),
+          _guideline('999 Fine Silver is used for coins, bars and bullion.'),
+          _guideline(
+              '925 Sterling Silver is preferred for hallmarked jewellery.'),
+          _guideline(
+              '800 and 700 grades are used for idols, utensils and utility stock.'),
+          _guideline(
+              'Custom grades remain traceable as separate inventory groups.'),
         ],
       ),
-    );
-  }
-
-  OutlineInputBorder _inputBorder(Color color, {double width = 1}) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: color, width: width),
     );
   }
 
@@ -420,32 +483,32 @@ class _SilverPurityStepState extends State<SilverPurityStep>
   List<_StockGroup> _stockGroups(Map<String, double> summary) {
     final groups = <_StockGroup>[
       const _StockGroup(
-        label: 'Fine Silver',
-        description: '99.99% grade',
+        label: '999 Fine Silver',
+        description: '99.90% grade',
         icon: Icons.workspace_premium_rounded,
         color: Color(0xFF526677),
       ),
       const _StockGroup(
-        label: 'Sterling',
+        label: '925 Sterling Silver',
         description: '92.50% grade',
         icon: Icons.verified_rounded,
         color: Color(0xFF0F8A72),
       ),
       const _StockGroup(
-        label: 'Idols',
-        description: 'Above 75.00% fine',
+        label: '800 Premium Silver',
+        description: '80.00% grade',
         icon: Icons.temple_hindu_rounded,
         color: Color(0xFF8B5CF6),
       ),
       const _StockGroup(
-        label: 'Utensils',
-        description: '60.01% to 75.00%',
+        label: '700 Utility Silver',
+        description: '70.00% grade',
         icon: Icons.soup_kitchen_rounded,
         color: Color(0xFF2563EB),
       ),
       const _StockGroup(
-        label: 'Jewellery',
-        description: 'Up to 60.00%',
+        label: '600 Lightweight Silver',
+        description: '60.00% grade',
         icon: Icons.diamond_rounded,
         color: Color(0xFFB7791F),
       ),
@@ -472,19 +535,19 @@ class _SilverPurityStepState extends State<SilverPurityStep>
 
   String _bucketFor(double percent) {
     if (percent >= 99.5) {
-      return 'Fine Silver';
+      return '999 Fine Silver';
     }
     if ((percent - 92.5).abs() <= 1.0) {
-      return 'Sterling';
+      return '925 Sterling Silver';
     }
     if (percent > 75.0) {
-      return 'Idols';
+      return '800 Premium Silver';
     }
     if (percent > 60.0) {
-      return 'Utensils';
+      return '700 Utility Silver';
     }
     if (percent > 0) {
-      return 'Jewellery';
+      return '600 Lightweight Silver';
     }
     return 'Other';
   }
@@ -594,7 +657,9 @@ class _HeroBanner extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              selected.isEmpty ? 'GRADE OPEN' : selected,
+              selected.isEmpty
+                  ? 'GRADE OPEN'
+                  : _professionalGradeName(selected),
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -605,6 +670,30 @@ class _HeroBanner extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _professionalGradeName(String grade) {
+    final normalized = grade.trim().toUpperCase();
+    if (normalized.contains('SILVER') &&
+        !RegExp(r'^(999|925|800|700|600)\b').hasMatch(normalized)) {
+      return normalized;
+    }
+    if (normalized.contains('99.9') || normalized.contains('999')) {
+      return '999 FINE';
+    }
+    if (normalized.contains('92.5') || normalized.contains('925')) {
+      return '925 STERLING';
+    }
+    if (normalized.contains('80') || normalized.contains('800')) {
+      return '800 PREMIUM';
+    }
+    if (normalized.contains('70') || normalized.contains('700')) {
+      return '700 UTILITY';
+    }
+    if (normalized.contains('60')) {
+      return '600 LIGHTWEIGHT';
+    }
+    return grade.toUpperCase();
   }
 }
 
@@ -671,7 +760,7 @@ class _PurityCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.manrope(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: SilverStockColors.textDark,
                 ),
@@ -680,7 +769,7 @@ class _PurityCard extends StatelessWidget {
               Text(
                 preset.value,
                 style: GoogleFonts.manrope(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w900,
                   color: preset.accent,
                 ),
@@ -691,9 +780,10 @@ class _PurityCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 11,
-                  height: 1.35,
-                  color: SilverStockColors.textMuted,
+                  fontSize: 12,
+                  height: 1.42,
+                  fontWeight: FontWeight.w600,
+                  color: SilverStockColors.textDark,
                 ),
               ),
             ],
@@ -702,6 +792,314 @@ class _PurityCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CreateSilverGradeButton extends StatelessWidget {
+  final bool expanded;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _CreateSilverGradeButton({
+    required this.expanded,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(expanded ? Icons.close_rounded : icon),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: SilverStockColors.textDark,
+        side: BorderSide(
+          color: expanded
+              ? SilverStockColors.brandSilver
+              : SilverStockColors.cardBorder,
+          width: expanded ? 1.4 : 1,
+        ),
+        backgroundColor: expanded
+            ? SilverStockColors.brandSilver.withValues(alpha: 0.08)
+            : Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        textStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+class _CustomSilverPurityPanel extends StatelessWidget {
+  final TextEditingController purityCtrl;
+  final String? errorText;
+  final VoidCallback onCreate;
+
+  const _CustomSilverPurityPanel({
+    required this.purityCtrl,
+    required this.errorText,
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _BuilderPanel(
+      icon: Icons.percent_rounded,
+      title: 'Create Custom Silver Purity',
+      subtitle:
+          'Use this when the supplier bill or article grade does not match a preset purity.',
+      errorText: errorText,
+      children: [
+        _SilverPanelField(
+          controller: purityCtrl,
+          label: 'Purity Percentage',
+          hint: 'Example: 76.50',
+          suffix: '%',
+          icon: Icons.percent_rounded,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        ),
+        const SizedBox(height: 14),
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: onCreate,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Create Purity Grade'),
+            style: _primaryButtonStyle(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CompanySilverGradePanel extends StatelessWidget {
+  final TextEditingController companyNameCtrl;
+  final TextEditingController purityCtrl;
+  final String? errorText;
+  final VoidCallback onCreate;
+
+  const _CompanySilverGradePanel({
+    required this.companyNameCtrl,
+    required this.purityCtrl,
+    required this.errorText,
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _BuilderPanel(
+      icon: Icons.business_center_rounded,
+      title: 'Create Company Silver Grade',
+      subtitle:
+          'Use this for branded silver stock such as Sukh, AG Raj, PC or supplier-specific product lines.',
+      errorText: errorText,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 680;
+            final companyField = _SilverPanelField(
+              controller: companyNameCtrl,
+              label: 'Company Name',
+              hint: 'Example: SUKH, AG RAJ, PC',
+              icon: Icons.business_rounded,
+              textCapitalization: TextCapitalization.characters,
+            );
+            final purityField = _SilverPanelField(
+              controller: purityCtrl,
+              label: 'Purity Percentage',
+              hint: 'Example: 92.50',
+              suffix: '%',
+              icon: Icons.percent_rounded,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+            );
+            if (isWide) {
+              return Row(
+                children: [
+                  Expanded(child: companyField),
+                  const SizedBox(width: 12),
+                  Expanded(child: purityField),
+                ],
+              );
+            }
+            return Column(
+              children: [
+                companyField,
+                const SizedBox(height: 12),
+                purityField,
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 14),
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: onCreate,
+            icon: const Icon(Icons.add_business_rounded, size: 18),
+            label: const Text('Create Company Grade'),
+            style: _primaryButtonStyle(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BuilderPanel extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? errorText;
+  final List<Widget> children;
+
+  const _BuilderPanel({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.errorText,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: SilverStockColors.brandSilverBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _IconBadge(icon: icon, color: SilverStockColors.brandSilver),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.manrope(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: SilverStockColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                        color: SilverStockColors.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+          if (errorText != null && errorText!.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              errorText!,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: SilverStockColors.danger,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SilverPanelField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final String? suffix;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+
+  const _SilverPanelField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    this.suffix,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      style: SilverStockStyles.inputText.copyWith(fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        suffixText: suffix,
+        prefixIcon: Icon(icon, color: SilverStockColors.brandSilver, size: 18),
+        labelStyle: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: SilverStockColors.textDark,
+        ),
+        hintStyle: SilverStockStyles.fieldHint,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: _panelInputBorder(SilverStockColors.borderLight),
+        enabledBorder: _panelInputBorder(SilverStockColors.borderLight),
+        focusedBorder: _panelInputBorder(
+          SilverStockColors.brandSilver,
+          width: 1.5,
+        ),
+      ),
+    );
+  }
+}
+
+ButtonStyle _primaryButtonStyle() {
+  return ElevatedButton.styleFrom(
+    backgroundColor: SilverStockColors.shellBg,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+    textStyle: GoogleFonts.inter(
+      fontSize: 13,
+      fontWeight: FontWeight.w900,
+    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  );
+}
+
+OutlineInputBorder _panelInputBorder(Color color, {double width = 1}) {
+  return OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: color, width: width),
+  );
 }
 
 class _StockGroupRow extends StatelessWidget {

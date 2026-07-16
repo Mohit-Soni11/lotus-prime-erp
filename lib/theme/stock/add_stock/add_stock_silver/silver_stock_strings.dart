@@ -17,7 +17,7 @@ class SilverStockStrings {
   static const String systemOnline = 'SYSTEM ONLINE';
 
   // ── TOP HEADER (Batch Code Row) ───────────────────────────────
-  static const String headerTitle = 'SILVER';
+  static const String headerTitle = 'ADD SILVER STOCK';
   static const String headerSubtitle = 'ADD STOCK • BATCH:';
   static const String statTotalItems = 'TOTAL ITEMS';
   static const String statNetWeight = 'NET WEIGHT';

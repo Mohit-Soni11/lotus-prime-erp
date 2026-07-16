@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/silver/application/silver_batch_code_generator.dart';
 import 'package:lotus_erp/features/stock/shared/application/add_stock_controller.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_payment_controller.dart';
@@ -21,8 +22,11 @@ import 'package:lotus_erp/features/stock/silver/domain/models/silver_item_model.
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 
 class SilverStockController extends AddStockController {
-  String _silverBatchCode;
+  String _silverBatchCode = '';
+  DateTime _silverBatchCreatedAt = DateTime.now();
   final AppDatabase _rateDb = AppDatabase();
+  late final SilverBatchCodeGenerator _batchCodeGenerator =
+      SilverBatchCodeGenerator(_rateDb);
 
   /// ✅ Payment controller — wired to this batch lifecycle
   final SilverPaymentController payment = SilverPaymentController();
@@ -42,15 +46,20 @@ class SilverStockController extends AddStockController {
   DateTime? _silverRateDate;
   bool _isLoadingSilverRate = false;
   bool _roundOffInvoiceFine = false;
+  bool _isLoadingBatchCode = false;
+  bool _currentBatchPosted = false;
 
-  SilverStockController()
-      : _silverBatchCode = _generateSilverBatchCode(),
-        super(initialMetal: StockCategory.silver) {
+  SilverStockController() : super(initialMetal: StockCategory.silver) {
+    _startNewBatchIdentity(notify: false);
     _loadSilverRateSnapshot();
   }
 
   @override
   String get batchCode => _silverBatchCode;
+
+  DateTime get batchCreatedAt => _silverBatchCreatedAt;
+  bool get isLoadingBatchCode => _isLoadingBatchCode;
+  bool get isCurrentBatchPosted => _currentBatchPosted;
 
   List<SilverItemModel> get silverRows => List.unmodifiable(_silverRows);
 
@@ -391,10 +400,43 @@ class SilverStockController extends AddStockController {
       return null;
     }
     // ✨ FIXED: Check updated rate condition
+    if (_currentBatchPosted || await _isCurrentBatchAlreadyPosted()) {
+      return 'This silver batch has already been saved. Start a new batch before saving again.';
+    }
     if (payment.todayRatePerKg <= 0) {
       return 'Enter the silver invoice rate before saving this batch.';
     }
     return null;
+  }
+
+  @override
+  Future<bool> saveAll() async {
+    final saved = await super.saveAll();
+    if (saved) {
+      _currentBatchPosted = true;
+    }
+    return saved;
+  }
+
+  Future<bool> _isCurrentBatchAlreadyPosted() async {
+    final code = batchCode.trim();
+    if (code.isEmpty) {
+      return false;
+    }
+    try {
+      final rows = await _rateDb.customSelect(
+        '''
+        SELECT 1
+        FROM purchase_vouchers
+        WHERE voucher_no = ?
+        LIMIT 1
+        ''',
+        variables: [drift.Variable.withString(code)],
+      ).get();
+      return rows.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
@@ -407,14 +449,14 @@ class SilverStockController extends AddStockController {
 
     final snapshot = paymentSnapshot;
     final sequenceNo = await getNextPurchaseSequence();
+    await _ensureCurrentBatchCodeIsAvailable();
     final supplierName = supplierDisplayName.trim().isNotEmpty
         ? supplierDisplayName.trim()
         : supplierNameCtrl.text.trim();
 
     return PurchaseVoucherDraft(
       sequenceNo: sequenceNo,
-      voucherNo:
-          'SSTOCK-${DateTime.now().year}-${sequenceNo.toString().padLeft(4, '0')}',
+      voucherNo: batchCode,
       supplierInvoiceNo: supplierInvoiceNumberCtrl.text.trim().isEmpty
           ? null
           : supplierInvoiceNumberCtrl.text.trim(),
@@ -637,17 +679,57 @@ class SilverStockController extends AddStockController {
 
   @override
   void resetForNewBatch() {
-    _silverBatchCode = _generateSilverBatchCode();
+    _startNewBatchIdentity(notify: false);
     supplierInvoiceNumberCtrl.clear();
     _billPhotoPath = null;
     _supplierLedger = null;
     _isLoadingSupplierLedger = false;
     _roundOffInvoiceFine = false;
     // ✨ FIXED: Replaced payment.reset()
+    _currentBatchPosted = false;
     payment.resetSettlement();
     _clearSilverRows();
     super.resetForNewBatch();
     _loadSilverRateSnapshot();
+  }
+
+  void _startNewBatchIdentity({bool notify = true}) {
+    _silverBatchCreatedAt = DateTime.now();
+    _silverBatchCode = SilverBatchCodeGenerator.previewCode(
+      _silverBatchCreatedAt,
+    );
+    _refreshBatchCode();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _refreshBatchCode() async {
+    _isLoadingBatchCode = true;
+    notifyListeners();
+    try {
+      final nextCode = await _batchCodeGenerator.nextCodeFor(
+        _silverBatchCreatedAt,
+      );
+      if (nextCode.trim().isNotEmpty) {
+        _silverBatchCode = nextCode;
+      }
+    } finally {
+      _isLoadingBatchCode = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _ensureCurrentBatchCodeIsAvailable() async {
+    final nextCode = await _batchCodeGenerator.nextAvailableCodeFor(
+      _silverBatchCreatedAt,
+      _silverBatchCode,
+    );
+    if (_silverBatchCode == nextCode) {
+      return;
+    }
+    _silverBatchCode = nextCode;
+    notifyListeners();
   }
 
   void _clearSilverRows() {
@@ -795,16 +877,5 @@ class SilverStockController extends AddStockController {
   double _parseSilverRate(String raw) {
     final normalized = raw.replaceAll(',', '').replaceAll('--', '0').trim();
     return double.tryParse(normalized) ?? 0.0;
-  }
-
-  static String _generateSilverBatchCode() {
-    final now = DateTime.now();
-    final datePart = '${now.year.toString().substring(2)}'
-        '${now.month.toString().padLeft(2, '0')}'
-        '${now.day.toString().padLeft(2, '0')}';
-    final timePart = '${now.hour.toString().padLeft(2, '0')}'
-        '${now.minute.toString().padLeft(2, '0')}'
-        '${now.second.toString().padLeft(2, '0')}';
-    return 'SIL-$datePart-$timePart';
   }
 }
