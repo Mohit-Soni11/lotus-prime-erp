@@ -256,21 +256,21 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
           const SizedBox(width: 4),
           _h('HUID / SERIAL NO.', flex: 4),
           const SizedBox(width: 4),
-          _h('GROSS WT (g)', flex: 2, center: true),
+          _h('GROSS WT\n(g)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('LESS WT (g)', flex: 2, center: true),
+          _h('LESS WT\n(g)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('NET WT (g)', flex: 2, center: true),
+          _h('NET WT\n(g)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('PURITY (%)', flex: 2, center: true),
+          _h('PURITY\n(%)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('WASTAGE (%)', flex: 2, center: true),
+          _h('WASTAGE\n(%)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('TOTAL PURITY (%)', flex: 2, center: true),
+          _h('TOTAL\nPURITY (%)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('ACTUAL FINE (g)', flex: 2, center: true),
+          _h('ACTUAL\nFINE (g)', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('VALUATION FINE (g)', flex: 2, center: true),
+          _h('VALUATION\nFINE (g)', flex: 2, center: true),
           const SizedBox(width: 4),
           _h('MAKING', flex: 3, center: true),
           const SizedBox(width: 4),
@@ -290,23 +290,24 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
   }) {
     return Expanded(
       flex: flex,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
+      child: Align(
         alignment: right
             ? Alignment.centerRight
             : (center ? Alignment.center : Alignment.centerLeft),
         child: Text(
           text,
-          maxLines: 1,
-          softWrap: false,
+          maxLines: 2,
+          softWrap: true,
+          overflow: TextOverflow.visible,
           textAlign: right
               ? TextAlign.right
               : (center ? TextAlign.center : TextAlign.left),
           style: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 12,
+            height: 1.08,
             fontWeight: FontWeight.w900,
             color: SilverStockColors.textDark,
-            letterSpacing: 0.35,
+            letterSpacing: 0.15,
           ),
         ),
       ),
@@ -526,6 +527,12 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
         'TOTAL ROWS',
         ctrl.enteredRowCount.toString(),
         SilverStockColors.textDark,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'TOTAL WEIGHT',
+        '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
+        SilverStockColors.brandSilver,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(

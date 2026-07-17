@@ -660,7 +660,6 @@ class SilverStockController extends AddStockController {
     final id = DateTime.now().microsecondsSinceEpoch.toString();
     final model = SilverItemModel(
       id: id,
-      initialPurityLabel: _defaultSilverPurityLabel(),
       initialWastagePercent: 0.0,
       initialPurchaseRate: silverRatePerGram,
       initialPieces: 1,

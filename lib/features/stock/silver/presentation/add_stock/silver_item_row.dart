@@ -528,7 +528,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w900,
-            fontSize: isBold ? 16 : 15,
+            fontSize: isBold ? 17 : 16,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
