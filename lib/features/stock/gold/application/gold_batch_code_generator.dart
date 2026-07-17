@@ -7,7 +7,7 @@ final class GoldBatchCodeGenerator {
   const GoldBatchCodeGenerator(this._database);
 
   static String previewCode(DateTime date) {
-    return '${_datePrefix(date)}-0001';
+    return '${_datePrefix(date)}-B001';
   }
 
   Future<String> nextCodeFor(DateTime date) async {
@@ -18,24 +18,25 @@ final class GoldBatchCodeGenerator {
         SELECT voucher_no
         FROM purchase_vouchers
         WHERE voucher_no LIKE ?
-        ORDER BY voucher_no DESC
-        LIMIT 1
         ''',
-        variables: [Variable.withString('$prefix-%')],
+        variables: [
+          Variable.withString('GS-%${date.year.toString().padLeft(4, '0')}-%'),
+        ],
       ).get();
 
-      final lastCode =
-          rows.isEmpty ? '' : rows.first.read<String>('voucher_no');
-      final lastSequence = _sequenceFromCode(lastCode);
-      return '$prefix-${(lastSequence + 1).toString().padLeft(4, '0')}';
+      final lastSequence = rows
+          .map((row) => _sequenceFromCode(row.read<String>('voucher_no')))
+          .fold<int>(0, (max, value) => value > max ? value : max);
+
+      return '$prefix-B${(lastSequence + 1).toString().padLeft(3, '0')}';
     } catch (_) {
-      return '$prefix-0001';
+      return '$prefix-B001';
     }
   }
 
   Future<String> nextAvailableCodeFor(
       DateTime date, String preferredCode) async {
-    if (preferredCode.trim().isEmpty) {
+    if (!_hasProfessionalSequence(preferredCode)) {
       return nextCodeFor(date);
     }
 
@@ -88,7 +89,11 @@ final class GoldBatchCodeGenerator {
   }
 
   static int _sequenceFromCode(String code) {
-    final match = RegExp(r'-(\d{4})$').firstMatch(code.trim());
+    final match = RegExp(r'-(?:B)?(\d{3,4})$').firstMatch(code.trim());
     return int.tryParse(match?.group(1) ?? '') ?? 0;
+  }
+
+  static bool _hasProfessionalSequence(String code) {
+    return RegExp(r'^GS-\d{2}[A-Z]{3}\d{4}-B\d{3}$').hasMatch(code.trim());
   }
 }

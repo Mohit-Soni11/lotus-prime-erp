@@ -21,6 +21,18 @@ class SilverItemModel extends ChangeNotifier {
     'Other',
   ];
 
+  static const List<String> segmentPresets = [
+    'Ladies',
+    'Gents',
+    'Kids',
+    'Religious',
+    'Gift',
+    'Utility',
+    'Investment',
+    'Company Stock',
+    'Custom',
+  ];
+
   static const List<String> purityPresets = [
     '99.99%',
     '92.50%',
@@ -33,6 +45,7 @@ class SilverItemModel extends ChangeNotifier {
   final String id;
 
   final TextEditingController categoryCtrl = TextEditingController();
+  final TextEditingController segmentCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController piecesCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
@@ -44,6 +57,7 @@ class SilverItemModel extends ChangeNotifier {
   final TextEditingController makingCtrl = TextEditingController();
 
   final FocusNode categoryFocus = FocusNode();
+  final FocusNode segmentFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode piecesFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
@@ -65,6 +79,7 @@ class SilverItemModel extends ChangeNotifier {
     int initialPieces = 1,
   }) {
     categoryCtrl.addListener(_fieldChanged);
+    segmentCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
     piecesCtrl.addListener(_weightPurityFieldChanged);
     huidCtrl.addListener(_fieldChanged);
@@ -99,6 +114,7 @@ class SilverItemModel extends ChangeNotifier {
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
   String get categoryLabel => categoryCtrl.text.trim();
+  String get segmentLabel => segmentCtrl.text.trim();
   String get itemName => itemNameCtrl.text.trim();
   int get pieces => _parseWholeNumber(piecesCtrl.text);
   String get huid => huidCtrl.text.trim().toUpperCase();
@@ -124,8 +140,12 @@ class SilverItemModel extends ChangeNotifier {
       ? '--'
       : _formatDecimal(effectiveTotalPurityPercent);
 
-  double get computedFineWeight => netWeight * (totalPurityPercent / 100.0);
-  double get fineWeight => _fineWeightOverride ?? computedFineWeight;
+  double get actualFineWeight => netWeight * (basePurityPercent / 100.0);
+  double get computedValuationFineWeight =>
+      netWeight * (totalPurityPercent / 100.0);
+  double get valuationFineWeight =>
+      _fineWeightOverride ?? computedValuationFineWeight;
+  double get fineWeight => valuationFineWeight;
   bool get hasRoundedFineWeight =>
       _fineRoundOffEnabled || _fineWeightOverride != null;
   bool get hasFractionalFineWeight {
@@ -149,6 +169,7 @@ class SilverItemModel extends ChangeNotifier {
 
   bool get hasAnyInput =>
       categoryLabel.isNotEmpty ||
+      segmentLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       _hasMeaningfulPiecesInput ||
       huid.isNotEmpty ||
@@ -240,7 +261,7 @@ class SilverItemModel extends ChangeNotifier {
       return;
     }
 
-    _fineWeightOverride = _roundClassic(computedFineWeight);
+    _fineWeightOverride = _roundClassic(computedValuationFineWeight);
   }
 
   double _roundClassic(double value) {
@@ -269,6 +290,7 @@ class SilverItemModel extends ChangeNotifier {
 
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
+    segmentCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
     piecesCtrl.removeListener(_weightPurityFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
@@ -280,6 +302,7 @@ class SilverItemModel extends ChangeNotifier {
     makingCtrl.removeListener(_fieldChanged);
 
     categoryCtrl.dispose();
+    segmentCtrl.dispose();
     itemNameCtrl.dispose();
     piecesCtrl.dispose();
     huidCtrl.dispose();
@@ -291,6 +314,7 @@ class SilverItemModel extends ChangeNotifier {
     makingCtrl.dispose();
 
     categoryFocus.dispose();
+    segmentFocus.dispose();
     itemNameFocus.dispose();
     piecesFocus.dispose();
     huidFocus.dispose();

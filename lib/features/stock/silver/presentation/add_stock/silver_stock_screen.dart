@@ -7,6 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_theme.dart';
 import 'package:lotus_erp/features/stock/silver/presentation/add_stock/add_silver_stock_items_step.dart';
 import 'package:lotus_erp/features/stock/silver/presentation/add_stock/silver_app_bar.dart';
+import 'package:lotus_erp/features/stock/silver/presentation/add_stock/silver_batch_action_bar.dart';
 import 'package:lotus_erp/features/stock/silver/presentation/add_stock/silver_purity_step.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
@@ -51,6 +52,14 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
               ctrl: _ctrl,
               onBack: _handleBackPressed,
             ),
+            bottomNavigationBar: _ctrl.step == AddStockStep.items
+                ? SilverBatchActionBar(
+                    ctrl: _ctrl,
+                    onSave: _onSave,
+                    onDoneExit: _doneAndExit,
+                    onResetBatch: _showResetDialog,
+                  )
+                : null,
             body: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
               switchInCurve: Curves.easeOutQuart,
@@ -156,6 +165,10 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
     }
 
     await _showSavedDialog();
+  }
+
+  void _doneAndExit() {
+    Navigator.of(context).pop();
   }
 
   Future<void> _showSavedDialog() async {

@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_colors.dart';
 
 import 'silver_item_row.dart';
 
-class SilverItemsTable extends StatelessWidget {
-  static const double _minTableWidth = 1880;
+class SilverItemsTable extends StatefulWidget {
+  static const double _minTableWidth = 1760;
 
   final SilverStockController ctrl;
 
   const SilverItemsTable({super.key, required this.ctrl});
+
+  @override
+  State<SilverItemsTable> createState() => _SilverItemsTableState();
+}
+
+class _SilverItemsTableState extends State<SilverItemsTable> {
+  final ScrollController _horizontalCtrl = ScrollController();
+
+  SilverStockController get ctrl => widget.ctrl;
+
+  @override
+  void dispose() {
+    _horizontalCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +47,11 @@ class SilverItemsTable extends StatelessWidget {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final needsHorizontalScroll =
-                    constraints.maxWidth < _minTableWidth;
-                final tableWidth = constraints.maxWidth > _minTableWidth
-                    ? constraints.maxWidth
-                    : _minTableWidth;
+                    constraints.maxWidth < SilverItemsTable._minTableWidth;
+                final tableWidth =
+                    constraints.maxWidth > SilverItemsTable._minTableWidth
+                        ? constraints.maxWidth
+                        : SilverItemsTable._minTableWidth;
 
                 return Container(
                   decoration: BoxDecoration(
@@ -56,32 +73,42 @@ class SilverItemsTable extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(rows.length, needsHorizontalScroll),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: needsHorizontalScroll
-                            ? const BouncingScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        child: SizedBox(
-                          width: tableWidth,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (rows.isNotEmpty) _buildColumnRow(),
-                              rows.isEmpty
-                                  ? _buildEmptyState()
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: rows.length,
-                                      itemBuilder: (_, i) => SilverItemRow(
-                                        key: ObjectKey(rows[i]),
-                                        index: i,
-                                        model: rows[i],
-                                        ctrl: ctrl,
-                                      ),
-                                    ),
-                            ],
+                      ClipRRect(
+                        child: Scrollbar(
+                          controller: _horizontalCtrl,
+                          thumbVisibility: needsHorizontalScroll,
+                          trackVisibility: needsHorizontalScroll,
+                          notificationPredicate: (notification) =>
+                              notification.metrics.axis == Axis.horizontal,
+                          child: SingleChildScrollView(
+                            controller: _horizontalCtrl,
+                            scrollDirection: Axis.horizontal,
+                            physics: needsHorizontalScroll
+                                ? const BouncingScrollPhysics()
+                                : const NeverScrollableScrollPhysics(),
+                            child: SizedBox(
+                              width: tableWidth,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (rows.isNotEmpty) _buildColumnRow(),
+                                  rows.isEmpty
+                                      ? _buildEmptyState()
+                                      : ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: rows.length,
+                                          itemBuilder: (_, i) => SilverItemRow(
+                                            key: ObjectKey(rows[i]),
+                                            index: i,
+                                            model: rows[i],
+                                            ctrl: ctrl,
+                                          ),
+                                        ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -99,12 +126,12 @@ class SilverItemsTable extends StatelessWidget {
 
   Widget _buildHeader(int count, bool needsHorizontalScroll) {
     return Container(
-      decoration: BoxDecoration(
-        color: SilverStockColors.brandSilver.withValues(alpha: 0.06),
-        border: const Border(
+      decoration: const BoxDecoration(
+        color: SilverStockColors.cardBg,
+        border: Border(
           bottom: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
         ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
@@ -129,33 +156,39 @@ class SilverItemsTable extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'INVOICE ITEMS',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
-                  color: SilverStockColors.textDark,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '3. Item Entry',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                    color: SilverStockColors.textDark,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                needsHorizontalScroll
-                    ? 'Scroll to review every column. Each row can capture a full silver lot with PCS and transparent purity.'
-                    : 'Enter total pieces and combined lot weight. Total purity = base purity + wastage.',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: SilverStockColors.textMuted,
+                const SizedBox(height: 4),
+                Text(
+                  needsHorizontalScroll
+                      ? 'Scroll horizontally to review serial, HUID, weight, purity, making and amount.'
+                      : 'Enter each silver stock item with segment, HUID, weight, purity, making and valuation.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: SilverStockColors.textBody,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -180,10 +213,12 @@ class SilverItemsTable extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'ITEMS : $count',
-                  style: const TextStyle(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.4,
                     color: SilverStockColors.textDark,
                   ),
                 ),
@@ -197,9 +232,9 @@ class SilverItemsTable extends StatelessWidget {
 
   Widget _buildColumnRow() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
-        color: SilverStockColors.bodyBg,
+        color: Color(0xFFF8FAFC),
         border: Border(
           bottom: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
         ),
@@ -207,37 +242,39 @@ class SilverItemsTable extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _h('NO.', flex: 1, center: true),
-          const SizedBox(width: 6),
+          _h('SERIAL NO.', flex: 2, center: true),
+          const SizedBox(width: 4),
           _h('ITEM TYPE', flex: 3),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
+          _h('SEGMENT', flex: 3),
+          const SizedBox(width: 4),
           _h('ITEM NAME', flex: 4),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           _h('PCS', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('HUID', flex: 2),
-          const SizedBox(width: 6),
-          _h('GROSS', flex: 2),
-          const SizedBox(width: 6),
-          _h('LESS/PC', flex: 2),
-          const SizedBox(width: 6),
-          _h('LESS TOTAL', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('NET', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('PURITY', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('WASTAGE', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('TOTAL PURITY', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('FINE', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _h('MAKING', flex: 3),
-          const SizedBox(width: 6),
-          _h('AMOUNT', flex: 3, right: true),
-          const SizedBox(width: 6),
-          _h('ACT', flex: 1, center: true),
+          const SizedBox(width: 4),
+          _h('HUID / SERIAL NO.', flex: 4),
+          const SizedBox(width: 4),
+          _h('GROSS WT (g)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('LESS WT (g)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('NET WT (g)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('PURITY (%)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('WASTAGE (%)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('TOTAL PURITY (%)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('ACTUAL FINE (g)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('VALUATION FINE (g)', flex: 2, center: true),
+          const SizedBox(width: 4),
+          _h('MAKING', flex: 3, center: true),
+          const SizedBox(width: 4),
+          _h('AMOUNT (Rs)', flex: 3, right: true),
+          const SizedBox(width: 4),
+          _h('ACTION', flex: 1, center: true),
         ],
       ),
     );
@@ -256,11 +293,11 @@ class SilverItemsTable extends StatelessWidget {
         textAlign: right
             ? TextAlign.right
             : (center ? TextAlign.center : TextAlign.left),
-        style: const TextStyle(
+        style: GoogleFonts.inter(
           fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: SilverStockColors.textMuted,
-          letterSpacing: 0.7,
+          fontWeight: FontWeight.w900,
+          color: SilverStockColors.textDark,
+          letterSpacing: 0.35,
         ),
       ),
     );
@@ -291,22 +328,22 @@ class SilverItemsTable extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'NO SILVER ITEMS YET',
-              style: TextStyle(
+            Text(
+              'No Silver Items Yet',
+              style: GoogleFonts.inter(
                 color: SilverStockColors.textDark,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
+                letterSpacing: 0.4,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Press F2 or click ADD NEW ITEM to begin silver stock entry',
-              style: TextStyle(
+            Text(
+              'Press F2 or click Add New Item to begin silver stock entry.',
+              style: GoogleFonts.inter(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: SilverStockColors.textMuted,
+                fontWeight: FontWeight.w800,
+                color: SilverStockColors.textBody,
               ),
             ),
           ],
@@ -319,7 +356,7 @@ class SilverItemsTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: const BoxDecoration(
-        color: SilverStockColors.bodyBg,
+        color: SilverStockColors.cardBg,
         border: Border(
           top: BorderSide(color: SilverStockColors.cardBorder, width: 1.5),
         ),
@@ -381,7 +418,7 @@ class SilverItemsTable extends StatelessWidget {
       onTap: () => ctrl.addRow(requestFocus: true),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: SilverStockColors.success.withValues(alpha: 0.08),
           border: Border.all(
@@ -399,13 +436,13 @@ class SilverItemsTable extends StatelessWidget {
               size: 20,
             ),
             const SizedBox(width: 8),
-            const Text(
-              'ADD NEW ITEM',
-              style: TextStyle(
+            Text(
+              'Add New Item',
+              style: GoogleFonts.inter(
                 color: SilverStockColors.success,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 0.8,
+                letterSpacing: 0.1,
               ),
             ),
             const SizedBox(width: 14),
@@ -415,9 +452,9 @@ class SilverItemsTable extends StatelessWidget {
                 color: SilverStockColors.success.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text(
+              child: Text(
                 '[F2]',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   color: SilverStockColors.success,
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -437,13 +474,13 @@ class SilverItemsTable extends StatelessWidget {
         enabled ? SilverStockColors.accentPricing : SilverStockColors.textMuted;
 
     return Tooltip(
-      message: 'Round invoice fine only',
+      message: 'Round valuation fine to the nearest gram',
       waitDuration: const Duration(milliseconds: 400),
       child: InkWell(
         onTap: enabled ? ctrl.roundOffInvoiceFine : null,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: color.withValues(alpha: enabled ? 0.08 : 0.04),
             border: Border.all(
@@ -458,12 +495,12 @@ class SilverItemsTable extends StatelessWidget {
               Icon(Icons.exposure_plus_1_rounded, color: color, size: 20),
               const SizedBox(width: 8),
               Text(
-                'ROUND INVOICE FINE',
-                style: TextStyle(
+                'Round Valuation Fine',
+                style: GoogleFonts.inter(
                   color: color,
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
+                  letterSpacing: 0.1,
                 ),
               ),
             ],
@@ -476,31 +513,37 @@ class SilverItemsTable extends StatelessWidget {
   List<Widget> _buildFooterStats() {
     return [
       _buildTotalBox(
-        'ROWS',
-        '${ctrl.enteredRowCount}',
+        'TOTAL ROWS',
+        ctrl.enteredRowCount.toString(),
         SilverStockColors.textDark,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
         'PCS',
-        '${ctrl.totalQuantity}',
+        ctrl.totalQuantity.toString(),
         SilverStockColors.accentPricing,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'NET WT',
-        '${ctrl.totalNetWeight.toStringAsFixed(3)} g',
+        'ACTUAL FINE',
+        '${ctrl.totalActualFineWeight.toStringAsFixed(3)} g',
+        SilverStockColors.success,
+      ),
+      const SizedBox(width: 12),
+      _buildTotalBox(
+        'VALUATION FINE',
+        '${ctrl.totalValuationFineWeight.toStringAsFixed(3)} g',
         SilverStockColors.brandSilver,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'FINE WT',
-        '${ctrl.totalFineWeight.toStringAsFixed(3)} g',
-        SilverStockColors.accentPricing,
+        'MAKING',
+        'Rs ${ctrl.totalMakingAmount.toStringAsFixed(2)}',
+        SilverStockColors.textDark,
       ),
       const SizedBox(width: 12),
       _buildTotalBox(
-        'BATCH TOTAL',
+        'TOTAL AMOUNT',
         'Rs ${ctrl.totalEstimatedCost.toStringAsFixed(2)}',
         SilverStockColors.success,
       ),
@@ -509,7 +552,8 @@ class SilverItemsTable extends StatelessWidget {
 
   Widget _buildTotalBox(String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      constraints: const BoxConstraints(minWidth: 128, maxWidth: 178),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         border: Border.all(color: color.withValues(alpha: 0.30), width: 1.5),
@@ -520,20 +564,28 @@ class SilverItemsTable extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
               fontWeight: FontWeight.w900,
-              fontSize: 10,
+              fontSize: 11,
               color: color,
               letterSpacing: 1.0,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              style: GoogleFonts.manrope(
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                color: color,
+              ),
             ),
           ),
         ],

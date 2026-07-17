@@ -83,6 +83,12 @@ class SilverStockController extends AddStockController {
   bool get hasSilverRateSnapshot => silverRatePerGram > 0;
   double get totalFineWeight =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.fineWeight);
+
+  double get totalActualFineWeight =>
+      enteredSilverRows.fold(0.0, (sum, row) => sum + row.actualFineWeight);
+
+  double get totalValuationFineWeight =>
+      enteredSilverRows.fold(0.0, (sum, row) => sum + row.valuationFineWeight);
   double get totalMakingAmount =>
       enteredSilverRows.fold(0.0, (sum, row) => sum + row.makingAmount);
   bool get canRoundOffInvoiceFine =>
@@ -274,6 +280,7 @@ class SilverStockController extends AddStockController {
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
+      row.segmentLabel = rowModel.segmentLabel;
       row.subCategory = _mapSilverSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
       row.huid = rowModel.huid;
@@ -534,6 +541,7 @@ class SilverStockController extends AddStockController {
             (row) => PurchaseVoucherItemDraft(
               metal: PurchaseMetalType.silver,
               description: row.itemName.trim(),
+              segmentLabel: row.segmentLabel.trim(),
               quantity: row.quantity,
               grossWeight: row.grossWeight,
               lessWeight: row.lessWeight,

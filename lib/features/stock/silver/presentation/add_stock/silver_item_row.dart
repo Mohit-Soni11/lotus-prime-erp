@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_stock_controller.dart';
+import 'package:lotus_erp/features/stock/silver/domain/models/silver_item_model.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_colors.dart';
 
-import 'package:lotus_erp/features/stock/silver/domain/models/silver_item_model.dart';
+const double _invoiceFieldHeight = 40;
+const double _invoiceFieldRadius = 8;
 
 class SilverItemRow extends StatefulWidget {
   final int index;
@@ -85,10 +87,12 @@ class _SilverItemRowState extends State<SilverItemRow> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(flex: 1, child: _buildSNo()),
-                  const SizedBox(width: 6),
+                  Expanded(flex: 2, child: _buildSNo()),
+                  const SizedBox(width: 4),
                   Expanded(flex: 3, child: _buildCategoryField()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
+                  Expanded(flex: 3, child: _buildSegmentField()),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 4,
                     child: _SilverTextField(
@@ -100,7 +104,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                           widget.model.piecesFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -111,14 +115,16 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       allowDecimal: false,
                       textAlign: TextAlign.center,
                       textInputAction: TextInputAction.next,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onSubmitted: (_) =>
-                          widget.model.grossFocus.requestFocus(),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(3),
+                      ],
+                      onSubmitted: (_) => widget.model.huidFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
-                    flex: 2,
+                    flex: 4,
                     child: _SilverTextField(
                       controller: widget.model.huidCtrl,
                       focusNode: widget.model.huidFocus,
@@ -135,7 +141,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                           widget.model.grossFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -147,7 +153,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       onSubmitted: (_) => widget.model.lessFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -160,16 +166,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                           widget.model.purityFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    flex: 2,
-                    child: _buildAutoCell(
-                      value: widget.model.lessWeight.toStringAsFixed(3),
-                      color: SilverStockColors.textMuted,
-                      align: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
@@ -178,7 +175,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       align: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -192,7 +189,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                           widget.model.wastageFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _SilverTextField(
@@ -206,13 +203,13 @@ class _SilverItemRowState extends State<SilverItemRow> {
                           widget.model.makingFocus.requestFocus(),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: Tooltip(
                       message: widget.model.hasRoundedFineWeight
-                          ? 'Rounded fine uses effective purity ${widget.model.effectiveTotalPurityLabel}% for billing.'
-                          : 'Total purity = Base purity ${widget.model.basePurityPercent.toStringAsFixed(2)}% + Wastage ${widget.model.wastagePercent.toStringAsFixed(2)}%',
+                          ? 'Rounded valuation fine uses effective purity ${widget.model.effectiveTotalPurityLabel}%.'
+                          : 'Total purity = base purity ${widget.model.basePurityPercent.toStringAsFixed(2)}% + wastage ${widget.model.wastagePercent.toStringAsFixed(2)}%',
                       waitDuration: const Duration(milliseconds: 400),
                       child: _buildAutoCell(
                         value: widget.model.effectiveTotalPurityLabel == '--'
@@ -222,27 +219,39 @@ class _SilverItemRowState extends State<SilverItemRow> {
                             ? SilverStockColors.brandSilver
                             : SilverStockColors.danger,
                         align: TextAlign.center,
+                        isBold: true,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
                     child: _buildAutoCell(
-                      value: widget.model.fineWeight.toStringAsFixed(3),
+                      value: widget.model.actualFineWeight.toStringAsFixed(3),
                       color: SilverStockColors.success,
                       align: TextAlign.center,
                       isBold: true,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    flex: 2,
+                    child: _buildAutoCell(
+                      value:
+                          widget.model.valuationFineWeight.toStringAsFixed(3),
+                      color: SilverStockColors.brandSilver,
+                      align: TextAlign.center,
+                      isBold: true,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
                   Expanded(flex: 3, child: _buildMakingField()),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Expanded(
                     flex: 3,
                     child: Tooltip(
                       message:
-                          'Fine ${widget.model.fineWeight.toStringAsFixed(3)} g at ${widget.model.effectiveTotalPurityLabel}% purity x Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g',
+                          'Valuation fine ${widget.model.valuationFineWeight.toStringAsFixed(3)} g at Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g plus making.',
                       waitDuration: const Duration(milliseconds: 400),
                       child: _buildAutoCell(
                         value:
@@ -253,8 +262,8 @@ class _SilverItemRowState extends State<SilverItemRow> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(flex: 1, child: _buildDeleteBtn()),
+                  const SizedBox(width: 4),
+                  Expanded(flex: 1, child: _buildRowActions()),
                 ],
               ),
             ),
@@ -286,6 +295,35 @@ class _SilverItemRowState extends State<SilverItemRow> {
         }
 
         _setText(widget.model.categoryCtrl, value);
+        widget.model.segmentFocus.requestFocus();
+      },
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => widget.model.segmentFocus.requestFocus(),
+    );
+  }
+
+  Widget _buildSegmentField() {
+    return _SilverPopupField(
+      controller: widget.model.segmentCtrl,
+      focusNode: widget.model.segmentFocus,
+      hint: 'Segment',
+      popupItems: SilverItemModel.segmentPresets,
+      onSelected: (value) {
+        if (value == 'Custom') {
+          if (SilverItemModel.segmentPresets.contains(
+            widget.model.segmentCtrl.text.trim(),
+          )) {
+            widget.model.segmentCtrl.clear();
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.model.segmentFocus.requestFocus();
+            }
+          });
+          return;
+        }
+
+        _setText(widget.model.segmentCtrl, value);
         widget.model.itemNameFocus.requestFocus();
       },
       textInputAction: TextInputAction.next,
@@ -303,18 +341,18 @@ class _SilverItemRowState extends State<SilverItemRow> {
   Widget _buildSNo() {
     return Center(
       child: Container(
-        width: 32,
-        height: 32,
+        width: 54,
+        height: _invoiceFieldHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(7),
+          color: SilverStockColors.brandSilver.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(_invoiceFieldRadius),
           border: Border.all(
             color: SilverStockColors.brandSilver.withValues(alpha: 0.35),
           ),
         ),
         child: Text(
-          '${widget.index + 1}',
+          (widget.index + 1).toString().padLeft(2, '0'),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w900,
@@ -333,23 +371,31 @@ class _SilverItemRowState extends State<SilverItemRow> {
     bool isBold = false,
   }) {
     return Container(
-      height: 38,
+      height: _invoiceFieldHeight,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment:
           align == TextAlign.center ? Alignment.center : Alignment.centerRight,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(_invoiceFieldRadius),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        value,
-        textAlign: align,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w900,
-          fontSize: isBold ? 16 : 15,
-          fontFeatures: const [FontFeature.tabularFigures()],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: align == TextAlign.center
+            ? Alignment.center
+            : Alignment.centerRight,
+        child: Text(
+          value,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: align,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w900,
+            fontSize: isBold ? 16 : 15,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );
@@ -379,15 +425,15 @@ class _SilverItemRowState extends State<SilverItemRow> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              width: 38,
-              height: 38,
+              width: _invoiceFieldHeight,
+              height: _invoiceFieldHeight,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
                 border: Border.all(
                   color: SilverStockColors.brandSilver.withValues(alpha: 0.40),
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(_invoiceFieldRadius),
               ),
               child: Text(
                 widget.model.makingTypeSymbol,
@@ -404,7 +450,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
     );
   }
 
-  Widget _buildDeleteBtn() {
+  Widget _buildRowActions() {
     return Center(
       child: Tooltip(
         message: 'Remove item',
@@ -413,13 +459,13 @@ class _SilverItemRowState extends State<SilverItemRow> {
           onTap: () => widget.ctrl.removeRow(widget.model.id),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            width: 32,
-            height: 32,
+            width: _invoiceFieldHeight,
+            height: _invoiceFieldHeight,
             decoration: BoxDecoration(
-              color: SilverStockColors.danger.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              color: SilverStockColors.danger.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(_invoiceFieldRadius),
               border: Border.all(
-                color: SilverStockColors.danger.withValues(alpha: 0.35),
+                color: SilverStockColors.danger.withValues(alpha: 0.32),
               ),
             ),
             child: const Icon(
@@ -461,62 +507,76 @@ class _SilverTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 38,
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: isNumber
-            ? TextInputType.numberWithOptions(decimal: allowDecimal)
-            : TextInputType.text,
-        textCapitalization: textCapitalization,
-        inputFormatters: inputFormatters ??
-            (isNumber
-                ? (allowDecimal
-                    ? [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d*\.?\d*'),
-                        ),
-                      ]
-                    : [FilteringTextInputFormatter.digitsOnly])
-                : null),
-        textInputAction: textInputAction,
-        textAlign: textAlign,
-        textAlignVertical: TextAlignVertical.center,
-        onFieldSubmitted: onSubmitted,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: SilverStockColors.textDark,
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: SilverStockColors.textMuted.withValues(alpha: 0.50),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-          filled: true,
-          fillColor: SilverStockColors.inputBg,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(
-              color: SilverStockColors.cardBorder,
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(
-              color: SilverStockColors.brandSilver,
-              width: 2.0,
-            ),
+    Widget buildField(bool hasFocus) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        height: _invoiceFieldHeight,
+        decoration: BoxDecoration(
+          color: SilverStockColors.inputBg,
+          borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+          border: Border.all(
+            color: hasFocus
+                ? SilverStockColors.brandSilver
+                : SilverStockColors.cardBorder,
+            width: hasFocus ? 2.0 : 1.5,
           ),
         ),
-      ),
+        alignment: Alignment.center,
+        child: TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          keyboardType: isNumber
+              ? TextInputType.numberWithOptions(decimal: allowDecimal)
+              : TextInputType.text,
+          textCapitalization: textCapitalization,
+          inputFormatters: inputFormatters ??
+              (isNumber
+                  ? (allowDecimal
+                      ? [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d*'),
+                          ),
+                        ]
+                      : [FilteringTextInputFormatter.digitsOnly])
+                  : null),
+          textInputAction: textInputAction,
+          textAlign: textAlign,
+          textAlignVertical: TextAlignVertical.center,
+          maxLines: 1,
+          onFieldSubmitted: onSubmitted,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: SilverStockColors.textDark,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            isCollapsed: true,
+            hintText: hint,
+            hintStyle: const TextStyle(
+              color: SilverStockColors.textHint,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 9,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (focusNode == null) {
+      return buildField(false);
+    }
+
+    return ListenableBuilder(
+      listenable: focusNode!,
+      builder: (context, _) => buildField(focusNode!.hasFocus),
     );
   }
 }
@@ -542,81 +602,104 @@ class _SilverPopupField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      decoration: BoxDecoration(
-        color: SilverStockColors.inputBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: SilverStockColors.cardBorder, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: controller,
-              focusNode: focusNode,
-              textInputAction: textInputAction,
-              onFieldSubmitted: onSubmitted,
-              textAlign: TextAlign.left,
-              textAlignVertical: TextAlignVertical.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: SilverStockColors.textDark,
-                fontFeatures: [FontFeature.tabularFigures()],
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                hintText: hint,
-                hintStyle: TextStyle(
-                  color: SilverStockColors.textMuted.withValues(alpha: 0.50),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+    Widget buildField(bool hasFocus) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        height: _invoiceFieldHeight,
+        decoration: BoxDecoration(
+          color: SilverStockColors.inputBg,
+          borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+          border: Border.all(
+            color: hasFocus
+                ? SilverStockColors.brandSilver
+                : SilverStockColors.cardBorder,
+            width: hasFocus ? 2.0 : 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                textInputAction: textInputAction,
+                onFieldSubmitted: onSubmitted,
+                textAlign: TextAlign.left,
+                textAlignVertical: TextAlignVertical.center,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: SilverStockColors.textDark,
+                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: InputDecoration(
+                  isDense: true,
+                  isCollapsed: true,
+                  hintText: hint,
+                  hintStyle: const TextStyle(
+                    color: SilverStockColors.textHint,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 9,
+                  ),
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            width: 36,
-            height: 38,
-            child: PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: SilverStockColors.brandSilver,
-                size: 20,
-              ),
-              color: SilverStockColors.cardBg,
-              position: PopupMenuPosition.under,
-              padding: EdgeInsets.zero,
-              splashRadius: 18,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(color: SilverStockColors.cardBorder),
-              ),
-              onSelected: onSelected,
-              itemBuilder: (context) => popupItems
-                  .map(
-                    (choice) => PopupMenuItem<String>(
-                      value: choice,
-                      height: 38,
-                      child: Text(
-                        choice,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: SilverStockColors.textDark,
+            SizedBox(
+              width: 36,
+              height: _invoiceFieldHeight,
+              child: PopupMenuButton<String>(
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: SilverStockColors.brandSilver,
+                  size: 20,
+                ),
+                color: SilverStockColors.cardBg,
+                position: PopupMenuPosition.under,
+                padding: EdgeInsets.zero,
+                splashRadius: 18,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+                  side: const BorderSide(color: SilverStockColors.cardBorder),
+                ),
+                onSelected: onSelected,
+                itemBuilder: (context) => popupItems
+                    .map(
+                      (choice) => PopupMenuItem<String>(
+                        value: choice,
+                        height: _invoiceFieldHeight,
+                        child: Text(
+                          choice,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: SilverStockColors.textDark,
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                  .toList(),
+                    )
+                    .toList(),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      );
+    }
+
+    if (focusNode == null) {
+      return buildField(false);
+    }
+
+    return ListenableBuilder(
+      listenable: focusNode!,
+      builder: (context, _) => buildField(focusNode!.hasFocus),
     );
   }
 }
