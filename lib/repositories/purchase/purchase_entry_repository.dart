@@ -54,7 +54,11 @@ class PurchaseVoucherItemDraft {
   final String purityLabel;
   final double effectiveRatePerGram;
   final double gstRate;
+  final String quantityMode;
+  final int packetCount;
+  final int piecesPerPacket;
   final PurchaseStockTrackingMode stockTrackingMode;
+  final bool weightsAreLineTotals;
 
   const PurchaseVoucherItemDraft({
     required this.metal,
@@ -79,7 +83,11 @@ class PurchaseVoucherItemDraft {
     this.purityLabel = '',
     this.effectiveRatePerGram = 0.0,
     this.gstRate = 0.0,
+    this.quantityMode = 'PIECES',
+    this.packetCount = 0,
+    this.piecesPerPacket = 1,
     this.stockTrackingMode = PurchaseStockTrackingMode.unit,
+    this.weightsAreLineTotals = false,
   });
 }
 
@@ -366,9 +374,12 @@ class PurchaseEntryRepository {
               valuation_fine_weight,
               rate,
               quantity,
+              quantity_mode,
+              packet_count,
+              pieces_per_packet,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -388,6 +399,9 @@ class PurchaseEntryRepository {
                   : item.fineWeight + item.wastageFineWeight,
               item.rate,
               item.quantity,
+              item.quantityMode,
+              item.packetCount,
+              item.piecesPerPacket,
               item.lineAmount,
               createdAtMs,
             ],
@@ -457,6 +471,19 @@ class PurchaseEntryRepository {
                   gstRate: drift.Value(item.gstRate),
                 ),
               );
+          await _db.customUpdate(
+            '''
+            UPDATE stock_items
+            SET quantity_mode = ?, packet_count = ?, pieces_per_packet = ?
+            WHERE id = ?
+            ''',
+            variables: [
+              drift.Variable.withString(item.quantityMode),
+              drift.Variable.withInt(item.packetCount),
+              drift.Variable.withInt(item.piecesPerPacket),
+              drift.Variable.withInt(stockItemId),
+            ],
+          );
           await _insertPurchaseItemHuids(
             voucherId: voucherId,
             purchaseVoucherItemId: purchaseVoucherItemId,
@@ -478,10 +505,10 @@ class PurchaseEntryRepository {
             createdAtMs: createdAtMs,
           );
           final stockQuantity = item.quantity > 0 ? item.quantity : 1;
-          final movementWeightMultiplier =
-              item.stockTrackingMode == PurchaseStockTrackingMode.lot
-                  ? 1
-                  : stockQuantity;
+          final movementWeightMultiplier = item.weightsAreLineTotals ||
+                  item.stockTrackingMode == PurchaseStockTrackingMode.lot
+              ? 1
+              : stockQuantity;
           await _insertStockMovement(
             stockItemId: stockItemId,
             movementType: 'IN',
@@ -630,6 +657,9 @@ class PurchaseEntryRepository {
         'huid': 'TEXT',
         'gst_rate': 'REAL NOT NULL DEFAULT 3.0',
         'quantity': 'INTEGER NOT NULL DEFAULT 1',
+        'quantity_mode': "TEXT NOT NULL DEFAULT 'PIECES'",
+        'packet_count': 'INTEGER NOT NULL DEFAULT 0',
+        'pieces_per_packet': 'INTEGER NOT NULL DEFAULT 1',
         'location': 'TEXT',
         'supplier_id': 'INTEGER',
         'supplier_name': 'TEXT',
@@ -675,6 +705,9 @@ class PurchaseEntryRepository {
       'purchase_voucher_items',
       const {
         'quantity': 'INTEGER NOT NULL DEFAULT 1',
+        'quantity_mode': "TEXT NOT NULL DEFAULT 'PIECES'",
+        'packet_count': 'INTEGER NOT NULL DEFAULT 0',
+        'pieces_per_packet': 'INTEGER NOT NULL DEFAULT 1',
         'item_segment': 'TEXT',
         'wastage_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
         'valuation_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
@@ -1134,14 +1167,24 @@ class PurchaseEntryRepository {
     final valuationFine = item.valuationFineWeight > 0
         ? item.valuationFineWeight
         : item.fineWeight + item.wastageFineWeight;
-    final unitGrossWeight = _divideForStockUnit(item.grossWeight, quantity);
-    final unitLessWeight = _divideForStockUnit(item.lessWeight, quantity);
-    final unitNetWeight = _divideForStockUnit(item.netWeight, quantity);
-    final unitFineWeight = _divideForStockUnit(item.fineWeight, quantity);
-    final unitWastageFineWeight =
-        _divideForStockUnit(item.wastageFineWeight, quantity);
-    final unitValuationFineWeight =
-        _divideForStockUnit(valuationFine, quantity);
+    final unitGrossWeight = item.weightsAreLineTotals
+        ? _divideForStockUnit(item.grossWeight, quantity)
+        : item.grossWeight;
+    final unitLessWeight = item.weightsAreLineTotals
+        ? _divideForStockUnit(item.lessWeight, quantity)
+        : item.lessWeight;
+    final unitNetWeight = item.weightsAreLineTotals
+        ? _divideForStockUnit(item.netWeight, quantity)
+        : item.netWeight;
+    final unitFineWeight = item.weightsAreLineTotals
+        ? _divideForStockUnit(item.fineWeight, quantity)
+        : item.fineWeight;
+    final unitWastageFineWeight = item.weightsAreLineTotals
+        ? _divideForStockUnit(item.wastageFineWeight, quantity)
+        : item.wastageFineWeight;
+    final unitValuationFineWeight = item.weightsAreLineTotals
+        ? _divideForStockUnit(valuationFine, quantity)
+        : valuationFine;
 
     for (var index = 0; index < quantity; index++) {
       final huid = index < huids.length ? huids[index] : null;

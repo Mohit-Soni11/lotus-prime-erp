@@ -250,7 +250,7 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
           const SizedBox(width: 4),
           _h('ITEM NAME', flex: 4),
           const SizedBox(width: 4),
-          _h('PCS', flex: 2, center: true),
+          _h('QUANTITY', flex: 3, center: true),
           const SizedBox(width: 4),
           _h('HUID / SERIAL NO.', flex: 4),
           const SizedBox(width: 4),

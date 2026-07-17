@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
+enum SilverQuantityMode {
+  pieces('PCS', 'Pieces'),
+  packet('PACK', 'Packet / Set');
+
+  final String code;
+  final String label;
+
+  const SilverQuantityMode(this.code, this.label);
+}
+
 class SilverItemModel extends ChangeNotifier {
   static const List<String> categoryPresets = [
     'Anklet / Payal',
@@ -47,7 +57,11 @@ class SilverItemModel extends ChangeNotifier {
   final TextEditingController categoryCtrl = TextEditingController();
   final TextEditingController segmentCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
+  final TextEditingController quantityModeCtrl = TextEditingController(
+    text: SilverQuantityMode.pieces.code,
+  );
   final TextEditingController piecesCtrl = TextEditingController();
+  final TextEditingController piecesPerPacketCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
   final List<TextEditingController> _extraHuidCtrls = [];
   final TextEditingController grossCtrl = TextEditingController();
@@ -61,6 +75,7 @@ class SilverItemModel extends ChangeNotifier {
   final FocusNode segmentFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode piecesFocus = FocusNode();
+  final FocusNode piecesPerPacketFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
   final List<FocusNode> _extraHuidFocusNodes = [];
   final FocusNode grossFocus = FocusNode();
@@ -70,6 +85,8 @@ class SilverItemModel extends ChangeNotifier {
   final FocusNode makingFocus = FocusNode();
 
   MakingChargesType makingChargesType = MakingChargesType.perGram;
+  SilverQuantityMode quantityMode = SilverQuantityMode.pieces;
+  bool huidTrackingEnabled = false;
   bool _fineRoundOffEnabled = false;
   double? _fineWeightOverride;
 
@@ -84,6 +101,7 @@ class SilverItemModel extends ChangeNotifier {
     segmentCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
     piecesCtrl.addListener(_piecesFieldChanged);
+    piecesPerPacketCtrl.addListener(_piecesFieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_weightPurityFieldChanged);
     lessCtrl.addListener(_weightPurityFieldChanged);
@@ -111,14 +129,46 @@ class SilverItemModel extends ChangeNotifier {
 
   double get grossWeight => _parseNumeric(grossCtrl.text);
   double get lessPerPieceWeight => _parseNumeric(lessCtrl.text);
-  double get lessWeight => lessPerPieceWeight * (pieces > 0 ? pieces : 1);
+  double get lessWeight => lessPerPieceWeight * lessUnitCount;
   double get netWeight =>
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
   String get categoryLabel => categoryCtrl.text.trim();
   String get segmentLabel => segmentCtrl.text.trim();
   String get itemName => itemNameCtrl.text.trim();
-  int get pieces => _parseWholeNumber(piecesCtrl.text);
+  int get enteredQuantity {
+    final value = _parseWholeNumber(piecesCtrl.text);
+    return value <= 0 ? 0 : value;
+  }
+
+  int get piecesPerPacket {
+    if (quantityMode == SilverQuantityMode.pieces) {
+      return 1;
+    }
+    final value = _parseWholeNumber(piecesPerPacketCtrl.text);
+    return value <= 0 ? 0 : value;
+  }
+
+  int get packetCount =>
+      quantityMode == SilverQuantityMode.packet ? enteredQuantity : 0;
+
+  int get lessUnitCount {
+    if (quantityMode == SilverQuantityMode.packet) {
+      return packetCount > 0 ? packetCount : 1;
+    }
+    return pieces > 0 ? pieces : 1;
+  }
+
+  int get pieces {
+    if (quantityMode == SilverQuantityMode.packet) {
+      if (enteredQuantity <= 0 || piecesPerPacket <= 0) {
+        return 0;
+      }
+      return enteredQuantity * piecesPerPacket;
+    }
+    return enteredQuantity;
+  }
+
   String get huid => huidCtrl.text.trim().toUpperCase();
   List<String> get huidValues => huidControllers
       .map((controller) => controller.text.trim().toUpperCase())
@@ -182,6 +232,8 @@ class SilverItemModel extends ChangeNotifier {
       segmentLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       _hasMeaningfulPiecesInput ||
+      (quantityMode == SilverQuantityMode.packet &&
+          piecesPerPacketCtrl.text.trim().isNotEmpty) ||
       huidValues.isNotEmpty ||
       grossWeight > 0 ||
       lessPerPieceWeight > 0 ||
@@ -192,7 +244,7 @@ class SilverItemModel extends ChangeNotifier {
     if (raw.isEmpty) {
       return false;
     }
-    return pieces != 1;
+    return enteredQuantity != 1;
   }
 
   void applyPurchaseRate(double rate, {bool onlyIfEmpty = true}) {
@@ -299,7 +351,8 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   void syncHuidInputsWithPieces() {
-    final requiredCount = pieces > 1 && pieces <= 12 ? pieces : 1;
+    final requiredCount =
+        huidTrackingEnabled && pieces > 1 && pieces <= 12 ? pieces : 1;
     while (huidControllers.length < requiredCount) {
       final controller = TextEditingController();
       final focusNode = FocusNode();
@@ -317,11 +370,53 @@ class SilverItemModel extends ChangeNotifier {
     }
   }
 
+  void setHuidTrackingEnabled(bool enabled) {
+    if (huidTrackingEnabled == enabled) {
+      return;
+    }
+    huidTrackingEnabled = enabled;
+    if (enabled) {
+      setQuantityMode(SilverQuantityMode.pieces, notify: false);
+    } else {
+      huidCtrl.clear();
+      for (final controller in _extraHuidCtrls) {
+        controller.clear();
+      }
+    }
+    syncHuidInputsWithPieces();
+    _refreshFineRoundOff();
+    notifyListeners();
+  }
+
+  void setQuantityMode(SilverQuantityMode mode, {bool notify = true}) {
+    if (huidTrackingEnabled && mode == SilverQuantityMode.packet) {
+      return;
+    }
+    if (quantityMode == mode) {
+      return;
+    }
+    quantityMode = mode;
+    quantityModeCtrl.text = mode.code;
+    if (mode == SilverQuantityMode.packet &&
+        piecesPerPacketCtrl.text.trim().isEmpty) {
+      piecesPerPacketCtrl.text = '2';
+    }
+    if (mode == SilverQuantityMode.pieces) {
+      piecesPerPacketCtrl.clear();
+    }
+    syncHuidInputsWithPieces();
+    _refreshFineRoundOff();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
     segmentCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
     piecesCtrl.removeListener(_piecesFieldChanged);
+    piecesPerPacketCtrl.removeListener(_piecesFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
     for (final controller in _extraHuidCtrls) {
       controller.removeListener(_fieldChanged);
@@ -336,7 +431,9 @@ class SilverItemModel extends ChangeNotifier {
     categoryCtrl.dispose();
     segmentCtrl.dispose();
     itemNameCtrl.dispose();
+    quantityModeCtrl.dispose();
     piecesCtrl.dispose();
+    piecesPerPacketCtrl.dispose();
     huidCtrl.dispose();
     for (final controller in _extraHuidCtrls) {
       controller.dispose();
@@ -352,6 +449,7 @@ class SilverItemModel extends ChangeNotifier {
     segmentFocus.dispose();
     itemNameFocus.dispose();
     piecesFocus.dispose();
+    piecesPerPacketFocus.dispose();
     huidFocus.dispose();
     for (final focusNode in _extraHuidFocusNodes) {
       focusNode.dispose();

@@ -105,24 +105,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Expanded(
-                    flex: 2,
-                    child: _SilverTextField(
-                      controller: widget.model.piecesCtrl,
-                      focusNode: widget.model.piecesFocus,
-                      hint: 'PCS',
-                      isNumber: true,
-                      allowDecimal: false,
-                      textAlign: TextAlign.center,
-                      textInputAction: TextInputAction.next,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(3),
-                      ],
-                      onSubmitted: (_) =>
-                          widget.model.huidFocusNodes.first.requestFocus(),
-                    ),
-                  ),
+                  Expanded(flex: 3, child: _buildQuantityFields()),
                   const SizedBox(width: 4),
                   Expanded(flex: 4, child: _buildHuidFields()),
                   const SizedBox(width: 4),
@@ -257,29 +240,98 @@ class _SilverItemRowState extends State<SilverItemRow> {
     );
   }
 
-  Widget _buildHuidFields() {
-    final controllers = widget.model.huidControllers;
-    final focusNodes = widget.model.huidFocusNodes;
+  Widget _buildQuantityFields() {
+    final isPacket = widget.model.quantityMode == SilverQuantityMode.packet;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (var index = 0; index < controllers.length; index++) ...[
-          _SilverTextField(
-            controller: controllers[index],
-            focusNode: focusNodes[index],
-            hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
-            textCapitalization: TextCapitalization.characters,
-            textInputAction: TextInputAction.next,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-              LengthLimitingTextInputFormatter(6),
+        Row(
+          children: [
+            _QuantityModeButton(model: widget.model),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _SilverTextField(
+                controller: widget.model.piecesCtrl,
+                focusNode: widget.model.piecesFocus,
+                hint: isPacket ? 'Packets' : 'Pieces',
+                isNumber: true,
+                allowDecimal: false,
+                textAlign: TextAlign.center,
+                textInputAction: TextInputAction.next,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(4),
+                ],
+                onSubmitted: (_) => isPacket
+                    ? widget.model.piecesPerPacketFocus.requestFocus()
+                    : widget.model.huidFocusNodes.first.requestFocus(),
+              ),
+            ),
+          ],
+        ),
+        if (isPacket) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: _SilverTextField(
+                  controller: widget.model.piecesPerPacketCtrl,
+                  focusNode: widget.model.piecesPerPacketFocus,
+                  hint: 'PCS / PACK',
+                  isNumber: true,
+                  allowDecimal: false,
+                  textAlign: TextAlign.center,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(3),
+                  ],
+                  onSubmitted: (_) =>
+                      widget.model.huidFocusNodes.first.requestFocus(),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Tooltip(
+                message: 'Total pieces = packets × pieces per packet / set.',
+                waitDuration: const Duration(milliseconds: 400),
+                child: _QuantityTotalBadge(value: '${widget.model.pieces}'),
+              ),
             ],
-            onSubmitted: (_) => index == controllers.length - 1
-                ? widget.model.grossFocus.requestFocus()
-                : focusNodes[index + 1].requestFocus(),
           ),
-          if (index != controllers.length - 1) const SizedBox(height: 6),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildHuidFields() {
+    final controllers = widget.model.huidControllers;
+    final focusNodes = widget.model.huidFocusNodes;
+    final enabled = widget.model.huidTrackingEnabled;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _HuidTrackingSwitch(model: widget.model),
+        if (enabled) ...[
+          const SizedBox(height: 6),
+          for (var index = 0; index < controllers.length; index++) ...[
+            _SilverTextField(
+              controller: controllers[index],
+              focusNode: focusNodes[index],
+              hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
+              textCapitalization: TextCapitalization.characters,
+              textInputAction: TextInputAction.next,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                LengthLimitingTextInputFormatter(6),
+              ],
+              onSubmitted: (_) => index == controllers.length - 1
+                  ? widget.model.grossFocus.requestFocus()
+                  : focusNodes[index + 1].requestFocus(),
+            ),
+            if (index != controllers.length - 1) const SizedBox(height: 6),
+          ],
         ],
       ],
     );
@@ -485,6 +537,187 @@ class _SilverItemRowState extends State<SilverItemRow> {
               color: SilverStockColors.danger,
               size: 18,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantityModeButton extends StatelessWidget {
+  final SilverItemModel model;
+
+  const _QuantityModeButton({required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Choose Pieces or Packet / Set quantity mode.',
+      waitDuration: const Duration(milliseconds: 400),
+      child: PopupMenuButton<SilverQuantityMode>(
+        tooltip: '',
+        color: SilverStockColors.cardBg,
+        position: PopupMenuPosition.under,
+        padding: EdgeInsets.zero,
+        splashRadius: 18,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+          side: const BorderSide(color: SilverStockColors.cardBorder),
+        ),
+        onSelected: model.setQuantityMode,
+        itemBuilder: (context) => SilverQuantityMode.values
+            .map(
+              (mode) => PopupMenuItem<SilverQuantityMode>(
+                value: mode,
+                height: _invoiceFieldHeight,
+                child: Text(
+                  mode.label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: SilverStockColors.textDark,
+                  ),
+                ),
+              ),
+            )
+            .toList(),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOut,
+          width: 54,
+          height: _invoiceFieldHeight,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: SilverStockColors.brandSilver.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+            border: Border.all(
+              color: SilverStockColors.brandSilver.withValues(alpha: 0.35),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                model.quantityMode.code,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: SilverStockColors.brandSilver,
+                ),
+              ),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 14,
+                color: SilverStockColors.brandSilver,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HuidTrackingSwitch extends StatelessWidget {
+  final SilverItemModel model;
+
+  const _HuidTrackingSwitch({required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = model.huidTrackingEnabled;
+    return Tooltip(
+      message: enabled
+          ? 'HUID tracking is on. Enter one row for each HUID item or set.'
+          : 'Bulk silver stock. Turn on only for HUID hallmark items.',
+      waitDuration: const Duration(milliseconds: 400),
+      child: InkWell(
+        onTap: () => model.setHuidTrackingEnabled(!enabled),
+        borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: _invoiceFieldHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: enabled
+                ? SilverStockColors.brandSilver.withValues(alpha: 0.14)
+                : SilverStockColors.inputBg,
+            borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+            border: Border.all(
+              color: enabled
+                  ? SilverStockColors.brandSilver.withValues(alpha: 0.42)
+                  : SilverStockColors.cardBorder,
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                enabled
+                    ? Icons.verified_user_rounded
+                    : Icons.inventory_2_outlined,
+                size: 16,
+                color: enabled
+                    ? SilverStockColors.brandSilver
+                    : SilverStockColors.textMuted,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  enabled ? 'HUID ON' : 'BULK',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: enabled
+                        ? SilverStockColors.brandSilver
+                        : SilverStockColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantityTotalBadge extends StatelessWidget {
+  final String value;
+
+  const _QuantityTotalBadge({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: _invoiceFieldHeight,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: SilverStockColors.success.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+        border: Border.all(
+          color: SilverStockColors.success.withValues(alpha: 0.28),
+          width: 1.5,
+        ),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          '$value pcs',
+          maxLines: 1,
+          softWrap: false,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: SilverStockColors.success,
+            fontFeatures: [FontFeature.tabularFigures()],
           ),
         ),
       ),

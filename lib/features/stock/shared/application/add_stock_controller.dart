@@ -41,6 +41,9 @@ class StockRowEntry {
   double gstRate = 3.0;
 
   int quantity = 1;
+  String quantityMode = 'PIECES';
+  int packetCount = 0;
+  int piecesPerPacket = 1;
   String location = '';
 
   int? supplierId;

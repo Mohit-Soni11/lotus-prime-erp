@@ -280,7 +280,8 @@ class SilverStockController extends AddStockController {
     return enteredSilverRows.map((rowModel) {
       final pieces = rowModel.pieces;
       final lotDivisor = pieces > 0 ? pieces : 1;
-      final huids = rowModel.huidValues;
+      final huids =
+          rowModel.huidTrackingEnabled ? rowModel.huidValues : <String>[];
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
@@ -306,6 +307,9 @@ class SilverStockController extends AddStockController {
       row.supplierId = supplierId;
       row.supplierName = supplierName;
       row.quantity = pieces;
+      row.quantityMode = rowModel.quantityMode.name.toUpperCase();
+      row.packetCount = rowModel.packetCount;
+      row.piecesPerPacket = rowModel.piecesPerPacket;
       return row;
     }).toList(growable: false);
   }
@@ -372,8 +376,17 @@ class SilverStockController extends AddStockController {
     if (row.itemName.length < 2) {
       return 'Item name must be at least 2 characters';
     }
+    if (row.enteredQuantity < 1) {
+      return row.quantityMode == SilverQuantityMode.packet
+          ? 'Packet count must be at least 1'
+          : 'Pieces must be at least 1';
+    }
+    if (row.quantityMode == SilverQuantityMode.packet &&
+        row.piecesPerPacket < 1) {
+      return 'Pieces per packet must be at least 1';
+    }
     if (row.pieces < 1) {
-      return 'Pieces must be at least 1';
+      return 'Total pieces must be at least 1';
     }
     if (row.grossWeight <= 0) {
       return 'Gross weight must be greater than 0';
@@ -397,12 +410,22 @@ class SilverStockController extends AddStockController {
     if (row.makingValue < 0) {
       return 'Making charge cannot be negative';
     }
-    final huids = row.huidValues;
+    if (row.huidTrackingEnabled &&
+        row.quantityMode == SilverQuantityMode.packet) {
+      return 'Use Pieces mode for HUID tracked silver items';
+    }
+    if (row.huidTrackingEnabled && row.pieces > 12) {
+      return 'Enter large HUID stock in separate item rows';
+    }
+    final huids = row.huidTrackingEnabled ? row.huidValues : <String>[];
+    if (row.huidTrackingEnabled && huids.isEmpty) {
+      return 'Enter HUID number for this silver item';
+    }
     final invalidHuid = huids.any((value) => value.length != 6);
     if (invalidHuid) {
       return 'HUID must be exactly 6 characters';
     }
-    if (huids.isNotEmpty && huids.length != row.pieces) {
+    if (row.huidTrackingEnabled && huids.length != row.pieces) {
       return 'Enter one HUID for each silver piece';
     }
     if (huids.toSet().length != huids.length) {
@@ -603,6 +626,10 @@ class SilverStockController extends AddStockController {
               purityLabel: resolvedPurityStorageLabel(row),
               effectiveRatePerGram: row.purchaseRate,
               gstRate: gstEnabled ? gstRate : 0.0,
+              quantityMode: row.quantityMode,
+              packetCount: row.packetCount,
+              piecesPerPacket: row.piecesPerPacket,
+              weightsAreLineTotals: true,
               stockTrackingMode: row.huids.isEmpty
                   ? PurchaseStockTrackingMode.lot
                   : PurchaseStockTrackingMode.unit,
