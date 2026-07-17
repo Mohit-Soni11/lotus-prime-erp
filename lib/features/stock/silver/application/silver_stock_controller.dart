@@ -53,6 +53,7 @@ class SilverStockController extends AddStockController {
   bool _currentBatchPosted = false;
 
   SilverStockController() : super(initialMetal: StockCategory.silver) {
+    payment.addListener(_syncPurchaseValuationRateToRows);
     _startNewBatchIdentity(notify: false);
     _loadSilverRateSnapshot();
   }
@@ -823,6 +824,7 @@ class SilverStockController extends AddStockController {
   @override
   void dispose() {
     supplierInvoiceNumberCtrl.dispose();
+    payment.removeListener(_syncPurchaseValuationRateToRows);
     payment.dispose();
     for (final row in _silverRows) {
       row.removeListener(notifyListeners);
@@ -879,7 +881,7 @@ class SilverStockController extends AddStockController {
       payment.setTodayRate(silverRatePerGram * 1000);
 
       for (final row in _silverRows) {
-        row.applyPurchaseRate(silverRatePerGram);
+        row.applyPurchaseRate(silverRatePerGram, onlyIfEmpty: false);
       }
     } catch (_) {
       _silverRatePer10g = 0.0;
@@ -955,5 +957,25 @@ class SilverStockController extends AddStockController {
   double _parseSilverRate(String raw) {
     final normalized = raw.replaceAll(',', '').replaceAll('--', '0').trim();
     return double.tryParse(normalized) ?? 0.0;
+  }
+
+  void _syncPurchaseValuationRateToRows() {
+    final ratePerGram = payment.todayRatePerGram;
+    if (ratePerGram <= 0) {
+      return;
+    }
+
+    var changed = false;
+    for (final row in _silverRows) {
+      if ((row.purchaseRate - ratePerGram).abs() < 0.0001) {
+        continue;
+      }
+      row.applyPurchaseRate(ratePerGram, onlyIfEmpty: false);
+      changed = true;
+    }
+
+    if (changed) {
+      notifyListeners();
+    }
   }
 }

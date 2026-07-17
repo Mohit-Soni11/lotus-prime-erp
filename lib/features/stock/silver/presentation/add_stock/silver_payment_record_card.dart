@@ -35,7 +35,8 @@ class _SilverPaymentRecordCardState extends State<SilverPaymentRecordCard> {
               const _CardHeader(
                 icon: SilverStockIcons.metalExchange,
                 title: '5. Settlement Method',
-                subtitle: 'Choose metal or cash supplier settlement.',
+                subtitle:
+                    'Settle supplier using silver metal, cash or mixed payment.',
               ),
               const Divider(height: 1, color: SilverStockColors.cardBorder),
               Padding(
@@ -51,7 +52,7 @@ class _SilverPaymentRecordCardState extends State<SilverPaymentRecordCard> {
                       duration: const Duration(milliseconds: 220),
                       switchInCurve: Curves.easeOut,
                       switchOutCurve: Curves.easeIn,
-                      child: payment.paymentMode == PaymentMode.metalToMetal
+                      child: payment.usesMetalSettlement
                           ? _MetalSettlementBoard(
                               key: const ValueKey('metal-settlement'),
                               payment: payment,
@@ -74,7 +75,7 @@ class _SilverPaymentRecordCardState extends State<SilverPaymentRecordCard> {
   }
 
   void _ensureMetalLineWhenNeeded() {
-    if (payment.paymentMode != PaymentMode.metalToMetal ||
+    if (!payment.usesMetalSettlement ||
         payment.metalLines.isNotEmpty ||
         _metalLineScheduled) {
       return;
@@ -110,7 +111,7 @@ class _SettlementModeTabs extends StatelessWidget {
         children: [
           Expanded(
             child: _SettlementModeButton(
-              label: 'Metal to Metal',
+              label: 'Silver to Silver',
               icon: SilverStockIcons.metalExchange,
               selected: payment.paymentMode == PaymentMode.metalToMetal,
               onTap: () => payment.setPaymentMode(PaymentMode.metalToMetal),
@@ -123,6 +124,15 @@ class _SettlementModeTabs extends StatelessWidget {
               icon: SilverStockIcons.cashPayment,
               selected: payment.paymentMode == PaymentMode.cash,
               onTap: () => payment.setPaymentMode(PaymentMode.cash),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _SettlementModeButton(
+              label: 'Mixed Settlement',
+              icon: Icons.call_split_rounded,
+              selected: payment.paymentMode == PaymentMode.mixed,
+              onTap: () => payment.setPaymentMode(PaymentMode.mixed),
             ),
           ),
         ],
@@ -414,7 +424,7 @@ class _MetalSettlementBoard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Metal Settlement',
+                  'Silver Metal Settlement',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -523,7 +533,7 @@ class _MetalLineEditor extends StatelessWidget {
           builder: (context, constraints) {
             final compact = constraints.maxWidth < 680;
             final gross = _SettlementInput(
-              label: 'Metal Given',
+              label: 'Silver Given',
               controller: line.grossCtrl,
               suffixText: 'g',
               icon: SilverStockIcons.weight,
@@ -535,7 +545,7 @@ class _MetalLineEditor extends StatelessWidget {
               icon: SilverStockIcons.purity,
             );
             final fine = _ReadOnlyValue(
-              label: 'Line Fine',
+              label: 'Fine Received',
               value: '${_weight(line.fineWeight)} g',
               icon: SilverStockIcons.fineWeight,
               tone: _MetricTone.neutral,

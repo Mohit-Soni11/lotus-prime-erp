@@ -26,7 +26,8 @@ class SilverPurchaseValuationCard extends StatelessWidget {
               const _CardHeader(
                 icon: SilverStockIcons.rateChart,
                 title: '4. Purchase Valuation',
-                subtitle: 'Rate, fine weight, making and final vendor value.',
+                subtitle:
+                    'Silver rate, valuation fine, making and supplier bill value.',
               ),
               const Divider(height: 1, color: SilverStockColors.cardBorder),
               Padding(
@@ -39,7 +40,7 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                         final stacked = constraints.maxWidth < 860;
                         final fields = [
                           _RateInput(
-                            label: 'Silver Rate / Kg',
+                            label: 'Invoice Silver Rate / Kg',
                             controller: payment.todayRatePerKgCtrl,
                             icon: SilverStockIcons.rateChart,
                             prefixText: 'Rs ',
@@ -112,7 +113,6 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          final stacked = constraints.maxWidth < 660;
                           final cards = [
                             _SummaryTile(
                               label: 'Actual Fine Total',
@@ -125,6 +125,12 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                               value: '${valuationFine.toStringAsFixed(3)} g',
                               icon: SilverStockIcons.rateChart,
                               tone: SilverStockColors.brandSilver,
+                            ),
+                            _SummaryTile(
+                              label: 'Silver Value',
+                              value: _money(payment.fineValueAmount),
+                              icon: SilverStockIcons.amountReceived,
+                              tone: SilverStockColors.paymentPrimary,
                             ),
                             _SummaryTile(
                               label: 'Making Total',
@@ -140,7 +146,7 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                                 tone: SilverStockColors.paymentReturn,
                               ),
                             _SummaryTile(
-                              label: 'Final Purchase Amount',
+                              label: 'Final Supplier Bill',
                               value: _money(payment.finalBillAmount),
                               icon: SilverStockIcons.payable,
                               tone: SilverStockColors.paymentPrimary,
@@ -148,30 +154,18 @@ class SilverPurchaseValuationCard extends StatelessWidget {
                             ),
                           ];
 
-                          if (stacked) {
-                            return Column(
-                              children: [
-                                for (var i = 0; i < cards.length; i++)
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: i == cards.length - 1 ? 0 : 10,
-                                    ),
-                                    child: cards[i],
-                                  ),
-                              ],
-                            );
-                          }
+                          final cardWidth = _summaryCardWidth(
+                            constraints.maxWidth,
+                          );
 
-                          return Row(
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
                             children: [
-                              for (var i = 0; i < cards.length; i++)
-                                Expanded(
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                      right: i == cards.length - 1 ? 0 : 12,
-                                    ),
-                                    child: cards[i],
-                                  ),
+                              for (final card in cards)
+                                SizedBox(
+                                  width: cardWidth,
+                                  child: card,
                                 ),
                             ],
                           );
@@ -187,6 +181,16 @@ class SilverPurchaseValuationCard extends StatelessWidget {
       },
     );
   }
+}
+
+double _summaryCardWidth(double maxWidth) {
+  if (maxWidth >= 720) {
+    return (maxWidth - 24) / 3;
+  }
+  if (maxWidth >= 460) {
+    return (maxWidth - 12) / 2;
+  }
+  return maxWidth;
 }
 
 class _SilverCardShell extends StatelessWidget {
@@ -452,14 +456,21 @@ class _SummaryTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    fontSize: emphasized ? 15 : 14,
-                    fontWeight: FontWeight.w900,
-                    color: emphasized ? tone : SilverStockColors.textDark,
+                Tooltip(
+                  message: value,
+                  waitDuration: const Duration(milliseconds: 350),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: GoogleFonts.manrope(
+                        fontSize: emphasized ? 15 : 14,
+                        fontWeight: FontWeight.w900,
+                        color: emphasized ? tone : SilverStockColors.textDark,
+                      ),
+                    ),
                   ),
                 ),
               ],

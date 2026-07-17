@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum PaymentMode { metalToMetal, cash }
+enum PaymentMode { metalToMetal, cash, mixed }
 
 enum TaxMode { estimate, gst }
 
@@ -146,8 +146,9 @@ class SilverMetalSettlementLine extends ChangeNotifier {
 extension PaymentModeLabel on PaymentMode {
   String get label {
     return switch (this) {
-      PaymentMode.metalToMetal => 'Metal to Metal',
+      PaymentMode.metalToMetal => 'Silver to Silver',
       PaymentMode.cash => 'Cash / Bank',
+      PaymentMode.mixed => 'Mixed Settlement',
     };
   }
 }
@@ -256,11 +257,16 @@ class SilverPaymentController extends ChangeNotifier {
   bool get gstEnabled => _gstEnabled;
   TaxMode get taxMode => _gstEnabled ? TaxMode.gst : TaxMode.estimate;
   PaymentMode get paymentMode => _paymentMode;
+  bool get usesMetalSettlement =>
+      _paymentMode == PaymentMode.metalToMetal ||
+      _paymentMode == PaymentMode.mixed;
+  bool get usesCashSettlement =>
+      _paymentMode == PaymentMode.cash || _paymentMode == PaymentMode.mixed;
   DueReturnType get metalDueReturnType => _metalDueReturnType;
   List<SilverMetalSettlementLine> get metalLines =>
       List.unmodifiable(_metalLines);
   bool get canRoundMetalGrossWeights =>
-      _paymentMode == PaymentMode.metalToMetal &&
+      usesMetalSettlement &&
       _metalLines.any(
         (line) => line.hasFractionalGrossWeight || line.hasFractionalFineWeight,
       );
@@ -309,16 +315,18 @@ class SilverPaymentController extends ChangeNotifier {
     if (!_gstEnabled) {
       return 0.0;
     }
-    return _paymentMode == PaymentMode.metalToMetal
-        ? metalGstPercent
-        : cashGstPercent;
+    return switch (_paymentMode) {
+      PaymentMode.metalToMetal => metalGstPercent,
+      PaymentMode.cash => cashGstPercent,
+      PaymentMode.mixed => cashGstPercent,
+    };
   }
 
   double get taxAmount => subTotalAmount * (taxPercentage / 100.0);
   double get finalBillAmount => subTotalAmount + taxAmount;
 
   double get fineReceived {
-    if (_paymentMode != PaymentMode.metalToMetal) {
+    if (!usesMetalSettlement) {
       return 0.0;
     }
     return _metalLines.fold(0.0, (sum, line) => sum + line.fineWeight);
@@ -334,7 +342,7 @@ class SilverPaymentController extends ChangeNotifier {
   double get fineExcessValue => fineExcess * todayRatePerGram;
   double get metalReceivedValue => fineReceived * todayRatePerGram;
   double get metalAppliedFine {
-    if (_paymentMode != PaymentMode.metalToMetal) {
+    if (!usesMetalSettlement) {
       return 0.0;
     }
     return fineReceived.clamp(0.0, totalFineFromItems).toDouble();
@@ -411,14 +419,10 @@ class SilverPaymentController extends ChangeNotifier {
 
   String get balanceLabel {
     if (hasReturn) {
-      return _metalDueReturnType.returnLabel(
-        _paymentMode == PaymentMode.metalToMetal,
-      );
+      return _metalDueReturnType.returnLabel(usesMetalSettlement);
     }
     if (hasDue) {
-      return _metalDueReturnType.dueLabel(
-        _paymentMode == PaymentMode.metalToMetal,
-      );
+      return _metalDueReturnType.dueLabel(usesMetalSettlement);
     }
     return 'Settled';
   }

@@ -894,7 +894,7 @@ class PurchaseEntryRepository {
     final expectedLines = draft.items.length;
     final expectedUnits = draft.items.fold<int>(
       0,
-      (sum, item) => sum + (item.quantity > 0 ? item.quantity : 1),
+      (sum, item) => sum + _expectedStockUnitCount(item),
     );
     final expectedHuids = _draftHuids(draft).length;
     final voucherIdValue = drift.Variable.withInt(voucherId);
@@ -970,6 +970,14 @@ class PurchaseEntryRepository {
       stockUnitCount: stockUnits,
       huidCount: huidCount,
     );
+  }
+
+  int _expectedStockUnitCount(PurchaseVoucherItemDraft item) {
+    final hasHuids = _normalizedHuids(item).isNotEmpty;
+    if (item.stockTrackingMode == PurchaseStockTrackingMode.lot && !hasHuids) {
+      return 1;
+    }
+    return item.quantity > 0 ? item.quantity : 1;
   }
 
   Future<int> _countInt(
