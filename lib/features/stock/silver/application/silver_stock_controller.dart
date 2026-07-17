@@ -9,6 +9,7 @@ import 'package:lotus_erp/features/stock/silver/application/silver_batch_code_ge
 import 'package:lotus_erp/features/stock/shared/application/add_stock_controller.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_payment_controller.dart';
+import 'package:lotus_erp/features/stock/silver/application/silver_supplier_invoice_policy.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
@@ -27,6 +28,8 @@ class SilverStockController extends AddStockController {
   final AppDatabase _rateDb = AppDatabase();
   late final SilverBatchCodeGenerator _batchCodeGenerator =
       SilverBatchCodeGenerator(_rateDb);
+  late final SilverSupplierInvoicePolicy _supplierInvoicePolicy =
+      SilverSupplierInvoicePolicy(_rateDb);
 
   /// ✅ Payment controller — wired to this batch lifecycle
   final SilverPaymentController payment = SilverPaymentController();
@@ -277,15 +280,17 @@ class SilverStockController extends AddStockController {
     return enteredSilverRows.map((rowModel) {
       final pieces = rowModel.pieces;
       final lotDivisor = pieces > 0 ? pieces : 1;
+      final huids = rowModel.huidValues;
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
       row.segmentLabel = rowModel.segmentLabel;
       row.subCategory = _mapSilverSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
-      row.huid = rowModel.huid;
-      row.grossWeight = rowModel.grossWeight / lotDivisor;
-      row.stoneWeight = rowModel.lessWeight / lotDivisor;
+      row.huids = huids;
+      row.huid = huids.isEmpty ? '' : huids.first;
+      row.grossWeight = rowModel.grossWeight;
+      row.stoneWeight = rowModel.lessWeight;
       row.touchPercent = rowModel.effectiveTotalPurityPercent;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
@@ -392,11 +397,16 @@ class SilverStockController extends AddStockController {
     if (row.makingValue < 0) {
       return 'Making charge cannot be negative';
     }
-    if (row.huid.isNotEmpty && row.huid.length != 6) {
+    final huids = row.huidValues;
+    final invalidHuid = huids.any((value) => value.length != 6);
+    if (invalidHuid) {
       return 'HUID must be exactly 6 characters';
     }
-    if (row.huid.isNotEmpty && row.pieces != 1) {
-      return 'HUID item must have quantity 1';
+    if (huids.isNotEmpty && huids.length != row.pieces) {
+      return 'Enter one HUID for each silver piece';
+    }
+    if (huids.toSet().length != huids.length) {
+      return 'Duplicate HUID found in the same silver row';
     }
     return null;
   }
@@ -409,6 +419,17 @@ class SilverStockController extends AddStockController {
     // ✨ FIXED: Check updated rate condition
     if (_currentBatchPosted || await _isCurrentBatchAlreadyPosted()) {
       return 'This silver batch has already been saved. Start a new batch before saving again.';
+    }
+    final supplierValidation = await _supplierInvoicePolicy.validate(
+      supplierId: linkedSupplier?.id ?? sessionSupplierId,
+      gstEnabled: gstEnabled,
+      supplierGstin: supplierGstCtrl.text,
+      supplierInvoiceNo: supplierInvoiceNumberCtrl.text,
+      hasBillAttachment: hasBillPhoto,
+      currentBatchCode: batchCode,
+    );
+    if (supplierValidation != null) {
+      return supplierValidation;
     }
     if (payment.todayRatePerKg <= 0) {
       return 'Enter the silver invoice rate before saving this batch.';
@@ -457,6 +478,12 @@ class SilverStockController extends AddStockController {
     final snapshot = paymentSnapshot;
     final sequenceNo = await getNextPurchaseSequence();
     await _ensureCurrentBatchCodeIsAvailable();
+    final invoiceCategory = _supplierInvoicePolicy.categoryFor(
+      gstEnabled: gstEnabled,
+    );
+    final creditStatus = _supplierInvoicePolicy.creditStatusFor(
+      gstEnabled: gstEnabled,
+    );
     final supplierName = supplierDisplayName.trim().isNotEmpty
         ? supplierDisplayName.trim()
         : supplierNameCtrl.text.trim();
@@ -470,8 +497,8 @@ class SilverStockController extends AddStockController {
       source: PurchaseSource.fromSupplier,
       taxType: gstEnabled ? PurchaseTaxType.gst : PurchaseTaxType.normal,
       discountType: PurchaseDiscountType.flatAmount,
-      discountValue: 0.0,
-      discountAmount: 0.0,
+      discountValue: snapshot.cashDiscountAmount,
+      discountAmount: snapshot.cashDiscountAmount,
       grossAmount: invoiceSummary.itemSnapshotAmount,
       taxableAmount: snapshot.subtotalAmount,
       gstAmount: snapshot.appliedGstAmount,
@@ -497,6 +524,13 @@ class SilverStockController extends AddStockController {
       paymentMeta: jsonEncode({
         'mode': snapshot.paymentMode.name,
         'taxMode': payment.taxMode.name,
+        'purchaseCategory': invoiceCategory.storageValue,
+        'purchaseCategoryLabel': invoiceCategory.label,
+        'inputCreditStatus': creditStatus.storageValue,
+        'inputCreditStatusLabel': creditStatus.label,
+        'supplierInvoiceNo': supplierInvoiceNumberCtrl.text.trim(),
+        'supplierBillAttachmentPath': _billPhotoPath,
+        'supplierBillAttachmentRequired': gstEnabled,
         'discountMode': payment.discountMode.name,
         'fineDiscountWeight': snapshot.fineDiscountWeight,
         'cashDiscountAmount': snapshot.cashDiscountAmount,
@@ -513,7 +547,6 @@ class SilverStockController extends AddStockController {
         'metalFineShortageValue': snapshot.metalFineShortageValue,
         'metalFineExcessValue': snapshot.metalFineExcessValue,
         'balanceLabel': snapshot.balanceLabel,
-        'billPhotoPath': _billPhotoPath,
         'oldDueBefore': snapshot.previousSupplierDue,
         'oldDueAdjustedAmount': snapshot.previousSupplierDueAdjustment,
         'oldDueFineEquivalent': snapshot.previousSupplierDueFineEquivalent,
@@ -558,6 +591,10 @@ class SilverStockController extends AddStockController {
               huid: row.huid.trim().isEmpty
                   ? null
                   : row.huid.trim().toUpperCase(),
+              huids: row.huids
+                  .map((value) => value.trim().toUpperCase())
+                  .where((value) => value.isNotEmpty)
+                  .toList(growable: false),
               hsnCode: row.hsnCode.trim().isEmpty
                   ? defaultHsnCode
                   : row.hsnCode.trim(),
@@ -566,6 +603,9 @@ class SilverStockController extends AddStockController {
               purityLabel: resolvedPurityStorageLabel(row),
               effectiveRatePerGram: row.purchaseRate,
               gstRate: gstEnabled ? gstRate : 0.0,
+              stockTrackingMode: row.huids.isEmpty
+                  ? PurchaseStockTrackingMode.lot
+                  : PurchaseStockTrackingMode.unit,
             ),
           )
           .toList(growable: false),

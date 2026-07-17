@@ -119,28 +119,12 @@ class _SilverItemRowState extends State<SilverItemRow> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(3),
                       ],
-                      onSubmitted: (_) => widget.model.huidFocus.requestFocus(),
+                      onSubmitted: (_) =>
+                          widget.model.huidFocusNodes.first.requestFocus(),
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Expanded(
-                    flex: 4,
-                    child: _SilverTextField(
-                      controller: widget.model.huidCtrl,
-                      focusNode: widget.model.huidFocus,
-                      hint: 'HUID',
-                      textCapitalization: TextCapitalization.characters,
-                      textInputAction: TextInputAction.next,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[a-zA-Z0-9]'),
-                        ),
-                        LengthLimitingTextInputFormatter(6),
-                      ],
-                      onSubmitted: (_) =>
-                          widget.model.grossFocus.requestFocus(),
-                    ),
-                  ),
+                  Expanded(flex: 4, child: _buildHuidFields()),
                   const SizedBox(width: 4),
                   Expanded(
                     flex: 2,
@@ -270,6 +254,34 @@ class _SilverItemRowState extends State<SilverItemRow> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildHuidFields() {
+    final controllers = widget.model.huidControllers;
+    final focusNodes = widget.model.huidFocusNodes;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < controllers.length; index++) ...[
+          _SilverTextField(
+            controller: controllers[index],
+            focusNode: focusNodes[index],
+            hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.next,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+              LengthLimitingTextInputFormatter(6),
+            ],
+            onSubmitted: (_) => index == controllers.length - 1
+                ? widget.model.grossFocus.requestFocus()
+                : focusNodes[index + 1].requestFocus(),
+          ),
+          if (index != controllers.length - 1) const SizedBox(height: 6),
+        ],
+      ],
     );
   }
 

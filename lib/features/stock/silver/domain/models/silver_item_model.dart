@@ -49,6 +49,7 @@ class SilverItemModel extends ChangeNotifier {
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController piecesCtrl = TextEditingController();
   final TextEditingController huidCtrl = TextEditingController();
+  final List<TextEditingController> _extraHuidCtrls = [];
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController lessCtrl = TextEditingController();
   final TextEditingController purityCtrl = TextEditingController();
@@ -61,6 +62,7 @@ class SilverItemModel extends ChangeNotifier {
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode piecesFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
+  final List<FocusNode> _extraHuidFocusNodes = [];
   final FocusNode grossFocus = FocusNode();
   final FocusNode lessFocus = FocusNode();
   final FocusNode purityFocus = FocusNode();
@@ -81,7 +83,7 @@ class SilverItemModel extends ChangeNotifier {
     categoryCtrl.addListener(_fieldChanged);
     segmentCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
-    piecesCtrl.addListener(_weightPurityFieldChanged);
+    piecesCtrl.addListener(_piecesFieldChanged);
     huidCtrl.addListener(_fieldChanged);
     grossCtrl.addListener(_weightPurityFieldChanged);
     lessCtrl.addListener(_weightPurityFieldChanged);
@@ -118,6 +120,14 @@ class SilverItemModel extends ChangeNotifier {
   String get itemName => itemNameCtrl.text.trim();
   int get pieces => _parseWholeNumber(piecesCtrl.text);
   String get huid => huidCtrl.text.trim().toUpperCase();
+  List<String> get huidValues => huidControllers
+      .map((controller) => controller.text.trim().toUpperCase())
+      .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+  List<TextEditingController> get huidControllers =>
+      List.unmodifiable([huidCtrl, ..._extraHuidCtrls]);
+  List<FocusNode> get huidFocusNodes =>
+      List.unmodifiable([huidFocus, ..._extraHuidFocusNodes]);
   String get purityLabel => purityCtrl.text.trim().toUpperCase();
 
   double get basePurityPercent => _purityLabelToPercent(purityLabel);
@@ -172,7 +182,7 @@ class SilverItemModel extends ChangeNotifier {
       segmentLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       _hasMeaningfulPiecesInput ||
-      huid.isNotEmpty ||
+      huidValues.isNotEmpty ||
       grossWeight > 0 ||
       lessPerPieceWeight > 0 ||
       makingValue > 0;
@@ -288,12 +298,34 @@ class SilverItemModel extends ChangeNotifier {
     };
   }
 
+  void syncHuidInputsWithPieces() {
+    final requiredCount = pieces > 1 && pieces <= 12 ? pieces : 1;
+    while (huidControllers.length < requiredCount) {
+      final controller = TextEditingController();
+      final focusNode = FocusNode();
+      controller.addListener(_fieldChanged);
+      _extraHuidCtrls.add(controller);
+      _extraHuidFocusNodes.add(focusNode);
+    }
+
+    while (huidControllers.length > requiredCount) {
+      final controller = _extraHuidCtrls.removeLast();
+      final focusNode = _extraHuidFocusNodes.removeLast();
+      controller.removeListener(_fieldChanged);
+      controller.dispose();
+      focusNode.dispose();
+    }
+  }
+
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
     segmentCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
-    piecesCtrl.removeListener(_weightPurityFieldChanged);
+    piecesCtrl.removeListener(_piecesFieldChanged);
     huidCtrl.removeListener(_fieldChanged);
+    for (final controller in _extraHuidCtrls) {
+      controller.removeListener(_fieldChanged);
+    }
     grossCtrl.removeListener(_weightPurityFieldChanged);
     lessCtrl.removeListener(_weightPurityFieldChanged);
     purityCtrl.removeListener(_weightPurityFieldChanged);
@@ -306,6 +338,9 @@ class SilverItemModel extends ChangeNotifier {
     itemNameCtrl.dispose();
     piecesCtrl.dispose();
     huidCtrl.dispose();
+    for (final controller in _extraHuidCtrls) {
+      controller.dispose();
+    }
     grossCtrl.dispose();
     lessCtrl.dispose();
     purityCtrl.dispose();
@@ -318,6 +353,9 @@ class SilverItemModel extends ChangeNotifier {
     itemNameFocus.dispose();
     piecesFocus.dispose();
     huidFocus.dispose();
+    for (final focusNode in _extraHuidFocusNodes) {
+      focusNode.dispose();
+    }
     grossFocus.dispose();
     lessFocus.dispose();
     purityFocus.dispose();
@@ -328,6 +366,12 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   void _fieldChanged() => notifyListeners();
+
+  void _piecesFieldChanged() {
+    syncHuidInputsWithPieces();
+    _refreshFineRoundOff();
+    notifyListeners();
+  }
 
   void _weightPurityFieldChanged() {
     _refreshFineRoundOff();

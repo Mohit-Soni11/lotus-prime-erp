@@ -7,6 +7,8 @@ import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
+enum PurchaseStockTrackingMode { unit, lot }
+
 class PurchaseVoucherPartyDraft {
   final int? customerId;
   final int? supplierId;
@@ -52,6 +54,7 @@ class PurchaseVoucherItemDraft {
   final String purityLabel;
   final double effectiveRatePerGram;
   final double gstRate;
+  final PurchaseStockTrackingMode stockTrackingMode;
 
   const PurchaseVoucherItemDraft({
     required this.metal,
@@ -76,6 +79,7 @@ class PurchaseVoucherItemDraft {
     this.purityLabel = '',
     this.effectiveRatePerGram = 0.0,
     this.gstRate = 0.0,
+    this.stockTrackingMode = PurchaseStockTrackingMode.unit,
   });
 }
 
@@ -473,6 +477,11 @@ class PurchaseEntryRepository {
             supplierName: isSupplierPurchase ? draft.party.name : null,
             createdAtMs: createdAtMs,
           );
+          final stockQuantity = item.quantity > 0 ? item.quantity : 1;
+          final movementWeightMultiplier =
+              item.stockTrackingMode == PurchaseStockTrackingMode.lot
+                  ? 1
+                  : stockQuantity;
           await _insertStockMovement(
             stockItemId: stockItemId,
             movementType: 'IN',
@@ -485,13 +494,10 @@ class PurchaseEntryRepository {
             itemNameSnapshot: item.description.isNotEmpty
                 ? item.description
                 : '${item.subCategory} Purchase Item',
-            quantityDelta: item.quantity > 0 ? item.quantity : 1,
-            grossWeightDelta:
-                item.grossWeight * (item.quantity > 0 ? item.quantity : 1),
-            netWeightDelta:
-                item.netWeight * (item.quantity > 0 ? item.quantity : 1),
-            fineWeightDelta:
-                item.fineWeight * (item.quantity > 0 ? item.quantity : 1),
+            quantityDelta: stockQuantity,
+            grossWeightDelta: item.grossWeight * movementWeightMultiplier,
+            netWeightDelta: item.netWeight * movementWeightMultiplier,
+            fineWeightDelta: item.fineWeight * movementWeightMultiplier,
             reason: 'Purchase stock inward',
             occurredAt: now,
           );
@@ -1105,6 +1111,22 @@ class PurchaseEntryRepository {
   }) async {
     final quantity = item.quantity > 0 ? item.quantity : 1;
     final huids = _normalizedHuids(item);
+    if (item.stockTrackingMode == PurchaseStockTrackingMode.lot &&
+        huids.isEmpty) {
+      await _insertStockLotUnit(
+        voucherId: voucherId,
+        voucherNo: voucherNo,
+        purchaseVoucherItemId: purchaseVoucherItemId,
+        stockItemId: stockItemId,
+        lineNo: lineNo,
+        sku: sku,
+        item: item,
+        supplierId: supplierId,
+        supplierName: supplierName,
+        createdAtMs: createdAtMs,
+      );
+      return;
+    }
     final unitCost = item.lineAmount / quantity;
     final unitMaking = item.labourType == MakingChargesType.flat
         ? item.labourCharge / quantity
@@ -1186,6 +1208,85 @@ class PurchaseEntryRepository {
         ],
       );
     }
+  }
+
+  Future<void> _insertStockLotUnit({
+    required int voucherId,
+    required String voucherNo,
+    required int purchaseVoucherItemId,
+    required int stockItemId,
+    required int lineNo,
+    required String sku,
+    required PurchaseVoucherItemDraft item,
+    required int? supplierId,
+    required String? supplierName,
+    required int createdAtMs,
+  }) async {
+    final valuationFine = item.valuationFineWeight > 0
+        ? item.valuationFineWeight
+        : item.fineWeight + item.wastageFineWeight;
+    await _db.customStatement(
+      '''
+      INSERT INTO stock_item_units (
+        stock_item_id,
+        purchase_voucher_id,
+        purchase_voucher_item_id,
+        batch_code,
+        unit_code,
+        piece_no,
+        metal_type,
+        item_type,
+        segment,
+        item_name,
+        huid,
+        gross_weight,
+        less_weight,
+        net_weight,
+        purity_percent,
+        actual_fine_weight,
+        wastage_fine_weight,
+        valuation_fine_weight,
+        rate_per_gram,
+        making_amount,
+        unit_cost,
+        supplier_id,
+        supplier_name,
+        status,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        stockItemId,
+        voucherId,
+        purchaseVoucherItemId,
+        voucherNo,
+        '$sku-LOT001',
+        lineNo,
+        item.metal.displayName,
+        item.subCategory,
+        item.segmentLabel.trim(),
+        item.description.isNotEmpty
+            ? item.description
+            : '${item.subCategory} Purchase Item',
+        null,
+        item.grossWeight,
+        item.lessWeight,
+        item.netWeight,
+        item.purity,
+        item.fineWeight,
+        item.wastageFineWeight,
+        valuationFine,
+        item.effectiveRatePerGram > 0 ? item.effectiveRatePerGram : item.rate,
+        item.labourCharge,
+        item.lineAmount,
+        supplierId,
+        supplierName,
+        StockStatus.available.label,
+        createdAtMs,
+        createdAtMs,
+      ],
+    );
   }
 
   double _divideForStockUnit(double value, int quantity) {
