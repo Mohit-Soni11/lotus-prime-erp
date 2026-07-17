@@ -16,6 +16,7 @@ class StockRowEntry {
   String description = '';
   StockSubCategory subCategory = StockSubCategory.ring;
   String subCategoryLabel = '';
+  String companyLabel = '';
   String segmentLabel = '';
   String huid = '';
   List<String> huids = [];
@@ -105,6 +106,7 @@ class StockRowEntry {
   bool get hasAnyInput {
     return itemName.trim().isNotEmpty ||
         description.trim().isNotEmpty ||
+        companyLabel.trim().isNotEmpty ||
         segmentLabel.trim().isNotEmpty ||
         huid.trim().isNotEmpty ||
         huids.any((value) => value.trim().isNotEmpty) ||

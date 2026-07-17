@@ -34,6 +34,7 @@ class PurchaseVoucherPartyDraft {
 class PurchaseVoucherItemDraft {
   final PurchaseMetalType metal;
   final String description;
+  final String companyLabel;
   final String segmentLabel;
   final int quantity;
   final double grossWeight;
@@ -63,6 +64,7 @@ class PurchaseVoucherItemDraft {
   const PurchaseVoucherItemDraft({
     required this.metal,
     required this.description,
+    this.companyLabel = '',
     this.segmentLabel = '',
     this.quantity = 1,
     required this.grossWeight,
@@ -364,6 +366,7 @@ class PurchaseEntryRepository {
               sku,
               metal_type,
               item_description,
+              item_company,
               item_segment,
               gross_weight,
               less_weight,
@@ -379,7 +382,7 @@ class PurchaseEntryRepository {
               pieces_per_packet,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -387,6 +390,7 @@ class PurchaseEntryRepository {
               sku,
               item.metal.displayName,
               item.description,
+              item.companyLabel.trim(),
               item.segmentLabel.trim(),
               item.grossWeight,
               item.lessWeight,
@@ -420,6 +424,7 @@ class PurchaseEntryRepository {
                     _buildStockDescription(
                       voucherNo: draft.voucherNo,
                       partyName: draft.party.name,
+                      companyLabel: item.companyLabel,
                       segmentLabel: item.segmentLabel,
                       purityLabel: item.purityLabel.isEmpty
                           ? _purityLabel(item)
@@ -474,10 +479,14 @@ class PurchaseEntryRepository {
           await _db.customUpdate(
             '''
             UPDATE stock_items
-            SET quantity_mode = ?, packet_count = ?, pieces_per_packet = ?
+            SET company_name = ?,
+                quantity_mode = ?,
+                packet_count = ?,
+                pieces_per_packet = ?
             WHERE id = ?
             ''',
             variables: [
+              drift.Variable.withString(item.companyLabel.trim()),
               drift.Variable.withString(item.quantityMode),
               drift.Variable.withInt(item.packetCount),
               drift.Variable.withInt(item.piecesPerPacket),
@@ -660,6 +669,7 @@ class PurchaseEntryRepository {
         'quantity_mode': "TEXT NOT NULL DEFAULT 'PIECES'",
         'packet_count': 'INTEGER NOT NULL DEFAULT 0',
         'pieces_per_packet': 'INTEGER NOT NULL DEFAULT 1',
+        'company_name': 'TEXT',
         'location': 'TEXT',
         'supplier_id': 'INTEGER',
         'supplier_name': 'TEXT',
@@ -708,6 +718,7 @@ class PurchaseEntryRepository {
         'quantity_mode': "TEXT NOT NULL DEFAULT 'PIECES'",
         'packet_count': 'INTEGER NOT NULL DEFAULT 0',
         'pieces_per_packet': 'INTEGER NOT NULL DEFAULT 1',
+        'item_company': 'TEXT',
         'item_segment': 'TEXT',
         'wastage_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
         'valuation_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
@@ -733,6 +744,12 @@ class PurchaseEntryRepository {
       'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_voucher" ON "purchase_item_huids" ("purchase_voucher_id")',
     );
     await _db.customStatement(_createStockItemUnitsTableSql);
+    await _ensureTableColumns(
+      'stock_item_units',
+      const {
+        'company_name': 'TEXT',
+      },
+    );
     for (final statement in _stockItemUnitsIndexSql) {
       await _db.customStatement(statement);
     }
@@ -1199,6 +1216,7 @@ class PurchaseEntryRepository {
           piece_no,
           metal_type,
           item_type,
+          company_name,
           segment,
           item_name,
           huid,
@@ -1217,7 +1235,7 @@ class PurchaseEntryRepository {
           status,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         [
           stockItemId,
@@ -1228,6 +1246,7 @@ class PurchaseEntryRepository {
           index + 1,
           item.metal.displayName,
           item.subCategory,
+          item.companyLabel.trim(),
           item.segmentLabel.trim(),
           item.description.isNotEmpty
               ? item.description
@@ -1279,6 +1298,7 @@ class PurchaseEntryRepository {
         piece_no,
         metal_type,
         item_type,
+        company_name,
         segment,
         item_name,
         huid,
@@ -1297,7 +1317,7 @@ class PurchaseEntryRepository {
         status,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       [
         stockItemId,
@@ -1308,6 +1328,7 @@ class PurchaseEntryRepository {
         lineNo,
         item.metal.displayName,
         item.subCategory,
+        item.companyLabel.trim(),
         item.segmentLabel.trim(),
         item.description.isNotEmpty
             ? item.description
@@ -1488,6 +1509,7 @@ class PurchaseEntryRepository {
   String _buildStockDescription({
     required String voucherNo,
     required String partyName,
+    required String companyLabel,
     required String segmentLabel,
     required String purityLabel,
     required double labourCharge,
@@ -1495,6 +1517,7 @@ class PurchaseEntryRepository {
   }) {
     final parts = <String>[
       'Purchased via $voucherNo from $partyName',
+      if (companyLabel.trim().isNotEmpty) 'Company ${companyLabel.trim()}',
       if (segmentLabel.trim().isNotEmpty) 'Segment ${segmentLabel.trim()}',
       if (purityLabel.isNotEmpty) purityLabel,
       if (labourCharge > 0)
@@ -1515,6 +1538,7 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
   "piece_no" INTEGER NOT NULL,
   "metal_type" TEXT NOT NULL,
   "item_type" TEXT,
+  "company_name" TEXT,
   "segment" TEXT,
   "item_name" TEXT NOT NULL,
   "huid" TEXT,

@@ -93,6 +93,7 @@ class SilverPaymentSnapshot {
 class SilverInvoiceLineSnapshot {
   final String id;
   final String itemName;
+  final String companyLabel;
   final String categoryLabel;
   final String purityLabel;
   final int pieces;
@@ -109,6 +110,7 @@ class SilverInvoiceLineSnapshot {
   const SilverInvoiceLineSnapshot({
     required this.id,
     required this.itemName,
+    required this.companyLabel,
     required this.categoryLabel,
     required this.purityLabel,
     required this.pieces,
@@ -202,6 +204,8 @@ class SilverInvoiceSummaryData {
     return SilverInvoiceLineSnapshot(
       id: row.id,
       itemName: row.itemName,
+      companyLabel:
+          row.companyLabel.isEmpty ? 'Local / Unbranded' : row.companyLabel,
       categoryLabel: row.categoryLabel,
       purityLabel: row.purityLabel,
       pieces: row.pieces,

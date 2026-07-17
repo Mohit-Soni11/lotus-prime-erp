@@ -285,6 +285,9 @@ class SilverStockController extends AddStockController {
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
+      row.companyLabel = rowModel.companyLabel.isEmpty
+          ? 'Local / Unbranded'
+          : rowModel.companyLabel;
       row.segmentLabel = rowModel.segmentLabel;
       row.subCategory = _mapSilverSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
@@ -597,6 +600,7 @@ class SilverStockController extends AddStockController {
             (row) => PurchaseVoucherItemDraft(
               metal: PurchaseMetalType.silver,
               description: row.itemName.trim(),
+              companyLabel: row.companyLabel.trim(),
               segmentLabel: row.segmentLabel.trim(),
               quantity: row.quantity,
               grossWeight: row.grossWeight,

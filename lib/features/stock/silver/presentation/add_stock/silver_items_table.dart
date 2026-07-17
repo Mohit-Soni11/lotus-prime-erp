@@ -7,7 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_co
 import 'silver_item_row.dart';
 
 class SilverItemsTable extends StatefulWidget {
-  static const double _minTableWidth = 1760;
+  static const double _minTableWidth = 1280;
 
   final SilverStockController ctrl;
 
@@ -244,11 +244,13 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
         children: [
           _h('SERIAL NO.', flex: 2, center: true),
           const SizedBox(width: 4),
-          _h('ITEM TYPE', flex: 3),
+          _h('COMPANY', flex: 4),
+          const SizedBox(width: 4),
+          _h('ITEM TYPE', flex: 4),
           const SizedBox(width: 4),
           _h('SEGMENT', flex: 3),
           const SizedBox(width: 4),
-          _h('ITEM NAME', flex: 4),
+          _h('ITEM NAME', flex: 5),
           const SizedBox(width: 4),
           _h('QUANTITY', flex: 3, center: true),
           const SizedBox(width: 4),
@@ -272,9 +274,9 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
           const SizedBox(width: 4),
           _h('MAKING', flex: 3, center: true),
           const SizedBox(width: 4),
-          _h('AMOUNT (Rs)', flex: 3, right: true),
+          _h('AMOUNT (Rs)', flex: 4, right: true),
           const SizedBox(width: 4),
-          _h('ACTION', flex: 1, center: true),
+          _h('ACTION', flex: 2, center: true),
         ],
       ),
     );
@@ -288,16 +290,24 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
   }) {
     return Expanded(
       flex: flex,
-      child: Text(
-        text,
-        textAlign: right
-            ? TextAlign.right
-            : (center ? TextAlign.center : TextAlign.left),
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-          color: SilverStockColors.textDark,
-          letterSpacing: 0.35,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: right
+            ? Alignment.centerRight
+            : (center ? Alignment.center : Alignment.centerLeft),
+        child: Text(
+          text,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: right
+              ? TextAlign.right
+              : (center ? TextAlign.center : TextAlign.left),
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: SilverStockColors.textDark,
+            letterSpacing: 0.35,
+          ),
         ),
       ),
     );

@@ -46,7 +46,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
       if (!mounted) {
         return;
       }
-      widget.model.categoryFocus.requestFocus();
+      widget.model.companyFocus.requestFocus();
       widget.ctrl.clearSilverFocusRequest(widget.model.id);
     });
   }
@@ -89,12 +89,14 @@ class _SilverItemRowState extends State<SilverItemRow> {
                 children: [
                   Expanded(flex: 2, child: _buildSNo()),
                   const SizedBox(width: 4),
-                  Expanded(flex: 3, child: _buildCategoryField()),
+                  Expanded(flex: 4, child: _buildCompanyField()),
+                  const SizedBox(width: 4),
+                  Expanded(flex: 4, child: _buildCategoryField()),
                   const SizedBox(width: 4),
                   Expanded(flex: 3, child: _buildSegmentField()),
                   const SizedBox(width: 4),
                   Expanded(
-                    flex: 4,
+                    flex: 5,
                     child: _SilverTextField(
                       controller: widget.model.itemNameCtrl,
                       focusNode: widget.model.itemNameFocus,
@@ -215,7 +217,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                   Expanded(flex: 3, child: _buildMakingField()),
                   const SizedBox(width: 4),
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: Tooltip(
                       message:
                           'Valuation fine ${widget.model.valuationFineWeight.toStringAsFixed(3)} g at Rs ${widget.model.purchaseRate.toStringAsFixed(2)}/g plus making.',
@@ -230,7 +232,7 @@ class _SilverItemRowState extends State<SilverItemRow> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Expanded(flex: 1, child: _buildRowActions()),
+                  Expanded(flex: 2, child: _buildRowActions()),
                 ],
               ),
             ),
@@ -309,31 +311,71 @@ class _SilverItemRowState extends State<SilverItemRow> {
     final focusNodes = widget.model.huidFocusNodes;
     final enabled = widget.model.huidTrackingEnabled;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HuidTrackingSwitch(model: widget.model),
-        if (enabled) ...[
-          const SizedBox(height: 6),
-          for (var index = 0; index < controllers.length; index++) ...[
-            _SilverTextField(
-              controller: controllers[index],
-              focusNode: focusNodes[index],
-              hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
-              textCapitalization: TextCapitalization.characters,
-              textInputAction: TextInputAction.next,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                LengthLimitingTextInputFormatter(6),
-              ],
-              onSubmitted: (_) => index == controllers.length - 1
-                  ? widget.model.grossFocus.requestFocus()
-                  : focusNodes[index + 1].requestFocus(),
-            ),
-            if (index != controllers.length - 1) const SizedBox(height: 6),
-          ],
-        ],
+        const SizedBox(width: 4),
+        Expanded(
+          child: enabled
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var index = 0; index < controllers.length; index++)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index == controllers.length - 1 ? 0 : 6,
+                        ),
+                        child: _SilverTextField(
+                          controller: controllers[index],
+                          focusNode: focusNodes[index],
+                          hint: controllers.length == 1
+                              ? 'HUID'
+                              : 'HUID ${index + 1}',
+                          textCapitalization: TextCapitalization.characters,
+                          textInputAction: TextInputAction.next,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z0-9]'),
+                            ),
+                            LengthLimitingTextInputFormatter(6),
+                          ],
+                          onSubmitted: (_) => index == controllers.length - 1
+                              ? widget.model.grossFocus.requestFocus()
+                              : focusNodes[index + 1].requestFocus(),
+                        ),
+                      ),
+                  ],
+                )
+              : _buildBulkHuidState(),
+        ),
       ],
+    );
+  }
+
+  Widget _buildBulkHuidState() {
+    return Container(
+      height: _invoiceFieldHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: SilverStockColors.inputBg,
+        borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+        border: Border.all(
+          color: SilverStockColors.cardBorder,
+          width: 1.5,
+        ),
+      ),
+      child: const Text(
+        'Bulk stock',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: SilverStockColors.textMuted,
+        ),
+      ),
     );
   }
 
@@ -363,6 +405,35 @@ class _SilverItemRowState extends State<SilverItemRow> {
       },
       textInputAction: TextInputAction.next,
       onSubmitted: (_) => widget.model.segmentFocus.requestFocus(),
+    );
+  }
+
+  Widget _buildCompanyField() {
+    return _SilverPopupField(
+      controller: widget.model.companyCtrl,
+      focusNode: widget.model.companyFocus,
+      hint: 'Company',
+      popupItems: SilverItemModel.companyPresets,
+      onSelected: (value) {
+        if (value == 'Custom') {
+          if (SilverItemModel.companyPresets.contains(
+            widget.model.companyCtrl.text.trim(),
+          )) {
+            widget.model.companyCtrl.clear();
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.model.companyFocus.requestFocus();
+            }
+          });
+          return;
+        }
+
+        _setText(widget.model.companyCtrl, value);
+        widget.model.categoryFocus.requestFocus();
+      },
+      textInputAction: TextInputAction.next,
+      onSubmitted: (_) => widget.model.categoryFocus.requestFocus(),
     );
   }
 
@@ -638,8 +709,8 @@ class _HuidTrackingSwitch extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
+          width: _invoiceFieldHeight,
           height: _invoiceFieldHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: enabled
@@ -653,34 +724,12 @@ class _HuidTrackingSwitch extends StatelessWidget {
               width: 1.5,
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                enabled
-                    ? Icons.verified_user_rounded
-                    : Icons.inventory_2_outlined,
-                size: 16,
-                color: enabled
-                    ? SilverStockColors.brandSilver
-                    : SilverStockColors.textMuted,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  enabled ? 'HUID ON' : 'BULK',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: enabled
-                        ? SilverStockColors.brandSilver
-                        : SilverStockColors.textMuted,
-                  ),
-                ),
-              ),
-            ],
+          child: Icon(
+            enabled ? Icons.verified_user_rounded : Icons.inventory_2_outlined,
+            size: 18,
+            color: enabled
+                ? SilverStockColors.brandSilver
+                : SilverStockColors.textMuted,
           ),
         ),
       ),

@@ -43,6 +43,15 @@ class SilverItemModel extends ChangeNotifier {
     'Custom',
   ];
 
+  static const List<String> companyPresets = [
+    'Local / Unbranded',
+    'Sukh',
+    'AG',
+    'Raj',
+    'PC',
+    'Custom',
+  ];
+
   static const List<String> purityPresets = [
     '99.99%',
     '92.50%',
@@ -55,6 +64,7 @@ class SilverItemModel extends ChangeNotifier {
   final String id;
 
   final TextEditingController categoryCtrl = TextEditingController();
+  final TextEditingController companyCtrl = TextEditingController();
   final TextEditingController segmentCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController quantityModeCtrl = TextEditingController(
@@ -72,6 +82,7 @@ class SilverItemModel extends ChangeNotifier {
   final TextEditingController makingCtrl = TextEditingController();
 
   final FocusNode categoryFocus = FocusNode();
+  final FocusNode companyFocus = FocusNode();
   final FocusNode segmentFocus = FocusNode();
   final FocusNode itemNameFocus = FocusNode();
   final FocusNode piecesFocus = FocusNode();
@@ -98,6 +109,7 @@ class SilverItemModel extends ChangeNotifier {
     int initialPieces = 1,
   }) {
     categoryCtrl.addListener(_fieldChanged);
+    companyCtrl.addListener(_fieldChanged);
     segmentCtrl.addListener(_fieldChanged);
     itemNameCtrl.addListener(_fieldChanged);
     piecesCtrl.addListener(_piecesFieldChanged);
@@ -134,6 +146,7 @@ class SilverItemModel extends ChangeNotifier {
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
 
   String get categoryLabel => categoryCtrl.text.trim();
+  String get companyLabel => companyCtrl.text.trim();
   String get segmentLabel => segmentCtrl.text.trim();
   String get itemName => itemNameCtrl.text.trim();
   int get enteredQuantity {
@@ -229,6 +242,7 @@ class SilverItemModel extends ChangeNotifier {
 
   bool get hasAnyInput =>
       categoryLabel.isNotEmpty ||
+      companyLabel.isNotEmpty ||
       segmentLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       _hasMeaningfulPiecesInput ||
@@ -413,6 +427,7 @@ class SilverItemModel extends ChangeNotifier {
 
   void disposeAll() {
     categoryCtrl.removeListener(_fieldChanged);
+    companyCtrl.removeListener(_fieldChanged);
     segmentCtrl.removeListener(_fieldChanged);
     itemNameCtrl.removeListener(_fieldChanged);
     piecesCtrl.removeListener(_piecesFieldChanged);
@@ -429,6 +444,7 @@ class SilverItemModel extends ChangeNotifier {
     makingCtrl.removeListener(_fieldChanged);
 
     categoryCtrl.dispose();
+    companyCtrl.dispose();
     segmentCtrl.dispose();
     itemNameCtrl.dispose();
     quantityModeCtrl.dispose();
@@ -446,6 +462,7 @@ class SilverItemModel extends ChangeNotifier {
     makingCtrl.dispose();
 
     categoryFocus.dispose();
+    companyFocus.dispose();
     segmentFocus.dispose();
     itemNameFocus.dispose();
     piecesFocus.dispose();
