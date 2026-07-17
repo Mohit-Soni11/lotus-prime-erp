@@ -12,9 +12,9 @@ class SilverBatchOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final createdAt = ctrl.batchCreatedAt;
-    final grade = ctrl.purityDisplay.trim().isEmpty
+    final grade = ctrl.intakeModeTitle.trim().isEmpty
         ? 'Grade Pending'
-        : ctrl.purityDisplay.trim();
+        : ctrl.intakeModeTitle.trim();
     final statusTone =
         ctrl.rowsWithErrorsCount > 0 ? SilverStockColors.danger : _gradeTone();
     final statusLabel = ctrl.rowsWithErrorsCount > 0
@@ -163,7 +163,10 @@ class SilverBatchOverviewCard extends StatelessWidget {
   }
 
   IconData _gradeIcon() {
-    final normalized = ctrl.purityDisplay.trim().toUpperCase();
+    final normalized = ctrl.intakeModeTitle.trim().toUpperCase();
+    if (ctrl.isMixedInvoiceMode) {
+      return Icons.receipt_long_rounded;
+    }
     if (normalized.contains('925') || normalized.contains('92.5')) {
       return Icons.verified_rounded;
     }
@@ -183,7 +186,10 @@ class SilverBatchOverviewCard extends StatelessWidget {
   }
 
   Color _gradeTone() {
-    final normalized = ctrl.purityDisplay.trim().toUpperCase();
+    final normalized = ctrl.intakeModeTitle.trim().toUpperCase();
+    if (ctrl.isMixedInvoiceMode) {
+      return SilverStockColors.brandSilver;
+    }
     if (normalized.contains('925') || normalized.contains('92.5')) {
       return const Color(0xFF0F8A72);
     }
@@ -254,11 +260,18 @@ class _MetricTile extends StatelessWidget {
                   style: _labelStyle(),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  data.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _valueStyle(),
+                Tooltip(
+                  message: data.value,
+                  waitDuration: const Duration(milliseconds: 350),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      data.value,
+                      maxLines: 1,
+                      style: _valueStyle(),
+                    ),
+                  ),
                 ),
               ],
             ),

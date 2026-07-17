@@ -31,8 +31,10 @@ class _InventoryGradeSummaryCardState
     final subtitle = _inventoryGradeSubtitle(
       widget.ui.category,
       widget.grade.gradeLabel,
-      widget.grade.availableUnits,
-      widget.grade.totalUnits,
+      widget.grade.availablePieces,
+      widget.grade.totalPieces,
+      widget.grade.companyCount,
+      widget.grade.purityGroupCount,
     );
     final borderColor = widget.selected
         ? widget.ui.accent
@@ -194,8 +196,11 @@ class _InventoryGradeSummaryCardState
                 ),
                 const SizedBox(height: 14),
                 _GradeAvailabilityStrip(
-                  availableUnits: widget.grade.availableUnits,
-                  soldUnits: widget.grade.soldUnits,
+                  totalPieces: widget.grade.totalPieces,
+                  availablePieces: widget.grade.availablePieces,
+                  soldPieces: widget.grade.soldPieces,
+                  totalSets: widget.grade.totalSets,
+                  availableSets: widget.grade.availableSets,
                   accent: widget.ui.accent,
                 ),
               ],
@@ -212,29 +217,36 @@ class _InventoryGradeSummaryCardState
 }
 
 class _GradeAvailabilityStrip extends StatelessWidget {
-  final int availableUnits;
-  final int soldUnits;
+  final int totalPieces;
+  final int availablePieces;
+  final int soldPieces;
+  final int totalSets;
+  final int availableSets;
   final Color accent;
 
   const _GradeAvailabilityStrip({
-    required this.availableUnits,
-    required this.soldUnits,
+    required this.totalPieces,
+    required this.availablePieces,
+    required this.soldPieces,
+    required this.totalSets,
+    required this.availableSets,
     required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isSoldOut = availableUnits == 0 && soldUnits > 0;
+    final isSoldOut = availablePieces == 0 && soldPieces > 0;
     final statusText = isSoldOut
         ? 'Sold Out'
-        : soldUnits > 0
+        : soldPieces > 0
             ? 'Partially Sold'
             : 'Ready Stock';
     final statusColor = isSoldOut
         ? InvColors.danger
-        : soldUnits > 0
+        : soldPieces > 0
             ? const Color(0xFFF59E0B)
             : InvColors.success;
+    final setValue = totalSets > 0 ? '$availableSets/$totalSets set' : 'No set';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -249,17 +261,25 @@ class _GradeAvailabilityStrip extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: _AvailabilityText(
+              label: 'Total Pcs',
+              value: '$totalPieces pcs',
+              color: InvColors.textDark,
+            ),
+          ),
+          Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
+          Expanded(
+            child: _AvailabilityText(
               label: 'Available',
-              value: '$availableUnits pcs',
+              value: '$availablePieces pcs',
               color: InvColors.success,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
           Expanded(
             child: _AvailabilityText(
-              label: 'Sold',
-              value: '$soldUnits pcs',
-              color: InvColors.danger,
+              label: 'Set / Packet',
+              value: setValue,
+              color: totalSets > 0 ? accent : InvColors.textMuted,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),

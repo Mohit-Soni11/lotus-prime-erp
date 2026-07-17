@@ -22,6 +22,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:lotus_erp/features/stock/silver/domain/models/silver_item_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 
+enum SilverIntakeMode { singleGrade, mixedInvoice }
+
 class SilverStockController extends AddStockController {
   String _silverBatchCode = '';
   DateTime _silverBatchCreatedAt = DateTime.now();
@@ -31,7 +33,6 @@ class SilverStockController extends AddStockController {
   late final SilverSupplierInvoicePolicy _supplierInvoicePolicy =
       SilverSupplierInvoicePolicy(_rateDb);
 
-  /// ✅ Payment controller — wired to this batch lifecycle
   final SilverPaymentController payment = SilverPaymentController();
 
   final TextEditingController supplierInvoiceNumberCtrl =
@@ -51,6 +52,7 @@ class SilverStockController extends AddStockController {
   bool _roundOffInvoiceFine = false;
   bool _isLoadingBatchCode = false;
   bool _currentBatchPosted = false;
+  SilverIntakeMode _intakeMode = SilverIntakeMode.singleGrade;
 
   SilverStockController() : super(initialMetal: StockCategory.silver) {
     payment.addListener(_syncPurchaseValuationRateToRows);
@@ -64,6 +66,10 @@ class SilverStockController extends AddStockController {
   DateTime get batchCreatedAt => _silverBatchCreatedAt;
   bool get isLoadingBatchCode => _isLoadingBatchCode;
   bool get isCurrentBatchPosted => _currentBatchPosted;
+  SilverIntakeMode get intakeMode => _intakeMode;
+  bool get isMixedInvoiceMode => _intakeMode == SilverIntakeMode.mixedInvoice;
+  String get intakeModeTitle =>
+      isMixedInvoiceMode ? 'Mixed Silver Supplier Invoice' : purityDisplay;
 
   List<SilverItemModel> get silverRows => List.unmodifiable(_silverRows);
 
@@ -98,7 +104,6 @@ class SilverStockController extends AddStockController {
   bool get canRoundOffInvoiceFine =>
       enteredSilverRows.any((row) => row.hasFractionalFineWeight);
 
-  // ✨ FIXED: Updated Snapshot logic dynamically linking to the new Payment Controller
   SilverPaymentSnapshot get paymentSnapshot {
     payment.updateInvoiceSummary(
       fine: totalFineWeight,
@@ -153,13 +158,21 @@ class SilverStockController extends AddStockController {
 
   @override
   void setPurity(String option) {
+    _intakeMode = SilverIntakeMode.singleGrade;
     super.setPurity(option);
     _loadSilverRateSnapshot();
   }
 
   @override
   void setCustomPurity(String value) {
+    _intakeMode = SilverIntakeMode.singleGrade;
     super.setCustomPurity(value);
+    _loadSilverRateSnapshot();
+  }
+
+  void startMixedSupplierInvoice() {
+    _intakeMode = SilverIntakeMode.mixedInvoice;
+    super.setCustomPurity('Mixed Silver Supplier Invoice');
     _loadSilverRateSnapshot();
   }
 
@@ -296,7 +309,10 @@ class SilverStockController extends AddStockController {
       row.huid = huids.isEmpty ? '' : huids.first;
       row.grossWeight = rowModel.grossWeight;
       row.stoneWeight = rowModel.lessWeight;
-      row.touchPercent = rowModel.effectiveTotalPurityPercent;
+      row.touchPercent = rowModel.basePurityPercent;
+      row.wastageFineWeight =
+          rowModel.valuationFineWeight - rowModel.actualFineWeight;
+      row.valuationFineWeight = rowModel.valuationFineWeight;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
       row.purchasePriceOverride = rowModel.totalAmount / lotDivisor;
@@ -404,6 +420,13 @@ class SilverStockController extends AddStockController {
     if (row.purityLabel.isEmpty) {
       return 'Base purity is required';
     }
+    if (!isMixedInvoiceMode && selectedPurityBasePercent > 0) {
+      final variance =
+          (row.basePurityPercent - selectedPurityBasePercent).abs();
+      if (variance > 0.2) {
+        return 'Row purity must match the selected silver grade';
+      }
+    }
     if (row.effectiveTotalPurityPercent <= 0 ||
         row.effectiveTotalPurityPercent > 100) {
       return 'Total purity must be between 0 and 100';
@@ -443,7 +466,6 @@ class SilverStockController extends AddStockController {
     if (rowsToSave.isEmpty) {
       return null;
     }
-    // ✨ FIXED: Check updated rate condition
     if (_currentBatchPosted || await _isCurrentBatchAlreadyPosted()) {
       return 'This silver batch has already been saved. Start a new batch before saving again.';
     }
@@ -543,7 +565,6 @@ class SilverStockController extends AddStockController {
       metalPaidPurity: snapshot.metalPurity,
       metalPaidFine: snapshot.metalFineCalculated,
       metalPaidValue: snapshot.metalPaidValue,
-      // ✨ FIXED: Using the new enum values
       dueMode: snapshot.hasDue ? snapshot.settlementPreference.name : null,
       excessMode:
           snapshot.hasReturn ? snapshot.settlementPreference.name : null,
@@ -609,6 +630,8 @@ class SilverStockController extends AddStockController {
               netWeight: row.netWeight,
               purity: row.resolveTouch(selectedPurityBasePercent),
               fineWeight: row.fineWeight(selectedPurityBasePercent),
+              wastageFineWeight: row.wastageFineWeight,
+              valuationFineWeight: row.valuationFine(selectedPurityBasePercent),
               rate: snapshot.ratePerGram > 0
                   ? snapshot.ratePerGram
                   : row.purchaseRate,
@@ -752,6 +775,7 @@ class SilverStockController extends AddStockController {
   @override
   void resetAllRows() {
     _roundOffInvoiceFine = false;
+    _intakeMode = SilverIntakeMode.singleGrade;
     _clearSilverRows();
     notifyListeners();
   }
@@ -764,7 +788,7 @@ class SilverStockController extends AddStockController {
     _supplierLedger = null;
     _isLoadingSupplierLedger = false;
     _roundOffInvoiceFine = false;
-    // ✨ FIXED: Replaced payment.reset()
+    _intakeMode = SilverIntakeMode.singleGrade;
     _currentBatchPosted = false;
     payment.resetSettlement();
     _clearSilverRows();
@@ -877,7 +901,6 @@ class SilverStockController extends AddStockController {
         _silverRateDate = null;
       }
 
-      // ✨ FIXED: Convert gram rate to Kg and feed to controller
       payment.setTodayRate(silverRatePerGram * 1000);
 
       for (final row in _silverRows) {

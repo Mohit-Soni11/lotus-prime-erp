@@ -7,7 +7,7 @@ final class SilverBatchCodeGenerator {
   const SilverBatchCodeGenerator(this._database);
 
   static String previewCode(DateTime date) {
-    return '${_datePrefix(date)}-B001';
+    return '${_datePrefix(date)}-0001';
   }
 
   Future<String> nextCodeFor(DateTime date) async {
@@ -28,9 +28,9 @@ final class SilverBatchCodeGenerator {
           .map((row) => _sequenceFromCode(row.read<String>('voucher_no')))
           .fold<int>(0, (max, value) => value > max ? value : max);
 
-      return '$prefix-B${(lastSequence + 1).toString().padLeft(3, '0')}';
+      return '$prefix-${(lastSequence + 1).toString().padLeft(4, '0')}';
     } catch (_) {
-      return '$prefix-B001';
+      return '$prefix-0001';
     }
   }
 
@@ -96,6 +96,6 @@ final class SilverBatchCodeGenerator {
   }
 
   static bool _hasProfessionalSequence(String code) {
-    return RegExp(r'^SS-\d{2}[A-Z]{3}\d{4}-B\d{3}$').hasMatch(code.trim());
+    return RegExp(r'^SS-\d{2}[A-Z]{3}\d{4}-\d{4}$').hasMatch(code.trim());
   }
 }

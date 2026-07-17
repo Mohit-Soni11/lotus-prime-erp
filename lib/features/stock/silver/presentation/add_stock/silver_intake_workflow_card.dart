@@ -150,7 +150,13 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
   }
 
   String _metalTrackingSummary() {
-    final grade = ctrl.purityDisplay.trim();
+    if (ctrl.isMixedInvoiceMode) {
+      final hasHuid = ctrl.enteredSilverRows.any((row) => row.huid.isNotEmpty);
+      return hasHuid
+          ? 'Row-wise company, purity and HUID'
+          : 'Row-wise company and purity';
+    }
+    final grade = ctrl.intakeModeTitle.trim();
     final gradeText =
         grade.isEmpty ? 'Silver grade pending' : 'Silver • $grade';
     final hasHuid = ctrl.enteredSilverRows.any((row) => row.huid.isNotEmpty);
@@ -186,7 +192,10 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
   }
 
   IconData _gradeIcon() {
-    final purity = ctrl.purityDisplay.trim().toUpperCase();
+    if (ctrl.isMixedInvoiceMode) {
+      return Icons.receipt_long_rounded;
+    }
+    final purity = ctrl.intakeModeTitle.trim().toUpperCase();
     if (purity.contains('999') || purity.contains('99.9')) {
       return Icons.workspace_premium_rounded;
     }
@@ -206,7 +215,10 @@ class SilverIntakeWorkflowCard extends StatelessWidget {
   }
 
   Color _gradeTone() {
-    final purity = ctrl.purityDisplay.trim().toUpperCase();
+    if (ctrl.isMixedInvoiceMode) {
+      return SilverStockColors.brandSilver;
+    }
+    final purity = ctrl.intakeModeTitle.trim().toUpperCase();
     if (purity.contains('925') || purity.contains('92.5')) {
       return const Color(0xFF0F8A72);
     }

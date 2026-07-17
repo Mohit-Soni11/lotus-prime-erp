@@ -77,11 +77,14 @@ class _SilverAppBarState extends State<SilverAppBar>
   }
 
   String get _headerTitle {
-    final grade = widget.ctrl.purityDisplay.trim();
-    if (grade.isEmpty || widget.ctrl.step.name == 'purity') {
+    final title = widget.ctrl.intakeModeTitle.trim();
+    if (title.isEmpty || widget.ctrl.step.name == 'purity') {
       return SilverStockStrings.headerTitle;
     }
-    return '${_professionalGradeName(grade).toUpperCase()} STOCK';
+    if (widget.ctrl.isMixedInvoiceMode) {
+      return 'MIXED SILVER SUPPLIER INVOICE';
+    }
+    return '${_professionalGradeName(title).toUpperCase()} STOCK';
   }
 
   String _professionalGradeName(String grade) {

@@ -43,6 +43,7 @@ class _InventoryGradeDetailScreenState
   }
 
   Future<List<_InventoryBatchGroup>> _loadBatchGroups() async {
+    final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
     final rows = await _db.customSelect(
       '''
       SELECT
@@ -86,24 +87,12 @@ class _InventoryGradeDetailScreenState
         COALESCE(pv.payment_meta, '') AS payment_meta,
         COALESCE(pv.created_at, u.created_at) AS batch_created_at,
         u.status AS status,
-        COALESCE(
-          NULLIF(TRIM(s.purity), ''),
-          CASE
-            WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
-            ELSE 'Custom Grade'
-          END
-        ) AS grade_label
+        $groupExpression AS grade_label
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
       WHERE lower(u.metal_type) = ?
-        AND COALESCE(
-          NULLIF(TRIM(s.purity), ''),
-          CASE
-            WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
-            ELSE 'Custom Grade'
-          END
-        ) = ?
+        AND $groupExpression = ?
       ORDER BY
         batch_created_at DESC,
         batch_code DESC,
@@ -139,8 +128,10 @@ class _InventoryGradeDetailScreenState
     final subtitle = _inventoryGradeSubtitle(
       widget.metal,
       widget.grade.gradeLabel,
-      widget.grade.availableUnits,
-      widget.grade.totalUnits,
+      widget.grade.availablePieces,
+      widget.grade.totalPieces,
+      widget.grade.companyCount,
+      widget.grade.purityGroupCount,
     );
 
     return Scaffold(

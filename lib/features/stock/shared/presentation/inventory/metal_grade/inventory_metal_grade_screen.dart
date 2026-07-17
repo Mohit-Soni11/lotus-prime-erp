@@ -40,19 +40,22 @@ class _InventoryMetalGradeScreenState
   }
 
   Future<_InventoryGradeSummary?> _loadGradeForBatch(String batchCode) async {
+    final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
+    final fallbackLabel = _inventoryFallbackGroupLabel(widget.metal);
     final rows = await _db.customSelect(
       '''
       SELECT
-        COALESCE(
-          NULLIF(TRIM(s.purity), ''),
-          CASE
-            WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
-            ELSE 'Custom Grade'
-          END
-        ) AS grade_label,
+        $groupExpression AS grade_label,
         COUNT(*) AS total_units,
         SUM(CASE WHEN lower(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
         SUM(CASE WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_units,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END) AS total_pieces,
+        SUM(CASE WHEN lower(u.status) = 'available' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS available_pieces,
+        SUM(CASE WHEN lower(u.status) = 'sold' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS sold_pieces,
+        SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
+        SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
         COALESCE(SUM(u.net_weight), 0.0) AS net_weight,
         COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
@@ -75,10 +78,17 @@ class _InventoryMetalGradeScreenState
     if (rows.isEmpty) return null;
     final row = rows.first;
     return _InventoryGradeSummary(
-      gradeLabel: _readString(row, 'grade_label', 'Custom Grade'),
+      gradeLabel: _readString(row, 'grade_label', fallbackLabel),
       totalUnits: _readInt(row, 'total_units'),
       availableUnits: _readInt(row, 'available_units'),
       soldUnits: _readInt(row, 'sold_units'),
+      totalPieces: _readInt(row, 'total_pieces'),
+      availablePieces: _readInt(row, 'available_pieces'),
+      soldPieces: _readInt(row, 'sold_pieces'),
+      totalSets: _readInt(row, 'total_sets'),
+      availableSets: _readInt(row, 'available_sets'),
+      companyCount: _readInt(row, 'company_count'),
+      purityGroupCount: _readInt(row, 'purity_group_count'),
       grossWeight: _readDouble(row, 'gross_weight'),
       netWeight: _readDouble(row, 'net_weight'),
       actualFine: _readDouble(row, 'actual_fine'),
@@ -88,19 +98,22 @@ class _InventoryMetalGradeScreenState
   }
 
   Future<List<_InventoryGradeSummary>> _loadGradeSummary() async {
+    final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
+    final fallbackLabel = _inventoryFallbackGroupLabel(widget.metal);
     final rows = await _db.customSelect(
       '''
       SELECT
-        COALESCE(
-          NULLIF(TRIM(s.purity), ''),
-          CASE
-            WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
-            ELSE 'Custom Grade'
-          END
-        ) AS grade_label,
+        $groupExpression AS grade_label,
         COUNT(*) AS total_units,
         SUM(CASE WHEN lower(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
         SUM(CASE WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_units,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END) AS total_pieces,
+        SUM(CASE WHEN lower(u.status) = 'available' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS available_pieces,
+        SUM(CASE WHEN lower(u.status) = 'sold' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS sold_pieces,
+        SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
+        SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
         COALESCE(SUM(u.net_weight), 0.0) AS net_weight,
         COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
@@ -118,10 +131,17 @@ class _InventoryMetalGradeScreenState
     return rows
         .map(
           (row) => _InventoryGradeSummary(
-            gradeLabel: _readString(row, 'grade_label', 'Custom Grade'),
+            gradeLabel: _readString(row, 'grade_label', fallbackLabel),
             totalUnits: _readInt(row, 'total_units'),
             availableUnits: _readInt(row, 'available_units'),
             soldUnits: _readInt(row, 'sold_units'),
+            totalPieces: _readInt(row, 'total_pieces'),
+            availablePieces: _readInt(row, 'available_pieces'),
+            soldPieces: _readInt(row, 'sold_pieces'),
+            totalSets: _readInt(row, 'total_sets'),
+            availableSets: _readInt(row, 'available_sets'),
+            companyCount: _readInt(row, 'company_count'),
+            purityGroupCount: _readInt(row, 'purity_group_count'),
             grossWeight: _readDouble(row, 'gross_weight'),
             netWeight: _readDouble(row, 'net_weight'),
             actualFine: _readDouble(row, 'actual_fine'),
@@ -221,7 +241,7 @@ class _InventoryMetalGradeScreenState
   ) {
     final totalAvailable = grades.fold<int>(
       0,
-      (sum, grade) => sum + grade.availableUnits,
+      (sum, grade) => sum + grade.availablePieces,
     );
     final totalFine = grades.fold<double>(
       0,
@@ -261,7 +281,10 @@ class _InventoryMetalGradeScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${ui.title} Inventory Grades',
+                  widget.metal == StockCategory.silver ||
+                          widget.metal == StockCategory.gold
+                      ? '${ui.title} Inventory Items'
+                      : '${ui.title} Inventory Grades',
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
@@ -271,7 +294,11 @@ class _InventoryMetalGradeScreenState
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Select a grade to review available stock, HUID status, fine weight and movement readiness.',
+                  widget.metal == StockCategory.silver
+                      ? 'Select an item to review available stock, company split, purity groups and batch movement.'
+                      : widget.metal == StockCategory.gold
+                          ? 'Select an item-grade card to review available stock, HUID status, fine weight and batch movement.'
+                          : 'Select a grade to review available stock, HUID status, fine weight and movement readiness.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -439,6 +466,13 @@ class _InventoryGradeSummary {
   final int totalUnits;
   final int availableUnits;
   final int soldUnits;
+  final int totalPieces;
+  final int availablePieces;
+  final int soldPieces;
+  final int totalSets;
+  final int availableSets;
+  final int companyCount;
+  final int purityGroupCount;
   final double grossWeight;
   final double netWeight;
   final double actualFine;
@@ -450,6 +484,13 @@ class _InventoryGradeSummary {
     required this.totalUnits,
     required this.availableUnits,
     required this.soldUnits,
+    required this.totalPieces,
+    required this.availablePieces,
+    required this.soldPieces,
+    required this.totalSets,
+    required this.availableSets,
+    required this.companyCount,
+    required this.purityGroupCount,
     required this.grossWeight,
     required this.netWeight,
     required this.actualFine,
@@ -458,16 +499,68 @@ class _InventoryGradeSummary {
   });
 }
 
+String _inventoryPrimaryGroupExpression(StockCategory metal) {
+  if (metal == StockCategory.gold) {
+    return '''
+      COALESCE(
+        NULLIF(TRIM(u.item_type), ''),
+        NULLIF(TRIM(s.sub_category), ''),
+        NULLIF(TRIM(u.item_name), ''),
+        NULLIF(TRIM(s.item_name), ''),
+        'Gold Item'
+      )
+      || ' |GRADE| ' ||
+      COALESCE(
+        NULLIF(TRIM(s.purity), ''),
+        CASE
+          WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
+          ELSE 'Custom Grade'
+        END
+      )
+    ''';
+  }
+
+  if (metal == StockCategory.silver) {
+    return '''
+      COALESCE(
+        NULLIF(TRIM(u.item_type), ''),
+        NULLIF(TRIM(s.sub_category), ''),
+        NULLIF(TRIM(u.item_name), ''),
+        NULLIF(TRIM(s.item_name), ''),
+        'Silver Item'
+      )
+    ''';
+  }
+
+  return '''
+    COALESCE(
+      NULLIF(TRIM(s.purity), ''),
+      CASE
+        WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
+        ELSE 'Custom Grade'
+      END
+    )
+  ''';
+}
+
+String _inventoryFallbackGroupLabel(StockCategory metal) {
+  if (metal == StockCategory.gold) return 'Gold Item |GRADE| Custom Grade';
+  if (metal == StockCategory.silver) return 'Silver Item';
+  return 'Custom Grade';
+}
+
 String _inventoryGradeTitle(StockCategory metal, String gradeLabel) {
   final ui = stockMetalUiFor(metal);
-  final purity = _inventoryGradePurityPercent(gradeLabel);
-  if (metal == StockCategory.gold && purity != null) {
-    final karat = (purity * 24 / 100).round();
-    return '${karat}KT (${_formatInventoryPercent(purity)}%) HUID Hallmark Stock';
-  }
-  final label = gradeLabel.trim();
+  final parts = _inventoryGroupParts(gradeLabel);
+  final label = parts.itemLabel.trim();
   if (label.isEmpty || label.toLowerCase() == 'custom grade') {
     return 'Custom ${ui.title} Stock';
+  }
+  if (metal == StockCategory.gold) {
+    return '${_titleCase(label)} Gold Stock';
+  }
+  if (metal == StockCategory.silver) {
+    return '${_titleCase(label)} Silver Stock';
   }
   return '$label ${ui.title} Stock';
 }
@@ -477,13 +570,43 @@ String _inventoryGradeSubtitle(
   String gradeLabel,
   int availableUnits,
   int totalUnits,
+  int companyCount,
+  int purityGroupCount,
 ) {
   final ui = stockMetalUiFor(metal);
-  final purity = _inventoryGradePurityPercent(gradeLabel);
+  final parts = _inventoryGroupParts(gradeLabel);
+  if (metal == StockCategory.gold) {
+    final purity = _inventoryGradePurityPercent(parts.gradeLabel);
+    final gradeText = purity == null
+        ? parts.gradeLabel
+        : '${(purity * 24 / 100).round()}KT (${_formatInventoryPercent(purity)}%)';
+    return '$gradeText gold • $availableUnits available of $totalUnits pcs';
+  }
+  if (metal == StockCategory.silver) {
+    final companyText =
+        companyCount <= 1 ? '1 company' : '$companyCount companies';
+    final purityText = purityGroupCount <= 1
+        ? '1 purity group'
+        : '$purityGroupCount purity groups';
+    return '$availableUnits available of $totalUnits pcs • $companyText • $purityText';
+  }
+  final purity = _inventoryGradePurityPercent(parts.gradeLabel);
   final purityText = purity == null
-      ? gradeLabel
+      ? parts.gradeLabel
       : '${_formatInventoryPercent(purity)}% ${ui.title.toLowerCase()} purity';
   return '$purityText - $availableUnits available of $totalUnits total items';
+}
+
+({String itemLabel, String gradeLabel}) _inventoryGroupParts(String value) {
+  final parts = value.split('|GRADE|');
+  if (parts.length < 2) {
+    final label = value.trim();
+    return (itemLabel: label, gradeLabel: label);
+  }
+  return (
+    itemLabel: parts.first.trim(),
+    gradeLabel: parts.sublist(1).join('|GRADE|').trim(),
+  );
 }
 
 double? _inventoryGradePurityPercent(String gradeLabel) {
@@ -500,6 +623,17 @@ String _formatInventoryPercent(double value) {
   final rounded = value.roundToDouble();
   if ((value - rounded).abs() < 0.001) return rounded.toStringAsFixed(0);
   return value.toStringAsFixed(1);
+}
+
+String _titleCase(String value) {
+  return value
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .map((part) {
+    final lower = part.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
+  }).join(' ');
 }
 
 class _HeaderMetric extends StatelessWidget {

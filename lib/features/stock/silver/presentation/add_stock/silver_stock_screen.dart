@@ -176,102 +176,178 @@ class _SilverStockScreenState extends State<SilverStockScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
-          content: SizedBox(
-            width: 420,
+        return Dialog(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Container(
+            width: 500,
+            decoration: BoxDecoration(
+              color: SilverStockColors.cardBg,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: SilverStockColors.cardBorder),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x24000000),
+                  blurRadius: 34,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                  padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFFDDE7ED), Color(0xFF8BA1AF)],
+                      colors: [
+                        Color(0xFFF8FBFC),
+                        Color(0xFFE7EEF2),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: Colors.white,
-                    size: 28,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color:
+                              SilverStockColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: SilverStockColors.success
+                                .withValues(alpha: 0.28),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_rounded,
+                          color: SilverStockColors.success,
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AddStockStrings.savedTitle,
+                              style: GoogleFonts.manrope(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w900,
+                                color: SilverStockColors.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _ctrl.successMessage ??
+                                  'Silver stock batch has been saved successfully.',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                height: 1.55,
+                                fontWeight: FontWeight.w600,
+                                color: SilverStockColors.textBody,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  AddStockStrings.savedTitle,
-                  style: GoogleFonts.manrope(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AddStockColors.textDark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _ctrl.successMessage ?? '',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    height: 1.6,
-                    color: AddStockColors.textBody,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                  child: Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          _ctrl.resetAllRows();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: SilverStockColors.brandSilver,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 13,
+                          ),
+                        ),
+                        child: Text(
+                          AddStockStrings.btnAddMore,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          _ctrl.resetForNewBatch();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: SilverStockColors.textDark,
+                          side: const BorderSide(
+                            color: SilverStockColors.cardBorder,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                        ),
+                        child: Text(
+                          AddStockStrings.btnNewBatch,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          if (mounted) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: SilverStockColors.brandSilver,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                        ),
+                        icon: const Icon(Icons.done_all_rounded, size: 18),
+                        label: Text(
+                          AddStockStrings.btnDone,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _ctrl.resetAllRows();
-              },
-              child: Text(
-                AddStockStrings.btnAddMore,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF748A98),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _ctrl.resetForNewBatch();
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF8BA1AF)),
-              ),
-              child: Text(
-                AddStockStrings.btnNewBatch,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF748A98),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF748A98),
-                foregroundColor: Colors.white,
-              ),
-              child: Text(
-                AddStockStrings.btnDone,
-                style: GoogleFonts.inter(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
         );
       },
     );

@@ -896,6 +896,10 @@ class PurchaseEntryRepository {
       0,
       (sum, item) => sum + _expectedStockUnitCount(item),
     );
+    final expectedMovementQuantity = draft.items.fold<int>(
+      0,
+      (sum, item) => sum + (item.quantity > 0 ? item.quantity : 1),
+    );
     final expectedHuids = _draftHuids(draft).length;
     final voucherIdValue = drift.Variable.withInt(voucherId);
 
@@ -960,7 +964,7 @@ class PurchaseEntryRepository {
         stockUnits != expectedUnits ||
         huidCount != expectedHuids ||
         movementRows != expectedLines ||
-        movementQuantity != expectedUnits) {
+        movementQuantity != expectedMovementQuantity) {
       throw const PurchasePostingException(
         'Purchase posting verification failed. No stock was posted. Please save again.',
       );

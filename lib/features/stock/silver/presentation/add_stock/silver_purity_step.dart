@@ -16,14 +16,11 @@ class SilverPurityStep extends StatefulWidget {
 class _SilverPurityStepState extends State<SilverPurityStep>
     with SingleTickerProviderStateMixin {
   late final TextEditingController _customCtrl;
-  late final TextEditingController _companyNameCtrl;
-  late final TextEditingController _companyPurityCtrl;
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
 
   bool _showPurityBuilder = false;
-  bool _showCompanyBuilder = false;
   String? _customError;
 
   static const List<_SilverPurityOption> _presets = [
@@ -68,8 +65,6 @@ class _SilverPurityStepState extends State<SilverPurityStep>
   void initState() {
     super.initState();
     _customCtrl = TextEditingController();
-    _companyNameCtrl = TextEditingController();
-    _companyPurityCtrl = TextEditingController(text: '92.50');
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 460),
@@ -85,8 +80,6 @@ class _SilverPurityStepState extends State<SilverPurityStep>
   @override
   void dispose() {
     _customCtrl.dispose();
-    _companyNameCtrl.dispose();
-    _companyPurityCtrl.dispose();
     _animCtrl.dispose();
     super.dispose();
   }
@@ -145,12 +138,12 @@ class _SilverPurityStepState extends State<SilverPurityStep>
           _HeroBanner(ctrl: ctrl),
           const SizedBox(height: 24),
           Text(
-            'Select Silver Purity Grade',
+            'Select Silver Intake Type',
             style: SilverStockStyles.pageTitle,
           ),
           const SizedBox(height: 6),
           Text(
-            'Choose the base purity for this silver stock batch. Item rows can add wastage later, and the final purity will be used for valuation, billing and inventory classification.',
+            'Choose one fixed silver purity for a clean grade batch, or use Mixed Silver Supplier Invoice when one supplier bill contains multiple companies, item groups or purities.',
             style: GoogleFonts.inter(
               fontSize: 14,
               height: 1.6,
@@ -183,7 +176,6 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                         ctrl.setPurity(preset.value);
                         setState(() {
                           _showPurityBuilder = false;
-                          _showCompanyBuilder = false;
                           _customError = null;
                         });
                       },
@@ -206,21 +198,18 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                     : 'Create Custom Silver Purity',
                 onTap: () => setState(() {
                   _showPurityBuilder = !_showPurityBuilder;
-                  _showCompanyBuilder = false;
                   _customError = null;
                 }),
               ),
-              _CreateSilverGradeButton(
-                expanded: _showCompanyBuilder,
-                icon: Icons.business_center_rounded,
-                label: _showCompanyBuilder
-                    ? 'Close Company Grade Builder'
-                    : 'Create Company Silver Grade',
-                onTap: () => setState(() {
-                  _showCompanyBuilder = !_showCompanyBuilder;
-                  _showPurityBuilder = false;
-                  _customError = null;
-                }),
+              _MixedSilverInvoiceButton(
+                selected: ctrl.isMixedInvoiceMode,
+                onTap: () {
+                  ctrl.startMixedSupplierInvoice();
+                  setState(() {
+                    _showPurityBuilder = false;
+                    _customError = null;
+                  });
+                },
               ),
             ],
           ),
@@ -236,18 +225,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
                       onCreate: _createCustomPurity,
                     ),
                   )
-                : _showCompanyBuilder
-                    ? Padding(
-                        key: const ValueKey('company-silver-grade-builder'),
-                        padding: const EdgeInsets.only(top: 14),
-                        child: _CompanySilverGradePanel(
-                          companyNameCtrl: _companyNameCtrl,
-                          purityCtrl: _companyPurityCtrl,
-                          errorText: _customError,
-                          onCreate: _createCompanyGrade,
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+                : const SizedBox.shrink(),
           ),
           const SizedBox(height: 24),
           ListenableBuilder(
@@ -287,7 +265,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
               return Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Text(
-                  'Select a stock grade to continue.',
+                  'Select a silver grade or mixed supplier invoice to continue.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 13,
@@ -317,30 +295,6 @@ class _SilverPurityStepState extends State<SilverPurityStep>
     _customCtrl.clear();
     setState(() {
       _showPurityBuilder = false;
-      _customError = null;
-    });
-  }
-
-  void _createCompanyGrade() {
-    final company = _companyNameCtrl.text.trim();
-    final purity = _parsePurity(_companyPurityCtrl.text);
-    if (company.length < 2 || purity <= 0 || purity > 100) {
-      setState(() {
-        _customError =
-            'Enter a company name and a valid purity between 1 and 100.';
-      });
-      return;
-    }
-
-    final normalizedCompany =
-        company.replaceAll(RegExp(r'\s+'), ' ').trim().toUpperCase();
-    final display = '$normalizedCompany ${_formatPurity(purity)}% Silver';
-    widget.ctrl.setPurity('Custom');
-    widget.ctrl.setCustomPurity(display);
-    _companyNameCtrl.clear();
-    _companyPurityCtrl.text = '92.50';
-    setState(() {
-      _showCompanyBuilder = false;
       _customError = null;
     });
   }
@@ -385,7 +339,7 @@ class _SilverPurityStepState extends State<SilverPurityStep>
           ),
           const SizedBox(height: 6),
           Text(
-            'Available inventory grouped by business grade with total fine weight.',
+            'Available inventory grouped by silver grade with total fine weight.',
             style: GoogleFonts.inter(
               fontSize: 11,
               height: 1.5,
@@ -444,6 +398,8 @@ class _SilverPurityStepState extends State<SilverPurityStep>
               '800 and 700 grades are used for idols, utensils and utility stock.'),
           _guideline(
               'Custom grades remain traceable as separate inventory groups.'),
+          _guideline(
+              'Use Mixed Silver Supplier Invoice for one supplier bill with multiple companies or purities.'),
         ],
       ),
     );
@@ -639,7 +595,7 @@ class _HeroBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Set the batch grade before entering items, wastage and supplier settlement.',
+                  'Select a fixed grade batch or capture one supplier invoice with mixed silver companies and purities.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     height: 1.45,
@@ -658,7 +614,7 @@ class _HeroBanner extends StatelessWidget {
             ),
             child: Text(
               selected.isEmpty
-                  ? 'GRADE OPEN'
+                  ? 'INTAKE OPEN'
                   : _professionalGradeName(selected),
               style: GoogleFonts.inter(
                 fontSize: 11,
@@ -835,6 +791,48 @@ class _CreateSilverGradeButton extends StatelessWidget {
   }
 }
 
+class _MixedSilverInvoiceButton extends StatelessWidget {
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MixedSilverInvoiceButton({
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tone =
+        selected ? SilverStockColors.brandSilver : SilverStockColors.textDark;
+
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(
+        selected ? Icons.check_circle_rounded : Icons.receipt_long_rounded,
+      ),
+      label: const Text('Mixed Silver Supplier Invoice'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tone,
+        side: BorderSide(
+          color: selected
+              ? SilverStockColors.brandSilver
+              : SilverStockColors.cardBorder,
+          width: selected ? 1.4 : 1,
+        ),
+        backgroundColor: selected
+            ? SilverStockColors.brandSilver.withValues(alpha: 0.10)
+            : Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        textStyle: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
 class _CustomSilverPurityPanel extends StatelessWidget {
   final TextEditingController purityCtrl;
   final String? errorText;
@@ -870,80 +868,6 @@ class _CustomSilverPurityPanel extends StatelessWidget {
             onPressed: onCreate,
             icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Create Purity Grade'),
-            style: _primaryButtonStyle(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CompanySilverGradePanel extends StatelessWidget {
-  final TextEditingController companyNameCtrl;
-  final TextEditingController purityCtrl;
-  final String? errorText;
-  final VoidCallback onCreate;
-
-  const _CompanySilverGradePanel({
-    required this.companyNameCtrl,
-    required this.purityCtrl,
-    required this.errorText,
-    required this.onCreate,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _BuilderPanel(
-      icon: Icons.business_center_rounded,
-      title: 'Create Company Silver Grade',
-      subtitle:
-          'Use this for branded silver stock such as Sukh, AG Raj, PC or supplier-specific product lines.',
-      errorText: errorText,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 680;
-            final companyField = _SilverPanelField(
-              controller: companyNameCtrl,
-              label: 'Company Name',
-              hint: 'Example: SUKH, AG RAJ, PC',
-              icon: Icons.business_rounded,
-              textCapitalization: TextCapitalization.characters,
-            );
-            final purityField = _SilverPanelField(
-              controller: purityCtrl,
-              label: 'Purity Percentage',
-              hint: 'Example: 92.50',
-              suffix: '%',
-              icon: Icons.percent_rounded,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-            );
-            if (isWide) {
-              return Row(
-                children: [
-                  Expanded(child: companyField),
-                  const SizedBox(width: 12),
-                  Expanded(child: purityField),
-                ],
-              );
-            }
-            return Column(
-              children: [
-                companyField,
-                const SizedBox(height: 12),
-                purityField,
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-        Align(
-          alignment: Alignment.centerRight,
-          child: ElevatedButton.icon(
-            onPressed: onCreate,
-            icon: const Icon(Icons.add_business_rounded, size: 18),
-            label: const Text('Create Company Grade'),
             style: _primaryButtonStyle(),
           ),
         ),
@@ -1036,7 +960,6 @@ class _SilverPanelField extends StatelessWidget {
   final String? suffix;
   final IconData icon;
   final TextInputType? keyboardType;
-  final TextCapitalization textCapitalization;
 
   const _SilverPanelField({
     required this.controller,
@@ -1045,7 +968,6 @@ class _SilverPanelField extends StatelessWidget {
     required this.icon,
     this.suffix,
     this.keyboardType,
-    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -1053,7 +975,6 @@ class _SilverPanelField extends StatelessWidget {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      textCapitalization: textCapitalization,
       style: SilverStockStyles.inputText.copyWith(fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
