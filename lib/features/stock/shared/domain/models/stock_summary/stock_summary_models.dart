@@ -9,6 +9,8 @@ class StockSummaryOverview {
   final double outwardWeight;
   final double restoredWeight;
   final double closingWeight;
+  final double soldWeight;
+  final double totalWeight;
   final double closingFine;
   final int soldUnits;
 
@@ -23,6 +25,8 @@ class StockSummaryOverview {
     required this.outwardWeight,
     required this.restoredWeight,
     required this.closingWeight,
+    required this.soldWeight,
+    required this.totalWeight,
     required this.closingFine,
     required this.soldUnits,
   });
@@ -39,6 +43,8 @@ class StockSummaryOverview {
       outwardWeight: 0,
       restoredWeight: 0,
       closingWeight: 0,
+      soldWeight: 0,
+      totalWeight: 0,
       closingFine: 0,
       soldUnits: 0,
     );
@@ -51,6 +57,8 @@ class StockSummaryMetal {
   final int soldUnits;
   final double grossWeight;
   final double netWeight;
+  final double soldWeight;
+  final double totalWeight;
   final double actualFine;
 
   const StockSummaryMetal({
@@ -59,6 +67,8 @@ class StockSummaryMetal {
     required this.soldUnits,
     required this.grossWeight,
     required this.netWeight,
+    required this.soldWeight,
+    required this.totalWeight,
     required this.actualFine,
   });
 }
@@ -69,6 +79,8 @@ class StockSummaryGrade {
   final int availableUnits;
   final int soldUnits;
   final double netWeight;
+  final double soldWeight;
+  final double totalWeight;
   final double actualFine;
 
   const StockSummaryGrade({
@@ -77,6 +89,8 @@ class StockSummaryGrade {
     required this.availableUnits,
     required this.soldUnits,
     required this.netWeight,
+    required this.soldWeight,
+    required this.totalWeight,
     required this.actualFine,
   });
 }

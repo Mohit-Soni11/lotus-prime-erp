@@ -4,6 +4,8 @@ class StockSearchSummary {
   final int soldUnits;
   final double grossWeight;
   final double netWeight;
+  final double availableWeight;
+  final double soldWeight;
   final double stockValue;
 
   const StockSearchSummary({
@@ -12,6 +14,8 @@ class StockSearchSummary {
     required this.soldUnits,
     required this.grossWeight,
     required this.netWeight,
+    required this.availableWeight,
+    required this.soldWeight,
     required this.stockValue,
   });
 
@@ -22,6 +26,8 @@ class StockSearchSummary {
       soldUnits: 0,
       grossWeight: 0,
       netWeight: 0,
+      availableWeight: 0,
+      soldWeight: 0,
       stockValue: 0,
     );
   }

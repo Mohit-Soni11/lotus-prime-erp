@@ -1,5 +1,21 @@
 part of '../inventory_screen.dart';
 
+const String _inventorySoldWeightExpression = '''
+CASE
+  WHEN u.id = (
+    SELECT MIN(first_unit.id)
+    FROM stock_item_units first_unit
+    WHERE first_unit.stock_item_id = s.id
+  ) THEN
+    CASE
+      WHEN COALESCE(sm.sold_net_weight, 0) > 0
+        THEN COALESCE(sm.sold_net_weight, 0)
+      ELSE 0
+    END
+  ELSE 0
+END
+''';
+
 class _InventoryMetalGradeScreen extends StatefulWidget {
   final StockCategory metal;
   final String? initialBatchCode;
@@ -20,6 +36,7 @@ class _InventoryMetalGradeScreenState
   late final Future<List<_InventoryGradeSummary>> _gradeFuture;
   String? _selectedGrade;
   bool _openedInitialBatch = false;
+  Future<void>? _schemaFuture;
 
   @override
   void initState() {
@@ -40,6 +57,7 @@ class _InventoryMetalGradeScreenState
   }
 
   Future<_InventoryGradeSummary?> _loadGradeForBatch(String batchCode) async {
+    await _ensureInventoryGroupingSchema();
     final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
     final fallbackLabel = _inventoryFallbackGroupLabel(widget.metal);
     final rows = await _db.customSelect(
@@ -49,21 +67,37 @@ class _InventoryMetalGradeScreenState
         COUNT(*) AS total_units,
         SUM(CASE WHEN lower(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
         SUM(CASE WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_units,
-        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END) AS total_pieces,
-        SUM(CASE WHEN lower(u.status) = 'available' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS available_pieces,
-        SUM(CASE WHEN lower(u.status) = 'sold' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS sold_pieces,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) ELSE 1 END) AS total_pieces,
+        SUM(CASE WHEN lower(u.status) = 'available' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN COALESCE(NULLIF(s.quantity, 0), 0) ELSE 1 END ELSE 0 END) AS available_pieces,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN CASE WHEN lower(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1) WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0 THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) ELSE 0 END WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_pieces,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
         SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
-        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
-        COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
-        COALESCE(SUM(u.net_weight), 0.0) AS net_weight,
+        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
+        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
+        COALESCE(SUM($_inventorySoldWeightExpression), 0.0) AS sold_weight,
         COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
         COALESCE(SUM(u.valuation_fine_weight), 0.0) AS valuation_fine,
         COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+      LEFT JOIN (
+        SELECT
+          stock_item_id,
+          SUM(
+            CASE
+              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+              ELSE 0
+            END
+          ) AS sold_net_weight
+        FROM stock_movements
+        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+        GROUP BY stock_item_id
+      ) sm ON sm.stock_item_id = s.id
       WHERE lower(u.metal_type) = ?
         AND lower(COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Unbatched Stock')) = lower(?)
       GROUP BY grade_label
@@ -91,6 +125,7 @@ class _InventoryMetalGradeScreenState
       purityGroupCount: _readInt(row, 'purity_group_count'),
       grossWeight: _readDouble(row, 'gross_weight'),
       netWeight: _readDouble(row, 'net_weight'),
+      soldWeight: _readDouble(row, 'sold_weight'),
       actualFine: _readDouble(row, 'actual_fine'),
       valuationFine: _readDouble(row, 'valuation_fine'),
       stockValue: _readDouble(row, 'stock_value'),
@@ -98,6 +133,7 @@ class _InventoryMetalGradeScreenState
   }
 
   Future<List<_InventoryGradeSummary>> _loadGradeSummary() async {
+    await _ensureInventoryGroupingSchema();
     final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
     final fallbackLabel = _inventoryFallbackGroupLabel(widget.metal);
     final rows = await _db.customSelect(
@@ -107,20 +143,36 @@ class _InventoryMetalGradeScreenState
         COUNT(*) AS total_units,
         SUM(CASE WHEN lower(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
         SUM(CASE WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_units,
-        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END) AS total_pieces,
-        SUM(CASE WHEN lower(u.status) = 'available' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS available_pieces,
-        SUM(CASE WHEN lower(u.status) = 'sold' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' THEN COALESCE(NULLIF(s.quantity, 0), 1) ELSE 1 END ELSE 0 END) AS sold_pieces,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) ELSE 1 END) AS total_pieces,
+        SUM(CASE WHEN lower(u.status) = 'available' THEN CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN COALESCE(NULLIF(s.quantity, 0), 0) ELSE 1 END ELSE 0 END) AS available_pieces,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN CASE WHEN lower(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1) WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0 THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) ELSE 0 END WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_pieces,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
         SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
-        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
-        COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
-        COALESCE(SUM(u.net_weight), 0.0) AS net_weight,
+        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
+        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
+        COALESCE(SUM($_inventorySoldWeightExpression), 0.0) AS sold_weight,
         COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
         COALESCE(SUM(u.valuation_fine_weight), 0.0) AS valuation_fine,
         COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      LEFT JOIN (
+        SELECT
+          stock_item_id,
+          SUM(
+            CASE
+              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+              ELSE 0
+            END
+          ) AS sold_net_weight
+        FROM stock_movements
+        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+        GROUP BY stock_item_id
+      ) sm ON sm.stock_item_id = s.id
       WHERE lower(u.metal_type) = ?
       GROUP BY grade_label
       ORDER BY available_units DESC, total_units DESC, grade_label ASC
@@ -144,12 +196,45 @@ class _InventoryMetalGradeScreenState
             purityGroupCount: _readInt(row, 'purity_group_count'),
             grossWeight: _readDouble(row, 'gross_weight'),
             netWeight: _readDouble(row, 'net_weight'),
+            soldWeight: _readDouble(row, 'sold_weight'),
             actualFine: _readDouble(row, 'actual_fine'),
             valuationFine: _readDouble(row, 'valuation_fine'),
             stockValue: _readDouble(row, 'stock_value'),
           ),
         )
         .toList(growable: false);
+  }
+
+  Future<void> _ensureInventoryGroupingSchema() async {
+    _schemaFuture ??= _ensureInventoryGroupingSchemaInternal();
+    return _schemaFuture;
+  }
+
+  Future<void> _ensureInventoryGroupingSchemaInternal() async {
+    final columns = await _tableColumns('stock_items');
+    if (!columns.contains('company_name')) {
+      await _db.customStatement(
+          'ALTER TABLE stock_items ADD COLUMN company_name TEXT');
+    }
+    if (!columns.contains('quantity_mode')) {
+      await _db.customStatement(
+        "ALTER TABLE stock_items ADD COLUMN quantity_mode TEXT NOT NULL DEFAULT 'PIECES'",
+      );
+    }
+    if (!columns.contains('packet_count')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+  }
+
+  Future<Set<String>> _tableColumns(String tableName) async {
+    final rows = await _db.customSelect('PRAGMA table_info($tableName)').get();
+    return rows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
   }
 
   String _readString(QueryRow row, String column, String fallback) {
@@ -243,9 +328,13 @@ class _InventoryMetalGradeScreenState
       0,
       (sum, grade) => sum + grade.availablePieces,
     );
-    final totalFine = grades.fold<double>(
+    final availableWeight = grades.fold<double>(
       0,
-      (sum, grade) => sum + grade.actualFine,
+      (sum, grade) => sum + grade.netWeight,
+    );
+    final totalWeight = grades.fold<double>(
+      0,
+      (sum, grade) => sum + grade.netWeight + grade.soldWeight,
     );
 
     return Container(
@@ -315,8 +404,14 @@ class _InventoryMetalGradeScreenState
           ),
           const SizedBox(width: 12),
           _HeaderMetric(
-            label: 'Actual Fine',
-            value: '${_weight(totalFine)} g',
+            label: 'Available Weight',
+            value: '${_weight(availableWeight)} g',
+            textColor: ui.textOnGradient,
+          ),
+          const SizedBox(width: 12),
+          _HeaderMetric(
+            label: 'Total Weight',
+            value: '${_weight(totalWeight)} g',
             textColor: ui.textOnGradient,
           ),
         ],
@@ -475,6 +570,7 @@ class _InventoryGradeSummary {
   final int purityGroupCount;
   final double grossWeight;
   final double netWeight;
+  final double soldWeight;
   final double actualFine;
   final double valuationFine;
   final double stockValue;
@@ -493,6 +589,7 @@ class _InventoryGradeSummary {
     required this.purityGroupCount,
     required this.grossWeight,
     required this.netWeight,
+    required this.soldWeight,
     required this.actualFine,
     required this.valuationFine,
     required this.stockValue,

@@ -6,6 +6,29 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/inventory/inventory_stats_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
+const String _isLotUnitExpression = '''
+LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+  AND TRIM(COALESCE(u.huid, '')) = ''
+''';
+
+const String _totalQuantityExpression = '''
+CASE
+  WHEN $_isLotUnitExpression THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1)
+  ELSE 1
+END
+''';
+
+const String _availableQuantityExpression = '''
+CASE
+  WHEN LOWER(u.status) = 'available' THEN
+    CASE
+      WHEN $_isLotUnitExpression THEN COALESCE(NULLIF(s.quantity, 0), 0)
+      ELSE 1
+    END
+  ELSE 0
+END
+''';
+
 class InventoryController extends ChangeNotifier {
   final AppDatabase _db;
 
@@ -210,28 +233,34 @@ class InventoryController extends ChangeNotifier {
 
     final metalValue = metal?.trim().toLowerCase();
     if (metalValue != null && metalValue.isNotEmpty) {
-      where.add('lower(metal_type) = ?');
+      where.add('lower(u.metal_type) = ?');
       variables.add(drift.Variable.withString(metalValue));
     }
 
     final statusValue = status?.trim();
     if (statusValue != null && statusValue.isNotEmpty) {
-      where.add('status = ?');
+      where.add('u.status = ?');
       variables.add(drift.Variable.withString(statusValue));
     }
 
     if (before != null) {
-      where.add('created_at < ?');
+      where.add('u.created_at < ?');
       variables.add(drift.Variable.withInt(before.millisecondsSinceEpoch));
     }
+
+    final countExpression = statusValue == StockStatus.available.label
+        ? _availableQuantityExpression
+        : _totalQuantityExpression;
 
     final row = await _db.customSelect(
       '''
       SELECT
-        COUNT(*) AS unit_count,
-        COALESCE(SUM(gross_weight), 0.0) AS gross_weight,
-        COALESCE(SUM(unit_cost), 0.0) AS stock_value
-      FROM stock_item_units
+        COALESCE(SUM($countExpression), 0) AS unit_count,
+        COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
+        COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
+      FROM stock_item_units u
+      LEFT JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       WHERE ${where.join(' AND ')}
       ''',
       variables: variables,

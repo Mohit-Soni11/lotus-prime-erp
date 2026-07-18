@@ -4,6 +4,52 @@ import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_summary/stock_summary_models.dart';
 
+const String _isLotUnitExpression = '''
+LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+  AND TRIM(COALESCE(u.huid, '')) = ''
+''';
+
+const String _availableQuantityExpression = '''
+CASE
+  WHEN LOWER(u.status) = 'available' THEN
+    CASE
+      WHEN $_isLotUnitExpression THEN COALESCE(NULLIF(s.quantity, 0), 0)
+      ELSE 1
+    END
+  ELSE 0
+END
+''';
+
+const String _soldQuantityExpression = '''
+CASE
+  WHEN $_isLotUnitExpression THEN
+    CASE
+      WHEN LOWER(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1)
+      WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0
+        THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0)
+      ELSE 0
+    END
+  WHEN LOWER(u.status) = 'sold' THEN 1
+  ELSE 0
+END
+''';
+
+const String _soldWeightExpression = '''
+CASE
+  WHEN u.id = (
+    SELECT MIN(first_unit.id)
+    FROM stock_item_units first_unit
+    WHERE first_unit.stock_item_id = s.id
+  ) THEN
+    CASE
+      WHEN COALESCE(sm.sold_net_weight, 0) > 0
+        THEN COALESCE(sm.sold_net_weight, 0)
+      ELSE 0
+    END
+  ELSE 0
+END
+''';
+
 class StockSummaryController extends ChangeNotifier {
   final AppDatabase _db;
 
@@ -65,6 +111,8 @@ class StockSummaryController extends ChangeNotifier {
         outwardWeight: today.outwardWeight,
         restoredWeight: today.restoredWeight,
         closingWeight: closingWeight,
+        soldWeight: current.soldWeight,
+        totalWeight: closingWeight + current.soldWeight,
         closingFine: current.availableFine,
         soldUnits: current.soldUnits,
       );
@@ -86,17 +134,35 @@ class StockSummaryController extends ChangeNotifier {
   Future<_CurrentSnapshot> _loadCurrentSnapshot() async {
     final row = await _db.customSelect('''
       SELECT
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN 1 ELSE 0 END), 0) AS available_units,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'sold' THEN 1 ELSE 0 END), 0) AS sold_units,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN net_weight ELSE 0 END), 0.0) AS available_weight,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN actual_fine_weight ELSE 0 END), 0.0) AS available_fine
-      FROM stock_item_units
+        COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
+        COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS available_weight,
+        COALESCE(SUM($_soldWeightExpression), 0.0) AS sold_weight,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS available_fine
+      FROM stock_item_units u
+      LEFT JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      LEFT JOIN (
+        SELECT
+          stock_item_id,
+          SUM(
+            CASE
+              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+              ELSE 0
+            END
+          ) AS sold_net_weight
+        FROM stock_movements
+        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+        GROUP BY stock_item_id
+      ) sm ON sm.stock_item_id = s.id
     ''').getSingle();
 
     return _CurrentSnapshot(
       availableUnits: _readInt(row, 'available_units'),
       soldUnits: _readInt(row, 'sold_units'),
       availableWeight: _readDouble(row, 'available_weight'),
+      soldWeight: _readDouble(row, 'sold_weight'),
       availableFine: _readDouble(row, 'available_fine'),
     );
   }
@@ -137,19 +203,36 @@ class StockSummaryController extends ChangeNotifier {
     final rows = await _db.customSelect('''
       SELECT
         CASE
-          WHEN LOWER(metal_type) = 'gold' THEN 'Gold'
-          WHEN LOWER(metal_type) = 'silver' THEN 'Silver'
-          WHEN LOWER(metal_type) = 'diamond' THEN 'Diamond'
-          WHEN LOWER(metal_type) = 'platinum' THEN 'Platinum'
-          ELSE COALESCE(NULLIF(TRIM(metal_type), ''), 'Other')
+          WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
+          WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
+          WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
+          WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
+          ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
         END AS metal,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN 1 ELSE 0 END), 0) AS available_units,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'sold' THEN 1 ELSE 0 END), 0) AS sold_units,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN gross_weight ELSE 0 END), 0.0) AS gross_weight,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN net_weight ELSE 0 END), 0.0) AS net_weight,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN actual_fine_weight ELSE 0 END), 0.0) AS actual_fine
-      FROM stock_item_units
-      GROUP BY LOWER(metal_type)
+        COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
+        COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
+        COALESCE(SUM($_soldWeightExpression), 0.0) AS sold_weight,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS actual_fine
+      FROM stock_item_units u
+      LEFT JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      LEFT JOIN (
+        SELECT
+          stock_item_id,
+          SUM(
+            CASE
+              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+              ELSE 0
+            END
+          ) AS sold_net_weight
+        FROM stock_movements
+        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+        GROUP BY stock_item_id
+      ) sm ON sm.stock_item_id = s.id
+      GROUP BY LOWER(u.metal_type)
       ORDER BY available_units DESC, metal ASC
     ''').get();
 
@@ -161,6 +244,9 @@ class StockSummaryController extends ChangeNotifier {
             soldUnits: _readInt(row, 'sold_units'),
             grossWeight: _readDouble(row, 'gross_weight'),
             netWeight: _readDouble(row, 'net_weight'),
+            soldWeight: _readDouble(row, 'sold_weight'),
+            totalWeight: _readDouble(row, 'net_weight') +
+                _readDouble(row, 'sold_weight'),
             actualFine: _readDouble(row, 'actual_fine'),
           ),
         )
@@ -172,20 +258,37 @@ class StockSummaryController extends ChangeNotifier {
     final rows = await _db.customSelect('''
       SELECT
         CASE
-          WHEN LOWER(metal_type) = 'gold' THEN 'Gold'
-          WHEN LOWER(metal_type) = 'silver' THEN 'Silver'
-          WHEN LOWER(metal_type) = 'diamond' THEN 'Diamond'
-          WHEN LOWER(metal_type) = 'platinum' THEN 'Platinum'
-          ELSE COALESCE(NULLIF(TRIM(metal_type), ''), 'Other')
+          WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
+          WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
+          WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
+          WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
+          ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
         END AS metal,
-        printf('%.0f%% Purity', COALESCE(purity_percent, 0.0)) AS grade_label,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN 1 ELSE 0 END), 0) AS available_units,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'sold' THEN 1 ELSE 0 END), 0) AS sold_units,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN net_weight ELSE 0 END), 0.0) AS net_weight,
-        COALESCE(SUM(CASE WHEN LOWER(status) = 'available' THEN actual_fine_weight ELSE 0 END), 0.0) AS actual_fine
-      FROM stock_item_units
-      GROUP BY LOWER(metal_type), ROUND(COALESCE(purity_percent, 0.0), 2)
-      ORDER BY LOWER(metal_type), purity_percent DESC
+        printf('%.0f%% Purity', COALESCE(u.purity_percent, 0.0)) AS grade_label,
+        COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
+        COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
+        COALESCE(SUM($_soldWeightExpression), 0.0) AS sold_weight,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS actual_fine
+      FROM stock_item_units u
+      LEFT JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      LEFT JOIN (
+        SELECT
+          stock_item_id,
+          SUM(
+            CASE
+              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+              ELSE 0
+            END
+          ) AS sold_net_weight
+        FROM stock_movements
+        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+        GROUP BY stock_item_id
+      ) sm ON sm.stock_item_id = s.id
+      GROUP BY LOWER(u.metal_type), ROUND(COALESCE(u.purity_percent, 0.0), 2)
+      ORDER BY LOWER(u.metal_type), u.purity_percent DESC
       LIMIT 24
     ''').get();
 
@@ -197,6 +300,9 @@ class StockSummaryController extends ChangeNotifier {
             availableUnits: _readInt(row, 'available_units'),
             soldUnits: _readInt(row, 'sold_units'),
             netWeight: _readDouble(row, 'net_weight'),
+            soldWeight: _readDouble(row, 'sold_weight'),
+            totalWeight: _readDouble(row, 'net_weight') +
+                _readDouble(row, 'sold_weight'),
             actualFine: _readDouble(row, 'actual_fine'),
           ),
         )
@@ -268,12 +374,14 @@ class _CurrentSnapshot {
   final int availableUnits;
   final int soldUnits;
   final double availableWeight;
+  final double soldWeight;
   final double availableFine;
 
   const _CurrentSnapshot({
     required this.availableUnits,
     required this.soldUnits,
     required this.availableWeight,
+    required this.soldWeight,
     required this.availableFine,
   });
 }

@@ -11,6 +11,19 @@ import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart'
     as stock;
 
+const String _stockUnitSaleColumns = '''
+id,
+status,
+gross_weight,
+less_weight,
+net_weight,
+actual_fine_weight,
+wastage_fine_weight,
+valuation_fine_weight,
+unit_cost,
+making_amount
+''';
+
 class PosCheckoutCommitResult {
   final int billId;
   final String invoiceNumber;
@@ -1011,6 +1024,18 @@ class PosCheckoutRepository {
     }
 
     final restoredQty = stockRow.quantity + quantityToRestore;
+    final isLotStock = await _isLotStockItem(stockItemId);
+    if (isLotStock) {
+      await _restoreLotStock(
+        stockRow: stockRow,
+        quantityToRestore: quantityToRestore,
+        sourceId: sourceId,
+        sourceNumber: sourceNumber,
+        sourceLineNo: sourceLineNo,
+      );
+      return;
+    }
+
     await (_db.update(_db.stockItems)
           ..where((tbl) => tbl.id.equals(stockItemId)))
         .write(
@@ -1022,13 +1047,14 @@ class PosCheckoutRepository {
       ),
     );
     final now = DateTime.now();
-    await _markStockUnitsAvailable(
+    final restoredUnits = await _markStockUnitsAvailable(
       stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
       quantityToRestore: quantityToRestore,
       restoredAt: now,
     );
+    final delta = _deltaFromRows(restoredUnits, quantityToRestore, 1);
     await _insertStockMovement(
       stockRow: stockRow,
       movementType: 'SALE_RESTORE',
@@ -1037,6 +1063,9 @@ class PosCheckoutRepository {
       sourceNumber: sourceNumber,
       sourceLineNo: sourceLineNo,
       quantityDelta: quantityToRestore,
+      grossWeightDelta: delta.grossWeight,
+      netWeightDelta: delta.netWeight,
+      fineWeightDelta: delta.fineWeight,
       reason: 'Sale edit stock restore',
       occurredAt: now,
     );
@@ -1075,16 +1104,28 @@ class PosCheckoutRepository {
       );
     }
 
-    final soldUnitCount = await _markStockUnitsSold(
+    final isLotStock = await _isLotStockItem(stockItemId);
+    if (isLotStock) {
+      await _deductLotStock(
+        stockRow: stockRow,
+        quantityToSell: quantityToSell,
+        sourceId: sourceId,
+        sourceNumber: sourceNumber,
+        sourceLineNo: sourceLineNo,
+      );
+      return;
+    }
+
+    final soldUnits = await _markStockUnitsSold(
       stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
       quantityToSell: quantityToSell,
       soldAt: DateTime.now(),
     );
-    if (soldUnitCount < quantityToSell) {
+    if (soldUnits.length < quantityToSell) {
       throw StateError(
-        'Only $soldUnitCount stock unit(s) could be reserved for ${stockRow.sku}.',
+        'Only ${soldUnits.length} stock unit(s) could be reserved for ${stockRow.sku}.',
       );
     }
 
@@ -1104,6 +1145,7 @@ class PosCheckoutRepository {
       ),
     );
     final now = DateTime.now();
+    final delta = _deltaFromRows(soldUnits, quantityToSell, -1);
     await _insertStockMovement(
       stockRow: stockRow,
       movementType: 'SALE',
@@ -1112,12 +1154,15 @@ class PosCheckoutRepository {
       sourceNumber: sourceNumber,
       sourceLineNo: sourceLineNo,
       quantityDelta: -quantityToSell,
+      grossWeightDelta: delta.grossWeight,
+      netWeightDelta: delta.netWeight,
+      fineWeightDelta: delta.fineWeight,
       reason: 'POS sale stock deduction',
       occurredAt: now,
     );
   }
 
-  Future<int> _markStockUnitsSold({
+  Future<List<QueryRow>> _markStockUnitsSold({
     required int stockItemId,
     required int? stockUnitId,
     required String? stockUnitCode,
@@ -1131,7 +1176,7 @@ class PosCheckoutRepository {
       quantityToSell: quantityToSell,
     );
     if (unitsToSell.length < quantityToSell) {
-      return unitsToSell.length;
+      return unitsToSell;
     }
 
     for (final unit in unitsToSell) {
@@ -1156,7 +1201,7 @@ class PosCheckoutRepository {
         ...ids,
       ],
     );
-    return ids.length;
+    return unitsToSell;
   }
 
   Future<List<QueryRow>> _stockUnitsForSale({
@@ -1179,7 +1224,7 @@ class PosCheckoutRepository {
       final rows = selectedId == null
           ? await _db.customSelect(
               '''
-              SELECT id, status
+              SELECT $_stockUnitSaleColumns
               FROM stock_item_units
               WHERE stock_item_id = ?
                 AND status = ?
@@ -1194,7 +1239,7 @@ class PosCheckoutRepository {
             ).get()
           : await _db.customSelect(
               '''
-              SELECT id, status
+              SELECT $_stockUnitSaleColumns
               FROM stock_item_units
               WHERE stock_item_id = ?
                 AND status = ?
@@ -1232,7 +1277,7 @@ class PosCheckoutRepository {
     );
     return _db.customSelect(
       '''
-      SELECT id, status
+      SELECT $_stockUnitSaleColumns
       FROM stock_item_units
       WHERE $whereClause
       LIMIT 1
@@ -1241,7 +1286,7 @@ class PosCheckoutRepository {
     ).getSingleOrNull();
   }
 
-  Future<void> _markStockUnitsAvailable({
+  Future<List<QueryRow>> _markStockUnitsAvailable({
     required int stockItemId,
     required int? stockUnitId,
     required String? stockUnitCode,
@@ -1262,7 +1307,7 @@ class PosCheckoutRepository {
       final rows = selectedId == null
           ? await _db.customSelect(
               '''
-              SELECT id, status
+              SELECT $_stockUnitSaleColumns
               FROM stock_item_units
               WHERE stock_item_id = ?
                 AND status = ?
@@ -1277,7 +1322,7 @@ class PosCheckoutRepository {
             ).get()
           : await _db.customSelect(
               '''
-              SELECT id, status
+              SELECT $_stockUnitSaleColumns
               FROM stock_item_units
               WHERE stock_item_id = ?
                 AND status = ?
@@ -1296,7 +1341,7 @@ class PosCheckoutRepository {
     }
 
     if (units.isEmpty) {
-      return;
+      return const [];
     }
 
     final ids = units.map((row) => row.read<int>('id')).toList();
@@ -1313,6 +1358,334 @@ class PosCheckoutRepository {
         ...ids,
       ],
     );
+    return units;
+  }
+
+  Future<bool> _isLotStockItem(int stockItemId) async {
+    final row = await _db.customSelect(
+      '''
+      SELECT
+        COUNT(*) AS unit_count,
+        COALESCE(SUM(CASE WHEN huid IS NOT NULL AND TRIM(huid) <> '' THEN 1 ELSE 0 END), 0) AS huid_count
+      FROM stock_item_units
+      WHERE stock_item_id = ?
+      ''',
+      variables: [Variable<int>(stockItemId)],
+    ).getSingleOrNull();
+    if (row == null) {
+      return false;
+    }
+    return row.read<int>('unit_count') == 1 && row.read<int>('huid_count') == 0;
+  }
+
+  Future<QueryRow?> _lotStockUnit(int stockItemId) {
+    return _db.customSelect(
+      '''
+      SELECT $_stockUnitSaleColumns
+      FROM stock_item_units
+      WHERE stock_item_id = ?
+      ORDER BY id ASC
+      LIMIT 1
+      ''',
+      variables: [Variable<int>(stockItemId)],
+    ).getSingleOrNull();
+  }
+
+  Future<void> _deductLotStock({
+    required StockItem stockRow,
+    required int quantityToSell,
+    required String sourceId,
+    required String sourceNumber,
+    required int sourceLineNo,
+  }) async {
+    final lotUnit = await _lotStockUnit(stockRow.id);
+    if (lotUnit == null) {
+      throw StateError('Stock lot ${stockRow.sku} is not available.');
+    }
+    final status = lotUnit.read<String>('status');
+    if (status != stock.StockStatus.available.label) {
+      throw StateError('Selected stock lot is no longer available for sale.');
+    }
+
+    final remainingQty = stockRow.quantity - quantityToSell;
+    final now = DateTime.now();
+    final delta = _lotDelta(
+      stockRow: stockRow,
+      unitRow: lotUnit,
+      quantity: quantityToSell,
+      sign: -1,
+    );
+
+    await _writeLotBalance(
+      stockRow: stockRow,
+      lotUnit: lotUnit,
+      quantity: remainingQty,
+      delta: delta,
+      status: remainingQty > 0
+          ? stock.StockStatus.available.label
+          : stock.StockStatus.sold.label,
+      soldAt: remainingQty > 0 ? null : now,
+      updatedAt: now,
+    );
+
+    await _insertStockMovement(
+      stockRow: stockRow,
+      movementType: 'SALE',
+      sourceType: 'SALE',
+      sourceId: sourceId,
+      sourceNumber: sourceNumber,
+      sourceLineNo: sourceLineNo,
+      quantityDelta: -quantityToSell,
+      grossWeightDelta: delta.grossWeight,
+      netWeightDelta: delta.netWeight,
+      fineWeightDelta: delta.fineWeight,
+      reason: 'POS sale stock deduction',
+      occurredAt: now,
+    );
+  }
+
+  Future<void> _restoreLotStock({
+    required StockItem stockRow,
+    required int quantityToRestore,
+    required String sourceId,
+    required String sourceNumber,
+    required int sourceLineNo,
+  }) async {
+    final lotUnit = await _lotStockUnit(stockRow.id);
+    if (lotUnit == null) {
+      throw StateError('Linked stock lot ${stockRow.sku} no longer exists.');
+    }
+
+    final now = DateTime.now();
+    final restoredQty = stockRow.quantity + quantityToRestore;
+    final delta = await _saleRestoreDelta(
+          stockItemId: stockRow.id,
+          stockRow: stockRow,
+          sourceId: sourceId,
+          sourceLineNo: sourceLineNo,
+        ) ??
+        _lotDelta(
+          stockRow: stockRow,
+          unitRow: lotUnit,
+          quantity: quantityToRestore,
+          sign: 1,
+        );
+
+    await _writeLotBalance(
+      stockRow: stockRow,
+      lotUnit: lotUnit,
+      quantity: restoredQty,
+      delta: delta,
+      status: stock.StockStatus.available.label,
+      soldAt: null,
+      updatedAt: now,
+    );
+
+    await _insertStockMovement(
+      stockRow: stockRow,
+      movementType: 'SALE_RESTORE',
+      sourceType: 'SALE',
+      sourceId: sourceId,
+      sourceNumber: sourceNumber,
+      sourceLineNo: sourceLineNo,
+      quantityDelta: quantityToRestore,
+      grossWeightDelta: delta.grossWeight,
+      netWeightDelta: delta.netWeight,
+      fineWeightDelta: delta.fineWeight,
+      reason: 'Sale edit stock restore',
+      occurredAt: now,
+    );
+  }
+
+  Future<_StockLotDelta?> _saleRestoreDelta({
+    required int stockItemId,
+    required StockItem stockRow,
+    required String sourceId,
+    required int sourceLineNo,
+  }) async {
+    final row = await _db.customSelect(
+      '''
+      SELECT quantity_delta, gross_weight_delta, net_weight_delta, fine_weight_delta
+      FROM stock_movements
+      WHERE stock_item_id = ?
+        AND source_type = 'SALE'
+        AND source_id = ?
+        AND source_line_no = ?
+        AND movement_type = 'SALE'
+      ORDER BY id DESC
+      LIMIT 1
+      ''',
+      variables: [
+        Variable<int>(stockItemId),
+        Variable<String>(sourceId),
+        Variable<int>(sourceLineNo),
+      ],
+    ).getSingleOrNull();
+    if (row == null) {
+      return null;
+    }
+    final gross = -row.read<double>('gross_weight_delta');
+    final net = -row.read<double>('net_weight_delta');
+    final fine = -row.read<double>('fine_weight_delta');
+    final quantity = row.read<int>('quantity_delta').abs();
+    return _StockLotDelta(
+      grossWeight: gross,
+      lessWeight: gross - net,
+      netWeight: net,
+      fineWeight: fine,
+      wastageFineWeight: 0,
+      valuationFineWeight: fine,
+      unitCost: stockRow.purchasePrice * quantity,
+      makingAmount: 0,
+    );
+  }
+
+  Future<void> _writeLotBalance({
+    required StockItem stockRow,
+    required QueryRow lotUnit,
+    required int quantity,
+    required _StockLotDelta delta,
+    required String status,
+    required DateTime? soldAt,
+    required DateTime updatedAt,
+  }) async {
+    final nextGross = _nonNegative(stockRow.grossWeight + delta.grossWeight);
+    final nextLess = _nonNegative(stockRow.stoneWeight + delta.lessWeight);
+    final nextNet = _nonNegative(stockRow.netWeight + delta.netWeight);
+    await (_db.update(_db.stockItems)..where((tbl) => tbl.id.equals(stockRow.id)))
+        .write(
+      StockItemsCompanion(
+        quantity: Value(quantity),
+        grossWeight: Value(nextGross),
+        stoneWeight: Value(nextLess),
+        netWeight: Value(nextNet),
+        isActive: Value(quantity > 0),
+        status: Value(status),
+        updatedAt: Value(updatedAt),
+      ),
+    );
+
+    await _db.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET gross_weight = ?,
+          less_weight = ?,
+          net_weight = ?,
+          actual_fine_weight = ?,
+          wastage_fine_weight = ?,
+          valuation_fine_weight = ?,
+          unit_cost = ?,
+          making_amount = ?,
+          status = ?,
+          sold_at = ?,
+          updated_at = ?
+      WHERE id = ?
+      ''',
+      [
+        _nonNegative(lotUnit.read<double>('gross_weight') + delta.grossWeight),
+        _nonNegative(lotUnit.read<double>('less_weight') + delta.lessWeight),
+        _nonNegative(lotUnit.read<double>('net_weight') + delta.netWeight),
+        _nonNegative(
+          lotUnit.read<double>('actual_fine_weight') + delta.fineWeight,
+        ),
+        _nonNegative(
+          lotUnit.read<double>('wastage_fine_weight') +
+              delta.wastageFineWeight,
+        ),
+        _nonNegative(
+          lotUnit.read<double>('valuation_fine_weight') +
+              delta.valuationFineWeight,
+        ),
+        _nonNegative(lotUnit.read<double>('unit_cost') + delta.unitCost),
+        _nonNegative(lotUnit.read<double>('making_amount') + delta.makingAmount),
+        status,
+        soldAt?.millisecondsSinceEpoch,
+        updatedAt.millisecondsSinceEpoch,
+        lotUnit.read<int>('id'),
+      ],
+    );
+  }
+
+  _StockLotDelta _lotDelta({
+    required StockItem stockRow,
+    required QueryRow unitRow,
+    required int quantity,
+    required int sign,
+  }) {
+    final safeQuantity = stockRow.quantity < 1 ? quantity : stockRow.quantity;
+    final factor = safeQuantity <= 0 ? 1.0 : quantity / safeQuantity;
+    return _StockLotDelta(
+      grossWeight: unitRow.read<double>('gross_weight') * factor * sign,
+      lessWeight: unitRow.read<double>('less_weight') * factor * sign,
+      netWeight: unitRow.read<double>('net_weight') * factor * sign,
+      fineWeight: unitRow.read<double>('actual_fine_weight') * factor * sign,
+      wastageFineWeight:
+          unitRow.read<double>('wastage_fine_weight') * factor * sign,
+      valuationFineWeight:
+          unitRow.read<double>('valuation_fine_weight') * factor * sign,
+      unitCost: unitRow.read<double>('unit_cost') * factor * sign,
+      makingAmount: unitRow.read<double>('making_amount') * factor * sign,
+    );
+  }
+
+  _StockLotDelta _deltaFromRows(
+    List<QueryRow> rows,
+    int quantity,
+    int sign,
+  ) {
+    if (rows.isEmpty) {
+      return const _StockLotDelta.zero();
+    }
+    final selectedRows = rows.take(quantity).toList(growable: false);
+    return _StockLotDelta(
+      grossWeight: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('gross_weight'),
+          ) *
+          sign,
+      lessWeight: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('less_weight'),
+          ) *
+          sign,
+      netWeight: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('net_weight'),
+          ) *
+          sign,
+      fineWeight: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('actual_fine_weight'),
+          ) *
+          sign,
+      wastageFineWeight: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('wastage_fine_weight'),
+          ) *
+          sign,
+      valuationFineWeight: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('valuation_fine_weight'),
+          ) *
+          sign,
+      unitCost: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('unit_cost'),
+          ) *
+          sign,
+      makingAmount: selectedRows.fold(
+            0.0,
+            (sum, row) => sum + row.read<double>('making_amount'),
+          ) *
+          sign,
+    );
+  }
+
+  double _nonNegative(double value) {
+    if (value.abs() < 0.000001) {
+      return 0;
+    }
+    return value < 0 ? 0 : value;
   }
 
   String? _stockUnitWhereClause({
@@ -1347,11 +1720,12 @@ class PosCheckoutRepository {
     required String sourceNumber,
     required int sourceLineNo,
     required int quantityDelta,
+    required double grossWeightDelta,
+    required double netWeightDelta,
+    required double fineWeightDelta,
     required String reason,
     required DateTime occurredAt,
   }) {
-    final multiplier = quantityDelta.abs();
-    final sign = quantityDelta < 0 ? -1.0 : 1.0;
     return _db.customStatement(
       '''
       INSERT INTO stock_movements (
@@ -1385,9 +1759,9 @@ class PosCheckoutRepository {
         stockRow.metalType,
         stockRow.itemName,
         quantityDelta,
-        stockRow.grossWeight * multiplier * sign,
-        stockRow.netWeight * multiplier * sign,
-        0.0,
+        grossWeightDelta,
+        netWeightDelta,
+        fineWeightDelta,
         reason,
         occurredAt.millisecondsSinceEpoch,
         occurredAt.millisecondsSinceEpoch,
@@ -1769,6 +2143,38 @@ class PosCheckoutRepository {
     final text = value?.trim() ?? '';
     return text.isEmpty ? null : text;
   }
+}
+
+class _StockLotDelta {
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double fineWeight;
+  final double wastageFineWeight;
+  final double valuationFineWeight;
+  final double unitCost;
+  final double makingAmount;
+
+  const _StockLotDelta({
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.fineWeight,
+    required this.wastageFineWeight,
+    required this.valuationFineWeight,
+    required this.unitCost,
+    required this.makingAmount,
+  });
+
+  const _StockLotDelta.zero()
+      : grossWeight = 0,
+        lessWeight = 0,
+        netWeight = 0,
+        fineWeight = 0,
+        wastageFineWeight = 0,
+        valuationFineWeight = 0,
+        unitCost = 0,
+        makingAmount = 0;
 }
 
 class _ResolvedInvoiceNumber {

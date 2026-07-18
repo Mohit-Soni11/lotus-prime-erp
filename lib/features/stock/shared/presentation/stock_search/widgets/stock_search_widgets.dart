@@ -64,7 +64,17 @@ class _SearchHero extends StatelessWidget {
           _HeroMetric(
               label: 'Available', value: '${summary.availableUnits} pcs'),
           const SizedBox(width: 12),
-          _HeroMetric(label: 'Net Weight', value: _grams(summary.netWeight)),
+          _HeroMetric(label: 'Total Weight', value: _grams(summary.netWeight)),
+          const SizedBox(width: 12),
+          _HeroMetric(
+            label: 'Available Weight',
+            value: _grams(summary.availableWeight),
+          ),
+          const SizedBox(width: 12),
+          _HeroMetric(
+            label: 'Sold Weight',
+            value: _grams(summary.soldWeight),
+          ),
         ],
       ),
     );

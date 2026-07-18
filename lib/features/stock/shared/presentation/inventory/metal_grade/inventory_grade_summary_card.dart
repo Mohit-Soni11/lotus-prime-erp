@@ -161,7 +161,7 @@ class _InventoryGradeSummaryCardState
                     const SizedBox(width: 10),
                     Expanded(
                       child: _GradeMetricTile(
-                        label: 'Net Weight',
+                        label: 'Available Weight',
                         value: '${_weight(widget.grade.netWeight)} g',
                         icon: Icons.scale_rounded,
                         accent: const Color(0xFF0F766E),
@@ -175,21 +175,22 @@ class _InventoryGradeSummaryCardState
                   children: [
                     Expanded(
                       child: _GradeMetricTile(
-                        label: 'Actual Fine',
-                        value: '${_weight(widget.grade.actualFine)} g',
-                        icon: Icons.verified_rounded,
-                        accent: const Color(0xFF10B981),
-                        surface: const Color(0xFFEAFBF5),
+                        label: 'Total Weight',
+                        value:
+                            '${_weight(widget.grade.netWeight + widget.grade.soldWeight)} g',
+                        icon: Icons.inventory_2_rounded,
+                        accent: widget.ui.accent,
+                        surface: widget.ui.softSurface,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _GradeMetricTile(
-                        label: 'Valuation Fine',
-                        value: '${_weight(widget.grade.valuationFine)} g',
-                        icon: Icons.trending_up_rounded,
-                        accent: InvColors.brandGold,
-                        surface: const Color(0xFFFFF7DF),
+                        label: 'Sold Weight',
+                        value: '${_weight(widget.grade.soldWeight)} g',
+                        icon: Icons.point_of_sale_rounded,
+                        accent: InvColors.danger,
+                        surface: InvColors.dangerBg,
                       ),
                     ),
                   ],

@@ -75,8 +75,8 @@ class _StockSummaryHero extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           _HeroSummaryTile(
-            label: 'Net Weight',
-            value: '${_summaryWeight(overview.closingWeight)} g',
+            label: 'Total Weight',
+            value: '${_summaryWeight(overview.totalWeight)} g',
           ),
           const SizedBox(width: 12),
           _HeroSummaryTile(
@@ -143,7 +143,7 @@ class _StockSummaryMetricGrid extends StatelessWidget {
         _SummaryMetricCard(
           title: 'Sold Inventory',
           value: '${overview.soldUnits} pcs',
-          subtitle: 'Historical sold units',
+          subtitle: '${_summaryWeight(overview.soldWeight)} g sold',
           icon: Icons.receipt_long_rounded,
           accent: const Color(0xFFF59E0B),
           background: const Color(0xFFFFF7E6),
@@ -334,7 +334,14 @@ class _MetalSummaryRow extends StatelessWidget {
             ),
           ),
           _InlineMetric(
-              label: 'Net', value: '${_summaryWeight(metal.netWeight)} g'),
+              label: 'Total', value: '${_summaryWeight(metal.totalWeight)} g'),
+          const SizedBox(width: 10),
+          _InlineMetric(
+              label: 'Available',
+              value: '${_summaryWeight(metal.netWeight)} g'),
+          const SizedBox(width: 10),
+          _InlineMetric(
+              label: 'Sold', value: '${_summaryWeight(metal.soldWeight)} g'),
           const SizedBox(width: 10),
           _InlineMetric(
               label: 'Fine', value: '${_summaryWeight(metal.actualFine)} g'),
@@ -380,7 +387,14 @@ class _GradeSummaryRow extends StatelessWidget {
             ),
           ),
           _InlineMetric(
-              label: 'Net', value: '${_summaryWeight(grade.netWeight)} g'),
+              label: 'Total', value: '${_summaryWeight(grade.totalWeight)} g'),
+          const SizedBox(width: 10),
+          _InlineMetric(
+              label: 'Available',
+              value: '${_summaryWeight(grade.netWeight)} g'),
+          const SizedBox(width: 10),
+          _InlineMetric(
+              label: 'Sold', value: '${_summaryWeight(grade.soldWeight)} g'),
           const SizedBox(width: 10),
           _InlineMetric(
               label: 'Fine', value: '${_summaryWeight(grade.actualFine)} g'),

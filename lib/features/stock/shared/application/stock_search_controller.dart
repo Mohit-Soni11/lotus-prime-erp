@@ -4,6 +4,59 @@ import 'package:flutter/foundation.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_search/stock_search_models.dart';
 
+const String _isLotUnitExpression = '''
+LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+  AND TRIM(COALESCE(u.huid, '')) = ''
+''';
+
+const String _totalQuantityExpression = '''
+CASE
+  WHEN $_isLotUnitExpression THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1)
+  ELSE 1
+END
+''';
+
+const String _availableQuantityExpression = '''
+CASE
+  WHEN LOWER(u.status) = 'available' THEN
+    CASE
+      WHEN $_isLotUnitExpression THEN COALESCE(NULLIF(s.quantity, 0), 0)
+      ELSE 1
+    END
+  ELSE 0
+END
+''';
+
+const String _soldQuantityExpression = '''
+CASE
+  WHEN $_isLotUnitExpression THEN
+    CASE
+      WHEN LOWER(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1)
+      WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0
+        THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0)
+      ELSE 0
+    END
+  WHEN LOWER(u.status) = 'sold' THEN 1
+  ELSE 0
+END
+''';
+
+const String _soldWeightExpression = '''
+CASE
+  WHEN u.id = (
+    SELECT MIN(first_unit.id)
+    FROM stock_item_units first_unit
+    WHERE first_unit.stock_item_id = s.id
+  ) THEN
+    CASE
+      WHEN COALESCE(sm.sold_net_weight, 0) > 0
+        THEN COALESCE(sm.sold_net_weight, 0)
+      ELSE 0
+    END
+  ELSE 0
+END
+''';
+
 class StockSearchController extends ChangeNotifier {
   final AppDatabase _db;
 
@@ -76,14 +129,35 @@ class StockSearchController extends ChangeNotifier {
       final summaryRow = await _db.customSelect(
         '''
         SELECT
-          COUNT(u.id) AS total_units,
-          COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN 1 ELSE 0 END), 0) AS available_units,
-          COALESCE(SUM(CASE WHEN LOWER(u.status) = 'sold' THEN 1 ELSE 0 END), 0) AS sold_units,
+          COALESCE(SUM($_totalQuantityExpression), 0) AS total_units,
+          COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
+          COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
           COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
-          COALESCE(SUM(u.net_weight), 0.0) AS net_weight,
+          COALESCE(SUM(
+            u.net_weight +
+            $_soldWeightExpression
+          ), 0.0) AS net_weight,
+          COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS available_weight,
+          COALESCE(SUM($_soldWeightExpression), 0.0) AS sold_weight,
           COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
         FROM stock_item_units u
+        LEFT JOIN stock_items s ON s.id = u.stock_item_id
+        LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
         LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+        LEFT JOIN (
+          SELECT
+            stock_item_id,
+            SUM(
+              CASE
+                WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+                WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+                ELSE 0
+              END
+            ) AS sold_net_weight
+          FROM stock_movements
+          WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+          GROUP BY stock_item_id
+        ) sm ON sm.stock_item_id = s.id
         ${where.sql}
         ''',
         variables: where.variables,
@@ -153,6 +227,8 @@ class StockSearchController extends ChangeNotifier {
         soldUnits: _readInt(summaryRow, 'sold_units'),
         grossWeight: _readDouble(summaryRow, 'gross_weight'),
         netWeight: _readDouble(summaryRow, 'net_weight'),
+        availableWeight: _readDouble(summaryRow, 'available_weight'),
+        soldWeight: _readDouble(summaryRow, 'sold_weight'),
         stockValue: _readDouble(summaryRow, 'stock_value'),
       );
       _results = rows.map(_mapResult).toList(growable: false);
