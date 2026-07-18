@@ -221,6 +221,75 @@ void main() {
     saleItem.dispose();
   });
 
+  test('silver untracked bulk units deduct actual POS sale weight', () async {
+    final purchase = await purchaseRepository.savePurchase(
+      _silverDraft(
+        voucherNo: 'SS-E2E-UNTRACKED-BULK-0004',
+        description: 'Silver Locket',
+        quantity: 50,
+        grossWeight: 150.526,
+        lessWeight: 0,
+        netWeight: 150.526,
+        purity: 60,
+        fineWeight: 90.316,
+        wastageFineWeight: 15.052,
+        valuationFineWeight: 105.368,
+        lineAmount: 23419.06,
+        stockTrackingMode: PurchaseStockTrackingMode.unit,
+        quantityMode: 'PIECES',
+      ),
+    );
+
+    expect(purchase, isNotNull);
+
+    final stockItem = await _stockByVoucher(
+      db,
+      'SS-E2E-UNTRACKED-BULK-0004',
+    );
+    final saleItem = _silverSaleItem(
+      stockItemId: stockItem.id,
+      sku: stockItem.sku,
+      description: 'Silver Locket',
+      pieces: 1,
+      grossWeight: 8.230,
+      purity: '60',
+      rate: 200,
+    );
+
+    await posRepository.finalizeSale(
+      invoice: _invoice(
+        invoiceNumber: 'INV-SILVER-UNTRACKED-BULK-0004',
+        saleItems: [saleItem],
+        cashPaid: saleItem.totalValue,
+      ),
+      customerId: null,
+    );
+
+    final updatedStock = await _stockById(db, stockItem.id);
+    final lotUnit = await _singleStockUnit(db, stockItem.id);
+    final movements = await _movementsFor(db, stockItem.id);
+
+    expect(updatedStock.quantity, 49);
+    expect(updatedStock.netWeight, closeTo(142.296, 0.001));
+    expect(lotUnit.read<double>('net_weight'), closeTo(142.296, 0.001));
+    expect(movements.last.movementType, 'SALE');
+    expect(movements.last.quantityDelta, -1);
+    expect(movements.last.netWeightDelta, closeTo(-8.230, 0.001));
+
+    final summary = StockSummaryController(db);
+    await summary.load();
+    final silverSummary = summary.metals
+        .singleWhere((item) => item.metal.toLowerCase() == 'silver');
+
+    expect(silverSummary.availableUnits, 49);
+    expect(silverSummary.soldUnits, 1);
+    expect(silverSummary.netWeight, closeTo(142.296, 0.001));
+    expect(silverSummary.soldWeight, closeTo(8.230, 0.001));
+    expect(silverSummary.totalWeight, closeTo(150.526, 0.001));
+
+    saleItem.dispose();
+  });
+
   test('silver lot reconciliation repairs old average-weight sale deduction',
       () async {
     final purchase = await purchaseRepository.savePurchase(

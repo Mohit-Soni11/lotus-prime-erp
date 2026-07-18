@@ -143,6 +143,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
+          await _ensurePurchaseVoucherSchema();
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockItemUnitSchema();
           await _ensureGirviPaymentReceiptIndex();
@@ -233,11 +234,7 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(deliveryItems);
           }
           if (from < 12) {
-            await customStatement(_createPurchaseVouchersTableSql);
-            await customStatement(_createPurchaseVoucherItemsTableSql);
-            for (final s in _purchaseVoucherIndexSql) {
-              await customStatement(s);
-            }
+            await _ensurePurchaseVoucherSchema();
           }
           if (from < 14) {
             try {
@@ -259,6 +256,7 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 17) {
+            await _ensurePurchaseVoucherSchema();
             final purchaseVoucherUpgradeSql = <String>[
               'ALTER TABLE "purchase_vouchers" ADD COLUMN "supplier_invoice_no" TEXT',
               'ALTER TABLE "purchase_vouchers" ADD COLUMN "upi_paid" REAL NOT NULL DEFAULT 0.0',
@@ -691,6 +689,7 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 36) {
+            await _ensurePurchaseVoucherSchema();
             try {
               await customStatement(
                 'ALTER TABLE "purchase_voucher_items" ADD COLUMN "item_segment" TEXT',
@@ -702,6 +701,7 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 37) {
+            await _ensurePurchaseVoucherSchema();
             try {
               await customStatement(
                 'ALTER TABLE "purchase_voucher_items" ADD COLUMN "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0',
@@ -721,14 +721,20 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 39) {
-            try {
-              await m.addColumn(billItems, billItems.linkedStockUnitId);
-              await m.addColumn(billItems, billItems.stockUnitCost);
-              await m.addColumn(billItems, billItems.stockProfitAmount);
-            } catch (e, s) {
-              _handleMigrationError(e, s);
+            if (await _tableExists('bill_items')) {
+              try {
+                await m.addColumn(billItems, billItems.linkedStockUnitId);
+                await m.addColumn(billItems, billItems.stockUnitCost);
+                await m.addColumn(billItems, billItems.stockProfitAmount);
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
+              AppLogger.info('v39 sales stock valuation fields applied.');
+            } else {
+              AppLogger.warning(
+                'v39 sales stock valuation fields skipped because bill_items table is missing.',
+              );
             }
-            AppLogger.info('v39 sales stock valuation fields applied.');
           }
         },
         beforeOpen: (details) async {
@@ -828,12 +834,8 @@ class AppDatabase extends _$AppDatabase {
               FOREIGN KEY ("delivery_order_id") REFERENCES "delivery_orders" ("id") ON DELETE CASCADE
             )
           ''');
-          await customStatement(_createPurchaseVouchersTableSql);
-          await customStatement(_createPurchaseVoucherItemsTableSql);
+          await _ensurePurchaseVoucherSchema();
           await _ensurePurchaseItemHuidSchema();
-          for (final s in _purchaseVoucherIndexSql) {
-            await customStatement(s);
-          }
           await ensureBillingSetupSchema();
 
           if (EnvConfig.enableVerboseLogs) {
@@ -859,6 +861,14 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _ensureCustomerAccountLedgerSchema() async {
     await customStatement(_createCustomerAccountLedgerTableSql);
     for (final statement in _customerAccountLedgerIndexSql) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _ensurePurchaseVoucherSchema() async {
+    await customStatement(_createPurchaseVouchersTableSql);
+    await customStatement(_createPurchaseVoucherItemsTableSql);
+    for (final statement in _purchaseVoucherIndexSql) {
       await customStatement(statement);
     }
   }

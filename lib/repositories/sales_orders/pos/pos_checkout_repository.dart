@@ -1116,10 +1116,14 @@ class PosCheckoutRepository {
       );
     }
 
+    final normalizedStockRow = await _normalizeUntrackedLotStock(
+      stockRow,
+      currentSourceId: sourceId,
+    );
     final isLotStock = await _isLotStockItem(stockItemId);
     if (isLotStock) {
       await _deductLotStock(
-        stockRow: stockRow,
+        stockRow: normalizedStockRow,
         quantityToSell: quantityToSell,
         saleGrossWeight: saleGrossWeight,
         saleLessWeight: saleLessWeight,
@@ -1200,7 +1204,8 @@ class PosCheckoutRepository {
     for (final unit in unitsToSell) {
       final status = unit.read<String>('status');
       if (status != stock.StockStatus.available.label) {
-        throw StateError('Selected stock unit is no longer available for sale.');
+        throw StateError(
+            'Selected stock unit is no longer available for sale.');
       }
     }
 
@@ -1393,7 +1398,7 @@ class PosCheckoutRepository {
     if (row == null) {
       return false;
     }
-    return row.read<int>('unit_count') == 1 && row.read<int>('huid_count') == 0;
+    return row.read<int>('unit_count') > 0 && row.read<int>('huid_count') == 0;
   }
 
   Future<QueryRow?> _lotStockUnit(int stockItemId) {
@@ -1402,11 +1407,262 @@ class PosCheckoutRepository {
       SELECT $_stockUnitSaleColumns
       FROM stock_item_units
       WHERE stock_item_id = ?
-      ORDER BY id ASC
+      ORDER BY
+        CASE WHEN status = ? THEN 0 ELSE 1 END,
+        CASE WHEN LOWER(COALESCE(unit_code, '')) LIKE '%lot%' THEN 0 ELSE 1 END,
+        id ASC
       LIMIT 1
       ''',
-      variables: [Variable<int>(stockItemId)],
+      variables: [
+        Variable<int>(stockItemId),
+        Variable<String>(stock.StockStatus.available.label),
+      ],
     ).getSingleOrNull();
+  }
+
+  Future<StockItem> _normalizeUntrackedLotStock(
+    StockItem stockRow, {
+    required String currentSourceId,
+  }) async {
+    final summary = await _db.customSelect(
+      '''
+      SELECT
+        COUNT(*) AS unit_count,
+        COALESCE(SUM(CASE WHEN TRIM(COALESCE(huid, '')) <> '' THEN 1 ELSE 0 END), 0) AS huid_count,
+        COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS available_count,
+        COALESCE(SUM(CASE WHEN status = ? AND LOWER(COALESCE(unit_code, '')) LIKE '%lot%' THEN 1 ELSE 0 END), 0) AS available_lot_count
+      FROM stock_item_units
+      WHERE stock_item_id = ?
+      ''',
+      variables: [
+        Variable<String>(stock.StockStatus.available.label),
+        Variable<String>(stock.StockStatus.available.label),
+        Variable<int>(stockRow.id),
+      ],
+    ).getSingleOrNull();
+
+    if (summary == null ||
+        summary.read<int>('unit_count') == 0 ||
+        summary.read<int>('huid_count') > 0 ||
+        summary.read<int>('available_count') == 0) {
+      return stockRow;
+    }
+
+    final availableCount = summary.read<int>('available_count');
+    final availableLotCount = summary.read<int>('available_lot_count');
+    if (availableCount == 1 && availableLotCount == 1) {
+      return stockRow;
+    }
+
+    final availableRows = await _db.customSelect(
+      '''
+      SELECT id,
+             purchase_voucher_item_id,
+             gross_weight,
+             less_weight,
+             net_weight,
+             actual_fine_weight,
+             wastage_fine_weight,
+             valuation_fine_weight,
+             unit_cost,
+             making_amount
+      FROM stock_item_units
+      WHERE stock_item_id = ?
+        AND status = ?
+        AND TRIM(COALESCE(huid, '')) = ''
+      ORDER BY
+        CASE WHEN LOWER(COALESCE(unit_code, '')) LIKE '%lot%' THEN 0 ELSE 1 END,
+        id ASC
+      ''',
+      variables: [
+        Variable<int>(stockRow.id),
+        Variable<String>(stock.StockStatus.available.label),
+      ],
+    ).get();
+
+    if (availableRows.isEmpty) {
+      return stockRow;
+    }
+
+    final unitBalance = _unitBalanceFromRows(availableRows);
+    final sourceBalance = await _sourceBalanceForUntrackedLot(
+      stockItemId: stockRow.id,
+      currentSourceId: currentSourceId,
+      availableRows: availableRows,
+    );
+    final balance = sourceBalance ?? unitBalance;
+    final keeper = availableRows.first;
+    final keeperId = keeper.read<int>('id');
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _db.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET unit_code = ?,
+          piece_no = 1,
+          gross_weight = ?,
+          less_weight = ?,
+          net_weight = ?,
+          actual_fine_weight = ?,
+          wastage_fine_weight = ?,
+          valuation_fine_weight = ?,
+          unit_cost = ?,
+          making_amount = ?,
+          status = ?,
+          sold_at = NULL,
+          updated_at = ?
+      WHERE id = ?
+      ''',
+      [
+        '${stockRow.sku}-LOT',
+        balance.grossWeight,
+        balance.lessWeight,
+        balance.netWeight,
+        balance.fineWeight,
+        balance.wastageFineWeight,
+        balance.valuationFineWeight,
+        balance.unitCost,
+        unitBalance.makingAmount,
+        stock.StockStatus.available.label,
+        now,
+        keeperId,
+      ],
+    );
+
+    final idsToDelete = availableRows
+        .skip(1)
+        .map((row) => row.read<int>('id'))
+        .toList(growable: false);
+    if (idsToDelete.isNotEmpty) {
+      final placeholders = List.filled(idsToDelete.length, '?').join(', ');
+      await _db.customStatement(
+        '''
+        DELETE FROM stock_item_units
+        WHERE id IN ($placeholders)
+        ''',
+        idsToDelete,
+      );
+    }
+
+    final remainingQuantity = stockRow.quantity > 0 ? stockRow.quantity : 1;
+    await (_db.update(_db.stockItems)
+          ..where((tbl) => tbl.id.equals(stockRow.id)))
+        .write(
+      StockItemsCompanion(
+        quantity: Value(remainingQuantity),
+        grossWeight: Value(balance.grossWeight),
+        stoneWeight: Value(balance.lessWeight),
+        netWeight: Value(balance.netWeight),
+        isActive: const Value(true),
+        status: Value(stock.StockStatus.available.label),
+        updatedAt: Value(DateTime.fromMillisecondsSinceEpoch(now)),
+      ),
+    );
+
+    return (_db.select(_db.stockItems)
+          ..where((tbl) => tbl.id.equals(stockRow.id)))
+        .getSingle();
+  }
+
+  _StockLotBalance _unitBalanceFromRows(List<QueryRow> rows) {
+    double sum(String column) => rows.fold(
+          0,
+          (total, row) => total + (row.readNullable<double>(column) ?? 0),
+        );
+    return _StockLotBalance(
+      grossWeight: sum('gross_weight'),
+      lessWeight: sum('less_weight'),
+      netWeight: sum('net_weight'),
+      fineWeight: sum('actual_fine_weight'),
+      wastageFineWeight: sum('wastage_fine_weight'),
+      valuationFineWeight: sum('valuation_fine_weight'),
+      unitCost: sum('unit_cost'),
+      makingAmount: sum('making_amount'),
+    );
+  }
+
+  Future<_StockLotBalance?> _sourceBalanceForUntrackedLot({
+    required int stockItemId,
+    required String currentSourceId,
+    required List<QueryRow> availableRows,
+  }) async {
+    final purchaseItemIds = availableRows
+        .map((row) => row.readNullable<int>('purchase_voucher_item_id'))
+        .whereType<int>()
+        .toSet();
+    if (purchaseItemIds.length != 1) {
+      return null;
+    }
+
+    final row = await _db.customSelect(
+      '''
+      SELECT
+        pvi.gross_weight AS original_gross_weight,
+        pvi.less_weight AS original_less_weight,
+        pvi.net_weight AS original_net_weight,
+        pvi.fine_weight AS original_fine_weight,
+        pvi.wastage_fine_weight AS original_wastage_fine_weight,
+        pvi.valuation_fine_weight AS original_valuation_fine_weight,
+        pvi.line_amount AS original_line_amount,
+        COALESCE(sales.sold_gross_weight, 0.0) AS sold_gross_weight,
+        COALESCE(sales.sold_less_weight, 0.0) AS sold_less_weight,
+        COALESCE(sales.sold_net_weight, 0.0) AS sold_net_weight,
+        COALESCE(sales.sold_fine_weight, 0.0) AS sold_fine_weight,
+        COALESCE(sales.sold_amount, 0.0) AS sold_amount
+      FROM purchase_voucher_items pvi
+      LEFT JOIN (
+        SELECT
+          linked_stock_item_id AS stock_item_id,
+          SUM(COALESCE(gross_weight, 0.0)) AS sold_gross_weight,
+          SUM(COALESCE(less_weight, 0.0)) AS sold_less_weight,
+          SUM(COALESCE(net_weight, 0.0)) AS sold_net_weight,
+          SUM(COALESCE(fine_weight, 0.0)) AS sold_fine_weight,
+          SUM(COALESCE(item_total, 0.0)) AS sold_amount
+        FROM bill_items
+        WHERE linked_stock_item_id = ?
+          AND CAST(bill_id AS TEXT) <> ?
+        GROUP BY linked_stock_item_id
+      ) sales ON sales.stock_item_id = ?
+      WHERE pvi.id = ?
+      ''',
+      variables: [
+        Variable<int>(stockItemId),
+        Variable<String>(currentSourceId),
+        Variable<int>(stockItemId),
+        Variable<int>(purchaseItemIds.single),
+      ],
+    ).getSingleOrNull();
+    if (row == null) {
+      return null;
+    }
+
+    return _StockLotBalance(
+      grossWeight: _nonNegative(
+        (row.readNullable<double>('original_gross_weight') ?? 0) -
+            (row.readNullable<double>('sold_gross_weight') ?? 0),
+      ),
+      lessWeight: _nonNegative(
+        (row.readNullable<double>('original_less_weight') ?? 0) -
+            (row.readNullable<double>('sold_less_weight') ?? 0),
+      ),
+      netWeight: _nonNegative(
+        (row.readNullable<double>('original_net_weight') ?? 0) -
+            (row.readNullable<double>('sold_net_weight') ?? 0),
+      ),
+      fineWeight: _nonNegative(
+        (row.readNullable<double>('original_fine_weight') ?? 0) -
+            (row.readNullable<double>('sold_fine_weight') ?? 0),
+      ),
+      wastageFineWeight:
+          row.readNullable<double>('original_wastage_fine_weight') ?? 0,
+      valuationFineWeight:
+          row.readNullable<double>('original_valuation_fine_weight') ?? 0,
+      unitCost: _nonNegative(
+        (row.readNullable<double>('original_line_amount') ?? 0) -
+            (row.readNullable<double>('sold_amount') ?? 0),
+      ),
+      makingAmount: 0,
+    );
   }
 
   Future<void> _deductLotStock({
@@ -1581,7 +1837,8 @@ class PosCheckoutRepository {
     final nextGross = _nonNegative(stockRow.grossWeight + delta.grossWeight);
     final nextLess = _nonNegative(stockRow.stoneWeight + delta.lessWeight);
     final nextNet = _nonNegative(stockRow.netWeight + delta.netWeight);
-    await (_db.update(_db.stockItems)..where((tbl) => tbl.id.equals(stockRow.id)))
+    await (_db.update(_db.stockItems)
+          ..where((tbl) => tbl.id.equals(stockRow.id)))
         .write(
       StockItemsCompanion(
         quantity: Value(quantity),
@@ -1618,15 +1875,15 @@ class PosCheckoutRepository {
           lotUnit.read<double>('actual_fine_weight') + delta.fineWeight,
         ),
         _nonNegative(
-          lotUnit.read<double>('wastage_fine_weight') +
-              delta.wastageFineWeight,
+          lotUnit.read<double>('wastage_fine_weight') + delta.wastageFineWeight,
         ),
         _nonNegative(
           lotUnit.read<double>('valuation_fine_weight') +
               delta.valuationFineWeight,
         ),
         _nonNegative(lotUnit.read<double>('unit_cost') + delta.unitCost),
-        _nonNegative(lotUnit.read<double>('making_amount') + delta.makingAmount),
+        _nonNegative(
+            lotUnit.read<double>('making_amount') + delta.makingAmount),
         status,
         soldAt?.millisecondsSinceEpoch,
         updatedAt.millisecondsSinceEpoch,
@@ -2254,6 +2511,28 @@ class _StockLotDelta {
         valuationFineWeight = 0,
         unitCost = 0,
         makingAmount = 0;
+}
+
+class _StockLotBalance {
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double fineWeight;
+  final double wastageFineWeight;
+  final double valuationFineWeight;
+  final double unitCost;
+  final double makingAmount;
+
+  const _StockLotBalance({
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.fineWeight,
+    required this.wastageFineWeight,
+    required this.valuationFineWeight,
+    required this.unitCost,
+    required this.makingAmount,
+  });
 }
 
 class _ResolvedInvoiceNumber {
