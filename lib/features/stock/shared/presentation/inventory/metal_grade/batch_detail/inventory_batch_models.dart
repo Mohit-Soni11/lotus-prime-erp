@@ -214,6 +214,14 @@ class _InventoryGradeUnit {
   final double ratePerGram;
   final double makingAmount;
   final double unitCost;
+  final int totalPieces;
+  final int availablePieces;
+  final int soldPieces;
+  final double totalGrossWeight;
+  final double totalNetWeight;
+  final double availableGrossWeight;
+  final double availableNetWeight;
+  final double soldNetWeight;
   final String supplierName;
   final String supplierMobile;
   final String supplierGstNumber;
@@ -256,6 +264,14 @@ class _InventoryGradeUnit {
     required this.ratePerGram,
     required this.makingAmount,
     required this.unitCost,
+    required this.totalPieces,
+    required this.availablePieces,
+    required this.soldPieces,
+    required this.totalGrossWeight,
+    required this.totalNetWeight,
+    required this.availableGrossWeight,
+    required this.availableNetWeight,
+    required this.soldNetWeight,
     required this.supplierName,
     required this.supplierMobile,
     required this.supplierGstNumber,
@@ -318,6 +334,14 @@ class _InventoryGradeUnit {
       ratePerGram: number('rate_per_gram'),
       makingAmount: number('making_amount'),
       unitCost: number('unit_cost'),
+      totalPieces: integer('total_pieces'),
+      availablePieces: integer('available_pieces'),
+      soldPieces: integer('sold_pieces'),
+      totalGrossWeight: number('total_gross_weight'),
+      totalNetWeight: number('total_net_weight'),
+      availableGrossWeight: number('available_gross_weight'),
+      availableNetWeight: number('available_net_weight'),
+      soldNetWeight: number('sold_net_weight'),
       supplierName: text('supplier_name'),
       supplierMobile: text('supplier_mobile'),
       supplierGstNumber: text('supplier_gst_number'),

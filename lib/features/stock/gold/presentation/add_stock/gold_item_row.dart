@@ -120,8 +120,13 @@ class _GoldItemRowState extends State<GoldItemRow> {
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(2),
                       ],
-                      onSubmitted: (_) =>
-                          widget.model.huidFocusNodes.first.requestFocus(),
+                      onSubmitted: (_) {
+                        if (widget.model.huidTrackingEnabled) {
+                          widget.model.huidFocusNodes.first.requestFocus();
+                          return;
+                        }
+                        widget.model.grossFocus.requestFocus();
+                      },
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -251,28 +256,73 @@ class _GoldItemRowState extends State<GoldItemRow> {
   Widget _buildHuidFields() {
     final controllers = widget.model.huidControllers;
     final focusNodes = widget.model.huidFocusNodes;
+    final enabled = widget.model.huidTrackingEnabled;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var index = 0; index < controllers.length; index++) ...[
-          _GoldTextField(
-            controller: controllers[index],
-            focusNode: focusNodes[index],
-            hint: controllers.length == 1 ? 'HUID' : 'HUID ${index + 1}',
-            textCapitalization: TextCapitalization.characters,
-            textInputAction: TextInputAction.next,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-              LengthLimitingTextInputFormatter(6),
-            ],
-            onSubmitted: (_) => index == controllers.length - 1
-                ? widget.model.grossFocus.requestFocus()
-                : focusNodes[index + 1].requestFocus(),
-          ),
-          if (index != controllers.length - 1) const SizedBox(height: 6),
-        ],
+        _HuidTrackingSwitch(model: widget.model),
+        const SizedBox(width: 4),
+        Expanded(
+          child: enabled
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var index = 0; index < controllers.length; index++)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index == controllers.length - 1 ? 0 : 6,
+                        ),
+                        child: _GoldTextField(
+                          controller: controllers[index],
+                          focusNode: focusNodes[index],
+                          hint: controllers.length == 1
+                              ? 'HUID'
+                              : 'HUID ${index + 1}',
+                          textCapitalization: TextCapitalization.characters,
+                          textInputAction: TextInputAction.next,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z0-9]'),
+                            ),
+                            LengthLimitingTextInputFormatter(6),
+                          ],
+                          onSubmitted: (_) => index == controllers.length - 1
+                              ? widget.model.grossFocus.requestFocus()
+                              : focusNodes[index + 1].requestFocus(),
+                        ),
+                      ),
+                  ],
+                )
+              : _buildBulkHuidState(),
+        ),
       ],
+    );
+  }
+
+  Widget _buildBulkHuidState() {
+    return Container(
+      height: _invoiceFieldHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      alignment: Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: GoldStockColors.inputBg,
+        borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+        border: Border.all(
+          color: GoldStockColors.cardBorder,
+          width: 1.5,
+        ),
+      ),
+      child: const Text(
+        'Bulk stock',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: GoldStockColors.textMuted,
+        ),
+      ),
     );
   }
 
@@ -699,6 +749,52 @@ class _GoldPopupField extends StatelessWidget {
     return ListenableBuilder(
       listenable: focusNode!,
       builder: (context, _) => buildField(focusNode!.hasFocus),
+    );
+  }
+}
+
+class _HuidTrackingSwitch extends StatelessWidget {
+  final GoldItemModel model;
+
+  const _HuidTrackingSwitch({required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = model.huidTrackingEnabled;
+    return Tooltip(
+      message: enabled
+          ? 'HUID tracking is on. Enter one row for each HUID item or set.'
+          : 'Bulk gold stock. Turn on only for HUID hallmark items.',
+      waitDuration: const Duration(milliseconds: 400),
+      child: InkWell(
+        onTap: () => model.setHuidTrackingEnabled(!enabled),
+        borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          width: _invoiceFieldHeight,
+          height: _invoiceFieldHeight,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: enabled
+                ? GoldStockColors.brandGold.withValues(alpha: 0.14)
+                : GoldStockColors.inputBg,
+            borderRadius: BorderRadius.circular(_invoiceFieldRadius),
+            border: Border.all(
+              color: enabled
+                  ? GoldStockColors.brandGold.withValues(alpha: 0.42)
+                  : GoldStockColors.cardBorder,
+              width: 1.5,
+            ),
+          ),
+          child: Icon(
+            enabled ? Icons.verified_user_rounded : Icons.inventory_2_outlined,
+            size: 18,
+            color:
+                enabled ? GoldStockColors.brandGold : GoldStockColors.textMuted,
+          ),
+        ),
+      ),
     );
   }
 }

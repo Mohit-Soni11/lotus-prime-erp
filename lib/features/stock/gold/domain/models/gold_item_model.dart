@@ -72,6 +72,7 @@ class GoldItemModel extends ChangeNotifier {
   final FocusNode makingFocus = FocusNode();
 
   MakingChargesType makingChargesType = MakingChargesType.perGram;
+  bool huidTrackingEnabled = false;
 
   GoldItemModel({
     required this.id,
@@ -121,11 +122,14 @@ class GoldItemModel extends ChangeNotifier {
     return value <= 0 ? 1 : value;
   }
 
-  String get huid => huidCtrl.text.trim().toUpperCase();
-  List<String> get huidValues => huidControllers
-      .map((controller) => controller.text.trim().toUpperCase())
-      .where((value) => value.isNotEmpty)
-      .toList(growable: false);
+  String get huid =>
+      huidTrackingEnabled ? huidCtrl.text.trim().toUpperCase() : '';
+  List<String> get huidValues => huidTrackingEnabled
+      ? huidControllers
+          .map((controller) => controller.text.trim().toUpperCase())
+          .where((value) => value.isNotEmpty)
+          .toList(growable: false)
+      : const [];
   List<TextEditingController> get huidControllers =>
       List.unmodifiable([huidCtrl, ..._extraHuidCtrls]);
   List<FocusNode> get huidFocusNodes =>
@@ -178,7 +182,7 @@ class GoldItemModel extends ChangeNotifier {
       segmentLabel.isNotEmpty ||
       itemName.isNotEmpty ||
       _hasMeaningfulPiecesInput ||
-      huid.isNotEmpty ||
+      huidValues.isNotEmpty ||
       grossWeight > 0 ||
       lessWeight > 0 ||
       makingValue > 0;
@@ -243,7 +247,8 @@ class GoldItemModel extends ChangeNotifier {
   }
 
   void syncHuidInputsWithPieces() {
-    final requiredCount = pieces.clamp(1, 12);
+    final requiredCount =
+        huidTrackingEnabled && pieces > 1 && pieces <= 12 ? pieces : 1;
     while (huidControllers.length < requiredCount) {
       final controller = TextEditingController();
       final focusNode = FocusNode();
@@ -259,6 +264,21 @@ class GoldItemModel extends ChangeNotifier {
       controller.dispose();
       focusNode.dispose();
     }
+  }
+
+  void setHuidTrackingEnabled(bool enabled) {
+    if (huidTrackingEnabled == enabled) {
+      return;
+    }
+    huidTrackingEnabled = enabled;
+    if (!enabled) {
+      huidCtrl.clear();
+      for (final controller in _extraHuidCtrls) {
+        controller.clear();
+      }
+    }
+    syncHuidInputsWithPieces();
+    notifyListeners();
   }
 
   String get makingTypeSymbol {

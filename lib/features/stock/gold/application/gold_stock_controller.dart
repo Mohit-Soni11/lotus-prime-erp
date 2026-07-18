@@ -295,19 +295,21 @@ class GoldStockController extends AddStockController {
     return enteredGoldRows.map((rowModel) {
       final pieces = rowModel.pieces;
       final lotDivisor = pieces > 0 ? pieces : 1;
+      final huids =
+          rowModel.huidTrackingEnabled ? rowModel.huidValues : <String>[];
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
       row.itemName = rowModel.itemName;
       row.description = rowModel.categoryLabel;
       row.subCategory = _mapGoldSubCategory(rowModel.categoryLabel);
       row.subCategoryLabel = rowModel.categoryLabel;
       row.segmentLabel = rowModel.segmentLabel;
-      row.huids = rowModel.huidValues;
-      row.huid = rowModel.huidValues.isEmpty ? '' : rowModel.huidValues.first;
-      row.grossWeight = rowModel.grossWeight / lotDivisor;
-      row.stoneWeight = rowModel.lessWeight / lotDivisor;
+      row.huids = huids;
+      row.huid = huids.isEmpty ? '' : huids.first;
+      row.grossWeight = rowModel.grossWeight;
+      row.stoneWeight = rowModel.lessWeight;
       row.touchPercent = rowModel.basePurityPercent;
-      row.wastageFineWeight = rowModel.wastageFineWeight / lotDivisor;
-      row.valuationFineWeight = rowModel.valuationFineWeight / lotDivisor;
+      row.wastageFineWeight = rowModel.wastageFineWeight;
+      row.valuationFineWeight = rowModel.valuationFineWeight;
       row.purityLabel = rowModel.purityLabel;
       row.purchaseRate = rowModel.purchaseRate;
       row.purchasePriceOverride = rowModel.totalAmount / lotDivisor;
@@ -415,7 +417,13 @@ class GoldStockController extends AddStockController {
     if (row.makingValue < 0) {
       return 'Making charge cannot be negative';
     }
+    if (row.huidTrackingEnabled && row.pieces > 12) {
+      return 'For HUID stock, keep one item row up to 12 pieces. Use separate rows for large HUID lots.';
+    }
     final huids = row.huidValues;
+    if (row.huidTrackingEnabled && huids.length != row.pieces) {
+      return 'Enter one HUID for each piece or switch this row to Bulk stock';
+    }
     final invalidHuid = huids.any((value) => value.length != 6);
     if (invalidHuid) {
       return 'HUID must be exactly 6 characters';
@@ -528,8 +536,6 @@ class GoldStockController extends AddStockController {
       cardPaid: snapshot.cardPaid,
       totalPaid: snapshot.totalPaidValue,
       balanceDue: snapshot.dueAmount,
-      // Legacy purchase schema stores the Gold 24K/10g invoice rate in this
-      // field name. UI and calculation code use ratePer10g/ratePerGram.
       ratePerKg: snapshot.ratePer10g,
       metalPaidGrossWeight: snapshot.metalGrossWeight,
       metalPaidPurity: snapshot.metalPurity,
@@ -650,6 +656,10 @@ class GoldStockController extends AddStockController {
                   ? snapshot.ratePerGram
                   : row.purchaseRate,
               gstRate: gstEnabled ? gstRate : 0.0,
+              weightsAreLineTotals: true,
+              stockTrackingMode: row.huids.isEmpty
+                  ? PurchaseStockTrackingMode.lot
+                  : PurchaseStockTrackingMode.unit,
             ),
           )
           .toList(growable: false),

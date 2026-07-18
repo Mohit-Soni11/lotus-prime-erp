@@ -1,5 +1,70 @@
 part of '../inventory_screen.dart';
 
+const String _inventoryLotUnitExpression = '''
+lower(COALESCE(u.unit_code, '')) LIKE '%lot%'
+  AND TRIM(COALESCE(u.huid, '')) = ''
+''';
+
+const String _inventoryAvailableGrossWeightExpression = '''
+CASE
+  WHEN lower(u.status) = 'available' THEN
+    CASE
+      WHEN $_inventoryLotUnitExpression THEN
+        COALESCE(s.gross_weight, u.gross_weight, 0.0)
+      ELSE COALESCE(u.gross_weight, 0.0)
+    END
+  ELSE 0.0
+END
+''';
+
+const String _inventoryAvailableNetWeightExpression = '''
+CASE
+  WHEN lower(u.status) = 'available' THEN
+    CASE
+      WHEN $_inventoryLotUnitExpression THEN
+        COALESCE(s.net_weight, u.net_weight, 0.0)
+      ELSE COALESCE(u.net_weight, 0.0)
+    END
+  ELSE 0.0
+END
+''';
+
+const String _inventoryAvailableActualFineExpression = '''
+CASE
+  WHEN lower(u.status) = 'available' THEN
+    CASE
+      WHEN $_inventoryLotUnitExpression THEN
+        COALESCE(u.actual_fine_weight, 0.0)
+      ELSE COALESCE(u.actual_fine_weight, 0.0)
+    END
+  ELSE 0.0
+END
+''';
+
+const String _inventoryAvailableValuationFineExpression = '''
+CASE
+  WHEN lower(u.status) = 'available' THEN
+    CASE
+      WHEN $_inventoryLotUnitExpression THEN
+        COALESCE(u.valuation_fine_weight, 0.0)
+      ELSE COALESCE(u.valuation_fine_weight, 0.0)
+    END
+  ELSE 0.0
+END
+''';
+
+const String _inventoryAvailableStockValueExpression = '''
+CASE
+  WHEN lower(u.status) = 'available' THEN
+    CASE
+      WHEN $_inventoryLotUnitExpression THEN
+        COALESCE(u.unit_cost, 0.0)
+      ELSE COALESCE(u.unit_cost, 0.0)
+    END
+  ELSE 0.0
+END
+''';
+
 const String _inventorySoldWeightExpression = '''
 CASE
   WHEN u.id = (
@@ -76,6 +141,7 @@ class _InventoryMetalGradeScreenState
   final AppDatabase _db = AppDatabase();
   late final Future<List<_InventoryGradeSummary>> _gradeFuture;
   String? _selectedGrade;
+  String _stockViewFilter = 'Live Stock';
   bool _openedInitialBatch = false;
   Future<void>? _schemaFuture;
 
@@ -115,12 +181,12 @@ class _InventoryMetalGradeScreenState
         SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
         COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
-        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
-        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
+        COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
+        COALESCE(SUM($_inventoryAvailableNetWeightExpression), 0.0) AS net_weight,
         COALESCE(SUM($_inventorySoldWeightExpression), 0.0) AS sold_weight,
-        COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
-        COALESCE(SUM(u.valuation_fine_weight), 0.0) AS valuation_fine,
-        COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
+        COALESCE(SUM($_inventoryAvailableActualFineExpression), 0.0) AS actual_fine,
+        COALESCE(SUM($_inventoryAvailableValuationFineExpression), 0.0) AS valuation_fine,
+        COALESCE(SUM($_inventoryAvailableStockValueExpression), 0.0) AS stock_value
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
@@ -178,12 +244,12 @@ class _InventoryMetalGradeScreenState
         SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
         COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
-        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
-        COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
+        COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
+        COALESCE(SUM($_inventoryAvailableNetWeightExpression), 0.0) AS net_weight,
         COALESCE(SUM($_inventorySoldWeightExpression), 0.0) AS sold_weight,
-        COALESCE(SUM(u.actual_fine_weight), 0.0) AS actual_fine,
-        COALESCE(SUM(u.valuation_fine_weight), 0.0) AS valuation_fine,
-        COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
+        COALESCE(SUM($_inventoryAvailableActualFineExpression), 0.0) AS actual_fine,
+        COALESCE(SUM($_inventoryAvailableValuationFineExpression), 0.0) AS valuation_fine,
+        COALESCE(SUM($_inventoryAvailableStockValueExpression), 0.0) AS stock_value
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
@@ -282,6 +348,7 @@ class _InventoryMetalGradeScreenState
         future: _gradeFuture,
         builder: (context, snapshot) {
           final grades = snapshot.data ?? const <_InventoryGradeSummary>[];
+          final visibleGrades = _filterGradeSummaries(grades);
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -323,17 +390,128 @@ class _InventoryMetalGradeScreenState
                     accent: ui.accent,
                   ),
                 )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                  sliver:
-                      SliverToBoxAdapter(child: _buildGradeGrid(ui, grades)),
+              else if (visibleGrades.isEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    child: _buildStockViewToolbar(ui, grades, visibleGrades),
+                  ),
+                ),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _buildMessageCard(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'No $_stockViewFilter Records',
+                    message:
+                        'Change the stock view to Live Stock, All Stock or Sold Out to review the required inventory records.',
+                    accent: ui.accent,
+                  ),
+                ),
+              ] else
+                SliverMainAxisGroup(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                        child: _buildStockViewToolbar(
+                          ui,
+                          grades,
+                          visibleGrades,
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildGradeGrid(ui, visibleGrades),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           );
         },
       ),
     );
+  }
+
+  Widget _buildStockViewToolbar(
+    StockMetalUiData ui,
+    List<_InventoryGradeSummary> grades,
+    List<_InventoryGradeSummary> visibleGrades,
+  ) {
+    final soldOutCount = grades.where((grade) => grade.isSoldOut).length;
+    final liveCount = grades.where((grade) => !grade.isSoldOut).length;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: InvColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final filter in const [
+                  'Live Stock',
+                  'All Stock',
+                  'Sold Out',
+                ])
+                  _BatchFilterChip(
+                    label: filter,
+                    selected: _stockViewFilter == filter,
+                    accent: ui.accent,
+                    onTap: () => setState(() => _stockViewFilter = filter),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            '${visibleGrades.length}/${grades.length} groups',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: InvColors.textDark,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '$liveCount live • $soldOutCount sold out',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: InvColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_InventoryGradeSummary> _filterGradeSummaries(
+    List<_InventoryGradeSummary> grades,
+  ) {
+    return grades.where((grade) {
+      switch (_stockViewFilter) {
+        case 'All Stock':
+          return true;
+        case 'Sold Out':
+          return grade.isSoldOut;
+        default:
+          return !grade.isSoldOut;
+      }
+    }).toList(growable: false);
   }
 
   Widget _buildHeader(
@@ -386,8 +564,7 @@ class _InventoryMetalGradeScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.metal == StockCategory.silver ||
-                          widget.metal == StockCategory.gold
+                  widget.metal == StockCategory.silver
                       ? '${ui.title} Inventory Items'
                       : '${ui.title} Inventory Grades',
                   style: GoogleFonts.inter(
@@ -402,7 +579,7 @@ class _InventoryMetalGradeScreenState
                   widget.metal == StockCategory.silver
                       ? 'Select an item to review available stock, company split, purity groups and batch movement.'
                       : widget.metal == StockCategory.gold
-                          ? 'Select an item-grade card to review available stock, HUID status, fine weight and batch movement.'
+                          ? 'Select a gold purity grade to review item-wise stock, HUID status and batch movement.'
                           : 'Select a grade to review available stock, HUID status, fine weight and movement readiness.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
@@ -610,38 +787,37 @@ class _InventoryGradeSummary {
     required this.valuationFine,
     required this.stockValue,
   });
+
+  bool get isSoldOut => totalPieces > 0 && availablePieces <= 0;
 }
 
 String _inventoryPrimaryGroupExpression(StockCategory metal) {
   if (metal == StockCategory.gold) {
     return '''
-      COALESCE(
-        NULLIF(TRIM(u.item_type), ''),
-        NULLIF(TRIM(s.sub_category), ''),
-        NULLIF(TRIM(u.item_name), ''),
-        NULLIF(TRIM(s.item_name), ''),
-        'Gold Item'
-      )
-      || ' |GRADE| ' ||
-      COALESCE(
-        NULLIF(TRIM(s.purity), ''),
-        CASE
-          WHEN u.purity_percent > 0 THEN printf('%.2f%%', u.purity_percent)
-          ELSE 'Custom Grade'
-        END
-      )
+      CASE
+        WHEN u.purity_percent > 0 THEN
+          CASE CAST(ROUND(u.purity_percent * 24.0 / 100.0) AS INTEGER)
+            WHEN 24 THEN '24KT (99.9%)'
+            WHEN 22 THEN '22KT (91.6%)'
+            WHEN 18 THEN '18KT (75%)'
+            WHEN 14 THEN '14KT (58.5%)'
+            WHEN 9 THEN '9KT (37.5%)'
+            ELSE CAST(CAST(ROUND(u.purity_percent * 24.0 / 100.0) AS INTEGER) AS TEXT) || 'KT (' || printf('%.1f', u.purity_percent) || '%)'
+          END
+        ELSE COALESCE(NULLIF(TRIM(s.purity), ''), 'Custom Grade')
+      END
     ''';
   }
 
   if (metal == StockCategory.silver) {
     return '''
-      COALESCE(
-        NULLIF(TRIM(u.item_type), ''),
-        NULLIF(TRIM(s.sub_category), ''),
+      lower(COALESCE(
         NULLIF(TRIM(u.item_name), ''),
         NULLIF(TRIM(s.item_name), ''),
+        NULLIF(TRIM(u.item_type), ''),
+        NULLIF(TRIM(s.sub_category), ''),
         'Silver Item'
-      )
+      ))
     ''';
   }
 
@@ -657,7 +833,7 @@ String _inventoryPrimaryGroupExpression(StockCategory metal) {
 }
 
 String _inventoryFallbackGroupLabel(StockCategory metal) {
-  if (metal == StockCategory.gold) return 'Gold Item |GRADE| Custom Grade';
+  if (metal == StockCategory.gold) return 'Custom Gold Grade';
   if (metal == StockCategory.silver) return 'Silver Item';
   return 'Custom Grade';
 }
@@ -670,7 +846,7 @@ String _inventoryGradeTitle(StockCategory metal, String gradeLabel) {
     return 'Custom ${ui.title} Stock';
   }
   if (metal == StockCategory.gold) {
-    return '${_titleCase(label)} Gold Stock';
+    return '${_inventoryGoldGradeText(parts.gradeLabel)} Gold Stock';
   }
   if (metal == StockCategory.silver) {
     return '${_titleCase(label)} Silver Stock';
@@ -689,11 +865,8 @@ String _inventoryGradeSubtitle(
   final ui = stockMetalUiFor(metal);
   final parts = _inventoryGroupParts(gradeLabel);
   if (metal == StockCategory.gold) {
-    final purity = _inventoryGradePurityPercent(parts.gradeLabel);
-    final gradeText = purity == null
-        ? parts.gradeLabel
-        : '${(purity * 24 / 100).round()}KT (${_formatInventoryPercent(purity)}%)';
-    return '$gradeText gold • $availableUnits available of $totalUnits pcs';
+    final gradeText = _inventoryGoldGradeText(parts.gradeLabel);
+    return '$gradeText gold • $availableUnits available pcs';
   }
   if (metal == StockCategory.silver) {
     final companyText =
@@ -701,13 +874,13 @@ String _inventoryGradeSubtitle(
     final purityText = purityGroupCount <= 1
         ? '1 purity group'
         : '$purityGroupCount purity groups';
-    return '$availableUnits available of $totalUnits pcs • $companyText • $purityText';
+    return '$availableUnits available pcs • $companyText • $purityText';
   }
   final purity = _inventoryGradePurityPercent(parts.gradeLabel);
   final purityText = purity == null
       ? parts.gradeLabel
       : '${_formatInventoryPercent(purity)}% ${ui.title.toLowerCase()} purity';
-  return '$purityText - $availableUnits available of $totalUnits total items';
+  return '$purityText • $availableUnits available items';
 }
 
 ({String itemLabel, String gradeLabel}) _inventoryGroupParts(String value) {
@@ -720,6 +893,38 @@ String _inventoryGradeSubtitle(
     itemLabel: parts.first.trim(),
     gradeLabel: parts.sublist(1).join('|GRADE|').trim(),
   );
+}
+
+String _inventoryGoldGradeText(String gradeLabel) {
+  final raw = gradeLabel.trim();
+  if (raw.isEmpty) return 'Custom Gold Grade';
+  if (RegExp(r'\b\d+(?:\.\d+)?\s*KT\b', caseSensitive: false).hasMatch(raw)) {
+    return raw.replaceAll(RegExp(r'\s+'), ' ').replaceAllMapped(
+          RegExp(r'\bkt\b', caseSensitive: false),
+          (_) => 'KT',
+        );
+  }
+  final purity = _inventoryGradePurityPercent(raw);
+  if (purity == null) return _titleCase(raw);
+  final karat = (purity * 24 / 100).round();
+  return '${karat}KT (${_formatInventoryPercent(_standardGoldPurity(karat, purity))}%)';
+}
+
+double _standardGoldPurity(int karat, double fallback) {
+  switch (karat) {
+    case 24:
+      return 99.9;
+    case 22:
+      return 91.6;
+    case 18:
+      return 75;
+    case 14:
+      return 58.5;
+    case 9:
+      return 37.5;
+    default:
+      return fallback;
+  }
 }
 
 double? _inventoryGradePurityPercent(String gradeLabel) {

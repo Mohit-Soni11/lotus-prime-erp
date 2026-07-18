@@ -181,6 +181,102 @@ void main() {
     saleItem.dispose();
   });
 
+  test('gold bulk lot reconciliation restores legacy divided stock weight',
+      () async {
+    final purchase = await purchaseRepository.savePurchase(
+      _goldDraft(
+        voucherNo: 'GS-E2E-BULK-LEGACY-0004',
+        description: 'Gold Casting Ring',
+        quantity: 50,
+        grossWeight: 250,
+        lessWeight: 0,
+        netWeight: 250,
+        purity: 75,
+        fineWeight: 187.5,
+        wastageFineWeight: 7.5,
+        valuationFineWeight: 195,
+        lineAmount: 2749500,
+        huids: const [],
+        stockTrackingMode: PurchaseStockTrackingMode.lot,
+      ),
+    );
+
+    expect(
+      purchase,
+      isNotNull,
+      reason: purchaseRepository.lastErrorMessage,
+    );
+
+    final stockItem = await _stockByVoucher(db, 'GS-E2E-BULK-LEGACY-0004');
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.customStatement(
+      '''
+      UPDATE purchase_voucher_items
+      SET gross_weight = 5,
+          less_weight = 0,
+          net_weight = 5,
+          fine_weight = 3.75,
+          wastage_fine_weight = 0.15,
+          valuation_fine_weight = 3.9
+      WHERE purchase_voucher_id = ?
+      ''',
+      [purchase!.voucherId],
+    );
+    await db.customStatement(
+      '''
+      UPDATE stock_items
+      SET gross_weight = 5,
+          stone_weight = 0,
+          net_weight = 5,
+          updated_at = ?
+      WHERE id = ?
+      ''',
+      [now, stockItem.id],
+    );
+    await db.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET gross_weight = 5,
+          less_weight = 0,
+          net_weight = 5,
+          actual_fine_weight = 3.75,
+          wastage_fine_weight = 0.15,
+          valuation_fine_weight = 3.9,
+          updated_at = ?
+      WHERE stock_item_id = ?
+      ''',
+      [now, stockItem.id],
+    );
+    await db.customStatement(
+      '''
+      UPDATE stock_movements
+      SET gross_weight_delta = 5,
+          net_weight_delta = 5,
+          fine_weight_delta = 3.75,
+          updated_at = ?
+      WHERE stock_item_id = ?
+        AND movement_type = 'IN'
+      ''',
+      [now, stockItem.id],
+    );
+
+    await StockLotSaleReconciliationService(db).reconcile();
+
+    final repairedStock = await _stockById(db, stockItem.id);
+    final repairedUnit = await _singleStockUnit(db, stockItem.id);
+    final movements = await _movementsFor(db, stockItem.id);
+
+    expect(repairedStock.quantity, 50);
+    expect(repairedStock.grossWeight, closeTo(250, 0.001));
+    expect(repairedStock.netWeight, closeTo(250, 0.001));
+    expect(repairedUnit.read<double>('gross_weight'), closeTo(250, 0.001));
+    expect(repairedUnit.read<double>('net_weight'), closeTo(250, 0.001));
+    expect(repairedUnit.read<double>('valuation_fine_weight'),
+        closeTo(195, 0.001));
+    expect(movements.first.grossWeightDelta, closeTo(250, 0.001));
+    expect(movements.first.netWeightDelta, closeTo(250, 0.001));
+  });
+
   test('gold lot reconciliation repairs old average-weight sale deduction',
       () async {
     final purchase = await purchaseRepository.savePurchase(

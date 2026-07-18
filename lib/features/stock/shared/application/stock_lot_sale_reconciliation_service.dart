@@ -9,6 +9,7 @@ final class StockLotSaleReconciliationService {
   StockLotSaleReconciliationService(this._db);
 
   Future<void> reconcile() async {
+    await _repairLegacyGoldBulkLineTotals();
     await _normalizeUntrackedBulkLots();
 
     final rows = await _db.customSelect(
@@ -62,6 +63,155 @@ final class StockLotSaleReconciliationService {
     }
 
     await _reconcileSaleMovements();
+  }
+
+  Future<void> _repairLegacyGoldBulkLineTotals() async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        s.id AS stock_item_id,
+        u.id AS unit_id,
+        pvi.id AS purchase_voucher_item_id,
+        pvi.quantity AS original_quantity,
+        pvi.gross_weight AS original_gross_weight,
+        pvi.less_weight AS original_less_weight,
+        pvi.net_weight AS original_net_weight,
+        pvi.fine_weight AS original_fine_weight,
+        pvi.wastage_fine_weight AS original_wastage_fine_weight,
+        pvi.valuation_fine_weight AS original_valuation_fine_weight,
+        pvi.line_amount AS line_amount,
+        pvi.rate AS rate_per_gram
+      FROM stock_items s
+      INNER JOIN stock_item_units u ON u.stock_item_id = s.id
+      INNER JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      LEFT JOIN (
+        SELECT linked_stock_item_id AS stock_item_id, COUNT(*) AS sale_count
+        FROM bill_items
+        WHERE linked_stock_item_id IS NOT NULL
+        GROUP BY linked_stock_item_id
+      ) sold ON sold.stock_item_id = s.id
+      WHERE LOWER(COALESCE(u.metal_type, s.metal_type, '')) = 'gold'
+        AND LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+        AND TRIM(COALESCE(u.huid, '')) = ''
+        AND COALESCE(pvi.quantity, 0) > 1
+        AND COALESCE(pvi.rate, 0.0) > 0
+        AND COALESCE(pvi.valuation_fine_weight, 0.0) > 0
+        AND COALESCE(sold.sale_count, 0) = 0
+        AND (COALESCE(pvi.line_amount, 0.0) / COALESCE(pvi.rate, 1.0))
+              > COALESCE(pvi.valuation_fine_weight, 0.0) * 1.75
+        AND (COALESCE(pvi.line_amount, 0.0) / COALESCE(pvi.rate, 1.0))
+              BETWEEN COALESCE(pvi.valuation_fine_weight, 0.0) * COALESCE(pvi.quantity, 1) * 0.70
+              AND COALESCE(pvi.valuation_fine_weight, 0.0) * COALESCE(pvi.quantity, 1) * 1.30
+      ''',
+    ).get();
+
+    if (rows.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (final row in rows) {
+      final stockItemId = row.read<int>('stock_item_id');
+      final unitId = row.read<int>('unit_id');
+      final purchaseVoucherItemId = row.read<int>('purchase_voucher_item_id');
+      final quantity = _positiveInt(row.read<int>('original_quantity'));
+      if (quantity <= 1) {
+        continue;
+      }
+
+      final grossWeight = _readDouble(row, 'original_gross_weight') * quantity;
+      final lessWeight = _readDouble(row, 'original_less_weight') * quantity;
+      final netWeight = _readDouble(row, 'original_net_weight') * quantity;
+      final fineWeight = _readDouble(row, 'original_fine_weight') * quantity;
+      final wastageFineWeight =
+          _readDouble(row, 'original_wastage_fine_weight') * quantity;
+      final valuationFineWeight =
+          _readDouble(row, 'original_valuation_fine_weight') * quantity;
+
+      await _db.customStatement(
+        '''
+        UPDATE purchase_voucher_items
+        SET gross_weight = ?,
+            less_weight = ?,
+            net_weight = ?,
+            fine_weight = ?,
+            wastage_fine_weight = ?,
+            valuation_fine_weight = ?
+        WHERE id = ?
+        ''',
+        [
+          grossWeight,
+          lessWeight,
+          netWeight,
+          fineWeight,
+          wastageFineWeight,
+          valuationFineWeight,
+          purchaseVoucherItemId,
+        ],
+      );
+
+      await _db.customStatement(
+        '''
+        UPDATE stock_items
+        SET gross_weight = ?,
+            stone_weight = ?,
+            net_weight = ?,
+            updated_at = ?
+        WHERE id = ?
+        ''',
+        [
+          grossWeight,
+          lessWeight,
+          netWeight,
+          now,
+          stockItemId,
+        ],
+      );
+
+      await _db.customStatement(
+        '''
+        UPDATE stock_item_units
+        SET gross_weight = ?,
+            less_weight = ?,
+            net_weight = ?,
+            actual_fine_weight = ?,
+            wastage_fine_weight = ?,
+            valuation_fine_weight = ?,
+            updated_at = ?
+        WHERE id = ?
+        ''',
+        [
+          grossWeight,
+          lessWeight,
+          netWeight,
+          fineWeight,
+          wastageFineWeight,
+          valuationFineWeight,
+          now,
+          unitId,
+        ],
+      );
+
+      await _db.customStatement(
+        '''
+        UPDATE stock_movements
+        SET gross_weight_delta = ?,
+            net_weight_delta = ?,
+            fine_weight_delta = ?,
+            updated_at = ?
+        WHERE stock_item_id = ?
+          AND movement_type = 'IN'
+          AND source_type = 'PURCHASE'
+        ''',
+        [
+          grossWeight,
+          netWeight,
+          fineWeight,
+          now,
+          stockItemId,
+        ],
+      );
+    }
   }
 
   Future<void> _normalizeUntrackedBulkLots() async {

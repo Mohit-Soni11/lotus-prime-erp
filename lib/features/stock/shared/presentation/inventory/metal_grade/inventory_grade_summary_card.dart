@@ -197,7 +197,6 @@ class _InventoryGradeSummaryCardState
                 ),
                 const SizedBox(height: 14),
                 _GradeAvailabilityStrip(
-                  totalPieces: widget.grade.totalPieces,
                   availablePieces: widget.grade.availablePieces,
                   soldPieces: widget.grade.soldPieces,
                   totalSets: widget.grade.totalSets,
@@ -218,7 +217,6 @@ class _InventoryGradeSummaryCardState
 }
 
 class _GradeAvailabilityStrip extends StatelessWidget {
-  final int totalPieces;
   final int availablePieces;
   final int soldPieces;
   final int totalSets;
@@ -226,7 +224,6 @@ class _GradeAvailabilityStrip extends StatelessWidget {
   final Color accent;
 
   const _GradeAvailabilityStrip({
-    required this.totalPieces,
     required this.availablePieces,
     required this.soldPieces,
     required this.totalSets,
@@ -262,17 +259,17 @@ class _GradeAvailabilityStrip extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: _AvailabilityText(
-              label: 'Total Pcs',
-              value: '$totalPieces pcs',
-              color: InvColors.textDark,
+              label: 'Available Pcs',
+              value: '$availablePieces pcs',
+              color: InvColors.success,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
           Expanded(
             child: _AvailabilityText(
-              label: 'Available',
-              value: '$availablePieces pcs',
-              color: InvColors.success,
+              label: 'Sold Pcs',
+              value: '$soldPieces pcs',
+              color: soldPieces > 0 ? InvColors.danger : InvColors.textMuted,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
