@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/inventory/inventory_stats_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
@@ -83,6 +84,8 @@ class InventoryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await StockLotSaleReconciliationService(_db).reconcile();
+
       final now = DateTime.now();
       final dayStart = DateTime(now.year, now.month, now.day);
 

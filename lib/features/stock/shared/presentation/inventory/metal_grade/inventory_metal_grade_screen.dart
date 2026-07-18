@@ -16,6 +16,47 @@ CASE
 END
 ''';
 
+const String _inventorySoldWeightJoin = '''
+LEFT JOIN (
+  SELECT
+    source.stock_item_id,
+    COALESCE(bill_weight.sold_net_weight, movement_weight.sold_net_weight, 0.0) AS sold_net_weight
+  FROM (
+    SELECT stock_item_id
+    FROM stock_movements
+    WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+    UNION
+    SELECT linked_stock_item_id AS stock_item_id
+    FROM bill_items
+    WHERE linked_stock_item_id IS NOT NULL
+  ) source
+  LEFT JOIN (
+    SELECT
+      bi.linked_stock_item_id AS stock_item_id,
+      SUM(COALESCE(bi.net_weight, 0.0)) AS sold_net_weight
+    FROM bill_items bi
+    INNER JOIN bills b ON b.id = bi.bill_id
+    WHERE bi.linked_stock_item_id IS NOT NULL
+      AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
+    GROUP BY bi.linked_stock_item_id
+  ) bill_weight ON bill_weight.stock_item_id = source.stock_item_id
+  LEFT JOIN (
+    SELECT
+      stock_item_id,
+      SUM(
+        CASE
+          WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+          WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+          ELSE 0
+        END
+      ) AS sold_net_weight
+    FROM stock_movements
+    WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+    GROUP BY stock_item_id
+  ) movement_weight ON movement_weight.stock_item_id = source.stock_item_id
+) sm ON sm.stock_item_id = s.id
+''';
+
 class _InventoryMetalGradeScreen extends StatefulWidget {
   final StockCategory metal;
   final String? initialBatchCode;
@@ -84,20 +125,7 @@ class _InventoryMetalGradeScreenState
       INNER JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
-      LEFT JOIN (
-        SELECT
-          stock_item_id,
-          SUM(
-            CASE
-              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
-              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
-              ELSE 0
-            END
-          ) AS sold_net_weight
-        FROM stock_movements
-        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
-        GROUP BY stock_item_id
-      ) sm ON sm.stock_item_id = s.id
+      $_inventorySoldWeightJoin
       WHERE lower(u.metal_type) = ?
         AND lower(COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Unbatched Stock')) = lower(?)
       GROUP BY grade_label
@@ -159,20 +187,7 @@ class _InventoryMetalGradeScreenState
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
-      LEFT JOIN (
-        SELECT
-          stock_item_id,
-          SUM(
-            CASE
-              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
-              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
-              ELSE 0
-            END
-          ) AS sold_net_weight
-        FROM stock_movements
-        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
-        GROUP BY stock_item_id
-      ) sm ON sm.stock_item_id = s.id
+      $_inventorySoldWeightJoin
       WHERE lower(u.metal_type) = ?
       GROUP BY grade_label
       ORDER BY available_units DESC, total_units DESC, grade_label ASC
@@ -226,6 +241,7 @@ class _InventoryMetalGradeScreenState
         'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
       );
     }
+    await StockLotSaleReconciliationService(_db).reconcile();
   }
 
   Future<Set<String>> _tableColumns(String tableName) async {

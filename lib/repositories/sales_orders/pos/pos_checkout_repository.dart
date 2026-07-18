@@ -779,6 +779,12 @@ class PosCheckoutRepository {
         stockUnitId: item.linkedStockUnitId,
         stockUnitCode: item.linkedStockSku,
         quantityToSell: _unitsForItem(item),
+        saleGrossWeight: _parseSafeNumber(item.grossCtrl.text),
+        saleLessWeight: _parseSafeNumber(item.lessCtrl.text),
+        saleNetWeight: item.netWt,
+        saleFineWeight: item.fineWt,
+        saleLineAmount: item.totalValue,
+        saleMakingAmount: item.makingAmt,
         sourceId: sourceId,
         sourceNumber: sourceNumber,
         sourceLineNo: index + 1,
@@ -1076,6 +1082,12 @@ class PosCheckoutRepository {
     required int? stockUnitId,
     required String? stockUnitCode,
     required int quantityToSell,
+    required double saleGrossWeight,
+    required double saleLessWeight,
+    required double saleNetWeight,
+    required double saleFineWeight,
+    required double saleLineAmount,
+    required double saleMakingAmount,
     required String sourceId,
     required String sourceNumber,
     required int sourceLineNo,
@@ -1109,6 +1121,12 @@ class PosCheckoutRepository {
       await _deductLotStock(
         stockRow: stockRow,
         quantityToSell: quantityToSell,
+        saleGrossWeight: saleGrossWeight,
+        saleLessWeight: saleLessWeight,
+        saleNetWeight: saleNetWeight,
+        saleFineWeight: saleFineWeight,
+        saleLineAmount: saleLineAmount,
+        saleMakingAmount: saleMakingAmount,
         sourceId: sourceId,
         sourceNumber: sourceNumber,
         sourceLineNo: sourceLineNo,
@@ -1394,6 +1412,12 @@ class PosCheckoutRepository {
   Future<void> _deductLotStock({
     required StockItem stockRow,
     required int quantityToSell,
+    required double saleGrossWeight,
+    required double saleLessWeight,
+    required double saleNetWeight,
+    required double saleFineWeight,
+    required double saleLineAmount,
+    required double saleMakingAmount,
     required String sourceId,
     required String sourceNumber,
     required int sourceLineNo,
@@ -1409,11 +1433,16 @@ class PosCheckoutRepository {
 
     final remainingQty = stockRow.quantity - quantityToSell;
     final now = DateTime.now();
-    final delta = _lotDelta(
+    final delta = _lotSaleDelta(
       stockRow: stockRow,
       unitRow: lotUnit,
       quantity: quantityToSell,
-      sign: -1,
+      saleGrossWeight: saleGrossWeight,
+      saleLessWeight: saleLessWeight,
+      saleNetWeight: saleNetWeight,
+      saleFineWeight: saleFineWeight,
+      saleLineAmount: saleLineAmount,
+      saleMakingAmount: saleMakingAmount,
     );
 
     await _writeLotBalance(
@@ -1625,6 +1654,56 @@ class PosCheckoutRepository {
           unitRow.read<double>('valuation_fine_weight') * factor * sign,
       unitCost: unitRow.read<double>('unit_cost') * factor * sign,
       makingAmount: unitRow.read<double>('making_amount') * factor * sign,
+    );
+  }
+
+  _StockLotDelta _lotSaleDelta({
+    required StockItem stockRow,
+    required QueryRow unitRow,
+    required int quantity,
+    required double saleGrossWeight,
+    required double saleLessWeight,
+    required double saleNetWeight,
+    required double saleFineWeight,
+    required double saleLineAmount,
+    required double saleMakingAmount,
+  }) {
+    final currentGross = unitRow.read<double>('gross_weight');
+    final currentLess = unitRow.read<double>('less_weight');
+    final currentNet = unitRow.read<double>('net_weight');
+    final currentFine = unitRow.read<double>('actual_fine_weight');
+    if (saleGrossWeight <= 0 && saleNetWeight <= 0) {
+      return _lotDelta(
+        stockRow: stockRow,
+        unitRow: unitRow,
+        quantity: quantity,
+        sign: -1,
+      );
+    }
+
+    final gross = saleGrossWeight > 0 ? saleGrossWeight : saleNetWeight;
+    final less = saleLessWeight > 0 ? saleLessWeight : (gross - saleNetWeight);
+    final net = saleNetWeight > 0 ? saleNetWeight : gross - less;
+    final safeGross = gross.clamp(0.0, currentGross).toDouble();
+    final safeLess = less.clamp(0.0, currentLess).toDouble();
+    final safeNet = net.clamp(0.0, currentNet).toDouble();
+    final netFactor = currentNet <= 0 ? 0.0 : safeNet / currentNet;
+    final fine = saleFineWeight > 0 ? saleFineWeight : currentFine * netFactor;
+    final safeFine = fine.clamp(0.0, currentFine).toDouble();
+
+    return _StockLotDelta(
+      grossWeight: -safeGross,
+      lessWeight: -safeLess,
+      netWeight: -safeNet,
+      fineWeight: -safeFine,
+      wastageFineWeight:
+          -(unitRow.read<double>('wastage_fine_weight') * netFactor),
+      valuationFineWeight:
+          -(unitRow.read<double>('valuation_fine_weight') * netFactor),
+      unitCost: -(unitRow.read<double>('unit_cost') * netFactor),
+      makingAmount: -(saleMakingAmount > 0
+          ? saleMakingAmount
+          : unitRow.read<double>('making_amount') * netFactor),
     );
   }
 

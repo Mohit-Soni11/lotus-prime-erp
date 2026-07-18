@@ -649,8 +649,8 @@ Future<int> _insertPrimaryBankAccount(AppDatabase db) {
       );
 }
 
-Future<int> _insertStockItem(AppDatabase db, {required String sku}) {
-  return db.into(db.stockItems).insert(
+Future<int> _insertStockItem(AppDatabase db, {required String sku}) async {
+  final stockItemId = await db.into(db.stockItems).insert(
         StockItemsCompanion.insert(
           sku: sku,
           itemName: 'Gold Ring',
@@ -665,6 +665,62 @@ Future<int> _insertStockItem(AppDatabase db, {required String sku}) {
           isActive: const drift.Value(true),
         ),
       );
+
+  final now = DateTime(2026, 6, 25, 12).millisecondsSinceEpoch;
+  await db.customInsert(
+    '''
+    INSERT INTO stock_item_units (
+      stock_item_id,
+      batch_code,
+      unit_code,
+      piece_no,
+      metal_type,
+      item_type,
+      segment,
+      item_name,
+      huid,
+      gross_weight,
+      less_weight,
+      net_weight,
+      purity_percent,
+      actual_fine_weight,
+      wastage_fine_weight,
+      valuation_fine_weight,
+      rate_per_gram,
+      making_amount,
+      unit_cost,
+      supplier_name,
+      status,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    variables: [
+      drift.Variable<int>(stockItemId),
+      const drift.Variable<String>('TEST-BATCH'),
+      drift.Variable<String>('$sku-U001'),
+      const drift.Variable<int>(1),
+      const drift.Variable<String>('Gold'),
+      const drift.Variable<String>('Ring'),
+      const drift.Variable<String>('Ladies'),
+      const drift.Variable<String>('Gold Ring'),
+      drift.Variable<String>(sku),
+      const drift.Variable<double>(10),
+      const drift.Variable<double>(0),
+      const drift.Variable<double>(10),
+      const drift.Variable<double>(91.6),
+      const drift.Variable<double>(9.16),
+      const drift.Variable<double>(0),
+      const drift.Variable<double>(9.16),
+      const drift.Variable<double>(6000),
+      const drift.Variable<double>(0),
+      const drift.Variable<double>(60000),
+      const drift.Variable<String>('Test Supplier'),
+      drift.Variable<String>(stock.StockStatus.available.label),
+      drift.Variable<int>(now),
+    ],
+  );
+
+  return stockItemId;
 }
 
 Future<StockItem> _stockById(AppDatabase db, int id) {

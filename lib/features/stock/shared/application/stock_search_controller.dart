@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_search/stock_search_models.dart';
 
 const String _isLotUnitExpression = '''
@@ -55,6 +56,47 @@ CASE
     END
   ELSE 0
 END
+''';
+
+const String _soldWeightJoin = '''
+LEFT JOIN (
+  SELECT
+    source.stock_item_id,
+    COALESCE(bill_weight.sold_net_weight, movement_weight.sold_net_weight, 0.0) AS sold_net_weight
+  FROM (
+    SELECT stock_item_id
+    FROM stock_movements
+    WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+    UNION
+    SELECT linked_stock_item_id AS stock_item_id
+    FROM bill_items
+    WHERE linked_stock_item_id IS NOT NULL
+  ) source
+  LEFT JOIN (
+    SELECT
+      bi.linked_stock_item_id AS stock_item_id,
+      SUM(COALESCE(bi.net_weight, 0.0)) AS sold_net_weight
+    FROM bill_items bi
+    INNER JOIN bills b ON b.id = bi.bill_id
+    WHERE bi.linked_stock_item_id IS NOT NULL
+      AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
+    GROUP BY bi.linked_stock_item_id
+  ) bill_weight ON bill_weight.stock_item_id = source.stock_item_id
+  LEFT JOIN (
+    SELECT
+      stock_item_id,
+      SUM(
+        CASE
+          WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+          WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+          ELSE 0
+        END
+      ) AS sold_net_weight
+    FROM stock_movements
+    WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+    GROUP BY stock_item_id
+  ) movement_weight ON movement_weight.stock_item_id = source.stock_item_id
+) sm ON sm.stock_item_id = s.id
 ''';
 
 class StockSearchController extends ChangeNotifier {
@@ -125,6 +167,8 @@ class StockSearchController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await StockLotSaleReconciliationService(_db).reconcile();
+
       final where = _buildWhere();
       final summaryRow = await _db.customSelect(
         '''
@@ -144,20 +188,7 @@ class StockSearchController extends ChangeNotifier {
         LEFT JOIN stock_items s ON s.id = u.stock_item_id
         LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
         LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
-        LEFT JOIN (
-          SELECT
-            stock_item_id,
-            SUM(
-              CASE
-                WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
-                WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
-                ELSE 0
-              END
-            ) AS sold_net_weight
-          FROM stock_movements
-          WHERE movement_type IN ('SALE', 'SALE_RESTORE')
-          GROUP BY stock_item_id
-        ) sm ON sm.stock_item_id = s.id
+        $_soldWeightJoin
         ${where.sql}
         ''',
         variables: where.variables,

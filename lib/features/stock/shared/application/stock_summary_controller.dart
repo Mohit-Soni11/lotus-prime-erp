@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_summary/stock_summary_models.dart';
 
 const String _isLotUnitExpression = '''
@@ -50,6 +51,47 @@ CASE
 END
 ''';
 
+const String _soldWeightJoin = '''
+LEFT JOIN (
+  SELECT
+    source.stock_item_id,
+    COALESCE(bill_weight.sold_net_weight, movement_weight.sold_net_weight, 0.0) AS sold_net_weight
+  FROM (
+    SELECT stock_item_id
+    FROM stock_movements
+    WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+    UNION
+    SELECT linked_stock_item_id AS stock_item_id
+    FROM bill_items
+    WHERE linked_stock_item_id IS NOT NULL
+  ) source
+  LEFT JOIN (
+    SELECT
+      bi.linked_stock_item_id AS stock_item_id,
+      SUM(COALESCE(bi.net_weight, 0.0)) AS sold_net_weight
+    FROM bill_items bi
+    INNER JOIN bills b ON b.id = bi.bill_id
+    WHERE bi.linked_stock_item_id IS NOT NULL
+      AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
+    GROUP BY bi.linked_stock_item_id
+  ) bill_weight ON bill_weight.stock_item_id = source.stock_item_id
+  LEFT JOIN (
+    SELECT
+      stock_item_id,
+      SUM(
+        CASE
+          WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
+          WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
+          ELSE 0
+        END
+      ) AS sold_net_weight
+    FROM stock_movements
+    WHERE movement_type IN ('SALE', 'SALE_RESTORE')
+    GROUP BY stock_item_id
+  ) movement_weight ON movement_weight.stock_item_id = source.stock_item_id
+) sm ON sm.stock_item_id = s.id
+''';
+
 class StockSummaryController extends ChangeNotifier {
   final AppDatabase _db;
 
@@ -75,6 +117,8 @@ class StockSummaryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await StockLotSaleReconciliationService(_db).reconcile();
+
       final now = DateTime.now();
       final startOfDay = DateTime(now.year, now.month, now.day);
       final endOfDay = startOfDay.add(const Duration(days: 1));
@@ -142,20 +186,7 @@ class StockSummaryController extends ChangeNotifier {
       FROM stock_item_units u
       LEFT JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
-      LEFT JOIN (
-        SELECT
-          stock_item_id,
-          SUM(
-            CASE
-              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
-              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
-              ELSE 0
-            END
-          ) AS sold_net_weight
-        FROM stock_movements
-        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
-        GROUP BY stock_item_id
-      ) sm ON sm.stock_item_id = s.id
+      $_soldWeightJoin
     ''').getSingle();
 
     return _CurrentSnapshot(
@@ -218,20 +249,7 @@ class StockSummaryController extends ChangeNotifier {
       FROM stock_item_units u
       LEFT JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
-      LEFT JOIN (
-        SELECT
-          stock_item_id,
-          SUM(
-            CASE
-              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
-              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
-              ELSE 0
-            END
-          ) AS sold_net_weight
-        FROM stock_movements
-        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
-        GROUP BY stock_item_id
-      ) sm ON sm.stock_item_id = s.id
+      $_soldWeightJoin
       GROUP BY LOWER(u.metal_type)
       ORDER BY available_units DESC, metal ASC
     ''').get();
@@ -273,20 +291,7 @@ class StockSummaryController extends ChangeNotifier {
       FROM stock_item_units u
       LEFT JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
-      LEFT JOIN (
-        SELECT
-          stock_item_id,
-          SUM(
-            CASE
-              WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)
-              WHEN movement_type = 'SALE_RESTORE' THEN -ABS(net_weight_delta)
-              ELSE 0
-            END
-          ) AS sold_net_weight
-        FROM stock_movements
-        WHERE movement_type IN ('SALE', 'SALE_RESTORE')
-        GROUP BY stock_item_id
-      ) sm ON sm.stock_item_id = s.id
+      $_soldWeightJoin
       GROUP BY LOWER(u.metal_type), ROUND(COALESCE(u.purity_percent, 0.0), 2)
       ORDER BY LOWER(u.metal_type), u.purity_percent DESC
       LIMIT 24
