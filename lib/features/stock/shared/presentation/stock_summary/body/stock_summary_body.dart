@@ -9,33 +9,45 @@ class _StockSummaryBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _StockSummaryHero(overview: controller.overview),
-              const SizedBox(height: 18),
-              _StockSummaryMetricGrid(overview: controller.overview),
-              const SizedBox(height: 18),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 1180;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    flex: 11,
-                    child: _MetalSummaryPanel(metals: controller.metals),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    flex: 9,
-                    child: _GradeSummaryPanel(grades: controller.grades),
-                  ),
+                  _StockSummaryHero(overview: controller.overview),
+                  const SizedBox(height: 18),
+                  _StockSummaryMetricGrid(overview: controller.overview),
+                  const SizedBox(height: 18),
+                  _ItemSummaryPanel(items: controller.items),
+                  const SizedBox(height: 18),
+                  if (isCompact) ...[
+                    _MetalSummaryPanel(metals: controller.metals),
+                    const SizedBox(height: 18),
+                    _GradeSummaryPanel(grades: controller.grades),
+                  ] else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 11,
+                          child: _MetalSummaryPanel(metals: controller.metals),
+                        ),
+                        const SizedBox(width: 18),
+                        Expanded(
+                          flex: 9,
+                          child: _GradeSummaryPanel(grades: controller.grades),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 18),
+                  _RecentMovementPanel(records: controller.recentMovements),
                 ],
               ),
-              const SizedBox(height: 18),
-              _RecentMovementPanel(records: controller.recentMovements),
-            ],
-          ),
+            );
+          },
         ),
         if (controller.isLoading)
           Positioned.fill(

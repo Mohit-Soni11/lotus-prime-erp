@@ -153,6 +153,47 @@ class _StockSummaryMetricGrid extends StatelessWidget {
   }
 }
 
+class _ItemSummaryPanel extends StatelessWidget {
+  final List<StockSummaryItem> items;
+
+  const _ItemSummaryPanel({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SummaryPanel(
+      title: 'Item-wise Stock Summary',
+      subtitle:
+          'Available stock, sold movement and weight status grouped by item.',
+      icon: Icons.inventory_2_rounded,
+      child: items.isEmpty
+          ? const _SummaryEmptyState(message: 'No item stock found yet.')
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 1480
+                    ? 3
+                    : constraints.maxWidth >= 980
+                        ? 2
+                        : 1;
+                const spacing = 14.0;
+                final width =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: [
+                    for (final item in items)
+                      SizedBox(
+                        width: width,
+                        child: _ItemSummaryCard(item: item),
+                      ),
+                  ],
+                );
+              },
+            ),
+    );
+  }
+}
+
 class _MetalSummaryPanel extends StatelessWidget {
   final List<StockSummaryMetal> metals;
 
@@ -161,7 +202,7 @@ class _MetalSummaryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SummaryPanel(
-      title: 'Metal-wise Closing Stock',
+      title: 'Metal-wise Stock Summary',
       subtitle: 'Available and sold stock grouped by metal.',
       icon: Icons.category_rounded,
       child: metals.isEmpty
@@ -185,17 +226,18 @@ class _GradeSummaryPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleGrades = grades.take(10).toList(growable: false);
     return _SummaryPanel(
-      title: 'Grade Breakdown',
+      title: 'Purity Breakdown',
       subtitle: 'Purity-wise available stock snapshot.',
       icon: Icons.verified_rounded,
-      child: grades.isEmpty
-          ? const _SummaryEmptyState(message: 'No grade stock found yet.')
+      child: visibleGrades.isEmpty
+          ? const _SummaryEmptyState(message: 'No purity stock found yet.')
           : Column(
               children: [
-                for (final grade in grades.take(10)) ...[
+                for (final grade in visibleGrades) ...[
                   _GradeSummaryRow(grade: grade),
-                  if (grade != grades.take(10).last) const SizedBox(height: 10),
+                  if (grade != visibleGrades.last) const SizedBox(height: 10),
                 ],
               ],
             ),
@@ -224,6 +266,157 @@ class _RecentMovementPanel extends StatelessWidget {
                 ],
               ],
             ),
+    );
+  }
+}
+
+class _ItemSummaryCard extends StatelessWidget {
+  final StockSummaryItem item;
+
+  const _ItemSummaryCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _metalAccent(item.metal);
+    final statusAccent = item.stockStatus == 'Sold Out'
+        ? InvColors.danger
+        : item.stockStatus == 'Partially Sold'
+            ? const Color(0xFFF59E0B)
+            : InvColors.success;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _SummaryIconBox(icon: _metalIcon(item.metal), accent: accent),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _titleCase(item.stockTitle),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _summaryStrongStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _itemSubtitle(item),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _summaryMutedStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = (constraints.maxWidth - 10) / 2;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _BlockMetric(
+                    width: width,
+                    label: 'Available Weight',
+                    value: '${_summaryWeight(item.availableWeight)} g',
+                    icon: Icons.scale_rounded,
+                    accent: InvColors.success,
+                    background: InvColors.successBg,
+                  ),
+                  _BlockMetric(
+                    width: width,
+                    label: 'Sold Weight',
+                    value: '${_summaryWeight(item.soldWeight)} g',
+                    icon: Icons.point_of_sale_rounded,
+                    accent: InvColors.danger,
+                    background: InvColors.dangerBg,
+                  ),
+                  _BlockMetric(
+                    width: width,
+                    label: 'Total Weight',
+                    value: '${_summaryWeight(item.totalWeight)} g',
+                    icon: Icons.inventory_rounded,
+                    accent: const Color(0xFF64748B),
+                    background: const Color(0xFFEFF3F8),
+                  ),
+                  _BlockMetric(
+                    width: width,
+                    label: 'Actual Fine',
+                    value: '${_summaryWeight(item.actualFine)} g',
+                    icon: Icons.verified_rounded,
+                    accent: InvColors.success,
+                    background: InvColors.successBg,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFCF7),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFEADCC5)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _FooterMetric(
+                    label: 'Total Pcs',
+                    value: '${item.totalPieces} pcs',
+                  ),
+                ),
+                const _MetricDivider(),
+                Expanded(
+                  child: _FooterMetric(
+                    label: 'Available',
+                    value: '${item.availablePieces} pcs',
+                    accent: InvColors.success,
+                  ),
+                ),
+                const _MetricDivider(),
+                Expanded(
+                  child: _FooterMetric(
+                    label: 'Sold',
+                    value: '${item.soldPieces} pcs',
+                    accent: item.soldPieces > 0
+                        ? InvColors.danger
+                        : InvColors.textDark,
+                  ),
+                ),
+                const _MetricDivider(),
+                Expanded(
+                  child: _FooterMetric(
+                    label: 'Status',
+                    value: item.stockStatus,
+                    accent: statusAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -306,47 +499,29 @@ class _MetalSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = _metalAccent(metal.metal);
-    return Container(
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          _SummaryIconBox(icon: _metalIcon(metal.metal), accent: accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${metal.metal} Stock',
-                  style: _summaryStrongStyle(fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${metal.availableUnits} available • ${metal.soldUnits} sold',
-                  style: _summaryMutedStyle(),
-                ),
-              ],
-            ),
-          ),
-          _InlineMetric(
-              label: 'Total', value: '${_summaryWeight(metal.totalWeight)} g'),
-          const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Available',
-              value: '${_summaryWeight(metal.netWeight)} g'),
-          const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Sold', value: '${_summaryWeight(metal.soldWeight)} g'),
-          const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Fine', value: '${_summaryWeight(metal.actualFine)} g'),
-        ],
-      ),
+    return _SummaryRowShell(
+      accent: accent,
+      icon: _metalIcon(metal.metal),
+      title: '${metal.metal} Stock',
+      subtitle: '${metal.availableUnits} available | ${metal.soldUnits} sold',
+      metrics: [
+        _InlineMetric(
+          label: 'Total',
+          value: '${_summaryWeight(metal.totalWeight)} g',
+        ),
+        _InlineMetric(
+          label: 'Available',
+          value: '${_summaryWeight(metal.netWeight)} g',
+        ),
+        _InlineMetric(
+          label: 'Sold',
+          value: '${_summaryWeight(metal.soldWeight)} g',
+        ),
+        _InlineMetric(
+          label: 'Fine',
+          value: '${_summaryWeight(metal.actualFine)} g',
+        ),
+      ],
     );
   }
 }
@@ -359,47 +534,29 @@ class _GradeSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = _metalAccent(grade.metal);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEADCC5)),
-      ),
-      child: Row(
-        children: [
-          _SummaryIconBox(icon: Icons.verified_rounded, accent: accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${grade.metal} • ${grade.gradeLabel}',
-                  style: _summaryStrongStyle(fontSize: 13.5),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${grade.availableUnits} available • ${grade.soldUnits} sold',
-                  style: _summaryMutedStyle(),
-                ),
-              ],
-            ),
-          ),
-          _InlineMetric(
-              label: 'Total', value: '${_summaryWeight(grade.totalWeight)} g'),
-          const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Available',
-              value: '${_summaryWeight(grade.netWeight)} g'),
-          const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Sold', value: '${_summaryWeight(grade.soldWeight)} g'),
-          const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Fine', value: '${_summaryWeight(grade.actualFine)} g'),
-        ],
-      ),
+    return _SummaryRowShell(
+      accent: accent,
+      icon: Icons.verified_rounded,
+      title: '${grade.metal} | ${grade.gradeLabel}',
+      subtitle: '${grade.availableUnits} available | ${grade.soldUnits} sold',
+      metrics: [
+        _InlineMetric(
+          label: 'Total',
+          value: '${_summaryWeight(grade.totalWeight)} g',
+        ),
+        _InlineMetric(
+          label: 'Available',
+          value: '${_summaryWeight(grade.netWeight)} g',
+        ),
+        _InlineMetric(
+          label: 'Sold',
+          value: '${_summaryWeight(grade.soldWeight)} g',
+        ),
+        _InlineMetric(
+          label: 'Fine',
+          value: '${_summaryWeight(grade.actualFine)} g',
+        ),
+      ],
     );
   }
 }
@@ -421,7 +578,47 @@ class _MovementSummaryRow extends StatelessWidget {
         : record.isRestore
             ? 'Restored'
             : 'Added';
+    return _SummaryRowShell(
+      accent: accent,
+      icon: record.isSold
+          ? Icons.point_of_sale_rounded
+          : record.isRestore
+              ? Icons.restore_rounded
+              : Icons.add_business_rounded,
+      title: '$label | ${_fallback(record.itemName, 'Stock Item')}',
+      subtitle: [
+        _fallback(record.metal, 'Metal'),
+        if (record.sourceNumber.trim().isNotEmpty) record.sourceNumber,
+        _summaryDate(record.occurredAt),
+      ].join(' | '),
+      metrics: [
+        _InlineMetric(label: 'PCS', value: record.quantity.toString()),
+        _InlineMetric(
+          label: 'Net',
+          value: '${_summaryWeight(record.netWeight)} g',
+        ),
+      ],
+    );
+  }
+}
 
+class _SummaryRowShell extends StatelessWidget {
+  final Color accent;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Widget> metrics;
+
+  const _SummaryRowShell({
+    required this.accent,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.metrics,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -431,31 +628,21 @@ class _MovementSummaryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _SummaryIconBox(
-            icon: record.isSold
-                ? Icons.point_of_sale_rounded
-                : record.isRestore
-                    ? Icons.restore_rounded
-                    : Icons.add_business_rounded,
-            accent: accent,
-          ),
+          _SummaryIconBox(icon: icon, accent: accent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$label • ${_fallback(record.itemName, 'Stock Item')}',
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: _summaryStrongStyle(fontSize: 13.5),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  [
-                    _fallback(record.metal, 'Metal'),
-                    if (record.sourceNumber.trim().isNotEmpty)
-                      record.sourceNumber,
-                    _summaryDate(record.occurredAt),
-                  ].join(' • '),
+                  subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: _summaryMutedStyle(),
@@ -463,10 +650,8 @@ class _MovementSummaryRow extends StatelessWidget {
               ],
             ),
           ),
-          _InlineMetric(label: 'PCS', value: record.quantity.toString()),
           const SizedBox(width: 10),
-          _InlineMetric(
-              label: 'Net', value: '${_summaryWeight(record.netWeight)} g'),
+          Wrap(spacing: 10, runSpacing: 10, children: metrics),
         ],
       ),
     );
@@ -558,6 +743,66 @@ class _HeroSummaryTile extends StatelessWidget {
   }
 }
 
+class _BlockMetric extends StatelessWidget {
+  final double width;
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color accent;
+  final Color background;
+
+  const _BlockMetric({
+    required this.width,
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.accent,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: accent, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: _summaryMutedStyle(fontSize: 10.5)),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _summaryStrongStyle(fontSize: 13.5),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _InlineMetric extends StatelessWidget {
   final String label;
   final String value;
@@ -582,9 +827,59 @@ class _InlineMetric extends StatelessWidget {
         children: [
           Text(label, style: _summaryMutedStyle(fontSize: 10)),
           const SizedBox(height: 4),
-          Text(value, style: _summaryStrongStyle(fontSize: 12.5)),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: _summaryStrongStyle(fontSize: 12.5),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _FooterMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? accent;
+
+  const _FooterMetric({
+    required this.label,
+    required this.value,
+    this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: _summaryMutedStyle(fontSize: 10.5)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _summaryStrongStyle(fontSize: 12.5).copyWith(
+            color: accent ?? InvColors.textDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricDivider extends StatelessWidget {
+  const _MetricDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 34,
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      color: const Color(0xFFEADCC5),
     );
   }
 }
@@ -696,6 +991,33 @@ String _summaryDate(DateTime? value) {
 
 String _fallback(String value, String fallback) {
   return value.trim().isEmpty ? fallback : value.trim();
+}
+
+String _itemSubtitle(StockSummaryItem item) {
+  final companyText = item.companyCount <= 0
+      ? 'company not tagged'
+      : item.companyCount == 1
+          ? '1 company'
+          : '${item.companyCount} companies';
+  final purityText = item.purityGroupCount <= 0
+      ? 'purity not tagged'
+      : item.purityGroupCount == 1
+          ? '1 purity group'
+          : '${item.purityGroupCount} purity groups';
+  final sets = item.totalSets > 0
+      ? ' | ${item.availableSets}/${item.totalSets} set'
+      : '';
+  return '${_fallback(item.itemType, 'General')} | ${_fallback(item.segment, 'General')} | $companyText | $purityText$sets';
+}
+
+String _titleCase(String value) {
+  final text = value.trim();
+  if (text.isEmpty) return 'Stock Item';
+  return text.split(RegExp(r'\s+')).map((word) {
+    if (word.isEmpty) return word;
+    if (word.length == 1) return word.toUpperCase();
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }).join(' ');
 }
 
 Color _metalAccent(String metal) {

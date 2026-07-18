@@ -102,6 +102,7 @@ class StockSummaryController extends ChangeNotifier {
   StockSummaryOverview _overview = StockSummaryOverview.empty();
   List<StockSummaryMetal> _metals = const [];
   List<StockSummaryGrade> _grades = const [];
+  List<StockSummaryItem> _items = const [];
   List<StockSummaryMovement> _recentMovements = const [];
 
   bool get isLoading => _isLoading;
@@ -109,6 +110,7 @@ class StockSummaryController extends ChangeNotifier {
   StockSummaryOverview get overview => _overview;
   List<StockSummaryMetal> get metals => _metals;
   List<StockSummaryGrade> get grades => _grades;
+  List<StockSummaryItem> get items => _items;
   List<StockSummaryMovement> get recentMovements => _recentMovements;
 
   Future<void> load() async {
@@ -117,6 +119,7 @@ class StockSummaryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await _ensureSummarySchema();
       await StockLotSaleReconciliationService(_db).reconcile();
 
       final now = DateTime.now();
@@ -127,6 +130,7 @@ class StockSummaryController extends ChangeNotifier {
       final today = await _loadTodayMovement(startOfDay, endOfDay);
       final metals = await _loadMetalSummary();
       final grades = await _loadGradeSummary();
+      final items = await _loadItemSummary();
       final movements = await _loadRecentMovements();
 
       final closingUnits = current.availableUnits;
@@ -162,11 +166,13 @@ class StockSummaryController extends ChangeNotifier {
       );
       _metals = metals;
       _grades = grades;
+      _items = items;
       _recentMovements = movements;
     } catch (error) {
       _overview = StockSummaryOverview.empty();
       _metals = const [];
       _grades = const [];
+      _items = const [];
       _recentMovements = const [];
       _errorMessage = 'Stock summary could not be loaded.';
     } finally {
@@ -315,6 +321,90 @@ class StockSummaryController extends ChangeNotifier {
         .toList(growable: false);
   }
 
+  Future<List<StockSummaryItem>> _loadItemSummary() async {
+    final rows = await _db.customSelect('''
+      SELECT
+        CASE
+          WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
+          WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
+          WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
+          WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
+          ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
+        END AS metal,
+        COALESCE(
+          NULLIF(TRIM(u.item_name), ''),
+          NULLIF(TRIM(s.item_name), ''),
+          'Unnamed Stock'
+        ) AS item_name,
+        COALESCE(
+          NULLIF(TRIM(u.item_type), ''),
+          NULLIF(TRIM(s.sub_category), ''),
+          'General'
+        ) AS item_type,
+        COALESCE(NULLIF(TRIM(u.segment), ''), 'General') AS segment,
+        COUNT(*) AS total_units,
+        COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
+        COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
+        COALESCE(SUM(
+          CASE
+            WHEN $_isLotUnitExpression THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1)
+            ELSE 1
+          END
+        ), 0) AS total_pieces,
+        COALESCE(SUM($_availableQuantityExpression), 0) AS available_pieces,
+        COALESCE(SUM($_soldQuantityExpression), 0) AS sold_pieces,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT CASE WHEN COALESCE(u.purity_percent, 0.0) > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
+        COALESCE(SUM(CASE WHEN LOWER(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END), 0) AS total_sets,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' AND LOWER(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END), 0) AS available_sets,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS available_weight,
+        COALESCE(SUM($_soldWeightExpression), 0.0) AS sold_weight,
+        COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS actual_fine
+      FROM stock_item_units u
+      LEFT JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      $_soldWeightJoin
+      GROUP BY
+        LOWER(COALESCE(NULLIF(TRIM(u.metal_type), ''), 'other')),
+        LOWER(COALESCE(NULLIF(TRIM(u.item_name), ''), NULLIF(TRIM(s.item_name), ''), 'unnamed stock'))
+      HAVING total_pieces > 0 OR sold_pieces > 0 OR total_units > 0
+      ORDER BY available_pieces DESC, total_pieces DESC, item_name ASC
+      LIMIT 18
+    ''').get();
+
+    return rows
+        .map(
+          (row) {
+            final availableWeight = _readDouble(row, 'available_weight');
+            final soldWeight = _readDouble(row, 'sold_weight');
+            return StockSummaryItem(
+              metal: _readString(row, 'metal'),
+              itemName: _readString(row, 'item_name'),
+              itemType: _readString(row, 'item_type'),
+              segment: _readString(row, 'segment'),
+              totalUnits: _readInt(row, 'total_units'),
+              availableUnits: _readInt(row, 'available_units'),
+              soldUnits: _readInt(row, 'sold_units'),
+              totalPieces: _readInt(row, 'total_pieces'),
+              availablePieces: _readInt(row, 'available_pieces'),
+              soldPieces: _readInt(row, 'sold_pieces'),
+              companyCount: _readInt(row, 'company_count'),
+              purityGroupCount: _readInt(row, 'purity_group_count'),
+              totalSets: _readInt(row, 'total_sets'),
+              availableSets: _readInt(row, 'available_sets'),
+              grossWeight: _readDouble(row, 'gross_weight'),
+              availableWeight: availableWeight,
+              soldWeight: soldWeight,
+              totalWeight: availableWeight + soldWeight,
+              actualFine: _readDouble(row, 'actual_fine'),
+            );
+          },
+        )
+        .where((item) => item.totalPieces > 0 || item.totalUnits > 0)
+        .toList(growable: false);
+  }
+
   Future<List<StockSummaryMovement>> _loadRecentMovements() async {
     final rows = await _db.customSelect('''
       SELECT
@@ -373,6 +463,34 @@ class StockSummaryController extends ChangeNotifier {
   int _positiveInt(int value) => value < 0 ? 0 : value;
 
   double _positiveDouble(double value) => value < 0 ? 0 : value;
+
+  Future<void> _ensureSummarySchema() async {
+    final columns = await _tableColumns('stock_items');
+    if (!columns.contains('company_name')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_items ADD COLUMN company_name TEXT',
+      );
+    }
+    if (!columns.contains('quantity_mode')) {
+      await _db.customStatement(
+        "ALTER TABLE stock_items ADD COLUMN quantity_mode TEXT NOT NULL DEFAULT 'PIECES'",
+      );
+    }
+    if (!columns.contains('packet_count')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+  }
+
+  Future<Set<String>> _tableColumns(String tableName) async {
+    final rows = await _db.customSelect('PRAGMA table_info($tableName)').get();
+    return rows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
+  }
 }
 
 class _CurrentSnapshot {

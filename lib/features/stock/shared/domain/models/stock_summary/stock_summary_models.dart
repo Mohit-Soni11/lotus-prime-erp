@@ -95,6 +95,58 @@ class StockSummaryGrade {
   });
 }
 
+class StockSummaryItem {
+  final String metal;
+  final String itemName;
+  final String itemType;
+  final String segment;
+  final int totalUnits;
+  final int availableUnits;
+  final int soldUnits;
+  final int totalPieces;
+  final int availablePieces;
+  final int soldPieces;
+  final int companyCount;
+  final int purityGroupCount;
+  final int totalSets;
+  final int availableSets;
+  final double grossWeight;
+  final double availableWeight;
+  final double soldWeight;
+  final double totalWeight;
+  final double actualFine;
+
+  const StockSummaryItem({
+    required this.metal,
+    required this.itemName,
+    required this.itemType,
+    required this.segment,
+    required this.totalUnits,
+    required this.availableUnits,
+    required this.soldUnits,
+    required this.totalPieces,
+    required this.availablePieces,
+    required this.soldPieces,
+    required this.companyCount,
+    required this.purityGroupCount,
+    required this.totalSets,
+    required this.availableSets,
+    required this.grossWeight,
+    required this.availableWeight,
+    required this.soldWeight,
+    required this.totalWeight,
+    required this.actualFine,
+  });
+
+  String get stockTitle => '${itemName.trim()} $metal Stock'.trim();
+
+  String get stockStatus {
+    if (availablePieces <= 0 && soldPieces > 0) return 'Sold Out';
+    if (soldPieces > 0) return 'Partially Sold';
+    return 'Ready Stock';
+  }
+}
+
 class StockSummaryMovement {
   final String movementType;
   final String sourceNumber;
