@@ -83,6 +83,67 @@ class StockMetalActivitySummary {
       restoredWeight != 0;
 }
 
+class StockActivityBreakdownSummary {
+  final String metal;
+  final String groupLabel;
+  final String groupKind;
+  final int inwardQuantity;
+  final int outwardQuantity;
+  final int restoredQuantity;
+  final double inwardWeight;
+  final double outwardWeight;
+  final double restoredWeight;
+  final int gradeCount;
+  final int itemTypeCount;
+  final int companyCount;
+
+  const StockActivityBreakdownSummary({
+    required this.metal,
+    required this.groupLabel,
+    required this.groupKind,
+    required this.inwardQuantity,
+    required this.outwardQuantity,
+    required this.restoredQuantity,
+    required this.inwardWeight,
+    required this.outwardWeight,
+    required this.restoredWeight,
+    required this.gradeCount,
+    required this.itemTypeCount,
+    required this.companyCount,
+  });
+
+  factory StockActivityBreakdownSummary.fromRow(QueryRow row) {
+    return StockActivityBreakdownSummary(
+      metal: row.read<String>('metal_type'),
+      groupLabel: row.read<String>('group_label'),
+      groupKind: row.read<String>('group_kind'),
+      inwardQuantity: row.read<int>('inward_quantity'),
+      outwardQuantity: row.read<int>('outward_quantity'),
+      restoredQuantity: row.read<int>('restored_quantity'),
+      inwardWeight: row.read<double>('inward_weight'),
+      outwardWeight: row.read<double>('outward_weight'),
+      restoredWeight: row.read<double>('restored_weight'),
+      gradeCount: row.read<int>('grade_count'),
+      itemTypeCount: row.read<int>('item_type_count'),
+      companyCount: row.read<int>('company_count'),
+    );
+  }
+
+  int get netOutwardQuantity => outwardQuantity - restoredQuantity;
+  double get netOutwardWeight => outwardWeight - restoredWeight;
+  int get totalMovementQuantity =>
+      inwardQuantity + outwardQuantity + restoredQuantity;
+  double get totalMovementWeight =>
+      inwardWeight + outwardWeight + restoredWeight;
+  bool get hasMovement =>
+      inwardQuantity != 0 ||
+      outwardQuantity != 0 ||
+      restoredQuantity != 0 ||
+      inwardWeight != 0 ||
+      outwardWeight != 0 ||
+      restoredWeight != 0;
+}
+
 class StockActivityRecord {
   final int id;
   final int stockItemId;

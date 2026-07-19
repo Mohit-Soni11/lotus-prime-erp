@@ -214,96 +214,133 @@ class _DateRangeChipState extends State<_DateRangeChip> {
 
 class _MetalMovementCard extends StatelessWidget {
   final StockMetalActivitySummary summary;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _MetalMovementCard({required this.summary});
+  const _MetalMovementCard({
+    required this.summary,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final accent = _metalAccent(summary.metal);
-    return Container(
-      width: 360,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _metalBackground(summary.metal),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(17),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: accent.withValues(alpha: 0.28)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: accent.withValues(alpha: 0.24)),
-                ),
-                child: Icon(_metalIcon(summary.metal), color: accent, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${summary.metal} Movement', style: _titleText(17)),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Current filtered movement view',
-                      style: _mutedText(),
+        child: Container(
+          width: 360,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _metalBackground(summary.metal),
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(
+              color: selected ? accent : accent.withValues(alpha: 0.28),
+              width: selected ? 1.6 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.16),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
-                  ],
-                ),
-              ),
-            ],
+                  ]
+                : const [],
           ),
-          const SizedBox(height: 14),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _MetalMovementCell(
-                  label: 'Inward',
-                  value: '${summary.inwardQuantity} pcs',
-                  detail: _weight(summary.inwardWeight),
-                  accent: InvColors.success,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: accent.withValues(alpha: 0.24)),
+                    ),
+                    child: Icon(_metalIcon(summary.metal),
+                        color: accent, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${summary.metal} Movement',
+                            style: _titleText(17)),
+                        const SizedBox(height: 3),
+                        Text(
+                          selected
+                              ? 'Timeline focused on this metal'
+                              : 'Click to focus movement timeline',
+                          style: _mutedText(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    selected
+                        ? Icons.check_circle_rounded
+                        : Icons.arrow_forward_rounded,
+                    color: accent,
+                    size: 20,
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetalMovementCell(
-                  label: 'Outward',
-                  value: '${summary.outwardQuantity} pcs',
-                  detail: _weight(summary.outwardWeight),
-                  accent: InvColors.danger,
-                ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetalMovementCell(
+                      label: 'Inward',
+                      value: '${summary.inwardQuantity} pcs',
+                      detail: _weight(summary.inwardWeight),
+                      accent: InvColors.success,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetalMovementCell(
+                      label: 'Outward',
+                      value: '${summary.outwardQuantity} pcs',
+                      detail: _weight(summary.outwardWeight),
+                      accent: InvColors.danger,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetalMovementCell(
+                      label: 'Restored',
+                      value: '${summary.restoredQuantity} pcs',
+                      detail: _weight(summary.restoredWeight),
+                      accent: const Color(0xFF2563EB),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MetalMovementCell(
+                      label: 'Net Out',
+                      value: '${summary.netOutwardQuantity} pcs',
+                      detail: _weight(summary.netOutwardWeight),
+                      accent: accent,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MetalMovementCell(
-                  label: 'Restored',
-                  value: '${summary.restoredQuantity} pcs',
-                  detail: _weight(summary.restoredWeight),
-                  accent: const Color(0xFF2563EB),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetalMovementCell(
-                  label: 'Net Out',
-                  value: '${summary.netOutwardQuantity} pcs',
-                  detail: _weight(summary.netOutwardWeight),
-                  accent: accent,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

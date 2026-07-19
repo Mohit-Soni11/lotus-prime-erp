@@ -22,6 +22,7 @@ import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 part 'app_bar/stock_search_app_bar.dart';
 part 'body/stock_search_body.dart';
 part 'pdf/stock_card_pdf_service.dart';
+part 'widgets/stock_search_lens_panel.dart';
 part 'widgets/stock_search_widgets.dart';
 
 class StockSearchScreen extends StatefulWidget {

@@ -109,6 +109,7 @@ class StockSearchController extends ChangeNotifier {
   String _statusFilter = 'All';
   String _metalFilter = 'All';
   String _trackingFilter = 'All';
+  String _sortMode = 'Relevance';
   String? _errorMessage;
   StockSearchSummary _summary = StockSearchSummary.empty();
   List<StockSearchResult> _results = const [];
@@ -118,14 +119,25 @@ class StockSearchController extends ChangeNotifier {
   String get statusFilter => _statusFilter;
   String get metalFilter => _metalFilter;
   String get trackingFilter => _trackingFilter;
+  String get sortMode => _sortMode;
   String? get errorMessage => _errorMessage;
   StockSearchSummary get summary => _summary;
   List<StockSearchResult> get results => _results;
+  bool get hasActiveFilters =>
+      _searchText.trim().isNotEmpty ||
+      _statusFilter != 'All' ||
+      _metalFilter != 'All' ||
+      _trackingFilter != 'All' ||
+      _sortMode != 'Relevance';
 
   static const List<String> statusFilters = [
     'All',
     'Available',
     'Sold',
+    'Reserved',
+    'On Hold',
+    'Damaged',
+    'Archived',
   ];
 
   static const List<String> metalFilters = [
@@ -142,12 +154,28 @@ class StockSearchController extends ChangeNotifier {
     'Weight Tracked',
   ];
 
+  static const List<String> sortModes = [
+    'Relevance',
+    'Newest',
+    'Weight High',
+    'Fine High',
+    'Value High',
+  ];
+
   static String statusFilterLabel(String value) {
     switch (value) {
       case 'Available':
         return 'Available Stock';
       case 'Sold':
         return 'Sold Stock';
+      case 'Reserved':
+        return 'Reserved';
+      case 'On Hold':
+        return 'On Hold';
+      case 'Damaged':
+        return 'Damaged';
+      case 'Archived':
+        return 'Archived';
       default:
         return 'All Status';
     }
@@ -167,6 +195,7 @@ class StockSearchController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await _ensureSearchSchema();
       await StockLotSaleReconciliationService(_db).reconcile();
 
       final where = _buildWhere();
@@ -188,6 +217,7 @@ class StockSearchController extends ChangeNotifier {
         LEFT JOIN stock_items s ON s.id = u.stock_item_id
         LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
         LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+        ${_latestSaleJoin()}
         $_soldWeightJoin
         ${where.sql}
         ''',
@@ -225,28 +255,21 @@ class StockSearchController extends ChangeNotifier {
           pv.voucher_no,
           pv.supplier_invoice_no,
           pv.tax_type,
-          b.bill_no AS sold_bill_no,
-          b.customer_name AS sold_customer_name,
-          b.bill_date AS sold_bill_date,
-          b.final_amount AS sold_bill_amount,
-          bi.stock_profit_amount AS sold_profit_amount
+          s.sku AS stock_sku,
+          s.company_name,
+          sale.bill_no AS sold_bill_no,
+          sale.customer_name AS sold_customer_name,
+          sale.bill_date AS sold_bill_date,
+          sale.final_amount AS sold_bill_amount,
+          sale.stock_profit_amount AS sold_profit_amount
         FROM stock_item_units u
+        LEFT JOIN stock_items s ON s.id = u.stock_item_id
         LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
-        LEFT JOIN bill_items bi ON (
-          bi.linked_stock_unit_id = u.id OR
-          LOWER(COALESCE(bi.linked_stock_sku, '')) = LOWER(COALESCE(u.unit_code, '')) OR
-          (
-            TRIM(COALESCE(u.huid, '')) <> '' AND
-            LOWER(COALESCE(bi.huid, '')) = LOWER(COALESCE(u.huid, ''))
-          )
-        )
-        LEFT JOIN bills b ON b.id = bi.bill_id
+        ${_latestSaleJoin()}
         ${where.sql}
         ORDER BY
           ${_searchPriorityOrder()}
-          CASE WHEN LOWER(u.status) = 'available' THEN 0 ELSE 1 END,
-          u.created_at DESC,
-          u.id DESC
+          ${_sortOrder()}
         LIMIT 250
         ''',
         variables: where.variables,
@@ -293,11 +316,17 @@ class StockSearchController extends ChangeNotifier {
     load();
   }
 
+  void setSortMode(String value) {
+    _sortMode = value;
+    load();
+  }
+
   void clearFilters() {
     _searchText = '';
     _statusFilter = 'All';
     _metalFilter = 'All';
     _trackingFilter = 'All';
+    _sortMode = 'Relevance';
     load();
   }
 
@@ -329,16 +358,24 @@ class StockSearchController extends ChangeNotifier {
         LOWER(COALESCE(u.huid, '')) LIKE ? OR
         LOWER(COALESCE(u.unit_code, '')) LIKE ? OR
         LOWER(COALESCE(u.batch_code, '')) LIKE ? OR
+        LOWER(COALESCE(s.sku, '')) LIKE ? OR
         LOWER(COALESCE(u.item_name, '')) LIKE ? OR
         LOWER(COALESCE(u.item_type, '')) LIKE ? OR
         LOWER(COALESCE(u.segment, '')) LIKE ? OR
+        LOWER(COALESCE(s.sub_category, '')) LIKE ? OR
+        LOWER(COALESCE(u.status, '')) LIKE ? OR
+        LOWER(COALESCE(u.metal_type, '')) LIKE ? OR
+        LOWER(COALESCE(u.company_name, s.company_name, '')) LIKE ? OR
         LOWER(COALESCE(u.supplier_name, '')) LIKE ? OR
+        LOWER(COALESCE(pv.party_name, '')) LIKE ? OR
         LOWER(COALESCE(pv.voucher_no, '')) LIKE ? OR
         LOWER(COALESCE(pv.supplier_invoice_no, '')) LIKE ? OR
+        LOWER(COALESCE(sale.bill_no, '')) LIKE ? OR
+        LOWER(COALESCE(sale.customer_name, '')) LIKE ? OR
         CAST(COALESCE(u.net_weight, 0) AS TEXT) LIKE ?
       )
       ''');
-      for (var index = 0; index < 10; index++) {
+      for (var index = 0; index < 18; index++) {
         variables.add(drift.Variable<String>(pattern));
       }
     }
@@ -358,11 +395,74 @@ class StockSearchController extends ChangeNotifier {
             WHEN LOWER(COALESCE(u.unit_code, '')) = '$query' THEN 1
             WHEN LOWER(COALESCE(u.batch_code, '')) = '$query' THEN 2
             WHEN LOWER(COALESCE(pv.supplier_invoice_no, '')) = '$query' THEN 3
-            WHEN LOWER(COALESCE(u.item_name, '')) LIKE '$query%' THEN 4
-            WHEN LOWER(COALESCE(u.item_type, '')) LIKE '$query%' THEN 5
+            WHEN LOWER(COALESCE(sale.bill_no, '')) = '$query' THEN 4
+            WHEN LOWER(COALESCE(s.sku, '')) = '$query' THEN 5
+            WHEN LOWER(COALESCE(u.item_name, '')) LIKE '$query%' THEN 6
+            WHEN LOWER(COALESCE(u.item_type, '')) LIKE '$query%' THEN 7
             ELSE 9
           END,
     ''';
+  }
+
+  String _latestSaleJoin() {
+    return '''
+        LEFT JOIN (
+          SELECT *
+          FROM (
+            SELECT
+              bi.linked_stock_unit_id,
+              bi.linked_stock_item_id,
+              bi.linked_stock_sku,
+              bi.huid,
+              bi.stock_profit_amount,
+              b.bill_no,
+              b.customer_name,
+              b.bill_date,
+              b.final_amount,
+              ROW_NUMBER() OVER (
+                PARTITION BY
+                  COALESCE(
+                    CAST(bi.linked_stock_unit_id AS TEXT),
+                    CAST(bi.linked_stock_item_id AS TEXT),
+                    NULLIF(LOWER(COALESCE(bi.linked_stock_sku, '')), ''),
+                    NULLIF(LOWER(COALESCE(bi.huid, '')), '')
+                  )
+                ORDER BY b.bill_date DESC, b.id DESC
+              ) AS sale_rank
+            FROM bill_items bi
+            INNER JOIN bills b ON b.id = bi.bill_id
+            WHERE UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
+          ) ranked_sale
+          WHERE sale_rank = 1
+        ) sale ON (
+          sale.linked_stock_unit_id = u.id OR
+          sale.linked_stock_item_id = u.stock_item_id OR
+          LOWER(COALESCE(sale.linked_stock_sku, '')) = LOWER(COALESCE(u.unit_code, '')) OR
+          (
+            TRIM(COALESCE(u.huid, '')) <> '' AND
+            LOWER(COALESCE(sale.huid, '')) = LOWER(COALESCE(u.huid, ''))
+          )
+        )
+    ''';
+  }
+
+  String _sortOrder() {
+    switch (_sortMode) {
+      case 'Newest':
+        return 'u.created_at DESC, u.id DESC';
+      case 'Weight High':
+        return 'u.net_weight DESC, u.created_at DESC, u.id DESC';
+      case 'Fine High':
+        return 'u.actual_fine_weight DESC, u.created_at DESC, u.id DESC';
+      case 'Value High':
+        return 'u.unit_cost DESC, u.created_at DESC, u.id DESC';
+      default:
+        return '''
+          CASE WHEN LOWER(u.status) = 'available' THEN 0 ELSE 1 END,
+          u.created_at DESC,
+          u.id DESC
+        ''';
+    }
   }
 
   StockSearchResult _mapResult(drift.QueryRow row) {
@@ -388,7 +488,10 @@ class StockSearchController extends ChangeNotifier {
       makingAmount: _readDouble(row, 'making_amount'),
       unitCost: _readDouble(row, 'unit_cost'),
       supplierId: _readNullableInt(row, 'supplier_id'),
-      supplierName: _readString(row, 'supplier_name'),
+      supplierName: _firstNonEmpty([
+        _readString(row, 'supplier_name'),
+        _readString(row, 'company_name'),
+      ]),
       status: _readString(row, 'status').isEmpty
           ? 'Available'
           : _readString(row, 'status'),
@@ -427,6 +530,48 @@ class StockSearchController extends ChangeNotifier {
     final value = (raw as num?)?.toInt();
     if (value == null || value <= 0) return null;
     return DateTime.fromMillisecondsSinceEpoch(value);
+  }
+
+  String _firstNonEmpty(List<String> values) {
+    for (final value in values) {
+      final clean = value.trim();
+      if (clean.isNotEmpty) return clean;
+    }
+    return '';
+  }
+
+  Future<void> _ensureSearchSchema() async {
+    final stockColumns = await _tableColumns('stock_items');
+    if (!stockColumns.contains('company_name')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_items ADD COLUMN company_name TEXT',
+      );
+    }
+    final unitColumns = await _tableColumns('stock_item_units');
+    if (!unitColumns.contains('item_type')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
+      );
+    }
+    if (!unitColumns.contains('company_name')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
+      );
+    }
+    if (!unitColumns.contains('segment')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
+      );
+    }
+  }
+
+  Future<Set<String>> _tableColumns(String tableName) async {
+    final rows = await _db.customSelect('PRAGMA table_info($tableName)').get();
+    return rows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
   }
 }
 

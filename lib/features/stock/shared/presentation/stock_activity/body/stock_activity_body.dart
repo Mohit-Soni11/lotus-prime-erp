@@ -49,7 +49,16 @@ class _StockActivityBodyState extends State<_StockActivityBody> {
               const SizedBox(height: 18),
               _SummaryGrid(summary: controller.summary),
               const SizedBox(height: 18),
-              _MetalMovementSnapshot(metals: controller.metalSummaries),
+              _MetalMovementSnapshot(
+                metals: controller.metalSummaries,
+                selectedMetal: controller.metalFilter,
+                onOpen: controller.setMetalFilter,
+              ),
+              const SizedBox(height: 18),
+              _MovementBreakdownPanel(
+                summaries: controller.breakdownSummaries,
+                selectedMetal: controller.metalFilter,
+              ),
               const SizedBox(height: 18),
               _FilterPanel(
                 controller: controller,
@@ -266,8 +275,14 @@ class _DateQuickFilterPanel extends StatelessWidget {
 
 class _MetalMovementSnapshot extends StatelessWidget {
   final List<StockMetalActivitySummary> metals;
+  final String selectedMetal;
+  final ValueChanged<String> onOpen;
 
-  const _MetalMovementSnapshot({required this.metals});
+  const _MetalMovementSnapshot({
+    required this.metals,
+    required this.selectedMetal,
+    required this.onOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +319,13 @@ class _MetalMovementSnapshot extends StatelessWidget {
               spacing: 14,
               runSpacing: 14,
               children: metals
-                  .map((metal) => _MetalMovementCard(summary: metal))
+                  .map(
+                    (metal) => _MetalMovementCard(
+                      summary: metal,
+                      selected: selectedMetal == metal.metal,
+                      onTap: () => onOpen(metal.metal),
+                    ),
+                  )
                   .toList(growable: false),
             ),
         ],

@@ -127,7 +127,7 @@ class _SearchFilterPanel extends StatelessWidget {
                   value: controller.statusFilter,
                   values: StockSearchController.statusFilters,
                   labelFor: StockSearchController.statusFilterLabel,
-                  width: 160,
+                  width: 170,
                   onChanged: controller.setStatusFilter,
                 ),
                 _FilterDropdown(
@@ -143,6 +143,17 @@ class _SearchFilterPanel extends StatelessWidget {
                   labelFor: StockSearchController.trackingFilterLabel,
                   width: 190,
                   onChanged: controller.setTrackingFilter,
+                ),
+                _FilterDropdown(
+                  value: controller.sortMode,
+                  values: StockSearchController.sortModes,
+                  labelFor: (value) => value,
+                  width: 170,
+                  onChanged: controller.setSortMode,
+                ),
+                _ClearSearchButton(
+                  enabled: controller.hasActiveFilters,
+                  onTap: controller.clearFilters,
                 ),
               ],
             ),
@@ -429,6 +440,59 @@ class _FilterDropdown extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ClearSearchButton extends StatelessWidget {
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _ClearSearchButton({
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(13),
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: enabled ? const Color(0xFFFFF7F7) : Colors.white,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(
+              color: enabled
+                  ? InvColors.danger.withValues(alpha: 0.28)
+                  : InvColors.cardBorder,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.filter_alt_off_rounded,
+                color: enabled ? InvColors.danger : InvColors.textMuted,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Clear',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: enabled ? InvColors.danger : InvColors.textMuted,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

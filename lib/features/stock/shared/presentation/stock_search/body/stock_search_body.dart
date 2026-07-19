@@ -59,6 +59,8 @@ class _StockSearchBodyState extends State<_StockSearchBody> {
             onSearchChanged: _searchChanged,
           ),
           const SizedBox(height: 18),
+          _SearchLensPanel(controller: controller),
+          const SizedBox(height: 18),
           _SearchResultsPanel(controller: controller),
         ],
       ),
