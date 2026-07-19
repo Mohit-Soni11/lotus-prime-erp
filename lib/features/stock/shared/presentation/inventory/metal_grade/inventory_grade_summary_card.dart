@@ -21,6 +21,7 @@ class _InventoryGradeSummaryCard extends StatefulWidget {
 class _InventoryGradeSummaryCardState
     extends State<_InventoryGradeSummaryCard> {
   bool _hovered = false;
+  bool _showInformation = false;
 
   @override
   Widget build(BuildContext context) {
@@ -203,6 +204,29 @@ class _InventoryGradeSummaryCardState
                   availableSets: widget.grade.availableSets,
                   accent: widget.ui.accent,
                 ),
+                const SizedBox(height: 12),
+                _GradeInformationToggle(
+                  expanded: _showInformation,
+                  accent: widget.ui.accent,
+                  onTap: () =>
+                      setState(() => _showInformation = !_showInformation),
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: _showInformation
+                      ? Padding(
+                          key: const ValueKey('grade_information'),
+                          padding: const EdgeInsets.only(top: 12),
+                          child: _GradeAvailableInformationPanel(
+                            grade: widget.grade,
+                            accent: widget.ui.accent,
+                            weightFormatter: _weight,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
@@ -213,6 +237,298 @@ class _InventoryGradeSummaryCardState
 
   String _weight(double value) {
     return NumberFormat('##,##0.000', 'en_IN').format(value);
+  }
+}
+
+class _GradeInformationToggle extends StatelessWidget {
+  final bool expanded;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _GradeInformationToggle({
+    required this.expanded,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: expanded ? 0.14 : 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accent.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                expanded
+                    ? Icons.visibility_off_rounded
+                    : Icons.visibility_rounded,
+                size: 16,
+                color: accent,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                expanded ? 'Hide Information' : 'Show Information',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: accent,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GradeAvailableInformationPanel extends StatelessWidget {
+  final _InventoryGradeSummary grade;
+  final Color accent;
+  final String Function(double value) weightFormatter;
+
+  const _GradeAvailableInformationPanel({
+    required this.grade,
+    required this.accent,
+    required this.weightFormatter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (grade.availableInfo.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBF7EF),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEADCC5)),
+        ),
+        child: Text(
+          'No available item detail is recorded in this grade.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: InvColors.textMuted,
+          ),
+        ),
+      );
+    }
+
+    final visibleItems = grade.availableInfo.take(4).toList(growable: false);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFCF7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEADCC5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.fact_check_rounded, color: accent, size: 17),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Available Item Information',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textDark,
+                  ),
+                ),
+              ),
+              Text(
+                '${grade.availableInfo.length} lines',
+                style: GoogleFonts.inter(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w900,
+                  color: InvColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (final item in visibleItems) ...[
+            _GradeAvailableInformationRow(
+              item: item,
+              accent: accent,
+              weightFormatter: weightFormatter,
+            ),
+            if (item != visibleItems.last) const SizedBox(height: 8),
+          ],
+          if (grade.availableInfo.length > visibleItems.length) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '+${grade.availableInfo.length - visibleItems.length} more available lines inside this grade',
+                style: GoogleFonts.inter(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w900,
+                  color: accent,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _GradeAvailableInformationRow extends StatelessWidget {
+  final _InventoryGradeAvailableInfo item;
+  final Color accent;
+  final String Function(double value) weightFormatter;
+
+  const _GradeAvailableInformationRow({
+    required this.item,
+    required this.accent,
+    required this.weightFormatter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${item.itemType} • ${item.segment}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textDark,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: InvColors.successBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${item.pieces} pcs',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.success,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            item.itemName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: InvColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _AvailableInfoMetric(
+                  label: 'Gross',
+                  value: '${weightFormatter(item.grossWeight)} g',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _AvailableInfoMetric(
+                  label: 'Available',
+                  value: '${weightFormatter(item.netWeight)} g',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvailableInfoMetric extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _AvailableInfoMetric({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: InvColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w900,
+              color: InvColors.textDark,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

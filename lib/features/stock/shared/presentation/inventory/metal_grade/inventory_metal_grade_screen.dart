@@ -223,6 +223,7 @@ class _InventoryMetalGradeScreenState
       actualFine: _readDouble(row, 'actual_fine'),
       valuationFine: _readDouble(row, 'valuation_fine'),
       stockValue: _readDouble(row, 'stock_value'),
+      availableInfo: const <_InventoryGradeAvailableInfo>[],
     );
   }
 
@@ -230,6 +231,8 @@ class _InventoryMetalGradeScreenState
     await _ensureInventoryGroupingSchema();
     final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
     final fallbackLabel = _inventoryFallbackGroupLabel(widget.metal);
+    final availableInfoByGrade =
+        await _loadAvailableInfoByGrade(groupExpression);
     final rows = await _db.customSelect(
       '''
       SELECT
@@ -261,29 +264,86 @@ class _InventoryMetalGradeScreenState
       variables: [Variable.withString(widget.metal.label.toLowerCase())],
     ).get();
 
-    return rows
-        .map(
-          (row) => _InventoryGradeSummary(
-            gradeLabel: _readString(row, 'grade_label', fallbackLabel),
-            totalUnits: _readInt(row, 'total_units'),
-            availableUnits: _readInt(row, 'available_units'),
-            soldUnits: _readInt(row, 'sold_units'),
-            totalPieces: _readInt(row, 'total_pieces'),
-            availablePieces: _readInt(row, 'available_pieces'),
-            soldPieces: _readInt(row, 'sold_pieces'),
-            totalSets: _readInt(row, 'total_sets'),
-            availableSets: _readInt(row, 'available_sets'),
-            companyCount: _readInt(row, 'company_count'),
-            purityGroupCount: _readInt(row, 'purity_group_count'),
-            grossWeight: _readDouble(row, 'gross_weight'),
-            netWeight: _readDouble(row, 'net_weight'),
-            soldWeight: _readDouble(row, 'sold_weight'),
-            actualFine: _readDouble(row, 'actual_fine'),
-            valuationFine: _readDouble(row, 'valuation_fine'),
-            stockValue: _readDouble(row, 'stock_value'),
-          ),
-        )
-        .toList(growable: false);
+    return rows.map(
+      (row) {
+        final gradeLabel = _readString(row, 'grade_label', fallbackLabel);
+        return _InventoryGradeSummary(
+          gradeLabel: gradeLabel,
+          totalUnits: _readInt(row, 'total_units'),
+          availableUnits: _readInt(row, 'available_units'),
+          soldUnits: _readInt(row, 'sold_units'),
+          totalPieces: _readInt(row, 'total_pieces'),
+          availablePieces: _readInt(row, 'available_pieces'),
+          soldPieces: _readInt(row, 'sold_pieces'),
+          totalSets: _readInt(row, 'total_sets'),
+          availableSets: _readInt(row, 'available_sets'),
+          companyCount: _readInt(row, 'company_count'),
+          purityGroupCount: _readInt(row, 'purity_group_count'),
+          grossWeight: _readDouble(row, 'gross_weight'),
+          netWeight: _readDouble(row, 'net_weight'),
+          soldWeight: _readDouble(row, 'sold_weight'),
+          actualFine: _readDouble(row, 'actual_fine'),
+          valuationFine: _readDouble(row, 'valuation_fine'),
+          stockValue: _readDouble(row, 'stock_value'),
+          availableInfo: availableInfoByGrade[gradeLabel] ??
+              const <_InventoryGradeAvailableInfo>[],
+        );
+      },
+    ).toList(growable: false);
+  }
+
+  Future<Map<String, List<_InventoryGradeAvailableInfo>>>
+      _loadAvailableInfoByGrade(String groupExpression) async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        $groupExpression AS grade_label,
+        COALESCE(
+          NULLIF(TRIM(u.item_type), ''),
+          NULLIF(TRIM(s.sub_category), ''),
+          'Stock Item'
+        ) AS item_type,
+        COALESCE(NULLIF(TRIM(u.segment), ''), 'General') AS segment,
+        COALESCE(
+          NULLIF(TRIM(u.item_name), ''),
+          NULLIF(TRIM(s.item_name), ''),
+          'Unnamed Item'
+        ) AS item_name,
+        SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN COALESCE(NULLIF(s.quantity, 0), 0) ELSE 1 END) AS pieces,
+        COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
+        COALESCE(SUM($_inventoryAvailableNetWeightExpression), 0.0) AS net_weight
+      FROM stock_item_units u
+      INNER JOIN stock_items s ON s.id = u.stock_item_id
+      WHERE lower(u.metal_type) = ?
+        AND lower(u.status) = 'available'
+      GROUP BY 1, 2, 3, 4
+      ORDER BY 1 ASC, 2 ASC, 3 ASC, 7 DESC
+      ''',
+      variables: [Variable.withString(widget.metal.label.toLowerCase())],
+    ).get();
+
+    final mapped = <String, List<_InventoryGradeAvailableInfo>>{};
+    for (final row in rows) {
+      final gradeLabel = _readString(
+        row,
+        'grade_label',
+        _inventoryFallbackGroupLabel(widget.metal),
+      );
+      mapped
+          .putIfAbsent(gradeLabel, () => <_InventoryGradeAvailableInfo>[])
+          .add(
+            _InventoryGradeAvailableInfo(
+              itemType: _titleCase(_readString(row, 'item_type', 'Stock Item')),
+              segment: _titleCase(_readString(row, 'segment', 'General')),
+              itemName:
+                  _titleCase(_readString(row, 'item_name', 'Unnamed Item')),
+              pieces: _readInt(row, 'pieces'),
+              grossWeight: _readDouble(row, 'gross_weight'),
+              netWeight: _readDouble(row, 'net_weight'),
+            ),
+          );
+    }
+    return mapped;
   }
 
   Future<void> _ensureInventoryGroupingSchema() async {
@@ -305,6 +365,22 @@ class _InventoryMetalGradeScreenState
     if (!columns.contains('packet_count')) {
       await _db.customStatement(
         'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    final unitColumns = await _tableColumns('stock_item_units');
+    if (!unitColumns.contains('item_type')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
+      );
+    }
+    if (!unitColumns.contains('segment')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
+      );
+    }
+    if (!unitColumns.contains('item_name')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN item_name TEXT',
       );
     }
     await StockLotSaleReconciliationService(_db).reconcile();
@@ -767,6 +843,7 @@ class _InventoryGradeSummary {
   final double actualFine;
   final double valuationFine;
   final double stockValue;
+  final List<_InventoryGradeAvailableInfo> availableInfo;
 
   const _InventoryGradeSummary({
     required this.gradeLabel,
@@ -786,9 +863,28 @@ class _InventoryGradeSummary {
     required this.actualFine,
     required this.valuationFine,
     required this.stockValue,
+    required this.availableInfo,
   });
 
   bool get isSoldOut => totalPieces > 0 && availablePieces <= 0;
+}
+
+class _InventoryGradeAvailableInfo {
+  final String itemType;
+  final String segment;
+  final String itemName;
+  final int pieces;
+  final double grossWeight;
+  final double netWeight;
+
+  const _InventoryGradeAvailableInfo({
+    required this.itemType,
+    required this.segment,
+    required this.itemName,
+    required this.pieces,
+    required this.grossWeight,
+    required this.netWeight,
+  });
 }
 
 String _inventoryPrimaryGroupExpression(StockCategory metal) {
