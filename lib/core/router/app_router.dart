@@ -31,9 +31,11 @@ import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/add_stock_hub_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/inventory/inventory_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/low_stock_alert_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_activity/stock_activity_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_search/stock_search_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_summary/stock_summary_screen.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/stock_transfer/stock_transfer_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
 
 import '../../ui/customer/customer_list/customer_list_screen.dart';
@@ -499,14 +501,14 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.stockTransfer,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.stockTransferRoute),
+            builder: (context, state) => StockTransferScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
           GoRoute(
             path: RoutePaths.stockLowAlert,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.lowStockAlertRoute),
+            builder: (context, state) => LowStockAlertScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
           GoRoute(

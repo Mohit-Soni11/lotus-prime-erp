@@ -12,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/settings/metal_costing/metal_costing_theme.dart';
 import '../../../logic/setting/metal_costing/metal_costing_controller.dart';
 import '../../../models/setting/metal_costing/metal_costing_model.dart';
+import '../../../features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
 import 'metal_costing_app_bar.dart';
 import 'metal_costing_purity_screen.dart';
 
@@ -112,6 +113,22 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
     );
   }
 
+  void _openStockValuation(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) => StockValuationScreen(
+          onBack: () => Navigator.maybePop(context),
+        ),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 260),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -168,6 +185,10 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
                     ),
                     const SizedBox(height: 16),
                     _buildGrid(context),
+                    const SizedBox(height: 24),
+                    _ValuationActionCard(
+                      onTap: () => _openStockValuation(context),
+                    ),
                     const SizedBox(height: 24),
                     _buildInfoBanner(),
                     const SizedBox(height: 40),
@@ -437,6 +458,111 @@ class _MetalCardState extends State<_MetalCard>
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ValuationActionCard extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _ValuationActionCard({required this.onTap});
+
+  @override
+  State<_ValuationActionCard> createState() => _ValuationActionCardState();
+}
+
+class _ValuationActionCardState extends State<_ValuationActionCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = MetalCostingColors.goldBrand;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(18),
+          decoration: MetalCostingStyles.metalCard(
+            accent: accent,
+            hovered: _hovered,
+          ),
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: _hovered ? 0.18 : 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: accent.withValues(alpha: _hovered ? 0.45 : 0.22),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.price_check_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Stock Valuation',
+                      style: MetalCostingStyles.cardTitle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Available stock cost, valuation fine and sold profit audit.',
+                      style: MetalCostingStyles.cardSubtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: _hovered ? 0.16 : 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Open',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      MetalCostingIcons.navArrow,
+                      color: accent,
+                      size: 12,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
