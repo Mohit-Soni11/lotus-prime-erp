@@ -179,7 +179,7 @@ class _InventoryMetalGradeScreenState
         SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN CASE WHEN lower(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1) WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0 THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) ELSE 0 END WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_pieces,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
         SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
-        COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
         COALESCE(SUM($_inventoryAvailableNetWeightExpression), 0.0) AS net_weight,
@@ -245,7 +245,7 @@ class _InventoryMetalGradeScreenState
         SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN CASE WHEN lower(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1) WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0 THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) ELSE 0 END WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_pieces,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
         SUM(CASE WHEN lower(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
-        COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
         COALESCE(SUM($_inventoryAvailableNetWeightExpression), 0.0) AS net_weight,
@@ -371,6 +371,11 @@ class _InventoryMetalGradeScreenState
     if (!unitColumns.contains('item_type')) {
       await _db.customStatement(
         'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
+      );
+    }
+    if (!unitColumns.contains('company_name')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
       );
     }
     if (!unitColumns.contains('segment')) {
@@ -907,13 +912,13 @@ String _inventoryPrimaryGroupExpression(StockCategory metal) {
 
   if (metal == StockCategory.silver) {
     return '''
-      lower(COALESCE(
-        NULLIF(TRIM(u.item_name), ''),
-        NULLIF(TRIM(s.item_name), ''),
-        NULLIF(TRIM(u.item_type), ''),
-        NULLIF(TRIM(s.sub_category), ''),
-        'Silver Item'
-      ))
+      CASE
+        WHEN NULLIF(TRIM(COALESCE(u.item_type, s.sub_category, '')), '') IS NOT NULL THEN
+          'item|GROUP|' || lower(TRIM(COALESCE(u.item_type, s.sub_category, '')))
+        WHEN NULLIF(TRIM(COALESCE(u.item_name, s.item_name, '')), '') IS NOT NULL THEN
+          'item|GROUP|' || lower(TRIM(COALESCE(u.item_name, s.item_name, '')))
+        ELSE 'item|GROUP|Silver Item'
+      END
     ''';
   }
 
@@ -937,12 +942,12 @@ String _inventoryFallbackGroupLabel(StockCategory metal) {
 String _inventoryGradeTitle(StockCategory metal, String gradeLabel) {
   final ui = stockMetalUiFor(metal);
   final parts = _inventoryGroupParts(gradeLabel);
-  final label = parts.itemLabel.trim();
+  final label = parts.label.trim();
   if (label.isEmpty || label.toLowerCase() == 'custom grade') {
     return 'Custom ${ui.title} Stock';
   }
   if (metal == StockCategory.gold) {
-    return '${_inventoryGoldGradeText(parts.gradeLabel)} Gold Stock';
+    return '${_inventoryGoldGradeText(parts.label)} Gold Stock';
   }
   if (metal == StockCategory.silver) {
     return '${_titleCase(label)} Silver Stock';
@@ -961,33 +966,40 @@ String _inventoryGradeSubtitle(
   final ui = stockMetalUiFor(metal);
   final parts = _inventoryGroupParts(gradeLabel);
   if (metal == StockCategory.gold) {
-    final gradeText = _inventoryGoldGradeText(parts.gradeLabel);
+    final gradeText = _inventoryGoldGradeText(parts.label);
     return '$gradeText gold • $availableUnits available pcs';
   }
   if (metal == StockCategory.silver) {
     final companyText =
-        companyCount <= 1 ? '1 company' : '$companyCount companies';
-    final purityText = purityGroupCount <= 1
-        ? '1 purity group'
-        : '$purityGroupCount purity groups';
-    return '$availableUnits available pcs • $companyText • $purityText';
+        companyCount <= 1 ? '$companyCount company' : '$companyCount companies';
+    final gradeText = purityGroupCount <= 1
+        ? '$purityGroupCount grade'
+        : '$purityGroupCount grades';
+    return '$availableUnits available pcs • $companyText • $gradeText';
   }
-  final purity = _inventoryGradePurityPercent(parts.gradeLabel);
+  final purity = _inventoryGradePurityPercent(parts.label);
   final purityText = purity == null
-      ? parts.gradeLabel
+      ? parts.label
       : '${_formatInventoryPercent(purity)}% ${ui.title.toLowerCase()} purity';
   return '$purityText • $availableUnits available items';
 }
 
-({String itemLabel, String gradeLabel}) _inventoryGroupParts(String value) {
-  final parts = value.split('|GRADE|');
+enum _InventoryGroupKind { grade, company, item }
+
+({String label, _InventoryGroupKind kind}) _inventoryGroupParts(String value) {
+  final parts = value.split('|GROUP|');
   if (parts.length < 2) {
     final label = value.trim();
-    return (itemLabel: label, gradeLabel: label);
+    return (label: label, kind: _InventoryGroupKind.grade);
   }
+  final type = parts.first.trim().toLowerCase();
   return (
-    itemLabel: parts.first.trim(),
-    gradeLabel: parts.sublist(1).join('|GRADE|').trim(),
+    label: parts.sublist(1).join('|GROUP|').trim(),
+    kind: type == 'company'
+        ? _InventoryGroupKind.company
+        : type == 'item'
+            ? _InventoryGroupKind.item
+            : _InventoryGroupKind.grade,
   );
 }
 

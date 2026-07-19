@@ -64,6 +64,7 @@ class _InventoryBatchGroup {
       for (final unit in units) ...[
         unit.itemName,
         unit.itemType,
+        unit.companyName,
         unit.segment,
         unit.huid,
         unit.unitCode,
@@ -201,6 +202,7 @@ class _InventoryGradeUnit {
   final String unitCode;
   final String batchCode;
   final String itemType;
+  final String companyName;
   final String segment;
   final String itemName;
   final String huid;
@@ -251,6 +253,7 @@ class _InventoryGradeUnit {
     required this.unitCode,
     required this.batchCode,
     required this.itemType,
+    required this.companyName,
     required this.segment,
     required this.itemName,
     required this.huid,
@@ -321,6 +324,7 @@ class _InventoryGradeUnit {
       unitCode: text('unit_code'),
       batchCode: text('batch_code'),
       itemType: text('item_type'),
+      companyName: text('company_name'),
       segment: text('segment'),
       itemName: text('item_name'),
       huid: text('huid'),

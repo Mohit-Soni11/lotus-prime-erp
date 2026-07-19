@@ -12,6 +12,7 @@ class _StockSummaryBody extends StatefulWidget {
 class _StockSummaryBodyState extends State<_StockSummaryBody> {
   String? _selectedMetal;
   String? _selectedGrade;
+  String? _selectedSilverItemType;
 
   StockSummaryController get controller => widget.controller;
 
@@ -19,6 +20,7 @@ class _StockSummaryBodyState extends State<_StockSummaryBody> {
     setState(() {
       _selectedMetal = metal;
       _selectedGrade = null;
+      _selectedSilverItemType = null;
     });
   }
 
@@ -26,10 +28,15 @@ class _StockSummaryBodyState extends State<_StockSummaryBody> {
     setState(() => _selectedGrade = grade);
   }
 
+  void _openSilverItemType(String itemType) {
+    setState(() => _selectedSilverItemType = itemType);
+  }
+
   void _backToMetals() {
     setState(() {
       _selectedMetal = null;
       _selectedGrade = null;
+      _selectedSilverItemType = null;
     });
   }
 
@@ -37,7 +44,15 @@ class _StockSummaryBodyState extends State<_StockSummaryBody> {
     setState(() => _selectedGrade = null);
   }
 
+  void _backToSilverItemTypes() {
+    setState(() => _selectedSilverItemType = null);
+  }
+
   bool handleInternalBack() {
+    if (_selectedSilverItemType != null) {
+      _backToSilverItemTypes();
+      return true;
+    }
     if (_selectedGrade != null) {
       _backToGrades();
       return true;
@@ -104,6 +119,7 @@ class _StockSummaryBodyState extends State<_StockSummaryBody> {
   Widget _buildSummaryLevel() {
     final selectedMetal = _selectedMetal;
     final selectedGrade = _selectedGrade;
+    final selectedSilverItemType = _selectedSilverItemType;
     if (selectedMetal == null) {
       return _MetalSummaryPanel(
         metals: controller.metals,
@@ -118,6 +134,34 @@ class _StockSummaryBodyState extends State<_StockSummaryBody> {
               selectedMetal.trim().toLowerCase(),
         )
         .toList(growable: false);
+
+    if (selectedMetal.trim().toLowerCase() == 'silver') {
+      final silverItems = controller.items
+          .where((item) => item.metal.trim().toLowerCase() == 'silver')
+          .toList(growable: false);
+
+      if (selectedSilverItemType == null) {
+        return _SilverItemTypeSummaryPanel(
+          items: silverItems,
+          onBack: _backToMetals,
+          onOpen: _openSilverItemType,
+        );
+      }
+
+      final itemTypeRows = silverItems
+          .where(
+            (item) =>
+                _silverSummaryItemType(item).toLowerCase() ==
+                selectedSilverItemType.trim().toLowerCase(),
+          )
+          .toList(growable: false);
+
+      return _SilverItemTypeDetailPanel(
+        itemType: selectedSilverItemType,
+        items: itemTypeRows,
+        onBack: _backToSilverItemTypes,
+      );
+    }
 
     if (selectedGrade == null) {
       return _GradeSummaryPanel(

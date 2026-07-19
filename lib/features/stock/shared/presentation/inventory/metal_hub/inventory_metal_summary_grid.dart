@@ -24,6 +24,10 @@ class InventoryMetalSummaryGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        if (cards.isEmpty) {
+          return const _InventoryMetalEmptyState();
+        }
+
         final cardWidth = constraints.maxWidth >= 960
             ? (constraints.maxWidth - 16) / 2
             : constraints.maxWidth;
@@ -91,7 +95,7 @@ class InventoryMetalSummaryGrid extends StatelessWidget {
         itemCount: stats.platinumCount,
         weight: stats.platinumWeight,
       ),
-    ];
+    ].where((card) => card.hasStock).toList(growable: false);
   }
 
   _InventoryMetalCardData _card({
@@ -104,6 +108,7 @@ class InventoryMetalSummaryGrid extends StatelessWidget {
     final ui = stockMetalUiFor(category);
     return _InventoryMetalCardData(
       category: category,
+      itemCount: itemCount,
       title: title,
       subtitle: subtitle,
       primaryLabel: 'Available Items',
@@ -128,6 +133,7 @@ class InventoryMetalSummaryGrid extends StatelessWidget {
 
 class _InventoryMetalCardData {
   final StockCategory category;
+  final int itemCount;
   final String title;
   final String subtitle;
   final String primaryLabel;
@@ -145,6 +151,7 @@ class _InventoryMetalCardData {
 
   const _InventoryMetalCardData({
     required this.category,
+    required this.itemCount,
     required this.title,
     required this.subtitle,
     required this.primaryLabel,
@@ -160,4 +167,50 @@ class _InventoryMetalCardData {
     required this.gradient,
     required this.textOnGradient,
   });
+
+  bool get hasStock => itemCount > 0;
+}
+
+class _InventoryMetalEmptyState extends StatelessWidget {
+  const _InventoryMetalEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.inventory_2_outlined,
+            color: Color(0xFFB45309),
+            size: 30,
+          ),
+          SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Inventory ledger cards will appear once stock is available.',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF374151),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

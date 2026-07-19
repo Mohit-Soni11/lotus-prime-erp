@@ -425,7 +425,8 @@ class StockSummaryController extends ChangeNotifier {
         ), 0) AS total_pieces,
         COALESCE(SUM($_availableQuantityExpression), 0) AS available_pieces,
         COALESCE(SUM($_soldQuantityExpression), 0) AS sold_pieces,
-        COUNT(DISTINCT NULLIF(TRIM(COALESCE(s.company_name, '')), '')) AS company_count,
+        COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
+        GROUP_CONCAT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_names,
         COUNT(DISTINCT CASE WHEN COALESCE(u.purity_percent, 0.0) > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM(CASE WHEN LOWER(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END), 0) AS total_sets,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' AND LOWER(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END), 0) AS available_sets,
@@ -464,6 +465,7 @@ class StockSummaryController extends ChangeNotifier {
               availablePieces: _readInt(row, 'available_pieces'),
               soldPieces: _readInt(row, 'sold_pieces'),
               companyCount: _readInt(row, 'company_count'),
+              companyNames: _readCsv(row, 'company_names'),
               purityGroupCount: _readInt(row, 'purity_group_count'),
               totalSets: _readInt(row, 'total_sets'),
               availableSets: _readInt(row, 'available_sets'),
@@ -567,20 +569,18 @@ class StockSummaryController extends ChangeNotifier {
   }
 
   Future<List<StockSummaryMovement>> _loadRecentMovements() async {
-    final rows = await _db.customSelect('''
-      SELECT
-        movement_type,
-        COALESCE(source_number, '') AS source_number,
-        COALESCE(metal_type_snapshot, '') AS metal,
-        COALESCE(item_name_snapshot, '') AS item_name,
-        ABS(quantity_delta) AS quantity,
-        ABS(net_weight_delta) AS net_weight,
-        occurred_at
-      FROM stock_movements
-      WHERE movement_type IN ('IN', 'SALE', 'SALE_RESTORE')
-      ORDER BY occurred_at DESC, id DESC
-      LIMIT 12
-    ''').get();
+    const limitPerType = 12;
+    final rows = <drift.QueryRow>[
+      ...await _loadRecentMovementRows('IN', limitPerType),
+      ...await _loadRecentMovementRows('SALE', limitPerType),
+      ...await _loadRecentMovementRows('SALE_RESTORE', limitPerType),
+    ]..sort((a, b) {
+        final leftDate = _readDate(a, 'occurred_at') ?? DateTime(0);
+        final rightDate = _readDate(b, 'occurred_at') ?? DateTime(0);
+        final dateCompare = rightDate.compareTo(leftDate);
+        if (dateCompare != 0) return dateCompare;
+        return _readInt(b, 'id').compareTo(_readInt(a, 'id'));
+      });
 
     return rows
         .map(
@@ -597,6 +597,33 @@ class StockSummaryController extends ChangeNotifier {
         .toList(growable: false);
   }
 
+  Future<List<drift.QueryRow>> _loadRecentMovementRows(
+    String movementType,
+    int limit,
+  ) {
+    return _db.customSelect(
+      '''
+      SELECT
+        id,
+        movement_type,
+        COALESCE(source_number, '') AS source_number,
+        COALESCE(metal_type_snapshot, '') AS metal,
+        COALESCE(item_name_snapshot, '') AS item_name,
+        ABS(quantity_delta) AS quantity,
+        ABS(net_weight_delta) AS net_weight,
+        occurred_at
+      FROM stock_movements
+      WHERE movement_type = ?
+      ORDER BY occurred_at DESC, id DESC
+      LIMIT ?
+      ''',
+      variables: [
+        drift.Variable<String>(movementType),
+        drift.Variable<int>(limit),
+      ],
+    ).get();
+  }
+
   int _readInt(drift.QueryRow row, String column) {
     final value = row.data[column];
     return value is num ? value.toInt() : 0;
@@ -610,6 +637,19 @@ class StockSummaryController extends ChangeNotifier {
   String _readString(drift.QueryRow row, String column) {
     final value = row.data[column];
     return value is String ? value.trim() : '';
+  }
+
+  List<String> _readCsv(drift.QueryRow row, String column) {
+    final value = row.data[column];
+    if (value is! String || value.trim().isEmpty) return const [];
+    final seen = <String>{};
+    final names = <String>[];
+    for (final part in value.split(',')) {
+      final name = part.trim();
+      if (name.isEmpty || !seen.add(name.toLowerCase())) continue;
+      names.add(name);
+    }
+    return names;
   }
 
   String _key(String value) => value.trim().toLowerCase();
@@ -642,6 +682,22 @@ class StockSummaryController extends ChangeNotifier {
     if (!columns.contains('packet_count')) {
       await _db.customStatement(
         'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    final unitColumns = await _tableColumns('stock_item_units');
+    if (!unitColumns.contains('item_type')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
+      );
+    }
+    if (!unitColumns.contains('company_name')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
+      );
+    }
+    if (!unitColumns.contains('segment')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
       );
     }
   }

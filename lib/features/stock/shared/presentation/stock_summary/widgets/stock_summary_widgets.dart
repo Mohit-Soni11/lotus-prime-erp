@@ -418,31 +418,6 @@ bool _hasGradeInventory(StockSummaryGrade grade) {
       grade.soldWeight > 0;
 }
 
-class _RecentMovementPanel extends StatelessWidget {
-  final List<StockSummaryMovement> records;
-
-  const _RecentMovementPanel({required this.records});
-
-  @override
-  Widget build(BuildContext context) {
-    return _SummaryPanel(
-      title: 'Recent Stock Movement',
-      subtitle: 'Latest inward, sold and restored inventory activity.',
-      icon: Icons.timeline_rounded,
-      child: records.isEmpty
-          ? const _SummaryEmptyState(message: 'No stock movement recorded yet.')
-          : Column(
-              children: [
-                for (final record in records) ...[
-                  _MovementSummaryRow(record: record),
-                  if (record != records.last) const SizedBox(height: 10),
-                ],
-              ],
-            ),
-    );
-  }
-}
-
 class _ItemSummaryCard extends StatelessWidget {
   final StockSummaryItem item;
 
@@ -706,104 +681,6 @@ class _PanelActionButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _MovementSummaryRow extends StatelessWidget {
-  final StockSummaryMovement record;
-
-  const _MovementSummaryRow({required this.record});
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = record.isSold
-        ? InvColors.danger
-        : record.isRestore
-            ? const Color(0xFF2563EB)
-            : InvColors.success;
-    final label = record.isSold
-        ? 'Sold'
-        : record.isRestore
-            ? 'Restored'
-            : 'Added';
-    return _SummaryRowShell(
-      accent: accent,
-      icon: record.isSold
-          ? Icons.point_of_sale_rounded
-          : record.isRestore
-              ? Icons.restore_rounded
-              : Icons.add_business_rounded,
-      title: '$label | ${_fallback(record.itemName, 'Stock Item')}',
-      subtitle: [
-        _fallback(record.metal, 'Metal'),
-        if (record.sourceNumber.trim().isNotEmpty) record.sourceNumber,
-        _summaryDate(record.occurredAt),
-      ].join(' | '),
-      metrics: [
-        _InlineMetric(label: 'PCS', value: record.quantity.toString()),
-        _InlineMetric(
-          label: 'Net',
-          value: '${_summaryWeight(record.netWeight)} g',
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryRowShell extends StatelessWidget {
-  final Color accent;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final List<Widget> metrics;
-
-  const _SummaryRowShell({
-    required this.accent,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.metrics,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final content = Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEADCC5)),
-      ),
-      child: Row(
-        children: [
-          _SummaryIconBox(icon: icon, accent: accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _summaryStrongStyle(fontSize: 13.5),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _summaryMutedStyle(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Wrap(spacing: 10, runSpacing: 10, children: metrics),
-        ],
-      ),
-    );
-    return content;
   }
 }
 
@@ -1143,11 +1020,13 @@ String _fallback(String value, String fallback) {
 }
 
 String _itemSubtitle(StockSummaryItem item) {
-  final companyText = item.companyCount <= 0
+  final companyCount =
+      item.companyNames.isEmpty ? item.companyCount : item.companyNames.length;
+  final companyText = companyCount <= 0
       ? 'company not tagged'
-      : item.companyCount == 1
+      : companyCount == 1
           ? '1 company'
-          : '${item.companyCount} companies';
+          : '$companyCount companies';
   final purityText = item.purityGroupCount <= 0
       ? 'purity not tagged'
       : item.purityGroupCount == 1

@@ -54,6 +54,7 @@ class _InventoryGradeDetailScreenState
         u.unit_code AS unit_code,
         COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Unbatched Stock') AS batch_code,
         u.item_type AS item_type,
+        COALESCE(NULLIF(TRIM(u.company_name), ''), NULLIF(TRIM(s.company_name), ''), '') AS company_name,
         u.segment AS segment,
         u.item_name AS item_name,
         u.huid AS huid,
@@ -223,9 +224,22 @@ class _InventoryGradeDetailScreenState
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                        child: _buildItemSummarySection(ui, batches),
+                        child: widget.metal == StockCategory.silver
+                            ? _SilverBreakdownSection(
+                                batches: batches,
+                                ui: ui,
+                                weightFormatter: _weight,
+                              )
+                            : _buildItemSummarySection(ui, batches),
                       ),
                     ),
+                    if (widget.metal == StockCategory.silver)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                          child: _buildItemSummarySection(ui, batches),
+                        ),
+                      ),
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),

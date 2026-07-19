@@ -148,6 +148,7 @@ class StockSummaryItem {
   final int availablePieces;
   final int soldPieces;
   final int companyCount;
+  final List<String> companyNames;
   final int purityGroupCount;
   final int totalSets;
   final int availableSets;
@@ -170,6 +171,7 @@ class StockSummaryItem {
     required this.availablePieces,
     required this.soldPieces,
     required this.companyCount,
+    this.companyNames = const [],
     required this.purityGroupCount,
     required this.totalSets,
     required this.availableSets,

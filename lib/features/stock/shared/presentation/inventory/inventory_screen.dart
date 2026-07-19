@@ -29,6 +29,7 @@ part 'metal_grade/batch_detail/inventory_batch_cleanup_dialog.dart';
 part 'metal_grade/batch_detail/inventory_batch_pdf_service.dart';
 part 'metal_grade/batch_detail/inventory_batch_status_pdf_service.dart';
 part 'metal_grade/batch_detail/inventory_batch_helpers.dart';
+part 'metal_grade/inventory_silver_breakdown_section.dart';
 part 'metal_grade/inventory_grade_summary_card.dart';
 part 'metal_grade/inventory_metal_grade_screen.dart';
 part 'screen_body/inventory_body.dart';

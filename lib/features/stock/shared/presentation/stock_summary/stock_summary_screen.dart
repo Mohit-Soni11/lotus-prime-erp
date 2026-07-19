@@ -12,6 +12,8 @@ import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/stock_summary_app_bar.dart';
 part 'body/stock_summary_body.dart';
+part 'widgets/stock_summary_recent_movement_panel.dart';
+part 'widgets/stock_summary_silver_item_type_panel.dart';
 part 'widgets/stock_summary_widgets.dart';
 
 class StockSummaryScreen extends StatefulWidget {
