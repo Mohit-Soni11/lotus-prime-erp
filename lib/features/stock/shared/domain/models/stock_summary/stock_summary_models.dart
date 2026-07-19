@@ -53,8 +53,18 @@ class StockSummaryOverview {
 
 class StockSummaryMetal {
   final String metal;
+  final int openingUnits;
+  final int inwardUnits;
+  final int outwardUnits;
+  final int restoredUnits;
+  final int closingUnits;
   final int availableUnits;
   final int soldUnits;
+  final double openingWeight;
+  final double inwardWeight;
+  final double outwardWeight;
+  final double restoredWeight;
+  final double closingWeight;
   final double grossWeight;
   final double netWeight;
   final double soldWeight;
@@ -63,8 +73,18 @@ class StockSummaryMetal {
 
   const StockSummaryMetal({
     required this.metal,
+    required this.openingUnits,
+    required this.inwardUnits,
+    required this.outwardUnits,
+    required this.restoredUnits,
+    required this.closingUnits,
     required this.availableUnits,
     required this.soldUnits,
+    required this.openingWeight,
+    required this.inwardWeight,
+    required this.outwardWeight,
+    required this.restoredWeight,
+    required this.closingWeight,
     required this.grossWeight,
     required this.netWeight,
     required this.soldWeight,
@@ -76,8 +96,18 @@ class StockSummaryMetal {
 class StockSummaryGrade {
   final String metal;
   final String gradeLabel;
+  final int openingUnits;
+  final int inwardUnits;
+  final int outwardUnits;
+  final int restoredUnits;
+  final int closingUnits;
   final int availableUnits;
   final int soldUnits;
+  final double openingWeight;
+  final double inwardWeight;
+  final double outwardWeight;
+  final double restoredWeight;
+  final double closingWeight;
   final double netWeight;
   final double soldWeight;
   final double totalWeight;
@@ -86,8 +116,18 @@ class StockSummaryGrade {
   const StockSummaryGrade({
     required this.metal,
     required this.gradeLabel,
+    required this.openingUnits,
+    required this.inwardUnits,
+    required this.outwardUnits,
+    required this.restoredUnits,
+    required this.closingUnits,
     required this.availableUnits,
     required this.soldUnits,
+    required this.openingWeight,
+    required this.inwardWeight,
+    required this.outwardWeight,
+    required this.restoredWeight,
+    required this.closingWeight,
     required this.netWeight,
     required this.soldWeight,
     required this.totalWeight,
@@ -97,6 +137,7 @@ class StockSummaryGrade {
 
 class StockSummaryItem {
   final String metal;
+  final String gradeLabel;
   final String itemName;
   final String itemType;
   final String segment;
@@ -118,6 +159,7 @@ class StockSummaryItem {
 
   const StockSummaryItem({
     required this.metal,
+    required this.gradeLabel,
     required this.itemName,
     required this.itemType,
     required this.segment,

@@ -92,6 +92,33 @@ LEFT JOIN (
 ) sm ON sm.stock_item_id = s.id
 ''';
 
+const String _metalLabelExpression = '''
+CASE
+  WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
+  WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
+  WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
+  WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
+  ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
+END
+''';
+
+const String _gradeLabelExpression = '''
+CASE
+  WHEN LOWER(u.metal_type) = 'gold' THEN
+    CASE
+      WHEN ABS(COALESCE(u.purity_percent, 0.0) - 91.6) <= 0.6 THEN '22KT (91.6%)'
+      WHEN ABS(COALESCE(u.purity_percent, 0.0) - 92.0) <= 0.6 THEN '22KT (91.6%)'
+      WHEN ABS(COALESCE(u.purity_percent, 0.0) - 75.0) <= 0.6 THEN '18KT (75%)'
+      WHEN ABS(COALESCE(u.purity_percent, 0.0) - 99.9) <= 0.6 THEN '24KT (99.9%)'
+      WHEN ABS(COALESCE(u.purity_percent, 0.0) - 58.5) <= 0.6 THEN '14KT (58.5%)'
+      WHEN ABS(COALESCE(u.purity_percent, 0.0) - 37.5) <= 0.6 THEN '9KT (37.5%)'
+      ELSE printf('%.2f%% Gold', COALESCE(u.purity_percent, 0.0))
+    END
+  WHEN LOWER(u.metal_type) = 'silver' THEN printf('%.0f%% Silver', COALESCE(u.purity_percent, 0.0))
+  ELSE printf('%.2f%% Purity', COALESCE(u.purity_percent, 0.0))
+END
+''';
+
 class StockSummaryController extends ChangeNotifier {
   final AppDatabase _db;
 
@@ -128,8 +155,12 @@ class StockSummaryController extends ChangeNotifier {
 
       final current = await _loadCurrentSnapshot();
       final today = await _loadTodayMovement(startOfDay, endOfDay);
-      final metals = await _loadMetalSummary();
-      final grades = await _loadGradeSummary();
+      final metalMovement =
+          await _loadMetalPeriodMovement(startOfDay, endOfDay);
+      final gradeMovement =
+          await _loadGradePeriodMovement(startOfDay, endOfDay);
+      final metals = await _loadMetalSummary(metalMovement);
+      final grades = await _loadGradeSummary(gradeMovement);
       final items = await _loadItemSummary();
       final movements = await _loadRecentMovements();
 
@@ -236,16 +267,12 @@ class StockSummaryController extends ChangeNotifier {
     );
   }
 
-  Future<List<StockSummaryMetal>> _loadMetalSummary() async {
+  Future<List<StockSummaryMetal>> _loadMetalSummary(
+    Map<String, _PeriodMovement> periodMovement,
+  ) async {
     final rows = await _db.customSelect('''
       SELECT
-        CASE
-          WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
-          WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
-          WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
-          WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
-          ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
-        END AS metal,
+        $_metalLabelExpression AS metal,
         COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
         COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.gross_weight ELSE 0 END), 0.0) AS gross_weight,
@@ -262,33 +289,55 @@ class StockSummaryController extends ChangeNotifier {
 
     return rows
         .map(
-          (row) => StockSummaryMetal(
-            metal: _readString(row, 'metal'),
-            availableUnits: _readInt(row, 'available_units'),
-            soldUnits: _readInt(row, 'sold_units'),
-            grossWeight: _readDouble(row, 'gross_weight'),
-            netWeight: _readDouble(row, 'net_weight'),
-            soldWeight: _readDouble(row, 'sold_weight'),
-            totalWeight: _readDouble(row, 'net_weight') +
-                _readDouble(row, 'sold_weight'),
-            actualFine: _readDouble(row, 'actual_fine'),
-          ),
+          (row) {
+            final metal = _readString(row, 'metal');
+            final closingUnits = _readInt(row, 'available_units');
+            final closingWeight = _readDouble(row, 'net_weight');
+            final movement =
+                periodMovement[_key(metal)] ?? const _PeriodMovement.empty();
+            return StockSummaryMetal(
+              metal: metal,
+              openingUnits: _positiveInt(
+                closingUnits -
+                    movement.inwardUnits -
+                    movement.restoredUnits +
+                    movement.outwardUnits,
+              ),
+              inwardUnits: movement.inwardUnits,
+              outwardUnits: movement.outwardUnits,
+              restoredUnits: movement.restoredUnits,
+              closingUnits: closingUnits,
+              availableUnits: closingUnits,
+              soldUnits: _readInt(row, 'sold_units'),
+              openingWeight: _positiveDouble(
+                closingWeight -
+                    movement.inwardWeight -
+                    movement.restoredWeight +
+                    movement.outwardWeight,
+              ),
+              inwardWeight: movement.inwardWeight,
+              outwardWeight: movement.outwardWeight,
+              restoredWeight: movement.restoredWeight,
+              closingWeight: closingWeight,
+              grossWeight: _readDouble(row, 'gross_weight'),
+              netWeight: closingWeight,
+              soldWeight: _readDouble(row, 'sold_weight'),
+              totalWeight: closingWeight + _readDouble(row, 'sold_weight'),
+              actualFine: _readDouble(row, 'actual_fine'),
+            );
+          },
         )
         .where((item) => item.availableUnits > 0 || item.soldUnits > 0)
         .toList(growable: false);
   }
 
-  Future<List<StockSummaryGrade>> _loadGradeSummary() async {
+  Future<List<StockSummaryGrade>> _loadGradeSummary(
+    Map<String, _PeriodMovement> periodMovement,
+  ) async {
     final rows = await _db.customSelect('''
       SELECT
-        CASE
-          WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
-          WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
-          WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
-          WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
-          ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
-        END AS metal,
-        printf('%.0f%% Purity', COALESCE(u.purity_percent, 0.0)) AS grade_label,
+        $_metalLabelExpression AS metal,
+        $_gradeLabelExpression AS grade_label,
         COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
         COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS net_weight,
@@ -298,24 +347,51 @@ class StockSummaryController extends ChangeNotifier {
       LEFT JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       $_soldWeightJoin
-      GROUP BY LOWER(u.metal_type), ROUND(COALESCE(u.purity_percent, 0.0), 2)
-      ORDER BY LOWER(u.metal_type), u.purity_percent DESC
+      GROUP BY 1, 2
+      ORDER BY LOWER(u.metal_type), MAX(u.purity_percent) DESC
       LIMIT 24
     ''').get();
 
     return rows
         .map(
-          (row) => StockSummaryGrade(
-            metal: _readString(row, 'metal'),
-            gradeLabel: _readString(row, 'grade_label'),
-            availableUnits: _readInt(row, 'available_units'),
-            soldUnits: _readInt(row, 'sold_units'),
-            netWeight: _readDouble(row, 'net_weight'),
-            soldWeight: _readDouble(row, 'sold_weight'),
-            totalWeight: _readDouble(row, 'net_weight') +
-                _readDouble(row, 'sold_weight'),
-            actualFine: _readDouble(row, 'actual_fine'),
-          ),
+          (row) {
+            final metal = _readString(row, 'metal');
+            final gradeLabel = _readString(row, 'grade_label');
+            final closingUnits = _readInt(row, 'available_units');
+            final closingWeight = _readDouble(row, 'net_weight');
+            final movement = periodMovement[_key('$metal|$gradeLabel')] ??
+                const _PeriodMovement.empty();
+            return StockSummaryGrade(
+              metal: metal,
+              gradeLabel: gradeLabel,
+              openingUnits: _positiveInt(
+                closingUnits -
+                    movement.inwardUnits -
+                    movement.restoredUnits +
+                    movement.outwardUnits,
+              ),
+              inwardUnits: movement.inwardUnits,
+              outwardUnits: movement.outwardUnits,
+              restoredUnits: movement.restoredUnits,
+              closingUnits: closingUnits,
+              availableUnits: closingUnits,
+              soldUnits: _readInt(row, 'sold_units'),
+              openingWeight: _positiveDouble(
+                closingWeight -
+                    movement.inwardWeight -
+                    movement.restoredWeight +
+                    movement.outwardWeight,
+              ),
+              inwardWeight: movement.inwardWeight,
+              outwardWeight: movement.outwardWeight,
+              restoredWeight: movement.restoredWeight,
+              closingWeight: closingWeight,
+              netWeight: closingWeight,
+              soldWeight: _readDouble(row, 'sold_weight'),
+              totalWeight: closingWeight + _readDouble(row, 'sold_weight'),
+              actualFine: _readDouble(row, 'actual_fine'),
+            );
+          },
         )
         .where((item) => item.availableUnits > 0 || item.soldUnits > 0)
         .toList(growable: false);
@@ -324,16 +400,12 @@ class StockSummaryController extends ChangeNotifier {
   Future<List<StockSummaryItem>> _loadItemSummary() async {
     final rows = await _db.customSelect('''
       SELECT
-        CASE
-          WHEN LOWER(u.metal_type) = 'gold' THEN 'Gold'
-          WHEN LOWER(u.metal_type) = 'silver' THEN 'Silver'
-          WHEN LOWER(u.metal_type) = 'diamond' THEN 'Diamond'
-          WHEN LOWER(u.metal_type) = 'platinum' THEN 'Platinum'
-          ELSE COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')
-        END AS metal,
+        $_metalLabelExpression AS metal,
+        $_gradeLabelExpression AS grade_label,
         COALESCE(
+          NULLIF(TRIM(u.item_type), ''),
+          NULLIF(TRIM(s.sub_category), ''),
           NULLIF(TRIM(u.item_name), ''),
-          NULLIF(TRIM(s.item_name), ''),
           'Unnamed Stock'
         ) AS item_name,
         COALESCE(
@@ -366,11 +438,12 @@ class StockSummaryController extends ChangeNotifier {
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       $_soldWeightJoin
       GROUP BY
-        LOWER(COALESCE(NULLIF(TRIM(u.metal_type), ''), 'other')),
-        LOWER(COALESCE(NULLIF(TRIM(u.item_name), ''), NULLIF(TRIM(s.item_name), ''), 'unnamed stock'))
+        1,
+        2,
+        LOWER(COALESCE(NULLIF(TRIM(u.item_type), ''), NULLIF(TRIM(s.sub_category), ''), NULLIF(TRIM(u.item_name), ''), 'unnamed stock')),
+        LOWER(COALESCE(NULLIF(TRIM(u.segment), ''), 'general'))
       HAVING total_pieces > 0 OR sold_pieces > 0 OR total_units > 0
-      ORDER BY available_pieces DESC, total_pieces DESC, item_name ASC
-      LIMIT 18
+      ORDER BY metal ASC, grade_label ASC, available_pieces DESC, total_pieces DESC, item_name ASC
     ''').get();
 
     return rows
@@ -380,6 +453,7 @@ class StockSummaryController extends ChangeNotifier {
             final soldWeight = _readDouble(row, 'sold_weight');
             return StockSummaryItem(
               metal: _readString(row, 'metal'),
+              gradeLabel: _readString(row, 'grade_label'),
               itemName: _readString(row, 'item_name'),
               itemType: _readString(row, 'item_type'),
               segment: _readString(row, 'segment'),
@@ -403,6 +477,93 @@ class StockSummaryController extends ChangeNotifier {
         )
         .where((item) => item.totalPieces > 0 || item.totalUnits > 0)
         .toList(growable: false);
+  }
+
+  Future<Map<String, _PeriodMovement>> _loadMetalPeriodMovement(
+    DateTime startOfDay,
+    DateTime endOfDay,
+  ) async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        CASE
+          WHEN LOWER(metal_type_snapshot) = 'gold' THEN 'Gold'
+          WHEN LOWER(metal_type_snapshot) = 'silver' THEN 'Silver'
+          WHEN LOWER(metal_type_snapshot) = 'diamond' THEN 'Diamond'
+          WHEN LOWER(metal_type_snapshot) = 'platinum' THEN 'Platinum'
+          ELSE COALESCE(NULLIF(TRIM(metal_type_snapshot), ''), 'Other')
+        END AS metal,
+        COALESCE(SUM(CASE WHEN movement_type = 'IN' THEN ABS(quantity_delta) ELSE 0 END), 0) AS inward_units,
+        COALESCE(SUM(CASE WHEN movement_type = 'SALE' THEN ABS(quantity_delta) ELSE 0 END), 0) AS outward_units,
+        COALESCE(SUM(CASE WHEN movement_type = 'SALE_RESTORE' THEN ABS(quantity_delta) ELSE 0 END), 0) AS restored_units,
+        COALESCE(SUM(CASE WHEN movement_type = 'IN' THEN ABS(net_weight_delta) ELSE 0 END), 0.0) AS inward_weight,
+        COALESCE(SUM(CASE WHEN movement_type = 'SALE' THEN ABS(net_weight_delta) ELSE 0 END), 0.0) AS outward_weight,
+        COALESCE(SUM(CASE WHEN movement_type = 'SALE_RESTORE' THEN ABS(net_weight_delta) ELSE 0 END), 0.0) AS restored_weight
+      FROM stock_movements
+      WHERE occurred_at >= ? AND occurred_at < ?
+      GROUP BY 1
+      ''',
+      variables: [
+        drift.Variable.withDateTime(startOfDay),
+        drift.Variable.withDateTime(endOfDay),
+      ],
+    ).get();
+
+    return {
+      for (final row in rows)
+        _key(_readString(row, 'metal')): _PeriodMovement(
+          inwardUnits: _readInt(row, 'inward_units'),
+          outwardUnits: _readInt(row, 'outward_units'),
+          restoredUnits: _readInt(row, 'restored_units'),
+          inwardWeight: _readDouble(row, 'inward_weight'),
+          outwardWeight: _readDouble(row, 'outward_weight'),
+          restoredWeight: _readDouble(row, 'restored_weight'),
+        ),
+    };
+  }
+
+  Future<Map<String, _PeriodMovement>> _loadGradePeriodMovement(
+    DateTime startOfDay,
+    DateTime endOfDay,
+  ) async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        $_metalLabelExpression AS metal,
+        $_gradeLabelExpression AS grade_label,
+        COALESCE(SUM(CASE WHEN m.movement_type = 'IN' THEN ABS(m.quantity_delta) ELSE 0 END), 0) AS inward_units,
+        COALESCE(SUM(CASE WHEN m.movement_type = 'SALE' THEN ABS(m.quantity_delta) ELSE 0 END), 0) AS outward_units,
+        COALESCE(SUM(CASE WHEN m.movement_type = 'SALE_RESTORE' THEN ABS(m.quantity_delta) ELSE 0 END), 0) AS restored_units,
+        COALESCE(SUM(CASE WHEN m.movement_type = 'IN' THEN ABS(m.net_weight_delta) ELSE 0 END), 0.0) AS inward_weight,
+        COALESCE(SUM(CASE WHEN m.movement_type = 'SALE' THEN ABS(m.net_weight_delta) ELSE 0 END), 0.0) AS outward_weight,
+        COALESCE(SUM(CASE WHEN m.movement_type = 'SALE_RESTORE' THEN ABS(m.net_weight_delta) ELSE 0 END), 0.0) AS restored_weight
+      FROM stock_movements m
+      LEFT JOIN stock_item_units u ON u.id = (
+        SELECT MIN(first_unit.id)
+        FROM stock_item_units first_unit
+        WHERE first_unit.stock_item_id = m.stock_item_id
+      )
+      WHERE m.occurred_at >= ? AND m.occurred_at < ?
+      GROUP BY 1, 2
+      ''',
+      variables: [
+        drift.Variable.withDateTime(startOfDay),
+        drift.Variable.withDateTime(endOfDay),
+      ],
+    ).get();
+
+    return {
+      for (final row in rows)
+        _key('${_readString(row, 'metal')}|${_readString(row, 'grade_label')}'):
+            _PeriodMovement(
+          inwardUnits: _readInt(row, 'inward_units'),
+          outwardUnits: _readInt(row, 'outward_units'),
+          restoredUnits: _readInt(row, 'restored_units'),
+          inwardWeight: _readDouble(row, 'inward_weight'),
+          outwardWeight: _readDouble(row, 'outward_weight'),
+          restoredWeight: _readDouble(row, 'restored_weight'),
+        ),
+    };
   }
 
   Future<List<StockSummaryMovement>> _loadRecentMovements() async {
@@ -450,6 +611,8 @@ class StockSummaryController extends ChangeNotifier {
     final value = row.data[column];
     return value is String ? value.trim() : '';
   }
+
+  String _key(String value) => value.trim().toLowerCase();
 
   DateTime? _readDate(drift.QueryRow row, String column) {
     final value = row.data[column];
@@ -525,4 +688,30 @@ class _TodayMovement {
     required this.outwardWeight,
     required this.restoredWeight,
   });
+}
+
+class _PeriodMovement {
+  final int inwardUnits;
+  final int outwardUnits;
+  final int restoredUnits;
+  final double inwardWeight;
+  final double outwardWeight;
+  final double restoredWeight;
+
+  const _PeriodMovement({
+    required this.inwardUnits,
+    required this.outwardUnits,
+    required this.restoredUnits,
+    required this.inwardWeight,
+    required this.outwardWeight,
+    required this.restoredWeight,
+  });
+
+  const _PeriodMovement.empty()
+      : inwardUnits = 0,
+        outwardUnits = 0,
+        restoredUnits = 0,
+        inwardWeight = 0,
+        outwardWeight = 0,
+        restoredWeight = 0;
 }

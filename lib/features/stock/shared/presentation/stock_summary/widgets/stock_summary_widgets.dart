@@ -154,17 +154,32 @@ class _StockSummaryMetricGrid extends StatelessWidget {
 }
 
 class _ItemSummaryPanel extends StatelessWidget {
+  final String title;
+  final String subtitle;
   final List<StockSummaryItem> items;
+  final VoidCallback? onBack;
 
-  const _ItemSummaryPanel({required this.items});
+  const _ItemSummaryPanel({
+    this.title = 'Item-wise Stock Summary',
+    this.subtitle =
+        'Available stock, sold movement and weight status grouped by item.',
+    required this.items,
+    this.onBack,
+  });
 
   @override
   Widget build(BuildContext context) {
     return _SummaryPanel(
-      title: 'Item-wise Stock Summary',
-      subtitle:
-          'Available stock, sold movement and weight status grouped by item.',
+      title: title,
+      subtitle: subtitle,
       icon: Icons.inventory_2_rounded,
+      action: onBack == null
+          ? null
+          : _PanelActionButton(
+              label: 'Back to Grades',
+              icon: Icons.arrow_back_rounded,
+              onTap: onBack!,
+            ),
       child: items.isEmpty
           ? const _SummaryEmptyState(message: 'No item stock found yet.')
           : LayoutBuilder(
@@ -196,53 +211,211 @@ class _ItemSummaryPanel extends StatelessWidget {
 
 class _MetalSummaryPanel extends StatelessWidget {
   final List<StockSummaryMetal> metals;
+  final ValueChanged<String>? onOpen;
 
-  const _MetalSummaryPanel({required this.metals});
+  const _MetalSummaryPanel({required this.metals, this.onOpen});
 
   @override
   Widget build(BuildContext context) {
+    final smartMetals = metals.where(_hasMetalInventory).toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (smartMetals.isEmpty) {
+          return const _SummaryPanel(
+            title: 'Metal-wise Stock Summary',
+            subtitle: 'Stock summary will appear once inventory is available.',
+            icon: Icons.category_rounded,
+            child: _SummaryEmptyState(message: 'No metal stock found yet.'),
+          );
+        }
+
+        final cardWidth = constraints.maxWidth >= 960
+            ? (constraints.maxWidth - 16) / 2
+            : constraints.maxWidth;
+
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            for (final metal in smartMetals)
+              SizedBox(
+                width: cardWidth,
+                child: _StockSummaryMetalCard(
+                  metal: metal,
+                  onTap: () => onOpen?.call(metal.metal),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _StockSummaryMetalCard extends StatelessWidget {
+  final StockSummaryMetal metal;
+  final VoidCallback onTap;
+
+  const _StockSummaryMetalCard({
+    required this.metal,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final category = _stockCategoryFromMetal(metal.metal);
+    final ui = stockMetalUiFor(category);
+
+    return InventoryMetalSummaryCard(
+      title: '${ui.title} Stock Summary',
+      subtitle: _metalSummarySubtitle(category),
+      primaryLabel: 'Opening Stock',
+      primaryValue:
+          '${metal.openingUnits} pcs | ${_summaryWeight(metal.openingWeight)} g',
+      weightLabel: 'Closing Stock',
+      weightValue:
+          '${metal.closingUnits} pcs | ${_summaryWeight(metal.closingWeight)} g',
+      actionLabel: 'Open ${ui.title} Summary',
+      icon: ui.icon,
+      logoAsset: ui.logoAsset,
+      accent: ui.accent,
+      surface: ui.softSurface,
+      tint: ui.softTint,
+      gradient: ui.gradient,
+      textOnGradient: ui.textOnGradient,
+      selected: false,
+      onTap: onTap,
+    );
+  }
+}
+
+bool _hasMetalInventory(StockSummaryMetal metal) {
+  return metal.openingUnits > 0 ||
+      metal.inwardUnits > 0 ||
+      metal.outwardUnits > 0 ||
+      metal.restoredUnits > 0 ||
+      metal.closingUnits > 0 ||
+      metal.totalWeight > 0 ||
+      metal.soldWeight > 0;
+}
+
+String _metalSummarySubtitle(StockCategory category) {
+  switch (category) {
+    case StockCategory.gold:
+      return 'Opening, inward, outward and closing stock by gold purity grade.';
+    case StockCategory.silver:
+      return 'Opening, inward, outward and closing stock by silver item and grade.';
+    case StockCategory.diamond:
+      return 'Diamond inventory summary with item movement and closing stock.';
+    case StockCategory.platinum:
+      return 'Platinum stock summary with premium item movement and closing stock.';
+    case StockCategory.antique:
+    case StockCategory.other:
+      return 'Custom stock summary with item movement and closing stock.';
+  }
+}
+
+class _GradeSummaryPanel extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final List<StockSummaryGrade> grades;
+  final VoidCallback? onBack;
+  final ValueChanged<String>? onOpen;
+
+  const _GradeSummaryPanel({
+    this.title = 'Purity Breakdown',
+    this.subtitle = 'Purity-wise available stock snapshot.',
+    required this.grades,
+    this.onBack,
+    this.onOpen,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleGrades = grades.where(_hasGradeInventory).toList();
     return _SummaryPanel(
-      title: 'Metal-wise Stock Summary',
-      subtitle: 'Available and sold stock grouped by metal.',
-      icon: Icons.category_rounded,
-      child: metals.isEmpty
-          ? const _SummaryEmptyState(message: 'No metal stock found yet.')
-          : Column(
-              children: [
-                for (final metal in metals) ...[
-                  _MetalSummaryRow(metal: metal),
-                  if (metal != metals.last) const SizedBox(height: 10),
-                ],
-              ],
+      title: title,
+      subtitle: subtitle,
+      icon: Icons.verified_rounded,
+      action: onBack == null
+          ? null
+          : _PanelActionButton(
+              label: 'Back to Metals',
+              icon: Icons.arrow_back_rounded,
+              onTap: onBack!,
+            ),
+      child: visibleGrades.isEmpty
+          ? const _SummaryEmptyState(message: 'No purity stock found yet.')
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = constraints.maxWidth >= 960
+                    ? (constraints.maxWidth - 16) / 2
+                    : constraints.maxWidth;
+
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    for (final grade in visibleGrades)
+                      SizedBox(
+                        width: cardWidth,
+                        child: _StockSummaryGradeCard(
+                          grade: grade,
+                          onTap: () => onOpen?.call(grade.gradeLabel),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
     );
   }
 }
 
-class _GradeSummaryPanel extends StatelessWidget {
-  final List<StockSummaryGrade> grades;
+class _StockSummaryGradeCard extends StatelessWidget {
+  final StockSummaryGrade grade;
+  final VoidCallback onTap;
 
-  const _GradeSummaryPanel({required this.grades});
+  const _StockSummaryGradeCard({required this.grade, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final visibleGrades = grades.take(10).toList(growable: false);
-    return _SummaryPanel(
-      title: 'Purity Breakdown',
-      subtitle: 'Purity-wise available stock snapshot.',
+    final category = _stockCategoryFromMetal(grade.metal);
+    final ui = stockMetalUiFor(category);
+
+    return InventoryMetalSummaryCard(
+      title: '${grade.gradeLabel} ${ui.title} Stock',
+      subtitle:
+          '${grade.closingUnits} available pcs | ${grade.soldUnits} sold pcs | grade-wise summary',
+      primaryLabel: 'Opening Stock',
+      primaryValue:
+          '${grade.openingUnits} pcs | ${_summaryWeight(grade.openingWeight)} g',
+      weightLabel: 'Closing Stock',
+      weightValue:
+          '${grade.closingUnits} pcs | ${_summaryWeight(grade.closingWeight)} g',
+      actionLabel: 'Open Item Summary',
       icon: Icons.verified_rounded,
-      child: visibleGrades.isEmpty
-          ? const _SummaryEmptyState(message: 'No purity stock found yet.')
-          : Column(
-              children: [
-                for (final grade in visibleGrades) ...[
-                  _GradeSummaryRow(grade: grade),
-                  if (grade != visibleGrades.last) const SizedBox(height: 10),
-                ],
-              ],
-            ),
+      logoAsset: ui.logoAsset,
+      accent: ui.accent,
+      surface: ui.softSurface,
+      tint: ui.softTint,
+      gradient: ui.gradient,
+      textOnGradient: ui.textOnGradient,
+      selected: false,
+      onTap: onTap,
     );
   }
+}
+
+bool _hasGradeInventory(StockSummaryGrade grade) {
+  return grade.openingUnits > 0 ||
+      grade.inwardUnits > 0 ||
+      grade.outwardUnits > 0 ||
+      grade.restoredUnits > 0 ||
+      grade.closingUnits > 0 ||
+      grade.totalWeight > 0 ||
+      grade.soldWeight > 0;
 }
 
 class _RecentMovementPanel extends StatelessWidget {
@@ -425,12 +598,14 @@ class _SummaryPanel extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
+  final Widget? action;
   final Widget child;
 
   const _SummaryPanel({
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.action,
     required this.child,
   });
 
@@ -481,6 +656,10 @@ class _SummaryPanel extends StatelessWidget {
                   ],
                 ),
               ),
+              if (action != null) ...[
+                const SizedBox(width: 12),
+                action!,
+              ],
             ],
           ),
           const SizedBox(height: 16),
@@ -491,72 +670,41 @@ class _SummaryPanel extends StatelessWidget {
   }
 }
 
-class _MetalSummaryRow extends StatelessWidget {
-  final StockSummaryMetal metal;
+class _PanelActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
 
-  const _MetalSummaryRow({required this.metal});
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = _metalAccent(metal.metal);
-    return _SummaryRowShell(
-      accent: accent,
-      icon: _metalIcon(metal.metal),
-      title: '${metal.metal} Stock',
-      subtitle: '${metal.availableUnits} available | ${metal.soldUnits} sold',
-      metrics: [
-        _InlineMetric(
-          label: 'Total',
-          value: '${_summaryWeight(metal.totalWeight)} g',
-        ),
-        _InlineMetric(
-          label: 'Available',
-          value: '${_summaryWeight(metal.netWeight)} g',
-        ),
-        _InlineMetric(
-          label: 'Sold',
-          value: '${_summaryWeight(metal.soldWeight)} g',
-        ),
-        _InlineMetric(
-          label: 'Fine',
-          value: '${_summaryWeight(metal.actualFine)} g',
-        ),
-      ],
-    );
-  }
-}
-
-class _GradeSummaryRow extends StatelessWidget {
-  final StockSummaryGrade grade;
-
-  const _GradeSummaryRow({required this.grade});
+  const _PanelActionButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final accent = _metalAccent(grade.metal);
-    return _SummaryRowShell(
-      accent: accent,
-      icon: Icons.verified_rounded,
-      title: '${grade.metal} | ${grade.gradeLabel}',
-      subtitle: '${grade.availableUnits} available | ${grade.soldUnits} sold',
-      metrics: [
-        _InlineMetric(
-          label: 'Total',
-          value: '${_summaryWeight(grade.totalWeight)} g',
+    return Material(
+      color: const Color(0xFFFFFCF7),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE8DDC9)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: InvColors.textDark),
+              const SizedBox(width: 8),
+              Text(label, style: _summaryStrongStyle(fontSize: 12.5)),
+            ],
+          ),
         ),
-        _InlineMetric(
-          label: 'Available',
-          value: '${_summaryWeight(grade.netWeight)} g',
-        ),
-        _InlineMetric(
-          label: 'Sold',
-          value: '${_summaryWeight(grade.soldWeight)} g',
-        ),
-        _InlineMetric(
-          label: 'Fine',
-          value: '${_summaryWeight(grade.actualFine)} g',
-        ),
-      ],
+      ),
     );
   }
 }
@@ -619,7 +767,7 @@ class _SummaryRowShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final content = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFCF7),
@@ -655,6 +803,7 @@ class _SummaryRowShell extends StatelessWidget {
         ],
       ),
     );
+    return content;
   }
 }
 
@@ -1018,6 +1167,21 @@ String _titleCase(String value) {
     if (word.length == 1) return word.toUpperCase();
     return word[0].toUpperCase() + word.substring(1).toLowerCase();
   }).join(' ');
+}
+
+StockCategory _stockCategoryFromMetal(String metal) {
+  switch (metal.trim().toLowerCase()) {
+    case 'gold':
+      return StockCategory.gold;
+    case 'silver':
+      return StockCategory.silver;
+    case 'diamond':
+      return StockCategory.diamond;
+    case 'platinum':
+      return StockCategory.platinum;
+    default:
+      return StockCategory.other;
+  }
 }
 
 Color _metalAccent(String metal) {

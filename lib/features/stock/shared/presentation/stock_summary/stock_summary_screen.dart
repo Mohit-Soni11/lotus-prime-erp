@@ -4,7 +4,10 @@ import 'package:intl/intl.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_summary_controller.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_summary/stock_summary_models.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/add_stock/stock_metal_ui.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/inventory/metal_hub/inventory_metal_summary_card.dart';
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/stock_summary_app_bar.dart';
@@ -22,6 +25,7 @@ class StockSummaryScreen extends StatefulWidget {
 
 class _StockSummaryScreenState extends State<StockSummaryScreen> {
   late final StockSummaryController _controller;
+  final _bodyKey = GlobalKey<_StockSummaryBodyState>();
 
   @override
   void initState() {
@@ -43,15 +47,33 @@ class _StockSummaryScreenState extends State<StockSummaryScreen> {
     super.dispose();
   }
 
+  bool _handleInternalBack() {
+    return _bodyKey.currentState?.handleInternalBack() ?? false;
+  }
+
+  void _handleBack() {
+    if (_handleInternalBack()) return;
+    final fallbackBack =
+        widget.onBack ?? () => Navigator.of(context).maybePop();
+    fallbackBack();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: InvColors.bodyBg,
-      appBar: _StockSummaryAppBar(
-        onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
-        onRefresh: _controller.load,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: InvColors.bodyBg,
+        appBar: _StockSummaryAppBar(
+          onBack: _handleBack,
+          onRefresh: _controller.load,
+        ),
+        body: _StockSummaryBody(key: _bodyKey, controller: _controller),
       ),
-      body: _StockSummaryBody(controller: _controller),
     );
   }
 }
