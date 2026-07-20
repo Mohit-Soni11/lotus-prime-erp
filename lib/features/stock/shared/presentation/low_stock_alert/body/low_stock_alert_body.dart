@@ -24,7 +24,10 @@ class LowStockAlertBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            LowStockAlertHeader(summary: controller.summary),
+            LowStockAlertHeader(
+              summary: controller.summary,
+              metalCards: controller.alertMetalCards,
+            ),
             if (controller.errorMessage != null) ...[
               const SizedBox(height: 14),
               _ErrorBanner(message: controller.errorMessage!),
@@ -38,34 +41,16 @@ class LowStockAlertBody extends StatelessWidget {
                 ),
               )
             else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= 1100;
-                  final cardPanel = LowStockMetalCardsPanel(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  LowStockAlertRulesPanel(controller: controller),
+                  const SizedBox(height: 18),
+                  LowStockMetalCardsPanel(
                     cards: controller.alertMetalCards,
                     onOpenMetal: (card) => _openMetalGroups(context, card),
-                  );
-                  final rulesPanel = LowStockAlertRulesPanel(
-                    controller: controller,
-                  );
-                  if (!wide) {
-                    return Column(
-                      children: [
-                        cardPanel,
-                        const SizedBox(height: 18),
-                        rulesPanel,
-                      ],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 7, child: cardPanel),
-                      const SizedBox(width: 18),
-                      Expanded(flex: 4, child: rulesPanel),
-                    ],
-                  );
-                },
+                  ),
+                ],
               ),
           ],
         ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:lotus_erp/features/stock/shared/application/low_stock_alert_controller.dart';
-import 'package:lotus_erp/features/stock/shared/domain/models/low_stock_alert/low_stock_alert_models.dart';
-import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/screens/low_stock_manual_rule_editor_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/screens/low_stock_rule_studio_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/widgets/low_stock_alert_widgets.dart';
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
@@ -14,65 +12,28 @@ class LowStockAlertRulesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final manualRules = controller.rules
-        .where((rule) => rule.ruleMode == LowStockRuleMode.manual)
-        .toList(growable: false);
     final stockMetalCount = controller.inventoryRuleMetalCards.length;
+    final watchedGroups = controller.summary.watchedGroups;
 
     return LowStockPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           LowStockSectionHeader(
-            icon: Icons.tune_rounded,
-            title: 'Alert Rule Studio',
-            subtitle: 'Pick inventory stock and set low-stock alert levels.',
-            trailing: IconButton.filled(
-              tooltip: 'Create manual alert rule',
-              onPressed: () => _openEditor(context),
-              icon: const Icon(Icons.add_rounded),
-              style: IconButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: InvColors.brandGold,
-              ),
+            icon: Icons.rule_folder_rounded,
+            title: 'Stock Alert Rule Setup',
+            subtitle: 'Create alert levels from live inventory stock cards.',
+            trailing: LowStockStatusPill(
+              label: '$stockMetalCount METALS',
+              color: InvColors.success,
             ),
           ),
           const SizedBox(height: 14),
-          _ActionCard(
-            icon: Icons.inventory_2_rounded,
-            title: 'Stock Rule Setup',
-            subtitle:
-                '$stockMetalCount metal stock cards. Click to set item rules.',
-            color: InvColors.success,
+          _RuleSetupConsole(
+            metalCount: stockMetalCount,
+            watchedGroups: watchedGroups,
             onTap: () => _openStudio(context, 0),
           ),
-          const SizedBox(height: 10),
-          _ActionCard(
-            icon: Icons.edit_note_rounded,
-            title: 'Saved Alert Rules',
-            subtitle:
-                '${manualRules.length} custom rules. Click to view and edit.',
-            color: InvColors.brandGold,
-            onTap: () => _openStudio(context, 1),
-          ),
-          const SizedBox(height: 14),
-          if (manualRules.isEmpty)
-            const LowStockEmptyState(
-              title: 'Manual Rules Not Set',
-              subtitle:
-                  'Open Stock Rule Setup to define red, yellow and green levels.',
-              icon: Icons.rule_folder_outlined,
-            )
-          else
-            ...manualRules.take(3).map(
-                  (rule) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _RuleCard(
-                      rule: rule,
-                      onTap: () => _openEditor(context, rule: rule),
-                    ),
-                  ),
-                ),
         ],
       ),
     );
@@ -84,12 +45,6 @@ class LowStockAlertRulesPanel extends StatelessWidget {
         controller: controller,
         initialTab: initialTab,
       ),
-    ));
-  }
-
-  void _openEditor(BuildContext context, {LowStockAlertRule? rule}) {
-    Navigator.of(context).push(_route(
-      LowStockManualRuleEditorScreen(controller: controller, rule: rule),
     ));
   }
 
@@ -114,18 +69,14 @@ class LowStockAlertRulesPanel extends StatelessWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
+class _RuleSetupConsole extends StatelessWidget {
+  final int metalCount;
+  final int watchedGroups;
   final VoidCallback onTap;
 
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
+  const _RuleSetupConsole({
+    required this.metalCount,
+    required this.watchedGroups,
     required this.onTap,
   });
 
@@ -135,30 +86,89 @@ class _ActionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
-          padding: const EdgeInsets.all(13),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.24)),
+            color: InvColors.success.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: InvColors.success.withValues(alpha: 0.24),
+            ),
           ),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: InvStyles.itemName),
-                    const SizedBox(height: 3),
-                    Text(subtitle, style: InvStyles.itemSku),
-                  ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 760;
+              final content = [
+                _SetupStatTile(
+                  label: 'Metals',
+                  value: '$metalCount',
+                  icon: Icons.category_rounded,
                 ),
-              ),
-              Icon(Icons.arrow_forward_rounded, color: color),
-            ],
+                _SetupStatTile(
+                  label: 'Rule Cards',
+                  value: '$watchedGroups',
+                  icon: Icons.inventory_2_rounded,
+                ),
+              ];
+              return Flex(
+                direction: compact ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: compact
+                    ? CrossAxisAlignment.stretch
+                    : CrossAxisAlignment.center,
+                children: [
+                  if (compact)
+                    const _RuleSetupIntro()
+                  else
+                    const Expanded(child: _RuleSetupIntro()),
+                  SizedBox(width: compact ? 0 : 18, height: compact ? 14 : 0),
+                  Flex(
+                    direction: compact ? Axis.vertical : Axis.horizontal,
+                    children: [
+                      for (final tile in content) ...[
+                        if (compact)
+                          tile
+                        else
+                          SizedBox(width: 132, child: tile),
+                        if (tile != content.last)
+                          SizedBox(
+                            width: compact ? 0 : 10,
+                            height: compact ? 10 : 0,
+                          ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(width: compact ? 0 : 18, height: compact ? 14 : 0),
+                  Container(
+                    height: 42,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: InvColors.success,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Open Setup',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -166,48 +176,89 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-class _RuleCard extends StatelessWidget {
-  final LowStockAlertRule rule;
-  final VoidCallback onTap;
-
-  const _RuleCard({required this.rule, required this.onTap});
+class _RuleSetupIntro extends StatelessWidget {
+  const _RuleSetupIntro();
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(13),
-        child: Ink(
-          padding: const EdgeInsets.all(13),
+    return Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFCF7),
+            color: InvColors.success.withValues(alpha: 0.13),
             borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: InvColors.cardBorder),
           ),
-          child: Row(
+          child: const Icon(
+            Icons.tune_rounded,
+            color: InvColors.success,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.edit_note_rounded, color: InvColors.brandGold),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(rule.scopeLabel, style: InvStyles.itemName),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Red ${rule.criticalUnits} | Yellow ${rule.thresholdUnits} | Target ${rule.targetUnits}',
-                      style: InvStyles.itemSku,
-                    ),
-                  ],
-                ),
+              Text('Inventory Rule Setup', style: InvStyles.itemName),
+              const SizedBox(height: 3),
+              Text(
+                'Open Gold, Silver and item cards to set red, yellow and green levels.',
+                style: InvStyles.itemSku,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const Icon(Icons.arrow_forward_rounded,
-                  color: InvColors.brandGold),
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _SetupStatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _SetupStatTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: InvColors.success.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: InvColors.success, size: 18),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label.toUpperCase(), style: InvStyles.cardLabel),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: InvStyles.itemName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

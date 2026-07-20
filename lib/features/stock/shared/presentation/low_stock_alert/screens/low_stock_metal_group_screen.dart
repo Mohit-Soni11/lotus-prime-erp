@@ -136,6 +136,7 @@ class _GroupGrid extends StatelessWidget {
                 child: LowStockSmartCard(
                   card: card,
                   actionLabel: actionLabel,
+                  alertMode: true,
                   onTap: () => onTap(card),
                 ),
               ),

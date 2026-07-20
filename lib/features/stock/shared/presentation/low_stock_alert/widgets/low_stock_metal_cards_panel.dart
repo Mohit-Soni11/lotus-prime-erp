@@ -22,10 +22,10 @@ class LowStockMetalCardsPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           LowStockSectionHeader(
-            icon: Icons.dashboard_customize_rounded,
-            title: 'Low Stock Smart Cards',
+            icon: Icons.notification_important_rounded,
+            title: 'Active Low Stock Alerts',
             subtitle:
-                'Only low, critical and stock-out inventory appears here.',
+                'Only stock groups crossing red, yellow or stockout rules appear here.',
             trailing: LowStockStatusPill(
               label: '${cards.length} ALERTS',
               color: InvColors.brandGold,
@@ -34,16 +34,19 @@ class LowStockMetalCardsPanel extends StatelessWidget {
           const SizedBox(height: 16),
           if (cards.isEmpty)
             const LowStockEmptyState(
-              title: 'No Low Stock Card Available',
-              subtitle: 'All watched inventory is currently healthy.',
-              icon: Icons.inventory_2_outlined,
+              title: 'All Watched Stock Healthy',
+              subtitle:
+                  'Only low, critical and stockout groups will appear here.',
+              icon: Icons.check_circle_outline_rounded,
             )
           else
             LayoutBuilder(
               builder: (context, constraints) {
-                final width = constraints.maxWidth >= 960
-                    ? (constraints.maxWidth - 16) / 2
-                    : constraints.maxWidth;
+                final width = constraints.maxWidth >= 1320
+                    ? (constraints.maxWidth - 32) / 3
+                    : constraints.maxWidth >= 880
+                        ? (constraints.maxWidth - 16) / 2
+                        : constraints.maxWidth;
                 return Wrap(
                   spacing: 16,
                   runSpacing: 16,
@@ -53,7 +56,8 @@ class LowStockMetalCardsPanel extends StatelessWidget {
                         width: width,
                         child: LowStockSmartCard(
                           card: card,
-                          actionLabel: 'Open ${card.metalType} Alerts',
+                          actionLabel: 'Review ${card.metalType} Alert',
+                          alertMode: true,
                           onTap: () => onOpenMetal(card),
                         ),
                       ),

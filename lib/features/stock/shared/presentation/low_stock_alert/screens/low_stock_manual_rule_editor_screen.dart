@@ -3,7 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:lotus_erp/features/stock/shared/application/low_stock_alert_controller.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/low_stock_alert/low_stock_alert_models.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/add_stock/stock_metal_ui.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/app_bar/low_stock_alert_app_bar.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/widgets/low_stock_alert_widgets.dart';
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 class LowStockManualRuleEditorScreen extends StatefulWidget {
@@ -84,6 +87,8 @@ class _LowStockManualRuleEditorScreenState
   @override
   Widget build(BuildContext context) {
     final scopeLocked = widget.autoCard != null || widget.rule != null;
+    final stockCard = widget.autoCard;
+    final unit = _unitName(stockCard?.unitLabel ?? 'pcs', plural: false);
     final metals = {
       for (final card in widget.controller.metalCards) card.metalType,
       'Gold',
@@ -99,7 +104,7 @@ class _LowStockManualRuleEditorScreenState
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
         child: Center(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 860),
+            constraints: const BoxConstraints(maxWidth: 1040),
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -118,40 +123,16 @@ class _LowStockManualRuleEditorScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.edit_note_rounded,
-                          color: InvColors.brandGold, size: 30),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.autoCard == null
-                                  ? 'Manual Alert Rule'
-                                  : 'Set Alert Rule From Stock',
-                              style: GoogleFonts.manrope(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                color: InvColors.textDark,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Set when this stock should become red, yellow and green.',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: InvColors.textDark,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  _EditorHero(
+                    metalType: _metalType,
+                    stockCard: stockCard,
+                    isManual: widget.autoCard == null,
                   ),
                   const SizedBox(height: 22),
+                  if (stockCard != null) ...[
+                    _SelectedStockSummary(card: stockCard),
+                    const SizedBox(height: 18),
+                  ],
                   if (scopeLocked)
                     _lockedValue('Metal', _metalType, Icons.category_rounded)
                   else
@@ -196,14 +177,14 @@ class _LowStockManualRuleEditorScreenState
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const _SectionTitle('Pieces Alert Levels'),
+                  const _SectionTitle('Alert Levels'),
                   Row(
                     children: [
                       Expanded(
                         child: _levelField(
                           _redPcs,
                           'Red',
-                          'Critical pcs',
+                          'Critical $unit',
                           InvColors.danger,
                         ),
                       ),
@@ -212,7 +193,7 @@ class _LowStockManualRuleEditorScreenState
                         child: _levelField(
                           _yellowPcs,
                           'Yellow',
-                          'Half stock pcs',
+                          'Half stock $unit',
                           InvColors.warning,
                         ),
                       ),
@@ -221,7 +202,7 @@ class _LowStockManualRuleEditorScreenState
                         child: _levelField(
                           _targetPcs,
                           'Green',
-                          'Full target pcs',
+                          'Full target $unit',
                           InvColors.success,
                         ),
                       ),
@@ -232,6 +213,7 @@ class _LowStockManualRuleEditorScreenState
                     totalPcs: _targetPcs.text,
                     yellowPcs: _yellowPcs.text,
                     redPcs: _redPcs.text,
+                    unitLabel: unit,
                   ),
                   const SizedBox(height: 16),
                   const _SectionTitle('Set / Packet'),
@@ -440,7 +422,7 @@ class _LowStockManualRuleEditorScreenState
     final target = int.parse(_targetPcs.text.trim());
     if (!(red <= yellow && yellow <= target)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Use Red <= Yellow <= Target pcs')),
+        const SnackBar(content: Text('Use Red <= Yellow <= Target')),
       );
       return;
     }
@@ -484,6 +466,200 @@ class _LowStockManualRuleEditorScreenState
   }
 }
 
+class _EditorHero extends StatelessWidget {
+  final String metalType;
+  final LowStockStockCard? stockCard;
+  final bool isManual;
+
+  const _EditorHero({
+    required this.metalType,
+    required this.stockCard,
+    required this.isManual,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ui = stockMetalUiFor(StockCategory.fromLabel(metalType));
+    final title = isManual ? 'Manual Alert Override' : 'Set Alert Rule';
+    final subtitle = stockCard == null
+        ? 'Create a custom low-stock rule for a metal, grade or item.'
+        : 'Define red, yellow and green levels for ${stockCard!.title}.';
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: ui.softTint.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: ui.accent.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              gradient: ui.gradient,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: ui.accent.withValues(alpha: 0.22),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(ui.icon, color: ui.textOnGradient, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.manrope(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: InvColors.textBody,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          LowStockStatusPill(
+            label: isManual ? 'MANUAL' : 'LIVE STOCK',
+            color: isManual ? InvColors.brandGold : InvColors.success,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectedStockSummary extends StatelessWidget {
+  final LowStockStockCard card;
+
+  const _SelectedStockSummary({required this.card});
+
+  @override
+  Widget build(BuildContext context) {
+    final unit = _unitName(card.unitLabel, plural: false);
+    final units = _unitName(card.unitLabel, plural: true);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 720;
+        final tiles = [
+          _SummaryTile(
+            label: 'Total $units',
+            value: _quantity(card.totalUnits, unit),
+            icon: Icons.inventory_2_rounded,
+            color: InvColors.brandGold,
+          ),
+          _SummaryTile(
+            label: 'Available $units',
+            value: _quantity(card.availableUnits, unit),
+            icon: Icons.check_circle_rounded,
+            color: InvColors.success,
+          ),
+          _SummaryTile(
+            label: 'Sold $units',
+            value: _quantity(card.soldUnits, unit),
+            icon: Icons.point_of_sale_rounded,
+            color: InvColors.danger,
+          ),
+          _SummaryTile(
+            label: 'Current Weight',
+            value: lowStockWeight(card.availableNetWeight),
+            icon: Icons.scale_rounded,
+            color: InvColors.textMuted,
+          ),
+        ];
+        if (compact) {
+          return Column(
+            children: [
+              for (final tile in tiles) ...[
+                tile,
+                if (tile != tiles.last) const SizedBox(height: 10),
+              ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (final tile in tiles) ...[
+              Expanded(child: tile),
+              if (tile != tiles.last) const SizedBox(width: 10),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _SummaryTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label.toUpperCase(), style: InvStyles.cardLabel),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: GoogleFonts.manrope(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: InvColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionTitle extends StatelessWidget {
   final String title;
 
@@ -509,11 +685,13 @@ class _TargetNote extends StatelessWidget {
   final String totalPcs;
   final String yellowPcs;
   final String redPcs;
+  final String unitLabel;
 
   const _TargetNote({
     required this.totalPcs,
     required this.yellowPcs,
     required this.redPcs,
+    required this.unitLabel,
   });
 
   @override
@@ -531,8 +709,8 @@ class _TargetNote extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Green target $totalPcs pcs is the full stock level to maintain. '
-              'Yellow starts at $yellowPcs pcs, Red starts at $redPcs pcs.',
+              'Green target $totalPcs $unitLabel is the full stock level to maintain. '
+              'Yellow starts at $yellowPcs $unitLabel, Red starts at $redPcs $unitLabel.',
               style: GoogleFonts.inter(
                 color: InvColors.textDark,
                 fontSize: 13,
@@ -544,5 +722,25 @@ class _TargetNote extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String _quantity(int value, String unit) => '$value $unit';
+
+String _unitName(String raw, {required bool plural}) {
+  final unit = raw.trim().toLowerCase();
+  switch (unit) {
+    case 'pair':
+      return plural ? 'pairs' : 'pair';
+    case 'set':
+      return plural ? 'sets' : 'set';
+    case 'packet':
+      return plural ? 'packets' : 'packet';
+    case 'bulk':
+      return 'bulk';
+    case 'item':
+      return plural ? 'items' : 'item';
+    default:
+      return 'pcs';
   }
 }

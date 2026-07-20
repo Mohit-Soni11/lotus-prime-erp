@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:lotus_erp/features/stock/shared/application/low_stock_alert_controller.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/low_stock_alert/low_stock_alert_models.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/app_bar/low_stock_alert_app_bar.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/screens/low_stock_manual_rule_editor_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/widgets/low_stock_alert_widgets.dart';
-import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/widgets/low_stock_smart_card.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/low_stock_alert/widgets/low_stock_rule_setup_card.dart';
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 class LowStockRuleStudioScreen extends StatefulWidget {
@@ -49,58 +50,35 @@ class _LowStockRuleStudioScreenState extends State<LowStockRuleStudioScreen> {
         onBack: () => Navigator.of(context).maybePop(),
         onRefresh: widget.controller.load,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openEditor(),
-        backgroundColor: InvColors.brandGold,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Manual Rule'),
-      ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: LowStockPanel(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    LowStockSectionHeader(
-                      icon: Icons.rule_folder_rounded,
-                      title: 'Stock Alert Rule Studio',
-                      subtitle:
-                          'Choose stock from inventory, then set when low-stock alerts should start.',
-                      trailing: LowStockStatusPill(
-                        label: _tab == 0 ? 'INVENTORY' : 'SAVED',
-                        color:
-                            _tab == 0 ? InvColors.success : InvColors.brandGold,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(
-                          value: 0,
-                          icon: Icon(Icons.inventory_2_rounded),
-                          label: Text('Inventory Stock'),
-                        ),
-                        ButtonSegment(
-                          value: 1,
-                          icon: Icon(Icons.edit_note_rounded),
-                          label: Text('Saved Rules'),
-                        ),
-                      ],
-                      selected: {_tab},
-                      onSelectionChanged: (value) {
-                        setState(() => _tab = value.first);
-                      },
-                    ),
-                  ],
-                ),
+              child: _RuleSetupHeader(
+                metalCount: autoMetalCards.length,
+                ruleCardCount: widget.controller.summary.watchedGroups,
+                manualRuleCount: manualRules.length,
+                tab: _tab,
+                onTabChanged: (value) => setState(() => _tab = value),
+                onManualRule: () => _openEditor(),
               ),
             ),
           ),
+          if (_tab == 0)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+                child: _RulePathHeader(
+                  selectedMetal: selectedAutoMetal,
+                  selectedGroup: selectedAutoGroup,
+                  metalCount: autoMetalCards.length,
+                  groupCount: autoGroupCards.length,
+                  itemCount: autoItemCards.length,
+                ),
+              ),
+            ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 18, 24, 34),
             sliver: SliverToBoxAdapter(
@@ -201,6 +179,333 @@ class _LowStockRuleStudioScreenState extends State<LowStockRuleStudioScreen> {
         ? card.itemType
         : card.gradeLabel;
     return '${card.level}|${card.metalType}|$scope'.trim().toLowerCase();
+  }
+}
+
+class _RuleSetupHeader extends StatelessWidget {
+  final int metalCount;
+  final int ruleCardCount;
+  final int manualRuleCount;
+  final int tab;
+  final ValueChanged<int> onTabChanged;
+  final VoidCallback onManualRule;
+
+  const _RuleSetupHeader({
+    required this.metalCount,
+    required this.ruleCardCount,
+    required this.manualRuleCount,
+    required this.tab,
+    required this.onTabChanged,
+    required this.onManualRule,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: InvColors.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: InvColors.cardBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: InvColors.shadowMedium,
+            blurRadius: 18,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 940;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Flex(
+                direction: compact ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: compact
+                    ? CrossAxisAlignment.stretch
+                    : CrossAxisAlignment.center,
+                children: [
+                  if (compact)
+                    const _RuleSetupTitleRow()
+                  else
+                    const Expanded(child: _RuleSetupTitleRow()),
+                  SizedBox(width: compact ? 0 : 18, height: compact ? 16 : 0),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _HeaderStat(
+                        label: 'Metals',
+                        value: '$metalCount',
+                        icon: Icons.category_rounded,
+                        color: InvColors.success,
+                      ),
+                      _HeaderStat(
+                        label: 'Rule Cards',
+                        value: '$ruleCardCount',
+                        icon: Icons.inventory_2_rounded,
+                        color: InvColors.brandGold,
+                      ),
+                      _HeaderStat(
+                        label: 'Overrides',
+                        value: '$manualRuleCount',
+                        icon: Icons.edit_note_rounded,
+                        color: InvColors.textMuted,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Flex(
+                direction: compact ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: compact
+                    ? CrossAxisAlignment.stretch
+                    : CrossAxisAlignment.center,
+                children: [
+                  if (compact)
+                    SegmentedButton<int>(
+                      segments: const [
+                        ButtonSegment(
+                          value: 0,
+                          icon: Icon(Icons.inventory_2_rounded),
+                          label: Text('Inventory Cards'),
+                        ),
+                        ButtonSegment(
+                          value: 1,
+                          icon: Icon(Icons.edit_note_rounded),
+                          label: Text('Manual Overrides'),
+                        ),
+                      ],
+                      selected: {tab},
+                      onSelectionChanged: (value) {
+                        onTabChanged(value.first);
+                      },
+                    )
+                  else
+                    Expanded(
+                      child: SegmentedButton<int>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 0,
+                            icon: Icon(Icons.inventory_2_rounded),
+                            label: Text('Inventory Cards'),
+                          ),
+                          ButtonSegment(
+                            value: 1,
+                            icon: Icon(Icons.edit_note_rounded),
+                            label: Text('Manual Overrides'),
+                          ),
+                        ],
+                        selected: {tab},
+                        onSelectionChanged: (value) {
+                          onTabChanged(value.first);
+                        },
+                      ),
+                    ),
+                  SizedBox(width: compact ? 0 : 12, height: compact ? 12 : 0),
+                  FilledButton.icon(
+                    onPressed: onManualRule,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Manual Override'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: InvColors.brandGold,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(176, 44),
+                      textStyle: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RuleSetupTitleRow extends StatelessWidget {
+  const _RuleSetupTitleRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            color: InvColors.brandGoldLight,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: InvColors.brandGold.withValues(alpha: 0.24),
+            ),
+          ),
+          child: const Icon(
+            Icons.rule_folder_rounded,
+            color: InvColors.brandGold,
+            size: 29,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Stock Alert Rule Setup',
+                style: GoogleFonts.manrope(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: InvColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Inventory-linked alert levels for every metal and item card.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: InvColors.textBody,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _HeaderStat({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 136,
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label.toUpperCase(), style: InvStyles.cardLabel),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  style: GoogleFonts.manrope(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RulePathHeader extends StatelessWidget {
+  final String? selectedMetal;
+  final LowStockStockCard? selectedGroup;
+  final int metalCount;
+  final int groupCount;
+  final int itemCount;
+
+  const _RulePathHeader({
+    required this.selectedMetal,
+    required this.selectedGroup,
+    required this.metalCount,
+    required this.groupCount,
+    required this.itemCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final group = selectedGroup;
+    final metal = selectedMetal;
+    final title = group != null
+        ? '${group.metalType} / ${group.gradeLabel}'
+        : metal != null
+            ? _isSilver(metal)
+                ? '$metal Item Cards'
+                : '$metal Grade Cards'
+            : 'Metal Stock Cards';
+    final badge = group != null
+        ? '$itemCount ITEMS'
+        : metal != null
+            ? _isSilver(metal)
+                ? '$groupCount ITEMS'
+                : '$groupCount GRADES'
+            : '$metalCount METALS';
+    final subtitle = group != null
+        ? 'Item cards available for rule setup.'
+        : metal != null
+            ? 'Open a card to continue rule setup.'
+            : 'Gold and Silver stock cards available for rule setup.';
+    return LowStockPanel(
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: InvColors.success.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.account_tree_rounded,
+              color: InvColors.success,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: InvStyles.sectionTitle),
+                const SizedBox(height: 3),
+                Text(subtitle, style: InvStyles.cardNote),
+              ],
+            ),
+          ),
+          LowStockStatusPill(label: badge, color: InvColors.success),
+        ],
+      ),
+    );
+  }
+
+  bool _isSilver(String metalType) {
+    return metalType.trim().toLowerCase() == 'silver';
   }
 }
 
@@ -343,7 +648,7 @@ class _RuleCardGrid extends StatelessWidget {
             for (final card in cards)
               SizedBox(
                 width: width,
-                child: LowStockSmartCard(
+                child: LowStockRuleSetupCard(
                   card: card,
                   actionLabel: actionLabelBuilder(card),
                   onTap: () => onTap(card),

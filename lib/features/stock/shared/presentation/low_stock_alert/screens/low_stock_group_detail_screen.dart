@@ -85,6 +85,7 @@ class _DetailGrid extends StatelessWidget {
                 child: LowStockSmartCard(
                   card: card,
                   actionLabel: 'Review Detail',
+                  alertMode: true,
                 ),
               ),
           ],
@@ -115,6 +116,7 @@ class _FinalItemSummary extends StatelessWidget {
               child: LowStockSmartCard(
                 card: card,
                 actionLabel: 'Item Summary',
+                alertMode: true,
               ),
             ),
           ],
