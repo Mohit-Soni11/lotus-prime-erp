@@ -24,7 +24,7 @@ class LowStockMetalGroupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ui = stockMetalUiFor(StockCategory.fromLabel(metalCard.metalType));
-    final groupCards = controller.groupCardsForMetal(metalCard.metalType);
+    final groupCards = controller.alertGroupCardsForMetal(metalCard.metalType);
     final isSilver = metalCard.metalType.trim().toLowerCase() == 'silver';
 
     return Scaffold(
@@ -46,7 +46,7 @@ class LowStockMetalGroupScreen extends StatelessWidget {
                     ? '${ui.title} Low Stock Items'
                     : '${ui.title} Low Stock Grades',
                 subtitle: isSilver
-                    ? 'Select an item type to review grade-wise stock need.'
+                    ? 'Select an item type to review stock need.'
                     : 'Select a purity grade to review item-type stock need.',
               ),
             ),
@@ -58,7 +58,7 @@ class LowStockMetalGroupScreen extends StatelessWidget {
                 icon: ui.icon,
                 accent: ui.accent,
                 title: 'No ${ui.title} Alert Groups',
-                message: 'This metal has no grouped stock detail yet.',
+                message: 'This metal has no low, critical or stock-out item.',
               ),
             )
           else

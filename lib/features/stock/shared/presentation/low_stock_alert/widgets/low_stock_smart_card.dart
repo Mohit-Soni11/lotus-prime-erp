@@ -112,80 +112,24 @@ class _LowStockSmartCardState extends State<LowStockSmartCard> {
                           ),
                         ),
                         LowStockStatusPill(
-                          label: lowStockRiskLabel(widget.card.riskLevel),
+                          label:
+                              '${lowStockRiskLabel(widget.card.riskLevel)} | ${widget.card.ruleMode.toUpperCase()}',
                           color: riskColor,
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MetricTile(
-                            label: 'Previous Pcs',
-                            value: '${widget.card.totalUnits} pcs',
-                            accent: ui.accent,
-                            surface: ui.softTint,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricTile(
-                            label: 'Current Pcs',
-                            value: '${widget.card.availableUnits} pcs',
-                            accent: InvColors.success,
-                            surface: InvColors.successBg,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MetricTile(
-                            label: 'Sold Pcs',
-                            value: '${widget.card.soldUnits} pcs',
-                            accent: InvColors.danger,
-                            surface: InvColors.dangerBg,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricTile(
-                            label: 'Add Stock',
-                            value: '${widget.card.suggestedReorderUnits} pcs',
-                            accent: riskColor,
-                            surface: riskColor.withValues(alpha: 0.10),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MetricTile(
-                            label: 'Current Weight',
-                            value:
-                                lowStockWeight(widget.card.availableNetWeight),
-                            accent: ui.accent,
-                            surface: ui.softTint,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricTile(
-                            label: 'Need Weight',
-                            value: lowStockWeight(
-                              widget.card.suggestedReorderNetWeight,
-                            ),
-                            accent: riskColor,
-                            surface: riskColor.withValues(alpha: 0.10),
-                          ),
-                        ),
-                      ],
-                    ),
+                    if (widget.card.level == LowStockCardLevel.metal)
+                      _MetalSummaryMetrics(
+                        card: widget.card,
+                        riskColor: riskColor,
+                      )
+                    else
+                      _StockDetailMetrics(
+                        card: widget.card,
+                        accent: ui.accent,
+                        softTint: ui.softTint,
+                      ),
                     const SizedBox(height: 18),
                     Container(
                       height: 46,
@@ -269,6 +213,211 @@ class _CardVisual extends StatelessWidget {
               ),
             )
           : Icon(icon, color: ui.textOnGradient, size: 28),
+    );
+  }
+}
+
+class _MetalSummaryMetrics extends StatelessWidget {
+  final LowStockStockCard card;
+  final Color riskColor;
+
+  const _MetalSummaryMetrics({
+    required this.card,
+    required this.riskColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+        final children = [
+          _MetalMetricTile(
+            icon: Icons.inventory_2_rounded,
+            label: 'Available Items',
+            value: '${card.availableUnits} pcs',
+            accent: InvColors.success,
+            surface: InvColors.successBg,
+          ),
+          _MetalMetricTile(
+            icon: Icons.point_of_sale_rounded,
+            label: 'Sold Items',
+            value: '${card.soldUnits} pcs',
+            accent: InvColors.danger,
+            surface: InvColors.dangerBg,
+          ),
+          _MetalMetricTile(
+            icon: Icons.health_and_safety_rounded,
+            label: 'Health Status',
+            value: lowStockRiskLabel(card.riskLevel),
+            accent: riskColor,
+            surface: riskColor.withValues(alpha: 0.10),
+          ),
+        ];
+        if (compact) {
+          return Column(
+            children: [
+              for (final child in children) ...[
+                child,
+                if (child != children.last) const SizedBox(height: 10),
+              ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (final child in children) ...[
+              Expanded(child: child),
+              if (child != children.last) const SizedBox(width: 10),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _StockDetailMetrics extends StatelessWidget {
+  final LowStockStockCard card;
+  final Color accent;
+  final Color softTint;
+
+  const _StockDetailMetrics({
+    required this.card,
+    required this.accent,
+    required this.softTint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final unit = _unitName(card.unitLabel, plural: false);
+    final units = _unitName(card.unitLabel, plural: true);
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                label: 'Total $units',
+                value: _quantityValue(card.totalUnits, unit),
+                accent: accent,
+                surface: softTint,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricTile(
+                label: 'Available $units',
+                value: _quantityValue(card.availableUnits, unit),
+                accent: InvColors.success,
+                surface: InvColors.successBg,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                label: 'Sold $units',
+                value: _quantityValue(card.soldUnits, unit),
+                accent: InvColors.danger,
+                surface: InvColors.dangerBg,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricTile(
+                label: 'Current Weight',
+                value: lowStockWeight(card.availableNetWeight),
+                accent: accent,
+                surface: softTint,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _quantityValue(int value, String unit) => '$value $unit';
+
+  String _unitName(String raw, {required bool plural}) {
+    final unit = raw.trim().toLowerCase();
+    switch (unit) {
+      case 'pair':
+        return plural ? 'pairs' : 'pair';
+      case 'set':
+        return plural ? 'sets' : 'set';
+      case 'packet':
+        return plural ? 'packets' : 'packet';
+      case 'bulk':
+        return 'bulk';
+      case 'item':
+        return plural ? 'items' : 'item';
+      default:
+        return 'pcs';
+    }
+  }
+}
+
+class _MetalMetricTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color accent;
+  final Color surface;
+
+  const _MetalMetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.accent,
+    required this.surface,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 92),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: accent, size: 22),
+          const SizedBox(height: 10),
+          Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w900,
+              color: InvColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: GoogleFonts.manrope(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: InvColors.textDark,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

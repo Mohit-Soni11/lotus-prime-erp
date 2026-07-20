@@ -42,11 +42,11 @@ class LowStockAlertBody extends StatelessWidget {
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= 1100;
                   final cardPanel = LowStockMetalCardsPanel(
-                    cards: controller.metalCards,
+                    cards: controller.alertMetalCards,
                     onOpenMetal: (card) => _openMetalGroups(context, card),
                   );
                   final rulesPanel = LowStockAlertRulesPanel(
-                    rules: controller.rules,
+                    controller: controller,
                   );
                   if (!wide) {
                     return Column(

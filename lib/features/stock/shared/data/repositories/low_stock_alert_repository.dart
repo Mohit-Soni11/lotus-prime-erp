@@ -30,6 +30,43 @@ CASE
 END
 ''';
 
+const String _lowStockLotUnitExpression = '''
+LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+  AND TRIM(COALESCE(u.huid, '')) = ''
+''';
+
+const String _lowStockTotalQuantityExpression = '''
+CASE
+  WHEN $_lowStockLotUnitExpression THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1)
+  ELSE 1
+END
+''';
+
+const String _lowStockAvailableQuantityExpression = '''
+CASE
+  WHEN LOWER(u.status) = 'available' THEN
+    CASE
+      WHEN $_lowStockLotUnitExpression THEN COALESCE(NULLIF(s.quantity, 0), 0)
+      ELSE 1
+    END
+  ELSE 0
+END
+''';
+
+const String _lowStockSoldQuantityExpression = '''
+CASE
+  WHEN $_lowStockLotUnitExpression THEN
+    CASE
+      WHEN LOWER(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1)
+      WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0
+        THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0)
+      ELSE 0
+    END
+  WHEN LOWER(u.status) = 'sold' THEN 1
+  ELSE 0
+END
+''';
+
 class LowStockAlertRepository {
   final AppDatabase _db;
 
@@ -40,10 +77,19 @@ class LowStockAlertRepository {
     await _db.customStatement('''
       CREATE TABLE IF NOT EXISTS "low_stock_alert_rules" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "rule_mode" TEXT NOT NULL DEFAULT 'manual',
+        "scope_level" TEXT NOT NULL DEFAULT 'item',
         "metal_type" TEXT NOT NULL,
+        "grade_label" TEXT NOT NULL DEFAULT '',
         "item_type" TEXT NOT NULL DEFAULT 'any',
+        "critical_units" INTEGER NOT NULL DEFAULT 0,
         "threshold_units" INTEGER NOT NULL DEFAULT 1,
+        "target_units" INTEGER NOT NULL DEFAULT 1,
+        "critical_net_weight" REAL NOT NULL DEFAULT 0.0,
         "threshold_net_weight" REAL NOT NULL DEFAULT 0.0,
+        "target_net_weight" REAL NOT NULL DEFAULT 0.0,
+        "target_sets" INTEGER NOT NULL DEFAULT 0,
+        "target_packets" INTEGER NOT NULL DEFAULT 0,
         "reorder_target_units" INTEGER NOT NULL DEFAULT 1,
         "preferred_supplier_name" TEXT,
         "is_active" INTEGER NOT NULL DEFAULT 1,
@@ -54,7 +100,8 @@ class LowStockAlertRepository {
     await _db.customStatement(
       'CREATE INDEX IF NOT EXISTS "idx_low_stock_rules_scope" ON "low_stock_alert_rules" ("metal_type", "item_type")',
     );
-    await _seedDefaultRulesIfNeeded();
+    await _ensureRuleColumns();
+    await _removeLegacySeedRules();
   }
 
   Future<LowStockAlertDashboard> loadDashboard() async {
@@ -109,6 +156,100 @@ class LowStockAlertRepository {
     );
   }
 
+  Future<void> saveManualRule(LowStockManualRuleDraft draft) async {
+    await ensureSchema();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final existing = await _db.customSelect(
+      '''
+      SELECT id
+      FROM low_stock_alert_rules
+      WHERE LOWER(metal_type) = LOWER(?)
+        AND LOWER(COALESCE(grade_label, '')) = LOWER(?)
+        AND LOWER(COALESCE(item_type, '')) = LOWER(?)
+      LIMIT 1
+      ''',
+      variables: [
+        drift.Variable.withString(draft.metalType.trim()),
+        drift.Variable.withString(draft.gradeLabel.trim()),
+        drift.Variable.withString(_normalizedItem(draft.itemType)),
+      ],
+    ).get();
+
+    final values = [
+      LowStockRuleMode.manual,
+      draft.gradeLabel.trim().isEmpty ? 'item' : 'grade_item',
+      draft.metalType.trim(),
+      draft.gradeLabel.trim(),
+      _normalizedItem(draft.itemType),
+      draft.criticalUnits,
+      draft.thresholdUnits,
+      draft.targetUnits,
+      draft.criticalNetWeight,
+      draft.thresholdNetWeight,
+      draft.targetNetWeight,
+      draft.targetSets,
+      draft.targetPackets,
+      draft.targetUnits,
+      draft.preferredSupplierName.trim(),
+      1,
+      now,
+    ];
+
+    if (existing.isEmpty) {
+      await _db.customStatement(
+        '''
+        INSERT INTO low_stock_alert_rules (
+          rule_mode,
+          scope_level,
+          metal_type,
+          grade_label,
+          item_type,
+          critical_units,
+          threshold_units,
+          target_units,
+          critical_net_weight,
+          threshold_net_weight,
+          target_net_weight,
+          target_sets,
+          target_packets,
+          reorder_target_units,
+          preferred_supplier_name,
+          is_active,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [...values, now],
+      );
+      return;
+    }
+
+    await _db.customStatement(
+      '''
+      UPDATE low_stock_alert_rules
+      SET rule_mode = ?,
+          scope_level = ?,
+          metal_type = ?,
+          grade_label = ?,
+          item_type = ?,
+          critical_units = ?,
+          threshold_units = ?,
+          target_units = ?,
+          critical_net_weight = ?,
+          threshold_net_weight = ?,
+          target_net_weight = ?,
+          target_sets = ?,
+          target_packets = ?,
+          reorder_target_units = ?,
+          preferred_supplier_name = ?,
+          is_active = ?,
+          updated_at = ?
+      WHERE id = ?
+      ''',
+      [...values, _readInt(existing.first, 'id')],
+    );
+  }
+
   Future<List<LowStockAlertRule>> _loadRules() async {
     final rows = await _db.customSelect(
       '''
@@ -134,19 +275,28 @@ class LowStockAlertRepository {
       SELECT
         $_lowStockMetalExpression AS metal_type,
         $_lowStockGradeExpression AS grade_label,
-        COALESCE(NULLIF(TRIM(u.item_type), ''), 'General') AS item_type,
-        COUNT(*) AS total_units,
-        SUM(CASE WHEN LOWER(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
-        SUM(CASE WHEN LOWER(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_units,
+        MIN(COALESCE(NULLIF(TRIM(u.item_type), ''), 'General')) AS item_type,
+        GROUP_CONCAT(DISTINCT LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), 'pieces'))) AS quantity_modes,
+        COALESCE(SUM($_lowStockTotalQuantityExpression), 0) AS total_units,
+        COALESCE(SUM($_lowStockAvailableQuantityExpression), 0) AS available_units,
+        COALESCE(SUM($_lowStockSoldQuantityExpression), 0) AS sold_units,
+        SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
+        SUM(CASE WHEN LOWER(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
+        SUM(CASE WHEN LOWER(u.status) = 'sold' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS sold_sets,
         COALESCE(SUM(u.net_weight), 0.0) AS total_net_weight,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS available_net_weight,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'sold' THEN u.net_weight ELSE 0 END), 0.0) AS sold_net_weight
       FROM stock_item_units u
+      INNER JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       WHERE COALESCE(NULLIF(TRIM(u.metal_type), ''), '') <> ''
-      GROUP BY 1, 2, 3
+      GROUP BY
+        $_lowStockMetalExpression,
+        $_lowStockGradeExpression,
+        LOWER(COALESCE(NULLIF(TRIM(u.item_type), ''), 'General'))
       HAVING total_units > 0
       ORDER BY
-        CASE LOWER(metal_type)
+        CASE LOWER($_lowStockMetalExpression)
           WHEN 'gold' THEN 1
           WHEN 'silver' THEN 2
           WHEN 'platinum' THEN 3
@@ -162,13 +312,17 @@ class LowStockAlertRepository {
   Future<List<_AvailableStockGroup>> _loadAvailableGroups() async {
     final rows = await _db.customSelect('''
       SELECT
-        COALESCE(NULLIF(TRIM(metal_type), ''), 'Other') AS metal_type,
-        COALESCE(NULLIF(TRIM(item_type), ''), 'any') AS item_type,
-        COUNT(*) AS units,
-        COALESCE(SUM(net_weight), 0.0) AS net_weight
-      FROM stock_item_units
-      WHERE LOWER(status) = 'available'
-      GROUP BY 1, 2
+        MIN(COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')) AS metal_type,
+        MIN(COALESCE(NULLIF(TRIM(u.item_type), ''), 'any')) AS item_type,
+        COALESCE(SUM($_lowStockAvailableQuantityExpression), 0) AS units,
+        COALESCE(SUM(u.net_weight), 0.0) AS net_weight
+      FROM stock_item_units u
+      LEFT JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+      WHERE LOWER(u.status) = 'available'
+      GROUP BY
+        LOWER(COALESCE(NULLIF(TRIM(u.metal_type), ''), 'Other')),
+        LOWER(COALESCE(NULLIF(TRIM(u.item_type), ''), 'any'))
       ORDER BY units ASC, net_weight ASC
     ''').get();
     return rows.map(_mapGroup).toList(growable: false);
@@ -182,37 +336,49 @@ class LowStockAlertRepository {
     for (final group in groups) {
       final rule = _ruleForGroup(
         rules: rules,
-        metalType: group.metalType,
-        itemType: group.itemType,
+        group: group,
       );
       final riskLevel = _stockRiskLevel(
         availableUnits: group.availableUnits,
         availableNetWeight: group.availableNetWeight,
+        criticalUnits: rule.criticalUnits,
         thresholdUnits: rule.thresholdUnits,
+        criticalNetWeight: rule.criticalNetWeight,
         thresholdNetWeight: rule.thresholdNetWeight,
       );
       final suggestedUnits =
-          _suggestedUnits(group.availableUnits, rule.reorderTargetUnits);
+          _suggestedUnits(group.availableUnits, rule.targetUnits);
       cards.add(
         LowStockStockCard(
           level: LowStockCardLevel.itemType,
           metalType: group.metalType,
           gradeLabel: group.gradeLabel,
           itemType: group.itemType,
+          unitLabel: group.unitLabel,
           totalUnits: group.totalUnits,
           availableUnits: group.availableUnits,
           soldUnits: group.soldUnits,
+          totalSets: group.totalSets,
+          availableSets: group.availableSets,
+          soldSets: group.soldSets,
           totalNetWeight: group.totalNetWeight,
           availableNetWeight: group.availableNetWeight,
           soldNetWeight: group.soldNetWeight,
+          ruleMode: rule.ruleMode,
+          criticalUnits: rule.criticalUnits,
           thresholdUnits: rule.thresholdUnits,
+          targetUnits: rule.targetUnits,
+          criticalNetWeight: rule.criticalNetWeight,
           thresholdNetWeight: rule.thresholdNetWeight,
+          targetNetWeight: rule.targetNetWeight,
+          targetSets: rule.targetSets,
+          targetPackets: rule.targetPackets,
           reorderTargetUnits: rule.reorderTargetUnits,
           suggestedReorderUnits: suggestedUnits,
           suggestedReorderNetWeight: _suggestedNetWeight(
             availableUnits: group.availableUnits,
             availableNetWeight: group.availableNetWeight,
-            thresholdNetWeight: rule.thresholdNetWeight,
+            targetNetWeight: rule.targetNetWeight,
             suggestedUnits: suggestedUnits,
           ),
           riskLevel: riskLevel,
@@ -251,20 +417,39 @@ class LowStockAlertRepository {
         itemType: level == LowStockCardLevel.itemGroup
             ? first.itemType
             : LowStockConstants.anyItemKey,
+        unitLabel: _aggregateUnitLabel(children),
         totalUnits: children.fold(0, (sum, card) => sum + card.totalUnits),
         availableUnits:
             children.fold(0, (sum, card) => sum + card.availableUnits),
         soldUnits: children.fold(0, (sum, card) => sum + card.soldUnits),
+        totalSets: children.fold(0, (sum, card) => sum + card.totalSets),
+        availableSets:
+            children.fold(0, (sum, card) => sum + card.availableSets),
+        soldSets: children.fold(0, (sum, card) => sum + card.soldSets),
         totalNetWeight:
             children.fold(0, (sum, card) => sum + card.totalNetWeight),
         availableNetWeight:
             children.fold(0, (sum, card) => sum + card.availableNetWeight),
         soldNetWeight:
             children.fold(0, (sum, card) => sum + card.soldNetWeight),
+        ruleMode:
+            children.any((card) => card.ruleMode == LowStockRuleMode.manual)
+                ? LowStockRuleMode.manual
+                : LowStockRuleMode.auto,
+        criticalUnits:
+            children.fold(0, (sum, card) => sum + card.criticalUnits),
         thresholdUnits:
             children.fold(0, (sum, card) => sum + card.thresholdUnits),
+        targetUnits: children.fold(0, (sum, card) => sum + card.targetUnits),
+        criticalNetWeight:
+            children.fold(0, (sum, card) => sum + card.criticalNetWeight),
         thresholdNetWeight:
             children.fold(0, (sum, card) => sum + card.thresholdNetWeight),
+        targetNetWeight:
+            children.fold(0, (sum, card) => sum + card.targetNetWeight),
+        targetSets: children.fold(0, (sum, card) => sum + card.targetSets),
+        targetPackets:
+            children.fold(0, (sum, card) => sum + card.targetPackets),
         reorderTargetUnits:
             children.fold(0, (sum, card) => sum + card.reorderTargetUnits),
         suggestedReorderUnits: children.fold(
@@ -342,40 +527,50 @@ class LowStockAlertRepository {
 
   _EffectiveLowStockRule _ruleForGroup({
     required List<LowStockAlertRule> rules,
-    required String metalType,
-    required String itemType,
+    required _StockLedgerGroup group,
   }) {
-    LowStockAlertRule? fallback;
+    LowStockAlertRule? best;
+    var bestRank = -1;
     for (final rule in rules) {
-      if (!_same(rule.metalType, metalType)) continue;
-      final ruleItem = rule.itemType.trim().toLowerCase();
-      if (ruleItem == itemType.trim().toLowerCase()) {
-        return _EffectiveLowStockRule.fromRule(rule);
-      }
-      if (ruleItem == LowStockConstants.anyItemKey) {
-        fallback ??= rule;
+      if (rule.ruleMode != LowStockRuleMode.manual) continue;
+      if (!_same(rule.metalType, group.metalType)) continue;
+      final ruleGrade = rule.gradeLabel.trim();
+      final ruleItem = rule.itemType.trim();
+      final gradeMatches =
+          ruleGrade.isEmpty || _same(ruleGrade, group.gradeLabel);
+      final itemMatches = ruleItem.isEmpty ||
+          ruleItem.toLowerCase() == LowStockConstants.anyItemKey ||
+          _same(ruleItem, group.itemType);
+      if (!gradeMatches || !itemMatches) continue;
+
+      final rank = (ruleGrade.isNotEmpty ? 2 : 0) +
+          (ruleItem.isNotEmpty &&
+                  ruleItem.toLowerCase() != LowStockConstants.anyItemKey
+              ? 1
+              : 0);
+      if (rank > bestRank) {
+        best = rule;
+        bestRank = rank;
       }
     }
-    if (fallback != null) return _EffectiveLowStockRule.fromRule(fallback);
-    return const _EffectiveLowStockRule(
-      thresholdUnits: 1,
-      thresholdNetWeight: 0,
-      reorderTargetUnits: 1,
-    );
+    if (best != null) return _EffectiveLowStockRule.fromRule(best);
+    return _EffectiveLowStockRule.auto(group);
   }
 
   String _stockRiskLevel({
     required int availableUnits,
     required double availableNetWeight,
+    required int criticalUnits,
     required int thresholdUnits,
+    required double criticalNetWeight,
     required double thresholdNetWeight,
   }) {
     if (availableUnits <= 0) return LowStockRiskLevel.stockout;
-    final unitCritical = availableUnits <= (thresholdUnits / 2).ceil();
-    final weightCritical = thresholdNetWeight > 0 &&
-        availableNetWeight <= thresholdNetWeight * 0.5;
+    final unitCritical = criticalUnits > 0 && availableUnits <= criticalUnits;
+    final weightCritical =
+        criticalNetWeight > 0 && availableNetWeight <= criticalNetWeight;
     if (unitCritical || weightCritical) return LowStockRiskLevel.critical;
-    final unitLow = availableUnits <= thresholdUnits;
+    final unitLow = thresholdUnits > 0 && availableUnits <= thresholdUnits;
     final weightLow =
         thresholdNetWeight > 0 && availableNetWeight <= thresholdNetWeight;
     if (unitLow || weightLow) return LowStockRiskLevel.low;
@@ -390,11 +585,11 @@ class LowStockAlertRepository {
   double _suggestedNetWeight({
     required int availableUnits,
     required double availableNetWeight,
-    required double thresholdNetWeight,
+    required double targetNetWeight,
     required int suggestedUnits,
   }) {
-    final thresholdGap = thresholdNetWeight - availableNetWeight;
-    if (thresholdGap > 0) return thresholdGap;
+    final targetGap = targetNetWeight - availableNetWeight;
+    if (targetGap > 0) return targetGap;
     if (suggestedUnits <= 0 || availableUnits <= 0) return 0;
     return (availableNetWeight / availableUnits) * suggestedUnits;
   }
@@ -424,50 +619,6 @@ class LowStockAlertRepository {
     return left.title.toLowerCase().compareTo(right.title.toLowerCase());
   }
 
-  Future<void> _seedDefaultRulesIfNeeded() async {
-    final countRow = await _db
-        .customSelect(
-            'SELECT COUNT(*) AS rule_count FROM low_stock_alert_rules')
-        .getSingle();
-    if (_readInt(countRow, 'rule_count') > 0) return;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    const defaults = [
-      _DefaultLowStockRule('Gold', 'any', 3, 20, 10),
-      _DefaultLowStockRule('Silver', 'any', 12, 500, 40),
-      _DefaultLowStockRule('Platinum', 'any', 2, 10, 6),
-      _DefaultLowStockRule('Diamond', 'any', 2, 0, 8),
-    ];
-
-    for (final rule in defaults) {
-      await _db.customStatement(
-        '''
-        INSERT INTO low_stock_alert_rules (
-          metal_type,
-          item_type,
-          threshold_units,
-          threshold_net_weight,
-          reorder_target_units,
-          preferred_supplier_name,
-          is_active,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-        ''',
-        [
-          rule.metalType,
-          rule.itemType,
-          rule.thresholdUnits,
-          rule.thresholdNetWeight,
-          rule.reorderTargetUnits,
-          '',
-          now,
-          now,
-        ],
-      );
-    }
-  }
-
   _AvailableStockGroup _mergeGroups(
     String metalType,
     Iterable<_AvailableStockGroup> groups,
@@ -483,10 +634,25 @@ class LowStockAlertRepository {
   LowStockAlertRule _mapRule(drift.QueryRow row) {
     return LowStockAlertRule(
       id: _readInt(row, 'id'),
+      ruleMode: _readString(row, 'rule_mode').isEmpty
+          ? LowStockRuleMode.manual
+          : _readString(row, 'rule_mode'),
+      scopeLevel: _readString(row, 'scope_level').isEmpty
+          ? 'item'
+          : _readString(row, 'scope_level'),
       metalType: _readString(row, 'metal_type'),
+      gradeLabel: _readString(row, 'grade_label'),
       itemType: _readString(row, 'item_type'),
+      criticalUnits: _readInt(row, 'critical_units'),
       thresholdUnits: _readInt(row, 'threshold_units'),
+      targetUnits: _readInt(row, 'target_units') > 0
+          ? _readInt(row, 'target_units')
+          : _readInt(row, 'reorder_target_units'),
+      criticalNetWeight: _readDouble(row, 'critical_net_weight'),
       thresholdNetWeight: _readDouble(row, 'threshold_net_weight'),
+      targetNetWeight: _readDouble(row, 'target_net_weight'),
+      targetSets: _readInt(row, 'target_sets'),
+      targetPackets: _readInt(row, 'target_packets'),
       reorderTargetUnits: _readInt(row, 'reorder_target_units'),
       preferredSupplierName: _readString(row, 'preferred_supplier_name'),
       isActive: _readInt(row, 'is_active') == 1,
@@ -507,9 +673,17 @@ class LowStockAlertRepository {
       metalType: _readString(row, 'metal_type'),
       gradeLabel: _readString(row, 'grade_label'),
       itemType: _readString(row, 'item_type'),
+      unitLabel: _unitLabelFor(
+        itemType: _readString(row, 'item_type'),
+        quantityModes: _readString(row, 'quantity_modes'),
+        totalSets: _readInt(row, 'total_sets'),
+      ),
       totalUnits: _readInt(row, 'total_units'),
       availableUnits: _readInt(row, 'available_units'),
       soldUnits: _readInt(row, 'sold_units'),
+      totalSets: _readInt(row, 'total_sets'),
+      availableSets: _readInt(row, 'available_sets'),
+      soldSets: _readInt(row, 'sold_sets'),
       totalNetWeight: _readDouble(row, 'total_net_weight'),
       availableNetWeight: _readDouble(row, 'available_net_weight'),
       soldNetWeight: _readDouble(row, 'sold_net_weight'),
@@ -552,6 +726,11 @@ class LowStockAlertRepository {
     return '${metal.trim().toLowerCase()}|${item.trim().toLowerCase()}';
   }
 
+  String _normalizedItem(String value) {
+    final item = value.trim();
+    return item.isEmpty ? LowStockConstants.anyItemKey : item;
+  }
+
   int _readInt(drift.QueryRow row, String column) {
     final value = row.data[column];
     return value is num ? value.toInt() : 0;
@@ -568,6 +747,24 @@ class LowStockAlertRepository {
   }
 
   Future<void> _ensureStockUnitColumns() async {
+    final itemRows =
+        await _db.customSelect('PRAGMA table_info(stock_items)').get();
+    final itemColumns = itemRows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
+    if (!itemColumns.contains('quantity_mode')) {
+      await _db.customStatement(
+        "ALTER TABLE stock_items ADD COLUMN quantity_mode TEXT NOT NULL DEFAULT 'PIECES'",
+      );
+    }
+    if (!itemColumns.contains('packet_count')) {
+      await _db.customStatement(
+        'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+
     final rows =
         await _db.customSelect('PRAGMA table_info(stock_item_units)').get();
     final columns = rows
@@ -579,6 +776,107 @@ class LowStockAlertRepository {
       await _db.customStatement(
           'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT');
     }
+  }
+
+  Future<void> _ensureRuleColumns() async {
+    final rows = await _db
+        .customSelect('PRAGMA table_info(low_stock_alert_rules)')
+        .get();
+    final columns = rows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
+    Future<void> add(String name, String ddl) async {
+      if (!columns.contains(name)) await _db.customStatement(ddl);
+    }
+
+    await add('rule_mode',
+        "ALTER TABLE low_stock_alert_rules ADD COLUMN rule_mode TEXT NOT NULL DEFAULT 'manual'");
+    await add('scope_level',
+        "ALTER TABLE low_stock_alert_rules ADD COLUMN scope_level TEXT NOT NULL DEFAULT 'item'");
+    await add('grade_label',
+        "ALTER TABLE low_stock_alert_rules ADD COLUMN grade_label TEXT NOT NULL DEFAULT ''");
+    await add('critical_units',
+        'ALTER TABLE low_stock_alert_rules ADD COLUMN critical_units INTEGER NOT NULL DEFAULT 0');
+    await add('target_units',
+        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_units INTEGER NOT NULL DEFAULT 0');
+    await add('critical_net_weight',
+        'ALTER TABLE low_stock_alert_rules ADD COLUMN critical_net_weight REAL NOT NULL DEFAULT 0.0');
+    await add('target_net_weight',
+        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_net_weight REAL NOT NULL DEFAULT 0.0');
+    await add('target_sets',
+        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_sets INTEGER NOT NULL DEFAULT 0');
+    await add('target_packets',
+        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_packets INTEGER NOT NULL DEFAULT 0');
+
+    await _db.customStatement('''
+      UPDATE low_stock_alert_rules
+      SET target_units = reorder_target_units
+      WHERE COALESCE(target_units, 0) <= 0
+    ''');
+  }
+
+  Future<void> _removeLegacySeedRules() async {
+    await _db.customStatement('''
+      DELETE FROM low_stock_alert_rules
+      WHERE COALESCE(rule_mode, 'manual') = 'manual'
+        AND COALESCE(NULLIF(TRIM(preferred_supplier_name), ''), '') = ''
+        AND LOWER(COALESCE(item_type, 'any')) = 'any'
+        AND COALESCE(NULLIF(TRIM(grade_label), ''), '') = ''
+        AND (
+          (LOWER(metal_type) = 'gold' AND threshold_units = 3 AND reorder_target_units = 10)
+          OR (LOWER(metal_type) = 'silver' AND threshold_units = 12 AND reorder_target_units = 40)
+          OR (LOWER(metal_type) = 'platinum' AND threshold_units = 2 AND reorder_target_units = 6)
+          OR (LOWER(metal_type) = 'diamond' AND threshold_units = 2 AND reorder_target_units = 8)
+        )
+    ''');
+  }
+
+  String _aggregateUnitLabel(List<LowStockStockCard> children) {
+    final labels = children
+        .map((card) => card.unitLabel.trim().toLowerCase())
+        .where((label) => label.isNotEmpty)
+        .toSet();
+    if (labels.length == 1) return labels.single;
+    if (children.any((card) => card.totalSets > 0 || card.targetPackets > 0)) {
+      return 'packet';
+    }
+    return 'item';
+  }
+
+  String _unitLabelFor({
+    required String itemType,
+    required String quantityModes,
+    required int totalSets,
+  }) {
+    final item = itemType.trim().toLowerCase();
+    final modes = quantityModes.trim().toLowerCase();
+    if (item.contains('payal') ||
+        item.contains('anklet') ||
+        item.contains('bichhiya') ||
+        item.contains('toe ring') ||
+        item.contains('jhumka') ||
+        item.contains('earring') ||
+        item.contains('ear ring') ||
+        item.contains('tops') ||
+        item.contains('bali') ||
+        item.contains('kundal') ||
+        item.contains('stud')) {
+      return 'pair';
+    }
+    if (item.contains('set') ||
+        item.contains('necklace') ||
+        item.contains('haar') ||
+        item.contains('har') ||
+        item.contains('chudi')) {
+      return 'set';
+    }
+    if (modes.contains('packet') || modes.contains('pack') || totalSets > 0) {
+      return 'packet';
+    }
+    if (modes.contains('bulk') || modes.contains('lot')) return 'bulk';
+    return 'pcs';
   }
 }
 
@@ -609,9 +907,13 @@ class _StockLedgerGroup {
   final String metalType;
   final String gradeLabel;
   final String itemType;
+  final String unitLabel;
   final int totalUnits;
   final int availableUnits;
   final int soldUnits;
+  final int totalSets;
+  final int availableSets;
+  final int soldSets;
   final double totalNetWeight;
   final double availableNetWeight;
   final double soldNetWeight;
@@ -620,9 +922,13 @@ class _StockLedgerGroup {
     required this.metalType,
     required this.gradeLabel,
     required this.itemType,
+    required this.unitLabel,
     required this.totalUnits,
     required this.availableUnits,
     required this.soldUnits,
+    required this.totalSets,
+    required this.availableSets,
+    required this.soldSets,
     required this.totalNetWeight,
     required this.availableNetWeight,
     required this.soldNetWeight,
@@ -630,37 +936,63 @@ class _StockLedgerGroup {
 }
 
 class _EffectiveLowStockRule {
+  final String ruleMode;
+  final int criticalUnits;
   final int thresholdUnits;
+  final int targetUnits;
+  final double criticalNetWeight;
   final double thresholdNetWeight;
+  final double targetNetWeight;
+  final int targetSets;
+  final int targetPackets;
   final int reorderTargetUnits;
 
   const _EffectiveLowStockRule({
+    required this.ruleMode,
+    required this.criticalUnits,
     required this.thresholdUnits,
+    required this.targetUnits,
+    required this.criticalNetWeight,
     required this.thresholdNetWeight,
+    required this.targetNetWeight,
+    required this.targetSets,
+    required this.targetPackets,
     required this.reorderTargetUnits,
   });
 
   factory _EffectiveLowStockRule.fromRule(LowStockAlertRule rule) {
     return _EffectiveLowStockRule(
+      ruleMode: LowStockRuleMode.manual,
+      criticalUnits: rule.criticalUnits,
       thresholdUnits: rule.thresholdUnits,
+      targetUnits:
+          rule.targetUnits > 0 ? rule.targetUnits : rule.reorderTargetUnits,
+      criticalNetWeight: rule.criticalNetWeight,
       thresholdNetWeight: rule.thresholdNetWeight,
-      reorderTargetUnits: rule.reorderTargetUnits,
+      targetNetWeight: rule.targetNetWeight,
+      targetSets: rule.targetSets,
+      targetPackets: rule.targetPackets,
+      reorderTargetUnits:
+          rule.targetUnits > 0 ? rule.targetUnits : rule.reorderTargetUnits,
     );
   }
-}
 
-class _DefaultLowStockRule {
-  final String metalType;
-  final String itemType;
-  final int thresholdUnits;
-  final double thresholdNetWeight;
-  final int reorderTargetUnits;
-
-  const _DefaultLowStockRule(
-    this.metalType,
-    this.itemType,
-    this.thresholdUnits,
-    this.thresholdNetWeight,
-    this.reorderTargetUnits,
-  );
+  factory _EffectiveLowStockRule.auto(_StockLedgerGroup group) {
+    final targetUnits = group.totalUnits;
+    final yellowUnits = targetUnits <= 1 ? 0 : (targetUnits * 0.50).ceil();
+    final redUnits = targetUnits <= 1 ? 0 : (targetUnits * 0.30).ceil();
+    final targetWeight = group.totalNetWeight;
+    return _EffectiveLowStockRule(
+      ruleMode: LowStockRuleMode.auto,
+      criticalUnits: redUnits,
+      thresholdUnits: yellowUnits,
+      targetUnits: targetUnits,
+      criticalNetWeight: targetWeight * 0.30,
+      thresholdNetWeight: targetWeight * 0.50,
+      targetNetWeight: targetWeight,
+      targetSets: group.totalSets,
+      targetPackets: group.totalSets,
+      reorderTargetUnits: targetUnits,
+    );
+  }
 }

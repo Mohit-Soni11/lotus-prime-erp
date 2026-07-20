@@ -23,7 +23,8 @@ class LowStockGroupDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ui = stockMetalUiFor(StockCategory.fromLabel(groupCard.metalType));
-    final detailCards = controller.detailCardsForGroup(groupCard);
+    final detailCards = controller.alertDetailCardsForGroup(groupCard);
+    final isFinalItemGroup = groupCard.level == LowStockCardLevel.itemGroup;
     return Scaffold(
       backgroundColor: InvColors.bodyBg,
       appBar: LowStockAlertAppBar(
@@ -42,13 +43,16 @@ class LowStockGroupDetailScreen extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
             sliver: SliverToBoxAdapter(
-              child: detailCards.isEmpty
-                  ? const LowStockEmptyState(
-                      title: 'No Detail Found',
-                      subtitle: 'This group has no stock detail yet.',
-                      icon: Icons.layers_clear_outlined,
-                    )
-                  : _DetailGrid(cards: detailCards),
+              child: isFinalItemGroup
+                  ? _FinalItemSummary(card: groupCard)
+                  : detailCards.isEmpty
+                      ? const LowStockEmptyState(
+                          title: 'No Detail Found',
+                          subtitle:
+                              'This group has no low, critical or stock-out item.',
+                          icon: Icons.layers_clear_outlined,
+                        )
+                      : _DetailGrid(cards: detailCards),
             ),
           ),
         ],
@@ -81,10 +85,6 @@ class _DetailGrid extends StatelessWidget {
                 child: LowStockSmartCard(
                   card: card,
                   actionLabel: 'Review Detail',
-                  titleOverride: _isSilver(card) ? card.gradeLabel : card.title,
-                  subtitleOverride: _isSilver(card)
-                      ? '${card.itemType} / ${card.metalType}'
-                      : card.subtitle,
                 ),
               ),
           ],
@@ -92,9 +92,35 @@ class _DetailGrid extends StatelessWidget {
       },
     );
   }
+}
 
-  bool _isSilver(LowStockStockCard card) {
-    return card.metalType.trim().toLowerCase() == 'silver';
+class _FinalItemSummary extends StatelessWidget {
+  final LowStockStockCard card;
+
+  const _FinalItemSummary({required this.card});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth >= 820
+            ? (constraints.maxWidth - 16) / 2
+            : constraints.maxWidth;
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: [
+            SizedBox(
+              width: width,
+              child: LowStockSmartCard(
+                card: card,
+                actionLabel: 'Item Summary',
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

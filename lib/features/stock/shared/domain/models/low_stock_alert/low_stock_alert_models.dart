@@ -32,32 +32,87 @@ class LowStockAlertSummary {
 
 class LowStockAlertRule {
   final int id;
+  final String ruleMode;
+  final String scopeLevel;
   final String metalType;
+  final String gradeLabel;
   final String itemType;
+  final int criticalUnits;
   final int thresholdUnits;
+  final int targetUnits;
+  final double criticalNetWeight;
   final double thresholdNetWeight;
+  final double targetNetWeight;
+  final int targetSets;
+  final int targetPackets;
   final int reorderTargetUnits;
   final String preferredSupplierName;
   final bool isActive;
 
   const LowStockAlertRule({
     required this.id,
+    required this.ruleMode,
+    required this.scopeLevel,
     required this.metalType,
+    required this.gradeLabel,
     required this.itemType,
+    required this.criticalUnits,
     required this.thresholdUnits,
+    required this.targetUnits,
+    required this.criticalNetWeight,
     required this.thresholdNetWeight,
+    required this.targetNetWeight,
+    required this.targetSets,
+    required this.targetPackets,
     required this.reorderTargetUnits,
     required this.preferredSupplierName,
     required this.isActive,
   });
 
   String get scopeLabel {
-    final item = itemType.trim();
+    final rawItem = itemType.trim();
+    final item =
+        rawItem.toLowerCase() == LowStockConstants.anyItemKey ? '' : rawItem;
+    final grade = gradeLabel.trim();
+    if (grade.isNotEmpty && item.isNotEmpty) {
+      return '$metalType / $grade / $item';
+    }
+    if (grade.isNotEmpty) return '$metalType / $grade';
     if (item.isEmpty || item.toLowerCase() == LowStockConstants.anyItemKey) {
       return '$metalType / Any Item';
     }
     return '$metalType / $item';
   }
+}
+
+class LowStockManualRuleDraft {
+  final String metalType;
+  final String gradeLabel;
+  final String itemType;
+  final int criticalUnits;
+  final int thresholdUnits;
+  final int targetUnits;
+  final double criticalNetWeight;
+  final double thresholdNetWeight;
+  final double targetNetWeight;
+  final int targetSets;
+  final int targetPackets;
+  final String preferredSupplierName;
+
+  const LowStockManualRuleDraft({
+    required this.metalType,
+    required this.gradeLabel,
+    required this.itemType,
+    required this.criticalUnits,
+    required this.thresholdUnits,
+    required this.targetUnits,
+    required this.criticalNetWeight,
+    required this.thresholdNetWeight,
+    required this.targetNetWeight,
+    required this.targetSets,
+    required this.targetPackets,
+    required this.preferredSupplierName,
+  });
 }
 
 class LowStockRiskCard {
@@ -104,14 +159,25 @@ class LowStockStockCard {
   final String metalType;
   final String gradeLabel;
   final String itemType;
+  final String unitLabel;
   final int totalUnits;
   final int availableUnits;
   final int soldUnits;
+  final int totalSets;
+  final int availableSets;
+  final int soldSets;
   final double totalNetWeight;
   final double availableNetWeight;
   final double soldNetWeight;
+  final String ruleMode;
+  final int criticalUnits;
   final int thresholdUnits;
+  final int targetUnits;
+  final double criticalNetWeight;
   final double thresholdNetWeight;
+  final double targetNetWeight;
+  final int targetSets;
+  final int targetPackets;
   final int reorderTargetUnits;
   final int suggestedReorderUnits;
   final double suggestedReorderNetWeight;
@@ -122,14 +188,25 @@ class LowStockStockCard {
     required this.metalType,
     required this.gradeLabel,
     required this.itemType,
+    required this.unitLabel,
     required this.totalUnits,
     required this.availableUnits,
     required this.soldUnits,
+    required this.totalSets,
+    required this.availableSets,
+    required this.soldSets,
     required this.totalNetWeight,
     required this.availableNetWeight,
     required this.soldNetWeight,
+    required this.ruleMode,
+    required this.criticalUnits,
     required this.thresholdUnits,
+    required this.targetUnits,
+    required this.criticalNetWeight,
     required this.thresholdNetWeight,
+    required this.targetNetWeight,
+    required this.targetSets,
+    required this.targetPackets,
     required this.reorderTargetUnits,
     required this.suggestedReorderUnits,
     required this.suggestedReorderNetWeight,
@@ -212,6 +289,13 @@ class LowStockCardLevel {
   static const String grade = 'grade';
   static const String itemGroup = 'itemGroup';
   static const String itemType = 'itemType';
+}
+
+class LowStockRuleMode {
+  LowStockRuleMode._();
+
+  static const String auto = 'auto';
+  static const String manual = 'manual';
 }
 
 class LowStockRiskLevel {

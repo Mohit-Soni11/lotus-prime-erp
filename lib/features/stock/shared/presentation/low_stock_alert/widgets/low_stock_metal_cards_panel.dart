@@ -25,9 +25,9 @@ class LowStockMetalCardsPanel extends StatelessWidget {
             icon: Icons.dashboard_customize_rounded,
             title: 'Low Stock Smart Cards',
             subtitle:
-                'Metal cards open the same way inventory ledger cards open.',
+                'Only low, critical and stock-out inventory appears here.',
             trailing: LowStockStatusPill(
-              label: '${cards.length} METALS',
+              label: '${cards.length} ALERTS',
               color: InvColors.brandGold,
             ),
           ),
@@ -35,7 +35,7 @@ class LowStockMetalCardsPanel extends StatelessWidget {
           if (cards.isEmpty)
             const LowStockEmptyState(
               title: 'No Low Stock Card Available',
-              subtitle: 'Metal cards appear only after stock entry exists.',
+              subtitle: 'All watched inventory is currently healthy.',
               icon: Icons.inventory_2_outlined,
             )
           else
