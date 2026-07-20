@@ -7,11 +7,15 @@ class LowStockAlertAppBar extends StatefulWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
   final VoidCallback onRefresh;
+  final String title;
+  final IconData icon;
 
   const LowStockAlertAppBar({
     super.key,
     required this.onBack,
     required this.onRefresh,
+    this.title = 'LOW STOCK ALERTS',
+    this.icon = Icons.notification_important_rounded,
   });
 
   @override
@@ -80,15 +84,15 @@ class _LowStockAlertAppBarState extends State<LowStockAlertAppBar>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.notification_important_rounded,
+              child: Icon(
+                widget.icon,
                 color: Colors.white,
                 size: 21,
               ),
             ),
             const SizedBox(width: 14),
             Text(
-              'LOW STOCK ALERTS',
+              widget.title.toUpperCase(),
               style: InvStyles.shellTitle.copyWith(
                 fontSize: 18,
                 letterSpacing: 1.2,
