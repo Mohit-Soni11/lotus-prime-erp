@@ -42,9 +42,9 @@ class _LowStockSmartCardState extends State<LowStockSmartCard> {
     final borderColor = widget.selected || _hovered
         ? ui.accent.withValues(alpha: 0.58)
         : activeAlert
-            ? riskColor.withValues(alpha: 0.42)
+            ? riskColor.withValues(alpha: 0.28)
             : ui.accent.withValues(alpha: 0.20);
-    final shadowOpacity = widget.selected || _hovered ? 0.18 : 0.09;
+    final shadowOpacity = widget.selected || _hovered ? 0.13 : 0.055;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -67,155 +67,115 @@ class _LowStockSmartCardState extends State<LowStockSmartCard> {
                 border: Border.all(color: borderColor, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: (activeAlert ? riskColor : ui.accent)
+                    color: (activeAlert ? Colors.black : ui.accent)
                         .withValues(alpha: shadowOpacity),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.035),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
+                    blurRadius: activeAlert ? 16 : 24,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              child: Stack(
-                children: [
-                  if (activeAlert)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 7,
-                        decoration: BoxDecoration(
-                          color: riskColor,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(24),
-                            bottomLeft: Radius.circular(24),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      activeAlert ? 24 : 20,
-                      20,
-                      20,
-                      20,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            _CardVisual(ui: ui, card: widget.card),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.titleOverride ?? widget.card.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w900,
-                                      color: InvColors.textDark,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    widget.subtitleOverride ??
-                                        widget.card.subtitle,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12.5,
-                                      height: 1.35,
-                                      fontWeight: FontWeight.w700,
-                                      color: InvColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            LowStockStatusPill(
-                              label:
-                                  '${lowStockRiskLabel(widget.card.riskLevel)} | ${widget.card.ruleMode.toUpperCase()}',
-                              color: riskColor,
-                            ),
-                          ],
-                        ),
-                        if (activeAlert) ...[
-                          const SizedBox(height: 16),
-                          _AlertReorderBanner(
-                            card: widget.card,
-                            accent: riskColor,
-                            unitLabel: _unitName(
-                              widget.card.unitLabel,
-                              plural: false,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        if (widget.card.level == LowStockCardLevel.metal)
-                          _MetalSummaryMetrics(card: widget.card)
-                        else
-                          _StockDetailMetrics(
-                            card: widget.card,
-                            accent: ui.accent,
-                            softTint: ui.softTint,
-                          ),
-                        const SizedBox(height: 18),
-                        Container(
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: widget.selected
-                                ? ui.accent
-                                : activeAlert
-                                    ? riskColor.withValues(alpha: 0.10)
-                                    : ui.accent.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: (activeAlert ? riskColor : ui.accent)
-                                  .withValues(alpha: 0.28),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        _CardVisual(ui: ui, card: widget.card),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.actionLabel,
+                                widget.titleOverride ?? widget.card.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.manrope(
-                                  fontSize: 13,
+                                  fontSize: 19,
                                   fontWeight: FontWeight.w900,
-                                  color: widget.selected
-                                      ? Colors.white
-                                      : activeAlert
-                                          ? riskColor
-                                          : ui.accent,
+                                  color: InvColors.textDark,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 18,
-                                color: widget.selected
-                                    ? Colors.white
-                                    : activeAlert
-                                        ? riskColor
-                                        : ui.accent,
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.subtitleOverride ?? widget.card.subtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  height: 1.35,
+                                  fontWeight: FontWeight.w700,
+                                  color: InvColors.textMuted,
+                                ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        LowStockStatusPill(
+                          label:
+                              '${lowStockRiskLabel(widget.card.riskLevel)} | ${widget.card.ruleMode.toUpperCase()}',
+                          color: riskColor,
+                        ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    if (activeAlert)
+                      _AlertStockMetrics(card: widget.card)
+                    else if (widget.card.level == LowStockCardLevel.metal)
+                      _MetalSummaryMetrics(card: widget.card)
+                    else
+                      _StockDetailMetrics(
+                        card: widget.card,
+                        accent: ui.accent,
+                        softTint: ui.softTint,
+                      ),
+                    const SizedBox(height: 18),
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: widget.selected
+                            ? ui.accent
+                            : activeAlert
+                                ? riskColor.withValues(alpha: 0.06)
+                                : ui.accent.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: (activeAlert ? riskColor : ui.accent)
+                              .withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.actionLabel,
+                            style: GoogleFonts.manrope(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: widget.selected
+                                  ? Colors.white
+                                  : activeAlert
+                                      ? riskColor
+                                      : ui.accent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 18,
+                            color: widget.selected
+                                ? Colors.white
+                                : activeAlert
+                                    ? riskColor
+                                    : ui.accent,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -225,62 +185,154 @@ class _LowStockSmartCardState extends State<LowStockSmartCard> {
   }
 }
 
-class _AlertReorderBanner extends StatelessWidget {
+class _AlertStockMetrics extends StatelessWidget {
   final LowStockStockCard card;
-  final Color accent;
-  final String unitLabel;
 
-  const _AlertReorderBanner({
-    required this.card,
-    required this.accent,
-    required this.unitLabel,
-  });
+  const _AlertStockMetrics({required this.card});
 
   @override
   Widget build(BuildContext context) {
-    final need = card.suggestedReorderUnits;
-    final target = card.reorderTargetUnits > 0
-        ? card.reorderTargetUnits
-        : card.targetUnits;
-    final targetText = target > 0 ? 'Target $target $unitLabel' : 'Target rule';
-    final needText =
-        need > 0 ? 'Add $need $unitLabel to recover stock' : 'Review stock now';
+    final unit = _unitName(card.unitLabel, plural: false);
+    final units = _unitName(card.unitLabel, plural: true);
+    final metrics = [
+      _AlertMetric(
+        label: 'Total $units',
+        value: _quantityValue(card.totalUnits, unit),
+        icon: Icons.inventory_2_rounded,
+        color: InvColors.brandGold,
+      ),
+      _AlertMetric(
+        label: 'Available $units',
+        value: _quantityValue(card.availableUnits, unit),
+        icon: Icons.check_circle_rounded,
+        color: InvColors.success,
+      ),
+      _AlertMetric(
+        label: 'Sold $units',
+        value: _quantityValue(card.soldUnits, unit),
+        icon: Icons.point_of_sale_rounded,
+        color: InvColors.danger,
+      ),
+      _AlertMetric(
+        label: 'Current Weight',
+        value: lowStockWeight(card.availableNetWeight),
+        icon: Icons.scale_rounded,
+        color: InvColors.textMuted,
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 500;
+        if (compact) {
+          return Column(
+            children: [
+              for (final metric in metrics) ...[
+                _AlertMetricTile(metric: metric),
+                if (metric != metrics.last) const SizedBox(height: 10),
+              ],
+            ],
+          );
+        }
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _AlertMetricTile(metric: metrics[0])),
+                const SizedBox(width: 10),
+                Expanded(child: _AlertMetricTile(metric: metrics[1])),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: _AlertMetricTile(metric: metrics[2])),
+                const SizedBox(width: 10),
+                Expanded(child: _AlertMetricTile(metric: metrics[3])),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AlertMetricTile extends StatelessWidget {
+  final _AlertMetric metric;
+
+  const _AlertMetricTile({required this.metric});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      constraints: const BoxConstraints(minHeight: 68),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.09),
+        color: const Color(0xFFFFFCF7),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.20)),
+        border: Border.all(color: metric.color.withValues(alpha: 0.16)),
       ),
       child: Row(
         children: [
-          Icon(Icons.priority_high_rounded, color: accent, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              needText,
-              style: GoogleFonts.inter(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w900,
-                color: InvColors.textDark,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: metric.color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(9),
             ),
+            child: Icon(metric.icon, color: metric.color, size: 17),
           ),
           const SizedBox(width: 10),
-          Text(
-            targetText,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              color: InvColors.textMuted,
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  metric.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                    color: InvColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    metric.value,
+                    style: GoogleFonts.manrope(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: InvColors.textDark,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _AlertMetric {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _AlertMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 }
 
 class _CardVisual extends StatelessWidget {

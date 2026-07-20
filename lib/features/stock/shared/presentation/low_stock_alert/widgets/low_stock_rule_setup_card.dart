@@ -60,133 +60,116 @@ class _LowStockRuleSetupCardState extends State<LowStockRuleSetupCard> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (_hovered ? ui.accent : Colors.black)
-                        .withValues(alpha: _hovered ? 0.14 : 0.05),
-                    blurRadius: _hovered ? 22 : 14,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withValues(alpha: 0.045),
+                    blurRadius: 14,
+                    offset: const Offset(0, 7),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    height: 5,
-                    decoration: BoxDecoration(
-                      gradient: ui.gradient,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            _RuleCardIcon(ui: ui, card: card),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    card.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.manrope(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w900,
-                                      color: InvColors.textDark,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    scope,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: InvColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            LowStockStatusPill(
-                              label: card.ruleMode.toUpperCase(),
-                              color: ui.accent,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _RuleLevelStrip(card: card, unit: unit),
-                        const SizedBox(height: 14),
-                        _RuleMetricGrid(
-                          metrics: [
-                            _RuleMetric(
-                              label: 'Total $units',
-                              value: _quantity(card.totalUnits, unit),
-                              icon: Icons.inventory_2_rounded,
-                              color: InvColors.brandGold,
-                            ),
-                            _RuleMetric(
-                              label: 'Available $units',
-                              value: _quantity(card.availableUnits, unit),
-                              icon: Icons.check_circle_rounded,
-                              color: InvColors.success,
-                            ),
-                            _RuleMetric(
-                              label: 'Sold $units',
-                              value: _quantity(card.soldUnits, unit),
-                              icon: Icons.point_of_sale_rounded,
-                              color: InvColors.danger,
-                            ),
-                            _RuleMetric(
-                              label: 'Current Weight',
-                              value: lowStockWeight(card.availableNetWeight),
-                              icon: Icons.scale_rounded,
-                              color: InvColors.textMuted,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: ui.accent.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: ui.accent.withValues(alpha: 0.22),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                        _RuleCardIcon(ui: ui, card: card),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.actionLabel,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
+                                card.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.manrope(
+                                  fontSize: 19,
                                   fontWeight: FontWeight.w900,
-                                  color: ui.accent,
+                                  color: InvColors.textDark,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                color: ui.accent,
-                                size: 18,
+                              const SizedBox(height: 4),
+                              Text(
+                                scope,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: InvColors.textMuted,
+                                ),
                               ),
                             ],
                           ),
                         ),
+                        LowStockStatusPill(
+                          label: card.ruleMode.toUpperCase(),
+                          color: ui.accent,
+                        ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    _RuleMetricGrid(
+                      metrics: [
+                        _RuleMetric(
+                          label: 'Total $units',
+                          value: _quantity(card.totalUnits, unit),
+                          icon: Icons.inventory_2_rounded,
+                          color: InvColors.brandGold,
+                        ),
+                        _RuleMetric(
+                          label: 'Available $units',
+                          value: _quantity(card.availableUnits, unit),
+                          icon: Icons.check_circle_rounded,
+                          color: InvColors.success,
+                        ),
+                        _RuleMetric(
+                          label: 'Sold $units',
+                          value: _quantity(card.soldUnits, unit),
+                          icon: Icons.point_of_sale_rounded,
+                          color: InvColors.danger,
+                        ),
+                        _RuleMetric(
+                          label: 'Current Weight',
+                          value: lowStockWeight(card.availableNetWeight),
+                          icon: Icons.scale_rounded,
+                          color: InvColors.textMuted,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: ui.accent.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: ui.accent.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.actionLabel,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: ui.accent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            color: ui.accent,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -231,13 +214,6 @@ class _RuleCardIcon extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: ui.gradient,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: ui.accent.withValues(alpha: 0.22),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: card.level == LowStockCardLevel.metal && ui.logoAsset != null
@@ -251,103 +227,6 @@ class _RuleCardIcon extends StatelessWidget {
               ),
             )
           : Icon(icon, color: ui.textOnGradient, size: 26),
-    );
-  }
-}
-
-class _RuleLevelStrip extends StatelessWidget {
-  final LowStockStockCard card;
-  final String unit;
-
-  const _RuleLevelStrip({required this.card, required this.unit});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: InvColors.cardBorder),
-      ),
-      child: Row(
-        children: [
-          _LevelChip(
-            label: 'Red',
-            value: card.criticalUnits,
-            unit: unit,
-            color: InvColors.danger,
-          ),
-          const SizedBox(width: 8),
-          _LevelChip(
-            label: 'Yellow',
-            value: card.thresholdUnits,
-            unit: unit,
-            color: InvColors.brandGold,
-          ),
-          const SizedBox(width: 8),
-          _LevelChip(
-            label: 'Green',
-            value: card.targetUnits,
-            unit: unit,
-            color: InvColors.success,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LevelChip extends StatelessWidget {
-  final String label;
-  final int value;
-  final String unit;
-  final Color color;
-
-  const _LevelChip({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(11),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w900,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                _quantity(value, unit),
-                style: GoogleFonts.manrope(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: InvColors.textDark,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

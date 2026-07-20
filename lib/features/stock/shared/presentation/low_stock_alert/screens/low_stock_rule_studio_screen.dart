@@ -25,7 +25,6 @@ class LowStockRuleStudioScreen extends StatefulWidget {
 }
 
 class _LowStockRuleStudioScreenState extends State<LowStockRuleStudioScreen> {
-  late int _tab = widget.initialTab;
   String? _autoMetalType;
   String? _autoGroupKey;
 
@@ -40,9 +39,6 @@ class _LowStockRuleStudioScreenState extends State<LowStockRuleStudioScreen> {
     final autoItemCards = selectedAutoGroup == null
         ? const <LowStockStockCard>[]
         : widget.controller.inventoryRuleItemCardsForGroup(selectedAutoGroup);
-    final manualRules = widget.controller.rules
-        .where((rule) => rule.ruleMode == LowStockRuleMode.manual)
-        .toList(growable: false);
 
     return Scaffold(
       backgroundColor: InvColors.bodyBg,
@@ -59,61 +55,54 @@ class _LowStockRuleStudioScreenState extends State<LowStockRuleStudioScreen> {
               child: _RuleSetupHeader(
                 metalCount: autoMetalCards.length,
                 ruleCardCount: widget.controller.summary.watchedGroups,
-                manualRuleCount: manualRules.length,
-                tab: _tab,
-                onTabChanged: (value) => setState(() => _tab = value),
-                onManualRule: () => _openEditor(),
               ),
             ),
           ),
-          if (_tab == 0)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
-                child: _RulePathHeader(
-                  selectedMetal: selectedAutoMetal,
-                  selectedGroup: selectedAutoGroup,
-                  metalCount: autoMetalCards.length,
-                  groupCount: autoGroupCards.length,
-                  itemCount: autoItemCards.length,
-                ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+              child: _RulePathHeader(
+                selectedMetal: selectedAutoMetal,
+                selectedGroup: selectedAutoGroup,
+                metalCount: autoMetalCards.length,
+                groupCount: autoGroupCards.length,
+                itemCount: autoItemCards.length,
               ),
             ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 18, 24, 34),
             sliver: SliverToBoxAdapter(
-              child: _tab == 0
-                  ? _AutoRuleBrowser(
-                      metalCards: autoMetalCards,
-                      groupCards: autoGroupCards,
-                      itemCards: autoItemCards,
-                      selectedMetalType: selectedAutoMetal,
-                      selectedGroupCard: selectedAutoGroup,
-                      onOpenMetal: (card) {
-                        setState(() {
-                          _autoMetalType = card.metalType;
-                          _autoGroupKey = null;
-                        });
-                      },
-                      onBackToMetals: () {
-                        setState(() {
-                          _autoMetalType = null;
-                          _autoGroupKey = null;
-                        });
-                      },
-                      onOpenGroup: (card) {
-                        if (card.level == LowStockCardLevel.itemGroup) {
-                          _openEditor(autoCard: card);
-                          return;
-                        }
-                        setState(() => _autoGroupKey = _groupKey(card));
-                      },
-                      onBackToGrades: () {
-                        setState(() => _autoGroupKey = null);
-                      },
-                      onOpenItem: (card) => _openEditor(autoCard: card),
-                    )
-                  : _ManualRuleList(rules: manualRules, onTap: _openEditor),
+              child: _AutoRuleBrowser(
+                metalCards: autoMetalCards,
+                groupCards: autoGroupCards,
+                itemCards: autoItemCards,
+                selectedMetalType: selectedAutoMetal,
+                selectedGroupCard: selectedAutoGroup,
+                onOpenMetal: (card) {
+                  setState(() {
+                    _autoMetalType = card.metalType;
+                    _autoGroupKey = null;
+                  });
+                },
+                onBackToMetals: () {
+                  setState(() {
+                    _autoMetalType = null;
+                    _autoGroupKey = null;
+                  });
+                },
+                onOpenGroup: (card) {
+                  if (card.level == LowStockCardLevel.itemGroup) {
+                    _openEditor(autoCard: card);
+                    return;
+                  }
+                  setState(() => _autoGroupKey = _groupKey(card));
+                },
+                onBackToGrades: () {
+                  setState(() => _autoGroupKey = null);
+                },
+                onOpenItem: (card) => _openEditor(autoCard: card),
+              ),
             ),
           ),
         ],
@@ -185,18 +174,10 @@ class _LowStockRuleStudioScreenState extends State<LowStockRuleStudioScreen> {
 class _RuleSetupHeader extends StatelessWidget {
   final int metalCount;
   final int ruleCardCount;
-  final int manualRuleCount;
-  final int tab;
-  final ValueChanged<int> onTabChanged;
-  final VoidCallback onManualRule;
 
   const _RuleSetupHeader({
     required this.metalCount,
     required this.ruleCardCount,
-    required this.manualRuleCount,
-    required this.tab,
-    required this.onTabChanged,
-    required this.onManualRule,
   });
 
   @override
@@ -248,77 +229,7 @@ class _RuleSetupHeader extends StatelessWidget {
                         icon: Icons.inventory_2_rounded,
                         color: InvColors.brandGold,
                       ),
-                      _HeaderStat(
-                        label: 'Overrides',
-                        value: '$manualRuleCount',
-                        icon: Icons.edit_note_rounded,
-                        color: InvColors.textMuted,
-                      ),
                     ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Flex(
-                direction: compact ? Axis.vertical : Axis.horizontal,
-                crossAxisAlignment: compact
-                    ? CrossAxisAlignment.stretch
-                    : CrossAxisAlignment.center,
-                children: [
-                  if (compact)
-                    SegmentedButton<int>(
-                      segments: const [
-                        ButtonSegment(
-                          value: 0,
-                          icon: Icon(Icons.inventory_2_rounded),
-                          label: Text('Inventory Cards'),
-                        ),
-                        ButtonSegment(
-                          value: 1,
-                          icon: Icon(Icons.edit_note_rounded),
-                          label: Text('Manual Overrides'),
-                        ),
-                      ],
-                      selected: {tab},
-                      onSelectionChanged: (value) {
-                        onTabChanged(value.first);
-                      },
-                    )
-                  else
-                    Expanded(
-                      child: SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(
-                            value: 0,
-                            icon: Icon(Icons.inventory_2_rounded),
-                            label: Text('Inventory Cards'),
-                          ),
-                          ButtonSegment(
-                            value: 1,
-                            icon: Icon(Icons.edit_note_rounded),
-                            label: Text('Manual Overrides'),
-                          ),
-                        ],
-                        selected: {tab},
-                        onSelectionChanged: (value) {
-                          onTabChanged(value.first);
-                        },
-                      ),
-                    ),
-                  SizedBox(width: compact ? 0 : 12, height: compact ? 12 : 0),
-                  FilledButton.icon(
-                    onPressed: onManualRule,
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Manual Override'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: InvColors.brandGold,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(176, 44),
-                      textStyle: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -703,100 +614,6 @@ class _AutoRuleBreadcrumb extends StatelessWidget {
             color: InvColors.success,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ManualRuleList extends StatelessWidget {
-  final List<LowStockAlertRule> rules;
-  final void Function({LowStockAlertRule rule}) onTap;
-
-  const _ManualRuleList({required this.rules, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    if (rules.isEmpty) {
-      return const LowStockEmptyState(
-        title: 'No Manual Rules',
-        subtitle:
-            'Use stock cards to set your own red, yellow and green levels.',
-      );
-    }
-    return Column(
-      children: [
-        for (final rule in rules) ...[
-          _RuleTile(
-            title: rule.scopeLabel,
-            subtitle:
-                'Red ${rule.criticalUnits} | Yellow ${rule.thresholdUnits} | Target ${rule.targetUnits}',
-            badge: 'MANUAL',
-            color: InvColors.brandGold,
-            onTap: () => onTap(rule: rule),
-          ),
-          const SizedBox(height: 12),
-        ],
-      ],
-    );
-  }
-}
-
-class _RuleTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String badge;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _RuleTile({
-    required this.title,
-    required this.subtitle,
-    required this.badge,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.28)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D000000),
-                blurRadius: 14,
-                offset: Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.rule_rounded, color: color, size: 28),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: InvStyles.itemName),
-                    const SizedBox(height: 4),
-                    Text(subtitle, style: InvStyles.itemSku),
-                  ],
-                ),
-              ),
-              LowStockStatusPill(label: badge, color: color),
-              const SizedBox(width: 10),
-              Icon(Icons.arrow_forward_rounded, color: color),
-            ],
-          ),
-        ),
       ),
     );
   }
