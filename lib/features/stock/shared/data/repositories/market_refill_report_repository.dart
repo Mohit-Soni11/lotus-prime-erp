@@ -92,9 +92,33 @@ END
 ''';
 
 class MarketRefillReportRepository {
+  static const Duration _checkoutHistoryRetention = Duration(days: 2);
+
   final AppDatabase _db;
 
   MarketRefillReportRepository(this._db);
+
+  Future<MarketRefillReport> loadActiveReport() async {
+    await _ensureSchema();
+    final lastClearedAt = await _loadLastClearedAt();
+    final now = DateTime.now();
+    final range = MarketRefillDateRange(
+      start: lastClearedAt ?? DateTime(2000),
+      end: now.add(const Duration(days: 1)),
+      label: 'Active Purchase List',
+    );
+    final report = await loadReport(range);
+    final recentCheckouts = await loadRecentCheckouts();
+    return MarketRefillReport(
+      range: report.range,
+      summary: report.summary,
+      metals: report.metals,
+      rows: report.rows,
+      recentCheckouts: recentCheckouts,
+      progressScope: lastClearedAt?.millisecondsSinceEpoch ?? 0,
+      lastClearedAt: lastClearedAt,
+    );
+  }
 
   Future<MarketRefillReport> loadReport(MarketRefillDateRange range) async {
     await _ensureSchema();
@@ -106,6 +130,10 @@ class MarketRefillReportRepository {
       for (final row in availableRows) _rowKey(row): row,
     };
 
+    final progressScope =
+        range.start.year <= 2000 ? 0 : range.start.millisecondsSinceEpoch;
+    final progressByKey = await _loadLineProgress(progressScope);
+
     final rows = soldRows.map((sold) {
       final available = availableByKey[_rowKey(sold)];
       final soldQuantity = _positiveInt(_readInt(sold, 'sold_quantity'));
@@ -114,16 +142,30 @@ class MarketRefillReportRepository {
       final soldWeight = _positiveDouble(_readDouble(sold, 'sold_weight'));
       final availableWeight =
           _positiveDouble(_readDoubleOrZero(available, 'available_weight'));
+      final metal = _readString(sold, 'metal');
+      final gradeLabel = _readString(sold, 'grade_label');
+      final companyName = _readString(sold, 'company_name');
+      final itemType = _titleCase(_readString(sold, 'item_type'));
+      final unitLabel = _unitLabel(
+        _readString(sold, 'quantity_mode'),
+        _readString(sold, 'item_type'),
+      );
+      final rowKey = _itemRowKey(
+        metal: metal,
+        gradeLabel: gradeLabel,
+        companyName: companyName,
+        itemType: itemType,
+        unitLabel: unitLabel,
+      );
+      final progress = progressByKey[rowKey];
 
       return MarketRefillItemRow(
-        metal: _readString(sold, 'metal'),
-        gradeLabel: _readString(sold, 'grade_label'),
-        companyName: _readString(sold, 'company_name'),
-        itemType: _titleCase(_readString(sold, 'item_type')),
-        unitLabel: _unitLabel(
-          _readString(sold, 'quantity_mode'),
-          _readString(sold, 'item_type'),
-        ),
+        rowKey: rowKey,
+        metal: metal,
+        gradeLabel: gradeLabel,
+        companyName: companyName,
+        itemType: itemType,
+        unitLabel: unitLabel,
         soldQuantity: soldQuantity,
         availableQuantity: availableQuantity,
         refillQuantity: soldQuantity,
@@ -134,6 +176,8 @@ class MarketRefillReportRepository {
         lastSoldAt: _readDate(sold, 'last_sold_at'),
         companyNames: _readCsv(sold, 'company_names'),
         itemNames: _readCsv(sold, 'item_names'),
+        boughtQuantity: progress?.boughtQuantity ?? soldQuantity,
+        purchaseDone: progress?.purchaseDone ?? false,
       );
     }).toList(growable: false)
       ..sort((a, b) {
@@ -151,7 +195,31 @@ class MarketRefillReportRepository {
       summary: _buildSummary(rows),
       metals: _buildMetalSummary(rows),
       rows: rows,
+      progressScope: progressScope,
     );
+  }
+
+  Future<List<MarketRefillCheckoutRecord>> loadRecentCheckouts({
+    int limit = 5,
+  }) async {
+    await _ensureSchema();
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        id,
+        checkout_no,
+        checked_out_at,
+        sold_quantity,
+        item_groups,
+        metal_groups,
+        sold_net_weight
+      FROM market_refill_checkout_history
+      ORDER BY checked_out_at DESC, id DESC
+      LIMIT ?
+      ''',
+      variables: [drift.Variable<int>(limit)],
+    ).get();
+    return rows.map(_mapCheckoutRecord).toList(growable: false);
   }
 
   String buildCsv(MarketRefillReport report) {
@@ -165,6 +233,8 @@ class MarketRefillReportRepository {
         'Sold Qty',
         'Available Qty',
         'Refill Qty',
+        'Bought Qty',
+        'Done',
         'Sold Net Weight',
         'Available Net Weight',
         'Companies',
@@ -184,6 +254,8 @@ class MarketRefillReportRepository {
           row.soldQuantity.toString(),
           row.availableQuantity.toString(),
           row.refillQuantity.toString(),
+          row.boughtQuantity.toString(),
+          row.purchaseDone ? 'Yes' : 'No',
           row.soldNetWeight.toStringAsFixed(3),
           row.availableNetWeight.toStringAsFixed(3),
           row.companyNames.join(' | '),
@@ -195,6 +267,102 @@ class MarketRefillReportRepository {
         ],
     ];
     return lines.map((line) => line.map(_csvCell).join(',')).join('\n');
+  }
+
+  Future<void> saveLineProgress({
+    required int progressScope,
+    required String rowKey,
+    required int boughtQuantity,
+    required bool purchaseDone,
+  }) async {
+    await _ensureSchema();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _db.customStatement(
+      '''
+      INSERT INTO market_refill_line_progress (
+        progress_scope,
+        row_key,
+        bought_quantity,
+        is_checked,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(progress_scope, row_key) DO UPDATE SET
+        bought_quantity = excluded.bought_quantity,
+        is_checked = excluded.is_checked,
+        updated_at = excluded.updated_at
+      ''',
+      [
+        progressScope,
+        rowKey,
+        boughtQuantity < 0 ? 0 : boughtQuantity,
+        purchaseDone ? 1 : 0,
+        now,
+      ],
+    );
+  }
+
+  Future<void> checkoutAndClear({MarketRefillReport? report}) async {
+    await _ensureSchema();
+    final snapshot = report ?? await loadActiveReport();
+    final nowDate = DateTime.now();
+    final now = nowDate.millisecondsSinceEpoch;
+    await _db.transaction(() async {
+      if (snapshot.rows.isNotEmpty) {
+        final checkoutNo = await _nextCheckoutNo(nowDate);
+        await _db.customStatement(
+          '''
+          INSERT INTO market_refill_checkout_history (
+            checkout_no,
+            checked_out_at,
+            cleared_until,
+            sold_quantity,
+            item_groups,
+            metal_groups,
+            sold_net_weight
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          ''',
+          [
+            checkoutNo,
+            now,
+            now,
+            snapshot.summary.soldQuantity,
+            snapshot.summary.itemGroups,
+            snapshot.summary.metalGroups,
+            snapshot.summary.soldNetWeight,
+          ],
+        );
+        final checkoutId = await _lastInsertId();
+        for (final row in snapshot.rows) {
+          await _insertCheckoutLine(checkoutId: checkoutId, row: row);
+        }
+      }
+
+      await _db.customStatement(
+        '''
+        INSERT INTO market_refill_report_state (id, cleared_until, updated_at)
+        VALUES (1, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          cleared_until = excluded.cleared_until,
+          updated_at = excluded.updated_at
+        ''',
+        [now, now],
+      );
+    });
+  }
+
+  Future<void> restoreClearedList() async {
+    await _ensureSchema();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _db.customStatement(
+      '''
+      INSERT INTO market_refill_report_state (id, cleared_until, updated_at)
+      VALUES (1, 0, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        cleared_until = 0,
+        updated_at = excluded.updated_at
+      ''',
+      [now],
+    );
   }
 
   Future<List<drift.QueryRow>> _loadSoldRows(
@@ -297,6 +465,27 @@ class MarketRefillReportRepository {
     ''').get();
   }
 
+  Future<Map<String, MarketRefillLineProgress>> _loadLineProgress(
+    int progressScope,
+  ) async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT row_key, bought_quantity, is_checked
+      FROM market_refill_line_progress
+      WHERE progress_scope = ?
+      ''',
+      variables: [drift.Variable<int>(progressScope)],
+    ).get();
+    return {
+      for (final row in rows)
+        _readString(row, 'row_key'): MarketRefillLineProgress(
+          rowKey: _readString(row, 'row_key'),
+          boughtQuantity: _positiveInt(_readInt(row, 'bought_quantity')),
+          purchaseDone: _readInt(row, 'is_checked') == 1,
+        ),
+    };
+  }
+
   MarketRefillSummary _buildSummary(List<MarketRefillItemRow> rows) {
     return MarketRefillSummary(
       soldQuantity: rows.fold(0, (sum, row) => sum + row.soldQuantity),
@@ -322,20 +511,95 @@ class MarketRefillReportRepository {
       final metalRows = entry.value;
       return MarketRefillMetalSummary(
         metal: entry.key,
-        soldQuantity:
-            metalRows.fold(0, (sum, row) => sum + row.soldQuantity),
+        soldQuantity: metalRows.fold(0, (sum, row) => sum + row.soldQuantity),
         availableQuantity:
             metalRows.fold(0, (sum, row) => sum + row.availableQuantity),
         refillQuantity:
             metalRows.fold(0, (sum, row) => sum + row.refillQuantity),
         itemGroups: metalRows.length,
-        soldNetWeight:
-            metalRows.fold(0, (sum, row) => sum + row.soldNetWeight),
+        soldNetWeight: metalRows.fold(0, (sum, row) => sum + row.soldNetWeight),
         availableNetWeight:
             metalRows.fold(0, (sum, row) => sum + row.availableNetWeight),
       );
     }).toList(growable: false)
       ..sort((a, b) => a.metal.compareTo(b.metal));
+  }
+
+  Future<String> _nextCheckoutNo(DateTime now) async {
+    final dayStart = DateTime(now.year, now.month, now.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+    final row = await _db.customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM market_refill_checkout_history
+      WHERE checked_out_at >= ? AND checked_out_at < ?
+      ''',
+      variables: [
+        drift.Variable<int>(dayStart.millisecondsSinceEpoch),
+        drift.Variable<int>(dayEnd.millisecondsSinceEpoch),
+      ],
+    ).getSingle();
+    final sequence = _readInt(row, 'count') + 1;
+    final y = now.year.toString().padLeft(4, '0');
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    return 'MPL-$y$m$d-${sequence.toString().padLeft(3, '0')}';
+  }
+
+  Future<int> _lastInsertId() async {
+    final row =
+        await _db.customSelect('SELECT last_insert_rowid() AS id').getSingle();
+    return _readInt(row, 'id');
+  }
+
+  Future<void> _insertCheckoutLine({
+    required int checkoutId,
+    required MarketRefillItemRow row,
+  }) {
+    return _db.customStatement(
+      '''
+      INSERT INTO market_refill_checkout_lines (
+        checkout_id,
+        row_key,
+        metal,
+        grade_label,
+        company_name,
+        item_type,
+        unit_label,
+        sold_quantity,
+        bought_quantity,
+        is_checked,
+        sold_net_weight,
+        last_sold_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        checkoutId,
+        row.rowKey,
+        row.metal,
+        row.gradeLabel,
+        row.companyLabel,
+        row.title,
+        row.unitLabel,
+        row.soldQuantity,
+        row.boughtQuantity,
+        row.purchaseDone ? 1 : 0,
+        row.soldNetWeight,
+        row.lastSoldAt?.millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  MarketRefillCheckoutRecord _mapCheckoutRecord(drift.QueryRow row) {
+    return MarketRefillCheckoutRecord(
+      id: _readInt(row, 'id'),
+      checkoutNo: _readString(row, 'checkout_no'),
+      checkedOutAt: _readDate(row, 'checked_out_at') ?? DateTime(2000),
+      soldQuantity: _readInt(row, 'sold_quantity'),
+      itemGroups: _readInt(row, 'item_groups'),
+      metalGroups: _readInt(row, 'metal_groups'),
+      soldNetWeight: _readDouble(row, 'sold_net_weight'),
+    );
   }
 
   String _rowKey(drift.QueryRow row) {
@@ -345,6 +609,23 @@ class MarketRefillReportRepository {
     final itemType = _readString(row, 'item_type').toLowerCase();
     final quantityMode = _readString(row, 'quantity_mode').toLowerCase();
     return '$metal|$grade|$company|$itemType|${_unitLabel(quantityMode, itemType)}';
+  }
+
+  String _itemRowKey({
+    required String metal,
+    required String gradeLabel,
+    required String companyName,
+    required String itemType,
+    required String unitLabel,
+  }) {
+    String normalize(String value) => value.trim().toLowerCase();
+    return [
+      normalize(metal),
+      normalize(gradeLabel),
+      normalize(companyName),
+      normalize(itemType),
+      normalize(unitLabel),
+    ].join('|');
   }
 
   String _unitLabel(String quantityMode, String itemType) {
@@ -366,6 +647,53 @@ class MarketRefillReportRepository {
   }
 
   Future<void> _ensureSchema() async {
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_report_state (
+        id INTEGER NOT NULL PRIMARY KEY,
+        cleared_until INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER
+      )
+    ''');
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_line_progress (
+        progress_scope INTEGER NOT NULL DEFAULT 0,
+        row_key TEXT NOT NULL,
+        bought_quantity INTEGER NOT NULL DEFAULT 0,
+        is_checked INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (progress_scope, row_key)
+      )
+    ''');
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_checkout_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        checkout_no TEXT NOT NULL UNIQUE,
+        checked_out_at INTEGER NOT NULL,
+        cleared_until INTEGER NOT NULL,
+        sold_quantity INTEGER NOT NULL DEFAULT 0,
+        item_groups INTEGER NOT NULL DEFAULT 0,
+        metal_groups INTEGER NOT NULL DEFAULT 0,
+        sold_net_weight REAL NOT NULL DEFAULT 0
+      )
+    ''');
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_checkout_lines (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        checkout_id INTEGER NOT NULL,
+        row_key TEXT NOT NULL,
+        metal TEXT NOT NULL,
+        grade_label TEXT,
+        company_name TEXT,
+        item_type TEXT NOT NULL,
+        unit_label TEXT NOT NULL,
+        sold_quantity INTEGER NOT NULL DEFAULT 0,
+        bought_quantity INTEGER NOT NULL DEFAULT 0,
+        is_checked INTEGER NOT NULL DEFAULT 0,
+        sold_net_weight REAL NOT NULL DEFAULT 0,
+        last_sold_at INTEGER,
+        FOREIGN KEY (checkout_id) REFERENCES market_refill_checkout_history(id)
+      )
+    ''');
     final itemColumns = await _tableColumns('stock_items');
     if (!itemColumns.contains('company_name')) {
       await _db.customStatement(
@@ -393,6 +721,50 @@ class MarketRefillReportRepository {
         'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
       );
     }
+    await _purgeExpiredCheckoutHistory();
+  }
+
+  Future<void> _purgeExpiredCheckoutHistory() async {
+    final cutoff = DateTime.now()
+        .subtract(_checkoutHistoryRetention)
+        .millisecondsSinceEpoch;
+    final rows = await _db.customSelect(
+      '''
+      SELECT id
+      FROM market_refill_checkout_history
+      WHERE checked_out_at < ?
+      ''',
+      variables: [drift.Variable<int>(cutoff)],
+    ).get();
+    final ids = rows
+        .map((row) => _readInt(row, 'id'))
+        .where((id) => id > 0)
+        .toList(growable: false);
+    if (ids.isEmpty) return;
+
+    final placeholders = List.filled(ids.length, '?').join(', ');
+    await _db.transaction(() async {
+      await _db.customStatement(
+        'DELETE FROM market_refill_checkout_lines WHERE checkout_id IN ($placeholders)',
+        ids,
+      );
+      await _db.customStatement(
+        'DELETE FROM market_refill_checkout_history WHERE id IN ($placeholders)',
+        ids,
+      );
+    });
+  }
+
+  Future<DateTime?> _loadLastClearedAt() async {
+    final row = await _db
+        .customSelect(
+          'SELECT cleared_until FROM market_refill_report_state WHERE id = 1',
+        )
+        .getSingleOrNull();
+    if (row == null) return null;
+    final value = row.data['cleared_until'];
+    if (value is! num || value <= 0) return null;
+    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
   }
 
   Future<Set<String>> _tableColumns(String tableName) async {

@@ -1,7 +1,12 @@
-import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/application/market_refill_report_controller.dart';
@@ -10,6 +15,7 @@ import 'package:lotus_erp/features/stock/shared/domain/models/market_refill/mark
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'widgets/market_refill_report_widgets.dart';
+part 'market_refill_purchase_pdf.dart';
 
 class MarketRefillReportScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -51,20 +57,18 @@ class _MarketRefillReportScreenState extends State<MarketRefillReportScreen> {
     fallback();
   }
 
-  Future<void> _exportCsv() async {
+  Future<void> _previewPdf() async {
     if (_controller.report.rows.isEmpty) {
       _showSnack('No sold stock found for this period.');
       return;
     }
-    final selectedPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Market Refill Report',
-      fileName: _controller.suggestedFileName(),
-      type: FileType.custom,
-      allowedExtensions: const ['csv'],
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _MarketPurchasePdfPreviewScreen(
+          report: _controller.report,
+        ),
+      ),
     );
-    if (selectedPath == null) return;
-    final exportedPath = await _controller.exportCsv(selectedPath);
-    _showSnack('Market refill report exported: $exportedPath');
   }
 
   void _showSnack(String message) {
@@ -94,19 +98,22 @@ class _MarketRefillReportScreenState extends State<MarketRefillReportScreen> {
               children: [
                 _MarketRefillHero(
                   report: _controller.report,
-                  isExportEnabled:
-                      !_controller.isLoading && _controller.report.rows.isNotEmpty,
-                  onExport: _exportCsv,
+                  isExportEnabled: !_controller.isLoading &&
+                      _controller.report.rows.isNotEmpty,
+                  canRestore: !_controller.isLoading &&
+                      _controller.report.rows.isEmpty &&
+                      _controller.report.lastClearedAt != null,
+                  onPreviewPdf: _previewPdf,
+                  onCheckout: _confirmCheckoutAndClear,
+                  onRestore: _restoreClearedList,
                 ),
                 const SizedBox(height: 18),
-                _MarketRefillToolbar(
-                  selected: _controller.preset,
-                  onChanged: _controller.selectPreset,
+                _MarketRefillItemList(
+                  report: _controller.report,
+                  onProgressChanged: _controller.updateLineProgress,
                 ),
                 const SizedBox(height: 18),
-                _MarketRefillMetalSnapshot(metals: _controller.report.metals),
-                const SizedBox(height: 18),
-                _MarketRefillItemList(report: _controller.report),
+                _MarketRefillHistoryPanel(records: _controller.recentCheckouts),
               ],
             ),
           ),
@@ -138,5 +145,68 @@ class _MarketRefillReportScreenState extends State<MarketRefillReportScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmCheckoutAndClear() async {
+    if (_controller.report.rows.isEmpty) {
+      _showSnack('Purchase ready list is already empty.');
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFFFCF7),
+        surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 6),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 4, 24, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          'Checkout clear purchase list?',
+          style: GoogleFonts.manrope(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: InvColors.textDark,
+          ),
+        ),
+        content: Text(
+          'Current sold items will be hidden from this active market list. '
+          'Temporary checkout history stays for 2 days only. '
+          'Your sales and stock history will stay safe.',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.45,
+            color: InvColors.textDark,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: InvColors.textDark,
+              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w800),
+            ),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: InvColors.brandGold,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Checkout Clear'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await _controller.checkoutAndClear();
+    _showSnack('Purchase ready list checked out and cleared.');
+  }
+
+  Future<void> _restoreClearedList() async {
+    await _controller.restoreClearedList();
+    _showSnack('Previous purchase list restored.');
   }
 }

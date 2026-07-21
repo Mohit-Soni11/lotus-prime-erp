@@ -2,7 +2,9 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/data/repositories/market_refill_report_repository.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
+import 'package:lotus_erp/features/stock/shared/domain/models/market_refill/market_refill_models.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_summary/stock_summary_models.dart';
 
 const String _isLotUnitExpression = '''
@@ -127,6 +129,8 @@ class StockSummaryController extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   StockSummaryOverview _overview = StockSummaryOverview.empty();
+  MarketRefillReport _marketPurchaseReport =
+      MarketRefillReport.empty(_marketPurchaseRange());
   List<StockSummaryMetal> _metals = const [];
   List<StockSummaryGrade> _grades = const [];
   List<StockSummaryItem> _items = const [];
@@ -135,6 +139,7 @@ class StockSummaryController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   StockSummaryOverview get overview => _overview;
+  MarketRefillReport get marketPurchaseReport => _marketPurchaseReport;
   List<StockSummaryMetal> get metals => _metals;
   List<StockSummaryGrade> get grades => _grades;
   List<StockSummaryItem> get items => _items;
@@ -163,6 +168,8 @@ class StockSummaryController extends ChangeNotifier {
       final grades = await _loadGradeSummary(gradeMovement);
       final items = await _loadItemSummary();
       final movements = await _loadRecentMovements();
+      final marketPurchaseReport =
+          await MarketRefillReportRepository(_db).loadActiveReport();
 
       final closingUnits = current.availableUnits;
       final closingWeight = current.availableWeight;
@@ -199,8 +206,10 @@ class StockSummaryController extends ChangeNotifier {
       _grades = grades;
       _items = items;
       _recentMovements = movements;
+      _marketPurchaseReport = marketPurchaseReport;
     } catch (error) {
       _overview = StockSummaryOverview.empty();
+      _marketPurchaseReport = MarketRefillReport.empty(_marketPurchaseRange());
       _metals = const [];
       _grades = const [];
       _items = const [];
@@ -210,6 +219,15 @@ class StockSummaryController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  static MarketRefillDateRange _marketPurchaseRange() {
+    final now = DateTime.now();
+    return MarketRefillDateRange(
+      start: DateTime(2000),
+      end: now.add(const Duration(days: 1)),
+      label: 'Active Purchase List',
+    );
   }
 
   Future<_CurrentSnapshot> _loadCurrentSnapshot() async {

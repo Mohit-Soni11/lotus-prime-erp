@@ -3,12 +3,18 @@ class MarketRefillReport {
   final MarketRefillSummary summary;
   final List<MarketRefillMetalSummary> metals;
   final List<MarketRefillItemRow> rows;
+  final List<MarketRefillCheckoutRecord> recentCheckouts;
+  final int progressScope;
+  final DateTime? lastClearedAt;
 
   const MarketRefillReport({
     required this.range,
     required this.summary,
     required this.metals,
     required this.rows,
+    this.recentCheckouts = const [],
+    this.progressScope = 0,
+    this.lastClearedAt,
   });
 
   factory MarketRefillReport.empty(MarketRefillDateRange range) {
@@ -17,6 +23,8 @@ class MarketRefillReport {
       summary: MarketRefillSummary.empty(),
       metals: const [],
       rows: const [],
+      recentCheckouts: const [],
+      progressScope: 0,
     );
   }
 }
@@ -86,6 +94,7 @@ class MarketRefillMetalSummary {
 }
 
 class MarketRefillItemRow {
+  final String rowKey;
   final String metal;
   final String gradeLabel;
   final String companyName;
@@ -101,8 +110,11 @@ class MarketRefillItemRow {
   final DateTime? lastSoldAt;
   final List<String> companyNames;
   final List<String> itemNames;
+  final int boughtQuantity;
+  final bool purchaseDone;
 
   const MarketRefillItemRow({
+    required this.rowKey,
     required this.metal,
     required this.gradeLabel,
     required this.companyName,
@@ -118,7 +130,35 @@ class MarketRefillItemRow {
     required this.lastSoldAt,
     required this.companyNames,
     required this.itemNames,
+    required this.boughtQuantity,
+    required this.purchaseDone,
   });
+
+  MarketRefillItemRow copyWith({
+    int? boughtQuantity,
+    bool? purchaseDone,
+  }) {
+    return MarketRefillItemRow(
+      rowKey: rowKey,
+      metal: metal,
+      gradeLabel: gradeLabel,
+      companyName: companyName,
+      itemType: itemType,
+      unitLabel: unitLabel,
+      soldQuantity: soldQuantity,
+      availableQuantity: availableQuantity,
+      refillQuantity: refillQuantity,
+      soldNetWeight: soldNetWeight,
+      availableNetWeight: availableNetWeight,
+      billCount: billCount,
+      latestInvoice: latestInvoice,
+      lastSoldAt: lastSoldAt,
+      companyNames: companyNames,
+      itemNames: itemNames,
+      boughtQuantity: boughtQuantity ?? this.boughtQuantity,
+      purchaseDone: purchaseDone ?? this.purchaseDone,
+    );
+  }
 
   String get title {
     final item = itemType.trim();
@@ -144,4 +184,36 @@ class MarketRefillItemRow {
     if (itemNames.length == 1) return itemNames.first;
     return '${itemNames.length} item names';
   }
+}
+
+class MarketRefillLineProgress {
+  final String rowKey;
+  final int boughtQuantity;
+  final bool purchaseDone;
+
+  const MarketRefillLineProgress({
+    required this.rowKey,
+    required this.boughtQuantity,
+    required this.purchaseDone,
+  });
+}
+
+class MarketRefillCheckoutRecord {
+  final int id;
+  final String checkoutNo;
+  final DateTime checkedOutAt;
+  final int soldQuantity;
+  final int itemGroups;
+  final int metalGroups;
+  final double soldNetWeight;
+
+  const MarketRefillCheckoutRecord({
+    required this.id,
+    required this.checkoutNo,
+    required this.checkedOutAt,
+    required this.soldQuantity,
+    required this.itemGroups,
+    required this.metalGroups,
+    required this.soldNetWeight,
+  });
 }

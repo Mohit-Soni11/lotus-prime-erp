@@ -143,6 +143,194 @@ void main() {
     final chain = report.rows.singleWhere((row) => row.itemType == 'Chain');
     expect(chain.availableQuantity, 0);
     expect(chain.statusLabel, 'Refill Now');
+
+    final active = await repository.loadActiveReport();
+    final activePayal =
+        active.rows.singleWhere((row) => row.companyLabel == 'Raj');
+    await repository.saveLineProgress(
+      progressScope: active.progressScope,
+      rowKey: activePayal.rowKey,
+      boughtQuantity: 2,
+      purchaseDone: true,
+    );
+
+    final reloaded = await repository.loadActiveReport();
+    final savedPayal =
+        reloaded.rows.singleWhere((row) => row.companyLabel == 'Raj');
+    expect(savedPayal.boughtQuantity, 2);
+    expect(savedPayal.purchaseDone, isTrue);
+  });
+
+  test('checkout clears current purchase list and starts a fresh window',
+      () async {
+    final now = DateTime.now();
+    await _ensureReportColumns(database);
+    final itemId = await _insertStockItem(
+      database,
+      sku: 'LJ-REFILL-CHECKOUT-001',
+      itemName: 'Gold Ring',
+      subCategory: 'Ring',
+      metal: 'Gold',
+      createdAt: now,
+    );
+    await _insertStockUnit(
+      database,
+      stockItemId: itemId,
+      unitCode: 'UNIT-REFILL-CHECKOUT-001',
+      metal: 'Gold',
+      itemType: 'Ring',
+      itemName: 'Gold Ring',
+      netWeight: 10,
+      purityPercent: 91.6,
+      status: stock.StockStatus.sold.label,
+      createdAt: now,
+    );
+    await _insertStockMovement(
+      database,
+      stockItemId: itemId,
+      movementType: 'SALE',
+      sourceId: 'INV-CHECKOUT-OLD',
+      sourceNumber: 'INV-CHECKOUT-OLD',
+      quantityDelta: -1,
+      netWeightDelta: -10,
+      occurredAt: now.subtract(const Duration(minutes: 2)),
+    );
+
+    final activeBeforeCheckout = await repository.loadActiveReport();
+    expect(activeBeforeCheckout.rows, hasLength(1));
+
+    await repository.saveLineProgress(
+      progressScope: activeBeforeCheckout.progressScope,
+      rowKey: activeBeforeCheckout.rows.single.rowKey,
+      boughtQuantity: 4,
+      purchaseDone: true,
+    );
+
+    final readyForCheckout = await repository.loadActiveReport();
+    await repository.checkoutAndClear(report: readyForCheckout);
+    expect((await repository.loadActiveReport()).rows, isEmpty);
+
+    final history = await repository.loadRecentCheckouts();
+    expect(history, hasLength(1));
+    expect(history.single.soldQuantity, 1);
+
+    final oldCheckoutAt =
+        DateTime.now().subtract(const Duration(days: 3)).millisecondsSinceEpoch;
+    await database.customStatement(
+      '''
+      INSERT INTO market_refill_checkout_history (
+        checkout_no,
+        checked_out_at,
+        cleared_until,
+        sold_quantity,
+        item_groups,
+        metal_groups,
+        sold_net_weight
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ''',
+      ['MPL-OLD-001', oldCheckoutAt, oldCheckoutAt, 1, 1, 1, 0.0],
+    );
+    final oldCheckout = await database.customSelect(
+      '''
+      SELECT id
+      FROM market_refill_checkout_history
+      WHERE checkout_no = ?
+      ''',
+      variables: [const drift.Variable<String>('MPL-OLD-001')],
+    ).getSingle();
+    final oldCheckoutId = oldCheckout.data['id'] as int;
+    await database.customStatement(
+      '''
+      INSERT INTO market_refill_checkout_lines (
+        checkout_id,
+        row_key,
+        metal,
+        grade_label,
+        company_name,
+        item_type,
+        unit_label,
+        sold_quantity,
+        bought_quantity,
+        is_checked,
+        sold_net_weight
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        oldCheckoutId,
+        'old|gold|18kt|ring|pcs',
+        'Gold',
+        '18KT (75%)',
+        '',
+        'Ring',
+        'pcs',
+        1,
+        1,
+        1,
+        0.0,
+      ],
+    );
+
+    final retainedHistory = await repository.loadRecentCheckouts();
+    expect(
+      retainedHistory.map((record) => record.checkoutNo),
+      contains(history.single.checkoutNo),
+    );
+    expect(
+      retainedHistory.map((record) => record.checkoutNo),
+      isNot(contains('MPL-OLD-001')),
+    );
+    final staleHistory = await database.customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM market_refill_checkout_history
+      WHERE checkout_no = ?
+      ''',
+      variables: [const drift.Variable<String>('MPL-OLD-001')],
+    ).getSingle();
+    final staleLines = await database.customSelect(
+      '''
+      SELECT COUNT(*) AS count
+      FROM market_refill_checkout_lines
+      WHERE checkout_id = ?
+      ''',
+      variables: [drift.Variable<int>(oldCheckoutId)],
+    ).getSingle();
+    expect(staleHistory.data['count'], 0);
+    expect(staleLines.data['count'], 0);
+
+    final checkoutLine = await database.customSelect(
+      '''
+      SELECT bought_quantity, is_checked
+      FROM market_refill_checkout_lines
+      WHERE checkout_id = ?
+      ''',
+      variables: [drift.Variable<int>(history.single.id)],
+    ).getSingle();
+    expect(checkoutLine.data['bought_quantity'], 4);
+    expect(checkoutLine.data['is_checked'], 1);
+
+    await repository.restoreClearedList();
+    final restored = await repository.loadActiveReport();
+    expect(restored.rows, hasLength(1));
+    expect(restored.rows.single.boughtQuantity, 4);
+    expect(restored.rows.single.purchaseDone, isTrue);
+
+    await repository.checkoutAndClear();
+
+    await _insertStockMovement(
+      database,
+      stockItemId: itemId,
+      movementType: 'SALE',
+      sourceId: 'INV-CHECKOUT-NEW',
+      sourceNumber: 'INV-CHECKOUT-NEW',
+      quantityDelta: -2,
+      netWeightDelta: -20,
+      occurredAt: DateTime.now().add(const Duration(milliseconds: 5)),
+    );
+
+    final fresh = await repository.loadActiveReport();
+    expect(fresh.rows, hasLength(1));
+    expect(fresh.rows.single.soldQuantity, 2);
   });
 }
 
@@ -284,8 +472,10 @@ Future<int> _insertStockMovement(
       occurredAt.millisecondsSinceEpoch,
     ],
   );
-  final row = await database.customSelect(
-    'SELECT last_insert_rowid() AS id',
-  ).getSingle();
+  final row = await database
+      .customSelect(
+        'SELECT last_insert_rowid() AS id',
+      )
+      .getSingle();
   return row.read<int>('id');
 }

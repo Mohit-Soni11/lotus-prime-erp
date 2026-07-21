@@ -6,8 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:lotus_erp/features/stock/shared/data/repositories/market_refill_report_repository.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/market_refill/market_refill_models.dart';
 
-enum MarketRefillPreset { thisMonth, last7Days, last30Days, allTime }
-
 class MarketRefillReportController extends ChangeNotifier {
   final MarketRefillReportRepository _repository;
 
@@ -15,14 +13,13 @@ class MarketRefillReportController extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _errorMessage;
-  MarketRefillPreset _preset = MarketRefillPreset.thisMonth;
-  MarketRefillReport _report =
-      MarketRefillReport.empty(_rangeFor(MarketRefillPreset.thisMonth));
+  MarketRefillReport _report = MarketRefillReport.empty(_activeRange());
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  MarketRefillPreset get preset => _preset;
   MarketRefillReport get report => _report;
+  List<MarketRefillCheckoutRecord> get recentCheckouts =>
+      _report.recentCheckouts;
 
   Future<void> load() async {
     _isLoading = true;
@@ -30,10 +27,9 @@ class MarketRefillReportController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final range = _rangeFor(_preset);
-      _report = await _repository.loadReport(range);
+      _report = await _repository.loadActiveReport();
     } catch (_) {
-      _report = MarketRefillReport.empty(_rangeFor(_preset));
+      _report = MarketRefillReport.empty(_activeRange());
       _errorMessage = 'Market refill report could not be loaded.';
     } finally {
       _isLoading = false;
@@ -41,10 +37,66 @@ class MarketRefillReportController extends ChangeNotifier {
     }
   }
 
-  Future<void> selectPreset(MarketRefillPreset preset) async {
-    if (_preset == preset) return;
-    _preset = preset;
+  Future<void> checkoutAndClear() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.checkoutAndClear(report: _report);
+    } catch (_) {
+      _errorMessage = 'Market refill list could not be checked out.';
+    } finally {
+      _isLoading = false;
+    }
     await load();
+  }
+
+  Future<void> restoreClearedList() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.restoreClearedList();
+    } catch (_) {
+      _errorMessage = 'Market refill list could not be restored.';
+    } finally {
+      _isLoading = false;
+    }
+    await load();
+  }
+
+  Future<void> updateLineProgress(
+    MarketRefillItemRow row, {
+    int? boughtQuantity,
+    bool? purchaseDone,
+  }) async {
+    final nextBoughtQuantity = boughtQuantity ?? row.boughtQuantity;
+    final nextPurchaseDone = purchaseDone ?? row.purchaseDone;
+    await _repository.saveLineProgress(
+      progressScope: _report.progressScope,
+      rowKey: row.rowKey,
+      boughtQuantity: nextBoughtQuantity,
+      purchaseDone: nextPurchaseDone,
+    );
+    final rows = [
+      for (final current in _report.rows)
+        current.rowKey == row.rowKey
+            ? current.copyWith(
+                boughtQuantity: nextBoughtQuantity,
+                purchaseDone: nextPurchaseDone,
+              )
+            : current,
+    ];
+    _report = MarketRefillReport(
+      range: _report.range,
+      summary: _report.summary,
+      metals: _report.metals,
+      rows: rows,
+      recentCheckouts: _report.recentCheckouts,
+      progressScope: _report.progressScope,
+      lastClearedAt: _report.lastClearedAt,
+    );
+    notifyListeners();
   }
 
   Future<String> exportCsv(String path) async {
@@ -56,38 +108,15 @@ class MarketRefillReportController extends ChangeNotifier {
 
   String suggestedFileName() {
     final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-    return 'lotus_market_refill_${_preset.name}_$stamp.csv';
+    return 'lotus_market_refill_active_$stamp.csv';
   }
 
-  static MarketRefillDateRange _rangeFor(MarketRefillPreset preset) {
+  static MarketRefillDateRange _activeRange() {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    switch (preset) {
-      case MarketRefillPreset.thisMonth:
-        return MarketRefillDateRange(
-          start: DateTime(now.year, now.month),
-          end: DateTime(now.year, now.month + 1),
-          label: 'This Month',
-        );
-      case MarketRefillPreset.last7Days:
-        return MarketRefillDateRange(
-          start: today.subtract(const Duration(days: 6)),
-          end: tomorrow,
-          label: 'Last 7 Days',
-        );
-      case MarketRefillPreset.last30Days:
-        return MarketRefillDateRange(
-          start: today.subtract(const Duration(days: 29)),
-          end: tomorrow,
-          label: 'Last 30 Days',
-        );
-      case MarketRefillPreset.allTime:
-        return MarketRefillDateRange(
-          start: DateTime(2000),
-          end: tomorrow,
-          label: 'All Time',
-        );
-    }
+    return MarketRefillDateRange(
+      start: DateTime(2000),
+      end: now.add(const Duration(days: 1)),
+      label: 'Active Purchase List',
+    );
   }
 }
