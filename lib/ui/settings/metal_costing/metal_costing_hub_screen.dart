@@ -12,7 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/settings/metal_costing/metal_costing_theme.dart';
 import '../../../logic/setting/metal_costing/metal_costing_controller.dart';
 import '../../../models/setting/metal_costing/metal_costing_model.dart';
-import '../../../features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
+import 'metal_cost_analyser_screen.dart';
 import 'metal_costing_app_bar.dart';
 import 'metal_costing_purity_screen.dart';
 
@@ -68,7 +68,9 @@ const List<_MetalMeta> _metals = [
 // HUB SCREEN
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 class MetalCostingHubScreen extends StatefulWidget {
-  const MetalCostingHubScreen({super.key});
+  final VoidCallback? onBack;
+
+  const MetalCostingHubScreen({super.key, this.onBack});
 
   @override
   State<MetalCostingHubScreen> createState() => _MetalCostingHubScreenState();
@@ -113,11 +115,11 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
     );
   }
 
-  void _openStockValuation(BuildContext context) {
+  void _openCostAudit(BuildContext context) {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, animation, __) => StockValuationScreen(
+        pageBuilder: (_, animation, __) => MetalCostAnalyserScreen(
           onBack: () => Navigator.maybePop(context),
         ),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
@@ -136,7 +138,7 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
       appBar: MetalCostingAppBar(
         screenTitle: MetalCostingStrings.hubTitle,
         screenSubtitle: MetalCostingStrings.hubSub,
-        onBack: () => Navigator.maybePop(context),
+        onBack: widget.onBack ?? () => Navigator.maybePop(context),
       ),
       body: SafeArea(
         top: false,
@@ -187,7 +189,7 @@ class _MetalCostingHubScreenState extends State<MetalCostingHubScreen> {
                     _buildGrid(context),
                     const SizedBox(height: 24),
                     _ValuationActionCard(
-                      onTap: () => _openStockValuation(context),
+                      onTap: () => _openCostAudit(context),
                     ),
                     const SizedBox(height: 24),
                     _buildInfoBanner(),
@@ -519,7 +521,7 @@ class _ValuationActionCardState extends State<_ValuationActionCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Stock Valuation',
+                      'Stock Cost Audit',
                       style: MetalCostingStyles.cardTitle,
                     ),
                     const SizedBox(height: 4),

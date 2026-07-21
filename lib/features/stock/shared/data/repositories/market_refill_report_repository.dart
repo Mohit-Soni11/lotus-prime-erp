@@ -647,80 +647,7 @@ class MarketRefillReportRepository {
   }
 
   Future<void> _ensureSchema() async {
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS market_refill_report_state (
-        id INTEGER NOT NULL PRIMARY KEY,
-        cleared_until INTEGER NOT NULL DEFAULT 0,
-        updated_at INTEGER
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS market_refill_line_progress (
-        progress_scope INTEGER NOT NULL DEFAULT 0,
-        row_key TEXT NOT NULL,
-        bought_quantity INTEGER NOT NULL DEFAULT 0,
-        is_checked INTEGER NOT NULL DEFAULT 0,
-        updated_at INTEGER NOT NULL,
-        PRIMARY KEY (progress_scope, row_key)
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS market_refill_checkout_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        checkout_no TEXT NOT NULL UNIQUE,
-        checked_out_at INTEGER NOT NULL,
-        cleared_until INTEGER NOT NULL,
-        sold_quantity INTEGER NOT NULL DEFAULT 0,
-        item_groups INTEGER NOT NULL DEFAULT 0,
-        metal_groups INTEGER NOT NULL DEFAULT 0,
-        sold_net_weight REAL NOT NULL DEFAULT 0
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS market_refill_checkout_lines (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        checkout_id INTEGER NOT NULL,
-        row_key TEXT NOT NULL,
-        metal TEXT NOT NULL,
-        grade_label TEXT,
-        company_name TEXT,
-        item_type TEXT NOT NULL,
-        unit_label TEXT NOT NULL,
-        sold_quantity INTEGER NOT NULL DEFAULT 0,
-        bought_quantity INTEGER NOT NULL DEFAULT 0,
-        is_checked INTEGER NOT NULL DEFAULT 0,
-        sold_net_weight REAL NOT NULL DEFAULT 0,
-        last_sold_at INTEGER,
-        FOREIGN KEY (checkout_id) REFERENCES market_refill_checkout_history(id)
-      )
-    ''');
-    final itemColumns = await _tableColumns('stock_items');
-    if (!itemColumns.contains('company_name')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_items ADD COLUMN company_name TEXT',
-      );
-    }
-    if (!itemColumns.contains('quantity_mode')) {
-      await _db.customStatement(
-        "ALTER TABLE stock_items ADD COLUMN quantity_mode TEXT NOT NULL DEFAULT 'PIECES'",
-      );
-    }
-    final unitColumns = await _tableColumns('stock_item_units');
-    if (!unitColumns.contains('item_type')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
-      );
-    }
-    if (!unitColumns.contains('company_name')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
-      );
-    }
-    if (!unitColumns.contains('segment')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
-      );
-    }
+    await _db.ensureMarketRefillReportSchema();
     await _purgeExpiredCheckoutHistory();
   }
 
@@ -765,15 +692,6 @@ class MarketRefillReportRepository {
     final value = row.data['cleared_until'];
     if (value is! num || value <= 0) return null;
     return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-  }
-
-  Future<Set<String>> _tableColumns(String tableName) async {
-    final rows = await _db.customSelect('PRAGMA table_info($tableName)').get();
-    return rows
-        .map((row) => row.data['name'])
-        .whereType<String>()
-        .map((name) => name.toLowerCase())
-        .toSet();
   }
 
   String _csvCell(String value) {

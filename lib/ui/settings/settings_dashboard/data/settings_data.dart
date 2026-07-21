@@ -50,7 +50,7 @@ class SettingsData {
       accentColor: Color(0xFFE06B3F),
     ),
     SettingsModel(
-      id: 'metal_costing',
+      id: AppRoutes.metalCostAnalyserRoute,
       icon: Icons.analytics_rounded,
       title: 'Metal Cost Analyser',
       subtitle: 'Purchase cost, current value & profit/loss per metal & purity',

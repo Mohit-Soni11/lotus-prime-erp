@@ -73,35 +73,7 @@ class LowStockAlertRepository {
   LowStockAlertRepository(this._db);
 
   Future<void> ensureSchema() async {
-    await _ensureStockUnitColumns();
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS "low_stock_alert_rules" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "rule_mode" TEXT NOT NULL DEFAULT 'manual',
-        "scope_level" TEXT NOT NULL DEFAULT 'item',
-        "metal_type" TEXT NOT NULL,
-        "grade_label" TEXT NOT NULL DEFAULT '',
-        "item_type" TEXT NOT NULL DEFAULT 'any',
-        "critical_units" INTEGER NOT NULL DEFAULT 0,
-        "threshold_units" INTEGER NOT NULL DEFAULT 1,
-        "target_units" INTEGER NOT NULL DEFAULT 1,
-        "critical_net_weight" REAL NOT NULL DEFAULT 0.0,
-        "threshold_net_weight" REAL NOT NULL DEFAULT 0.0,
-        "target_net_weight" REAL NOT NULL DEFAULT 0.0,
-        "target_sets" INTEGER NOT NULL DEFAULT 0,
-        "target_packets" INTEGER NOT NULL DEFAULT 0,
-        "reorder_target_units" INTEGER NOT NULL DEFAULT 1,
-        "preferred_supplier_name" TEXT,
-        "is_active" INTEGER NOT NULL DEFAULT 1,
-        "created_at" INTEGER NOT NULL,
-        "updated_at" INTEGER
-      )
-    ''');
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_low_stock_rules_scope" ON "low_stock_alert_rules" ("metal_type", "item_type")',
-    );
-    await _ensureRuleColumns();
-    await _removeLegacySeedRules();
+    await _db.ensureLowStockAlertSchema();
   }
 
   Future<LowStockAlertDashboard> loadDashboard() async {
@@ -744,93 +716,6 @@ class LowStockAlertRepository {
   String _readString(drift.QueryRow row, String column) {
     final value = row.data[column];
     return value is String ? value.trim() : '';
-  }
-
-  Future<void> _ensureStockUnitColumns() async {
-    final itemRows =
-        await _db.customSelect('PRAGMA table_info(stock_items)').get();
-    final itemColumns = itemRows
-        .map((row) => row.data['name'])
-        .whereType<String>()
-        .map((name) => name.toLowerCase())
-        .toSet();
-    if (!itemColumns.contains('quantity_mode')) {
-      await _db.customStatement(
-        "ALTER TABLE stock_items ADD COLUMN quantity_mode TEXT NOT NULL DEFAULT 'PIECES'",
-      );
-    }
-    if (!itemColumns.contains('packet_count')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
-      );
-    }
-
-    final rows =
-        await _db.customSelect('PRAGMA table_info(stock_item_units)').get();
-    final columns = rows
-        .map((row) => row.data['name'])
-        .whereType<String>()
-        .map((name) => name.toLowerCase())
-        .toSet();
-    if (!columns.contains('item_type')) {
-      await _db.customStatement(
-          'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT');
-    }
-  }
-
-  Future<void> _ensureRuleColumns() async {
-    final rows = await _db
-        .customSelect('PRAGMA table_info(low_stock_alert_rules)')
-        .get();
-    final columns = rows
-        .map((row) => row.data['name'])
-        .whereType<String>()
-        .map((name) => name.toLowerCase())
-        .toSet();
-    Future<void> add(String name, String ddl) async {
-      if (!columns.contains(name)) await _db.customStatement(ddl);
-    }
-
-    await add('rule_mode',
-        "ALTER TABLE low_stock_alert_rules ADD COLUMN rule_mode TEXT NOT NULL DEFAULT 'manual'");
-    await add('scope_level',
-        "ALTER TABLE low_stock_alert_rules ADD COLUMN scope_level TEXT NOT NULL DEFAULT 'item'");
-    await add('grade_label',
-        "ALTER TABLE low_stock_alert_rules ADD COLUMN grade_label TEXT NOT NULL DEFAULT ''");
-    await add('critical_units',
-        'ALTER TABLE low_stock_alert_rules ADD COLUMN critical_units INTEGER NOT NULL DEFAULT 0');
-    await add('target_units',
-        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_units INTEGER NOT NULL DEFAULT 0');
-    await add('critical_net_weight',
-        'ALTER TABLE low_stock_alert_rules ADD COLUMN critical_net_weight REAL NOT NULL DEFAULT 0.0');
-    await add('target_net_weight',
-        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_net_weight REAL NOT NULL DEFAULT 0.0');
-    await add('target_sets',
-        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_sets INTEGER NOT NULL DEFAULT 0');
-    await add('target_packets',
-        'ALTER TABLE low_stock_alert_rules ADD COLUMN target_packets INTEGER NOT NULL DEFAULT 0');
-
-    await _db.customStatement('''
-      UPDATE low_stock_alert_rules
-      SET target_units = reorder_target_units
-      WHERE COALESCE(target_units, 0) <= 0
-    ''');
-  }
-
-  Future<void> _removeLegacySeedRules() async {
-    await _db.customStatement('''
-      DELETE FROM low_stock_alert_rules
-      WHERE COALESCE(rule_mode, 'manual') = 'manual'
-        AND COALESCE(NULLIF(TRIM(preferred_supplier_name), ''), '') = ''
-        AND LOWER(COALESCE(item_type, 'any')) = 'any'
-        AND COALESCE(NULLIF(TRIM(grade_label), ''), '') = ''
-        AND (
-          (LOWER(metal_type) = 'gold' AND threshold_units = 3 AND reorder_target_units = 10)
-          OR (LOWER(metal_type) = 'silver' AND threshold_units = 12 AND reorder_target_units = 40)
-          OR (LOWER(metal_type) = 'platinum' AND threshold_units = 2 AND reorder_target_units = 6)
-          OR (LOWER(metal_type) = 'diamond' AND threshold_units = 2 AND reorder_target_units = 8)
-        )
-    ''');
   }
 
   String _aggregateUnitLabel(List<LowStockStockCard> children) {

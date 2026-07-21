@@ -3,17 +3,18 @@ import 'package:drift/drift.dart' show QueryRow;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
-class StockValuationScreen extends StatefulWidget {
+class MetalCostAnalyserScreen extends StatefulWidget {
   final VoidCallback? onBack;
 
-  const StockValuationScreen({super.key, this.onBack});
+  const MetalCostAnalyserScreen({super.key, this.onBack});
 
   @override
-  State<StockValuationScreen> createState() => _StockValuationScreenState();
+  State<MetalCostAnalyserScreen> createState() =>
+      _MetalCostAnalyserScreenState();
 }
 
-class _StockValuationScreenState extends State<StockValuationScreen> {
-  late Future<_StockValuationData> _future;
+class _MetalCostAnalyserScreenState extends State<MetalCostAnalyserScreen> {
+  late Future<_MetalCostAnalyserData> _future;
 
   @override
   void initState() {
@@ -21,7 +22,7 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
     _future = _loadData();
   }
 
-  Future<_StockValuationData> _loadData() async {
+  Future<_MetalCostAnalyserData> _loadData() async {
     final db = AppDatabase();
     final available = await db.customSelect('''
       SELECT
@@ -76,7 +77,7 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
       LIMIT 80
     ''').get();
 
-    return _StockValuationData(
+    return _MetalCostAnalyserData(
       availableUnits: available.read<int>('units'),
       availableCost: available.read<double>('cost'),
       availableActualFine: available.read<double>('actual_fine'),
@@ -102,7 +103,7 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
           onPressed: widget.onBack ?? () => Navigator.maybePop(context),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text('Stock Valuation'),
+        title: const Text('Metal Cost Analyser'),
         actions: [
           IconButton(
             onPressed: () => setState(() => _future = _loadData()),
@@ -111,7 +112,7 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
           const SizedBox(width: 12),
         ],
       ),
-      body: FutureBuilder<_StockValuationData>(
+      body: FutureBuilder<_MetalCostAnalyserData>(
         future: _future,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
@@ -126,14 +127,14 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
                 _Header(data: data),
                 const SizedBox(height: 18),
                 _SectionCard(
-                  title: 'Available Stock Valuation',
+                  title: 'Available Stock Cost',
                   subtitle:
                       'Current stock cost based on valuation fine, rate and making.',
                   child: _AvailableTable(rows: data.availableStock),
                 ),
                 const SizedBox(height: 18),
                 _SectionCard(
-                  title: 'Metal Cost Analyzer',
+                  title: 'Sold Stock Profit Audit',
                   subtitle:
                       'Sold stock cost, sale value and profit from linked stock units.',
                   child: _SoldTable(rows: data.recentSold),
@@ -148,7 +149,7 @@ class _StockValuationScreenState extends State<StockValuationScreen> {
 }
 
 class _Header extends StatelessWidget {
-  final _StockValuationData data;
+  final _MetalCostAnalyserData data;
 
   const _Header({required this.data});
 
@@ -380,7 +381,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _StockValuationData {
+class _MetalCostAnalyserData {
   final int availableUnits;
   final double availableCost;
   final double availableActualFine;
@@ -392,7 +393,7 @@ class _StockValuationData {
   final List<_SoldCostRow> recentSold;
   final List<_AvailableCostRow> availableStock;
 
-  const _StockValuationData({
+  const _MetalCostAnalyserData({
     required this.availableUnits,
     required this.availableCost,
     required this.availableActualFine,

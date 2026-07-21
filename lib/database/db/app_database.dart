@@ -104,6 +104,12 @@ class AppDatabase extends _$AppDatabase {
   // ✅ DAO getter — directly use karo: AppDatabase().taxGstDao.fetchConfig()
   TaxGstConfigDao get taxGstDao => TaxGstConfigDao(this);
 
+  Future<void>? _stockInventorySchemaFuture;
+  Future<void>? _stockLifecycleSchemaFuture;
+  Future<void>? _lowStockAlertSchemaFuture;
+  Future<void>? _marketRefillReportSchemaFuture;
+  Future<void>? _stockTransferSchemaFuture;
+
   /// Handles migration errors safely.
   ///
   /// SQLite raises "duplicate column name" when re-adding an existing column.
@@ -139,13 +145,380 @@ class AppDatabase extends _$AppDatabase {
     return row != null;
   }
 
+  Future<Set<String>> _tableColumns(String tableName) async {
+    final rows = await customSelect('PRAGMA table_info("$tableName")').get();
+    return rows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
+  }
+
+  Future<void> _addColumnIfMissing({
+    required String tableName,
+    required String columnName,
+    required String declaration,
+  }) async {
+    final columns = await _tableColumns(tableName);
+    if (columns.contains(columnName.toLowerCase())) return;
+    try {
+      await customStatement(
+        'ALTER TABLE "$tableName" ADD COLUMN "$columnName" $declaration',
+      );
+    } catch (error, stackTrace) {
+      _handleMigrationError(error, stackTrace);
+    }
+  }
+
+  Future<void> ensureStockInventorySchema() async {
+    final cached = _stockInventorySchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureStockInventorySchemaInternal();
+    _stockInventorySchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _stockInventorySchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureStockInventorySchemaInternal() async {
+    await _ensureStockItemUnitSchema();
+    await _addColumnIfMissing(
+      tableName: 'stock_items',
+      columnName: 'company_name',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_items',
+      columnName: 'quantity_mode',
+      declaration: "TEXT NOT NULL DEFAULT 'PIECES'",
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_items',
+      columnName: 'packet_count',
+      declaration: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_item_units',
+      columnName: 'item_type',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_item_units',
+      columnName: 'company_name',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_item_units',
+      columnName: 'segment',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_item_units',
+      columnName: 'item_name',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'stock_item_units',
+      columnName: 'current_location',
+      declaration: 'TEXT',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_location" ON "stock_item_units" ("current_location")',
+    );
+  }
+
+  Future<void> ensureStockLifecycleSchema() async {
+    final cached = _stockLifecycleSchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureStockLifecycleSchemaInternal();
+    _stockLifecycleSchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _stockLifecycleSchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureStockLifecycleSchemaInternal() async {
+    await ensureStockInventorySchema();
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS "stock_unit_status_events" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "stock_unit_id" INTEGER NOT NULL,
+        "stock_item_id" INTEGER,
+        "unit_code" TEXT NOT NULL,
+        "huid" TEXT,
+        "batch_code" TEXT,
+        "previous_status" TEXT NOT NULL,
+        "new_status" TEXT NOT NULL,
+        "reason" TEXT NOT NULL,
+        "source_type" TEXT NOT NULL,
+        "source_number" TEXT,
+        "created_at" INTEGER NOT NULL,
+        FOREIGN KEY ("stock_unit_id") REFERENCES "stock_item_units" ("id") ON DELETE CASCADE
+      )
+    ''');
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_unit_status_events_unit" ON "stock_unit_status_events" ("stock_unit_id")',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_unit_status_events_created" ON "stock_unit_status_events" ("created_at")',
+    );
+  }
+
+  Future<void> ensureLowStockAlertSchema() async {
+    final cached = _lowStockAlertSchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureLowStockAlertSchemaInternal();
+    _lowStockAlertSchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _lowStockAlertSchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureLowStockAlertSchemaInternal() async {
+    await ensureStockInventorySchema();
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS "low_stock_alert_rules" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "rule_mode" TEXT NOT NULL DEFAULT 'manual',
+        "scope_level" TEXT NOT NULL DEFAULT 'item',
+        "metal_type" TEXT NOT NULL,
+        "grade_label" TEXT NOT NULL DEFAULT '',
+        "item_type" TEXT NOT NULL DEFAULT 'any',
+        "critical_units" INTEGER NOT NULL DEFAULT 0,
+        "threshold_units" INTEGER NOT NULL DEFAULT 1,
+        "target_units" INTEGER NOT NULL DEFAULT 1,
+        "critical_net_weight" REAL NOT NULL DEFAULT 0.0,
+        "threshold_net_weight" REAL NOT NULL DEFAULT 0.0,
+        "target_net_weight" REAL NOT NULL DEFAULT 0.0,
+        "target_sets" INTEGER NOT NULL DEFAULT 0,
+        "target_packets" INTEGER NOT NULL DEFAULT 0,
+        "reorder_target_units" INTEGER NOT NULL DEFAULT 1,
+        "preferred_supplier_name" TEXT,
+        "is_active" INTEGER NOT NULL DEFAULT 1,
+        "created_at" INTEGER NOT NULL,
+        "updated_at" INTEGER
+      )
+    ''');
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_low_stock_rules_scope" ON "low_stock_alert_rules" ("metal_type", "item_type")',
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'rule_mode',
+      declaration: "TEXT NOT NULL DEFAULT 'manual'",
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'scope_level',
+      declaration: "TEXT NOT NULL DEFAULT 'item'",
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'grade_label',
+      declaration: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'critical_units',
+      declaration: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'target_units',
+      declaration: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'critical_net_weight',
+      declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'target_net_weight',
+      declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'target_sets',
+      declaration: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'low_stock_alert_rules',
+      columnName: 'target_packets',
+      declaration: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await customStatement('''
+      UPDATE low_stock_alert_rules
+      SET target_units = reorder_target_units
+      WHERE COALESCE(target_units, 0) <= 0
+    ''');
+    await customStatement('''
+      DELETE FROM low_stock_alert_rules
+      WHERE COALESCE(rule_mode, 'manual') = 'manual'
+        AND COALESCE(NULLIF(TRIM(preferred_supplier_name), ''), '') = ''
+        AND LOWER(COALESCE(item_type, 'any')) = 'any'
+        AND COALESCE(NULLIF(TRIM(grade_label), ''), '') = ''
+        AND (
+          (LOWER(metal_type) = 'gold' AND threshold_units = 3 AND reorder_target_units = 10)
+          OR (LOWER(metal_type) = 'silver' AND threshold_units = 12 AND reorder_target_units = 40)
+          OR (LOWER(metal_type) = 'platinum' AND threshold_units = 2 AND reorder_target_units = 6)
+          OR (LOWER(metal_type) = 'diamond' AND threshold_units = 2 AND reorder_target_units = 8)
+        )
+    ''');
+  }
+
+  Future<void> ensureMarketRefillReportSchema() async {
+    final cached = _marketRefillReportSchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureMarketRefillReportSchemaInternal();
+    _marketRefillReportSchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _marketRefillReportSchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureMarketRefillReportSchemaInternal() async {
+    await ensureStockInventorySchema();
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_report_state (
+        id INTEGER NOT NULL PRIMARY KEY,
+        cleared_until INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER
+      )
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_line_progress (
+        progress_scope INTEGER NOT NULL DEFAULT 0,
+        row_key TEXT NOT NULL,
+        bought_quantity INTEGER NOT NULL DEFAULT 0,
+        is_checked INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (progress_scope, row_key)
+      )
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_checkout_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        checkout_no TEXT NOT NULL UNIQUE,
+        checked_out_at INTEGER NOT NULL,
+        cleared_until INTEGER NOT NULL,
+        sold_quantity INTEGER NOT NULL DEFAULT 0,
+        item_groups INTEGER NOT NULL DEFAULT 0,
+        metal_groups INTEGER NOT NULL DEFAULT 0,
+        sold_net_weight REAL NOT NULL DEFAULT 0
+      )
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS market_refill_checkout_lines (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        checkout_id INTEGER NOT NULL,
+        row_key TEXT NOT NULL,
+        metal TEXT NOT NULL,
+        grade_label TEXT,
+        company_name TEXT,
+        item_type TEXT NOT NULL,
+        unit_label TEXT NOT NULL,
+        sold_quantity INTEGER NOT NULL DEFAULT 0,
+        bought_quantity INTEGER NOT NULL DEFAULT 0,
+        is_checked INTEGER NOT NULL DEFAULT 0,
+        sold_net_weight REAL NOT NULL DEFAULT 0,
+        last_sold_at INTEGER,
+        FOREIGN KEY (checkout_id) REFERENCES market_refill_checkout_history(id)
+      )
+    ''');
+  }
+
+  Future<void> ensureStockTransferSchema() async {
+    final cached = _stockTransferSchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureStockTransferSchemaInternal();
+    _stockTransferSchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _stockTransferSchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureStockTransferSchemaInternal() async {
+    await ensureStockLifecycleSchema();
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS "stock_transfers" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "transfer_no" TEXT NOT NULL UNIQUE,
+        "from_location" TEXT NOT NULL,
+        "to_location" TEXT NOT NULL,
+        "transfer_type" TEXT NOT NULL,
+        "status" TEXT NOT NULL,
+        "carrier_name" TEXT,
+        "authorized_by" TEXT,
+        "expected_date" INTEGER,
+        "notes" TEXT,
+        "total_units" INTEGER NOT NULL DEFAULT 0,
+        "total_gross_weight" REAL NOT NULL DEFAULT 0.0,
+        "total_net_weight" REAL NOT NULL DEFAULT 0.0,
+        "total_fine_weight" REAL NOT NULL DEFAULT 0.0,
+        "created_at" INTEGER NOT NULL,
+        "updated_at" INTEGER,
+        "received_at" INTEGER,
+        "cancelled_at" INTEGER
+      )
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS "stock_transfer_lines" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "transfer_id" INTEGER NOT NULL,
+        "stock_unit_id" INTEGER NOT NULL,
+        "stock_item_id" INTEGER NOT NULL,
+        "unit_code" TEXT NOT NULL,
+        "huid" TEXT,
+        "item_name" TEXT NOT NULL,
+        "metal_type" TEXT NOT NULL,
+        "gross_weight" REAL NOT NULL DEFAULT 0.0,
+        "net_weight" REAL NOT NULL DEFAULT 0.0,
+        "fine_weight" REAL NOT NULL DEFAULT 0.0,
+        "unit_cost" REAL NOT NULL DEFAULT 0.0,
+        "from_status" TEXT NOT NULL,
+        "to_status" TEXT NOT NULL,
+        "created_at" INTEGER NOT NULL,
+        FOREIGN KEY ("transfer_id") REFERENCES "stock_transfers" ("id") ON DELETE CASCADE,
+        FOREIGN KEY ("stock_unit_id") REFERENCES "stock_item_units" ("id") ON DELETE RESTRICT
+      )
+    ''');
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_transfers_status" ON "stock_transfers" ("status")',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_transfers_created" ON "stock_transfers" ("created_at")',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_transfer_lines_transfer" ON "stock_transfer_lines" ("transfer_id")',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_stock_transfer_lines_unit" ON "stock_transfer_lines" ("stock_unit_id")',
+    );
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
           await _ensurePurchaseVoucherSchema();
           await _ensurePurchaseItemHuidSchema();
-          await _ensureStockItemUnitSchema();
+          await _ensureStockInventorySchemaInternal();
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
         },
@@ -716,7 +1089,7 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 38) {
-            await _ensureStockItemUnitSchema();
+            await ensureStockInventorySchema();
             AppLogger.info('v38 stock item unit tracking schema applied.');
           }
 
@@ -750,7 +1123,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureGirviNoticeActionSchema();
           await _ensureCustomerAccountLedgerSchema();
           await _ensurePurchaseItemHuidSchema();
-          await _ensureStockItemUnitSchema();
+          await _ensureStockInventorySchemaInternal();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -1558,6 +1931,7 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
   "item_type" TEXT,
   "segment" TEXT,
   "item_name" TEXT NOT NULL,
+  "company_name" TEXT,
   "huid" TEXT,
   "gross_weight" REAL NOT NULL DEFAULT 0.0,
   "less_weight" REAL NOT NULL DEFAULT 0.0,
@@ -1571,6 +1945,7 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
   "unit_cost" REAL NOT NULL DEFAULT 0.0,
   "supplier_id" INTEGER,
   "supplier_name" TEXT,
+  "current_location" TEXT,
   "status" TEXT NOT NULL DEFAULT 'Available',
   "created_at" INTEGER NOT NULL,
   "updated_at" INTEGER,

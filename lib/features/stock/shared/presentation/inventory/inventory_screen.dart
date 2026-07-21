@@ -22,6 +22,7 @@ import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/inventory_app_bar.dart';
 part 'metal_grade/inventory_grade_detail_screen.dart';
+part 'metal_grade/inventory_grade_item_summary_widgets.dart';
 part 'metal_grade/batch_detail/inventory_batch_models.dart';
 part 'metal_grade/batch_detail/inventory_batch_list_widgets.dart';
 part 'metal_grade/batch_detail/inventory_batch_dossier_screen.dart';

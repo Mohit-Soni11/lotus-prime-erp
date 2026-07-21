@@ -335,12 +335,7 @@ void main() {
 }
 
 Future<void> _ensureReportColumns(AppDatabase database) async {
-  await database.customStatement(
-    'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
-  );
-  await database.customStatement(
-    'ALTER TABLE stock_items ADD COLUMN company_name TEXT',
-  );
+  await database.ensureStockInventorySchema();
 }
 
 Future<int> _insertStockItem(

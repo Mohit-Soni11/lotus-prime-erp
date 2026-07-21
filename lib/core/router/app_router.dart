@@ -23,6 +23,8 @@ import '../../ui/dashboard/dashboard_screen.dart';
 
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
 import '../../ui/settings/print_templates/print_templates_screen.dart';
+import '../../ui/settings/metal_costing/metal_cost_analyser_screen.dart';
+import '../../ui/settings/metal_costing/metal_costing_hub_screen.dart';
 import '../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
 
 import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
@@ -36,7 +38,6 @@ import 'package:lotus_erp/features/stock/shared/presentation/stock_activity/stoc
 import 'package:lotus_erp/features/stock/shared/presentation/stock_search/stock_search_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_summary/stock_summary_screen.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/stock_transfer/stock_transfer_screen.dart';
-import 'package:lotus_erp/features/stock/shared/presentation/valuation/stock_valuation_screen.dart';
 
 import '../../ui/customer/customer_list/customer_list_screen.dart';
 import '../../ui/customer/add_customer/add_customer_screen.dart';
@@ -338,6 +339,12 @@ GoRouter createAppRouter() {
             builder: (context, state) => const PrintTemplatesScreen(),
           ),
           GoRoute(
+            path: RoutePaths.settingsMetalCostAnalyser,
+            builder: (context, state) => MetalCostingHubScreen(
+              onBack: () => _goBackOr(context, RoutePaths.settings),
+            ),
+          ),
+          GoRoute(
             path: RoutePaths.customerList,
             builder: (context, state) => CustomerListScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
@@ -489,9 +496,7 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.stockValuation,
-            builder: (context, state) => StockValuationScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
+            redirect: (context, state) => RoutePaths.settingsMetalCostAnalyser,
           ),
           GoRoute(
             path: RoutePaths.stockBarcode,
@@ -640,6 +645,15 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.billingSetup,
             builder: (context, state) => const BillingSetupWorkspaceScreen(),
+          ),
+          GoRoute(
+            path: '${RoutePaths.settingsMetalCostAnalyser}/audit',
+            builder: (context, state) => MetalCostAnalyserScreen(
+              onBack: () => _goBackOr(
+                context,
+                RoutePaths.settingsMetalCostAnalyser,
+              ),
+            ),
           ),
           GoRoute(
             path: RoutePaths.accountProfile,

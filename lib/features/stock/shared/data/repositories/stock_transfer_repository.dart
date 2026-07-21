@@ -2,7 +2,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:intl/intl.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
-import 'package:lotus_erp/features/stock/shared/application/stock_lifecycle_controller.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_transfer/stock_transfer_models.dart';
 
@@ -12,66 +11,7 @@ class StockTransferRepository {
   StockTransferRepository(this._db);
 
   Future<void> ensureSchema() async {
-    await StockLifecycleSchema.ensure(_db);
-    await _ensureStockUnitLocationColumn();
-
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS "stock_transfers" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "transfer_no" TEXT NOT NULL UNIQUE,
-        "from_location" TEXT NOT NULL,
-        "to_location" TEXT NOT NULL,
-        "transfer_type" TEXT NOT NULL,
-        "status" TEXT NOT NULL,
-        "carrier_name" TEXT,
-        "authorized_by" TEXT,
-        "expected_date" INTEGER,
-        "notes" TEXT,
-        "total_units" INTEGER NOT NULL DEFAULT 0,
-        "total_gross_weight" REAL NOT NULL DEFAULT 0.0,
-        "total_net_weight" REAL NOT NULL DEFAULT 0.0,
-        "total_fine_weight" REAL NOT NULL DEFAULT 0.0,
-        "created_at" INTEGER NOT NULL,
-        "updated_at" INTEGER,
-        "received_at" INTEGER,
-        "cancelled_at" INTEGER
-      )
-    ''');
-
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS "stock_transfer_lines" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "transfer_id" INTEGER NOT NULL,
-        "stock_unit_id" INTEGER NOT NULL,
-        "stock_item_id" INTEGER NOT NULL,
-        "unit_code" TEXT NOT NULL,
-        "huid" TEXT,
-        "item_name" TEXT NOT NULL,
-        "metal_type" TEXT NOT NULL,
-        "gross_weight" REAL NOT NULL DEFAULT 0.0,
-        "net_weight" REAL NOT NULL DEFAULT 0.0,
-        "fine_weight" REAL NOT NULL DEFAULT 0.0,
-        "unit_cost" REAL NOT NULL DEFAULT 0.0,
-        "from_status" TEXT NOT NULL,
-        "to_status" TEXT NOT NULL,
-        "created_at" INTEGER NOT NULL,
-        FOREIGN KEY ("transfer_id") REFERENCES "stock_transfers" ("id") ON DELETE CASCADE,
-        FOREIGN KEY ("stock_unit_id") REFERENCES "stock_item_units" ("id") ON DELETE RESTRICT
-      )
-    ''');
-
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_transfers_status" ON "stock_transfers" ("status")',
-    );
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_transfers_created" ON "stock_transfers" ("created_at")',
-    );
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_transfer_lines_transfer" ON "stock_transfer_lines" ("transfer_id")',
-    );
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_transfer_lines_unit" ON "stock_transfer_lines" ("stock_unit_id")',
-    );
+    await _db.ensureStockTransferSchema();
   }
 
   Future<StockTransferSummary> loadSummary() async {
@@ -455,26 +395,6 @@ class StockTransferRepository {
       }
       await _syncStockItems(lines.map((line) => line.stockItemId).toSet());
     });
-  }
-
-  Future<void> _ensureStockUnitLocationColumn() async {
-    final columns = await _db
-        .customSelect(
-          "PRAGMA table_info('stock_item_units')",
-        )
-        .get();
-    final names = columns
-        .map((row) => (row.data['name'] as String?)?.toLowerCase())
-        .whereType<String>()
-        .toSet();
-    if (!names.contains('current_location')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN current_location TEXT',
-      );
-    }
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_location" ON "stock_item_units" ("current_location")',
-    );
   }
 
   Future<List<StockTransferUnit>> _loadUnitsByIds(List<int> ids) async {

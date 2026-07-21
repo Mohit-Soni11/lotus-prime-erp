@@ -686,47 +686,7 @@ class StockSummaryController extends ChangeNotifier {
   double _positiveDouble(double value) => value < 0 ? 0 : value;
 
   Future<void> _ensureSummarySchema() async {
-    final columns = await _tableColumns('stock_items');
-    if (!columns.contains('company_name')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_items ADD COLUMN company_name TEXT',
-      );
-    }
-    if (!columns.contains('quantity_mode')) {
-      await _db.customStatement(
-        "ALTER TABLE stock_items ADD COLUMN quantity_mode TEXT NOT NULL DEFAULT 'PIECES'",
-      );
-    }
-    if (!columns.contains('packet_count')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_items ADD COLUMN packet_count INTEGER NOT NULL DEFAULT 0',
-      );
-    }
-    final unitColumns = await _tableColumns('stock_item_units');
-    if (!unitColumns.contains('item_type')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
-      );
-    }
-    if (!unitColumns.contains('company_name')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
-      );
-    }
-    if (!unitColumns.contains('segment')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
-      );
-    }
-  }
-
-  Future<Set<String>> _tableColumns(String tableName) async {
-    final rows = await _db.customSelect('PRAGMA table_info($tableName)').get();
-    return rows
-        .map((row) => row.data['name'])
-        .whereType<String>()
-        .map((name) => name.toLowerCase())
-        .toSet();
+    await _db.ensureStockInventorySchema();
   }
 }
 

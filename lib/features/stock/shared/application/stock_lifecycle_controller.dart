@@ -19,29 +19,7 @@ class StockLifecycleAction {
 
 class StockLifecycleSchema {
   static Future<void> ensure(AppDatabase db) async {
-    await db.customStatement('''
-      CREATE TABLE IF NOT EXISTS "stock_unit_status_events" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "stock_unit_id" INTEGER NOT NULL,
-        "stock_item_id" INTEGER,
-        "unit_code" TEXT NOT NULL,
-        "huid" TEXT,
-        "batch_code" TEXT,
-        "previous_status" TEXT NOT NULL,
-        "new_status" TEXT NOT NULL,
-        "reason" TEXT NOT NULL,
-        "source_type" TEXT NOT NULL,
-        "source_number" TEXT,
-        "created_at" INTEGER NOT NULL,
-        FOREIGN KEY ("stock_unit_id") REFERENCES "stock_item_units" ("id") ON DELETE CASCADE
-      )
-    ''');
-    await db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_unit_status_events_unit" ON "stock_unit_status_events" ("stock_unit_id")',
-    );
-    await db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_stock_unit_status_events_created" ON "stock_unit_status_events" ("created_at")',
-    );
+    await db.ensureStockLifecycleSchema();
   }
 }
 

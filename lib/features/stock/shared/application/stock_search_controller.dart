@@ -541,37 +541,7 @@ class StockSearchController extends ChangeNotifier {
   }
 
   Future<void> _ensureSearchSchema() async {
-    final stockColumns = await _tableColumns('stock_items');
-    if (!stockColumns.contains('company_name')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_items ADD COLUMN company_name TEXT',
-      );
-    }
-    final unitColumns = await _tableColumns('stock_item_units');
-    if (!unitColumns.contains('item_type')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN item_type TEXT',
-      );
-    }
-    if (!unitColumns.contains('company_name')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN company_name TEXT',
-      );
-    }
-    if (!unitColumns.contains('segment')) {
-      await _db.customStatement(
-        'ALTER TABLE stock_item_units ADD COLUMN segment TEXT',
-      );
-    }
-  }
-
-  Future<Set<String>> _tableColumns(String tableName) async {
-    final rows = await _db.customSelect('PRAGMA table_info($tableName)').get();
-    return rows
-        .map((row) => row.data['name'])
-        .whereType<String>()
-        .map((name) => name.toLowerCase())
-        .toSet();
+    await _db.ensureStockInventorySchema();
   }
 }
 

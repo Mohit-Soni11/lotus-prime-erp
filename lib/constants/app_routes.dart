@@ -17,6 +17,7 @@ class AppRoutes {
   // Settings
   static const String billingSetupRoute = '/settings/billing-setup';
   static const String printTemplatesRoute = '/settings/print-templates';
+  static const String metalCostAnalyserRoute = '/settings/metal-cost-analyser';
 
   // Customer
   static const String customerListRoute = '/customer/list';
@@ -89,6 +90,7 @@ class AppRoutes {
     accountProfileRoute: 'My Account',
     billingSetupRoute: 'Billing Setup',
     printTemplatesRoute: 'Print Templates',
+    metalCostAnalyserRoute: 'Metal Cost Analyser',
     customerListRoute: 'Customer List',
     addCustomerRoute: 'Add New Customer',
     customerProfileRoute: 'Customer Profile',
@@ -105,7 +107,7 @@ class AppRoutes {
     inventoryRoute: 'Inventory Ledger',
     stockActivityRoute: 'Stock Activity Ledger',
     stockSearchRoute: 'Stock Search Center',
-    stockValuationRoute: 'Stock Valuation',
+    stockValuationRoute: 'Metal Cost Analyser',
     addStockRoute: 'Add Stock',
     barcodePrintRoute: 'Print Barcodes',
     stockTransferRoute: 'Stock Transfer',
@@ -152,6 +154,8 @@ class RoutePaths {
   // Settings
   static const String billingSetup = '/app/settings/billing-setup';
   static const String printTemplates = '/app/settings/print-templates';
+  static const String settingsMetalCostAnalyser =
+      '/app/settings/metal-cost-analyser';
 
   // Customer
   static const String customerList = '/app/customer/list';
@@ -244,6 +248,7 @@ class RouteMapper {
     AppRoutes.accountProfileRoute: RoutePaths.accountProfile,
     AppRoutes.billingSetupRoute: RoutePaths.billingSetup,
     AppRoutes.printTemplatesRoute: RoutePaths.printTemplates,
+    AppRoutes.metalCostAnalyserRoute: RoutePaths.settingsMetalCostAnalyser,
     AppRoutes.customerListRoute: RoutePaths.customerList,
     AppRoutes.addCustomerRoute: RoutePaths.customerAdd,
     AppRoutes.creditLimitRoute: RoutePaths.customerCreditLimit,
@@ -260,7 +265,6 @@ class RouteMapper {
     AppRoutes.stockSummaryRoute: RoutePaths.stockSummary,
     AppRoutes.stockActivityRoute: RoutePaths.stockActivity,
     AppRoutes.stockSearchRoute: RoutePaths.stockSearch,
-    AppRoutes.stockValuationRoute: RoutePaths.stockValuation,
     AppRoutes.addStockRoute: RoutePaths.stockAdd,
     AppRoutes.barcodePrintRoute: RoutePaths.stockBarcode,
     AppRoutes.stockTransferRoute: RoutePaths.stockTransfer,
@@ -291,6 +295,7 @@ class RouteMapper {
 
   static final Map<String, String> _routeIdByPath = {
     for (final entry in _pathByRouteId.entries) entry.value: entry.key,
+    RoutePaths.stockValuation: AppRoutes.metalCostAnalyserRoute,
     RoutePaths.customerProfileBase: AppRoutes.customerListRoute,
     RoutePaths.supplierProfileBase: AppRoutes.supplierListRoute,
   };
@@ -298,6 +303,9 @@ class RouteMapper {
   static String toPath(String routeId, {int? entityId}) {
     if (routeId == AppRoutes.customerProfileRoute && entityId != null) {
       return RoutePaths.customerProfileFor(entityId);
+    }
+    if (routeId == AppRoutes.stockValuationRoute) {
+      return RoutePaths.settingsMetalCostAnalyser;
     }
     return _pathByRouteId[routeId] ?? RoutePaths.dashboard;
   }

@@ -10,7 +10,6 @@ import '../../../models/setting/settings_model.dart';
 import '../shop_setup/shop_setup_wizard.dart';
 import '../account_profile/account_profile_screen.dart';
 
-import '../metal_costing/metal_costing_hub_screen.dart';
 import '../metal_rate/metal_rate_hub_screen.dart';
 
 import '../tax_gst/tax_gst_hub_screen.dart';
@@ -43,23 +42,6 @@ class SettingsScreen extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const AccountProfileScreen()),
-        );
-        break;
-
-      case 'metal_costing':
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, animation, __) => const MetalCostingHubScreen(),
-            transitionsBuilder: (_, animation, __, child) => FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOut,
-              ),
-              child: child,
-            ),
-            transitionDuration: const Duration(milliseconds: 260),
-          ),
         );
         break;
 
