@@ -281,9 +281,9 @@ class StockActivityController extends ChangeNotifier {
     final dateRange = _dateRangeForFilter(_dateFilter);
     if (dateRange != null) {
       clauses.add('sm.occurred_at >= ?');
-      variables.add(drift.Variable.withDateTime(dateRange.start));
+      variables.add(drift.Variable<int>(dateRange.start.millisecondsSinceEpoch));
       clauses.add('sm.occurred_at < ?');
-      variables.add(drift.Variable.withDateTime(dateRange.end));
+      variables.add(drift.Variable<int>(dateRange.end.millisecondsSinceEpoch));
     }
 
     if (_searchText.isNotEmpty) {

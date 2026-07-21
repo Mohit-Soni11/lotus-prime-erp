@@ -252,8 +252,8 @@ class StockSummaryController extends ChangeNotifier {
       WHERE occurred_at >= ? AND occurred_at < ?
       ''',
       variables: [
-        drift.Variable.withDateTime(startOfDay),
-        drift.Variable.withDateTime(endOfDay),
+        drift.Variable<int>(startOfDay.millisecondsSinceEpoch),
+        drift.Variable<int>(endOfDay.millisecondsSinceEpoch),
       ],
     ).getSingle();
 
@@ -506,8 +506,8 @@ class StockSummaryController extends ChangeNotifier {
       GROUP BY 1
       ''',
       variables: [
-        drift.Variable.withDateTime(startOfDay),
-        drift.Variable.withDateTime(endOfDay),
+        drift.Variable<int>(startOfDay.millisecondsSinceEpoch),
+        drift.Variable<int>(endOfDay.millisecondsSinceEpoch),
       ],
     ).get();
 
@@ -549,8 +549,8 @@ class StockSummaryController extends ChangeNotifier {
       GROUP BY 1, 2
       ''',
       variables: [
-        drift.Variable.withDateTime(startOfDay),
-        drift.Variable.withDateTime(endOfDay),
+        drift.Variable<int>(startOfDay.millisecondsSinceEpoch),
+        drift.Variable<int>(endOfDay.millisecondsSinceEpoch),
       ],
     ).get();
 

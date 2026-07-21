@@ -79,6 +79,11 @@ class _StockSummaryBodyState extends State<_StockSummaryBody> {
                   const SizedBox(height: 18),
                   _StockSummaryMetricGrid(overview: controller.overview),
                   const SizedBox(height: 18),
+                  _StockSummaryMarketRefillPanel(
+                    soldUnits: controller.overview.soldUnits,
+                    soldWeight: controller.overview.soldWeight,
+                  ),
+                  const SizedBox(height: 18),
                   _buildSummaryLevel(),
                   const SizedBox(height: 18),
                   _RecentMovementPanel(records: controller.recentMovements),

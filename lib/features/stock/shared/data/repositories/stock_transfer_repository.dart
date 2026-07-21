@@ -106,10 +106,10 @@ class StockTransferRepository {
       FROM stock_transfers
       ''',
       variables: [
-        drift.Variable.withDateTime(start),
-        drift.Variable.withDateTime(end),
-        drift.Variable.withDateTime(start),
-        drift.Variable.withDateTime(end),
+        drift.Variable<int>(start.millisecondsSinceEpoch),
+        drift.Variable<int>(end.millisecondsSinceEpoch),
+        drift.Variable<int>(start.millisecondsSinceEpoch),
+        drift.Variable<int>(end.millisecondsSinceEpoch),
       ],
     ).getSingle();
 

@@ -8,10 +8,12 @@ import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_e
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_summary/stock_summary_models.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/stock_metal_ui.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/inventory/metal_hub/inventory_metal_summary_card.dart';
+import 'package:lotus_erp/features/stock/shared/presentation/market_refill_report/market_refill_report_screen.dart';
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'app_bar/stock_summary_app_bar.dart';
 part 'body/stock_summary_body.dart';
+part 'widgets/stock_summary_market_refill_panel.dart';
 part 'widgets/stock_summary_recent_movement_panel.dart';
 part 'widgets/stock_summary_silver_item_type_panel.dart';
 part 'widgets/stock_summary_widgets.dart';
