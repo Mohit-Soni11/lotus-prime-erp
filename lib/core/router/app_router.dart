@@ -453,6 +453,14 @@ GoRouter createAppRouter() {
             ),
           ),
           GoRoute(
+            path: RoutePaths.salesReturnExchange,
+            builder: (context, state) => _ComingSoonScreen(
+              pageTitle: AppRoutes.getTitle(
+                AppRoutes.salesReturnExchangeRoute,
+              ),
+            ),
+          ),
+          GoRoute(
             path: RoutePaths.purchaseEntry,
             builder: (_, __) => const PurchaseEntryScreen(),
           ),
@@ -502,6 +510,12 @@ GoRouter createAppRouter() {
             path: RoutePaths.stockBarcode,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.barcodePrintRoute),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.stockDisposition,
+            builder: (context, state) => _ComingSoonScreen(
+              pageTitle: AppRoutes.getTitle(AppRoutes.stockDispositionRoute),
             ),
           ),
           GoRoute(

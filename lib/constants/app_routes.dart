@@ -32,6 +32,7 @@ class AppRoutes {
 
   // Sales
   static const String newSaleRoute = '/sales/pos';
+  static const String salesReturnExchangeRoute = '/sales/returns-exchanges';
   static const String bookingAdvanceRoute = '/sales/booking';
   static const String deliveryManagementRoute = '/sales/delivery';
 
@@ -48,6 +49,7 @@ class AppRoutes {
   static const String stockValuationRoute = '/stock/valuation';
   static const String addStockRoute = '/stock/add';
   static const String barcodePrintRoute = '/stock/barcode';
+  static const String stockDispositionRoute = '/stock/disposition';
   static const String stockTransferRoute = '/stock/transfer';
   static const String lowStockAlertRoute = '/stock/low-alert';
 
@@ -99,10 +101,11 @@ class AppRoutes {
     supplierListRoute: 'Supplier List',
     addSupplierRoute: 'Add New Supplier',
     newSaleRoute: 'New Sale (POS)',
+    salesReturnExchangeRoute: 'Returns & Exchanges',
     bookingAdvanceRoute: 'Booking & Advance',
     deliveryManagementRoute: 'Delivery Management',
     purchaseEntryRoute: 'Purchase Entry',
-    oldGoldBuyRoute: 'Old Gold Purchase',
+    oldGoldBuyRoute: 'Old Metal Purchase',
     purchaseReturnRoute: 'Purchase Return',
     inventoryRoute: 'Inventory Ledger',
     stockActivityRoute: 'Stock Activity Ledger',
@@ -110,6 +113,7 @@ class AppRoutes {
     stockValuationRoute: 'Metal Cost Analyser',
     addStockRoute: 'Add Stock',
     barcodePrintRoute: 'Print Barcodes',
+    stockDispositionRoute: 'Inventory Disposition',
     stockTransferRoute: 'Stock Transfer',
     lowStockAlertRoute: 'Low Stock Alerts',
     issueToKarigarRoute: 'Issue to Karigar',
@@ -173,6 +177,7 @@ class RoutePaths {
 
   // Sales
   static const String salesPos = '/app/sales/pos';
+  static const String salesReturnExchange = '/app/sales/returns-exchanges';
   static const String salesBooking = '/app/sales/booking';
   static const String salesDelivery = '/app/sales/delivery';
 
@@ -189,6 +194,7 @@ class RoutePaths {
   static const String stockValuation = '/app/stock/valuation';
   static const String stockAdd = '/app/stock/add';
   static const String stockBarcode = '/app/stock/barcode';
+  static const String stockDisposition = '/app/stock/disposition';
   static const String stockTransfer = '/app/stock/transfer';
   static const String stockLowAlert = '/app/stock/low-alert';
 
@@ -256,6 +262,7 @@ class RouteMapper {
     AppRoutes.supplierListRoute: RoutePaths.supplierList,
     AppRoutes.addSupplierRoute: RoutePaths.supplierAdd,
     AppRoutes.newSaleRoute: RoutePaths.salesPos,
+    AppRoutes.salesReturnExchangeRoute: RoutePaths.salesReturnExchange,
     AppRoutes.bookingAdvanceRoute: RoutePaths.salesBooking,
     AppRoutes.deliveryManagementRoute: RoutePaths.salesDelivery,
     AppRoutes.purchaseEntryRoute: RoutePaths.purchaseEntry,
@@ -267,6 +274,7 @@ class RouteMapper {
     AppRoutes.stockSearchRoute: RoutePaths.stockSearch,
     AppRoutes.addStockRoute: RoutePaths.stockAdd,
     AppRoutes.barcodePrintRoute: RoutePaths.stockBarcode,
+    AppRoutes.stockDispositionRoute: RoutePaths.stockDisposition,
     AppRoutes.stockTransferRoute: RoutePaths.stockTransfer,
     AppRoutes.lowStockAlertRoute: RoutePaths.stockLowAlert,
     AppRoutes.issueToKarigarRoute: RoutePaths.karigarIssue,

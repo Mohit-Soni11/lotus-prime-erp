@@ -45,10 +45,11 @@ class SidebarMenu {
 
     // ── sales_orders ──────────────────────────────────────────
     SidebarItem(
-      title: 'sales_orders',
+      title: 'Sales & Returns',
       icon: Icons.shopping_cart_outlined,
       subItems: [
         MenuItemData(AppRoutes.newSaleRoute),
+        MenuItemData(AppRoutes.salesReturnExchangeRoute),
         MenuItemData(AppRoutes.bookingAdvanceRoute),
         MenuItemData(AppRoutes.deliveryManagementRoute),
       ],
@@ -56,7 +57,7 @@ class SidebarMenu {
 
     // ── Purchase & Old Gold ─────────────────────────────────────
     SidebarItem(
-      title: 'Purchase & Old Gold',
+      title: 'Metal Procurement',
       icon: Icons.shopping_bag_outlined,
       subItems: [
         MenuItemData(AppRoutes.purchaseEntryRoute),
@@ -76,6 +77,7 @@ class SidebarMenu {
         MenuItemData(AppRoutes.stockSearchRoute),
         MenuItemData(AppRoutes.addStockRoute),
         MenuItemData(AppRoutes.barcodePrintRoute),
+        MenuItemData(AppRoutes.stockDispositionRoute),
         MenuItemData(AppRoutes.stockTransferRoute),
         MenuItemData(AppRoutes.lowStockAlertRoute),
       ],

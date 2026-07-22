@@ -154,6 +154,16 @@ class AppDatabase extends _$AppDatabase {
         .toSet();
   }
 
+  Future<void> _ensureStockBaseSchema() async {
+    final migrator = createMigrator();
+    if (!await _tableExists('suppliers')) {
+      await migrator.createTable(suppliers);
+    }
+    if (!await _tableExists('stock_items')) {
+      await migrator.createTable(stockItems);
+    }
+  }
+
   Future<void> _addColumnIfMissing({
     required String tableName,
     required String columnName,
@@ -184,6 +194,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> _ensureStockInventorySchemaInternal() async {
+    await _ensureStockBaseSchema();
     await _ensureStockItemUnitSchema();
     await _addColumnIfMissing(
       tableName: 'stock_items',
