@@ -414,7 +414,7 @@ class PosBillingController extends ChangeNotifier {
     }
 
     final item = saleItems[rowIndex];
-    final query = item.huidCtrl.text.trim();
+    final query = item.primaryHuidText;
     if (query.isEmpty) {
       return;
     }
@@ -440,7 +440,7 @@ class PosBillingController extends ChangeNotifier {
         continue;
       }
 
-      final query = _firstHuidToken(item.huidCtrl.text);
+      final query = item.primaryHuidText;
       if (query.isEmpty) {
         continue;
       }
@@ -460,14 +460,6 @@ class PosBillingController extends ChangeNotifier {
     }
   }
 
-  String _firstHuidToken(String value) {
-    final parts = value
-        .split(RegExp(r'[,;/\s]+'))
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty);
-    return parts.isEmpty ? '' : parts.first;
-  }
-
   void applyStockSuggestionToRow({
     required int rowIndex,
     required PosStockLookupModel suggestion,
@@ -482,9 +474,11 @@ class PosBillingController extends ChangeNotifier {
     item.descCtrl.text = suggestion.itemName.trim().isEmpty
         ? suggestion.sku
         : suggestion.itemName;
-    item.huidCtrl.text = suggestion.huids.isNotEmpty
-        ? suggestion.huids.join(', ')
-        : suggestion.huid?.trim() ?? '';
+    item.setHuidValues(
+      suggestion.huids.isNotEmpty
+          ? suggestion.huids
+          : [suggestion.huid?.trim() ?? ''],
+    );
     item.purityCtrl.text = suggestion.purity.trim();
     item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
     item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
@@ -821,7 +815,7 @@ class PosBillingController extends ChangeNotifier {
         item.addListener(_onChildItemChanged);
         item.descCtrl.text = row.itemName;
         item.pcsCtrl.text = row.quantity.toString();
-        item.huidCtrl.text = row.huid ?? '';
+        item.setHuidText(row.huid ?? '');
         item.purityCtrl.text = row.purity;
         item.grossCtrl.text = _formatEditNumber(row.grossWeight);
         item.lessCtrl.text = _formatEditNumber(row.lessWeight);
@@ -830,6 +824,8 @@ class PosBillingController extends ChangeNotifier {
         if (row.linkedStockItemId != null && row.linkedStockSku != null) {
           item.attachStockReference(
             stockItemId: row.linkedStockItemId!,
+            stockUnitId: row.linkedStockUnitId,
+            stockUnitCost: row.stockUnitCost,
             sku: row.linkedStockSku!,
           );
         }

@@ -504,12 +504,11 @@ class _PosInvoicePdfDocumentBuilder {
                     var desc = item.descCtrl.text.isNotEmpty
                         ? item.descCtrl.text
                         : '${item.metal.name.toUpperCase()} ITEM';
-                    if (activeConfig.showHuid &&
-                        item.huidCtrl.text.isNotEmpty) {
-                      desc += '\n[HUID: ${item.huidCtrl.text}]';
+                    if (activeConfig.showHuid && item.huidText.isNotEmpty) {
+                      desc += '\n[HUID: ${item.huidText}]';
                     }
                     final linkedSku = item.linkedStockSku?.trim() ?? '';
-                    final huid = item.huidCtrl.text.trim();
+                    final huid = item.huidText.trim();
                     if (activeConfig.showHuid &&
                         linkedSku.isNotEmpty &&
                         linkedSku != huid) {

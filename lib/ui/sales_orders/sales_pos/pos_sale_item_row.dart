@@ -381,39 +381,51 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
   }
 
   Widget _buildPcsField(bool isWholesale) {
+    final unitTag =
+        widget.item.unitShortName == 'PCS' ? '' : widget.item.unitShortName;
     return SizedBox(
       height: 38,
-      child: TextFormField(
-        controller: widget.item.pcsCtrl,
-        focusNode: widget.item.pcsFocus,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        textInputAction: TextInputAction.next,
-        onFieldSubmitted: (_) => isWholesale
-            ? widget.item.grossFocus.requestFocus()
-            : widget.item.huidFocus.requestFocus(),
-        textAlign: TextAlign.center,
-        style: SalesPosStyles.inputText.copyWith(
-          color: SalesPosColors.bodyTextMain,
-          fontFeatures: const [FontFeature.tabularFigures()],
-        ),
-        decoration: InputDecoration(
-          hintText: '1',
-          hintStyle: SalesPosStyles.subTitleMuted.copyWith(
-              color: SalesPosColors.bodyTextMain.withValues(alpha: 0.40)),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-          filled: true,
-          fillColor: SalesPosColors.bodyBg,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide:
-                const BorderSide(color: SalesPosColors.bodyBorder, width: 1.5),
+      child: Tooltip(
+        message: widget.item.unitDisplayName,
+        waitDuration: const Duration(milliseconds: 400),
+        child: TextFormField(
+          controller: widget.item.pcsCtrl,
+          focusNode: widget.item.pcsFocus,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) => isWholesale
+              ? widget.item.grossFocus.requestFocus()
+              : widget.item.huidFocus.requestFocus(),
+          textAlign: TextAlign.center,
+          style: SalesPosStyles.inputText.copyWith(
+            color: SalesPosColors.bodyTextMain,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide:
-                const BorderSide(color: SalesPosColors.brandGold, width: 2.0),
+          decoration: InputDecoration(
+            hintText: '1',
+            suffixText: unitTag.isEmpty ? null : unitTag,
+            suffixStyle: SalesPosStyles.subTitleMuted.copyWith(
+              color: SalesPosColors.brandGold,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+            ),
+            hintStyle: SalesPosStyles.subTitleMuted.copyWith(
+                color: SalesPosColors.bodyTextMain.withValues(alpha: 0.40)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+            filled: true,
+            fillColor: SalesPosColors.bodyBg,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                  color: SalesPosColors.bodyBorder, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  const BorderSide(color: SalesPosColors.brandGold, width: 2.0),
+            ),
           ),
         ),
       ),
@@ -812,17 +824,42 @@ class _HuidWithSuggestions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final huidTokens = _huidTokens(item.huidCtrl.text);
-    if (item.hasLinkedStock && huidTokens.length > 1) {
+    final controllers = item.huidControllers;
+    final focusNodes = item.huidFocusNodes;
+    if (item.huidSlotCount > 1) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var index = 0; index < huidTokens.length; index++) ...[
-            _HuidSetBox(
-              label: 'HUID ${index + 1}',
-              value: huidTokens[index],
+          for (var index = 0; index < item.huidSlotCount; index++) ...[
+            PosStockLookupField(
+              listenable: ctrl,
+              controller: controllers[index],
+              hint: 'HUID ${index + 1}',
+              focusNode: focusNodes[index],
+              textInputAction: TextInputAction.next,
+              onSubmitted: (_) {
+                if (index < item.huidSlotCount - 1) {
+                  focusNodes[index + 1].requestFocus();
+                } else {
+                  onSubmitted?.call(item.huidText);
+                }
+              },
+              onSearch: (query) async {
+                await ctrl.searchHuids(query, rowIndex, item.metal);
+              },
+              getSuggestions: () => ctrl.getHuidSuggestionsForRow(rowIndex),
+              onSelected: (selection) async {
+                ctrl.applyStockSuggestionToRow(
+                  rowIndex: rowIndex,
+                  suggestion: selection,
+                );
+              },
+              onClearSuggestions: () {
+                ctrl.clearHuidSuggestions();
+              },
+              overlayWidth: 360,
             ),
-            if (index < huidTokens.length - 1) const SizedBox(height: 5),
+            if (index < item.huidSlotCount - 1) const SizedBox(height: 5),
           ],
         ],
       );
@@ -849,76 +886,6 @@ class _HuidWithSuggestions extends StatelessWidget {
         ctrl.clearHuidSuggestions();
       },
       overlayWidth: 360,
-    );
-  }
-
-  List<String> _huidTokens(String value) {
-    return value
-        .split(RegExp(r'[,;/\n]+'))
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty)
-        .toList(growable: false);
-  }
-}
-
-class _HuidSetBox extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _HuidSetBox({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 34,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: SalesPosColors.bodyBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: SalesPosColors.brandGold, width: 1.4),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 16,
-            height: 20,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: SalesPosColors.brandGold.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Text(
-              label.replaceFirst('HUID ', ''),
-              style: SalesPosStyles.subTitleMuted.copyWith(
-                color: SalesPosColors.brandGold,
-                fontSize: 9,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                maxLines: 1,
-                softWrap: false,
-                style: SalesPosStyles.inputText.copyWith(
-                  color: SalesPosColors.bodyTextMain,
-                  fontSize: SalesPosStyles.fontBody,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.1,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

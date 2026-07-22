@@ -1131,13 +1131,13 @@ class PosLotusClassicInvoicePdfLayout {
     final parts = <String>[
       _fallback(item.descCtrl.text, '${item.metal.displayName} Item'),
     ];
-    if (config.showHuid && item.huidCtrl.text.trim().isNotEmpty) {
-      parts.add('HUID: ${item.huidCtrl.text.trim()}');
+    if (config.showHuid && item.huidText.trim().isNotEmpty) {
+      parts.add('HUID: ${item.huidText.trim()}');
     }
     final linkedSku = item.linkedStockSku?.trim() ?? '';
     if (config.showHuid &&
         linkedSku.isNotEmpty &&
-        linkedSku != item.huidCtrl.text.trim()) {
+        linkedSku != item.huidText.trim()) {
       parts.add('SKU: $linkedSku');
     }
     if (config.showPcs && item.pcs > 1) {

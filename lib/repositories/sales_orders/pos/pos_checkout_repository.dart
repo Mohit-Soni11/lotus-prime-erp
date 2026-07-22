@@ -134,9 +134,7 @@ class PosCheckoutRepository {
                 metalType: Value(item.metal.displayName),
                 itemName: Value(itemName),
                 huid: Value(
-                  item.huidCtrl.text.trim().isNotEmpty
-                      ? item.huidCtrl.text.trim()
-                      : null,
+                  item.huidText.trim().isNotEmpty ? item.huidText.trim() : null,
                 ),
                 purity: Value(
                   item.purityCtrl.text.trim().isNotEmpty
@@ -321,9 +319,7 @@ class PosCheckoutRepository {
                 metalType: Value(item.metal.displayName),
                 itemName: Value(itemName),
                 huid: Value(
-                  item.huidCtrl.text.trim().isNotEmpty
-                      ? item.huidCtrl.text.trim()
-                      : null,
+                  item.huidText.trim().isNotEmpty ? item.huidText.trim() : null,
                 ),
                 purity: Value(
                   item.purityCtrl.text.trim().isNotEmpty
@@ -2252,7 +2248,7 @@ class PosCheckoutRepository {
     );
     item.descCtrl.text = row.itemName;
     item.pcsCtrl.text = row.quantity.toString();
-    item.huidCtrl.text = row.huid ?? '';
+    item.setHuidText(row.huid ?? '');
     item.purityCtrl.text = row.purity;
     item.grossCtrl.text = _formatPersistedNumber(row.grossWeight);
     item.lessCtrl.text = _formatPersistedNumber(row.lessWeight);

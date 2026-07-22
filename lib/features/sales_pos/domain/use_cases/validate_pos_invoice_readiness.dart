@@ -133,8 +133,11 @@ class PosInvoiceReadinessValidator {
 
     for (int index = 0; index < saleItems.length; index++) {
       final rowNumber = index + 1;
-      final huid = saleItems[index].huidCtrl.text.trim().toUpperCase();
-      if (huid.isNotEmpty) {
+      for (final value in saleItems[index].huidValues) {
+        final huid = value.trim().toUpperCase();
+        if (huid.isEmpty) {
+          continue;
+        }
         final firstRow = huidRows[huid];
         if (firstRow != null) {
           return 'HUID $huid is already used in item row $firstRow. Remove the duplicate from row $rowNumber.';

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_number_formatter.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_number_parser.dart';
 import 'package:lotus_erp/features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
@@ -30,6 +31,54 @@ void main() {
     });
   });
 
+  group('PosItemUnitProfile', () {
+    test('infers pair unit for gold jhumka and opens two HUID slots', () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.descCtrl.text = 'Gold Jhumka';
+      item.setHuidValues(['GJ1234', 'GJ5678']);
+
+      expect(item.unitProfile.code, PosItemUnitCode.pair);
+      expect(item.unitShortName, 'PAIR');
+      expect(item.pcs, 2);
+      expect(item.huidControllers.length, 2);
+      expect(item.huidText, 'GJ1234, GJ5678');
+
+      item.dispose();
+    });
+
+    test('infers silver pair and packet units from item description', () {
+      final payal = SaleItemModel(metal: MetalType.silver);
+      final packet = SaleItemModel(metal: MetalType.silver);
+
+      payal.descCtrl.text = 'Silver Payal';
+      packet.descCtrl.text = 'Silver Beads Packet';
+
+      expect(payal.unitProfile.code, PosItemUnitCode.pair);
+      expect(payal.pcs, 2);
+      expect(payal.huidControllers.length, 2);
+      expect(packet.unitProfile.code, PosItemUnitCode.packet);
+      expect(packet.pcs, 1);
+      expect(packet.huidControllers.length, 1);
+
+      payal.dispose();
+      packet.dispose();
+    });
+
+    test('keeps manual quantity when description unit changes later', () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.pcsCtrl.text = '3';
+      item.descCtrl.text = 'Gold Jhumka';
+
+      expect(item.unitProfile.code, PosItemUnitCode.pair);
+      expect(item.pcs, 3);
+      expect(item.huidControllers.length, 3);
+
+      item.dispose();
+    });
+  });
+
   group('PosInvoiceReadinessValidator', () {
     test('accepts a complete cash sale', () {
       final item = _saleItem(huid: 'HUID-001');
@@ -45,6 +94,22 @@ void main() {
     test('blocks duplicate HUID entries before invoice generation', () {
       final first = _saleItem(huid: 'HUID-001');
       final second = _saleItem(huid: 'huid-001');
+
+      final result = const PosInvoiceReadinessValidator().validate(
+        _input(saleItems: [first, second]),
+      );
+
+      expect(result, contains('HUID HUID-001'));
+      first.dispose();
+      second.dispose();
+    });
+
+    test('blocks duplicate HUID values across multi-slot rows', () {
+      final first = _saleItem(huid: 'HUID-001');
+      final second = _saleItem(huid: '');
+
+      second.descCtrl.text = 'Gold Jhumka';
+      second.setHuidValues(['HUID-002', 'huid-001']);
 
       final result = const PosInvoiceReadinessValidator().validate(
         _input(saleItems: [first, second]),

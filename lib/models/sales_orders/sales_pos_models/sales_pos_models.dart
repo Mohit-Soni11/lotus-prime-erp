@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
 import '../../../features/sales_pos/domain/services/pos_weight_math.dart';
@@ -47,17 +48,23 @@ double _roundWeight3(double value) {
 }
 
 class SaleItemModel extends ChangeNotifier {
+  static const int _maxPieceWiseHuidSlots = 12;
+
   MetalType _metal;
   MakingChargeType _makingChargeType;
   bool _isLessPerPiece;
+  PosItemUnitProfile _unitProfile = PosItemUnitProfile.pieces;
   int? _linkedStockItemId;
   int? _linkedStockUnitId;
   String? _linkedStockSku;
   double _linkedStockUnitCost = 0.0;
+  bool _isApplyingSmartQuantity = false;
+  bool _quantityManuallyChanged = false;
 
   final TextEditingController descCtrl = TextEditingController();
   final TextEditingController pcsCtrl = TextEditingController(text: '1');
   final TextEditingController huidCtrl = TextEditingController();
+  final List<TextEditingController> _extraHuidCtrls = [];
   final TextEditingController purityCtrl = TextEditingController();
   final TextEditingController grossCtrl = TextEditingController();
   final TextEditingController lessCtrl = TextEditingController();
@@ -68,6 +75,7 @@ class SaleItemModel extends ChangeNotifier {
   //  Focus nodes support predictable Tab and Enter navigation.
   final FocusNode pcsFocus = FocusNode();
   final FocusNode huidFocus = FocusNode();
+  final List<FocusNode> _extraHuidFocusNodes = [];
   final FocusNode purityFocus = FocusNode();
   final FocusNode grossFocus = FocusNode();
   final FocusNode lessFocus = FocusNode();
@@ -96,12 +104,18 @@ class SaleItemModel extends ChangeNotifier {
   })  : _metal = metal,
         _makingChargeType = makingChargeType,
         _isLessPerPiece = isLessPerPiece {
+    descCtrl.addListener(_applySmartUnitFromDescription);
+
     //  Value equality listeners
     pcsCtrl.addListener(() {
       //  Quantity is constrained to positive whole numbers.
       final val = (int.tryParse(pcsCtrl.text) ?? 1).clamp(1, 9999);
+      if (!_isApplyingSmartQuantity) {
+        _quantityManuallyChanged = true;
+      }
       if (_pcs != val) {
         _pcs = val;
+        _syncHuidInputsWithPieceCount();
         notifyListeners();
       }
     });
@@ -160,6 +174,9 @@ class SaleItemModel extends ChangeNotifier {
   MetalType get metal => _metal;
   MakingChargeType get makingChargeType => _makingChargeType;
   bool get isLessPerPiece => _isLessPerPiece;
+  PosItemUnitProfile get unitProfile => _unitProfile;
+  String get unitDisplayName => _unitProfile.displayName;
+  String get unitShortName => _unitProfile.shortName;
   int? get linkedStockItemId => _linkedStockItemId;
   int? get linkedStockUnitId => _linkedStockUnitId;
   String? get linkedStockSku => _linkedStockSku;
@@ -180,6 +197,29 @@ class SaleItemModel extends ChangeNotifier {
 
   // --- CORE WEIGHT LOGIC ---
   int get pcs => _pcs;
+  int get huidSlotCount {
+    if (!_unitProfile.usesPieceWiseHuid) return 1;
+    if (_pcs <= 1 || _pcs > _maxPieceWiseHuidSlots) return 1;
+    return _pcs;
+  }
+
+  List<TextEditingController> get huidControllers =>
+      List.unmodifiable([huidCtrl, ..._extraHuidCtrls]);
+
+  List<FocusNode> get huidFocusNodes =>
+      List.unmodifiable([huidFocus, ..._extraHuidFocusNodes]);
+
+  List<String> get huidValues {
+    final values = <String>[];
+    for (final controller in huidControllers) {
+      values.addAll(_splitHuidText(controller.text));
+    }
+    return values;
+  }
+
+  String get huidText => huidValues.join(', ');
+  String get primaryHuidText => huidValues.isEmpty ? '' : huidValues.first;
+
   double get totalLessWt => _isLessPerPiece ? (_lessWt * _pcs) : _lessWt;
   //  Net weight is clamped at zero when deductions exceed gross weight.
   double get netWt => (_grossWt - totalLessWt).clamp(0.0, double.infinity);
@@ -222,8 +262,33 @@ class SaleItemModel extends ChangeNotifier {
   void updateMetal(MetalType newMetal) {
     if (_metal != newMetal) {
       _metal = newMetal;
+      _applySmartUnitFromDescription(notify: false);
       notifyListeners();
     }
+  }
+
+  void setHuidText(String value) {
+    setHuidValues(_splitHuidText(value));
+  }
+
+  void setHuidValues(List<String> values) {
+    final normalizedValues = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    _syncHuidInputsWithPieceCount();
+    final controllers = huidControllers;
+    for (var index = 0; index < controllers.length; index++) {
+      final text =
+          index < normalizedValues.length ? normalizedValues[index] : '';
+      if (controllers[index].text != text) {
+        controllers[index].text = text;
+      }
+    }
+    if (controllers.length == 1 && normalizedValues.length > 1) {
+      huidCtrl.text = normalizedValues.join(', ');
+    }
+    notifyListeners();
   }
 
   bool applyMasterRate({
@@ -376,11 +441,84 @@ class SaleItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _applySmartUnitFromDescription({bool notify = true}) {
+    final next = PosItemUnitProfile.infer(
+      metal: _metal,
+      itemName: descCtrl.text,
+    );
+    if (next.code == _unitProfile.code) {
+      return;
+    }
+
+    final previousDefaultPieces = _unitProfile.defaultPieceCount;
+    _unitProfile = next;
+    final canApplyDefaultQuantity = !_quantityManuallyChanged ||
+        pcsCtrl.text.trim().isEmpty ||
+        _pcs == previousDefaultPieces;
+
+    if (canApplyDefaultQuantity) {
+      _isApplyingSmartQuantity = true;
+      pcsCtrl.text = next.defaultPieceCount.toString();
+      pcsCtrl.selection = TextSelection.collapsed(offset: pcsCtrl.text.length);
+      _isApplyingSmartQuantity = false;
+      _quantityManuallyChanged = false;
+      _pcs = next.defaultPieceCount;
+    }
+    _syncHuidInputsWithPieceCount();
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void _syncHuidInputsWithPieceCount() {
+    final targetCount = huidSlotCount;
+    final existingValues = huidValues;
+    while (_extraHuidCtrls.length < targetCount - 1) {
+      final controller = TextEditingController();
+      _extraHuidCtrls.add(controller);
+      _extraHuidFocusNodes.add(FocusNode());
+    }
+    while (_extraHuidCtrls.length > targetCount - 1) {
+      final controller = _extraHuidCtrls.removeLast();
+      controller.dispose();
+      _extraHuidFocusNodes.removeLast().dispose();
+    }
+    _applyHuidValuesToVisibleInputs(existingValues);
+  }
+
+  void _applyHuidValuesToVisibleInputs(List<String> values) {
+    if (values.isEmpty) return;
+    final controllers = huidControllers;
+    if (controllers.length == 1 && values.length > 1) {
+      if (huidCtrl.text != values.join(', ')) {
+        huidCtrl.text = values.join(', ');
+      }
+      return;
+    }
+    for (var index = 0; index < controllers.length; index++) {
+      final nextText = index < values.length ? values[index] : '';
+      if (controllers[index].text != nextText) {
+        controllers[index].text = nextText;
+      }
+    }
+  }
+
+  List<String> _splitHuidText(String value) {
+    return value
+        .split(RegExp(r'[,;/\s]+'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
+  }
+
   @override
   void dispose() {
     descCtrl.dispose();
     pcsCtrl.dispose();
     huidCtrl.dispose();
+    for (final controller in _extraHuidCtrls) {
+      controller.dispose();
+    }
     purityCtrl.dispose();
     grossCtrl.dispose();
     lessCtrl.dispose();
@@ -390,6 +528,9 @@ class SaleItemModel extends ChangeNotifier {
     //  Dispose field focus nodes.
     pcsFocus.dispose();
     huidFocus.dispose();
+    for (final focusNode in _extraHuidFocusNodes) {
+      focusNode.dispose();
+    }
     purityFocus.dispose();
     grossFocus.dispose();
     lessFocus.dispose();

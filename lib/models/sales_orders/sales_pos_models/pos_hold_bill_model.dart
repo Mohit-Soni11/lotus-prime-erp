@@ -214,7 +214,7 @@ class PosHoldSaleItemSnapshot {
       stockUnitCost: item.linkedStockUnitCost,
       description: item.descCtrl.text,
       pcsInput: item.pcsCtrl.text,
-      huid: item.huidCtrl.text,
+      huid: item.huidText,
       purity: item.purityCtrl.text,
       grossInput: item.grossCtrl.text,
       lessInput: item.lessCtrl.text,
@@ -277,7 +277,7 @@ class PosHoldSaleItemSnapshot {
     );
     item.descCtrl.text = description;
     item.pcsCtrl.text = pcsInput.isEmpty ? '1' : pcsInput;
-    item.huidCtrl.text = huid;
+    item.setHuidText(huid);
     item.purityCtrl.text = purity;
     item.grossCtrl.text = grossInput;
     item.lessCtrl.text = lessInput;
