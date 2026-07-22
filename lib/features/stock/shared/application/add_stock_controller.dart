@@ -1,6 +1,11 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/stock/shared/application/add_stock_models.dart';
+import 'package:lotus_erp/features/stock/shared/application/add_stock_purity_utils.dart';
+import 'package:lotus_erp/features/stock/shared/application/add_stock_row_validator.dart';
+import 'package:lotus_erp/features/stock/shared/application/add_stock_save_guard.dart';
+import 'package:lotus_erp/features/stock/shared/application/add_stock_sku_generator.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
@@ -9,125 +14,7 @@ import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.
 import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
 import 'package:lotus_erp/theme/stock/add_stock/add_stock_theme.dart';
 
-class StockRowEntry {
-  final String id;
-
-  String itemName = '';
-  String description = '';
-  StockSubCategory subCategory = StockSubCategory.ring;
-  String subCategoryLabel = '';
-  String companyLabel = '';
-  String segmentLabel = '';
-  String huid = '';
-  List<String> huids = [];
-  String hsnCode;
-
-  double grossWeight = 0.0;
-  double stoneWeight = 0.0;
-  double stoneValue = 0.0;
-  double touchPercent = 0.0;
-  double wastageFineWeight = 0.0;
-  double valuationFineWeight = 0.0;
-  String purityLabel = '';
-
-  StoneType stoneType = StoneType.none;
-  double stoneCarats = 0.0;
-  int stonePieces = 0;
-
-  double purchaseRate = 0.0;
-  double purchasePriceOverride = 0.0;
-  double makingCharges = 0.0;
-  MakingChargesType makingChargesType = MakingChargesType.perGram;
-  double mrp = 0.0;
-  double gstRate = 3.0;
-
-  int quantity = 1;
-  String quantityMode = 'PIECES';
-  int packetCount = 0;
-  int piecesPerPacket = 1;
-  String location = '';
-
-  int? supplierId;
-  String supplierName = '';
-
-  StockRowEntry({required this.id, required this.hsnCode});
-
-  double get netWeight =>
-      (grossWeight - stoneWeight).clamp(0.0, double.infinity);
-
-  double get lessWeight => stoneWeight;
-
-  set lessWeight(double value) => stoneWeight = value;
-
-  double resolveTouch(double fallbackTouch) {
-    final value = touchPercent > 0 ? touchPercent : fallbackTouch;
-    return value.clamp(0.0, 100.0);
-  }
-
-  double fineWeight(double fallbackTouch) =>
-      netWeight * (resolveTouch(fallbackTouch) / 100.0);
-
-  double valuationFine(double fallbackTouch) {
-    if (valuationFineWeight > 0) {
-      return valuationFineWeight;
-    }
-    return fineWeight(fallbackTouch) + wastageFineWeight;
-  }
-
-  double labourAmount({
-    required double metalAmount,
-    required double fallbackTouch,
-  }) {
-    return switch (makingChargesType) {
-      MakingChargesType.perGram => netWeight * makingCharges,
-      MakingChargesType.flat => makingCharges,
-      MakingChargesType.percent => metalAmount * makingCharges / 100.0,
-    };
-  }
-
-  double get costPrice {
-    final metalCost = netWeight * purchaseRate;
-    final making = switch (makingChargesType) {
-      MakingChargesType.perGram => netWeight * makingCharges,
-      MakingChargesType.flat => makingCharges,
-      MakingChargesType.percent => metalCost * makingCharges / 100.0,
-    };
-    return metalCost + stoneValue + making;
-  }
-
-  double get resolvedCostPrice =>
-      purchasePriceOverride > 0 ? purchasePriceOverride : costPrice;
-
-  double get totalCostValue => resolvedCostPrice * quantity;
-
-  double get totalSellingValue =>
-      ((mrp > 0 ? mrp : resolvedCostPrice) * quantity);
-
-  bool get hasAnyInput {
-    return itemName.trim().isNotEmpty ||
-        description.trim().isNotEmpty ||
-        companyLabel.trim().isNotEmpty ||
-        segmentLabel.trim().isNotEmpty ||
-        huid.trim().isNotEmpty ||
-        huids.any((value) => value.trim().isNotEmpty) ||
-        grossWeight > 0 ||
-        stoneWeight > 0 ||
-        stoneValue > 0 ||
-        touchPercent > 0 ||
-        wastageFineWeight > 0 ||
-        valuationFineWeight > 0 ||
-        stoneCarats > 0 ||
-        stonePieces > 0 ||
-        purchaseRate > 0 ||
-        makingCharges > 0 ||
-        mrp > 0 ||
-        quantity != 1 ||
-        location.trim().isNotEmpty ||
-        supplierName.trim().isNotEmpty;
-  }
-}
-
-enum AddStockStep { purity, items }
+export 'package:lotus_erp/features/stock/shared/application/add_stock_models.dart';
 
 class AddStockController extends ChangeNotifier {
   final AppDatabase _db = AppDatabase();
@@ -261,9 +148,11 @@ class AddStockController extends ChangeNotifier {
   double get gold14kRatePer10g => _gold14kRatePer10g;
   double get gold9kRatePer10g => _gold9kRatePer10g;
 
-  String get selectedPurityShortLabel => _shortPurityLabel(_purityDisplay);
+  String get selectedPurityShortLabel =>
+      AddStockPurityUtils.shortPurityLabel(_purityDisplay);
 
-  double get selectedPurityBasePercent => _resolvePurityPercent(_purityDisplay);
+  double get selectedPurityBasePercent =>
+      AddStockPurityUtils.resolvePurityPercent(_purityDisplay);
 
   double get effectiveGold24kRatePer10g {
     if (_selectedMetal != StockCategory.gold) {
@@ -417,7 +306,7 @@ class AddStockController extends ChangeNotifier {
           await MetalRateRepository().loadProfile(MetalRateMetal.gold);
       final masterRates = <String, double>{};
       for (final plan in masterProfile.purityPlans) {
-        final key = _normaliseRateKey(plan.label);
+        final key = AddStockPurityUtils.normaliseRateKey(plan.label);
         final rate = plan.manualDisplayRatePer10g > 0
             ? plan.manualDisplayRatePer10g
             : masterProfile.marketBaseRatePer10g * plan.purityFactor;
@@ -433,11 +322,11 @@ class AddStockController extends ChangeNotifier {
 
       if (latestRate != null) {
         masterRates.putIfAbsent(
-            '24K', () => _parseRateText(latestRate.gold24k));
+            '24K', () => AddStockPurityUtils.parseRateText(latestRate.gold24k));
         masterRates.putIfAbsent(
-            '22K', () => _parseRateText(latestRate.gold22k));
+            '22K', () => AddStockPurityUtils.parseRateText(latestRate.gold22k));
         masterRates.putIfAbsent(
-            '18K', () => _parseRateText(latestRate.gold18k));
+            '18K', () => AddStockPurityUtils.parseRateText(latestRate.gold18k));
       }
 
       _goldRateByPurityPer10g = masterRates;
@@ -461,7 +350,8 @@ class AddStockController extends ChangeNotifier {
     }
 
     if (_manualGold24kRatePer10g == null || _manualGold24kRatePer10g! <= 0) {
-      gold24kManualCtrl.text = _formatRateText(_gold24kRatePer10g);
+      gold24kManualCtrl.text =
+          AddStockPurityUtils.formatRateText(_gold24kRatePer10g);
     }
 
     _isLoadingGoldRates = false;
@@ -544,7 +434,7 @@ class AddStockController extends ChangeNotifier {
     for (final row in _rows) {
       if (!row.hasAnyInput ||
           row.touchPercent == 0 ||
-          _near(row.touchPercent, previousBaseTouch)) {
+          AddStockPurityUtils.near(row.touchPercent, previousBaseTouch)) {
         row.touchPercent = newBaseTouch;
       }
       row.gstRate = _gstEnabled ? gstRate : 0.0;
@@ -965,8 +855,10 @@ class AddStockController extends ChangeNotifier {
     }
 
     final touch = row.resolveTouch(selectedPurityBasePercent);
-    final basePercent = _resolvePurityPercent(baseLabel);
-    if (basePercent <= 0 || _near(basePercent, touch)) {
+    if (AddStockRowValidator.purityMatchesTouch(
+      purityLabel: baseLabel,
+      touch: touch,
+    )) {
       return baseLabel;
     }
 
@@ -977,185 +869,25 @@ class AddStockController extends ChangeNotifier {
   }
 
   String? validateRow(StockRowEntry row) {
-    if (!row.hasAnyInput) {
-      return null;
-    }
-
-    if (row.itemName.trim().isEmpty) {
-      return AddStockStrings.errItemName;
-    }
-    if (row.itemName.trim().length < 2) {
-      return AddStockStrings.errItemNameShort;
-    }
-    if (row.quantity < 1) {
-      return AddStockStrings.errQtyMin;
-    }
-    if (row.grossWeight <= 0) {
-      return AddStockStrings.errWeightInvalid;
-    }
-    if (row.grossWeight < 0 || row.stoneWeight < 0) {
-      return AddStockStrings.errWeightNeg;
-    }
-    if (row.stoneWeight > row.grossWeight) {
-      return AddStockStrings.errStoneWeightExceeds;
-    }
-    if (_selectedMetal == StockCategory.gold) {
-      final touch = touchOf(row);
-      if (touch <= 0 || touch > 100) {
-        return 'Touch must be between 0 and 100';
-      }
-      if (row.makingCharges < 0) {
-        return AddStockStrings.errPriceNeg;
-      }
-    } else if (row.purchaseRate < 0 ||
-        row.makingCharges < 0 ||
-        row.stoneValue < 0 ||
-        row.mrp < 0) {
-      return AddStockStrings.errPriceNeg;
-    }
-    if (_selectedMetal == StockCategory.silver &&
-        row.subCategoryLabel.trim().isEmpty) {
-      return 'Category is required';
-    }
-    if (_selectedMetal == StockCategory.silver) {
-      final purityLabel = row.purityLabel.trim().isNotEmpty
-          ? row.purityLabel.trim()
-          : _purityDisplay.trim();
-      if (purityLabel.isEmpty) {
-        return 'Base purity is required';
-      }
-
-      final touch =
-          row.touchPercent > 0 ? row.touchPercent : selectedPurityBasePercent;
-      if (touch <= 0 || touch > 100) {
-        return 'Total purity must be between 0 and 100';
-      }
-
-      if (row.purchaseRate <= 0) {
-        return 'Silver daily rate is missing. Update silver jewellery rate before saving.';
-      }
-    }
-    if (row.gstRate < 0 || row.gstRate > 100) {
-      return AddStockStrings.errGstRange;
-    }
-    final rowHuids = row.huids.isNotEmpty
-        ? row.huids
-        : [
-            if (row.huid.trim().isNotEmpty) row.huid.trim(),
-          ];
-    final invalidHuid = rowHuids
-        .map((value) => value.trim())
-        .where((value) => value.isNotEmpty)
-        .any((value) => value.length != 6);
-    if (invalidHuid) {
-      return AddStockStrings.errHuidLength;
-    }
-    if (_selectedMetal != StockCategory.gold &&
-        row.huid.trim().isNotEmpty &&
-        row.quantity != 1) {
-      return 'HUID item must have quantity 1';
-    }
-    return null;
+    return AddStockRowValidator.validate(
+      row: row,
+      selectedMetal: _selectedMetal,
+      selectedPurityBasePercent: selectedPurityBasePercent,
+      purityDisplay: _purityDisplay,
+    );
   }
 
   Future<String?> _validateBeforeSave() async {
-    if (!canProceedFromPurity) {
-      return AddStockStrings.errPurityRequired;
-    }
-
-    final rowsToSave = enteredRows;
-    if (rowsToSave.isEmpty) {
-      return AddStockStrings.errRowsMissing;
-    }
-
-    if (_selectedMetal == StockCategory.gold) {
-      if (_sessionSupplierId == null) {
-        return 'Select a saved supplier profile before saving this gold batch.';
-      }
-      if (!hasActiveRateSnapshot) {
-        return 'Today\'s gold rate snapshot is missing. Set rates before saving this batch.';
-      }
-    }
-
-    final customValidation = await validateCustomBatch(rowsToSave);
-    if (customValidation != null) {
-      return customValidation;
-    }
-
-    final seenBatchHuids = <String>{};
-    for (int index = 0; index < rowsToSave.length; index++) {
-      final row = rowsToSave[index];
-      final error = validateRow(row);
-      if (error != null) {
-        return 'Row ${index + 1}: $error';
-      }
-
-      final rowHuids = row.huids.isNotEmpty
-          ? row.huids
-          : [
-              if (row.huid.trim().isNotEmpty) row.huid,
-            ];
-      for (final huidValue in rowHuids) {
-        final huid = huidValue.trim().toUpperCase();
-        if (huid.isNotEmpty && !seenBatchHuids.add(huid)) {
-          return 'Row ${index + 1}: ${AddStockStrings.errDuplicateHuidInBatch}';
-        }
-      }
-    }
-
-    final huidValues = rowsToSave
-        .expand(
-          (row) => row.huids.isNotEmpty
-              ? row.huids
-              : [
-                  if (row.huid.trim().isNotEmpty) row.huid,
-                ],
-        )
-        .map((value) => value.trim().toUpperCase())
-        .where((value) => value.isNotEmpty)
-        .toSet()
-        .toList();
-
-    if (huidValues.isNotEmpty) {
-      final existing = await (_db.select(
-        _db.stockItems,
-      )..where((table) => table.huid.isIn(huidValues)))
-          .get();
-      if (existing.isNotEmpty) {
-        final duplicate = existing.first.huid ?? huidValues.first;
-        return '${AddStockStrings.errDuplicateHuidInStock} ($duplicate)';
-      }
-
-      try {
-        final placeholders = List.filled(huidValues.length, '?').join(', ');
-        final serialRows = await _db.customSelect(
-          '''
-          SELECT huid
-          FROM purchase_item_huids
-          WHERE huid IN ($placeholders)
-          LIMIT 1
-          ''',
-          variables: huidValues.map(drift.Variable.withString).toList(),
-        ).get();
-        if (serialRows.isNotEmpty) {
-          final duplicate = serialRows.first.read<String>('huid');
-          return '${AddStockStrings.errDuplicateHuidInStock} ($duplicate)';
-        }
-      } catch (_) {}
-    }
-
-    return null;
-  }
-
-  String _generateSku(int index) {
-    final prefix = _selectedMetal.label.length >= 4
-        ? _selectedMetal.label.substring(0, 4).toUpperCase()
-        : _selectedMetal.label.toUpperCase();
-    final now = DateTime.now();
-    final datePart =
-        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
-    final uniquePart = now.microsecondsSinceEpoch % 99999;
-    return '$prefix-$datePart-${uniquePart + index}';
+    return AddStockSaveGuard.validateBeforeSave(
+      db: _db,
+      canProceedFromPurity: canProceedFromPurity,
+      rowsToSave: enteredRows,
+      selectedMetal: _selectedMetal,
+      hasSessionSupplier: _sessionSupplierId != null,
+      hasActiveRateSnapshot: hasActiveRateSnapshot,
+      validateRow: validateRow,
+      validateCustomBatch: validateCustomBatch,
+    );
   }
 
   @protected
@@ -1234,7 +966,10 @@ class AddStockController extends ChangeNotifier {
 
         await _db.into(_db.stockItems).insert(
               StockItemsCompanion.insert(
-                sku: _generateSku(index),
+                sku: AddStockSkuGenerator.generate(
+                  metal: _selectedMetal,
+                  index: index,
+                ),
                 itemName: row.itemName.trim(),
                 description: drift.Value(
                   row.description.trim().isEmpty
@@ -1339,111 +1074,13 @@ class AddStockController extends ChangeNotifier {
     _pendingFocusRowId = null;
     _activeRowId = null;
     _manualGold24kRatePer10g = null;
-    gold24kManualCtrl.text = _formatRateText(_gold24kRatePer10g);
+    gold24kManualCtrl.text =
+        AddStockPurityUtils.formatRateText(_gold24kRatePer10g);
     _errorMessage = null;
     _successMessage = null;
     _step = AddStockStep.purity;
     notifyListeners();
   }
-
-  String _formatRateText(double value) {
-    if (value <= 0) {
-      return '';
-    }
-
-    return value == value.roundToDouble()
-        ? value.toStringAsFixed(0)
-        : value.toStringAsFixed(2);
-  }
-
-  double _parseRateText(String raw) {
-    final normalized = raw.replaceAll(',', '').replaceAll('--', '0').trim();
-    return double.tryParse(normalized) ?? 0.0;
-  }
-
-  String _shortPurityLabel(String value) {
-    final normalized = value.toUpperCase().replaceAll('KT', 'K');
-    final match = RegExp(r'(\d{1,2}K)').firstMatch(normalized);
-    if (match != null) {
-      return match.group(1)!;
-    }
-    if (normalized.contains('999')) {
-      return '24K';
-    }
-    if (normalized.contains('916')) {
-      return '22K';
-    }
-    if (normalized.contains('750')) {
-      return '18K';
-    }
-    if (normalized.contains('585')) {
-      return '14K';
-    }
-    if (normalized.contains('375')) {
-      return '9K';
-    }
-    if (normalized.contains('417')) {
-      return '10K';
-    }
-    return value.trim();
-  }
-
-  String _normaliseRateKey(String value) {
-    final normalized = value.trim().toUpperCase().replaceAll('KT', 'K');
-    final karatMatch = RegExp(r'(\d{1,2}K)').firstMatch(normalized);
-    if (karatMatch != null) {
-      return karatMatch.group(1)!;
-    }
-    if (normalized.contains('999')) return '24K';
-    if (normalized.contains('916')) return '22K';
-    if (normalized.contains('750')) return '18K';
-    if (normalized.contains('585')) return '14K';
-    if (normalized.contains('375')) return '9K';
-    return normalized;
-  }
-
-  double _resolvePurityPercent(String value) {
-    final normalized = value.toUpperCase().replaceAll('KT', 'K');
-
-    final karatMatch = RegExp(r'(\d{1,2})K').firstMatch(normalized);
-    if (karatMatch != null) {
-      final karat = double.tryParse(karatMatch.group(1) ?? '');
-      if (karat != null) {
-        return (karat / 24.0) * 100.0;
-      }
-    }
-
-    final hallmarkMatch = RegExp(
-      r'\((\d{3}(?:\.\d+)?)\)',
-    ).firstMatch(normalized);
-    if (hallmarkMatch != null) {
-      final hallmark = double.tryParse(hallmarkMatch.group(1) ?? '');
-      if (hallmark != null) {
-        return hallmark / 10.0;
-      }
-    }
-
-    final directPercentMatch = RegExp(
-      r'(\d{2,3}(?:\.\d+)?)\s*%',
-    ).firstMatch(normalized);
-    if (directPercentMatch != null) {
-      return double.tryParse(directPercentMatch.group(1) ?? '') ?? 0.0;
-    }
-
-    final pureCodeMatch = RegExp(
-      r'\b(999|925|800|700)\b',
-    ).firstMatch(normalized);
-    if (pureCodeMatch != null) {
-      final code = double.tryParse(pureCodeMatch.group(1) ?? '');
-      if (code != null) {
-        return code / 10.0;
-      }
-    }
-
-    return 0.0;
-  }
-
-  bool _near(double a, double b) => (a - b).abs() < 0.11;
 
   @override
   void dispose() {

@@ -2,13 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
 enum SilverQuantityMode {
-  pieces('PCS', 'Pieces'),
-  packet('PACK', 'Packet / Set');
+  pieces('PIECES', 'PCS', 'Pieces', 1),
+  packet('PACKET', 'PACK', 'Packet', 1),
+  pair('PAIR', 'PAIR', 'Pair', 2),
+  set('SET', 'SET', 'Set', 1);
 
-  final String code;
+  final String modeCode;
+  final String shortCode;
   final String label;
+  final int stockPiecesPerUnit;
 
-  const SilverQuantityMode(this.code, this.label);
+  const SilverQuantityMode(
+    this.modeCode,
+    this.shortCode,
+    this.label,
+    this.stockPiecesPerUnit,
+  );
+
+  static SilverQuantityMode infer({
+    required String category,
+    required String itemName,
+  }) {
+    final text = '${category.trim()} ${itemName.trim()}'.toLowerCase();
+    if (_containsAny(text, const [
+      'payal',
+      'anklet',
+      'bichhiya',
+      'toe ring',
+      'jhumka',
+      'earring',
+      'ear ring',
+      'tops',
+      'bali',
+      'kundal',
+    ])) {
+      return SilverQuantityMode.pair;
+    }
+    if (_containsAny(text, const [
+      'necklace set',
+      'bridal set',
+      'jewellery set',
+      'jewelry set',
+      'haar',
+      'har',
+      'chudi set',
+    ])) {
+      return SilverQuantityMode.set;
+    }
+    if (_containsAny(text, const [
+      'packet',
+      'pack',
+    ])) {
+      return SilverQuantityMode.packet;
+    }
+    return SilverQuantityMode.pieces;
+  }
+}
+
+bool _containsAny(String text, List<String> keywords) {
+  return keywords.any(text.contains);
 }
 
 class SilverItemModel extends ChangeNotifier {
@@ -68,7 +120,7 @@ class SilverItemModel extends ChangeNotifier {
   final TextEditingController segmentCtrl = TextEditingController();
   final TextEditingController itemNameCtrl = TextEditingController();
   final TextEditingController quantityModeCtrl = TextEditingController(
-    text: SilverQuantityMode.pieces.code,
+    text: SilverQuantityMode.pieces.shortCode,
   );
   final TextEditingController piecesCtrl = TextEditingController();
   final TextEditingController piecesPerPacketCtrl = TextEditingController();
@@ -98,6 +150,7 @@ class SilverItemModel extends ChangeNotifier {
   MakingChargesType makingChargesType = MakingChargesType.perGram;
   SilverQuantityMode quantityMode = SilverQuantityMode.pieces;
   bool huidTrackingEnabled = false;
+  bool _quantityModeManuallySet = false;
   bool _fineRoundOffEnabled = false;
   double? _fineWeightOverride;
 
@@ -155,15 +208,16 @@ class SilverItemModel extends ChangeNotifier {
   }
 
   int get piecesPerPacket {
-    if (quantityMode == SilverQuantityMode.pieces) {
-      return 1;
+    if (quantityMode == SilverQuantityMode.packet) {
+      final value = _parseWholeNumber(piecesPerPacketCtrl.text);
+      return value <= 0 ? 0 : value;
     }
-    final value = _parseWholeNumber(piecesPerPacketCtrl.text);
-    return value <= 0 ? 0 : value;
+    return quantityMode.stockPiecesPerUnit;
   }
 
-  int get packetCount =>
-      quantityMode == SilverQuantityMode.packet ? enteredQuantity : 0;
+  int get packetCount => quantityMode == SilverQuantityMode.pieces
+      ? 0
+      : (enteredQuantity <= 0 ? 1 : enteredQuantity);
 
   int get lessUnitCount {
     if (quantityMode == SilverQuantityMode.packet) {
@@ -179,7 +233,19 @@ class SilverItemModel extends ChangeNotifier {
       }
       return enteredQuantity * piecesPerPacket;
     }
-    return enteredQuantity;
+    final value = enteredQuantity * quantityMode.stockPiecesPerUnit;
+    return value <= 0 ? 0 : value;
+  }
+
+  String get quantityModeCode => quantityMode.modeCode;
+  String get quantityUnitCode => quantityMode.shortCode;
+  String get quantityInputHint {
+    return switch (quantityMode) {
+      SilverQuantityMode.pieces => 'Pieces',
+      SilverQuantityMode.packet => 'Packets',
+      SilverQuantityMode.pair => 'Pairs',
+      SilverQuantityMode.set => 'Sets',
+    };
   }
 
   String get huid => huidCtrl.text.trim().toUpperCase();
@@ -389,9 +455,10 @@ class SilverItemModel extends ChangeNotifier {
       return;
     }
     huidTrackingEnabled = enabled;
-    if (enabled) {
-      setQuantityMode(SilverQuantityMode.pieces, notify: false);
-    } else {
+    if (enabled && quantityMode == SilverQuantityMode.packet) {
+      setQuantityMode(SilverQuantityMode.pieces, notify: false, manual: false);
+    }
+    if (!enabled) {
       huidCtrl.clear();
       for (final controller in _extraHuidCtrls) {
         controller.clear();
@@ -402,20 +469,25 @@ class SilverItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setQuantityMode(SilverQuantityMode mode, {bool notify = true}) {
+  void setQuantityMode(
+    SilverQuantityMode mode, {
+    bool notify = true,
+    bool manual = true,
+  }) {
     if (huidTrackingEnabled && mode == SilverQuantityMode.packet) {
       return;
     }
-    if (quantityMode == mode) {
+    if (quantityMode == mode && _quantityModeManuallySet == manual) {
       return;
     }
     quantityMode = mode;
-    quantityModeCtrl.text = mode.code;
+    _quantityModeManuallySet = manual;
+    quantityModeCtrl.text = mode.shortCode;
     if (mode == SilverQuantityMode.packet &&
         piecesPerPacketCtrl.text.trim().isEmpty) {
       piecesPerPacketCtrl.text = '2';
     }
-    if (mode == SilverQuantityMode.pieces) {
+    if (mode != SilverQuantityMode.packet) {
       piecesPerPacketCtrl.clear();
     }
     syncHuidInputsWithPieces();
@@ -480,12 +552,42 @@ class SilverItemModel extends ChangeNotifier {
     dispose();
   }
 
-  void _fieldChanged() => notifyListeners();
+  void _fieldChanged() {
+    _applySmartQuantityMode();
+    notifyListeners();
+  }
 
   void _piecesFieldChanged() {
     syncHuidInputsWithPieces();
     _refreshFineRoundOff();
     notifyListeners();
+  }
+
+  void _applySmartQuantityMode() {
+    if (_quantityModeManuallySet) {
+      return;
+    }
+    final inferred = SilverQuantityMode.infer(
+      category: categoryLabel,
+      itemName: itemName,
+    );
+    if (huidTrackingEnabled && inferred == SilverQuantityMode.packet) {
+      return;
+    }
+    if (quantityMode == inferred) {
+      return;
+    }
+    quantityMode = inferred;
+    quantityModeCtrl.text = inferred.shortCode;
+    if (inferred == SilverQuantityMode.packet &&
+        piecesPerPacketCtrl.text.trim().isEmpty) {
+      piecesPerPacketCtrl.text = '2';
+    }
+    if (inferred != SilverQuantityMode.packet) {
+      piecesPerPacketCtrl.clear();
+    }
+    syncHuidInputsWithPieces();
+    _refreshFineRoundOff();
   }
 
   void _weightPurityFieldChanged() {

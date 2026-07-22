@@ -12,6 +12,7 @@ import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 part 'app_bar/stock_activity_app_bar.dart';
 part 'body/stock_activity_body.dart';
 part 'widgets/stock_activity_breakdown_panel.dart';
+part 'widgets/stock_activity_shared_widgets.dart';
 part 'widgets/stock_activity_widgets.dart';
 
 class StockActivityScreen extends StatefulWidget {

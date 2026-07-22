@@ -201,6 +201,11 @@ class AppDatabase extends _$AppDatabase {
       declaration: 'INTEGER NOT NULL DEFAULT 0',
     );
     await _addColumnIfMissing(
+      tableName: 'stock_items',
+      columnName: 'pieces_per_packet',
+      declaration: 'INTEGER NOT NULL DEFAULT 1',
+    );
+    await _addColumnIfMissing(
       tableName: 'stock_item_units',
       columnName: 'item_type',
       declaration: 'TEXT',

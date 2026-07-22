@@ -15,6 +15,8 @@ import 'package:lotus_erp/features/stock/shared/domain/models/market_refill/mark
 import 'package:lotus_erp/theme/stock/inventory/inventory_theme.dart';
 
 part 'widgets/market_refill_report_widgets.dart';
+part 'widgets/market_refill_purchase_list_widgets.dart';
+part 'widgets/market_refill_shared_widgets.dart';
 part 'market_refill_purchase_pdf.dart';
 
 class MarketRefillReportScreen extends StatefulWidget {

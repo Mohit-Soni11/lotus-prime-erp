@@ -38,6 +38,8 @@ LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
 const String _lowStockTotalQuantityExpression = '''
 CASE
   WHEN $_lowStockLotUnitExpression THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1)
+  WHEN lower(COALESCE(s.quantity_mode, '')) = 'pair'
+    THEN 1.0 / COALESCE(NULLIF(s.pieces_per_packet, 0), 2)
   ELSE 1
 END
 ''';
@@ -47,6 +49,8 @@ CASE
   WHEN LOWER(u.status) = 'available' THEN
     CASE
       WHEN $_lowStockLotUnitExpression THEN COALESCE(NULLIF(s.quantity, 0), 0)
+      WHEN lower(COALESCE(s.quantity_mode, '')) = 'pair'
+        THEN 1.0 / COALESCE(NULLIF(s.pieces_per_packet, 0), 2)
       ELSE 1
     END
   ELSE 0
@@ -60,6 +64,12 @@ CASE
       WHEN LOWER(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1)
       WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0
         THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0)
+      ELSE 0
+    END
+  WHEN lower(COALESCE(s.quantity_mode, '')) = 'pair' THEN
+    CASE
+      WHEN LOWER(u.status) = 'sold'
+        THEN 1.0 / COALESCE(NULLIF(s.pieces_per_packet, 0), 2)
       ELSE 0
     END
   WHEN LOWER(u.status) = 'sold' THEN 1
@@ -252,9 +262,9 @@ class LowStockAlertRepository {
         COALESCE(SUM($_lowStockTotalQuantityExpression), 0) AS total_units,
         COALESCE(SUM($_lowStockAvailableQuantityExpression), 0) AS available_units,
         COALESCE(SUM($_lowStockSoldQuantityExpression), 0) AS sold_units,
-        SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
-        SUM(CASE WHEN LOWER(u.status) = 'available' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS available_sets,
-        SUM(CASE WHEN LOWER(u.status) = 'sold' AND lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS sold_sets,
+        COALESCE(SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set', 'pair') THEN $_lowStockTotalQuantityExpression ELSE 0 END), 0) AS total_sets,
+        COALESCE(SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set', 'pair') THEN $_lowStockAvailableQuantityExpression ELSE 0 END), 0) AS available_sets,
+        COALESCE(SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack', 'set', 'pair') THEN $_lowStockSoldQuantityExpression ELSE 0 END), 0) AS sold_sets,
         COALESCE(SUM(u.net_weight), 0.0) AS total_net_weight,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS available_net_weight,
         COALESCE(SUM(CASE WHEN LOWER(u.status) = 'sold' THEN u.net_weight ELSE 0 END), 0.0) AS sold_net_weight

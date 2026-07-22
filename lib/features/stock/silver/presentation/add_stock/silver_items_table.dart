@@ -7,7 +7,7 @@ import 'package:lotus_erp/theme/stock/add_stock/add_stock_silver/silver_stock_co
 import 'silver_item_row.dart';
 
 class SilverItemsTable extends StatefulWidget {
-  static const double _minTableWidth = 1280;
+  static const double _minTableWidth = 1320;
 
   final SilverStockController ctrl;
 
@@ -252,7 +252,7 @@ class _SilverItemsTableState extends State<SilverItemsTable> {
           const SizedBox(width: 4),
           _h('ITEM NAME', flex: 5),
           const SizedBox(width: 4),
-          _h('QUANTITY', flex: 3, center: true),
+          _h('QTY / UNIT', flex: 4, center: true),
           const SizedBox(width: 4),
           _h('HUID / SERIAL NO.', flex: 4),
           const SizedBox(width: 4),

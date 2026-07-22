@@ -85,6 +85,8 @@ CASE
   WHEN LOWER(u.status) = 'available' THEN
     CASE
       WHEN $_refillLotUnitExpression THEN COALESCE(NULLIF(s.quantity, 0), 0)
+      WHEN lower(COALESCE(s.quantity_mode, '')) = 'pair'
+        THEN 1.0 / COALESCE(NULLIF(s.pieces_per_packet, 0), 2)
       ELSE 1
     END
   ELSE 0
@@ -385,7 +387,11 @@ class MarketRefillReportRepository {
         GROUP_CONCAT(DISTINCT NULLIF(TRIM(COALESCE(u.item_name, s.item_name, m.item_name_snapshot, '')), '')) AS item_names,
         COALESCE(SUM(
           CASE
+            WHEN m.movement_type = 'SALE' AND LOWER(COALESCE(s.quantity_mode, '')) = 'pair'
+              THEN ABS(m.quantity_delta) * 1.0 / COALESCE(NULLIF(s.pieces_per_packet, 0), 2)
             WHEN m.movement_type = 'SALE' THEN ABS(m.quantity_delta)
+            WHEN m.movement_type = 'SALE_RESTORE' AND LOWER(COALESCE(s.quantity_mode, '')) = 'pair'
+              THEN -ABS(m.quantity_delta) * 1.0 / COALESCE(NULLIF(s.pieces_per_packet, 0), 2)
             WHEN m.movement_type = 'SALE_RESTORE' THEN -ABS(m.quantity_delta)
             ELSE 0
           END

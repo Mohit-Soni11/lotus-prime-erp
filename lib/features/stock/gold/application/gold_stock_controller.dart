@@ -1,8 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:drift/drift.dart' as drift;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_batch_code_generator.dart';
@@ -10,14 +7,14 @@ import 'package:lotus_erp/features/stock/shared/application/add_stock_controller
 import 'package:lotus_erp/features/stock/gold/application/gold_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_payment_controller.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_supplier_invoice_policy.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_batch_posting_guard.dart';
+import 'package:lotus_erp/features/stock/shared/application/supplier_bill_attachment_service.dart';
+import 'package:lotus_erp/features/stock/shared/application/supplier_ledger_loader.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
 import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.dart';
-import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'package:lotus_erp/features/stock/gold/domain/models/gold_item_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
@@ -74,7 +71,7 @@ class GoldStockController extends AddStockController {
   bool get isLoadingSupplierLedger => _isLoadingSupplierLedger;
   String? get billPhotoPath => _billPhotoPath;
   String get billPhotoName =>
-      _billPhotoPath == null ? '' : p.basename(_billPhotoPath!);
+      SupplierBillAttachmentService.fileName(_billPhotoPath);
   bool get hasBillPhoto => _billPhotoPath != null && _billPhotoPath!.isNotEmpty;
   bool get isPickingBillPhoto => _isPickingBillPhoto;
 
@@ -220,29 +217,13 @@ class GoldStockController extends AddStockController {
     notifyListeners();
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-        allowMultiple: false,
+      final copiedPath = await SupplierBillAttachmentService.pickAndCopy(
+        batchCode: batchCode,
+        mode: SupplierBillAttachmentMode.imageOrPdf,
       );
-      final sourcePath = result?.files.single.path;
-      if (sourcePath == null || sourcePath.trim().isEmpty) {
-        return;
+      if (copiedPath != null) {
+        _billPhotoPath = copiedPath;
       }
-
-      final source = File(sourcePath);
-      final docDir = await getApplicationDocumentsDirectory();
-      final targetDir = Directory(
-        p.join(docDir.path, 'lotus_erp', 'supplier_bills'),
-      );
-      await targetDir.create(recursive: true);
-      final extension =
-          p.extension(source.path).isEmpty ? '.jpg' : p.extension(source.path);
-      final fileName =
-          '${batchCode}_${DateTime.now().millisecondsSinceEpoch}$extension';
-      final target = File(p.join(targetDir.path, fileName));
-      final copied = await source.copy(target.path);
-      _billPhotoPath = copied.path;
     } finally {
       _isPickingBillPhoto = false;
       notifyListeners();
@@ -264,16 +245,15 @@ class GoldStockController extends AddStockController {
     notifyListeners();
 
     try {
-      final repo = SupplierRepository(_rateDb);
-      final ledger = await repo.getLedgerSnapshot(supplierId);
+      final ledger = await SupplierLedgerLoader.load(
+        db: _rateDb,
+        supplierId: supplierId,
+      );
       if (linkedSupplier?.id != supplierId && sessionSupplierId != supplierId) {
         return;
       }
       _supplierLedger = ledger;
-      payment.setSupplierPreviousDue(ledger.outstandingDue);
-    } catch (_) {
-      _supplierLedger = null;
-      payment.setSupplierPreviousDue(0.0);
+      payment.setSupplierPreviousDue(ledger?.outstandingDue ?? 0.0);
     } finally {
       _isLoadingSupplierLedger = false;
       notifyListeners();
@@ -293,7 +273,7 @@ class GoldStockController extends AddStockController {
     final supplierName = supplierDisplayName;
 
     return enteredGoldRows.map((rowModel) {
-      final pieces = rowModel.pieces;
+      final pieces = rowModel.stockPieces;
       final lotDivisor = pieces > 0 ? pieces : 1;
       final huids =
           rowModel.huidTrackingEnabled ? rowModel.huidValues : <String>[];
@@ -324,6 +304,9 @@ class GoldStockController extends AddStockController {
       row.supplierId = supplierId;
       row.supplierName = supplierName;
       row.quantity = pieces;
+      row.quantityMode = rowModel.quantityModeCode;
+      row.packetCount = rowModel.packetCount;
+      row.piecesPerPacket = rowModel.piecesPerPacket;
       return row;
     }).toList(growable: false);
   }
@@ -390,8 +373,8 @@ class GoldStockController extends AddStockController {
     if (row.itemName.length < 2) {
       return 'Item name must be at least 2 characters';
     }
-    if (row.pieces < 1) {
-      return 'Pieces must be at least 1';
+    if (row.enteredQuantity < 1) {
+      return '${row.quantityUnitLabel} quantity must be at least 1';
     }
     if (row.grossWeight <= 0) {
       return 'Gross weight must be greater than 0';
@@ -417,18 +400,18 @@ class GoldStockController extends AddStockController {
     if (row.makingValue < 0) {
       return 'Making charge cannot be negative';
     }
-    if (row.huidTrackingEnabled && row.pieces > 12) {
+    if (row.huidTrackingEnabled && row.stockPieces > 12) {
       return 'For HUID stock, keep one item row up to 12 pieces. Use separate rows for large HUID lots.';
     }
     final huids = row.huidValues;
-    if (row.huidTrackingEnabled && huids.length != row.pieces) {
-      return 'Enter one HUID for each piece or switch this row to Bulk stock';
+    if (row.huidTrackingEnabled && huids.length != row.stockPieces) {
+      return 'Enter one HUID for each physical piece or switch this row to Bulk stock';
     }
     final invalidHuid = huids.any((value) => value.length != 6);
     if (invalidHuid) {
       return 'HUID must be exactly 6 characters';
     }
-    if (huids.length > row.pieces) {
+    if (huids.length > row.stockPieces) {
       return 'HUID count cannot exceed pieces';
     }
     if (huids.toSet().length != huids.length) {
@@ -472,24 +455,10 @@ class GoldStockController extends AddStockController {
   }
 
   Future<bool> _isCurrentBatchAlreadyPosted() async {
-    final code = batchCode.trim();
-    if (code.isEmpty) {
-      return false;
-    }
-    try {
-      final rows = await _rateDb.customSelect(
-        '''
-        SELECT 1
-        FROM purchase_vouchers
-        WHERE voucher_no = ?
-        LIMIT 1
-        ''',
-        variables: [drift.Variable.withString(code)],
-      ).get();
-      return rows.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
+    return StockBatchPostingGuard.isVoucherPosted(
+      db: _rateDb,
+      batchCode: batchCode,
+    );
   }
 
   @override
@@ -656,6 +625,9 @@ class GoldStockController extends AddStockController {
                   ? snapshot.ratePerGram
                   : row.purchaseRate,
               gstRate: gstEnabled ? gstRate : 0.0,
+              quantityMode: row.quantityMode,
+              packetCount: row.packetCount,
+              piecesPerPacket: row.piecesPerPacket,
               weightsAreLineTotals: true,
               stockTrackingMode: row.huids.isEmpty
                   ? PurchaseStockTrackingMode.lot

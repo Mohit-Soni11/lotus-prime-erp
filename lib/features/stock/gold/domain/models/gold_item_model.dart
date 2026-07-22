@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/stock/gold/domain/calculation/gold_stock_calculation_input.dart';
 import 'package:lotus_erp/features/stock/gold/domain/calculation/gold_stock_calculation_result.dart';
 import 'package:lotus_erp/features/stock/gold/domain/calculation/gold_stock_calculator.dart';
+import 'package:lotus_erp/features/stock/gold/domain/models/gold_quantity_unit.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 
 class GoldItemModel extends ChangeNotifier {
@@ -72,7 +73,9 @@ class GoldItemModel extends ChangeNotifier {
   final FocusNode makingFocus = FocusNode();
 
   MakingChargesType makingChargesType = MakingChargesType.perGram;
+  GoldQuantityUnit quantityUnit = GoldQuantityUnit.pieces;
   bool huidTrackingEnabled = false;
+  bool _quantityUnitManuallySet = false;
 
   GoldItemModel({
     required this.id,
@@ -121,6 +124,31 @@ class GoldItemModel extends ChangeNotifier {
     final value = _parseWholeNumber(piecesCtrl.text);
     return value <= 0 ? 1 : value;
   }
+
+  int get enteredQuantity => pieces;
+
+  int get stockPieces {
+    final value = enteredQuantity * quantityUnit.stockPiecesPerUnit;
+    return value <= 0 ? 1 : value;
+  }
+
+  String get quantityModeCode => quantityUnit.modeCode;
+  String get quantityUnitCode => quantityUnit.shortCode;
+  String get quantityUnitLabel => quantityUnit.label;
+  String get quantityInputHint {
+    return switch (quantityUnit) {
+      GoldQuantityUnit.pieces => 'Pieces',
+      GoldQuantityUnit.pair => 'Pairs',
+      GoldQuantityUnit.set => 'Sets',
+      GoldQuantityUnit.bulk => 'Lots',
+    };
+  }
+
+  int get packetCount => quantityUnit == GoldQuantityUnit.pieces
+      ? 0
+      : (enteredQuantity <= 0 ? 1 : enteredQuantity);
+
+  int get piecesPerPacket => quantityUnit.stockPiecesPerUnit;
 
   String get huid =>
       huidTrackingEnabled ? huidCtrl.text.trim().toUpperCase() : '';
@@ -246,9 +274,21 @@ class GoldItemModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setQuantityUnit(GoldQuantityUnit unit, {bool manual = true}) {
+    if (quantityUnit == unit && _quantityUnitManuallySet == manual) {
+      return;
+    }
+    quantityUnit = unit;
+    _quantityUnitManuallySet = manual;
+    syncHuidInputsWithPieces();
+    notifyListeners();
+  }
+
   void syncHuidInputsWithPieces() {
     final requiredCount =
-        huidTrackingEnabled && pieces > 1 && pieces <= 12 ? pieces : 1;
+        huidTrackingEnabled && stockPieces > 1 && stockPieces <= 12
+            ? stockPieces
+            : 1;
     while (huidControllers.length < requiredCount) {
       final controller = TextEditingController();
       final focusNode = FocusNode();
@@ -345,11 +385,29 @@ class GoldItemModel extends ChangeNotifier {
     dispose();
   }
 
-  void _fieldChanged() => notifyListeners();
+  void _fieldChanged() {
+    _applySmartQuantityUnit();
+    notifyListeners();
+  }
 
   void _piecesFieldChanged() {
     syncHuidInputsWithPieces();
     notifyListeners();
+  }
+
+  void _applySmartQuantityUnit() {
+    if (_quantityUnitManuallySet) {
+      return;
+    }
+    final inferred = GoldQuantityUnit.infer(
+      category: categoryLabel,
+      itemName: itemName,
+    );
+    if (inferred == quantityUnit) {
+      return;
+    }
+    quantityUnit = inferred;
+    syncHuidInputsWithPieces();
   }
 
   void _weightPurityFieldChanged() => notifyListeners();

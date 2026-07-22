@@ -1,8 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:drift/drift.dart' as drift;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_batch_code_generator.dart';
@@ -10,14 +7,14 @@ import 'package:lotus_erp/features/stock/shared/application/add_stock_controller
 import 'package:lotus_erp/features/stock/silver/application/silver_invoice_summary_logic.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_payment_controller.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_supplier_invoice_policy.dart';
+import 'package:lotus_erp/features/stock/shared/application/stock_batch_posting_guard.dart';
+import 'package:lotus_erp/features/stock/shared/application/supplier_bill_attachment_service.dart';
+import 'package:lotus_erp/features/stock/shared/application/supplier_ledger_loader.dart';
 import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
 import 'package:lotus_erp/repositories/setting/metal_rate/metal_rate_repository.dart';
-import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'package:lotus_erp/features/stock/silver/domain/models/silver_item_model.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
@@ -81,7 +78,7 @@ class SilverStockController extends AddStockController {
   bool get isLoadingSupplierLedger => _isLoadingSupplierLedger;
   String? get billPhotoPath => _billPhotoPath;
   String get billPhotoName =>
-      _billPhotoPath == null ? '' : p.basename(_billPhotoPath!);
+      SupplierBillAttachmentService.fileName(_billPhotoPath);
   bool get hasBillPhoto => _billPhotoPath != null && _billPhotoPath!.isNotEmpty;
   bool get isPickingBillPhoto => _isPickingBillPhoto;
 
@@ -220,28 +217,13 @@ class SilverStockController extends AddStockController {
     notifyListeners();
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
+      final copiedPath = await SupplierBillAttachmentService.pickAndCopy(
+        batchCode: batchCode,
+        mode: SupplierBillAttachmentMode.imageOnly,
       );
-      final sourcePath = result?.files.single.path;
-      if (sourcePath == null || sourcePath.trim().isEmpty) {
-        return;
+      if (copiedPath != null) {
+        _billPhotoPath = copiedPath;
       }
-
-      final source = File(sourcePath);
-      final docDir = await getApplicationDocumentsDirectory();
-      final targetDir = Directory(
-        p.join(docDir.path, 'lotus_erp', 'supplier_bills'),
-      );
-      await targetDir.create(recursive: true);
-      final extension =
-          p.extension(source.path).isEmpty ? '.jpg' : p.extension(source.path);
-      final fileName =
-          '${batchCode}_${DateTime.now().millisecondsSinceEpoch}$extension';
-      final target = File(p.join(targetDir.path, fileName));
-      final copied = await source.copy(target.path);
-      _billPhotoPath = copied.path;
     } finally {
       _isPickingBillPhoto = false;
       notifyListeners();
@@ -263,16 +245,15 @@ class SilverStockController extends AddStockController {
     notifyListeners();
 
     try {
-      final repo = SupplierRepository(_rateDb);
-      final ledger = await repo.getLedgerSnapshot(supplierId);
+      final ledger = await SupplierLedgerLoader.load(
+        db: _rateDb,
+        supplierId: supplierId,
+      );
       if (linkedSupplier?.id != supplierId && sessionSupplierId != supplierId) {
         return;
       }
       _supplierLedger = ledger;
-      payment.setSupplierPreviousDue(ledger.outstandingDue);
-    } catch (_) {
-      _supplierLedger = null;
-      payment.setSupplierPreviousDue(0.0);
+      payment.setSupplierPreviousDue(ledger?.outstandingDue ?? 0.0);
     } finally {
       _isLoadingSupplierLedger = false;
       notifyListeners();
@@ -327,7 +308,7 @@ class SilverStockController extends AddStockController {
       row.supplierId = supplierId;
       row.supplierName = supplierName;
       row.quantity = pieces;
-      row.quantityMode = rowModel.quantityMode.name.toUpperCase();
+      row.quantityMode = rowModel.quantityModeCode;
       row.packetCount = rowModel.packetCount;
       row.piecesPerPacket = rowModel.piecesPerPacket;
       return row;
@@ -397,9 +378,7 @@ class SilverStockController extends AddStockController {
       return 'Item name must be at least 2 characters';
     }
     if (row.enteredQuantity < 1) {
-      return row.quantityMode == SilverQuantityMode.packet
-          ? 'Packet count must be at least 1'
-          : 'Pieces must be at least 1';
+      return '${row.quantityMode.label} count must be at least 1';
     }
     if (row.quantityMode == SilverQuantityMode.packet &&
         row.piecesPerPacket < 1) {
@@ -439,7 +418,7 @@ class SilverStockController extends AddStockController {
     }
     if (row.huidTrackingEnabled &&
         row.quantityMode == SilverQuantityMode.packet) {
-      return 'Use Pieces mode for HUID tracked silver items';
+      return 'Use Pieces, Pair or Set mode for HUID tracked silver items';
     }
     if (row.huidTrackingEnabled && row.pieces > 12) {
       return 'Enter large HUID stock in separate item rows';
@@ -496,24 +475,10 @@ class SilverStockController extends AddStockController {
   }
 
   Future<bool> _isCurrentBatchAlreadyPosted() async {
-    final code = batchCode.trim();
-    if (code.isEmpty) {
-      return false;
-    }
-    try {
-      final rows = await _rateDb.customSelect(
-        '''
-        SELECT 1
-        FROM purchase_vouchers
-        WHERE voucher_no = ?
-        LIMIT 1
-        ''',
-        variables: [drift.Variable.withString(code)],
-      ).get();
-      return rows.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
+    return StockBatchPostingGuard.isVoucherPosted(
+      db: _rateDb,
+      batchCode: batchCode,
+    );
   }
 
   @override

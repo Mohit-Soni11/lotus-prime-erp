@@ -26,6 +26,7 @@ part 'widgets/stock_search_lens_panel.dart';
 part 'widgets/stock_search_dossier_widgets.dart';
 part 'widgets/stock_search_history_widgets.dart';
 part 'widgets/stock_search_lifecycle_widgets.dart';
+part 'widgets/stock_search_shared_widgets.dart';
 part 'widgets/stock_search_widgets.dart';
 
 class StockSearchScreen extends StatefulWidget {
