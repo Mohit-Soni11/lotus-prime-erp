@@ -27,6 +27,7 @@ part 'metal_grade/batch_detail/inventory_batch_models.dart';
 part 'metal_grade/batch_detail/inventory_batch_list_widgets.dart';
 part 'metal_grade/batch_detail/inventory_batch_dossier_screen.dart';
 part 'metal_grade/batch_detail/inventory_batch_dossier_widgets.dart';
+part 'metal_grade/batch_detail/inventory_batch_dossier_panels.dart';
 part 'metal_grade/batch_detail/inventory_batch_cleanup_dialog.dart';
 part 'metal_grade/batch_detail/inventory_batch_pdf_service.dart';
 part 'metal_grade/batch_detail/inventory_batch_status_pdf_service.dart';
