@@ -324,6 +324,7 @@ class PosBillingController extends ChangeNotifier {
     String query,
     int rowIndex,
     MetalType metal,
+    String purityLabel,
   ) async {
     _descSearchTimer?.cancel();
     final term = query.toLowerCase().trim();
@@ -338,6 +339,7 @@ class PosBillingController extends ChangeNotifier {
         _descriptionSuggestions = await _stockLookupRepo.searchByDescription(
           query: term,
           metal: metal,
+          purityLabel: purityLabel,
         );
         if (_isDisposed) return;
         _descSuggestionRowIndex = rowIndex;
@@ -353,6 +355,7 @@ class PosBillingController extends ChangeNotifier {
     String query,
     int rowIndex,
     MetalType metal,
+    String purityLabel,
   ) async {
     _huidSearchTimer?.cancel();
     final term = query.toLowerCase().trim();
@@ -367,6 +370,7 @@ class PosBillingController extends ChangeNotifier {
         _huidSuggestions = await _stockLookupRepo.searchByHuid(
           query: term,
           metal: metal,
+          purityLabel: purityLabel,
         );
         if (_isDisposed) return;
         _huidSuggestionRowIndex = rowIndex;
@@ -422,6 +426,7 @@ class PosBillingController extends ChangeNotifier {
     final match = await _stockLookupRepo.findExactByHuid(
       query: query,
       metal: item.metal,
+      purityLabel: item.purityCtrl.text,
     );
     if (_isDisposed || match == null) {
       return;
@@ -448,6 +453,7 @@ class PosBillingController extends ChangeNotifier {
       final match = await _stockLookupRepo.findExactByHuid(
         query: query,
         metal: item.metal,
+        purityLabel: item.purityCtrl.text,
       );
       if (_isDisposed || match == null) {
         continue;
@@ -469,17 +475,20 @@ class PosBillingController extends ChangeNotifier {
     }
 
     final item = saleItems[rowIndex];
+    final selectedPurity = item.purityCtrl.text.trim();
     item.updateMetal(suggestion.metal);
-    item.pcsCtrl.text = suggestion.quantity.toString();
     item.descCtrl.text = suggestion.itemName.trim().isEmpty
         ? suggestion.sku
         : suggestion.itemName;
+    item.pcsCtrl.text = item.unitProfile.defaultPieceCount.toString();
     item.setHuidValues(
       suggestion.huids.isNotEmpty
           ? suggestion.huids
           : [suggestion.huid?.trim() ?? ''],
     );
-    item.purityCtrl.text = suggestion.purity.trim();
+    item.purityCtrl.text = selectedPurity.isNotEmpty
+        ? selectedPurity
+        : _displayPurityForSuggestion(suggestion);
     item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
     item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
     item.clearMasterRateIfOwned();
@@ -493,6 +502,21 @@ class PosBillingController extends ChangeNotifier {
     activeRowIndex = rowIndex;
     clearAllStockSuggestions();
     unawaited(applySaleItemMasterRate(item, force: true));
+  }
+
+  String _displayPurityForSuggestion(PosStockLookupModel suggestion) {
+    final raw = suggestion.purity.trim().toUpperCase();
+    return switch (raw.replaceAll(' ', '')) {
+      '75' || '75.0' || '75.00' => '18KT',
+      '91.67' || '91.6' || '91.60' => '22KT',
+      '99.9' ||
+      '99.90' ||
+      '999' =>
+        suggestion.metal == MetalType.silver ? '999' : '24KT',
+      '92.5' || '92.50' => '925',
+      '80' || '80.0' || '80.00' => '800',
+      _ => raw,
+    };
   }
 
   String _formatLookupNumber(double value) {

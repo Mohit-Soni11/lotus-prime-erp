@@ -60,6 +60,7 @@ class SaleItemModel extends ChangeNotifier {
   double _linkedStockUnitCost = 0.0;
   bool _isApplyingSmartQuantity = false;
   bool _quantityManuallyChanged = false;
+  bool _unitProfileManuallySet = false;
 
   final TextEditingController descCtrl = TextEditingController();
   final TextEditingController pcsCtrl = TextEditingController(text: '1');
@@ -177,6 +178,8 @@ class SaleItemModel extends ChangeNotifier {
   PosItemUnitProfile get unitProfile => _unitProfile;
   String get unitDisplayName => _unitProfile.displayName;
   String get unitShortName => _unitProfile.shortName;
+  List<PosItemUnitProfile> get availableUnitProfiles =>
+      PosItemUnitProfile.invoiceOptionsForMetal(_metal);
   int? get linkedStockItemId => _linkedStockItemId;
   int? get linkedStockUnitId => _linkedStockUnitId;
   String? get linkedStockSku => _linkedStockSku;
@@ -199,8 +202,14 @@ class SaleItemModel extends ChangeNotifier {
   int get pcs => _pcs;
   int get huidSlotCount {
     if (!_unitProfile.usesPieceWiseHuid) return 1;
-    if (_pcs <= 1 || _pcs > _maxPieceWiseHuidSlots) return 1;
-    return _pcs;
+    final stockPieceCount = _pcs * _unitProfile.stockPiecesPerUnit;
+    final expectedPieces = stockPieceCount > _unitProfile.stockPiecesPerUnit
+        ? stockPieceCount
+        : _unitProfile.stockPiecesPerUnit;
+    if (expectedPieces <= 1 || expectedPieces > _maxPieceWiseHuidSlots) {
+      return 1;
+    }
+    return expectedPieces;
   }
 
   List<TextEditingController> get huidControllers =>
@@ -262,9 +271,22 @@ class SaleItemModel extends ChangeNotifier {
   void updateMetal(MetalType newMetal) {
     if (_metal != newMetal) {
       _metal = newMetal;
+      if (!availableUnitProfiles
+          .any((unit) => unit.code == _unitProfile.code)) {
+        _unitProfile = PosItemUnitProfile.pieces;
+        _unitProfileManuallySet = false;
+      }
       _applySmartUnitFromDescription(notify: false);
       notifyListeners();
     }
+  }
+
+  void setUnitProfile(PosItemUnitProfile profile) {
+    if (!availableUnitProfiles.any((unit) => unit.code == profile.code)) {
+      return;
+    }
+    _unitProfileManuallySet = true;
+    _applyUnitProfile(profile);
   }
 
   void setHuidText(String value) {
@@ -442,11 +464,29 @@ class SaleItemModel extends ChangeNotifier {
   }
 
   void _applySmartUnitFromDescription({bool notify = true}) {
+    if (_unitProfileManuallySet) {
+      return;
+    }
     final next = PosItemUnitProfile.infer(
       metal: _metal,
       itemName: descCtrl.text,
     );
     if (next.code == _unitProfile.code) {
+      return;
+    }
+
+    _applyUnitProfile(next, notify: notify);
+  }
+
+  void _applyUnitProfile(
+    PosItemUnitProfile next, {
+    bool notify = true,
+  }) {
+    if (next.code == _unitProfile.code) {
+      _syncHuidInputsWithPieceCount();
+      if (notify) {
+        notifyListeners();
+      }
       return;
     }
 

@@ -40,7 +40,7 @@ void main() {
 
       expect(item.unitProfile.code, PosItemUnitCode.pair);
       expect(item.unitShortName, 'PAIR');
-      expect(item.pcs, 2);
+      expect(item.pcs, 1);
       expect(item.huidControllers.length, 2);
       expect(item.huidText, 'GJ1234, GJ5678');
 
@@ -55,7 +55,7 @@ void main() {
       packet.descCtrl.text = 'Silver Beads Packet';
 
       expect(payal.unitProfile.code, PosItemUnitCode.pair);
-      expect(payal.pcs, 2);
+      expect(payal.pcs, 1);
       expect(payal.huidControllers.length, 2);
       expect(packet.unitProfile.code, PosItemUnitCode.packet);
       expect(packet.pcs, 1);
@@ -63,6 +63,22 @@ void main() {
 
       payal.dispose();
       packet.dispose();
+    });
+
+    test('exposes silver invoice unit options', () {
+      final item = SaleItemModel(metal: MetalType.silver);
+
+      expect(
+        item.availableUnitProfiles.map((unit) => unit.shortName),
+        ['PCS', 'PACK', 'PAIR', 'SET'],
+      );
+
+      item.setUnitProfile(PosItemUnitProfile.packet);
+
+      expect(item.unitProfile.code, PosItemUnitCode.packet);
+      expect(item.huidSlotCount, 1);
+
+      item.dispose();
     });
 
     test('keeps manual quantity when description unit changes later', () {
@@ -73,7 +89,23 @@ void main() {
 
       expect(item.unitProfile.code, PosItemUnitCode.pair);
       expect(item.pcs, 3);
-      expect(item.huidControllers.length, 3);
+      expect(item.huidControllers.length, 6);
+
+      item.dispose();
+    });
+
+    test('keeps two HUID slots for pair items even with one stock HUID', () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.descCtrl.text = 'Casting Tops';
+      item.pcsCtrl.text = '1';
+      item.setHuidValues(['BXZ01A']);
+
+      expect(item.unitProfile.code, PosItemUnitCode.pair);
+      expect(item.huidSlotCount, 2);
+      expect(item.huidControllers, hasLength(2));
+      expect(item.huidControllers.first.text, 'BXZ01A');
+      expect(item.huidControllers.last.text, isEmpty);
 
       item.dispose();
     });

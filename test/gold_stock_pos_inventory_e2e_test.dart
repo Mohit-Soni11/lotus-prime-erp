@@ -68,11 +68,15 @@ void main() {
       stockUnitId: unitsBeforeSale.first.read<int>('id'),
       sku: stockItem.sku,
       description: 'Hallmark Gold Jhumka',
-      pieces: 2,
+      pieces: 1,
       grossWeight: 12,
       purity: '75',
       rate: 15600,
     );
+
+    expect(saleItem.pcs, 1);
+    expect(saleItem.unitShortName, 'PAIR');
+    expect(saleItem.huidControllers, hasLength(2));
 
     await posRepository.finalizeSale(
       invoice: _invoice(

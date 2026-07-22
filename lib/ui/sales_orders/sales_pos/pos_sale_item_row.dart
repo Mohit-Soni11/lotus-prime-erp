@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
@@ -203,7 +204,7 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 1, child: _buildPcsField(isWholesale)),
+                  Expanded(flex: 2, child: _buildPcsField(isWholesale)),
                   const SizedBox(width: 6),
 
                   if (!isWholesale) ...[
@@ -381,8 +382,6 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
   }
 
   Widget _buildPcsField(bool isWholesale) {
-    final unitTag =
-        widget.item.unitShortName == 'PCS' ? '' : widget.item.unitShortName;
     return SizedBox(
       height: 38,
       child: Tooltip(
@@ -404,16 +403,15 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           ),
           decoration: InputDecoration(
             hintText: '1',
-            suffixText: unitTag.isEmpty ? null : unitTag,
-            suffixStyle: SalesPosStyles.subTitleMuted.copyWith(
+            suffixIcon: _UnitSelector(
+              item: widget.item,
               color: SalesPosColors.brandGold,
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
             ),
+            suffixIconConstraints:
+                const BoxConstraints(minWidth: 42, maxWidth: 48),
             hintStyle: SalesPosStyles.subTitleMuted.copyWith(
                 color: SalesPosColors.bodyTextMain.withValues(alpha: 0.40)),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+            contentPadding: const EdgeInsets.only(left: 8, right: 2),
             filled: true,
             fillColor: SalesPosColors.bodyBg,
             enabledBorder: OutlineInputBorder(
@@ -763,6 +761,79 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
   }
 }
 
+class _UnitSelector extends StatelessWidget {
+  final SaleItemModel item;
+  final Color color;
+
+  const _UnitSelector({
+    required this.item,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<PosItemUnitProfile>(
+      tooltip: 'Select unit',
+      padding: EdgeInsets.zero,
+      position: PopupMenuPosition.under,
+      color: SalesPosColors.bodyPanelBg,
+      onSelected: item.setUnitProfile,
+      itemBuilder: (context) => [
+        for (final profile in item.availableUnitProfiles)
+          PopupMenuItem<PosItemUnitProfile>(
+            value: profile,
+            height: 34,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 42,
+                  child: Text(
+                    profile.shortName,
+                    style: SalesPosStyles.caption.copyWith(
+                      color: profile.code == item.unitProfile.code
+                          ? color
+                          : SalesPosColors.bodyTextMain,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    profile.displayName,
+                    style: SalesPosStyles.caption.copyWith(
+                      color: SalesPosColors.bodyTextMuted,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        height: 26,
+        margin: const EdgeInsets.only(right: 4),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.24)),
+        ),
+        child: Text(
+          item.unitShortName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: SalesPosStyles.caption.copyWith(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ==========================================
 //  CLEAN WIDGETS USING PosStockLookupField
 // ==========================================
@@ -790,12 +861,15 @@ class _DescriptionWithSuggestions extends StatelessWidget {
       textInputAction: TextInputAction.next,
       onSubmitted: onSubmitted,
       onSearch: (query) async {
-        // Passed item.metal as the missing 3rd argument.
-        // Update this argument if the controller signature changes.
-        await ctrl.searchDescriptions(query, rowIndex, item.metal);
+        await ctrl.searchDescriptions(
+          query,
+          rowIndex,
+          item.metal,
+          item.purityCtrl.text,
+        );
       },
-      // Automatically handles the PosStockLookupModel type!
       getSuggestions: () => ctrl.getDescSuggestionsForRow(rowIndex),
+      overlayWidth: 460,
       onSelected: (selection) {
         ctrl.applyStockSuggestionToRow(
           rowIndex: rowIndex,
@@ -845,7 +919,12 @@ class _HuidWithSuggestions extends StatelessWidget {
                 }
               },
               onSearch: (query) async {
-                await ctrl.searchHuids(query, rowIndex, item.metal);
+                await ctrl.searchHuids(
+                  query,
+                  rowIndex,
+                  item.metal,
+                  item.purityCtrl.text,
+                );
               },
               getSuggestions: () => ctrl.getHuidSuggestionsForRow(rowIndex),
               onSelected: (selection) async {
@@ -873,7 +952,12 @@ class _HuidWithSuggestions extends StatelessWidget {
       textInputAction: TextInputAction.next,
       onSubmitted: onSubmitted,
       onSearch: (query) async {
-        await ctrl.searchHuids(query, rowIndex, item.metal);
+        await ctrl.searchHuids(
+          query,
+          rowIndex,
+          item.metal,
+          item.purityCtrl.text,
+        );
       },
       getSuggestions: () => ctrl.getHuidSuggestionsForRow(rowIndex),
       onSelected: (selection) async {

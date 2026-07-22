@@ -13,6 +13,7 @@ class PosItemUnitProfile {
   final String displayName;
   final String shortName;
   final int defaultPieceCount;
+  final int stockPiecesPerUnit;
   final bool usesPieceWiseHuid;
 
   const PosItemUnitProfile._({
@@ -20,6 +21,7 @@ class PosItemUnitProfile {
     required this.displayName,
     required this.shortName,
     required this.defaultPieceCount,
+    required this.stockPiecesPerUnit,
     required this.usesPieceWiseHuid,
   });
 
@@ -28,6 +30,7 @@ class PosItemUnitProfile {
     displayName: 'Pieces',
     shortName: 'PCS',
     defaultPieceCount: 1,
+    stockPiecesPerUnit: 1,
     usesPieceWiseHuid: true,
   );
 
@@ -35,7 +38,8 @@ class PosItemUnitProfile {
     code: PosItemUnitCode.pair,
     displayName: 'Pair',
     shortName: 'PAIR',
-    defaultPieceCount: 2,
+    defaultPieceCount: 1,
+    stockPiecesPerUnit: 2,
     usesPieceWiseHuid: true,
   );
 
@@ -44,6 +48,7 @@ class PosItemUnitProfile {
     displayName: 'Set',
     shortName: 'SET',
     defaultPieceCount: 1,
+    stockPiecesPerUnit: 1,
     usesPieceWiseHuid: true,
   );
 
@@ -52,6 +57,7 @@ class PosItemUnitProfile {
     displayName: 'Packet',
     shortName: 'PACK',
     defaultPieceCount: 1,
+    stockPiecesPerUnit: 1,
     usesPieceWiseHuid: false,
   );
 
@@ -60,10 +66,19 @@ class PosItemUnitProfile {
     displayName: 'Lot',
     shortName: 'LOT',
     defaultPieceCount: 1,
+    stockPiecesPerUnit: 1,
     usesPieceWiseHuid: false,
   );
 
   static const values = [pieces, pair, set, packet, lot];
+
+  static List<PosItemUnitProfile> invoiceOptionsForMetal(MetalType metal) {
+    return switch (metal) {
+      MetalType.silver => const [pieces, packet, pair, set],
+      MetalType.gold => const [pieces, pair, set],
+      MetalType.platinum || MetalType.diamond => const [pieces, set],
+    };
+  }
 
   static PosItemUnitProfile infer({
     required MetalType metal,

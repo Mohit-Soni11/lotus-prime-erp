@@ -20,6 +20,7 @@ class PosStockLookupModel {
   final MetalType metal;
   final String categoryLabel;
   final String segmentLabel;
+  final String companyName;
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
@@ -39,6 +40,7 @@ class PosStockLookupModel {
     required this.metal,
     required this.categoryLabel,
     this.segmentLabel = '',
+    this.companyName = '',
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
@@ -53,6 +55,7 @@ class PosStockLookupModel {
     final parts = <String>[
       categoryLabel,
       if (segmentLabel.trim().isNotEmpty) segmentLabel.trim(),
+      if (companyName.trim().isNotEmpty) companyName.trim(),
       if (huids.isNotEmpty)
         'HUID ${huids.join(', ')}'
       else if (huid != null && huid!.trim().isNotEmpty)

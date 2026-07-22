@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../../features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
 import '../../../models/finance/bank_book/bank_book_enums.dart' as bank_book;
@@ -774,7 +775,7 @@ class PosCheckoutRepository {
         stockItemId: stockItemId,
         stockUnitId: item.linkedStockUnitId,
         stockUnitCode: item.linkedStockSku,
-        quantityToSell: _unitsForItem(item),
+        quantityToSell: await _unitsForItem(item),
         saleGrossWeight: _parseSafeNumber(item.grossCtrl.text),
         saleLessWeight: _parseSafeNumber(item.lessCtrl.text),
         saleNetWeight: item.netWt,
@@ -803,7 +804,7 @@ class PosCheckoutRepository {
         stockItemId: stockItemId,
         stockUnitId: item.linkedStockUnitId,
         stockUnitCode: item.linkedStockSku,
-        quantityToRestore: _unitsForQuantity(item.quantity),
+        quantityToRestore: await _unitsForBillItem(item),
         sourceId: sourceId,
         sourceNumber: sourceNumber,
         sourceLineNo: item.lineNo,
@@ -998,12 +999,41 @@ class PosCheckoutRepository {
     }
   }
 
-  int _unitsForItem(SaleItemModel item) {
-    return _unitsForQuantity(item.pcs);
+  Future<int> _unitsForItem(SaleItemModel item) async {
+    final stockItemId = item.linkedStockItemId;
+    if (stockItemId != null && await _isLotStockItem(stockItemId)) {
+      return _unitsForQuantity(item.pcs);
+    }
+    return _unitsForQuantity(item.pcs * item.unitProfile.stockPiecesPerUnit);
+  }
+
+  Future<int> _unitsForBillItem(BillItem item) async {
+    final stockItemId = item.linkedStockItemId;
+    if (stockItemId != null && await _isLotStockItem(stockItemId)) {
+      return _unitsForQuantity(item.quantity);
+    }
+    final metal = _metalFromDb(item.metalType);
+    final unit = PosItemUnitProfile.infer(
+      metal: metal,
+      itemName: item.itemName,
+    );
+    final huidCount = _splitHuidTokens(item.huid ?? '').length;
+    return [
+      _unitsForQuantity(item.quantity * unit.stockPiecesPerUnit),
+      huidCount,
+    ].reduce((value, element) => value > element ? value : element);
   }
 
   int _unitsForQuantity(int quantity) {
     return quantity < 1 ? 1 : quantity;
+  }
+
+  List<String> _splitHuidTokens(String value) {
+    return value
+        .split(RegExp(r'[,;/\s]+'))
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
   }
 
   Future<void> _restoreStock({

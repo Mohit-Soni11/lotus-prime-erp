@@ -15,6 +15,7 @@ class PosStockLookupRepository {
   Future<List<PosStockLookupModel>> searchByDescription({
     required String query,
     required MetalType metal,
+    String purityLabel = '',
     int limit = 8,
   }) async {
     final term = query.trim().toLowerCase();
@@ -28,9 +29,7 @@ class PosStockLookupRepository {
     }
 
     final matches = term.length == 1
-        ? unitRows
-            .where((row) => _descriptionSearchText(row).contains(term))
-            .toList(growable: false)
+        ? unitRows.where((row) => _startsWithItemText(row, term)).toList()
         : FuzzySearchHelper.searchObjects(
             items: unitRows,
             query: term,
@@ -38,6 +37,11 @@ class PosStockLookupRepository {
             maxResults: limit,
             threshold: 0.25,
           );
+    matches.sort(
+      (a, b) => _rankDescriptionMatch(a, term).compareTo(
+        _rankDescriptionMatch(b, term),
+      ),
+    );
 
     return _toLookupModels(matches, unitRows, limit);
   }
@@ -45,6 +49,7 @@ class PosStockLookupRepository {
   Future<List<PosStockLookupModel>> searchByHuid({
     required String query,
     required MetalType metal,
+    String purityLabel = '',
     int limit = 6,
   }) async {
     final term = query.trim().toLowerCase();
@@ -68,6 +73,7 @@ class PosStockLookupRepository {
   Future<PosStockLookupModel?> findExactByHuid({
     required String query,
     required MetalType metal,
+    String purityLabel = '',
   }) async {
     final term = query.trim().toLowerCase();
     if (term.isEmpty) {
@@ -110,6 +116,7 @@ class PosStockLookupRepository {
         u.purity_percent AS purity_percent,
         u.unit_cost AS unit_cost,
         u.status AS unit_status,
+        u.supplier_name AS company_name,
         s.purity AS purity_label,
         s.category AS category,
         s.description AS description
@@ -144,12 +151,33 @@ class PosStockLookupRepository {
       row.itemName,
       row.itemType,
       row.segment,
+      row.companyName,
       row.huid,
       row.unitCode,
       row.batchCode,
       row.netWeight.toStringAsFixed(3),
       row.grossWeight.toStringAsFixed(3),
     ].join(' ').toLowerCase();
+  }
+
+  bool _startsWithItemText(_StockUnitLookupRow row, String term) {
+    return row.itemName.trim().toLowerCase().startsWith(term) ||
+        row.itemType.trim().toLowerCase().startsWith(term);
+  }
+
+  int _rankDescriptionMatch(_StockUnitLookupRow row, String term) {
+    final itemName = row.itemName.trim().toLowerCase();
+    final itemType = row.itemType.trim().toLowerCase();
+    final segment = row.segment.trim().toLowerCase();
+    final huid = row.huid.trim().toLowerCase();
+    final unitCode = row.unitCode.trim().toLowerCase();
+    if (itemName == term || itemType == term) return 0;
+    if (itemName.startsWith(term)) return 1;
+    if (itemType.startsWith(term)) return 2;
+    if (segment.startsWith(term)) return 3;
+    if (itemName.contains(term) || itemType.contains(term)) return 4;
+    if (huid.startsWith(term) || unitCode.startsWith(term)) return 5;
+    return 6;
   }
 
   int _rankHuidMatch(_StockUnitLookupRow row, String term) {
@@ -246,10 +274,10 @@ class PosStockLookupRepository {
       metal: _metalFromUnitRow(row),
       categoryLabel: row.itemType.isEmpty ? row.category : row.itemType,
       segmentLabel: row.segment,
+      companyName: row.companyName,
       grossWeight:
           effectiveRows.fold(0.0, (sum, unit) => sum + unit.grossWeight),
-      lessWeight:
-          effectiveRows.fold(0.0, (sum, unit) => sum + unit.lessWeight),
+      lessWeight: effectiveRows.fold(0.0, (sum, unit) => sum + unit.lessWeight),
       netWeight: effectiveRows.fold(0.0, (sum, unit) => sum + unit.netWeight),
       unitCost: effectiveRows.fold(0.0, (sum, unit) => sum + unit.unitCost),
       quantity: effectiveRows.length,
@@ -283,6 +311,7 @@ class _StockUnitLookupRow {
   final double purityPercent;
   final double unitCost;
   final String status;
+  final String companyName;
   final String purityLabel;
   final String category;
   final String description;
@@ -303,6 +332,7 @@ class _StockUnitLookupRow {
     required this.purityPercent,
     required this.unitCost,
     required this.status,
+    required this.companyName,
     required this.purityLabel,
     required this.category,
     required this.description,
@@ -325,6 +355,7 @@ class _StockUnitLookupRow {
       purityPercent: row.read<double>('purity_percent'),
       unitCost: row.read<double>('unit_cost'),
       status: row.read<String>('unit_status'),
+      companyName: row.readNullable<String>('company_name') ?? '',
       purityLabel: row.readNullable<String>('purity_label') ?? '',
       category: row.read<String>('category'),
       description: row.readNullable<String>('description') ?? '',
