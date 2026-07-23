@@ -1,5 +1,8 @@
 part of '../../inventory_screen.dart';
 
+const double _inventoryScaleVarianceToleranceGrams = 0.05;
+const double _inventoryQuantityClosureTolerance = 0.0001;
+
 class _InventoryBatchGroup {
   final String batchCode;
   final String supplierName;
@@ -43,9 +46,14 @@ class _InventoryBatchGroup {
 
   bool get isGst => taxType.toUpperCase().contains('GST');
   int get soldItems => totalItems - availableItems;
-  bool get hasAvailableStock => availableItems > 0;
-  bool get isSoldOut => totalItems > 0 && availableItems == 0;
-  bool get isPartiallySold => availableItems > 0 && soldItems > 0;
+  bool get hasAvailableStock =>
+      availableDisplayQuantity > _inventoryQuantityClosureTolerance ||
+      hasScaleVariance;
+  bool get isQuantityClosed =>
+      totalDisplayQuantity > 0 &&
+      availableDisplayQuantity <= _inventoryQuantityClosureTolerance;
+  bool get isSoldOut => isQuantityClosed && !hasScaleVariance;
+  bool get isPartiallySold => !isSoldOut && soldDisplayQuantity > 0;
   String get sourceItemPreview {
     final seen = <String>{};
     final names = <String>[];
@@ -115,6 +123,8 @@ class _InventoryBatchGroup {
       units.fold(0.0, (sum, unit) => sum + unit.displayAvailableNetWeight);
   double get soldNetWeight =>
       units.fold(0.0, (sum, unit) => sum + unit.soldNetWeight);
+  double get reconciledNetWeight =>
+      units.fold(0.0, (sum, unit) => sum + unit.reconciledNetWeight);
   double get totalNetWeight =>
       units.fold(0.0, (sum, unit) => sum + unit.displayTotalNetWeight);
   double get totalGrossWeight =>
@@ -157,8 +167,21 @@ class _InventoryBatchGroup {
       _inventoryDisplayQuantityText(soldDisplayQuantity, displayUnitLabel);
   String get quantityBalanceLabel =>
       '${_quantityNumber(availableDisplayQuantity)}/${_quantityNumber(totalDisplayQuantity)} $displayUnitPlural';
+  double get scaleVarianceWeight => isQuantityClosed
+      ? totalNetWeight - soldNetWeight + reconciledNetWeight
+      : 0.0;
+  bool get hasScaleVariance =>
+      isQuantityClosed &&
+      scaleVarianceWeight.abs() > _inventoryScaleVarianceToleranceGrams;
+  bool get hasResidualWeight => hasScaleVariance && scaleVarianceWeight > 0;
+  String get scaleVarianceLabel {
+    if (!hasScaleVariance) return 'Balanced';
+    final label = hasResidualWeight ? 'Residual' : 'Shortage';
+    return '$label ${_weight(scaleVarianceWeight.abs())} g';
+  }
 
   String get stockStatusLabel {
+    if (hasScaleVariance) return 'Reconciliation Pending';
     if (isSoldOut) return 'Sold Out';
     if (isPartiallySold) return 'Partially Sold';
     return 'Available';
@@ -314,6 +337,7 @@ class _InventoryPaymentSummary {
 
 class _InventoryGradeUnit {
   final int unitId;
+  final int stockItemId;
   final String unitCode;
   final String batchCode;
   final String itemType;
@@ -342,6 +366,7 @@ class _InventoryGradeUnit {
   final double availableGrossWeight;
   final double availableNetWeight;
   final double soldNetWeight;
+  final double reconciledNetWeight;
   final int soldQuantity;
   final String supplierName;
   final String supplierMobile;
@@ -370,6 +395,7 @@ class _InventoryGradeUnit {
 
   const _InventoryGradeUnit({
     required this.unitId,
+    required this.stockItemId,
     required this.unitCode,
     required this.batchCode,
     required this.itemType,
@@ -398,6 +424,7 @@ class _InventoryGradeUnit {
     required this.availableGrossWeight,
     required this.availableNetWeight,
     required this.soldNetWeight,
+    required this.reconciledNetWeight,
     required this.soldQuantity,
     required this.supplierName,
     required this.supplierMobile,
@@ -446,6 +473,7 @@ class _InventoryGradeUnit {
 
     return _InventoryGradeUnit(
       unitId: integer('unit_id'),
+      stockItemId: integer('stock_item_id'),
       unitCode: text('unit_code'),
       batchCode: text('batch_code'),
       itemType: text('item_type'),
@@ -474,6 +502,7 @@ class _InventoryGradeUnit {
       availableGrossWeight: number('available_gross_weight'),
       availableNetWeight: number('available_net_weight'),
       soldNetWeight: number('sold_net_weight'),
+      reconciledNetWeight: number('reconciled_net_weight'),
       soldQuantity: integer('sold_quantity'),
       supplierName: text('supplier_name'),
       supplierMobile: text('supplier_mobile'),
@@ -545,6 +574,29 @@ class _InventoryGradeUnit {
       displaySoldQuantity, displayUnitSingular, displayUnitPlural);
   String get quantityBalanceLabel =>
       '${_quantityNumber(displayAvailableQuantity)}/${_quantityNumber(displayTotalQuantity)} $displayUnitPlural';
+  bool get isQuantityClosed =>
+      displayTotalQuantity > 0 &&
+      displayAvailableQuantity <= _inventoryQuantityClosureTolerance;
+  double get scaleVarianceWeight => isQuantityClosed
+      ? displayTotalNetWeight - soldNetWeight + reconciledNetWeight
+      : 0.0;
+  bool get hasScaleVariance =>
+      isQuantityClosed &&
+      scaleVarianceWeight.abs() > _inventoryScaleVarianceToleranceGrams;
+  bool get hasResidualWeight => hasScaleVariance && scaleVarianceWeight > 0;
+  String get scaleVarianceLabel {
+    if (!hasScaleVariance) return 'Balanced';
+    final label = hasResidualWeight ? 'Residual' : 'Shortage';
+    return '$label ${_weight(scaleVarianceWeight.abs())} g';
+  }
+
+  String get stockMovementStatusLabel {
+    if (hasScaleVariance) return 'Reconciliation Pending';
+    if (isQuantityClosed) return 'Sold Out';
+    if (displaySoldQuantity > 0) return 'Partially Sold';
+    final currentStatus = status.trim();
+    return currentStatus.isEmpty ? 'Available' : currentStatus;
+  }
 }
 
 String _quantityText(double quantity, String singular, String plural) {

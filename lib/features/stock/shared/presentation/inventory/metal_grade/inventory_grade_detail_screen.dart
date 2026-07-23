@@ -57,6 +57,7 @@ class _InventoryGradeDetailScreenState
       '''
       SELECT
         u.id AS unit_id,
+        u.stock_item_id AS stock_item_id,
         u.unit_code AS unit_code,
         COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Unbatched Stock') AS batch_code,
         u.item_type AS item_type,
@@ -127,6 +128,7 @@ class _InventoryGradeDetailScreenState
         $_inventoryAvailableGrossWeightExpression AS available_gross_weight,
         $_inventoryAvailableNetWeightExpression AS available_net_weight,
         $_inventorySoldWeightExpression AS sold_net_weight,
+        COALESCE(sm.reconciled_net_weight, 0.0) AS reconciled_net_weight,
         COALESCE(sm.sold_quantity, 0) AS sold_quantity,
         COALESCE(NULLIF(TRIM(u.supplier_name), ''), pv.party_name, '') AS supplier_name,
         COALESCE(pv.mobile, '') AS supplier_mobile,
@@ -801,10 +803,11 @@ class _InventoryGradeDetailScreenState
     for (final batch in batches) {
       for (final unit in batch.units) {
         final name = _itemSummaryGroupName(unit);
-        final key = name.toLowerCase();
+        final unitLabel = _inventoryQuantityUnitLabel(unit);
+        final key = '${name.toLowerCase()}::$unitLabel';
         summaries.putIfAbsent(
           key,
-          () => _InventoryItemSummaryAccumulator(name),
+          () => _InventoryItemSummaryAccumulator(name, unitLabel),
         );
         summaries[key]!.add(unit);
       }
@@ -929,6 +932,7 @@ class _InventoryGradeDetailScreenState
     final cleaned = await Navigator.of(context).push<bool>(
       PageRouteBuilder<bool>(
         pageBuilder: (_, animation, __) => _InventoryBatchDossierScreen(
+          db: _db,
           metal: widget.metal,
           grade: widget.grade,
           batch: dossierBatch,

@@ -36,6 +36,7 @@ class _InventoryGradeSummaryCardState
       widget.grade.totalPieces,
       widget.grade.companyCount,
       widget.grade.purityGroupCount,
+      widget.grade.availableQuantityLabel,
     );
     final borderColor = widget.selected
         ? widget.ui.accent
@@ -202,6 +203,11 @@ class _InventoryGradeSummaryCardState
                   soldPieces: widget.grade.soldPieces,
                   totalSets: widget.grade.totalSets,
                   availableSets: widget.grade.availableSets,
+                  unitLabel: widget.grade.quantityUnitLabel,
+                  availableQuantityLabel: widget.grade.availableQuantityLabel,
+                  soldQuantityLabel: widget.grade.soldQuantityLabel,
+                  unitBalanceLabel: widget.grade.unitBalanceLabel,
+                  statusText: widget.grade.statusLabel,
                   accent: widget.ui.accent,
                 ),
                 const SizedBox(height: 12),
@@ -424,7 +430,7 @@ class _GradeAvailableInformationRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${item.itemType} • ${item.segment}',
+                  '${item.itemType} - ${item.segment}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -537,6 +543,11 @@ class _GradeAvailabilityStrip extends StatelessWidget {
   final int soldPieces;
   final int totalSets;
   final int availableSets;
+  final String unitLabel;
+  final String availableQuantityLabel;
+  final String soldQuantityLabel;
+  final String unitBalanceLabel;
+  final String statusText;
   final Color accent;
 
   const _GradeAvailabilityStrip({
@@ -544,24 +555,23 @@ class _GradeAvailabilityStrip extends StatelessWidget {
     required this.soldPieces,
     required this.totalSets,
     required this.availableSets,
+    required this.unitLabel,
+    required this.availableQuantityLabel,
+    required this.soldQuantityLabel,
+    required this.unitBalanceLabel,
+    required this.statusText,
     required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isSoldOut = availablePieces == 0 && soldPieces > 0;
-    final statusText = isSoldOut
-        ? 'Sold Out'
-        : soldPieces > 0
-            ? 'Partially Sold'
-            : 'Ready Stock';
+    final isSoldOut = statusText == 'Sold Out';
+    final isPartiallySold = statusText == 'Partially Sold';
     final statusColor = isSoldOut
         ? InvColors.danger
-        : soldPieces > 0
+        : isPartiallySold
             ? const Color(0xFFF59E0B)
             : InvColors.success;
-    final setValue = totalSets > 0 ? '$availableSets/$totalSets set' : 'No set';
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
@@ -575,25 +585,27 @@ class _GradeAvailabilityStrip extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: _AvailabilityText(
-              label: 'Available Pcs',
-              value: '$availablePieces pcs',
+              label: 'Available Qty',
+              value: availableQuantityLabel,
               color: InvColors.success,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
           Expanded(
             child: _AvailabilityText(
-              label: 'Sold Pcs',
-              value: '$soldPieces pcs',
+              label: 'Sold Qty',
+              value: soldQuantityLabel,
               color: soldPieces > 0 ? InvColors.danger : InvColors.textMuted,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),
           Expanded(
             child: _AvailabilityText(
-              label: 'Set / Packet',
-              value: setValue,
-              color: totalSets > 0 ? accent : InvColors.textMuted,
+              label: 'Unit Balance',
+              value: unitBalanceLabel,
+              color: totalSets > 0 || unitLabel != 'pcs'
+                  ? accent
+                  : InvColors.textDark,
             ),
           ),
           Container(width: 1, height: 30, color: const Color(0xFFEADCC5)),

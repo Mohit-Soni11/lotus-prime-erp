@@ -16,22 +16,25 @@ class _InventoryBatchCard extends StatelessWidget {
     final statusColor = _batchStatusColor();
     final statusBg = _batchStatusBg();
     final soldOut = batch.isSoldOut;
+    final needsReconciliation = batch.hasScaleVariance;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        color: soldOut ? const Color(0xFFFFFBFA) : Colors.white,
+        color: soldOut || needsReconciliation
+            ? const Color(0xFFFFFBFA)
+            : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: soldOut
-              ? InvColors.danger.withValues(alpha: 0.26)
+          color: soldOut || needsReconciliation
+              ? statusColor.withValues(alpha: 0.28)
               : InvColors.cardBorder,
-          width: soldOut ? 1.2 : 1,
+          width: soldOut || needsReconciliation ? 1.2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: (soldOut ? InvColors.danger : ui.accent)
+            color: ((soldOut || needsReconciliation) ? statusColor : ui.accent)
                 .withValues(alpha: 0.07),
             blurRadius: 16,
             offset: const Offset(0, 10),
@@ -118,16 +121,10 @@ class _InventoryBatchCard extends StatelessWidget {
                 accent: statusColor,
                 helper: '${batch.quantityBalanceLabel} in view',
               ),
-              if (_hasWeightDifference(batch.grossWeight, batch.netWeight))
-                _BatchMetric(
-                  label: 'Gross Weight',
-                  value: '${_weight(batch.grossWeight)} g',
-                  accent: ui.accent,
-                ),
               _BatchMetric(
-                label: 'Actual Fine',
-                value: '${_weight(batch.actualFine)} g',
-                accent: const Color(0xFF10B981),
+                label: 'Gross Weight',
+                value: '${_weight(batch.totalGrossWeight)} g',
+                accent: ui.accent,
               ),
             ],
           ),
@@ -149,12 +146,14 @@ class _InventoryBatchCard extends StatelessWidget {
   }
 
   Color _batchStatusColor() {
+    if (batch.hasScaleVariance) return const Color(0xFFF59E0B);
     if (batch.isSoldOut) return InvColors.danger;
     if (batch.isPartiallySold) return const Color(0xFFF59E0B);
     return InvColors.success;
   }
 
   Color _batchStatusBg() {
+    if (batch.hasScaleVariance) return const Color(0xFFFFF7E6);
     if (batch.isSoldOut) return InvColors.dangerBg;
     if (batch.isPartiallySold) return const Color(0xFFFFF7E6);
     return InvColors.successBg;
@@ -182,9 +181,9 @@ class _InventoryGradeUnitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final available = unit.status.toLowerCase() == 'available';
-    final statusColor = available ? InvColors.success : InvColors.danger;
-    final statusBg = available ? InvColors.successBg : InvColors.dangerBg;
+    final statusLabel = unit.stockMovementStatusLabel;
+    final statusColor = _unitStatusColor(statusLabel);
+    final statusBg = _unitStatusBg(statusLabel);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -219,7 +218,7 @@ class _InventoryGradeUnitCard extends StatelessWidget {
                       Border.all(color: statusColor.withValues(alpha: 0.25)),
                 ),
                 child: Text(
-                  unit.status.isEmpty ? 'Available' : unit.status,
+                  statusLabel,
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w900,
@@ -268,6 +267,9 @@ class _InventoryGradeUnitCard extends StatelessWidget {
                 _UnitMetric(
                     label: 'Sold Weight',
                     value: '${_weight(unit.soldNetWeight)} g'),
+              if (unit.hasScaleVariance)
+                _UnitMetric(
+                    label: 'Scale Variance', value: unit.scaleVarianceLabel),
               if (unit.purityPercent > 0)
                 _UnitMetric(
                     label: 'Base Purity',
@@ -308,6 +310,22 @@ class _InventoryGradeUnitCard extends StatelessWidget {
 
   String _weight(double value) {
     return NumberFormat('##,##0.000', 'en_IN').format(value);
+  }
+
+  Color _unitStatusColor(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized.contains('reconciliation')) return const Color(0xFFF59E0B);
+    if (normalized.contains('partially')) return const Color(0xFFF59E0B);
+    if (normalized.contains('sold')) return InvColors.danger;
+    return InvColors.success;
+  }
+
+  Color _unitStatusBg(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized.contains('reconciliation')) return const Color(0xFFFFF7E6);
+    if (normalized.contains('partially')) return const Color(0xFFFFF7E6);
+    if (normalized.contains('sold')) return InvColors.dangerBg;
+    return InvColors.successBg;
   }
 }
 

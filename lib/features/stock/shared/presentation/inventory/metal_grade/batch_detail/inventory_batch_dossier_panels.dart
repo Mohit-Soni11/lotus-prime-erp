@@ -5,12 +5,16 @@ class _BatchDossierHeader extends StatelessWidget {
   final String title;
   final _InventoryBatchGroup batch;
   final VoidCallback onDocuments;
+  final VoidCallback? onCloseVariance;
+  final bool isClosingVariance;
 
   const _BatchDossierHeader({
     required this.ui,
     required this.title,
     required this.batch,
     required this.onDocuments,
+    required this.onCloseVariance,
+    required this.isClosingVariance,
   });
 
   @override
@@ -100,6 +104,13 @@ class _BatchDossierHeader extends StatelessWidget {
                 value: '${_weight(batch.actualFine)} g',
                 textColor: ui.textOnGradient,
               ),
+              if (onCloseVariance != null)
+                _HeaderActionButton(
+                  label: isClosingVariance ? 'Closing...' : 'Close Variance',
+                  icon: Icons.fact_check_rounded,
+                  textColor: ui.textOnGradient,
+                  onTap: isClosingVariance ? null : onCloseVariance,
+                ),
               _HeaderActionButton(
                 label: 'Documents',
                 icon: Icons.description_rounded,
@@ -443,6 +454,13 @@ class _BatchOverviewPanel extends StatelessWidget {
                     label: 'Sold Weight',
                     value: '${_weight(batch.soldNetWeight)} g',
                     accent: InvColors.danger),
+              if (batch.hasScaleVariance)
+                _DossierMetric(
+                    label: 'Scale Variance',
+                    value: batch.scaleVarianceLabel,
+                    accent: batch.hasResidualWeight
+                        ? const Color(0xFFF59E0B)
+                        : InvColors.danger),
               if (batch.purityPercent > 0)
                 _DossierMetric(
                     label: 'Base Purity',
@@ -480,7 +498,7 @@ class _HeaderActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color textColor;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _HeaderActionButton({
     required this.label,
@@ -758,6 +776,14 @@ class _BatchStockLedgerPanel extends StatelessWidget {
                       value: '${_weight(batch.soldNetWeight)} g',
                       accent: InvColors.danger,
                     ),
+                  if (batch.hasScaleVariance)
+                    _DossierMetric(
+                      label: 'Scale Variance',
+                      value: batch.scaleVarianceLabel,
+                      accent: batch.hasResidualWeight
+                          ? const Color(0xFFF59E0B)
+                          : InvColors.danger,
+                    ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -879,6 +905,7 @@ class _DossierLedgerSection extends StatelessWidget {
 }
 
 Color _dossierBatchStatusAccent(_InventoryBatchGroup batch) {
+  if (batch.hasScaleVariance) return const Color(0xFFF59E0B);
   if (batch.isSoldOut) return InvColors.danger;
   if (batch.isPartiallySold) return const Color(0xFFF59E0B);
   return InvColors.success;

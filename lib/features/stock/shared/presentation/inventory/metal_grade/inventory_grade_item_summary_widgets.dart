@@ -2,10 +2,10 @@ part of '../inventory_screen.dart';
 
 class _InventoryItemSummaryAccumulator {
   final String itemType;
+  final String quantityUnitLabel;
   final Map<String, _InventoryItemNameSummaryAccumulator> variants =
       <String, _InventoryItemNameSummaryAccumulator>{};
   final Set<String> companyNames = <String>{};
-  final Set<String> unitLabels = <String>{};
   int totalPieces = 0;
   int availablePieces = 0;
   int soldPieces = 0;
@@ -17,7 +17,7 @@ class _InventoryItemSummaryAccumulator {
   double availableWeight = 0;
   double soldWeight = 0;
 
-  _InventoryItemSummaryAccumulator(this.itemType);
+  _InventoryItemSummaryAccumulator(this.itemType, this.quantityUnitLabel);
 
   void add(_InventoryGradeUnit unit) {
     final itemName = unit.itemName.trim().isNotEmpty
@@ -29,8 +29,6 @@ class _InventoryItemSummaryAccumulator {
     } else {
       companyNames.add('Unbranded Silver');
     }
-    final unitLabel = _inventoryQuantityUnitLabel(unit);
-    unitLabels.add(unitLabel);
     totalDisplayUnits += _inventoryTotalDisplayUnits(unit);
     availableDisplayUnits += _inventoryAvailableDisplayUnits(unit);
     soldDisplayUnits += _inventorySoldDisplayUnits(unit);
@@ -57,7 +55,6 @@ class _InventoryItemSummaryAccumulator {
         return a.itemName.compareTo(b.itemName);
       });
     final companies = companyNames.toList()..sort();
-    final quantityUnitLabel = _inventoryAggregateUnitLabel(unitLabels);
 
     return _InventoryItemSummary(
       itemType: itemType,
@@ -239,11 +236,7 @@ String _inventoryAggregateUnitLabel(Set<String> unitLabels) {
       .where((label) => label.isNotEmpty)
       .toSet();
   if (labels.length == 1) return labels.single;
-  if (labels.contains('packet')) return 'packet';
-  if (labels.contains('pair')) return 'pair';
-  if (labels.contains('set')) return 'set';
-  if (labels.contains('lot')) return 'lot';
-  return 'pcs';
+  return 'mixed';
 }
 
 double _inventoryTotalDisplayUnits(_InventoryGradeUnit unit) {
@@ -299,6 +292,7 @@ String _inventoryQuantityUnitName(String label, {required bool plural}) {
     'pair' => plural ? 'Pairs' : 'Pair',
     'set' => plural ? 'Sets' : 'Set',
     'lot' => plural ? 'Lots' : 'Lot',
+    'mixed' => plural ? 'Units' : 'Unit',
     _ => 'Pcs',
   };
 }

@@ -146,6 +146,8 @@ class _InventoryBatchStatusPdfService {
             if (_hasWeight(batch.soldNetWeight))
               _StatusMetricData(
                   'Sold Weight', '${_weight(batch.soldNetWeight)} g'),
+            if (batch.hasScaleVariance)
+              _StatusMetricData('Scale Variance', batch.scaleVarianceLabel),
           ],
         ),
         if (_hasWeight(batch.actualFine) ||
@@ -251,6 +253,8 @@ class _InventoryBatchStatusPdfService {
               if (_hasWeight(unit.soldNetWeight))
                 _statusMetric(
                     'Sold Weight', '${_weight(unit.soldNetWeight)} g'),
+              if (unit.hasScaleVariance)
+                _statusMetric('Scale Variance', unit.scaleVarianceLabel),
               if (_hasWeight(unit.purityPercent))
                 _statusMetric(
                     'Base Purity', '${_percent(unit.purityPercent)}%'),
@@ -335,18 +339,18 @@ class _InventoryBatchStatusPdfService {
   }
 
   static pw.Widget _snapshotMetricRow(List<_StatusMetricData> metrics) {
-    return pw.Row(
+    return pw.Wrap(
+      spacing: 7,
+      runSpacing: 7,
       children: [
-        for (var index = 0; index < metrics.length; index++) ...[
-          pw.Expanded(child: _snapshotMetric(metrics[index])),
-          if (index != metrics.length - 1) pw.SizedBox(width: 7),
-        ],
+        for (final metric in metrics) _snapshotMetric(metric),
       ],
     );
   }
 
   static pw.Widget _snapshotMetric(_StatusMetricData metric) {
     return pw.Container(
+      width: 111,
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 7),
       decoration: pw.BoxDecoration(
         color: PdfColors.white,
@@ -435,6 +439,7 @@ class _InventoryBatchStatusPdfService {
   }
 
   static PdfColor _batchStatusPdfColor(_InventoryBatchGroup batch) {
+    if (batch.hasScaleVariance) return PdfColors.amber800;
     if (batch.isSoldOut) return PdfColors.red700;
     if (batch.isPartiallySold) return PdfColors.amber800;
     return PdfColors.green700;
@@ -443,25 +448,24 @@ class _InventoryBatchStatusPdfService {
   static bool _hasWeight(double value) => value.abs() > 0.0004;
 
   static String _unitStockStatusLabel(_InventoryGradeUnit unit) {
-    if (unit.displayTotalQuantity > 0 && unit.displayAvailableQuantity <= 0) {
-      return 'Sold Out';
-    }
-    if (unit.displaySoldQuantity > 0) return 'Partially Sold';
-    final status = unit.status.trim();
-    return status.isEmpty ? 'Available' : status;
+    return unit.stockMovementStatusLabel;
   }
 
   static PdfColor _unitStockStatusColor(String status) {
     final normalized = status.toLowerCase();
+    if (normalized.contains('reconciliation')) return PdfColors.amber800;
+    if (normalized.contains('partially')) return PdfColors.amber800;
     if (normalized.contains('sold out')) return PdfColors.red700;
-    if (normalized.contains('sold')) return PdfColors.amber800;
+    if (normalized.contains('sold')) return PdfColors.red700;
     return PdfColors.green700;
   }
 
   static PdfColor _unitStockStatusBackground(String status) {
     final normalized = status.toLowerCase();
+    if (normalized.contains('reconciliation')) return PdfColors.amber100;
+    if (normalized.contains('partially')) return PdfColors.amber100;
     if (normalized.contains('sold out')) return PdfColors.red50;
-    if (normalized.contains('sold')) return PdfColors.amber100;
+    if (normalized.contains('sold')) return PdfColors.red50;
     return PdfColors.green50;
   }
 }

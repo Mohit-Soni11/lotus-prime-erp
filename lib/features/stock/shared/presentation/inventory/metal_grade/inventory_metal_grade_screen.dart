@@ -57,6 +57,10 @@ class _InventoryMetalGradeScreenState
         SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN CASE WHEN lower(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1) WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0 THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) ELSE 0 END WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_pieces,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN MAX(COALESCE(NULLIF(s.packet_count, 0), 0) - COALESCE(sm.sold_quantity, 0), 0) ELSE 0 END) AS available_sets,
+        SUM($_inventorySummaryTotalDisplayQuantityExpression) AS total_display_quantity,
+        SUM($_inventorySummaryAvailableDisplayQuantityExpression) AS available_display_quantity,
+        SUM($_inventorySummarySoldDisplayQuantityExpression) AS sold_display_quantity,
+        GROUP_CONCAT(DISTINCT $_inventorySummaryUnitLabelExpression) AS quantity_modes,
         COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
@@ -93,6 +97,10 @@ class _InventoryMetalGradeScreenState
       soldPieces: _readInt(row, 'sold_pieces'),
       totalSets: _readInt(row, 'total_sets'),
       availableSets: _readInt(row, 'available_sets'),
+      quantityUnitLabel: _inventorySummaryUnitLabel(row),
+      totalDisplayUnits: _readDouble(row, 'total_display_quantity'),
+      availableDisplayUnits: _readDouble(row, 'available_display_quantity'),
+      soldDisplayUnits: _readDouble(row, 'sold_display_quantity'),
       companyCount: _readInt(row, 'company_count'),
       purityGroupCount: _readInt(row, 'purity_group_count'),
       grossWeight: _readDouble(row, 'gross_weight'),
@@ -123,6 +131,10 @@ class _InventoryMetalGradeScreenState
         SUM(CASE WHEN lower(COALESCE(u.unit_code, '')) LIKE '%lot%' AND TRIM(COALESCE(u.huid, '')) = '' THEN CASE WHEN lower(u.status) = 'sold' THEN COALESCE(NULLIF(pvi.quantity, 0), 1) WHEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) > 0 THEN COALESCE(NULLIF(pvi.quantity, 0), NULLIF(s.quantity, 0), 1) - COALESCE(s.quantity, 0) ELSE 0 END WHEN lower(u.status) = 'sold' THEN 1 ELSE 0 END) AS sold_pieces,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN COALESCE(NULLIF(s.packet_count, 0), 0) ELSE 0 END) AS total_sets,
         SUM(CASE WHEN lower(COALESCE(s.quantity_mode, '')) IN ('packet', 'pack') THEN MAX(COALESCE(NULLIF(s.packet_count, 0), 0) - COALESCE(sm.sold_quantity, 0), 0) ELSE 0 END) AS available_sets,
+        SUM($_inventorySummaryTotalDisplayQuantityExpression) AS total_display_quantity,
+        SUM($_inventorySummaryAvailableDisplayQuantityExpression) AS available_display_quantity,
+        SUM($_inventorySummarySoldDisplayQuantityExpression) AS sold_display_quantity,
+        GROUP_CONCAT(DISTINCT $_inventorySummaryUnitLabelExpression) AS quantity_modes,
         COUNT(DISTINCT NULLIF(TRIM(COALESCE(u.company_name, s.company_name, '')), '')) AS company_count,
         COUNT(DISTINCT CASE WHEN u.purity_percent > 0 THEN printf('%.2f', u.purity_percent) ELSE NULL END) AS purity_group_count,
         COALESCE(SUM($_inventoryAvailableGrossWeightExpression), 0.0) AS gross_weight,
@@ -155,6 +167,10 @@ class _InventoryMetalGradeScreenState
           soldPieces: _readInt(row, 'sold_pieces'),
           totalSets: _readInt(row, 'total_sets'),
           availableSets: _readInt(row, 'available_sets'),
+          quantityUnitLabel: _inventorySummaryUnitLabel(row),
+          totalDisplayUnits: _readDouble(row, 'total_display_quantity'),
+          availableDisplayUnits: _readDouble(row, 'available_display_quantity'),
+          soldDisplayUnits: _readDouble(row, 'sold_display_quantity'),
           companyCount: _readInt(row, 'company_count'),
           purityGroupCount: _readInt(row, 'purity_group_count'),
           grossWeight: _readDouble(row, 'gross_weight'),
@@ -250,6 +266,17 @@ class _InventoryMetalGradeScreenState
     final value = row.data[column];
     if (value is num) return value.toDouble();
     return 0.0;
+  }
+
+  String _inventorySummaryUnitLabel(QueryRow row) {
+    final value = row.data['quantity_modes'];
+    if (value is! String || value.trim().isEmpty) return 'pcs';
+    final unitLabels = value
+        .split(',')
+        .map((unit) => unit.trim().toLowerCase())
+        .where((unit) => unit.isNotEmpty)
+        .toSet();
+    return _inventoryAggregateUnitLabel(unitLabels);
   }
 
   @override
@@ -433,10 +460,7 @@ class _InventoryMetalGradeScreenState
     StockMetalUiData ui,
     List<_InventoryGradeSummary> grades,
   ) {
-    final totalAvailable = grades.fold<int>(
-      0,
-      (sum, grade) => sum + grade.availablePieces,
-    );
+    final quantityMetricValue = _availableQuantityMixText(grades);
     final availableWeight = grades.fold<double>(
       0,
       (sum, grade) => sum + grade.netWeight,
@@ -506,25 +530,72 @@ class _InventoryMetalGradeScreenState
             ),
           ),
           _HeaderMetric(
-            label: 'Available Items',
-            value: '$totalAvailable pcs',
+            label: 'Available Quantity',
+            value: quantityMetricValue,
             textColor: ui.textOnGradient,
           ),
           const SizedBox(width: 12),
           _HeaderMetric(
             label: 'Available Weight',
-            value: '${_weight(availableWeight)} g',
+            value: _weightWithAdaptiveUnit(availableWeight),
             textColor: ui.textOnGradient,
           ),
           const SizedBox(width: 12),
           _HeaderMetric(
             label: 'Total Weight',
-            value: '${_weight(totalWeight)} g',
+            value: _weightWithAdaptiveUnit(totalWeight),
             textColor: ui.textOnGradient,
           ),
         ],
       ),
     );
+  }
+
+  String _availableQuantityMixText(List<_InventoryGradeSummary> grades) {
+    final totalsByUnit = <String, double>{};
+    for (final grade in grades) {
+      if (grade.isSoldOut || grade.availableDisplayQuantity <= 0.0001) {
+        continue;
+      }
+      final unitLabel = grade.quantityUnitLabel.trim().isEmpty
+          ? 'pcs'
+          : grade.quantityUnitLabel.trim().toLowerCase();
+      totalsByUnit.update(
+        unitLabel,
+        (value) => value + grade.availableDisplayQuantity,
+        ifAbsent: () => grade.availableDisplayQuantity,
+      );
+    }
+
+    if (totalsByUnit.isEmpty) return '0 pcs';
+
+    final entries = totalsByUnit.entries.toList()
+      ..sort((a, b) {
+        final order = {
+          'packet': 0,
+          'packets': 0,
+          'pair': 1,
+          'pairs': 1,
+          'pcs': 2,
+          'piece': 2,
+          'pieces': 2,
+          'set': 3,
+          'sets': 3,
+        };
+        final left = order[a.key] ?? 99;
+        final right = order[b.key] ?? 99;
+        if (left != right) return left.compareTo(right);
+        return a.key.compareTo(b.key);
+      });
+
+    final visible = entries
+        .take(3)
+        .map((entry) => _inventoryDisplayQuantityText(entry.value, entry.key))
+        .toList();
+    if (entries.length > 3) {
+      visible.add('+${entries.length - 3} more');
+    }
+    return visible.join(' / ');
   }
 
   Widget _buildGradeGrid(
@@ -632,6 +703,13 @@ class _InventoryMetalGradeScreenState
     return NumberFormat('##,##0.000', 'en_IN').format(value);
   }
 
+  String _weightWithAdaptiveUnit(double value) {
+    if (value.abs() >= 1000) {
+      return '${NumberFormat('##,##0.###', 'en_IN').format(value / 1000)} kg';
+    }
+    return '${_weight(value)} g';
+  }
+
   void _openGradeLedger(
     _InventoryGradeSummary grade, {
     String? initialBatchCode,
@@ -678,7 +756,7 @@ class _HeaderMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 140),
+      constraints: const BoxConstraints(minWidth: 148, maxWidth: 214),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.30),
@@ -700,8 +778,10 @@ class _HeaderMetric extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 15,
+              fontSize: value.length > 20 ? 13 : 15,
               fontWeight: FontWeight.w900,
               color: textColor,
             ),

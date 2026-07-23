@@ -10,6 +10,10 @@ class _InventoryGradeSummary {
   final int soldPieces;
   final int totalSets;
   final int availableSets;
+  final String quantityUnitLabel;
+  final double totalDisplayUnits;
+  final double availableDisplayUnits;
+  final double soldDisplayUnits;
   final int companyCount;
   final int purityGroupCount;
   final double grossWeight;
@@ -30,6 +34,10 @@ class _InventoryGradeSummary {
     required this.soldPieces,
     required this.totalSets,
     required this.availableSets,
+    required this.quantityUnitLabel,
+    required this.totalDisplayUnits,
+    required this.availableDisplayUnits,
+    required this.soldDisplayUnits,
     required this.companyCount,
     required this.purityGroupCount,
     required this.grossWeight,
@@ -41,7 +49,50 @@ class _InventoryGradeSummary {
     required this.availableInfo,
   });
 
-  bool get isSoldOut => totalPieces > 0 && availablePieces <= 0;
+  bool get isSoldOut =>
+      totalDisplayQuantity > 0 && availableDisplayQuantity <= 0.0001;
+  bool get isPartiallySold => !isSoldOut && soldDisplayQuantity > 0.0001;
+
+  double get totalDisplayQuantity {
+    if (totalDisplayUnits > 0) return totalDisplayUnits;
+    if (quantityUnitLabel == 'packet' && totalSets > 0) {
+      return totalSets.toDouble();
+    }
+    return _inventoryGradeDisplayQuantity(totalPieces, quantityUnitLabel);
+  }
+
+  double get availableDisplayQuantity {
+    if (totalDisplayUnits > 0) return availableDisplayUnits;
+    if (quantityUnitLabel == 'packet' && totalSets > 0) {
+      return availableSets.clamp(0, totalSets).toDouble();
+    }
+    return _inventoryGradeDisplayQuantity(availablePieces, quantityUnitLabel);
+  }
+
+  double get soldDisplayQuantity {
+    if (totalDisplayUnits > 0) return soldDisplayUnits;
+    return (totalDisplayQuantity - availableDisplayQuantity)
+        .clamp(0.0, totalDisplayQuantity)
+        .toDouble();
+  }
+
+  String get totalQuantityLabel =>
+      _inventoryDisplayQuantityText(totalDisplayQuantity, quantityUnitLabel);
+
+  String get availableQuantityLabel => _inventoryDisplayQuantityText(
+      availableDisplayQuantity, quantityUnitLabel);
+
+  String get soldQuantityLabel =>
+      _inventoryDisplayQuantityText(soldDisplayQuantity, quantityUnitLabel);
+
+  String get unitBalanceLabel =>
+      '${_quantityNumber(availableDisplayQuantity)}/${_quantityNumber(totalDisplayQuantity)} ${_inventoryQuantityUnitName(quantityUnitLabel, plural: true).toLowerCase()}';
+
+  String get statusLabel {
+    if (isSoldOut) return 'Sold Out';
+    if (isPartiallySold) return 'Partially Sold';
+    return 'Ready Stock';
+  }
 }
 
 class _InventoryGradeAvailableInfo {
@@ -86,10 +137,10 @@ String _inventoryPrimaryGroupExpression(StockCategory metal) {
     return '''
       CASE
         WHEN NULLIF(TRIM(COALESCE(u.item_type, s.sub_category, '')), '') IS NOT NULL THEN
-          'item|GROUP|' || lower(TRIM(COALESCE(u.item_type, s.sub_category, '')))
+          'item|GROUP|' || lower(TRIM(COALESCE(u.item_type, s.sub_category, ''))) || '|UNIT|' || ($_inventorySummaryUnitLabelExpression)
         WHEN NULLIF(TRIM(COALESCE(u.item_name, s.item_name, '')), '') IS NOT NULL THEN
-          'item|GROUP|' || lower(TRIM(COALESCE(u.item_name, s.item_name, '')))
-        ELSE 'item|GROUP|Silver Item'
+          'item|GROUP|' || lower(TRIM(COALESCE(u.item_name, s.item_name, ''))) || '|UNIT|' || ($_inventorySummaryUnitLabelExpression)
+        ELSE 'item|GROUP|Silver Item|UNIT|' || ($_inventorySummaryUnitLabelExpression)
       END
     ''';
   }
@@ -122,24 +173,23 @@ String _inventoryGradeTitle(StockCategory metal, String gradeLabel) {
     return '${_inventoryGoldGradeText(parts.label)} Gold Stock';
   }
   if (metal == StockCategory.silver) {
-    return '${_titleCase(label)} Silver Stock';
+    final unitLabel = _inventoryGroupUnitLabel(gradeLabel);
+    final unitText = unitLabel == null
+        ? ''
+        : ' ${_inventoryQuantityUnitName(unitLabel, plural: false)}';
+    return '${_titleCase(label)}$unitText Silver Stock';
   }
   return '$label ${ui.title} Stock';
 }
 
-String _inventoryGradeSubtitle(
-  StockCategory metal,
-  String gradeLabel,
-  int availableUnits,
-  int totalUnits,
-  int companyCount,
-  int purityGroupCount,
-) {
+String _inventoryGradeSubtitle(StockCategory metal, String gradeLabel,
+    int availableUnits, int totalUnits, int companyCount, int purityGroupCount,
+    [String? availableQuantityLabel]) {
   final ui = stockMetalUiFor(metal);
   final parts = _inventoryGroupParts(gradeLabel);
   if (metal == StockCategory.gold) {
     final gradeText = _inventoryGoldGradeText(parts.label);
-    return '$gradeText gold - $availableUnits available pcs';
+    return '$gradeText gold - ${availableQuantityLabel ?? '$availableUnits pcs'} available';
   }
   if (metal == StockCategory.silver) {
     final companyText =
@@ -147,7 +197,7 @@ String _inventoryGradeSubtitle(
     final gradeText = purityGroupCount <= 1
         ? '$purityGroupCount grade'
         : '$purityGroupCount grades';
-    return '$availableUnits available pcs - $companyText - $gradeText';
+    return '${availableQuantityLabel ?? '$availableUnits pcs'} available - $companyText - $gradeText';
   }
   final purity = _inventoryGradePurityPercent(parts.label);
   final purityText = purity == null
@@ -156,21 +206,43 @@ String _inventoryGradeSubtitle(
   return '$purityText - $availableUnits available items';
 }
 
+double _inventoryGradeDisplayQuantity(int pieces, String unitLabel) {
+  final quantity = pieces.toDouble();
+  return switch (unitLabel) {
+    'pair' => quantity / 2,
+    _ => quantity,
+  };
+}
+
 ({String label, _InventoryGroupKind kind}) _inventoryGroupParts(String value) {
   final parts = value.split('|GROUP|');
   if (parts.length < 2) {
-    final label = value.trim();
+    final label = _inventoryGroupBaseLabel(value);
     return (label: label, kind: _InventoryGroupKind.grade);
   }
   final type = parts.first.trim().toLowerCase();
+  final label = _inventoryGroupBaseLabel(parts.sublist(1).join('|GROUP|'));
   return (
-    label: parts.sublist(1).join('|GROUP|').trim(),
+    label: label,
     kind: type == 'company'
         ? _InventoryGroupKind.company
         : type == 'item'
             ? _InventoryGroupKind.item
             : _InventoryGroupKind.grade,
   );
+}
+
+String _inventoryGroupBaseLabel(String value) {
+  return value
+      .replaceFirst(RegExp(r'\|UNIT\|[^|]+$', caseSensitive: false), '')
+      .trim();
+}
+
+String? _inventoryGroupUnitLabel(String value) {
+  final match = RegExp(r'\|UNIT\|([^|]+)$', caseSensitive: false)
+      .firstMatch(value.trim());
+  final label = match?.group(1)?.trim().toLowerCase();
+  return label == null || label.isEmpty ? null : label;
 }
 
 String _inventoryGoldGradeText(String gradeLabel) {
