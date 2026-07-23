@@ -48,7 +48,10 @@ class _InventoryGradeDetailScreenState
     super.dispose();
   }
 
-  Future<List<_InventoryBatchGroup>> _loadBatchGroups() async {
+  Future<List<_InventoryBatchGroup>> _loadBatchGroups({
+    String? sourceBatchCode,
+    bool includeAllInvoiceItems = false,
+  }) async {
     final groupExpression = _inventoryPrimaryGroupExpression(widget.metal);
     final rows = await _db.customSelect(
       '''
@@ -68,9 +71,25 @@ class _InventoryGradeDetailScreenState
         u.less_weight AS less_weight,
         u.net_weight AS net_weight,
         u.purity_percent AS purity_percent,
-        u.actual_fine_weight AS actual_fine,
+        CASE
+          WHEN $_inventoryLotUnitExpression
+            AND COALESCE(u.net_weight, 0.0) > 0
+            AND COALESCE(u.purity_percent, 0.0) > 0
+          THEN ROUND(COALESCE(u.net_weight, 0.0) * COALESCE(u.purity_percent, 0.0) / 100.0, 6)
+          ELSE COALESCE(u.actual_fine_weight, 0.0)
+        END AS actual_fine,
         u.wastage_fine_weight AS wastage_fine,
-        u.valuation_fine_weight AS valuation_fine,
+        CASE
+          WHEN $_inventoryLotUnitExpression
+            AND COALESCE(u.net_weight, 0.0) > 0
+            AND COALESCE(u.purity_percent, 0.0) > 0
+          THEN ROUND(
+            (COALESCE(u.net_weight, 0.0) * COALESCE(u.purity_percent, 0.0) / 100.0)
+            + COALESCE(u.wastage_fine_weight, 0.0),
+            6
+          )
+          ELSE COALESCE(u.valuation_fine_weight, 0.0)
+        END AS valuation_fine,
         u.rate_per_gram AS rate_per_gram,
         u.making_amount AS making_amount,
         u.unit_cost AS unit_cost,
@@ -132,6 +151,26 @@ class _InventoryGradeDetailScreenState
         COALESCE(pv.payment_meta, '') AS payment_meta,
         COALESCE(pv.created_at, u.created_at) AS batch_created_at,
         u.status AS status,
+        COALESCE((
+          SELECT GROUP_CONCAT(DISTINCT NULLIF(TRIM(source_unit.item_name), ''))
+          FROM stock_item_units source_unit
+          LEFT JOIN purchase_vouchers source_pv
+            ON source_pv.id = source_unit.purchase_voucher_id
+          WHERE lower(source_unit.metal_type) = lower(u.metal_type)
+            AND lower(
+              COALESCE(
+                NULLIF(TRIM(source_unit.batch_code), ''),
+                source_pv.voucher_no,
+                'Unbatched Stock'
+              )
+            ) = lower(
+              COALESCE(
+                NULLIF(TRIM(u.batch_code), ''),
+                pv.voucher_no,
+                'Unbatched Stock'
+              )
+            )
+        ), '') AS source_item_names,
         $groupExpression AS grade_label
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
@@ -139,7 +178,11 @@ class _InventoryGradeDetailScreenState
       LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
       $_inventorySoldWeightJoin
       WHERE lower(u.metal_type) = ?
-        AND $groupExpression = ?
+        AND (? = 1 OR $groupExpression = ?)
+        AND (
+          ? = ''
+          OR lower(COALESCE(NULLIF(TRIM(u.batch_code), ''), pv.voucher_no, 'Unbatched Stock')) = lower(?)
+        )
       ORDER BY
         batch_created_at DESC,
         batch_code DESC,
@@ -151,7 +194,10 @@ class _InventoryGradeDetailScreenState
       ''',
       variables: [
         Variable.withString(widget.metal.label.toLowerCase()),
+        Variable.withInt(includeAllInvoiceItems ? 1 : 0),
         Variable.withString(widget.grade.gradeLabel),
+        Variable.withString(sourceBatchCode?.trim() ?? ''),
+        Variable.withString(sourceBatchCode?.trim() ?? ''),
       ],
     ).get();
 
@@ -219,7 +265,7 @@ class _InventoryGradeDetailScreenState
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                    child: _buildBatchToolbar(ui, batches),
+                    child: _buildSourceInvoiceToolbar(ui, batches, title),
                   ),
                 ),
                 SliverFillRemaining(
@@ -259,7 +305,7 @@ class _InventoryGradeDetailScreenState
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                        child: _buildBatchToolbar(ui, batches),
+                        child: _buildSourceInvoiceToolbar(ui, batches, title),
                       ),
                     ),
                     SliverPadding(
@@ -418,7 +464,7 @@ class _InventoryGradeDetailScreenState
             Icon(Icons.manage_search_rounded, color: ui.accent, size: 36),
             const SizedBox(height: 12),
             Text(
-              'No Matching Batch Found',
+              'No Matching Source Invoice Found',
               style: GoogleFonts.inter(
                 fontSize: 19,
                 fontWeight: FontWeight.w900,
@@ -427,7 +473,7 @@ class _InventoryGradeDetailScreenState
             ),
             const SizedBox(height: 6),
             Text(
-              'Change the search text or filter to view more stock batches.',
+              'Change the search text or filter to view more source invoices.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
@@ -441,12 +487,13 @@ class _InventoryGradeDetailScreenState
     );
   }
 
-  Widget _buildBatchToolbar(
+  Widget _buildSourceInvoiceToolbar(
     StockMetalUiData ui,
     List<_InventoryBatchGroup> batches,
+    String title,
   ) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -459,89 +506,139 @@ class _InventoryGradeDetailScreenState
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: TextField(
-              controller: _batchSearchCtrl,
-              onChanged: (value) => setState(() => _batchSearch = value),
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: InvColors.textDark,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Search batch, supplier, invoice or item',
-                hintStyle: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: InvColors.textHint,
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: ui.softTint.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                prefixIcon: Icon(
-                  Icons.search_rounded,
+                child: Icon(
+                  Icons.receipt_long_rounded,
                   color: ui.accent,
                   size: 20,
                 ),
-                suffixIcon: _batchSearch.trim().isEmpty
-                    ? null
-                    : IconButton(
-                        onPressed: () {
-                          _batchSearchCtrl.clear();
-                          setState(() => _batchSearch = '');
-                        },
-                        icon: const Icon(Icons.close_rounded, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Source Purchase Invoices',
+                      style: GoogleFonts.inter(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: InvColors.textDark,
                       ),
-                filled: true,
-                fillColor: const Color(0xFFFBF8F1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Color(0xFFEADCC5)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Color(0xFFEADCC5)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(color: ui.accent, width: 1.4),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 13,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Showing invoice sources that contain $title stock. Open a card to view the full source dossier.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: InvColors.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final filter in const [
-                'Live Stock',
-                'All Stock',
-                'Available',
-                'Partially Sold',
-                'Sold Out',
-                'GST',
-                'Due',
-                'Attachment',
-              ])
-                _BatchFilterChip(
-                  label: filter,
-                  selected: _batchFilter == filter,
-                  accent: ui.accent,
-                  onTap: () => setState(() => _batchFilter = filter),
+              const SizedBox(width: 12),
+              Text(
+                '${_filterBatches(batches).length}/${batches.length} invoices',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: InvColors.textMuted,
                 ),
+              ),
             ],
           ),
-          const SizedBox(width: 12),
-          Text(
-            '${_filterBatches(batches).length}/${batches.length} batches',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: InvColors.textMuted,
-            ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _batchSearchCtrl,
+                  onChanged: (value) => setState(() => _batchSearch = value),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: InvColors.textDark,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search source invoice, supplier, batch or item',
+                    hintStyle: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: InvColors.textHint,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: ui.accent,
+                      size: 20,
+                    ),
+                    suffixIcon: _batchSearch.trim().isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: () {
+                              _batchSearchCtrl.clear();
+                              setState(() => _batchSearch = '');
+                            },
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                          ),
+                    filled: true,
+                    fillColor: const Color(0xFFFBF8F1),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Color(0xFFEADCC5)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: Color(0xFFEADCC5)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: ui.accent, width: 1.4),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final filter in const [
+                    'Live Stock',
+                    'All Stock',
+                    'Available',
+                    'Partially Sold',
+                    'Sold Out',
+                    'GST',
+                    'Due',
+                    'Attachment',
+                  ])
+                    _BatchFilterChip(
+                      label: filter,
+                      selected: _batchFilter == filter,
+                      accent: ui.accent,
+                      onTap: () => setState(() => _batchFilter = filter),
+                    ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -812,12 +909,29 @@ class _InventoryGradeDetailScreenState
   }
 
   Future<void> _openBatchDossier(_InventoryBatchGroup batch) async {
+    var dossierBatch = batch;
+    final sourceBatchCode = batch.batchCode.trim();
+    if (sourceBatchCode.isNotEmpty) {
+      final sourceBatches = await _loadBatchGroups(
+        sourceBatchCode: sourceBatchCode,
+        includeAllInvoiceItems: true,
+      );
+      for (final sourceBatch in sourceBatches) {
+        if (sourceBatch.batchCode.toLowerCase() ==
+            sourceBatchCode.toLowerCase()) {
+          dossierBatch = sourceBatch;
+          break;
+        }
+      }
+    }
+
+    if (!mounted) return;
     final cleaned = await Navigator.of(context).push<bool>(
       PageRouteBuilder<bool>(
         pageBuilder: (_, animation, __) => _InventoryBatchDossierScreen(
           metal: widget.metal,
           grade: widget.grade,
-          batch: batch,
+          batch: dossierBatch,
         ),
         transitionsBuilder: (_, animation, __, child) {
           final curved = CurvedAnimation(

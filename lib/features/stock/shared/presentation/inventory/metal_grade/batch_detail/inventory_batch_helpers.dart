@@ -68,6 +68,10 @@ String _percent(double value) {
   return value.toStringAsFixed(2);
 }
 
+bool _hasWeightDifference(double first, double second) {
+  return (first - second).abs() >= 0.001;
+}
+
 String _dash(String value) {
   final text = value.trim();
   return text.isEmpty ? 'Not recorded' : text;

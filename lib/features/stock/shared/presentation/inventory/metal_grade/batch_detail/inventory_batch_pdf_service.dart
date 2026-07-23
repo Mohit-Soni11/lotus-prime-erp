@@ -30,7 +30,7 @@ class _InventoryBatchPdfService {
             _itemLedger(batch),
             pw.SizedBox(height: 12),
             pw.NewPage(freeSpace: 150),
-            _purchaseValuation(batch),
+            _purchaseValuation(batch, metal),
             pw.SizedBox(height: 12),
             _settlementSummary(batch),
           ];
@@ -110,11 +110,6 @@ class _InventoryBatchPdfService {
                       pw.SizedBox(width: 8),
                       _tag('GST PURCHASE', PdfColors.green700),
                     ],
-                    pw.SizedBox(width: 8),
-                    _tag(
-                      batch.stockStatusLabel.toUpperCase(),
-                      _batchStatusPdfColor(batch),
-                    ),
                   ],
                 ),
                 pw.SizedBox(height: 4),
@@ -128,7 +123,7 @@ class _InventoryBatchPdfService {
               ],
             ),
           ),
-          _headerMetric('Items', '${batch.availableItems}/${batch.totalItems}'),
+          _headerMetric('Quantity', batch.totalQuantityLabel),
           pw.SizedBox(width: 8),
           _headerMetric('Actual Fine', '${_weight(batch.actualFine)} g'),
         ],
@@ -157,7 +152,6 @@ class _InventoryBatchPdfService {
             DateTime.fromMillisecondsSinceEpoch(batch.createdAt),
           ),
         ),
-      _infoRow('Stock Status', batch.stockStatusLabel),
     ];
 
     return _section(
@@ -169,24 +163,34 @@ class _InventoryBatchPdfService {
           spacing: 6,
           runSpacing: 6,
           children: [
-            _metric('Total Items', '${batch.totalItems} pcs'),
-            _metric('Available', '${batch.availableItems} pcs'),
-            _metric('Sold', '${batch.totalItems - batch.availableItems} pcs'),
-            _metric('Stock Status', batch.stockStatusLabel),
-            _metric('Gross Wt', '${_weight(batch.grossWeight)} g'),
-            _metric('Net Wt', '${_weight(batch.netWeight)} g'),
-            _metric('Purity', '${_percent(batch.purityPercent)}%'),
-            _metric('Wastage', '${_percent(batch.wastagePercent)}%'),
-            _metric('Actual Fine', '${_weight(batch.actualFine)} g'),
-            _metric('Wastage Fine', '${_weight(batch.wastageFine)} g'),
-            _metric('Valuation Fine', '${_weight(batch.valuationFine)} g'),
+            _metric('Total Qty', batch.totalQuantityLabel),
+            if (_hasWeightDifference(
+                batch.totalGrossWeight, batch.totalNetWeight))
+              _metric('Gross Weight', '${_weight(batch.totalGrossWeight)} g'),
+            _metric('Total Weight', '${_weight(batch.totalNetWeight)} g'),
+            if (_hasWeight(batch.purityPercent))
+              _metric('Base Purity', '${_percent(batch.purityPercent)}%'),
+            if (_hasWeight(batch.wastagePercent))
+              _metric('Wastage', '${_percent(batch.wastagePercent)}%'),
+            if (_hasWeight(batch.valuationPurityPercent))
+              _metric(
+                'Valuation Purity',
+                '${_percent(batch.valuationPurityPercent)}%',
+              ),
+            if (_hasWeight(batch.actualFine))
+              _metric('Actual Fine', '${_weight(batch.actualFine)} g'),
+            if (_hasWeight(batch.valuationFine))
+              _metric('Valuation Fine', '${_weight(batch.valuationFine)} g'),
           ],
         ),
       ],
     );
   }
 
-  static pw.Widget _purchaseValuation(_InventoryBatchGroup batch) {
+  static pw.Widget _purchaseValuation(
+    _InventoryBatchGroup batch,
+    StockCategory metal,
+  ) {
     final primaryRate = batch.units
         .map((unit) => unit.ratePerGram)
         .firstWhere((rate) => rate > 0, orElse: () => 0.0);
@@ -200,7 +204,11 @@ class _InventoryBatchPdfService {
             if (_hasMoney(primaryRate))
               _metric('Rate / Gram', _money(primaryRate)),
             if (_hasMoney(primaryRate))
-              _metric('Rate / 10g', _money(primaryRate * 10)),
+              _metric(
+                  _purchaseRateUnitLabel(metal),
+                  _money(
+                    primaryRate * _purchaseRateUnitMultiplier(metal),
+                  )),
             _metric('Actual Fine Total', '${_weight(batch.actualFine)} g'),
             _metric(
                 'Valuation Fine Total', '${_weight(batch.valuationFine)} g'),
@@ -259,13 +267,14 @@ class _InventoryBatchPdfService {
             runSpacing: 6,
             children: [
               if (_hasText(payment.paymentMode))
-                _metric('Settlement Mode', payment.paymentMode),
+                _metric('Settlement Mode', _humanizeToken(payment.paymentMode)),
               if (_hasText(payment.balanceLabel))
-                _metric('Balance Handling', payment.balanceLabel),
+                _metric(
+                    'Balance Handling', _humanizeToken(payment.balanceLabel)),
               if (_hasText(payment.dueMode))
-                _metric('Due Mode', payment.dueMode),
+                _metric('Due Mode', _humanizeToken(payment.dueMode)),
               if (_hasText(payment.excessMode))
-                _metric('Excess Mode', payment.excessMode),
+                _metric('Excess Mode', _humanizeToken(payment.excessMode)),
             ],
           ),
           pw.SizedBox(height: 8),
@@ -399,17 +408,31 @@ class _InventoryBatchPdfService {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _unitMetric('PCS', '1'),
-              _unitMetric('Gross', '${_weight(unit.grossWeight)} g'),
-              _unitMetric('Less', '${_weight(unit.lessWeight)} g'),
-              _unitMetric('Net', '${_weight(unit.netWeight)} g'),
-              _unitMetric('Purity', '${_percent(unit.purityPercent)}%'),
-              _unitMetric('Wastage', '${_percent(unit.wastagePercent)}%'),
+              _unitMetric('Unit', unit.displayUnitPlural),
+              _unitMetric('Total Qty', unit.totalQuantityLabel),
+              if (_hasText(unit.huid)) _unitMetric('HUID', unit.huid),
+              if (_hasWeightDifference(
+                  unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
+                _unitMetric('Gross Weight',
+                    '${_weight(unit.displayTotalGrossWeight)} g'),
+              if (_hasWeight(unit.lessWeight))
+                _unitMetric('Less Weight', '${_weight(unit.lessWeight)} g'),
               _unitMetric(
-                  'Total Purity', '${_percent(unit.totalPurityPercent)}%'),
-              _unitMetric('Actual Fine', '${_weight(unit.actualFine)} g'),
-              _unitMetric('Wastage Fine', '${_weight(unit.wastageFine)} g'),
-              _unitMetric('Valuation Fine', '${_weight(unit.valuationFine)} g'),
+                  'Total Weight', '${_weight(unit.displayTotalNetWeight)} g'),
+              if (_hasWeight(unit.purityPercent))
+                _unitMetric('Base Purity', '${_percent(unit.purityPercent)}%'),
+              if (_hasWeight(unit.wastagePercent))
+                _unitMetric('Wastage', '${_percent(unit.wastagePercent)}%'),
+              if (_hasWeight(unit.totalPurityPercent))
+                _unitMetric(
+                  'Valuation Purity',
+                  '${_percent(unit.totalPurityPercent)}%',
+                ),
+              if (_hasWeight(unit.actualFine))
+                _unitMetric('Actual Fine', '${_weight(unit.actualFine)} g'),
+              if (_hasWeight(unit.valuationFine))
+                _unitMetric(
+                    'Valuation Fine', '${_weight(unit.valuationFine)} g'),
               if (_hasMoney(unit.ratePerGram))
                 _unitMetric('Rate / Gram', _money(unit.ratePerGram)),
               if (_hasMoney(unit.makingAmount))
@@ -611,23 +634,35 @@ class _InventoryBatchPdfService {
     return PdfColor.fromInt(color.toARGB32());
   }
 
-  static PdfColor _batchStatusPdfColor(_InventoryBatchGroup batch) {
-    if (batch.isSoldOut) return PdfColors.red700;
-    if (batch.isPartiallySold) return PdfColors.amber800;
-    return PdfColors.green700;
-  }
-
   static bool _hasText(String value) => value.trim().isNotEmpty;
 
   static bool _hasMoney(double value) => value.abs() > 0.004;
 
   static bool _hasWeight(double value) => value.abs() > 0.0004;
 
+  static String _purchaseRateUnitLabel(StockCategory metal) {
+    return metal == StockCategory.silver ? 'Rate / Kg' : 'Rate / 10g';
+  }
+
+  static double _purchaseRateUnitMultiplier(StockCategory metal) {
+    return metal == StockCategory.silver ? 1000 : 10;
+  }
+
   static String _unitSubtitle(_InventoryGradeUnit unit) {
     return [
+      unit.companyName,
       unit.itemType,
       unit.segment,
-      unit.huid,
+      unit.unitCode,
     ].where((value) => value.trim().isNotEmpty).join(' - ');
+  }
+
+  static String _humanizeToken(String value) {
+    final spaced =
+        value.trim().replaceAll('_', ' ').replaceAll('-', ' ').replaceAllMapped(
+              RegExp(r'([a-z])([A-Z])'),
+              (match) => '${match.group(1)} ${match.group(2)}',
+            );
+    return _titleCase(spaced);
   }
 }

@@ -14,7 +14,7 @@ class _InventoryBatchDossierScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ui = stockMetalUiFor(metal);
-    final title = _inventoryGradeTitle(metal, grade.gradeLabel);
+    final title = batch.sourceDocumentLabel;
 
     return Scaffold(
       backgroundColor: InvColors.bodyBg,
@@ -30,7 +30,6 @@ class _InventoryBatchDossierScreen extends StatelessWidget {
                 title: title,
                 batch: batch,
                 onDocuments: () => _openDocumentCenter(context),
-                onCleanup: () => _openCleanupCenter(context),
               ),
             ),
           ),
@@ -52,8 +51,10 @@ class _InventoryBatchDossierScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _BatchDocumentPanel(batch: batch, ui: ui),
-                  const SizedBox(height: 16),
+                  if (batch.payment.hasAttachment) ...[
+                    _BatchDocumentPanel(batch: batch, ui: ui),
+                    const SizedBox(height: 16),
+                  ],
                   _BatchStockLedgerPanel(batch: batch, ui: ui),
                 ],
               ),
@@ -143,31 +144,6 @@ class _InventoryBatchDossierScreen extends StatelessWidget {
         onDownload: (type) {
           Navigator.of(dialogContext).pop();
           _downloadDocument(context, type);
-        },
-      ),
-    );
-  }
-
-  void _openCleanupCenter(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => _InventoryBatchCleanupDialog(
-        batchCode: batch.batchCode,
-        onCleanupConfirmed: () async {
-          final service = InventoryBatchCleanupService(AppDatabase());
-          final result = await service.deleteSafeTestBatch(batch.batchCode);
-          if (!dialogContext.mounted) return;
-          Navigator.of(dialogContext).pop();
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Cleaned ${result.batchCode}: ${result.removedUnits} stock unit(s) removed.',
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          Navigator.of(context).pop(true);
         },
       ),
     );

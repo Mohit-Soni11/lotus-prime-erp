@@ -1,18 +1,16 @@
-﻿part of '../../inventory_screen.dart';
+part of '../../inventory_screen.dart';
 
 class _BatchDossierHeader extends StatelessWidget {
   final StockMetalUiData ui;
   final String title;
   final _InventoryBatchGroup batch;
   final VoidCallback onDocuments;
-  final VoidCallback onCleanup;
 
   const _BatchDossierHeader({
     required this.ui,
     required this.title,
     required this.batch,
     required this.onDocuments,
-    required this.onCleanup,
   });
 
   @override
@@ -75,7 +73,9 @@ class _BatchDossierHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '$title - complete batch dossier',
+                  batch.dossierSubtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -91,13 +91,8 @@ class _BatchDossierHeader extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _HeaderMetric(
-                label: 'Items',
-                value: '${batch.availableItems}/${batch.totalItems}',
-                textColor: ui.textOnGradient,
-              ),
-              _HeaderMetric(
-                label: 'Stock Status',
-                value: batch.stockStatusLabel,
+                label: 'Quantity',
+                value: batch.quantityBalanceLabel,
                 textColor: ui.textOnGradient,
               ),
               _HeaderMetric(
@@ -110,12 +105,6 @@ class _BatchDossierHeader extends StatelessWidget {
                 icon: Icons.description_rounded,
                 textColor: ui.textOnGradient,
                 onTap: onDocuments,
-              ),
-              _HeaderActionButton(
-                label: 'Cleanup',
-                icon: Icons.cleaning_services_rounded,
-                textColor: ui.textOnGradient,
-                onTap: onCleanup,
               ),
             ],
           ),
@@ -175,6 +164,9 @@ class _InventoryBatchDocumentDialog extends StatelessWidget {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      elevation: 18,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 760),
         child: Padding(
@@ -389,83 +381,93 @@ class _BatchOverviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusAccent = _dossierBatchStatusAccent(batch);
     return _DossierPanel(
       icon: Icons.inventory_2_rounded,
       title: 'Batch Overview',
-      subtitle: 'Supplier, invoice and stock status',
+      subtitle: 'Supplier, quantity, purity and valuation profile',
       accent: ui.accent,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _DossierInfoRow(label: 'Supplier', value: _dash(batch.supplierName)),
-          _DossierInfoRow(
-            label: 'Supplier Invoice',
-            value: _dash(batch.supplierInvoiceNo),
-          ),
-          _DossierInfoRow(
-              label: 'Purchase Type',
-              value: batch.isGst ? 'GST Purchase' : 'Non-GST Purchase'),
-          _DossierInfoRow(
-            label: 'Batch Date',
-            value: batch.createdAt > 0
-                ? DateFormat('dd MMM yyyy').format(
-                    DateTime.fromMillisecondsSinceEpoch(batch.createdAt),
-                  )
-                : 'Not recorded',
-          ),
-          _DossierInfoRow(
-            label: 'Stock Status',
-            value: batch.stockStatusLabel,
-          ),
+          if (batch.supplierName.trim().isNotEmpty)
+            _DossierInfoRow(label: 'Supplier', value: batch.supplierName),
+          if (batch.supplierInvoiceNo.trim().isNotEmpty)
+            _DossierInfoRow(
+              label: 'Supplier Invoice',
+              value: batch.supplierInvoiceNo,
+            ),
+          if (batch.taxType.trim().isNotEmpty)
+            _DossierInfoRow(
+                label: 'Purchase Type',
+                value: batch.isGst ? 'GST Purchase' : 'Non-GST Purchase'),
+          if (batch.createdAt > 0)
+            _DossierInfoRow(
+              label: 'Batch Date',
+              value: DateFormat('dd MMM yyyy').format(
+                DateTime.fromMillisecondsSinceEpoch(batch.createdAt),
+              ),
+            ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
               _DossierMetric(
-                  label: 'Total Items',
-                  value: '${batch.totalItems} pcs',
+                  label: 'Total Qty',
+                  value: batch.totalQuantityLabel,
                   accent: ui.accent),
               _DossierMetric(
-                  label: 'Available',
-                  value: '${batch.availableItems} pcs',
+                  label: 'Available Qty',
+                  value: batch.availableQuantityLabel,
                   accent: InvColors.success),
               _DossierMetric(
-                  label: 'Sold',
-                  value: '${batch.totalItems - batch.availableItems} pcs',
+                  label: 'Sold Qty',
+                  value: batch.soldQuantityLabel,
                   accent: InvColors.danger),
+              if (_hasWeightDifference(
+                  batch.totalGrossWeight, batch.totalNetWeight))
+                _DossierMetric(
+                    label: 'Gross Weight',
+                    value: '${_weight(batch.totalGrossWeight)} g',
+                    accent: ui.accent),
               _DossierMetric(
-                  label: 'Stock Status',
-                  value: batch.stockStatusLabel,
-                  accent: statusAccent),
-              _DossierMetric(
-                  label: 'Gross Wt',
-                  value: '${_weight(batch.grossWeight)} g',
+                  label: 'Total Weight',
+                  value: '${_weight(batch.totalNetWeight)} g',
                   accent: ui.accent),
               _DossierMetric(
-                  label: 'Net Wt',
-                  value: '${_weight(batch.netWeight)} g',
+                  label: 'Available Weight',
+                  value: '${_weight(batch.availableNetWeight)} g',
                   accent: const Color(0xFF0F766E)),
-              _DossierMetric(
-                  label: 'Purity',
-                  value: '${_percent(batch.purityPercent)}%',
-                  accent: const Color(0xFF2563EB)),
-              _DossierMetric(
-                  label: 'Wastage',
-                  value: '${_percent(batch.wastagePercent)}%',
-                  accent: const Color(0xFFF59E0B)),
-              _DossierMetric(
-                  label: 'Actual Fine',
-                  value: '${_weight(batch.actualFine)} g',
-                  accent: InvColors.success),
-              _DossierMetric(
-                  label: 'Wastage Fine',
-                  value: '${_weight(batch.wastageFine)} g',
-                  accent: const Color(0xFFF59E0B)),
-              _DossierMetric(
-                  label: 'Valuation Fine',
-                  value: '${_weight(batch.valuationFine)} g',
-                  accent: InvColors.brandGold),
+              if (batch.soldNetWeight > 0)
+                _DossierMetric(
+                    label: 'Sold Weight',
+                    value: '${_weight(batch.soldNetWeight)} g',
+                    accent: InvColors.danger),
+              if (batch.purityPercent > 0)
+                _DossierMetric(
+                    label: 'Base Purity',
+                    value: '${_percent(batch.purityPercent)}%',
+                    accent: const Color(0xFF2563EB)),
+              if (batch.wastagePercent > 0)
+                _DossierMetric(
+                    label: 'Wastage',
+                    value: '${_percent(batch.wastagePercent)}%',
+                    accent: const Color(0xFFF59E0B)),
+              if (batch.valuationPurityPercent > 0)
+                _DossierMetric(
+                    label: 'Valuation Purity',
+                    value: '${_percent(batch.valuationPurityPercent)}%',
+                    accent: InvColors.brandGold),
+              if (batch.actualFine > 0)
+                _DossierMetric(
+                    label: 'Actual Fine',
+                    value: '${_weight(batch.actualFine)} g',
+                    accent: InvColors.success),
+              if (batch.valuationFine > 0)
+                _DossierMetric(
+                    label: 'Valuation Fine',
+                    value: '${_weight(batch.valuationFine)} g',
+                    accent: InvColors.brandGold),
             ],
           ),
         ],
@@ -537,58 +539,106 @@ class _BatchPaymentPanel extends StatelessWidget {
       subtitle: 'Cash, metal, GST, due and return snapshot',
       accent: ui.accent,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _DossierMetric(
-                  label: 'Final Bill',
-                  value: _money(payment.grandTotal),
-                  accent: ui.accent),
-              _DossierMetric(
-                  label: 'Total Paid',
-                  value: _money(payment.totalPaid),
-                  accent: InvColors.success),
-              _DossierMetric(
-                  label: 'Cash Due',
-                  value: _money(payment.balanceDue),
-                  accent: payment.balanceDue > 0
-                      ? InvColors.danger
-                      : InvColors.success),
-              _DossierMetric(
-                  label: 'Metal Paid',
-                  value: '${_weight(payment.metalPaidFine)} g',
-                  accent: InvColors.brandGold),
-              _DossierMetric(
-                  label: 'Fine Due',
-                  value: '${_weight(payment.fineDueWeight)} g',
-                  accent: payment.fineDueWeight > 0
-                      ? InvColors.danger
-                      : InvColors.success),
-              _DossierMetric(
-                  label: 'Fine Return',
-                  value: '${_weight(payment.fineReturnWeight)} g',
-                  accent: const Color(0xFF0F766E)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _DossierInfoRow(label: 'Cash', value: _money(payment.cashPaid)),
-          _DossierInfoRow(label: 'UPI', value: _money(payment.upiPaid)),
-          _DossierInfoRow(label: 'Bank', value: _money(payment.bankPaid)),
-          _DossierInfoRow(label: 'Card', value: _money(payment.cardPaid)),
-          if (batch.isGst) ...[
-            _DossierInfoRow(
-                label: 'GST Total', value: _money(payment.gstAmount)),
-            _DossierInfoRow(
-                label: 'CGST / SGST',
-                value:
-                    '${_money(payment.cgstAmount)} / ${_money(payment.sgstAmount)}'),
-          ],
-          _DossierInfoRow(label: 'Status', value: _dash(payment.paymentStatus)),
+          if (_paymentMetrics(payment).isNotEmpty)
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final metric in _paymentMetrics(payment))
+                  _DossierMetric(
+                    label: metric.label,
+                    value: metric.value,
+                    accent: metric.accent,
+                  ),
+              ],
+            ),
+          if (_paymentMetrics(payment).isNotEmpty &&
+              _paymentInfoRows(payment, batch.isGst).isNotEmpty)
+            const SizedBox(height: 12),
+          for (final row in _paymentInfoRows(payment, batch.isGst))
+            _DossierInfoRow(label: row.label, value: row.value),
+          if (_paymentMetrics(payment).isEmpty &&
+              _paymentInfoRows(payment, batch.isGst).isEmpty)
+            Text(
+              'No payment settlement information is recorded for this batch.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: InvColors.textMuted,
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  List<_DossierMetricData> _paymentMetrics(_InventoryPaymentSummary payment) {
+    final metrics = <_DossierMetricData>[];
+    if (payment.grandTotal > 0) {
+      metrics.add(_DossierMetricData(
+          'Final Bill', _money(payment.grandTotal), ui.accent));
+    }
+    if (payment.totalPaid > 0) {
+      metrics.add(_DossierMetricData(
+          'Total Paid', _money(payment.totalPaid), InvColors.success));
+    }
+    if (payment.balanceDue > 0) {
+      metrics.add(_DossierMetricData(
+          'Cash Due', _money(payment.balanceDue), InvColors.danger));
+    }
+    if (payment.metalPaidFine > 0) {
+      metrics.add(_DossierMetricData('Metal Paid',
+          '${_weight(payment.metalPaidFine)} g', InvColors.brandGold));
+    }
+    if (payment.fineDueWeight > 0) {
+      metrics.add(_DossierMetricData(
+          'Fine Due', '${_weight(payment.fineDueWeight)} g', InvColors.danger));
+    }
+    if (payment.fineReturnWeight > 0) {
+      metrics.add(_DossierMetricData('Fine Return',
+          '${_weight(payment.fineReturnWeight)} g', const Color(0xFF0F766E)));
+    }
+    if (payment.supplierCreditValue > 0) {
+      metrics.add(_DossierMetricData('Supplier Credit',
+          _money(payment.supplierCreditValue), InvColors.brandGold));
+    }
+    return metrics;
+  }
+
+  List<_DossierInfoData> _paymentInfoRows(
+    _InventoryPaymentSummary payment,
+    bool isGst,
+  ) {
+    final rows = <_DossierInfoData>[];
+    if (payment.paymentMode.trim().isNotEmpty) {
+      rows.add(
+          _DossierInfoData('Payment Mode', _titleCase(payment.paymentMode)));
+    }
+    if (payment.cashPaid > 0) {
+      rows.add(_DossierInfoData('Cash', _money(payment.cashPaid)));
+    }
+    if (payment.upiPaid > 0) {
+      rows.add(_DossierInfoData('UPI', _money(payment.upiPaid)));
+    }
+    if (payment.bankPaid > 0) {
+      rows.add(_DossierInfoData('Bank', _money(payment.bankPaid)));
+    }
+    if (payment.cardPaid > 0) {
+      rows.add(_DossierInfoData('Card', _money(payment.cardPaid)));
+    }
+    if (isGst && payment.gstAmount > 0) {
+      rows.add(_DossierInfoData('GST Total', _money(payment.gstAmount)));
+      rows.add(_DossierInfoData(
+        'CGST / SGST',
+        '${_money(payment.cgstAmount)} / ${_money(payment.sgstAmount)}',
+      ));
+    }
+    if (payment.paymentStatus.trim().isNotEmpty) {
+      rows.add(_DossierInfoData('Status', payment.paymentStatus));
+    }
+    return rows;
   }
 }
 
@@ -658,16 +708,10 @@ class _BatchStockLedgerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final availableUnits = batch.units
-        .where((unit) => unit.status.toLowerCase() == 'available')
-        .toList();
-    final soldUnits = batch.units
-        .where((unit) => unit.status.toLowerCase() != 'available')
-        .toList();
     return _DossierPanel(
       icon: Icons.view_list_rounded,
       title: 'Batch Item Ledger',
-      subtitle: '${batch.stockStatusLabel} stock movement from this batch',
+      subtitle: 'Item-wise quantity, unit, weight and sale balance',
       accent: ui.accent,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -679,32 +723,73 @@ class _BatchStockLedgerPanel extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (availableUnits.isNotEmpty)
-                _DossierLedgerSection(
-                  title: 'Available Stock Units',
-                  subtitle: 'Ready for sale and stock movement',
-                  units: availableUnits,
-                  itemWidth: itemWidth,
-                  ui: ui,
-                  accent: InvColors.success,
-                ),
-              if (availableUnits.isNotEmpty && soldUnits.isNotEmpty)
-                const SizedBox(height: 18),
-              if (soldUnits.isNotEmpty)
-                _DossierLedgerSection(
-                  title: 'Sold Stock Units',
-                  subtitle: 'Linked with sales invoices or closed movement',
-                  units: soldUnits,
-                  itemWidth: itemWidth,
-                  ui: ui,
-                  accent: InvColors.danger,
-                ),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _DossierMetric(
+                    label: 'Total Qty',
+                    value: batch.totalQuantityLabel,
+                    accent: ui.accent,
+                  ),
+                  _DossierMetric(
+                    label: 'Available Qty',
+                    value: batch.availableQuantityLabel,
+                    accent: InvColors.success,
+                  ),
+                  _DossierMetric(
+                    label: 'Sold Qty',
+                    value: batch.soldQuantityLabel,
+                    accent: InvColors.danger,
+                  ),
+                  _DossierMetric(
+                    label: 'Total Weight',
+                    value: '${_weight(batch.totalNetWeight)} g',
+                    accent: ui.accent,
+                  ),
+                  _DossierMetric(
+                    label: 'Available Weight',
+                    value: '${_weight(batch.availableNetWeight)} g',
+                    accent: InvColors.success,
+                  ),
+                  if (batch.soldNetWeight > 0)
+                    _DossierMetric(
+                      label: 'Sold Weight',
+                      value: '${_weight(batch.soldNetWeight)} g',
+                      accent: InvColors.danger,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _DossierLedgerSection(
+                title: 'Stock Item Lines',
+                subtitle: 'Total, available and sold movement per item',
+                units: batch.units,
+                itemWidth: itemWidth,
+                ui: ui,
+                accent: ui.accent,
+              ),
             ],
           );
         },
       ),
     );
   }
+}
+
+class _DossierMetricData {
+  final String label;
+  final String value;
+  final Color accent;
+
+  const _DossierMetricData(this.label, this.value, this.accent);
+}
+
+class _DossierInfoData {
+  final String label;
+  final String value;
+
+  const _DossierInfoData(this.label, this.value);
 }
 
 class _DossierLedgerSection extends StatelessWidget {
@@ -757,7 +842,7 @@ class _DossierLedgerSection extends StatelessWidget {
                 border: Border.all(color: accent.withValues(alpha: 0.18)),
               ),
               child: Text(
-                '${units.length} pcs',
+                _stockUnitCountText(units.length),
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,

@@ -42,7 +42,7 @@ class _InventoryBatchCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           child: Row(
             children: [
               Container(
@@ -92,47 +92,42 @@ class _InventoryBatchCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: InvColors.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: InvColors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Invoice Items: ${batch.sourceItemPreview}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: InvColors.textDark,
                       ),
                     ),
                   ],
                 ),
               ),
               _BatchMetric(
-                label: 'Items',
-                value: '${batch.availableItems}/${batch.totalItems}',
+                label: 'Invoice Items',
+                value:
+                    '${batch.sourceInvoiceItemCount} item${batch.sourceInvoiceItemCount == 1 ? '' : 's'}',
                 accent: statusColor,
-                helper: batch.isSoldOut
-                    ? 'All sold'
-                    : batch.isPartiallySold
-                        ? '${batch.soldItems} sold'
-                        : 'In stock',
+                helper: '${batch.quantityBalanceLabel} in view',
               ),
-              _BatchMetric(
-                label: 'Gross Weight',
-                value: '${_weight(batch.grossWeight)} g',
-                accent: ui.accent,
-              ),
+              if (_hasWeightDifference(batch.grossWeight, batch.netWeight))
+                _BatchMetric(
+                  label: 'Gross Weight',
+                  value: '${_weight(batch.grossWeight)} g',
+                  accent: ui.accent,
+                ),
               _BatchMetric(
                 label: 'Actual Fine',
                 value: '${_weight(batch.actualFine)} g',
                 accent: const Color(0xFF10B981),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: ui.softTint.withValues(alpha: 0.70),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.open_in_full_rounded,
-                  color: ui.accent,
-                  size: 18,
-                ),
               ),
             ],
           ),
@@ -143,10 +138,12 @@ class _InventoryBatchCard extends StatelessWidget {
 
   String _batchSubtitle() {
     final parts = [
-      batch.supplierName.isEmpty ? 'Supplier not linked' : batch.supplierName,
+      batch.supplierName.isEmpty
+          ? 'Supplier not linked'
+          : 'Supplier: ${batch.supplierName}',
       if (batch.supplierInvoiceNo.isNotEmpty)
-        'Invoice ${batch.supplierInvoiceNo}',
-      if (batch.createdAt > 0) _date(batch.createdAt),
+        'Invoice: ${batch.supplierInvoiceNo}',
+      if (batch.createdAt > 0) 'Purchase Date: ${_date(batch.createdAt)}',
     ];
     return parts.join(' - ');
   }
@@ -248,25 +245,50 @@ class _InventoryGradeUnitCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              _UnitMetric(label: 'Unit', value: unit.displayUnitPlural),
+              _UnitMetric(label: 'Total Qty', value: unit.totalQuantityLabel),
               _UnitMetric(
-                  label: 'HUID',
-                  value: unit.huid.isEmpty ? 'No HUID' : unit.huid),
+                  label: 'Available', value: unit.availableQuantityLabel),
+              _UnitMetric(label: 'Sold', value: unit.soldQuantityLabel),
+              if (unit.huid.isNotEmpty)
+                _UnitMetric(label: 'HUID', value: unit.huid),
+              if (_hasWeightDifference(
+                  unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
+                _UnitMetric(
+                    label: 'Gross Weight',
+                    value: '${_weight(unit.displayTotalGrossWeight)} g'),
               _UnitMetric(
-                  label: 'Gross', value: '${_weight(unit.grossWeight)} g'),
-              _UnitMetric(label: 'Net', value: '${_weight(unit.netWeight)} g'),
-              _UnitMetric(
-                  label: 'Purity', value: '${_percent(unit.purityPercent)}%'),
-              _UnitMetric(
-                  label: 'Wastage', value: '${_percent(unit.wastagePercent)}%'),
-              _UnitMetric(
-                  label: 'Actual Fine', value: '${_weight(unit.actualFine)} g'),
-              _UnitMetric(
-                  label: 'Wastage Fine',
-                  value: '${_weight(unit.wastageFine)} g'),
-              _UnitMetric(
-                label: 'Valuation Fine',
-                value: '${_weight(unit.valuationFine)} g',
-              ),
+                  label: 'Total Weight',
+                  value: '${_weight(unit.displayTotalNetWeight)} g'),
+              if (unit.displayAvailableNetWeight > 0)
+                _UnitMetric(
+                    label: 'Available Weight',
+                    value: '${_weight(unit.displayAvailableNetWeight)} g'),
+              if (unit.soldNetWeight > 0)
+                _UnitMetric(
+                    label: 'Sold Weight',
+                    value: '${_weight(unit.soldNetWeight)} g'),
+              if (unit.purityPercent > 0)
+                _UnitMetric(
+                    label: 'Base Purity',
+                    value: '${_percent(unit.purityPercent)}%'),
+              if (unit.wastagePercent > 0)
+                _UnitMetric(
+                    label: 'Wastage',
+                    value: '${_percent(unit.wastagePercent)}%'),
+              if (unit.totalPurityPercent > 0)
+                _UnitMetric(
+                    label: 'Valuation Purity',
+                    value: '${_percent(unit.totalPurityPercent)}%'),
+              if (unit.actualFine > 0)
+                _UnitMetric(
+                    label: 'Actual Fine',
+                    value: '${_weight(unit.actualFine)} g'),
+              if (unit.valuationFine > 0)
+                _UnitMetric(
+                  label: 'Valuation Fine',
+                  value: '${_weight(unit.valuationFine)} g',
+                ),
             ],
           ),
         ],
@@ -276,6 +298,7 @@ class _InventoryGradeUnitCard extends StatelessWidget {
 
   String _itemSubtitle() {
     final parts = [
+      unit.companyName,
       unit.itemType,
       unit.segment,
       unit.unitCode,
@@ -304,7 +327,8 @@ class _BatchMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 138,
+      width: 150,
+      height: 80,
       margin: const EdgeInsets.only(left: 10),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
@@ -321,8 +345,9 @@ class _BatchMetric extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 10,
+              height: 1.05,
               fontWeight: FontWeight.w900,
-              color: InvColors.textMuted,
+              color: InvColors.textDark,
             ),
           ),
           const SizedBox(height: 4),
@@ -332,6 +357,7 @@ class _BatchMetric extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               fontSize: 13,
+              height: 1.08,
               fontWeight: FontWeight.w900,
               color: InvColors.textDark,
             ),
@@ -344,8 +370,9 @@ class _BatchMetric extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
                 fontSize: 9.5,
+                height: 1.05,
                 fontWeight: FontWeight.w800,
-                color: accent,
+                color: InvColors.textDark,
               ),
             ),
           ],

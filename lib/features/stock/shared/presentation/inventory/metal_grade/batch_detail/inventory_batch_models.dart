@@ -46,6 +46,117 @@ class _InventoryBatchGroup {
   bool get hasAvailableStock => availableItems > 0;
   bool get isSoldOut => totalItems > 0 && availableItems == 0;
   bool get isPartiallySold => availableItems > 0 && soldItems > 0;
+  String get sourceItemPreview {
+    final seen = <String>{};
+    final names = <String>[];
+    for (final raw in units.first.sourceItemNames.split(',')) {
+      final name = _titleCase(raw);
+      if (name.isEmpty || !seen.add(name.toLowerCase())) continue;
+      names.add(name);
+    }
+    if (names.isEmpty) {
+      for (final unit in units) {
+        final name = _titleCase(unit.itemName);
+        if (name.isEmpty || !seen.add(name.toLowerCase())) continue;
+        names.add(name);
+      }
+    }
+    if (names.isEmpty) return 'No item names recorded';
+    final preview = names.take(3).join(', ');
+    if (names.length <= 3) return preview;
+    return '$preview +${names.length - 3} more';
+  }
+
+  String get sourceDocumentLabel {
+    final invoice = supplierInvoiceNo.trim();
+    if (invoice.isNotEmpty) return invoice;
+    return batchCode;
+  }
+
+  int get sourceInvoiceItemCount {
+    final seen = <String>{};
+    for (final raw in units.first.sourceItemNames.split(',')) {
+      final name = raw.trim().toLowerCase();
+      if (name.isNotEmpty) seen.add(name);
+    }
+    if (seen.isNotEmpty) return seen.length;
+    for (final unit in units) {
+      final name = unit.itemName.trim().toLowerCase();
+      if (name.isNotEmpty) seen.add(name);
+    }
+    return seen.isEmpty ? totalItems : seen.length;
+  }
+
+  String get dossierSubtitle {
+    final parts = <String>[
+      supplierName.isEmpty ? 'Supplier not linked' : supplierName,
+      if (supplierInvoiceNo.isNotEmpty) 'Invoice $supplierInvoiceNo',
+      if (createdAt > 0)
+        DateFormat('dd MMM yyyy').format(
+          DateTime.fromMillisecondsSinceEpoch(createdAt),
+        ),
+      sourceItemPreview,
+    ];
+    return parts.join(' - ');
+  }
+
+  String get totalStockUnitsLabel => _stockUnitCountText(totalItems);
+  String get availableStockUnitsLabel => _stockUnitCountText(availableItems);
+  String get soldStockUnitsLabel => _stockUnitCountText(soldItems);
+  String get stockUnitBalanceLabel =>
+      '$availableItems/$totalItems ${totalItems == 1 ? 'unit' : 'units'}';
+  double get totalDisplayQuantity =>
+      units.fold(0.0, (sum, unit) => sum + unit.displayTotalQuantity);
+  double get availableDisplayQuantity =>
+      units.fold(0.0, (sum, unit) => sum + unit.displayAvailableQuantity);
+  double get soldDisplayQuantity =>
+      units.fold(0.0, (sum, unit) => sum + unit.displaySoldQuantity);
+  double get availableNetWeight =>
+      units.fold(0.0, (sum, unit) => sum + unit.displayAvailableNetWeight);
+  double get soldNetWeight =>
+      units.fold(0.0, (sum, unit) => sum + unit.soldNetWeight);
+  double get totalNetWeight =>
+      units.fold(0.0, (sum, unit) => sum + unit.displayTotalNetWeight);
+  double get totalGrossWeight =>
+      units.fold(0.0, (sum, unit) => sum + unit.displayTotalGrossWeight);
+  String get displayUnitSingular {
+    final unitsSeen = <String>{};
+    for (final unit in units) {
+      unitsSeen.add(unit.displayUnitLabel);
+    }
+    return unitsSeen.length == 1
+        ? _inventoryQuantityUnitName(unitsSeen.first, plural: false)
+            .toLowerCase()
+        : 'unit';
+  }
+
+  String get displayUnitPlural {
+    final unitsSeen = <String>{};
+    for (final unit in units) {
+      unitsSeen.add(unit.displayUnitLabel);
+    }
+    return unitsSeen.length == 1
+        ? _inventoryQuantityUnitName(unitsSeen.first, plural: true)
+            .toLowerCase()
+        : 'units';
+  }
+
+  String get displayUnitLabel {
+    final unitsSeen = <String>{};
+    for (final unit in units) {
+      unitsSeen.add(unit.displayUnitLabel);
+    }
+    return unitsSeen.length == 1 ? unitsSeen.first : 'pcs';
+  }
+
+  String get totalQuantityLabel =>
+      _inventoryDisplayQuantityText(totalDisplayQuantity, displayUnitLabel);
+  String get availableQuantityLabel =>
+      _inventoryDisplayQuantityText(availableDisplayQuantity, displayUnitLabel);
+  String get soldQuantityLabel =>
+      _inventoryDisplayQuantityText(soldDisplayQuantity, displayUnitLabel);
+  String get quantityBalanceLabel =>
+      '${_quantityNumber(availableDisplayQuantity)}/${_quantityNumber(totalDisplayQuantity)} $displayUnitPlural';
 
   String get stockStatusLabel {
     if (isSoldOut) return 'Sold Out';
@@ -112,6 +223,10 @@ class _InventoryBatchGroup {
   }
 
   double get valuationPurityPercent => purityPercent + wastagePercent;
+}
+
+String _stockUnitCountText(int count) {
+  return '$count ${count == 1 ? 'unit' : 'units'}';
 }
 
 class _InventoryPaymentSummary {
@@ -251,6 +366,7 @@ class _InventoryGradeUnit {
   final String paymentMeta;
   final int batchCreatedAt;
   final String status;
+  final String sourceItemNames;
 
   const _InventoryGradeUnit({
     required this.unitId,
@@ -306,6 +422,7 @@ class _InventoryGradeUnit {
     required this.paymentMeta,
     required this.batchCreatedAt,
     required this.status,
+    required this.sourceItemNames,
   });
 
   factory _InventoryGradeUnit.fromRow(QueryRow row) {
@@ -381,6 +498,7 @@ class _InventoryGradeUnit {
       paymentMeta: text('payment_meta'),
       batchCreatedAt: integer('batch_created_at'),
       status: text('status'),
+      sourceItemNames: text('source_item_names'),
     );
   }
 
@@ -390,4 +508,51 @@ class _InventoryGradeUnit {
   }
 
   double get totalPurityPercent => purityPercent + wastagePercent;
+
+  bool get isAvailable => status.toLowerCase() == 'available';
+  bool get isLotStock =>
+      unitCode.toLowerCase().contains('lot') && huid.trim().isEmpty;
+
+  String get displayUnitLabel => _inventoryQuantityUnitLabel(this);
+
+  String get displayUnitSingular =>
+      _inventoryQuantityUnitName(displayUnitLabel, plural: false).toLowerCase();
+
+  String get displayUnitPlural =>
+      _inventoryQuantityUnitName(displayUnitLabel, plural: true).toLowerCase();
+
+  double get displayTotalQuantity => _inventoryTotalDisplayUnits(this);
+
+  double get displayAvailableQuantity => _inventoryAvailableDisplayUnits(this);
+
+  double get displaySoldQuantity => _inventorySoldDisplayUnits(this);
+
+  double get displayTotalNetWeight =>
+      totalNetWeight > 0 ? totalNetWeight : netWeight;
+
+  double get displayTotalGrossWeight =>
+      totalGrossWeight > 0 ? totalGrossWeight : grossWeight;
+
+  double get displayAvailableNetWeight => availableNetWeight > 0
+      ? availableNetWeight
+      : (isAvailable ? netWeight : 0.0);
+
+  String get totalQuantityLabel => _quantityText(
+      displayTotalQuantity, displayUnitSingular, displayUnitPlural);
+  String get availableQuantityLabel => _quantityText(
+      displayAvailableQuantity, displayUnitSingular, displayUnitPlural);
+  String get soldQuantityLabel => _quantityText(
+      displaySoldQuantity, displayUnitSingular, displayUnitPlural);
+  String get quantityBalanceLabel =>
+      '${_quantityNumber(displayAvailableQuantity)}/${_quantityNumber(displayTotalQuantity)} $displayUnitPlural';
+}
+
+String _quantityText(double quantity, String singular, String plural) {
+  return '${_quantityNumber(quantity)} ${quantity == 1 ? singular : plural}';
+}
+
+String _quantityNumber(double value) {
+  final rounded = value.roundToDouble();
+  if ((value - rounded).abs() < 0.001) return rounded.toStringAsFixed(0);
+  return value.toStringAsFixed(1);
 }

@@ -75,24 +75,26 @@ class _InventoryBatchStatusPdfService {
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
       ),
       child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Expanded(
                       child: pw.Text(
                         'Stock Status Report',
+                        maxLines: 1,
                         style: pw.TextStyle(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: pw.FontWeight.bold,
                           color: PdfColors.black,
                         ),
                       ),
                     ),
+                    pw.SizedBox(width: 10),
                     _statusBadge(
                       batch.stockStatusLabel.toUpperCase(),
                       _batchStatusPdfColor(batch),
@@ -102,18 +104,15 @@ class _InventoryBatchStatusPdfService {
                 pw.SizedBox(height: 4),
                 pw.Text(
                   '$title - ${batch.batchCode}',
+                  maxLines: 1,
                   style: const pw.TextStyle(
-                    fontSize: 10,
+                    fontSize: 9.5,
                     color: PdfColors.grey800,
                   ),
                 ),
               ],
             ),
           ),
-          _statusMetric('Available', '${batch.availableItems} pcs'),
-          pw.SizedBox(width: 8),
-          _statusMetric(
-              'Sold', '${batch.totalItems - batch.availableItems} pcs'),
         ],
       ),
     );
@@ -121,31 +120,56 @@ class _InventoryBatchStatusPdfService {
 
   static pw.Widget _statusSummary(_InventoryBatchGroup batch) {
     return _statusSection(
-      title: 'Stock Snapshot',
+      title: 'Current Stock Snapshot',
       children: [
-        pw.Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            _statusMetric('Total Items', '${batch.totalItems} pcs'),
-            _statusMetric('Available', '${batch.availableItems} pcs'),
-            _statusMetric(
-                'Sold', '${batch.totalItems - batch.availableItems} pcs'),
-            _statusMetric('Stock Status', batch.stockStatusLabel),
-            _statusMetric('Gross Wt', '${_weight(batch.grossWeight)} g'),
-            _statusMetric('Net Wt', '${_weight(batch.netWeight)} g'),
-            _statusMetric('Actual Fine', '${_weight(batch.actualFine)} g'),
-            _statusMetric(
-                'Valuation Fine', '${_weight(batch.valuationFine)} g'),
+        _snapshotGroup(
+          'Quantity Movement',
+          [
+            _StatusMetricData('Total Quantity', batch.totalQuantityLabel),
+            _StatusMetricData(
+                'Available Quantity', batch.availableQuantityLabel),
+            _StatusMetricData('Sold Quantity', batch.soldQuantityLabel),
           ],
         ),
+        pw.SizedBox(height: 8),
+        _snapshotGroup(
+          'Weight Movement',
+          [
+            if (_hasWeightDifference(
+                batch.totalGrossWeight, batch.totalNetWeight))
+              _StatusMetricData(
+                  'Gross Weight', '${_weight(batch.totalGrossWeight)} g'),
+            _StatusMetricData(
+                'Total Weight', '${_weight(batch.totalNetWeight)} g'),
+            _StatusMetricData(
+                'Available Weight', '${_weight(batch.availableNetWeight)} g'),
+            if (_hasWeight(batch.soldNetWeight))
+              _StatusMetricData(
+                  'Sold Weight', '${_weight(batch.soldNetWeight)} g'),
+          ],
+        ),
+        if (_hasWeight(batch.actualFine) ||
+            _hasWeight(batch.valuationFine)) ...[
+          pw.SizedBox(height: 8),
+          _snapshotGroup(
+            'Fine Balance',
+            [
+              if (_hasWeight(batch.actualFine))
+                _StatusMetricData(
+                    'Available Actual Fine', '${_weight(batch.actualFine)} g'),
+              if (_hasWeight(batch.valuationFine))
+                _StatusMetricData('Available Valuation Fine',
+                    '${_weight(batch.valuationFine)} g'),
+            ],
+          ),
+        ],
       ],
     );
   }
 
   static pw.Widget _statusLedger(_InventoryBatchGroup batch) {
     return _statusSection(
-      title: 'Item Status Ledger',
+      title: 'Stock Movement Ledger',
       children: [
         for (final entry in batch.units.asMap().entries) ...[
           _statusItemCard(entry.key + 1, entry.value),
@@ -156,15 +180,16 @@ class _InventoryBatchStatusPdfService {
   }
 
   static pw.Widget _statusItemCard(int index, _InventoryGradeUnit unit) {
-    final available = unit.status.toLowerCase() == 'available';
-    final status = unit.status.isEmpty ? 'Available' : unit.status;
+    final status = _unitStockStatusLabel(unit);
+    final statusColor = _unitStockStatusColor(status);
+    final statusBg = _unitStockStatusBackground(status);
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.all(9),
       decoration: pw.BoxDecoration(
-        color: available ? PdfColors.green50 : PdfColors.red50,
+        color: statusBg,
         border: pw.Border.all(
-          color: available ? PdfColors.green300 : PdfColors.red300,
+          color: statusColor,
           width: 0.5,
         ),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
@@ -196,7 +221,7 @@ class _InventoryBatchStatusPdfService {
               ),
               _statusBadge(
                 status,
-                available ? PdfColors.green700 : PdfColors.red700,
+                statusColor,
               ),
             ],
           ),
@@ -205,23 +230,44 @@ class _InventoryBatchStatusPdfService {
             spacing: 6,
             runSpacing: 6,
             children: [
+              _statusMetric('Company', _dash(unit.companyName)),
               _statusMetric('Type', _dash(unit.itemType)),
               if (unit.segment.trim().isNotEmpty)
                 _statusMetric('Segment', unit.segment),
+              _statusMetric('Unit', unit.displayUnitPlural),
+              _statusMetric('Total Qty', unit.totalQuantityLabel),
+              _statusMetric('Available', unit.availableQuantityLabel),
+              _statusMetric('Sold', unit.soldQuantityLabel),
               if (unit.huid.trim().isNotEmpty) _statusMetric('HUID', unit.huid),
-              _statusMetric('Gross', '${_weight(unit.grossWeight)} g'),
-              _statusMetric('Net', '${_weight(unit.netWeight)} g'),
-              _statusMetric('Purity', '${_percent(unit.purityPercent)}%'),
-              _statusMetric('Wastage', '${_percent(unit.wastagePercent)}%'),
+              if (_hasWeightDifference(
+                  unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
+                _statusMetric('Gross Weight',
+                    '${_weight(unit.displayTotalGrossWeight)} g'),
               _statusMetric(
-                'Total Purity',
-                '${_percent(unit.totalPurityPercent)}%',
-              ),
-              _statusMetric('Actual Fine', '${_weight(unit.actualFine)} g'),
-              _statusMetric(
-                'Valuation Fine',
-                '${_weight(unit.valuationFine)} g',
-              ),
+                  'Total Weight', '${_weight(unit.displayTotalNetWeight)} g'),
+              if (_hasWeight(unit.displayAvailableNetWeight))
+                _statusMetric('Available Weight',
+                    '${_weight(unit.displayAvailableNetWeight)} g'),
+              if (_hasWeight(unit.soldNetWeight))
+                _statusMetric(
+                    'Sold Weight', '${_weight(unit.soldNetWeight)} g'),
+              if (_hasWeight(unit.purityPercent))
+                _statusMetric(
+                    'Base Purity', '${_percent(unit.purityPercent)}%'),
+              if (_hasWeight(unit.wastagePercent))
+                _statusMetric('Wastage', '${_percent(unit.wastagePercent)}%'),
+              if (_hasWeight(unit.totalPurityPercent))
+                _statusMetric(
+                  'Valuation Purity',
+                  '${_percent(unit.totalPurityPercent)}%',
+                ),
+              if (_hasWeight(unit.actualFine))
+                _statusMetric('Actual Fine', '${_weight(unit.actualFine)} g'),
+              if (_hasWeight(unit.valuationFine))
+                _statusMetric(
+                  'Valuation Fine',
+                  '${_weight(unit.valuationFine)} g',
+                ),
             ],
           ),
         ],
@@ -253,6 +299,82 @@ class _InventoryBatchStatusPdfService {
           ),
           pw.SizedBox(height: 8),
           ...children,
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _snapshotGroup(
+    String title,
+    List<_StatusMetricData> metrics,
+  ) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(8),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.grey50,
+        border: pw.Border.all(color: PdfColors.grey300, width: 0.45),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              fontSize: 8,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey800,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          _snapshotMetricRow(metrics),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _snapshotMetricRow(List<_StatusMetricData> metrics) {
+    return pw.Row(
+      children: [
+        for (var index = 0; index < metrics.length; index++) ...[
+          pw.Expanded(child: _snapshotMetric(metrics[index])),
+          if (index != metrics.length - 1) pw.SizedBox(width: 7),
+        ],
+      ],
+    );
+  }
+
+  static pw.Widget _snapshotMetric(_StatusMetricData metric) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        border: pw.Border.all(color: PdfColors.grey300, width: 0.45),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            metric.label,
+            maxLines: 1,
+            style: pw.TextStyle(
+              fontSize: 6.9,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.grey700,
+            ),
+          ),
+          pw.SizedBox(height: 3),
+          pw.Text(
+            metric.value,
+            maxLines: 1,
+            style: pw.TextStyle(
+              fontSize: 8.6,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.black,
+            ),
+          ),
         ],
       ),
     );
@@ -317,4 +439,36 @@ class _InventoryBatchStatusPdfService {
     if (batch.isPartiallySold) return PdfColors.amber800;
     return PdfColors.green700;
   }
+
+  static bool _hasWeight(double value) => value.abs() > 0.0004;
+
+  static String _unitStockStatusLabel(_InventoryGradeUnit unit) {
+    if (unit.displayTotalQuantity > 0 && unit.displayAvailableQuantity <= 0) {
+      return 'Sold Out';
+    }
+    if (unit.displaySoldQuantity > 0) return 'Partially Sold';
+    final status = unit.status.trim();
+    return status.isEmpty ? 'Available' : status;
+  }
+
+  static PdfColor _unitStockStatusColor(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized.contains('sold out')) return PdfColors.red700;
+    if (normalized.contains('sold')) return PdfColors.amber800;
+    return PdfColors.green700;
+  }
+
+  static PdfColor _unitStockStatusBackground(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized.contains('sold out')) return PdfColors.red50;
+    if (normalized.contains('sold')) return PdfColors.amber100;
+    return PdfColors.green50;
+  }
+}
+
+class _StatusMetricData {
+  final String label;
+  final String value;
+
+  const _StatusMetricData(this.label, this.value);
 }

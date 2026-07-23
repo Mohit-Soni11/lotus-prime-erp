@@ -12,7 +12,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
-import 'package:lotus_erp/features/stock/shared/application/inventory_batch_cleanup_service.dart';
 import 'package:lotus_erp/features/stock/shared/application/inventory_controller.dart';
 import 'package:lotus_erp/features/stock/shared/application/stock_lot_sale_reconciliation_service.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
@@ -28,7 +27,6 @@ part 'metal_grade/batch_detail/inventory_batch_list_widgets.dart';
 part 'metal_grade/batch_detail/inventory_batch_dossier_screen.dart';
 part 'metal_grade/batch_detail/inventory_batch_dossier_widgets.dart';
 part 'metal_grade/batch_detail/inventory_batch_dossier_panels.dart';
-part 'metal_grade/batch_detail/inventory_batch_cleanup_dialog.dart';
 part 'metal_grade/batch_detail/inventory_batch_pdf_service.dart';
 part 'metal_grade/batch_detail/inventory_batch_status_pdf_service.dart';
 part 'metal_grade/batch_detail/inventory_batch_helpers.dart';
