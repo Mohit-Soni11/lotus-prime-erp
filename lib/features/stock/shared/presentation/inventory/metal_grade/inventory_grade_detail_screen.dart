@@ -20,6 +20,8 @@ class _InventoryGradeDetailScreenState
     extends State<_InventoryGradeDetailScreen> {
   final AppDatabase _db = AppDatabase();
   final TextEditingController _batchSearchCtrl = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _silverProfileKey = GlobalKey();
   String _batchSearch = '';
   String _batchFilter = 'Live Stock';
   String _itemSummaryFilter = 'Live Stock';
@@ -42,6 +44,7 @@ class _InventoryGradeDetailScreenState
   @override
   void dispose() {
     _batchSearchCtrl.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -184,6 +187,7 @@ class _InventoryGradeDetailScreenState
           _openInitialBatchDossierWhenReady(batches);
           final visibleBatches = _filterBatches(batches);
           return CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
@@ -225,10 +229,13 @@ class _InventoryGradeDetailScreenState
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                         child: widget.metal == StockCategory.silver
-                            ? _SilverBreakdownSection(
-                                batches: batches,
-                                ui: ui,
-                                weightFormatter: _weight,
+                            ? KeyedSubtree(
+                                key: _silverProfileKey,
+                                child: _SilverBreakdownSection(
+                                  batches: batches,
+                                  ui: ui,
+                                  weightFormatter: _weight,
+                                ),
                               )
                             : _buildItemSummarySection(ui, batches),
                       ),
@@ -237,7 +244,12 @@ class _InventoryGradeDetailScreenState
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-                          child: _buildItemSummarySection(ui, batches),
+                          child: _buildItemSummarySection(
+                            ui,
+                            batches,
+                            onValuationProfileRequested:
+                                _scrollToSilverValuationProfile,
+                          ),
                         ),
                       ),
                     SliverToBoxAdapter(
@@ -533,9 +545,8 @@ class _InventoryGradeDetailScreenState
   }
 
   Widget _buildItemSummarySection(
-    StockMetalUiData ui,
-    List<_InventoryBatchGroup> batches,
-  ) {
+      StockMetalUiData ui, List<_InventoryBatchGroup> batches,
+      {VoidCallback? onValuationProfileRequested}) {
     final allItems = _buildItemSummaries(batches);
     final items = _filterItemSummaries(allItems);
     if (allItems.isEmpty) return const SizedBox.shrink();
@@ -669,6 +680,8 @@ class _InventoryGradeDetailScreenState
                           item: item,
                           ui: ui,
                           weightFormatter: _weight,
+                          onValuationProfileRequested:
+                              onValuationProfileRequested,
                         ),
                       ),
                   ],
@@ -726,6 +739,17 @@ class _InventoryGradeDetailScreenState
     final itemName = unit.itemName.trim();
     if (itemName.isNotEmpty) return _titleCase(itemName);
     return 'Unnamed Stock Item';
+  }
+
+  void _scrollToSilverValuationProfile() {
+    final context = _silverProfileKey.currentContext;
+    if (context == null) return;
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      alignment: 0.05,
+    );
   }
 
   List<_InventoryBatchGroup> _filterBatches(

@@ -317,6 +317,7 @@ class PosBillingController extends ChangeNotifier {
   List<PosStockLookupModel> _huidSuggestions = [];
   int _descSuggestionRowIndex = -1;
   int _huidSuggestionRowIndex = -1;
+  bool _isApplyingStockSuggestion = false;
   Timer? _descSearchTimer;
   Timer? _huidSearchTimer;
 
@@ -327,6 +328,9 @@ class PosBillingController extends ChangeNotifier {
     String purityLabel,
   ) async {
     _descSearchTimer?.cancel();
+    if (_isApplyingStockSuggestion) {
+      return;
+    }
     final term = query.toLowerCase().trim();
     if (term.isEmpty) {
       _descriptionSuggestions = [];
@@ -358,6 +362,9 @@ class PosBillingController extends ChangeNotifier {
     String purityLabel,
   ) async {
     _huidSearchTimer?.cancel();
+    if (_isApplyingStockSuggestion) {
+      return;
+    }
     final term = query.toLowerCase().trim();
     if (term.isEmpty) {
       _huidSuggestions = [];
@@ -393,18 +400,22 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void clearDescriptionSuggestions() {
+    _descSearchTimer?.cancel();
     _descriptionSuggestions = [];
     _descSuggestionRowIndex = -1;
     notifyListeners();
   }
 
   void clearHuidSuggestions() {
+    _huidSearchTimer?.cancel();
     _huidSuggestions = [];
     _huidSuggestionRowIndex = -1;
     notifyListeners();
   }
 
   void clearAllStockSuggestions() {
+    _descSearchTimer?.cancel();
+    _huidSearchTimer?.cancel();
     _descriptionSuggestions = [];
     _huidSuggestions = [];
     _descSuggestionRowIndex = -1;
@@ -475,31 +486,34 @@ class PosBillingController extends ChangeNotifier {
     }
 
     final item = saleItems[rowIndex];
-    final selectedPurity = item.purityCtrl.text.trim();
-    item.updateMetal(suggestion.metal);
-    item.descCtrl.text = suggestion.itemName.trim().isEmpty
-        ? suggestion.sku
-        : suggestion.itemName;
-    item.pcsCtrl.text = item.unitProfile.defaultPieceCount.toString();
-    item.setHuidValues(
-      suggestion.huids.isNotEmpty
-          ? suggestion.huids
-          : [suggestion.huid?.trim() ?? ''],
-    );
-    item.purityCtrl.text = selectedPurity.isNotEmpty
-        ? selectedPurity
-        : _displayPurityForSuggestion(suggestion);
-    item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
-    item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
-    item.clearMasterRateIfOwned();
-    item.makingCtrl.clear();
-    item.attachStockReference(
-      stockItemId: suggestion.stockItemId,
-      stockUnitId: suggestion.stockUnitId,
-      stockUnitCost: suggestion.unitCost,
-      sku: suggestion.sku,
-    );
-    activeRowIndex = rowIndex;
+    clearAllStockSuggestions();
+    _isApplyingStockSuggestion = true;
+    try {
+      item.updateMetal(suggestion.metal);
+      item.descCtrl.text = suggestion.itemName.trim().isEmpty
+          ? suggestion.sku
+          : suggestion.itemName;
+      item.pcsCtrl.text = item.unitProfile.defaultPieceCount.toString();
+      item.setHuidValues(
+        suggestion.huids.isNotEmpty
+            ? suggestion.huids
+            : [suggestion.huid?.trim() ?? ''],
+      );
+      item.purityCtrl.text = _displayPurityForSuggestion(suggestion);
+      item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
+      item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
+      item.clearMasterRateIfOwned();
+      item.makingCtrl.clear();
+      item.attachStockReference(
+        stockItemId: suggestion.stockItemId,
+        stockUnitId: suggestion.stockUnitId,
+        stockUnitCost: suggestion.unitCost,
+        sku: suggestion.sku,
+      );
+      activeRowIndex = rowIndex;
+    } finally {
+      _isApplyingStockSuggestion = false;
+    }
     clearAllStockSuggestions();
     unawaited(applySaleItemMasterRate(item, force: true));
   }

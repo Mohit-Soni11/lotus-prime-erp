@@ -4,6 +4,7 @@ class _InventoryItemSummaryAccumulator {
   final String itemType;
   final Map<String, _InventoryItemNameSummaryAccumulator> variants =
       <String, _InventoryItemNameSummaryAccumulator>{};
+  final Set<String> companyNames = <String>{};
   int totalPieces = 0;
   int availablePieces = 0;
   int soldPieces = 0;
@@ -18,6 +19,12 @@ class _InventoryItemSummaryAccumulator {
     final itemName = unit.itemName.trim().isNotEmpty
         ? _titleCase(unit.itemName)
         : 'Unnamed ${itemType.trim()}';
+    final companyName = unit.companyName.trim();
+    if (companyName.isNotEmpty) {
+      companyNames.add(_titleCase(companyName));
+    } else {
+      companyNames.add('Unbranded Silver');
+    }
     variants
         .putIfAbsent(
           itemName.toLowerCase(),
@@ -40,10 +47,12 @@ class _InventoryItemSummaryAccumulator {
         if (status != 0) return status;
         return a.itemName.compareTo(b.itemName);
       });
+    final companies = companyNames.toList()..sort();
 
     return _InventoryItemSummary(
       itemType: itemType,
       itemNames: itemNames,
+      companyNames: companies,
       totalPieces: totalPieces,
       availablePieces: availablePieces,
       soldPieces: soldPieces,
@@ -91,6 +100,7 @@ class _InventoryItemNameSummaryAccumulator {
 class _InventoryItemSummary {
   final String itemType;
   final List<_InventoryItemNameSummary> itemNames;
+  final List<String> companyNames;
   final int totalPieces;
   final int availablePieces;
   final int soldPieces;
@@ -102,6 +112,7 @@ class _InventoryItemSummary {
   const _InventoryItemSummary({
     required this.itemType,
     required this.itemNames,
+    required this.companyNames,
     required this.totalPieces,
     required this.availablePieces,
     required this.soldPieces,
@@ -114,12 +125,20 @@ class _InventoryItemSummary {
   bool get isSoldOut => totalPieces > 0 && availablePieces <= 0;
   bool get isPartiallySold => availablePieces > 0 && soldPieces > 0;
   int get itemNameCount => itemNames.length;
+  int get companyCount => companyNames.length;
 
   String get itemNamePreview {
     if (itemNames.isEmpty) return 'No item names recorded';
     final preview = itemNames.map((item) => item.itemName).take(3).join(', ');
     if (itemNames.length <= 3) return preview;
     return '$preview +${itemNames.length - 3} more';
+  }
+
+  String get companyPreview {
+    if (companyNames.isEmpty) return 'No company tagged';
+    final preview = companyNames.take(3).join(', ');
+    if (companyNames.length <= 3) return preview;
+    return '$preview +${companyNames.length - 3} more';
   }
 
   String get statusLabel {
@@ -166,11 +185,13 @@ class _GradeItemSummaryCard extends StatefulWidget {
   final _InventoryItemSummary item;
   final StockMetalUiData ui;
   final String Function(double value) weightFormatter;
+  final VoidCallback? onValuationProfileRequested;
 
   const _GradeItemSummaryCard({
     required this.item,
     required this.ui,
     required this.weightFormatter,
+    this.onValuationProfileRequested,
   });
 
   @override
@@ -178,8 +199,6 @@ class _GradeItemSummaryCard extends StatefulWidget {
 }
 
 class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
-  bool _showDetails = false;
-
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -191,7 +210,7 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
             : const Color(0xFF10B981);
 
     return InkWell(
-      onTap: () => setState(() => _showDetails = !_showDetails),
+      onTap: widget.onValuationProfileRequested,
       borderRadius: BorderRadius.circular(18),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
@@ -201,35 +220,18 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
           color: const Color(0xFFFFFCF7),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: _showDetails ? ui.accent : ui.accent.withValues(alpha: 0.24),
-            width: _showDetails ? 1.4 : 1,
+            color: ui.accent.withValues(alpha: 0.24),
+            width: 1,
           ),
-          boxShadow: [
-            if (_showDetails)
-              BoxShadow(
-                color: ui.accent.withValues(alpha: 0.12),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 12,
+              offset: Offset(0, 6),
+            ),
           ],
         ),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.985, end: 1).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          child: _showDetails
-              ? _buildBack(item, ui)
-              : _buildFront(item, ui, statusColor),
-        ),
+        child: _buildFront(item, ui, statusColor),
       ),
     );
   }
@@ -271,7 +273,7 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    item.itemNamePreview,
+                    item.companyPreview,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
@@ -316,8 +318,8 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
             const SizedBox(width: 10),
             Expanded(
               child: _GradeItemMetric(
-                label: 'Item Names',
-                value: '${item.itemNameCount}',
+                label: 'Companies',
+                value: '${item.companyCount}',
                 accent: ui.accent,
               ),
             ),
@@ -359,220 +361,13 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        _FlipHint(accent: ui.accent, label: 'Click to view item-name breakup'),
-      ],
-    );
-  }
-
-  Widget _buildBack(_InventoryItemSummary item, StockMetalUiData ui) {
-    final visibleNames = item.itemNames.take(5).toList(growable: false);
-    return Column(
-      key: const ValueKey('back'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: ui.accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(Icons.category_rounded, color: ui.accent, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${item.itemType} Breakup',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: InvColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${item.itemNameCount} item names • ${item.availablePieces} available pcs',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: InvColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.flip_to_front_rounded, color: ui.accent, size: 20),
-          ],
-        ),
-        const SizedBox(height: 12),
-        for (final variant in visibleNames) ...[
-          _ItemNameBreakupRow(
-            variant: variant,
+        if (widget.onValuationProfileRequested != null) ...[
+          const SizedBox(height: 10),
+          _FlipHint(
             accent: ui.accent,
-            weightFormatter: widget.weightFormatter,
-          ),
-          if (variant != visibleNames.last) const SizedBox(height: 8),
-        ],
-        if (item.itemNames.length > visibleNames.length) ...[
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-            decoration: BoxDecoration(
-              color: ui.accent.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '+${item.itemNames.length - visibleNames.length} more item names in this family',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: ui.accent,
-              ),
-            ),
+            label: 'Open company valuation profile',
           ),
         ],
-        const SizedBox(height: 10),
-        _FlipHint(accent: ui.accent, label: 'Click to return to summary'),
-      ],
-    );
-  }
-}
-
-class _ItemNameBreakupRow extends StatelessWidget {
-  final _InventoryItemNameSummary variant;
-  final Color accent;
-  final String Function(double value) weightFormatter;
-
-  const _ItemNameBreakupRow({
-    required this.variant,
-    required this.accent,
-    required this.weightFormatter,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final statusColor =
-        variant.isSoldOut ? InvColors.danger : InvColors.success;
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: accent.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  variant.itemName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w900,
-                    color: InvColors.textDark,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${variant.availablePieces} pcs',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _BreakupMiniMetric(
-                  label: 'Available',
-                  value: '${weightFormatter(variant.availableWeight)} g',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _BreakupMiniMetric(
-                  label: 'Total',
-                  value: '${weightFormatter(variant.totalWeight)} g',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _BreakupMiniMetric(
-                  label: 'Sold',
-                  value:
-                      '${variant.soldPieces} pcs • ${weightFormatter(variant.soldWeight)} g',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BreakupMiniMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _BreakupMiniMetric({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(
-            fontSize: 8.5,
-            fontWeight: FontWeight.w900,
-            color: InvColors.textMuted,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w900,
-            color: InvColors.textDark,
-          ),
-        ),
       ],
     );
   }

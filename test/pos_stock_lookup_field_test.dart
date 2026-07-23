@@ -57,8 +57,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Jhumka Premium Long Name'), findsOneWidget);
-    expect(find.textContaining('Type: Jhumka'), findsOneWidget);
-    expect(find.textContaining('Company: Raj Ornaments'), findsOneWidget);
+    expect(find.text('Jhumka'), findsOneWidget);
+    expect(find.text('Raj Ornaments'), findsOneWidget);
+    expect(find.text('HUID-LONG-1234567890-ABCDE'), findsOneWidget);
+    expect(find.text('HUID-LONG-0987654321-ZYXWV'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     controller.dispose();

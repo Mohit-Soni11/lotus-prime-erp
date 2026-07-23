@@ -116,7 +116,7 @@ class PosStockLookupRepository {
         u.purity_percent AS purity_percent,
         u.unit_cost AS unit_cost,
         u.status AS unit_status,
-        u.supplier_name AS company_name,
+        COALESCE(NULLIF(TRIM(u.company_name), ''), NULLIF(TRIM(s.company_name), '')) AS company_name,
         s.purity AS purity_label,
         s.category AS category,
         s.description AS description
@@ -141,8 +141,35 @@ class PosStockLookupRepository {
 
   Future<void> _ensureStockItemUnitSchema() async {
     await _db.customStatement(_createStockItemUnitsTableSql);
+    await _ensureTableColumns(
+      'stock_item_units',
+      const {
+        'company_name': 'TEXT',
+      },
+    );
     for (final statement in _stockItemUnitsIndexSql) {
       await _db.customStatement(statement);
+    }
+  }
+
+  Future<void> _ensureTableColumns(
+    String tableName,
+    Map<String, String> columns,
+  ) async {
+    final rows =
+        await _db.customSelect('PRAGMA table_info("$tableName")').get();
+    if (rows.isEmpty) {
+      return;
+    }
+
+    final existingColumns = rows.map((row) => row.read<String>('name')).toSet();
+    for (final entry in columns.entries) {
+      if (existingColumns.contains(entry.key)) {
+        continue;
+      }
+      await _db.customStatement(
+        'ALTER TABLE "$tableName" ADD COLUMN "${entry.key}" ${entry.value}',
+      );
     }
   }
 
@@ -374,6 +401,7 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
   "piece_no" INTEGER NOT NULL,
   "metal_type" TEXT NOT NULL,
   "item_type" TEXT,
+  "company_name" TEXT,
   "segment" TEXT,
   "item_name" TEXT NOT NULL,
   "huid" TEXT,

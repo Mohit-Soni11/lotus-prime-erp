@@ -55,7 +55,7 @@ class _SilverBreakdownSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Company & Grade Breakup',
+                      'Company Valuation Profile',
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -64,7 +64,7 @@ class _SilverBreakdownSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Company-wise stock with grade, item-name and weight details.',
+                      'Company-wise availability with purity, wastage and valuation detail.',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -82,7 +82,7 @@ class _SilverBreakdownSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _SilverBreakdownPill(
-                label: gradeCount == 1 ? '1 grade' : '$gradeCount grades',
+                label: gradeCount == 1 ? '1 profile' : '$gradeCount profiles',
                 accent: const Color(0xFF0F766E),
               ),
             ],
@@ -231,17 +231,19 @@ class _SilverCompanyBreakdownCardState
                 const SizedBox(width: 10),
                 Expanded(
                   child: _SilverBreakdownMetric(
-                    label: 'Total',
-                    value: '${company.totalPieces} pcs',
-                    accent: accent,
+                    label: 'Sold',
+                    value: '${company.soldPieces} pcs',
+                    accent: company.soldPieces > 0
+                        ? const Color(0xFFEF4444)
+                        : InvColors.textMuted,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _SilverBreakdownMetric(
-                    label: 'Grades',
-                    value: '${company.grades.length}',
-                    accent: const Color(0xFF0F766E),
+                    label: 'Total',
+                    value: '${company.totalPieces} pcs',
+                    accent: accent,
                   ),
                 ),
               ],
@@ -255,6 +257,16 @@ class _SilverCompanyBreakdownCardState
                     value:
                         '${widget.weightFormatter(company.availableWeight)} g',
                     accent: const Color(0xFF0F766E),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SilverBreakdownMetric(
+                    label: 'Sold Wt',
+                    value: '${widget.weightFormatter(company.soldWeight)} g',
+                    accent: company.soldWeight > 0
+                        ? const Color(0xFFEF4444)
+                        : InvColors.textMuted,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -286,7 +298,7 @@ class _SilverCompanyBreakdownCardState
                       padding: const EdgeInsets.only(top: 10),
                       child: _FlipHint(
                         accent: accent,
-                        label: 'Click to view grade breakup',
+                        label: 'Click to view valuation profile',
                       ),
                     ),
             ),
@@ -339,11 +351,13 @@ class _SilverGradeBreakdownList extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${grade.availablePieces}/${grade.totalPieces} pcs',
+                      '${grade.soldPieces}/${grade.totalPieces} sold',
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF0F766E),
+                        color: grade.soldPieces > 0
+                            ? const Color(0xFFEF4444)
+                            : InvColors.textMuted,
                       ),
                     ),
                   ],
@@ -364,16 +378,26 @@ class _SilverGradeBreakdownList extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _SilverBreakdownMetric(
-                        label: 'Available',
-                        value: '${weightFormatter(grade.availableWeight)} g',
+                        label: 'Base Purity',
+                        value: '${_formatInventoryPercent(grade.purityPercent)}%',
                         accent: const Color(0xFF0F766E),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: _SilverBreakdownMetric(
-                        label: 'Total',
-                        value: '${weightFormatter(grade.totalWeight)} g',
+                        label: 'Wastage',
+                        value:
+                            '${_formatInventoryPercent(grade.wastagePercent)}%',
+                        accent: const Color(0xFFB45309),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _SilverBreakdownMetric(
+                        label: 'Valuation Purity',
+                        value:
+                            '${_formatInventoryPercent(grade.valuationPurityPercent)}%',
                         accent: accent,
                       ),
                     ),
@@ -494,6 +518,11 @@ class _SilverCompanySummary {
     return '$preview +${itemNames.length - 3} more';
   }
 
+  int get soldPieces => (totalPieces - availablePieces).clamp(0, totalPieces);
+
+  double get soldWeight =>
+      (totalWeight - availableWeight).clamp(0.0, totalWeight);
+
   static List<_SilverCompanySummary> buildFromBatches(
     List<_InventoryBatchGroup> batches,
   ) {
@@ -573,6 +602,8 @@ class _SilverGradeSummary {
   final int availablePieces;
   final double totalWeight;
   final double availableWeight;
+  final double purityPercent;
+  final double wastagePercent;
   final Set<String> itemNames;
 
   const _SilverGradeSummary({
@@ -581,6 +612,8 @@ class _SilverGradeSummary {
     required this.availablePieces,
     required this.totalWeight,
     required this.availableWeight,
+    required this.purityPercent,
+    required this.wastagePercent,
     required this.itemNames,
   });
 
@@ -590,6 +623,13 @@ class _SilverGradeSummary {
     if (itemNames.length <= 3) return preview;
     return '$preview +${itemNames.length - 3} more';
   }
+
+  int get soldPieces => (totalPieces - availablePieces).clamp(0, totalPieces);
+
+  double get soldWeight =>
+      (totalWeight - availableWeight).clamp(0.0, totalWeight);
+
+  double get valuationPurityPercent => purityPercent + wastagePercent;
 }
 
 class _SilverGradeAccumulator {
@@ -599,6 +639,9 @@ class _SilverGradeAccumulator {
   int availablePieces = 0;
   double totalWeight = 0;
   double availableWeight = 0;
+  double valuationWeight = 0;
+  double weightedPurityPercent = 0;
+  double weightedWastagePercent = 0;
 
   _SilverGradeAccumulator(this.gradeLabel);
 
@@ -609,15 +652,22 @@ class _SilverGradeAccumulator {
     availablePieces += unit.availablePieces;
     totalWeight += unit.totalNetWeight;
     availableWeight += unit.availableNetWeight;
+    final profileWeight = unit.totalNetWeight > 0 ? unit.totalNetWeight : 1.0;
+    valuationWeight += profileWeight;
+    weightedPurityPercent += unit.purityPercent * profileWeight;
+    weightedWastagePercent += unit.wastagePercent * profileWeight;
   }
 
   _SilverGradeSummary toSummary() {
+    final divisor = valuationWeight <= 0 ? 1.0 : valuationWeight;
     return _SilverGradeSummary(
       gradeLabel: gradeLabel,
       totalPieces: totalPieces,
       availablePieces: availablePieces,
       totalWeight: totalWeight,
       availableWeight: availableWeight,
+      purityPercent: weightedPurityPercent / divisor,
+      wastagePercent: weightedWastagePercent / divisor,
       itemNames: itemNames,
     );
   }

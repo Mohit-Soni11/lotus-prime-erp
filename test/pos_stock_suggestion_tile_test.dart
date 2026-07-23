@@ -34,7 +34,8 @@ void main() {
     expect(find.byType(GoldStockSuggestionTile), findsOneWidget);
     expect(find.byType(SilverStockSuggestionTile), findsNothing);
     expect(find.text('Casting Tops'), findsOneWidget);
-    expect(find.textContaining('Company: Test Ornaments'), findsOneWidget);
+    expect(find.text('Tops'), findsOneWidget);
+    expect(find.text('Test Ornaments'), findsOneWidget);
   });
 
   testWidgets('routes silver suggestions to the silver card implementation',
@@ -64,7 +65,36 @@ void main() {
     expect(find.byType(SilverStockSuggestionTile), findsOneWidget);
     expect(find.byType(GoldStockSuggestionTile), findsNothing);
     expect(find.text('Silver Payal'), findsOneWidget);
-    expect(find.textContaining('Company: Silver House'), findsOneWidget);
+    expect(find.text('Payal'), findsOneWidget);
+    expect(find.text('Silver House'), findsOneWidget);
+  });
+
+  testWidgets('keeps HUID column blank when stock has no HUID', (tester) async {
+    await tester.pumpWidget(
+      _tileHost(
+        const PosStockLookupModel(
+          stockItemId: 3,
+          stockUnitId: 33,
+          sku: 'PUR-SILVER-1784200000-001',
+          itemName: 'Fancy Payal',
+          description: '',
+          huid: '',
+          purity: '999',
+          metal: MetalType.silver,
+          categoryLabel: 'Payal',
+          companyName: 'Sukh',
+          grossWeight: 280,
+          lessWeight: 0,
+          netWeight: 280,
+          quantity: 1,
+          status: 'Available',
+        ),
+      ),
+    );
+
+    expect(find.byType(SilverStockSuggestionTile), findsOneWidget);
+    expect(find.text('Fancy Payal'), findsOneWidget);
+    expect(find.textContaining('PUR-SILVER'), findsNothing);
   });
 }
 

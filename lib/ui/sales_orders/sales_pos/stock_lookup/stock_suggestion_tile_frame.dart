@@ -8,8 +8,8 @@ class StockSuggestionTileFrame extends StatelessWidget {
   final VoidCallback onTap;
   final Color accentColor;
   final Color huidIconColor;
-  final String metadata;
-  final String huidText;
+  final List<String> metadata;
+  final List<String> identifiers;
 
   const StockSuggestionTileFrame({
     super.key,
@@ -18,7 +18,7 @@ class StockSuggestionTileFrame extends StatelessWidget {
     required this.accentColor,
     required this.huidIconColor,
     required this.metadata,
-    required this.huidText,
+    required this.identifiers,
   });
 
   @override
@@ -28,8 +28,9 @@ class StockSuggestionTileFrame extends StatelessWidget {
       hoverColor: accentColor.withValues(alpha: 0.08),
       splashColor: accentColor.withValues(alpha: 0.12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               flex: 11,
@@ -37,7 +38,7 @@ class StockSuggestionTileFrame extends StatelessWidget {
                 children: [
                   Container(
                     width: 4,
-                    height: 34,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: accentColor,
                       borderRadius: BorderRadius.circular(99),
@@ -57,16 +58,10 @@ class StockSuggestionTileFrame extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          metadata,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: SalesPosStyles.caption.copyWith(
-                            color: SalesPosColors.bodyTextMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        const SizedBox(height: 6),
+                        _MetadataRibbon(
+                          values: metadata.isEmpty ? [item.sku] : metadata,
+                          accentColor: accentColor,
                         ),
                       ],
                     ),
@@ -77,8 +72,8 @@ class StockSuggestionTileFrame extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               flex: 10,
-              child: _StockIdentifierPill(
-                text: huidText,
+              child: _StockIdentifierStack(
+                values: identifiers,
                 iconColor: huidIconColor,
               ),
             ),
@@ -111,6 +106,106 @@ class StockSuggestionTileFrame extends StatelessWidget {
   }
 }
 
+class _MetadataRibbon extends StatelessWidget {
+  final List<String> values;
+  final Color accentColor;
+
+  const _MetadataRibbon({
+    required this.values,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleValues = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .take(3)
+        .toList(growable: false);
+    if (visibleValues.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Wrap(
+      spacing: 5,
+      runSpacing: 4,
+      children: [
+        for (final value in visibleValues)
+          Container(
+            constraints: const BoxConstraints(maxWidth: 118),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(
+                color: accentColor.withValues(alpha: 0.18),
+              ),
+            ),
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SalesPosStyles.caption.copyWith(
+                color: SalesPosColors.bodyTextMuted,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _StockIdentifierStack extends StatelessWidget {
+  final List<String> values;
+  final Color iconColor;
+
+  const _StockIdentifierStack({
+    required this.values,
+    required this.iconColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanValues = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+    final visibleValues = cleanValues.take(2).toList(growable: false);
+    final overflowCount = cleanValues.length - visibleValues.length;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var index = 0; index < visibleValues.length; index++) ...[
+          _StockIdentifierPill(
+            text: visibleValues[index],
+            iconColor: iconColor,
+          ),
+          if (index < visibleValues.length - 1) const SizedBox(height: 4),
+        ],
+        if (overflowCount > 0) ...[
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '+$overflowCount more',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SalesPosStyles.caption.copyWith(
+                color: SalesPosColors.bodyTextMuted,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _StockIdentifierPill extends StatelessWidget {
   final String text;
   final Color iconColor;
@@ -123,19 +218,19 @@ class _StockIdentifierPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 28,
+      height: 23,
       alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: SalesPosColors.bodyBg,
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: SalesPosColors.bodyBorder),
       ),
       child: Row(
         children: [
           Icon(
             Icons.verified_outlined,
-            size: 13,
+            size: 12,
             color: iconColor.withValues(alpha: 0.88),
           ),
           const SizedBox(width: 6),

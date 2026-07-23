@@ -59,7 +59,7 @@ void main() {
       matches.map((item) => item.huid),
       containsAll(['HUID-J22', 'HUID-J18']),
     );
-    expect(matches.map((item) => item.companyName).toSet(), {'Test Supplier'});
+    expect(matches.map((item) => item.companyName).toSet(), {'Test Brand'});
   });
 
   test('description search returns stock even when selected purity differs',
@@ -132,10 +132,11 @@ Future<int> _insertLookupStock(
       rate_per_gram,
       making_amount,
       unit_cost,
+      company_name,
       supplier_name,
       status,
       created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''',
     variables: [
       drift.Variable<int>(stockItemId),
@@ -157,6 +158,7 @@ Future<int> _insertLookupStock(
       const drift.Variable<double>(6000),
       const drift.Variable<double>(0),
       const drift.Variable<double>(60000),
+      const drift.Variable<String>('Test Brand'),
       const drift.Variable<String>('Test Supplier'),
       drift.Variable<String>(stock.StockStatus.available.label),
       drift.Variable<int>(DateTime(2026, 7, 22, 12).millisecondsSinceEpoch),
