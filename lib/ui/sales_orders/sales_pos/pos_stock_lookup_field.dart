@@ -7,10 +7,10 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_stock_lookup_model.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import 'shared_pos_components.dart';
+import 'stock_lookup/pos_stock_suggestion_tile.dart';
 
 class PosStockLookupField extends StatefulWidget {
   final Listenable listenable;
@@ -216,7 +216,7 @@ class _StockSuggestionDropdown extends StatelessWidget {
                 ),
                 itemBuilder: (context, index) {
                   final item = suggestions[index];
-                  return _SuggestionRow(
+                  return PosStockSuggestionTile(
                     item: item,
                     onTap: () => onSelected(item),
                   );
@@ -312,186 +312,6 @@ class _SuggestionColumnHeader extends StatelessWidget {
               maxLines: 1,
               textAlign: TextAlign.right,
               style: style,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SuggestionRow extends StatelessWidget {
-  final PosStockLookupModel item;
-  final VoidCallback onTap;
-
-  const _SuggestionRow({
-    required this.item,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      hoverColor: SalesPosColors.brandGold.withValues(alpha: 0.08),
-      splashColor: SalesPosColors.brandGold.withValues(alpha: 0.12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 11,
-              child: Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: _metalColor(item),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.displayTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: SalesPosStyles.bodyText.copyWith(
-                            color: SalesPosColors.bodyTextMain,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _itemMeta(item),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: SalesPosStyles.caption.copyWith(
-                            color: SalesPosColors.bodyTextMuted,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 10,
-              child: _HuidPill(text: _huidValue(item)),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 68,
-              child: Text(
-                '${_formatWeight(item.grossWeight)} g',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.right,
-                style: SalesPosStyles.bodyText.copyWith(
-                  color: SalesPosColors.bodyTextMain,
-                  fontWeight: FontWeight.w900,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static String _huidValue(PosStockLookupModel item) {
-    if (item.huids.isNotEmpty) {
-      return item.huids.join(', ');
-    }
-    final huid = item.huid?.trim() ?? '';
-    if (huid.isNotEmpty) {
-      return huid;
-    }
-    return item.sku.trim().isEmpty ? '-' : item.sku.trim();
-  }
-
-  static String _itemMeta(PosStockLookupModel item) {
-    final type = item.categoryLabel.trim();
-    final segment = item.segmentLabel.trim();
-    final company = item.companyName.trim();
-    final details = <String>[
-      if (type.isNotEmpty) 'Type: $type',
-      if (company.isNotEmpty) 'Company: $company',
-      if (segment.isNotEmpty) segment,
-      if (item.quantity > 1) '${item.quantity} pcs',
-    ];
-    if (details.isEmpty) {
-      return item.sku;
-    }
-    return details.join('  |  ');
-  }
-
-  static String _formatWeight(double value) {
-    return value
-        .toStringAsFixed(3)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
-  }
-
-  static Color _metalColor(PosStockLookupModel item) {
-    switch (item.metal) {
-      case MetalType.gold:
-        return SalesPosColors.brandGold;
-      case MetalType.silver:
-        return SalesPosColors.brandSilver;
-      case MetalType.platinum:
-        return SalesPosColors.brandPlatinum;
-      case MetalType.diamond:
-        return SalesPosColors.brandDiamond;
-    }
-  }
-}
-
-class _HuidPill extends StatelessWidget {
-  final String text;
-
-  const _HuidPill({
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 28,
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 9),
-      decoration: BoxDecoration(
-        color: SalesPosColors.bodyBg,
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: SalesPosColors.bodyBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.verified_outlined,
-            size: 13,
-            color: SalesPosColors.brandGold.withValues(alpha: 0.88),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: SalesPosStyles.caption.copyWith(
-                color: SalesPosColors.bodyTextMain,
-                fontWeight: FontWeight.w900,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
             ),
           ),
         ],
