@@ -202,6 +202,9 @@ class _InventoryGradeUnit {
   final String unitCode;
   final String batchCode;
   final String itemType;
+  final String quantityMode;
+  final int packetCount;
+  final int piecesPerPacket;
   final String companyName;
   final String segment;
   final String itemName;
@@ -224,6 +227,7 @@ class _InventoryGradeUnit {
   final double availableGrossWeight;
   final double availableNetWeight;
   final double soldNetWeight;
+  final int soldQuantity;
   final String supplierName;
   final String supplierMobile;
   final String supplierGstNumber;
@@ -253,6 +257,9 @@ class _InventoryGradeUnit {
     required this.unitCode,
     required this.batchCode,
     required this.itemType,
+    required this.quantityMode,
+    required this.packetCount,
+    required this.piecesPerPacket,
     required this.companyName,
     required this.segment,
     required this.itemName,
@@ -275,6 +282,7 @@ class _InventoryGradeUnit {
     required this.availableGrossWeight,
     required this.availableNetWeight,
     required this.soldNetWeight,
+    required this.soldQuantity,
     required this.supplierName,
     required this.supplierMobile,
     required this.supplierGstNumber,
@@ -324,6 +332,9 @@ class _InventoryGradeUnit {
       unitCode: text('unit_code'),
       batchCode: text('batch_code'),
       itemType: text('item_type'),
+      quantityMode: text('quantity_mode'),
+      packetCount: integer('packet_count'),
+      piecesPerPacket: integer('pieces_per_packet'),
       companyName: text('company_name'),
       segment: text('segment'),
       itemName: text('item_name'),
@@ -346,6 +357,7 @@ class _InventoryGradeUnit {
       availableGrossWeight: number('available_gross_weight'),
       availableNetWeight: number('available_net_weight'),
       soldNetWeight: number('sold_net_weight'),
+      soldQuantity: integer('sold_quantity'),
       supplierName: text('supplier_name'),
       supplierMobile: text('supplier_mobile'),
       supplierGstNumber: text('supplier_gst_number'),

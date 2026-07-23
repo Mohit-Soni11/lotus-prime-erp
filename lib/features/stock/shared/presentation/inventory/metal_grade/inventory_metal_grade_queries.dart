@@ -85,7 +85,12 @@ const String _inventorySoldWeightJoin = '''
 LEFT JOIN (
   SELECT
     source.stock_item_id,
-    COALESCE(bill_weight.sold_net_weight, movement_weight.sold_net_weight, 0.0) AS sold_net_weight
+    COALESCE(bill_weight.sold_net_weight, movement_weight.sold_net_weight, 0.0) AS sold_net_weight,
+    CASE
+      WHEN movement_weight.stock_item_id IS NOT NULL
+        THEN COALESCE(movement_weight.sold_quantity, 0)
+      ELSE COALESCE(bill_weight.sold_quantity, 0)
+    END AS sold_quantity
   FROM (
     SELECT stock_item_id
     FROM stock_movements
@@ -98,6 +103,7 @@ LEFT JOIN (
   LEFT JOIN (
     SELECT
       bi.linked_stock_item_id AS stock_item_id,
+      SUM(COALESCE(bi.quantity, 0)) AS sold_quantity,
       SUM(COALESCE(bi.net_weight, 0.0)) AS sold_net_weight
     FROM bill_items bi
     INNER JOIN bills b ON b.id = bi.bill_id
@@ -108,6 +114,13 @@ LEFT JOIN (
   LEFT JOIN (
     SELECT
       stock_item_id,
+      SUM(
+        CASE
+          WHEN movement_type = 'SALE' THEN ABS(quantity_delta)
+          WHEN movement_type = 'SALE_RESTORE' THEN -ABS(quantity_delta)
+          ELSE 0
+        END
+      ) AS sold_quantity,
       SUM(
         CASE
           WHEN movement_type = 'SALE' THEN ABS(net_weight_delta)

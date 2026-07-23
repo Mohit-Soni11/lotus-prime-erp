@@ -5,9 +5,13 @@ class _InventoryItemSummaryAccumulator {
   final Map<String, _InventoryItemNameSummaryAccumulator> variants =
       <String, _InventoryItemNameSummaryAccumulator>{};
   final Set<String> companyNames = <String>{};
+  final Set<String> unitLabels = <String>{};
   int totalPieces = 0;
   int availablePieces = 0;
   int soldPieces = 0;
+  double totalDisplayUnits = 0;
+  double availableDisplayUnits = 0;
+  double soldDisplayUnits = 0;
   double grossWeight = 0;
   double totalWeight = 0;
   double availableWeight = 0;
@@ -25,6 +29,11 @@ class _InventoryItemSummaryAccumulator {
     } else {
       companyNames.add('Unbranded Silver');
     }
+    final unitLabel = _inventoryQuantityUnitLabel(unit);
+    unitLabels.add(unitLabel);
+    totalDisplayUnits += _inventoryTotalDisplayUnits(unit);
+    availableDisplayUnits += _inventoryAvailableDisplayUnits(unit);
+    soldDisplayUnits += _inventorySoldDisplayUnits(unit);
     variants
         .putIfAbsent(
           itemName.toLowerCase(),
@@ -48,14 +57,19 @@ class _InventoryItemSummaryAccumulator {
         return a.itemName.compareTo(b.itemName);
       });
     final companies = companyNames.toList()..sort();
+    final quantityUnitLabel = _inventoryAggregateUnitLabel(unitLabels);
 
     return _InventoryItemSummary(
       itemType: itemType,
       itemNames: itemNames,
       companyNames: companies,
+      quantityUnitLabel: quantityUnitLabel,
       totalPieces: totalPieces,
       availablePieces: availablePieces,
       soldPieces: soldPieces,
+      totalDisplayUnits: totalDisplayUnits,
+      availableDisplayUnits: availableDisplayUnits,
+      soldDisplayUnits: soldDisplayUnits,
       grossWeight: grossWeight,
       totalWeight: totalWeight,
       availableWeight: availableWeight,
@@ -101,9 +115,13 @@ class _InventoryItemSummary {
   final String itemType;
   final List<_InventoryItemNameSummary> itemNames;
   final List<String> companyNames;
+  final String quantityUnitLabel;
   final int totalPieces;
   final int availablePieces;
   final int soldPieces;
+  final double totalDisplayUnits;
+  final double availableDisplayUnits;
+  final double soldDisplayUnits;
   final double grossWeight;
   final double totalWeight;
   final double availableWeight;
@@ -113,9 +131,13 @@ class _InventoryItemSummary {
     required this.itemType,
     required this.itemNames,
     required this.companyNames,
+    required this.quantityUnitLabel,
     required this.totalPieces,
     required this.availablePieces,
     required this.soldPieces,
+    required this.totalDisplayUnits,
+    required this.availableDisplayUnits,
+    required this.soldDisplayUnits,
     required this.grossWeight,
     required this.totalWeight,
     required this.availableWeight,
@@ -179,6 +201,118 @@ class _InventoryItemNameSummary {
     if (isSoldOut) return 2;
     return 1;
   }
+}
+
+String _inventoryQuantityUnitLabel(_InventoryGradeUnit unit) {
+  final mode = unit.quantityMode.trim().toLowerCase();
+  if (mode == 'packet' || mode == 'pack') return 'packet';
+  if (mode == 'pair') return 'pair';
+  if (mode == 'set') return 'set';
+  if (mode == 'lot' || mode == 'bulk') return 'lot';
+
+  final item = '${unit.itemType} ${unit.itemName}'.toLowerCase();
+  if (item.contains('packet') || item.contains('pack')) return 'packet';
+  if (item.contains('payal') ||
+      item.contains('anklet') ||
+      item.contains('jhumka') ||
+      item.contains('earring') ||
+      item.contains('tops') ||
+      item.contains('bali') ||
+      item.contains('kundal') ||
+      item.contains('bichhiya') ||
+      item.contains('toe ring')) {
+    return 'pair';
+  }
+  if (item.contains('set') ||
+      item.contains('necklace') ||
+      item.contains('haar') ||
+      item.contains('har') ||
+      item.contains('chudi')) {
+    return 'set';
+  }
+  return 'pcs';
+}
+
+String _inventoryAggregateUnitLabel(Set<String> unitLabels) {
+  final labels = unitLabels
+      .map((label) => label.trim().toLowerCase())
+      .where((label) => label.isNotEmpty)
+      .toSet();
+  if (labels.length == 1) return labels.single;
+  if (labels.contains('packet')) return 'packet';
+  if (labels.contains('pair')) return 'pair';
+  if (labels.contains('set')) return 'set';
+  if (labels.contains('lot')) return 'lot';
+  return 'pcs';
+}
+
+double _inventoryTotalDisplayUnits(_InventoryGradeUnit unit) {
+  final label = _inventoryQuantityUnitLabel(unit);
+  if (label == 'packet') {
+    if (unit.packetCount > 0) return unit.packetCount.toDouble();
+    return _inventoryPieceDisplayUnits(unit.totalPieces, unit);
+  }
+  return _inventoryPieceDisplayUnits(unit.totalPieces, unit);
+}
+
+double _inventoryAvailableDisplayUnits(_InventoryGradeUnit unit) {
+  final label = _inventoryQuantityUnitLabel(unit);
+  if (label == 'packet') {
+    if (unit.packetCount > 0) {
+      return (unit.packetCount - unit.soldQuantity)
+          .clamp(0, unit.packetCount)
+          .toDouble();
+    }
+    if (unit.soldQuantity > 0) {
+      final total = _inventoryTotalDisplayUnits(unit);
+      return (total - unit.soldQuantity).clamp(0.0, total).toDouble();
+    }
+  }
+  return _inventoryPieceDisplayUnits(unit.availablePieces, unit);
+}
+
+double _inventorySoldDisplayUnits(_InventoryGradeUnit unit) {
+  final label = _inventoryQuantityUnitLabel(unit);
+  if (label == 'packet') {
+    if (unit.packetCount > 0) {
+      return unit.soldQuantity.clamp(0, unit.packetCount).toDouble();
+    }
+    if (unit.soldQuantity > 0) return unit.soldQuantity.toDouble();
+  }
+  return _inventoryPieceDisplayUnits(unit.soldPieces, unit);
+}
+
+double _inventoryPieceDisplayUnits(int pieces, _InventoryGradeUnit unit) {
+  final label = _inventoryQuantityUnitLabel(unit);
+  final divisor = switch (label) {
+    'packet' => unit.piecesPerPacket <= 0 ? 1 : unit.piecesPerPacket,
+    'pair' => 2,
+    _ => 1,
+  };
+  return pieces / divisor;
+}
+
+String _inventoryQuantityUnitName(String label, {required bool plural}) {
+  final normalized = label.trim().toLowerCase();
+  return switch (normalized) {
+    'packet' => plural ? 'Packets' : 'Packet',
+    'pair' => plural ? 'Pairs' : 'Pair',
+    'set' => plural ? 'Sets' : 'Set',
+    'lot' => plural ? 'Lots' : 'Lot',
+    _ => 'Pcs',
+  };
+}
+
+String _inventoryDisplayQuantityText(double value, String label) {
+  final rounded = value.roundToDouble();
+  final quantity = (value - rounded).abs() < 0.001
+      ? rounded.toStringAsFixed(0)
+      : value.toStringAsFixed(1);
+  final unit = _inventoryQuantityUnitName(
+    label,
+    plural: (value - 1).abs() > 0.001,
+  ).toLowerCase();
+  return '$quantity $unit';
 }
 
 class _GradeItemSummaryCard extends StatefulWidget {
@@ -310,8 +444,12 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
           children: [
             Expanded(
               child: _GradeItemMetric(
-                label: 'Available Pcs',
-                value: '${item.availablePieces} pcs',
+                label:
+                    'Available ${_inventoryQuantityUnitName(item.quantityUnitLabel, plural: true)}',
+                value: _inventoryDisplayQuantityText(
+                  item.availableDisplayUnits,
+                  item.quantityUnitLabel,
+                ),
                 accent: const Color(0xFF10B981),
               ),
             ),
@@ -327,7 +465,10 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
             Expanded(
               child: _GradeItemMetric(
                 label: 'Sold',
-                value: '${item.soldPieces} pcs',
+                value: _inventoryDisplayQuantityText(
+                  item.soldDisplayUnits,
+                  item.quantityUnitLabel,
+                ),
                 accent: const Color(0xFFEF4444),
               ),
             ),

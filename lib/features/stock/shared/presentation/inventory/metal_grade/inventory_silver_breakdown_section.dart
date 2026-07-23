@@ -223,8 +223,12 @@ class _SilverCompanyBreakdownCardState
               children: [
                 Expanded(
                   child: _SilverBreakdownMetric(
-                    label: 'Available',
-                    value: '${company.availablePieces} pcs',
+                    label:
+                        'Available ${_inventoryQuantityUnitName(company.quantityUnitLabel, plural: true)}',
+                    value: _inventoryDisplayQuantityText(
+                      company.availableDisplayUnits,
+                      company.quantityUnitLabel,
+                    ),
                     accent: const Color(0xFF10B981),
                   ),
                 ),
@@ -232,7 +236,10 @@ class _SilverCompanyBreakdownCardState
                 Expanded(
                   child: _SilverBreakdownMetric(
                     label: 'Sold',
-                    value: '${company.soldPieces} pcs',
+                    value: _inventoryDisplayQuantityText(
+                      company.soldDisplayUnits,
+                      company.quantityUnitLabel,
+                    ),
                     accent: company.soldPieces > 0
                         ? const Color(0xFFEF4444)
                         : InvColors.textMuted,
@@ -242,7 +249,10 @@ class _SilverCompanyBreakdownCardState
                 Expanded(
                   child: _SilverBreakdownMetric(
                     label: 'Total',
-                    value: '${company.totalPieces} pcs',
+                    value: _inventoryDisplayQuantityText(
+                      company.totalDisplayUnits,
+                      company.quantityUnitLabel,
+                    ),
                     accent: accent,
                   ),
                 ),
@@ -351,7 +361,7 @@ class _SilverGradeBreakdownList extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${grade.soldPieces}/${grade.totalPieces} sold',
+                      '${_inventoryDisplayQuantityText(grade.soldDisplayUnits, grade.quantityUnitLabel)} sold',
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -379,7 +389,8 @@ class _SilverGradeBreakdownList extends StatelessWidget {
                     Expanded(
                       child: _SilverBreakdownMetric(
                         label: 'Base Purity',
-                        value: '${_formatInventoryPercent(grade.purityPercent)}%',
+                        value:
+                            '${_formatInventoryPercent(grade.purityPercent)}%',
                         accent: const Color(0xFF0F766E),
                       ),
                     ),
@@ -495,8 +506,12 @@ class _SilverBreakdownMetric extends StatelessWidget {
 class _SilverCompanySummary {
   final String companyName;
   final List<_SilverGradeSummary> grades;
+  final String quantityUnitLabel;
   final int totalPieces;
   final int availablePieces;
+  final double totalDisplayUnits;
+  final double availableDisplayUnits;
+  final double soldDisplayUnits;
   final double totalWeight;
   final double availableWeight;
   final Set<String> itemNames;
@@ -504,8 +519,12 @@ class _SilverCompanySummary {
   const _SilverCompanySummary({
     required this.companyName,
     required this.grades,
+    required this.quantityUnitLabel,
     required this.totalPieces,
     required this.availablePieces,
+    required this.totalDisplayUnits,
+    required this.availableDisplayUnits,
+    required this.soldDisplayUnits,
     required this.totalWeight,
     required this.availableWeight,
     required this.itemNames,
@@ -555,8 +574,12 @@ class _SilverCompanyAccumulator {
   final Set<String> itemNames = <String>{};
   int totalPieces = 0;
   int availablePieces = 0;
+  double totalDisplayUnits = 0;
+  double availableDisplayUnits = 0;
+  double soldDisplayUnits = 0;
   double totalWeight = 0;
   double availableWeight = 0;
+  final Set<String> unitLabels = <String>{};
 
   _SilverCompanyAccumulator(this.companyName);
 
@@ -571,8 +594,13 @@ class _SilverCompanyAccumulator {
 
     final itemName = unit.itemName.trim();
     if (itemName.isNotEmpty) itemNames.add(_titleCase(itemName));
+    final unitLabel = _inventoryQuantityUnitLabel(unit);
+    unitLabels.add(unitLabel);
     totalPieces += unit.totalPieces;
     availablePieces += unit.availablePieces;
+    totalDisplayUnits += _inventoryTotalDisplayUnits(unit);
+    availableDisplayUnits += _inventoryAvailableDisplayUnits(unit);
+    soldDisplayUnits += _inventorySoldDisplayUnits(unit);
     totalWeight += unit.totalNetWeight;
     availableWeight += unit.availableNetWeight;
   }
@@ -587,8 +615,12 @@ class _SilverCompanyAccumulator {
     return _SilverCompanySummary(
       companyName: companyName,
       grades: gradeList,
+      quantityUnitLabel: _inventoryAggregateUnitLabel(unitLabels),
       totalPieces: totalPieces,
       availablePieces: availablePieces,
+      totalDisplayUnits: totalDisplayUnits,
+      availableDisplayUnits: availableDisplayUnits,
+      soldDisplayUnits: soldDisplayUnits,
       totalWeight: totalWeight,
       availableWeight: availableWeight,
       itemNames: itemNames,
@@ -598,8 +630,12 @@ class _SilverCompanyAccumulator {
 
 class _SilverGradeSummary {
   final String gradeLabel;
+  final String quantityUnitLabel;
   final int totalPieces;
   final int availablePieces;
+  final double totalDisplayUnits;
+  final double availableDisplayUnits;
+  final double soldDisplayUnits;
   final double totalWeight;
   final double availableWeight;
   final double purityPercent;
@@ -608,8 +644,12 @@ class _SilverGradeSummary {
 
   const _SilverGradeSummary({
     required this.gradeLabel,
+    required this.quantityUnitLabel,
     required this.totalPieces,
     required this.availablePieces,
+    required this.totalDisplayUnits,
+    required this.availableDisplayUnits,
+    required this.soldDisplayUnits,
     required this.totalWeight,
     required this.availableWeight,
     required this.purityPercent,
@@ -637,8 +677,12 @@ class _SilverGradeAccumulator {
   final Set<String> itemNames = <String>{};
   int totalPieces = 0;
   int availablePieces = 0;
+  double totalDisplayUnits = 0;
+  double availableDisplayUnits = 0;
+  double soldDisplayUnits = 0;
   double totalWeight = 0;
   double availableWeight = 0;
+  final Set<String> unitLabels = <String>{};
   double valuationWeight = 0;
   double weightedPurityPercent = 0;
   double weightedWastagePercent = 0;
@@ -648,8 +692,13 @@ class _SilverGradeAccumulator {
   void add(_InventoryGradeUnit unit) {
     final itemName = unit.itemName.trim();
     if (itemName.isNotEmpty) itemNames.add(_titleCase(itemName));
+    final unitLabel = _inventoryQuantityUnitLabel(unit);
+    unitLabels.add(unitLabel);
     totalPieces += unit.totalPieces;
     availablePieces += unit.availablePieces;
+    totalDisplayUnits += _inventoryTotalDisplayUnits(unit);
+    availableDisplayUnits += _inventoryAvailableDisplayUnits(unit);
+    soldDisplayUnits += _inventorySoldDisplayUnits(unit);
     totalWeight += unit.totalNetWeight;
     availableWeight += unit.availableNetWeight;
     final profileWeight = unit.totalNetWeight > 0 ? unit.totalNetWeight : 1.0;
@@ -662,8 +711,12 @@ class _SilverGradeAccumulator {
     final divisor = valuationWeight <= 0 ? 1.0 : valuationWeight;
     return _SilverGradeSummary(
       gradeLabel: gradeLabel,
+      quantityUnitLabel: _inventoryAggregateUnitLabel(unitLabels),
       totalPieces: totalPieces,
       availablePieces: availablePieces,
+      totalDisplayUnits: totalDisplayUnits,
+      availableDisplayUnits: availableDisplayUnits,
+      soldDisplayUnits: soldDisplayUnits,
       totalWeight: totalWeight,
       availableWeight: availableWeight,
       purityPercent: weightedPurityPercent / divisor,
