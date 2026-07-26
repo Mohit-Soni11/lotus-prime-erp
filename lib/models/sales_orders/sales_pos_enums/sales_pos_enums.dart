@@ -72,8 +72,8 @@ extension BillTypeExtension on BillType {
   String get displayName => this == BillType.gst ? 'GST' : 'NORMAL';
 }
 
-/// Represents how Old Gold value is adjusted against the final bill.
-enum OldGoldAdjustMode {
+/// Represents how trade-in metal value is adjusted against the final bill.
+enum TradeInAdjustMode {
   cashAdjust,
   metalAdjust,
 }

@@ -50,10 +50,10 @@ class SalesPosIcons {
       Icons.shopping_cart_checkout_rounded;
   static const IconData addItemToCart = Icons.add_shopping_cart_rounded;
   static const IconData deleteItem = Icons.delete_outline_rounded;
-  static const IconData oldGoldHeader = Icons.recycling_rounded;
+  static const IconData tradeInHeader = Icons.recycling_rounded;
   static const IconData itemsCountBag = Icons.shopping_bag_outlined;
   static const IconData emptyStateSync = Icons.sync_alt_rounded;
-  static const IconData addOldGold = Icons.add_circle_outline_rounded;
+  static const IconData addTradeIn = Icons.add_circle_outline_rounded;
 
   // --- PAYMENT MODES & HUB ---
   static const IconData paymentHubWallet =

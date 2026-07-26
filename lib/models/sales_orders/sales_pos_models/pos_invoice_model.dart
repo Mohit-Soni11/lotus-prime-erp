@@ -99,10 +99,10 @@ class PosInvoiceModel {
   final String customerCity;
   final String customerPan;
   final String customerGstin;
-  final OldGoldAdjustMode oldGoldMode;
+  final TradeInAdjustMode tradeInMode;
 
   final List<SaleItemModel> saleItems;
-  final List<OldGoldItemModel> oldGoldItems;
+  final List<TradeInItemModel> tradeInItems;
 
   final double grossAmount;
   final double discountAmount;
@@ -110,7 +110,7 @@ class PosInvoiceModel {
   final double cgst;
   final double sgst;
   final double totalGst;
-  final double totalOldGoldDeduction;
+  final double totalTradeInDeduction;
   final double grandTotal;
 
   final double cashPaid;
@@ -193,7 +193,7 @@ class PosInvoiceModel {
 
   double get netPayable => billingMode == BillingMode.wholesale
       ? grandTotal
-      : grandTotal - totalOldGoldDeduction;
+      : grandTotal - totalTradeInDeduction;
 
   PaymentStatus get paymentStatus {
     if (netPayable < 0) return PaymentStatus.credit;
@@ -221,16 +221,16 @@ class PosInvoiceModel {
     required this.customerCity,
     required this.customerPan,
     required this.customerGstin,
-    required this.oldGoldMode,
+    required this.tradeInMode,
     required this.saleItems,
-    required this.oldGoldItems,
+    required this.tradeInItems,
     required this.grossAmount,
     required this.discountAmount,
     required this.taxableAmount,
     required this.cgst,
     required this.sgst,
     required this.totalGst,
-    required this.totalOldGoldDeduction,
+    required this.totalTradeInDeduction,
     required this.grandTotal,
     required this.cashPaid,
     required this.upiPaid,

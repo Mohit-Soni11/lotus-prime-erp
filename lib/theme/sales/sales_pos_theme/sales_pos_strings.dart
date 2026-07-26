@@ -46,10 +46,10 @@ class SalesPosStrings {
   static const String emptyItemsMsg =
       "Press F2 or click 'Add New Item' to start billing.";
 
-  // --- OLD GOLD TABLE ---
-  static const String headerOldGold = "OLD GOLD / EXCHANGE (-)";
-  static const String msgNoOldGold = "No old gold added.";
-  static const String btnAddOldGold = "Add Old Item";
+  // --- TRADE-IN TABLE ---
+  static const String headerTradeIn = "METAL TRADE-IN (-)";
+  static const String msgNoTradeIn = "No trade-in items added.";
+  static const String btnAddTradeIn = "Add Trade-In";
   static const String toggleCashAdjust = "Cash Adjust";
   static const String toggleMetalAdjust = "Metal Adjust";
 
@@ -58,7 +58,7 @@ class SalesPosStrings {
   static const String lblGoldNetWt = "Total Gold Net Wt.";
   static const String lblSilverNetWt = "Total Silver Net Wt.";
   static const String lblGrossAmt = "Gross Amount";
-  static const String lblLessOldGold = "Less: Old Gold";
+  static const String lblLessTradeIn = "Less: Trade-In";
   static const String lblLessDiscount = "Less: Discount ";
   static const String lblTaxableAmt = "Taxable Amount";
   static const String headerPaymentMode = "PAYMENT MODE";

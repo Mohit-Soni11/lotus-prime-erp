@@ -49,3 +49,4 @@ class PosHoldRepository {
     await prefs.remove(_storageKey);
   }
 }
+

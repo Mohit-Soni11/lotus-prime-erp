@@ -44,7 +44,7 @@ void main() {
   });
 
   test('old silver exchange does not treat blank purity as pure silver', () {
-    final item = OldGoldItemModel(metal: pos.MetalType.silver);
+    final item = TradeInItemModel(metal: pos.MetalType.silver);
     item.grossCtrl.text = '10';
     item.lessCtrl.text = '0';
     item.rateCtrl.text = '100';
@@ -70,7 +70,7 @@ void main() {
         grossWeight: 10,
         rate: 100,
       );
-      final oldGoldItem = _oldGoldItem(
+      final tradeInItem = _tradeInItem(
         grossWeight: 2,
         purity: 90,
         rate: 50,
@@ -78,7 +78,7 @@ void main() {
       final invoice = _invoice(
         invoiceNumber: 'INV-LJ-2026-0001',
         saleItems: [saleItem],
-        oldGoldItems: [oldGoldItem],
+        tradeInItems: [tradeInItem],
         cashPaid: 910,
       );
 
@@ -93,7 +93,7 @@ void main() {
       final billItems = await (db.select(db.billItems)
             ..where((tbl) => tbl.billId.equals(result.billId)))
           .get();
-      final oldGoldRows = await (db.select(db.billOldGoldItems)
+      final tradeInRows = await (db.select(db.billTradeInItems)
             ..where((tbl) => tbl.billId.equals(result.billId)))
           .get();
       final stockRow = await _stockById(db, stockId);
@@ -103,13 +103,13 @@ void main() {
       expect(result.invoiceNumber, 'INV-LJ-2026-0001');
       expect(result.invoiceSequence, 1);
       expect(bill.finalAmount, 910);
-      expect(bill.oldGoldDeduction, 90);
+      expect(bill.tradeInDeduction, 90);
       expect(bill.paymentStatus, 'PAID');
       expect(billItems, hasLength(1));
       expect(billItems.single.linkedStockItemId, stockId);
-      expect(oldGoldRows, hasLength(1));
-      expect(oldGoldRows.single.fineWeight, 1.8);
-      expect(oldGoldRows.single.lineAmount, 90);
+      expect(tradeInRows, hasLength(1));
+      expect(tradeInRows.single.fineWeight, 1.8);
+      expect(tradeInRows.single.lineAmount, 90);
       expect(stockRow.quantity, 0);
       expect(stockRow.status, stock.StockStatus.sold.label);
       expect(stockMovements, hasLength(1));
@@ -124,7 +124,7 @@ void main() {
       expect(cashRows.single.amount, 910);
       expect(cashRows.single.isVoided, isFalse);
 
-      _disposeItems(saleItems: [saleItem], oldGoldItems: [oldGoldItem]);
+      _disposeItems(saleItems: [saleItem], tradeInItems: [tradeInItem]);
     },
   );
 
@@ -769,12 +769,12 @@ SaleItemModel _saleItem({
   return item;
 }
 
-OldGoldItemModel _oldGoldItem({
+TradeInItemModel _tradeInItem({
   required double grossWeight,
   required double purity,
   required double rate,
 }) {
-  final item = OldGoldItemModel(metal: pos.MetalType.gold);
+  final item = TradeInItemModel(metal: pos.MetalType.gold);
   item.descCtrl.text = 'Old Gold Exchange';
   item.grossCtrl.text = _formatNumber(grossWeight);
   item.lessCtrl.text = '0';
@@ -786,7 +786,7 @@ OldGoldItemModel _oldGoldItem({
 PosInvoiceModel _invoice({
   required String invoiceNumber,
   required List<SaleItemModel> saleItems,
-  List<OldGoldItemModel> oldGoldItems = const [],
+  List<TradeInItemModel> tradeInItems = const [],
   String customerName = 'Walk-in Customer',
   String customerMobile = '',
   double cashPaid = 0,
@@ -800,9 +800,9 @@ PosInvoiceModel _invoice({
 }) {
   final grossAmount =
       saleItems.fold<double>(0, (sum, item) => sum + item.totalValue);
-  final oldGoldDeduction =
-      oldGoldItems.fold<double>(0, (sum, item) => sum + item.totalValue);
-  final netPayable = grossAmount - oldGoldDeduction;
+  final tradeInDeduction =
+      tradeInItems.fold<double>(0, (sum, item) => sum + item.totalValue);
+  final netPayable = grossAmount - tradeInDeduction;
   final totalPaid = cashPaid + upiPaid + cardPaid + advancePaid;
   return PosInvoiceModel(
     invoiceNumber: invoiceNumber,
@@ -818,16 +818,16 @@ PosInvoiceModel _invoice({
     customerCity: 'Patna',
     customerPan: '',
     customerGstin: '',
-    oldGoldMode: pos.OldGoldAdjustMode.cashAdjust,
+    tradeInMode: pos.TradeInAdjustMode.cashAdjust,
     saleItems: saleItems,
-    oldGoldItems: oldGoldItems,
+    tradeInItems: tradeInItems,
     grossAmount: grossAmount,
     discountAmount: 0,
     taxableAmount: grossAmount,
     cgst: 0,
     sgst: 0,
     totalGst: 0,
-    totalOldGoldDeduction: oldGoldDeduction,
+    totalTradeInDeduction: tradeInDeduction,
     grandTotal: grossAmount,
     cashPaid: cashPaid,
     upiPaid: upiPaid,
@@ -844,12 +844,12 @@ PosInvoiceModel _invoice({
 
 void _disposeItems({
   List<SaleItemModel> saleItems = const [],
-  List<OldGoldItemModel> oldGoldItems = const [],
+  List<TradeInItemModel> tradeInItems = const [],
 }) {
   for (final item in saleItems) {
     item.dispose();
   }
-  for (final item in oldGoldItems) {
+  for (final item in tradeInItems) {
     item.dispose();
   }
 }

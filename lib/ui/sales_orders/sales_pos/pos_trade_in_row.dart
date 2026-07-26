@@ -1,8 +1,8 @@
 // ==========================================
-// FILE: pos_old_gold_row.dart
+// FILE: pos_trade_in_row.dart
 // TYPE: Smart UI Component (Single Row) (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Low-latency row for the old gold and exchange table.
+// DESCRIPTION: Low-latency row for the trade-in and exchange table.
 //               Strictly mapped Colors, Icons, and TextStyles.
 // ==========================================
 
@@ -16,12 +16,12 @@ import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'shared_pos_components.dart';
 
-class PosOldGoldRow extends StatefulWidget {
+class PosTradeInRow extends StatefulWidget {
   final int index;
-  final OldGoldItemModel item;
+  final TradeInItemModel item;
   final PosBillingController ctrl;
 
-  const PosOldGoldRow({
+  const PosTradeInRow({
     super.key,
     required this.index,
     required this.item,
@@ -29,10 +29,10 @@ class PosOldGoldRow extends StatefulWidget {
   });
 
   @override
-  State<PosOldGoldRow> createState() => _PosOldGoldRowState();
+  State<PosTradeInRow> createState() => _PosTradeInRowState();
 }
 
-class _PosOldGoldRowState extends State<PosOldGoldRow> {
+class _PosTradeInRowState extends State<PosTradeInRow> {
   bool _isHovered = false;
   late MetalType _currentMetal;
 
@@ -46,7 +46,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      unawaited(widget.ctrl.applyOldMetalMasterBuyRate(widget.item));
+      unawaited(widget.ctrl.applyTradeInMasterBuyRate(widget.item));
     });
   }
 
@@ -61,7 +61,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
         widget.item.purityCtrl.text = "100";
       }
     });
-    unawaited(widget.ctrl.applyOldMetalMasterBuyRate(widget.item, force: true));
+    unawaited(widget.ctrl.applyTradeInMasterBuyRate(widget.item, force: true));
   }
 
   Color _metalColor(MetalType metal) {
@@ -168,7 +168,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
                       controller: widget.item.rateCtrl,
                       hint: "Rate",
                       isNumber: true,
-                      onSubmitted: (_) => widget.ctrl.addOldGoldItem(),
+                      onSubmitted: (_) => widget.ctrl.addTradeInItem(),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -258,7 +258,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
         controller: widget.item.purityCtrl,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         onChanged: (_) =>
-            unawaited(widget.ctrl.applyOldMetalMasterBuyRate(widget.item)),
+            unawaited(widget.ctrl.applyTradeInMasterBuyRate(widget.item)),
         textAlign: TextAlign.left,
         style: SalesPosStyles.inputText.copyWith(
             color: metalColor,
@@ -311,7 +311,7 @@ class _PosOldGoldRowState extends State<PosOldGoldRow> {
         message: "Remove Item",
         waitDuration: const Duration(milliseconds: 400),
         child: InkWell(
-          onTap: () => widget.ctrl.removeOldGoldItem(widget.index),
+          onTap: () => widget.ctrl.removeTradeInItem(widget.index),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             width: 32,

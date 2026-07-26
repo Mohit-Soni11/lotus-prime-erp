@@ -4,7 +4,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 class PosInvoiceReadinessInput {
   const PosInvoiceReadinessInput({
     required this.saleItems,
-    required this.oldGoldItems,
+    required this.tradeInItems,
     required this.billingMode,
     required this.finalPayableAmount,
     required this.hasChangeReturn,
@@ -19,7 +19,7 @@ class PosInvoiceReadinessInput {
   });
 
   final List<SaleItemModel> saleItems;
-  final List<OldGoldItemModel> oldGoldItems;
+  final List<TradeInItemModel> tradeInItems;
   final BillingMode billingMode;
   final double finalPayableAmount;
   final bool hasChangeReturn;
@@ -37,7 +37,7 @@ class PosInvoiceReadinessValidator {
   const PosInvoiceReadinessValidator();
 
   String? validate(PosInvoiceReadinessInput input) {
-    if (input.saleItems.isEmpty && input.oldGoldItems.isEmpty) {
+    if (input.saleItems.isEmpty && input.tradeInItems.isEmpty) {
       return 'The cart is empty. Please add at least one item before generating an invoice.';
     }
 
@@ -63,8 +63,8 @@ class PosInvoiceReadinessValidator {
       }
     }
 
-    for (int index = 0; index < input.oldGoldItems.length; index++) {
-      final item = input.oldGoldItems[index];
+    for (int index = 0; index < input.tradeInItems.length; index++) {
+      final item = input.tradeInItems[index];
       final rowNumber = index + 1;
       if (item.netWt <= input.weightTolerance) {
         return 'Enter gross weight for exchange row $rowNumber before generating an invoice.';
@@ -119,7 +119,7 @@ class PosInvoiceReadinessValidator {
               (input.billingMode == BillingMode.wholesale ||
                   item.totalValue > input.amountTolerance),
         ) ||
-        input.oldGoldItems.any(
+        input.tradeInItems.any(
           (item) =>
               item.netWt > input.weightTolerance &&
               item.rate > 0 &&

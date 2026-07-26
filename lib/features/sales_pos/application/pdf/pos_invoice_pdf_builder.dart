@@ -688,7 +688,7 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel invoice) {
-    final showExchangeBreakdown = invoice.oldGoldItems.any(
+    final showExchangeBreakdown = invoice.tradeInItems.any(
       (item) => _getMetalConfig(item.metal).showExchangeBreakdown,
     );
     final showGstBreakup = scopeService
@@ -713,22 +713,22 @@ class _PosInvoicePdfDocumentBuilder {
                 _totalRow('CGST', invoice.cgst),
                 _totalRow('SGST', invoice.sgst),
               ],
-              if (invoice.totalOldGoldDeduction > 0) ...[
+              if (invoice.totalTradeInDeduction > 0) ...[
                 () {
-                  final goldExchange = invoice.oldGoldItems
+                  final goldExchange = invoice.tradeInItems
                       .where((item) => item.metal == MetalType.gold)
                       .fold(0.0, (sum, item) => sum + item.totalValue);
-                  final silverExchange = invoice.oldGoldItems
+                  final silverExchange = invoice.tradeInItems
                       .where((item) => item.metal == MetalType.silver)
                       .fold(0.0, (sum, item) => sum + item.totalValue);
-                  final platinumExchange = invoice.oldGoldItems
+                  final platinumExchange = invoice.tradeInItems
                       .where((item) => item.metal == MetalType.platinum)
                       .fold(0.0, (sum, item) => sum + item.totalValue);
 
                   if (!showExchangeBreakdown) {
                     return _totalRow(
                       'Less: Old Metal Exchange',
-                      -invoice.totalOldGoldDeduction,
+                      -invoice.totalTradeInDeduction,
                       isDeduction: true,
                     );
                   }
@@ -757,7 +757,7 @@ class _PosInvoicePdfDocumentBuilder {
                           platinumExchange == 0)
                         _totalRow(
                           'Less: Old Metal Exchange',
-                          -invoice.totalOldGoldDeduction,
+                          -invoice.totalTradeInDeduction,
                           isDeduction: true,
                         ),
                     ],

@@ -36,9 +36,9 @@ class Bills extends Table with BaseTable {
   RealColumn get cardPaid => real().withDefault(const Constant(0.0))();
   RealColumn get advancePaid => real().withDefault(const Constant(0.0))();
   RealColumn get dueAmount => real().withDefault(const Constant(0.0))();
-  RealColumn get oldGoldDeduction => real().withDefault(const Constant(0.0))();
-  TextColumn get oldGoldMode =>
-      text().withDefault(const Constant('CASH_ADJUST'))();
+  RealColumn get tradeInDeduction => real().named('old_gold_deduction').withDefault(const Constant(0.0))();
+  TextColumn get tradeInMode =>
+      text().named('old_gold_mode').withDefault(const Constant('CASH_ADJUST'))();
 
   // Meta
   DateTimeColumn get billDate => dateTime().withDefault(currentDateAndTime)();

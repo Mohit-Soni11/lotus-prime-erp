@@ -588,8 +588,8 @@ class PosBillingController extends ChangeNotifier {
     }
   }
 
-  Future<void> applyOldMetalMasterBuyRate(
-    OldGoldItemModel item, {
+  Future<void> applyTradeInMasterBuyRate(
+    TradeInItemModel item, {
     bool force = false,
   }) async {
     final metalSnapshot = item.metal;
@@ -602,7 +602,7 @@ class PosBillingController extends ChangeNotifier {
     );
 
     if (_isDisposed ||
-        !oldGoldItems.contains(item) ||
+        !tradeInItems.contains(item) ||
         item.metal != metalSnapshot ||
         item.purityCtrl.text.trim() != purityText) {
       return;
@@ -701,12 +701,12 @@ class PosBillingController extends ChangeNotifier {
   // --- CORE STATES ---
   BillingMode billingMode = BillingMode.retail;
   BillType billType = BillType.normal;
-  OldGoldAdjustMode oldGoldMode = OldGoldAdjustMode.cashAdjust;
+  TradeInAdjustMode tradeInMode = TradeInAdjustMode.cashAdjust;
   DiscountType discountType = DiscountType.percentage;
 
   // --- SHARED DATA LISTS ---
   final List<SaleItemModel> saleItems = [];
-  final List<OldGoldItemModel> oldGoldItems = [];
+  final List<TradeInItemModel> tradeInItems = [];
 
   // --- UI CONTROLLERS ---
   final ScrollController tableScrollCtrl = ScrollController();
@@ -827,7 +827,7 @@ class PosBillingController extends ChangeNotifier {
       _committedInvoiceNumber = bill.billNo;
       billingMode = _billingModeFromDb(bill.billingMode);
       billType = _billTypeFromDb(bill.billType);
-      oldGoldMode = _oldGoldModeFromDb(bill.oldGoldMode);
+      tradeInMode = _tradeInModeFromDb(bill.tradeInMode);
       discountType = DiscountType.flatAmount;
       promiseDate = bill.promiseDate;
 
@@ -870,15 +870,15 @@ class PosBillingController extends ChangeNotifier {
         saleItems.add(item);
       }
 
-      for (final row in details.oldGoldItems) {
-        final item = OldGoldItemModel(metal: _metalFromDb(row.metalType));
+      for (final row in details.tradeInItems) {
+        final item = TradeInItemModel(metal: _metalFromDb(row.metalType));
         item.addListener(_onChildItemChanged);
         item.descCtrl.text = row.itemDescription;
         item.grossCtrl.text = _formatEditNumber(row.grossWeight);
         item.lessCtrl.text = _formatEditNumber(row.lessWeight);
         item.purityCtrl.text = _formatEditNumber(row.purity);
         item.rateCtrl.text = _formatEditNumber(row.rate);
-        oldGoldItems.add(item);
+        tradeInItems.add(item);
       }
 
       activeRowIndex = saleItems.isEmpty ? -1 : 0;
@@ -1009,10 +1009,10 @@ class PosBillingController extends ChangeNotifier {
     return value.trim().toUpperCase() == 'GST' ? BillType.gst : BillType.normal;
   }
 
-  OldGoldAdjustMode _oldGoldModeFromDb(String value) {
+  TradeInAdjustMode _tradeInModeFromDb(String value) {
     return value.trim().toUpperCase() == 'METAL_ADJUST'
-        ? OldGoldAdjustMode.metalAdjust
-        : OldGoldAdjustMode.cashAdjust;
+        ? TradeInAdjustMode.metalAdjust
+        : TradeInAdjustMode.cashAdjust;
   }
 
   Future<void> _initializeInvoiceNumberPreview() async {
@@ -1072,10 +1072,10 @@ class PosBillingController extends ChangeNotifier {
     return _cachedTotals ??= const CalculatePosTotals()(
       PosTotalsInput(
         saleItems: saleItems,
-        oldGoldItems: oldGoldItems,
+        tradeInItems: tradeInItems,
         billingMode: billingMode,
         billType: billType,
-        oldGoldMode: oldGoldMode,
+        tradeInMode: tradeInMode,
         discountType: discountType,
         discountInput: _discountInput,
         cashInput: _cashInput,
@@ -1103,8 +1103,8 @@ class PosBillingController extends ChangeNotifier {
   double get totalSilverAmount => _totals.totalSilverAmount;
   double get totalPlatinumAmount => _totals.totalPlatinumAmount;
   double get totalDiamondAmount => _totals.totalDiamondAmount;
-  double get totalOldGoldAmount => _totals.totalOldGoldAmount;
-  double get oldGoldCashDeduction => _totals.oldGoldCashDeduction;
+  double get totalTradeInAmount => _totals.totalTradeInAmount;
+  double get tradeInCashDeduction => _totals.tradeInCashDeduction;
   double get pureGoldAmount => _totals.pureGoldAmount;
   double get pureSilverAmount => _totals.pureSilverAmount;
   double get purePlatinumAmount => _totals.purePlatinumAmount;
@@ -1198,7 +1198,7 @@ class PosBillingController extends ChangeNotifier {
     return item.rate > 0 && item.totalValue > _invoiceAmountTolerance;
   }
 
-  bool _isBillableOldMetalItem(OldGoldItemModel item) {
+  bool _isBillableTradeInItem(TradeInItemModel item) {
     return item.netWt > _invoiceWeightTolerance &&
         item.rate > 0 &&
         item.totalValue > _invoiceAmountTolerance;
@@ -1206,13 +1206,13 @@ class PosBillingController extends ChangeNotifier {
 
   bool get hasBillableInvoiceItems =>
       saleItems.any(_isBillableSaleItem) ||
-      oldGoldItems.any(_isBillableOldMetalItem);
+      tradeInItems.any(_isBillableTradeInItem);
 
   String? validateInvoiceReadiness() {
     return const PosInvoiceReadinessValidator().validate(
       PosInvoiceReadinessInput(
         saleItems: saleItems,
-        oldGoldItems: oldGoldItems,
+        tradeInItems: tradeInItems,
         billingMode: billingMode,
         finalPayableAmount: finalPayableAmount,
         hasChangeReturn: hasChangeReturn,
@@ -1253,12 +1253,12 @@ class PosBillingController extends ChangeNotifier {
       return;
     }
 
-    for (final item in oldGoldItems) {
-      if (_isBillableOldMetalItem(item)) {
+    for (final item in tradeInItems) {
+      if (_isBillableTradeInItem(item)) {
         continue;
       }
       Future.delayed(const Duration(milliseconds: 80), () {
-        if (oldGoldItems.contains(item)) {
+        if (tradeInItems.contains(item)) {
           item.firstFieldFocus.requestFocus();
         }
       });
@@ -1317,24 +1317,24 @@ class PosBillingController extends ChangeNotifier {
     }
   }
 
-  void addOldGoldItem() {
-    var newItem = OldGoldItemModel();
+  void addTradeInItem() {
+    var newItem = TradeInItemModel();
     newItem.addListener(_onChildItemChanged);
-    oldGoldItems.add(newItem);
+    tradeInItems.add(newItem);
     notifyListeners();
-    unawaited(applyOldMetalMasterBuyRate(newItem, force: true));
+    unawaited(applyTradeInMasterBuyRate(newItem, force: true));
   }
 
-  void removeOldGoldItem(int index) {
-    if (index < 0 || index >= oldGoldItems.length) return;
-    oldGoldItems[index].removeListener(_onChildItemChanged);
-    oldGoldItems[index].dispose();
-    oldGoldItems.removeAt(index);
+  void removeTradeInItem(int index) {
+    if (index < 0 || index >= tradeInItems.length) return;
+    tradeInItems[index].removeListener(_onChildItemChanged);
+    tradeInItems[index].dispose();
+    tradeInItems.removeAt(index);
     notifyListeners();
   }
 
-  void toggleOldGoldMode(OldGoldAdjustMode mode) {
-    oldGoldMode = mode;
+  void toggleTradeInMode(TradeInAdjustMode mode) {
+    tradeInMode = mode;
     _clearChangeReturnMethod();
     notifyListeners();
   }
@@ -1427,7 +1427,7 @@ class PosBillingController extends ChangeNotifier {
       customerGst: gstCtrl.text,
       billingMode: billingMode,
       billType: billType,
-      oldGoldMode: oldGoldMode,
+      tradeInMode: tradeInMode,
       discountType: discountType,
       promiseDate: promiseDate,
       discountInput: discountCtrl.text,
@@ -1443,8 +1443,8 @@ class PosBillingController extends ChangeNotifier {
       savedSaleItems: saleItems
           .map(PosHoldSaleItemSnapshot.capture)
           .toList(growable: false),
-      savedOldMetalItems: oldGoldItems
-          .map(PosHoldOldMetalSnapshot.capture)
+      savedTradeInItems: tradeInItems
+          .map(PosHoldTradeInSnapshot.capture)
           .toList(growable: false),
     );
   }
@@ -1452,7 +1452,7 @@ class PosBillingController extends ChangeNotifier {
   void _restoreHoldSnapshot(PosHoldBillModel holdBill) {
     billingMode = holdBill.billingMode;
     billType = holdBill.billType;
-    oldGoldMode = holdBill.oldGoldMode;
+    tradeInMode = holdBill.tradeInMode;
     discountType = holdBill.discountType;
     promiseDate = holdBill.promiseDate;
 
@@ -1479,10 +1479,10 @@ class PosBillingController extends ChangeNotifier {
       saleItems.add(item);
     }
 
-    for (final snapshot in holdBill.savedOldMetalItems) {
+    for (final snapshot in holdBill.savedTradeInItems) {
       final item = snapshot.restore();
       item.addListener(_onChildItemChanged);
-      oldGoldItems.add(item);
+      tradeInItems.add(item);
     }
 
     activeRowIndex = saleItems.isEmpty ? -1 : 0;
@@ -1490,7 +1490,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void holdCurrentBill() {
-    if (saleItems.isEmpty && oldGoldItems.isEmpty) return;
+    if (saleItems.isEmpty && tradeInItems.isEmpty) return;
 
     final newHold = _buildHoldSnapshot();
     heldBills.insert(0, newHold);
@@ -1560,14 +1560,14 @@ class PosBillingController extends ChangeNotifier {
         item.removeListener(_onChildItemChanged);
         item.dispose();
       }
-      for (var item in oldGoldItems) {
+      for (var item in tradeInItems) {
         item.removeListener(_onChildItemChanged);
         item.dispose();
       }
     }
 
     saleItems.clear();
-    oldGoldItems.clear();
+    tradeInItems.clear();
     activeRowIndex = -1;
     if (refreshInvoicePreview) {
       unawaited(refreshInvoiceSequencePreview());

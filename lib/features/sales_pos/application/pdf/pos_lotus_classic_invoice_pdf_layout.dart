@@ -50,15 +50,15 @@ class PosLotusClassicInvoicePdfLayout {
         ),
         pw.SizedBox(height: 8),
         _saleItemSections(invoice),
-        if (invoice.oldGoldItems.isNotEmpty) ...[
+        if (invoice.tradeInItems.isNotEmpty) ...[
           pw.SizedBox(height: 8),
           _sectionHeading(
             number: '02',
-            title: 'EXCHANGE & SCRAP METAL',
+            title: 'METAL TRADE-IN',
             subtitle: 'Deduction recorded against this invoice',
           ),
           pw.SizedBox(height: 8),
-          _exchangeTable(invoice),
+          _tradeInTable(invoice),
         ],
         pw.SizedBox(height: 10),
         _totalsAndPayment(invoice),
@@ -581,7 +581,7 @@ class PosLotusClassicInvoicePdfLayout {
     return _table(headers, rows);
   }
 
-  pw.Widget _exchangeTable(PosInvoiceModel invoice) {
+  pw.Widget _tradeInTable(PosInvoiceModel invoice) {
     const headers = [
       'S/N',
       'Metal',
@@ -593,12 +593,12 @@ class PosLotusClassicInvoicePdfLayout {
       'Deduction',
     ];
 
-    final rows = invoice.oldGoldItems.asMap().entries.map((entry) {
+    final rows = invoice.tradeInItems.asMap().entries.map((entry) {
       final item = entry.value;
       return [
         '${entry.key + 1}',
         item.metal.displayName,
-        _fallback(item.descCtrl.text, '${item.metal.displayName} Scrap'),
+        _fallback(item.descCtrl.text, '${item.metal.displayName} Trade-In'),
         _weightText(item.grossCtrl.text),
         _weightText(item.lessCtrl.text),
         _weightText(item.fineWt.toStringAsFixed(3)),
@@ -666,10 +666,10 @@ class PosLotusClassicInvoicePdfLayout {
         _totalLine('CGST', invoice.cgst),
         _totalLine('SGST', invoice.sgst),
       ],
-      if (invoice.totalOldGoldDeduction > 0)
+      if (invoice.totalTradeInDeduction > 0)
         _totalLine(
-          'Old Metal Exchange',
-          -invoice.totalOldGoldDeduction,
+          'Trade-In Deduction',
+          -invoice.totalTradeInDeduction,
           isDeduction: true,
         ),
     ];

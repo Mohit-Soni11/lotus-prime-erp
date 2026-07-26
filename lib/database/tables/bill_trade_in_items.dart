@@ -3,9 +3,12 @@ import 'package:drift/drift.dart';
 import 'base_table.dart';
 import 'bills.dart';
 
-@DataClassName('BillOldGoldItem')
-@TableIndex(name: 'idx_bill_old_gold_bill', columns: {#billId})
-class BillOldGoldItems extends Table with BaseTable {
+@DataClassName('BillTradeInItem')
+@TableIndex(name: 'idx_bill_trade_in_bill', columns: {#billId})
+class BillTradeInItems extends Table with BaseTable {
+  @override
+  String get tableName => 'bill_old_gold_items';
+
   IntColumn get billId =>
       integer().references(Bills, #id, onDelete: KeyAction.cascade)();
 

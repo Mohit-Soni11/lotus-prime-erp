@@ -28,7 +28,7 @@ class PosRightBillingPanel extends StatefulWidget {
 class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   bool _makingExpanded = false;
   bool _gstExpanded = false;
-  bool _exchangeExpanded = false;
+  bool _tradeInExpanded = false;
   //  Promise date is owned by PosBillingController.
 
   double _lastPayableAmount = 0.0;
@@ -175,28 +175,28 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   // RETAIL SUMMARY BOARD
   // ==========================================
   Widget _buildRetailSummaryBoard() {
-    double oldGoldFine = 0.0,
-        oldSilverFine = 0.0,
-        oldPlatinumFine = 0.0,
-        oldDiamondFine = 0.0;
-    double oldGoldAmt = 0.0,
-        oldSilverAmt = 0.0,
-        oldPlatinumAmt = 0.0,
-        oldDiamondAmt = 0.0;
+    double tradeInGoldFine = 0.0,
+        tradeInSilverFine = 0.0,
+        tradeInPlatinumFine = 0.0,
+        tradeInDiamondFine = 0.0;
+    double tradeInGoldAmt = 0.0,
+        tradeInSilverAmt = 0.0,
+        tradeInPlatinumAmt = 0.0,
+        tradeInDiamondAmt = 0.0;
 
-    for (var item in widget.ctrl.oldGoldItems) {
+    for (var item in widget.ctrl.tradeInItems) {
       if (item.metal == MetalType.gold) {
-        oldGoldFine += item.fineWt;
-        oldGoldAmt += item.totalValue;
+        tradeInGoldFine += item.fineWt;
+        tradeInGoldAmt += item.totalValue;
       } else if (item.metal == MetalType.silver) {
-        oldSilverFine += item.fineWt;
-        oldSilverAmt += item.totalValue;
+        tradeInSilverFine += item.fineWt;
+        tradeInSilverAmt += item.totalValue;
       } else if (item.metal == MetalType.platinum) {
-        oldPlatinumFine += item.fineWt;
-        oldPlatinumAmt += item.totalValue;
+        tradeInPlatinumFine += item.fineWt;
+        tradeInPlatinumAmt += item.totalValue;
       } else if (item.metal == MetalType.diamond) {
-        oldDiamondFine += item.fineWt;
-        oldDiamondAmt += item.totalValue;
+        tradeInDiamondFine += item.fineWt;
+        tradeInDiamondAmt += item.totalValue;
       }
     }
 
@@ -237,22 +237,22 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
 
           if (widget.ctrl.totalMakingCharge > 0) _buildMakingChargesSection(),
 
-          if (widget.ctrl.oldGoldMode == OldGoldAdjustMode.metalAdjust) ...[
-            if (oldGoldFine > 0)
-              _buildSubtleRow("Less: Exchange Gold Fine", 0,
-                  customVal: "- ${oldGoldFine.toStringAsFixed(3)} g",
+          if (widget.ctrl.tradeInMode == TradeInAdjustMode.metalAdjust) ...[
+            if (tradeInGoldFine > 0)
+              _buildSubtleRow("Less: Trade-In Gold Fine", 0,
+                  customVal: "- ${tradeInGoldFine.toStringAsFixed(3)} g",
                   color: SalesPosColors.brandGold),
-            if (oldSilverFine > 0)
-              _buildSubtleRow("Less: Exchange Silver Fine", 0,
-                  customVal: "- ${oldSilverFine.toStringAsFixed(3)} g",
+            if (tradeInSilverFine > 0)
+              _buildSubtleRow("Less: Trade-In Silver Fine", 0,
+                  customVal: "- ${tradeInSilverFine.toStringAsFixed(3)} g",
                   color: SalesPosColors.brandSilver),
-            if (oldPlatinumFine > 0)
-              _buildSubtleRow("Less: Exchange Platinum Fine", 0,
-                  customVal: "- ${oldPlatinumFine.toStringAsFixed(3)} g",
+            if (tradeInPlatinumFine > 0)
+              _buildSubtleRow("Less: Trade-In Platinum Fine", 0,
+                  customVal: "- ${tradeInPlatinumFine.toStringAsFixed(3)} g",
                   color: SalesPosColors.brandPlatinum),
-            if (oldDiamondFine > 0)
-              _buildSubtleRow("Less: Exchange Diamond Fine", 0,
-                  customVal: "- ${oldDiamondFine.toStringAsFixed(3)} ct",
+            if (tradeInDiamondFine > 0)
+              _buildSubtleRow("Less: Trade-In Diamond Fine", 0,
+                  customVal: "- ${tradeInDiamondFine.toStringAsFixed(3)} ct",
                   color: SalesPosColors.brandDiamond),
           ],
 
@@ -268,8 +268,8 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           ),
           const SizedBox(height: 12),
 
-          if (widget.ctrl.oldGoldMode == OldGoldAdjustMode.cashAdjust &&
-              widget.ctrl.totalOldGoldAmount > 0)
+          if (widget.ctrl.tradeInMode == TradeInAdjustMode.cashAdjust &&
+              widget.ctrl.totalTradeInAmount > 0)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Column(
@@ -277,11 +277,11 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 children: [
                   InkWell(
                     onTap: () =>
-                        setState(() => _exchangeExpanded = !_exchangeExpanded),
+                        setState(() => _tradeInExpanded = !_tradeInExpanded),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Exchange Value Adjusted",
+                        Text("Trade-In Value Adjusted",
                             style: TextStyle(
                                 fontSize: SalesPosStyles.fontLabel,
                                 fontWeight: FontWeight.w900,
@@ -290,14 +290,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                         Row(
                           children: [
                             Text(
-                                "- Rs ${widget.ctrl.oldGoldCashDeduction.toStringAsFixed(2)}",
+                                "- Rs ${widget.ctrl.tradeInCashDeduction.toStringAsFixed(2)}",
                                 style: const TextStyle(
                                     fontSize: SalesPosStyles.fontBody,
                                     fontWeight: FontWeight.w900,
                                     color: SalesPosColors.danger)),
                             const SizedBox(width: 4),
                             Icon(
-                                _exchangeExpanded
+                                _tradeInExpanded
                                     ? SalesPosIcons.arrowUp
                                     : SalesPosIcons.arrowDown,
                                 color: SalesPosColors.danger,
@@ -307,7 +307,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       ],
                     ),
                   ),
-                  if (_exchangeExpanded)
+                  if (_tradeInExpanded)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.all(10),
@@ -320,17 +320,17 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           borderRadius: BorderRadius.circular(8)),
                       child: Column(
                         children: [
-                          if (oldGoldAmt > 0)
-                            _buildSubtleRow("Gold Exchange", oldGoldAmt,
+                          if (tradeInGoldAmt > 0)
+                            _buildSubtleRow("Gold Trade-In", tradeInGoldAmt,
                                 color: SalesPosColors.brandGold),
-                          if (oldSilverAmt > 0)
-                            _buildSubtleRow("Silver Exchange", oldSilverAmt,
+                          if (tradeInSilverAmt > 0)
+                            _buildSubtleRow("Silver Trade-In", tradeInSilverAmt,
                                 color: SalesPosColors.brandSilver),
-                          if (oldPlatinumAmt > 0)
-                            _buildSubtleRow("Platinum Exchange", oldPlatinumAmt,
+                          if (tradeInPlatinumAmt > 0)
+                            _buildSubtleRow("Platinum Trade-In", tradeInPlatinumAmt,
                                 color: SalesPosColors.brandPlatinum),
-                          if (oldDiamondAmt > 0)
-                            _buildSubtleRow("Diamond Exchange", oldDiamondAmt,
+                          if (tradeInDiamondAmt > 0)
+                            _buildSubtleRow("Diamond Trade-In", tradeInDiamondAmt,
                                 color: SalesPosColors.brandDiamond),
                         ],
                       ),
@@ -1099,7 +1099,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
 
   Widget _buildPaymentHub() {
     final isEmptyCart =
-        widget.ctrl.saleItems.isEmpty && widget.ctrl.oldGoldItems.isEmpty;
+        widget.ctrl.saleItems.isEmpty && widget.ctrl.tradeInItems.isEmpty;
     final hasIncompleteDraft =
         !isEmptyCart && widget.ctrl.validateInvoiceReadiness() != null;
     final isDue = widget.ctrl.balanceDue > 0.005;
@@ -1519,7 +1519,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     // --- HOLD BUTTON LINKED ---
                     onPressed: () {
                       if (widget.ctrl.saleItems.isEmpty &&
-                          widget.ctrl.oldGoldItems.isEmpty) {
+                          widget.ctrl.tradeInItems.isEmpty) {
                         return;
                       }
                       widget.ctrl.holdCurrentBill();

@@ -1,8 +1,8 @@
 // ==========================================
-// FILE: pos_old_gold_table.dart
-// TYPE: Smart Exchange/Scrap Container (UPGRADED)
+// FILE: pos_trade_in_table.dart
+// TYPE: Smart Metal Trade-In Container (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-Lag Old Gold Table connected to Master Theme.
+// DESCRIPTION: Zero-Lag Trade-In Table connected to Master Theme.
 //               Hardcoded colors, icons, and typography removed.
 // ==========================================
 
@@ -11,12 +11,12 @@ import 'package:flutter/material.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
-import 'pos_old_gold_row.dart';
+import 'pos_trade_in_row.dart';
 
-class PosOldGoldTable extends StatelessWidget {
+class PosTradeInTable extends StatelessWidget {
   final PosBillingController ctrl;
 
-  const PosOldGoldTable({
+  const PosTradeInTable({
     super.key,
     required this.ctrl,
   });
@@ -30,7 +30,7 @@ class PosOldGoldTable extends StatelessWidget {
 
           return Container(
             decoration: BoxDecoration(
-              color: SalesPosColors.oldGoldTableBg,
+              color: SalesPosColors.tradeInTableBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: SalesPosColors.bodyBorder, width: 1.5),
               boxShadow: const [
@@ -45,16 +45,16 @@ class PosOldGoldTable extends StatelessWidget {
               children: [
                 _buildHeader(isWholesale),
                 _buildColumnRow(isWholesale),
-                ctrl.oldGoldItems.isEmpty
+                ctrl.tradeInItems.isEmpty
                     ? _buildEmptyState(isWholesale)
                     : ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: ctrl.oldGoldItems.length,
+                        itemCount: ctrl.tradeInItems.length,
                         itemBuilder: (context, index) {
-                          return PosOldGoldRow(
+                          return PosTradeInRow(
                             index: index,
-                            item: ctrl.oldGoldItems[index],
+                            item: ctrl.tradeInItems[index],
                             ctrl: ctrl,
                           );
                         },
@@ -87,7 +87,7 @@ class PosOldGoldTable extends StatelessWidget {
               border: Border.all(
                   color: SalesPosColors.danger.withValues(alpha: 0.40)),
             ),
-            child: const Icon(SalesPosIcons.oldGoldHeader,
+            child: const Icon(SalesPosIcons.tradeInHeader,
                 color: SalesPosColors.danger, size: 22),
           ),
           const SizedBox(width: 14),
@@ -98,7 +98,7 @@ class PosOldGoldTable extends StatelessWidget {
               Text(
                 isWholesale
                     ? "METAL INWARD (KACHHI / JAMA)"
-                    : "EXCHANGE & SCRAP METAL",
+                    : "METAL TRADE-IN",
                 style: SalesPosStyles.highVisHeader
                     .copyWith(color: SalesPosColors.danger, height: 1),
               ),
@@ -106,7 +106,7 @@ class PosOldGoldTable extends StatelessWidget {
               Text(
                 isWholesale
                     ? "Record raw metal receipts for fine weight calculation"
-                    : "Record old customer items for deduction",
+                    : "Record customer's old metal for trade-in deduction",
                 style: SalesPosStyles.subTitleMuted,
               ),
             ],
@@ -126,7 +126,7 @@ class PosOldGoldTable extends StatelessWidget {
                     color: SalesPosColors.danger, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  "ITEMS : ${ctrl.oldGoldItems.length}",
+                  "ITEMS : ${ctrl.tradeInItems.length}",
                   style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: SalesPosStyles.fontBody,
@@ -214,7 +214,7 @@ class PosOldGoldTable extends StatelessWidget {
                   color: SalesPosColors.danger, size: 32),
             ),
             const SizedBox(height: 18),
-            Text(isWholesale ? "NO METAL INWARDS" : "NO EXCHANGE ITEMS",
+            Text(isWholesale ? "NO METAL INWARDS" : "NO TRADE-IN ITEMS",
                 style: const TextStyle(
                     color: SalesPosColors.bodyTextMain,
                     fontSize: SalesPosStyles.fontTitle,
@@ -224,7 +224,7 @@ class PosOldGoldTable extends StatelessWidget {
             Text(
                 isWholesale
                     ? "Click below to receive Kachhi/Jama"
-                    : "Click below to record customer scrap",
+                    : "Click below to record trade-in metal",
                 style: SalesPosStyles.subTitleMuted),
           ],
         ),
@@ -236,7 +236,7 @@ class PosOldGoldTable extends StatelessWidget {
     double gFine = 0, sFine = 0, pFine = 0, dFine = 0;
     double gVal = 0, sVal = 0, pVal = 0, dVal = 0;
 
-    for (var item in ctrl.oldGoldItems) {
+    for (var item in ctrl.tradeInItems) {
       if (item.metal == MetalType.gold) {
         gFine += item.fineWt;
         gVal += item.totalValue;
@@ -265,7 +265,7 @@ class PosOldGoldTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            onTap: ctrl.addOldGoldItem,
+            onTap: ctrl.addTradeInItem,
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -278,13 +278,13 @@ class PosOldGoldTable extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(SalesPosIcons.addOldGold,
+                  const Icon(SalesPosIcons.addTradeIn,
                       color: SalesPosColors.danger, size: 20),
                   const SizedBox(width: 8),
                   Text(
                       isWholesale
                           ? "RECORD METAL INWARD"
-                          : "RECORD EXCHANGE ITEM",
+                          : "RECORD TRADE-IN",
                       style: const TextStyle(
                           color: SalesPosColors.danger,
                           fontSize: SalesPosStyles.fontBody,
@@ -294,7 +294,7 @@ class PosOldGoldTable extends StatelessWidget {
               ),
             ),
           ),
-          if (ctrl.oldGoldItems.isNotEmpty)
+          if (ctrl.tradeInItems.isNotEmpty)
             Expanded(
               child: Wrap(
                 alignment: WrapAlignment.end,

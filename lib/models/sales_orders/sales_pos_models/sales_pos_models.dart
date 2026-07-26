@@ -580,7 +580,7 @@ class SaleItemModel extends ChangeNotifier {
   }
 }
 
-class OldGoldItemModel extends ChangeNotifier {
+class TradeInItemModel extends ChangeNotifier {
   MetalType _metal;
 
   final TextEditingController descCtrl = TextEditingController();
@@ -600,7 +600,7 @@ class OldGoldItemModel extends ChangeNotifier {
   bool _rateFromMetalRateMaster = false;
   String? _rateSourceLabel;
 
-  OldGoldItemModel({
+  TradeInItemModel({
     MetalType metal = MetalType.gold,
   }) : _metal = metal {
     purityCtrl.text = "100";

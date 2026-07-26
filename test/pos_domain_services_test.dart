@@ -246,18 +246,18 @@ void main() {
 
     test('deducts old gold only in retail cash-adjust mode', () {
       final saleItem = _saleItem(huid: 'HUID-001', grossWeight: 10, rate: 1000);
-      final oldItem = _oldGoldItem(grossWeight: 2, purity: 90, rate: 500);
+      final oldItem = _tradeInItem(grossWeight: 2, purity: 90, rate: 500);
 
       final totals = const CalculatePosTotals()(
         _totalsInput(
           saleItems: [saleItem],
-          oldGoldItems: [oldItem],
-          oldGoldMode: OldGoldAdjustMode.cashAdjust,
+          tradeInItems: [oldItem],
+          tradeInMode: TradeInAdjustMode.cashAdjust,
         ),
       );
 
-      expect(totals.totalOldGoldAmount, 900);
-      expect(totals.oldGoldCashDeduction, 900);
+      expect(totals.totalTradeInAmount, 900);
+      expect(totals.tradeInCashDeduction, 900);
       expect(totals.finalPayableAmount, 9100);
 
       saleItem.dispose();
@@ -289,12 +289,12 @@ SaleItemModel _saleItem({
   return item;
 }
 
-OldGoldItemModel _oldGoldItem({
+TradeInItemModel _tradeInItem({
   required double grossWeight,
   required double purity,
   required double rate,
 }) {
-  final item = OldGoldItemModel(metal: MetalType.gold);
+  final item = TradeInItemModel(metal: MetalType.gold);
   item.descCtrl.text = 'Old Gold';
   item.grossCtrl.text = PosNumberFormatter.compact(grossWeight);
   item.lessCtrl.text = '0';
@@ -312,7 +312,7 @@ PosInvoiceReadinessInput _input({
 }) {
   return PosInvoiceReadinessInput(
     saleItems: saleItems,
-    oldGoldItems: const [],
+    tradeInItems: const [],
     billingMode: BillingMode.retail,
     finalPayableAmount: finalPayableAmount,
     hasChangeReturn: false,
@@ -327,10 +327,10 @@ PosInvoiceReadinessInput _input({
 
 PosTotalsInput _totalsInput({
   required List<SaleItemModel> saleItems,
-  List<OldGoldItemModel> oldGoldItems = const [],
+  List<TradeInItemModel> tradeInItems = const [],
   BillingMode billingMode = BillingMode.retail,
   BillType billType = BillType.normal,
-  OldGoldAdjustMode oldGoldMode = OldGoldAdjustMode.cashAdjust,
+  TradeInAdjustMode tradeInMode = TradeInAdjustMode.cashAdjust,
   double cashInput = 0,
   double upiInput = 0,
   double cardInput = 0,
@@ -339,10 +339,10 @@ PosTotalsInput _totalsInput({
 }) {
   return PosTotalsInput(
     saleItems: saleItems,
-    oldGoldItems: oldGoldItems,
+    tradeInItems: tradeInItems,
     billingMode: billingMode,
     billType: billType,
-    oldGoldMode: oldGoldMode,
+    tradeInMode: tradeInMode,
     discountType: DiscountType.percentage,
     discountInput: 0,
     cashInput: cashInput,

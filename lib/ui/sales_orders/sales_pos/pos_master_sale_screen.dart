@@ -18,7 +18,7 @@ import 'pos_top_control_bar.dart';
 import 'pos_invoice_status_bar.dart';
 import 'pos_customer_details_panel.dart';
 import 'pos_sale_items_table.dart';
-import 'pos_old_gold_table.dart';
+import 'pos_trade_in_table.dart';
 import 'pos_right_billing_panel.dart';
 
 class PosMasterSaleScreen extends StatefulWidget {
@@ -226,7 +226,7 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
                     const SizedBox(height: 16),
 
                     //  OLD GOLD / EXCHANGE TABLE
-                    PosOldGoldTable(ctrl: _ctrl),
+                    PosTradeInTable(ctrl: _ctrl),
 
                     // Extra bottom padding for scroll comfort
                     const SizedBox(height: 40),

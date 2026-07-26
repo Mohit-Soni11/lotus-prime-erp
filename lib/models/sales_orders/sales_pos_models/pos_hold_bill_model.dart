@@ -20,7 +20,7 @@ class PosHoldBillModel {
   final String customerGst;
   final BillingMode billingMode;
   final BillType billType;
-  final OldGoldAdjustMode oldGoldMode;
+  final TradeInAdjustMode tradeInMode;
   final DiscountType discountType;
   final DateTime? promiseDate;
   final String discountInput;
@@ -34,7 +34,7 @@ class PosHoldBillModel {
   final String diamondBhawInput;
   final double grandTotal;
   final List<PosHoldSaleItemSnapshot> savedSaleItems;
-  final List<PosHoldOldMetalSnapshot> savedOldMetalItems;
+  final List<PosHoldTradeInSnapshot> savedTradeInItems;
 
   const PosHoldBillModel({
     required this.holdId,
@@ -47,7 +47,7 @@ class PosHoldBillModel {
     required this.customerGst,
     required this.billingMode,
     required this.billType,
-    required this.oldGoldMode,
+    required this.tradeInMode,
     required this.discountType,
     required this.promiseDate,
     required this.discountInput,
@@ -61,10 +61,10 @@ class PosHoldBillModel {
     required this.diamondBhawInput,
     required this.grandTotal,
     required this.savedSaleItems,
-    required this.savedOldMetalItems,
+    required this.savedTradeInItems,
   });
 
-  int get totalItems => savedSaleItems.length + savedOldMetalItems.length;
+  int get totalItems => savedSaleItems.length + savedTradeInItems.length;
 
   Map<String, dynamic> toJson() {
     return {
@@ -78,7 +78,7 @@ class PosHoldBillModel {
       'customerGst': customerGst,
       'billingMode': billingMode.name,
       'billType': billType.name,
-      'oldGoldMode': oldGoldMode.name,
+      'oldGoldMode': tradeInMode.name,
       'discountType': discountType.name,
       'promiseDate': promiseDate?.toIso8601String(),
       'discountInput': discountInput,
@@ -93,7 +93,7 @@ class PosHoldBillModel {
       'grandTotal': grandTotal,
       'savedSaleItems': savedSaleItems.map((item) => item.toJson()).toList(),
       'savedOldMetalItems':
-          savedOldMetalItems.map((item) => item.toJson()).toList(),
+          savedTradeInItems.map((item) => item.toJson()).toList(),
     };
   }
 
@@ -116,7 +116,7 @@ class PosHoldBillModel {
       customerGst: (json['customerGst'] ?? '').toString(),
       billingMode: _billingModeFromName((json['billingMode'] ?? '').toString()),
       billType: _billTypeFromName((json['billType'] ?? '').toString()),
-      oldGoldMode: _oldGoldModeFromName((json['oldGoldMode'] ?? '').toString()),
+      tradeInMode: _tradeInModeFromName((json['oldGoldMode'] ?? '').toString()),
       discountType:
           _discountTypeFromName((json['discountType'] ?? '').toString()),
       promiseDate: DateTime.tryParse((json['promiseDate'] ?? '').toString()),
@@ -133,8 +133,8 @@ class PosHoldBillModel {
       savedSaleItems: rawSaleItems
           .map(PosHoldSaleItemSnapshot.fromJson)
           .toList(growable: false),
-      savedOldMetalItems: rawOldMetalItems
-          .map(PosHoldOldMetalSnapshot.fromJson)
+      savedTradeInItems: rawOldMetalItems
+          .map(PosHoldTradeInSnapshot.fromJson)
           .toList(growable: false),
     );
   }
@@ -153,10 +153,10 @@ class PosHoldBillModel {
     );
   }
 
-  static OldGoldAdjustMode _oldGoldModeFromName(String name) {
-    return OldGoldAdjustMode.values.firstWhere(
+  static TradeInAdjustMode _tradeInModeFromName(String name) {
+    return TradeInAdjustMode.values.firstWhere(
       (mode) => mode.name == name,
-      orElse: () => OldGoldAdjustMode.cashAdjust,
+      orElse: () => TradeInAdjustMode.cashAdjust,
     );
   }
 
@@ -295,7 +295,7 @@ class PosHoldSaleItemSnapshot {
   }
 }
 
-class PosHoldOldMetalSnapshot {
+class PosHoldTradeInSnapshot {
   final MetalType metal;
   final String description;
   final String grossInput;
@@ -303,7 +303,7 @@ class PosHoldOldMetalSnapshot {
   final String purityInput;
   final String rateInput;
 
-  const PosHoldOldMetalSnapshot({
+  const PosHoldTradeInSnapshot({
     required this.metal,
     required this.description,
     required this.grossInput,
@@ -312,8 +312,8 @@ class PosHoldOldMetalSnapshot {
     required this.rateInput,
   });
 
-  factory PosHoldOldMetalSnapshot.capture(OldGoldItemModel item) {
-    return PosHoldOldMetalSnapshot(
+  factory PosHoldTradeInSnapshot.capture(TradeInItemModel item) {
+    return PosHoldTradeInSnapshot(
       metal: item.metal,
       description: item.descCtrl.text,
       grossInput: item.grossCtrl.text,
@@ -334,8 +334,8 @@ class PosHoldOldMetalSnapshot {
     };
   }
 
-  factory PosHoldOldMetalSnapshot.fromJson(Map<String, dynamic> json) {
-    return PosHoldOldMetalSnapshot(
+  factory PosHoldTradeInSnapshot.fromJson(Map<String, dynamic> json) {
+    return PosHoldTradeInSnapshot(
       metal: MetalType.values.firstWhere(
         (value) => value.name == (json['metal'] ?? '').toString(),
         orElse: () => MetalType.gold,
@@ -348,8 +348,8 @@ class PosHoldOldMetalSnapshot {
     );
   }
 
-  OldGoldItemModel restore() {
-    final item = OldGoldItemModel(metal: metal);
+  TradeInItemModel restore() {
+    final item = TradeInItemModel(metal: metal);
     item.descCtrl.text = description;
     item.grossCtrl.text = grossInput;
     item.lessCtrl.text = lessInput;

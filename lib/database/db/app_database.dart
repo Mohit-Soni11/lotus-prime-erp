@@ -10,7 +10,7 @@ import '../../config/env_config.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
-import '../tables/bill_old_gold_items.dart';
+import '../tables/bill_trade_in_items.dart';
 import '../tables/bills.dart';
 import '../tables/customer_account_ledger.dart';
 import '../tables/customers.dart';
@@ -54,7 +54,7 @@ part 'app_database.g.dart';
     ShopProfiles,
     Bills,
     BillItems,
-    BillOldGoldItems,
+    BillTradeInItems,
     CustomerAccountLedger,
     SalesOrders,
     OrderAdvances,
@@ -739,12 +739,12 @@ class AppDatabase extends _$AppDatabase {
               _handleMigrationError(e, s);
             }
             try {
-              await m.addColumn(bills, bills.oldGoldDeduction);
+              await m.addColumn(bills, bills.tradeInDeduction);
             } catch (e, s) {
               _handleMigrationError(e, s);
             }
             try {
-              await m.addColumn(bills, bills.oldGoldMode);
+              await m.addColumn(bills, bills.tradeInMode);
             } catch (e, s) {
               _handleMigrationError(e, s);
             }
@@ -806,7 +806,7 @@ class AppDatabase extends _$AppDatabase {
             }
 
             try {
-              await m.createTable(billOldGoldItems);
+              await m.createTable(billTradeInItems);
             } catch (e, s) {
               _handleMigrationError(e, s);
             }

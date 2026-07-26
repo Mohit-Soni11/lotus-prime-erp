@@ -5513,18 +5513,18 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _oldGoldDeductionMeta =
-      const VerificationMeta('oldGoldDeduction');
+  static const VerificationMeta _tradeInDeductionMeta =
+      const VerificationMeta('tradeInDeduction');
   @override
-  late final GeneratedColumn<double> oldGoldDeduction = GeneratedColumn<double>(
+  late final GeneratedColumn<double> tradeInDeduction = GeneratedColumn<double>(
       'old_gold_deduction', aliasedName, false,
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _oldGoldModeMeta =
-      const VerificationMeta('oldGoldMode');
+  static const VerificationMeta _tradeInModeMeta =
+      const VerificationMeta('tradeInMode');
   @override
-  late final GeneratedColumn<String> oldGoldMode = GeneratedColumn<String>(
+  late final GeneratedColumn<String> tradeInMode = GeneratedColumn<String>(
       'old_gold_mode', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
@@ -5591,8 +5591,8 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
         cardPaid,
         advancePaid,
         dueAmount,
-        oldGoldDeduction,
-        oldGoldMode,
+        tradeInDeduction,
+        tradeInMode,
         billDate,
         promiseDate,
         sourceAdvanceOrderId,
@@ -5732,15 +5732,15 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
     }
     if (data.containsKey('old_gold_deduction')) {
       context.handle(
-          _oldGoldDeductionMeta,
-          oldGoldDeduction.isAcceptableOrUnknown(
-              data['old_gold_deduction']!, _oldGoldDeductionMeta));
+          _tradeInDeductionMeta,
+          tradeInDeduction.isAcceptableOrUnknown(
+              data['old_gold_deduction']!, _tradeInDeductionMeta));
     }
     if (data.containsKey('old_gold_mode')) {
       context.handle(
-          _oldGoldModeMeta,
-          oldGoldMode.isAcceptableOrUnknown(
-              data['old_gold_mode']!, _oldGoldModeMeta));
+          _tradeInModeMeta,
+          tradeInMode.isAcceptableOrUnknown(
+              data['old_gold_mode']!, _tradeInModeMeta));
     }
     if (data.containsKey('bill_date')) {
       context.handle(_billDateMeta,
@@ -5825,9 +5825,9 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           .read(DriftSqlType.double, data['${effectivePrefix}advance_paid'])!,
       dueAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}due_amount'])!,
-      oldGoldDeduction: attachedDatabase.typeMapping.read(
+      tradeInDeduction: attachedDatabase.typeMapping.read(
           DriftSqlType.double, data['${effectivePrefix}old_gold_deduction'])!,
-      oldGoldMode: attachedDatabase.typeMapping
+      tradeInMode: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}old_gold_mode'])!,
       billDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}bill_date'])!,
@@ -5874,8 +5874,8 @@ class Bill extends DataClass implements Insertable<Bill> {
   final double cardPaid;
   final double advancePaid;
   final double dueAmount;
-  final double oldGoldDeduction;
-  final String oldGoldMode;
+  final double tradeInDeduction;
+  final String tradeInMode;
   final DateTime billDate;
   final DateTime? promiseDate;
   final int? sourceAdvanceOrderId;
@@ -5906,8 +5906,8 @@ class Bill extends DataClass implements Insertable<Bill> {
       required this.cardPaid,
       required this.advancePaid,
       required this.dueAmount,
-      required this.oldGoldDeduction,
-      required this.oldGoldMode,
+      required this.tradeInDeduction,
+      required this.tradeInMode,
       required this.billDate,
       this.promiseDate,
       this.sourceAdvanceOrderId,
@@ -5948,8 +5948,8 @@ class Bill extends DataClass implements Insertable<Bill> {
     map['card_paid'] = Variable<double>(cardPaid);
     map['advance_paid'] = Variable<double>(advancePaid);
     map['due_amount'] = Variable<double>(dueAmount);
-    map['old_gold_deduction'] = Variable<double>(oldGoldDeduction);
-    map['old_gold_mode'] = Variable<String>(oldGoldMode);
+    map['old_gold_deduction'] = Variable<double>(tradeInDeduction);
+    map['old_gold_mode'] = Variable<String>(tradeInMode);
     map['bill_date'] = Variable<DateTime>(billDate);
     if (!nullToAbsent || promiseDate != null) {
       map['promise_date'] = Variable<DateTime>(promiseDate);
@@ -5997,8 +5997,8 @@ class Bill extends DataClass implements Insertable<Bill> {
       cardPaid: Value(cardPaid),
       advancePaid: Value(advancePaid),
       dueAmount: Value(dueAmount),
-      oldGoldDeduction: Value(oldGoldDeduction),
-      oldGoldMode: Value(oldGoldMode),
+      tradeInDeduction: Value(tradeInDeduction),
+      tradeInMode: Value(tradeInMode),
       billDate: Value(billDate),
       promiseDate: promiseDate == null && nullToAbsent
           ? const Value.absent()
@@ -6041,8 +6041,8 @@ class Bill extends DataClass implements Insertable<Bill> {
       cardPaid: serializer.fromJson<double>(json['cardPaid']),
       advancePaid: serializer.fromJson<double>(json['advancePaid']),
       dueAmount: serializer.fromJson<double>(json['dueAmount']),
-      oldGoldDeduction: serializer.fromJson<double>(json['oldGoldDeduction']),
-      oldGoldMode: serializer.fromJson<String>(json['oldGoldMode']),
+      tradeInDeduction: serializer.fromJson<double>(json['tradeInDeduction']),
+      tradeInMode: serializer.fromJson<String>(json['tradeInMode']),
       billDate: serializer.fromJson<DateTime>(json['billDate']),
       promiseDate: serializer.fromJson<DateTime?>(json['promiseDate']),
       sourceAdvanceOrderId:
@@ -6080,8 +6080,8 @@ class Bill extends DataClass implements Insertable<Bill> {
       'cardPaid': serializer.toJson<double>(cardPaid),
       'advancePaid': serializer.toJson<double>(advancePaid),
       'dueAmount': serializer.toJson<double>(dueAmount),
-      'oldGoldDeduction': serializer.toJson<double>(oldGoldDeduction),
-      'oldGoldMode': serializer.toJson<String>(oldGoldMode),
+      'tradeInDeduction': serializer.toJson<double>(tradeInDeduction),
+      'tradeInMode': serializer.toJson<String>(tradeInMode),
       'billDate': serializer.toJson<DateTime>(billDate),
       'promiseDate': serializer.toJson<DateTime?>(promiseDate),
       'sourceAdvanceOrderId': serializer.toJson<int?>(sourceAdvanceOrderId),
@@ -6115,8 +6115,8 @@ class Bill extends DataClass implements Insertable<Bill> {
           double? cardPaid,
           double? advancePaid,
           double? dueAmount,
-          double? oldGoldDeduction,
-          String? oldGoldMode,
+          double? tradeInDeduction,
+          String? tradeInMode,
           DateTime? billDate,
           Value<DateTime?> promiseDate = const Value.absent(),
           Value<int?> sourceAdvanceOrderId = const Value.absent(),
@@ -6148,8 +6148,8 @@ class Bill extends DataClass implements Insertable<Bill> {
         cardPaid: cardPaid ?? this.cardPaid,
         advancePaid: advancePaid ?? this.advancePaid,
         dueAmount: dueAmount ?? this.dueAmount,
-        oldGoldDeduction: oldGoldDeduction ?? this.oldGoldDeduction,
-        oldGoldMode: oldGoldMode ?? this.oldGoldMode,
+        tradeInDeduction: tradeInDeduction ?? this.tradeInDeduction,
+        tradeInMode: tradeInMode ?? this.tradeInMode,
         billDate: billDate ?? this.billDate,
         promiseDate: promiseDate.present ? promiseDate.value : this.promiseDate,
         sourceAdvanceOrderId: sourceAdvanceOrderId.present
@@ -6201,11 +6201,11 @@ class Bill extends DataClass implements Insertable<Bill> {
       advancePaid:
           data.advancePaid.present ? data.advancePaid.value : this.advancePaid,
       dueAmount: data.dueAmount.present ? data.dueAmount.value : this.dueAmount,
-      oldGoldDeduction: data.oldGoldDeduction.present
-          ? data.oldGoldDeduction.value
-          : this.oldGoldDeduction,
-      oldGoldMode:
-          data.oldGoldMode.present ? data.oldGoldMode.value : this.oldGoldMode,
+      tradeInDeduction: data.tradeInDeduction.present
+          ? data.tradeInDeduction.value
+          : this.tradeInDeduction,
+      tradeInMode:
+          data.tradeInMode.present ? data.tradeInMode.value : this.tradeInMode,
       billDate: data.billDate.present ? data.billDate.value : this.billDate,
       promiseDate:
           data.promiseDate.present ? data.promiseDate.value : this.promiseDate,
@@ -6246,8 +6246,8 @@ class Bill extends DataClass implements Insertable<Bill> {
           ..write('cardPaid: $cardPaid, ')
           ..write('advancePaid: $advancePaid, ')
           ..write('dueAmount: $dueAmount, ')
-          ..write('oldGoldDeduction: $oldGoldDeduction, ')
-          ..write('oldGoldMode: $oldGoldMode, ')
+          ..write('tradeInDeduction: $tradeInDeduction, ')
+          ..write('tradeInMode: $tradeInMode, ')
           ..write('billDate: $billDate, ')
           ..write('promiseDate: $promiseDate, ')
           ..write('sourceAdvanceOrderId: $sourceAdvanceOrderId, ')
@@ -6283,8 +6283,8 @@ class Bill extends DataClass implements Insertable<Bill> {
         cardPaid,
         advancePaid,
         dueAmount,
-        oldGoldDeduction,
-        oldGoldMode,
+        tradeInDeduction,
+        tradeInMode,
         billDate,
         promiseDate,
         sourceAdvanceOrderId,
@@ -6319,8 +6319,8 @@ class Bill extends DataClass implements Insertable<Bill> {
           other.cardPaid == this.cardPaid &&
           other.advancePaid == this.advancePaid &&
           other.dueAmount == this.dueAmount &&
-          other.oldGoldDeduction == this.oldGoldDeduction &&
-          other.oldGoldMode == this.oldGoldMode &&
+          other.tradeInDeduction == this.tradeInDeduction &&
+          other.tradeInMode == this.tradeInMode &&
           other.billDate == this.billDate &&
           other.promiseDate == this.promiseDate &&
           other.sourceAdvanceOrderId == this.sourceAdvanceOrderId &&
@@ -6353,8 +6353,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
   final Value<double> cardPaid;
   final Value<double> advancePaid;
   final Value<double> dueAmount;
-  final Value<double> oldGoldDeduction;
-  final Value<String> oldGoldMode;
+  final Value<double> tradeInDeduction;
+  final Value<String> tradeInMode;
   final Value<DateTime> billDate;
   final Value<DateTime?> promiseDate;
   final Value<int?> sourceAdvanceOrderId;
@@ -6385,8 +6385,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.cardPaid = const Value.absent(),
     this.advancePaid = const Value.absent(),
     this.dueAmount = const Value.absent(),
-    this.oldGoldDeduction = const Value.absent(),
-    this.oldGoldMode = const Value.absent(),
+    this.tradeInDeduction = const Value.absent(),
+    this.tradeInMode = const Value.absent(),
     this.billDate = const Value.absent(),
     this.promiseDate = const Value.absent(),
     this.sourceAdvanceOrderId = const Value.absent(),
@@ -6418,8 +6418,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.cardPaid = const Value.absent(),
     this.advancePaid = const Value.absent(),
     this.dueAmount = const Value.absent(),
-    this.oldGoldDeduction = const Value.absent(),
-    this.oldGoldMode = const Value.absent(),
+    this.tradeInDeduction = const Value.absent(),
+    this.tradeInMode = const Value.absent(),
     this.billDate = const Value.absent(),
     this.promiseDate = const Value.absent(),
     this.sourceAdvanceOrderId = const Value.absent(),
@@ -6451,8 +6451,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     Expression<double>? cardPaid,
     Expression<double>? advancePaid,
     Expression<double>? dueAmount,
-    Expression<double>? oldGoldDeduction,
-    Expression<String>? oldGoldMode,
+    Expression<double>? tradeInDeduction,
+    Expression<String>? tradeInMode,
     Expression<DateTime>? billDate,
     Expression<DateTime>? promiseDate,
     Expression<int>? sourceAdvanceOrderId,
@@ -6484,8 +6484,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       if (cardPaid != null) 'card_paid': cardPaid,
       if (advancePaid != null) 'advance_paid': advancePaid,
       if (dueAmount != null) 'due_amount': dueAmount,
-      if (oldGoldDeduction != null) 'old_gold_deduction': oldGoldDeduction,
-      if (oldGoldMode != null) 'old_gold_mode': oldGoldMode,
+      if (tradeInDeduction != null) 'old_gold_deduction': tradeInDeduction,
+      if (tradeInMode != null) 'old_gold_mode': tradeInMode,
       if (billDate != null) 'bill_date': billDate,
       if (promiseDate != null) 'promise_date': promiseDate,
       if (sourceAdvanceOrderId != null)
@@ -6521,8 +6521,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       Value<double>? cardPaid,
       Value<double>? advancePaid,
       Value<double>? dueAmount,
-      Value<double>? oldGoldDeduction,
-      Value<String>? oldGoldMode,
+      Value<double>? tradeInDeduction,
+      Value<String>? tradeInMode,
       Value<DateTime>? billDate,
       Value<DateTime?>? promiseDate,
       Value<int?>? sourceAdvanceOrderId,
@@ -6553,8 +6553,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       cardPaid: cardPaid ?? this.cardPaid,
       advancePaid: advancePaid ?? this.advancePaid,
       dueAmount: dueAmount ?? this.dueAmount,
-      oldGoldDeduction: oldGoldDeduction ?? this.oldGoldDeduction,
-      oldGoldMode: oldGoldMode ?? this.oldGoldMode,
+      tradeInDeduction: tradeInDeduction ?? this.tradeInDeduction,
+      tradeInMode: tradeInMode ?? this.tradeInMode,
       billDate: billDate ?? this.billDate,
       promiseDate: promiseDate ?? this.promiseDate,
       sourceAdvanceOrderId: sourceAdvanceOrderId ?? this.sourceAdvanceOrderId,
@@ -6638,11 +6638,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     if (dueAmount.present) {
       map['due_amount'] = Variable<double>(dueAmount.value);
     }
-    if (oldGoldDeduction.present) {
-      map['old_gold_deduction'] = Variable<double>(oldGoldDeduction.value);
+    if (tradeInDeduction.present) {
+      map['old_gold_deduction'] = Variable<double>(tradeInDeduction.value);
     }
-    if (oldGoldMode.present) {
-      map['old_gold_mode'] = Variable<String>(oldGoldMode.value);
+    if (tradeInMode.present) {
+      map['old_gold_mode'] = Variable<String>(tradeInMode.value);
     }
     if (billDate.present) {
       map['bill_date'] = Variable<DateTime>(billDate.value);
@@ -6691,8 +6691,8 @@ class BillsCompanion extends UpdateCompanion<Bill> {
           ..write('cardPaid: $cardPaid, ')
           ..write('advancePaid: $advancePaid, ')
           ..write('dueAmount: $dueAmount, ')
-          ..write('oldGoldDeduction: $oldGoldDeduction, ')
-          ..write('oldGoldMode: $oldGoldMode, ')
+          ..write('tradeInDeduction: $tradeInDeduction, ')
+          ..write('tradeInMode: $tradeInMode, ')
           ..write('billDate: $billDate, ')
           ..write('promiseDate: $promiseDate, ')
           ..write('sourceAdvanceOrderId: $sourceAdvanceOrderId, ')
@@ -7830,12 +7830,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
   }
 }
 
-class $BillOldGoldItemsTable extends BillOldGoldItems
-    with TableInfo<$BillOldGoldItemsTable, BillOldGoldItem> {
+class $BillTradeInItemsTable extends BillTradeInItems
+    with TableInfo<$BillTradeInItemsTable, BillTradeInItem> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $BillOldGoldItemsTable(this.attachedDatabase, [this._alias]);
+  $BillTradeInItemsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -7967,7 +7967,7 @@ class $BillOldGoldItemsTable extends BillOldGoldItems
   String get actualTableName => $name;
   static const String $name = 'bill_old_gold_items';
   @override
-  VerificationContext validateIntegrity(Insertable<BillOldGoldItem> instance,
+  VerificationContext validateIntegrity(Insertable<BillTradeInItem> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -8044,9 +8044,9 @@ class $BillOldGoldItemsTable extends BillOldGoldItems
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  BillOldGoldItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+  BillTradeInItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return BillOldGoldItem(
+    return BillTradeInItem(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       createdAt: attachedDatabase.typeMapping
@@ -8079,12 +8079,12 @@ class $BillOldGoldItemsTable extends BillOldGoldItems
   }
 
   @override
-  $BillOldGoldItemsTable createAlias(String alias) {
-    return $BillOldGoldItemsTable(attachedDatabase, alias);
+  $BillTradeInItemsTable createAlias(String alias) {
+    return $BillTradeInItemsTable(attachedDatabase, alias);
   }
 }
 
-class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
+class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
   final int id;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -8099,7 +8099,7 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
   final double fineWeight;
   final double rate;
   final double lineAmount;
-  const BillOldGoldItem(
+  const BillTradeInItem(
       {required this.id,
       required this.createdAt,
       this.updatedAt,
@@ -8136,8 +8136,8 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
     return map;
   }
 
-  BillOldGoldItemsCompanion toCompanion(bool nullToAbsent) {
-    return BillOldGoldItemsCompanion(
+  BillTradeInItemsCompanion toCompanion(bool nullToAbsent) {
+    return BillTradeInItemsCompanion(
       id: Value(id),
       createdAt: Value(createdAt),
       updatedAt: updatedAt == null && nullToAbsent
@@ -8157,10 +8157,10 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
     );
   }
 
-  factory BillOldGoldItem.fromJson(Map<String, dynamic> json,
+  factory BillTradeInItem.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return BillOldGoldItem(
+    return BillTradeInItem(
       id: serializer.fromJson<int>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -8198,7 +8198,7 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
     };
   }
 
-  BillOldGoldItem copyWith(
+  BillTradeInItem copyWith(
           {int? id,
           DateTime? createdAt,
           Value<DateTime?> updatedAt = const Value.absent(),
@@ -8213,7 +8213,7 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
           double? fineWeight,
           double? rate,
           double? lineAmount}) =>
-      BillOldGoldItem(
+      BillTradeInItem(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -8229,8 +8229,8 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
         rate: rate ?? this.rate,
         lineAmount: lineAmount ?? this.lineAmount,
       );
-  BillOldGoldItem copyWithCompanion(BillOldGoldItemsCompanion data) {
-    return BillOldGoldItem(
+  BillTradeInItem copyWithCompanion(BillTradeInItemsCompanion data) {
+    return BillTradeInItem(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -8256,7 +8256,7 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
 
   @override
   String toString() {
-    return (StringBuffer('BillOldGoldItem(')
+    return (StringBuffer('BillTradeInItem(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -8294,7 +8294,7 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is BillOldGoldItem &&
+      (other is BillTradeInItem &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -8311,7 +8311,7 @@ class BillOldGoldItem extends DataClass implements Insertable<BillOldGoldItem> {
           other.lineAmount == this.lineAmount);
 }
 
-class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
+class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
   final Value<int> id;
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
@@ -8326,7 +8326,7 @@ class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
   final Value<double> fineWeight;
   final Value<double> rate;
   final Value<double> lineAmount;
-  const BillOldGoldItemsCompanion({
+  const BillTradeInItemsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -8342,7 +8342,7 @@ class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
     this.rate = const Value.absent(),
     this.lineAmount = const Value.absent(),
   });
-  BillOldGoldItemsCompanion.insert({
+  BillTradeInItemsCompanion.insert({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -8358,7 +8358,7 @@ class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
     this.rate = const Value.absent(),
     this.lineAmount = const Value.absent(),
   }) : billId = Value(billId);
-  static Insertable<BillOldGoldItem> custom({
+  static Insertable<BillTradeInItem> custom({
     Expression<int>? id,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -8392,7 +8392,7 @@ class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
     });
   }
 
-  BillOldGoldItemsCompanion copyWith(
+  BillTradeInItemsCompanion copyWith(
       {Value<int>? id,
       Value<DateTime>? createdAt,
       Value<DateTime?>? updatedAt,
@@ -8407,7 +8407,7 @@ class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
       Value<double>? fineWeight,
       Value<double>? rate,
       Value<double>? lineAmount}) {
-    return BillOldGoldItemsCompanion(
+    return BillTradeInItemsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -8475,7 +8475,7 @@ class BillOldGoldItemsCompanion extends UpdateCompanion<BillOldGoldItem> {
 
   @override
   String toString() {
-    return (StringBuffer('BillOldGoldItemsCompanion(')
+    return (StringBuffer('BillTradeInItemsCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -36192,8 +36192,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SalesOrdersTable salesOrders = $SalesOrdersTable(this);
   late final $BillsTable bills = $BillsTable(this);
   late final $BillItemsTable billItems = $BillItemsTable(this);
-  late final $BillOldGoldItemsTable billOldGoldItems =
-      $BillOldGoldItemsTable(this);
+  late final $BillTradeInItemsTable billTradeInItems =
+      $BillTradeInItemsTable(this);
   late final $CustomerAccountLedgerTable customerAccountLedger =
       $CustomerAccountLedgerTable(this);
   late final $OrderAdvancesTable orderAdvances = $OrderAdvancesTable(this);
@@ -36263,8 +36263,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_bills_customer ON bills (customer_id)');
   late final Index idxBillItemsBill = Index('idx_bill_items_bill',
       'CREATE INDEX idx_bill_items_bill ON bill_items (bill_id)');
-  late final Index idxBillOldGoldBill = Index('idx_bill_old_gold_bill',
-      'CREATE INDEX idx_bill_old_gold_bill ON bill_old_gold_items (bill_id)');
+  late final Index idxBillTradeInBill = Index('idx_bill_trade_in_bill',
+      'CREATE INDEX idx_bill_trade_in_bill ON bill_old_gold_items (bill_id)');
   late final Index idxCustomerAccountCustomer = Index(
       'idx_customer_account_customer',
       'CREATE INDEX idx_customer_account_customer ON customer_account_ledger (customer_id)');
@@ -36426,7 +36426,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         salesOrders,
         bills,
         billItems,
-        billOldGoldItems,
+        billTradeInItems,
         customerAccountLedger,
         orderAdvances,
         loans,
@@ -36469,7 +36469,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxBillsDate,
         idxBillsCustomer,
         idxBillItemsBill,
-        idxBillOldGoldBill,
+        idxBillTradeInBill,
         idxCustomerAccountCustomer,
         idxCustomerAccountReference,
         idxCustomerAccountDate,
@@ -39827,8 +39827,8 @@ typedef $$BillsTableCreateCompanionBuilder = BillsCompanion Function({
   Value<double> cardPaid,
   Value<double> advancePaid,
   Value<double> dueAmount,
-  Value<double> oldGoldDeduction,
-  Value<String> oldGoldMode,
+  Value<double> tradeInDeduction,
+  Value<String> tradeInMode,
   Value<DateTime> billDate,
   Value<DateTime?> promiseDate,
   Value<int?> sourceAdvanceOrderId,
@@ -39860,8 +39860,8 @@ typedef $$BillsTableUpdateCompanionBuilder = BillsCompanion Function({
   Value<double> cardPaid,
   Value<double> advancePaid,
   Value<double> dueAmount,
-  Value<double> oldGoldDeduction,
-  Value<String> oldGoldMode,
+  Value<double> tradeInDeduction,
+  Value<String> tradeInMode,
   Value<DateTime> billDate,
   Value<DateTime?> promiseDate,
   Value<int?> sourceAdvanceOrderId,
@@ -39915,19 +39915,19 @@ final class $$BillsTableReferences
         manager.$state.copyWith(prefetchedData: cache));
   }
 
-  static MultiTypedResultKey<$BillOldGoldItemsTable, List<BillOldGoldItem>>
-      _billOldGoldItemsRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.billOldGoldItems,
+  static MultiTypedResultKey<$BillTradeInItemsTable, List<BillTradeInItem>>
+      _billTradeInItemsRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.billTradeInItems,
               aliasName: $_aliasNameGenerator(
-                  db.bills.id, db.billOldGoldItems.billId));
+                  db.bills.id, db.billTradeInItems.billId));
 
-  $$BillOldGoldItemsTableProcessedTableManager get billOldGoldItemsRefs {
+  $$BillTradeInItemsTableProcessedTableManager get billTradeInItemsRefs {
     final manager =
-        $$BillOldGoldItemsTableTableManager($_db, $_db.billOldGoldItems)
+        $$BillTradeInItemsTableTableManager($_db, $_db.billTradeInItems)
             .filter((f) => f.billId.id($_item.id));
 
     final cache =
-        $_typedResult.readTableOrNull(_billOldGoldItemsRefsTable($_db));
+        $_typedResult.readTableOrNull(_billTradeInItemsRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -40010,12 +40010,12 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
   ColumnFilters<double> get dueAmount => $composableBuilder(
       column: $table.dueAmount, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get oldGoldDeduction => $composableBuilder(
-      column: $table.oldGoldDeduction,
+  ColumnFilters<double> get tradeInDeduction => $composableBuilder(
+      column: $table.tradeInDeduction,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get oldGoldMode => $composableBuilder(
-      column: $table.oldGoldMode, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get tradeInMode => $composableBuilder(
+      column: $table.tradeInMode, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get billDate => $composableBuilder(
       column: $table.billDate, builder: (column) => ColumnFilters(column));
@@ -40091,19 +40091,19 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
     return f(composer);
   }
 
-  Expression<bool> billOldGoldItemsRefs(
-      Expression<bool> Function($$BillOldGoldItemsTableFilterComposer f) f) {
-    final $$BillOldGoldItemsTableFilterComposer composer = $composerBuilder(
+  Expression<bool> billTradeInItemsRefs(
+      Expression<bool> Function($$BillTradeInItemsTableFilterComposer f) f) {
+    final $$BillTradeInItemsTableFilterComposer composer = $composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $db.billOldGoldItems,
+        referencedTable: $db.billTradeInItems,
         getReferencedColumn: (t) => t.billId,
         builder: (joinBuilder,
                 {$addJoinBuilderToRootComposer,
                 $removeJoinBuilderFromRootComposer}) =>
-            $$BillOldGoldItemsTableFilterComposer(
+            $$BillTradeInItemsTableFilterComposer(
               $db: $db,
-              $table: $db.billOldGoldItems,
+              $table: $db.billTradeInItems,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -40194,12 +40194,12 @@ class $$BillsTableOrderingComposer
   ColumnOrderings<double> get dueAmount => $composableBuilder(
       column: $table.dueAmount, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get oldGoldDeduction => $composableBuilder(
-      column: $table.oldGoldDeduction,
+  ColumnOrderings<double> get tradeInDeduction => $composableBuilder(
+      column: $table.tradeInDeduction,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get oldGoldMode => $composableBuilder(
-      column: $table.oldGoldMode, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get tradeInMode => $composableBuilder(
+      column: $table.tradeInMode, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get billDate => $composableBuilder(
       column: $table.billDate, builder: (column) => ColumnOrderings(column));
@@ -40333,11 +40333,11 @@ class $$BillsTableAnnotationComposer
   GeneratedColumn<double> get dueAmount =>
       $composableBuilder(column: $table.dueAmount, builder: (column) => column);
 
-  GeneratedColumn<double> get oldGoldDeduction => $composableBuilder(
-      column: $table.oldGoldDeduction, builder: (column) => column);
+  GeneratedColumn<double> get tradeInDeduction => $composableBuilder(
+      column: $table.tradeInDeduction, builder: (column) => column);
 
-  GeneratedColumn<String> get oldGoldMode => $composableBuilder(
-      column: $table.oldGoldMode, builder: (column) => column);
+  GeneratedColumn<String> get tradeInMode => $composableBuilder(
+      column: $table.tradeInMode, builder: (column) => column);
 
   GeneratedColumn<DateTime> get billDate =>
       $composableBuilder(column: $table.billDate, builder: (column) => column);
@@ -40412,19 +40412,19 @@ class $$BillsTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> billOldGoldItemsRefs<T extends Object>(
-      Expression<T> Function($$BillOldGoldItemsTableAnnotationComposer a) f) {
-    final $$BillOldGoldItemsTableAnnotationComposer composer = $composerBuilder(
+  Expression<T> billTradeInItemsRefs<T extends Object>(
+      Expression<T> Function($$BillTradeInItemsTableAnnotationComposer a) f) {
+    final $$BillTradeInItemsTableAnnotationComposer composer = $composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $db.billOldGoldItems,
+        referencedTable: $db.billTradeInItems,
         getReferencedColumn: (t) => t.billId,
         builder: (joinBuilder,
                 {$addJoinBuilderToRootComposer,
                 $removeJoinBuilderFromRootComposer}) =>
-            $$BillOldGoldItemsTableAnnotationComposer(
+            $$BillTradeInItemsTableAnnotationComposer(
               $db: $db,
-              $table: $db.billOldGoldItems,
+              $table: $db.billTradeInItems,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -40449,7 +40449,7 @@ class $$BillsTableTableManager extends RootTableManager<
         {bool customerId,
         bool sourceAdvanceOrderId,
         bool billItemsRefs,
-        bool billOldGoldItemsRefs})> {
+        bool billTradeInItemsRefs})> {
   $$BillsTableTableManager(_$AppDatabase db, $BillsTable table)
       : super(TableManagerState(
           db: db,
@@ -40485,8 +40485,8 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<double> cardPaid = const Value.absent(),
             Value<double> advancePaid = const Value.absent(),
             Value<double> dueAmount = const Value.absent(),
-            Value<double> oldGoldDeduction = const Value.absent(),
-            Value<String> oldGoldMode = const Value.absent(),
+            Value<double> tradeInDeduction = const Value.absent(),
+            Value<String> tradeInMode = const Value.absent(),
             Value<DateTime> billDate = const Value.absent(),
             Value<DateTime?> promiseDate = const Value.absent(),
             Value<int?> sourceAdvanceOrderId = const Value.absent(),
@@ -40518,8 +40518,8 @@ class $$BillsTableTableManager extends RootTableManager<
             cardPaid: cardPaid,
             advancePaid: advancePaid,
             dueAmount: dueAmount,
-            oldGoldDeduction: oldGoldDeduction,
-            oldGoldMode: oldGoldMode,
+            tradeInDeduction: tradeInDeduction,
+            tradeInMode: tradeInMode,
             billDate: billDate,
             promiseDate: promiseDate,
             sourceAdvanceOrderId: sourceAdvanceOrderId,
@@ -40551,8 +40551,8 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<double> cardPaid = const Value.absent(),
             Value<double> advancePaid = const Value.absent(),
             Value<double> dueAmount = const Value.absent(),
-            Value<double> oldGoldDeduction = const Value.absent(),
-            Value<String> oldGoldMode = const Value.absent(),
+            Value<double> tradeInDeduction = const Value.absent(),
+            Value<String> tradeInMode = const Value.absent(),
             Value<DateTime> billDate = const Value.absent(),
             Value<DateTime?> promiseDate = const Value.absent(),
             Value<int?> sourceAdvanceOrderId = const Value.absent(),
@@ -40584,8 +40584,8 @@ class $$BillsTableTableManager extends RootTableManager<
             cardPaid: cardPaid,
             advancePaid: advancePaid,
             dueAmount: dueAmount,
-            oldGoldDeduction: oldGoldDeduction,
-            oldGoldMode: oldGoldMode,
+            tradeInDeduction: tradeInDeduction,
+            tradeInMode: tradeInMode,
             billDate: billDate,
             promiseDate: promiseDate,
             sourceAdvanceOrderId: sourceAdvanceOrderId,
@@ -40600,12 +40600,12 @@ class $$BillsTableTableManager extends RootTableManager<
               {customerId = false,
               sourceAdvanceOrderId = false,
               billItemsRefs = false,
-              billOldGoldItemsRefs = false}) {
+              billTradeInItemsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (billItemsRefs) db.billItems,
-                if (billOldGoldItemsRefs) db.billOldGoldItems
+                if (billTradeInItemsRefs) db.billTradeInItems
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -40657,14 +40657,14 @@ class $$BillsTableTableManager extends RootTableManager<
                                 referencedItems) =>
                             referencedItems.where((e) => e.billId == item.id),
                         typedResults: items),
-                  if (billOldGoldItemsRefs)
+                  if (billTradeInItemsRefs)
                     await $_getPrefetchedData(
                         currentTable: table,
                         referencedTable: $$BillsTableReferences
-                            ._billOldGoldItemsRefsTable(db),
+                            ._billTradeInItemsRefsTable(db),
                         managerFromTypedResult: (p0) =>
                             $$BillsTableReferences(db, table, p0)
-                                .billOldGoldItemsRefs,
+                                .billTradeInItemsRefs,
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.billId == item.id),
@@ -40691,7 +40691,7 @@ typedef $$BillsTableProcessedTableManager = ProcessedTableManager<
         {bool customerId,
         bool sourceAdvanceOrderId,
         bool billItemsRefs,
-        bool billOldGoldItemsRefs})>;
+        bool billTradeInItemsRefs})>;
 typedef $$BillItemsTableCreateCompanionBuilder = BillItemsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
@@ -41273,8 +41273,8 @@ typedef $$BillItemsTableProcessedTableManager = ProcessedTableManager<
     (BillItem, $$BillItemsTableReferences),
     BillItem,
     PrefetchHooks Function({bool billId})>;
-typedef $$BillOldGoldItemsTableCreateCompanionBuilder
-    = BillOldGoldItemsCompanion Function({
+typedef $$BillTradeInItemsTableCreateCompanionBuilder
+    = BillTradeInItemsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
@@ -41290,8 +41290,8 @@ typedef $$BillOldGoldItemsTableCreateCompanionBuilder
   Value<double> rate,
   Value<double> lineAmount,
 });
-typedef $$BillOldGoldItemsTableUpdateCompanionBuilder
-    = BillOldGoldItemsCompanion Function({
+typedef $$BillTradeInItemsTableUpdateCompanionBuilder
+    = BillTradeInItemsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
@@ -41308,13 +41308,13 @@ typedef $$BillOldGoldItemsTableUpdateCompanionBuilder
   Value<double> lineAmount,
 });
 
-final class $$BillOldGoldItemsTableReferences extends BaseReferences<
-    _$AppDatabase, $BillOldGoldItemsTable, BillOldGoldItem> {
-  $$BillOldGoldItemsTableReferences(
+final class $$BillTradeInItemsTableReferences extends BaseReferences<
+    _$AppDatabase, $BillTradeInItemsTable, BillTradeInItem> {
+  $$BillTradeInItemsTableReferences(
       super.$_db, super.$_table, super.$_typedResult);
 
   static $BillsTable _billIdTable(_$AppDatabase db) => db.bills.createAlias(
-      $_aliasNameGenerator(db.billOldGoldItems.billId, db.bills.id));
+      $_aliasNameGenerator(db.billTradeInItems.billId, db.bills.id));
 
   $$BillsTableProcessedTableManager? get billId {
     if ($_item.billId == null) return null;
@@ -41327,9 +41327,9 @@ final class $$BillOldGoldItemsTableReferences extends BaseReferences<
   }
 }
 
-class $$BillOldGoldItemsTableFilterComposer
-    extends Composer<_$AppDatabase, $BillOldGoldItemsTable> {
-  $$BillOldGoldItemsTableFilterComposer({
+class $$BillTradeInItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $BillTradeInItemsTable> {
+  $$BillTradeInItemsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -41397,9 +41397,9 @@ class $$BillOldGoldItemsTableFilterComposer
   }
 }
 
-class $$BillOldGoldItemsTableOrderingComposer
-    extends Composer<_$AppDatabase, $BillOldGoldItemsTable> {
-  $$BillOldGoldItemsTableOrderingComposer({
+class $$BillTradeInItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BillTradeInItemsTable> {
+  $$BillTradeInItemsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -41467,9 +41467,9 @@ class $$BillOldGoldItemsTableOrderingComposer
   }
 }
 
-class $$BillOldGoldItemsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $BillOldGoldItemsTable> {
-  $$BillOldGoldItemsTableAnnotationComposer({
+class $$BillTradeInItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BillTradeInItemsTable> {
+  $$BillTradeInItemsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -41536,29 +41536,29 @@ class $$BillOldGoldItemsTableAnnotationComposer
   }
 }
 
-class $$BillOldGoldItemsTableTableManager extends RootTableManager<
+class $$BillTradeInItemsTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $BillOldGoldItemsTable,
-    BillOldGoldItem,
-    $$BillOldGoldItemsTableFilterComposer,
-    $$BillOldGoldItemsTableOrderingComposer,
-    $$BillOldGoldItemsTableAnnotationComposer,
-    $$BillOldGoldItemsTableCreateCompanionBuilder,
-    $$BillOldGoldItemsTableUpdateCompanionBuilder,
-    (BillOldGoldItem, $$BillOldGoldItemsTableReferences),
-    BillOldGoldItem,
+    $BillTradeInItemsTable,
+    BillTradeInItem,
+    $$BillTradeInItemsTableFilterComposer,
+    $$BillTradeInItemsTableOrderingComposer,
+    $$BillTradeInItemsTableAnnotationComposer,
+    $$BillTradeInItemsTableCreateCompanionBuilder,
+    $$BillTradeInItemsTableUpdateCompanionBuilder,
+    (BillTradeInItem, $$BillTradeInItemsTableReferences),
+    BillTradeInItem,
     PrefetchHooks Function({bool billId})> {
-  $$BillOldGoldItemsTableTableManager(
-      _$AppDatabase db, $BillOldGoldItemsTable table)
+  $$BillTradeInItemsTableTableManager(
+      _$AppDatabase db, $BillTradeInItemsTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$BillOldGoldItemsTableFilterComposer($db: db, $table: table),
+              $$BillTradeInItemsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$BillOldGoldItemsTableOrderingComposer($db: db, $table: table),
+              $$BillTradeInItemsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$BillOldGoldItemsTableAnnotationComposer($db: db, $table: table),
+              $$BillTradeInItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -41575,7 +41575,7 @@ class $$BillOldGoldItemsTableTableManager extends RootTableManager<
             Value<double> rate = const Value.absent(),
             Value<double> lineAmount = const Value.absent(),
           }) =>
-              BillOldGoldItemsCompanion(
+              BillTradeInItemsCompanion(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -41607,7 +41607,7 @@ class $$BillOldGoldItemsTableTableManager extends RootTableManager<
             Value<double> rate = const Value.absent(),
             Value<double> lineAmount = const Value.absent(),
           }) =>
-              BillOldGoldItemsCompanion.insert(
+              BillTradeInItemsCompanion.insert(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -41626,7 +41626,7 @@ class $$BillOldGoldItemsTableTableManager extends RootTableManager<
           withReferenceMapper: (p0) => p0
               .map((e) => (
                     e.readTable(table),
-                    $$BillOldGoldItemsTableReferences(db, table, e)
+                    $$BillTradeInItemsTableReferences(db, table, e)
                   ))
               .toList(),
           prefetchHooksCallback: ({billId = false}) {
@@ -41651,9 +41651,9 @@ class $$BillOldGoldItemsTableTableManager extends RootTableManager<
                     currentTable: table,
                     currentColumn: table.billId,
                     referencedTable:
-                        $$BillOldGoldItemsTableReferences._billIdTable(db),
+                        $$BillTradeInItemsTableReferences._billIdTable(db),
                     referencedColumn:
-                        $$BillOldGoldItemsTableReferences._billIdTable(db).id,
+                        $$BillTradeInItemsTableReferences._billIdTable(db).id,
                   ) as T;
                 }
 
@@ -41667,17 +41667,17 @@ class $$BillOldGoldItemsTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$BillOldGoldItemsTableProcessedTableManager = ProcessedTableManager<
+typedef $$BillTradeInItemsTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $BillOldGoldItemsTable,
-    BillOldGoldItem,
-    $$BillOldGoldItemsTableFilterComposer,
-    $$BillOldGoldItemsTableOrderingComposer,
-    $$BillOldGoldItemsTableAnnotationComposer,
-    $$BillOldGoldItemsTableCreateCompanionBuilder,
-    $$BillOldGoldItemsTableUpdateCompanionBuilder,
-    (BillOldGoldItem, $$BillOldGoldItemsTableReferences),
-    BillOldGoldItem,
+    $BillTradeInItemsTable,
+    BillTradeInItem,
+    $$BillTradeInItemsTableFilterComposer,
+    $$BillTradeInItemsTableOrderingComposer,
+    $$BillTradeInItemsTableAnnotationComposer,
+    $$BillTradeInItemsTableCreateCompanionBuilder,
+    $$BillTradeInItemsTableUpdateCompanionBuilder,
+    (BillTradeInItem, $$BillTradeInItemsTableReferences),
+    BillTradeInItem,
     PrefetchHooks Function({bool billId})>;
 typedef $$CustomerAccountLedgerTableCreateCompanionBuilder
     = CustomerAccountLedgerCompanion Function({
@@ -57042,8 +57042,8 @@ class $AppDatabaseManager {
       $$BillsTableTableManager(_db, _db.bills);
   $$BillItemsTableTableManager get billItems =>
       $$BillItemsTableTableManager(_db, _db.billItems);
-  $$BillOldGoldItemsTableTableManager get billOldGoldItems =>
-      $$BillOldGoldItemsTableTableManager(_db, _db.billOldGoldItems);
+  $$BillTradeInItemsTableTableManager get billTradeInItems =>
+      $$BillTradeInItemsTableTableManager(_db, _db.billTradeInItems);
   $$CustomerAccountLedgerTableTableManager get customerAccountLedger =>
       $$CustomerAccountLedgerTableTableManager(_db, _db.customerAccountLedger);
   $$OrderAdvancesTableTableManager get orderAdvances =>

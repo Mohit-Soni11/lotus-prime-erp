@@ -41,12 +41,12 @@ class PosEditableBill {
   const PosEditableBill({
     required this.bill,
     required this.items,
-    required this.oldGoldItems,
+    required this.tradeInItems,
   });
 
   final Bill bill;
   final List<BillItem> items;
-  final List<BillOldGoldItem> oldGoldItems;
+  final List<BillTradeInItem> tradeInItems;
 }
 
 class PosCheckoutRepository {
@@ -112,8 +112,8 @@ class PosCheckoutRepository {
               cardPaid: Value(invoice.cardPaid),
               advancePaid: Value(invoice.advancePaid),
               dueAmount: Value(_dueAmount(invoice)),
-              oldGoldDeduction: Value(invoice.totalOldGoldDeduction),
-              oldGoldMode: Value(_dbOldGoldMode(invoice.oldGoldMode)),
+              tradeInDeduction: Value(invoice.totalTradeInDeduction),
+              tradeInMode: Value(_dbTradeInMode(invoice.tradeInMode)),
               billDate: Value(invoice.invoiceDate),
               promiseDate: Value(invoice.promiseDate),
               sourceAdvanceOrderId: Value(sourceAdvanceOrderId),
@@ -166,9 +166,9 @@ class PosCheckoutRepository {
             );
       }
 
-      await _persistOldGoldItems(
+      await _persistTradeInItems(
         billId: billId,
-        oldGoldItems: invoice.oldGoldItems,
+        tradeInItems: invoice.tradeInItems,
       );
       await _consumeLinkedStock(
         invoice.saleItems,
@@ -207,7 +207,7 @@ class PosCheckoutRepository {
           ..where((tbl) => tbl.billId.equals(billId))
           ..orderBy([(tbl) => OrderingTerm.asc(tbl.lineNo)]))
         .get();
-    final oldGoldItems = await (_db.select(_db.billOldGoldItems)
+    final tradeInItems = await (_db.select(_db.billTradeInItems)
           ..where((tbl) => tbl.billId.equals(billId))
           ..orderBy([(tbl) => OrderingTerm.asc(tbl.lineNo)]))
         .get();
@@ -215,7 +215,7 @@ class PosCheckoutRepository {
     return PosEditableBill(
       bill: bill,
       items: items,
-      oldGoldItems: oldGoldItems,
+      tradeInItems: tradeInItems,
     );
   }
 
@@ -291,8 +291,8 @@ class PosCheckoutRepository {
           cardPaid: Value(invoice.cardPaid),
           advancePaid: Value(invoice.advancePaid),
           dueAmount: Value(_dueAmount(invoice)),
-          oldGoldDeduction: Value(invoice.totalOldGoldDeduction),
-          oldGoldMode: Value(_dbOldGoldMode(invoice.oldGoldMode)),
+          tradeInDeduction: Value(invoice.totalTradeInDeduction),
+          tradeInMode: Value(_dbTradeInMode(invoice.tradeInMode)),
           billDate: Value(invoice.invoiceDate),
           promiseDate: Value(invoice.promiseDate),
           status: const Value('ACTIVE'),
@@ -303,7 +303,7 @@ class PosCheckoutRepository {
       await (_db.delete(_db.billItems)
             ..where((tbl) => tbl.billId.equals(billId)))
           .go();
-      await (_db.delete(_db.billOldGoldItems)
+      await (_db.delete(_db.billTradeInItems)
             ..where((tbl) => tbl.billId.equals(billId)))
           .go();
 
@@ -351,9 +351,9 @@ class PosCheckoutRepository {
             );
       }
 
-      await _persistOldGoldItems(
+      await _persistTradeInItems(
         billId: billId,
-        oldGoldItems: invoice.oldGoldItems,
+        tradeInItems: invoice.tradeInItems,
       );
       await _consumeLinkedStock(
         invoice.saleItems,
@@ -975,14 +975,14 @@ class PosCheckoutRepository {
     );
   }
 
-  Future<void> _persistOldGoldItems({
+  Future<void> _persistTradeInItems({
     required int billId,
-    required List<OldGoldItemModel> oldGoldItems,
+    required List<TradeInItemModel> tradeInItems,
   }) async {
-    for (var index = 0; index < oldGoldItems.length; index++) {
-      final item = oldGoldItems[index];
-      await _db.into(_db.billOldGoldItems).insert(
-            BillOldGoldItemsCompanion(
+    for (var index = 0; index < tradeInItems.length; index++) {
+      final item = tradeInItems[index];
+      await _db.into(_db.billTradeInItems).insert(
+            BillTradeInItemsCompanion(
               billId: Value(billId),
               lineNo: Value(index + 1),
               metalType: Value(item.metal.displayName),
@@ -2251,8 +2251,8 @@ class PosCheckoutRepository {
     return type == BillType.gst ? 'GST' : 'NORMAL';
   }
 
-  String _dbOldGoldMode(OldGoldAdjustMode mode) {
-    return mode == OldGoldAdjustMode.cashAdjust
+  String _dbTradeInMode(TradeInAdjustMode mode) {
+    return mode == TradeInAdjustMode.cashAdjust
         ? 'CASH_ADJUST'
         : 'METAL_ADJUST';
   }

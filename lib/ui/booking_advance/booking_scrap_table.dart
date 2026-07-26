@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : booking_scrap_table.dart
 // MODULE      : Sales â†’ Booking & Advance
-// DESCRIPTION : Exchange & Scrap Metal table â€” same as PosOldGoldTable.
+// DESCRIPTION : Metal Trade-In table â€” same as PosTradeInTable.
 //               Customer gives old/scrap metal as part of advance.
 //               Columns: S.NO | METAL | DESCRIPTION | GR.WT | LESS |
 //                        NET WT | PURITY | FINE WT | RATE | VALUE | ACT

@@ -7,7 +7,7 @@ class PosInvoiceScopeService {
   List<MetalType> collectMetals(PosInvoiceModel invoice) {
     final present = <MetalType>{
       ...invoice.saleItems.map((item) => item.metal),
-      ...invoice.oldGoldItems.map((item) => item.metal),
+      ...invoice.tradeInItems.map((item) => item.metal),
     };
     const ordered = [
       MetalType.gold,
@@ -36,7 +36,7 @@ class PosInvoiceScopeService {
     final scopedSaleItems = source.saleItems
         .where((item) => item.metal == metal)
         .toList(growable: false);
-    final scopedOldItems = source.oldGoldItems
+    final scopedOldItems = source.tradeInItems
         .where((item) => item.metal == metal)
         .toList(growable: false);
 
@@ -58,7 +58,7 @@ class PosInvoiceScopeService {
     final scopedGst = source.totalGst * taxRatio;
     final scopedGrandTotal = safeTaxable + scopedGst;
     final scopedExchangeDeduction =
-        source.oldGoldMode == OldGoldAdjustMode.cashAdjust
+        source.tradeInMode == TradeInAdjustMode.cashAdjust
             ? scopedOldItems.fold(0.0, (sum, item) => sum + item.totalValue)
             : 0.0;
     final scopedNetPayable = source.billingMode == BillingMode.wholesale
@@ -101,16 +101,16 @@ class PosInvoiceScopeService {
       customerCity: source.customerCity,
       customerPan: source.customerPan,
       customerGstin: source.customerGstin,
-      oldGoldMode: source.oldGoldMode,
+      tradeInMode: source.tradeInMode,
       saleItems: scopedSaleItems,
-      oldGoldItems: scopedOldItems,
+      tradeInItems: scopedOldItems,
       grossAmount: scopedGrossAmount,
       discountAmount: scopedDiscount,
       taxableAmount: safeTaxable,
       cgst: scopedGst / 2,
       sgst: scopedGst / 2,
       totalGst: scopedGst,
-      totalOldGoldDeduction: scopedExchangeDeduction,
+      totalTradeInDeduction: scopedExchangeDeduction,
       grandTotal: scopedGrandTotal,
       cashPaid: cashPaid,
       upiPaid: upiPaid,

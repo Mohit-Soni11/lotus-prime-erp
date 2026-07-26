@@ -82,7 +82,7 @@ class SalesPosColors {
   static const Color invoiceStripBg = bodyPanelBg;
   static const Color customerCardBg = bodyPanelBg;
   static const Color itemsTableBg = bodyPanelBg;
-  static const Color oldGoldTableBg = bodyPanelBg;
+  static const Color tradeInTableBg = bodyPanelBg;
   static const Color billingRightPanelBg = bodyPanelBg;
 
   static const Color cardHoverBg = Color(0xFFF6F3EC);

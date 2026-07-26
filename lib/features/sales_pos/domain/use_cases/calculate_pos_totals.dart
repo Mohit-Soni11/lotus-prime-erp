@@ -5,10 +5,10 @@ import '../services/pos_weight_math.dart';
 class PosTotalsInput {
   const PosTotalsInput({
     required this.saleItems,
-    required this.oldGoldItems,
+    required this.tradeInItems,
     required this.billingMode,
     required this.billType,
-    required this.oldGoldMode,
+    required this.tradeInMode,
     required this.discountType,
     required this.discountInput,
     required this.cashInput,
@@ -27,10 +27,10 @@ class PosTotalsInput {
   });
 
   final List<SaleItemModel> saleItems;
-  final List<OldGoldItemModel> oldGoldItems;
+  final List<TradeInItemModel> tradeInItems;
   final BillingMode billingMode;
   final BillType billType;
-  final OldGoldAdjustMode oldGoldMode;
+  final TradeInAdjustMode tradeInMode;
   final DiscountType discountType;
   final double discountInput;
   final double cashInput;
@@ -58,8 +58,8 @@ class PosTotals {
     required this.totalSilverAmount,
     required this.totalPlatinumAmount,
     required this.totalDiamondAmount,
-    required this.totalOldGoldAmount,
-    required this.oldGoldCashDeduction,
+    required this.totalTradeInAmount,
+    required this.tradeInCashDeduction,
     required this.pureGoldAmount,
     required this.pureSilverAmount,
     required this.purePlatinumAmount,
@@ -117,8 +117,8 @@ class PosTotals {
   final double totalSilverAmount;
   final double totalPlatinumAmount;
   final double totalDiamondAmount;
-  final double totalOldGoldAmount;
-  final double oldGoldCashDeduction;
+  final double totalTradeInAmount;
+  final double tradeInCashDeduction;
   final double pureGoldAmount;
   final double pureSilverAmount;
   final double purePlatinumAmount;
@@ -225,14 +225,14 @@ class CalculatePosTotals {
       }
     }
 
-    var totalOldGoldAmount = 0.0;
+    var totalTradeInAmount = 0.0;
     var goldJamaFine = 0.0;
     var silverJamaFine = 0.0;
     var platinumJamaFine = 0.0;
     var diamondJamaFine = 0.0;
 
-    for (final item in input.oldGoldItems) {
-      totalOldGoldAmount += item.totalValue;
+    for (final item in input.tradeInItems) {
+      totalTradeInAmount += item.totalValue;
       switch (item.metal) {
         case MetalType.gold:
           goldJamaFine += item.fineWt;
@@ -339,13 +339,13 @@ class CalculatePosTotals {
     final cgst = totalGst / 2;
     final sgst = totalGst / 2;
     final grandTotal = taxableAmount + totalGst;
-    final oldGoldCashDeduction =
-        input.oldGoldMode == OldGoldAdjustMode.cashAdjust
-            ? totalOldGoldAmount
+    final tradeInCashDeduction =
+        input.tradeInMode == TradeInAdjustMode.cashAdjust
+            ? totalTradeInAmount
             : 0.0;
     final finalPayableAmount = input.billingMode == BillingMode.wholesale
         ? grandTotal
-        : grandTotal - oldGoldCashDeduction;
+        : grandTotal - tradeInCashDeduction;
 
     final paymentAllocation = _allocatePayments(input, finalPayableAmount);
     final totalPaid =
@@ -366,8 +366,8 @@ class CalculatePosTotals {
       totalSilverAmount: totalSilverAmount,
       totalPlatinumAmount: totalPlatinumAmount,
       totalDiamondAmount: totalDiamondAmount,
-      totalOldGoldAmount: totalOldGoldAmount,
-      oldGoldCashDeduction: oldGoldCashDeduction,
+      totalTradeInAmount: totalTradeInAmount,
+      tradeInCashDeduction: tradeInCashDeduction,
       pureGoldAmount: totalGoldAmount - goldMakingCharge,
       pureSilverAmount: totalSilverAmount - silverMakingCharge,
       purePlatinumAmount: totalPlatinumAmount - platinumMakingCharge,
