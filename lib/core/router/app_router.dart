@@ -71,6 +71,7 @@ import '../../ui/girvi/notice_auction/notice_auction_screen.dart';
 import '../../ui/report/day_book/day_book_screen.dart';
 
 import '../../ui/layout/app_shell.dart';
+import '../../ui/purchase_orders/metal_inward_ledger/metal_inward_ledger_screen.dart';
 
 final _authNotifier = ValueNotifier<bool>(false);
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -464,11 +465,10 @@ GoRouter createAppRouter() {
             path: RoutePaths.purchaseEntry,
             builder: (_, __) => const PurchaseEntryScreen(),
           ),
+
           GoRoute(
-            path: RoutePaths.purchaseOldGold,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.oldGoldBuyRoute),
-            ),
+            path: RoutePaths.metalInwardLedger,
+            builder: (context, state) => const MetalInwardLedgerScreen(),
           ),
           GoRoute(
             path: RoutePaths.purchaseReturn,

@@ -55,14 +55,14 @@ class SidebarMenu {
       ],
     ),
 
-    // ── Purchase & Old Gold ─────────────────────────────────────
+    // ── Purchase & Inward ────────────────────────────────────────
     SidebarItem(
-      title: 'Metal Procurement',
+      title: 'Purchase & Inward',
       icon: Icons.shopping_bag_outlined,
       subItems: [
         MenuItemData(AppRoutes.purchaseEntryRoute),
-        MenuItemData(AppRoutes.oldGoldBuyRoute),
         MenuItemData(AppRoutes.purchaseReturnRoute),
+        MenuItemData(AppRoutes.metalInwardLedgerRoute),
       ],
     ),
 
