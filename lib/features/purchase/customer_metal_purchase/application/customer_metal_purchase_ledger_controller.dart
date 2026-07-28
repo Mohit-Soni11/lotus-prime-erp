@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/data/customer_metal_purchase_ledger_drift_repository.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/repositories/customer_metal_purchase_ledger_repository.dart';
@@ -50,6 +51,32 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
     fetchData();
   }
 
+  List<CustomerMetalPurchaseEntry> entriesForMetal(
+    CustomerMetalPurchaseMetal metal,
+  ) {
+    return entries
+        .where(
+            (entry) => _normalizeMetal(entry.metalType) == metal.storageValue)
+        .toList(growable: false);
+  }
+
+  CustomerMetalPurchaseMetalSummary summaryForMetal(
+    CustomerMetalPurchaseMetal metal,
+  ) {
+    return buildCustomerMetalPurchaseSummary(
+      metal: metal,
+      entries: entriesForMetal(metal),
+    );
+  }
+
+  Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
+      get metalSummaries {
+    return {
+      for (final metal in CustomerMetalPurchaseMetal.values)
+        metal: summaryForMetal(metal),
+    };
+  }
+
   double get totalGoldGrossWeight => entries
       .where((entry) => entry.metalType.toUpperCase() == 'GOLD')
       .fold(0.0, (sum, entry) => sum + entry.grossWeight);
@@ -65,4 +92,8 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   double get totalSilverFineWeight => entries
       .where((entry) => entry.metalType.toUpperCase() == 'SILVER')
       .fold(0.0, (sum, entry) => sum + entry.fineWeight);
+
+  String _normalizeMetal(String value) {
+    return value.trim().toUpperCase();
+  }
 }

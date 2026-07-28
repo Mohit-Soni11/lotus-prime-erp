@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/utils/customer_metal_purchase_formatters.dart';
+
 class CustomerMetalPurchaseCardHeader extends StatelessWidget {
   final String title;
   final String caption;
@@ -33,9 +36,9 @@ class CustomerMetalPurchaseCardHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.manrope(
-                  fontSize: 23,
+                  fontSize: 25,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF172033),
+                  color: Colors.black,
                 ),
               ),
               const SizedBox(height: 2),
@@ -44,9 +47,9 @@ class CustomerMetalPurchaseCardHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: accent,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
                 ),
               ),
             ],
@@ -57,16 +60,14 @@ class CustomerMetalPurchaseCardHeader extends StatelessWidget {
   }
 }
 
-class CustomerMetalPurchaseInfoPanel extends StatelessWidget {
-  final String summary;
+class CustomerMetalPurchaseSummaryPanel extends StatelessWidget {
+  final CustomerMetalPurchaseMetalSummary summary;
   final Color accent;
-  final List<String> tags;
 
-  const CustomerMetalPurchaseInfoPanel({
+  const CustomerMetalPurchaseSummaryPanel({
     super.key,
     required this.summary,
     required this.accent,
-    required this.tags,
   });
 
   @override
@@ -76,7 +77,7 @@ class CustomerMetalPurchaseInfoPanel extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            accent.withValues(alpha: 0.12),
+            accent.withValues(alpha: 0.10),
             Colors.white.withValues(alpha: 0.88),
           ],
         ),
@@ -86,24 +87,22 @@ class CustomerMetalPurchaseInfoPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            summary,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              height: 1.45,
-              color: const Color(0xFF334155),
+          _MetricsRow(
+            leftLabel: 'Gross Weight',
+            leftValue: CustomerMetalPurchaseFormatters.weight(
+              summary.grossWeight,
+            ),
+            rightLabel: 'Fine Weight',
+            rightValue: CustomerMetalPurchaseFormatters.weight(
+              summary.fineWeight,
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final tag in tags)
-                CustomerMetalPurchaseBadge(label: tag, accent: accent),
-            ],
+          _MetricsRow(
+            leftLabel: 'Amount Paid',
+            leftValue: CustomerMetalPurchaseFormatters.amount(summary.amount),
+            rightLabel: 'Total Items',
+            rightValue: summary.entryCount.toString(),
           ),
         ],
       ),
@@ -114,11 +113,76 @@ class CustomerMetalPurchaseInfoPanel extends StatelessWidget {
 class CustomerMetalPurchaseCardFooter extends StatelessWidget {
   final String actionLabel;
   final Color accent;
+  final CustomerMetalPurchaseMetalSummary summary;
 
   const CustomerMetalPurchaseCardFooter({
     super.key,
     required this.actionLabel,
     required this.accent,
+    required this.summary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            CustomerMetalPurchaseBadge(
+              label: 'Direct ${summary.directPurchaseCount}',
+              accent: accent,
+            ),
+            CustomerMetalPurchaseBadge(
+              label: 'Trade-In ${summary.tradeInCount}',
+              accent: accent,
+            ),
+            CustomerMetalPurchaseBadge(
+              label: 'Refund ${summary.refundCount}',
+              accent: accent,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                actionLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_rounded,
+              size: 20,
+              color: Colors.black,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricsRow extends StatelessWidget {
+  final String leftLabel;
+  final String leftValue;
+  final String rightLabel;
+  final String rightValue;
+
+  const _MetricsRow({
+    required this.leftLabel,
+    required this.leftValue,
+    required this.rightLabel,
+    required this.rightValue,
   });
 
   @override
@@ -126,18 +190,52 @@ class CustomerMetalPurchaseCardFooter extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            actionLabel,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: accent,
-            ),
+          child: _MetricText(label: leftLabel, value: leftValue),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _MetricText(label: rightLabel, value: rightValue),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricText extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MetricText({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
           ),
         ),
-        Icon(Icons.arrow_forward_rounded, size: 18, color: accent),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.manrope(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
       ],
     );
   }
@@ -168,8 +266,8 @@ class CustomerMetalPurchaseBadge extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF334155),
+          fontWeight: FontWeight.w800,
+          color: Colors.black,
         ),
       ),
     );

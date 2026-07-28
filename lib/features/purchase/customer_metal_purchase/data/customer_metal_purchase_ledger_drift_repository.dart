@@ -71,6 +71,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
           netWeight: item.netWeight,
           purity: item.purity,
           fineWeight: item.fineWeight,
+          rate: item.rate,
           amount: item.lineAmount,
         ),
       );
@@ -94,6 +95,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
         pvi.net_weight,
         pvi.purity,
         pvi.fine_weight,
+        pvi.rate,
         pvi.line_amount
       FROM purchase_voucher_items pvi
       INNER JOIN purchase_vouchers pv ON pvi.purchase_voucher_id = pv.id
@@ -125,6 +127,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
           netWeight: row.read<double>('net_weight'),
           purity: row.read<double>('purity'),
           fineWeight: row.read<double>('fine_weight'),
+          rate: row.read<double>('rate'),
           amount: row.read<double>('line_amount'),
         ),
       );

@@ -5,10 +5,12 @@ import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dar
 class CustomerMetalPurchaseLedgerAppBar extends StatefulWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final String title;
 
   const CustomerMetalPurchaseLedgerAppBar({
     super.key,
     required this.onBack,
+    this.title = 'Customer Metal Purchase Ledger',
   });
 
   @override
@@ -70,7 +72,7 @@ class _CustomerMetalPurchaseLedgerAppBarState
             const SizedBox(width: 14),
             Expanded(
               child: Text(
-                'Customer Metal Purchase Ledger',
+                widget.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: PurchaseEntryStyles.headerTitle.copyWith(
