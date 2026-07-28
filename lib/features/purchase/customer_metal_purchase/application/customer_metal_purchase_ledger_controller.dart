@@ -52,11 +52,12 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   }
 
   List<CustomerMetalPurchaseEntry> entriesForMetal(
-    CustomerMetalPurchaseMetal metal,
-  ) {
+      CustomerMetalPurchaseMetal metal,
+      {bool includeReturned = false}) {
     return entries
         .where(
             (entry) => _normalizeMetal(entry.metalType) == metal.storageValue)
+        .where((entry) => includeReturned || !entry.isReturned)
         .toList(growable: false);
   }
 
@@ -92,6 +93,15 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   double get totalSilverFineWeight => entries
       .where((entry) => entry.metalType.toUpperCase() == 'SILVER')
       .fold(0.0, (sum, entry) => sum + entry.fineWeight);
+
+  Future<void> markReturned(CustomerMetalPurchaseEntry entry) async {
+    if (entry.isReturned) {
+      return;
+    }
+
+    await _repository.markReturned(entry);
+    await fetchData();
+  }
 
   String _normalizeMetal(String value) {
     return value.trim().toUpperCase();

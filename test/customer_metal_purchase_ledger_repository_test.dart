@@ -114,6 +114,44 @@ void main() {
     expect(summary.fineWeight, closeTo(28.36, 0.001));
     expect(summary.amount, closeTo(11382.4, 0.001));
   });
+
+  test('marks customer metal entry returned without deleting original record',
+      () async {
+    await purchaseRepository.savePurchase(
+      _purchaseDraft(
+        sequenceNo: 1,
+        voucherNo: 'CMP-RET-2026-0001',
+        source: PurchaseSource.fromCustomer,
+        partyName: 'Neel Verma',
+        metal: PurchaseMetalType.gold,
+      ),
+    );
+
+    final beforeReturn = await ledgerRepository.fetchLedger(
+      startDate: DateTime(2020),
+      endDate: DateTime(2100, 12, 31),
+    );
+    final original = beforeReturn.single;
+
+    await ledgerRepository.markReturned(original);
+
+    final afterReturn = await ledgerRepository.fetchLedger(
+      startDate: DateTime(2020),
+      endDate: DateTime(2100, 12, 31),
+    );
+    final returned = afterReturn.single;
+    final activeSummary = buildCustomerMetalPurchaseSummary(
+      metal: CustomerMetalPurchaseMetal.gold,
+      entries: afterReturn.where((entry) => !entry.isReturned).toList(),
+    );
+
+    expect(returned.referenceNo, 'CMP-RET-2026-0001');
+    expect(returned.isReturned, isTrue);
+    expect(returned.returnedAt, isNotNull);
+    expect(activeSummary.entryCount, 0);
+    expect(activeSummary.grossWeight, 0);
+    expect(activeSummary.amount, 0);
+  });
 }
 
 Future<void> _insertSalesTradeIn(

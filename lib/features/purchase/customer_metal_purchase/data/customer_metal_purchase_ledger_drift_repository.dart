@@ -15,6 +15,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    await _ensureReturnTable();
     final entries = <CustomerMetalPurchaseEntry>[];
     final normalizedStart = startDate == null ? null : _startOfDay(startDate);
     final normalizedEnd = endDate == null ? null : _endOfDay(endDate);
@@ -31,7 +32,44 @@ class DriftCustomerMetalPurchaseLedgerRepository
     );
 
     entries.sort((a, b) => b.date.compareTo(a.date));
-    return entries;
+    return _applyReturnStatus(entries);
+  }
+
+  @override
+  Future<void> markReturned(CustomerMetalPurchaseEntry entry) async {
+    await _ensureReturnTable();
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    await _db.customStatement(
+      '''
+      INSERT OR IGNORE INTO customer_metal_purchase_returns (
+        source,
+        source_entry_id,
+        reference_no,
+        metal_type,
+        customer_name,
+        gross_weight,
+        fine_weight,
+        amount,
+        reason,
+        returned_at,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        entry.source,
+        entry.id,
+        entry.referenceNo,
+        entry.metalType,
+        entry.customerName,
+        entry.grossWeight,
+        entry.fineWeight,
+        entry.amount,
+        'Customer item returned',
+        now,
+        now,
+      ],
+    );
   }
 
   Future<void> _appendSalesTradeInEntries(
@@ -140,5 +178,65 @@ class DriftCustomerMetalPurchaseLedgerRepository
 
   DateTime _endOfDay(DateTime value) {
     return DateTime(value.year, value.month, value.day, 23, 59, 59, 999);
+  }
+
+  Future<List<CustomerMetalPurchaseEntry>> _applyReturnStatus(
+    List<CustomerMetalPurchaseEntry> entries,
+  ) async {
+    final returnedRows = await _db.customSelect(
+      '''
+      SELECT source, source_entry_id, returned_at
+      FROM customer_metal_purchase_returns
+      ''',
+    ).get();
+
+    final returnedEntries = <String, DateTime>{};
+    for (final row in returnedRows) {
+      final source = row.read<String>('source');
+      final entryId = row.read<int>('source_entry_id');
+      final returnedAt = row.read<int>('returned_at');
+      returnedEntries[_entryKey(source, entryId)] =
+          DateTime.fromMillisecondsSinceEpoch(returnedAt);
+    }
+
+    return [
+      for (final entry in entries)
+        if (returnedEntries.containsKey(_entryKey(entry.source, entry.id)))
+          entry.copyWith(
+            isReturned: true,
+            returnedAt: returnedEntries[_entryKey(entry.source, entry.id)],
+          )
+        else
+          entry,
+    ];
+  }
+
+  Future<void> _ensureReturnTable() async {
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS customer_metal_purchase_returns (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        source TEXT NOT NULL,
+        source_entry_id INTEGER NOT NULL,
+        reference_no TEXT NOT NULL,
+        metal_type TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        gross_weight REAL NOT NULL DEFAULT 0.0,
+        fine_weight REAL NOT NULL DEFAULT 0.0,
+        amount REAL NOT NULL DEFAULT 0.0,
+        reason TEXT NOT NULL DEFAULT '',
+        returned_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        UNIQUE(source, source_entry_id)
+      )
+    ''');
+
+    await _db.customStatement('''
+      CREATE INDEX IF NOT EXISTS idx_customer_metal_purchase_returns_source
+      ON customer_metal_purchase_returns (source, source_entry_id)
+    ''');
+  }
+
+  String _entryKey(String source, int entryId) {
+    return '${source.trim().toUpperCase()}|$entryId';
   }
 }

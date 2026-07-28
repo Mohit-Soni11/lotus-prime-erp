@@ -100,8 +100,7 @@ class _CustomerMetalPurchaseLedgerScreenState
         pageBuilder: (_, animation, __) {
           return CustomerMetalPurchaseMetalDetailScreen(
             metal: metal,
-            summary: _ledgerController.summaryForMetal(metal),
-            entries: _ledgerController.entriesForMetal(metal),
+            controller: _ledgerController,
           );
         },
         transitionsBuilder: (_, animation, __, child) {

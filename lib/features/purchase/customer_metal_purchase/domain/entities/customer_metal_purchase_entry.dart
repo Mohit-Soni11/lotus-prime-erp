@@ -12,6 +12,8 @@ class CustomerMetalPurchaseEntry {
   final double fineWeight;
   final double rate;
   final double amount;
+  final bool isReturned;
+  final DateTime? returnedAt;
 
   const CustomerMetalPurchaseEntry({
     required this.id,
@@ -27,8 +29,33 @@ class CustomerMetalPurchaseEntry {
     required this.fineWeight,
     required this.rate,
     required this.amount,
+    this.isReturned = false,
+    this.returnedAt,
   });
 
   double get effectiveRate =>
       rate > 0 || fineWeight <= 0 ? rate : amount / fineWeight;
+
+  CustomerMetalPurchaseEntry copyWith({
+    bool? isReturned,
+    DateTime? returnedAt,
+  }) {
+    return CustomerMetalPurchaseEntry(
+      id: id,
+      date: date,
+      source: source,
+      referenceNo: referenceNo,
+      customerName: customerName,
+      metalType: metalType,
+      itemDescription: itemDescription,
+      grossWeight: grossWeight,
+      netWeight: netWeight,
+      purity: purity,
+      fineWeight: fineWeight,
+      rate: rate,
+      amount: amount,
+      isReturned: isReturned ?? this.isReturned,
+      returnedAt: returnedAt ?? this.returnedAt,
+    );
+  }
 }

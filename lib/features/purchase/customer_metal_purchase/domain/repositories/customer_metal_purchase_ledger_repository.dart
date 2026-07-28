@@ -5,4 +5,6 @@ abstract class CustomerMetalPurchaseLedgerRepository {
     DateTime? startDate,
     DateTime? endDate,
   });
+
+  Future<void> markReturned(CustomerMetalPurchaseEntry entry);
 }
