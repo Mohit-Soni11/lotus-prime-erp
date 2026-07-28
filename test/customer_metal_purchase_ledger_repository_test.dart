@@ -107,6 +107,7 @@ void main() {
       {'CMP-SIL-2026-0001', 'SALE-SIL-2026-0001'},
     );
     expect(summary.entryCount, 2);
+    expect(summary.customerCount, 2);
     expect(summary.directPurchaseCount, 1);
     expect(summary.tradeInCount, 1);
     expect(summary.grossWeight, closeTo(35, 0.001));

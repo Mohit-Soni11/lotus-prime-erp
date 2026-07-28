@@ -18,6 +18,7 @@ class CustomerMetalPurchaseMetalSummary {
   final double fineWeight;
   final double amount;
   final int entryCount;
+  final int customerCount;
   final int directPurchaseCount;
   final int tradeInCount;
   final int refundCount;
@@ -28,6 +29,7 @@ class CustomerMetalPurchaseMetalSummary {
     required this.fineWeight,
     required this.amount,
     required this.entryCount,
+    required this.customerCount,
     required this.directPurchaseCount,
     required this.tradeInCount,
     required this.refundCount,
@@ -46,11 +48,16 @@ CustomerMetalPurchaseMetalSummary buildCustomerMetalPurchaseSummary({
   var directPurchaseCount = 0;
   var tradeInCount = 0;
   var refundCount = 0;
+  final customerNames = <String>{};
 
   for (final entry in entries) {
     grossWeight += entry.grossWeight;
     fineWeight += entry.fineWeight;
     amount += entry.amount;
+    final customerName = entry.customerName.trim().toUpperCase();
+    if (customerName.isNotEmpty) {
+      customerNames.add(customerName);
+    }
 
     final source = entry.source.toLowerCase();
     if (source.contains('trade') || source.contains('exchange')) {
@@ -68,6 +75,7 @@ CustomerMetalPurchaseMetalSummary buildCustomerMetalPurchaseSummary({
     fineWeight: fineWeight,
     amount: amount,
     entryCount: entries.length,
+    customerCount: customerNames.length,
     directPurchaseCount: directPurchaseCount,
     tradeInCount: tradeInCount,
     refundCount: refundCount,
