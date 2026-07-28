@@ -62,7 +62,7 @@ class SidebarMenu {
       subItems: [
         MenuItemData(AppRoutes.purchaseEntryRoute),
         MenuItemData(AppRoutes.purchaseReturnRoute),
-        MenuItemData(AppRoutes.metalInwardLedgerRoute),
+        MenuItemData(AppRoutes.customerMetalPurchaseLedgerRoute),
       ],
     ),
 

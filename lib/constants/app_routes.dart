@@ -39,7 +39,8 @@ class AppRoutes {
   // Purchase
   static const String purchaseEntryRoute = '/purchase/entry';
   static const String purchaseReturnRoute = '/purchase/return';
-  static const String metalInwardLedgerRoute = '/purchase/metal-inward';
+  static const String customerMetalPurchaseLedgerRoute =
+      '/purchase/customer-metal-purchases';
 
   // Stock
   static const String inventoryRoute = '/stock/inventory';
@@ -106,7 +107,7 @@ class AppRoutes {
     deliveryManagementRoute: 'Delivery Management',
     purchaseEntryRoute: 'Purchase Entry',
     purchaseReturnRoute: 'Purchase Return',
-    metalInwardLedgerRoute: 'Metal Inward Ledger',
+    customerMetalPurchaseLedgerRoute: 'Customer Metal Purchase Ledger',
     inventoryRoute: 'Inventory Ledger',
     stockActivityRoute: 'Stock Activity Ledger',
     stockSearchRoute: 'Stock Search Center',
@@ -185,7 +186,8 @@ class RoutePaths {
   static const String purchaseEntry = '/app/purchase/entry';
   // purchaseOldGold removed — consolidated into Purchase Entry
   static const String purchaseReturn = '/app/purchase/return';
-  static const String metalInwardLedger = '/app/purchase/metal-inward';
+  static const String customerMetalPurchaseLedger =
+      '/app/purchase/customer-metal-purchases';
 
   // Stock
   static const String stockInventory = '/app/stock/inventory';
@@ -269,7 +271,8 @@ class RouteMapper {
     AppRoutes.purchaseEntryRoute: RoutePaths.purchaseEntry,
     // oldGoldBuyRoute removed
     AppRoutes.purchaseReturnRoute: RoutePaths.purchaseReturn,
-    AppRoutes.metalInwardLedgerRoute: RoutePaths.metalInwardLedger,
+    AppRoutes.customerMetalPurchaseLedgerRoute:
+        RoutePaths.customerMetalPurchaseLedger,
     AppRoutes.inventoryRoute: RoutePaths.stockInventory,
     AppRoutes.stockSummaryRoute: RoutePaths.stockSummary,
     AppRoutes.stockActivityRoute: RoutePaths.stockActivity,
