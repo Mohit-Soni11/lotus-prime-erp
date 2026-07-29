@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/repositories/customer_metal_purchase_ledger_repository.dart';
+import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
 class DriftCustomerMetalPurchaseLedgerRepository
     implements CustomerMetalPurchaseLedgerRepository {
@@ -17,6 +18,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
   }) async {
     await _ensureReturnTable();
     await _ensureMeltingTables();
+    await _db.ensureSalesCustomerMetalSettlementSchema();
     final entries = <CustomerMetalPurchaseEntry>[];
     final normalizedStart = startDate == null ? null : _startOfDay(startDate);
     final normalizedEnd = endDate == null ? null : _endOfDay(endDate);
@@ -205,7 +207,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
           customerId: customerId,
           sourceDocumentId: bill.id,
           date: bill.billDate,
-          source: 'Sales Trade-In',
+          source: _salesSettlementSource(item.settlementType),
           referenceNo: bill.billNo,
           customerName: customerName,
           metalType: item.metalType,
@@ -219,6 +221,15 @@ class DriftCustomerMetalPurchaseLedgerRepository
         ),
       );
     }
+  }
+
+  String _salesSettlementSource(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (normalized ==
+        CustomerMetalSettlementType.purchaseFromCustomer.storageValue) {
+      return CustomerMetalSettlementType.purchaseFromCustomer.ledgerSource;
+    }
+    return CustomerMetalSettlementType.exchangeAdjustment.ledgerSource;
   }
 
   Future<void> _appendDirectPurchaseEntries(

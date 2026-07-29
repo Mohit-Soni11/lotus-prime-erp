@@ -78,6 +78,32 @@ enum TradeInAdjustMode {
   metalAdjust,
 }
 
+/// Represents why customer metal was received in the POS bill.
+enum CustomerMetalSettlementType {
+  exchangeAdjustment,
+  purchaseFromCustomer,
+}
+
+extension CustomerMetalSettlementTypeExtension on CustomerMetalSettlementType {
+  String get storageValue {
+    switch (this) {
+      case CustomerMetalSettlementType.exchangeAdjustment:
+        return 'EXCHANGE_ADJUSTMENT';
+      case CustomerMetalSettlementType.purchaseFromCustomer:
+        return 'PURCHASE_FROM_CUSTOMER';
+    }
+  }
+
+  String get ledgerSource {
+    switch (this) {
+      case CustomerMetalSettlementType.exchangeAdjustment:
+        return 'Exchange Adjustment';
+      case CustomerMetalSettlementType.purchaseFromCustomer:
+        return 'Purchase From Customer';
+    }
+  }
+}
+
 /// Represents the type of discount applied to the total gross amount.
 enum DiscountType {
   flatAmount,

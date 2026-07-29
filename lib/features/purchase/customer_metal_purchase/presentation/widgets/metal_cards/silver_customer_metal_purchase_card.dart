@@ -34,7 +34,7 @@ class SilverCustomerMetalPurchaseCard extends StatelessWidget {
           children: [
             const CustomerMetalPurchaseCardHeader(
               title: 'Silver',
-              caption: 'Customer Metal Purchase',
+              caption: 'Customer Metal Settlement',
               accent: accent,
               assetPath: 'lib/logo/silver and platinum .jpeg',
             ),
@@ -45,7 +45,7 @@ class SilverCustomerMetalPurchaseCard extends StatelessWidget {
             ),
             const Spacer(),
             CustomerMetalPurchaseCardFooter(
-              actionLabel: 'Open silver ledger',
+              actionLabel: 'Open silver settlement',
               accent: accent,
               summary: summary,
             ),

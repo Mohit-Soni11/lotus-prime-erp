@@ -21,6 +21,7 @@ class PosHoldBillModel {
   final BillingMode billingMode;
   final BillType billType;
   final TradeInAdjustMode tradeInMode;
+  final CustomerMetalSettlementType customerMetalSettlementType;
   final DiscountType discountType;
   final DateTime? promiseDate;
   final String discountInput;
@@ -48,6 +49,7 @@ class PosHoldBillModel {
     required this.billingMode,
     required this.billType,
     required this.tradeInMode,
+    required this.customerMetalSettlementType,
     required this.discountType,
     required this.promiseDate,
     required this.discountInput,
@@ -79,6 +81,7 @@ class PosHoldBillModel {
       'billingMode': billingMode.name,
       'billType': billType.name,
       'oldGoldMode': tradeInMode.name,
+      'customerMetalSettlementType': customerMetalSettlementType.name,
       'discountType': discountType.name,
       'promiseDate': promiseDate?.toIso8601String(),
       'discountInput': discountInput,
@@ -117,6 +120,9 @@ class PosHoldBillModel {
       billingMode: _billingModeFromName((json['billingMode'] ?? '').toString()),
       billType: _billTypeFromName((json['billType'] ?? '').toString()),
       tradeInMode: _tradeInModeFromName((json['oldGoldMode'] ?? '').toString()),
+      customerMetalSettlementType: _customerMetalSettlementTypeFromName(
+        (json['customerMetalSettlementType'] ?? '').toString(),
+      ),
       discountType:
           _discountTypeFromName((json['discountType'] ?? '').toString()),
       promiseDate: DateTime.tryParse((json['promiseDate'] ?? '').toString()),
@@ -157,6 +163,15 @@ class PosHoldBillModel {
     return TradeInAdjustMode.values.firstWhere(
       (mode) => mode.name == name,
       orElse: () => TradeInAdjustMode.cashAdjust,
+    );
+  }
+
+  static CustomerMetalSettlementType _customerMetalSettlementTypeFromName(
+    String name,
+  ) {
+    return CustomerMetalSettlementType.values.firstWhere(
+      (type) => type.name == name,
+      orElse: () => CustomerMetalSettlementType.exchangeAdjustment,
     );
   }
 

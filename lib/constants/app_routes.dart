@@ -107,7 +107,7 @@ class AppRoutes {
     deliveryManagementRoute: 'Delivery Management',
     purchaseEntryRoute: 'Purchase Entry',
     purchaseReturnRoute: 'Purchase Return',
-    customerMetalPurchaseLedgerRoute: 'Customer Metal Purchase Ledger',
+    customerMetalPurchaseLedgerRoute: 'Customer Metal Settlement Ledger',
     inventoryRoute: 'Inventory Ledger',
     stockActivityRoute: 'Stock Activity Ledger',
     stockSearchRoute: 'Stock Search Center',

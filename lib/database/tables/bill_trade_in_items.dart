@@ -14,6 +14,8 @@ class BillTradeInItems extends Table with BaseTable {
 
   IntColumn get lineNo => integer().withDefault(const Constant(1))();
   TextColumn get metalType => text().withDefault(const Constant('GOLD'))();
+  TextColumn get settlementType =>
+      text().withDefault(const Constant('EXCHANGE_ADJUSTMENT'))();
   TextColumn get itemDescription => text().withDefault(const Constant(''))();
 
   RealColumn get grossWeight => real().withDefault(const Constant(0.0))();

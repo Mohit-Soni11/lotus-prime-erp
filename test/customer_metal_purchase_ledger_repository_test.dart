@@ -20,7 +20,8 @@ void main() {
 
   tearDown(() => database.close());
 
-  test('includes direct customer purchases and sales trade-ins only', () async {
+  test('includes direct customer purchases and sales exchange adjustments only',
+      () async {
     final customerPurchase = await purchaseRepository.savePurchase(
       _purchaseDraft(
         sequenceNo: 1,
@@ -56,12 +57,13 @@ void main() {
     );
     expect(
       rows.map((row) => row.source).toSet(),
-      {'Direct Purchase', 'Sales Trade-In'},
+      {'Direct Purchase', 'Exchange Adjustment'},
     );
     expect(rows.any((row) => row.referenceNo == 'SUP-2026-0001'), isFalse);
   });
 
-  test('groups silver direct purchases and sales trade-ins in silver summary',
+  test(
+      'groups silver direct purchases and sales exchange adjustments in silver summary',
       () async {
     final silverPurchase = await purchaseRepository.savePurchase(
       _purchaseDraft(
@@ -113,6 +115,31 @@ void main() {
     expect(summary.grossWeight, closeTo(35, 0.001));
     expect(summary.fineWeight, closeTo(28.36, 0.001));
     expect(summary.amount, closeTo(11382.4, 0.001));
+  });
+
+  test('marks POS purchase-from-customer rows as direct purchase source',
+      () async {
+    await _insertSalesTradeIn(
+      database,
+      billNo: 'SALE-PUR-2026-0001',
+      customerName: 'Ira Kapoor',
+      settlementType: 'PURCHASE_FROM_CUSTOMER',
+    );
+
+    final rows = await ledgerRepository.fetchLedger(
+      startDate: DateTime(2020),
+      endDate: DateTime(2100, 12, 31),
+    );
+
+    final row = rows.single;
+    final summary = buildCustomerMetalPurchaseSummary(
+      metal: CustomerMetalPurchaseMetal.gold,
+      entries: rows,
+    );
+
+    expect(row.source, 'Purchase From Customer');
+    expect(summary.directPurchaseCount, 1);
+    expect(summary.tradeInCount, 0);
   });
 
   test('marks customer metal entry returned without deleting original record',
@@ -206,6 +233,7 @@ Future<void> _insertSalesTradeIn(
   double fineWeight = 10.992,
   double rate = 6550,
   double lineAmount = 72000,
+  String settlementType = 'EXCHANGE_ADJUSTMENT',
 }) async {
   final billId = await database.into(database.bills).insert(
         BillsCompanion.insert(
@@ -219,6 +247,7 @@ Future<void> _insertSalesTradeIn(
         BillTradeInItemsCompanion.insert(
           billId: billId,
           metalType: Value(metalType),
+          settlementType: Value(settlementType),
           itemDescription: Value(itemDescription),
           grossWeight: Value(grossWeight),
           netWeight: Value(netWeight),

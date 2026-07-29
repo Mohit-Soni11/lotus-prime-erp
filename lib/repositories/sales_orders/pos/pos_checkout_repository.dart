@@ -73,6 +73,7 @@ class PosCheckoutRepository {
     int? sourceAdvanceOrderId,
     String? sourceAdvanceOrderNo,
   }) async {
+    await _db.ensureSalesCustomerMetalSettlementSchema();
     return _db.transaction(() async {
       final resolved = await _resolveInvoiceNumber(
         invoicePrefix: _invoicePrefixFromBillNo(invoice.invoiceNumber),
@@ -169,6 +170,7 @@ class PosCheckoutRepository {
       await _persistTradeInItems(
         billId: billId,
         tradeInItems: invoice.tradeInItems,
+        settlementType: invoice.customerMetalSettlementType,
       );
       await _consumeLinkedStock(
         invoice.saleItems,
@@ -233,6 +235,7 @@ class PosCheckoutRepository {
     required PosInvoiceModel invoice,
     required int? customerId,
   }) async {
+    await _db.ensureSalesCustomerMetalSettlementSchema();
     await _db.transaction(() async {
       final existingBill = await (_db.select(_db.bills)
             ..where((tbl) => tbl.id.equals(billId)))
@@ -354,6 +357,7 @@ class PosCheckoutRepository {
       await _persistTradeInItems(
         billId: billId,
         tradeInItems: invoice.tradeInItems,
+        settlementType: invoice.customerMetalSettlementType,
       );
       await _consumeLinkedStock(
         invoice.saleItems,
@@ -978,6 +982,7 @@ class PosCheckoutRepository {
   Future<void> _persistTradeInItems({
     required int billId,
     required List<TradeInItemModel> tradeInItems,
+    required CustomerMetalSettlementType settlementType,
   }) async {
     for (var index = 0; index < tradeInItems.length; index++) {
       final item = tradeInItems[index];
@@ -986,6 +991,7 @@ class PosCheckoutRepository {
               billId: Value(billId),
               lineNo: Value(index + 1),
               metalType: Value(item.metal.displayName),
+              settlementType: Value(settlementType.storageValue),
               itemDescription: Value(item.descCtrl.text.trim()),
               grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
               lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),

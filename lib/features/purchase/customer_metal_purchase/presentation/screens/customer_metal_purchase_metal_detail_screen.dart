@@ -39,7 +39,7 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     return Scaffold(
       backgroundColor: PurchaseEntryColors.bodyBg,
       appBar: CustomerMetalPurchaseLedgerAppBar(
-        title: '${widget.metal.label} Customer Purchase Details',
+        title: '${widget.metal.label} Customer Metal Settlement',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(

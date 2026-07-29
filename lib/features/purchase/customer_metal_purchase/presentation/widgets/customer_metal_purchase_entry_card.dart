@@ -148,7 +148,7 @@ class _EntryCardSurfaceState extends State<_EntryCardSurface> {
                           ),
                           _MeasureTile(
                             width: width,
-                            label: 'Paid Touch',
+                            label: 'Touch',
                             value: CustomerMetalPurchaseFormatters.purity(
                               entry.purity,
                             ),
@@ -162,14 +162,14 @@ class _EntryCardSurfaceState extends State<_EntryCardSurface> {
                           ),
                           _MeasureTile(
                             width: width,
-                            label: 'Amount Paid',
+                            label: 'Settlement Value',
                             value: CustomerMetalPurchaseFormatters.amount(
                               entry.amount,
                             ),
                           ),
                           _MeasureTile(
                             width: width,
-                            label: 'Purchase Rate',
+                            label: 'Settlement Rate',
                             value: CustomerMetalPurchaseFormatters.rate(
                               entry.effectiveRate,
                             ),

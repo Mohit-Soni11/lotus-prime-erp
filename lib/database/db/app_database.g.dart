@@ -7882,6 +7882,14 @@ class $BillTradeInItemsTable extends BillTradeInItems
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('GOLD'));
+  static const VerificationMeta _settlementTypeMeta =
+      const VerificationMeta('settlementType');
+  @override
+  late final GeneratedColumn<String> settlementType = GeneratedColumn<String>(
+      'settlement_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('EXCHANGE_ADJUSTMENT'));
   static const VerificationMeta _itemDescriptionMeta =
       const VerificationMeta('itemDescription');
   @override
@@ -7952,6 +7960,7 @@ class $BillTradeInItemsTable extends BillTradeInItems
         billId,
         lineNo,
         metalType,
+        settlementType,
         itemDescription,
         grossWeight,
         lessWeight,
@@ -7995,6 +8004,12 @@ class $BillTradeInItemsTable extends BillTradeInItems
     if (data.containsKey('metal_type')) {
       context.handle(_metalTypeMeta,
           metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
+    }
+    if (data.containsKey('settlement_type')) {
+      context.handle(
+          _settlementTypeMeta,
+          settlementType.isAcceptableOrUnknown(
+              data['settlement_type']!, _settlementTypeMeta));
     }
     if (data.containsKey('item_description')) {
       context.handle(
@@ -8059,6 +8074,8 @@ class $BillTradeInItemsTable extends BillTradeInItems
           .read(DriftSqlType.int, data['${effectivePrefix}line_no'])!,
       metalType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
+      settlementType: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}settlement_type'])!,
       itemDescription: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}item_description'])!,
       grossWeight: attachedDatabase.typeMapping
@@ -8091,6 +8108,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
   final int billId;
   final int lineNo;
   final String metalType;
+  final String settlementType;
   final String itemDescription;
   final double grossWeight;
   final double lessWeight;
@@ -8106,6 +8124,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
       required this.billId,
       required this.lineNo,
       required this.metalType,
+      required this.settlementType,
       required this.itemDescription,
       required this.grossWeight,
       required this.lessWeight,
@@ -8125,6 +8144,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
     map['bill_id'] = Variable<int>(billId);
     map['line_no'] = Variable<int>(lineNo);
     map['metal_type'] = Variable<String>(metalType);
+    map['settlement_type'] = Variable<String>(settlementType);
     map['item_description'] = Variable<String>(itemDescription);
     map['gross_weight'] = Variable<double>(grossWeight);
     map['less_weight'] = Variable<double>(lessWeight);
@@ -8146,6 +8166,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
       billId: Value(billId),
       lineNo: Value(lineNo),
       metalType: Value(metalType),
+      settlementType: Value(settlementType),
       itemDescription: Value(itemDescription),
       grossWeight: Value(grossWeight),
       lessWeight: Value(lessWeight),
@@ -8167,6 +8188,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
       billId: serializer.fromJson<int>(json['billId']),
       lineNo: serializer.fromJson<int>(json['lineNo']),
       metalType: serializer.fromJson<String>(json['metalType']),
+      settlementType: serializer.fromJson<String>(json['settlementType']),
       itemDescription: serializer.fromJson<String>(json['itemDescription']),
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
       lessWeight: serializer.fromJson<double>(json['lessWeight']),
@@ -8187,6 +8209,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
       'billId': serializer.toJson<int>(billId),
       'lineNo': serializer.toJson<int>(lineNo),
       'metalType': serializer.toJson<String>(metalType),
+      'settlementType': serializer.toJson<String>(settlementType),
       'itemDescription': serializer.toJson<String>(itemDescription),
       'grossWeight': serializer.toJson<double>(grossWeight),
       'lessWeight': serializer.toJson<double>(lessWeight),
@@ -8205,6 +8228,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
           int? billId,
           int? lineNo,
           String? metalType,
+          String? settlementType,
           String? itemDescription,
           double? grossWeight,
           double? lessWeight,
@@ -8220,6 +8244,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
         billId: billId ?? this.billId,
         lineNo: lineNo ?? this.lineNo,
         metalType: metalType ?? this.metalType,
+        settlementType: settlementType ?? this.settlementType,
         itemDescription: itemDescription ?? this.itemDescription,
         grossWeight: grossWeight ?? this.grossWeight,
         lessWeight: lessWeight ?? this.lessWeight,
@@ -8237,6 +8262,9 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
       billId: data.billId.present ? data.billId.value : this.billId,
       lineNo: data.lineNo.present ? data.lineNo.value : this.lineNo,
       metalType: data.metalType.present ? data.metalType.value : this.metalType,
+      settlementType: data.settlementType.present
+          ? data.settlementType.value
+          : this.settlementType,
       itemDescription: data.itemDescription.present
           ? data.itemDescription.value
           : this.itemDescription,
@@ -8263,6 +8291,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
           ..write('billId: $billId, ')
           ..write('lineNo: $lineNo, ')
           ..write('metalType: $metalType, ')
+          ..write('settlementType: $settlementType, ')
           ..write('itemDescription: $itemDescription, ')
           ..write('grossWeight: $grossWeight, ')
           ..write('lessWeight: $lessWeight, ')
@@ -8283,6 +8312,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
       billId,
       lineNo,
       metalType,
+      settlementType,
       itemDescription,
       grossWeight,
       lessWeight,
@@ -8301,6 +8331,7 @@ class BillTradeInItem extends DataClass implements Insertable<BillTradeInItem> {
           other.billId == this.billId &&
           other.lineNo == this.lineNo &&
           other.metalType == this.metalType &&
+          other.settlementType == this.settlementType &&
           other.itemDescription == this.itemDescription &&
           other.grossWeight == this.grossWeight &&
           other.lessWeight == this.lessWeight &&
@@ -8318,6 +8349,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
   final Value<int> billId;
   final Value<int> lineNo;
   final Value<String> metalType;
+  final Value<String> settlementType;
   final Value<String> itemDescription;
   final Value<double> grossWeight;
   final Value<double> lessWeight;
@@ -8333,6 +8365,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
     this.billId = const Value.absent(),
     this.lineNo = const Value.absent(),
     this.metalType = const Value.absent(),
+    this.settlementType = const Value.absent(),
     this.itemDescription = const Value.absent(),
     this.grossWeight = const Value.absent(),
     this.lessWeight = const Value.absent(),
@@ -8349,6 +8382,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
     required int billId,
     this.lineNo = const Value.absent(),
     this.metalType = const Value.absent(),
+    this.settlementType = const Value.absent(),
     this.itemDescription = const Value.absent(),
     this.grossWeight = const Value.absent(),
     this.lessWeight = const Value.absent(),
@@ -8365,6 +8399,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
     Expression<int>? billId,
     Expression<int>? lineNo,
     Expression<String>? metalType,
+    Expression<String>? settlementType,
     Expression<String>? itemDescription,
     Expression<double>? grossWeight,
     Expression<double>? lessWeight,
@@ -8381,6 +8416,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
       if (billId != null) 'bill_id': billId,
       if (lineNo != null) 'line_no': lineNo,
       if (metalType != null) 'metal_type': metalType,
+      if (settlementType != null) 'settlement_type': settlementType,
       if (itemDescription != null) 'item_description': itemDescription,
       if (grossWeight != null) 'gross_weight': grossWeight,
       if (lessWeight != null) 'less_weight': lessWeight,
@@ -8399,6 +8435,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
       Value<int>? billId,
       Value<int>? lineNo,
       Value<String>? metalType,
+      Value<String>? settlementType,
       Value<String>? itemDescription,
       Value<double>? grossWeight,
       Value<double>? lessWeight,
@@ -8414,6 +8451,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
       billId: billId ?? this.billId,
       lineNo: lineNo ?? this.lineNo,
       metalType: metalType ?? this.metalType,
+      settlementType: settlementType ?? this.settlementType,
       itemDescription: itemDescription ?? this.itemDescription,
       grossWeight: grossWeight ?? this.grossWeight,
       lessWeight: lessWeight ?? this.lessWeight,
@@ -8445,6 +8483,9 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
     }
     if (metalType.present) {
       map['metal_type'] = Variable<String>(metalType.value);
+    }
+    if (settlementType.present) {
+      map['settlement_type'] = Variable<String>(settlementType.value);
     }
     if (itemDescription.present) {
       map['item_description'] = Variable<String>(itemDescription.value);
@@ -8482,6 +8523,7 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
           ..write('billId: $billId, ')
           ..write('lineNo: $lineNo, ')
           ..write('metalType: $metalType, ')
+          ..write('settlementType: $settlementType, ')
           ..write('itemDescription: $itemDescription, ')
           ..write('grossWeight: $grossWeight, ')
           ..write('lessWeight: $lessWeight, ')
@@ -41281,6 +41323,7 @@ typedef $$BillTradeInItemsTableCreateCompanionBuilder
   required int billId,
   Value<int> lineNo,
   Value<String> metalType,
+  Value<String> settlementType,
   Value<String> itemDescription,
   Value<double> grossWeight,
   Value<double> lessWeight,
@@ -41298,6 +41341,7 @@ typedef $$BillTradeInItemsTableUpdateCompanionBuilder
   Value<int> billId,
   Value<int> lineNo,
   Value<String> metalType,
+  Value<String> settlementType,
   Value<String> itemDescription,
   Value<double> grossWeight,
   Value<double> lessWeight,
@@ -41350,6 +41394,10 @@ class $$BillTradeInItemsTableFilterComposer
 
   ColumnFilters<String> get metalType => $composableBuilder(
       column: $table.metalType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get settlementType => $composableBuilder(
+      column: $table.settlementType,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get itemDescription => $composableBuilder(
       column: $table.itemDescription,
@@ -41421,6 +41469,10 @@ class $$BillTradeInItemsTableOrderingComposer
   ColumnOrderings<String> get metalType => $composableBuilder(
       column: $table.metalType, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get settlementType => $composableBuilder(
+      column: $table.settlementType,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get itemDescription => $composableBuilder(
       column: $table.itemDescription,
       builder: (column) => ColumnOrderings(column));
@@ -41490,6 +41542,9 @@ class $$BillTradeInItemsTableAnnotationComposer
 
   GeneratedColumn<String> get metalType =>
       $composableBuilder(column: $table.metalType, builder: (column) => column);
+
+  GeneratedColumn<String> get settlementType => $composableBuilder(
+      column: $table.settlementType, builder: (column) => column);
 
   GeneratedColumn<String> get itemDescription => $composableBuilder(
       column: $table.itemDescription, builder: (column) => column);
@@ -41566,6 +41621,7 @@ class $$BillTradeInItemsTableTableManager extends RootTableManager<
             Value<int> billId = const Value.absent(),
             Value<int> lineNo = const Value.absent(),
             Value<String> metalType = const Value.absent(),
+            Value<String> settlementType = const Value.absent(),
             Value<String> itemDescription = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
             Value<double> lessWeight = const Value.absent(),
@@ -41582,6 +41638,7 @@ class $$BillTradeInItemsTableTableManager extends RootTableManager<
             billId: billId,
             lineNo: lineNo,
             metalType: metalType,
+            settlementType: settlementType,
             itemDescription: itemDescription,
             grossWeight: grossWeight,
             lessWeight: lessWeight,
@@ -41598,6 +41655,7 @@ class $$BillTradeInItemsTableTableManager extends RootTableManager<
             required int billId,
             Value<int> lineNo = const Value.absent(),
             Value<String> metalType = const Value.absent(),
+            Value<String> settlementType = const Value.absent(),
             Value<String> itemDescription = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
             Value<double> lessWeight = const Value.absent(),
@@ -41614,6 +41672,7 @@ class $$BillTradeInItemsTableTableManager extends RootTableManager<
             billId: billId,
             lineNo: lineNo,
             metalType: metalType,
+            settlementType: settlementType,
             itemDescription: itemDescription,
             grossWeight: grossWeight,
             lessWeight: lessWeight,

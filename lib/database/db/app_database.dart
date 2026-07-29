@@ -1125,6 +1125,26 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           }
+
+          if (from < 40) {
+            if (await _tableExists('bill_old_gold_items')) {
+              try {
+                await m.addColumn(
+                  billTradeInItems,
+                  billTradeInItems.settlementType,
+                );
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
+              AppLogger.info(
+                'v40 customer metal settlement type applied to sales metal rows.',
+              );
+            } else {
+              AppLogger.warning(
+                'v40 customer metal settlement type skipped because bill_old_gold_items table is missing.',
+              );
+            }
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -1138,6 +1158,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
           await _ensureCustomerAccountLedgerSchema();
+          await ensureSalesCustomerMetalSettlementSchema();
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockInventorySchemaInternal();
 
@@ -1252,6 +1273,15 @@ class AppDatabase extends _$AppDatabase {
     for (final statement in _customerAccountLedgerIndexSql) {
       await customStatement(statement);
     }
+  }
+
+  Future<void> ensureSalesCustomerMetalSettlementSchema() async {
+    if (!await _tableExists('bill_old_gold_items')) return;
+    await _addColumnIfMissing(
+      tableName: 'bill_old_gold_items',
+      columnName: 'settlement_type',
+      declaration: "TEXT NOT NULL DEFAULT 'EXCHANGE_ADJUSTMENT'",
+    );
   }
 
   Future<void> _ensurePurchaseVoucherSchema() async {

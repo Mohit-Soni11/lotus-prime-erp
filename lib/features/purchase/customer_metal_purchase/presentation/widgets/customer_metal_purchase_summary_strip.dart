@@ -64,7 +64,7 @@ class CustomerMetalPurchaseSummaryStrip extends StatelessWidget {
               ),
               _SummaryTile(
                 width: width,
-                label: 'Amount Paid',
+                label: 'Settlement Value',
                 value: CustomerMetalPurchaseFormatters.amount(summary.amount),
                 accent: accent,
               ),

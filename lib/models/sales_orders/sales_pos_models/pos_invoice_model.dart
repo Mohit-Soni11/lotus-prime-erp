@@ -100,6 +100,7 @@ class PosInvoiceModel {
   final String customerPan;
   final String customerGstin;
   final TradeInAdjustMode tradeInMode;
+  final CustomerMetalSettlementType customerMetalSettlementType;
 
   final List<SaleItemModel> saleItems;
   final List<TradeInItemModel> tradeInItems;
@@ -222,6 +223,8 @@ class PosInvoiceModel {
     required this.customerPan,
     required this.customerGstin,
     required this.tradeInMode,
+    this.customerMetalSettlementType =
+        CustomerMetalSettlementType.exchangeAdjustment,
     required this.saleItems,
     required this.tradeInItems,
     required this.grossAmount,

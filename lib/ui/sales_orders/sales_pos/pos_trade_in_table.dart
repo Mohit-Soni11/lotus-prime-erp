@@ -116,16 +116,21 @@ class PosTradeInTable extends StatelessWidget {
             _buildHeaderSettlementMode(
               icon: Icons.swap_horiz_rounded,
               label: 'EXCHANGE',
-              selected: ctrl.tradeInMode == TradeInAdjustMode.cashAdjust,
-              onTap: () => ctrl.toggleTradeInMode(TradeInAdjustMode.cashAdjust),
+              selected: ctrl.customerMetalSettlementType ==
+                  CustomerMetalSettlementType.exchangeAdjustment,
+              onTap: () => ctrl.setCustomerMetalSettlementType(
+                CustomerMetalSettlementType.exchangeAdjustment,
+              ),
             ),
             const SizedBox(width: 8),
             _buildHeaderSettlementMode(
               icon: Icons.account_balance_wallet_outlined,
               label: 'PURCHASE',
-              selected: ctrl.tradeInMode == TradeInAdjustMode.metalAdjust,
-              onTap: () =>
-                  ctrl.toggleTradeInMode(TradeInAdjustMode.metalAdjust),
+              selected: ctrl.customerMetalSettlementType ==
+                  CustomerMetalSettlementType.purchaseFromCustomer,
+              onTap: () => ctrl.setCustomerMetalSettlementType(
+                CustomerMetalSettlementType.purchaseFromCustomer,
+              ),
             ),
             const SizedBox(width: 10),
           ],

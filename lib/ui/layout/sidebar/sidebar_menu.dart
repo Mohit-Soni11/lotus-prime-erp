@@ -55,9 +55,9 @@ class SidebarMenu {
       ],
     ),
 
-    // ── Purchase & Inward ────────────────────────────────────────
+    // ── Procurement & Metal Inward ───────────────────────────────
     SidebarItem(
-      title: 'Purchase & Inward',
+      title: 'Procurement & Metal Inward',
       icon: Icons.shopping_bag_outlined,
       subItems: [
         MenuItemData(AppRoutes.purchaseEntryRoute),

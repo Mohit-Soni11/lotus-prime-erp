@@ -99,7 +99,7 @@ class CustomerMetalPurchaseSummaryPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _MetricsRow(
-            leftLabel: 'Amount Paid',
+            leftLabel: 'Settlement Value',
             leftValue: CustomerMetalPurchaseFormatters.amount(summary.amount),
             rightLabel: 'Total Items',
             rightValue: summary.entryCount.toString(),
@@ -132,11 +132,11 @@ class CustomerMetalPurchaseCardFooter extends StatelessWidget {
           runSpacing: 8,
           children: [
             CustomerMetalPurchaseBadge(
-              label: 'Direct ${summary.directPurchaseCount}',
+              label: 'Purchase ${summary.directPurchaseCount}',
               accent: accent,
             ),
             CustomerMetalPurchaseBadge(
-              label: 'Trade-In ${summary.tradeInCount}',
+              label: 'Exchange ${summary.tradeInCount}',
               accent: accent,
             ),
             CustomerMetalPurchaseBadge(

@@ -71,7 +71,7 @@ CustomerMetalPurchaseMetalSummary buildCustomerMetalPurchaseSummary({
     }
 
     final source = entry.source.toLowerCase();
-    if (source.contains('trade') || source.contains('exchange')) {
+    if (source.contains('exchange')) {
       tradeInCount++;
     } else if (source.contains('refund') || source.contains('return')) {
       refundCount++;

@@ -102,6 +102,7 @@ class PosInvoiceScopeService {
       customerPan: source.customerPan,
       customerGstin: source.customerGstin,
       tradeInMode: source.tradeInMode,
+      customerMetalSettlementType: source.customerMetalSettlementType,
       saleItems: scopedSaleItems,
       tradeInItems: scopedOldItems,
       grossAmount: scopedGrossAmount,

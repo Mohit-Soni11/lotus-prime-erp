@@ -35,7 +35,7 @@ class DiamondCustomerMetalPurchaseCard extends StatelessWidget {
           children: [
             const CustomerMetalPurchaseCardHeader(
               title: 'Diamond',
-              caption: 'Customer Metal Purchase',
+              caption: 'Customer Metal Settlement',
               accent: accent,
               assetPath: 'lib/logo/diamond .jpeg',
             ),
@@ -46,7 +46,7 @@ class DiamondCustomerMetalPurchaseCard extends StatelessWidget {
             ),
             const Spacer(),
             CustomerMetalPurchaseCardFooter(
-              actionLabel: 'Open diamond ledger',
+              actionLabel: 'Open diamond settlement',
               accent: accent,
               summary: summary,
             ),

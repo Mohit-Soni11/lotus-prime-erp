@@ -702,6 +702,8 @@ class PosBillingController extends ChangeNotifier {
   BillingMode billingMode = BillingMode.retail;
   BillType billType = BillType.normal;
   TradeInAdjustMode tradeInMode = TradeInAdjustMode.cashAdjust;
+  CustomerMetalSettlementType customerMetalSettlementType =
+      CustomerMetalSettlementType.exchangeAdjustment;
   DiscountType discountType = DiscountType.percentage;
 
   // --- SHARED DATA LISTS ---
@@ -828,6 +830,11 @@ class PosBillingController extends ChangeNotifier {
       billingMode = _billingModeFromDb(bill.billingMode);
       billType = _billTypeFromDb(bill.billType);
       tradeInMode = _tradeInModeFromDb(bill.tradeInMode);
+      customerMetalSettlementType = details.tradeInItems.isEmpty
+          ? CustomerMetalSettlementType.exchangeAdjustment
+          : _customerMetalSettlementTypeFromDb(
+              details.tradeInItems.first.settlementType,
+            );
       discountType = DiscountType.flatAmount;
       promiseDate = bill.promiseDate;
 
@@ -1013,6 +1020,14 @@ class PosBillingController extends ChangeNotifier {
     return value.trim().toUpperCase() == 'METAL_ADJUST'
         ? TradeInAdjustMode.metalAdjust
         : TradeInAdjustMode.cashAdjust;
+  }
+
+  CustomerMetalSettlementType _customerMetalSettlementTypeFromDb(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (normalized == 'PURCHASE_FROM_CUSTOMER') {
+      return CustomerMetalSettlementType.purchaseFromCustomer;
+    }
+    return CustomerMetalSettlementType.exchangeAdjustment;
   }
 
   Future<void> _initializeInvoiceNumberPreview() async {
@@ -1339,6 +1354,15 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCustomerMetalSettlementType(CustomerMetalSettlementType type) {
+    customerMetalSettlementType = type;
+    if (billingMode == BillingMode.retail) {
+      tradeInMode = TradeInAdjustMode.cashAdjust;
+    }
+    _clearChangeReturnMethod();
+    notifyListeners();
+  }
+
   void toggleBillingMode(BillingMode mode) {
     billingMode = mode;
     _clearChangeReturnMethod();
@@ -1428,6 +1452,7 @@ class PosBillingController extends ChangeNotifier {
       billingMode: billingMode,
       billType: billType,
       tradeInMode: tradeInMode,
+      customerMetalSettlementType: customerMetalSettlementType,
       discountType: discountType,
       promiseDate: promiseDate,
       discountInput: discountCtrl.text,
@@ -1453,6 +1478,7 @@ class PosBillingController extends ChangeNotifier {
     billingMode = holdBill.billingMode;
     billType = holdBill.billType;
     tradeInMode = holdBill.tradeInMode;
+    customerMetalSettlementType = holdBill.customerMetalSettlementType;
     discountType = holdBill.discountType;
     promiseDate = holdBill.promiseDate;
 
@@ -1531,6 +1557,9 @@ class PosBillingController extends ChangeNotifier {
     advanceConversionError = null;
     _committedInvoiceNumber = null;
     changeReturnMethod = null;
+    tradeInMode = TradeInAdjustMode.cashAdjust;
+    customerMetalSettlementType =
+        CustomerMetalSettlementType.exchangeAdjustment;
     selectedCustomer = null;
     customerSuggestions = [];
     customerNotFound = false;

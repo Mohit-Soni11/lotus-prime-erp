@@ -10,7 +10,7 @@ class CustomerMetalPurchaseLedgerAppBar extends StatefulWidget
   const CustomerMetalPurchaseLedgerAppBar({
     super.key,
     required this.onBack,
-    this.title = 'Customer Metal Purchase Ledger',
+    this.title = 'Customer Metal Settlement Ledger',
   });
 
   @override

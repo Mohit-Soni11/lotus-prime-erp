@@ -75,7 +75,7 @@ class _CustomerMetalPurchaseLedgerScreenState
                   if (_ledgerController.error != null) ...[
                     const CustomerMetalPurchaseEmptyState(
                       message:
-                          'Unable to load customer metal purchase records.',
+                          'Unable to load customer metal settlement records.',
                     ),
                     const SizedBox(height: 16),
                   ],
