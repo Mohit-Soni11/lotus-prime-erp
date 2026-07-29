@@ -1,8 +1,8 @@
 // ==========================================
 // FILE: pos_trade_in_table.dart
-// TYPE: Smart Metal Trade-In Container (UPGRADED)
+// TYPE: Smart Customer Metal Settlement Container (UPGRADED)
 // AUTHOR: Senior System Architect
-// DESCRIPTION: Zero-Lag Trade-In Table connected to Master Theme.
+// DESCRIPTION: Zero-Lag customer metal settlement table connected to Master Theme.
 //               Hardcoded colors, icons, and typography removed.
 // ==========================================
 
@@ -98,7 +98,7 @@ class PosTradeInTable extends StatelessWidget {
               Text(
                 isWholesale
                     ? "METAL INWARD (KACHHI / JAMA)"
-                    : "METAL TRADE-IN",
+                    : "CUSTOMER METAL SETTLEMENT",
                 style: SalesPosStyles.highVisHeader
                     .copyWith(color: SalesPosColors.danger, height: 1),
               ),
@@ -106,12 +106,29 @@ class PosTradeInTable extends StatelessWidget {
               Text(
                 isWholesale
                     ? "Record raw metal receipts for fine weight calculation"
-                    : "Record customer's old metal for trade-in deduction",
+                    : "Exchange or purchase customer metal with a clean bill record",
                 style: SalesPosStyles.subTitleMuted,
               ),
             ],
           ),
           const Spacer(),
+          if (!isWholesale) ...[
+            _buildHeaderSettlementMode(
+              icon: Icons.swap_horiz_rounded,
+              label: 'EXCHANGE',
+              selected: ctrl.tradeInMode == TradeInAdjustMode.cashAdjust,
+              onTap: () => ctrl.toggleTradeInMode(TradeInAdjustMode.cashAdjust),
+            ),
+            const SizedBox(width: 8),
+            _buildHeaderSettlementMode(
+              icon: Icons.account_balance_wallet_outlined,
+              label: 'PURCHASE',
+              selected: ctrl.tradeInMode == TradeInAdjustMode.metalAdjust,
+              onTap: () =>
+                  ctrl.toggleTradeInMode(TradeInAdjustMode.metalAdjust),
+            ),
+            const SizedBox(width: 10),
+          ],
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -137,6 +154,63 @@ class PosTradeInTable extends StatelessWidget {
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderSettlementMode({
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? SalesPosColors.danger.withValues(alpha: 0.075)
+                : SalesPosColors.bodyBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected
+                  ? SalesPosColors.danger.withValues(alpha: 0.45)
+                  : SalesPosColors.bodyBorder,
+              width: 1.3,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: selected
+                    ? SalesPosColors.danger
+                    : SalesPosColors.bodyTextMuted,
+                size: 17,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected
+                      ? SalesPosColors.danger
+                      : SalesPosColors.bodyTextMain,
+                  fontSize: SalesPosStyles.fontCaption,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -214,7 +288,7 @@ class PosTradeInTable extends StatelessWidget {
                   color: SalesPosColors.danger, size: 32),
             ),
             const SizedBox(height: 18),
-            Text(isWholesale ? "NO METAL INWARDS" : "NO TRADE-IN ITEMS",
+            Text(isWholesale ? "NO METAL INWARDS" : "NO CUSTOMER METAL",
                 style: const TextStyle(
                     color: SalesPosColors.bodyTextMain,
                     fontSize: SalesPosStyles.fontTitle,
@@ -224,7 +298,7 @@ class PosTradeInTable extends StatelessWidget {
             Text(
                 isWholesale
                     ? "Click below to receive Kachhi/Jama"
-                    : "Click below to record trade-in metal",
+                    : "Click below to record customer metal settlement",
                 style: SalesPosStyles.subTitleMuted),
           ],
         ),
@@ -284,7 +358,7 @@ class PosTradeInTable extends StatelessWidget {
                   Text(
                       isWholesale
                           ? "RECORD METAL INWARD"
-                          : "RECORD TRADE-IN",
+                          : "RECORD CUSTOMER METAL",
                       style: const TextStyle(
                           color: SalesPosColors.danger,
                           fontSize: SalesPosStyles.fontBody,

@@ -239,19 +239,19 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
 
           if (widget.ctrl.tradeInMode == TradeInAdjustMode.metalAdjust) ...[
             if (tradeInGoldFine > 0)
-              _buildSubtleRow("Less: Trade-In Gold Fine", 0,
+              _buildSubtleRow("Less: Customer Gold Fine", 0,
                   customVal: "- ${tradeInGoldFine.toStringAsFixed(3)} g",
                   color: SalesPosColors.brandGold),
             if (tradeInSilverFine > 0)
-              _buildSubtleRow("Less: Trade-In Silver Fine", 0,
+              _buildSubtleRow("Less: Customer Silver Fine", 0,
                   customVal: "- ${tradeInSilverFine.toStringAsFixed(3)} g",
                   color: SalesPosColors.brandSilver),
             if (tradeInPlatinumFine > 0)
-              _buildSubtleRow("Less: Trade-In Platinum Fine", 0,
+              _buildSubtleRow("Less: Customer Platinum Fine", 0,
                   customVal: "- ${tradeInPlatinumFine.toStringAsFixed(3)} g",
                   color: SalesPosColors.brandPlatinum),
             if (tradeInDiamondFine > 0)
-              _buildSubtleRow("Less: Trade-In Diamond Fine", 0,
+              _buildSubtleRow("Less: Customer Diamond Fine", 0,
                   customVal: "- ${tradeInDiamondFine.toStringAsFixed(3)} ct",
                   color: SalesPosColors.brandDiamond),
           ],
@@ -281,7 +281,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Trade-In Value Adjusted",
+                        Text("Customer Metal Adjusted",
                             style: TextStyle(
                                 fontSize: SalesPosStyles.fontLabel,
                                 fontWeight: FontWeight.w900,
@@ -321,16 +321,19 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                       child: Column(
                         children: [
                           if (tradeInGoldAmt > 0)
-                            _buildSubtleRow("Gold Trade-In", tradeInGoldAmt,
+                            _buildSubtleRow("Gold Settlement", tradeInGoldAmt,
                                 color: SalesPosColors.brandGold),
                           if (tradeInSilverAmt > 0)
-                            _buildSubtleRow("Silver Trade-In", tradeInSilverAmt,
+                            _buildSubtleRow(
+                                "Silver Settlement", tradeInSilverAmt,
                                 color: SalesPosColors.brandSilver),
                           if (tradeInPlatinumAmt > 0)
-                            _buildSubtleRow("Platinum Trade-In", tradeInPlatinumAmt,
+                            _buildSubtleRow(
+                                "Platinum Settlement", tradeInPlatinumAmt,
                                 color: SalesPosColors.brandPlatinum),
                           if (tradeInDiamondAmt > 0)
-                            _buildSubtleRow("Diamond Trade-In", tradeInDiamondAmt,
+                            _buildSubtleRow(
+                                "Diamond Settlement", tradeInDiamondAmt,
                                 color: SalesPosColors.brandDiamond),
                         ],
                       ),

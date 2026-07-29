@@ -727,7 +727,7 @@ class _PosInvoicePdfDocumentBuilder {
 
                   if (!showExchangeBreakdown) {
                     return _totalRow(
-                      'Less: Old Metal Exchange',
+                      'Less: Customer Metal Adjustment',
                       -invoice.totalTradeInDeduction,
                       isDeduction: true,
                     );
@@ -736,19 +736,19 @@ class _PosInvoicePdfDocumentBuilder {
                     children: [
                       if (goldExchange > 0)
                         _totalRow(
-                          'Less: Gold Exchange',
+                          'Less: Gold Settlement',
                           -goldExchange,
                           isDeduction: true,
                         ),
                       if (silverExchange > 0)
                         _totalRow(
-                          'Less: Silver Exchange',
+                          'Less: Silver Settlement',
                           -silverExchange,
                           isDeduction: true,
                         ),
                       if (platinumExchange > 0)
                         _totalRow(
-                          'Less: Platinum Exchange',
+                          'Less: Platinum Settlement',
                           -platinumExchange,
                           isDeduction: true,
                         ),
@@ -756,7 +756,7 @@ class _PosInvoicePdfDocumentBuilder {
                           silverExchange == 0 &&
                           platinumExchange == 0)
                         _totalRow(
-                          'Less: Old Metal Exchange',
+                          'Less: Customer Metal Adjustment',
                           -invoice.totalTradeInDeduction,
                           isDeduction: true,
                         ),

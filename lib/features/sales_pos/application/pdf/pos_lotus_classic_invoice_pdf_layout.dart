@@ -54,8 +54,8 @@ class PosLotusClassicInvoicePdfLayout {
           pw.SizedBox(height: 8),
           _sectionHeading(
             number: '02',
-            title: 'METAL TRADE-IN',
-            subtitle: 'Deduction recorded against this invoice',
+            title: 'CUSTOMER METAL SETTLEMENT',
+            subtitle: 'Customer metal adjustment recorded against this invoice',
           ),
           pw.SizedBox(height: 8),
           _tradeInTable(invoice),
@@ -598,7 +598,7 @@ class PosLotusClassicInvoicePdfLayout {
       return [
         '${entry.key + 1}',
         item.metal.displayName,
-        _fallback(item.descCtrl.text, '${item.metal.displayName} Trade-In'),
+        _fallback(item.descCtrl.text, '${item.metal.displayName} Settlement'),
         _weightText(item.grossCtrl.text),
         _weightText(item.lessCtrl.text),
         _weightText(item.fineWt.toStringAsFixed(3)),
@@ -668,7 +668,7 @@ class PosLotusClassicInvoicePdfLayout {
       ],
       if (invoice.totalTradeInDeduction > 0)
         _totalLine(
-          'Trade-In Deduction',
+          'Customer Metal Adjustment',
           -invoice.totalTradeInDeduction,
           isDeduction: true,
         ),
