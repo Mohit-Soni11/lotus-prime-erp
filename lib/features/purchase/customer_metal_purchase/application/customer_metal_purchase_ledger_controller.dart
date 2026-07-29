@@ -52,12 +52,14 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   }
 
   List<CustomerMetalPurchaseEntry> entriesForMetal(
-      CustomerMetalPurchaseMetal metal,
-      {bool includeReturned = false}) {
+    CustomerMetalPurchaseMetal metal, {
+    CustomerMetalPurchaseEntryView view =
+        CustomerMetalPurchaseEntryView.available,
+  }) {
     return entries
         .where(
             (entry) => _normalizeMetal(entry.metalType) == metal.storageValue)
-        .where((entry) => includeReturned || !entry.isReturned)
+        .where((entry) => _matchesView(entry, view))
         .toList(growable: false);
   }
 
@@ -66,7 +68,10 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   ) {
     return buildCustomerMetalPurchaseSummary(
       metal: metal,
-      entries: entriesForMetal(metal),
+      entries: entriesForMetal(
+        metal,
+        view: CustomerMetalPurchaseEntryView.available,
+      ),
     );
   }
 
@@ -95,7 +100,7 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
       .fold(0.0, (sum, entry) => sum + entry.fineWeight);
 
   Future<void> markReturned(CustomerMetalPurchaseEntry entry) async {
-    if (entry.isReturned) {
+    if (!entry.isAvailable) {
       return;
     }
 
@@ -103,7 +108,35 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
     await fetchData();
   }
 
+  Future<String> createMeltingBatch({
+    required CustomerMetalPurchaseMetal metal,
+    required List<CustomerMetalPurchaseEntry> selectedEntries,
+  }) async {
+    final batchNo = await _repository.createMeltingBatch(
+      metalType: metal.storageValue,
+      entries: selectedEntries,
+    );
+    await fetchData();
+    return batchNo;
+  }
+
   String _normalizeMetal(String value) {
     return value.trim().toUpperCase();
+  }
+
+  bool _matchesView(
+    CustomerMetalPurchaseEntry entry,
+    CustomerMetalPurchaseEntryView view,
+  ) {
+    switch (view) {
+      case CustomerMetalPurchaseEntryView.available:
+        return entry.isAvailable;
+      case CustomerMetalPurchaseEntryView.transferred:
+        return entry.isTransferredToMelting;
+      case CustomerMetalPurchaseEntryView.returned:
+        return entry.isReturned;
+      case CustomerMetalPurchaseEntryView.all:
+        return true;
+    }
   }
 }

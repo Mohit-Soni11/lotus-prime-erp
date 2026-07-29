@@ -7,4 +7,9 @@ abstract class CustomerMetalPurchaseLedgerRepository {
   });
 
   Future<void> markReturned(CustomerMetalPurchaseEntry entry);
+
+  Future<String> createMeltingBatch({
+    required String metalType,
+    required List<CustomerMetalPurchaseEntry> entries,
+  });
 }

@@ -16,6 +16,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
     DateTime? endDate,
   }) async {
     await _ensureReturnTable();
+    await _ensureMeltingTables();
     final entries = <CustomerMetalPurchaseEntry>[];
     final normalizedStart = startDate == null ? null : _startOfDay(startDate);
     final normalizedEnd = endDate == null ? null : _endOfDay(endDate);
@@ -32,7 +33,8 @@ class DriftCustomerMetalPurchaseLedgerRepository
     );
 
     entries.sort((a, b) => b.date.compareTo(a.date));
-    return _applyReturnStatus(entries);
+    final returnedApplied = await _applyReturnStatus(entries);
+    return _applyMeltingStatus(returnedApplied);
   }
 
   @override
@@ -70,6 +72,104 @@ class DriftCustomerMetalPurchaseLedgerRepository
         now,
       ],
     );
+  }
+
+  @override
+  Future<String> createMeltingBatch({
+    required String metalType,
+    required List<CustomerMetalPurchaseEntry> entries,
+  }) async {
+    await _ensureMeltingTables();
+    final availableEntries =
+        entries.where((entry) => entry.isAvailable).toList();
+    if (availableEntries.isEmpty) {
+      throw ArgumentError('Select at least one available item.');
+    }
+
+    final now = DateTime.now();
+    final nowMs = now.millisecondsSinceEpoch;
+    final batchNo = _buildMeltingBatchNo(metalType, now);
+    final grossWeight = availableEntries.fold<double>(
+      0,
+      (sum, entry) => sum + entry.grossWeight,
+    );
+    final fineWeight = availableEntries.fold<double>(
+      0,
+      (sum, entry) => sum + entry.fineWeight,
+    );
+    final amount = availableEntries.fold<double>(
+      0,
+      (sum, entry) => sum + entry.amount,
+    );
+
+    await _db.transaction(() async {
+      await _db.customStatement(
+        '''
+        INSERT INTO customer_metal_melting_batches (
+          batch_no,
+          metal_type,
+          item_count,
+          gross_weight,
+          fine_weight,
+          amount,
+          status,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          batchNo,
+          metalType,
+          availableEntries.length,
+          grossWeight,
+          fineWeight,
+          amount,
+          'CREATED',
+          nowMs,
+        ],
+      );
+
+      final batchRow = await _db
+          .customSelect('SELECT last_insert_rowid() AS id')
+          .getSingle();
+      final batchId = batchRow.read<int>('id');
+
+      for (final entry in availableEntries) {
+        await _db.customStatement(
+          '''
+          INSERT OR IGNORE INTO customer_metal_melting_batch_lines (
+            batch_id,
+            batch_no,
+            source,
+            source_entry_id,
+            reference_no,
+            customer_name,
+            metal_type,
+            item_description,
+            gross_weight,
+            fine_weight,
+            amount,
+            transferred_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ''',
+          [
+            batchId,
+            batchNo,
+            entry.source,
+            entry.id,
+            entry.referenceNo,
+            entry.customerName,
+            entry.metalType,
+            entry.itemDescription,
+            entry.grossWeight,
+            entry.fineWeight,
+            entry.amount,
+            nowMs,
+          ],
+        );
+      }
+    });
+
+    return batchNo;
   }
 
   Future<void> _appendSalesTradeInEntries(
@@ -268,7 +368,107 @@ class DriftCustomerMetalPurchaseLedgerRepository
     ''');
   }
 
+  Future<List<CustomerMetalPurchaseEntry>> _applyMeltingStatus(
+    List<CustomerMetalPurchaseEntry> entries,
+  ) async {
+    final transferredRows = await _db.customSelect(
+      '''
+      SELECT source, source_entry_id, batch_no, transferred_at
+      FROM customer_metal_melting_batch_lines
+      ''',
+    ).get();
+
+    final transferredEntries = <String, _MeltingTransferSnapshot>{};
+    for (final row in transferredRows) {
+      final source = row.read<String>('source');
+      final entryId = row.read<int>('source_entry_id');
+      final batchNo = row.read<String>('batch_no');
+      final transferredAt = row.read<int>('transferred_at');
+      transferredEntries[_entryKey(source, entryId)] = _MeltingTransferSnapshot(
+        batchNo: batchNo,
+        transferredAt: DateTime.fromMillisecondsSinceEpoch(transferredAt),
+      );
+    }
+
+    return [
+      for (final entry in entries)
+        if (transferredEntries.containsKey(_entryKey(entry.source, entry.id)))
+          entry.copyWith(
+            isTransferredToMelting: true,
+            transferredToMeltingAt:
+                transferredEntries[_entryKey(entry.source, entry.id)]!
+                    .transferredAt,
+            meltingBatchNo:
+                transferredEntries[_entryKey(entry.source, entry.id)]!.batchNo,
+          )
+        else
+          entry,
+    ];
+  }
+
+  Future<void> _ensureMeltingTables() async {
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS customer_metal_melting_batches (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        batch_no TEXT NOT NULL UNIQUE,
+        metal_type TEXT NOT NULL,
+        item_count INTEGER NOT NULL DEFAULT 0,
+        gross_weight REAL NOT NULL DEFAULT 0.0,
+        fine_weight REAL NOT NULL DEFAULT 0.0,
+        amount REAL NOT NULL DEFAULT 0.0,
+        status TEXT NOT NULL DEFAULT 'CREATED',
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS customer_metal_melting_batch_lines (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        batch_id INTEGER NOT NULL,
+        batch_no TEXT NOT NULL,
+        source TEXT NOT NULL,
+        source_entry_id INTEGER NOT NULL,
+        reference_no TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        metal_type TEXT NOT NULL,
+        item_description TEXT NOT NULL DEFAULT '',
+        gross_weight REAL NOT NULL DEFAULT 0.0,
+        fine_weight REAL NOT NULL DEFAULT 0.0,
+        amount REAL NOT NULL DEFAULT 0.0,
+        transferred_at INTEGER NOT NULL,
+        UNIQUE(source, source_entry_id),
+        FOREIGN KEY (batch_id) REFERENCES customer_metal_melting_batches (id)
+      )
+    ''');
+
+    await _db.customStatement('''
+      CREATE INDEX IF NOT EXISTS idx_customer_metal_melting_lines_source
+      ON customer_metal_melting_batch_lines (source, source_entry_id)
+    ''');
+  }
+
   String _entryKey(String source, int entryId) {
     return '${source.trim().toUpperCase()}|$entryId';
   }
+
+  String _buildMeltingBatchNo(String metalType, DateTime now) {
+    final metalCode = metalType.trim().toUpperCase();
+    final dateCode = '${now.year}'
+        '${now.month.toString().padLeft(2, '0')}'
+        '${now.day.toString().padLeft(2, '0')}';
+    final timeCode = '${now.hour.toString().padLeft(2, '0')}'
+        '${now.minute.toString().padLeft(2, '0')}'
+        '${now.second.toString().padLeft(2, '0')}';
+    return 'CMB-$metalCode-$dateCode-$timeCode';
+  }
+}
+
+class _MeltingTransferSnapshot {
+  final String batchNo;
+  final DateTime transferredAt;
+
+  const _MeltingTransferSnapshot({
+    required this.batchNo,
+    required this.transferredAt,
+  });
 }

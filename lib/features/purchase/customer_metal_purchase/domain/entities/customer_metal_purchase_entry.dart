@@ -16,6 +16,9 @@ class CustomerMetalPurchaseEntry {
   final double amount;
   final bool isReturned;
   final DateTime? returnedAt;
+  final bool isTransferredToMelting;
+  final DateTime? transferredToMeltingAt;
+  final String? meltingBatchNo;
 
   const CustomerMetalPurchaseEntry({
     required this.id,
@@ -35,14 +38,22 @@ class CustomerMetalPurchaseEntry {
     required this.amount,
     this.isReturned = false,
     this.returnedAt,
+    this.isTransferredToMelting = false,
+    this.transferredToMeltingAt,
+    this.meltingBatchNo,
   });
 
   double get effectiveRate =>
       rate > 0 || fineWeight <= 0 ? rate : amount / fineWeight;
 
+  bool get isAvailable => !isReturned && !isTransferredToMelting;
+
   CustomerMetalPurchaseEntry copyWith({
     bool? isReturned,
     DateTime? returnedAt,
+    bool? isTransferredToMelting,
+    DateTime? transferredToMeltingAt,
+    String? meltingBatchNo,
   }) {
     return CustomerMetalPurchaseEntry(
       id: id,
@@ -62,6 +73,11 @@ class CustomerMetalPurchaseEntry {
       amount: amount,
       isReturned: isReturned ?? this.isReturned,
       returnedAt: returnedAt ?? this.returnedAt,
+      isTransferredToMelting:
+          isTransferredToMelting ?? this.isTransferredToMelting,
+      transferredToMeltingAt:
+          transferredToMeltingAt ?? this.transferredToMeltingAt,
+      meltingBatchNo: meltingBatchNo ?? this.meltingBatchNo,
     );
   }
 }

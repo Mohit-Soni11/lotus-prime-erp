@@ -7,6 +7,8 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation
 class CustomerMetalPurchaseEntryCard extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelectionChanged;
   final VoidCallback? onCustomerPressed;
   final VoidCallback? onReferencePressed;
   final VoidCallback? onReturnPressed;
@@ -15,6 +17,8 @@ class CustomerMetalPurchaseEntryCard extends StatelessWidget {
     super.key,
     required this.entry,
     required this.accent,
+    this.isSelected = false,
+    this.onSelectionChanged,
     this.onCustomerPressed,
     this.onReferencePressed,
     this.onReturnPressed,
@@ -25,6 +29,8 @@ class CustomerMetalPurchaseEntryCard extends StatelessWidget {
     return _EntryCardSurface(
       entry: entry,
       accent: accent,
+      isSelected: isSelected,
+      onSelectionChanged: onSelectionChanged,
       onCustomerPressed: onCustomerPressed,
       onReferencePressed: onReferencePressed,
       onReturnPressed: onReturnPressed,
@@ -35,6 +41,8 @@ class CustomerMetalPurchaseEntryCard extends StatelessWidget {
 class _EntryCardSurface extends StatefulWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelectionChanged;
   final VoidCallback? onCustomerPressed;
   final VoidCallback? onReferencePressed;
   final VoidCallback? onReturnPressed;
@@ -42,6 +50,8 @@ class _EntryCardSurface extends StatefulWidget {
   const _EntryCardSurface({
     required this.entry,
     required this.accent,
+    required this.isSelected,
+    required this.onSelectionChanged,
     required this.onCustomerPressed,
     required this.onReferencePressed,
     required this.onReturnPressed,
@@ -73,8 +83,10 @@ class _EntryCardSurfaceState extends State<_EntryCardSurface> {
           border: Border.all(
             color: entry.isReturned
                 ? const Color(0xFFD1D5DB)
-                : (_hovered ? accent : const Color(0xFFE5E0D8)),
-            width: _hovered ? 1.2 : 1,
+                : (widget.isSelected || _hovered
+                    ? accent
+                    : const Color(0xFFE5E0D8)),
+            width: widget.isSelected ? 1.6 : (_hovered ? 1.2 : 1),
           ),
           boxShadow: [
             BoxShadow(
@@ -103,6 +115,8 @@ class _EntryCardSurfaceState extends State<_EntryCardSurface> {
                   _EntryHeader(
                     entry: entry,
                     accent: accent,
+                    isSelected: widget.isSelected,
+                    onSelectionChanged: widget.onSelectionChanged,
                     onCustomerPressed: widget.onCustomerPressed,
                     onReturnPressed: widget.onReturnPressed,
                   ),
@@ -184,12 +198,16 @@ class _EntryCardSurfaceState extends State<_EntryCardSurface> {
 class _EntryHeader extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelectionChanged;
   final VoidCallback? onCustomerPressed;
   final VoidCallback? onReturnPressed;
 
   const _EntryHeader({
     required this.entry,
     required this.accent,
+    required this.isSelected,
+    required this.onSelectionChanged,
     required this.onCustomerPressed,
     required this.onReturnPressed,
   });
@@ -202,6 +220,8 @@ class _EntryHeader extends StatelessWidget {
         final details = _HeaderDetails(
           entry: entry,
           accent: accent,
+          isSelected: isSelected,
+          onSelectionChanged: onSelectionChanged,
           onCustomerPressed: onCustomerPressed,
         );
         final action = _ReturnAction(
@@ -237,11 +257,15 @@ class _EntryHeader extends StatelessWidget {
 class _HeaderDetails extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final bool isSelected;
+  final ValueChanged<bool>? onSelectionChanged;
   final VoidCallback? onCustomerPressed;
 
   const _HeaderDetails({
     required this.entry,
     required this.accent,
+    required this.isSelected,
+    required this.onSelectionChanged,
     required this.onCustomerPressed,
   });
 
@@ -255,15 +279,25 @@ class _HeaderDetails extends StatelessWidget {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            if (entry.isAvailable)
+              Checkbox(
+                value: isSelected,
+                onChanged: (value) => onSelectionChanged?.call(value ?? false),
+                activeColor: accent,
+                side: BorderSide(color: accent.withValues(alpha: 0.6)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
             _CustomerNameButton(
               name: entry.customerName,
               accent: accent,
               onPressed: onCustomerPressed,
             ),
             _StatusBadge(
-              label: entry.isReturned ? 'Returned' : entry.source,
-              accent: entry.isReturned ? const Color(0xFF6B7280) : accent,
-              filled: entry.isReturned,
+              label: _statusLabel(entry),
+              accent: entry.isAvailable ? accent : const Color(0xFF6B7280),
+              filled: !entry.isAvailable,
             ),
           ],
         ),
@@ -287,10 +321,26 @@ class _HeaderDetails extends StatelessWidget {
                 label: 'Returned On',
                 value: CustomerMetalPurchaseFormatters.date(entry.returnedAt!),
               ),
+            if (entry.isTransferredToMelting &&
+                entry.transferredToMeltingAt != null)
+              _MetaText(
+                label: 'Melting Batch',
+                value: entry.meltingBatchNo ?? 'Transferred',
+              ),
           ],
         ),
       ],
     );
+  }
+
+  String _statusLabel(CustomerMetalPurchaseEntry entry) {
+    if (entry.isReturned) {
+      return 'Returned';
+    }
+    if (entry.isTransferredToMelting) {
+      return 'Transferred to Melting';
+    }
+    return entry.source;
   }
 }
 
@@ -310,6 +360,13 @@ class _ReturnAction extends StatelessWidget {
     if (entry.isReturned) {
       return const _StatusBadge(
         label: 'Return Completed',
+        accent: Color(0xFF6B7280),
+        filled: true,
+      );
+    }
+    if (entry.isTransferredToMelting) {
+      return const _StatusBadge(
+        label: 'In Melting Batch',
         accent: Color(0xFF6B7280),
         filled: true,
       );

@@ -11,7 +11,7 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_summary_strip.dart';
 import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dart';
 
-class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
+class CustomerMetalPurchaseMetalDetailScreen extends StatefulWidget {
   final CustomerMetalPurchaseMetal metal;
   final CustomerMetalPurchaseLedgerController controller;
 
@@ -22,24 +22,45 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<CustomerMetalPurchaseMetalDetailScreen> createState() =>
+      _CustomerMetalPurchaseMetalDetailScreenState();
+}
+
+class _CustomerMetalPurchaseMetalDetailScreenState
+    extends State<CustomerMetalPurchaseMetalDetailScreen> {
+  CustomerMetalPurchaseEntryView _view =
+      CustomerMetalPurchaseEntryView.available;
+  final Set<String> _selectedEntryKeys = {};
+
+  @override
   Widget build(BuildContext context) {
-    final accent = _accentFor(metal);
+    final accent = _accentFor(widget.metal);
 
     return Scaffold(
       backgroundColor: PurchaseEntryColors.bodyBg,
       appBar: CustomerMetalPurchaseLedgerAppBar(
-        title: '${metal.label} Customer Purchase Details',
+        title: '${widget.metal.label} Customer Purchase Details',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
         top: false,
         child: ListenableBuilder(
-          listenable: controller,
+          listenable: widget.controller,
           builder: (context, _) {
-            final summary = controller.summaryForMetal(metal);
-            final entries = controller.entriesForMetal(
-              metal,
-              includeReturned: true,
+            final summary = widget.controller.summaryForMetal(widget.metal);
+            final entries = widget.controller.entriesForMetal(
+              widget.metal,
+              view: _view,
+            );
+            final selectedEntries = widget.controller
+                .entriesForMetal(widget.metal)
+                .where((entry) => _selectedEntryKeys.contains(_entryKey(entry)))
+                .toList(growable: false);
+
+            _selectedEntryKeys.removeWhere(
+              (key) => !widget.controller
+                  .entriesForMetal(widget.metal)
+                  .any((entry) => _entryKey(entry) == key),
             );
 
             return SingleChildScrollView(
@@ -50,11 +71,28 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
                     summary: summary,
                     accent: accent,
                   ),
+                  const SizedBox(height: 14),
+                  _DetailActionBar(
+                    accent: accent,
+                    view: _view,
+                    selectedCount: selectedEntries.length,
+                    onViewChanged: (view) {
+                      setState(() {
+                        _view = view;
+                        if (view != CustomerMetalPurchaseEntryView.available) {
+                          _selectedEntryKeys.clear();
+                        }
+                      });
+                    },
+                    onCreateMeltingBatch: selectedEntries.isEmpty
+                        ? null
+                        : () => _confirmMeltingBatch(selectedEntries),
+                  ),
                   const SizedBox(height: 16),
                   if (entries.isEmpty)
                     CustomerMetalPurchaseEmptyState(
                       message:
-                          'No ${metal.label.toLowerCase()} customer purchase records found.',
+                          'No ${widget.metal.label.toLowerCase()} ${_view.label.toLowerCase()} records found.',
                     )
                   else
                     ListView.separated(
@@ -63,22 +101,38 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
                       itemCount: entries.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
+                        final entry = entries[index];
                         return CustomerMetalPurchaseEntryCard(
-                          entry: entries[index],
+                          entry: entry,
                           accent: accent,
-                          onCustomerPressed: entries[index].customerId == null
+                          isSelected: _selectedEntryKeys.contains(
+                            _entryKey(entry),
+                          ),
+                          onSelectionChanged: entry.isAvailable
+                              ? (selected) {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedEntryKeys.add(_entryKey(entry));
+                                    } else {
+                                      _selectedEntryKeys
+                                          .remove(_entryKey(entry));
+                                    }
+                                  });
+                                }
+                              : null,
+                          onCustomerPressed: entry.customerId == null
                               ? null
                               : () => _openCustomerProfile(
                                     context,
-                                    entries[index].customerId!,
+                                    entry.customerId!,
                                   ),
                           onReferencePressed: () => _openSourceDocument(
                             context,
-                            entries[index],
+                            entry,
                           ),
                           onReturnPressed: () => _confirmReturn(
                             context,
-                            entries[index],
+                            entry,
                           ),
                         );
                       },
@@ -119,11 +173,54 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmMeltingBatch(
+    List<CustomerMetalPurchaseEntry> selectedEntries,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Create Melting Batch'),
+          content: Text(
+            'Transfer ${selectedEntries.length} selected ${widget.metal.label.toLowerCase()} item(s) to melting?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Create Batch'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    final batchNo = await widget.controller.createMeltingBatch(
+      metal: widget.metal,
+      selectedEntries: selectedEntries,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(_selectedEntryKeys.clear);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Melting batch $batchNo created.')),
+    );
+  }
+
   Future<void> _confirmReturn(
     BuildContext context,
     CustomerMetalPurchaseEntry entry,
   ) async {
-    if (entry.isReturned) {
+    if (!entry.isAvailable) {
       return;
     }
 
@@ -153,16 +250,19 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
       return;
     }
 
-    await controller.markReturned(entry);
+    await widget.controller.markReturned(entry);
     if (!context.mounted) {
       return;
     }
 
+    setState(() => _selectedEntryKeys.remove(_entryKey(entry)));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${entry.referenceNo} marked as returned.'),
-      ),
+      SnackBar(content: Text('${entry.referenceNo} marked as returned.')),
     );
+  }
+
+  String _entryKey(CustomerMetalPurchaseEntry entry) {
+    return '${entry.source}|${entry.id}';
   }
 
   Color _accentFor(CustomerMetalPurchaseMetal metal) {
@@ -176,5 +276,141 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
       case CustomerMetalPurchaseMetal.platinum:
         return PurchaseEntryColors.metalPlatinum;
     }
+  }
+}
+
+class _DetailActionBar extends StatelessWidget {
+  final Color accent;
+  final CustomerMetalPurchaseEntryView view;
+  final int selectedCount;
+  final ValueChanged<CustomerMetalPurchaseEntryView> onViewChanged;
+  final VoidCallback? onCreateMeltingBatch;
+
+  const _DetailActionBar({
+    required this.accent,
+    required this.view,
+    required this.selectedCount,
+    required this.onViewChanged,
+    required this.onCreateMeltingBatch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E0D8)),
+      ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final option in CustomerMetalPurchaseEntryView.values)
+                _EntryViewButton(
+                  label: Text(option.label),
+                  selected: view == option,
+                  accent: accent,
+                  onPressed: () => onViewChanged(option),
+                ),
+            ],
+          ),
+          FilledButton.icon(
+            onPressed: onCreateMeltingBatch,
+            icon: const Icon(Icons.local_fire_department_rounded, size: 18),
+            label: Text(
+              selectedCount == 0
+                  ? 'Create Melting Batch'
+                  : 'Create Melting Batch ($selectedCount)',
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: const Color(0xFFF1F1F1),
+              disabledForegroundColor: Colors.black.withValues(alpha: 0.45),
+              minimumSize: const Size(190, 42),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EntryViewButton extends StatelessWidget {
+  final Widget label;
+  final bool selected;
+  final Color accent;
+  final VoidCallback onPressed;
+
+  const _EntryViewButton({
+    required this.label,
+    required this.selected,
+    required this.accent,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = selected ? Colors.white : Colors.black;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: selected ? Colors.black : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected ? accent : const Color(0xFFD8D2C8),
+              width: selected ? 1.4 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                Icon(Icons.check_rounded, size: 16, color: textColor),
+                const SizedBox(width: 7),
+              ],
+              DefaultTextStyle.merge(
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+                child: label,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

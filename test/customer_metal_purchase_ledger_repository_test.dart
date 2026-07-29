@@ -153,6 +153,45 @@ void main() {
     expect(activeSummary.grossWeight, 0);
     expect(activeSummary.amount, 0);
   });
+
+  test('moves selected customer metal entries into melting batch', () async {
+    await purchaseRepository.savePurchase(
+      _purchaseDraft(
+        sequenceNo: 1,
+        voucherNo: 'CMP-MELT-2026-0001',
+        source: PurchaseSource.fromCustomer,
+        partyName: 'Ayaan Shah',
+        metal: PurchaseMetalType.gold,
+      ),
+    );
+
+    final beforeTransfer = await ledgerRepository.fetchLedger(
+      startDate: DateTime(2020),
+      endDate: DateTime(2100, 12, 31),
+    );
+
+    final batchNo = await ledgerRepository.createMeltingBatch(
+      metalType: 'GOLD',
+      entries: beforeTransfer,
+    );
+
+    final afterTransfer = await ledgerRepository.fetchLedger(
+      startDate: DateTime(2020),
+      endDate: DateTime(2100, 12, 31),
+    );
+    final transferred = afterTransfer.single;
+    final activeSummary = buildCustomerMetalPurchaseSummary(
+      metal: CustomerMetalPurchaseMetal.gold,
+      entries: afterTransfer.where((entry) => entry.isAvailable).toList(),
+    );
+
+    expect(batchNo, startsWith('CMB-GOLD-'));
+    expect(transferred.isTransferredToMelting, isTrue);
+    expect(transferred.meltingBatchNo, batchNo);
+    expect(transferred.transferredToMeltingAt, isNotNull);
+    expect(activeSummary.entryCount, 0);
+    expect(activeSummary.fineWeight, 0);
+  });
 }
 
 Future<void> _insertSalesTradeIn(

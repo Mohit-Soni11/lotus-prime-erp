@@ -12,6 +12,17 @@ enum CustomerMetalPurchaseMetal {
   const CustomerMetalPurchaseMetal(this.label, this.storageValue);
 }
 
+enum CustomerMetalPurchaseEntryView {
+  available('Available'),
+  transferred('Transferred'),
+  returned('Returned'),
+  all('All');
+
+  final String label;
+
+  const CustomerMetalPurchaseEntryView(this.label);
+}
+
 class CustomerMetalPurchaseMetalSummary {
   final CustomerMetalPurchaseMetal metal;
   final double grossWeight;

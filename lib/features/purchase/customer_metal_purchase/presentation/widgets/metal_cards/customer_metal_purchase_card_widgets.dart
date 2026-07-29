@@ -88,11 +88,11 @@ class CustomerMetalPurchaseSummaryPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _MetricsRow(
-            leftLabel: 'Gross Weight',
+            leftLabel: 'Available Gross',
             leftValue: CustomerMetalPurchaseFormatters.weight(
               summary.grossWeight,
             ),
-            rightLabel: 'Fine Weight',
+            rightLabel: 'Available Fine',
             rightValue: CustomerMetalPurchaseFormatters.weight(
               summary.fineWeight,
             ),

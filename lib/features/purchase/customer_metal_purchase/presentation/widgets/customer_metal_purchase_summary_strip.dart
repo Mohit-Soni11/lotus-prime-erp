@@ -48,7 +48,7 @@ class CustomerMetalPurchaseSummaryStrip extends StatelessWidget {
             children: [
               _SummaryTile(
                 width: width,
-                label: 'Gross Weight',
+                label: 'Available Gross',
                 value: CustomerMetalPurchaseFormatters.weight(
                   summary.grossWeight,
                 ),
@@ -56,7 +56,7 @@ class CustomerMetalPurchaseSummaryStrip extends StatelessWidget {
               ),
               _SummaryTile(
                 width: width,
-                label: 'Fine Weight',
+                label: 'Available Fine',
                 value: CustomerMetalPurchaseFormatters.weight(
                   summary.fineWeight,
                 ),
