@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_controller.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
@@ -64,6 +66,16 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
                         return CustomerMetalPurchaseEntryCard(
                           entry: entries[index],
                           accent: accent,
+                          onCustomerPressed: entries[index].customerId == null
+                              ? null
+                              : () => _openCustomerProfile(
+                                    context,
+                                    entries[index].customerId!,
+                                  ),
+                          onReferencePressed: () => _openSourceDocument(
+                            context,
+                            entries[index],
+                          ),
                           onReturnPressed: () => _confirmReturn(
                             context,
                             entries[index],
@@ -77,6 +89,33 @@ class CustomerMetalPurchaseMetalDetailScreen extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+
+  void _openCustomerProfile(BuildContext context, int customerId) {
+    context.push(RoutePaths.customerProfileFor(customerId));
+  }
+
+  void _openSourceDocument(
+    BuildContext context,
+    CustomerMetalPurchaseEntry entry,
+  ) {
+    final source = entry.source.toLowerCase();
+    if (source.contains('trade') || source.contains('exchange')) {
+      context.push(
+        Uri(
+          path: RoutePaths.salesPos,
+          queryParameters: {'editBillId': '${entry.sourceDocumentId}'},
+        ).toString(),
+      );
+      return;
+    }
+
+    context.push(
+      Uri(
+        path: RoutePaths.purchaseEntry,
+        queryParameters: {'voucherId': '${entry.sourceDocumentId}'},
+      ).toString(),
     );
   }
 

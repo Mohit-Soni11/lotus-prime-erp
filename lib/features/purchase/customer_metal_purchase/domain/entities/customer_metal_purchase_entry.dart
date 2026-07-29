@@ -1,5 +1,7 @@
 class CustomerMetalPurchaseEntry {
   final int id;
+  final int? customerId;
+  final int sourceDocumentId;
   final DateTime date;
   final String source;
   final String referenceNo;
@@ -17,6 +19,8 @@ class CustomerMetalPurchaseEntry {
 
   const CustomerMetalPurchaseEntry({
     required this.id,
+    required this.customerId,
+    required this.sourceDocumentId,
     required this.date,
     required this.source,
     required this.referenceNo,
@@ -42,6 +46,8 @@ class CustomerMetalPurchaseEntry {
   }) {
     return CustomerMetalPurchaseEntry(
       id: id,
+      customerId: customerId,
+      sourceDocumentId: sourceDocumentId,
       date: date,
       source: source,
       referenceNo: referenceNo,

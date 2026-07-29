@@ -7,102 +7,175 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation
 class CustomerMetalPurchaseEntryCard extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final VoidCallback? onCustomerPressed;
+  final VoidCallback? onReferencePressed;
   final VoidCallback? onReturnPressed;
 
   const CustomerMetalPurchaseEntryCard({
     super.key,
     required this.entry,
     required this.accent,
+    this.onCustomerPressed,
+    this.onReferencePressed,
     this.onReturnPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: entry.isReturned
-              ? const Color(0xFFD1D5DB)
-              : accent.withValues(alpha: 0.28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _EntryHeader(
-            entry: entry,
-            accent: accent,
-            onReturnPressed: onReturnPressed,
-          ),
-          const SizedBox(height: 18),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 1180
-                  ? 4
-                  : constraints.maxWidth >= 720
-                      ? 3
-                      : constraints.maxWidth >= 520
-                          ? 2
-                          : 1;
-              const spacing = 12.0;
-              final width =
-                  (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+    return _EntryCardSurface(
+      entry: entry,
+      accent: accent,
+      onCustomerPressed: onCustomerPressed,
+      onReferencePressed: onReferencePressed,
+      onReturnPressed: onReturnPressed,
+    );
+  }
+}
 
-              return Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
+class _EntryCardSurface extends StatefulWidget {
+  final CustomerMetalPurchaseEntry entry;
+  final Color accent;
+  final VoidCallback? onCustomerPressed;
+  final VoidCallback? onReferencePressed;
+  final VoidCallback? onReturnPressed;
+
+  const _EntryCardSurface({
+    required this.entry,
+    required this.accent,
+    required this.onCustomerPressed,
+    required this.onReferencePressed,
+    required this.onReturnPressed,
+  });
+
+  @override
+  State<_EntryCardSurface> createState() => _EntryCardSurfaceState();
+}
+
+class _EntryCardSurfaceState extends State<_EntryCardSurface> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = widget.entry;
+    final accent = widget.accent;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: entry.isReturned
+                ? const Color(0xFFD1D5DB)
+                : (_hovered ? accent : const Color(0xFFE5E0D8)),
+            width: _hovered ? 1.2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: _hovered ? 0.08 : 0.05),
+              blurRadius: _hovered ? 16 : 10,
+              offset: Offset(0, _hovered ? 6 : 3),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 4,
+              height: 148,
+              decoration: BoxDecoration(
+                color: entry.isReturned ? const Color(0xFF9CA3AF) : accent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MeasureTile(
-                    width: width,
-                    label: 'Gross Weight',
-                    value: CustomerMetalPurchaseFormatters.weight(
-                      entry.grossWeight,
-                    ),
+                  _EntryHeader(
+                    entry: entry,
+                    accent: accent,
+                    onCustomerPressed: widget.onCustomerPressed,
+                    onReturnPressed: widget.onReturnPressed,
                   ),
-                  _MeasureTile(
-                    width: width,
-                    label: 'Paid Touch',
-                    value: CustomerMetalPurchaseFormatters.purity(entry.purity),
-                  ),
-                  _MeasureTile(
-                    width: width,
-                    label: 'Fine Weight',
-                    value: CustomerMetalPurchaseFormatters.weight(
-                      entry.fineWeight,
-                    ),
-                  ),
-                  _MeasureTile(
-                    width: width,
-                    label: 'Amount Paid',
-                    value: CustomerMetalPurchaseFormatters.amount(entry.amount),
-                  ),
-                  _MeasureTile(
-                    width: width,
-                    label: 'Purchase Rate',
-                    value: CustomerMetalPurchaseFormatters.rate(
-                      entry.effectiveRate,
-                    ),
-                  ),
-                  _MeasureTile(
-                    width: width,
-                    label: 'Reference No',
-                    value: entry.referenceNo,
+                  const SizedBox(height: 18),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 1180
+                          ? 4
+                          : constraints.maxWidth >= 720
+                              ? 3
+                              : constraints.maxWidth >= 520
+                                  ? 2
+                                  : 1;
+                      const spacing = 12.0;
+                      final width =
+                          (constraints.maxWidth - (spacing * (columns - 1))) /
+                              columns;
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: spacing,
+                        children: [
+                          _MeasureTile(
+                            width: width,
+                            label: 'Gross Weight',
+                            value: CustomerMetalPurchaseFormatters.weight(
+                              entry.grossWeight,
+                            ),
+                          ),
+                          _MeasureTile(
+                            width: width,
+                            label: 'Paid Touch',
+                            value: CustomerMetalPurchaseFormatters.purity(
+                              entry.purity,
+                            ),
+                          ),
+                          _MeasureTile(
+                            width: width,
+                            label: 'Fine Weight',
+                            value: CustomerMetalPurchaseFormatters.weight(
+                              entry.fineWeight,
+                            ),
+                          ),
+                          _MeasureTile(
+                            width: width,
+                            label: 'Amount Paid',
+                            value: CustomerMetalPurchaseFormatters.amount(
+                              entry.amount,
+                            ),
+                          ),
+                          _MeasureTile(
+                            width: width,
+                            label: 'Purchase Rate',
+                            value: CustomerMetalPurchaseFormatters.rate(
+                              entry.effectiveRate,
+                            ),
+                          ),
+                          _MeasureTile(
+                            width: width,
+                            label: 'Reference No',
+                            value: entry.referenceNo,
+                            icon: Icons.receipt_long_rounded,
+                            onTap: widget.onReferencePressed,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
-              );
-            },
-          ),
-        ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -111,11 +184,13 @@ class CustomerMetalPurchaseEntryCard extends StatelessWidget {
 class _EntryHeader extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final VoidCallback? onCustomerPressed;
   final VoidCallback? onReturnPressed;
 
   const _EntryHeader({
     required this.entry,
     required this.accent,
+    required this.onCustomerPressed,
     required this.onReturnPressed,
   });
 
@@ -124,7 +199,11 @@ class _EntryHeader extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 760;
-        final details = _HeaderDetails(entry: entry, accent: accent);
+        final details = _HeaderDetails(
+          entry: entry,
+          accent: accent,
+          onCustomerPressed: onCustomerPressed,
+        );
         final action = _ReturnAction(
           entry: entry,
           accent: accent,
@@ -158,10 +237,12 @@ class _EntryHeader extends StatelessWidget {
 class _HeaderDetails extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
   final Color accent;
+  final VoidCallback? onCustomerPressed;
 
   const _HeaderDetails({
     required this.entry,
     required this.accent,
+    required this.onCustomerPressed,
   });
 
   @override
@@ -174,15 +255,10 @@ class _HeaderDetails extends StatelessWidget {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text(
-              entry.customerName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.manrope(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
-              ),
+            _CustomerNameButton(
+              name: entry.customerName,
+              accent: accent,
+              onPressed: onCustomerPressed,
             ),
             _StatusBadge(
               label: entry.isReturned ? 'Returned' : entry.source,
@@ -262,49 +338,127 @@ class _MeasureTile extends StatelessWidget {
   final double width;
   final String label;
   final String value;
+  final IconData? icon;
+  final VoidCallback? onTap;
 
   const _MeasureTile({
     required this.width,
     required this.label,
     required this.value,
+    this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E0D8)),
+      ),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18, color: Colors.black),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
     return SizedBox(
       width: width,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E0D8)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
+      child: onTap == null
+          ? content
+          : Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(8),
+                child: content,
               ),
             ),
-            const SizedBox(height: 5),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.manrope(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: Colors.black,
+    );
+  }
+}
+
+class _CustomerNameButton extends StatelessWidget {
+  final String name;
+  final Color accent;
+  final VoidCallback? onPressed;
+
+  const _CustomerNameButton({
+    required this.name,
+    required this.accent,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      name,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: GoogleFonts.manrope(
+        fontSize: 21,
+        fontWeight: FontWeight.w800,
+        color: Colors.black,
+      ),
+    );
+
+    if (onPressed == null) {
+      return text;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 6, top: 2, bottom: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: text),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.open_in_new_rounded,
+                size: 17,
+                color: accent,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

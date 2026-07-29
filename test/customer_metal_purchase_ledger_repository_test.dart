@@ -146,6 +146,7 @@ void main() {
     );
 
     expect(returned.referenceNo, 'CMP-RET-2026-0001');
+    expect(returned.sourceDocumentId, isPositive);
     expect(returned.isReturned, isTrue);
     expect(returned.returnedAt, isNotNull);
     expect(activeSummary.entryCount, 0);

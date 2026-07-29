@@ -94,15 +94,20 @@ class DriftCustomerMetalPurchaseLedgerRepository
       final item = row.readTable(_db.billTradeInItems);
       final bill = row.readTable(_db.bills);
       final customer = row.readTableOrNull(_db.customers);
+      final customerName =
+          customer?.name ?? bill.customerName ?? 'Walk-in Customer';
+      final customerId =
+          customer?.id ?? await _findCustomerIdByName(customerName);
 
       entries.add(
         CustomerMetalPurchaseEntry(
           id: item.id,
+          customerId: customerId,
+          sourceDocumentId: bill.id,
           date: bill.billDate,
           source: 'Sales Trade-In',
           referenceNo: bill.billNo,
-          customerName:
-              customer?.name ?? bill.customerName ?? 'Walk-in Customer',
+          customerName: customerName,
           metalType: item.metalType,
           itemDescription: item.itemDescription,
           grossWeight: item.grossWeight,
@@ -124,6 +129,8 @@ class DriftCustomerMetalPurchaseLedgerRepository
     var sql = '''
       SELECT
         pvi.id,
+        pv.id AS voucher_id,
+        pv.customer_id,
         pv.created_at,
         pv.voucher_no,
         COALESCE(c.name, pv.party_name, 'Walk-in Customer') AS customer_name,
@@ -151,14 +158,20 @@ class DriftCustomerMetalPurchaseLedgerRepository
 
     final rows = await _db.customSelect(sql, variables: variables).get();
     for (final row in rows) {
+      final customerName = row.read<String>('customer_name');
+      final customerId = row.readNullable<int>('customer_id') ??
+          await _findCustomerIdByName(customerName);
+
       entries.add(
         CustomerMetalPurchaseEntry(
           id: row.read<int>('id'),
+          customerId: customerId,
+          sourceDocumentId: row.read<int>('voucher_id'),
           date:
               DateTime.fromMillisecondsSinceEpoch(row.read<int>('created_at')),
           source: 'Direct Purchase',
           referenceNo: row.read<String>('voucher_no'),
-          customerName: row.read<String>('customer_name'),
+          customerName: customerName,
           metalType: row.read<String>('metal_type'),
           itemDescription: row.read<String>('item_description'),
           grossWeight: row.read<double>('gross_weight'),
@@ -178,6 +191,25 @@ class DriftCustomerMetalPurchaseLedgerRepository
 
   DateTime _endOfDay(DateTime value) {
     return DateTime(value.year, value.month, value.day, 23, 59, 59, 999);
+  }
+
+  Future<int?> _findCustomerIdByName(String customerName) async {
+    final normalized = customerName.trim();
+    if (normalized.isEmpty || normalized == 'Walk-in Customer') {
+      return null;
+    }
+
+    final row = await _db.customSelect(
+      '''
+      SELECT id
+      FROM customers
+      WHERE UPPER(TRIM(name)) = UPPER(TRIM(?))
+      LIMIT 1
+      ''',
+      variables: [Variable.withString(normalized)],
+    ).getSingleOrNull();
+
+    return row?.read<int>('id');
   }
 
   Future<List<CustomerMetalPurchaseEntry>> _applyReturnStatus(
