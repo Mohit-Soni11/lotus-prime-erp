@@ -148,8 +148,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                                 ? SalesPosColors.success
                                 : SalesPosColors.textDark,
                           ),
-                          child: Text(
-                              _isGst ? "Tax Invoice" : "Standard Estimate"),
+                          child: Text(_isGst ? "GST Invoice" : "Sales Invoice"),
                         ),
                       ],
                     ),
@@ -199,7 +198,7 @@ class _PosInvoiceStatusBarState extends State<PosInvoiceStatusBar>
                               ? SalesPosColors.success
                               : SalesPosColors.textDark,
                         ),
-                        child: Text(_isGst ? "GST BILL" : "ESTIMATE"),
+                        child: Text(_isGst ? "GST INVOICE" : "SALES INVOICE"),
                       ),
                     ],
                   ),

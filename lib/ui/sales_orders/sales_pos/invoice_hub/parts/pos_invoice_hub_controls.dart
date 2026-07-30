@@ -2,6 +2,8 @@ part of '../../pos_invoice_preview_screen.dart';
 
 extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
   Widget _buildFormatGrid() {
+    final selectedFormat = _invCtrl.selectedFormat;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -15,57 +17,162 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
           ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: PrintFormat.values.map((fmt) {
-            final isSelected = _invCtrl.selectedFormat == fmt;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => _invCtrl.switchFormat(fmt),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? SalesPosColors.brandGold.withValues(alpha: 0.15)
-                        : SalesPosColors.shellPanelBg,
-                    border: Border.all(
-                      color: isSelected
-                          ? SalesPosColors.brandGold
-                          : SalesPosColors.shellBorder,
-                      width: isSelected ? 1.5 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        fmt.icon,
-                        color: isSelected
-                            ? SalesPosColors.brandGold
-                            : SalesPosColors.shellTextMuted,
-                        size: 24,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        fmt.label,
-                        style: TextStyle(
-                          color: isSelected
-                              ? SalesPosColors.brandGold
-                              : SalesPosColors.shellTextMuted,
-                          fontSize: SalesPosStyles.fontCaption,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _showDocumentFormatPicker(selectedFormat),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: SalesPosColors.shellPanelBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: SalesPosColors.brandGold.withValues(alpha: 0.45),
               ),
-            );
-          }).toList(),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _FormatIcon(format: selectedFormat),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selectedFormat.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: SalesPosColors.shellTextTitle,
+                              fontSize: SalesPosStyles.fontLabel,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _formatShortName(selectedFormat),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: SalesPosColors.brandGold,
+                              fontSize: SalesPosStyles.fontCaption,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _FormatChangeButton(
+                      onTap: () => _showDocumentFormatPicker(selectedFormat),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _FormatDetailPill(
+                        icon: Icons.straighten_rounded,
+                        label: _formatPaperSpec(selectedFormat),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _FormatDetailPill(
+                        icon: Icons.verified_rounded,
+                        label: _formatUseCase(selectedFormat),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
+  }
+
+  Future<void> _showDocumentFormatPicker(PrintFormat selectedFormat) {
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close document format selector',
+      barrierColor: Colors.black.withValues(alpha: 0.48),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, _, __) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: Colors.transparent,
+            child: _DocumentFormatPickerPanel(
+              selectedFormat: selectedFormat,
+              formatShortName: _formatShortName,
+              formatPaperSpec: _formatPaperSpec,
+              formatUseCase: _formatUseCase,
+              onSelect: (format) {
+                _invCtrl.switchFormat(format);
+                Navigator.of(dialogContext).pop();
+              },
+              onClose: () => Navigator.of(dialogContext).pop(),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (_, animation, __, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.12, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: FadeTransition(opacity: curved, child: child),
+        );
+      },
+    );
+  }
+
+  String _formatShortName(PrintFormat format) {
+    switch (format) {
+      case PrintFormat.a4:
+        return 'A4';
+      case PrintFormat.thermal3inch:
+        return '80 mm';
+      case PrintFormat.thermal2inch:
+        return '57 mm';
+    }
+  }
+
+  String _formatPaperSpec(PrintFormat format) {
+    switch (format) {
+      case PrintFormat.a4:
+        return '210 x 297 mm';
+      case PrintFormat.thermal3inch:
+        return '80 mm roll';
+      case PrintFormat.thermal2inch:
+        return '57 mm roll';
+    }
+  }
+
+  String _formatUseCase(PrintFormat format) {
+    switch (format) {
+      case PrintFormat.a4:
+        return 'GST ready';
+      case PrintFormat.thermal3inch:
+        return 'Counter print';
+      case PrintFormat.thermal2inch:
+        return 'Compact POS';
+    }
   }
 
   Widget _buildTemplateSelector() {
@@ -87,7 +194,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
             : 'Retail';
     final billTypeLabel = widget.billingCtrl.billType == BillType.gst
         ? 'GST Invoice'
-        : 'Non-GST Bill';
+        : 'Sales Invoice';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,15 +233,6 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                         : metals.map((metal) => metal.displayName).join(' + '),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Auto-detected from the current POS sale.',
-                style: TextStyle(
-                  color: SalesPosColors.shellTextMuted.withValues(alpha: 0.9),
-                  fontSize: SalesPosStyles.fontCaption,
-                  height: 1.3,
-                ),
               ),
             ],
           ),
@@ -511,6 +609,324 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DocumentFormatPickerPanel extends StatelessWidget {
+  final PrintFormat selectedFormat;
+  final String Function(PrintFormat) formatShortName;
+  final String Function(PrintFormat) formatPaperSpec;
+  final String Function(PrintFormat) formatUseCase;
+  final ValueChanged<PrintFormat> onSelect;
+  final VoidCallback onClose;
+
+  const _DocumentFormatPickerPanel({
+    required this.selectedFormat,
+    required this.formatShortName,
+    required this.formatPaperSpec,
+    required this.formatUseCase,
+    required this.onSelect,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final panelWidth = width < 560 ? width - 24 : 420.0;
+
+    return Container(
+      width: panelWidth,
+      height: double.infinity,
+      margin: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellPanelBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: SalesPosColors.shellBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 28,
+            offset: Offset(-10, 0),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 12, 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.print_rounded,
+                      color: SalesPosColors.brandGold,
+                      size: 19,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'DOCUMENT FORMAT',
+                          style: TextStyle(
+                            color: SalesPosColors.shellTextTitle,
+                            fontSize: SalesPosStyles.fontInput,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Choose print paper and receipt size',
+                          style: TextStyle(
+                            color: SalesPosColors.shellTextMuted,
+                            fontSize: SalesPosStyles.fontCaption,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onClose,
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: SalesPosColors.shellTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: SalesPosColors.shellBorder, height: 1),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(14),
+                itemBuilder: (context, index) {
+                  final format = PrintFormat.values[index];
+                  return _DocumentFormatOptionTile(
+                    format: format,
+                    selected: format == selectedFormat,
+                    shortName: formatShortName(format),
+                    paperSpec: formatPaperSpec(format),
+                    useCase: formatUseCase(format),
+                    onTap: () => onSelect(format),
+                  );
+                },
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemCount: PrintFormat.values.length,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentFormatOptionTile extends StatelessWidget {
+  final PrintFormat format;
+  final bool selected;
+  final String shortName;
+  final String paperSpec;
+  final String useCase;
+  final VoidCallback onTap;
+
+  const _DocumentFormatOptionTile({
+    required this.format,
+    required this.selected,
+    required this.shortName,
+    required this.paperSpec,
+    required this.useCase,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected
+              ? SalesPosColors.brandGold.withValues(alpha: 0.10)
+              : SalesPosColors.shellBg.withValues(alpha: 0.62),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? SalesPosColors.brandGold
+                : SalesPosColors.shellBorder,
+            width: selected ? 1.4 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            _FormatIcon(format: format),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    format.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected
+                          ? SalesPosColors.brandGold
+                          : SalesPosColors.shellTextTitle,
+                      fontSize: SalesPosStyles.fontLabel,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '$shortName  |  $paperSpec  |  $useCase',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: SalesPosColors.shellTextMuted,
+                      fontSize: SalesPosStyles.fontCaption,
+                      height: 1.25,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(
+              selected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              color: selected
+                  ? SalesPosColors.brandGold
+                  : SalesPosColors.shellTextMuted,
+              size: 21,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FormatIcon extends StatelessWidget {
+  final PrintFormat format;
+
+  const _FormatIcon({required this.format});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: SalesPosColors.brandGold.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: SalesPosColors.brandGold.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Icon(
+        format.icon,
+        color: SalesPosColors.brandGold,
+        size: 21,
+      ),
+    );
+  }
+}
+
+class _FormatChangeButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _FormatChangeButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: SalesPosColors.brandGold.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: SalesPosColors.brandGold.withValues(alpha: 0.32),
+          ),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Change',
+              style: TextStyle(
+                color: SalesPosColors.brandGold,
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: SalesPosColors.brandGold,
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FormatDetailPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _FormatDetailPill({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: SalesPosColors.shellTextMuted, size: 15),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: SalesPosColors.shellTextTitle,
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

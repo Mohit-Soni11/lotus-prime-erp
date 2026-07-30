@@ -1102,7 +1102,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Center(
-        child: Text("NORMAL BILL    NO GST APPLIED",
+        child: Text("SALES INVOICE    GST NOT APPLIED",
             style: TextStyle(
                 fontSize: SalesPosStyles.fontCaption,
                 fontWeight: FontWeight.w900,

@@ -1126,7 +1126,7 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   String _billTypeLabel(PosInvoiceModel invoice) {
-    return invoice.billType == BillType.gst ? 'GST Bill' : 'Sales Bill';
+    return invoice.billType == BillType.gst ? 'GST Invoice' : 'Sales Invoice';
   }
 
   String _itemDescription(SaleItemModel item, BillSettings config) {

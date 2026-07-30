@@ -175,34 +175,15 @@ class _PosInvoicePdfDocumentBuilder {
     }
 
     doc.addPage(
-      pw.Page(
-        pageFormat: pageFormat,
-        margin: const pw.EdgeInsets.all(6),
-        build: (pw.Context context) {
-          final layout = _buildThermalLayout(invoice, format);
-          if (options.includeDuplicateStamp) {
-            return pw.Stack(
-              alignment: pw.Alignment.center,
-              children: [
-                pw.Center(
-                  child: pw.Transform.rotate(
-                    angle: 0.785,
-                    child: pw.Text(
-                      'DUPLICATE',
-                      style: pw.TextStyle(
-                        color: PdfColors.grey300,
-                        fontSize: format == PrintFormat.a4 ? 60 : 25,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                layout,
-              ],
-            );
-          }
-          return layout;
-        },
+      pw.MultiPage(
+        pageTheme: pw.PageTheme(
+          pageFormat: pageFormat,
+          margin: const pw.EdgeInsets.all(6),
+          buildBackground: options.includeDuplicateStamp
+              ? (_) => pw.Center(child: _duplicateWatermark(fontSize: 25))
+              : null,
+        ),
+        build: (_) => [_buildThermalLayout(invoice, format)],
       ),
     );
   }
@@ -1423,57 +1404,440 @@ class _PosInvoicePdfDocumentBuilder {
     PosInvoiceModel invoice,
     PrintFormat format,
   ) {
-    final fontSize = format == PrintFormat.thermal2inch ? 8.5 : 9.5;
+    final fontSize = _thermalFontSize(format);
     return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        if (invoice.printShopName.trim().isNotEmpty)
+        _thermalHeader(invoice, fontSize),
+        _thermalSectionTitle('Customer', fontSize),
+        _thermalKeyValue(
+          'Name',
+          invoice.customerName.trim().isEmpty
+              ? 'Walk-in Customer'
+              : invoice.customerName.trim(),
+          fontSize,
+        ),
+        if (invoice.customerMobile.trim().isNotEmpty)
+          _thermalKeyValue('Mobile', invoice.customerMobile.trim(), fontSize),
+        if (invoice.customerCity.trim().isNotEmpty)
+          _thermalKeyValue('Address', invoice.customerCity.trim(), fontSize),
+        if (invoice.customerGstin.trim().isNotEmpty)
+          _thermalKeyValue('GSTIN', invoice.customerGstin.trim(), fontSize),
+        _thermalSaleItems(invoice, fontSize),
+        if (invoice.tradeInItems.isNotEmpty)
+          _thermalMetalSettlement(invoice, fontSize),
+        _thermalTotals(invoice, fontSize),
+        _thermalPayments(invoice, fontSize),
+        _thermalFooter(invoice, fontSize),
+      ],
+    );
+  }
+
+  double _thermalFontSize(PrintFormat format) {
+    return format == PrintFormat.thermal2inch ? 7.2 : 8.4;
+  }
+
+  pw.Widget _thermalHeader(PosInvoiceModel invoice, double fontSize) {
+    final shopName = invoice.printShopName.trim().isEmpty
+        ? invoice.shopName.trim()
+        : invoice.printShopName.trim();
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        if (shopName.isNotEmpty)
           pw.Text(
-            invoice.printShopName,
+            shopName.toUpperCase(),
+            textAlign: pw.TextAlign.center,
             style: pw.TextStyle(
-              fontSize: 13.0,
+              fontSize: fontSize + 3,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
-        for (final line in invoice.shopPrintHeaderLines.take(3))
-          pw.Text(
-            line,
-            textAlign: pw.TextAlign.center,
-            style: pw.TextStyle(fontSize: fontSize - 1),
-          ),
+        for (final line in invoice.shopPrintHeaderLines.take(5))
+          if (line.trim().isNotEmpty)
+            pw.Text(
+              line.trim(),
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(fontSize: fontSize - 0.4),
+            ),
+        pw.SizedBox(height: 4),
         pw.Text(
-          'No: ${invoice.invoiceNumber}',
-          style: pw.TextStyle(fontSize: fontSize),
-        ),
-        pw.Divider(color: _pdfBorderColor),
-        pw.Text(
-          'GRAND TOTAL: Rs ${invoice.netPayable.toStringAsFixed(2)}',
+          _invoiceTitle(invoice),
+          textAlign: pw.TextAlign.center,
           style: pw.TextStyle(
-            fontSize: fontSize + 2,
+            fontSize: fontSize + 1,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
+        _thermalDivider(),
+        _thermalKeyValue('Invoice No', invoice.invoiceNumber, fontSize),
+        _thermalKeyValue('Date', _thermalDate(invoice.invoiceDate), fontSize),
+        _thermalKeyValue(
+          'Bill Type',
+          invoice.billType == BillType.gst ? 'GST Invoice' : 'Sales Invoice',
+          fontSize,
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _thermalSaleItems(PosInvoiceModel invoice, double fontSize) {
+    if (invoice.saleItems.isEmpty) return pw.SizedBox.shrink();
+    var lineNo = 0;
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalSectionTitle('Item Details', fontSize),
+        for (final item in invoice.saleItems) ...[
+          _thermalItemBlock(++lineNo, item, invoice, fontSize),
+          if (lineNo < invoice.saleItems.length) _thermalDashedDivider(),
+        ],
+      ],
+    );
+  }
+
+  pw.Widget _thermalItemBlock(
+    int lineNo,
+    SaleItemModel item,
+    PosInvoiceModel invoice,
+    double fontSize,
+  ) {
+    final config = _getMetalConfig(item.metal);
+    final isWholesale = invoice.billingMode == BillingMode.wholesale;
+    final description = item.descCtrl.text.trim().isEmpty
+        ? '${item.metal.displayName} Item'
+        : item.descCtrl.text.trim();
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalKeyValue(
+          '$lineNo. ${item.metal.displayName}',
+          description,
+          fontSize,
+          boldValue: true,
+        ),
+        if (config.showHuid && item.huidText.trim().isNotEmpty)
+          _thermalKeyValue('HUID', item.huidText.trim(), fontSize),
+        if (config.showHsnCode)
+          _thermalKeyValue('HSN', _hsnCode(item), fontSize),
+        if (config.showPcs) _thermalKeyValue('Pcs', '${item.pcs}', fontSize),
+        if (config.showPurity)
+          _thermalKeyValue('Purity', _formatPurity(item), fontSize),
+        if (config.showGrossWt)
+          _thermalKeyValue(
+            'Gross',
+            '${item.grossCtrl.text.trim().isEmpty ? item.netWt.toStringAsFixed(3) : item.grossCtrl.text.trim()} g',
+            fontSize,
+          ),
+        if (config.showLessWt)
+          _thermalKeyValue(
+            'Less',
+            '${item.totalLessWt.toStringAsFixed(3)} g',
+            fontSize,
+          ),
+        if (config.showNetWt)
+          _thermalKeyValue(
+            isWholesale ? 'Fine' : 'Net',
+            '${(isWholesale ? item.fineWt : item.netWt).toStringAsFixed(3)} g',
+            fontSize,
+          ),
+        if (config.showFineWeight && !isWholesale)
+          _thermalKeyValue(
+            'Fine',
+            '${item.fineWt.toStringAsFixed(3)} g',
+            fontSize,
+          ),
+        if (config.showRate)
+          _thermalKeyValue('Rate', _thermalMoney(item.rate), fontSize),
+        if (config.showMaking || config.showMakingType)
+          _thermalKeyValue(
+            isWholesale ? 'Labour' : 'Making',
+            _formatMakingCharge(item, config, isWholesale: isWholesale),
+            fontSize,
+          ),
+        if (config.showAmount)
+          _thermalKeyValue(
+            'Amount',
+            _thermalMoney(item.totalValue),
+            fontSize,
+            boldValue: true,
+          ),
+      ],
+    );
+  }
+
+  pw.Widget _thermalMetalSettlement(
+    PosInvoiceModel invoice,
+    double fontSize,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalSectionTitle('Customer Metal Settlement', fontSize),
+        for (var i = 0; i < invoice.tradeInItems.length; i++) ...[
+          _thermalTradeInBlock(i + 1, invoice.tradeInItems[i], fontSize),
+          if (i < invoice.tradeInItems.length - 1) _thermalDashedDivider(),
+        ],
+        _thermalKeyValue(
+          'Settlement Total',
+          '- ${_thermalMoney(invoice.totalTradeInDeduction)}',
+          fontSize,
+          boldValue: true,
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _thermalTradeInBlock(
+    int lineNo,
+    TradeInItemModel item,
+    double fontSize,
+  ) {
+    final description = item.descCtrl.text.trim().isEmpty
+        ? '${item.metal.displayName} Metal'
+        : item.descCtrl.text.trim();
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalKeyValue(
+          '$lineNo. ${item.metal.displayName}',
+          description,
+          fontSize,
+          boldValue: true,
+        ),
+        _thermalKeyValue(
+          'Gross / Net',
+          '${item.grossCtrl.text.trim().isEmpty ? item.netWt.toStringAsFixed(3) : item.grossCtrl.text.trim()} g / ${item.netWt.toStringAsFixed(3)} g',
+          fontSize,
+        ),
+        _thermalKeyValue(
+          'Purity / Fine',
+          '${item.purityPercent.toStringAsFixed(2)}% / ${item.fineWt.toStringAsFixed(3)} g',
+          fontSize,
+        ),
+        _thermalKeyValue('Rate', _thermalMoney(item.rate), fontSize),
+        _thermalKeyValue(
+          'Value',
+          _thermalMoney(item.totalValue),
+          fontSize,
+          boldValue: true,
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _thermalTotals(PosInvoiceModel invoice, double fontSize) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalSectionTitle('Bill Summary', fontSize),
+        _thermalKeyValue(
+            'Gross Value', _thermalMoney(invoice.grossAmount), fontSize),
+        if (invoice.discountAmount > 0.5)
+          _thermalKeyValue(
+            'Discount',
+            '- ${_thermalMoney(invoice.discountAmount)}',
+            fontSize,
+          ),
+        if (invoice.billType == BillType.gst) ...[
+          _thermalKeyValue(
+              'Taxable Value', _thermalMoney(invoice.taxableAmount), fontSize),
+          _thermalKeyValue('CGST', _thermalMoney(invoice.cgst), fontSize),
+          _thermalKeyValue('SGST', _thermalMoney(invoice.sgst), fontSize),
+          _thermalKeyValue(
+              'Total GST', _thermalMoney(invoice.totalGst), fontSize),
+        ],
+        if (invoice.totalTradeInDeduction > 0.5)
+          _thermalKeyValue(
+            'Metal Adjusted',
+            '- ${_thermalMoney(invoice.totalTradeInDeduction)}',
+            fontSize,
+          ),
+        _thermalDivider(),
+        _thermalKeyValue(
+          'Net Payable',
+          _thermalMoney(invoice.netPayable),
+          fontSize + 0.8,
+          boldLabel: true,
+          boldValue: true,
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _thermalPayments(PosInvoiceModel invoice, double fontSize) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalSectionTitle('Payment', fontSize),
+        if (invoice.cashPaid > 0.5)
+          _thermalKeyValue('Cash', _thermalMoney(invoice.cashPaid), fontSize),
+        if (invoice.upiPaid > 0.5)
+          _thermalKeyValue(
+              'UPI / Bank', _thermalMoney(invoice.upiPaid), fontSize),
+        if (invoice.cardPaid > 0.5)
+          _thermalKeyValue('Card', _thermalMoney(invoice.cardPaid), fontSize),
+        if (invoice.advancePaid > 0.5)
+          _thermalKeyValue(
+              'Advance', _thermalMoney(invoice.advancePaid), fontSize),
+        _thermalKeyValue('Paid', _thermalMoney(invoice.totalPaid), fontSize),
+        if (invoice.balanceDue > 0.5)
+          _thermalKeyValue(
+            'Balance Due',
+            _thermalMoney(invoice.balanceDue),
+            fontSize,
+            boldValue: true,
+          )
+        else
+          _thermalKeyValue(
+            'Status',
+            'PAID',
+            fontSize,
+            boldLabel: true,
+            boldValue: true,
+          ),
         if (invoice.changeSettlementMethod != null &&
             invoice.changeSettlementAmount > 0.5) ...[
-          pw.SizedBox(height: 4),
-          pw.Text(
-            'EXCESS: Rs ${invoice.changeSettlementAmount.toStringAsFixed(2)}',
-            style: pw.TextStyle(
-              fontSize: fontSize,
-              fontWeight: pw.FontWeight.bold,
-            ),
+          _thermalKeyValue(
+            'Excess',
+            _thermalMoney(invoice.changeSettlementAmount),
+            fontSize,
+            boldValue: true,
           ),
-          pw.Text(
+          _thermalKeyValue(
+            'Returned',
             _changeSettlementLabel(invoice.changeSettlementMethod),
-            textAlign: pw.TextAlign.center,
-            style: pw.TextStyle(
-              fontSize: fontSize,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            fontSize,
           ),
         ],
       ],
     );
+  }
+
+  pw.Widget _thermalFooter(PosInvoiceModel invoice, double fontSize) {
+    final footerMessages = scopeService
+        .collectMetals(invoice)
+        .map((metal) {
+          final config = _getMetalConfig(metal);
+          return config.printFooterMessage ? config.footerMessage.trim() : '';
+        })
+        .where((message) => message.isNotEmpty)
+        .where(_hasPrintableCopy)
+        .toSet()
+        .toList();
+
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalDivider(),
+        if (footerMessages.isNotEmpty)
+          pw.Text(
+            footerMessages.join(' | '),
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(fontSize: fontSize - 0.4),
+          ),
+        pw.SizedBox(height: 3),
+        pw.Text(
+          'Thank you',
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(
+            fontSize: fontSize,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.Text(
+          'E&OE',
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(fontSize: fontSize - 0.8),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _thermalSectionTitle(String title, double fontSize) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        _thermalDivider(),
+        pw.Text(
+          title.toUpperCase(),
+          textAlign: pw.TextAlign.left,
+          style: pw.TextStyle(
+            fontSize: fontSize,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 2),
+      ],
+    );
+  }
+
+  pw.Widget _thermalKeyValue(
+    String label,
+    String value,
+    double fontSize, {
+    bool boldLabel = false,
+    bool boldValue = false,
+  }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 1.2),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: 58,
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: fontSize,
+                fontWeight: boldLabel ? pw.FontWeight.bold : null,
+              ),
+            ),
+          ),
+          pw.Text(': ', style: pw.TextStyle(fontSize: fontSize)),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              textAlign: pw.TextAlign.right,
+              style: pw.TextStyle(
+                fontSize: fontSize,
+                fontWeight: boldValue ? pw.FontWeight.bold : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _thermalDivider() {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Container(height: 0.7, color: _pdfBorderColor),
+    );
+  }
+
+  pw.Widget _thermalDashedDivider() {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 3),
+      child: pw.Text(
+        '--------------------------------',
+        textAlign: pw.TextAlign.center,
+        style: const pw.TextStyle(fontSize: 6, color: _pdfMutedTextColor),
+      ),
+    );
+  }
+
+  String _thermalDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  String _thermalMoney(double amount) {
+    return 'Rs ${amount.toStringAsFixed(2)}';
   }
 
   BillSettings _getMetalConfig(MetalType metal) {

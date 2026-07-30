@@ -107,6 +107,48 @@ void main() {
 
       item.dispose();
     });
+
+    test('generates full thermal receipt bytes for 80mm and 57mm formats',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final oldMetal = TradeInItemModel(metal: MetalType.gold);
+      oldMetal.descCtrl.text = 'Old Gold';
+      oldMetal.grossCtrl.text = '2';
+      oldMetal.lessCtrl.text = '0';
+      oldMetal.purityCtrl.text = '100';
+      oldMetal.rateCtrl.text = '11000';
+      final invoice = _invoice(
+        saleItems: [item],
+        tradeInItems: [oldMetal],
+      );
+
+      for (final format in [
+        PrintFormat.thermal3inch,
+        PrintFormat.thermal2inch,
+      ]) {
+        final bytes = await const PosInvoicePdfBuilder().build(
+          invoice: invoice,
+          options: PosInvoicePdfBuildOptions(
+            format: format,
+            copies: 1,
+            includeDuplicateStamp: false,
+            metalPrintSettings: {MetalType.gold: BillSettings()},
+          ),
+        );
+
+        expect(bytes.length, greaterThan(1000));
+        expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      }
+
+      item.dispose();
+      oldMetal.dispose();
+    });
   });
 }
 
@@ -134,8 +176,12 @@ SaleItemModel _saleItem({
 
 PosInvoiceModel _invoice({
   required List<SaleItemModel> saleItems,
+  List<TradeInItemModel> tradeInItems = const <TradeInItemModel>[],
 }) {
   final grossAmount = saleItems.fold(0.0, (sum, item) => sum + item.totalValue);
+  final tradeInDeduction =
+      tradeInItems.fold(0.0, (sum, item) => sum + item.totalValue);
+  final netPayable = grossAmount - tradeInDeduction;
   return PosInvoiceModel(
     invoiceNumber: 'POS-001',
     invoiceDate: DateTime(2026, 6, 26),
@@ -154,16 +200,16 @@ PosInvoiceModel _invoice({
     customerGstin: '',
     tradeInMode: TradeInAdjustMode.cashAdjust,
     saleItems: saleItems,
-    tradeInItems: const <TradeInItemModel>[],
+    tradeInItems: tradeInItems,
     grossAmount: grossAmount,
     discountAmount: 0,
     taxableAmount: grossAmount,
     cgst: 0,
     sgst: 0,
     totalGst: 0,
-    totalTradeInDeduction: 0,
+    totalTradeInDeduction: tradeInDeduction,
     grandTotal: grossAmount,
-    cashPaid: grossAmount,
+    cashPaid: netPayable,
     upiPaid: 0,
     cardPaid: 0,
     advancePaid: 0,

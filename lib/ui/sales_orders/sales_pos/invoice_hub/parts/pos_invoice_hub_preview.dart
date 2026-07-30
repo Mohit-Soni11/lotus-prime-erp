@@ -49,11 +49,13 @@ extension _PosInvoiceHubPreview on _PosInvoicePreviewScreenState {
         return const PdfPageFormat(
           80 * PdfPageFormat.mm,
           250 * PdfPageFormat.mm,
+          marginAll: 4 * PdfPageFormat.mm,
         );
       case PrintFormat.thermal2inch:
         return const PdfPageFormat(
           57 * PdfPageFormat.mm,
           250 * PdfPageFormat.mm,
+          marginAll: 3 * PdfPageFormat.mm,
         );
     }
   }

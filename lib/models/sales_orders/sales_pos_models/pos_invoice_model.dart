@@ -20,22 +20,22 @@ extension PrintFormatExt on PrintFormat {
   String get label {
     switch (this) {
       case PrintFormat.a4:
-        return "A4 Size";
+        return "A4 Tax Invoice";
       case PrintFormat.thermal3inch:
-        return "3-Inch Thermal";
+        return "80 mm Thermal Receipt";
       case PrintFormat.thermal2inch:
-        return "2-Inch Thermal";
+        return "57 mm Compact Receipt";
     }
   }
 
   String get subtitle {
     switch (this) {
       case PrintFormat.a4:
-        return "210 x 297 mm - Full detail invoice";
+        return "210 x 297 mm - Full-detail statutory invoice";
       case PrintFormat.thermal3inch:
-        return "80 mm roll - Standard POS printer";
+        return "80 mm roll - Standard counter printer";
       case PrintFormat.thermal2inch:
-        return "57 mm roll - Compact receipt";
+        return "57 mm roll - Compact receipt printer";
     }
   }
 

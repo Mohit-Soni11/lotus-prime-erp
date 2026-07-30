@@ -96,7 +96,7 @@ class PosTopControlBar extends StatelessWidget {
                                       : SalesPosColors.bodyTextMuted,
                                 ),
                                 child: Text(
-                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}    ${isGstOn ? 'Tax Invoice' : 'Normal Bill'}",
+                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}    ${isGstOn ? 'GST Invoice' : 'Sales Invoice'}",
                                 ),
                               ),
                             ],

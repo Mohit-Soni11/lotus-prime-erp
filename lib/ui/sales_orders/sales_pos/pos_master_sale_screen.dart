@@ -118,7 +118,7 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
         //  Top app bar
         appBar: PosAppBar(
           title: widget.editBillId != null
-              ? 'Edit Sales Bill'
+              ? 'Edit Sales Invoice'
               : widget.convertAdvanceId != null
                   ? 'Convert Advance to Sale'
                   : "${_ctrl.shopName} - POS TERMINAL",
