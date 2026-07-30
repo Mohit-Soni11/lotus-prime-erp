@@ -1145,6 +1145,21 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           }
+
+          if (from < 41) {
+            if (await _tableExists('bill_items')) {
+              try {
+                await m.addColumn(billItems, billItems.hsnCode);
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
+              AppLogger.info('v41 sales bill item HSN snapshot applied.');
+            } else {
+              AppLogger.warning(
+                'v41 sales bill item HSN snapshot skipped because bill_items table is missing.',
+              );
+            }
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

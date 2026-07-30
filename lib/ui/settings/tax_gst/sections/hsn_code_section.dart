@@ -1,15 +1,14 @@
-// ============================================================
-// FILE    : lib/ui/settings/tax_gst/sections/hsn_code_section.dart
-// MODULE  : Tax & GST â€” Card 03
-// ============================================================
 import 'package:flutter/material.dart';
-import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
-import '../../../../logic/setting/tax_gst/sections/hsn_code_logic.dart';
-import '../widgets/tax_gst_info_banner.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
+
+import '../../../../logic/setting/tax_gst/sections/hsn_code_logic.dart';
+import '../../../../theme/settings/tax_gst/tax_gst_theme.dart';
+import '../widgets/tax_gst_info_banner.dart';
+import 'hsn_classification_widgets.dart';
 
 class HsnCodeSection extends StatefulWidget {
   const HsnCodeSection({super.key, required this.logic});
+
   final HsnCodeLogic logic;
 
   @override
@@ -17,8 +16,8 @@ class HsnCodeSection extends StatefulWidget {
 }
 
 class _HsnCodeSectionState extends State<HsnCodeSection> {
-  bool _showAddForm = false;
-  final Color a = TaxGstColors.card03Accent;
+  bool _showForm = false;
+  final Color _accent = TaxGstColors.card03Accent;
 
   @override
   Widget build(BuildContext context) {
@@ -28,101 +27,74 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // â”€â”€ Section Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(TaxGstStrings.card03SectionTitle,
-                          style: TaxGstStyles.sectionTitle(context)),
-                      const SizedBox(height: 3),
-                      Text(TaxGstStrings.card03SectionSub,
-                          style: TaxGstStyles.sectionSubtitle(context)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
+            const _SectionTitle(),
             const SizedBox(height: TaxGstStyles.fieldGapV),
-
-            // â”€â”€ Table Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(children: [
-                Expanded(
-                    flex: 3,
-                    child: Text(TaxGstStrings.hsnColCategory,
-                        style: TaxGstStyles.hsnTableHeader(context))),
-                Expanded(
-                    flex: 2,
-                    child: Text(TaxGstStrings.hsnColCode,
-                        style: TaxGstStyles.hsnTableHeader(context))),
-                SizedBox(
-                    width: 52,
-                    child: Text(TaxGstStrings.hsnColRate,
-                        style: TaxGstStyles.hsnTableHeader(context),
-                        textAlign: TextAlign.center)),
-                const SizedBox(width: 32),
-              ]),
-            ),
+            _TableHeader(),
             const Divider(
-                height: 1, thickness: 1, color: TaxGstColors.dividerColor),
-
+              height: 1,
+              thickness: 1,
+              color: TaxGstColors.dividerColor,
+            ),
             const SizedBox(height: 4),
-
-            // â”€â”€ HSN Rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (widget.logic.codes.isEmpty)
-              _EmptyHsnState(accentColor: a)
+              _EmptyHsnState(accentColor: _accent)
             else
-              ...widget.logic.codes.asMap().entries.map((entry) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: _HsnRow(
-                    index: entry.key,
-                    entry: entry.value,
-                    accent: a,
-                    onDelete: () {
-                      widget.logic.removeCode(entry.key);
-                      _showFeedback(context, TaxGstStrings.feedbackHsnRemoved);
-                    },
+              ...widget.logic.codes.asMap().entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: HsnClassificationRow(
+                        index: entry.key,
+                        entry: entry.value,
+                        accent: _accent,
+                        onEdit: () {
+                          widget.logic.startEdit(entry.key);
+                          setState(() => _showForm = true);
+                        },
+                        onDelete: () {
+                          widget.logic.removeCode(entry.key);
+                          _showFeedback(
+                            context,
+                            TaxGstStrings.feedbackHsnRemoved,
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                );
-              }),
-
             const SizedBox(height: TaxGstStyles.spaceMD),
-
-            // â”€â”€ Add Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             AnimatedCrossFade(
               duration: TaxGstStyles.animNormal,
-              crossFadeState: _showAddForm
+              crossFadeState: _showForm
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
               firstChild: _AddButton(
-                accent: a,
-                onTap: () => setState(() => _showAddForm = true),
+                accent: _accent,
+                onTap: () => setState(() => _showForm = true),
               ),
-              secondChild: _AddHsnForm(
+              secondChild: HsnClassificationForm(
                 logic: widget.logic,
-                accent: a,
-                onAdd: () {
-                  widget.logic.addCode();
-                  setState(() => _showAddForm = false);
-                  _showFeedback(context, TaxGstStrings.feedbackHsnAdded);
+                accent: _accent,
+                onSubmit: () {
+                  final wasEditing = widget.logic.isEditing;
+                  widget.logic.saveDraft();
+                  setState(() => _showForm = false);
+                  _showFeedback(
+                    context,
+                    wasEditing
+                        ? TaxGstStrings.feedbackHsnUpdated
+                        : TaxGstStrings.feedbackHsnAdded,
+                  );
                 },
                 onCancel: () {
                   widget.logic.resetAddForm();
-                  setState(() => _showAddForm = false);
+                  setState(() => _showForm = false);
                 },
               ),
             ),
-
             const SizedBox(height: TaxGstStyles.spaceMD),
-
-            TaxGstInfoBanner(accentColor: a, message: TaxGstStrings.infoHsn),
+            TaxGstInfoBanner(
+              accentColor: _accent,
+              message: TaxGstStrings.infoHsn,
+            ),
           ],
         );
       },
@@ -130,69 +102,84 @@ class _HsnCodeSectionState extends State<HsnCodeSection> {
   }
 }
 
-class _HsnRow extends StatelessWidget {
-  const _HsnRow({
-    required this.index,
-    required this.entry,
-    required this.accent,
-    required this.onDelete,
-  });
-
-  final int index;
-  final dynamic entry; // HsnCodeModel
-  final Color accent;
-  final VoidCallback onDelete;
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: TaxGstStyles.hsnRowDecoration(index.isEven),
-      child: Row(children: [
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         Expanded(
-          flex: 3,
-          child: Text(entry.category, style: TaxGstStyles.hsnCategory(context)),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(entry.hsnCode, style: TaxGstStyles.hsnCode(context)),
-        ),
-        SizedBox(
-          width: 52,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration:
-                  TaxGstStyles.ratePillDecoration(TaxGstColors.accentPrimary),
-              child: Text(
-                entry.gstRate,
-                style: TaxGstStyles.hsnRate(context,
-                    color: TaxGstColors.accentPrimary),
-                textAlign: TextAlign.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                TaxGstStrings.card03SectionTitle,
+                style: TaxGstStyles.sectionTitle(context),
               ),
+              const SizedBox(height: 3),
+              Text(
+                TaxGstStrings.card03SectionSub,
+                style: TaxGstStyles.sectionSubtitle(context),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TableHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              TaxGstStrings.hsnColCategory,
+              style: TaxGstStyles.hsnTableHeader(context),
             ),
           ),
-        ),
-        SizedBox(
-          width: 32,
-          child: IconButton(
-            onPressed: onDelete,
-            icon: Icon(TaxGstIcons.actionDelete,
-                size: 16,
-                color: TaxGstColors.statusDanger.withValues(alpha: 0.7)),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+          Expanded(
+            flex: 2,
+            child: Text(
+              TaxGstStrings.hsnColCode,
+              style: TaxGstStyles.hsnTableHeader(context),
+            ),
           ),
-        ),
-      ]),
+          SizedBox(
+            width: 72,
+            child: Text(
+              'POS GROUP',
+              style: TaxGstStyles.hsnTableHeader(context),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 58,
+            child: Text(
+              TaxGstStrings.hsnColRate,
+              style: TaxGstStyles.hsnTableHeader(context),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 72),
+        ],
+      ),
     );
   }
 }
 
 class _AddButton extends StatelessWidget {
-  const _AddButton({required this.accent, required this.onTap});
   final Color accent;
   final VoidCallback onTap;
+
+  const _AddButton({required this.accent, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -203,128 +190,28 @@ class _AddButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(TaxGstStyles.radiusButton),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.30),
-            style: BorderStyle.solid,
-          ),
+          border: Border.all(color: accent.withValues(alpha: 0.30)),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(TaxGstIcons.actionAdd, size: 16, color: accent),
-          const SizedBox(width: 6),
-          Text(TaxGstStrings.btnAddHsn,
-              style: TaxGstStyles.btnText(context, color: accent)),
-        ]),
-      ),
-    );
-  }
-}
-
-class _AddHsnForm extends StatelessWidget {
-  const _AddHsnForm({
-    required this.logic,
-    required this.accent,
-    required this.onAdd,
-    required this.onCancel,
-  });
-
-  final HsnCodeLogic logic;
-  final Color accent;
-  final VoidCallback onAdd;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(TaxGstStyles.radiusSection),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(TaxGstStrings.dialogAddHsnTitle,
-              style: TaxGstStyles.sectionTitle(context).copyWith(fontSize: 13)),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: logic.addCategoryCtrl,
-                style: TaxGstStyles.inputText(context),
-                decoration: TaxGstStyles.inputDecoration(context,
-                    labelText: TaxGstStrings.labelItemCategory,
-                    hintText: TaxGstStrings.hintCategory,
-                    accentColor: accent),
-              ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(TaxGstIcons.actionAdd, size: 16, color: accent),
+            const SizedBox(width: 6),
+            Text(
+              TaxGstStrings.btnAddHsn,
+              style: TaxGstStyles.btnText(context, color: accent),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: TextFormField(
-                controller: logic.addHsnCtrl,
-                style: TaxGstStyles.inputText(context),
-                decoration: TaxGstStyles.inputDecoration(context,
-                    labelText: TaxGstStrings.labelHsnCode,
-                    hintText: TaxGstStrings.hintHsnCode,
-                    accentColor: accent),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 100,
-              child: DropdownButtonFormField<String>(
-                initialValue: logic.addRateValue,
-                decoration: TaxGstStyles.inputDecoration(context,
-                    labelText: TaxGstStrings.labelGstRate,
-                    hintText: '',
-                    accentColor: accent),
-                items: TaxGstStrings.gstRateOptions
-                    .map((r) => DropdownMenuItem(
-                          value: r,
-                          child: Text(r),
-                        ))
-                    .toList(),
-                onChanged: (v) => logic.setAddRate(v ?? '3%'),
-                dropdownColor: TaxGstColors.cardSurface,
-              ),
-            ),
-          ]),
-          const SizedBox(height: 10),
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            TextButton(
-              onPressed: onCancel,
-              child: Text(TaxGstStrings.btnCancelDialog,
-                  style: TaxGstStyles.btnText(context,
-                      color: TaxGstColors.btnCancel)),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(TaxGstIcons.actionAdd,
-                  size: 14, color: Colors.white),
-              label: const Text(TaxGstStrings.btnAddHsnDialog,
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(TaxGstStyles.radiusButton)),
-                elevation: 0,
-              ),
-            ),
-          ]),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _EmptyHsnState extends StatelessWidget {
-  const _EmptyHsnState({required this.accentColor});
   final Color accentColor;
+
+  const _EmptyHsnState({required this.accentColor});
 
   @override
   Widget build(BuildContext context) {
@@ -333,16 +220,25 @@ class _EmptyHsnState extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(TaxGstIcons.card03,
-                size: 36, color: accentColor.withValues(alpha: 0.3)),
+            Icon(
+              TaxGstIcons.card03,
+              size: 36,
+              color: accentColor.withValues(alpha: 0.3),
+            ),
             const SizedBox(height: 8),
-            Text(TaxGstStrings.emptyHsnTitle,
-                style: TaxGstStyles.sectionTitle(context)
-                    .copyWith(fontSize: 13, color: TaxGstColors.textMuted)),
+            Text(
+              TaxGstStrings.emptyHsnTitle,
+              style: TaxGstStyles.sectionTitle(context).copyWith(
+                fontSize: 13,
+                color: TaxGstColors.textMuted,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(TaxGstStrings.emptyHsnSub,
-                style: TaxGstStyles.sectionSubtitle(context),
-                textAlign: TextAlign.center),
+            Text(
+              TaxGstStrings.emptyHsnSub,
+              style: TaxGstStyles.sectionSubtitle(context),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -350,10 +246,10 @@ class _EmptyHsnState extends StatelessWidget {
   }
 }
 
-void _showFeedback(BuildContext ctx, String msg) {
+void _showFeedback(BuildContext context, String message) {
   AppFeedback.show(
-    ctx,
+    context,
     type: AppFeedbackType.info,
-    message: msg,
+    message: message,
   );
 }

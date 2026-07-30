@@ -190,6 +190,41 @@ void main() {
   );
 
   test(
+    'finalizeSale saves and reloads invoice HSN code snapshot',
+    () async {
+      final stockId = await _insertStockItem(db, sku: 'GOLD-HSN-001');
+      final saleItem = _saleItem(
+        stockItemId: stockId,
+        sku: 'GOLD-HSN-001',
+        grossWeight: 5,
+        rate: 1000,
+      );
+      saleItem.setInvoiceHsnCode('71131910');
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [saleItem],
+        cashPaid: 5000,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+
+      final billItems = await (db.select(db.billItems)
+            ..where((tbl) => tbl.billId.equals(result.billId)))
+          .get();
+      final printableItems =
+          await repository.fetchPrintableSaleItems(result.billId);
+
+      expect(billItems.single.hsnCode, '71131910');
+      expect(printableItems.single.invoiceHsnCode, '71131910');
+
+      _disposeItems(saleItems: [saleItem, ...printableItems]);
+    },
+  );
+
+  test(
     'finalizeSale posts mixed cash UPI and card payments to finance ledgers',
     () async {
       await _insertPrimaryBankAccount(db);

@@ -95,6 +95,7 @@ class SaleItemModel extends ChangeNotifier {
   bool _makingFromMetalRateMaster = false;
   String? _rateSourceLabel;
   String? _makingSourceLabel;
+  String? _invoiceHsnCode;
   //  Store purity as the display label, such as "22KT" or "925".
   String _tunchLabel = '';
 
@@ -197,6 +198,7 @@ class SaleItemModel extends ChangeNotifier {
   bool get makingFromMetalRateMaster => _makingFromMetalRateMaster;
   String? get rateSourceLabel => _rateSourceLabel;
   String? get makingSourceLabel => _makingSourceLabel;
+  String? get invoiceHsnCode => _invoiceHsnCode;
 
   // --- CORE WEIGHT LOGIC ---
   int get pcs => _pcs;
@@ -287,6 +289,12 @@ class SaleItemModel extends ChangeNotifier {
     }
     _unitProfileManuallySet = true;
     _applyUnitProfile(profile);
+  }
+
+  void setInvoiceHsnCode(String? value) {
+    final normalized = value?.trim();
+    _invoiceHsnCode =
+        normalized == null || normalized.isEmpty ? null : normalized;
   }
 
   void setHuidText(String value) {

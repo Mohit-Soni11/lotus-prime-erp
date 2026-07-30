@@ -543,6 +543,7 @@ class PosLotusClassicInvoicePdfLayout {
     final headers = <String>[
       'S/N',
       'Item Description',
+      if (config.showHsnCode) 'HSN',
       if (config.showPurity) 'Purity',
       if (config.showGrossWt) 'Gross',
       if (config.showLessWt) 'Less',
@@ -559,6 +560,7 @@ class PosLotusClassicInvoicePdfLayout {
       final row = <String>[
         '${entry.key + 1}',
         _itemDescription(item, config),
+        if (config.showHsnCode) _hsnCode(item),
         if (config.showPurity) _formatPurity(item),
         if (config.showGrossWt) _weightText(item.grossCtrl.text),
         if (config.showLessWt) _weightText(item.totalLessWt.toStringAsFixed(3)),
@@ -1144,6 +1146,11 @@ class PosLotusClassicInvoicePdfLayout {
       parts.add('${item.pcs} pcs');
     }
     return parts.join('\n');
+  }
+
+  String _hsnCode(SaleItemModel item) {
+    final code = item.invoiceHsnCode?.trim() ?? '';
+    return code.isEmpty ? '-' : code;
   }
 
   String _formatMakingCharge(

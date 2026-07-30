@@ -135,6 +135,7 @@ class PosCheckoutRepository {
                 lineNo: Value(index + 1),
                 metalType: Value(item.metal.displayName),
                 itemName: Value(itemName),
+                hsnCode: Value(_nullable(item.invoiceHsnCode)),
                 huid: Value(
                   item.huidText.trim().isNotEmpty ? item.huidText.trim() : null,
                 ),
@@ -322,6 +323,7 @@ class PosCheckoutRepository {
                 lineNo: Value(index + 1),
                 metalType: Value(item.metal.displayName),
                 itemName: Value(itemName),
+                hsnCode: Value(_nullable(item.invoiceHsnCode)),
                 huid: Value(
                   item.huidText.trim().isNotEmpty ? item.huidText.trim() : null,
                 ),
@@ -2283,6 +2285,7 @@ class PosCheckoutRepository {
       isLessPerPiece: row.lessWeightPerPiece,
     );
     item.descCtrl.text = row.itemName;
+    item.setInvoiceHsnCode(row.hsnCode);
     item.pcsCtrl.text = row.quantity.toString();
     item.setHuidText(row.huid ?? '');
     item.purityCtrl.text = row.purity;

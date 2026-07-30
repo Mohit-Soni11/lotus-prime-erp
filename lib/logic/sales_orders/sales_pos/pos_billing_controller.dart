@@ -30,6 +30,8 @@ import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../models/setting/tax_gst/gst_slab_model.dart';
+import '../../../models/setting/tax_gst/hsn_code_model.dart';
+import '../../../features/sales_pos/domain/services/pos_gst_classification_resolver.dart';
 
 //  Customer history support
 import '../../../repositories/customer/customer_profile_repository.dart';
@@ -76,6 +78,7 @@ class PosBillingController extends ChangeNotifier {
   };
   double _makingGstRate = _defaultMakingGstRate;
   bool _roundOffGstAmount = true;
+  List<HsnCodeModel> _hsnClassifications = defaultHsnCodeModels();
   PosTotals? _cachedTotals;
 
   Future<void> _initShopName() async {
@@ -105,6 +108,7 @@ class PosBillingController extends ChangeNotifier {
       final config = await _db.taxGstDao.fetchConfig();
       if (_isDisposed) return;
       final slabs = gstSlabListFromJson(config?.gstSlabsJson);
+      _hsnClassifications = hsnListFromJson(config?.hsnCodesJson);
       _metalGstRates[MetalType.gold] =
           _rateForCategory(slabs, const ['gold'], _defaultJewelleryGstRate);
       _metalGstRates[MetalType.silver] =
@@ -144,6 +148,68 @@ class PosBillingController extends ChangeNotifier {
     final parsed = double.tryParse(normalized);
     if (parsed == null || parsed < 0) {
       return fallback;
+    }
+    return parsed / 100;
+  }
+
+  List<PosGstClassificationLine> get gstClassificationLines {
+    return const PosGstClassificationResolver().resolve(
+      saleItems: saleItems,
+      hsnCodes: _hsnClassifications,
+    );
+  }
+
+  String? invoiceHsnCodeForMetal(MetalType metal) {
+    return const PosGstClassificationResolver().invoiceHsnForMetal(
+      metal: metal,
+      hsnCodes: _hsnClassifications,
+    );
+  }
+
+  String get jewelleryGstRateLabel {
+    final activeRates = <double>{};
+    if (totalGoldWt > 0 || goldNetFine != 0) {
+      activeRates
+          .add(_metalGstRates[MetalType.gold] ?? _defaultJewelleryGstRate);
+    }
+    if (totalSilverWt > 0 || silverNetFine != 0) {
+      activeRates
+          .add(_metalGstRates[MetalType.silver] ?? _defaultJewelleryGstRate);
+    }
+    if (totalPlatinumWt > 0 || platNetFine != 0) {
+      activeRates
+          .add(_metalGstRates[MetalType.platinum] ?? _defaultJewelleryGstRate);
+    }
+    if (totalDiamondWt > 0 || diaNetFine != 0) {
+      activeRates
+          .add(_metalGstRates[MetalType.diamond] ?? _defaultJewelleryGstRate);
+    }
+    if (activeRates.length == 1) {
+      return _formatRateLabel(activeRates.first);
+    }
+    return _formatRateLabel(_defaultJewelleryGstRate);
+  }
+
+  String get halfJewelleryGstRateLabel {
+    final rate = _parsePercentLabel(jewelleryGstRateLabel);
+    if (rate == null) {
+      return '1.5%';
+    }
+    return _formatRateLabel(rate / 2);
+  }
+
+  String get makingGstRateLabel => _formatRateLabel(_makingGstRate);
+
+  String _formatRateLabel(double decimalRate) {
+    final percent = decimalRate * 100;
+    final fixed = percent.toStringAsFixed(percent % 1 == 0 ? 0 : 2);
+    return '$fixed%';
+  }
+
+  double? _parsePercentLabel(String label) {
+    final parsed = double.tryParse(label.replaceAll('%', '').trim());
+    if (parsed == null) {
+      return null;
     }
     return parsed / 100;
   }

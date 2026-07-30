@@ -33,8 +33,8 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
         children: [
           _SetupHeader(
             icon: Icons.tune_rounded,
-            title: '${metal.displayName} Invoice Setup',
-            subtitle: 'Metal-specific print controls',
+            title: '${metal.displayName} Display Profile',
+            subtitle: 'Column and copy controls',
             accentColor: accentColor,
             metrics: [
               _MetricPill(
@@ -54,8 +54,8 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
           const Divider(color: SalesPosColors.shellBorder, height: 1),
           _CompactActionRow(
             icon: Icons.settings_backup_restore_rounded,
-            title: 'Use Saved Setup',
-            subtitle: 'Reload field visibility from Billing Setup',
+            title: 'Reload Saved Profile',
+            subtitle: 'Apply defaults from Sales Billing Setup',
             accentColor: accentColor,
             actionLabel: 'Apply',
             onPressed: () => controller.restoreMetalSavedSetup(metal),
@@ -63,10 +63,10 @@ class PosInvoiceMetalSetupCard extends StatelessWidget {
           const Divider(color: SalesPosColors.shellBorder, height: 1),
           _CompactActionRow(
             icon: Icons.dashboard_customize_rounded,
-            title: 'Invoice Fields',
+            title: 'Invoice Columns',
             subtitle: '$activeFieldCount of ${options.length} fields visible',
             accentColor: accentColor,
-            actionLabel: 'Add More',
+            actionLabel: 'Configure',
             onPressed: () => _showFieldSelector(context),
           ),
           const Divider(color: SalesPosColors.shellBorder, height: 1),
@@ -177,8 +177,8 @@ class PosInvoiceShopPrintSetupCard extends StatelessWidget {
         children: [
           _SetupHeader(
             icon: Icons.storefront_rounded,
-            title: 'Shop Print Information',
-            subtitle: 'Shop details printed on this invoice',
+            title: 'Business Print Profile',
+            subtitle: 'Business details on this invoice',
             accentColor: accentColor,
             metrics: [
               _MetricPill(
@@ -198,8 +198,8 @@ class PosInvoiceShopPrintSetupCard extends StatelessWidget {
           const Divider(color: SalesPosColors.shellBorder, height: 1),
           _CompactActionRow(
             icon: Icons.settings_backup_restore_rounded,
-            title: 'Use Saved Shop Setup',
-            subtitle: 'Reload saved shop print visibility',
+            title: 'Reload Business Profile',
+            subtitle: 'Apply saved business print visibility',
             actionLabel: 'Apply',
             accentColor: accentColor,
             onPressed: controller.restoreShopPrintInformationSetup,
@@ -207,10 +207,10 @@ class PosInvoiceShopPrintSetupCard extends StatelessWidget {
           const Divider(color: SalesPosColors.shellBorder, height: 1),
           _CompactActionRow(
             icon: Icons.store_mall_directory_rounded,
-            title: 'Shop Fields',
+            title: 'Business Fields',
             subtitle:
                 '${state.enabledCount} of ${state.configuredCount} configured fields visible',
-            actionLabel: 'Add More',
+            actionLabel: 'Configure',
             accentColor: accentColor,
             onPressed: () => _showShopFieldSelector(context, state),
           ),
@@ -302,7 +302,7 @@ class _InvoiceFieldSelectorPanel extends StatelessWidget {
               children: [
                 _PanelHeader(
                   icon: Icons.dashboard_customize_rounded,
-                  title: '${metal.displayName} Field Setup',
+                  title: '${metal.displayName} Column Setup',
                   subtitle: 'Choose invoice columns for this metal',
                   accentColor: accentColor,
                   onClose: onClose,
@@ -386,7 +386,7 @@ class _ShopPrintFieldSelectorPanel extends StatelessWidget {
               children: [
                 _PanelHeader(
                   icon: Icons.storefront_rounded,
-                  title: 'Shop Print Fields',
+                  title: 'Business Print Fields',
                   subtitle: 'Choose shop details for this invoice',
                   accentColor: accentColor,
                   onClose: onClose,
@@ -827,7 +827,7 @@ class _SetupHeader extends StatelessWidget {
                 ),
               ),
               _StatusPill(
-                label: 'Saved Setup',
+                label: 'Saved Profile',
                 color: accentColor,
               ),
             ],
@@ -951,7 +951,7 @@ class _CopySuiteRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Print Saved Copy',
+                  'Print Policy Copy',
                   style: TextStyle(
                     color: SalesPosColors.shellTextTitle,
                     fontSize: SalesPosStyles.fontCaption,
@@ -1291,6 +1291,13 @@ class _InvoiceSetupCatalog {
       title: 'GST Breakup',
       subtitle: 'CGST and SGST lines on GST invoices',
       icon: Icons.request_quote_rounded,
+      group: _InvoiceFieldGroup.settlement,
+    ),
+    _InvoiceFieldOption(
+      key: 'hsnCode',
+      title: 'HSN Code',
+      subtitle: 'Tax classification code on invoice lines',
+      icon: Icons.qr_code_2_rounded,
       group: _InvoiceFieldGroup.settlement,
     ),
   ];

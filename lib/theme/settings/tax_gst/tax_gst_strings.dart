@@ -48,13 +48,13 @@ abstract final class TaxGstStrings {
       'Category-wise GST rates — auto-applied during billing';
 
   // ── Card 03 — HSN Codes ──────────────────────────────────────
-  static const String card03Title = 'HSN Code Manager';
+  static const String card03Title = 'HSN & GST Classification';
   static const String card03Subtitle =
-      'Map HSN/SAC codes to your product categories';
+      'Map HSN/SAC codes, GST rates and sale usage';
   static const String card03Tag = '71131910 · 71131120 · 99889900';
-  static const String card03SectionTitle = 'HSN / SAC Code Mapping';
+  static const String card03SectionTitle = 'HSN & GST Classification';
   static const String card03SectionSub =
-      'Required for GST returns — maps to item categories on bill';
+      'Single source of truth for New Sales, invoices and GST reports';
 
   // ── Card 04 — Tax Preferences ────────────────────────────────
   static const String card04Title = 'Tax Computation';
@@ -103,6 +103,9 @@ abstract final class TaxGstStrings {
   static const String labelGstRate = 'GST Rate';
   static const String labelHsnCode = 'HSN / SAC Code';
   static const String labelItemCategory = 'Item Category';
+  static const String labelBillingDisplayCode = 'POS Group Code';
+  static const String labelAppliesTo = 'Applies To';
+  static const String labelEffectiveFrom = 'Effective From';
   static const String labelTcsThreshold = 'TCS Threshold Amount';
   static const String labelTcsRate = 'TCS Rate (%)';
   static const String labelTdsRate = 'TDS Rate (%)';
@@ -123,6 +126,8 @@ abstract final class TaxGstStrings {
   static const String hintState = 'e.g. Maharashtra — MH (27)';
   static const String hintHsnCode = 'e.g. 71131910';
   static const String hintCategory = 'e.g. Gold Jewellery';
+  static const String hintBillingDisplayCode = 'e.g. 7113';
+  static const String hintEffectiveFrom = 'Optional';
   static const String hintTcsThreshold = 'e.g. 200000';
   static const String hintTcsRate = 'e.g. 1.0';
   static const String hintBisLicense = 'e.g. CM/L-XXXXXXX';
@@ -148,6 +153,16 @@ abstract final class TaxGstStrings {
     '12%',
     '18%',
     '28%',
+  ];
+
+  static const String hsnAppliesProductSale = 'Product Sale';
+  static const String hsnAppliesMetalPurchase = 'Customer Metal Settlement';
+  static const String hsnAppliesRepairService = 'Repair / Job Work';
+
+  static const List<String> hsnAppliesToOptions = [
+    hsnAppliesProductSale,
+    hsnAppliesMetalPurchase,
+    hsnAppliesRepairService,
   ];
 
   static const List<String> eInvoiceThresholds = [
@@ -199,8 +214,9 @@ abstract final class TaxGstStrings {
       'Making charges → 5%, Repair services → 18%, '
       'Imitation jewellery → 3%. Composition scheme: flat 1% on turnover.';
   static const String infoHsn =
-      'HSN codes are mandatory on invoices above ₹5L. '
-      'These codes map directly to GSTR-1 outward supply columns.';
+      'New Sales reads active Product Sale classifications from this master. '
+      'Invoice lines use detailed HSN/SAC. POS summary uses the optional '
+      'group code such as 7113 for compact GST display.';
   static const String infoTcs =
       'Section 206C(1F) of Income Tax Act: Collect 1% TCS on sale of '
       'jewellery exceeding ₹2,00,000 per transaction. '
@@ -212,8 +228,9 @@ abstract final class TaxGstStrings {
 
   // ── HSN Column Headers ───────────────────────────────────────
   static const String hsnColCategory = 'CATEGORY';
-  static const String hsnColCode = 'HSN / SAC';
+  static const String hsnColCode = 'INVOICE HSN / SAC';
   static const String hsnColRate = 'RATE';
+  static const String hsnColAppliesTo = 'APPLIES TO';
   static const String hsnColActions = '';
 
   // ── Buttons ──────────────────────────────────────────────────
@@ -221,12 +238,13 @@ abstract final class TaxGstStrings {
   static const String btnSave = 'Save Changes';
   static const String btnSaving = 'Saving…';
   static const String btnCancel = 'Cancel';
-  static const String btnAddHsn = 'Add HSN Code';
+  static const String btnAddHsn = 'Add Classification';
   static const String btnAddHsnDialog = 'Add';
   static const String btnCancelDialog = 'Cancel';
 
   // ── Dialog ───────────────────────────────────────────────────
-  static const String dialogAddHsnTitle = 'Add HSN Code';
+  static const String dialogAddHsnTitle = 'Add Classification';
+  static const String dialogEditHsnTitle = 'Edit Classification';
 
   // ── Feedback Messages ────────────────────────────────────────
   static const String feedbackSaved =
@@ -235,6 +253,7 @@ abstract final class TaxGstStrings {
   static const String feedbackValidationError =
       'Please fix the errors before saving.';
   static const String feedbackHsnAdded = 'HSN code added successfully';
+  static const String feedbackHsnUpdated = 'HSN classification updated';
   static const String feedbackHsnRemoved = 'HSN code removed';
 
   // ── Validation Messages ──────────────────────────────────────
@@ -250,13 +269,55 @@ abstract final class TaxGstStrings {
 
   // ── Default HSN Data ─────────────────────────────────────────
   static const List<Map<String, String>> defaultHsnCodes = [
-    {'category': 'Gold Jewellery', 'hsn': '71131910', 'rate': '3%'},
-    {'category': 'Silver Jewellery', 'hsn': '71131120', 'rate': '3%'},
-    {'category': 'Diamond/Gemstones', 'hsn': '71023910', 'rate': '3%'},
-    {'category': 'Platinum Jewellery', 'hsn': '71131990', 'rate': '3%'},
-    {'category': 'Imitation Jewellery', 'hsn': '71171990', 'rate': '3%'},
-    {'category': 'Making Charges', 'hsn': '99889900', 'rate': '5%'},
-    {'category': 'Coins & Bars', 'hsn': '71081310', 'rate': '3%'},
+    {
+      'category': 'Gold Jewellery',
+      'hsn': '71131910',
+      'rate': '3%',
+      'displayCode': '7113',
+      'appliesTo': hsnAppliesProductSale,
+    },
+    {
+      'category': 'Silver Jewellery',
+      'hsn': '71131120',
+      'rate': '3%',
+      'displayCode': '7113',
+      'appliesTo': hsnAppliesProductSale,
+    },
+    {
+      'category': 'Diamond/Gemstones',
+      'hsn': '71023910',
+      'rate': '3%',
+      'displayCode': '7102',
+      'appliesTo': hsnAppliesProductSale,
+    },
+    {
+      'category': 'Platinum Jewellery',
+      'hsn': '71131990',
+      'rate': '3%',
+      'displayCode': '7113',
+      'appliesTo': hsnAppliesProductSale,
+    },
+    {
+      'category': 'Imitation Jewellery',
+      'hsn': '71171990',
+      'rate': '3%',
+      'displayCode': '7117',
+      'appliesTo': hsnAppliesProductSale,
+    },
+    {
+      'category': 'Making Charges',
+      'hsn': '99889900',
+      'rate': '5%',
+      'displayCode': '9988',
+      'appliesTo': hsnAppliesRepairService,
+    },
+    {
+      'category': 'Coins & Bars',
+      'hsn': '71081310',
+      'rate': '3%',
+      'displayCode': '7108',
+      'appliesTo': hsnAppliesProductSale,
+    },
   ];
 
   // ── Default GST Slabs ─────────────────────────────────────────

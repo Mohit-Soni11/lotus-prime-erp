@@ -1,13 +1,39 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_gst_classification_resolver.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_number_formatter.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_number_parser.dart';
 import 'package:lotus_erp/features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
 import 'package:lotus_erp/features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/sales_pos_models.dart';
+import 'package:lotus_erp/models/setting/tax_gst/hsn_code_model.dart';
+import 'package:lotus_erp/theme/settings/tax_gst/tax_gst_strings.dart';
 
 void main() {
+  group('HsnCodeModel', () {
+    test('restores missing core classifications from saved settings JSON', () {
+      final saved = hsnListToJson(const [
+        HsnCodeModel(
+          category: 'Silver Jewellery',
+          hsnCode: '71131120',
+          gstRate: '3%',
+        ),
+      ]);
+
+      final codes = hsnListFromJson(saved);
+
+      expect(codes.first.category, 'Gold Jewellery');
+      expect(codes.any((entry) => entry.category == 'Gold Jewellery'), isTrue);
+      expect(
+        codes
+            .firstWhere((entry) => entry.category == 'Making Charges')
+            .appliesTo,
+        TaxGstStrings.hsnAppliesRepairService,
+      );
+    });
+  });
+
   group('PosNumberParser', () {
     test('parses clean non-negative numeric input only', () {
       expect(PosNumberParser.parseNonNegative(''), 0);
@@ -28,6 +54,40 @@ void main() {
         PosNumberFormatter.compact(4.1258, maxFractionDigits: 3),
         '4.126',
       );
+    });
+  });
+
+  group('PosGstClassificationResolver', () {
+    test('groups gold and silver jewellery under configured display HSN', () {
+      final gold = SaleItemModel(metal: MetalType.gold)..grossCtrl.text = '5';
+      final silver = SaleItemModel(metal: MetalType.silver)
+        ..grossCtrl.text = '10';
+
+      final lines = const PosGstClassificationResolver().resolve(
+        saleItems: [gold, silver],
+        hsnCodes: const [
+          HsnCodeModel(
+            category: 'Gold Jewellery',
+            hsnCode: '71131910',
+            gstRate: '3%',
+            displayCode: '7113',
+          ),
+          HsnCodeModel(
+            category: 'Silver Jewellery',
+            hsnCode: '71131120',
+            gstRate: '3%',
+            displayCode: '7113',
+          ),
+        ],
+      );
+
+      expect(lines, hasLength(1));
+      expect(lines.first.code, 'HSN 7113');
+      expect(lines.first.taxLabel, 'GST 3%');
+      expect(lines.first.subtitle, 'Gold + Silver finished jewellery');
+
+      gold.dispose();
+      silver.dispose();
     });
   });
 

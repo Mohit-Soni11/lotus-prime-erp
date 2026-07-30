@@ -12,6 +12,7 @@ class BillItems extends Table with BaseTable {
   IntColumn get lineNo => integer().withDefault(const Constant(1))();
   TextColumn get metalType => text().withDefault(const Constant('GOLD'))();
   TextColumn get itemName => text()();
+  TextColumn get hsnCode => text().nullable()();
   TextColumn get huid => text().nullable()();
   TextColumn get purity => text().withDefault(const Constant("22K"))();
 

@@ -6761,6 +6761,12 @@ class $BillItemsTable extends BillItems
   late final GeneratedColumn<String> itemName = GeneratedColumn<String>(
       'item_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _hsnCodeMeta =
+      const VerificationMeta('hsnCode');
+  @override
+  late final GeneratedColumn<String> hsnCode = GeneratedColumn<String>(
+      'hsn_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _huidMeta = const VerificationMeta('huid');
   @override
   late final GeneratedColumn<String> huid = GeneratedColumn<String>(
@@ -6905,6 +6911,7 @@ class $BillItemsTable extends BillItems
         lineNo,
         metalType,
         itemName,
+        hsnCode,
         huid,
         purity,
         quantity,
@@ -6964,6 +6971,10 @@ class $BillItemsTable extends BillItems
           itemName.isAcceptableOrUnknown(data['item_name']!, _itemNameMeta));
     } else if (isInserting) {
       context.missing(_itemNameMeta);
+    }
+    if (data.containsKey('hsn_code')) {
+      context.handle(_hsnCodeMeta,
+          hsnCode.isAcceptableOrUnknown(data['hsn_code']!, _hsnCodeMeta));
     }
     if (data.containsKey('huid')) {
       context.handle(
@@ -7084,6 +7095,8 @@ class $BillItemsTable extends BillItems
           .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
       itemName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}item_name'])!,
+      hsnCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hsn_code']),
       huid: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}huid']),
       purity: attachedDatabase.typeMapping
@@ -7137,6 +7150,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
   final int lineNo;
   final String metalType;
   final String itemName;
+  final String? hsnCode;
   final String? huid;
   final String purity;
   final int quantity;
@@ -7163,6 +7177,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       required this.lineNo,
       required this.metalType,
       required this.itemName,
+      this.hsnCode,
       this.huid,
       required this.purity,
       required this.quantity,
@@ -7193,6 +7208,9 @@ class BillItem extends DataClass implements Insertable<BillItem> {
     map['line_no'] = Variable<int>(lineNo);
     map['metal_type'] = Variable<String>(metalType);
     map['item_name'] = Variable<String>(itemName);
+    if (!nullToAbsent || hsnCode != null) {
+      map['hsn_code'] = Variable<String>(hsnCode);
+    }
     if (!nullToAbsent || huid != null) {
       map['huid'] = Variable<String>(huid);
     }
@@ -7233,6 +7251,9 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       lineNo: Value(lineNo),
       metalType: Value(metalType),
       itemName: Value(itemName),
+      hsnCode: hsnCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hsnCode),
       huid: huid == null && nullToAbsent ? const Value.absent() : Value(huid),
       purity: Value(purity),
       quantity: Value(quantity),
@@ -7271,6 +7292,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       lineNo: serializer.fromJson<int>(json['lineNo']),
       metalType: serializer.fromJson<String>(json['metalType']),
       itemName: serializer.fromJson<String>(json['itemName']),
+      hsnCode: serializer.fromJson<String?>(json['hsnCode']),
       huid: serializer.fromJson<String?>(json['huid']),
       purity: serializer.fromJson<String>(json['purity']),
       quantity: serializer.fromJson<int>(json['quantity']),
@@ -7302,6 +7324,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       'lineNo': serializer.toJson<int>(lineNo),
       'metalType': serializer.toJson<String>(metalType),
       'itemName': serializer.toJson<String>(itemName),
+      'hsnCode': serializer.toJson<String?>(hsnCode),
       'huid': serializer.toJson<String?>(huid),
       'purity': serializer.toJson<String>(purity),
       'quantity': serializer.toJson<int>(quantity),
@@ -7331,6 +7354,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           int? lineNo,
           String? metalType,
           String? itemName,
+          Value<String?> hsnCode = const Value.absent(),
           Value<String?> huid = const Value.absent(),
           String? purity,
           int? quantity,
@@ -7357,6 +7381,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         lineNo: lineNo ?? this.lineNo,
         metalType: metalType ?? this.metalType,
         itemName: itemName ?? this.itemName,
+        hsnCode: hsnCode.present ? hsnCode.value : this.hsnCode,
         huid: huid.present ? huid.value : this.huid,
         purity: purity ?? this.purity,
         quantity: quantity ?? this.quantity,
@@ -7390,6 +7415,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       lineNo: data.lineNo.present ? data.lineNo.value : this.lineNo,
       metalType: data.metalType.present ? data.metalType.value : this.metalType,
       itemName: data.itemName.present ? data.itemName.value : this.itemName,
+      hsnCode: data.hsnCode.present ? data.hsnCode.value : this.hsnCode,
       huid: data.huid.present ? data.huid.value : this.huid,
       purity: data.purity.present ? data.purity.value : this.purity,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
@@ -7442,6 +7468,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ..write('lineNo: $lineNo, ')
           ..write('metalType: $metalType, ')
           ..write('itemName: $itemName, ')
+          ..write('hsnCode: $hsnCode, ')
           ..write('huid: $huid, ')
           ..write('purity: $purity, ')
           ..write('quantity: $quantity, ')
@@ -7473,6 +7500,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         lineNo,
         metalType,
         itemName,
+        hsnCode,
         huid,
         purity,
         quantity,
@@ -7503,6 +7531,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           other.lineNo == this.lineNo &&
           other.metalType == this.metalType &&
           other.itemName == this.itemName &&
+          other.hsnCode == this.hsnCode &&
           other.huid == this.huid &&
           other.purity == this.purity &&
           other.quantity == this.quantity &&
@@ -7531,6 +7560,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
   final Value<int> lineNo;
   final Value<String> metalType;
   final Value<String> itemName;
+  final Value<String?> hsnCode;
   final Value<String?> huid;
   final Value<String> purity;
   final Value<int> quantity;
@@ -7557,6 +7587,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.lineNo = const Value.absent(),
     this.metalType = const Value.absent(),
     this.itemName = const Value.absent(),
+    this.hsnCode = const Value.absent(),
     this.huid = const Value.absent(),
     this.purity = const Value.absent(),
     this.quantity = const Value.absent(),
@@ -7584,6 +7615,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.lineNo = const Value.absent(),
     this.metalType = const Value.absent(),
     required String itemName,
+    this.hsnCode = const Value.absent(),
     this.huid = const Value.absent(),
     this.purity = const Value.absent(),
     this.quantity = const Value.absent(),
@@ -7612,6 +7644,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     Expression<int>? lineNo,
     Expression<String>? metalType,
     Expression<String>? itemName,
+    Expression<String>? hsnCode,
     Expression<String>? huid,
     Expression<String>? purity,
     Expression<int>? quantity,
@@ -7639,6 +7672,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       if (lineNo != null) 'line_no': lineNo,
       if (metalType != null) 'metal_type': metalType,
       if (itemName != null) 'item_name': itemName,
+      if (hsnCode != null) 'hsn_code': hsnCode,
       if (huid != null) 'huid': huid,
       if (purity != null) 'purity': purity,
       if (quantity != null) 'quantity': quantity,
@@ -7669,6 +7703,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       Value<int>? lineNo,
       Value<String>? metalType,
       Value<String>? itemName,
+      Value<String?>? hsnCode,
       Value<String?>? huid,
       Value<String>? purity,
       Value<int>? quantity,
@@ -7695,6 +7730,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       lineNo: lineNo ?? this.lineNo,
       metalType: metalType ?? this.metalType,
       itemName: itemName ?? this.itemName,
+      hsnCode: hsnCode ?? this.hsnCode,
       huid: huid ?? this.huid,
       purity: purity ?? this.purity,
       quantity: quantity ?? this.quantity,
@@ -7739,6 +7775,9 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     }
     if (itemName.present) {
       map['item_name'] = Variable<String>(itemName.value);
+    }
+    if (hsnCode.present) {
+      map['hsn_code'] = Variable<String>(hsnCode.value);
     }
     if (huid.present) {
       map['huid'] = Variable<String>(huid.value);
@@ -7807,6 +7846,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
           ..write('lineNo: $lineNo, ')
           ..write('metalType: $metalType, ')
           ..write('itemName: $itemName, ')
+          ..write('hsnCode: $hsnCode, ')
           ..write('huid: $huid, ')
           ..write('purity: $purity, ')
           ..write('quantity: $quantity, ')
@@ -40742,6 +40782,7 @@ typedef $$BillItemsTableCreateCompanionBuilder = BillItemsCompanion Function({
   Value<int> lineNo,
   Value<String> metalType,
   required String itemName,
+  Value<String?> hsnCode,
   Value<String?> huid,
   Value<String> purity,
   Value<int> quantity,
@@ -40769,6 +40810,7 @@ typedef $$BillItemsTableUpdateCompanionBuilder = BillItemsCompanion Function({
   Value<int> lineNo,
   Value<String> metalType,
   Value<String> itemName,
+  Value<String?> hsnCode,
   Value<String?> huid,
   Value<String> purity,
   Value<int> quantity,
@@ -40833,6 +40875,9 @@ class $$BillItemsTableFilterComposer
 
   ColumnFilters<String> get itemName => $composableBuilder(
       column: $table.itemName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hsnCode => $composableBuilder(
+      column: $table.hsnCode, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get huid => $composableBuilder(
       column: $table.huid, builder: (column) => ColumnFilters(column));
@@ -40942,6 +40987,9 @@ class $$BillItemsTableOrderingComposer
 
   ColumnOrderings<String> get itemName => $composableBuilder(
       column: $table.itemName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hsnCode => $composableBuilder(
+      column: $table.hsnCode, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get huid => $composableBuilder(
       column: $table.huid, builder: (column) => ColumnOrderings(column));
@@ -41054,6 +41102,9 @@ class $$BillItemsTableAnnotationComposer
   GeneratedColumn<String> get itemName =>
       $composableBuilder(column: $table.itemName, builder: (column) => column);
 
+  GeneratedColumn<String> get hsnCode =>
+      $composableBuilder(column: $table.hsnCode, builder: (column) => column);
+
   GeneratedColumn<String> get huid =>
       $composableBuilder(column: $table.huid, builder: (column) => column);
 
@@ -41159,6 +41210,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<int> lineNo = const Value.absent(),
             Value<String> metalType = const Value.absent(),
             Value<String> itemName = const Value.absent(),
+            Value<String?> hsnCode = const Value.absent(),
             Value<String?> huid = const Value.absent(),
             Value<String> purity = const Value.absent(),
             Value<int> quantity = const Value.absent(),
@@ -41186,6 +41238,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             lineNo: lineNo,
             metalType: metalType,
             itemName: itemName,
+            hsnCode: hsnCode,
             huid: huid,
             purity: purity,
             quantity: quantity,
@@ -41213,6 +41266,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<int> lineNo = const Value.absent(),
             Value<String> metalType = const Value.absent(),
             required String itemName,
+            Value<String?> hsnCode = const Value.absent(),
             Value<String?> huid = const Value.absent(),
             Value<String> purity = const Value.absent(),
             Value<int> quantity = const Value.absent(),
@@ -41240,6 +41294,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             lineNo: lineNo,
             metalType: metalType,
             itemName: itemName,
+            hsnCode: hsnCode,
             huid: huid,
             purity: purity,
             quantity: quantity,

@@ -621,7 +621,7 @@ class PosInvoiceController extends ChangeNotifier {
       customerGstin: billing.gstCtrl.text,
       tradeInMode: billing.tradeInMode,
       customerMetalSettlementType: billing.customerMetalSettlementType,
-      saleItems: List.from(billing.saleItems),
+      saleItems: _buildPrintableSaleItemSnapshots(),
       tradeInItems: List.from(billing.tradeInItems),
       grossAmount: billing.grossAmount,
       discountAmount: billing.discountAmount,
@@ -642,6 +642,35 @@ class PosInvoiceController extends ChangeNotifier {
       changeSettlementPaymentMode: billing.changeCreditSourcePaymentMode,
       promiseDate: dueDate,
     );
+  }
+
+  List<SaleItemModel> _buildPrintableSaleItemSnapshots() {
+    return billing.saleItems.map((source) {
+      final item = SaleItemModel(
+        metal: source.metal,
+        makingChargeType: source.makingChargeType,
+        isLessPerPiece: source.isLessPerPiece,
+      );
+      item.descCtrl.text = source.descCtrl.text;
+      item.pcsCtrl.text = source.pcs.toString();
+      item.setUnitProfile(source.unitProfile);
+      item.setHuidText(source.huidText);
+      item.purityCtrl.text = source.purityCtrl.text;
+      item.grossCtrl.text = source.grossCtrl.text;
+      item.lessCtrl.text = source.lessCtrl.text;
+      item.rateCtrl.text = source.rateCtrl.text;
+      item.makingCtrl.text = source.makingCtrl.text;
+      item.setInvoiceHsnCode(billing.invoiceHsnCodeForMetal(source.metal));
+      if (source.linkedStockItemId != null) {
+        item.attachStockReference(
+          stockItemId: source.linkedStockItemId!,
+          stockUnitId: source.linkedStockUnitId,
+          stockUnitCost: source.linkedStockUnitCost,
+          sku: source.linkedStockSku ?? '',
+        );
+      }
+      return item;
+    }).toList(growable: false);
   }
 
   // ==========================================

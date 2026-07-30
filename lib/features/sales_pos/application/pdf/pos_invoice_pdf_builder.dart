@@ -485,6 +485,7 @@ class _PosInvoicePdfDocumentBuilder {
                     children: [
                       _th('#'),
                       _th('Item Description'),
+                      if (activeConfig.showHsnCode) _th('HSN'),
                       if (activeConfig.showPurity) _th('Purity'),
                       if (activeConfig.showGrossWt) _th('Gross(g)'),
                       if (activeConfig.showLessWt) _th('Less(g)'),
@@ -522,6 +523,7 @@ class _PosInvoicePdfDocumentBuilder {
                       children: [
                         _cell('${entry.key + 1}'),
                         _cell(desc),
+                        if (activeConfig.showHsnCode) _cell(_hsnCode(item)),
                         if (activeConfig.showPurity) _cell(_formatPurity(item)),
                         if (activeConfig.showGrossWt)
                           _cell(item.grossCtrl.text.isNotEmpty
@@ -586,6 +588,11 @@ class _PosInvoicePdfDocumentBuilder {
         ),
       ),
     );
+  }
+
+  String _hsnCode(SaleItemModel item) {
+    final code = item.invoiceHsnCode?.trim() ?? '';
+    return code.isEmpty ? '-' : code;
   }
 
   String _formatMakingCharge(

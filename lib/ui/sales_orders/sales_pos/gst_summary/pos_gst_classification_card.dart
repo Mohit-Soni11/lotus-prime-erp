@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../../../features/sales_pos/domain/services/pos_gst_classification_resolver.dart';
 import '../../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
 class PosGstClassificationCard extends StatelessWidget {
-  final bool hasJewelleryItems;
-  final bool hasLooseDiamondItems;
+  final List<PosGstClassificationLine> lines;
 
   const PosGstClassificationCard({
     super.key,
-    required this.hasJewelleryItems,
-    required this.hasLooseDiamondItems,
+    required this.lines,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (!hasJewelleryItems && !hasLooseDiamondItems) {
+    if (lines.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -43,21 +42,9 @@ class PosGstClassificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (hasJewelleryItems)
-            const _ClassificationLine(
-              code: 'HSN 7113',
-              title: 'Jewellery Sale',
-              subtitle: 'Gold, silver and platinum jewellery',
-              taxLabel: 'GST 3%',
-            ),
-          if (hasLooseDiamondItems) ...[
-            if (hasJewelleryItems) const SizedBox(height: 8),
-            const _ClassificationLine(
-              code: 'HSN 7102',
-              title: 'Loose Diamond / Stone',
-              subtitle: 'Use only for loose stones, not jewellery items',
-              taxLabel: 'Rate as configured',
-            ),
+          for (var index = 0; index < lines.length; index++) ...[
+            if (index > 0) const SizedBox(height: 8),
+            _ClassificationLine(line: lines[index]),
           ],
         ],
       ),
@@ -66,17 +53,9 @@ class PosGstClassificationCard extends StatelessWidget {
 }
 
 class _ClassificationLine extends StatelessWidget {
-  final String code;
-  final String title;
-  final String subtitle;
-  final String taxLabel;
+  final PosGstClassificationLine line;
 
-  const _ClassificationLine({
-    required this.code,
-    required this.title,
-    required this.subtitle,
-    required this.taxLabel,
-  });
+  const _ClassificationLine({required this.line});
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +72,7 @@ class _ClassificationLine extends StatelessWidget {
             ),
           ),
           child: Text(
-            code,
+            line.code,
             style: const TextStyle(
               fontSize: SalesPosStyles.fontCaption,
               fontWeight: FontWeight.w900,
@@ -108,7 +87,7 @@ class _ClassificationLine extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                line.title,
                 style: const TextStyle(
                   fontSize: SalesPosStyles.fontLabel,
                   fontWeight: FontWeight.w900,
@@ -118,7 +97,7 @@ class _ClassificationLine extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                subtitle,
+                line.subtitle,
                 style: const TextStyle(
                   fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w800,
@@ -131,7 +110,7 @@ class _ClassificationLine extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          taxLabel,
+          line.taxLabel,
           style: const TextStyle(
             fontSize: SalesPosStyles.fontCaption,
             fontWeight: FontWeight.w900,

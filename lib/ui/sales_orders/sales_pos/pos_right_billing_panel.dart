@@ -922,13 +922,13 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           const SizedBox(height: 8),
           _buildSubtleRow(
               mTaxable > 0
-                  ? "Tax on Metal (3% on Rs ${mTaxable.toStringAsFixed(2)})"
+                  ? "Tax on Metal (${widget.ctrl.jewelleryGstRateLabel} on Rs ${mTaxable.toStringAsFixed(2)})"
                   : "Tax on Metal (0.00)",
               0,
               customVal: "Rs ${mGst.toStringAsFixed(2)}"),
           _buildSubtleRow(
               lTaxable > 0
-                  ? "Tax on Labour (5% on Rs ${lTaxable.toStringAsFixed(2)})"
+                  ? "Tax on Labour (${widget.ctrl.makingGstRateLabel} on Rs ${lTaxable.toStringAsFixed(2)})"
                   : "Tax on Labour (0.00)",
               0,
               customVal: "Rs ${lGst.toStringAsFixed(2)}"),
@@ -958,12 +958,10 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
 
   Widget _buildGstDropdownSection() {
     bool isWholesale = widget.ctrl.billingMode == BillingMode.wholesale;
-    String gstTitle =
-        isWholesale ? "Total GST (Metal 3%, Labour 5%)" : "Total GST (3%)";
-    final hasJewelleryItems = widget.ctrl.totalGoldWt > 0 ||
-        widget.ctrl.totalSilverWt > 0 ||
-        widget.ctrl.totalPlatinumWt > 0;
-    final hasLooseDiamondItems = widget.ctrl.totalDiamondWt > 0;
+    String gstTitle = isWholesale
+        ? "Total GST (Metal ${widget.ctrl.jewelleryGstRateLabel}, Labour ${widget.ctrl.makingGstRateLabel})"
+        : "Total GST (${widget.ctrl.jewelleryGstRateLabel})";
+    final classificationLines = widget.ctrl.gstClassificationLines;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, top: 4),
@@ -972,8 +970,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         children: [
           if (!isWholesale)
             PosGstClassificationCard(
-              hasJewelleryItems: hasJewelleryItems,
-              hasLooseDiamondItems: hasLooseDiamondItems,
+              lines: classificationLines,
             ),
           InkWell(
             onTap: () => setState(() => _gstExpanded = !_gstExpanded),
@@ -1017,10 +1014,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               child: Column(
                 children: [
                   _buildSubtleRow(
-                      isWholesale ? "Total CGST Amount" : "CGST (1.5%)",
+                      isWholesale
+                          ? "Total CGST Amount"
+                          : "CGST (${widget.ctrl.halfJewelleryGstRateLabel})",
                       widget.ctrl.cgst),
                   _buildSubtleRow(
-                      isWholesale ? "Total SGST Amount" : "SGST (1.5%)",
+                      isWholesale
+                          ? "Total SGST Amount"
+                          : "SGST (${widget.ctrl.halfJewelleryGstRateLabel})",
                       widget.ctrl.sgst),
                   Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
