@@ -12,6 +12,8 @@ import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'pos_hold_list_dialog.dart';
+import 'gst_summary/pos_gst_classification_card.dart';
+import 'payment_summary/pos_payment_summary_cards.dart';
 
 //  Invoice preview dependency
 import 'pos_invoice_preview_screen.dart';
@@ -958,12 +960,21 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     bool isWholesale = widget.ctrl.billingMode == BillingMode.wholesale;
     String gstTitle =
         isWholesale ? "Total GST (Metal 3%, Labour 5%)" : "Total GST (3%)";
+    final hasJewelleryItems = widget.ctrl.totalGoldWt > 0 ||
+        widget.ctrl.totalSilverWt > 0 ||
+        widget.ctrl.totalPlatinumWt > 0;
+    final hasLooseDiamondItems = widget.ctrl.totalDiamondWt > 0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, top: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!isWholesale)
+            PosGstClassificationCard(
+              hasJewelleryItems: hasJewelleryItems,
+              hasLooseDiamondItems: hasLooseDiamondItems,
+            ),
           InkWell(
             onTap: () => setState(() => _gstExpanded = !_gstExpanded),
             child: Row(
@@ -1053,22 +1064,22 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                   ] else ...[
                     if (widget.ctrl.totalGoldWt > 0 ||
                         widget.ctrl.goldNetFine != 0)
-                      _buildSubtleRow("Gold (HSN 7113)", 0,
+                      _buildSubtleRow("Gold Jewellery", 0,
                           customVal:
                               "Rs ${widget.ctrl.goldGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalSilverWt > 0 ||
                         widget.ctrl.silverNetFine != 0)
-                      _buildSubtleRow("Silver (HSN 7113)", 0,
+                      _buildSubtleRow("Silver Jewellery", 0,
                           customVal:
                               "Rs ${widget.ctrl.silverGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalPlatinumWt > 0 ||
                         widget.ctrl.platNetFine != 0)
-                      _buildSubtleRow("Platinum (HSN 7113)", 0,
+                      _buildSubtleRow("Platinum Jewellery", 0,
                           customVal:
                               "Rs ${widget.ctrl.platinumGst.toStringAsFixed(2)}"),
                     if (widget.ctrl.totalDiamondWt > 0 ||
                         widget.ctrl.diaNetFine != 0)
-                      _buildSubtleRow("Diamond (HSN 7102)", 0,
+                      _buildSubtleRow("Loose Diamond / Stone", 0,
                           customVal:
                               "Rs ${widget.ctrl.diamondGst.toStringAsFixed(2)}"),
                   ]
@@ -1105,20 +1116,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
         widget.ctrl.saleItems.isEmpty && widget.ctrl.tradeInItems.isEmpty;
     final hasIncompleteDraft =
         !isEmptyCart && widget.ctrl.validateInvoiceReadiness() != null;
-    final isDue = widget.ctrl.balanceDue > 0.005;
     final isReturn = widget.ctrl.balanceDue < -0.005;
     final returnMethod = widget.ctrl.changeReturnMethod;
-    final returnMethodLabel = returnMethod?.displayName;
-    final settledReturnLabel = returnMethod == RefundMethod.accountCredit
-        ? "CHANGE ADDED TO CUSTOMER ACCOUNT"
-        : "CHANGE RETURNED VIA $returnMethodLabel";
-    final isPaid = !isDue && !isReturn && !isEmptyCart && !hasIncompleteDraft;
-
-    final balanceColor = hasIncompleteDraft
-        ? SalesPosColors.warning
-        : (isReturn && returnMethod != null) || isPaid
-            ? SalesPosColors.success
-            : (isReturn ? SalesPosColors.warning : SalesPosColors.danger);
+    final isDue = widget.ctrl.balanceDue > 0.005;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -1128,7 +1128,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           _buildSectionHead(
               icon: SalesPosIcons.paymentHubWallet,
               title: "PAYMENT SETTLEMENT",
-              subtitle: "Record received cash amounts"),
+              subtitle: "Record received payment amounts"),
           _buildPaymentInput(
               "Cash Received", widget.ctrl.cashCtrl, SalesPosIcons.cashFilled),
           const SizedBox(height: 12),
@@ -1141,83 +1141,20 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           _buildPaymentInput("Customer Advance", widget.ctrl.advCtrl,
               SalesPosIcons.advancePayment),
           const SizedBox(height: 18),
-          if (isEmptyCart)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: SalesPosColors.bodyBg,
-                borderRadius: BorderRadius.circular(10),
-                border:
-                    Border.all(color: SalesPosColors.bodyBorder, width: 1.5),
-              ),
-              child: const Center(
-                child: Text("NO CASH / AMOUNT DUE YET",
-                    style: TextStyle(
-                        fontSize: SalesPosStyles.fontCaption,
-                        fontWeight: FontWeight.w900,
-                        color: SalesPosColors.bodyTextMain,
-                        letterSpacing: 0)),
-              ),
-            )
-          else ...[
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: balanceColor.withValues(alpha: 0.10),
-                border: Border.all(
-                    color: balanceColor.withValues(alpha: 0.60), width: 2.0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                              hasIncompleteDraft
-                                  ? "INVOICE INCOMPLETE"
-                                  : isReturn && returnMethodLabel != null
-                                      ? settledReturnLabel
-                                      : isReturn
-                                          ? "CHANGE DUE TO CUSTOMER"
-                                          : isPaid
-                                              ? "INVOICE SETTLED"
-                                              : "BALANCE OUTSTANDING",
-                              style: TextStyle(
-                                  fontSize: SalesPosStyles.fontCaption,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0,
-                                  color: balanceColor)),
-                          const SizedBox(height: 4),
-                          Text(
-                              "Rs ${widget.ctrl.balanceDue.abs().toStringAsFixed(2)}",
-                              style: TextStyle(
-                                  fontSize: SalesPosStyles.fontHero,
-                                  fontWeight: FontWeight.w900,
-                                  color: balanceColor)),
-                        ],
-                      ),
-                      Icon(
-                          hasIncompleteDraft
-                              ? SalesPosIcons.dueWarning
-                              : (isReturn && returnMethod != null) || isPaid
-                                  ? SalesPosIcons.settledVerified
-                                  : isReturn
-                                      ? SalesPosIcons.returnChange
-                                      : SalesPosIcons.dueWarning,
-                          color: balanceColor,
-                          size: 32),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          PosPaymentBreakdownCard(
+            amountPayable: widget.ctrl.finalPayableAmount,
+            amountReceived: widget.ctrl.totalPaid,
+            balanceDue: widget.ctrl.balanceDue,
+            hasIncompleteDraft: hasIncompleteDraft,
+          ),
+          const SizedBox(height: 12),
+          PosPaymentStatusCard(
+            isEmptyCart: isEmptyCart,
+            hasIncompleteDraft: hasIncompleteDraft,
+            balanceDue: widget.ctrl.balanceDue,
+            returnMethod: returnMethod,
+          ),
+          if (!isEmptyCart) ...[
             if (isReturn && returnMethod == null) ...[
               const SizedBox(height: 12),
               Row(
@@ -1432,50 +1369,12 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   // ==========================================
   Widget _buildActionButtons() {
     final payableAmount = widget.ctrl.finalPayableAmount;
-    bool isCredit = payableAmount < 0;
-    Color boxColor =
-        isCredit ? SalesPosColors.success : SalesPosColors.brandGold;
-    String topLabel = isCredit ? "PAYABLE TO CUSTOMER" : "FINAL CASH AMOUNT";
 
     return Padding(
       padding: const EdgeInsets.all(18),
       child: Column(
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: boxColor.withValues(alpha: 0.10),
-              border: Border.all(
-                  color: boxColor.withValues(alpha: 0.50), width: 2.0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(topLabel,
-                        style: TextStyle(
-                            fontSize: SalesPosStyles.fontCaption,
-                            fontWeight: FontWeight.w900,
-                            color: isCredit
-                                ? boxColor
-                                : SalesPosColors.bodyTextMain,
-                            letterSpacing: 0)),
-                    const SizedBox(height: 6),
-                    Text(
-                        "${isCredit ? '- ' : ''}Rs ${payableAmount.abs().toStringAsFixed(2)}",
-                        style: SalesPosStyles.grandTotalText
-                            .copyWith(color: boxColor)),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          PosAmountPayableCard(amount: payableAmount),
 
           // --- SMART PARKED BILLS BADGE (Visible only if bills are on hold) ---
           if (widget.ctrl.heldBills.isNotEmpty)
