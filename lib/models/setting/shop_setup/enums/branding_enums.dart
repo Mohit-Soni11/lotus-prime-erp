@@ -8,39 +8,33 @@
 
 /// Represents the different configuration sections in the Branding Tab.
 enum BrandingSection {
-  social,
-  support,
+  website,
 }
 
 /// Represents the supported social media and communication platforms.
 /// Used strictly for URL launching and UI icon mapping.
 enum SocialPlatform {
+  website,
   instagram,
   facebook,
   youtube,
-  website,
-  whatsapp,
-  email,
-  phone;
+  whatsappChannel,
+  ;
 
   /// Helper method to return the exact string needed for our switch cases
   /// or API payloads, eliminating human spelling errors.
   String get value {
     switch (this) {
+      case SocialPlatform.website:
+        return 'website';
       case SocialPlatform.instagram:
         return 'instagram';
       case SocialPlatform.facebook:
         return 'facebook';
       case SocialPlatform.youtube:
         return 'youtube';
-      case SocialPlatform.website:
-        return 'website';
-      case SocialPlatform.whatsapp:
-        return 'whatsapp';
-      case SocialPlatform.email:
-        return 'email';
-      case SocialPlatform.phone:
-        return 'phone';
+      case SocialPlatform.whatsappChannel:
+        return 'whatsapp_channel';
     }
   }
 

@@ -34,7 +34,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
 
   // --- ðŸš€ UPGRADE: UI ELEMENTS MOVED FROM LOGIC TO STATE ---
   final GlobalKey<FormState> entKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> opsKey = GlobalKey<FormState>();
   final GlobalKey<FormState> commKey = GlobalKey<FormState>();
 
   final TextEditingController legalNameCtrl = TextEditingController();
@@ -42,12 +41,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   final TextEditingController taglineCtrl = TextEditingController();
   final TextEditingController ownerNameCtrl = TextEditingController();
   final TextEditingController ownerPhoneCtrl = TextEditingController();
-  final TextEditingController ownerWaCtrl = TextEditingController();
-  final TextEditingController estYearCtrl = TextEditingController();
-  final TextEditingController branchCodeCtrl = TextEditingController();
-
-  final TextEditingController openTimeCtrl = TextEditingController();
-  final TextEditingController closeTimeCtrl = TextEditingController();
   final TextEditingController brandDisplayCtrl = TextEditingController();
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController shopPhoneCtrl = TextEditingController();
@@ -58,13 +51,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   final FocusNode taglineFocus = FocusNode();
   final FocusNode ownerNameFocus = FocusNode();
   final FocusNode ownerPhoneFocus = FocusNode();
-  final FocusNode ownerWaFocus = FocusNode();
-  final FocusNode estYearFocus = FocusNode();
-  final FocusNode branchCodeFocus = FocusNode();
-
-  final FocusNode openTimeFocus = FocusNode();
-  final FocusNode closeTimeFocus = FocusNode();
-  final FocusNode holidayFocus = FocusNode();
 
   final FocusNode brandDisplayFocus = FocusNode();
   final FocusNode emailFocus = FocusNode();
@@ -88,14 +74,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     taglineCtrl.text = data.tagline;
     ownerNameCtrl.text = data.ownerName;
     ownerPhoneCtrl.text = data.ownerPhone;
-    ownerWaCtrl.text = data.ownerWhatsapp;
-    estYearCtrl.text = data.estYear;
-    branchCodeCtrl.text = data.branchCode.isNotEmpty
-        ? data.branchCode
-        : BasicInfoStrings.valDefaultBranch;
-
-    openTimeCtrl.text = data.openTime;
-    closeTimeCtrl.text = data.closeTime;
 
     brandDisplayCtrl.text = data.brandDisplayName;
     emailCtrl.text = data.businessEmail;
@@ -112,11 +90,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       taglineCtrl,
       ownerNameCtrl,
       ownerPhoneCtrl,
-      ownerWaCtrl,
-      estYearCtrl,
-      branchCodeCtrl,
-      openTimeCtrl,
-      closeTimeCtrl,
       brandDisplayCtrl,
       emailCtrl,
       shopPhoneCtrl,
@@ -126,12 +99,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       taglineFocus,
       ownerNameFocus,
       ownerPhoneFocus,
-      ownerWaFocus,
-      estYearFocus,
-      branchCodeFocus,
-      openTimeFocus,
-      closeTimeFocus,
-      holidayFocus,
       brandDisplayFocus,
       emailFocus,
       shopPhoneFocus,
@@ -154,12 +121,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
         return ownerNameFocus;
       case BasicInfoStrings.keyOwnerPhone:
         return ownerPhoneFocus;
-      case BasicInfoStrings.keyOwnerWa:
-        return ownerWaFocus;
-      case BasicInfoStrings.keyOpenTime:
-        return openTimeFocus;
-      case BasicInfoStrings.keyCloseTime:
-        return closeTimeFocus;
       case BasicInfoStrings.keyEmail:
         return emailFocus;
       case BasicInfoStrings.keyShopPhone:
@@ -179,9 +140,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       case FormSection.enterprise:
         isLocked = logic.enterpriseLocked.value;
         break;
-      case FormSection.operations:
-        isLocked = logic.operationsLocked.value;
-        break;
       case FormSection.communication:
         isLocked = logic.commLocked.value;
         break;
@@ -191,7 +149,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       logic.unlockSection(section);
       FocusNode? targetNode;
       if (section == FormSection.enterprise) targetNode = legalNameFocus;
-      if (section == FormSection.operations) targetNode = openTimeFocus;
       if (section == FormSection.communication) targetNode = brandDisplayFocus;
 
       if (targetNode != null) {
@@ -208,13 +165,8 @@ class BasicInfoTabState extends State<BasicInfoTab> {
             legalName: legalNameCtrl.text,
             displayName: displayNameCtrl.text,
             ownerName: ownerNameCtrl.text,
-            ownerPhone: ownerPhoneCtrl.text,
-            ownerWa: ownerWaCtrl.text);
+            ownerPhone: ownerPhoneCtrl.text);
         saved = await logic.saveEnterprise(errors);
-      } else if (section == FormSection.operations) {
-        errors = logic.validateOperations(
-            openTime: openTimeCtrl.text, closeTime: closeTimeCtrl.text);
-        saved = await logic.saveOperations(errors);
       } else if (section == FormSection.communication) {
         errors = logic.validateCommunication(
             email: emailCtrl.text,
@@ -252,16 +204,13 @@ class BasicInfoTabState extends State<BasicInfoTab> {
         legalName: legalNameCtrl.text,
         displayName: displayNameCtrl.text,
         ownerName: ownerNameCtrl.text,
-        ownerPhone: ownerPhoneCtrl.text,
-        ownerWa: ownerWaCtrl.text);
-    final opsErrs = logic.validateOperations(
-        openTime: openTimeCtrl.text, closeTime: closeTimeCtrl.text);
+        ownerPhone: ownerPhoneCtrl.text);
     final commErrs = logic.validateCommunication(
         email: emailCtrl.text,
         shopPhone: shopPhoneCtrl.text,
         shopWa: shopWaCtrl.text);
 
-    if (entErrs.isNotEmpty || opsErrs.isNotEmpty || commErrs.isNotEmpty) {
+    if (entErrs.isNotEmpty || commErrs.isNotEmpty) {
       _showFeedback(
           message: BasicInfoStrings.msgFixErrors,
           icon: BasicInfoIcons.warning,
@@ -275,11 +224,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       tagline: taglineCtrl.text,
       ownerName: ownerNameCtrl.text,
       ownerPhone: ownerPhoneCtrl.text,
-      ownerWhatsapp: ownerWaCtrl.text,
-      estYear: estYearCtrl.text,
-      branchCode: branchCodeCtrl.text,
-      openTime: openTimeCtrl.text,
-      closeTime: closeTimeCtrl.text,
       brandDisplayName: brandDisplayCtrl.text,
       businessEmail: emailCtrl.text,
       shopPhone: shopPhoneCtrl.text,
@@ -315,8 +259,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
             children: [
               _buildEnterpriseCard(),
               const SizedBox(height: 24),
-              _buildOperationsCard(),
-              const SizedBox(height: 24),
               _buildCommunicationCard(),
             ],
           ),
@@ -331,8 +273,6 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     return Column(
       children: [
         _buildEnterpriseCard(),
-        const SizedBox(height: 24),
-        _buildOperationsCard(),
         const SizedBox(height: 24),
         _buildCommunicationCard(),
         const SizedBox(height: 24),
@@ -554,220 +494,19 @@ class BasicInfoTabState extends State<BasicInfoTab> {
                     isLocked: isLocked,
                     inputType: TextInputType.phone,
                     focusNode: ownerPhoneFocus,
-                    nextFocus: ownerWaFocus,
+                    isLastField: true,
                     maxLength: 10,
                     brandColor: BasicInfoColors.brandPhone,
                     onChanged: (val) {
-                      if (logic.shouldSyncOwnerWa) ownerWaCtrl.text = val;
                       if (logic.shouldSyncShopPhone) shopPhoneCtrl.text = val;
                       if (logic.shouldSyncShopWa) shopWaCtrl.text = val;
                     },
-                  )),
-                  const SizedBox(width: 20),
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblWhatsapp,
-                    hint: BasicInfoStrings.hintWhatsapp,
-                    icon: BasicInfoIcons.whatsapp,
-                    brandColor: BasicInfoColors.brandWhatsapp,
-                    ctrl: ownerWaCtrl,
-                    isLocked: isLocked,
-                    inputType: TextInputType.phone,
-                    focusNode: ownerWaFocus,
-                    nextFocus: estYearFocus,
-                    maxLength: 10,
-                    onChanged: (val) {
-                      logic.markWaTouched();
-                      if (logic.shouldSyncShopWa) shopWaCtrl.text = val;
-                    },
-                  )),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildSectionLabel(BasicInfoStrings.subMeta),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblEstYear,
-                    hint: BasicInfoStrings.hintEstYear,
-                    icon: BasicInfoIcons.calendar,
-                    ctrl: estYearCtrl,
-                    isLocked: isLocked,
-                    inputType: TextInputType.number,
-                    focusNode: estYearFocus,
-                    nextFocus: branchCodeFocus,
-                    brandColor: BasicInfoColors.brandTime,
-                  )),
-                  const SizedBox(width: 20),
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblBranch,
-                    hint: BasicInfoStrings.hintBranch,
-                    icon: BasicInfoIcons.branchCode,
-                    ctrl: branchCodeCtrl,
-                    isLocked: isLocked,
-                    focusNode: branchCodeFocus,
-                    isLastField: true,
-                    brandColor: BasicInfoColors.brandLocation,
                     onFieldSubmitted: (_) => _handleSectionToggle(
                         FormSection.enterprise, BasicInfoStrings.secEnterprise),
                   )),
                 ],
               ),
             ],
-          );
-        });
-  }
-
-  Widget _buildOperationsCard() {
-    return ListenableBuilder(
-        listenable: Listenable.merge(
-            [logic.operationsLocked, logic.loadingSection, holidayFocus]),
-        builder: (context, _) {
-          bool isLocked = logic.operationsLocked.value;
-          bool isHolidayFocused = holidayFocus.hasFocus && !isLocked;
-
-          return _buildThemeCard(
-            section: FormSection.operations,
-            title: BasicInfoStrings.secOperations,
-            icon: BasicInfoIcons.operations,
-            isLocked: isLocked,
-            onToggle: () => _handleSectionToggle(
-                FormSection.operations, BasicInfoStrings.secOperations),
-            isVerified:
-                openTimeCtrl.text.isNotEmpty && closeTimeCtrl.text.isNotEmpty,
-            formKey: opsKey,
-            children: [
-              _buildSectionLabel(BasicInfoStrings.subHours),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblOpenTime,
-                    hint: "HH:MM AM",
-                    icon: BasicInfoIcons.timeOpen,
-                    ctrl: openTimeCtrl,
-                    isLocked: isLocked,
-                    focusNode: openTimeFocus,
-                    nextFocus: closeTimeFocus,
-                    brandColor: BasicInfoColors.brandTime,
-                  )),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                    child: Icon(BasicInfoIcons.arrowRight,
-                        color: BasicInfoColors.textMuted),
-                  ),
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblCloseTime,
-                    hint: "HH:MM PM",
-                    icon: BasicInfoIcons.timeClose,
-                    ctrl: closeTimeCtrl,
-                    isLocked: isLocked,
-                    focusNode: closeTimeFocus,
-                    isLastField: false,
-                    brandColor: BasicInfoColors.textDark,
-                    onFieldSubmitted: (_) =>
-                        FocusScope.of(context).requestFocus(holidayFocus),
-                  )),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(BasicInfoStrings.lblHoliday,
-                      style: GoogleFonts.manrope(
-                          fontSize: BasicInfoStyles.szFieldLabel,
-                          fontWeight: FontWeight.w700,
-                          color: BasicInfoColors.textBody)),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: BasicInfoStyles.hInputField,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isLocked
-                          ? BasicInfoColors.inputBgLocked
-                          : BasicInfoColors.inputBg,
-                      borderRadius:
-                          BorderRadius.circular(BasicInfoStyles.rInputRadius),
-                      border: isHolidayFocused
-                          ? Border.all(
-                              color: BasicInfoColors.goldAccent, width: 2)
-                          : Border.all(color: BasicInfoColors.borderLight),
-                    ),
-                    child: isLocked
-                        ? _buildLockedDropdown()
-                        : _buildUnlockedDropdown(isHolidayFocused),
-                  ),
-                ],
-              )
-            ],
-          );
-        });
-  }
-
-  Widget _buildLockedDropdown() {
-    return ValueListenableBuilder<String>(
-        valueListenable: logic.selectedClosureDay,
-        builder: (context, day, _) {
-          return Row(
-            children: [
-              const Icon(BasicInfoIcons.calendar,
-                  size: 20, color: BasicInfoColors.brandIdentity),
-              const SizedBox(width: 12),
-              Container(
-                  width: 1, height: 24, color: BasicInfoColors.borderLight),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  day,
-                  style: GoogleFonts.manrope(
-                      fontSize: BasicInfoStyles.szFieldText,
-                      fontWeight: FontWeight.w700,
-                      color: BasicInfoColors.textDark),
-                ),
-              ),
-              Icon(BasicInfoIcons.lock,
-                  size: 16,
-                  color: BasicInfoColors.textHint.withValues(alpha: 0.5)),
-            ],
-          );
-        });
-  }
-
-  Widget _buildUnlockedDropdown(bool isFocused) {
-    return ValueListenableBuilder<String>(
-        valueListenable: logic.selectedClosureDay,
-        builder: (context, day, _) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              focusColor: BasicInfoColors.goldAccent.withValues(alpha: 0.2),
-              hoverColor: BasicInfoColors.goldAccent.withValues(alpha: 0.1),
-              canvasColor: BasicInfoColors.cardBg,
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: day,
-                focusNode: holidayFocus,
-                isExpanded: true,
-                icon: Icon(BasicInfoIcons.dropdown,
-                    color: isFocused
-                        ? BasicInfoColors.goldAccent
-                        : BasicInfoColors.textHint),
-                style: GoogleFonts.manrope(
-                    fontSize: BasicInfoStyles.szFieldText,
-                    fontWeight: FontWeight.w700,
-                    color: BasicInfoColors.textDark),
-                onChanged: (val) => logic.updateClosureDay(val),
-                items: logic.weekDays
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-              ),
-            ),
           );
         });
   }

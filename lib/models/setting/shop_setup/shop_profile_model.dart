@@ -15,12 +15,6 @@ class ShopProfileModel {
   final String tagline;
   final String ownerName;
   final String ownerPhone;
-  final String ownerWhatsapp;
-  final String estYear;
-  final String branchCode;
-  final String openTime;
-  final String closeTime;
-  final String weeklyOff;
   final String brandDisplayName;
   final String businessEmail;
   final String shopPhone;
@@ -36,12 +30,6 @@ class ShopProfileModel {
     this.tagline = "",
     this.ownerName = "",
     this.ownerPhone = "",
-    this.ownerWhatsapp = "",
-    this.estYear = "",
-    this.branchCode = "",
-    this.openTime = "10:00 AM",
-    this.closeTime = "08:00 PM",
-    this.weeklyOff = "Sunday",
     this.brandDisplayName = "",
     this.businessEmail = "",
     this.shopPhone = "",
@@ -59,12 +47,6 @@ class ShopProfileModel {
       tagline: json['tagline']?.toString() ?? "",
       ownerName: json['owner_name']?.toString() ?? "",
       ownerPhone: json['owner_phone']?.toString() ?? "",
-      ownerWhatsapp: json['owner_whatsapp']?.toString() ?? "",
-      estYear: json['est_year']?.toString() ?? "",
-      branchCode: json['branch_code']?.toString() ?? "",
-      openTime: json['open_time']?.toString() ?? "10:00 AM",
-      closeTime: json['close_time']?.toString() ?? "08:00 PM",
-      weeklyOff: json['weekly_off']?.toString() ?? "Sunday",
       brandDisplayName: json['brand_display_name']?.toString() ?? "",
       businessEmail: json['business_email']?.toString() ?? "",
       shopPhone: json['shop_phone']?.toString() ?? "",
@@ -83,12 +65,6 @@ class ShopProfileModel {
       'tagline': tagline,
       'owner_name': ownerName,
       'owner_phone': ownerPhone,
-      'owner_whatsapp': ownerWhatsapp,
-      'est_year': estYear,
-      'branch_code': branchCode,
-      'open_time': openTime,
-      'close_time': closeTime,
-      'weekly_off': weeklyOff,
       'brand_display_name': brandDisplayName,
       'business_email': businessEmail,
       'shop_phone': shopPhone,
@@ -106,12 +82,6 @@ class ShopProfileModel {
     String? tagline,
     String? ownerName,
     String? ownerPhone,
-    String? ownerWhatsapp,
-    String? estYear,
-    String? branchCode,
-    String? openTime,
-    String? closeTime,
-    String? weeklyOff,
     String? brandDisplayName,
     String? businessEmail,
     String? shopPhone,
@@ -127,12 +97,6 @@ class ShopProfileModel {
       tagline: tagline ?? this.tagline,
       ownerName: ownerName ?? this.ownerName,
       ownerPhone: ownerPhone ?? this.ownerPhone,
-      ownerWhatsapp: ownerWhatsapp ?? this.ownerWhatsapp,
-      estYear: estYear ?? this.estYear,
-      branchCode: branchCode ?? this.branchCode,
-      openTime: openTime ?? this.openTime,
-      closeTime: closeTime ?? this.closeTime,
-      weeklyOff: weeklyOff ?? this.weeklyOff,
       brandDisplayName: brandDisplayName ?? this.brandDisplayName,
       businessEmail: businessEmail ?? this.businessEmail,
       shopPhone: shopPhone ?? this.shopPhone,
@@ -153,12 +117,6 @@ class ShopProfileModel {
         other.tagline == tagline &&
         other.ownerName == ownerName &&
         other.ownerPhone == ownerPhone &&
-        other.ownerWhatsapp == ownerWhatsapp &&
-        other.estYear == estYear &&
-        other.branchCode == branchCode &&
-        other.openTime == openTime &&
-        other.closeTime == closeTime &&
-        other.weeklyOff == weeklyOff &&
         other.brandDisplayName == brandDisplayName &&
         other.businessEmail == businessEmail &&
         other.shopPhone == shopPhone &&
@@ -177,12 +135,6 @@ class ShopProfileModel {
         tagline,
         ownerName,
         ownerPhone,
-        ownerWhatsapp,
-        estYear,
-        branchCode,
-        openTime,
-        closeTime,
-        weeklyOff,
         brandDisplayName,
         businessEmail,
         shopPhone,

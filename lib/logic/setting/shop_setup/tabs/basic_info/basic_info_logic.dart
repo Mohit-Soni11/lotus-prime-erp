@@ -21,12 +21,9 @@ import '../../../../../theme/settings/shop_setup/tabs/basic_info_tab/basic_info_
 class BasicInfoLogic {
   // --- 🚀 UPGRADE: GRANULAR STATE NOTIFIERS (Zero-Lag UI Fix) ---
   final ValueNotifier<bool> enterpriseLocked = ValueNotifier(true);
-  final ValueNotifier<bool> operationsLocked = ValueNotifier(true);
   final ValueNotifier<bool> commLocked = ValueNotifier(true);
 
   final ValueNotifier<FormSection?> loadingSection = ValueNotifier(null);
-  final ValueNotifier<String> selectedClosureDay =
-      ValueNotifier(BasicInfoStrings.valDefaultHoliday);
 
   final ValueNotifier<File?> logoFile = ValueNotifier(null);
   final ValueNotifier<File?> signatureFile = ValueNotifier(null);
@@ -35,13 +32,11 @@ class BasicInfoLogic {
   bool _logoRemoved = false;
   bool _signatureRemoved = false;
 
-  final List<String> weekDays = BasicInfoStrings.weekDaysList;
   static const int _maxFileSize = 5 * 1024 * 1024; // 5 MB
 
   ShopProfileModel? _initialData;
 
   // --- SMART SYNC FLAGS (Maintained in Logic for Business Rules) ---
-  bool _isWaTouched = false;
   bool _isShopPhoneTouched = false;
   bool _isBrandDisplayTouched = false;
   bool _isShopWaTouched = false;
@@ -51,9 +46,6 @@ class BasicInfoLogic {
     if (_initialData != null) return;
     _initialData = initialData;
 
-    if (initialData != null && weekDays.contains(initialData.weeklyOff)) {
-      selectedClosureDay.value = initialData.weeklyOff;
-    }
     logoShape.value = initialData?.logoShape ?? "circle";
     signatureShape.value = initialData?.signatureShape ?? "square";
   }
@@ -96,9 +88,6 @@ class BasicInfoLogic {
       case FormSection.enterprise:
         enterpriseLocked.value = false;
         break;
-      case FormSection.operations:
-        operationsLocked.value = false;
-        break;
       case FormSection.communication:
         commLocked.value = false;
         break;
@@ -110,8 +99,7 @@ class BasicInfoLogic {
       {required String legalName,
       required String displayName,
       required String ownerName,
-      required String ownerPhone,
-      required String ownerWa}) {
+      required String ownerPhone}) {
     List<String> errors = [];
     if (BasicInfoValidators.required(
             legalName, BasicInfoStrings.lblLegalName) !=
@@ -129,32 +117,6 @@ class BasicInfoLogic {
     }
     if (BasicInfoValidators.requiredPhone(ownerPhone) != null) {
       errors.add(BasicInfoStrings.keyOwnerPhone);
-    }
-    if (ownerWa.isNotEmpty && BasicInfoValidators.phone(ownerWa) != null) {
-      errors.add(BasicInfoStrings.keyOwnerWa);
-    }
-    return errors;
-  }
-
-  List<String> validateOperations(
-      {required String openTime, required String closeTime}) {
-    List<String> errors = [];
-    if (BasicInfoValidators.required(openTime, BasicInfoStrings.lblOpenTime) !=
-        null) {
-      errors.add(BasicInfoStrings.keyOpenTime);
-    }
-    if (BasicInfoValidators.required(
-            closeTime, BasicInfoStrings.lblCloseTime) !=
-        null) {
-      errors.add(BasicInfoStrings.keyCloseTime);
-    }
-    if (errors.isEmpty &&
-        BasicInfoValidators.businessHours(
-              openTime: openTime,
-              closeTime: closeTime,
-            ) !=
-            null) {
-      errors.add(BasicInfoStrings.keyCloseTime);
     }
     return errors;
   }
@@ -186,15 +148,6 @@ class BasicInfoLogic {
     return true;
   }
 
-  Future<bool> saveOperations(List<String> errors) async {
-    if (errors.isNotEmpty) return false;
-    loadingSection.value = FormSection.operations;
-    await Future.delayed(const Duration(milliseconds: 300)); // Simulating API
-    loadingSection.value = null;
-    operationsLocked.value = true;
-    return true;
-  }
-
   Future<bool> saveCommunication(List<String> errors) async {
     if (errors.isNotEmpty) return false;
     loadingSection.value = FormSection.communication;
@@ -205,23 +158,15 @@ class BasicInfoLogic {
   }
 
   // --- SMART DATA SYNC RULES ---
-  void markWaTouched() => _isWaTouched = true;
   void markShopPhoneTouched() => _isShopPhoneTouched = true;
   void markBrandDisplayTouched() => _isBrandDisplayTouched = true;
   void markShopWaTouched() => _isShopWaTouched = true;
 
-  bool get shouldSyncOwnerWa => !_isWaTouched && !enterpriseLocked.value;
   bool get shouldSyncShopPhone =>
       !_isShopPhoneTouched && !enterpriseLocked.value;
   bool get shouldSyncShopWa => !_isShopWaTouched && !enterpriseLocked.value;
   bool get shouldSyncBrandDisplay =>
       !_isBrandDisplayTouched && !enterpriseLocked.value;
-
-  void updateClosureDay(String? val) {
-    if (val != null && val != selectedClosureDay.value) {
-      selectedClosureDay.value = val;
-    }
-  }
 
   // --- FINAL EXPORT ---
   ShopProfileModel generateFinalModel({
@@ -230,11 +175,6 @@ class BasicInfoLogic {
     required String tagline,
     required String ownerName,
     required String ownerPhone,
-    required String ownerWhatsapp,
-    required String estYear,
-    required String branchCode,
-    required String openTime,
-    required String closeTime,
     required String brandDisplayName,
     required String businessEmail,
     required String shopPhone,
@@ -246,12 +186,6 @@ class BasicInfoLogic {
       tagline: tagline.trim(),
       ownerName: ownerName.trim(),
       ownerPhone: ownerPhone.trim(),
-      ownerWhatsapp: ownerWhatsapp.trim(),
-      estYear: estYear.trim(),
-      branchCode: branchCode.trim(),
-      openTime: openTime.trim(),
-      closeTime: closeTime.trim(),
-      weeklyOff: selectedClosureDay.value,
       brandDisplayName: brandDisplayName.trim(),
       businessEmail: businessEmail.trim(),
       shopPhone: shopPhone.trim(),
@@ -316,10 +250,8 @@ class BasicInfoLogic {
   // --- MEMORY CLEANUP ---
   void dispose() {
     enterpriseLocked.dispose();
-    operationsLocked.dispose();
     commLocked.dispose();
     loadingSection.dispose();
-    selectedClosureDay.dispose();
     logoFile.dispose();
     signatureFile.dispose();
     logoShape.dispose();

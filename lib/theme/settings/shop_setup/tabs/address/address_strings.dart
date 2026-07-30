@@ -8,16 +8,15 @@
 
 class AddressStrings {
   // --- PAGE HEADERS ---
-  static const String pageTitle = "Registered Office & Location";
+  static const String pageTitle = "Registered Office";
   static const String pageSub =
-      "Manage billing premises, warehouses, and geo-spatial data";
-  static const String statusActive = "LOCATION ACTIVE";
+      "Manage billing premises and branch address details";
+  static const String statusActive = "ADDRESS ACTIVE";
 
   // --- SECTION HEADERS ---
   static const String secAddress = "Registered Premises";
   static const String subLocation = "LOCATION DETAILS";
   static const String subFacility = "FACILITY CLASSIFICATION";
-  static const String secMap = "Geo-Tagging";
 
   // --- LABELS & HINTS ---
   static const String lblAddr1 = "Building / Shop / Premise No.";
@@ -43,25 +42,8 @@ class AddressStrings {
   static const String typeBranchOffice = "Branch Office";
   static const String typeWarehouse = "Warehouse";
 
-  // --- MAP INSTRUCTIONS & BUTTONS ---
-  static const String btnDetectGps = "Auto Detect GPS";
-  static const String btnLocating = "Locating...";
-  static const String lblMapInstruction = "Click / Right-Click to Pin";
-
   // --- SYSTEM MESSAGES & SNACKBARS ---
-  static const String msgUnlockMap = "Unlock map to edit pin";
   static const String lblSaving = "Saving...";
   static const String lblLocked = "Locked";
   static const String lblSave = "Save";
-  static const String msgMapLocked = "Geo-Location Locked & Saved";
-  static const String msgMapUnlocked = "Map Unlocked: Tap anywhere to set pin";
-  static const String msgGpsDisabled = "GPS/Location Service is disabled.";
-  static const String msgPermDenied = "Location permission denied.";
-  static const String msgLocSuccess = "Location Detected Successfully";
-  static const String msgLocError = "Error: Could not fetch accurate location.";
-
-  // --- MAP CONFIGURATION ---
-  static const String mapTileUrl =
-      "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
-  static const String mapUserAgent = "com.lotus.erp";
 }

@@ -113,9 +113,6 @@ class GirviInvoiceBranding {
     ShopPrintDocumentProfile printProfile = ShopPrintDocumentProfile.empty,
   }) {
     final basicInfo = _stringMap(payload['basic_info']);
-    final branding = _stringMap(
-      payload['branding_social'] ?? payload['branding'],
-    );
     final address = _stringMap(payload['address']);
     final tax = _stringMap(payload['tax_compliance']);
     final shopName = _firstValue([
@@ -130,7 +127,6 @@ class GirviInvoiceBranding {
     final alternateMobile = _differentValue(
       mobile,
       [
-        branding['support_phone'],
         basicInfo['shop_whatsapp'],
       ],
     );

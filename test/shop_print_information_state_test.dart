@@ -17,9 +17,9 @@ void main() {
       defaultEnabled: true,
     );
     const missingField = ShopPrintField(
-      id: 'instagram',
-      label: 'Instagram Channel',
-      description: 'Instagram handle or page link.',
+      id: 'website',
+      label: 'Website',
+      description: 'Official website printed for customer follow-up.',
       sourceSection: 'Branding',
       value: '',
       group: ShopPrintFieldGroup.social,
@@ -29,7 +29,7 @@ void main() {
     const state = ShopPrintInformationState(
       tenantId: 'tenant_001',
       fields: [configuredField, missingField],
-      enabledFieldIds: {'shop_name', 'instagram'},
+      enabledFieldIds: {'shop_name', 'website'},
     );
 
     expect(state.configuredCount, 1);
@@ -70,7 +70,9 @@ void main() {
           'silver_bis_license_no': 'BIS-REG-123',
         },
         'branding_social': {
+          'website': 'lotusjewellers.com',
           'instagram': '@lotusjewellers',
+          'youtube': 'youtube.com/@lotusjewellers',
         },
         'banking_details': [
           {
@@ -90,6 +92,7 @@ void main() {
           'shop_name',
           'mobile_number',
           'gstin',
+          'website',
           'instagram',
           'upi_id',
           'bis_license',
@@ -103,6 +106,7 @@ void main() {
           ..where((tbl) => tbl.tenantId.equals('tenant_billing_setup_test')))
         .getSingle();
     expect(row.enabledFieldIdsJson, contains('mobile_number'));
+    expect(row.enabledFieldIdsJson, contains('website'));
     expect(row.enabledFieldIdsJson, contains('instagram'));
 
     final reloaded = await repository.load();
@@ -125,7 +129,8 @@ void main() {
       profile.headerLines.any((line) => line.startsWith('Silver BIS License:')),
       isFalse,
     );
-    expect(profile.headerLines, contains('Instagram Channel: @lotusjewellers'));
+    expect(profile.headerLines, contains('Website: lotusjewellers.com'));
+    expect(profile.headerLines, contains('Instagram: @lotusjewellers'));
     expect(profile.headerLines, contains('UPI ID: lotus@upi'));
   });
 }

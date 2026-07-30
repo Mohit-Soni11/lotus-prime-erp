@@ -14,19 +14,11 @@ class BrandingIcons {
 
   // --- Section Headers ---
   static const IconData secSocial = Icons.public_rounded;
-  static const IconData secSupport = Icons.contact_support_rounded;
-
-  // --- Social Platforms ---
+  static const IconData website = Icons.language_rounded;
   static const IconData instagram = Icons.camera_alt_rounded;
   static const IconData facebook = Icons.facebook_rounded;
   static const IconData youtube = Icons.play_circle_fill_rounded;
-  static const IconData website = Icons.language_rounded;
-
-  // --- Community & Support ---
   static const IconData whatsappChannel = Icons.campaign_rounded;
-  static const IconData whatsappBiz = Icons.chat_rounded;
-  static const IconData email = Icons.mail_rounded;
-  static const IconData phone = Icons.phone_in_talk_rounded;
 
   // --- Actions & Status ---
   static const IconData edit = Icons.edit_rounded;

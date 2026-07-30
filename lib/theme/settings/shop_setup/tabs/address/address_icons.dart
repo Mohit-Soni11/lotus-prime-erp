@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 class AddressIcons {
   // --- Headers ---
   static const IconData sectionAddress = Icons.business_rounded;
-  static const IconData sectionMap = Icons.map_rounded;
 
   // --- Actions & Status ---
   static const IconData edit = Icons.edit_rounded;
@@ -35,10 +34,4 @@ class AddressIcons {
   static const IconData typeBranch = Icons.store_rounded;
   static const IconData typeWarehouse = Icons.warehouse_rounded;
 
-  // --- Map Controls ---
-  static const IconData mapVisual = Icons.satellite_alt_rounded;
-  static const IconData mapPin = Icons.location_on_rounded;
-  static const IconData detectLoc = Icons.my_location_rounded;
-  static const IconData setManual = Icons.add_location_alt_rounded;
-  static const IconData mouse = Icons.mouse_rounded;
 }

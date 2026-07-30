@@ -10,7 +10,6 @@
 /// Used for state management, locking/unlocking, and focus traversal.
 enum FormSection {
   enterprise,
-  operations,
   communication,
 }
 

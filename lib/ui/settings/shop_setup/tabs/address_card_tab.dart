@@ -12,14 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-
 import '../../../../theme/settings/shop_setup/tabs/address/address_theme.dart';
 import '../../../../logic/setting/shop_setup/tabs/address/address_logic.dart';
-import '../../../../logic/setting/shop_setup/tabs/address/address_map_logic.dart';
-import '../../../../core/logging/app_logger.dart';
-import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class AddressTab extends StatefulWidget {
   // ðŸš€ NEW: Receive initial data from parent
@@ -34,7 +28,6 @@ class AddressTab extends StatefulWidget {
 class AddressTabState extends State<AddressTab> {
   // ðŸš€ UPGRADE: Logic Engines
   late final AddressFormLogic formLogic;
-  late final AddressMapLogic mapLogic;
 
   // ðŸš€ UPGRADE: Controllers safely moved to UI State
   final TextEditingController addr1Ctrl = TextEditingController();
@@ -58,14 +51,11 @@ class AddressTabState extends State<AddressTab> {
   final FocusNode warehouseFocus = FocusNode();
 
   // ðŸš€ UPGRADE: Map Visual Elements in UI Layer
-  final MapController mapController = MapController();
-  List<Marker> mapMarkers = [];
 
   @override
   void initState() {
     super.initState();
     formLogic = AddressFormLogic();
-    mapLogic = AddressMapLogic();
 
     // ðŸš€ NEW: AUTO-FILL LOGIC FOR ADDRESS & MAP
     if (widget.initialData != null && widget.initialData!.isNotEmpty) {
@@ -84,45 +74,12 @@ class AddressTabState extends State<AddressTab> {
         formLogic.updateAddressType(widget.initialData!['type'].toString());
       }
 
-      // Auto-Locate Map to saved coordinates
-      if (widget.initialData!['latitude'] != null &&
-          widget.initialData!['longitude'] != null) {
-        try {
-          final double lat =
-              double.parse(widget.initialData!['latitude'].toString());
-          final double lng =
-              double.parse(widget.initialData!['longitude'].toString());
-          final LatLng savedLoc = LatLng(lat, lng);
-
-          mapLogic.selectedLocation.value = savedLoc;
-          mapMarkers = [
-            Marker(
-              point: savedLoc,
-              width: 40,
-              height: 40,
-              alignment: Alignment.topCenter,
-              child: const Icon(Icons.location_on,
-                  color: AddressColors.goldAccent, size: 40),
-            )
-          ];
-
-          // Move map controller safely after UI layout is built
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            try {
-              mapController.move(savedLoc, 16.0);
-            } catch (_) {}
-          });
-        } catch (e) {
-          AppLogger.error("Map Coordinate Auto-Fill Error: $e");
-        }
-      }
     }
   }
 
   @override
   void dispose() {
     formLogic.dispose();
-    mapLogic.dispose();
 
     // Memory Leak Prevention: Dispose all UI controllers
     addr1Ctrl.dispose();
@@ -142,7 +99,6 @@ class AddressTabState extends State<AddressTab> {
     branchOfficeFocus.dispose();
     warehouseFocus.dispose();
 
-    mapController.dispose();
     super.dispose();
   }
 
@@ -202,7 +158,6 @@ class AddressTabState extends State<AddressTab> {
       return null;
     }
 
-    final selectedLocation = mapLogic.selectedLocation.value;
     return {
       "type": formLogic.selectedAddressType.value,
       "addr1": addr1Ctrl.text.trim(),
@@ -212,56 +167,7 @@ class AddressTabState extends State<AddressTab> {
       "pincode": pinCtrl.text.trim(),
       "country":
           countryCtrl.text.trim().isEmpty ? "India" : countryCtrl.text.trim(),
-      "latitude": selectedLocation?.latitude,
-      "longitude": selectedLocation?.longitude,
     };
-  }
-
-  // --- SMART MAP HANDLING ---
-  void _handleMapTap(LatLng latLng) {
-    if (mapLogic.isMapLocked.value) {
-      _showMapFeedback(AddressStrings.msgUnlockMap, isError: true);
-    } else {
-      mapLogic.onMapTap(latLng);
-      _updateMapMarker(latLng);
-    }
-  }
-
-  Future<void> _handleGpsDetect() async {
-    try {
-      LatLng newLoc = await mapLogic.detectCurrentLocation();
-      _updateMapMarker(newLoc);
-      mapController.move(newLoc, 16.0);
-      _showMapFeedback("Location Detected Successfully", isError: false);
-    } catch (e) {
-      _showMapFeedback(e.toString().replaceAll("Exception: ", ""),
-          isError: true);
-    }
-  }
-
-  void _updateMapMarker(LatLng latLng) {
-    setState(() {
-      mapMarkers = [
-        Marker(
-          point: latLng,
-          width: 40,
-          height: 40,
-          alignment: Alignment.topCenter,
-          child: const Icon(Icons.location_on,
-              color: AddressColors.goldAccent, size: 40),
-        )
-      ];
-    });
-  }
-
-  void _showMapFeedback(String msg, {bool isError = false}) {
-    if (!mounted) return;
-    AppFeedback.show(
-      context,
-      type: isError ? AppFeedbackType.error : AppFeedbackType.success,
-      message: msg,
-      duration: const Duration(seconds: 2),
-    );
   }
 
   void _handleChipSelect(String type) {
@@ -274,7 +180,6 @@ class AddressTabState extends State<AddressTab> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: LayoutBuilder(builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth > 900;
         return SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 80),
           child: Column(
@@ -282,32 +187,11 @@ class AddressTabState extends State<AddressTab> {
             children: [
               const _PageHeader(),
               const SizedBox(height: 30),
-              isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
+              _buildAddressCard(),
             ],
           ),
         );
       }),
-    );
-  }
-
-  Widget _buildDesktopLayout() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(flex: 65, child: _buildAddressCard()),
-        const SizedBox(width: 24),
-        Expanded(flex: 35, child: _buildMapSection()),
-      ],
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        _buildAddressCard(),
-        const SizedBox(height: 24),
-        _buildMapSection(),
-      ],
     );
   }
 
@@ -472,182 +356,6 @@ class AddressTabState extends State<AddressTab> {
         });
   }
 
-  Widget _buildMapSection() {
-    return ListenableBuilder(
-        listenable:
-            Listenable.merge([mapLogic.isMapLocked, mapLogic.isLocating]),
-        builder: (context, _) {
-          bool isLocked = mapLogic.isMapLocked.value;
-          return Container(
-            padding: AddressStyles.padCardInternal,
-            decoration: AddressStyles.cardDecoration,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionHeader(
-                  title: AddressStrings.secMap,
-                  icon: AddressIcons.sectionMap,
-                  isLocked: isLocked,
-                  isSaving: false,
-                  onToggle: () => _showMapFeedback(mapLogic.toggleLock()),
-                ),
-                const Divider(
-                    height: 40, thickness: 1, color: AddressColors.borderLight),
-                Container(
-                  height: 280,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                      color: AddressColors.mapPlaceholderBg,
-                      borderRadius:
-                          BorderRadius.circular(AddressStyles.rMapContainer),
-                      border: Border.all(
-                          color: isLocked
-                              ? AddressColors.borderLight
-                              : AddressColors.goldAccent,
-                          width: isLocked ? 1 : 2),
-                      boxShadow: isLocked
-                          ? []
-                          : const [
-                              BoxShadow(
-                                  color: AddressColors.goldAccent20,
-                                  blurRadius: 10,
-                                  offset: Offset(0, 4))
-                            ]),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AddressStyles.rMapClip),
-                    child: Stack(
-                      children: [
-                        FlutterMap(
-                          mapController: mapController,
-                          options: MapOptions(
-                            initialCenter: mapLogic.selectedLocation.value ??
-                                AddressMapLogic.defaultLocation,
-                            initialZoom: mapLogic.selectedLocation.value != null
-                                ? 16.0
-                                : 4.8,
-                            onTap: (tapPos, latLng) => _handleMapTap(latLng),
-                            interactionOptions: InteractionOptions(
-                              flags: isLocked
-                                  ? InteractiveFlag.none
-                                  : (InteractiveFlag.all &
-                                      ~InteractiveFlag.doubleTapZoom),
-                            ),
-                          ),
-                          children: [
-                            TileLayer(
-                                urlTemplate: AddressStrings.mapTileUrl,
-                                userAgentPackageName:
-                                    AddressStrings.mapUserAgent),
-                            MarkerLayer(markers: mapMarkers),
-                          ],
-                        ),
-                        if (isLocked)
-                          Container(color: AddressColors.mapOverlayLocked),
-                        if (mapLogic.isLocating.value)
-                          Container(
-                            color: AddressColors.mapOverlayLoading,
-                            child: const Center(
-                                child: CircularProgressIndicator(
-                                    color: AddressColors.goldAccent)),
-                          )
-                      ],
-                    ),
-                  ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 300),
-                  child: isLocked
-                      ? const SizedBox.shrink()
-                      : Column(
-                          children: [
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: InkWell(
-                                  onTap: mapLogic.isLocating.value
-                                      ? null
-                                      : _handleGpsDetect,
-                                  borderRadius: BorderRadius.circular(
-                                      AddressStyles.rButton),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: AddressColors.goldAccent10,
-                                      border: Border.all(
-                                          color: AddressColors.goldAccent),
-                                      borderRadius: BorderRadius.circular(
-                                          AddressStyles.rButton),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        mapLogic.isLocating.value
-                                            ? const SizedBox(
-                                                height: 16,
-                                                width: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        color: AddressColors
-                                                            .goldAccent))
-                                            : const Icon(AddressIcons.detectLoc,
-                                                size: 16,
-                                                color:
-                                                    AddressColors.goldAccent),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                            mapLogic.isLocating.value
-                                                ? AddressStrings.btnLocating
-                                                : AddressStrings.btnDetectGps,
-                                            style: GoogleFonts.inter(
-                                                fontSize:
-                                                    AddressStyles.szButtonText,
-                                                fontWeight: FontWeight.w600,
-                                                color: AddressColors.textDark)),
-                                      ],
-                                    ),
-                                  ),
-                                )),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                    child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: AddressColors.borderLight),
-                                      borderRadius: BorderRadius.circular(
-                                          AddressStyles.rButton)),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(AddressIcons.mouse,
-                                          size: 16,
-                                          color: AddressColors.textMuted),
-                                      const SizedBox(width: 8),
-                                      Text(AddressStrings.lblMapInstruction,
-                                          style: GoogleFonts.inter(
-                                              fontSize:
-                                                  AddressStyles.szButtonText,
-                                              fontWeight: FontWeight.w600,
-                                              color: AddressColors.textBody)),
-                                    ],
-                                  ),
-                                )),
-                              ],
-                            ),
-                          ],
-                        ),
-                )
-              ],
-            ),
-          );
-        });
-  }
-
   Widget _buildSectionLabel(String text) {
     return Text(text,
         style: GoogleFonts.inter(
@@ -696,7 +404,7 @@ class _PageHeader extends StatelessWidget {
               border: Border.all(color: AddressColors.statusActiveText30)),
           child: Row(
             children: [
-              const Icon(AddressIcons.mapPin,
+              const Icon(AddressIcons.city,
                   size: 16, color: AddressColors.statusActiveText),
               const SizedBox(width: 8),
               Text(AddressStrings.statusActive,

@@ -677,6 +677,7 @@ class _SelectInput extends StatelessWidget {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: items.contains(value) ? value : items.first,
+          isExpanded: true,
           dropdownColor: Colors.white,
           menuMaxHeight: 320,
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: accent),
@@ -715,6 +716,8 @@ class _SelectInput extends StatelessWidget {
                   value: item,
                   child: Text(
                     itemLabel?.call(item) ?? item,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: BillingSetupColors.textDark,
                       fontSize: 14,
@@ -724,6 +727,25 @@ class _SelectInput extends StatelessWidget {
                 ),
               )
               .toList(growable: false),
+          selectedItemBuilder: (context) {
+            return items
+                .map(
+                  (item) => Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      itemLabel?.call(item) ?? item,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: BillingSetupColors.textDark,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false);
+          },
           onChanged: (value) {
             if (value != null) onChanged(value);
           },

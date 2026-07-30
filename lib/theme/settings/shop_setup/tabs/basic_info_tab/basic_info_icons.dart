@@ -16,7 +16,6 @@ class BasicInfoIcons {
   static const IconData phone = Icons.phone_android_rounded;
   static const IconData whatsapp = Icons.chat_bubble_rounded;
   static const IconData calendar = Icons.calendar_month_rounded;
-  static const IconData branchCode = Icons.qr_code_2_rounded;
   static const IconData timeOpen = Icons.wb_sunny_rounded;
   static const IconData timeClose = Icons.nights_stay_rounded;
   static const IconData arrowRight = Icons.arrow_right_alt_rounded;

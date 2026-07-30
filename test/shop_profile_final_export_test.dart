@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lotus_erp/helpers/basic_info/basic_info_validators.dart';
 import 'package:lotus_erp/helpers/banking/banking_validators.dart';
 import 'package:lotus_erp/helpers/branding/branding_validators.dart';
 import 'package:lotus_erp/logic/setting/shop_setup/tabs/address/address_logic.dart';
@@ -20,20 +19,20 @@ void main() {
     final logic = BrandingLogic();
     addTearDown(logic.dispose);
 
-    logic.instaCtrl.text = 'lotus_jewellers';
     logic.webCtrl.text = 'lotus.example';
-    logic.waBizCtrl.text = '9876543210';
-    logic.emailCtrl.text = 'support@lotus.com';
-    logic.phoneCtrl.text = '9123456780';
+    logic.instaCtrl.text = '@lotus_jewellers';
+    logic.fbCtrl.text = 'facebook.com/lotusjewellers';
+    logic.ytCtrl.text = 'youtube.com/@lotusjewellers';
+    logic.waChannelCtrl.text = 'whatsapp.com/channel/lotus';
 
     final model = logic.validateAndGenerateFinalModel();
 
     expect(model, isNotNull);
-    expect(model!.instagram, 'lotus_jewellers');
-    expect(model.website, 'lotus.example');
-    expect(model.whatsappBusiness, '9876543210');
-    expect(model.supportEmail, 'support@lotus.com');
-    expect(model.supportPhone, '9123456780');
+    expect(model!.website, 'lotus.example');
+    expect(model.instagram, '@lotus_jewellers');
+    expect(model.facebook, 'facebook.com/lotusjewellers');
+    expect(model.youtube, 'youtube.com/@lotusjewellers');
+    expect(model.whatsappChannel, 'whatsapp.com/channel/lotus');
     expect(logic.brandingData, model);
   });
 
@@ -42,16 +41,12 @@ void main() {
     addTearDown(logic.dispose);
 
     logic.webCtrl.text = 'dsaascs';
-    logic.waChannelCtrl.text = 'dascasadc';
 
     expect(logic.validateAndGenerateFinalModel(), isNull);
 
-    expect(logic.isSocialLocked, isFalse);
-    expect(logic.isSupportLocked, isFalse);
+    expect(logic.isChannelsLocked, isFalse);
     expect(logic.lastValidationError, contains('Official Website'));
     expect(logic.lastValidationError, contains('lotusjewellers.com'));
-    expect(logic.lastValidationError, contains('WhatsApp Channel Link'));
-    expect(logic.lastValidationError, contains('whatsapp.com/channel'));
   });
 
   test('tax GST final validation rejects invalid controller values', () {
@@ -72,8 +67,7 @@ void main() {
         isNotNull);
   });
 
-  test('basic info validation requires legal name and valid business hours',
-      () {
+  test('basic info validation requires legal name', () {
     final logic = BasicInfoLogic();
     addTearDown(logic.dispose);
 
@@ -82,24 +76,9 @@ void main() {
       displayName: 'Anjali Jewellers',
       ownerName: 'Anjali Sharma',
       ownerPhone: '9876543210',
-      ownerWa: '',
     );
 
     expect(errors, contains(BasicInfoStrings.keyLegalName));
-    expect(
-      BasicInfoValidators.businessHours(
-        openTime: '10:00 AM',
-        closeTime: '08:00 PM',
-      ),
-      isNull,
-    );
-    expect(
-      BasicInfoValidators.businessHours(
-        openTime: '08:00 PM',
-        closeTime: '10:00 AM',
-      ),
-      isNotNull,
-    );
   });
 
   test('address pincode must be exactly six digits', () {
@@ -128,29 +107,22 @@ void main() {
     );
   });
 
-  test('branding validators accept production contact formats', () {
-    expect(BrandingValidators.validateOptionalPhone('919876543210'), isNull);
-    expect(BrandingValidators.validateOptionalPhone('98765'), isNotNull);
-    expect(
-      BrandingValidators.validateOptionalEmail('support@lotus.jewelry'),
-      isNull,
-    );
+  test('branding validator accepts production website formats', () {
     expect(
       BrandingValidators.validateOptionalWebsite('lotusjewellers.com'),
       isNull,
     );
     expect(BrandingValidators.validateOptionalWebsite('lotus'), isNotNull);
+    expect(BrandingValidators.validateOptionalHandleOrUrl('@lotus'), isNull);
+    expect(
+      BrandingValidators.validateOptionalHandleOrUrl('@lotus jewellery'),
+      isNotNull,
+    );
     expect(
       BrandingValidators.validateOptionalWhatsAppChannel(
         'whatsapp.com/channel/lotus',
       ),
       isNull,
-    );
-    expect(
-      BrandingValidators.validateOptionalWhatsAppChannel(
-        'telegram.com/channel/lotus',
-      ),
-      isNotNull,
     );
   });
 

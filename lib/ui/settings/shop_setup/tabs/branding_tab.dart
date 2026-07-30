@@ -8,7 +8,6 @@
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 // --- IMPORTS ---
 import '../../../../logic/setting/shop_setup/tabs/branding/branding_logic.dart';
@@ -42,28 +41,13 @@ class BrandingTabState extends State<BrandingTab> {
 
     // 🚀 NEW: AUTO-FILL LOGIC FOR SOCIAL & SUPPORT LINKS (Database Fetch)
     if (widget.brandingData != null && widget.brandingData!.isNotEmpty) {
+      logic.webCtrl.text = widget.brandingData!['website']?.toString() ?? '';
       logic.instaCtrl.text =
           widget.brandingData!['instagram']?.toString() ?? '';
       logic.fbCtrl.text = widget.brandingData!['facebook']?.toString() ?? '';
       logic.ytCtrl.text = widget.brandingData!['youtube']?.toString() ?? '';
-      logic.webCtrl.text = widget.brandingData!['website']?.toString() ?? '';
       logic.waChannelCtrl.text =
           widget.brandingData!['whatsapp_channel']?.toString() ?? '';
-
-      // Agar explicitly branding mein hi support data save kiya tha, toh usko use karein
-      if (widget.brandingData!['whatsapp_business'] != null &&
-          widget.brandingData!['whatsapp_business'].toString().isNotEmpty) {
-        logic.waBizCtrl.text =
-            widget.brandingData!['whatsapp_business'].toString();
-      }
-      if (widget.brandingData!['support_email'] != null &&
-          widget.brandingData!['support_email'].toString().isNotEmpty) {
-        logic.emailCtrl.text = widget.brandingData!['support_email'].toString();
-      }
-      if (widget.brandingData!['support_phone'] != null &&
-          widget.brandingData!['support_phone'].toString().isNotEmpty) {
-        logic.phoneCtrl.text = widget.brandingData!['support_phone'].toString();
-      }
 
       // Logic layer ke state model ko bhi update kar do
       logic.brandingData = ShopBrandingModel.fromJson(
@@ -86,28 +70,7 @@ class BrandingTabState extends State<BrandingTab> {
       {required String phone,
       required String whatsapp,
       required String email}) {
-    bool isUpdated = false;
-
-    // Sirf tabhi update karo jab fields khali hon (Taaki user ka purana data overwrite na ho)
-    if (logic.waBizCtrl.text.isEmpty && whatsapp.isNotEmpty) {
-      logic.waBizCtrl.text = whatsapp;
-      isUpdated = true;
-    }
-    if (logic.emailCtrl.text.isEmpty && email.isNotEmpty) {
-      logic.emailCtrl.text = email;
-      isUpdated = true;
-    }
-    if (logic.phoneCtrl.text.isEmpty && phone.isNotEmpty) {
-      logic.phoneCtrl.text = phone;
-      isUpdated = true;
-    }
-
-    // Agar humne auto-fill kiya hai, toh UI ko ek chhota push denge
-    // taaki TextFields ke side mein green checkmarks turant render ho jayein
-    if (isUpdated && mounted) {
-      logic.generateFinalModel();
-      setState(() {});
-    }
+    // Branding now only manages website; contact data lives in Basic Info.
   }
 
   ShopBrandingModel? validateAndExport() {
@@ -144,7 +107,6 @@ class BrandingTabState extends State<BrandingTab> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      bool isDesktop = constraints.maxWidth > BrandingStyles.desktopBreakpoint;
       return SingleChildScrollView(
         padding: BrandingStyles.padPageBottom,
         child: Column(
@@ -152,45 +114,37 @@ class BrandingTabState extends State<BrandingTab> {
           children: [
             _buildPageHeader(),
             const SizedBox(height: BrandingStyles.spacePageTitle),
-            if (isDesktop) _buildDesktopLayout() else _buildMobileLayout(),
+            _buildBrandChannelsCard(),
           ],
         ),
       );
     });
   }
 
-  Widget _buildDesktopLayout() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _buildSocialCard()),
-        const SizedBox(width: BrandingStyles.spaceCardGap),
-        Expanded(child: _buildSupportCard()),
-      ],
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        _buildSocialCard(),
-        const SizedBox(height: BrandingStyles.spaceCardGap),
-        _buildSupportCard(),
-      ],
-    );
-  }
-
   // --- CARDS ---
 
-  Widget _buildSocialCard() {
+  Widget _buildBrandChannelsCard() {
     return _buildThemeCard(
-      sectionId: 'social',
-      title: BrandingStrings.cardSocialTitle,
+      sectionId: 'channels',
+      title: BrandingStrings.cardChannelsTitle,
       icon: BrandingIcons.secSocial,
       onToggle: () =>
-          _handleSectionToggle('social', BrandingStrings.toggleSocial),
-      formKey: logic.socialKey,
+          _handleSectionToggle('channels', BrandingStrings.toggleChannels),
+      formKey: logic.channelsKey,
       childrenBuilder: (isLocked) => [
+        _ThemeInputField(
+          label: BrandingStrings.lblWebsite,
+          hint: BrandingStrings.hntWebsite,
+          icon: BrandingIcons.website,
+          ctrl: logic.webCtrl,
+          isLocked: isLocked,
+          focusNode: logic.webFocus,
+          nextFocus: logic.instaFocus,
+          brandColor: BrandingColors.brandWeb,
+          platformType: 'website',
+          onLaunchUrl: logic.launchPlatformUrl,
+        ),
+        const SizedBox(height: 14),
         _ThemeInputField(
           label: BrandingStrings.lblInstagram,
           hint: BrandingStrings.hntInstagram,
@@ -203,7 +157,7 @@ class BrandingTabState extends State<BrandingTab> {
           platformType: 'instagram',
           onLaunchUrl: logic.launchPlatformUrl,
         ),
-        const SizedBox(height: BrandingStyles.spaceFieldGap),
+        const SizedBox(height: 14),
         _ThemeInputField(
           label: BrandingStrings.lblFacebook,
           hint: BrandingStrings.hntFacebook,
@@ -216,7 +170,7 @@ class BrandingTabState extends State<BrandingTab> {
           platformType: 'facebook',
           onLaunchUrl: logic.launchPlatformUrl,
         ),
-        const SizedBox(height: BrandingStyles.spaceFieldGap),
+        const SizedBox(height: 14),
         _ThemeInputField(
           label: BrandingStrings.lblYoutube,
           hint: BrandingStrings.hntYoutube,
@@ -224,96 +178,25 @@ class BrandingTabState extends State<BrandingTab> {
           ctrl: logic.ytCtrl,
           isLocked: isLocked,
           focusNode: logic.ytFocus,
-          nextFocus: logic.webFocus,
+          nextFocus: logic.waChannelFocus,
           brandColor: BrandingColors.brandYoutube,
           platformType: 'youtube',
           onLaunchUrl: logic.launchPlatformUrl,
         ),
-        const SizedBox(height: BrandingStyles.spaceFieldGap),
+        const SizedBox(height: 14),
         _ThemeInputField(
-          label: BrandingStrings.lblWebsite,
-          hint: BrandingStrings.hntWebsite,
-          icon: BrandingIcons.website,
-          ctrl: logic.webCtrl,
-          isLocked: isLocked,
-          focusNode: logic.webFocus,
-          isLastField: true,
-          brandColor: BrandingColors.brandWeb,
-          platformType: 'website',
-          onLaunchUrl: logic.launchPlatformUrl,
-          onFieldSubmitted: (_) =>
-              _handleSectionToggle('social', BrandingStrings.toggleSocial),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSupportCard() {
-    return _buildThemeCard(
-      sectionId: 'support',
-      title: BrandingStrings.cardSupportTitle,
-      icon: BrandingIcons.secSupport,
-      onToggle: () =>
-          _handleSectionToggle('support', BrandingStrings.toggleSupport),
-      formKey: logic.supportKey,
-      childrenBuilder: (isLocked) => [
-        _ThemeInputField(
-          label: BrandingStrings.lblWaChannel,
-          hint: BrandingStrings.hntWaChannel,
+          label: BrandingStrings.lblWhatsappChannel,
+          hint: BrandingStrings.hntWhatsappChannel,
           icon: BrandingIcons.whatsappChannel,
           ctrl: logic.waChannelCtrl,
           isLocked: isLocked,
           focusNode: logic.waChannelFocus,
-          nextFocus: logic.waBizFocus,
-          brandColor: BrandingColors.brandWhatsapp,
-          platformType: 'website',
-          onLaunchUrl: logic.launchPlatformUrl,
-        ),
-        const SizedBox(height: BrandingStyles.spaceFieldGap),
-        _ThemeInputField(
-          label: BrandingStrings.lblWaBusiness,
-          hint: BrandingStrings.hntWaBusiness,
-          icon: BrandingIcons.whatsappBiz,
-          ctrl: logic.waBizCtrl,
-          isLocked: isLocked,
-          focusNode: logic.waBizFocus,
-          nextFocus: logic.emailFocus,
-          inputType: TextInputType.phone,
-          maxLength: 15,
-          brandColor: BrandingColors.brandWhatsapp,
-          platformType: 'whatsapp',
-          onLaunchUrl: logic.launchPlatformUrl,
-        ),
-        const SizedBox(height: BrandingStyles.spaceFieldGap),
-        _ThemeInputField(
-          label: BrandingStrings.lblSupportEmail,
-          hint: BrandingStrings.hntSupportEmail,
-          icon: BrandingIcons.email,
-          ctrl: logic.emailCtrl,
-          isLocked: isLocked,
-          focusNode: logic.emailFocus,
-          nextFocus: logic.phoneFocus,
-          inputType: TextInputType.emailAddress,
-          brandColor: BrandingColors.brandEmail,
-          platformType: 'email',
-          onLaunchUrl: logic.launchPlatformUrl,
-        ),
-        const SizedBox(height: BrandingStyles.spaceFieldGap),
-        _ThemeInputField(
-          label: BrandingStrings.lblSupportPhone,
-          hint: BrandingStrings.hntSupportPhone,
-          icon: BrandingIcons.phone,
-          ctrl: logic.phoneCtrl,
-          isLocked: isLocked,
-          focusNode: logic.phoneFocus,
-          inputType: TextInputType.phone,
           isLastField: true,
-          maxLength: 15,
-          brandColor: BrandingColors.brandPhone,
-          platformType: 'phone',
+          brandColor: BrandingColors.brandWhatsapp,
+          platformType: 'whatsapp_channel',
           onLaunchUrl: logic.launchPlatformUrl,
           onFieldSubmitted: (_) =>
-              _handleSectionToggle('support', BrandingStrings.toggleSupport),
+              _handleSectionToggle('channels', BrandingStrings.toggleChannels),
         ),
       ],
     );
@@ -479,10 +362,8 @@ class _ThemeInputField extends StatefulWidget {
   final FocusNode? focusNode;
   final FocusNode? nextFocus;
   final Color? brandColor;
-  final TextInputType inputType;
   final bool isLastField;
   final Function(String)? onFieldSubmitted;
-  final int? maxLength;
 
   final String platformType;
   final Function(String, String)? onLaunchUrl;
@@ -496,10 +377,8 @@ class _ThemeInputField extends StatefulWidget {
     this.focusNode,
     this.nextFocus,
     this.brandColor,
-    this.inputType = TextInputType.text,
     this.isLastField = false,
     this.onFieldSubmitted,
-    this.maxLength,
     required this.platformType,
     this.onLaunchUrl,
   });
@@ -580,16 +459,8 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
                     child: TextFormField(
                       controller: widget.ctrl,
                       readOnly: widget.isLocked,
-                      keyboardType: widget.inputType,
+                      keyboardType: TextInputType.url,
                       focusNode: widget.focusNode,
-                      maxLength: widget.maxLength,
-                      inputFormatters: widget.maxLength != null
-                          ? [
-                              LengthLimitingTextInputFormatter(
-                                  widget.maxLength),
-                              FilteringTextInputFormatter.digitsOnly,
-                            ]
-                          : [],
                       textInputAction: widget.isLastField
                           ? TextInputAction.done
                           : TextInputAction.next,
@@ -598,11 +469,8 @@ class _ThemeInputFieldState extends State<_ThemeInputField> {
                           if (widget.onFieldSubmitted != null) {
                             widget.onFieldSubmitted!(val);
                           }
-                        } else {
-                          if (widget.nextFocus != null) {
-                            FocusScope.of(context)
-                                .requestFocus(widget.nextFocus);
-                          }
+                        } else if (widget.nextFocus != null) {
+                          FocusScope.of(context).requestFocus(widget.nextFocus);
                         }
                       },
                       style: BrandingStyles.textInput(

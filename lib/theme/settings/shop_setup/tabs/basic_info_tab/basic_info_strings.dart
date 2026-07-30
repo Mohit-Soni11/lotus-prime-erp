@@ -17,10 +17,6 @@ class BasicInfoStrings {
   static const String secEnterprise = "Enterprise Registration";
   static const String subEnterprise = "LEGAL & STATUTORY DETAILS";
   static const String subProprietor = "PROPRIETORSHIP / DIRECTORATE";
-  static const String subMeta = "ESTABLISHMENT METADATA";
-
-  static const String secOperations = "Operational Parameters";
-  static const String subHours = "BUSINESS HOURS & AVAILABILITY";
 
   static const String secCommunication = "Support & Communication";
   static const String subTouchpoints = "CUSTOMER TOUCHPOINTS";
@@ -41,18 +37,7 @@ class BasicInfoStrings {
   static const String lblPhone = "Registered Mobile";
   static const String hintPhone = "10 Digit Mobile No.";
 
-  static const String lblWhatsapp = "Official WhatsApp";
   static const String hintWhatsapp = "WhatsApp No.";
-
-  static const String lblEstYear = "Incorporation Year";
-  static const String hintEstYear = "YYYY";
-
-  static const String lblBranch = "Store Unit ID (Branch Code)";
-  static const String hintBranch = "Enter Branch ID";
-
-  static const String lblOpenTime = "Opens At";
-  static const String lblCloseTime = "Closes At";
-  static const String lblHoliday = "Weekly Statutory Holiday";
 
   static const String lblBrandDisplay = "Support Display Name";
   static const String hintBrandDisplay = "Enter Team Name";
@@ -78,27 +63,11 @@ class BasicInfoStrings {
       "Invalid format. Please use JPG or PNG.";
 
   // --- EXTRACTED FROM LOGIC (DEFAULTS & ERROR KEYS) ---
-  static const String valDefaultHoliday = "Sunday";
-  static const String valDefaultBranch = "HQ-001";
-  static const List<String> weekDaysList = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "None"
-  ];
-
   // Field Keys for Validation Tracking
   static const String keyLegalName = "legalName";
   static const String keyDisplayName = "displayName";
   static const String keyOwnerName = "ownerName";
   static const String keyOwnerPhone = "ownerPhone";
-  static const String keyOwnerWa = "ownerWa";
-  static const String keyOpenTime = "openTime";
-  static const String keyCloseTime = "closeTime";
   static const String keyEmail = "email";
   static const String keyShopPhone = "shopPhone";
   static const String keyShopWa = "shopWa";

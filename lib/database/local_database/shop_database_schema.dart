@@ -9,7 +9,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class ShopDatabaseSchema {
   ShopDatabaseSchema._();
 
-  static const int currentVersion = 6;
+  static const int currentVersion = 7;
 
   static Future<void> configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
@@ -22,9 +22,8 @@ class ShopDatabaseSchema {
       CREATE TABLE shop_profile (
         tenant_id TEXT PRIMARY KEY,
         legal_name TEXT, display_name TEXT, tagline TEXT,
-        owner_name TEXT, owner_phone TEXT, owner_whatsapp TEXT,
-        est_year TEXT, branch_code TEXT, open_time TEXT, close_time TEXT,
-        weekly_off TEXT, brand_display_name TEXT, business_email TEXT,
+        owner_name TEXT, owner_phone TEXT,
+        brand_display_name TEXT, business_email TEXT,
         shop_phone TEXT, shop_whatsapp TEXT,
         logo_path TEXT, logo_shape TEXT DEFAULT 'circle',
         signature_path TEXT, signature_shape TEXT DEFAULT 'square'
@@ -36,7 +35,6 @@ class ShopDatabaseSchema {
         tenant_id TEXT PRIMARY KEY,
         type TEXT, addr1 TEXT, addr2 TEXT, city TEXT,
         state TEXT, pincode TEXT, country TEXT,
-        latitude REAL, longitude REAL,
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
       )
     ''');
@@ -57,8 +55,8 @@ class ShopDatabaseSchema {
     await db.execute('''
       CREATE TABLE shop_branding (
         tenant_id TEXT PRIMARY KEY,
-        instagram TEXT, facebook TEXT, youtube TEXT, website TEXT,
-        whatsapp_channel TEXT, whatsapp_business TEXT, support_email TEXT, support_phone TEXT,
+        website TEXT, instagram TEXT, facebook TEXT, youtube TEXT,
+        whatsapp_channel TEXT,
         FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
       )
     ''');
@@ -128,6 +126,40 @@ class ShopDatabaseSchema {
         "TEXT DEFAULT 'Single Registration'",
       );
     }
+    if (oldVersion < 7) {
+      if (!await _tableExists(db, 'shop_branding')) {
+        await db.execute('''
+          CREATE TABLE shop_branding (
+            tenant_id TEXT PRIMARY KEY,
+            website TEXT, instagram TEXT, facebook TEXT, youtube TEXT,
+            whatsapp_channel TEXT,
+            FOREIGN KEY (tenant_id) REFERENCES shop_profile (tenant_id) ON DELETE CASCADE
+          )
+        ''');
+      } else {
+        await _addColumnIfMissing(db, 'shop_branding', 'instagram', 'TEXT');
+        await _addColumnIfMissing(db, 'shop_branding', 'facebook', 'TEXT');
+        await _addColumnIfMissing(db, 'shop_branding', 'youtube', 'TEXT');
+        await _addColumnIfMissing(
+          db,
+          'shop_branding',
+          'whatsapp_channel',
+          'TEXT',
+        );
+      }
+    }
+  }
+
+  static Future<bool> _tableExists(Database db, String tableName) async {
+    final rows = await db.rawQuery(
+      '''
+      SELECT 1 FROM sqlite_master
+      WHERE type = 'table' AND name = ?
+      LIMIT 1
+      ''',
+      [tableName],
+    );
+    return rows.isNotEmpty;
   }
 
   static Future<void> _addColumnIfMissing(

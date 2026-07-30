@@ -86,7 +86,6 @@ class ShopPrintDocumentField {
       case ShopPrintFieldGroup.identity:
         if (id == 'shop_name' || id == 'tagline') return value;
         if (id == 'legal_name') return 'Legal Name: $value';
-        if (id == 'branch_code') return 'Branch: $value';
         return '$label: $value';
       case ShopPrintFieldGroup.address:
         return value;
@@ -258,15 +257,6 @@ class ShopPrintInformationCatalog {
         defaultEnabled: false,
       ),
       ShopPrintField(
-        id: 'branch_code',
-        label: 'Branch Code',
-        description: 'Branch identifier for multi-branch billing.',
-        sourceSection: 'Basic Info',
-        value: _value(basic['branch_code']),
-        group: ShopPrintFieldGroup.identity,
-        defaultEnabled: false,
-      ),
-      ShopPrintField(
         id: 'logo',
         label: 'Logo',
         description: 'Shop logo in the invoice header.',
@@ -383,8 +373,8 @@ class ShopPrintInformationCatalog {
       ),
       ShopPrintField(
         id: 'instagram',
-        label: 'Instagram Channel',
-        description: 'Instagram handle or page link.',
+        label: 'Instagram',
+        description: 'Instagram profile for offers and brand updates.',
         sourceSection: 'Branding',
         value: _value(branding['instagram']),
         group: ShopPrintFieldGroup.social,
@@ -392,37 +382,28 @@ class ShopPrintInformationCatalog {
       ),
       ShopPrintField(
         id: 'facebook',
-        label: 'Facebook Channel',
-        description: 'Facebook page or profile link.',
+        label: 'Facebook',
+        description: 'Facebook page for customer engagement.',
         sourceSection: 'Branding',
         value: _value(branding['facebook']),
         group: ShopPrintFieldGroup.social,
         defaultEnabled: false,
       ),
       ShopPrintField(
-        id: 'whatsapp_channel',
-        label: 'WhatsApp Channel',
-        description: 'WhatsApp broadcast or channel link.',
-        sourceSection: 'Branding',
-        value: _value(branding['whatsapp_channel']),
-        group: ShopPrintFieldGroup.social,
-        defaultEnabled: false,
-      ),
-      ShopPrintField(
-        id: 'whatsapp_business',
-        label: 'WhatsApp Business',
-        description: 'WhatsApp Business API or support number.',
-        sourceSection: 'Branding',
-        value: _value(branding['whatsapp_business']),
-        group: ShopPrintFieldGroup.social,
-        defaultEnabled: false,
-      ),
-      ShopPrintField(
         id: 'youtube',
-        label: 'YouTube Channel',
-        description: 'YouTube channel link for brand discovery.',
+        label: 'YouTube',
+        description: 'YouTube channel for brand and product videos.',
         sourceSection: 'Branding',
         value: _value(branding['youtube']),
+        group: ShopPrintFieldGroup.social,
+        defaultEnabled: false,
+      ),
+      ShopPrintField(
+        id: 'whatsapp_channel',
+        label: 'WhatsApp Channel',
+        description: 'WhatsApp channel for promotions and announcements.',
+        sourceSection: 'Branding',
+        value: _value(branding['whatsapp_channel']),
         group: ShopPrintFieldGroup.social,
         defaultEnabled: false,
       ),

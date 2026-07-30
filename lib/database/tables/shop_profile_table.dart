@@ -10,14 +10,6 @@ class ShopProfiles extends Table with BaseTable {
   TextColumn get tagline => text().nullable()();
   TextColumn get ownerName => text().nullable()();
   TextColumn get ownerContact => text().nullable()();
-  TextColumn get ownerWhatsapp => text().nullable()(); // Personal WA
-  TextColumn get estYear => text().nullable()();
-  TextColumn get branchCode => text().nullable()();
-
-  // --- Operations ---
-  TextColumn get openingTime => text().nullable()();
-  TextColumn get closingTime => text().nullable()();
-  TextColumn get weeklyOff => text().nullable()();
 
   // --- Communication ---
   TextColumn get email => text().nullable()();
@@ -33,18 +25,14 @@ class ShopProfiles extends Table with BaseTable {
   TextColumn get signatureShape =>
       text().withDefault(const Constant('square'))();
 
-  // --- 2. Address & Map ---
+  // --- 2. Address ---
   TextColumn get address => text().nullable()();
   TextColumn get city => text().nullable()();
   TextColumn get state => text().nullable()();
   TextColumn get pincode => text().nullable()();
   TextColumn get country => text().nullable()();
-  TextColumn get mapConfig =>
-      text().nullable()(); // JSON string for map coordinates
 
-  // --- 3. Social & Support ---
-  TextColumn get instagramLink => text().nullable()();
-  TextColumn get facebookLink => text().nullable()();
+  // --- 3. Online Presence ---
   TextColumn get website => text().nullable()();
 
   // --- 4. Statutory (GST & BIS) ---

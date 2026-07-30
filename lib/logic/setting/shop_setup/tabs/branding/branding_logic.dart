@@ -21,80 +21,44 @@ class BrandingLogic extends ChangeNotifier {
   ShopBrandingModel brandingData = const ShopBrandingModel();
 
   // --- STATE LOCKS ---
-  bool isSocialLocked = true;
-  bool isSupportLocked = true;
+  bool isChannelsLocked = true;
 
   // 🚀 UPGRADE: Changed to String to perfectly match UI requirements
   String? loadingSection;
   String? lastValidationError;
 
   // 🚀 UPGRADE: Added Missing GlobalKeys to prevent UI runtime crashes
-  final GlobalKey<FormState> socialKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> supportKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> channelsKey = GlobalKey<FormState>();
 
-  // --- CONTROLLERS (Social) ---
+  final TextEditingController webCtrl = TextEditingController();
   final TextEditingController instaCtrl = TextEditingController();
   final TextEditingController fbCtrl = TextEditingController();
   final TextEditingController ytCtrl = TextEditingController();
-  final TextEditingController webCtrl = TextEditingController();
-
-  // --- CONTROLLERS (Support) ---
   final TextEditingController waChannelCtrl = TextEditingController();
-  final TextEditingController waBizCtrl = TextEditingController();
-  final TextEditingController emailCtrl = TextEditingController();
-  final TextEditingController phoneCtrl = TextEditingController();
 
-  // --- FOCUS NODES ---
+  final FocusNode webFocus = FocusNode();
   final FocusNode instaFocus = FocusNode();
   final FocusNode fbFocus = FocusNode();
   final FocusNode ytFocus = FocusNode();
-  final FocusNode webFocus = FocusNode();
-
   final FocusNode waChannelFocus = FocusNode();
-  final FocusNode waBizFocus = FocusNode();
-  final FocusNode emailFocus = FocusNode();
-  final FocusNode phoneFocus = FocusNode();
 
   // --- SMART INITIALIZATION ---
   void init(ShopProfileModel? basicInfoData) {
-    if (basicInfoData != null) {
-      if (waBizCtrl.text.isEmpty) {
-        waBizCtrl.text = basicInfoData.shopWhatsapp.isNotEmpty
-            ? basicInfoData.shopWhatsapp
-            : basicInfoData.ownerWhatsapp;
-      }
-
-      if (emailCtrl.text.isEmpty) {
-        emailCtrl.text = basicInfoData.businessEmail;
-      }
-
-      if (phoneCtrl.text.isEmpty) {
-        phoneCtrl.text = basicInfoData.shopPhone.isNotEmpty
-            ? basicInfoData.shopPhone
-            : basicInfoData.ownerPhone;
-      }
-    }
+    // Website branding is intentionally independent from Basic Info contacts.
   }
 
   // --- UI HELPER METHODS ---
 
   /// Checks if a specific section is currently locked.
   bool isSectionLocked(String sectionId) {
-    return sectionId == 'social' ? isSocialLocked : isSupportLocked;
+    return isChannelsLocked;
   }
 
   /// Unlocks a section and returns the first FocusNode to auto-focus the keyboard.
   FocusNode? unlockSection(String sectionId) {
-    if (sectionId == 'social') {
-      isSocialLocked = false;
-      notifyListeners();
-      return instaFocus;
-    } else if (sectionId == 'support') {
-      isSupportLocked = false;
-      notifyListeners();
-      return waChannelFocus;
-    }
-    return null;
+    isChannelsLocked = false;
+    notifyListeners();
+    return webFocus;
   }
 
   // --- LOGIC: ASYNC SAVE & SMART VALIDATION ---
@@ -116,23 +80,8 @@ class BrandingLogic extends ChangeNotifier {
     await Future.delayed(const Duration(milliseconds: 300));
 
     // 3. Save Data & Lock Section
-    if (sectionId == 'social') {
-      brandingData = brandingData.copyWith(
-        instagram: instaCtrl.text.trim(),
-        facebook: fbCtrl.text.trim(),
-        youtube: ytCtrl.text.trim(),
-        website: webCtrl.text.trim(),
-      );
-      isSocialLocked = true;
-    } else if (sectionId == 'support') {
-      brandingData = brandingData.copyWith(
-        whatsappChannel: waChannelCtrl.text.trim(),
-        whatsappBusiness: waBizCtrl.text.trim(),
-        supportEmail: emailCtrl.text.trim(),
-        supportPhone: phoneCtrl.text.trim(),
-      );
-      isSupportLocked = true;
-    }
+    brandingData = generateFinalModel(notify: false);
+    isChannelsLocked = true;
 
     loadingSection = null;
     notifyListeners();
@@ -150,97 +99,62 @@ class BrandingLogic extends ChangeNotifier {
     return generateFinalModel();
   }
 
-  ShopBrandingModel generateFinalModel() {
+  ShopBrandingModel generateFinalModel({bool notify = true}) {
     brandingData = ShopBrandingModel(
+      website: webCtrl.text.trim(),
       instagram: instaCtrl.text.trim(),
       facebook: fbCtrl.text.trim(),
       youtube: ytCtrl.text.trim(),
-      website: webCtrl.text.trim(),
       whatsappChannel: waChannelCtrl.text.trim(),
-      whatsappBusiness: waBizCtrl.text.trim(),
-      supportEmail: emailCtrl.text.trim(),
-      supportPhone: phoneCtrl.text.trim(),
     );
-    notifyListeners();
+    if (notify) notifyListeners();
     return brandingData;
   }
 
   List<_BrandingValidationFailure> _validationFailures({String? sectionId}) {
     final failures = <_BrandingValidationFailure>[];
-    final includeSocial = sectionId == null || sectionId == 'social';
-    final includeSupport = sectionId == null || sectionId == 'support';
-
-    if (includeSocial) {
-      _addFailure(
-        failures,
-        fieldLabel: 'Instagram Handle',
-        sectionId: 'social',
-        focusNode: instaFocus,
-        error: BrandingValidators.validateOptionalSocialLink(instaCtrl.text),
-        fallbackMessage: 'remove spaces from the handle or link.',
-      );
-      _addFailure(
-        failures,
-        fieldLabel: 'Facebook Page',
-        sectionId: 'social',
-        focusNode: fbFocus,
-        error: BrandingValidators.validateOptionalSocialLink(fbCtrl.text),
-        fallbackMessage: 'remove spaces from the page link.',
-      );
-      _addFailure(
-        failures,
-        fieldLabel: 'YouTube Channel',
-        sectionId: 'social',
-        focusNode: ytFocus,
-        error: BrandingValidators.validateOptionalSocialLink(ytCtrl.text),
-        fallbackMessage: 'remove spaces from the channel link.',
-      );
-      _addFailure(
-        failures,
-        fieldLabel: 'Official Website',
-        sectionId: 'social',
-        focusNode: webFocus,
-        error: BrandingValidators.validateOptionalWebsite(webCtrl.text),
-        fallbackMessage: 'enter a domain like lotusjewellers.com.',
-      );
-    }
-
-    if (includeSupport) {
-      _addFailure(
-        failures,
-        fieldLabel: 'WhatsApp Channel Link',
-        sectionId: 'support',
-        focusNode: waChannelFocus,
-        error: BrandingValidators.validateOptionalWhatsAppChannel(
-          waChannelCtrl.text,
-        ),
-        fallbackMessage: 'paste a link like whatsapp.com/channel/...',
-      );
-      _addFailure(
-        failures,
-        fieldLabel: 'WhatsApp Business API',
-        sectionId: 'support',
-        focusNode: waBizFocus,
-        error: BrandingValidators.validateOptionalPhone(waBizCtrl.text),
-        fallbackMessage: 'enter 10-15 digits only.',
-      );
-      _addFailure(
-        failures,
-        fieldLabel: 'Official Support Email',
-        sectionId: 'support',
-        focusNode: emailFocus,
-        error: BrandingValidators.validateOptionalEmail(emailCtrl.text),
-        fallbackMessage: 'enter an email like help@brand.com.',
-      );
-      _addFailure(
-        failures,
-        fieldLabel: 'Helpline / Toll Free',
-        sectionId: 'support',
-        focusNode: phoneFocus,
-        error: BrandingValidators.validateOptionalPhone(phoneCtrl.text),
-        fallbackMessage: 'enter 10-15 digits only.',
-      );
-    }
+    _addFailure(
+      failures,
+      fieldLabel: 'Official Website',
+      sectionId: 'website',
+      focusNode: webFocus,
+      error: BrandingValidators.validateOptionalWebsite(webCtrl.text),
+      fallbackMessage: 'enter a domain like lotusjewellers.com.',
+    );
+    _addFailure(
+      failures,
+      fieldLabel: 'Instagram',
+      sectionId: 'channels',
+      focusNode: instaFocus,
+      error: BrandingValidators.validateOptionalHandleOrUrl(instaCtrl.text),
+      fallbackMessage: 'enter a handle or link without spaces.',
+    );
+    _addFailure(
+      failures,
+      fieldLabel: 'Facebook',
+      sectionId: 'channels',
+      focusNode: fbFocus,
+      error: BrandingValidators.validateOptionalHandleOrUrl(fbCtrl.text),
+      fallbackMessage: 'enter a page link without spaces.',
+    );
+    _addFailure(
+      failures,
+      fieldLabel: 'YouTube',
+      sectionId: 'channels',
+      focusNode: ytFocus,
+      error: BrandingValidators.validateOptionalHandleOrUrl(ytCtrl.text),
+      fallbackMessage: 'enter a channel link without spaces.',
+    );
+    _addFailure(
+      failures,
+      fieldLabel: 'WhatsApp Channel',
+      sectionId: 'channels',
+      focusNode: waChannelFocus,
+      error: BrandingValidators.validateOptionalWhatsAppChannel(
+        waChannelCtrl.text,
+      ),
+      fallbackMessage: 'paste a link like whatsapp.com/channel/...',
+    );
 
     return failures;
   }
@@ -272,13 +186,7 @@ class BrandingLogic extends ChangeNotifier {
     if (normalized.contains('whatsapp channel')) {
       return 'paste a link like whatsapp.com/channel/...';
     }
-    if (normalized.contains('email')) {
-      return 'enter an email like help@brand.com.';
-    }
-    if (normalized.contains('digit') || normalized.contains('number')) {
-      return 'enter 10-15 digits only.';
-    }
-    if (normalized.contains('space')) {
+    if (normalized.contains('spaces')) {
       return 'remove spaces from the handle or link.';
     }
     return fallbackMessage;
@@ -287,8 +195,10 @@ class BrandingLogic extends ChangeNotifier {
   void _handleValidationFailures(List<_BrandingValidationFailure> failures) {
     final invalidSections =
         failures.map((failure) => failure.sectionId).toSet();
-    if (invalidSections.contains('social')) isSocialLocked = false;
-    if (invalidSections.contains('support')) isSupportLocked = false;
+    if (invalidSections.contains('website') ||
+        invalidSections.contains('channels')) {
+      isChannelsLocked = false;
+    }
 
     lastValidationError =
         failures.take(3).map((failure) => failure.message).join('\n');
@@ -308,27 +218,28 @@ class BrandingLogic extends ChangeNotifier {
     final cleanValue = value.trim();
 
     switch (platform) {
-      case SocialPlatform.instagram:
-        urlString = "https://instagram.com/${cleanValue.replaceAll('@', '')}";
-        break;
-      case SocialPlatform.facebook:
-      case SocialPlatform.youtube:
       case SocialPlatform.website:
         urlString =
             cleanValue.startsWith('http') ? cleanValue : "https://$cleanValue";
         break;
-      case SocialPlatform.whatsapp:
-        final digits = cleanValue.replaceAll(RegExp(r'\D'), '');
-        final normalized = digits.length == 10
-            ? '91$digits'
-            : (digits.startsWith('91') ? digits : '91$digits');
-        urlString = "https://wa.me/$normalized";
+      case SocialPlatform.instagram:
+        urlString = cleanValue.startsWith('http')
+            ? cleanValue
+            : "https://instagram.com/${cleanValue.replaceAll('@', '')}";
         break;
-      case SocialPlatform.email:
-        urlString = "mailto:$cleanValue";
+      case SocialPlatform.facebook:
+        urlString = cleanValue.startsWith('http')
+            ? cleanValue
+            : "https://facebook.com/$cleanValue";
         break;
-      case SocialPlatform.phone:
-        urlString = "tel:$cleanValue";
+      case SocialPlatform.youtube:
+        urlString = cleanValue.startsWith('http')
+            ? cleanValue
+            : "https://youtube.com/$cleanValue";
+        break;
+      case SocialPlatform.whatsappChannel:
+        urlString =
+            cleanValue.startsWith('http') ? cleanValue : "https://$cleanValue";
         break;
     }
 
@@ -344,23 +255,16 @@ class BrandingLogic extends ChangeNotifier {
 
   @override
   void dispose() {
+    webCtrl.dispose();
     instaCtrl.dispose();
     fbCtrl.dispose();
     ytCtrl.dispose();
-    webCtrl.dispose();
     waChannelCtrl.dispose();
-    waBizCtrl.dispose();
-    emailCtrl.dispose();
-    phoneCtrl.dispose();
-
+    webFocus.dispose();
     instaFocus.dispose();
     fbFocus.dispose();
     ytFocus.dispose();
-    webFocus.dispose();
     waChannelFocus.dispose();
-    waBizFocus.dispose();
-    emailFocus.dispose();
-    phoneFocus.dispose();
 
     super.dispose();
   }

@@ -2694,42 +2694,6 @@ class $ShopProfilesTable extends ShopProfiles
   late final GeneratedColumn<String> ownerContact = GeneratedColumn<String>(
       'owner_contact', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _ownerWhatsappMeta =
-      const VerificationMeta('ownerWhatsapp');
-  @override
-  late final GeneratedColumn<String> ownerWhatsapp = GeneratedColumn<String>(
-      'owner_whatsapp', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _estYearMeta =
-      const VerificationMeta('estYear');
-  @override
-  late final GeneratedColumn<String> estYear = GeneratedColumn<String>(
-      'est_year', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _branchCodeMeta =
-      const VerificationMeta('branchCode');
-  @override
-  late final GeneratedColumn<String> branchCode = GeneratedColumn<String>(
-      'branch_code', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _openingTimeMeta =
-      const VerificationMeta('openingTime');
-  @override
-  late final GeneratedColumn<String> openingTime = GeneratedColumn<String>(
-      'opening_time', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _closingTimeMeta =
-      const VerificationMeta('closingTime');
-  @override
-  late final GeneratedColumn<String> closingTime = GeneratedColumn<String>(
-      'closing_time', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _weeklyOffMeta =
-      const VerificationMeta('weeklyOff');
-  @override
-  late final GeneratedColumn<String> weeklyOff = GeneratedColumn<String>(
-      'weekly_off', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _emailMeta = const VerificationMeta('email');
   @override
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
@@ -2814,24 +2778,6 @@ class $ShopProfilesTable extends ShopProfiles
   @override
   late final GeneratedColumn<String> country = GeneratedColumn<String>(
       'country', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _mapConfigMeta =
-      const VerificationMeta('mapConfig');
-  @override
-  late final GeneratedColumn<String> mapConfig = GeneratedColumn<String>(
-      'map_config', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _instagramLinkMeta =
-      const VerificationMeta('instagramLink');
-  @override
-  late final GeneratedColumn<String> instagramLink = GeneratedColumn<String>(
-      'instagram_link', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _facebookLinkMeta =
-      const VerificationMeta('facebookLink');
-  @override
-  late final GeneratedColumn<String> facebookLink = GeneratedColumn<String>(
-      'facebook_link', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _websiteMeta =
       const VerificationMeta('website');
@@ -2944,12 +2890,6 @@ class $ShopProfilesTable extends ShopProfiles
         tagline,
         ownerName,
         ownerContact,
-        ownerWhatsapp,
-        estYear,
-        branchCode,
-        openingTime,
-        closingTime,
-        weeklyOff,
         email,
         contactNumber,
         whatsappNumber,
@@ -2964,9 +2904,6 @@ class $ShopProfilesTable extends ShopProfiles
         state,
         pincode,
         country,
-        mapConfig,
-        instagramLink,
-        facebookLink,
         website,
         gstin,
         gstType,
@@ -3025,38 +2962,6 @@ class $ShopProfilesTable extends ShopProfiles
           _ownerContactMeta,
           ownerContact.isAcceptableOrUnknown(
               data['owner_contact']!, _ownerContactMeta));
-    }
-    if (data.containsKey('owner_whatsapp')) {
-      context.handle(
-          _ownerWhatsappMeta,
-          ownerWhatsapp.isAcceptableOrUnknown(
-              data['owner_whatsapp']!, _ownerWhatsappMeta));
-    }
-    if (data.containsKey('est_year')) {
-      context.handle(_estYearMeta,
-          estYear.isAcceptableOrUnknown(data['est_year']!, _estYearMeta));
-    }
-    if (data.containsKey('branch_code')) {
-      context.handle(
-          _branchCodeMeta,
-          branchCode.isAcceptableOrUnknown(
-              data['branch_code']!, _branchCodeMeta));
-    }
-    if (data.containsKey('opening_time')) {
-      context.handle(
-          _openingTimeMeta,
-          openingTime.isAcceptableOrUnknown(
-              data['opening_time']!, _openingTimeMeta));
-    }
-    if (data.containsKey('closing_time')) {
-      context.handle(
-          _closingTimeMeta,
-          closingTime.isAcceptableOrUnknown(
-              data['closing_time']!, _closingTimeMeta));
-    }
-    if (data.containsKey('weekly_off')) {
-      context.handle(_weeklyOffMeta,
-          weeklyOff.isAcceptableOrUnknown(data['weekly_off']!, _weeklyOffMeta));
     }
     if (data.containsKey('email')) {
       context.handle(
@@ -3125,22 +3030,6 @@ class $ShopProfilesTable extends ShopProfiles
     if (data.containsKey('country')) {
       context.handle(_countryMeta,
           country.isAcceptableOrUnknown(data['country']!, _countryMeta));
-    }
-    if (data.containsKey('map_config')) {
-      context.handle(_mapConfigMeta,
-          mapConfig.isAcceptableOrUnknown(data['map_config']!, _mapConfigMeta));
-    }
-    if (data.containsKey('instagram_link')) {
-      context.handle(
-          _instagramLinkMeta,
-          instagramLink.isAcceptableOrUnknown(
-              data['instagram_link']!, _instagramLinkMeta));
-    }
-    if (data.containsKey('facebook_link')) {
-      context.handle(
-          _facebookLinkMeta,
-          facebookLink.isAcceptableOrUnknown(
-              data['facebook_link']!, _facebookLinkMeta));
     }
     if (data.containsKey('website')) {
       context.handle(_websiteMeta,
@@ -3237,18 +3126,6 @@ class $ShopProfilesTable extends ShopProfiles
           .read(DriftSqlType.string, data['${effectivePrefix}owner_name']),
       ownerContact: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}owner_contact']),
-      ownerWhatsapp: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}owner_whatsapp']),
-      estYear: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}est_year']),
-      branchCode: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}branch_code']),
-      openingTime: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}opening_time']),
-      closingTime: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}closing_time']),
-      weeklyOff: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}weekly_off']),
       email: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}email']),
       contactNumber: attachedDatabase.typeMapping
@@ -3277,12 +3154,6 @@ class $ShopProfilesTable extends ShopProfiles
           .read(DriftSqlType.string, data['${effectivePrefix}pincode']),
       country: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}country']),
-      mapConfig: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}map_config']),
-      instagramLink: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}instagram_link']),
-      facebookLink: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}facebook_link']),
       website: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}website']),
       gstin: attachedDatabase.typeMapping
@@ -3331,12 +3202,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
   final String? tagline;
   final String? ownerName;
   final String? ownerContact;
-  final String? ownerWhatsapp;
-  final String? estYear;
-  final String? branchCode;
-  final String? openingTime;
-  final String? closingTime;
-  final String? weeklyOff;
   final String? email;
   final String? contactNumber;
   final String? whatsappNumber;
@@ -3351,9 +3216,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
   final String? state;
   final String? pincode;
   final String? country;
-  final String? mapConfig;
-  final String? instagramLink;
-  final String? facebookLink;
   final String? website;
   final String? gstin;
   final String? gstType;
@@ -3378,12 +3240,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       this.tagline,
       this.ownerName,
       this.ownerContact,
-      this.ownerWhatsapp,
-      this.estYear,
-      this.branchCode,
-      this.openingTime,
-      this.closingTime,
-      this.weeklyOff,
       this.email,
       this.contactNumber,
       this.whatsappNumber,
@@ -3398,9 +3254,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       this.state,
       this.pincode,
       this.country,
-      this.mapConfig,
-      this.instagramLink,
-      this.facebookLink,
       this.website,
       this.gstin,
       this.gstType,
@@ -3436,24 +3289,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
     }
     if (!nullToAbsent || ownerContact != null) {
       map['owner_contact'] = Variable<String>(ownerContact);
-    }
-    if (!nullToAbsent || ownerWhatsapp != null) {
-      map['owner_whatsapp'] = Variable<String>(ownerWhatsapp);
-    }
-    if (!nullToAbsent || estYear != null) {
-      map['est_year'] = Variable<String>(estYear);
-    }
-    if (!nullToAbsent || branchCode != null) {
-      map['branch_code'] = Variable<String>(branchCode);
-    }
-    if (!nullToAbsent || openingTime != null) {
-      map['opening_time'] = Variable<String>(openingTime);
-    }
-    if (!nullToAbsent || closingTime != null) {
-      map['closing_time'] = Variable<String>(closingTime);
-    }
-    if (!nullToAbsent || weeklyOff != null) {
-      map['weekly_off'] = Variable<String>(weeklyOff);
     }
     if (!nullToAbsent || email != null) {
       map['email'] = Variable<String>(email);
@@ -3492,15 +3327,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
     }
     if (!nullToAbsent || country != null) {
       map['country'] = Variable<String>(country);
-    }
-    if (!nullToAbsent || mapConfig != null) {
-      map['map_config'] = Variable<String>(mapConfig);
-    }
-    if (!nullToAbsent || instagramLink != null) {
-      map['instagram_link'] = Variable<String>(instagramLink);
-    }
-    if (!nullToAbsent || facebookLink != null) {
-      map['facebook_link'] = Variable<String>(facebookLink);
     }
     if (!nullToAbsent || website != null) {
       map['website'] = Variable<String>(website);
@@ -3564,24 +3390,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       ownerContact: ownerContact == null && nullToAbsent
           ? const Value.absent()
           : Value(ownerContact),
-      ownerWhatsapp: ownerWhatsapp == null && nullToAbsent
-          ? const Value.absent()
-          : Value(ownerWhatsapp),
-      estYear: estYear == null && nullToAbsent
-          ? const Value.absent()
-          : Value(estYear),
-      branchCode: branchCode == null && nullToAbsent
-          ? const Value.absent()
-          : Value(branchCode),
-      openingTime: openingTime == null && nullToAbsent
-          ? const Value.absent()
-          : Value(openingTime),
-      closingTime: closingTime == null && nullToAbsent
-          ? const Value.absent()
-          : Value(closingTime),
-      weeklyOff: weeklyOff == null && nullToAbsent
-          ? const Value.absent()
-          : Value(weeklyOff),
       email:
           email == null && nullToAbsent ? const Value.absent() : Value(email),
       contactNumber: contactNumber == null && nullToAbsent
@@ -3616,15 +3424,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       country: country == null && nullToAbsent
           ? const Value.absent()
           : Value(country),
-      mapConfig: mapConfig == null && nullToAbsent
-          ? const Value.absent()
-          : Value(mapConfig),
-      instagramLink: instagramLink == null && nullToAbsent
-          ? const Value.absent()
-          : Value(instagramLink),
-      facebookLink: facebookLink == null && nullToAbsent
-          ? const Value.absent()
-          : Value(facebookLink),
       website: website == null && nullToAbsent
           ? const Value.absent()
           : Value(website),
@@ -3676,12 +3475,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       tagline: serializer.fromJson<String?>(json['tagline']),
       ownerName: serializer.fromJson<String?>(json['ownerName']),
       ownerContact: serializer.fromJson<String?>(json['ownerContact']),
-      ownerWhatsapp: serializer.fromJson<String?>(json['ownerWhatsapp']),
-      estYear: serializer.fromJson<String?>(json['estYear']),
-      branchCode: serializer.fromJson<String?>(json['branchCode']),
-      openingTime: serializer.fromJson<String?>(json['openingTime']),
-      closingTime: serializer.fromJson<String?>(json['closingTime']),
-      weeklyOff: serializer.fromJson<String?>(json['weeklyOff']),
       email: serializer.fromJson<String?>(json['email']),
       contactNumber: serializer.fromJson<String?>(json['contactNumber']),
       whatsappNumber: serializer.fromJson<String?>(json['whatsappNumber']),
@@ -3696,9 +3489,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       state: serializer.fromJson<String?>(json['state']),
       pincode: serializer.fromJson<String?>(json['pincode']),
       country: serializer.fromJson<String?>(json['country']),
-      mapConfig: serializer.fromJson<String?>(json['mapConfig']),
-      instagramLink: serializer.fromJson<String?>(json['instagramLink']),
-      facebookLink: serializer.fromJson<String?>(json['facebookLink']),
       website: serializer.fromJson<String?>(json['website']),
       gstin: serializer.fromJson<String?>(json['gstin']),
       gstType: serializer.fromJson<String?>(json['gstType']),
@@ -3729,12 +3519,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       'tagline': serializer.toJson<String?>(tagline),
       'ownerName': serializer.toJson<String?>(ownerName),
       'ownerContact': serializer.toJson<String?>(ownerContact),
-      'ownerWhatsapp': serializer.toJson<String?>(ownerWhatsapp),
-      'estYear': serializer.toJson<String?>(estYear),
-      'branchCode': serializer.toJson<String?>(branchCode),
-      'openingTime': serializer.toJson<String?>(openingTime),
-      'closingTime': serializer.toJson<String?>(closingTime),
-      'weeklyOff': serializer.toJson<String?>(weeklyOff),
       'email': serializer.toJson<String?>(email),
       'contactNumber': serializer.toJson<String?>(contactNumber),
       'whatsappNumber': serializer.toJson<String?>(whatsappNumber),
@@ -3749,9 +3533,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       'state': serializer.toJson<String?>(state),
       'pincode': serializer.toJson<String?>(pincode),
       'country': serializer.toJson<String?>(country),
-      'mapConfig': serializer.toJson<String?>(mapConfig),
-      'instagramLink': serializer.toJson<String?>(instagramLink),
-      'facebookLink': serializer.toJson<String?>(facebookLink),
       'website': serializer.toJson<String?>(website),
       'gstin': serializer.toJson<String?>(gstin),
       'gstType': serializer.toJson<String?>(gstType),
@@ -3779,12 +3560,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           Value<String?> tagline = const Value.absent(),
           Value<String?> ownerName = const Value.absent(),
           Value<String?> ownerContact = const Value.absent(),
-          Value<String?> ownerWhatsapp = const Value.absent(),
-          Value<String?> estYear = const Value.absent(),
-          Value<String?> branchCode = const Value.absent(),
-          Value<String?> openingTime = const Value.absent(),
-          Value<String?> closingTime = const Value.absent(),
-          Value<String?> weeklyOff = const Value.absent(),
           Value<String?> email = const Value.absent(),
           Value<String?> contactNumber = const Value.absent(),
           Value<String?> whatsappNumber = const Value.absent(),
@@ -3799,9 +3574,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           Value<String?> state = const Value.absent(),
           Value<String?> pincode = const Value.absent(),
           Value<String?> country = const Value.absent(),
-          Value<String?> mapConfig = const Value.absent(),
-          Value<String?> instagramLink = const Value.absent(),
-          Value<String?> facebookLink = const Value.absent(),
           Value<String?> website = const Value.absent(),
           Value<String?> gstin = const Value.absent(),
           Value<String?> gstType = const Value.absent(),
@@ -3827,13 +3599,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
         ownerName: ownerName.present ? ownerName.value : this.ownerName,
         ownerContact:
             ownerContact.present ? ownerContact.value : this.ownerContact,
-        ownerWhatsapp:
-            ownerWhatsapp.present ? ownerWhatsapp.value : this.ownerWhatsapp,
-        estYear: estYear.present ? estYear.value : this.estYear,
-        branchCode: branchCode.present ? branchCode.value : this.branchCode,
-        openingTime: openingTime.present ? openingTime.value : this.openingTime,
-        closingTime: closingTime.present ? closingTime.value : this.closingTime,
-        weeklyOff: weeklyOff.present ? weeklyOff.value : this.weeklyOff,
         email: email.present ? email.value : this.email,
         contactNumber:
             contactNumber.present ? contactNumber.value : this.contactNumber,
@@ -3853,11 +3618,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
         state: state.present ? state.value : this.state,
         pincode: pincode.present ? pincode.value : this.pincode,
         country: country.present ? country.value : this.country,
-        mapConfig: mapConfig.present ? mapConfig.value : this.mapConfig,
-        instagramLink:
-            instagramLink.present ? instagramLink.value : this.instagramLink,
-        facebookLink:
-            facebookLink.present ? facebookLink.value : this.facebookLink,
         website: website.present ? website.value : this.website,
         gstin: gstin.present ? gstin.value : this.gstin,
         gstType: gstType.present ? gstType.value : this.gstType,
@@ -3889,17 +3649,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       ownerContact: data.ownerContact.present
           ? data.ownerContact.value
           : this.ownerContact,
-      ownerWhatsapp: data.ownerWhatsapp.present
-          ? data.ownerWhatsapp.value
-          : this.ownerWhatsapp,
-      estYear: data.estYear.present ? data.estYear.value : this.estYear,
-      branchCode:
-          data.branchCode.present ? data.branchCode.value : this.branchCode,
-      openingTime:
-          data.openingTime.present ? data.openingTime.value : this.openingTime,
-      closingTime:
-          data.closingTime.present ? data.closingTime.value : this.closingTime,
-      weeklyOff: data.weeklyOff.present ? data.weeklyOff.value : this.weeklyOff,
       email: data.email.present ? data.email.value : this.email,
       contactNumber: data.contactNumber.present
           ? data.contactNumber.value
@@ -3925,13 +3674,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
       state: data.state.present ? data.state.value : this.state,
       pincode: data.pincode.present ? data.pincode.value : this.pincode,
       country: data.country.present ? data.country.value : this.country,
-      mapConfig: data.mapConfig.present ? data.mapConfig.value : this.mapConfig,
-      instagramLink: data.instagramLink.present
-          ? data.instagramLink.value
-          : this.instagramLink,
-      facebookLink: data.facebookLink.present
-          ? data.facebookLink.value
-          : this.facebookLink,
       website: data.website.present ? data.website.value : this.website,
       gstin: data.gstin.present ? data.gstin.value : this.gstin,
       gstType: data.gstType.present ? data.gstType.value : this.gstType,
@@ -3967,12 +3709,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           ..write('tagline: $tagline, ')
           ..write('ownerName: $ownerName, ')
           ..write('ownerContact: $ownerContact, ')
-          ..write('ownerWhatsapp: $ownerWhatsapp, ')
-          ..write('estYear: $estYear, ')
-          ..write('branchCode: $branchCode, ')
-          ..write('openingTime: $openingTime, ')
-          ..write('closingTime: $closingTime, ')
-          ..write('weeklyOff: $weeklyOff, ')
           ..write('email: $email, ')
           ..write('contactNumber: $contactNumber, ')
           ..write('whatsappNumber: $whatsappNumber, ')
@@ -3987,9 +3723,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           ..write('state: $state, ')
           ..write('pincode: $pincode, ')
           ..write('country: $country, ')
-          ..write('mapConfig: $mapConfig, ')
-          ..write('instagramLink: $instagramLink, ')
-          ..write('facebookLink: $facebookLink, ')
           ..write('website: $website, ')
           ..write('gstin: $gstin, ')
           ..write('gstType: $gstType, ')
@@ -4019,12 +3752,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
         tagline,
         ownerName,
         ownerContact,
-        ownerWhatsapp,
-        estYear,
-        branchCode,
-        openingTime,
-        closingTime,
-        weeklyOff,
         email,
         contactNumber,
         whatsappNumber,
@@ -4039,9 +3766,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
         state,
         pincode,
         country,
-        mapConfig,
-        instagramLink,
-        facebookLink,
         website,
         gstin,
         gstType,
@@ -4070,12 +3794,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           other.tagline == this.tagline &&
           other.ownerName == this.ownerName &&
           other.ownerContact == this.ownerContact &&
-          other.ownerWhatsapp == this.ownerWhatsapp &&
-          other.estYear == this.estYear &&
-          other.branchCode == this.branchCode &&
-          other.openingTime == this.openingTime &&
-          other.closingTime == this.closingTime &&
-          other.weeklyOff == this.weeklyOff &&
           other.email == this.email &&
           other.contactNumber == this.contactNumber &&
           other.whatsappNumber == this.whatsappNumber &&
@@ -4090,9 +3808,6 @@ class ShopProfileData extends DataClass implements Insertable<ShopProfileData> {
           other.state == this.state &&
           other.pincode == this.pincode &&
           other.country == this.country &&
-          other.mapConfig == this.mapConfig &&
-          other.instagramLink == this.instagramLink &&
-          other.facebookLink == this.facebookLink &&
           other.website == this.website &&
           other.gstin == this.gstin &&
           other.gstType == this.gstType &&
@@ -4119,12 +3834,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
   final Value<String?> tagline;
   final Value<String?> ownerName;
   final Value<String?> ownerContact;
-  final Value<String?> ownerWhatsapp;
-  final Value<String?> estYear;
-  final Value<String?> branchCode;
-  final Value<String?> openingTime;
-  final Value<String?> closingTime;
-  final Value<String?> weeklyOff;
   final Value<String?> email;
   final Value<String?> contactNumber;
   final Value<String?> whatsappNumber;
@@ -4139,9 +3848,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
   final Value<String?> state;
   final Value<String?> pincode;
   final Value<String?> country;
-  final Value<String?> mapConfig;
-  final Value<String?> instagramLink;
-  final Value<String?> facebookLink;
   final Value<String?> website;
   final Value<String?> gstin;
   final Value<String?> gstType;
@@ -4166,12 +3872,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     this.tagline = const Value.absent(),
     this.ownerName = const Value.absent(),
     this.ownerContact = const Value.absent(),
-    this.ownerWhatsapp = const Value.absent(),
-    this.estYear = const Value.absent(),
-    this.branchCode = const Value.absent(),
-    this.openingTime = const Value.absent(),
-    this.closingTime = const Value.absent(),
-    this.weeklyOff = const Value.absent(),
     this.email = const Value.absent(),
     this.contactNumber = const Value.absent(),
     this.whatsappNumber = const Value.absent(),
@@ -4186,9 +3886,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     this.state = const Value.absent(),
     this.pincode = const Value.absent(),
     this.country = const Value.absent(),
-    this.mapConfig = const Value.absent(),
-    this.instagramLink = const Value.absent(),
-    this.facebookLink = const Value.absent(),
     this.website = const Value.absent(),
     this.gstin = const Value.absent(),
     this.gstType = const Value.absent(),
@@ -4214,12 +3911,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     this.tagline = const Value.absent(),
     this.ownerName = const Value.absent(),
     this.ownerContact = const Value.absent(),
-    this.ownerWhatsapp = const Value.absent(),
-    this.estYear = const Value.absent(),
-    this.branchCode = const Value.absent(),
-    this.openingTime = const Value.absent(),
-    this.closingTime = const Value.absent(),
-    this.weeklyOff = const Value.absent(),
     this.email = const Value.absent(),
     this.contactNumber = const Value.absent(),
     this.whatsappNumber = const Value.absent(),
@@ -4234,9 +3925,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     this.state = const Value.absent(),
     this.pincode = const Value.absent(),
     this.country = const Value.absent(),
-    this.mapConfig = const Value.absent(),
-    this.instagramLink = const Value.absent(),
-    this.facebookLink = const Value.absent(),
     this.website = const Value.absent(),
     this.gstin = const Value.absent(),
     this.gstType = const Value.absent(),
@@ -4262,12 +3950,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     Expression<String>? tagline,
     Expression<String>? ownerName,
     Expression<String>? ownerContact,
-    Expression<String>? ownerWhatsapp,
-    Expression<String>? estYear,
-    Expression<String>? branchCode,
-    Expression<String>? openingTime,
-    Expression<String>? closingTime,
-    Expression<String>? weeklyOff,
     Expression<String>? email,
     Expression<String>? contactNumber,
     Expression<String>? whatsappNumber,
@@ -4282,9 +3964,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     Expression<String>? state,
     Expression<String>? pincode,
     Expression<String>? country,
-    Expression<String>? mapConfig,
-    Expression<String>? instagramLink,
-    Expression<String>? facebookLink,
     Expression<String>? website,
     Expression<String>? gstin,
     Expression<String>? gstType,
@@ -4310,12 +3989,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       if (tagline != null) 'tagline': tagline,
       if (ownerName != null) 'owner_name': ownerName,
       if (ownerContact != null) 'owner_contact': ownerContact,
-      if (ownerWhatsapp != null) 'owner_whatsapp': ownerWhatsapp,
-      if (estYear != null) 'est_year': estYear,
-      if (branchCode != null) 'branch_code': branchCode,
-      if (openingTime != null) 'opening_time': openingTime,
-      if (closingTime != null) 'closing_time': closingTime,
-      if (weeklyOff != null) 'weekly_off': weeklyOff,
       if (email != null) 'email': email,
       if (contactNumber != null) 'contact_number': contactNumber,
       if (whatsappNumber != null) 'whatsapp_number': whatsappNumber,
@@ -4330,9 +4003,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       if (state != null) 'state': state,
       if (pincode != null) 'pincode': pincode,
       if (country != null) 'country': country,
-      if (mapConfig != null) 'map_config': mapConfig,
-      if (instagramLink != null) 'instagram_link': instagramLink,
-      if (facebookLink != null) 'facebook_link': facebookLink,
       if (website != null) 'website': website,
       if (gstin != null) 'gstin': gstin,
       if (gstType != null) 'gst_type': gstType,
@@ -4361,12 +4031,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       Value<String?>? tagline,
       Value<String?>? ownerName,
       Value<String?>? ownerContact,
-      Value<String?>? ownerWhatsapp,
-      Value<String?>? estYear,
-      Value<String?>? branchCode,
-      Value<String?>? openingTime,
-      Value<String?>? closingTime,
-      Value<String?>? weeklyOff,
       Value<String?>? email,
       Value<String?>? contactNumber,
       Value<String?>? whatsappNumber,
@@ -4381,9 +4045,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       Value<String?>? state,
       Value<String?>? pincode,
       Value<String?>? country,
-      Value<String?>? mapConfig,
-      Value<String?>? instagramLink,
-      Value<String?>? facebookLink,
       Value<String?>? website,
       Value<String?>? gstin,
       Value<String?>? gstType,
@@ -4408,12 +4069,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       tagline: tagline ?? this.tagline,
       ownerName: ownerName ?? this.ownerName,
       ownerContact: ownerContact ?? this.ownerContact,
-      ownerWhatsapp: ownerWhatsapp ?? this.ownerWhatsapp,
-      estYear: estYear ?? this.estYear,
-      branchCode: branchCode ?? this.branchCode,
-      openingTime: openingTime ?? this.openingTime,
-      closingTime: closingTime ?? this.closingTime,
-      weeklyOff: weeklyOff ?? this.weeklyOff,
       email: email ?? this.email,
       contactNumber: contactNumber ?? this.contactNumber,
       whatsappNumber: whatsappNumber ?? this.whatsappNumber,
@@ -4428,9 +4083,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
       state: state ?? this.state,
       pincode: pincode ?? this.pincode,
       country: country ?? this.country,
-      mapConfig: mapConfig ?? this.mapConfig,
-      instagramLink: instagramLink ?? this.instagramLink,
-      facebookLink: facebookLink ?? this.facebookLink,
       website: website ?? this.website,
       gstin: gstin ?? this.gstin,
       gstType: gstType ?? this.gstType,
@@ -4476,24 +4128,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     if (ownerContact.present) {
       map['owner_contact'] = Variable<String>(ownerContact.value);
     }
-    if (ownerWhatsapp.present) {
-      map['owner_whatsapp'] = Variable<String>(ownerWhatsapp.value);
-    }
-    if (estYear.present) {
-      map['est_year'] = Variable<String>(estYear.value);
-    }
-    if (branchCode.present) {
-      map['branch_code'] = Variable<String>(branchCode.value);
-    }
-    if (openingTime.present) {
-      map['opening_time'] = Variable<String>(openingTime.value);
-    }
-    if (closingTime.present) {
-      map['closing_time'] = Variable<String>(closingTime.value);
-    }
-    if (weeklyOff.present) {
-      map['weekly_off'] = Variable<String>(weeklyOff.value);
-    }
     if (email.present) {
       map['email'] = Variable<String>(email.value);
     }
@@ -4535,15 +4169,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
     }
     if (country.present) {
       map['country'] = Variable<String>(country.value);
-    }
-    if (mapConfig.present) {
-      map['map_config'] = Variable<String>(mapConfig.value);
-    }
-    if (instagramLink.present) {
-      map['instagram_link'] = Variable<String>(instagramLink.value);
-    }
-    if (facebookLink.present) {
-      map['facebook_link'] = Variable<String>(facebookLink.value);
     }
     if (website.present) {
       map['website'] = Variable<String>(website.value);
@@ -4604,12 +4229,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
           ..write('tagline: $tagline, ')
           ..write('ownerName: $ownerName, ')
           ..write('ownerContact: $ownerContact, ')
-          ..write('ownerWhatsapp: $ownerWhatsapp, ')
-          ..write('estYear: $estYear, ')
-          ..write('branchCode: $branchCode, ')
-          ..write('openingTime: $openingTime, ')
-          ..write('closingTime: $closingTime, ')
-          ..write('weeklyOff: $weeklyOff, ')
           ..write('email: $email, ')
           ..write('contactNumber: $contactNumber, ')
           ..write('whatsappNumber: $whatsappNumber, ')
@@ -4624,9 +4243,6 @@ class ShopProfilesCompanion extends UpdateCompanion<ShopProfileData> {
           ..write('state: $state, ')
           ..write('pincode: $pincode, ')
           ..write('country: $country, ')
-          ..write('mapConfig: $mapConfig, ')
-          ..write('instagramLink: $instagramLink, ')
-          ..write('facebookLink: $facebookLink, ')
           ..write('website: $website, ')
           ..write('gstin: $gstin, ')
           ..write('gstType: $gstType, ')
@@ -38467,12 +38083,6 @@ typedef $$ShopProfilesTableCreateCompanionBuilder = ShopProfilesCompanion
   Value<String?> tagline,
   Value<String?> ownerName,
   Value<String?> ownerContact,
-  Value<String?> ownerWhatsapp,
-  Value<String?> estYear,
-  Value<String?> branchCode,
-  Value<String?> openingTime,
-  Value<String?> closingTime,
-  Value<String?> weeklyOff,
   Value<String?> email,
   Value<String?> contactNumber,
   Value<String?> whatsappNumber,
@@ -38487,9 +38097,6 @@ typedef $$ShopProfilesTableCreateCompanionBuilder = ShopProfilesCompanion
   Value<String?> state,
   Value<String?> pincode,
   Value<String?> country,
-  Value<String?> mapConfig,
-  Value<String?> instagramLink,
-  Value<String?> facebookLink,
   Value<String?> website,
   Value<String?> gstin,
   Value<String?> gstType,
@@ -38516,12 +38123,6 @@ typedef $$ShopProfilesTableUpdateCompanionBuilder = ShopProfilesCompanion
   Value<String?> tagline,
   Value<String?> ownerName,
   Value<String?> ownerContact,
-  Value<String?> ownerWhatsapp,
-  Value<String?> estYear,
-  Value<String?> branchCode,
-  Value<String?> openingTime,
-  Value<String?> closingTime,
-  Value<String?> weeklyOff,
   Value<String?> email,
   Value<String?> contactNumber,
   Value<String?> whatsappNumber,
@@ -38536,9 +38137,6 @@ typedef $$ShopProfilesTableUpdateCompanionBuilder = ShopProfilesCompanion
   Value<String?> state,
   Value<String?> pincode,
   Value<String?> country,
-  Value<String?> mapConfig,
-  Value<String?> instagramLink,
-  Value<String?> facebookLink,
   Value<String?> website,
   Value<String?> gstin,
   Value<String?> gstType,
@@ -38589,24 +38187,6 @@ class $$ShopProfilesTableFilterComposer
   ColumnFilters<String> get ownerContact => $composableBuilder(
       column: $table.ownerContact, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get ownerWhatsapp => $composableBuilder(
-      column: $table.ownerWhatsapp, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get estYear => $composableBuilder(
-      column: $table.estYear, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get branchCode => $composableBuilder(
-      column: $table.branchCode, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get openingTime => $composableBuilder(
-      column: $table.openingTime, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get closingTime => $composableBuilder(
-      column: $table.closingTime, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get weeklyOff => $composableBuilder(
-      column: $table.weeklyOff, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnFilters(column));
 
@@ -38651,15 +38231,6 @@ class $$ShopProfilesTableFilterComposer
 
   ColumnFilters<String> get country => $composableBuilder(
       column: $table.country, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get mapConfig => $composableBuilder(
-      column: $table.mapConfig, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get instagramLink => $composableBuilder(
-      column: $table.instagramLink, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get facebookLink => $composableBuilder(
-      column: $table.facebookLink, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get website => $composableBuilder(
       column: $table.website, builder: (column) => ColumnFilters(column));
@@ -38743,25 +38314,6 @@ class $$ShopProfilesTableOrderingComposer
       column: $table.ownerContact,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get ownerWhatsapp => $composableBuilder(
-      column: $table.ownerWhatsapp,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get estYear => $composableBuilder(
-      column: $table.estYear, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get branchCode => $composableBuilder(
-      column: $table.branchCode, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get openingTime => $composableBuilder(
-      column: $table.openingTime, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get closingTime => $composableBuilder(
-      column: $table.closingTime, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get weeklyOff => $composableBuilder(
-      column: $table.weeklyOff, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnOrderings(column));
 
@@ -38808,17 +38360,6 @@ class $$ShopProfilesTableOrderingComposer
 
   ColumnOrderings<String> get country => $composableBuilder(
       column: $table.country, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get mapConfig => $composableBuilder(
-      column: $table.mapConfig, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get instagramLink => $composableBuilder(
-      column: $table.instagramLink,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get facebookLink => $composableBuilder(
-      column: $table.facebookLink,
-      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get website => $composableBuilder(
       column: $table.website, builder: (column) => ColumnOrderings(column));
@@ -38901,24 +38442,6 @@ class $$ShopProfilesTableAnnotationComposer
   GeneratedColumn<String> get ownerContact => $composableBuilder(
       column: $table.ownerContact, builder: (column) => column);
 
-  GeneratedColumn<String> get ownerWhatsapp => $composableBuilder(
-      column: $table.ownerWhatsapp, builder: (column) => column);
-
-  GeneratedColumn<String> get estYear =>
-      $composableBuilder(column: $table.estYear, builder: (column) => column);
-
-  GeneratedColumn<String> get branchCode => $composableBuilder(
-      column: $table.branchCode, builder: (column) => column);
-
-  GeneratedColumn<String> get openingTime => $composableBuilder(
-      column: $table.openingTime, builder: (column) => column);
-
-  GeneratedColumn<String> get closingTime => $composableBuilder(
-      column: $table.closingTime, builder: (column) => column);
-
-  GeneratedColumn<String> get weeklyOff =>
-      $composableBuilder(column: $table.weeklyOff, builder: (column) => column);
-
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
 
@@ -38960,15 +38483,6 @@ class $$ShopProfilesTableAnnotationComposer
 
   GeneratedColumn<String> get country =>
       $composableBuilder(column: $table.country, builder: (column) => column);
-
-  GeneratedColumn<String> get mapConfig =>
-      $composableBuilder(column: $table.mapConfig, builder: (column) => column);
-
-  GeneratedColumn<String> get instagramLink => $composableBuilder(
-      column: $table.instagramLink, builder: (column) => column);
-
-  GeneratedColumn<String> get facebookLink => $composableBuilder(
-      column: $table.facebookLink, builder: (column) => column);
 
   GeneratedColumn<String> get website =>
       $composableBuilder(column: $table.website, builder: (column) => column);
@@ -39050,12 +38564,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             Value<String?> tagline = const Value.absent(),
             Value<String?> ownerName = const Value.absent(),
             Value<String?> ownerContact = const Value.absent(),
-            Value<String?> ownerWhatsapp = const Value.absent(),
-            Value<String?> estYear = const Value.absent(),
-            Value<String?> branchCode = const Value.absent(),
-            Value<String?> openingTime = const Value.absent(),
-            Value<String?> closingTime = const Value.absent(),
-            Value<String?> weeklyOff = const Value.absent(),
             Value<String?> email = const Value.absent(),
             Value<String?> contactNumber = const Value.absent(),
             Value<String?> whatsappNumber = const Value.absent(),
@@ -39070,9 +38578,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             Value<String?> state = const Value.absent(),
             Value<String?> pincode = const Value.absent(),
             Value<String?> country = const Value.absent(),
-            Value<String?> mapConfig = const Value.absent(),
-            Value<String?> instagramLink = const Value.absent(),
-            Value<String?> facebookLink = const Value.absent(),
             Value<String?> website = const Value.absent(),
             Value<String?> gstin = const Value.absent(),
             Value<String?> gstType = const Value.absent(),
@@ -39098,12 +38603,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             tagline: tagline,
             ownerName: ownerName,
             ownerContact: ownerContact,
-            ownerWhatsapp: ownerWhatsapp,
-            estYear: estYear,
-            branchCode: branchCode,
-            openingTime: openingTime,
-            closingTime: closingTime,
-            weeklyOff: weeklyOff,
             email: email,
             contactNumber: contactNumber,
             whatsappNumber: whatsappNumber,
@@ -39118,9 +38617,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             state: state,
             pincode: pincode,
             country: country,
-            mapConfig: mapConfig,
-            instagramLink: instagramLink,
-            facebookLink: facebookLink,
             website: website,
             gstin: gstin,
             gstType: gstType,
@@ -39146,12 +38642,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             Value<String?> tagline = const Value.absent(),
             Value<String?> ownerName = const Value.absent(),
             Value<String?> ownerContact = const Value.absent(),
-            Value<String?> ownerWhatsapp = const Value.absent(),
-            Value<String?> estYear = const Value.absent(),
-            Value<String?> branchCode = const Value.absent(),
-            Value<String?> openingTime = const Value.absent(),
-            Value<String?> closingTime = const Value.absent(),
-            Value<String?> weeklyOff = const Value.absent(),
             Value<String?> email = const Value.absent(),
             Value<String?> contactNumber = const Value.absent(),
             Value<String?> whatsappNumber = const Value.absent(),
@@ -39166,9 +38656,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             Value<String?> state = const Value.absent(),
             Value<String?> pincode = const Value.absent(),
             Value<String?> country = const Value.absent(),
-            Value<String?> mapConfig = const Value.absent(),
-            Value<String?> instagramLink = const Value.absent(),
-            Value<String?> facebookLink = const Value.absent(),
             Value<String?> website = const Value.absent(),
             Value<String?> gstin = const Value.absent(),
             Value<String?> gstType = const Value.absent(),
@@ -39194,12 +38681,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             tagline: tagline,
             ownerName: ownerName,
             ownerContact: ownerContact,
-            ownerWhatsapp: ownerWhatsapp,
-            estYear: estYear,
-            branchCode: branchCode,
-            openingTime: openingTime,
-            closingTime: closingTime,
-            weeklyOff: weeklyOff,
             email: email,
             contactNumber: contactNumber,
             whatsappNumber: whatsappNumber,
@@ -39214,9 +38695,6 @@ class $$ShopProfilesTableTableManager extends RootTableManager<
             state: state,
             pincode: pincode,
             country: country,
-            mapConfig: mapConfig,
-            instagramLink: instagramLink,
-            facebookLink: facebookLink,
             website: website,
             gstin: gstin,
             gstType: gstType,

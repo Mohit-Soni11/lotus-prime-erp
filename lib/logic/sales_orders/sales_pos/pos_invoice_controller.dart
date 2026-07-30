@@ -299,12 +299,6 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   Future<void> restoreMetalSavedSetup(MetalType metal) async {
-    final current = getMetalConfig(metal);
-    final printTerms = current.printTermsAndConditions;
-    final printReturn = current.printReturnPolicy;
-    final printBuyback = current.printBuybackPolicy;
-    final printFooter = current.printFooterMessage;
-
     late BillSettings restored;
     try {
       final setup = await _salesBillingRepo.fetchForMetal(metal.name);
@@ -313,11 +307,19 @@ class PosInvoiceController extends ChangeNotifier {
       restored = _defaultSettingsForMetal(metal);
     }
 
-    restored.printTermsAndConditions = printTerms;
-    restored.printReturnPolicy = printReturn;
-    restored.printBuybackPolicy = printBuyback;
-    restored.printFooterMessage = printFooter;
     metalPrintSettings[metal] = restored;
+
+    if (invoice != null) {
+      await _refreshActivePreviewPdf();
+    }
+    notifyListeners();
+  }
+
+  Future<void> applySalesBillingSetupModel(SalesBillingModel model) async {
+    final metal = _metalTypeFor(model.metal);
+    if (metal == null) return;
+
+    metalPrintSettings[metal] = _settingsFromBillingSetup(model);
 
     if (invoice != null) {
       await _refreshActivePreviewPdf();
@@ -370,6 +372,12 @@ class PosInvoiceController extends ChangeNotifier {
     _shopPrintState = await _shopPrintRepo.load();
     await _refreshShopPrintProfile();
     notifyListeners();
+  }
+
+  Future<void> saveShopPrintInformationSetup() async {
+    final state = _shopPrintState;
+    if (state == null) return;
+    await _shopPrintRepo.save(state);
   }
 
   Future<void> _ensureShopPrintStateLoaded() async {
@@ -432,6 +440,13 @@ class PosInvoiceController extends ChangeNotifier {
     return BillSettings.fromSalesBilling(
       SalesBillingModel.defaultFor(metal.name),
     );
+  }
+
+  MetalType? _metalTypeFor(String metal) {
+    for (final type in MetalType.values) {
+      if (type.name == metal) return type;
+    }
+    return null;
   }
 
   Future<void> updatePrintOptions(

@@ -113,12 +113,6 @@ void main() {
           'tagline': 'Trusted jewellery',
           'owner_name': 'Quality Assurance',
           'owner_phone': '9876543210',
-          'owner_whatsapp': '9876543210',
-          'est_year': '2020',
-          'branch_code': 'HQ',
-          'open_time': '10:00 AM',
-          'close_time': '08:00 PM',
-          'weekly_off': 'Sunday',
           'brand_display_name': 'Lotus Jewellers',
           'business_email': 'support@lotusjewellers.com',
           'shop_phone': '9876543210',
@@ -136,8 +130,6 @@ void main() {
           'state': 'Bihar',
           'pincode': '800001',
           'country': 'India',
-          'latitude': 25.5941,
-          'longitude': 85.1376,
         },
         'tax_compliance': <String, dynamic>{
           'gstin': '10ABCDE1234F1Z5',
@@ -153,14 +145,11 @@ void main() {
           'bis_license_path': 'C:/qa/bis-license.pdf',
         },
         'branding_social': <String, dynamic>{
-          'instagram': 'lotus_jewellers',
-          'facebook': 'lotusjewellers',
-          'youtube': 'lotusjewellers',
           'website': 'lotusjewellers.com',
+          'instagram': '@lotusjewellers',
+          'facebook': 'facebook.com/lotusjewellers',
+          'youtube': 'youtube.com/@lotusjewellers',
           'whatsapp_channel': 'whatsapp.com/channel/lotus',
-          'whatsapp_business': '9876543210',
-          'support_email': 'support@lotusjewellers.com',
-          'support_phone': '9876543210',
         },
         'banking_details': <Map<String, dynamic>>[
           <String, dynamic>{
@@ -195,6 +184,11 @@ void main() {
           'Separate Registrations');
       expect(restored['tax_compliance']['gst_cert_path'],
           'C:/qa/gst-certificate.pdf');
+      expect(restored['branding_social']['instagram'], '@lotusjewellers');
+      expect(
+        restored['branding_social']['whatsapp_channel'],
+        'whatsapp.com/channel/lotus',
+      );
       expect(restored['banking_details'], hasLength(1));
       expect(restored['banking_details'].single['acc'], '1234567890123456');
 
