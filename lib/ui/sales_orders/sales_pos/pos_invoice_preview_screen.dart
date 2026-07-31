@@ -51,13 +51,17 @@ class PosInvoicePreviewScreen extends StatefulWidget {
 class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     with TickerProviderStateMixin {
   late PosInvoiceController _invCtrl;
+  late final bool _wasSaleCommittedOnOpen;
 
   bool _isSavingPdf = false;
   bool _isPdfSaved = false;
+  bool _isPrintingInvoice = false;
+  bool _hasPrintedInvoice = false;
 
   @override
   void initState() {
     super.initState();
+    _wasSaleCommittedOnOpen = widget.billingCtrl.isCurrentSaleCommitted;
     _invCtrl = PosInvoiceController(billing: widget.billingCtrl);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -74,8 +78,22 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
     setState(() {});
   }
 
+  void _setInvoicePrintState({
+    bool? isPrinting,
+    bool? hasPrinted,
+  }) {
+    if (!mounted) return;
+    setState(() {
+      if (isPrinting != null) _isPrintingInvoice = isPrinting;
+      if (hasPrinted != null) _hasPrintedInvoice = hasPrinted;
+    });
+  }
+
   @override
   void dispose() {
+    if (!_wasSaleCommittedOnOpen && !_invCtrl.isSavedToDb) {
+      widget.billingCtrl.releaseUncommittedInvoicePreview();
+    }
     _invCtrl.removeListener(_handleInvoiceControllerChanged);
     _invCtrl.dispose();
     super.dispose();

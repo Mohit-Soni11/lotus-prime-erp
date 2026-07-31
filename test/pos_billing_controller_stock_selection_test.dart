@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
@@ -10,6 +13,16 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async {
+        if (call.method == 'getApplicationDocumentsDirectory') {
+          return Directory.systemTemp.path;
+        }
+        return null;
+      },
+    );
   });
 
   test('stock selection replaces selected purity with stock purity', () {
@@ -41,6 +54,23 @@ void main() {
     expect(item.purityCtrl.text, '18KT');
     expect(item.descCtrl.text, 'Casting Tops');
     expect(item.grossCtrl.text, '0.68');
+
+    controller.dispose();
+  });
+
+  test('draft invoice preview can be parked after returning to new sales', () {
+    final controller = PosBillingController();
+    final item = SaleItemModel(metal: MetalType.gold);
+    item.descCtrl.text = 'Casting Ring';
+    controller.saleItems.add(item);
+
+    expect(controller.canHoldCurrentBill, isTrue);
+
+    controller.markCurrentSaleCommitted('INV-AJ-2026-0001');
+    expect(controller.canHoldCurrentBill, isFalse);
+
+    controller.releaseUncommittedInvoicePreview();
+    expect(controller.canHoldCurrentBill, isTrue);
 
     controller.dispose();
   });

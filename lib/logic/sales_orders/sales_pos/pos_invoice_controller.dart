@@ -19,6 +19,7 @@ import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 export '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 
@@ -996,9 +997,12 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
-  Future<void> printInvoice(PrintFormat format) async {
+  Future<bool> printInvoice(
+    PrintFormat format, {
+    required BuildContext context,
+  }) async {
     await finalizeInvoiceIfNeeded();
-    if (invoice == null) return;
+    if (invoice == null) return false;
     if (format != selectedFormat) {
       selectedFormat = format;
       await _refreshActivePreviewPdf();
@@ -1009,13 +1013,29 @@ class PosInvoiceController extends ChangeNotifier {
       format,
       includeAllMetals: true,
     );
-    await _outputService.printPdf(printBytes);
+    if (!context.mounted) return false;
+    return _outputService.printPdf(
+      context: context,
+      bytes: printBytes,
+      invoice: invoice!,
+    );
+  }
+
+  Future<void> shareInvoicePdf() async {
+    await finalizeInvoiceIfNeeded();
+    if (invoice == null) return;
+    await _outputService.shareInvoicePdf(
+      invoice: invoice!,
+      buildPdfBytes: () => _buildPdf(
+        invoice!,
+        selectedFormat,
+        includeAllMetals: true,
+      ),
+    );
   }
 
   Future<void> openDirectWhatsAppChat() async {
-    await finalizeInvoiceIfNeeded();
-    if (invoice == null) return;
-    await _outputService.openWhatsAppInvoice(invoice!);
+    await shareInvoicePdf();
   }
 
   Future<String?> downloadPdf() async {

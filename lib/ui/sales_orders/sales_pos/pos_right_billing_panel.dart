@@ -1148,13 +1148,15 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             balanceDue: widget.ctrl.balanceDue,
             hasIncompleteDraft: hasIncompleteDraft,
           ),
-          const SizedBox(height: 12),
-          PosPaymentStatusCard(
-            isEmptyCart: isEmptyCart,
-            hasIncompleteDraft: hasIncompleteDraft,
-            balanceDue: widget.ctrl.balanceDue,
-            returnMethod: returnMethod,
-          ),
+          if (!isEmptyCart) ...[
+            const SizedBox(height: 12),
+            PosPaymentStatusCard(
+              isEmptyCart: isEmptyCart,
+              hasIncompleteDraft: hasIncompleteDraft,
+              balanceDue: widget.ctrl.balanceDue,
+              returnMethod: returnMethod,
+            ),
+          ],
           if (!isEmptyCart) ...[
             if (isReturn && returnMethod == null) ...[
               const SizedBox(height: 12),
@@ -1416,38 +1418,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             children: [
               Expanded(
                 flex: 1,
-                child: SizedBox(
-                  height: 54,
-                  child: OutlinedButton.icon(
-                    // --- HOLD BUTTON LINKED ---
-                    onPressed: () {
-                      if (widget.ctrl.saleItems.isEmpty &&
-                          widget.ctrl.tradeInItems.isEmpty) {
-                        return;
-                      }
-                      widget.ctrl.holdCurrentBill();
-                      AppFeedback.show(
-                        context,
-                        type: AppFeedbackType.success,
-                        message: "Bill successfully parked!",
-                      );
-                    },
-                    icon: const Icon(SalesPosIcons.holdFilled, size: 18),
-                    label: const Text("HOLD",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: SalesPosStyles.fontBody,
-                            letterSpacing: 0)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: SalesPosColors.warning,
-                      side: BorderSide(
-                          color: SalesPosColors.warning.withValues(alpha: 0.80),
-                          width: 2.0),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ),
+                child: _buildParkBillAction(),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1483,6 +1454,121 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildParkBillAction() {
+    final canPark = widget.ctrl.canHoldCurrentBill;
+    final hasItems =
+        widget.ctrl.saleItems.isNotEmpty || widget.ctrl.tradeInItems.isNotEmpty;
+    final isFinalized = widget.ctrl.isCurrentSaleCommitted;
+    final subtitle = canPark
+        ? 'Save draft'
+        : isFinalized
+            ? 'Finalized'
+            : hasItems
+                ? 'Not available'
+                : 'Add items';
+    final accent =
+        canPark ? SalesPosColors.warning : SalesPosColors.bodyTextMuted;
+
+    return SizedBox(
+      height: 54,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: canPark ? _handleParkBillPressed : null,
+          borderRadius: BorderRadius.circular(10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: canPark
+                  ? SalesPosColors.warning.withValues(alpha: 0.10)
+                  : SalesPosColors.bodyBg.withValues(alpha: 0.86),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: canPark
+                    ? SalesPosColors.warning.withValues(alpha: 0.82)
+                    : SalesPosColors.bodyBorder,
+                width: canPark ? 1.8 : 1.4,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: canPark ? 0.18 : 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: accent.withValues(alpha: 0.22)),
+                  ),
+                  child: Icon(
+                    SalesPosIcons.holdFilled,
+                    size: 17,
+                    color: accent,
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Park Bill',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: canPark
+                              ? SalesPosColors.warning
+                              : SalesPosColors.bodyTextMain
+                                  .withValues(alpha: 0.60),
+                          fontSize: SalesPosStyles.fontCaption,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color:
+                              accent.withValues(alpha: canPark ? 0.88 : 0.70),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleParkBillPressed() {
+    final parked = widget.ctrl.holdCurrentBill();
+    if (!parked) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.warning,
+        message:
+            "Finalized invoices cannot be parked. Start a new sale instead.",
+      );
+      return;
+    }
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.success,
+      message: "Bill successfully parked!",
     );
   }
 }

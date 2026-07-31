@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../features/print_templates/domain/print_template_registry.dart';
+import '../../../../features/sales_pos/domain/services/pos_invoice_file_naming.dart';
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
@@ -80,7 +81,13 @@ class _PosInvoicePdfDocumentBuilder {
 
   Future<Uint8List> build(PosInvoiceModel invoice) async {
     final devanagariFont = await _loadDevanagariFont();
-    final doc = pw.Document(theme: await _buildTheme(devanagariFont));
+    final doc = pw.Document(
+      title: PosInvoiceFileNaming.pdfBaseName(invoice),
+      author: invoice.shopName,
+      creator: 'Lotus ERP',
+      subject: 'Sales invoice ${invoice.invoiceNumber}',
+      theme: await _buildTheme(devanagariFont),
+    );
     final pageFormat = _pageFormatFor(options.format);
     final scopedInvoices = options.includeAllMetals
         ? scopeService.scopedInvoicesForAllMetals(invoice)

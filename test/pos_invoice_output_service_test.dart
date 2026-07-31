@@ -41,6 +41,20 @@ void main() {
       expect(message, contains('*Total Amount:* Rs 107320.00'));
     });
 
+    test('uses the same professional message for invoice sharing', () {
+      final invoice = _invoice(
+        customerName: 'Reyansh Soni',
+        invoiceNumber: 'POS-001',
+        grandTotal: 107320,
+      );
+
+      final message = service.buildShareMessage(invoice);
+
+      expect(message, contains('Dear Reyansh Soni,'));
+      expect(message, contains('*Invoice No:* POS-001'));
+      expect(message, contains('*Total Amount:* Rs 107320.00'));
+    });
+
     test('keeps an international mobile number unchanged', () {
       final invoice = _invoice(customerMobile: '971501234567');
 

@@ -1149,6 +1149,15 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void releaseUncommittedInvoicePreview() {
+    if (_committedInvoiceNumber == null || editingBillId != null) {
+      return;
+    }
+    _committedInvoiceNumber = null;
+    unawaited(refreshInvoiceSequencePreview());
+    notifyListeners();
+  }
+
   PosTotals get _totals {
     return _cachedTotals ??= const CalculatePosTotals()(
       PosTotalsInput(
@@ -1454,6 +1463,10 @@ class PosBillingController extends ChangeNotifier {
   // --- HOLD INVOICE SYSTEM LOGIC ---
   final List<PosHoldBillModel> heldBills = [];
 
+  bool get canHoldCurrentBill =>
+      !isCurrentSaleCommitted &&
+      (saleItems.isNotEmpty || tradeInItems.isNotEmpty);
+
   //  Promise date is carried from the billing panel to the invoice.
   DateTime? promiseDate;
 
@@ -1581,14 +1594,15 @@ class PosBillingController extends ChangeNotifier {
     unawaited(_restoreSelectedCustomer(holdBill.selectedCustomerId));
   }
 
-  void holdCurrentBill() {
-    if (saleItems.isEmpty && tradeInItems.isEmpty) return;
+  bool holdCurrentBill() {
+    if (!canHoldCurrentBill) return false;
 
     final newHold = _buildHoldSnapshot();
     heldBills.insert(0, newHold);
     clearEntirePOS(isHolding: false);
     notifyListeners();
     unawaited(_persistHeldBills());
+    return true;
   }
 
   void resumeBill(String holdId) {
