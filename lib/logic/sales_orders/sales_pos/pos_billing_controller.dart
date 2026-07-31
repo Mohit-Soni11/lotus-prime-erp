@@ -367,6 +367,12 @@ class PosBillingController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshSelectedCustomerHistory() async {
+    final customerId = selectedCustomer?.id ?? customerHistory?.id;
+    if (customerId == null) return;
+    await _fetchCustomerHistory(customerId);
+  }
+
   void clearCustomerSuggestions() {
     customerSuggestions = [];
     customerNotFound = false;
