@@ -59,7 +59,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
     _selected = widget.invoiceCtrl.selectedFormat;
     _selectedTemplateId = widget.invoiceCtrl.selectedTemplateId;
     _copies = widget.invoiceCtrl.printCopies;
-    _duplicateStamp = widget.invoiceCtrl.includeDuplicateStamp;
+    _duplicateStamp = _copies > 1 && widget.invoiceCtrl.includeDuplicateStamp;
 
     _animCtrl = AnimationController(
       vsync: this,
@@ -296,7 +296,10 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
               _CopyStepper(
                 value: _copies,
                 onChanged: (v) {
-                  setState(() => _copies = v);
+                  setState(() {
+                    _copies = v;
+                    if (_copies == 1) _duplicateStamp = false;
+                  });
                   widget.invoiceCtrl.updatePrintOptions(
                       copies: _copies, duplicate: _duplicateStamp);
                 },
@@ -317,28 +320,33 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
               const Icon(Icons.approval_outlined,
                   color: SalesPosColors.bodyTextMain, size: 18),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Mark as DUPLICATE",
+                      const Text("Mark as DUPLICATE",
                           style: TextStyle(
                               color: SalesPosColors.bodyTextMain,
                               fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w700)),
-                      Text("Adds a 'Duplicate Copy' watermark",
-                          style: TextStyle(
+                      Text(
+                          _copies > 1
+                              ? "Marks second and later copies"
+                              : "Available when copies are 2 or more",
+                          style: const TextStyle(
                               color: SalesPosColors.shellTextMuted,
                               fontSize: SalesPosStyles.fontCaption)),
                     ]),
               ),
               Switch(
                 value: _duplicateStamp,
-                onChanged: (v) {
-                  setState(() => _duplicateStamp = v);
-                  widget.invoiceCtrl.updatePrintOptions(
-                      copies: _copies, duplicate: _duplicateStamp);
-                },
+                onChanged: _copies > 1
+                    ? (v) {
+                        setState(() => _duplicateStamp = v);
+                        widget.invoiceCtrl.updatePrintOptions(
+                            copies: _copies, duplicate: _duplicateStamp);
+                      }
+                    : null,
                 activeThumbColor: SalesPosColors.brandGold,
                 inactiveThumbColor: SalesPosColors.shellTextMuted,
                 inactiveTrackColor: SalesPosColors.bodyBorder,
@@ -384,7 +392,8 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                   widget.invoiceCtrl.selectedFormat = _selected;
                   widget.invoiceCtrl.selectedTemplateId = _selectedTemplateId;
                   widget.invoiceCtrl.printCopies = _copies;
-                  widget.invoiceCtrl.includeDuplicateStamp = _duplicateStamp;
+                  widget.invoiceCtrl.includeDuplicateStamp =
+                      _copies > 1 && _duplicateStamp;
                   Navigator.pop(context);
                   widget.onPrint();
                 },

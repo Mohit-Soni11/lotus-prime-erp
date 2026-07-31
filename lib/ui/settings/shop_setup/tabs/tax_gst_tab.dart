@@ -380,7 +380,6 @@ class TaxGstTabState extends State<TaxGstTab> {
             isLocked: logic.isGstLocked,
             focusNode: logic.gstinFocus,
             nextFocus: logic.legalNameFocus,
-            maxLength: 15,
             isCapital: true,
             brandColor: TaxGstColors.brandGstin,
           ),

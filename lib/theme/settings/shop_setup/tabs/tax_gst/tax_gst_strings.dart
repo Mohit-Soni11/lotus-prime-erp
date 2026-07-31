@@ -24,7 +24,7 @@ class TaxGstStrings {
 
   // --- Input Labels & Hints ---
   static const String lblGstin = "GSTIN Number";
-  static const String hintGstin = "22AAAAA0000A1Z5";
+  static const String hintGstin = "Enter GSTIN";
 
   static const String lblLegalName = "Legal Trade Name";
   static const String hintLegalName = "As per GST Certificate";
@@ -79,8 +79,7 @@ class TaxGstStrings {
 
   // --- Error & Validation Messages ---
   static const String errGstinEmpty = "GSTIN cannot be empty";
-  static const String errGstinInvalid =
-      "Invalid GSTIN format. Please check again.";
+  static const String errGstinInvalid = "Enter GSTIN to continue";
   static const String errLegalNameEmpty = "Legal Trade Name is required";
   static const String errLegalNameShort =
       "Name must be at least 3 characters long";

@@ -451,8 +451,9 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> updatePrintOptions(
       {required int copies, required bool duplicate}) async {
-    printCopies = copies;
-    includeDuplicateStamp = duplicate;
+    final normalizedCopies = copies.clamp(1, 5).toInt();
+    printCopies = normalizedCopies;
+    includeDuplicateStamp = normalizedCopies > 1 && duplicate;
     if (invoice != null) {
       await _refreshActivePreviewPdf();
       notifyListeners();

@@ -8,6 +8,8 @@ void main() {
       ownerName: 'Anjali Kumari',
       ownerPhone: '9876543210',
       shopPhone: '9876543210',
+      shopWhatsapp: '9876543210',
+      helpDeskNumber: '9123456780',
       logoPath: r'D:\shop_identity\shop_logo.png',
       logoShape: 'square',
       signaturePath: r'D:\shop_identity\authorized_signature.png',
@@ -17,6 +19,7 @@ void main() {
     final restored = ShopProfileModel.fromJson(profile.toJson());
 
     expect(restored.logoPath, r'D:\shop_identity\shop_logo.png');
+    expect(restored.helpDeskNumber, '9123456780');
     expect(restored.logoShape, 'square');
     expect(
       restored.signaturePath,

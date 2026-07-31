@@ -81,7 +81,11 @@ class ShopPrintDocumentField {
     required this.group,
   });
 
+  bool get isQrField => id == 'social_media_qr';
+
   String get displayText {
+    if (isQrField) return '';
+
     switch (group) {
       case ShopPrintFieldGroup.identity:
         if (id == 'shop_name' || id == 'tagline') return value;
@@ -128,9 +132,12 @@ class ShopPrintDocumentProfile {
   ) {
     final basic = ShopPrintInformationCatalog._map(payload?['basic_info']);
     final enabledIds = state.enabledFieldIds;
+    final selectedFields = _removeDuplicateContactFields(
+      state.fields.where(state.isEnabled),
+    );
     final textFields = <ShopPrintDocumentField>[
-      for (final field in state.fields)
-        if (state.isEnabled(field) && !_assetFieldIds.contains(field.id))
+      for (final field in selectedFields)
+        if (!_assetFieldIds.contains(field.id))
           ShopPrintDocumentField(
             id: field.id,
             label: field.label,
@@ -167,6 +174,8 @@ class ShopPrintDocumentProfile {
   }
 
   String get primaryAddress {
+    final fullAddress = valueOf('business_address');
+    if (fullAddress.isNotEmpty) return fullAddress;
     return _join([
       valueOf('address_line'),
       valueOf('city_state_pin'),
@@ -210,6 +219,32 @@ class ShopPrintDocumentProfile {
   static String _join(List<String> values) {
     return values.where((value) => value.trim().isNotEmpty).join(', ');
   }
+
+  static Iterable<ShopPrintField> _removeDuplicateContactFields(
+    Iterable<ShopPrintField> fields,
+  ) sync* {
+    final selected = fields.toList(growable: false);
+    final mobile = _digitsOnly(_fieldValue(selected, 'mobile_number'));
+    final whatsapp = _digitsOnly(_fieldValue(selected, 'whatsapp_number'));
+    for (final field in selected) {
+      if (field.id == 'whatsapp_number' &&
+          mobile.isNotEmpty &&
+          mobile == whatsapp) {
+        continue;
+      }
+      yield field;
+    }
+  }
+
+  static String _fieldValue(List<ShopPrintField> fields, String id) {
+    for (final field in fields) {
+      if (field.id == id) return field.value;
+    }
+    return '';
+  }
+
+  static String _digitsOnly(String value) =>
+      value.replaceAll(RegExp(r'\D'), '');
 }
 
 class ShopPrintInformationCatalog {
@@ -221,6 +256,22 @@ class ShopPrintInformationCatalog {
     final tax = _map(payload?['tax_compliance']);
     final branding = _map(payload?['branding_social']);
     final banking = _firstMap(payload?['banking_details']);
+    final mobileNumber = _value(basic['shop_phone']);
+    final whatsappNumber = _value(basic['shop_whatsapp']);
+    final helpDeskNumber = _firstValue([
+      basic['help_desk_number'],
+      basic['alternate_phone'],
+      basic['support_phone'],
+    ]);
+    final fullAddress = _join([
+      address['addr1'],
+      address['addr2'],
+      address['city'],
+      address['state'],
+      address['pincode'],
+      address['country'],
+    ]);
+    final socialQrPayload = _socialDirectoryPayload(branding);
 
     final shopName = _firstValue([
       basic['brand_display_name'],
@@ -276,21 +327,30 @@ class ShopPrintInformationCatalog {
       ),
       ShopPrintField(
         id: 'mobile_number',
-        label: 'Mobile Number',
-        description: 'Official store phone number.',
+        label: 'Business Mobile',
+        description: 'Primary customer-facing business number.',
         sourceSection: 'Basic Info',
-        value: _value(basic['shop_phone']),
+        value: mobileNumber,
         group: ShopPrintFieldGroup.contact,
         defaultEnabled: true,
       ),
       ShopPrintField(
         id: 'whatsapp_number',
         label: 'WhatsApp Number',
-        description: 'Official WhatsApp contact number.',
+        description: 'Printed once with business mobile when both are same.',
         sourceSection: 'Basic Info',
-        value: _value(basic['shop_whatsapp']),
+        value: whatsappNumber,
         group: ShopPrintFieldGroup.contact,
         defaultEnabled: true,
+      ),
+      ShopPrintField(
+        id: 'help_desk_number',
+        label: 'Help Desk Number',
+        description: 'Alternate support or help desk contact number.',
+        sourceSection: 'Basic Info',
+        value: helpDeskNumber,
+        group: ShopPrintFieldGroup.contact,
+        defaultEnabled: false,
       ),
       ShopPrintField(
         id: 'business_email',
@@ -313,52 +373,18 @@ class ShopPrintInformationCatalog {
       ShopPrintField(
         id: 'bis_license',
         label: 'BIS Registration No.',
-        description: 'BIS jeweller hallmarking registration number.',
+        description: 'Single or metal-wise BIS registration reference.',
         sourceSection: 'GST & Legal',
         value: _bisRegistrationValue(tax),
         group: ShopPrintFieldGroup.statutory,
         defaultEnabled: false,
       ),
       ShopPrintField(
-        id: 'bis_hallmarking_scope',
-        label: 'BIS Hallmarking Scope',
-        description: 'Gold, silver, or both as covered by registration.',
-        sourceSection: 'GST & Legal',
-        value: _value(tax['hallmarking_scope']),
-        group: ShopPrintFieldGroup.statutory,
-        defaultEnabled: false,
-      ),
-      ShopPrintField(
-        id: 'taxpayer_type',
-        label: 'Taxpayer Type',
-        description: 'GST taxpayer category such as regular or composition.',
-        sourceSection: 'GST & Legal',
-        value: _value(tax['taxpayer_type']),
-        group: ShopPrintFieldGroup.statutory,
-        defaultEnabled: false,
-      ),
-      ShopPrintField(
-        id: 'address_line',
-        label: 'Address',
-        description: 'Primary address line printed below contact details.',
+        id: 'business_address',
+        label: 'Business Address',
+        description: 'Complete billing address in one clean invoice line.',
         sourceSection: 'Address',
-        value: _join([
-          address['addr1'],
-          address['addr2'],
-        ]),
-        group: ShopPrintFieldGroup.address,
-        defaultEnabled: true,
-      ),
-      ShopPrintField(
-        id: 'city_state_pin',
-        label: 'City, State & PIN',
-        description: 'Location line for the invoice footer or header.',
-        sourceSection: 'Address',
-        value: _join([
-          address['city'],
-          address['state'],
-          address['pincode'],
-        ]),
+        value: fullAddress,
         group: ShopPrintFieldGroup.address,
         defaultEnabled: true,
       ),
@@ -404,6 +430,15 @@ class ShopPrintInformationCatalog {
         description: 'WhatsApp channel for promotions and announcements.',
         sourceSection: 'Branding',
         value: _value(branding['whatsapp_channel']),
+        group: ShopPrintFieldGroup.social,
+        defaultEnabled: false,
+      ),
+      ShopPrintField(
+        id: 'social_media_qr',
+        label: 'Social Media QR',
+        description: 'QR payload with all configured brand channel links.',
+        sourceSection: 'Branding',
+        value: socialQrPayload,
         group: ShopPrintFieldGroup.social,
         defaultEnabled: false,
       ),
@@ -489,4 +524,21 @@ class ShopPrintInformationCatalog {
   }
 
   static String _value(Object? value) => value?.toString().trim() ?? '';
+
+  static String _socialDirectoryPayload(Map<String, dynamic> branding) {
+    final entries = <String>[
+      _socialLine('Website', branding['website']),
+      _socialLine('Instagram', branding['instagram']),
+      _socialLine('Facebook', branding['facebook']),
+      _socialLine('YouTube', branding['youtube']),
+      _socialLine('WhatsApp Channel', branding['whatsapp_channel']),
+    ].where((line) => line.isNotEmpty).toList(growable: false);
+    return entries.join('\n');
+  }
+
+  static String _socialLine(String label, Object? value) {
+    final text = _value(value);
+    if (text.isEmpty) return '';
+    return '$label: $text';
+  }
 }

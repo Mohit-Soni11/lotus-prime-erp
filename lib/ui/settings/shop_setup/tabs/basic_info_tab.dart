@@ -45,6 +45,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   final TextEditingController emailCtrl = TextEditingController();
   final TextEditingController shopPhoneCtrl = TextEditingController();
   final TextEditingController shopWaCtrl = TextEditingController();
+  final TextEditingController helpDeskCtrl = TextEditingController();
 
   final FocusNode legalNameFocus = FocusNode();
   final FocusNode displayNameFocus = FocusNode();
@@ -56,6 +57,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
   final FocusNode emailFocus = FocusNode();
   final FocusNode shopPhoneFocus = FocusNode();
   final FocusNode shopWaFocus = FocusNode();
+  final FocusNode helpDeskFocus = FocusNode();
 
   @override
   void initState() {
@@ -79,6 +81,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     emailCtrl.text = data.businessEmail;
     shopPhoneCtrl.text = data.shopPhone;
     shopWaCtrl.text = data.shopWhatsapp;
+    helpDeskCtrl.text = data.helpDeskNumber;
   }
 
   @override
@@ -94,6 +97,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       emailCtrl,
       shopPhoneCtrl,
       shopWaCtrl,
+      helpDeskCtrl,
       legalNameFocus,
       displayNameFocus,
       taglineFocus,
@@ -102,7 +106,8 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       brandDisplayFocus,
       emailFocus,
       shopPhoneFocus,
-      shopWaFocus
+      shopWaFocus,
+      helpDeskFocus
     ];
     for (var item in disposables) {
       item.dispose();
@@ -127,6 +132,8 @@ class BasicInfoTabState extends State<BasicInfoTab> {
         return shopPhoneFocus;
       case BasicInfoStrings.keyShopWa:
         return shopWaFocus;
+      case BasicInfoStrings.keyHelpDesk:
+        return helpDeskFocus;
       default:
         return null;
     }
@@ -171,7 +178,8 @@ class BasicInfoTabState extends State<BasicInfoTab> {
         errors = logic.validateCommunication(
             email: emailCtrl.text,
             shopPhone: shopPhoneCtrl.text,
-            shopWa: shopWaCtrl.text);
+            shopWa: shopWaCtrl.text,
+            helpDeskNumber: helpDeskCtrl.text);
         saved = await logic.saveCommunication(errors);
       }
 
@@ -208,7 +216,8 @@ class BasicInfoTabState extends State<BasicInfoTab> {
     final commErrs = logic.validateCommunication(
         email: emailCtrl.text,
         shopPhone: shopPhoneCtrl.text,
-        shopWa: shopWaCtrl.text);
+        shopWa: shopWaCtrl.text,
+        helpDeskNumber: helpDeskCtrl.text);
 
     if (entErrs.isNotEmpty || commErrs.isNotEmpty) {
       _showFeedback(
@@ -228,6 +237,7 @@ class BasicInfoTabState extends State<BasicInfoTab> {
       businessEmail: emailCtrl.text,
       shopPhone: shopPhoneCtrl.text,
       shopWhatsapp: shopWaCtrl.text,
+      helpDeskNumber: helpDeskCtrl.text,
     );
   }
 
@@ -553,41 +563,75 @@ class BasicInfoTabState extends State<BasicInfoTab> {
                 brandColor: BasicInfoColors.brandEmail,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblHelpPhone,
-                    hint: BasicInfoStrings.hintPhone,
-                    icon: BasicInfoIcons.phone,
-                    ctrl: shopPhoneCtrl,
-                    isLocked: isLocked,
-                    inputType: TextInputType.phone,
-                    focusNode: shopPhoneFocus,
-                    nextFocus: shopWaFocus,
-                    maxLength: 10,
-                    brandColor: BasicInfoColors.brandPhone,
-                    onChanged: (val) => logic.markShopPhoneTouched(),
-                  )),
-                  const SizedBox(width: 20),
-                  Expanded(
-                      child: _ThemeInputField(
-                    label: BasicInfoStrings.lblBizWhatsapp,
-                    hint: BasicInfoStrings.hintWhatsapp,
-                    icon: BasicInfoIcons.whatsapp,
-                    brandColor: BasicInfoColors.brandWhatsapp,
-                    ctrl: shopWaCtrl,
-                    isLocked: isLocked,
-                    inputType: TextInputType.phone,
-                    focusNode: shopWaFocus,
-                    maxLength: 10,
-                    isLastField: true,
-                    onFieldSubmitted: (_) => _handleSectionToggle(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final fields = [
+                    _ThemeInputField(
+                      label: BasicInfoStrings.lblBusinessMobile,
+                      hint: BasicInfoStrings.hintPhone,
+                      icon: BasicInfoIcons.phone,
+                      ctrl: shopPhoneCtrl,
+                      isLocked: isLocked,
+                      inputType: TextInputType.phone,
+                      focusNode: shopPhoneFocus,
+                      nextFocus: shopWaFocus,
+                      maxLength: 10,
+                      brandColor: BasicInfoColors.brandPhone,
+                      onChanged: (val) => logic.markShopPhoneTouched(),
+                    ),
+                    _ThemeInputField(
+                      label: BasicInfoStrings.lblBizWhatsapp,
+                      hint: BasicInfoStrings.hintWhatsapp,
+                      icon: BasicInfoIcons.whatsapp,
+                      brandColor: BasicInfoColors.brandWhatsapp,
+                      ctrl: shopWaCtrl,
+                      isLocked: isLocked,
+                      inputType: TextInputType.phone,
+                      focusNode: shopWaFocus,
+                      nextFocus: helpDeskFocus,
+                      maxLength: 10,
+                      onChanged: (val) => logic.markShopWaTouched(),
+                    ),
+                    _ThemeInputField(
+                      label: BasicInfoStrings.lblHelpDesk,
+                      hint: BasicInfoStrings.hintPhone,
+                      icon: BasicInfoIcons.phone,
+                      ctrl: helpDeskCtrl,
+                      isLocked: isLocked,
+                      inputType: TextInputType.phone,
+                      focusNode: helpDeskFocus,
+                      maxLength: 10,
+                      isLastField: true,
+                      brandColor: BasicInfoColors.brandPhone,
+                      onFieldSubmitted: (_) => _handleSectionToggle(
                         FormSection.communication,
-                        BasicInfoStrings.secCommunication),
-                    onChanged: (val) => logic.markShopWaTouched(),
-                  )),
-                ],
+                        BasicInfoStrings.secCommunication,
+                      ),
+                    ),
+                  ];
+
+                  if (constraints.maxWidth < 760) {
+                    return Column(
+                      children: [
+                        for (var index = 0; index < fields.length; index++) ...[
+                          fields[index],
+                          if (index != fields.length - 1)
+                            const SizedBox(height: 16),
+                        ],
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      for (var index = 0; index < fields.length; index++) ...[
+                        Expanded(child: fields[index]),
+                        if (index != fields.length - 1)
+                          const SizedBox(width: 20),
+                      ],
+                    ],
+                  );
+                },
               ),
             ],
           );

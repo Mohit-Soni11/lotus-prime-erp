@@ -45,8 +45,9 @@ class BasicInfoStrings {
   static const String lblEmail = "Official Correspondence Email";
   static const String hintEmail = "email@domain.com";
 
-  static const String lblHelpPhone = "Helpdesk Mobile";
+  static const String lblBusinessMobile = "Business Mobile";
   static const String lblBizWhatsapp = "Business WhatsApp";
+  static const String lblHelpDesk = "Help Desk Number";
 
   // --- VISUALS ---
   static const String titleIdentity = "Corporate Identity";
@@ -71,6 +72,7 @@ class BasicInfoStrings {
   static const String keyEmail = "email";
   static const String keyShopPhone = "shopPhone";
   static const String keyShopWa = "shopWa";
+  static const String keyHelpDesk = "helpDeskNumber";
 
   // --- PHOTO WIDGET & UI STRINGS ---
   static const String photoOptTitle = "Profile Photo Options";

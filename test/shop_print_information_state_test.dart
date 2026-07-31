@@ -53,6 +53,8 @@ void main() {
         'basic_info': {
           'brand_display_name': 'Lotus Jewellers',
           'shop_phone': '9304479436',
+          'shop_whatsapp': '9304479436',
+          'help_desk_number': '9123456780',
           'logo_path': r'D:\Lotus\logo.png',
           'logo_shape': 'square',
         },
@@ -91,12 +93,15 @@ void main() {
         enabledFieldIds: {
           'shop_name',
           'mobile_number',
+          'whatsapp_number',
+          'help_desk_number',
+          'business_address',
           'gstin',
           'website',
           'instagram',
+          'social_media_qr',
           'upi_id',
           'bis_license',
-          'bis_hallmarking_scope',
           'logo',
         },
       ),
@@ -112,15 +117,36 @@ void main() {
     final reloaded = await repository.load();
     expect(reloaded.enabledFieldIds, containsAll({'shop_name', 'gstin'}));
     expect(reloaded.enabledFieldIds, contains('upi_id'));
+    expect(reloaded.configuredFieldIds, contains('whatsapp_number'));
+    expect(
+      reloaded.fields
+          .singleWhere((field) => field.id == 'whatsapp_number')
+          .value,
+      '9304479436',
+    );
 
     final profile = await repository.loadDocumentProfile();
     expect(profile.primaryName, 'Lotus Jewellers');
     expect(profile.logoPath, r'D:\Lotus\logo.png');
-    expect(profile.headerLines, contains('Mobile Number: 9304479436'));
+    expect(profile.primaryAddress, 'Main Road, Patna, Bihar, 800001');
+    expect(profile.headerLines, contains('Business Mobile: 9304479436'));
+    expect(
+      profile.headerLines.any((line) => line.startsWith('WhatsApp Number:')),
+      isFalse,
+    );
+    expect(profile.headerLines, contains('Help Desk Number: 9123456780'));
     expect(profile.headerLines, contains('GSTIN: 10ABCDE1234F1Z5'));
     expect(profile.headerLines, contains('BIS Registration No.: BIS-REG-123'));
     expect(
-        profile.headerLines, contains('BIS Hallmarking Scope: Gold & Silver'));
+      profile.headerLines.any((line) => line.startsWith('Taxpayer Type:')),
+      isFalse,
+    );
+    expect(
+      profile.headerLines.any(
+        (line) => line.startsWith('BIS Hallmarking Scope:'),
+      ),
+      isFalse,
+    );
     expect(
       profile.headerLines.any((line) => line.startsWith('Gold BIS License:')),
       isFalse,
@@ -131,6 +157,11 @@ void main() {
     );
     expect(profile.headerLines, contains('Website: lotusjewellers.com'));
     expect(profile.headerLines, contains('Instagram: @lotusjewellers'));
+    expect(profile.valueOf('social_media_qr'), contains('Instagram:'));
+    expect(
+      profile.headerLines.any((line) => line.startsWith('Social Media QR:')),
+      isFalse,
+    );
     expect(profile.headerLines, contains('UPI ID: lotus@upi'));
   });
 }

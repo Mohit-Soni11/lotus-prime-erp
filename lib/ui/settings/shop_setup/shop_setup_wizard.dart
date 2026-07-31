@@ -125,6 +125,7 @@ class _ShopSetupWizardState extends State<ShopSetupWizard> {
           businessEmail: basicMap['business_email']?.toString() ?? "",
           shopPhone: basicMap['shop_phone']?.toString() ?? "",
           shopWhatsapp: basicMap['shop_whatsapp']?.toString() ?? "",
+          helpDeskNumber: basicMap['help_desk_number']?.toString() ?? "",
           logoPath: basicMap['logo_path']?.toString(),
           signaturePath: basicMap['signature_path']?.toString(),
           logoShape: basicMap['logo_shape']?.toString() ?? "circle",

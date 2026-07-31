@@ -70,17 +70,9 @@ class GstRegistrationLogic extends ChangeNotifier {
   // ── Validation ───────────────────────────────────────────────
   bool _validate() {
     bool valid = true;
-    final gstin = gstinCtrl.text.trim().toUpperCase();
     final pan = panCtrl.text.trim().toUpperCase();
 
-    if (gstin.isNotEmpty &&
-        !RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$')
-            .hasMatch(gstin)) {
-      gstinError = TaxGstStrings.validGstinFormat;
-      valid = false;
-    } else {
-      gstinError = null;
-    }
+    gstinError = null;
 
     if (pan.isNotEmpty &&
         !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(pan)) {

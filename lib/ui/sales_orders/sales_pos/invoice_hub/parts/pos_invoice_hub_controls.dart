@@ -493,6 +493,12 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
   }
 
   Widget _buildPrintOptions() {
+    final copies = _invCtrl.printCopies;
+    final duplicateEnabled = _invCtrl.includeDuplicateStamp;
+    final canDecrease = copies > 1;
+    final canIncrease = copies < 5;
+    final canMarkDuplicate = copies > 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -509,99 +515,138 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
         AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: SalesPosColors.shellPanelBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: SalesPosColors.shellBorder),
+            border: Border.all(
+              color: SalesPosColors.brandGold.withValues(alpha: 0.32),
+            ),
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Copies',
-                    style: TextStyle(
-                      color: SalesPosColors.shellTextTitle,
-                      fontSize: SalesPosStyles.fontLabel,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: SalesPosColors.brandGold.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.print_rounded,
+                      color: SalesPosColors.brandGold,
+                      size: 20,
                     ),
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.remove_circle_outline,
-                          color: SalesPosColors.brandGold,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Print Run',
+                          style: TextStyle(
+                            color: SalesPosColors.shellTextTitle,
+                            fontSize: SalesPosStyles.fontLabel,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0,
+                          ),
                         ),
-                        onPressed: () {
-                          if (_invCtrl.printCopies > 1) {
-                            _invCtrl.updatePrintOptions(
-                              copies: _invCtrl.printCopies - 1,
-                              duplicate: _invCtrl.includeDuplicateStamp,
-                            );
-                          }
-                        },
-                      ),
-                      Text(
-                        '${_invCtrl.printCopies}',
-                        style: const TextStyle(
-                          color: SalesPosColors.brandGold,
-                          fontSize: SalesPosStyles.fontValue,
-                          fontWeight: FontWeight.w900,
+                        const SizedBox(height: 2),
+                        Text(
+                          '$copies ${copies == 1 ? 'copy' : 'copies'} selected',
+                          style: const TextStyle(
+                            color: SalesPosColors.shellTextMuted,
+                            fontSize: SalesPosStyles.fontCaption,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.add_circle_outline,
-                          color: SalesPosColors.brandGold,
-                        ),
-                        onPressed: () {
-                          if (_invCtrl.printCopies < 5) {
-                            _invCtrl.updatePrintOptions(
-                              copies: _invCtrl.printCopies + 1,
-                              duplicate: _invCtrl.includeDuplicateStamp,
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  )
+                      ],
+                    ),
+                  ),
+                  _PrintStatusBadge(
+                    label: duplicateEnabled ? 'Duplicate On' : 'Original',
+                    isActive: duplicateEnabled,
+                  ),
                 ],
               ),
               const Divider(color: SalesPosColors.shellBorder, height: 24),
+              _PrintControlSurface(
+                icon: Icons.copy_all_rounded,
+                title: 'Copies',
+                subtitle: 'Maximum 5 copies per print run',
+                trailing: _CopyStepper(
+                  value: copies,
+                  canDecrease: canDecrease,
+                  canIncrease: canIncrease,
+                  onDecrease: () {
+                    if (!canDecrease) return;
+                    _invCtrl.updatePrintOptions(
+                      copies: copies - 1,
+                      duplicate: duplicateEnabled,
+                    );
+                  },
+                  onIncrease: () {
+                    if (!canIncrease) return;
+                    _invCtrl.updatePrintOptions(
+                      copies: copies + 1,
+                      duplicate: duplicateEnabled,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              _PrintControlSurface(
+                icon: Icons.verified_user_rounded,
+                title: 'Duplicate Mark',
+                subtitle: canMarkDuplicate
+                    ? 'Stamp second and later copies only'
+                    : 'Available when copies are 2 or more',
+                trailing: Switch(
+                  value: duplicateEnabled,
+                  onChanged: canMarkDuplicate
+                      ? (value) => _invCtrl.updatePrintOptions(
+                            copies: copies,
+                            duplicate: value,
+                          )
+                      : null,
+                  activeThumbColor: SalesPosColors.brandGold,
+                  activeTrackColor:
+                      SalesPosColors.brandGold.withValues(alpha: 0.32),
+                  inactiveThumbColor: SalesPosColors.shellTextMuted,
+                  inactiveTrackColor: SalesPosColors.shellBg,
+                ),
+              ),
+              const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Duplicate Mark',
-                        style: TextStyle(
-                          color: SalesPosColors.shellTextTitle,
-                          fontSize: SalesPosStyles.fontLabel,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Marks reprinted copies',
-                        style: TextStyle(
-                          color: SalesPosColors.shellTextMuted,
-                          fontSize: SalesPosStyles.fontCaption,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Switch(
-                    value: _invCtrl.includeDuplicateStamp,
-                    onChanged: (value) => _invCtrl.updatePrintOptions(
-                      copies: _invCtrl.printCopies,
-                      duplicate: value,
+                  Expanded(
+                    child: _PrintMetaPill(
+                      icon: Icons.description_rounded,
+                      label: _formatShortName(_invCtrl.selectedFormat),
                     ),
-                    activeThumbColor: SalesPosColors.brandGold,
-                    inactiveTrackColor: SalesPosColors.shellBg,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PrintMetaPill(
+                      icon: Icons.layers_rounded,
+                      label: copies == 1 ? 'Single copy' : '$copies copies',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PrintMetaPill(
+                      icon: duplicateEnabled
+                          ? Icons.verified_rounded
+                          : Icons.lock_open_rounded,
+                      label: duplicateEnabled ? 'Stamped' : 'Clean',
+                    ),
                   ),
                 ],
               ),
@@ -609,6 +654,247 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PrintControlSurface extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  const _PrintControlSurface({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellBg.withValues(alpha: 0.58),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: SalesPosColors.brandGold, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: SalesPosColors.shellTextTitle,
+                    fontSize: SalesPosStyles.fontLabel,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: SalesPosColors.shellTextMuted,
+                    fontSize: SalesPosStyles.fontCaption,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          trailing,
+        ],
+      ),
+    );
+  }
+}
+
+class _CopyStepper extends StatelessWidget {
+  final int value;
+  final bool canDecrease;
+  final bool canIncrease;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
+
+  const _CopyStepper({
+    required this.value,
+    required this.canDecrease,
+    required this.canIncrease,
+    required this.onDecrease,
+    required this.onIncrease,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 36,
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellPanelBg,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StepperButton(
+            icon: Icons.remove_rounded,
+            enabled: canDecrease,
+            onTap: onDecrease,
+          ),
+          SizedBox(
+            width: 38,
+            child: Center(
+              child: Text(
+                '$value',
+                style: const TextStyle(
+                  color: SalesPosColors.brandGold,
+                  fontSize: SalesPosStyles.fontInput,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ),
+          _StepperButton(
+            icon: Icons.add_rounded,
+            enabled: canIncrease,
+            onTap: onIncrease,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _StepperButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: icon == Icons.add_rounded ? 'Add copy' : 'Remove copy',
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 34,
+          height: 34,
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled
+                ? SalesPosColors.brandGold
+                : SalesPosColors.shellTextMuted.withValues(alpha: 0.38),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrintStatusBadge extends StatelessWidget {
+  final String label;
+  final bool isActive;
+
+  const _PrintStatusBadge({
+    required this.label,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive
+            ? SalesPosColors.brandGold.withValues(alpha: 0.14)
+            : SalesPosColors.shellBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isActive
+              ? SalesPosColors.brandGold.withValues(alpha: 0.40)
+              : SalesPosColors.shellBorder,
+        ),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: isActive
+              ? SalesPosColors.brandGold
+              : SalesPosColors.shellTextMuted,
+          fontSize: SalesPosStyles.fontCaption,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+    );
+  }
+}
+
+class _PrintMetaPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _PrintMetaPill({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: SalesPosColors.shellTextMuted),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: SalesPosColors.shellTextTitle,
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

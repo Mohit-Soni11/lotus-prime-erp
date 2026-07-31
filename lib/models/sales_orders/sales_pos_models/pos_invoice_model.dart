@@ -135,6 +135,8 @@ class PosInvoiceModel {
   }
 
   String get printShopAddress {
+    final businessAddress = shopPrintValue('business_address');
+    if (businessAddress.isNotEmpty) return businessAddress;
     final address = [
       shopPrintValue('address_line'),
       shopPrintValue('city_state_pin'),

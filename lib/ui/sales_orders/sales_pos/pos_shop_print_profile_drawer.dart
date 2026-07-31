@@ -168,7 +168,7 @@ class _DrawerHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Shop Print Information controls with live invoice preview',
+                  'Print information controls with live invoice preview',
                   style: TextStyle(
                     color: SalesPosColors.shellTextMuted,
                     fontSize: SalesPosStyles.fontCaption,

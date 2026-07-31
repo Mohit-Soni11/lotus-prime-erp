@@ -93,7 +93,13 @@ class _PosInvoicePdfDocumentBuilder {
 
     for (int i = 0; i < options.copies; i++) {
       for (final scopedInvoice in scopedInvoices) {
-        _addInvoicePage(doc, scopedInvoice, options.format, pageFormat);
+        _addInvoicePage(
+          doc,
+          scopedInvoice,
+          options.format,
+          pageFormat,
+          copyIndex: i,
+        );
       }
     }
     return doc.save();
@@ -162,15 +168,23 @@ class _PosInvoicePdfDocumentBuilder {
     }
   }
 
-  void _addInvoicePage(
-    pw.Document doc,
-    PosInvoiceModel invoice,
-    PrintFormat format,
-    PdfPageFormat pageFormat,
-  ) {
+  void _addInvoicePage(pw.Document doc, PosInvoiceModel invoice,
+      PrintFormat format, PdfPageFormat pageFormat,
+      {required int copyIndex}) {
+    final includeDuplicateStamp = _includeDuplicateStamp(copyIndex);
     if (format == PrintFormat.a4) {
-      _addA4InvoicePage(doc, invoice, pageFormat);
-      _addA4PolicyPages(doc, invoice, pageFormat);
+      _addA4InvoicePage(
+        doc,
+        invoice,
+        pageFormat,
+        includeDuplicateStamp: includeDuplicateStamp,
+      );
+      _addA4PolicyPages(
+        doc,
+        invoice,
+        pageFormat,
+        includeDuplicateStamp: includeDuplicateStamp,
+      );
       return;
     }
 
@@ -179,7 +193,7 @@ class _PosInvoicePdfDocumentBuilder {
         pageTheme: pw.PageTheme(
           pageFormat: pageFormat,
           margin: const pw.EdgeInsets.all(6),
-          buildBackground: options.includeDuplicateStamp
+          buildBackground: includeDuplicateStamp
               ? (_) => pw.Center(child: _duplicateWatermark(fontSize: 25))
               : null,
         ),
@@ -189,10 +203,8 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   void _addA4InvoicePage(
-    pw.Document doc,
-    PosInvoiceModel invoice,
-    PdfPageFormat pageFormat,
-  ) {
+      pw.Document doc, PosInvoiceModel invoice, PdfPageFormat pageFormat,
+      {required bool includeDuplicateStamp}) {
     doc.addPage(
       pw.Page(
         pageFormat: pageFormat,
@@ -202,7 +214,7 @@ class _PosInvoicePdfDocumentBuilder {
             invoice,
             includePolicyBlock: false,
           );
-          if (options.includeDuplicateStamp) {
+          if (includeDuplicateStamp) {
             return pw.Stack(
               alignment: pw.Alignment.center,
               children: [
@@ -218,10 +230,8 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   void _addA4PolicyPages(
-    pw.Document doc,
-    PosInvoiceModel invoice,
-    PdfPageFormat pageFormat,
-  ) {
+      pw.Document doc, PosInvoiceModel invoice, PdfPageFormat pageFormat,
+      {required bool includeDuplicateStamp}) {
     final entries = _policyEntries(invoice);
     if (entries.isEmpty) return;
 
@@ -230,7 +240,7 @@ class _PosInvoicePdfDocumentBuilder {
         pageTheme: pw.PageTheme(
           pageFormat: pageFormat,
           margin: const pw.EdgeInsets.all(28),
-          buildBackground: options.includeDuplicateStamp
+          buildBackground: includeDuplicateStamp
               ? (_) => pw.Center(
                     child: _duplicateWatermark(fontSize: 60),
                   )
@@ -241,6 +251,10 @@ class _PosInvoicePdfDocumentBuilder {
         build: (_) => _policyPageContent(entries),
       ),
     );
+  }
+
+  bool _includeDuplicateStamp(int copyIndex) {
+    return options.includeDuplicateStamp && copyIndex > 0;
   }
 
   pw.Widget _duplicateWatermark({required double fontSize}) {

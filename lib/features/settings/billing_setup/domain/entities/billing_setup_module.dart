@@ -52,7 +52,7 @@ class BillingSetupModules {
       subtitle:
           'Choose shop, tax, contact and social details printed on bills.',
       tag: 'Name, GSTIN, BIS, Mobile, Social',
-      actionLabel: 'Configure Shop Info',
+      actionLabel: 'Configure Print Info',
     ),
   ];
 }

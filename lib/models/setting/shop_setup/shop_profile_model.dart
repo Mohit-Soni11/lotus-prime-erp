@@ -19,6 +19,7 @@ class ShopProfileModel {
   final String businessEmail;
   final String shopPhone;
   final String shopWhatsapp;
+  final String helpDeskNumber;
   final String logoShape;
   final String signatureShape;
   final String? logoPath; // 🚀 FIXED: Changed from logoBase64
@@ -34,6 +35,7 @@ class ShopProfileModel {
     this.businessEmail = "",
     this.shopPhone = "",
     this.shopWhatsapp = "",
+    this.helpDeskNumber = "",
     this.logoShape = "circle",
     this.signatureShape = "square",
     this.logoPath,
@@ -51,6 +53,7 @@ class ShopProfileModel {
       businessEmail: json['business_email']?.toString() ?? "",
       shopPhone: json['shop_phone']?.toString() ?? "",
       shopWhatsapp: json['shop_whatsapp']?.toString() ?? "",
+      helpDeskNumber: json['help_desk_number']?.toString() ?? "",
       logoShape: _shape(json['logo_shape'], fallback: "circle"),
       signatureShape: _shape(json['signature_shape'], fallback: "square"),
       logoPath: json['logo_path']?.toString(),
@@ -69,6 +72,7 @@ class ShopProfileModel {
       'business_email': businessEmail,
       'shop_phone': shopPhone,
       'shop_whatsapp': shopWhatsapp,
+      'help_desk_number': helpDeskNumber,
       'logo_shape': logoShape,
       'signature_shape': signatureShape,
       'logo_path': logoPath,
@@ -86,6 +90,7 @@ class ShopProfileModel {
     String? businessEmail,
     String? shopPhone,
     String? shopWhatsapp,
+    String? helpDeskNumber,
     String? logoShape,
     String? signatureShape,
     String? logoPath,
@@ -101,6 +106,7 @@ class ShopProfileModel {
       businessEmail: businessEmail ?? this.businessEmail,
       shopPhone: shopPhone ?? this.shopPhone,
       shopWhatsapp: shopWhatsapp ?? this.shopWhatsapp,
+      helpDeskNumber: helpDeskNumber ?? this.helpDeskNumber,
       logoShape: logoShape ?? this.logoShape,
       signatureShape: signatureShape ?? this.signatureShape,
       logoPath: logoPath ?? this.logoPath,
@@ -121,6 +127,7 @@ class ShopProfileModel {
         other.businessEmail == businessEmail &&
         other.shopPhone == shopPhone &&
         other.shopWhatsapp == shopWhatsapp &&
+        other.helpDeskNumber == helpDeskNumber &&
         other.logoShape == logoShape &&
         other.signatureShape == signatureShape &&
         other.logoPath == logoPath &&
@@ -139,6 +146,7 @@ class ShopProfileModel {
         businessEmail,
         shopPhone,
         shopWhatsapp,
+        helpDeskNumber,
         logoShape,
         signatureShape,
         logoPath,

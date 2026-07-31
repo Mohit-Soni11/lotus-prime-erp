@@ -206,9 +206,8 @@ abstract final class TaxGstStrings {
 
   // ── Info Banners ─────────────────────────────────────────────
   static const String infoGstin =
-      'GSTIN format: 2-digit state code + 10-char PAN + 3-char suffix '
-      '(e.g. 27AAAAA0000A1Z5). Taxpayer type determines whether '
-      'CGST+SGST or Composition levy applies on your bills.';
+      'Enter GSTIN exactly as it should appear on invoices and GST records. '
+      'The app keeps this field flexible so future format changes do not block billing.';
   static const String infoSlabs =
       'As per GST Act: Gold/Silver/Diamond jewellery → 3%, '
       'Making charges → 5%, Repair services → 18%, '
@@ -257,8 +256,7 @@ abstract final class TaxGstStrings {
   static const String feedbackHsnRemoved = 'HSN code removed';
 
   // ── Validation Messages ──────────────────────────────────────
-  static const String validGstinFormat =
-      'Invalid GSTIN format (e.g. 27AAAAA0000A1Z5)';
+  static const String validGstinFormat = 'Enter GSTIN to continue';
   static const String validPanFormat = 'Invalid PAN format (e.g. AAAAA0000A)';
   static const String validRequired = 'This field is required';
 

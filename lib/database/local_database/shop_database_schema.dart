@@ -9,7 +9,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class ShopDatabaseSchema {
   ShopDatabaseSchema._();
 
-  static const int currentVersion = 7;
+  static const int currentVersion = 8;
 
   static Future<void> configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
@@ -24,7 +24,7 @@ class ShopDatabaseSchema {
         legal_name TEXT, display_name TEXT, tagline TEXT,
         owner_name TEXT, owner_phone TEXT,
         brand_display_name TEXT, business_email TEXT,
-        shop_phone TEXT, shop_whatsapp TEXT,
+        shop_phone TEXT, shop_whatsapp TEXT, help_desk_number TEXT,
         logo_path TEXT, logo_shape TEXT DEFAULT 'circle',
         signature_path TEXT, signature_shape TEXT DEFAULT 'square'
       )
@@ -147,6 +147,14 @@ class ShopDatabaseSchema {
           'TEXT',
         );
       }
+    }
+    if (oldVersion < 8) {
+      await _addColumnIfMissing(
+        db,
+        'shop_profile',
+        'help_desk_number',
+        'TEXT',
+      );
     }
   }
 

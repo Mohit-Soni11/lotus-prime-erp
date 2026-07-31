@@ -124,7 +124,8 @@ class BasicInfoLogic {
   List<String> validateCommunication(
       {required String email,
       required String shopPhone,
-      required String shopWa}) {
+      required String shopWa,
+      required String helpDeskNumber}) {
     List<String> errors = [];
     if (email.isNotEmpty && BasicInfoValidators.email(email) != null) {
       errors.add(BasicInfoStrings.keyEmail);
@@ -134,6 +135,10 @@ class BasicInfoLogic {
     }
     if (shopWa.isNotEmpty && BasicInfoValidators.phone(shopWa) != null) {
       errors.add(BasicInfoStrings.keyShopWa);
+    }
+    if (helpDeskNumber.isNotEmpty &&
+        BasicInfoValidators.phone(helpDeskNumber) != null) {
+      errors.add(BasicInfoStrings.keyHelpDesk);
     }
     return errors;
   }
@@ -179,6 +184,7 @@ class BasicInfoLogic {
     required String businessEmail,
     required String shopPhone,
     required String shopWhatsapp,
+    required String helpDeskNumber,
   }) {
     return ShopProfileModel(
       legalName: legalName.trim(),
@@ -190,6 +196,7 @@ class BasicInfoLogic {
       businessEmail: businessEmail.trim(),
       shopPhone: shopPhone.trim(),
       shopWhatsapp: shopWhatsapp.trim(),
+      helpDeskNumber: helpDeskNumber.trim(),
       // 🚀 FIXED: Mapping to logoPath and signaturePath instead of Base64
       // Yeh check karega ki naya file select hua hai ya nahi, warna initial data se le lega
       logoPath: _logoRemoved

@@ -117,6 +117,7 @@ void main() {
           'business_email': 'support@lotusjewellers.com',
           'shop_phone': '9876543210',
           'shop_whatsapp': '9876543210',
+          'help_desk_number': '9123456780',
           'logo_path': 'C:/qa/logo.png',
           'logo_shape': 'circle',
           'signature_path': 'C:/qa/signature.png',
@@ -176,6 +177,7 @@ void main() {
       expect(restored, isNotNull);
       expect(restored!['basic_info']['legal_name'],
           'Lotus Jewellers Private Limited');
+      expect(restored['basic_info']['help_desk_number'], '9123456780');
       expect(restored['address']['pincode'], '800001');
       expect(restored['tax_compliance']['gold_bis_license_no'], 'HM/C-GOLD');
       expect(
