@@ -194,6 +194,32 @@ void main() {
       item.dispose();
     });
 
+    test('keeps linked stock reference when sale quantity is adjusted', () {
+      final item = SaleItemModel(metal: MetalType.silver);
+
+      item.applyStockReferenceSnapshot(
+        huids: const ['HUID-001'],
+        grossWeight: 17.95,
+        lessWeight: 0,
+        stockItemId: 10,
+        stockUnitId: 20,
+        stockUnitCost: 3000,
+        sku: 'SKU-10',
+      );
+
+      expect(item.hasLinkedStock, isTrue);
+      expect(item.linkedStockSku, 'SKU-10');
+
+      item.pcsCtrl.text = '2';
+
+      expect(item.hasLinkedStock, isTrue);
+      expect(item.linkedStockItemId, 10);
+      expect(item.linkedStockUnitId, 20);
+      expect(item.linkedStockSku, 'SKU-10');
+
+      item.dispose();
+    });
+
     test('clears linked stock reference when item identity is edited', () {
       final item = SaleItemModel(metal: MetalType.gold);
 

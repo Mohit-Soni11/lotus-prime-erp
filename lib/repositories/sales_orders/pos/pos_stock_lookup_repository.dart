@@ -46,6 +46,29 @@ class PosStockLookupRepository {
     return _toLookupModels(matches, unitRows, limit);
   }
 
+  Future<PosStockLookupModel?> findUniqueExactDescription({
+    required String query,
+    required MetalType metal,
+    String purityLabel = '',
+    int limit = 20,
+  }) async {
+    final term = _normalizeExactText(query);
+    if (term.isEmpty) {
+      return null;
+    }
+
+    final matches = await searchByDescription(
+      query: query,
+      metal: metal,
+      purityLabel: purityLabel,
+      limit: limit,
+    );
+    final exactMatches = matches
+        .where((match) => _isExactDescriptionMatch(match, term))
+        .toList(growable: false);
+    return exactMatches.length == 1 ? exactMatches.single : null;
+  }
+
   Future<List<PosStockLookupModel>> searchByHuid({
     required String query,
     required MetalType metal,
@@ -209,6 +232,16 @@ class PosStockLookupRepository {
     if (itemName.contains(term) || itemType.contains(term)) return 4;
     if (huid.startsWith(term) || unitCode.startsWith(term)) return 5;
     return 6;
+  }
+
+  bool _isExactDescriptionMatch(PosStockLookupModel match, String term) {
+    return _normalizeExactText(match.displayTitle) == term ||
+        _normalizeExactText(match.itemName) == term ||
+        _normalizeExactText(match.categoryLabel) == term;
+  }
+
+  String _normalizeExactText(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
   int _rankHuidMatch(_StockUnitLookupRow row, String term) {

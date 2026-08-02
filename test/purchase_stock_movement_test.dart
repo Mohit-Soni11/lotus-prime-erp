@@ -203,8 +203,7 @@ void main() {
     expect(movements.single.netWeightDelta, 180);
   });
 
-  test('savePurchase records HUID silver as separate units with one HUID each',
-      () async {
+  test('savePurchase records HUID silver with exact unit weights', () async {
     final result = await repository.savePurchase(
       _silverDraft(
         voucherNo: 'SS-18JUL2026-0002',
@@ -220,6 +219,28 @@ void main() {
         huids: const ['SIL123', 'SIL456'],
         stockTrackingMode: PurchaseStockTrackingMode.unit,
         quantityMode: 'PIECES',
+        unitLines: const [
+          PurchaseVoucherUnitDraft(
+            huid: 'SIL123',
+            grossWeight: 5.25,
+            lessWeight: 0,
+            netWeight: 5.25,
+            fineWeight: 4.856,
+            wastageFineWeight: 0.263,
+            valuationFineWeight: 5.119,
+            lineAmount: 1131.1,
+          ),
+          PurchaseVoucherUnitDraft(
+            huid: 'SIL456',
+            grossWeight: 6.75,
+            lessWeight: 0,
+            netWeight: 6.75,
+            fineWeight: 6.244,
+            wastageFineWeight: 0.337,
+            valuationFineWeight: 6.581,
+            lineAmount: 1457.1,
+          ),
+        ],
       ),
     );
 
@@ -248,12 +269,40 @@ void main() {
       huidRows.map((row) => row.read<String>('huid')).toList(),
       ['SIL123', 'SIL456'],
     );
-    expect(unitRows.first.read<double>('gross_weight'), 6);
-    expect(unitRows.last.read<double>('gross_weight'), 6);
-    expect(unitRows.first.read<double>('valuation_fine_weight'), 5.85);
+    expect(unitRows.first.read<double>('gross_weight'), 5.25);
+    expect(unitRows.last.read<double>('gross_weight'), 6.75);
+    expect(unitRows.first.read<double>('valuation_fine_weight'), 5.119);
     expect(movements.single.quantityDelta, 2);
     expect(movements.single.grossWeightDelta, 12);
     expect(movements.single.netWeightDelta, 12);
+  });
+
+  test('savePurchase rejects unit-tracked total weight without unit weights',
+      () async {
+    final result = await repository.savePurchase(
+      _silverDraft(
+        voucherNo: 'SS-18JUL2026-0003',
+        quantity: 2,
+        grossWeight: 3.65,
+        lessWeight: 0,
+        netWeight: 3.65,
+        purity: 75,
+        fineWeight: 2.737,
+        wastageFineWeight: 0,
+        valuationFineWeight: 2.737,
+        lineAmount: 605,
+        huids: const ['RNG123', 'RNG456'],
+        stockTrackingMode: PurchaseStockTrackingMode.unit,
+        quantityMode: 'PIECES',
+      ),
+    );
+
+    expect(result, isNull);
+    expect(
+      repository.lastErrorMessage,
+      contains('Enter each piece as a separate row with exact gross'),
+    );
+    expect(await database.select(database.stockItems).get(), isEmpty);
   });
 }
 
@@ -332,6 +381,7 @@ PurchaseVoucherDraft _silverDraft({
   String quantityMode = 'PIECES',
   int packetCount = 0,
   int piecesPerPacket = 1,
+  List<PurchaseVoucherUnitDraft> unitLines = const [],
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: 1,
@@ -391,6 +441,7 @@ PurchaseVoucherDraft _silverDraft({
         piecesPerPacket: piecesPerPacket,
         weightsAreLineTotals: true,
         stockTrackingMode: stockTrackingMode,
+        unitLines: unitLines,
       ),
     ],
   );

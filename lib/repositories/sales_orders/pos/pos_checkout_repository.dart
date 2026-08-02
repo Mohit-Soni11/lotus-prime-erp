@@ -1752,17 +1752,25 @@ class PosCheckoutRepository {
 
     final remainingQty = stockRow.quantity - quantityToSell;
     final now = DateTime.now();
-    final delta = _lotSaleDelta(
-      stockRow: stockRow,
-      unitRow: lotUnit,
-      quantity: quantityToSell,
-      saleGrossWeight: saleGrossWeight,
-      saleLessWeight: saleLessWeight,
-      saleNetWeight: saleNetWeight,
-      saleFineWeight: saleFineWeight,
-      saleLineAmount: saleLineAmount,
-      saleMakingAmount: saleMakingAmount,
-    );
+    final isFullLotSale = quantityToSell >= stockRow.quantity;
+    final delta = isFullLotSale
+        ? _lotDelta(
+            stockRow: stockRow,
+            unitRow: lotUnit,
+            quantity: quantityToSell,
+            sign: -1,
+          )
+        : _lotSaleDelta(
+            stockRow: stockRow,
+            unitRow: lotUnit,
+            quantity: quantityToSell,
+            saleGrossWeight: saleGrossWeight,
+            saleLessWeight: saleLessWeight,
+            saleNetWeight: saleNetWeight,
+            saleFineWeight: saleFineWeight,
+            saleLineAmount: saleLineAmount,
+            saleMakingAmount: saleMakingAmount,
+          );
 
     await _writeLotBalance(
       stockRow: stockRow,

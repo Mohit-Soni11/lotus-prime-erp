@@ -190,6 +190,53 @@ void main() {
   );
 
   test(
+    'finalizeSale clears full lot stock balance on net-weight sale',
+    () async {
+      final stockId = await _insertSilverLotStock(
+        db,
+        sku: 'SIL-CHAND-LOT',
+        quantity: 8,
+        grossWeight: 12.45,
+        lessWeight: 0.50,
+        netWeight: 11.95,
+      );
+      final saleItem = SaleItemModel(metal: pos.MetalType.silver);
+      saleItem.descCtrl.text = 'CHAND';
+      saleItem.pcsCtrl.text = '8';
+      saleItem.purityCtrl.text = '999';
+      saleItem.grossCtrl.text = '11.95';
+      saleItem.lessCtrl.text = '0';
+      saleItem.rateCtrl.text = '100';
+      saleItem.makingCtrl.text = '0';
+      saleItem.attachStockReference(
+        stockItemId: stockId,
+        sku: 'SIL-CHAND-LOT-U001',
+      );
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [saleItem],
+        cashPaid: 1195,
+      );
+
+      await repository.finalizeSale(invoice: invoice, customerId: null);
+
+      final stockRow = await _stockById(db, stockId);
+      final stockMovements = await _stockMovementsFor(db, stockId);
+
+      expect(stockRow.quantity, 0);
+      expect(stockRow.status, stock.StockStatus.sold.label);
+      expect(stockRow.grossWeight, 0);
+      expect(stockRow.stoneWeight, 0);
+      expect(stockRow.netWeight, 0);
+      expect(stockMovements.single.quantityDelta, -8);
+      expect(stockMovements.single.grossWeightDelta, -12.45);
+      expect(stockMovements.single.netWeightDelta, -11.95);
+
+      _disposeItems(saleItems: [saleItem]);
+    },
+  );
+
+  test(
     'finalizeSale saves and reloads invoice HSN code snapshot',
     () async {
       final stockId = await _insertStockItem(db, sku: 'GOLD-HSN-001');
@@ -749,6 +796,88 @@ Future<int> _insertStockItem(AppDatabase db, {required String sku}) async {
       const drift.Variable<double>(6000),
       const drift.Variable<double>(0),
       const drift.Variable<double>(60000),
+      const drift.Variable<String>('Test Supplier'),
+      drift.Variable<String>(stock.StockStatus.available.label),
+      drift.Variable<int>(now),
+    ],
+  );
+
+  return stockItemId;
+}
+
+Future<int> _insertSilverLotStock(
+  AppDatabase db, {
+  required String sku,
+  required int quantity,
+  required double grossWeight,
+  required double lessWeight,
+  required double netWeight,
+}) async {
+  final stockItemId = await db.into(db.stockItems).insert(
+        StockItemsCompanion.insert(
+          sku: sku,
+          itemName: 'CHAND',
+          category: 'Silver',
+          subCategory: 'Payal',
+          metalType: const drift.Value('Silver'),
+          purity: const drift.Value('999'),
+          grossWeight: drift.Value(grossWeight),
+          stoneWeight: drift.Value(lessWeight),
+          netWeight: drift.Value(netWeight),
+          quantity: drift.Value(quantity),
+          status: drift.Value(stock.StockStatus.available.label),
+          isActive: const drift.Value(true),
+        ),
+      );
+
+  final now = DateTime(2026, 7, 22, 12).millisecondsSinceEpoch;
+  await db.customInsert(
+    '''
+    INSERT INTO stock_item_units (
+      stock_item_id,
+      batch_code,
+      unit_code,
+      piece_no,
+      metal_type,
+      item_type,
+      segment,
+      item_name,
+      huid,
+      gross_weight,
+      less_weight,
+      net_weight,
+      purity_percent,
+      actual_fine_weight,
+      wastage_fine_weight,
+      valuation_fine_weight,
+      rate_per_gram,
+      making_amount,
+      unit_cost,
+      supplier_name,
+      status,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    variables: [
+      drift.Variable<int>(stockItemId),
+      const drift.Variable<String>('SILVER-LOT'),
+      drift.Variable<String>('$sku-U001'),
+      const drift.Variable<int>(1),
+      const drift.Variable<String>('Silver'),
+      const drift.Variable<String>('CHAND'),
+      const drift.Variable<String>('Local'),
+      const drift.Variable<String>('CHAND'),
+      const drift.Variable<String>(''),
+      drift.Variable<double>(grossWeight),
+      drift.Variable<double>(lessWeight),
+      drift.Variable<double>(netWeight),
+      const drift.Variable<double>(99.9),
+      drift.Variable<double>(netWeight * 0.999),
+      const drift.Variable<double>(0),
+      drift.Variable<double>(netWeight * 0.999),
+      const drift.Variable<double>(100),
+      const drift.Variable<double>(0),
+      drift.Variable<double>(netWeight * 100),
       const drift.Variable<String>('Test Supplier'),
       drift.Variable<String>(stock.StockStatus.available.label),
       drift.Variable<int>(now),

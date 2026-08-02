@@ -44,6 +44,28 @@ void main() {
         valuationFineWeight: 9.36,
         lineAmount: 140520,
         huids: const ['GJ1234', 'GJ5678'],
+        unitLines: const [
+          PurchaseVoucherUnitDraft(
+            huid: 'GJ1234',
+            grossWeight: 5.8,
+            lessWeight: 0,
+            netWeight: 5.8,
+            fineWeight: 4.35,
+            wastageFineWeight: 0.174,
+            valuationFineWeight: 4.524,
+            lineAmount: 67918,
+          ),
+          PurchaseVoucherUnitDraft(
+            huid: 'GJ5678',
+            grossWeight: 6.2,
+            lessWeight: 0,
+            netWeight: 6.2,
+            fineWeight: 4.65,
+            wastageFineWeight: 0.186,
+            valuationFineWeight: 4.836,
+            lineAmount: 72602,
+          ),
+        ],
       ),
     );
 
@@ -455,11 +477,6 @@ SaleItemModel _goldSaleItem({
   int? stockUnitId,
 }) {
   final item = SaleItemModel(metal: pos.MetalType.gold);
-  item.attachStockReference(
-    stockItemId: stockItemId,
-    stockUnitId: stockUnitId,
-    sku: sku,
-  );
   item.descCtrl.text = description;
   item.pcsCtrl.text = pieces.toString();
   item.huidCtrl.text = sku;
@@ -468,6 +485,11 @@ SaleItemModel _goldSaleItem({
   item.lessCtrl.text = '0';
   item.rateCtrl.text = _formatNumber(rate);
   item.makingCtrl.text = '0';
+  item.attachStockReference(
+    stockItemId: stockItemId,
+    stockUnitId: stockUnitId,
+    sku: sku,
+  );
   return item;
 }
 
@@ -525,6 +547,7 @@ PurchaseVoucherDraft _goldDraft({
   required double valuationFineWeight,
   required double lineAmount,
   required List<String> huids,
+  List<PurchaseVoucherUnitDraft> unitLines = const [],
   PurchaseStockTrackingMode stockTrackingMode = PurchaseStockTrackingMode.unit,
 }) {
   return PurchaseVoucherDraft(
@@ -585,6 +608,7 @@ PurchaseVoucherDraft _goldDraft({
         piecesPerPacket: 1,
         weightsAreLineTotals: true,
         stockTrackingMode: stockTrackingMode,
+        unitLines: unitLines,
       ),
     ],
   );

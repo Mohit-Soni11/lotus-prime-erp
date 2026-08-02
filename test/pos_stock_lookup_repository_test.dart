@@ -83,6 +83,62 @@ void main() {
     expect(matches, hasLength(1));
     expect(matches.single.sku, 'JHM-PCT-001-U001');
   });
+
+  test(
+      'unique exact description resolves typed stock without picking prefix rows',
+      () async {
+    await _insertLookupStock(
+      db,
+      sku: 'CHAND-001',
+      itemName: 'CHAND',
+      purityLabel: '999',
+      grossWeight: 11.95,
+      huid: '',
+    );
+    await _insertLookupStock(
+      db,
+      sku: 'OPP-CHAND-001',
+      itemName: 'OPP. CHAND',
+      purityLabel: '999',
+      grossWeight: 11.95,
+      huid: '',
+    );
+
+    final match = await repository.findUniqueExactDescription(
+      query: 'CHAND',
+      metal: MetalType.gold,
+    );
+
+    expect(match, isNotNull);
+    expect(match!.itemName, 'CHAND');
+    expect(match.sku, 'CHAND-001-U001');
+  });
+
+  test('unique exact description refuses ambiguous same-name stock', () async {
+    await _insertLookupStock(
+      db,
+      sku: 'CHAIN-001',
+      itemName: 'CHAIN',
+      purityLabel: '999',
+      grossWeight: 20.30,
+      huid: '',
+    );
+    await _insertLookupStock(
+      db,
+      sku: 'CHAIN-002',
+      itemName: 'CHAIN',
+      purityLabel: '999',
+      grossWeight: 17.95,
+      huid: '',
+    );
+
+    final match = await repository.findUniqueExactDescription(
+      query: 'CHAIN',
+      metal: MetalType.gold,
+    );
+
+    expect(match, isNull);
+  });
 }
 
 Future<int> _insertLookupStock(

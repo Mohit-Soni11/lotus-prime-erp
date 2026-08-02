@@ -9,6 +9,30 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 
 enum PurchaseStockTrackingMode { unit, lot }
 
+class PurchaseVoucherUnitDraft {
+  final String? huid;
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double fineWeight;
+  final double wastageFineWeight;
+  final double valuationFineWeight;
+  final double lineAmount;
+  final double labourCharge;
+
+  const PurchaseVoucherUnitDraft({
+    this.huid,
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.fineWeight,
+    this.wastageFineWeight = 0.0,
+    this.valuationFineWeight = 0.0,
+    required this.lineAmount,
+    this.labourCharge = 0.0,
+  });
+}
+
 class PurchaseVoucherPartyDraft {
   final int? customerId;
   final int? supplierId;
@@ -60,6 +84,7 @@ class PurchaseVoucherItemDraft {
   final int piecesPerPacket;
   final PurchaseStockTrackingMode stockTrackingMode;
   final bool weightsAreLineTotals;
+  final List<PurchaseVoucherUnitDraft> unitLines;
 
   const PurchaseVoucherItemDraft({
     required this.metal,
@@ -90,6 +115,7 @@ class PurchaseVoucherItemDraft {
     this.piecesPerPacket = 1,
     this.stockTrackingMode = PurchaseStockTrackingMode.unit,
     this.weightsAreLineTotals = false,
+    this.unitLines = const [],
   });
 }
 
@@ -791,6 +817,28 @@ class PurchaseEntryRepository {
           'Row $rowNo has more HUID numbers than pieces.',
         );
       }
+      if (item.stockTrackingMode == PurchaseStockTrackingMode.unit &&
+          item.weightsAreLineTotals &&
+          huids.length > 1 &&
+          quantity > 1 &&
+          item.unitLines.length != quantity) {
+        throw PurchasePostingException(
+          'Row $rowNo is unit-tracked but has only total weight. Enter each piece as a separate row with exact gross, less and net weight.',
+        );
+      }
+      for (var unitIndex = 0; unitIndex < item.unitLines.length; unitIndex++) {
+        final unit = item.unitLines[unitIndex];
+        if (unit.grossWeight <= 0 || unit.netWeight <= 0) {
+          throw PurchasePostingException(
+            'Row $rowNo piece ${unitIndex + 1} must have exact gross and net weight.',
+          );
+        }
+        if (unit.lessWeight < 0 || unit.lessWeight > unit.grossWeight) {
+          throw PurchasePostingException(
+            'Row $rowNo piece ${unitIndex + 1} less weight is invalid.',
+          );
+        }
+      }
 
       for (final huid in huids) {
         if (!RegExp(r'^[A-Z0-9]{6}$').hasMatch(huid)) {
@@ -1104,6 +1152,9 @@ class PurchaseEntryRepository {
     final values = <String>[
       ...item.huids,
       if ((item.huid ?? '').trim().isNotEmpty) item.huid!,
+      ...item.unitLines
+          .map((unit) => unit.huid ?? '')
+          .where((value) => value.trim().isNotEmpty),
     ];
     final seen = <String>{};
     return values
@@ -1189,34 +1240,53 @@ class PurchaseEntryRepository {
       );
       return;
     }
-    final unitCost = item.lineAmount / quantity;
-    final unitMaking = item.labourType == MakingChargesType.flat
+    final unitLines = item.unitLines.length == quantity
+        ? item.unitLines
+        : const <PurchaseVoucherUnitDraft>[];
+    final defaultUnitCost = item.lineAmount / quantity;
+    final defaultUnitMaking = item.labourType == MakingChargesType.flat
         ? item.labourCharge / quantity
         : item.labourCharge;
     final valuationFine = item.valuationFineWeight > 0
         ? item.valuationFineWeight
         : item.fineWeight + item.wastageFineWeight;
-    final unitGrossWeight = item.weightsAreLineTotals
+    final defaultUnitGrossWeight = item.weightsAreLineTotals
         ? _divideForStockUnit(item.grossWeight, quantity)
         : item.grossWeight;
-    final unitLessWeight = item.weightsAreLineTotals
+    final defaultUnitLessWeight = item.weightsAreLineTotals
         ? _divideForStockUnit(item.lessWeight, quantity)
         : item.lessWeight;
-    final unitNetWeight = item.weightsAreLineTotals
+    final defaultUnitNetWeight = item.weightsAreLineTotals
         ? _divideForStockUnit(item.netWeight, quantity)
         : item.netWeight;
-    final unitFineWeight = item.weightsAreLineTotals
+    final defaultUnitFineWeight = item.weightsAreLineTotals
         ? _divideForStockUnit(item.fineWeight, quantity)
         : item.fineWeight;
-    final unitWastageFineWeight = item.weightsAreLineTotals
+    final defaultUnitWastageFineWeight = item.weightsAreLineTotals
         ? _divideForStockUnit(item.wastageFineWeight, quantity)
         : item.wastageFineWeight;
-    final unitValuationFineWeight = item.weightsAreLineTotals
+    final defaultUnitValuationFineWeight = item.weightsAreLineTotals
         ? _divideForStockUnit(valuationFine, quantity)
         : valuationFine;
 
     for (var index = 0; index < quantity; index++) {
-      final huid = index < huids.length ? huids[index] : null;
+      final unitLine = index < unitLines.length ? unitLines[index] : null;
+      final unitHuid = unitLine?.huid?.trim().toUpperCase();
+      final huid = unitHuid != null && unitHuid.isNotEmpty
+          ? unitHuid
+          : index < huids.length
+              ? huids[index]
+              : null;
+      final unitGrossWeight = unitLine?.grossWeight ?? defaultUnitGrossWeight;
+      final unitLessWeight = unitLine?.lessWeight ?? defaultUnitLessWeight;
+      final unitNetWeight = unitLine?.netWeight ?? defaultUnitNetWeight;
+      final unitFineWeight = unitLine?.fineWeight ?? defaultUnitFineWeight;
+      final unitWastageFineWeight =
+          unitLine?.wastageFineWeight ?? defaultUnitWastageFineWeight;
+      final unitValuationFineWeight =
+          unitLine?.valuationFineWeight ?? defaultUnitValuationFineWeight;
+      final unitCost = unitLine?.lineAmount ?? defaultUnitCost;
+      final unitMaking = unitLine?.labourCharge ?? defaultUnitMaking;
       await _db.customStatement(
         '''
         INSERT INTO stock_item_units (

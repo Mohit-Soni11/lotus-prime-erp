@@ -60,6 +60,43 @@ void main() {
     controller.dispose();
   });
 
+  test('stock selection fills sale row with net weight basis', () {
+    final controller = PosBillingController();
+    final item = SaleItemModel(metal: MetalType.silver);
+    controller.saleItems.add(item);
+
+    controller.applyStockSuggestionToRow(
+      rowIndex: 0,
+      suggestion: const PosStockLookupModel(
+        stockItemId: 1,
+        stockUnitId: 10,
+        sku: 'PUR-SILVER-001-U001',
+        itemName: 'Fancy Chain',
+        description: '',
+        huid: '',
+        purity: '49',
+        metal: MetalType.silver,
+        categoryLabel: 'Chain',
+        grossWeight: 19.600,
+        lessWeight: 1.650,
+        netWeight: 17.950,
+        quantity: 2,
+        availableQuantity: 2,
+        quantityUnitLabel: 'pcs',
+        status: 'Available',
+      ),
+    );
+
+    expect(item.descCtrl.text, 'Fancy Chain');
+    expect(item.grossCtrl.text, '17.95');
+    expect(item.lessCtrl.text, isEmpty);
+    expect(item.netWt, 17.95);
+    expect(item.linkedStockItemId, 1);
+    expect(item.linkedStockUnitId, 10);
+
+    controller.dispose();
+  });
+
   test('draft invoice preview can be parked after returning to new sales', () {
     final controller = PosBillingController();
     final item = SaleItemModel(metal: MetalType.gold);

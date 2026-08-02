@@ -119,9 +119,6 @@ class SaleItemModel extends ChangeNotifier {
       if (!_isApplyingSmartQuantity) {
         _quantityManuallyChanged = true;
       }
-      if (!_isApplyingSmartQuantity) {
-        _clearStockReferenceOnManualEdit();
-      }
       if (_pcs != val) {
         _pcs = val;
         _syncHuidInputsWithPieceCount();

@@ -65,6 +65,28 @@ void main() {
         huids: const ['SV1234', 'SV5678'],
         stockTrackingMode: PurchaseStockTrackingMode.unit,
         quantityMode: 'PIECES',
+        unitLines: const [
+          PurchaseVoucherUnitDraft(
+            huid: 'SV1234',
+            grossWeight: 5.4,
+            lessWeight: 0,
+            netWeight: 5.4,
+            fineWeight: 4.995,
+            wastageFineWeight: 0.270,
+            valuationFineWeight: 5.265,
+            lineAmount: 1165,
+          ),
+          PurchaseVoucherUnitDraft(
+            huid: 'SV5678',
+            grossWeight: 6.6,
+            lessWeight: 0,
+            netWeight: 6.6,
+            fineWeight: 6.105,
+            wastageFineWeight: 0.330,
+            valuationFineWeight: 6.435,
+            lineAmount: 1423.2,
+          ),
+        ],
       ),
     );
 
@@ -460,11 +482,6 @@ SaleItemModel _silverSaleItem({
   int? stockUnitId,
 }) {
   final item = SaleItemModel(metal: pos.MetalType.silver);
-  item.attachStockReference(
-    stockItemId: stockItemId,
-    stockUnitId: stockUnitId,
-    sku: sku,
-  );
   item.descCtrl.text = description;
   item.pcsCtrl.text = pieces.toString();
   item.huidCtrl.text = sku;
@@ -473,6 +490,11 @@ SaleItemModel _silverSaleItem({
   item.lessCtrl.text = '0';
   item.rateCtrl.text = _formatNumber(rate);
   item.makingCtrl.text = '0';
+  item.attachStockReference(
+    stockItemId: stockItemId,
+    stockUnitId: stockUnitId,
+    sku: sku,
+  );
   return item;
 }
 
@@ -534,6 +556,7 @@ PurchaseVoucherDraft _silverDraft({
   String quantityMode = 'PIECES',
   int packetCount = 0,
   int piecesPerPacket = 1,
+  List<PurchaseVoucherUnitDraft> unitLines = const [],
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: 1,
@@ -593,6 +616,7 @@ PurchaseVoucherDraft _silverDraft({
         piecesPerPacket: piecesPerPacket,
         weightsAreLineTotals: true,
         stockTrackingMode: stockTrackingMode,
+        unitLines: unitLines,
       ),
     ],
   );

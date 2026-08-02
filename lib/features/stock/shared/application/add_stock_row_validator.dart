@@ -89,6 +89,9 @@ final class AddStockRowValidator {
     if (invalidHuid) {
       return AddStockStrings.errHuidLength;
     }
+    if (row.huids.length > 1 && row.quantity > 1) {
+      return 'Enter each HUID piece as a separate row with its exact weight. Lotus ERP will not split total weight equally.';
+    }
     if (selectedMetal != StockCategory.gold &&
         row.huid.trim().isNotEmpty &&
         row.quantity != 1) {

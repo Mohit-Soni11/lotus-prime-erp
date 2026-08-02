@@ -681,8 +681,8 @@ class PosBillingController extends ChangeNotifier {
         huids: suggestion.huids.isNotEmpty
             ? suggestion.huids
             : [suggestion.huid?.trim() ?? ''],
-        grossWeight: suggestion.grossWeight,
-        lessWeight: suggestion.lessWeight,
+        grossWeight: suggestion.netWeight,
+        lessWeight: 0,
         stockItemId: suggestion.stockItemId,
         stockUnitId: suggestion.stockUnitId,
         stockUnitCost: suggestion.unitCost,
@@ -1407,6 +1407,17 @@ class PosBillingController extends ChangeNotifier {
         continue;
       }
 
+      final autoLinked = await _autoLinkUniqueExactStockForUnlinkedItem(
+        rowIndex: index,
+        item: item,
+      );
+      if (_isDisposed) {
+        return null;
+      }
+      if (autoLinked) {
+        continue;
+      }
+
       final match = await _findMatchingStockForUnlinkedItem(item);
       if (_isDisposed) {
         return null;
@@ -1425,6 +1436,60 @@ class PosBillingController extends ChangeNotifier {
       );
     }
     return null;
+  }
+
+  Future<bool> _autoLinkUniqueExactStockForUnlinkedItem({
+    required int rowIndex,
+    required SaleItemModel item,
+  }) async {
+    final description = item.descCtrl.text.trim();
+    if (description.isEmpty) {
+      return false;
+    }
+
+    final match = await _stockLookupRepo.findUniqueExactDescription(
+      query: description,
+      metal: item.metal,
+      purityLabel: item.purityCtrl.text,
+    );
+    if (match == null ||
+        item.pcs > match.quantity ||
+        item.netWt > match.netWeight + _invoiceWeightTolerance) {
+      return false;
+    }
+
+    _attachStockReferenceToExistingRow(
+      rowIndex: rowIndex,
+      item: item,
+      suggestion: match,
+    );
+    return true;
+  }
+
+  void _attachStockReferenceToExistingRow({
+    required int rowIndex,
+    required SaleItemModel item,
+    required PosStockLookupModel suggestion,
+  }) {
+    _isApplyingStockSuggestion = true;
+    try {
+      if (item.purityCtrl.text.trim().isEmpty) {
+        item.purityCtrl.text = _displayPurityForSuggestion(suggestion);
+      }
+      if (item.primaryHuidText.trim().isEmpty && suggestion.huids.isNotEmpty) {
+        item.setHuidValues(suggestion.huids);
+      }
+      item.attachStockReference(
+        stockItemId: suggestion.stockItemId,
+        stockUnitId: suggestion.stockUnitId,
+        stockUnitCost: suggestion.unitCost,
+        sku: suggestion.sku,
+      );
+      activeRowIndex = rowIndex;
+    } finally {
+      _isApplyingStockSuggestion = false;
+    }
+    clearAllStockSuggestions();
   }
 
   Future<PosStockLookupModel?> _findMatchingStockForUnlinkedItem(
@@ -1651,7 +1716,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   Future<void> _restoreHeldBills() async {
-    final restored = await _holdRepo.loadHeldBills();
+    final restored = (await _holdRepo.loadHeldBills()).toList();
     if (_isDisposed) return;
     restored.sort((a, b) => b.holdTime.compareTo(a.holdTime));
     heldBills
