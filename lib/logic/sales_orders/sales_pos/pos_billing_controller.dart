@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async'; //  Timer support for debounced input
+import 'package:drift/drift.dart' show Value;
 
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
@@ -32,6 +33,7 @@ import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../models/setting/tax_gst/gst_slab_model.dart';
 import '../../../models/setting/tax_gst/hsn_code_model.dart';
 import '../../../features/sales_pos/domain/services/pos_gst_classification_resolver.dart';
+import '../../../features/customer/domain/services/customer_contact_value.dart';
 
 //  Customer history support
 import '../../../repositories/customer/customer_profile_repository.dart';
@@ -256,14 +258,17 @@ class PosBillingController extends ChangeNotifier {
       if (isNumeric) {
         //  Match customer mobile numbers by substring.
         matched = rows
-            .where((row) => row.mobile.toLowerCase().contains(term))
+            .where((row) => CustomerContactValue.displayMobile(row.mobile)
+                .toLowerCase()
+                .contains(term))
             .toList();
       } else {
         //  Match customer names using fuzzy search.
         matched = FuzzySearchHelper.searchObjects(
           items: rows,
           query: term,
-          getSearchText: (row) => '${row.name} ${row.mobile}',
+          getSearchText: (row) =>
+              '${row.name} ${CustomerContactValue.displayMobile(row.mobile)}',
           maxResults: 8,
           threshold: 0.30,
         );
@@ -319,12 +324,86 @@ class PosBillingController extends ChangeNotifier {
     }
   }
 
+  Future<bool> quickCreateCustomer() async {
+    final enteredName = nameCtrl.text.trim();
+    final enteredMobile = mobileCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final enteredAddress = cityCtrl.text.trim();
+
+    if (enteredName.isEmpty && enteredMobile.isEmpty) {
+      return false;
+    }
+    if (enteredMobile.isNotEmpty && enteredMobile.length != 10) {
+      return false;
+    }
+
+    try {
+      if (enteredMobile.isNotEmpty) {
+        final existing = await (_db.select(_db.customers)
+              ..where((tbl) => tbl.mobile.equals(enteredMobile)))
+            .getSingleOrNull();
+        if (existing != null) {
+          selectCustomer(_customerListItemFromRow(existing));
+          return true;
+        }
+      }
+
+      final displayName = enteredName.isNotEmpty
+          ? enteredName
+          : 'Customer ${enteredMobile.substring(enteredMobile.length - 4)}';
+      final mobileValue = CustomerContactValue.storageMobile(enteredMobile);
+
+      final id = await _db.into(_db.customers).insert(
+            CustomersCompanion(
+              name: Value(displayName),
+              firstName: Value(displayName),
+              mobile: Value(mobileValue),
+              city: Value(enteredAddress.isEmpty ? null : enteredAddress),
+              addressLine1:
+                  Value(enteredAddress.isEmpty ? null : enteredAddress),
+              type: const Value('Regular'),
+              customerTier: const Value('Regular'),
+              notes: enteredMobile.isEmpty
+                  ? const Value(
+                      'Created from New Sales quick add without mobile number.')
+                  : const Value.absent(),
+            ),
+          );
+
+      final row = await (_db.select(_db.customers)
+            ..where((tbl) => tbl.id.equals(id)))
+          .getSingleOrNull();
+      if (row == null) return false;
+
+      selectedCustomer = CustomerListItemModel(
+        id: row.id,
+        name: row.name,
+        mobile: CustomerContactValue.displayMobile(row.mobile),
+        city: _customerAddressSummary(row),
+        type: CustomerType.fromString(row.type),
+        billCount: 0,
+        createdAt: row.createdAt,
+        initials: CustomerListItemModel.buildInitials(row.name),
+      );
+      nameCtrl.text = selectedCustomer!.name;
+      mobileCtrl.text = selectedCustomer!.mobile;
+      cityCtrl.text = selectedCustomer!.city;
+      customerSuggestions = [];
+      customerNotFound = false;
+      customerHistory = null;
+      notifyListeners();
+      unawaited(_fetchCustomerHistory(row.id));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   CustomerListItemModel _customerListItemFromRow(Customer row) {
     final name = row.name;
     return CustomerListItemModel(
       id: row.id,
       name: name,
-      mobile: row.mobile,
+      mobile: CustomerContactValue.displayMobile(row.mobile),
       city: _customerAddressSummary(row),
       type: CustomerType.fromString(row.type),
       billCount: 0,

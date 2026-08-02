@@ -7,6 +7,7 @@
 
 import 'package:lotus_erp/database/db/app_database.dart';
 
+import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -29,7 +30,9 @@ class CustomerListRepository {
     final customers = await getAllCustomers(sort: CustomerSort.newest);
     return customers.where((customer) {
       return customer.name.toLowerCase().contains(term) ||
-          customer.mobile.toLowerCase().contains(term) ||
+          CustomerContactValue.displayMobile(customer.mobile)
+              .toLowerCase()
+              .contains(term) ||
           customer.city.toLowerCase().contains(term) ||
           customer.lastActivityLabel.toLowerCase().contains(term);
     }).toList();
@@ -285,7 +288,7 @@ class _CustomerActivity {
     return CustomerListItemModel(
       id: customer.id,
       name: name,
-      mobile: customer.mobile,
+      mobile: CustomerContactValue.displayMobile(customer.mobile),
       city: customer.city ?? "",
       type: CustomerType.fromString(customer.type),
       billCount: billCount,

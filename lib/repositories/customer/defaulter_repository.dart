@@ -11,6 +11,7 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../logic/girvi/girvi_risk_policy.dart';
 import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';
@@ -206,7 +207,7 @@ class DefaulterRepository {
       loanId: loan.id,
       customerId: customer.id,
       customerName: customer.name,
-      mobile: customer.mobile,
+      mobile: CustomerContactValue.displayMobile(customer.mobile),
       city: _clean(customer.city, fallback: 'Not specified'),
       address: _formatCustomerAddress(customer),
       customerType: customer.customerTier,

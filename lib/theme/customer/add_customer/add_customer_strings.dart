@@ -37,7 +37,7 @@ class AddCustomerStrings {
 
   // ── FIELD HINTS ──────────────────────────────────────────────────────────
   static const String hintName = "Enter full name";
-  static const String hintMobile = "10-digit mobile number";
+  static const String hintMobile = "10-digit mobile number (optional)";
   static const String hintWhatsapp = "Same as mobile (optional)";
   static const String hintCity = "e.g. Patna, Gaya...";
   static const String hintNotes = "Any special notes...";

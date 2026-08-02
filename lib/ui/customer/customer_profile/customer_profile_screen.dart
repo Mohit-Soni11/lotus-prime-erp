@@ -508,8 +508,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           Row(
             children: [
               Expanded(
-                child: _infoRow(CustomerProfileIcons.phone,
-                    CustomerProfileStrings.lblMobile, p.mobile),
+                child: _infoRow(
+                    CustomerProfileIcons.phone,
+                    CustomerProfileStrings.lblMobile,
+                    p.mobile.isEmpty ? CustomerProfileStrings.lblNa : p.mobile),
               ),
               Expanded(
                 child: _infoRow(

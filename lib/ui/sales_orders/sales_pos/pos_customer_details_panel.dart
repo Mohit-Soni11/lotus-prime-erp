@@ -4,15 +4,13 @@
 // DESCRIPTION: Customer entry, customer lookup, suggestion overlay, and customer history panel for POS billing.
 // ==========================================
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
-import '../../customer/add_customer/add_customer_screen.dart';
 import 'customer_history/pos_customer_history_card.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class PosCustomerDetailsPanel extends StatefulWidget {
   final PosBillingController ctrl;
@@ -159,30 +157,33 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
     overlay.insert(_suggestionOverlay!);
   }
 
-  Future<void> _openQuickAddCustomer() async {
-    _removeSuggestionOverlay();
-    final initialMobile = widget.ctrl.mobileCtrl.text.trim();
-    final initialName = widget.ctrl.nameCtrl.text.trim();
-    final initialAddress = widget.ctrl.cityCtrl.text.trim();
+  bool get _hasLookupText =>
+      widget.ctrl.nameCtrl.text.trim().length >= 2 ||
+      widget.ctrl.mobileCtrl.text.trim().length >= 3;
 
-    await Navigator.push(
+  bool get _noCustomerFound =>
+      _hasLookupText &&
+      widget.ctrl.customerNotFound &&
+      widget.ctrl.customerSuggestions.isEmpty &&
+      widget.ctrl.selectedCustomer == null;
+
+  Future<void> _quickAddCustomer() async {
+    final ok = await widget.ctrl.quickCreateCustomer();
+    if (!mounted) return;
+    if (ok) {
+      _removeSuggestionOverlay();
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.success,
+        message: 'Customer added for this sale.',
+      );
+      return;
+    }
+
+    AppFeedback.show(
       context,
-      MaterialPageRoute(
-        builder: (_) => AddCustomerScreen(
-          initialName: initialName,
-          initialMobile: initialMobile,
-          initialAddress: initialAddress,
-          onSaved: () {
-            if (!mounted) return;
-            Navigator.pop(context);
-            if (initialMobile.isNotEmpty) {
-              unawaited(widget.ctrl.selectCustomerByMobile(initialMobile));
-            } else if (initialName.isNotEmpty) {
-              unawaited(widget.ctrl.searchCustomersByName(initialName));
-            }
-          },
-        ),
-      ),
+      type: AppFeedbackType.error,
+      message: 'Enter customer name or a valid 10-digit mobile number.',
     );
   }
 
@@ -270,41 +271,16 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                         ],
                       ),
                       const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color:
-                              SalesPosColors.brandGold.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color:
-                                SalesPosColors.brandGold.withValues(alpha: 0.4),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: SalesPosColors.brandGold,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              "POS Session",
-                              style: TextStyle(
-                                fontSize: SalesPosStyles.fontCaption,
-                                fontWeight: FontWeight.bold,
-                                color: SalesPosColors.goldHoverDark,
-                              ),
-                            ),
-                          ],
-                        ),
+                      ListenableBuilder(
+                        listenable: widget.ctrl,
+                        builder: (context, _) {
+                          if (_noCustomerFound) {
+                            return _HeaderQuickAddButton(
+                              onTap: _quickAddCustomer,
+                            );
+                          }
+                          return const _PosSessionBadge();
+                        },
                       ),
                     ],
                   ),
@@ -396,10 +372,10 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                           ),
                           const SizedBox(height: 8),
                           _HoverAnimatedButton(
-                            title: "New Customer",
+                            title: "Quick Add",
                             icon: SalesPosIcons.newCustomerAdd,
                             isPrimary: true,
-                            onTap: _openQuickAddCustomer,
+                            onTap: _quickAddCustomer,
                           ),
                         ],
                       ),
@@ -512,6 +488,90 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
   }
 }
 
+class _PosSessionBadge extends StatelessWidget {
+  const _PosSessionBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: SalesPosColors.brandGold.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: SalesPosColors.brandGold.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: SalesPosColors.brandGold,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            "POS Session",
+            style: TextStyle(
+              fontSize: SalesPosStyles.fontCaption,
+              fontWeight: FontWeight.bold,
+              color: SalesPosColors.goldHoverDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderQuickAddButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _HeaderQuickAddButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        decoration: BoxDecoration(
+          color: SalesPosColors.success.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: SalesPosColors.success.withValues(alpha: 0.45),
+          ),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.person_add_alt_1_rounded,
+              size: 15,
+              color: SalesPosColors.success,
+            ),
+            SizedBox(width: 6),
+            Text(
+              "Quick Add Customer",
+              style: TextStyle(
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w900,
+                color: SalesPosColors.success,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ==========================================
 // CUSTOMER SUGGESTION DROPDOWN
 // ==========================================
@@ -590,7 +650,7 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    "Use New Customer to register this buyer.",
+                                    "Use Quick Add to save this buyer instantly.",
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(

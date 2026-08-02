@@ -6,6 +6,7 @@
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 
+import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -99,7 +100,7 @@ class CustomerProfileRepository {
       return CustomerProfileModel(
         id: cust.id,
         name: cust.name,
-        mobile: cust.mobile,
+        mobile: CustomerContactValue.displayMobile(cust.mobile),
         whatsapp: cust.whatsapp ?? "",
         city: cust.city ?? "",
         type: cust.type,
@@ -247,7 +248,7 @@ class CustomerProfileRepository {
         ticketNo: loan.ticketNo,
         createdAt: loan.createdAt,
         customerName: customer.name,
-        customerMobile: customer.mobile,
+        customerMobile: CustomerContactValue.displayMobile(customer.mobile),
         customerCity: customer.city ?? '',
         customerAddress: _formatCustomerAddress(customer),
         items: itemRows
@@ -421,11 +422,33 @@ class CustomerProfileRepository {
     String? pincode,
   }) async {
     try {
+      final cleanMobile = mobile.replaceAll(RegExp(r'[^0-9]'), '');
+      var storageMobile = CustomerContactValue.storageMobile(cleanMobile);
+
+      if (cleanMobile.isNotEmpty) {
+        final duplicate = await (_db.select(_db.customers)
+              ..where((row) =>
+                  row.mobile.equals(cleanMobile) &
+                  row.id.equals(customerId).not())
+              ..limit(1))
+            .getSingleOrNull();
+        if (duplicate != null) return false;
+      } else {
+        final existing = await (_db.select(_db.customers)
+              ..where((row) => row.id.equals(customerId))
+              ..limit(1))
+            .getSingleOrNull();
+        if (existing != null &&
+            CustomerContactValue.isInternalWalkInKey(existing.mobile)) {
+          storageMobile = existing.mobile;
+        }
+      }
+
       await (_db.update(_db.customers)..where((t) => t.id.equals(customerId)))
           .write(
         CustomersCompanion(
           name: Value(name.trim()),
-          mobile: Value(mobile.trim()),
+          mobile: Value(storageMobile),
           city: Value(city.trim().isEmpty ? null : city.trim()),
           type: Value(type),
           whatsapp: whatsapp != null

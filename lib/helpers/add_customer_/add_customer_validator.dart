@@ -27,7 +27,7 @@ class AddCustomerValidator {
 
   // ── MOBILE ───────────────────────────────────────────────────────────────
   static String? validateMobile(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Mobile number is required';
+    if (v == null || v.trim().isEmpty) return null;
     final c = v.trim();
     if (c.length != 10) return 'Enter valid 10-digit number';
     if (!_mobileRx.hasMatch(c)) return 'Invalid mobile number';

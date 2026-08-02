@@ -123,7 +123,8 @@ class CustomerProfileLogic extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    if (mobile.trim().length != 10) {
+    final cleanMobile = mobile.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanMobile.isNotEmpty && cleanMobile.length != 10) {
       _editError = "Mobile must be 10 digits";
       notifyListeners();
       return false;
@@ -136,7 +137,7 @@ class CustomerProfileLogic extends ChangeNotifier {
     final ok = await _repo.updateCustomer(
       customerId: customerId,
       name: name,
-      mobile: mobile,
+      mobile: cleanMobile,
       city: city,
       type: type,
       whatsapp: whatsapp,
@@ -149,7 +150,7 @@ class CustomerProfileLogic extends ChangeNotifier {
     if (ok) {
       _profile = _profile!.copyWith(
         name: name,
-        mobile: mobile,
+        mobile: cleanMobile,
         city: city,
         type: type,
         whatsapp: whatsapp,

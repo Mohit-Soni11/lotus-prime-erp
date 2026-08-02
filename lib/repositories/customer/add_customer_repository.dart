@@ -4,6 +4,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../models/customer/customer_enums/add_customer_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import '../../features/customer/domain/services/customer_contact_value.dart';
 
 class AddCustomerRepository {
   final AppDatabase _db;
@@ -54,9 +55,9 @@ class AddCustomerRepository {
           (value) => value.label,
         ),
         anniversaryDate: _parseDate(customer.anniversaryDate),
-        mobile: customer.mobile,
-        sameAsWhatsApp:
-            whatsapp.isNotEmpty && whatsapp == customer.mobile.trim(),
+        mobile: CustomerContactValue.displayMobile(customer.mobile),
+        sameAsWhatsApp: whatsapp.isNotEmpty &&
+            whatsapp == CustomerContactValue.displayMobile(customer.mobile),
         whatsapp: whatsapp,
         email: customer.email ?? '',
         alternateContact: customer.alternateContact ?? '',
@@ -112,10 +113,12 @@ class AddCustomerRepository {
     int? customerId,
   }) async {
     try {
-      final exists = await _checkMobileExists(
-        form.mobile.trim(),
-        excludeCustomerId: customerId,
-      );
+      final cleanMobile = form.mobile.replaceAll(RegExp(r'[^0-9]'), '');
+      final exists = cleanMobile.isNotEmpty &&
+          await _checkMobileExists(
+            cleanMobile,
+            excludeCustomerId: customerId,
+          );
       if (exists) return SaveResult.duplicate;
 
       final displayName = form.isCorporate
@@ -123,7 +126,7 @@ class AddCustomerRepository {
           : '${form.firstName.trim()} ${form.lastName.trim()}'.trim();
       final companion = _buildCompanion(
         form,
-        displayName: displayName.isEmpty ? form.mobile : displayName,
+        displayName: displayName.isEmpty ? 'Walk-in Customer' : displayName,
         isUpdate: customerId != null,
       );
 
@@ -173,7 +176,7 @@ class AddCustomerRepository {
   }) {
     return CustomersCompanion(
       name: drift.Value(displayName),
-      mobile: drift.Value(form.mobile.trim()),
+      mobile: drift.Value(CustomerContactValue.storageMobile(form.mobile)),
       city: drift.Value(_nullable(form.city)),
       type: drift.Value(form.customerTier.label),
       entityType: drift.Value(form.entityType.label),

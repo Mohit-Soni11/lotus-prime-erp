@@ -989,7 +989,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _field(
         label: AddCustomerStrings.lblMobile,
-        required: true,
         icon: AddCustomerIcons.mobile,
         ctrl: _mobileCtrl,
         focus: _mobileFocus,

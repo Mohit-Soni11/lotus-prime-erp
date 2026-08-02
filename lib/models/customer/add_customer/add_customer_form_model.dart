@@ -206,9 +206,9 @@ class AddCustomerFormModel {
   bool get isReadyToSave {
     if (hasErrors) return false;
     if (isCorporate) {
-      return companyName.trim().isNotEmpty && mobile.trim().length == 10;
+      return companyName.trim().isNotEmpty;
     }
-    return firstName.trim().isNotEmpty && mobile.trim().length == 10;
+    return firstName.trim().isNotEmpty;
   }
 
   AddCustomerFormModel copyWith({
