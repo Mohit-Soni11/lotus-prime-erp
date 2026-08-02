@@ -664,17 +664,15 @@ class PosBillingController extends ChangeNotifier {
           ? suggestion.sku
           : suggestion.itemName;
       item.pcsCtrl.text = item.unitProfile.defaultPieceCount.toString();
-      item.setHuidValues(
-        suggestion.huids.isNotEmpty
-            ? suggestion.huids
-            : [suggestion.huid?.trim() ?? ''],
-      );
       item.purityCtrl.text = _displayPurityForSuggestion(suggestion);
-      item.grossCtrl.text = _formatLookupNumber(suggestion.grossWeight);
-      item.lessCtrl.text = _formatLookupNumber(suggestion.lessWeight);
       item.clearMasterRateIfOwned();
       item.makingCtrl.clear();
-      item.attachStockReference(
+      item.applyStockReferenceSnapshot(
+        huids: suggestion.huids.isNotEmpty
+            ? suggestion.huids
+            : [suggestion.huid?.trim() ?? ''],
+        grossWeight: suggestion.grossWeight,
+        lessWeight: suggestion.lessWeight,
         stockItemId: suggestion.stockItemId,
         stockUnitId: suggestion.stockUnitId,
         stockUnitCost: suggestion.unitCost,
@@ -701,16 +699,6 @@ class PosBillingController extends ChangeNotifier {
       '80' || '80.0' || '80.00' => '800',
       _ => raw,
     };
-  }
-
-  String _formatLookupNumber(double value) {
-    if (value == value.roundToDouble()) {
-      return value.round().toString();
-    }
-    return value
-        .toStringAsFixed(3)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
   }
 
   Future<void> applySaleItemMasterRate(
@@ -1415,6 +1403,9 @@ class PosBillingController extends ChangeNotifier {
         balanceDue: balanceDue,
         hasSelectedCustomer: selectedCustomer != null,
         hasPromiseDate: promiseDate != null,
+        cashInput: _cashInput,
+        upiInput: _upiInput,
+        cardInput: _cardInput,
         advanceInput: _advInput,
         amountTolerance: _invoiceAmountTolerance,
         weightTolerance: _invoiceWeightTolerance,

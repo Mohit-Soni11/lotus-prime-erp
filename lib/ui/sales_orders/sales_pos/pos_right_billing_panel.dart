@@ -1141,14 +1141,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           const SizedBox(height: 12),
           _buildPaymentInput("Customer Advance", widget.ctrl.advCtrl,
               SalesPosIcons.advancePayment),
-          const SizedBox(height: 18),
-          PosPaymentBreakdownCard(
-            amountPayable: widget.ctrl.finalPayableAmount,
-            amountReceived: widget.ctrl.totalPaid,
-            balanceDue: widget.ctrl.balanceDue,
-            hasIncompleteDraft: hasIncompleteDraft,
-          ),
           if (!isEmptyCart) ...[
+            const SizedBox(height: 18),
+            PosPaymentBreakdownCard(
+              amountPayable: widget.ctrl.finalPayableAmount,
+              amountReceived: widget.ctrl.totalPaid,
+              balanceDue: widget.ctrl.balanceDue,
+              hasIncompleteDraft: hasIncompleteDraft,
+            ),
             const SizedBox(height: 12),
             PosPaymentStatusCard(
               isEmptyCart: isEmptyCart,
@@ -1372,6 +1372,28 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
   // ==========================================
   Widget _buildActionButtons() {
     final payableAmount = widget.ctrl.finalPayableAmount;
+    final hasItems =
+        widget.ctrl.saleItems.isNotEmpty || widget.ctrl.tradeInItems.isNotEmpty;
+    final validationMessage =
+        hasItems ? widget.ctrl.validateInvoiceReadiness() : null;
+    final actionNeedsReview = validationMessage != null;
+    final actionLabel = !hasItems
+        ? 'ADD ITEMS FIRST'
+        : widget.ctrl.isEditingExistingBill
+            ? 'UPDATE INVOICE'
+            : actionNeedsReview
+                ? 'REVIEW INVOICE'
+                : 'GENERATE INVOICE';
+    final actionColor = !hasItems
+        ? SalesPosColors.bodyTextMuted
+        : actionNeedsReview
+            ? SalesPosColors.warning
+            : SalesPosColors.success;
+    final actionIcon = !hasItems
+        ? SalesPosIcons.addItemToCart
+        : actionNeedsReview
+            ? SalesPosIcons.dueWarning
+            : SalesPosIcons.printReceipt;
 
     return Padding(
       padding: const EdgeInsets.all(18),
@@ -1429,12 +1451,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                     //  Generate invoice action
                     onPressed: _handleGenerateInvoicePressed,
 
-                    icon: const Icon(SalesPosIcons.printReceipt,
-                        color: Colors.white, size: 20),
+                    icon: Icon(actionIcon, color: Colors.white, size: 20),
                     label: Text(
-                      widget.ctrl.isEditingExistingBill
-                          ? "UPDATE INVOICE"
-                          : "GENERATE INVOICE",
+                      actionLabel,
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -1442,7 +1461,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                           letterSpacing: 0),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: SalesPosColors.success,
+                      backgroundColor: actionColor,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),

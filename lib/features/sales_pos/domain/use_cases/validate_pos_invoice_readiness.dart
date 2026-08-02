@@ -13,6 +13,9 @@ class PosInvoiceReadinessInput {
     required this.balanceDue,
     required this.hasSelectedCustomer,
     required this.hasPromiseDate,
+    required this.cashInput,
+    required this.upiInput,
+    required this.cardInput,
     required this.advanceInput,
     this.amountTolerance = 0.005,
     this.weightTolerance = 0.0001,
@@ -28,6 +31,9 @@ class PosInvoiceReadinessInput {
   final double balanceDue;
   final bool hasSelectedCustomer;
   final bool hasPromiseDate;
+  final double cashInput;
+  final double upiInput;
+  final double cardInput;
   final double advanceInput;
   final double amountTolerance;
   final double weightTolerance;
@@ -39,6 +45,11 @@ class PosInvoiceReadinessValidator {
   String? validate(PosInvoiceReadinessInput input) {
     if (input.saleItems.isEmpty && input.tradeInItems.isEmpty) {
       return 'The cart is empty. Please add at least one item before generating an invoice.';
+    }
+
+    final paymentError = _validatePaymentInputs(input);
+    if (paymentError != null) {
+      return paymentError;
     }
 
     final duplicateItemError = _validateUniqueSaleItemReferences(
@@ -108,6 +119,22 @@ class PosInvoiceReadinessValidator {
       return 'Select or create a customer before using advance payment.';
     }
 
+    return null;
+  }
+
+  String? _validatePaymentInputs(PosInvoiceReadinessInput input) {
+    final payments = <String, double>{
+      'Cash received': input.cashInput,
+      'UPI / Bank transfer': input.upiInput,
+      'Card payment': input.cardInput,
+      'Customer advance': input.advanceInput,
+    };
+
+    for (final entry in payments.entries) {
+      if (entry.value < -input.amountTolerance) {
+        return '${entry.key} cannot be negative.';
+      }
+    }
     return null;
   }
 

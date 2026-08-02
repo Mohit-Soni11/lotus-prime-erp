@@ -59,6 +59,7 @@ class SaleItemModel extends ChangeNotifier {
   String? _linkedStockSku;
   double _linkedStockUnitCost = 0.0;
   bool _isApplyingSmartQuantity = false;
+  bool _isApplyingStockReferenceSnapshot = false;
   bool _quantityManuallyChanged = false;
   bool _unitProfileManuallySet = false;
 
@@ -106,7 +107,10 @@ class SaleItemModel extends ChangeNotifier {
   })  : _metal = metal,
         _makingChargeType = makingChargeType,
         _isLessPerPiece = isLessPerPiece {
-    descCtrl.addListener(_applySmartUnitFromDescription);
+    descCtrl.addListener(() {
+      _clearStockReferenceOnManualEdit();
+      _applySmartUnitFromDescription();
+    });
 
     //  Value equality listeners
     pcsCtrl.addListener(() {
@@ -114,6 +118,9 @@ class SaleItemModel extends ChangeNotifier {
       final val = (int.tryParse(pcsCtrl.text) ?? 1).clamp(1, 9999);
       if (!_isApplyingSmartQuantity) {
         _quantityManuallyChanged = true;
+      }
+      if (!_isApplyingSmartQuantity) {
+        _clearStockReferenceOnManualEdit();
       }
       if (_pcs != val) {
         _pcs = val;
@@ -125,6 +132,7 @@ class SaleItemModel extends ChangeNotifier {
     grossCtrl.addListener(() {
       final val = _parseSafeNumber(grossCtrl.text);
       if (_grossWt != val) {
+        _clearStockReferenceOnManualEdit();
         _grossWt = val;
         notifyListeners();
       }
@@ -133,6 +141,7 @@ class SaleItemModel extends ChangeNotifier {
     lessCtrl.addListener(() {
       final val = _parseSafeNumber(lessCtrl.text);
       if (_lessWt != val) {
+        _clearStockReferenceOnManualEdit();
         _lessWt = val;
         notifyListeners();
       }
@@ -166,6 +175,7 @@ class SaleItemModel extends ChangeNotifier {
     purityCtrl.addListener(() {
       final label = purityCtrl.text;
       if (_tunchLabel != label) {
+        _clearStockReferenceOnManualEdit();
         _tunchLabel = label;
         notifyListeners();
       }
@@ -272,6 +282,7 @@ class SaleItemModel extends ChangeNotifier {
   // --- ACTIONS ---
   void updateMetal(MetalType newMetal) {
     if (_metal != newMetal) {
+      _clearStockReferenceOnManualEdit();
       _metal = newMetal;
       if (!availableUnitProfiles
           .any((unit) => unit.code == _unitProfile.code)) {
@@ -302,6 +313,7 @@ class SaleItemModel extends ChangeNotifier {
   }
 
   void setHuidValues(List<String> values) {
+    _clearStockReferenceOnManualEdit();
     final normalizedValues = values
         .map((value) => value.trim())
         .where((value) => value.isNotEmpty)
@@ -457,6 +469,31 @@ class SaleItemModel extends ChangeNotifier {
     }
   }
 
+  void applyStockReferenceSnapshot({
+    required List<String> huids,
+    required double grossWeight,
+    required double lessWeight,
+    required int stockItemId,
+    required String sku,
+    int? stockUnitId,
+    double stockUnitCost = 0.0,
+  }) {
+    _isApplyingStockReferenceSnapshot = true;
+    try {
+      setHuidValues(huids);
+      grossCtrl.text = PosNumberFormatter.compact(grossWeight);
+      lessCtrl.text = PosNumberFormatter.compact(lessWeight);
+      attachStockReference(
+        stockItemId: stockItemId,
+        stockUnitId: stockUnitId,
+        stockUnitCost: stockUnitCost,
+        sku: sku,
+      );
+    } finally {
+      _isApplyingStockReferenceSnapshot = false;
+    }
+  }
+
   void clearStockReference() {
     if (_linkedStockItemId == null &&
         _linkedStockUnitId == null &&
@@ -469,6 +506,13 @@ class SaleItemModel extends ChangeNotifier {
     _linkedStockSku = null;
     _linkedStockUnitCost = 0.0;
     notifyListeners();
+  }
+
+  void _clearStockReferenceOnManualEdit() {
+    if (_isApplyingStockReferenceSnapshot) {
+      return;
+    }
+    clearStockReference();
   }
 
   void _applySmartUnitFromDescription({bool notify = true}) {

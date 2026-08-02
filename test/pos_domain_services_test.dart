@@ -169,6 +169,30 @@ void main() {
 
       item.dispose();
     });
+
+    test('clears linked stock reference when protected fields are edited', () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.applyStockReferenceSnapshot(
+        huids: const ['HUID-001'],
+        grossWeight: 5,
+        lessWeight: 0,
+        stockItemId: 10,
+        stockUnitId: 20,
+        stockUnitCost: 50000,
+        sku: 'SKU-10',
+      );
+
+      expect(item.hasLinkedStock, isTrue);
+      expect(item.linkedStockSku, 'SKU-10');
+
+      item.grossCtrl.text = '6';
+
+      expect(item.hasLinkedStock, isFalse);
+      expect(item.linkedStockSku, isNull);
+
+      item.dispose();
+    });
   });
 
   group('PosInvoiceReadinessValidator', () {
@@ -247,6 +271,20 @@ void main() {
 
       expect(withoutCustomer, contains('Select or create a customer'));
       expect(withoutPromiseDate, contains('Select a promise date'));
+      item.dispose();
+    });
+
+    test('blocks negative payment entries before invoice generation', () {
+      final item = _saleItem(huid: 'HUID-001');
+
+      final result = const PosInvoiceReadinessValidator().validate(
+        _input(
+          saleItems: [item],
+          cashInput: -100,
+        ),
+      );
+
+      expect(result, contains('Cash received cannot be negative'));
       item.dispose();
     });
   });
@@ -369,6 +407,10 @@ PosInvoiceReadinessInput _input({
   double balanceDue = 0,
   bool hasSelectedCustomer = false,
   bool hasPromiseDate = false,
+  double cashInput = 0,
+  double upiInput = 0,
+  double cardInput = 0,
+  double advanceInput = 0,
 }) {
   return PosInvoiceReadinessInput(
     saleItems: saleItems,
@@ -381,7 +423,10 @@ PosInvoiceReadinessInput _input({
     balanceDue: balanceDue,
     hasSelectedCustomer: hasSelectedCustomer,
     hasPromiseDate: hasPromiseDate,
-    advanceInput: 0,
+    cashInput: cashInput,
+    upiInput: upiInput,
+    cardInput: cardInput,
+    advanceInput: advanceInput,
   );
 }
 
