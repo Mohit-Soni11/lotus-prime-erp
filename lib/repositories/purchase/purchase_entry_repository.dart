@@ -812,7 +812,8 @@ class PurchaseEntryRepository {
       if (quantity < 1) {
         throw PurchasePostingException('Row $rowNo quantity must be valid.');
       }
-      if (huids.length > quantity) {
+      final maxHuidSlots = quantity * _physicalPiecesPerSaleableUnit(item);
+      if (huids.length > maxHuidSlots) {
         throw PurchasePostingException(
           'Row $rowNo has more HUID numbers than pieces.',
         );
@@ -853,6 +854,17 @@ class PurchaseEntryRepository {
         }
       }
     }
+  }
+
+  int _physicalPiecesPerSaleableUnit(PurchaseVoucherItemDraft item) {
+    final mode = item.quantityMode.trim().toUpperCase();
+    if (mode == 'PAIR') {
+      return item.piecesPerPacket > 0 ? item.piecesPerPacket : 2;
+    }
+    if (mode == 'PACKET' || mode == 'PACK') {
+      return item.piecesPerPacket > 0 ? item.piecesPerPacket : 1;
+    }
+    return 1;
   }
 
   Future<void> _assertVoucherNoAvailable(String voucherNo) async {

@@ -279,7 +279,7 @@ double _inventoryPieceDisplayUnits(int pieces, _InventoryGradeUnit unit) {
   final label = _inventoryQuantityUnitLabel(unit);
   final divisor = switch (label) {
     'packet' => unit.piecesPerPacket <= 0 ? 1 : unit.piecesPerPacket,
-    'pair' => 2,
+    'pair' => 1,
     _ => 1,
   };
   return pieces / divisor;

@@ -105,9 +105,9 @@ class PosStockLookupRepository {
 
     final unitRows = await _availableUnitsForMetal(metal);
     for (final row in unitRows) {
-      final huid = row.huid.trim().toLowerCase();
+      final huid = row.huidSearchText.trim().toLowerCase();
       final unitCode = row.unitCode.trim().toLowerCase();
-      if (huid == term || unitCode == term) {
+      if (huid.split(' ').contains(term) || unitCode == term) {
         return _toLookupModel(
           row,
           _stockItemGroupRows(row, unitRows),
@@ -133,6 +133,7 @@ class PosStockLookupRepository {
         u.segment AS segment,
         u.item_name AS item_name,
         u.huid AS huid,
+        COALESCE(ph.huid_list, '') AS huid_list,
         u.gross_weight AS gross_weight,
         u.less_weight AS less_weight,
         u.net_weight AS net_weight,
@@ -149,6 +150,18 @@ class PosStockLookupRepository {
         s.description AS description
       FROM stock_item_units u
       INNER JOIN stock_items s ON s.id = u.stock_item_id
+      LEFT JOIN (
+        SELECT
+          purchase_voucher_item_id,
+          stock_item_id,
+          GROUP_CONCAT(huid, ',') AS huid_list
+        FROM purchase_item_huids
+        GROUP BY purchase_voucher_item_id, stock_item_id
+      ) ph ON ph.stock_item_id = u.stock_item_id
+          AND (
+            ph.purchase_voucher_item_id = u.purchase_voucher_item_id
+            OR u.purchase_voucher_item_id IS NULL
+          )
       WHERE u.status = ?
         AND s.is_active = 1
         AND s.status = ?
@@ -167,6 +180,21 @@ class PosStockLookupRepository {
   }
 
   Future<void> _ensureStockItemUnitSchema() async {
+    await _db.customStatement('''
+      CREATE TABLE IF NOT EXISTS "purchase_item_huids" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "purchase_voucher_id" INTEGER NOT NULL,
+        "purchase_voucher_item_id" INTEGER,
+        "stock_item_id" INTEGER,
+        "line_no" INTEGER NOT NULL,
+        "piece_no" INTEGER NOT NULL,
+        "huid" TEXT NOT NULL,
+        "created_at" INTEGER NOT NULL
+      )
+    ''');
+    await _db.customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_huid" ON "purchase_item_huids" ("huid")',
+    );
     await _db.customStatement(_createStockItemUnitsTableSql);
     await _ensureTableColumns(
       'stock_item_units',
@@ -207,6 +235,7 @@ class PosStockLookupRepository {
       row.segment,
       row.companyName,
       row.huid,
+      row.huidList,
       row.unitCode,
       row.batchCode,
       row.netWeight.toStringAsFixed(3),
@@ -223,7 +252,7 @@ class PosStockLookupRepository {
     final itemName = row.itemName.trim().toLowerCase();
     final itemType = row.itemType.trim().toLowerCase();
     final segment = row.segment.trim().toLowerCase();
-    final huid = row.huid.trim().toLowerCase();
+    final huid = row.huidSearchText.trim().toLowerCase();
     final unitCode = row.unitCode.trim().toLowerCase();
     if (itemName == term || itemType == term) return 0;
     if (itemName.startsWith(term)) return 1;
@@ -322,8 +351,9 @@ class PosStockLookupRepository {
     final sellAsSet = _shouldSellAsSet(row, groupRows);
     final effectiveRows = sellAsSet ? groupRows : [row];
     final huids = effectiveRows
-        .map((unit) => unit.huid.trim())
+        .expand((unit) => unit.huidTokens)
         .where((huid) => huid.isNotEmpty)
+        .toSet()
         .toList(growable: false);
     final availablePieces = _availablePiecesForRows(effectiveRows);
     final quantityUnitLabel = _quantityUnitLabel(row);
@@ -407,7 +437,7 @@ class PosStockLookupRepository {
     if (pieces <= 0) return 0;
     return switch (unitLabel) {
       'packet' => pieces / _positiveInt(row.piecesPerPacket, fallback: 1),
-      'pair' => pieces / 2,
+      'pair' => pieces.toDouble(),
       _ => pieces.toDouble(),
     };
   }
@@ -436,6 +466,7 @@ class _StockUnitLookupRow {
   final String segment;
   final String itemName;
   final String huid;
+  final String huidList;
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
@@ -461,6 +492,7 @@ class _StockUnitLookupRow {
     required this.segment,
     required this.itemName,
     required this.huid,
+    required this.huidList,
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
@@ -488,6 +520,7 @@ class _StockUnitLookupRow {
       segment: row.readNullable<String>('segment') ?? '',
       itemName: row.read<String>('item_name'),
       huid: row.readNullable<String>('huid') ?? '',
+      huidList: row.readNullable<String>('huid_list') ?? '',
       grossWeight: row.read<double>('gross_weight'),
       lessWeight: row.read<double>('less_weight'),
       netWeight: row.read<double>('net_weight'),
@@ -504,6 +537,20 @@ class _StockUnitLookupRow {
       description: row.readNullable<String>('description') ?? '',
     );
   }
+
+  List<String> get huidTokens {
+    final values = <String>[
+      ...huidList.split(RegExp(r'[,;/\s]+')),
+      huid,
+    ];
+    return values
+        .map((value) => value.trim().toUpperCase())
+        .where((value) => value.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+  }
+
+  String get huidSearchText => huidTokens.join(' ');
 }
 
 const String _createStockItemUnitsTableSql = '''

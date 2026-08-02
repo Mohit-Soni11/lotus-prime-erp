@@ -70,7 +70,7 @@ CASE
       WHEN COALESCE(NULLIF(s.packet_count, 0), 0) > 0 THEN COALESCE(NULLIF(s.packet_count, 0), 0)
       ELSE ($_inventorySummaryRawQuantityExpression * 1.0) / CASE WHEN COALESCE(NULLIF(s.pieces_per_packet, 0), 1) <= 0 THEN 1 ELSE COALESCE(NULLIF(s.pieces_per_packet, 0), 1) END
     END
-  WHEN $_inventorySummaryUnitLabelExpression = 'pair' THEN ($_inventorySummaryRawQuantityExpression * 1.0) / 2.0
+  WHEN $_inventorySummaryUnitLabelExpression = 'pair' THEN $_inventorySummaryRawQuantityExpression * 1.0
   ELSE $_inventorySummaryRawQuantityExpression * 1.0
 END
 ''';
@@ -82,7 +82,7 @@ CASE
       WHEN COALESCE(NULLIF(s.packet_count, 0), 0) > 0 THEN MAX(COALESCE(NULLIF(s.packet_count, 0), 0) - COALESCE(sm.sold_quantity, 0), 0)
       ELSE ($_inventorySummaryAvailableRawQuantityExpression * 1.0) / CASE WHEN COALESCE(NULLIF(s.pieces_per_packet, 0), 1) <= 0 THEN 1 ELSE COALESCE(NULLIF(s.pieces_per_packet, 0), 1) END
     END
-  WHEN $_inventorySummaryUnitLabelExpression = 'pair' THEN ($_inventorySummaryAvailableRawQuantityExpression * 1.0) / 2.0
+  WHEN $_inventorySummaryUnitLabelExpression = 'pair' THEN $_inventorySummaryAvailableRawQuantityExpression * 1.0
   ELSE $_inventorySummaryAvailableRawQuantityExpression * 1.0
 END
 ''';
@@ -94,7 +94,7 @@ CASE
       WHEN COALESCE(NULLIF(s.packet_count, 0), 0) > 0 THEN MIN(COALESCE(sm.sold_quantity, 0), COALESCE(NULLIF(s.packet_count, 0), 0))
       ELSE ($_inventorySummarySoldRawQuantityExpression * 1.0) / CASE WHEN COALESCE(NULLIF(s.pieces_per_packet, 0), 1) <= 0 THEN 1 ELSE COALESCE(NULLIF(s.pieces_per_packet, 0), 1) END
     END
-  WHEN $_inventorySummaryUnitLabelExpression = 'pair' THEN ($_inventorySummarySoldRawQuantityExpression * 1.0) / 2.0
+  WHEN $_inventorySummaryUnitLabelExpression = 'pair' THEN $_inventorySummarySoldRawQuantityExpression * 1.0
   ELSE $_inventorySummarySoldRawQuantityExpression * 1.0
 END
 ''';

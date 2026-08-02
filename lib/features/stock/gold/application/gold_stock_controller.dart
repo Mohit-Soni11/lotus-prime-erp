@@ -273,8 +273,9 @@ class GoldStockController extends AddStockController {
     final supplierName = supplierDisplayName;
 
     return enteredGoldRows.map((rowModel) {
-      final pieces = rowModel.stockPieces;
-      final lotDivisor = pieces > 0 ? pieces : 1;
+      final stockUnits =
+          rowModel.enteredQuantity > 0 ? rowModel.enteredQuantity : 1;
+      final lotDivisor = stockUnits;
       final huids =
           rowModel.huidTrackingEnabled ? rowModel.huidValues : <String>[];
       final row = StockRowEntry(id: rowModel.id, hsnCode: defaultHsnCode);
@@ -303,7 +304,7 @@ class GoldStockController extends AddStockController {
       row.gstRate = gstEnabled ? gstRate : 0.0;
       row.supplierId = supplierId;
       row.supplierName = supplierName;
-      row.quantity = pieces;
+      row.quantity = stockUnits;
       row.quantityMode = rowModel.quantityModeCode;
       row.packetCount = rowModel.packetCount;
       row.piecesPerPacket = rowModel.piecesPerPacket;

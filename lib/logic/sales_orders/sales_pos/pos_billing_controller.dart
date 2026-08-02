@@ -33,6 +33,7 @@ import '../../../models/setting/metal_rate/metal_rate_model.dart';
 import '../../../models/setting/tax_gst/gst_slab_model.dart';
 import '../../../models/setting/tax_gst/hsn_code_model.dart';
 import '../../../features/sales_pos/domain/services/pos_gst_classification_resolver.dart';
+import '../../../features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../features/customer/domain/services/customer_contact_value.dart';
 
 //  Customer history support
@@ -670,6 +671,7 @@ class PosBillingController extends ChangeNotifier {
     _isApplyingStockSuggestion = true;
     try {
       item.updateMetal(suggestion.metal);
+      item.setUnitProfile(_unitProfileForStockSuggestion(suggestion));
       item.descCtrl.text = suggestion.itemName.trim().isEmpty
           ? suggestion.sku
           : suggestion.itemName;
@@ -694,6 +696,18 @@ class PosBillingController extends ChangeNotifier {
     }
     clearAllStockSuggestions();
     unawaited(applySaleItemMasterRate(item, force: true));
+  }
+
+  PosItemUnitProfile _unitProfileForStockSuggestion(
+    PosStockLookupModel suggestion,
+  ) {
+    return switch (suggestion.quantityUnitLabel.trim().toLowerCase()) {
+      'pair' => PosItemUnitProfile.pair,
+      'set' => PosItemUnitProfile.set,
+      'packet' || 'pack' => PosItemUnitProfile.packet,
+      'lot' || 'bulk' => PosItemUnitProfile.lot,
+      _ => PosItemUnitProfile.pieces,
+    };
   }
 
   String _displayPurityForSuggestion(PosStockLookupModel suggestion) {

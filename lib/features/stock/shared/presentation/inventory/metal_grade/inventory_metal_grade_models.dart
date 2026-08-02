@@ -209,7 +209,7 @@ String _inventoryGradeSubtitle(StockCategory metal, String gradeLabel,
 double _inventoryGradeDisplayQuantity(int pieces, String unitLabel) {
   final quantity = pieces.toDouble();
   return switch (unitLabel) {
-    'pair' => quantity / 2,
+    'pair' => quantity,
     _ => quantity,
   };
 }

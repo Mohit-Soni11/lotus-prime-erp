@@ -29,12 +29,12 @@ void main() {
     await db.close();
   });
 
-  test('gold HUID pair sells both linked units from one POS line', () async {
+  test('gold HUID pair sells one linked pair unit with both HUIDs', () async {
     final purchase = await purchaseRepository.savePurchase(
       _goldDraft(
         voucherNo: 'GS-E2E-HUID-0001',
         description: 'Hallmark Gold Jhumka',
-        quantity: 2,
+        quantity: 1,
         grossWeight: 12,
         lessWeight: 0,
         netWeight: 12,
@@ -44,28 +44,9 @@ void main() {
         valuationFineWeight: 9.36,
         lineAmount: 140520,
         huids: const ['GJ1234', 'GJ5678'],
-        unitLines: const [
-          PurchaseVoucherUnitDraft(
-            huid: 'GJ1234',
-            grossWeight: 5.8,
-            lessWeight: 0,
-            netWeight: 5.8,
-            fineWeight: 4.35,
-            wastageFineWeight: 0.174,
-            valuationFineWeight: 4.524,
-            lineAmount: 67918,
-          ),
-          PurchaseVoucherUnitDraft(
-            huid: 'GJ5678',
-            grossWeight: 6.2,
-            lessWeight: 0,
-            netWeight: 6.2,
-            fineWeight: 4.65,
-            wastageFineWeight: 0.186,
-            valuationFineWeight: 4.836,
-            lineAmount: 72602,
-          ),
-        ],
+        quantityMode: 'PAIR',
+        packetCount: 1,
+        piecesPerPacket: 2,
       ),
     );
 
@@ -78,12 +59,11 @@ void main() {
     final stockItem = await _stockByVoucher(db, 'GS-E2E-HUID-0001');
     final unitsBeforeSale = await _stockUnits(db, stockItem.id);
 
-    expect(stockItem.quantity, 2);
-    expect(unitsBeforeSale, hasLength(2));
-    expect(unitsBeforeSale.map((row) => row.read<String>('huid')).toList(), [
-      'GJ1234',
-      'GJ5678',
-    ]);
+    expect(stockItem.quantity, 1);
+    expect(unitsBeforeSale, hasLength(1));
+    expect(unitsBeforeSale.single.read<String>('huid'), 'GJ1234');
+    expect(
+        unitsBeforeSale.single.read<double>('net_weight'), closeTo(12, 0.001));
 
     final saleItem = _goldSaleItem(
       stockItemId: stockItem.id,
@@ -119,7 +99,7 @@ void main() {
       stock.StockStatus.sold.label,
     });
     expect(movements.last.movementType, 'SALE');
-    expect(movements.last.quantityDelta, -2);
+    expect(movements.last.quantityDelta, -1);
     expect(movements.last.netWeightDelta, closeTo(-12, 0.001));
 
     final summary = StockSummaryController(db);
@@ -128,7 +108,7 @@ void main() {
         .singleWhere((item) => item.metal.toLowerCase() == 'gold');
 
     expect(goldSummary.availableUnits, 0);
-    expect(goldSummary.soldUnits, 2);
+    expect(goldSummary.soldUnits, 1);
     expect(goldSummary.netWeight, closeTo(0, 0.001));
     expect(goldSummary.soldWeight, closeTo(12, 0.001));
     expect(goldSummary.totalWeight, closeTo(12, 0.001));
@@ -549,6 +529,9 @@ PurchaseVoucherDraft _goldDraft({
   required List<String> huids,
   List<PurchaseVoucherUnitDraft> unitLines = const [],
   PurchaseStockTrackingMode stockTrackingMode = PurchaseStockTrackingMode.unit,
+  String quantityMode = 'PIECES',
+  int packetCount = 0,
+  int piecesPerPacket = 1,
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: 1,
@@ -603,9 +586,9 @@ PurchaseVoucherDraft _goldDraft({
         purityLabel: '${purity.toStringAsFixed(2)}%',
         effectiveRatePerGram: 15600,
         gstRate: 0,
-        quantityMode: 'PIECES',
-        packetCount: 0,
-        piecesPerPacket: 1,
+        quantityMode: quantityMode,
+        packetCount: packetCount,
+        piecesPerPacket: piecesPerPacket,
         weightsAreLineTotals: true,
         stockTrackingMode: stockTrackingMode,
         unitLines: unitLines,
