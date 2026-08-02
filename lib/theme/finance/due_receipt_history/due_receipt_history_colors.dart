@@ -13,9 +13,9 @@ class DueReceiptHistoryColors {
   static const Color border = Color(0xFFE5E0D8);
   static const Color divider = Color(0xFFEDE9E0);
 
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF475569);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = Color(0xFF0B1220);
+  static const Color textSecondary = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
   static const Color textLight = Color(0xFFF9FAFB);
 
   static const Color onlineGreen = Color(0xFF00E676);

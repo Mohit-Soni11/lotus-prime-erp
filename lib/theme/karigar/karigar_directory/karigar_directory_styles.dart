@@ -103,13 +103,13 @@ class KarigarDirectoryStyles {
       );
 
   static TextStyle get karigarDetail => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: KarigarDirectoryColors.textMuted,
       );
 
   static TextStyle get karigarSince => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: KarigarDirectoryColors.textHint,
         fontStyle: FontStyle.italic,
@@ -122,7 +122,7 @@ class KarigarDirectoryStyles {
       );
 
   static TextStyle get statsLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: KarigarDirectoryColors.textMuted,
       );

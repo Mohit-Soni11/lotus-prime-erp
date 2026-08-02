@@ -32,7 +32,7 @@ class SupplierListStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: SupplierListColors.onlineGreen, // Using theme color
-    fontSize: 12.0, // Changed to 12.0
+    fontSize: 13, // Changed to 12.0
     fontWeight: FontWeight.w700,
     letterSpacing: 0.5, // Changed to 0.5
   );
@@ -45,7 +45,7 @@ class SupplierListStyles {
       );
 
   static TextStyle get statsLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: SupplierListColors.bodyTextMuted,
         letterSpacing: 0.5,
@@ -88,19 +88,19 @@ class SupplierListStyles {
       );
 
   static TextStyle get supplierDetail => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: SupplierListColors.bodyTextMuted,
       );
 
   static TextStyle get supplierGst => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: SupplierListColors.bodyTextMuted,
       );
 
   static TextStyle get typeBadge => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: SupplierListColors.manufacturerText,
         letterSpacing: 0.8,

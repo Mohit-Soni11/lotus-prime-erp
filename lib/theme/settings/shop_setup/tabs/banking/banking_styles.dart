@@ -31,7 +31,7 @@ class BankingStyles {
   static TextStyle statusPillText = GoogleFonts.inter(
       color: BankingColors.statusActiveText,
       fontWeight: FontWeight.w700,
-      fontSize: 11);
+      fontSize: 13.5);
   static TextStyle addBtnText = GoogleFonts.manrope(
       fontSize: 14,
       fontWeight: FontWeight.w700,
@@ -58,17 +58,17 @@ class BankingStyles {
       GoogleFonts.inter(color: BankingColors.textHint, fontSize: szFieldHint);
 
   static TextStyle badgeText(Color color) => GoogleFonts.inter(
-      fontSize: 10,
+      fontSize: 13,
       fontWeight: FontWeight.w800,
       letterSpacing: 0.8,
       color: color);
   static TextStyle accountMasked(bool isPrimary) => GoogleFonts.inter(
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: FontWeight.w600,
       color: BankingColors.textMuted,
       letterSpacing: isPrimary ? 2 : 1);
   static TextStyle lockStatusText(bool isLocked) => GoogleFonts.inter(
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: FontWeight.w700,
       color:
           isLocked ? BankingColors.lockedIcon : BankingColors.statusActiveText);

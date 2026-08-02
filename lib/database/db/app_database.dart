@@ -1302,6 +1302,21 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _ensurePurchaseVoucherSchema() async {
     await customStatement(_createPurchaseVouchersTableSql);
     await customStatement(_createPurchaseVoucherItemsTableSql);
+    await _addColumnIfMissing(
+      tableName: 'purchase_voucher_items',
+      columnName: 'wastage_percent',
+      declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'purchase_voucher_items',
+      columnName: 'wastage_fine_weight',
+      declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
+    await _addColumnIfMissing(
+      tableName: 'purchase_voucher_items',
+      columnName: 'valuation_fine_weight',
+      declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
     for (final statement in _purchaseVoucherIndexSql) {
       await customStatement(statement);
     }
@@ -1316,6 +1331,11 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> _ensureStockItemUnitSchema() async {
     await customStatement(_createStockItemUnitsTableSql);
+    await _addColumnIfMissing(
+      tableName: 'stock_item_units',
+      columnName: 'wastage_percent',
+      declaration: 'REAL NOT NULL DEFAULT 0.0',
+    );
     for (final statement in _stockItemUnitsIndexSql) {
       await customStatement(statement);
     }
@@ -1961,6 +1981,7 @@ const String _createPurchaseVoucherItemsTableSql = '''
     "net_weight" REAL NOT NULL DEFAULT 0.0,
     "purity" REAL NOT NULL DEFAULT 0.0,
     "fine_weight" REAL NOT NULL DEFAULT 0.0,
+    "wastage_percent" REAL NOT NULL DEFAULT 0.0,
     "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
     "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
     "rate" REAL NOT NULL DEFAULT 0.0,
@@ -1999,6 +2020,7 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
   "net_weight" REAL NOT NULL DEFAULT 0.0,
   "purity_percent" REAL NOT NULL DEFAULT 0.0,
   "actual_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "wastage_percent" REAL NOT NULL DEFAULT 0.0,
   "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
   "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
   "rate_per_gram" REAL NOT NULL DEFAULT 0.0,

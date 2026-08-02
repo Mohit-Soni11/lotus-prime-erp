@@ -12,10 +12,10 @@ class BankingColors {
 
   static const Color textWhite = Colors.white;
   static const Color textWhite70 = Colors.white70;
-  static const Color textDark = Color(0xFF111827);
-  static const Color textBody = Color(0xFF374151);
-  static const Color textHint = Color(0xFF9CA3AF);
-  static const Color textMuted = Color(0xFF6B7280);
+  static const Color textDark = Color(0xFF0B1220);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
 
   static const Color btnDanger = Color(0xFFEF4444);
   static const Color iconEdit = Color(0xFF374151);

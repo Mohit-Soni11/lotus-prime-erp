@@ -48,10 +48,10 @@ class BillingSetupColors {
   static const Color overlayDark = Color(0xCC000000);
 
   // ── TYPOGRAPHY ────────────────────────────────────────────────────────────
-  static const Color textDark = Color(0xFF111827);
-  static const Color textBody = Color(0xFF374151);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color textHint = Color(0xFF9CA3AF);
+  static const Color textDark = Color(0xFF0B1220);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
 
   // ── MODULE BADGE ─────────────────────────────────────────────────────────
   static const Color moduleBadgeBg = Color(0xFF1A2332);

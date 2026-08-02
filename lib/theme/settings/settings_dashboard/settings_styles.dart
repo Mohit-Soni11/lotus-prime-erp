@@ -30,7 +30,7 @@ class SettingsStyles {
 
   // â”€â”€ Category Label â”€â”€
   static const TextStyle categoryLabel = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 1.6,
   );

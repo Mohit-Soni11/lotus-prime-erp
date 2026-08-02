@@ -29,7 +29,7 @@ class DeliveryStyles {
 
   // â”€â”€ SUBTITLE MUTED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle subTitleMuted = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w600,
     color: DeliveryColors.bodyTextMuted.withValues(alpha: 0.75),
   );
@@ -43,14 +43,14 @@ class DeliveryStyles {
 
   // â”€â”€ CARD SUBTITLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle cardSubtitle = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w500,
     color: DeliveryColors.bodyTextMuted,
   );
 
   // â”€â”€ DELIVERY NO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle deliveryNoText = TextStyle(
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     color: DeliveryColors.brandGold,
     letterSpacing: 0.5,
@@ -87,14 +87,14 @@ class DeliveryStyles {
 
   // â”€â”€ TAB TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle tabActive = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     color: DeliveryColors.shellTextTitle,
     letterSpacing: 0.3,
   );
 
   static const TextStyle tabInactive = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w500,
     color: DeliveryColors.shellTextMuted,
     letterSpacing: 0.3,

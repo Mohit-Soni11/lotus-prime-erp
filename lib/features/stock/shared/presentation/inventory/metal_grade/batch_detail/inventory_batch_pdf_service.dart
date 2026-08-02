@@ -410,7 +410,8 @@ class _InventoryBatchPdfService {
             children: [
               _unitMetric('Unit', unit.displayUnitPlural),
               _unitMetric('Total Qty', unit.totalQuantityLabel),
-              if (_hasText(unit.huid)) _unitMetric('HUID', unit.huid),
+              if (_hasText(unit.huidDisplayText))
+                _unitMetric('HUID', unit.huidDisplayText),
               if (_hasWeightDifference(
                   unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
                 _unitMetric('Gross Weight',
@@ -653,7 +654,6 @@ class _InventoryBatchPdfService {
       unit.companyName,
       unit.itemType,
       unit.segment,
-      unit.unitCode,
     ].where((value) => value.trim().isNotEmpty).join(' - ');
   }
 

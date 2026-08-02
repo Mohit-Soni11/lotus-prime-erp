@@ -59,7 +59,7 @@ class GoldStockStyles {
 
   // â”€â”€ FIELD LABEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: GoldStockColors.textBody,
         letterSpacing: 0.1,
@@ -67,7 +67,7 @@ class GoldStockStyles {
 
   // â”€â”€ INPUT LABEL (alias) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get inputLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: GoldStockColors.textMuted,
       );
@@ -95,7 +95,7 @@ class GoldStockStyles {
 
   // â”€â”€ TAG LINE / SUBTITLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get tagLine => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: GoldStockColors.textMuted,
         letterSpacing: 0.5,
@@ -110,7 +110,7 @@ class GoldStockStyles {
 
   // â”€â”€ SMALL MUTED / CAPTION TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get caption => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: GoldStockColors.textMuted,
       );

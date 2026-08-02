@@ -55,13 +55,13 @@ class CashBookStyles {
       );
 
   static TextStyle get labelSecondary => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: CashBookColors.textSecondary,
       );
 
   static TextStyle get labelMuted => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: CashBookColors.textMuted,
       );
@@ -74,7 +74,7 @@ class CashBookStyles {
       );
 
   static TextStyle get txnSubtitle => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: CashBookColors.textSecondary,
       );
@@ -100,13 +100,13 @@ class CashBookStyles {
 
   // ── Toggle chips ──────────────────────────────────────────────────────────
   static TextStyle get toggleActive => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: CashBookColors.toggleActiveText,
       );
 
   static TextStyle get toggleInactive => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: CashBookColors.toggleInactiveText,
       );

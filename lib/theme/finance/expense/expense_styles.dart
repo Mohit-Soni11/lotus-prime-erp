@@ -22,7 +22,7 @@ class ExpenseStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: ExpenseColors.shellMuted,
       );
@@ -30,7 +30,7 @@ class ExpenseStyles {
   // ── Left Panel ────────────────────────────────────────────────────────────
 
   static TextStyle get totalLabel => GoogleFonts.manrope(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: ExpenseColors.textSecondary,
         letterSpacing: 0.8,
@@ -44,14 +44,14 @@ class ExpenseStyles {
       );
 
   static TextStyle get sectionHeader => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: ExpenseColors.textSecondary,
         letterSpacing: 1.1,
       );
 
   static TextStyle get metaLabel => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: ExpenseColors.textMuted,
       );
@@ -65,14 +65,14 @@ class ExpenseStyles {
   // ── List Items ────────────────────────────────────────────────────────────
 
   static TextStyle get groupHeader => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: ExpenseColors.textSecondary,
         letterSpacing: 0.4,
       );
 
   static TextStyle get groupTotal => GoogleFonts.manrope(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: ExpenseColors.moduleAccentMid,
       );
@@ -84,7 +84,7 @@ class ExpenseStyles {
       );
 
   static TextStyle get itemMeta => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: ExpenseColors.textSecondary,
       );
@@ -96,7 +96,7 @@ class ExpenseStyles {
       );
 
   static TextStyle get expenseId => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: ExpenseColors.textMuted,
         fontFeatures: [const FontFeature.tabularFigures()],
@@ -111,7 +111,7 @@ class ExpenseStyles {
       );
 
   static TextStyle get labelSecondary => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: ExpenseColors.textSecondary,
       );
@@ -137,19 +137,19 @@ class ExpenseStyles {
   // ── Breakdown Bar ─────────────────────────────────────────────────────────
 
   static TextStyle get breakdownLabel => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: ExpenseColors.textSecondary,
       );
 
   static TextStyle get breakdownAmount => GoogleFonts.manrope(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: ExpenseColors.textPrimary,
       );
 
   static TextStyle get breakdownPct => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: ExpenseColors.textMuted,
       );

@@ -40,7 +40,7 @@ class AppTextStyles {
 
   // Hint: Small text / placeholders
   TextStyle get hint => _base.copyWith(
-      fontSize: 12, fontWeight: FontWeight.w400, color: _colors.textSecondary);
+      fontSize: 13, fontWeight: FontWeight.w400, color: _colors.textSecondary);
 
   // --- 3. COMPONENTS ---
 

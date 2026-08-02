@@ -15,9 +15,9 @@ class DueCollectionEntryColors {
   static const Color panelSoft = Color(0xFFFAF8F4);
   static const Color tableHeader = Color(0xFFF1EDE4);
   static const Color divider = Color(0xFFEEEAE2);
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = Color(0xFF0B1220);
+  static const Color textSecondary = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
   static const Color success = Color(0xFF10B981);
   static const Color successBg = Color(0xFFECFDF5);
   static const Color warning = Color(0xFFF59E0B);

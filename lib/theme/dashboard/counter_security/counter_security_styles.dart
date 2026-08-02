@@ -80,7 +80,7 @@ class CounterSecurityStyles {
       InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-          fontSize: 11,
+          fontSize: 13.5,
           fontWeight: FontWeight.w600,
           color: isFocused
               ? CounterSecurityColors.inputFocus
@@ -170,21 +170,21 @@ class CounterSecurityStyles {
   );
 
   static const TextStyle stepLabelStyle = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w700,
     color: CounterSecurityColors.textMuted,
     letterSpacing: 1.0,
   );
 
   static const TextStyle metalChipStyle = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w700,
     color: Colors.white,
     letterSpacing: 0.3,
   );
 
   static const TextStyle lockedBadgeStyle = TextStyle(
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     color: Colors.white,
     letterSpacing: 0.5,
@@ -196,7 +196,7 @@ class CounterSecurityStyles {
   );
 
   static const TextStyle resultSubStyle = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     color: CounterSecurityColors.textMuted,
   );
 }

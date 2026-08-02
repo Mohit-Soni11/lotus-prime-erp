@@ -42,7 +42,7 @@ class AddStockStyles {
 
   // â”€â”€ FIELD LABEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: AddStockColors.textBody,
         letterSpacing: 0.1,
@@ -71,7 +71,7 @@ class AddStockStyles {
 
   // â”€â”€ SMALL MUTED TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get caption => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: AddStockColors.textMuted,
       );

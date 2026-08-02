@@ -40,6 +40,7 @@ void main() {
         netWeight: 12,
         purity: 75,
         fineWeight: 9,
+        wastagePercent: 3,
         wastageFineWeight: 0.36,
         valuationFineWeight: 9.36,
         lineAmount: 140520,
@@ -62,6 +63,19 @@ void main() {
     expect(stockItem.quantity, 1);
     expect(unitsBeforeSale, hasLength(1));
     expect(unitsBeforeSale.single.read<String>('huid'), 'GJ1234');
+    expect(
+      await _inventoryLedgerHuidListForUnit(
+        db,
+        unitsBeforeSale.single.read<int>('id'),
+      ),
+      'GJ1234, GJ5678',
+    );
+    final wastagePercent = await _wastagePercentSnapshotForUnit(
+      db,
+      unitsBeforeSale.single.read<int>('id'),
+    );
+    expect(wastagePercent.read<double>('stock_unit_wastage_percent'), 3);
+    expect(wastagePercent.read<double>('purchase_item_wastage_percent'), 3);
     expect(
         unitsBeforeSale.single.read<double>('net_weight'), closeTo(12, 0.001));
 
@@ -439,6 +453,61 @@ Future<QueryRow> _singleStockUnit(AppDatabase db, int stockItemId) {
   ).getSingle();
 }
 
+Future<String> _inventoryLedgerHuidListForUnit(
+  AppDatabase db,
+  int stockUnitId,
+) async {
+  final row = await db.customSelect(
+    '''
+    SELECT COALESCE(ph.huid_list, u.huid, '') AS huid_list
+    FROM stock_item_units u
+    LEFT JOIN (
+      SELECT
+        purchase_voucher_item_id,
+        stock_item_id,
+        GROUP_CONCAT(huid, ', ') AS huid_list
+      FROM (
+        SELECT
+          purchase_voucher_item_id,
+          stock_item_id,
+          NULLIF(TRIM(huid), '') AS huid,
+          piece_no,
+          id
+        FROM purchase_item_huids
+        WHERE NULLIF(TRIM(huid), '') IS NOT NULL
+        ORDER BY piece_no ASC, id ASC
+      ) purchase_huids
+      GROUP BY purchase_voucher_item_id, stock_item_id
+    ) ph ON ph.stock_item_id = u.stock_item_id
+        AND (
+          ph.purchase_voucher_item_id = u.purchase_voucher_item_id
+          OR u.purchase_voucher_item_id IS NULL
+        )
+    WHERE u.id = ?
+    ''',
+    variables: [Variable<int>(stockUnitId)],
+  ).getSingle();
+
+  return row.read<String>('huid_list');
+}
+
+Future<QueryRow> _wastagePercentSnapshotForUnit(
+  AppDatabase db,
+  int stockUnitId,
+) {
+  return db.customSelect(
+    '''
+    SELECT
+      COALESCE(u.wastage_percent, 0.0) AS stock_unit_wastage_percent,
+      COALESCE(pvi.wastage_percent, 0.0) AS purchase_item_wastage_percent
+    FROM stock_item_units u
+    LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+    WHERE u.id = ?
+    ''',
+    variables: [Variable<int>(stockUnitId)],
+  ).getSingle();
+}
+
 Future<List<StockMovement>> _movementsFor(AppDatabase db, int stockItemId) {
   return (db.select(db.stockMovements)
         ..where((tbl) => tbl.stockItemId.equals(stockItemId))
@@ -523,6 +592,7 @@ PurchaseVoucherDraft _goldDraft({
   required double netWeight,
   required double purity,
   required double fineWeight,
+  double wastagePercent = 0,
   required double wastageFineWeight,
   required double valuationFineWeight,
   required double lineAmount,
@@ -574,6 +644,7 @@ PurchaseVoucherDraft _goldDraft({
         netWeight: netWeight,
         purity: purity,
         fineWeight: fineWeight,
+        wastagePercent: wastagePercent,
         wastageFineWeight: wastageFineWeight,
         valuationFineWeight: valuationFineWeight,
         rate: 15600,

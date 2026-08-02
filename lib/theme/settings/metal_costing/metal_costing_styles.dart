@@ -23,7 +23,7 @@ class MetalCostingStyles {
       );
 
   static TextStyle get sectionLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w800,
         color: MetalCostingColors.textMuted,
         letterSpacing: 1.2,
@@ -36,13 +36,13 @@ class MetalCostingStyles {
       );
 
   static TextStyle get cardSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         color: MetalCostingColors.textMuted,
         height: 1.3,
       );
 
   static TextStyle get labelSmall => GoogleFonts.inter(
-        fontSize: 9,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.4,
       );
@@ -53,12 +53,12 @@ class MetalCostingStyles {
       );
 
   static TextStyle get calcRow => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         color: MetalCostingColors.textMuted,
       );
 
   static TextStyle get calcRowTotal => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: MetalCostingColors.profitGreen,
       );
@@ -70,7 +70,7 @@ class MetalCostingStyles {
       );
 
   static TextStyle get itemMeta => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         color: MetalCostingColors.textHint,
       );
 

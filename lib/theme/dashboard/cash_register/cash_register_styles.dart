@@ -88,7 +88,7 @@ class CashRegisterStyles {
   );
 
   static const TextStyle headerSubStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     color: CashRegisterColors.textSecondary,
   );
 
@@ -105,7 +105,7 @@ class CashRegisterStyles {
   );
 
   static const TextStyle blockLabelStyle = TextStyle(
-    fontSize: 12.0,
+    fontSize: 13,
     fontWeight: FontWeight.w600,
   );
 
@@ -121,7 +121,7 @@ class CashRegisterStyles {
   );
 
   static const TextStyle footerSubStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     fontWeight: FontWeight.w500,
     color: CashRegisterColors.footerText,
   );

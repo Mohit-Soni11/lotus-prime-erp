@@ -36,7 +36,7 @@ class InvStyles {
 
   // â”€â”€ SUMMARY CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get cardLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: InvColors.textMuted,
         letterSpacing: 0.3,
@@ -56,13 +56,13 @@ class InvStyles {
       );
 
   static TextStyle get cardSubValue => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: InvColors.textBody,
       );
 
   static TextStyle get cardNote => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: InvColors.textMuted,
       );
@@ -83,14 +83,14 @@ class InvStyles {
       );
 
   static TextStyle get itemSku => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: InvColors.textMuted,
         letterSpacing: 0.3,
       );
 
   static TextStyle get itemFieldLabel => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: InvColors.textMuted,
         letterSpacing: 0.2,
@@ -110,21 +110,21 @@ class InvStyles {
 
   // â”€â”€ FILTER CHIP TEXT STYLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get chipActiveText => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: InvColors.shellTextTitle,
         letterSpacing: 0.2,
       );
 
   static TextStyle get chipInactiveText => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: InvColors.textMuted,
       );
 
   // â”€â”€ METAL CHIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle metalChipText(Color color) => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: color,
         letterSpacing: 0.3,
@@ -132,7 +132,7 @@ class InvStyles {
 
   // â”€â”€ STATUS BADGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle statusBadgeText(Color color) => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: color,
         letterSpacing: 0.3,

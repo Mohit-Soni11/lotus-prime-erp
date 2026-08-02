@@ -23,7 +23,7 @@ class DefaulterStyles {
       );
 
   static TextStyle get shellSubtitle => GoogleFonts.inter(
-        fontSize: 10.5,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: DefaulterColors.shellTextMuted,
         letterSpacing: 0.5,
@@ -31,7 +31,7 @@ class DefaulterStyles {
 
   static TextStyle get onlineBadgeText => const TextStyle(
         // Removed GoogleFonts to match exact style
-        fontSize: 12.0, // Match 12px
+        fontSize: 13, // Match 12px
         fontWeight: FontWeight.w700,
         color: DefaulterColors.onlineGreen,
         letterSpacing: 0.5,
@@ -42,7 +42,7 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle statLabel = TextStyle(
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMuted,
     letterSpacing: 0.3,
@@ -56,7 +56,7 @@ class DefaulterStyles {
   );
 
   static const TextStyle statSuffix = TextStyle(
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextMuted,
   );
@@ -80,7 +80,7 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle tableHeader = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMain,
     letterSpacing: 0.8,
@@ -104,7 +104,7 @@ class DefaulterStyles {
   );
 
   static const TextStyle customerCity = TextStyle(
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextHint,
   );
@@ -135,13 +135,13 @@ class DefaulterStyles {
   );
 
   static const TextStyle daysUnit = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextMuted,
   );
 
   static const TextStyle interestRate = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     color: DefaulterColors.bodyTextHint,
   );
@@ -151,7 +151,7 @@ class DefaulterStyles {
   // ==========================================
 
   static const TextStyle riskBadgeText = TextStyle(
-    fontSize: 10.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w900,
     letterSpacing: 0.8,
   );

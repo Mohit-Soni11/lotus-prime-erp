@@ -37,10 +37,10 @@ class SilverStockColors {
   static const Color panelBg = Color(0xFFFFFFFF);
   static const Color borderLight = Color(0xFFE5E0D8);
 
-  static const Color textDark = Color(0xFF0F172A);
-  static const Color textBody = Color(0xFF334155);
-  static const Color textMuted = Color(0xFF64748B);
-  static const Color textHint = Color(0xFF94A3B8);
+  static const Color textDark = Color(0xFF0B1220);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
   static const Color textBlack = Color(0xFF000000);
 
   static const Color moduleBadgeBg = Color(0xFF1A2332);

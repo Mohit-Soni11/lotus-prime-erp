@@ -33,7 +33,7 @@ class CustomerListStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: CustomerListColors.onlineGreen,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.5,
   );
@@ -59,13 +59,13 @@ class CustomerListStyles {
       );
 
   static TextStyle get statsLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.bodyTextMuted,
       );
 
   static TextStyle get statsCaption => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.bodyTextSoft,
       );
@@ -83,19 +83,19 @@ class CustomerListStyles {
       );
 
   static TextStyle get chipActive => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.brandGoldDark,
       );
 
   static TextStyle get chipInactive => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.chipInactive,
       );
 
   static TextStyle get toolbarButton => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMain,
       );
@@ -107,7 +107,7 @@ class CustomerListStyles {
       );
 
   static TextStyle get resultMeta => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.bodyTextMuted,
       );
@@ -125,13 +125,13 @@ class CustomerListStyles {
       );
 
   static TextStyle get customerDetail => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: CustomerListColors.bodyTextMuted,
       );
 
   static TextStyle get customerSince => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.bodyTextSoft,
       );
@@ -143,7 +143,7 @@ class CustomerListStyles {
       );
 
   static TextStyle get invoiceLabel => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMuted,
       );
@@ -155,31 +155,31 @@ class CustomerListStyles {
       );
 
   static TextStyle get metricLabel => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMuted,
       );
 
   static TextStyle get activityLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get activityMeta => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: CustomerListColors.bodyTextMuted,
       );
 
   static TextStyle get vipBadge => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w900,
         color: CustomerListColors.vipBadgeText,
       );
 
   static TextStyle get regularBadge => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.regularBadgeText,
       );

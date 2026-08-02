@@ -289,6 +289,7 @@ class GoldStockController extends AddStockController {
       row.grossWeight = rowModel.grossWeight;
       row.stoneWeight = rowModel.lessWeight;
       row.touchPercent = rowModel.basePurityPercent;
+      row.wastagePercent = rowModel.wastagePercent;
       row.wastageFineWeight = rowModel.wastageFineWeight;
       row.valuationFineWeight = rowModel.valuationFineWeight;
       row.purityLabel = rowModel.purityLabel;
@@ -596,6 +597,7 @@ class GoldStockController extends AddStockController {
               fineWeight: _roundGoldWeight(
                 row.fineWeight(selectedPurityBasePercent),
               ),
+              wastagePercent: row.wastagePercent,
               wastageFineWeight: _roundGoldWeight(
                 row.wastageFineWeight,
               ),

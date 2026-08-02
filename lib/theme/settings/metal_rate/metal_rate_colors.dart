@@ -20,10 +20,10 @@ class MetalRateColors {
   static const Color bodyBg = Color(0xFFF4F7FA);
   static const Color cardBg = Color(0xFFFFFFFF);
   static const Color cardBorder = Color(0xFFE5EAF0);
-  static const Color textDark = Color(0xFF17202A);
-  static const Color textBody = Color(0xFF475569);
-  static const Color textMuted = Color(0xFF7B8794);
-  static const Color textHint = Color(0xFFA4AFBC);
+  static const Color textDark = Color(0xFF0B1220);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
   static const Color inputBg = Color(0xFFF8FAFC);
 
   static const Color gold = Color(0xFFD4AF37);

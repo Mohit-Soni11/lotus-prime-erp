@@ -107,7 +107,7 @@ class PaymentStatusStyles {
   );
 
   static const TextStyle billNoStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     color: PaymentStatusColors.textSecondary,
   );
 
@@ -118,12 +118,12 @@ class PaymentStatusStyles {
   );
 
   static const TextStyle dateStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     color: PaymentStatusColors.textSecondary,
   );
 
   static const TextStyle amountLabelStyle = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     color: PaymentStatusColors.textSecondary,
   );
 
@@ -142,13 +142,13 @@ class PaymentStatusStyles {
       );
 
   static const TextStyle badgeStyle = TextStyle(
-    fontSize: 9.0,
+    fontSize: 13,
     fontWeight: FontWeight.w800,
     letterSpacing: 0.3,
   );
 
   static const TextStyle tabStyle = TextStyle(
-    fontSize: 12.0,
+    fontSize: 13,
     fontWeight: FontWeight.w600,
   );
 
@@ -166,13 +166,13 @@ class PaymentStatusStyles {
   );
 
   static const TextStyle statLabelStyle = TextStyle(
-    fontSize: 10.0,
+    fontSize: 13,
     color: PaymentStatusColors.textSecondary,
     letterSpacing: 0.3,
   );
 
   static const TextStyle showMoreStyle = TextStyle(
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w600,
     color: PaymentStatusColors.accentGold,
   );

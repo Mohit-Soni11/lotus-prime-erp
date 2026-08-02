@@ -14,7 +14,7 @@ class DueCollectionEntryStyles {
 
   static const TextStyle appBarSub = TextStyle(
     color: DueCollectionEntryColors.shellMuted,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w600,
     letterSpacing: 0,
   );
@@ -28,14 +28,14 @@ class DueCollectionEntryStyles {
 
   static const TextStyle label = TextStyle(
     color: DueCollectionEntryColors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
 
   static const TextStyle muted = TextStyle(
     color: DueCollectionEntryColors.textMuted,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
   );
@@ -56,7 +56,7 @@ class DueCollectionEntryStyles {
 
   static const TextStyle rowSub = TextStyle(
     color: DueCollectionEntryColors.textMuted,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
   );

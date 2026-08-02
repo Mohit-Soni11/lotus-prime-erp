@@ -31,7 +31,7 @@ class DeliveryColors {
   static const Color bodyTextMain = Color(0xFF1E293B);
   static const Color bodyTextMuted = Color(0xFF475569);
   static const Color cardHoverBg = Color(0xFFF6F3EC);
-  static const Color textDark = Color(0xFF000000);
+  static const Color textDark = Color(0xFF0B1220);
 
   // ── STATUS PIPELINE COLORS ────────────────────────────────────────────────
   static const Color statusBooked = Color(0xFF6366F1); // Indigo

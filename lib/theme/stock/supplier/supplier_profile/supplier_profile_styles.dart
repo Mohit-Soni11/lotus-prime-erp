@@ -22,7 +22,7 @@ class SupplierProfileStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: SupplierProfileColors.brandGold,
         letterSpacing: 0,
@@ -30,7 +30,7 @@ class SupplierProfileStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: SupplierProfileColors.onlineGreen,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
@@ -57,14 +57,14 @@ class SupplierProfileStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: SupplierProfileColors.bodyTextMuted,
         letterSpacing: 0,
       );
 
   static TextStyle get infoLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: SupplierProfileColors.bodyTextMuted,
         letterSpacing: 0,
@@ -86,14 +86,14 @@ class SupplierProfileStyles {
       );
 
   static TextStyle get statLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: SupplierProfileColors.bodyTextMuted,
         letterSpacing: 0,
       );
 
   static TextStyle get chipText => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w800,
         letterSpacing: 0,
       );
@@ -106,7 +106,7 @@ class SupplierProfileStyles {
       );
 
   static TextStyle get historyMeta => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: SupplierProfileColors.bodyTextMuted,
         letterSpacing: 0,

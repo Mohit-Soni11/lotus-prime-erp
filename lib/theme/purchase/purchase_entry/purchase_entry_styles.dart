@@ -54,7 +54,7 @@ class PurchaseEntryStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: PurchaseEntryColors.onlineGreen, // <-- Updated to proper onlineGreen
-    fontSize: 12.0,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.5,
   );

@@ -65,11 +65,11 @@ abstract final class TaxGstColors {
   static const Color sectionSeparator = Color(0xFFF3EFE8);
 
   // ── Typography ──────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF111827);
-  static const Color textSecondary = Color(0xFF374151);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color textDisabled = Color(0xFF9CA3AF);
-  static const Color textHint = Color(0xFFBBC0C8);
+  static const Color textPrimary = Color(0xFF0B1220);
+  static const Color textSecondary = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textDisabled = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
 
   // ── Buttons ─────────────────────────────────────────────────
   static const Color btnSave = Color(0xFF166534);

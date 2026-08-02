@@ -68,6 +68,7 @@ class _InventoryGradeDetailScreenState
         u.segment AS segment,
         u.item_name AS item_name,
         u.huid AS huid,
+        COALESCE(ph.huid_list, u.huid, '') AS huid_list,
         u.gross_weight AS gross_weight,
         u.less_weight AS less_weight,
         u.net_weight AS net_weight,
@@ -79,6 +80,7 @@ class _InventoryGradeDetailScreenState
           THEN ROUND(COALESCE(u.net_weight, 0.0) * COALESCE(u.purity_percent, 0.0) / 100.0, 6)
           ELSE COALESCE(u.actual_fine_weight, 0.0)
         END AS actual_fine,
+        COALESCE(NULLIF(u.wastage_percent, 0.0), NULLIF(pvi.wastage_percent, 0.0), 0.0) AS wastage_percent,
         u.wastage_fine_weight AS wastage_fine,
         CASE
           WHEN $_inventoryLotUnitExpression
@@ -178,6 +180,28 @@ class _InventoryGradeDetailScreenState
       INNER JOIN stock_items s ON s.id = u.stock_item_id
       LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
       LEFT JOIN purchase_vouchers pv ON pv.id = u.purchase_voucher_id
+      LEFT JOIN (
+        SELECT
+          purchase_voucher_item_id,
+          stock_item_id,
+          GROUP_CONCAT(huid, ', ') AS huid_list
+        FROM (
+          SELECT
+            purchase_voucher_item_id,
+            stock_item_id,
+            NULLIF(TRIM(huid), '') AS huid,
+            piece_no,
+            id
+          FROM purchase_item_huids
+          WHERE NULLIF(TRIM(huid), '') IS NOT NULL
+          ORDER BY piece_no ASC, id ASC
+        ) purchase_huids
+        GROUP BY purchase_voucher_item_id, stock_item_id
+      ) ph ON ph.stock_item_id = u.stock_item_id
+          AND (
+            ph.purchase_voucher_item_id = u.purchase_voucher_item_id
+            OR u.purchase_voucher_item_id IS NULL
+          )
       $_inventorySoldWeightJoin
       WHERE lower(u.metal_type) = ?
         AND (? = 1 OR $groupExpression = ?)
@@ -387,9 +411,9 @@ class _InventoryGradeDetailScreenState
                 Text(
                   '$subtitle - Batch-wise stock ledger',
                   style: GoogleFonts.inter(
-                    fontSize: 13,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w700,
-                    color: ui.textOnGradient.withValues(alpha: 0.78),
+                    color: ui.textOnGradient.withValues(alpha: 0.92),
                   ),
                 ),
               ],
@@ -545,9 +569,9 @@ class _InventoryGradeDetailScreenState
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: InvColors.textMuted,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: InvColors.textDark,
                       ),
                     ),
                   ],
@@ -557,9 +581,9 @@ class _InventoryGradeDetailScreenState
               Text(
                 '${_filterBatches(batches).length}/${batches.length} invoices',
                 style: GoogleFonts.inter(
-                  fontSize: 12,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w900,
-                  color: InvColors.textMuted,
+                  color: InvColors.textDark,
                 ),
               ),
             ],
@@ -572,16 +596,16 @@ class _InventoryGradeDetailScreenState
                   controller: _batchSearchCtrl,
                   onChanged: (value) => setState(() => _batchSearch = value),
                   style: GoogleFonts.inter(
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: InvColors.textDark,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search source invoice, supplier, batch or item',
                     hintStyle: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: InvColors.textHint,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: InvColors.textDark.withValues(alpha: 0.72),
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
@@ -699,9 +723,9 @@ class _InventoryGradeDetailScreenState
                     Text(
                       'Item-wise available, sold and total weight for this selected grade.',
                       style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: InvColors.textMuted,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: InvColors.textDark,
                       ),
                     ),
                   ],
@@ -736,7 +760,7 @@ class _InventoryGradeDetailScreenState
                 child: Text(
                   '${items.length}/${allItems.length} items',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w900,
                     color: ui.accent,
                   ),

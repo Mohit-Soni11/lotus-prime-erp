@@ -95,7 +95,7 @@ class _InventoryBatchCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: InvColors.textDark,
                       ),
@@ -106,7 +106,7 @@ class _InventoryBatchCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: InvColors.textDark,
                       ),
@@ -184,12 +184,14 @@ class _InventoryGradeUnitCard extends StatelessWidget {
     final statusLabel = unit.stockMovementStatusLabel;
     final statusColor = _unitStatusColor(statusLabel);
     final statusBg = _unitStatusBg(statusLabel);
+    final weightMetrics = _weightMetrics();
+    final purityMetrics = _purityMetrics();
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFCF7),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEADCC5)),
       ),
       child: Column(
@@ -199,7 +201,9 @@ class _InventoryGradeUnitCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  unit.itemName.isEmpty ? 'Unnamed Stock Item' : unit.itemName,
+                  unit.itemName.isEmpty
+                      ? 'Unnamed Stock Item'
+                      : _titleCase(unit.itemName),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -220,7 +224,7 @@ class _InventoryGradeUnitCard extends StatelessWidget {
                 child: Text(
                   statusLabel,
                   style: GoogleFonts.inter(
-                    fontSize: 10.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     color: statusColor,
                   ),
@@ -234,68 +238,77 @@ class _InventoryGradeUnitCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: InvColors.textMuted,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+              color: InvColors.textDark,
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _UnitMetric(label: 'Unit', value: unit.displayUnitPlural),
-              _UnitMetric(label: 'Total Qty', value: unit.totalQuantityLabel),
-              _UnitMetric(
-                  label: 'Available', value: unit.availableQuantityLabel),
-              _UnitMetric(label: 'Sold', value: unit.soldQuantityLabel),
-              if (unit.huid.isNotEmpty)
-                _UnitMetric(label: 'HUID', value: unit.huid),
-              if (_hasWeightDifference(
-                  unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
-                _UnitMetric(
-                    label: 'Gross Weight',
-                    value: '${_weight(unit.displayTotalGrossWeight)} g'),
-              _UnitMetric(
-                  label: 'Total Weight',
-                  value: '${_weight(unit.displayTotalNetWeight)} g'),
-              if (unit.displayAvailableNetWeight > 0)
-                _UnitMetric(
-                    label: 'Available Weight',
-                    value: '${_weight(unit.displayAvailableNetWeight)} g'),
-              if (unit.soldNetWeight > 0)
-                _UnitMetric(
-                    label: 'Sold Weight',
-                    value: '${_weight(unit.soldNetWeight)} g'),
-              if (unit.hasScaleVariance)
-                _UnitMetric(
-                    label: 'Scale Variance', value: unit.scaleVarianceLabel),
-              if (unit.purityPercent > 0)
-                _UnitMetric(
-                    label: 'Base Purity',
-                    value: '${_percent(unit.purityPercent)}%'),
-              if (unit.wastagePercent > 0)
-                _UnitMetric(
-                    label: 'Wastage',
-                    value: '${_percent(unit.wastagePercent)}%'),
-              if (unit.totalPurityPercent > 0)
-                _UnitMetric(
-                    label: 'Valuation Purity',
-                    value: '${_percent(unit.totalPurityPercent)}%'),
-              if (unit.actualFine > 0)
-                _UnitMetric(
-                    label: 'Actual Fine',
-                    value: '${_weight(unit.actualFine)} g'),
-              if (unit.valuationFine > 0)
-                _UnitMetric(
-                  label: 'Valuation Fine',
-                  value: '${_weight(unit.valuationFine)} g',
-                ),
+          const SizedBox(height: 14),
+          _QuantityMetricStrip(
+            accent: ui.accent,
+            metrics: [
+              _UnitMetricData('Unit', unit.displayUnitPlural),
+              _UnitMetricData('Total Qty', unit.totalQuantityLabel),
+              _UnitMetricData('Available', unit.availableQuantityLabel),
+              _UnitMetricData('Sold', unit.soldQuantityLabel),
             ],
           ),
+          if (unit.huidDisplayText.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _HuidMetric(value: unit.huidDisplayText, accent: ui.accent),
+          ],
+          const SizedBox(height: 12),
+          _MetricSection(title: 'Weight', metrics: weightMetrics),
+          if (purityMetrics.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _MetricSection(title: 'Purity & Fine', metrics: purityMetrics),
+          ],
         ],
       ),
     );
+  }
+
+  List<_UnitMetricData> _weightMetrics() {
+    return [
+      if (_hasWeightDifference(
+          unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
+        _UnitMetricData(
+          'Gross Weight',
+          '${_weight(unit.displayTotalGrossWeight)} g',
+        ),
+      _UnitMetricData(
+        'Total Weight',
+        '${_weight(unit.displayTotalNetWeight)} g',
+      ),
+      if (unit.displayAvailableNetWeight > 0)
+        _UnitMetricData(
+          'Available Weight',
+          '${_weight(unit.displayAvailableNetWeight)} g',
+        ),
+      if (unit.soldNetWeight > 0)
+        _UnitMetricData('Sold Weight', '${_weight(unit.soldNetWeight)} g'),
+      if (unit.hasScaleVariance)
+        _UnitMetricData('Scale Variance', unit.scaleVarianceLabel),
+    ];
+  }
+
+  List<_UnitMetricData> _purityMetrics() {
+    return [
+      if (unit.purityPercent > 0)
+        _UnitMetricData('Base Purity', '${_percent(unit.purityPercent)}%'),
+      if (unit.wastagePercent > 0)
+        _UnitMetricData('Wastage', '${_percent(unit.wastagePercent)}%'),
+      if (unit.totalPurityPercent > 0)
+        _UnitMetricData(
+            'Valuation Purity', '${_percent(unit.totalPurityPercent)}%'),
+      if (unit.actualFine > 0)
+        _UnitMetricData('Actual Fine', '${_weight(unit.actualFine)} g'),
+      if (unit.valuationFine > 0)
+        _UnitMetricData(
+          'Valuation Fine',
+          '${_weight(unit.valuationFine)} g',
+        ),
+    ];
   }
 
   String _itemSubtitle() {
@@ -303,7 +316,6 @@ class _InventoryGradeUnitCard extends StatelessWidget {
       unit.companyName,
       unit.itemType,
       unit.segment,
-      unit.unitCode,
     ].where((item) => item.trim().isNotEmpty).toList(growable: false);
     return parts.isEmpty ? 'Stock unit' : parts.join(' - ');
   }
@@ -326,6 +338,166 @@ class _InventoryGradeUnitCard extends StatelessWidget {
     if (normalized.contains('partially')) return const Color(0xFFFFF7E6);
     if (normalized.contains('sold')) return InvColors.dangerBg;
     return InvColors.successBg;
+  }
+}
+
+class _UnitMetricData {
+  final String label;
+  final String value;
+
+  const _UnitMetricData(this.label, this.value);
+}
+
+class _QuantityMetricStrip extends StatelessWidget {
+  final List<_UnitMetricData> metrics;
+  final Color accent;
+
+  const _QuantityMetricStrip({
+    required this.metrics,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 460;
+        if (compact) {
+          return Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final metric in metrics)
+                SizedBox(
+                  width: (constraints.maxWidth - 8) / 2,
+                  child: _UnitMetric(
+                    label: metric.label,
+                    value: metric.value,
+                    accent: accent,
+                    highlighted: metric.label == 'Available',
+                  ),
+                ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            for (var index = 0; index < metrics.length; index++) ...[
+              Expanded(
+                child: _UnitMetric(
+                  label: metrics[index].label,
+                  value: metrics[index].value,
+                  accent: accent,
+                  highlighted: metrics[index].label == 'Available',
+                ),
+              ),
+              if (index != metrics.length - 1) const SizedBox(width: 8),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MetricSection extends StatelessWidget {
+  final String title;
+  final List<_UnitMetricData> metrics;
+
+  const _MetricSection({
+    required this.title,
+    required this.metrics,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            color: InvColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 7),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final itemWidth = constraints.maxWidth >= 520
+                ? (constraints.maxWidth - 16) / 3
+                : (constraints.maxWidth - 8) / 2;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final metric in metrics)
+                  SizedBox(
+                    width: itemWidth,
+                    child: _UnitMetric(
+                      label: metric.label,
+                      value: metric.value,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HuidMetric extends StatelessWidget {
+  final String value;
+  final Color accent;
+
+  const _HuidMetric({
+    required this.value,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'HUID',
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              height: 1.35,
+              fontWeight: FontWeight.w900,
+              color: accent,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                height: 1.35,
+                fontWeight: FontWeight.w900,
+                color: InvColors.textDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -362,7 +534,7 @@ class _BatchMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 10,
+              fontSize: 12.5,
               height: 1.05,
               fontWeight: FontWeight.w900,
               color: InvColors.textDark,
@@ -374,7 +546,7 @@ class _BatchMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 15.5,
               height: 1.08,
               fontWeight: FontWeight.w900,
               color: InvColors.textDark,
@@ -387,7 +559,7 @@ class _BatchMetric extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                fontSize: 9.5,
+                fontSize: 12,
                 height: 1.05,
                 fontWeight: FontWeight.w800,
                 color: InvColors.textDark,
@@ -423,10 +595,10 @@ class _BatchStatusTag extends StatelessWidget {
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 10.5,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
           color: color,
-          letterSpacing: 0.2,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -436,21 +608,31 @@ class _BatchStatusTag extends StatelessWidget {
 class _UnitMetric extends StatelessWidget {
   final String label;
   final String value;
+  final Color? accent;
+  final bool highlighted;
 
   const _UnitMetric({
     required this.label,
     required this.value,
+    this.accent,
+    this.highlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final activeAccent = accent ?? InvColors.textDark;
     return Container(
-      constraints: const BoxConstraints(minWidth: 106),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      constraints: const BoxConstraints(minWidth: 98, minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE7DAC5)),
+        color:
+            highlighted ? activeAccent.withValues(alpha: 0.09) : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: highlighted
+              ? activeAccent.withValues(alpha: 0.24)
+              : const Color(0xFFE7DAC5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,18 +642,18 @@ class _UnitMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 9.5,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
-              color: InvColors.textMuted,
+              color: highlighted ? activeAccent : InvColors.textDark,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 12,
+              fontSize: 14.5,
               fontWeight: FontWeight.w900,
               color: InvColors.textDark,
             ),
@@ -499,10 +681,10 @@ class _GstTag extends StatelessWidget {
       child: Text(
         'GST',
         style: GoogleFonts.inter(
-          fontSize: 10.5,
+          fontSize: 12.5,
           fontWeight: FontWeight.w900,
           color: accent,
-          letterSpacing: 0.4,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -529,7 +711,7 @@ class _BatchFilterChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
         decoration: BoxDecoration(
           color: selected ? accent : const Color(0xFFFBF8F1),
           borderRadius: BorderRadius.circular(999),
@@ -540,7 +722,7 @@ class _BatchFilterChip extends StatelessWidget {
         child: Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 12,
+            fontSize: 13.5,
             fontWeight: FontWeight.w900,
             color: selected ? Colors.white : InvColors.textDark,
           ),

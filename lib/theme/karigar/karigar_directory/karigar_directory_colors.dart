@@ -23,10 +23,10 @@ class KarigarDirectoryColors {
   static const Color bodyBorder = Color(0xFFE9E3DA);
 
   // Text
-  static const Color textMain = Color(0xFF111827);
-  static const Color textBody = Color(0xFF374151);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color textHint = Color(0xFF9CA3AF);
+  static const Color textMain = Color(0xFF0B1220);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
 
   // Stats
   static const Color success = Color(0xFF10B981);

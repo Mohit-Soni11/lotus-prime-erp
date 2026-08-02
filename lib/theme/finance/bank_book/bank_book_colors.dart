@@ -84,10 +84,10 @@ class BankBookColors {
   static const Color searchIcon = Color(0xFF9CA3AF);
 
   // ── Text ───────────────────────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
-  static const Color textDark = Color(0xFF0F172A);
+  static const Color textPrimary = Color(0xFF0B1220);
+  static const Color textSecondary = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textDark = Color(0xFF0B1220);
 
   // ── Reconciled Badge ───────────────────────────────────────────────────────
   static const Color reconciledBg = Color(0xFFECFDF5);

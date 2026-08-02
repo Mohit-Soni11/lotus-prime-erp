@@ -292,6 +292,7 @@ class SilverStockController extends AddStockController {
       row.grossWeight = rowModel.grossWeight;
       row.stoneWeight = rowModel.lessWeight;
       row.touchPercent = rowModel.basePurityPercent;
+      row.wastagePercent = rowModel.wastagePercent;
       row.wastageFineWeight =
           rowModel.valuationFineWeight - rowModel.actualFineWeight;
       row.valuationFineWeight = rowModel.valuationFineWeight;
@@ -596,6 +597,7 @@ class SilverStockController extends AddStockController {
               netWeight: row.netWeight,
               purity: row.resolveTouch(selectedPurityBasePercent),
               fineWeight: row.fineWeight(selectedPurityBasePercent),
+              wastagePercent: row.wastagePercent,
               wastageFineWeight: row.wastageFineWeight,
               valuationFineWeight: row.valuationFine(selectedPurityBasePercent),
               rate: snapshot.ratePerGram > 0

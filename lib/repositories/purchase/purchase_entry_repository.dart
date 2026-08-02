@@ -66,6 +66,7 @@ class PurchaseVoucherItemDraft {
   final double netWeight;
   final double purity;
   final double fineWeight;
+  final double wastagePercent;
   final double wastageFineWeight;
   final double valuationFineWeight;
   final double rate;
@@ -97,6 +98,7 @@ class PurchaseVoucherItemDraft {
     required this.netWeight,
     required this.purity,
     required this.fineWeight,
+    this.wastagePercent = 0.0,
     this.wastageFineWeight = 0.0,
     this.valuationFineWeight = 0.0,
     required this.rate,
@@ -399,6 +401,7 @@ class PurchaseEntryRepository {
               net_weight,
               purity,
               fine_weight,
+              wastage_percent,
               wastage_fine_weight,
               valuation_fine_weight,
               rate,
@@ -408,7 +411,7 @@ class PurchaseEntryRepository {
               pieces_per_packet,
               line_amount,
               created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''',
             [
               voucherId,
@@ -423,6 +426,7 @@ class PurchaseEntryRepository {
               item.netWeight,
               item.purity,
               item.fineWeight,
+              item.wastagePercent,
               item.wastageFineWeight,
               item.valuationFineWeight > 0
                   ? item.valuationFineWeight
@@ -474,6 +478,7 @@ class PurchaseEntryRepository {
                   grossWeight: drift.Value(item.grossWeight),
                   stoneWeight: drift.Value(item.lessWeight),
                   netWeight: drift.Value(item.netWeight),
+                  wastage: drift.Value(item.wastagePercent),
                   purchaseRate: drift.Value(
                     item.effectiveRatePerGram > 0
                         ? item.effectiveRatePerGram
@@ -746,6 +751,7 @@ class PurchaseEntryRepository {
         'pieces_per_packet': 'INTEGER NOT NULL DEFAULT 1',
         'item_company': 'TEXT',
         'item_segment': 'TEXT',
+        'wastage_percent': 'REAL NOT NULL DEFAULT 0.0',
         'wastage_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
         'valuation_fine_weight': 'REAL NOT NULL DEFAULT 0.0',
       },
@@ -774,6 +780,7 @@ class PurchaseEntryRepository {
       'stock_item_units',
       const {
         'company_name': 'TEXT',
+        'wastage_percent': 'REAL NOT NULL DEFAULT 0.0',
       },
     );
     for (final statement in _stockItemUnitsIndexSql) {
@@ -1319,6 +1326,7 @@ class PurchaseEntryRepository {
           net_weight,
           purity_percent,
           actual_fine_weight,
+          wastage_percent,
           wastage_fine_weight,
           valuation_fine_weight,
           rate_per_gram,
@@ -1329,7 +1337,7 @@ class PurchaseEntryRepository {
           status,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         [
           stockItemId,
@@ -1351,6 +1359,7 @@ class PurchaseEntryRepository {
           unitNetWeight,
           item.purity,
           unitFineWeight,
+          item.wastagePercent,
           unitWastageFineWeight,
           unitValuationFineWeight,
           item.effectiveRatePerGram > 0 ? item.effectiveRatePerGram : item.rate,
@@ -1401,6 +1410,7 @@ class PurchaseEntryRepository {
         net_weight,
         purity_percent,
         actual_fine_weight,
+        wastage_percent,
         wastage_fine_weight,
         valuation_fine_weight,
         rate_per_gram,
@@ -1411,7 +1421,7 @@ class PurchaseEntryRepository {
         status,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ''',
       [
         stockItemId,
@@ -1433,6 +1443,7 @@ class PurchaseEntryRepository {
         item.netWeight,
         item.purity,
         item.fineWeight,
+        item.wastagePercent,
         item.wastageFineWeight,
         valuationFine,
         item.effectiveRatePerGram > 0 ? item.effectiveRatePerGram : item.rate,
@@ -1641,6 +1652,7 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
   "net_weight" REAL NOT NULL DEFAULT 0.0,
   "purity_percent" REAL NOT NULL DEFAULT 0.0,
   "actual_fine_weight" REAL NOT NULL DEFAULT 0.0,
+  "wastage_percent" REAL NOT NULL DEFAULT 0.0,
   "wastage_fine_weight" REAL NOT NULL DEFAULT 0.0,
   "valuation_fine_weight" REAL NOT NULL DEFAULT 0.0,
   "rate_per_gram" REAL NOT NULL DEFAULT 0.0,

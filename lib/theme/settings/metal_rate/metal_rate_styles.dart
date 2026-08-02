@@ -25,20 +25,20 @@ class MetalRateStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: MetalRateColors.shellTextMuted,
       );
 
   static TextStyle get systemOnline => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: MetalRateColors.onlineGreen,
         letterSpacing: 0.5,
       );
 
   static TextStyle get sectionLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w800,
         color: MetalRateColors.textMuted,
         letterSpacing: 1.15,
@@ -51,14 +51,14 @@ class MetalRateStyles {
       );
 
   static TextStyle get cardSubtitle => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: MetalRateColors.textBody,
         height: 1.35,
       );
 
   static TextStyle get smallLabel => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: MetalRateColors.textMuted,
         letterSpacing: 0.3,

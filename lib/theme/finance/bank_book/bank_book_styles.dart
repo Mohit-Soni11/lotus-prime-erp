@@ -51,13 +51,13 @@ class BankBookStyles {
       );
 
   static TextStyle get labelSecondary => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: BankBookColors.textSecondary,
       );
 
   static TextStyle get labelMuted => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: BankBookColors.textMuted,
       );
@@ -69,7 +69,7 @@ class BankBookStyles {
       );
 
   static TextStyle get txnSubtitle => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: BankBookColors.textSecondary,
       );
@@ -93,13 +93,13 @@ class BankBookStyles {
       );
 
   static TextStyle get toggleActive => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: BankBookColors.toggleActiveText,
       );
 
   static TextStyle get toggleInactive => GoogleFonts.inter(
-        fontSize: 12.0,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: BankBookColors.toggleInactiveText,
       );
@@ -112,7 +112,7 @@ class BankBookStyles {
       );
 
   static TextStyle get accountNumber => GoogleFonts.inter(
-        fontSize: 11.0,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: BankBookColors.shellMuted,
         letterSpacing: 1.0,

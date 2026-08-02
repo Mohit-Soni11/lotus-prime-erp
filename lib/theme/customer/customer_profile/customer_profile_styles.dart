@@ -30,7 +30,7 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: CustomerProfileColors.brandGold,
         letterSpacing: 1.5,
@@ -38,7 +38,7 @@ class CustomerProfileStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: Color(0xFF10B981),
-    fontSize: 9.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.8,
   );
@@ -71,7 +71,7 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMuted,
         letterSpacing: 1.2,
@@ -79,7 +79,7 @@ class CustomerProfileStyles {
 
   // Information rows
   static TextStyle get infoLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: CustomerProfileColors.bodyTextMuted,
       );
@@ -99,12 +99,12 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get snapshotLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         color: CustomerProfileColors.bodyTextMuted,
       );
 
   static TextStyle get snapshotMeta => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: CustomerProfileColors.bodyTextMuted,
       );
@@ -130,7 +130,7 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get billDate => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         color: CustomerProfileColors.bodyTextMuted,
       );
 

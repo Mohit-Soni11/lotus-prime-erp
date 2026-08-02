@@ -20,9 +20,9 @@ class DayBookColors {
   static const Color bodyBorder = Color(0xFFE8E3DA);
   static const Color cardHover = Color(0xFFF6F3EC);
 
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = Color(0xFF0B1220);
+  static const Color textSecondary = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
   static const Color textOnAccent = Color(0xFFFFFFFF);
 
   static const Color positive = Color(0xFF147A55);

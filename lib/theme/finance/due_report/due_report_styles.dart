@@ -14,14 +14,14 @@ class DueReportStyles {
 
   static const TextStyle appBarSubtitle = TextStyle(
     color: DueReportColors.textMuted,
-    fontSize: 10.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w600,
     letterSpacing: 0,
   );
 
   static const TextStyle onlineBadge = TextStyle(
     color: DueReportColors.onlineGreen,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
@@ -35,14 +35,14 @@ class DueReportStyles {
 
   static const TextStyle label = TextStyle(
     color: DueReportColors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
 
   static const TextStyle muted = TextStyle(
     color: DueReportColors.textMuted,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
   );
@@ -63,7 +63,7 @@ class DueReportStyles {
 
   static const TextStyle tableHeader = TextStyle(
     color: DueReportColors.textPrimary,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w800,
     letterSpacing: 0,
   );
@@ -77,7 +77,7 @@ class DueReportStyles {
 
   static const TextStyle rowSub = TextStyle(
     color: DueReportColors.textMuted,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
   );

@@ -25,7 +25,7 @@ class AddSupplierStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: AddSupplierColors.brandGold,
         letterSpacing: 0,
@@ -33,7 +33,7 @@ class AddSupplierStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: AddSupplierColors.onlineGreen,
-    fontSize: 12.0,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
@@ -45,14 +45,14 @@ class AddSupplierStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: AddSupplierColors.bodyTextMuted,
         letterSpacing: 0,
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: AddSupplierColors.inputLabel,
       );
@@ -73,7 +73,7 @@ class AddSupplierStyles {
       );
 
   static TextStyle get requiredNote => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: AddSupplierColors.bodyTextMuted,
       );
@@ -130,7 +130,7 @@ class AddSupplierStyles {
         labelStyle: fieldLabel,
         hintStyle: fieldHint,
         floatingLabelStyle: GoogleFonts.inter(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w700,
           color: AddSupplierColors.brandGold,
         ),

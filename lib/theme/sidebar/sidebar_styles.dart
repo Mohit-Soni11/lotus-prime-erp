@@ -28,7 +28,7 @@ class SidebarStyles {
 
   // Tooltip Text
   static const TextStyle tooltip = TextStyle(
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.white,
     fontWeight: FontWeight.w500,
   );

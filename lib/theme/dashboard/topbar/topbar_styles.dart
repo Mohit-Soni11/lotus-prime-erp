@@ -20,7 +20,7 @@ class TopBarStyles {
   );
 
   static const TextStyle systemStatus = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     fontWeight: FontWeight.w600,
     color: TopBarColors.systemText,
     letterSpacing: 0.5,

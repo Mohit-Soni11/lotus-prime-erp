@@ -25,21 +25,21 @@ class BasicInfoColors {
   static const Color shadowSubtle = Color(0x0A000000); // Soft Shadow for Cards
 
   // --- Typography (Contrast Optimized) ---
-  static const Color textDark = Color(0xFF111827); // Headings (Near Black)
-  static const Color textBody = Color(0xFF374151); // Labels (Dark Grey)
+  static const Color textDark = Color(0xFF0B1220); // Headings (Near Black)
+  static const Color textBody = Color(0xFF111827); // Labels (Dark Grey)
   static const Color textHeaderSub =
-      Color(0xFF4B5563); // 🚀 UPGRADE: Darker grey for Header visibility
-  static const Color textHint = Color(0xFF9CA3AF); // Placeholders
-  static const Color textMuted = Color(0xFF6B7280); // Secondary Text
+      Color(0xFF111827); // 🚀 UPGRADE: Darker grey for Header visibility
+  static const Color textHint = Color(0xFF111827); // Placeholders
+  static const Color textMuted = Color(0xFF111827); // Secondary Text
   static const Color textBlack87 = Colors.black87;
 
   // --- Extracted Greys (For Photo Widget Dialogs) ---
   static const Color bgGrey50 = Color(0xFFF9FAFB);
   static const Color bgGrey100 = Color(0xFFF3F4F6);
   static const Color borderGrey300 = Color(0xFFE0E0E0);
-  static const Color textGrey500 = Color(0xFF9E9E9E);
-  static const Color textGrey600 = Color(0xFF757575);
-  static const Color textGrey700 = Color(0xFF616161);
+  static const Color textGrey500 = Color(0xFF111827);
+  static const Color textGrey600 = Color(0xFF111827);
+  static const Color textGrey700 = Color(0xFF0B1220);
 
   // --- Actions & Status ---
   static const Color btnDanger = Color(0xFFEF4444); // Delete/Remove (Red)

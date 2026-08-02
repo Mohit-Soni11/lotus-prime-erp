@@ -35,7 +35,7 @@ class AddKarigarStyles {
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: AddKarigarColors.bodyTextMuted,
         letterSpacing: 0.5,
@@ -60,7 +60,7 @@ class AddKarigarStyles {
       );
 
   static TextStyle get requiredNote => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: AddKarigarColors.bodyTextHint,
       );

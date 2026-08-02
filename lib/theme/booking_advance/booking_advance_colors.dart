@@ -33,7 +33,7 @@ class BookingAdvanceColors {
   static const Color bodyTextMuted = Color(0xFF475569);
   static const Color formInputBg = Color(0xFFFAFAFA);
   static const Color cardHoverBg = Color(0xFFF6F3EC);
-  static const Color textDark = Color(0xFF000000);
+  static const Color textDark = Color(0xFF0B1220);
 
   // ── STATUS ────────────────────────────────────────────────────────────────
   static const Color success = Color(0xFF10B981);

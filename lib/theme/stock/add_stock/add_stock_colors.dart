@@ -49,10 +49,10 @@ class AddStockColors {
   static const Color inputBgLocked = Color(0xFFF3F4F6); // Disabled input
 
   // ── TYPOGRAPHY ────────────────────────────────────────────────
-  static const Color textDark = Color(0xFF111827); // Headings
+  static const Color textDark = Color(0xFF0B1220); // Headings
   static const Color textBody = Color(0xFF111827); // Body text
-  static const Color textMuted = Color(0xFF1E293B); // Secondary
-  static const Color textHint = Color(0xFF475569); // Placeholders
+  static const Color textMuted = Color(0xFF111827); // Secondary
+  static const Color textHint = Color(0xFF111827); // Placeholders
   static const Color textBlack = Color(0xFF000000);
 
   // ── MODULE BADGE ─────────────────────────────────────────────

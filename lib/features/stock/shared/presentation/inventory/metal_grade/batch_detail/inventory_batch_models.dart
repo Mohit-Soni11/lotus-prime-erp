@@ -201,6 +201,7 @@ class _InventoryBatchGroup {
         unit.companyName,
         unit.segment,
         unit.huid,
+        unit.huidDisplayText,
         unit.unitCode,
       ],
     ].join(' ').toLowerCase();
@@ -242,7 +243,11 @@ class _InventoryBatchGroup {
 
   double get wastagePercent {
     if (netWeight <= 0) return 0.0;
-    return (wastageFine / netWeight) * 100;
+    final weighted = units.fold(0.0, (sum, unit) {
+      return sum + unit.displayTotalNetWeight * unit.wastagePercent / 100.0;
+    });
+    if (weighted > 0) return (weighted / netWeight) * 100;
+    return _normalizedInventoryPercentFromRoundedWeight(wastageFine, netWeight);
   }
 
   double get valuationPurityPercent => purityPercent + wastagePercent;
@@ -335,6 +340,23 @@ class _InventoryPaymentSummary {
   bool get hasAttachment => attachmentPath.trim().isNotEmpty;
 }
 
+double _normalizedInventoryPercentFromRoundedWeight(
+  double fineWeight,
+  double netWeight,
+) {
+  if (fineWeight <= 0 || netWeight <= 0) return 0.0;
+  final rawPercent = fineWeight / netWeight * 100.0;
+  final roundingTolerancePercent = (0.0005 / netWeight * 100.0) + 0.000001;
+  const preferredSteps = <double>[1.0, 0.5, 0.25, 0.1, 0.05, 0.01];
+  for (final step in preferredSteps) {
+    final candidate = (rawPercent / step).roundToDouble() * step;
+    if ((rawPercent - candidate).abs() <= roundingTolerancePercent) {
+      return candidate;
+    }
+  }
+  return rawPercent;
+}
+
 class _InventoryGradeUnit {
   final int unitId;
   final int stockItemId;
@@ -348,11 +370,13 @@ class _InventoryGradeUnit {
   final String segment;
   final String itemName;
   final String huid;
+  final String huidList;
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
   final double purityPercent;
   final double actualFine;
+  final double wastagePercentSource;
   final double wastageFine;
   final double valuationFine;
   final double ratePerGram;
@@ -406,11 +430,13 @@ class _InventoryGradeUnit {
     required this.segment,
     required this.itemName,
     required this.huid,
+    required this.huidList,
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
     required this.purityPercent,
     required this.actualFine,
+    required this.wastagePercentSource,
     required this.wastageFine,
     required this.valuationFine,
     required this.ratePerGram,
@@ -484,11 +510,13 @@ class _InventoryGradeUnit {
       segment: text('segment'),
       itemName: text('item_name'),
       huid: text('huid'),
+      huidList: text('huid_list'),
       grossWeight: number('gross_weight'),
       lessWeight: number('less_weight'),
       netWeight: number('net_weight'),
       purityPercent: number('purity_percent'),
       actualFine: number('actual_fine'),
+      wastagePercentSource: number('wastage_percent'),
       wastageFine: number('wastage_fine'),
       valuationFine: number('valuation_fine'),
       ratePerGram: number('rate_per_gram'),
@@ -533,7 +561,8 @@ class _InventoryGradeUnit {
 
   double get wastagePercent {
     if (netWeight <= 0) return 0.0;
-    return (wastageFine / netWeight) * 100;
+    if (wastagePercentSource > 0) return wastagePercentSource;
+    return _normalizedInventoryPercentFromRoundedWeight(wastageFine, netWeight);
   }
 
   double get totalPurityPercent => purityPercent + wastagePercent;
@@ -541,6 +570,22 @@ class _InventoryGradeUnit {
   bool get isAvailable => status.toLowerCase() == 'available';
   bool get isLotStock =>
       unitCode.toLowerCase().contains('lot') && huid.trim().isEmpty;
+
+  List<String> get huidTokens {
+    final seen = <String>{};
+    final tokens = <String>[];
+    for (final raw in [
+      ...huidList.split(RegExp(r'[,;/\s]+')),
+      huid,
+    ]) {
+      final token = raw.trim().toUpperCase();
+      if (token.isEmpty || !seen.add(token)) continue;
+      tokens.add(token);
+    }
+    return tokens;
+  }
+
+  String get huidDisplayText => huidTokens.join(', ');
 
   String get displayUnitLabel => _inventoryQuantityUnitLabel(this);
 

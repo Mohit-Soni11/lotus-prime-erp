@@ -43,10 +43,10 @@ class TaxGstColors {
   static const Color brandBis = Color(0xFFD97706); // Amber
 
   // --- Text ---
-  static const Color textDark = Color(0xFF111827);
-  static const Color textBody = Color(0xFF374151);
-  static const Color textHint = Color(0xFF9CA3AF);
-  static const Color textMuted = Color(0xFF6B7280);
+  static const Color textDark = Color(0xFF0B1220);
+  static const Color textBody = Color(0xFF111827);
+  static const Color textHint = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
 
   // --- Actions & States ---
   static const Color btnDanger = Color(0xFFEF4444);

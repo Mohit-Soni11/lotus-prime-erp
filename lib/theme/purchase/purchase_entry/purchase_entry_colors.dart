@@ -54,9 +54,9 @@ class PurchaseEntryColors {
   static const Color cardHoverBg = Color(0xFFF6F3EC);
 
   // ── Text ─────────────────────────────────────────────────────────────────
-  static const Color textMain = Color(0xFF1E293B);
-  static const Color textMuted = Color(0xFF475569);
-  static const Color textDark = Color(0xFF000000);
+  static const Color textMain = Color(0xFF0B1220);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textDark = Color(0xFF0B1220);
 
   // ── Shadows ──────────────────────────────────────────────────────────────
   static const Color shadowLight = Color(0x0F000000);

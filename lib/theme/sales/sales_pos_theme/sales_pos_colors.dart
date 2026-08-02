@@ -68,7 +68,7 @@ class SalesPosColors {
   static const Color roleManager = Color(0xFF9C27B0);
   static const Color roleStaff = Color(0xFF64B5F6);
 
-  static const Color textDark = Color(0xFF000000);
+  static const Color textDark = Color(0xFF0B1220);
 
   // --- EFFECTS & OVERLAYS ---
   static const Color shadowLight = Color(0x0F000000);

@@ -90,14 +90,14 @@ class AlertRowStyles {
 
   // â”€â”€ TEXT STYLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle titleStyle = TextStyle(
-    fontSize: 10.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     color: Color(0x72FFFFFF),
     letterSpacing: 1.3,
   );
 
   static const TextStyle badgeStyle = TextStyle(
-    fontSize: 8.0,
+    fontSize: 13,
     fontWeight: FontWeight.w800,
     letterSpacing: 0.4,
   );
@@ -117,13 +117,13 @@ class AlertRowStyles {
       );
 
   static const TextStyle subTextStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     color: Color(0x61FFFFFF),
     height: 1.35,
   );
 
   static const TextStyle severityLabelStyle = TextStyle(
-    fontSize: 8.5,
+    fontSize: 13.5,
     color: Color(0x40FFFFFF),
     letterSpacing: 0.6,
   );

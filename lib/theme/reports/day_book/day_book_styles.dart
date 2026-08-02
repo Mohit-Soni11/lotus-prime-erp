@@ -97,7 +97,7 @@ class DayBookStyles {
           borderRadius: BorderRadius.circular(6),
         ),
         textStyle: GoogleFonts.inter(
-          fontSize: 11,
+          fontSize: 13.5,
           fontWeight: FontWeight.w600,
           color: DayBookColors.shellTitle,
         ),
@@ -112,7 +112,7 @@ class DayBookStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: DayBookColors.shellMuted,
       );
@@ -130,13 +130,13 @@ class DayBookStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: DayBookColors.textSecondary,
       );
 
   static TextStyle get label => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: DayBookColors.textSecondary,
       );
@@ -166,7 +166,7 @@ class DayBookStyles {
       );
 
   static TextStyle get button => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
       );
 

@@ -103,10 +103,29 @@ class LotusERPApp extends StatelessWidget {
         scaffoldBackgroundColor: UV.colors.bgPrimary,
         useMaterial3: true,
         fontFamily: GoogleFonts.inter().fontFamily,
+        textTheme: GoogleFonts.interTextTheme(
+          ThemeData.dark(useMaterial3: true).textTheme,
+        ).apply(
+          bodyColor: const Color(0xFFF9FAFB),
+          displayColor: const Color(0xFFF9FAFB),
+        ),
       ),
+      builder: _readableTextScaleBuilder,
       routerConfig: routerConfig,
     );
   }
+}
+
+Widget _readableTextScaleBuilder(BuildContext context, Widget? child) {
+  final media = MediaQuery.of(context);
+  final currentScale = media.textScaler.scale(1.0);
+  final targetScale = currentScale < 1.08 ? 1.08 : currentScale;
+  return MediaQuery(
+    data: media.copyWith(
+      textScaler: TextScaler.linear(targetScale.clamp(1.08, 1.18).toDouble()),
+    ),
+    child: child ?? const SizedBox.shrink(),
+  );
 }
 
 class BootstrapFailureApp extends StatelessWidget {

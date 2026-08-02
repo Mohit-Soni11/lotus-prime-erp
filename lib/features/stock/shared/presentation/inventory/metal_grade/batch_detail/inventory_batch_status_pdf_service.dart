@@ -240,7 +240,8 @@ class _InventoryBatchStatusPdfService {
               _statusMetric('Total Qty', unit.totalQuantityLabel),
               _statusMetric('Available', unit.availableQuantityLabel),
               _statusMetric('Sold', unit.soldQuantityLabel),
-              if (unit.huid.trim().isNotEmpty) _statusMetric('HUID', unit.huid),
+              if (unit.huidDisplayText.trim().isNotEmpty)
+                _statusMetric('HUID', unit.huidDisplayText),
               if (_hasWeightDifference(
                   unit.displayTotalGrossWeight, unit.displayTotalNetWeight))
                 _statusMetric('Gross Weight',

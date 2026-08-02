@@ -394,7 +394,7 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w900,
                       color: InvColors.textDark,
                     ),
@@ -405,9 +405,9 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: InvColors.textMuted,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: InvColors.textDark,
                     ),
                   ),
                 ],
@@ -425,7 +425,7 @@ class _GradeItemSummaryCardState extends State<_GradeItemSummaryCard> {
               child: Text(
                 item.statusLabel,
                 style: GoogleFonts.inter(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                   color: statusColor,
                 ),
@@ -534,7 +534,7 @@ class _FlipHint extends StatelessWidget {
           Text(
             label,
             style: GoogleFonts.inter(
-              fontSize: 10.5,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
               color: accent,
             ),
@@ -573,18 +573,18 @@ class _GradeItemMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 9,
+              fontSize: 12.5,
               fontWeight: FontWeight.w900,
-              color: InvColors.textMuted,
+              color: InvColors.textDark,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
               color: InvColors.textDark,
             ),

@@ -54,10 +54,10 @@ class ExpenseColors {
   static const Color danger = Color(0xFFEF4444);
 
   // ── Text ─────────────────────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
-  static const Color textDark = Color(0xFF0F172A);
+  static const Color textPrimary = Color(0xFF0B1220);
+  static const Color textSecondary = Color(0xFF111827);
+  static const Color textMuted = Color(0xFF111827);
+  static const Color textDark = Color(0xFF0B1220);
 
   // ── Void / Cancelled ─────────────────────────────────────────────────────
   static const Color voidedBg = Color(0xFFFEF2F2);

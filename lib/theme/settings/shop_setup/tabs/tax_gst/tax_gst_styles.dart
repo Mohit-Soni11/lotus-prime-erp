@@ -72,7 +72,7 @@ class TaxGstStyles {
       GoogleFonts.inter(fontSize: szFieldHint, color: TaxGstColors.textHint);
 
   static TextStyle get statusPill => GoogleFonts.inter(
-      fontSize: 11.0,
+      fontSize: 13.5,
       fontWeight: FontWeight.w700,
       color: TaxGstColors.statusActiveText,
       letterSpacing: 0.5);

@@ -17,6 +17,7 @@ class StockRowEntry {
   double stoneWeight = 0.0;
   double stoneValue = 0.0;
   double touchPercent = 0.0;
+  double wastagePercent = 0.0;
   double wastageFineWeight = 0.0;
   double valuationFineWeight = 0.0;
   String purityLabel = '';

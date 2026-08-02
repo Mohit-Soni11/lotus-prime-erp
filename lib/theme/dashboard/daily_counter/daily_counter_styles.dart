@@ -89,21 +89,21 @@ class DailyCounterStyles {
   );
 
   static const TextStyle groupTitleStyle = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w700,
     color: DailyCounterColors.textMuted,
     letterSpacing: 1.0,
   );
 
   static const TextStyle boxTitleStyle = TextStyle(
-    fontSize: 12.0,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     color: DailyCounterColors.textWhite,
     letterSpacing: 0.3,
   );
 
   static const TextStyle metalLabelStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     fontWeight: FontWeight.w600,
     color: DailyCounterColors.metalLabel,
     letterSpacing: 0.5,
@@ -116,7 +116,7 @@ class DailyCounterStyles {
   );
 
   static const TextStyle metalPiecesStyle = TextStyle(
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: FontWeight.w600,
     color: DailyCounterColors.textMuted,
   );
@@ -128,7 +128,7 @@ class DailyCounterStyles {
   );
 
   static const TextStyle subLabelStyle = TextStyle(
-    fontSize: 10.5,
+    fontSize: 13.5,
     color: DailyCounterColors.textMuted,
   );
 
@@ -140,7 +140,7 @@ class DailyCounterStyles {
       );
 
   static const TextStyle dateStyle = TextStyle(
-    fontSize: 11.0,
+    fontSize: 13.5,
     color: DailyCounterColors.textMuted,
     letterSpacing: 0.3,
   );

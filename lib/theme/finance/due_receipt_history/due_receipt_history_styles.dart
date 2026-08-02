@@ -14,14 +14,14 @@ class DueReceiptHistoryStyles {
 
   static const TextStyle appBarSubtitle = TextStyle(
     color: DueReceiptHistoryColors.textMuted,
-    fontSize: 10.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w600,
     letterSpacing: 0,
   );
 
   static const TextStyle onlineBadge = TextStyle(
     color: DueReceiptHistoryColors.onlineGreen,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
@@ -35,14 +35,14 @@ class DueReceiptHistoryStyles {
 
   static const TextStyle label = TextStyle(
     color: DueReceiptHistoryColors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w700,
     letterSpacing: 0,
   );
 
   static const TextStyle muted = TextStyle(
     color: DueReceiptHistoryColors.textMuted,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
   );
@@ -63,7 +63,7 @@ class DueReceiptHistoryStyles {
 
   static const TextStyle tableHeader = TextStyle(
     color: DueReceiptHistoryColors.textPrimary,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w800,
     letterSpacing: 0,
   );
@@ -77,7 +77,7 @@ class DueReceiptHistoryStyles {
 
   static const TextStyle rowSub = TextStyle(
     color: DueReceiptHistoryColors.textMuted,
-    fontSize: 11,
+    fontSize: 13.5,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
   );

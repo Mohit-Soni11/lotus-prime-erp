@@ -25,7 +25,7 @@ class KarigarStyles {
       );
 
   static TextStyle get shellMuted => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: KarigarColors.shellTextMuted,
         letterSpacing: 0.3,
@@ -39,13 +39,13 @@ class KarigarStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: KarigarColors.textMuted,
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: KarigarColors.textBody,
         letterSpacing: 0.1,
@@ -70,13 +70,13 @@ class KarigarStyles {
       );
 
   static TextStyle get readOnlyLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: KarigarColors.textMuted,
       );
 
   static TextStyle get caption => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: KarigarColors.textMuted,
       );
@@ -109,7 +109,7 @@ class KarigarStyles {
       );
 
   static TextStyle get jobSubtitle => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: KarigarColors.textMuted,
       );
@@ -121,7 +121,7 @@ class KarigarStyles {
       );
 
   static TextStyle get statLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: KarigarColors.textMuted,
         letterSpacing: 0.3,
@@ -135,7 +135,7 @@ class KarigarStyles {
       );
 
   static TextStyle get karigarSub => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: KarigarColors.shellTextMuted,
       );
@@ -154,7 +154,7 @@ class KarigarStyles {
       );
 
   static TextStyle get ledgerSub => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: KarigarColors.textMuted,
       );

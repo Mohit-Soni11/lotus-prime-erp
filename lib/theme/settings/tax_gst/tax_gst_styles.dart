@@ -76,7 +76,7 @@ abstract final class TaxGstStyles {
       );
 
   static TextStyle appBarSubtitle(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: TaxGstColors.onlinePulse,
         letterSpacing: 0.8,
@@ -84,7 +84,7 @@ abstract final class TaxGstStyles {
 
   // â”€â”€ Hub Screen Labels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle sectionLabel(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: TaxGstColors.textMuted,
         letterSpacing: 1.2,
@@ -99,7 +99,7 @@ abstract final class TaxGstStyles {
       );
 
   static TextStyle cardSubtitle(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11.5,
+        fontSize: 12.5,
         fontWeight: FontWeight.w400,
         color: TaxGstColors.textMuted,
         height: 1.5,
@@ -107,7 +107,7 @@ abstract final class TaxGstStyles {
 
   static TextStyle cardTagText(BuildContext ctx, {required Color color}) =>
       GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: color,
         letterSpacing: 0.3,
@@ -122,7 +122,7 @@ abstract final class TaxGstStyles {
       );
 
   static TextStyle sectionSubtitle(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11.5,
+        fontSize: 12.5,
         fontWeight: FontWeight.w400,
         color: TaxGstColors.textMuted,
         height: 1.5,
@@ -130,7 +130,7 @@ abstract final class TaxGstStyles {
 
   // â”€â”€ Fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle fieldLabel(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11.5,
+        fontSize: 12.5,
         fontWeight: FontWeight.w600,
         color: TaxGstColors.textSecondary,
         letterSpacing: 0.1,
@@ -149,7 +149,7 @@ abstract final class TaxGstStyles {
       );
 
   static TextStyle inputErrorText(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: TaxGstColors.statusDanger,
       );
@@ -162,7 +162,7 @@ abstract final class TaxGstStyles {
       );
 
   static TextStyle toggleSubtitle(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: TaxGstColors.textMuted,
         height: 1.4,
@@ -170,34 +170,34 @@ abstract final class TaxGstStyles {
 
   // â”€â”€ HSN Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle hsnTableHeader(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: TaxGstColors.textMuted,
         letterSpacing: 0.9,
       );
 
   static TextStyle hsnCategory(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: TaxGstColors.textPrimary,
       );
 
   static TextStyle hsnCode(BuildContext ctx) => GoogleFonts.sourceCodePro(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: TaxGstColors.textSecondary,
       );
 
   static TextStyle hsnRate(BuildContext ctx, {required Color color}) =>
       GoogleFonts.inter(
-        fontSize: 11.5,
+        fontSize: 12.5,
         fontWeight: FontWeight.w700,
         color: color,
       );
 
   // â”€â”€ Info Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle infoBannerText(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w400,
         color: TaxGstColors.textSecondary,
         height: 1.6,
@@ -205,20 +205,20 @@ abstract final class TaxGstStyles {
 
   // â”€â”€ Sync Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle syncBannerTitle(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 12.5,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: TaxGstColors.accentPrimary,
       );
 
   static TextStyle syncBannerBody(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 11.5,
+        fontSize: 12.5,
         fontWeight: FontWeight.w400,
         color: TaxGstColors.textSecondary,
         height: 1.5,
       );
 
   static TextStyle syncBannerTag(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 9.5,
+        fontSize: 13.5,
         fontWeight: FontWeight.w700,
         color: TaxGstColors.accentPrimary,
         letterSpacing: 0.8,
@@ -227,13 +227,13 @@ abstract final class TaxGstStyles {
   // â”€â”€ Button Text â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle btnText(BuildContext ctx, {required Color color}) =>
       GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: color,
       );
 
   static TextStyle badgeText(BuildContext ctx) => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: TaxGstColors.shellBadgeText,
         letterSpacing: 0.8,
@@ -262,7 +262,7 @@ abstract final class TaxGstStyles {
       hintText: hintText,
       errorText: errorText,
       labelStyle: GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: isLocked ? TaxGstColors.textDisabled : TaxGstColors.textMuted,
       ),
@@ -272,7 +272,7 @@ abstract final class TaxGstStyles {
         color: TaxGstColors.textHint,
       ),
       errorStyle: GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w500,
         color: TaxGstColors.statusDanger,
       ),

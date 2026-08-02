@@ -33,7 +33,7 @@ class AddCustomerStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w600,
         color: AddCustomerColors.brandGold,
         letterSpacing: 1.5,
@@ -41,7 +41,7 @@ class AddCustomerStyles {
 
   static const TextStyle systemOnlineText = TextStyle(
     color: Color(0xFF10B981),
-    fontSize: 9.5,
+    fontSize: 13.5,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.8,
   );
@@ -54,7 +54,7 @@ class AddCustomerStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: AddCustomerColors.bodyTextMuted,
         letterSpacing: 1.2,
@@ -87,7 +87,7 @@ class AddCustomerStyles {
 
   // â”€â”€ ERROR TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get errorText => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: AddCustomerColors.error,
       );
@@ -100,7 +100,7 @@ class AddCustomerStyles {
       );
 
   static TextStyle get typeSubtitle => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         color: AddCustomerColors.bodyTextMuted,
       );
 
@@ -114,7 +114,7 @@ class AddCustomerStyles {
 
   // â”€â”€ REQUIRED NOTE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get requiredNote => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         color: AddCustomerColors.bodyTextMuted,
       );
 

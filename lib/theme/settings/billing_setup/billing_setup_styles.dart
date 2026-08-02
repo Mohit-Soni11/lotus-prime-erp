@@ -31,7 +31,7 @@ class BillingSetupStyles {
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: BillingSetupColors.textBody,
         letterSpacing: 0.1,
@@ -50,7 +50,7 @@ class BillingSetupStyles {
       );
 
   static TextStyle get sectionLabel => GoogleFonts.inter(
-        fontSize: 11,
+        fontSize: 13.5,
         fontWeight: FontWeight.w800,
         color: BillingSetupColors.textMuted,
         letterSpacing: 1.2,
@@ -66,28 +66,28 @@ class BillingSetupStyles {
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w500,
         color: BillingSetupColors.shellTextMuted,
         letterSpacing: 0.2,
       );
 
   static TextStyle get systemOnlineText => GoogleFonts.inter(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: BillingSetupColors.onlineGreen,
         letterSpacing: 0.5,
       );
 
   static TextStyle get moduleBadgeTitle => GoogleFonts.inter(
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: FontWeight.w800,
         color: BillingSetupColors.brandGold,
         letterSpacing: 0.6,
       );
 
   static TextStyle get moduleBadgeSub => GoogleFonts.inter(
-        fontSize: 9,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: BillingSetupColors.shellTextMuted,
       );
