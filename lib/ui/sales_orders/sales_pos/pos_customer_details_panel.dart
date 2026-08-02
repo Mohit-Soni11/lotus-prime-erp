@@ -148,6 +148,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
             color: Colors.transparent,
             child: _CustomerSuggestionDropdown(
               ctrl: widget.ctrl,
+              onQuickAdd: _quickAddCustomer,
               onSelected: () => _removeSuggestionOverlay(),
             ),
           ),
@@ -163,8 +164,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   bool get _noCustomerFound =>
       _hasLookupText &&
-      widget.ctrl.customerNotFound &&
-      widget.ctrl.customerSuggestions.isEmpty &&
+      widget.ctrl.canQuickAddCustomer &&
       widget.ctrl.selectedCustomer == null;
 
   Future<void> _quickAddCustomer() async {
@@ -577,10 +577,12 @@ class _HeaderQuickAddButton extends StatelessWidget {
 // ==========================================
 class _CustomerSuggestionDropdown extends StatelessWidget {
   final PosBillingController ctrl;
+  final VoidCallback onQuickAdd;
   final VoidCallback onSelected;
 
   const _CustomerSuggestionDropdown({
     required this.ctrl,
+    required this.onQuickAdd,
     required this.onSelected,
   });
 
@@ -591,9 +593,12 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
       builder: (context, _) {
         final suggestions = ctrl.customerSuggestions;
         final notFound = ctrl.customerNotFound;
+        final canQuickAdd = ctrl.canQuickAddCustomer;
 
         // No content is shown for this state.
-        if (suggestions.isEmpty && !notFound) return const SizedBox.shrink();
+        if (suggestions.isEmpty && !notFound && !canQuickAdd) {
+          return const SizedBox.shrink();
+        }
 
         return Material(
           elevation: 12,
@@ -698,10 +703,16 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     shrinkWrap: true,
-                    itemCount: suggestions.length,
+                    itemCount: suggestions.length + (canQuickAdd ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 4),
                     itemBuilder: (context, i) {
-                      final c = suggestions[i];
+                      if (canQuickAdd && i == 0) {
+                        return _QuickAddSuggestionAction(
+                          ctrl: ctrl,
+                          onTap: onQuickAdd,
+                        );
+                      }
+                      final c = suggestions[canQuickAdd ? i - 1 : i];
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: InkWell(
@@ -851,6 +862,98 @@ class _CustomerSuggestionDropdown extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _QuickAddSuggestionAction extends StatelessWidget {
+  final PosBillingController ctrl;
+  final VoidCallback onTap;
+
+  const _QuickAddSuggestionAction({
+    required this.ctrl,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = ctrl.nameCtrl.text.trim();
+    final mobile = ctrl.mobileCtrl.text.trim();
+    final title = name.isEmpty ? 'Add New Customer' : 'Add $name';
+    final detail = mobile.isEmpty ? 'Create customer without mobile' : mobile;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: SalesPosColors.success.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: SalesPosColors.success.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: SalesPosColors.success.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.person_add_alt_1_rounded,
+                    size: 18,
+                    color: SalesPosColors.success,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: SalesPosColors.textDark,
+                          fontSize: SalesPosStyles.fontBody,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        detail,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: SalesPosColors.bodyTextMuted,
+                          fontSize: SalesPosStyles.fontCaption,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 20,
+                  color: SalesPosColors.success,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

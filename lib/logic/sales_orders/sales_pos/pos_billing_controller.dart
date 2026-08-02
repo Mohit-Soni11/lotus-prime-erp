@@ -223,12 +223,22 @@ class PosBillingController extends ChangeNotifier {
   List<CustomerListItemModel> customerSuggestions = [];
   bool isSearchingCustomer = false;
   bool customerNotFound = false;
+  String _pendingQuickAddMobile = '';
   CustomerListItemModel? selectedCustomer;
 
   //  Customer POS history displayed after customer selection.
   CustomerProfileModel? customerHistory;
   bool isLoadingHistory = false;
   final CustomerProfileRepository _profileRepo = CustomerProfileRepository();
+
+  bool get canQuickAddCustomer {
+    if (selectedCustomer != null) return false;
+    final cleanMobile = mobileCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final hasName = nameCtrl.text.trim().isNotEmpty;
+    final hasValidPendingMobile =
+        cleanMobile.length == 10 && _pendingQuickAddMobile == cleanMobile;
+    return hasValidPendingMobile || (customerNotFound && hasName);
+  }
 
   Future<void> searchCustomersByName(String query) async {
     final term = query.toLowerCase().trim();
@@ -262,6 +272,11 @@ class PosBillingController extends ChangeNotifier {
                 .toLowerCase()
                 .contains(term))
             .toList();
+        final exactMobileExists = rows.any(
+          (row) => CustomerContactValue.displayMobile(row.mobile) == term,
+        );
+        _pendingQuickAddMobile =
+            term.length == 10 && !exactMobileExists ? term : '';
       } else {
         //  Match customer names using fuzzy search.
         matched = FuzzySearchHelper.searchObjects(
@@ -278,7 +293,8 @@ class PosBillingController extends ChangeNotifier {
           matched.map(_customerListItemFromRow).toList(growable: false);
 
       //  Show the not-found state when no customers match.
-      customerNotFound = customerSuggestions.isEmpty;
+      customerNotFound =
+          customerSuggestions.isEmpty || _pendingQuickAddMobile.isNotEmpty;
     } catch (e) {
       customerSuggestions = [];
       customerNotFound = false;
@@ -293,6 +309,7 @@ class PosBillingController extends ChangeNotifier {
     cityCtrl.text = customer.city;
     customerSuggestions = [];
     customerNotFound = false;
+    _pendingQuickAddMobile = '';
     customerHistory = null;
     notifyListeners();
 
@@ -389,6 +406,7 @@ class PosBillingController extends ChangeNotifier {
       cityCtrl.text = selectedCustomer!.city;
       customerSuggestions = [];
       customerNotFound = false;
+      _pendingQuickAddMobile = '';
       customerHistory = null;
       notifyListeners();
       unawaited(_fetchCustomerHistory(row.id));
@@ -455,6 +473,7 @@ class PosBillingController extends ChangeNotifier {
   void clearCustomerSuggestions() {
     customerSuggestions = [];
     customerNotFound = false;
+    _pendingQuickAddMobile = '';
     notifyListeners();
   }
 
