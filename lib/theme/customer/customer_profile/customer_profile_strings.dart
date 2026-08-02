@@ -69,11 +69,12 @@ class CustomerProfileStrings {
 
   static const String deleteTitle = "Delete Customer?";
   static const String deleteMsg =
-      "This will permanently delete this customer and all their data. This cannot be undone.";
+      "Only customers with no invoices, girvi tickets, advance orders, or ledger entries can be deleted. Transaction customers are kept for audit history.";
   static const String deleteConfirm = "Delete";
   static const String deleteCancel = "Cancel";
   static const String deleteSuccess = "Customer deleted successfully.";
-  static const String deleteError = "Failed to delete customer.";
+  static const String deleteError =
+      "Cannot delete this customer because linked records exist.";
 
   static const String editTitle = "Edit Customer";
   static const String editSave = "Save Changes";

@@ -34,16 +34,6 @@ class EnvConfig {
   static bool get enableVerboseLogs =>
       !kReleaseMode && currentEnv != Environment.prod;
 
-  static bool get enableDemoSeed {
-    if (kReleaseMode || isProduction) {
-      return false;
-    }
-    return const bool.fromEnvironment(
-      'APP_ENABLE_DEMO_SEED',
-      defaultValue: true,
-    );
-  }
-
   static bool get enableSqlLogging {
     if (kReleaseMode || isProduction) {
       return false;

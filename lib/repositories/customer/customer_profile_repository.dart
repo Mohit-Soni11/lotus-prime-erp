@@ -11,6 +11,27 @@ import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
+class CustomerDeleteResult {
+  final bool deleted;
+  final String? message;
+
+  const CustomerDeleteResult._({
+    required this.deleted,
+    this.message,
+  });
+
+  const CustomerDeleteResult.success() : this._(deleted: true);
+
+  const CustomerDeleteResult.blocked(String message)
+      : this._(deleted: false, message: message);
+
+  const CustomerDeleteResult.failed([String? message])
+      : this._(
+          deleted: false,
+          message: message ?? 'Failed to delete customer.',
+        );
+}
+
 class CustomerProfileRepository {
   final AppDatabase _db;
 
@@ -492,14 +513,55 @@ class CustomerProfileRepository {
     }
   }
 
-  Future<bool> deleteCustomer(int customerId) async {
+  Future<CustomerDeleteResult> deleteCustomer(int customerId) async {
     try {
+      final blockers = <String>[];
+      final billCount = await _countCustomerRows('bills', customerId);
+      final girviCount = await _countCustomerRows('girvi_loans', customerId);
+      final legacyLoanCount = await _countCustomerRows('loans', customerId);
+      final salesOrderCount =
+          await _countCustomerRows('sales_orders', customerId);
+      final accountLedgerCount =
+          await _countCustomerRows('customer_account_ledger', customerId);
+
+      if (billCount > 0) {
+        blockers.add('$billCount sales invoice${billCount == 1 ? '' : 's'}');
+      }
+      if (girviCount > 0 || legacyLoanCount > 0) {
+        final totalGirvi = girviCount + legacyLoanCount;
+        blockers.add('$totalGirvi girvi ticket${totalGirvi == 1 ? '' : 's'}');
+      }
+      if (salesOrderCount > 0) {
+        blockers.add(
+          '$salesOrderCount advance order${salesOrderCount == 1 ? '' : 's'}',
+        );
+      }
+      if (accountLedgerCount > 0) {
+        blockers.add(
+          '$accountLedgerCount account ledger entr${accountLedgerCount == 1 ? 'y' : 'ies'}',
+        );
+      }
+
+      if (blockers.isNotEmpty) {
+        return CustomerDeleteResult.blocked(
+          'Cannot delete this customer because linked ${blockers.join(', ')} exist. Keep the profile for audit history.',
+        );
+      }
+
       await (_db.delete(_db.customers)..where((t) => t.id.equals(customerId)))
           .go();
-      return true;
+      return const CustomerDeleteResult.success();
     } catch (e) {
       AppLogger.error("Customer delete error: $e");
-      return false;
+      return const CustomerDeleteResult.failed();
     }
+  }
+
+  Future<int> _countCustomerRows(String tableName, int customerId) async {
+    final result = await _db.customSelect(
+      'SELECT COUNT(*) AS count FROM "$tableName" WHERE "customer_id" = ?',
+      variables: [Variable<int>(customerId)],
+    ).getSingle();
+    return result.read<int>('count');
   }
 }

@@ -38,6 +38,7 @@ class CustomerProfileLogic extends ChangeNotifier {
   bool _editMode = false;
   bool _savingEdit = false;
   String? _editError;
+  String? _deleteError;
 
   // Active tab for stats
   int _activeTab = 0;
@@ -54,6 +55,7 @@ class CustomerProfileLogic extends ChangeNotifier {
   bool get editMode => _editMode;
   bool get savingEdit => _savingEdit;
   String? get editError => _editError;
+  String? get deleteError => _deleteError;
   int get activeTab => _activeTab;
 
   // Load
@@ -205,15 +207,17 @@ class CustomerProfileLogic extends ChangeNotifier {
   // Delete
   Future<bool> deleteCustomer() async {
     _state = ProfileState.deleting;
+    _deleteError = null;
     notifyListeners();
 
-    final ok = await _repo.deleteCustomer(customerId);
-    if (ok) {
+    final result = await _repo.deleteCustomer(customerId);
+    if (result.deleted) {
       _state = ProfileState.deleted;
     } else {
+      _deleteError = result.message;
       _state = ProfileState.loaded;
     }
     notifyListeners();
-    return ok;
+    return result.deleted;
   }
 }

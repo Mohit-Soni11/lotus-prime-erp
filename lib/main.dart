@@ -9,11 +9,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'config/app_config.dart';
-import 'config/env_config.dart';
 import 'core/logging/app_logger.dart';
 import 'core/router/app_router.dart';
 import 'database/db/app_database.dart';
-import 'database/seeds/database_seeder.dart';
 import 'firebase_options.dart';
 import 'theme/dashboard/app/uv.dart';
 
@@ -76,12 +74,7 @@ Future<void> _bootstrapApplication() async {
   );
   initAuthRouting();
 
-  final database = AppDatabase();
-  if (EnvConfig.enableDemoSeed) {
-    await DatabaseSeeder(database).seed();
-  } else {
-    AppLogger.info('Demo seeding disabled for this environment.');
-  }
+  AppDatabase();
 }
 
 String _formatStartupError(Object error) {

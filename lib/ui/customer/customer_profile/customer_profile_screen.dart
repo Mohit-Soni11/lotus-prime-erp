@@ -79,6 +79,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   String _editTypeValue = "Regular";
 
   final ScrollController _scrollCtrl = ScrollController();
+  bool _deleteNavigationScheduled = false;
 
   @override
   void initState() {
@@ -96,19 +97,30 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
     _fadeIn = CurvedAnimation(parent: _pageAnim, curve: Curves.easeOut);
 
-    _logic.addListener(() {
-      if (_logic.state == ProfileState.loaded && _pageAnim.value == 0) {
-        _pageAnim.forward();
-      }
-      if (_logic.state == ProfileState.deleted) {
-        widget.onDeleted?.call();
-        widget.onBack?.call();
-      }
-    });
+    _logic.addListener(_handleProfileStateChanged);
+  }
+
+  void _handleProfileStateChanged() {
+    if (!mounted) return;
+    if (_logic.state == ProfileState.loaded && _pageAnim.value == 0) {
+      _pageAnim.forward();
+    }
+    if (_logic.state == ProfileState.deleted && !_deleteNavigationScheduled) {
+      _deleteNavigationScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (widget.onDeleted != null) {
+          widget.onDeleted!();
+        } else {
+          widget.onBack?.call();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _logic.removeListener(_handleProfileStateChanged);
     _logic.dispose();
     _pageAnim.dispose();
     _tabCtrl.dispose();
@@ -136,6 +148,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         listenable: _logic,
         builder: (context, _) {
           if (_logic.isLoading) return _buildLoading();
+          if (_logic.state == ProfileState.deleting) {
+            return _buildLoading(message: 'Deleting customer...');
+          }
+          if (_logic.state == ProfileState.deleted) {
+            return _buildLoading(message: 'Returning to client directory...');
+          }
           if (_logic.state == ProfileState.error) return _buildError();
           if (_logic.profile == null) return _buildError();
           return _buildBody(_logic.profile!);
@@ -1866,7 +1884,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   void _showDeleteDialog(CustomerProfileModel p) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: CustomerProfileColors.bodyPanelBg,
         icon: Container(
@@ -1899,7 +1917,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           OutlinedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             style: OutlinedButton.styleFrom(
               foregroundColor: CustomerProfileColors.bodyTextMuted,
               side: const BorderSide(color: CustomerProfileColors.bodyBorder),
@@ -1913,13 +1931,17 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           const SizedBox(width: 12),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
+              final dialogNavigator = Navigator.of(dialogContext);
+              dialogNavigator.pop();
+              await Future<void>.delayed(Duration.zero);
+              if (!mounted) return;
               final ok = await _logic.deleteCustomer();
               if (!ok && mounted) {
                 AppFeedback.show(
                   context,
                   type: AppFeedbackType.error,
-                  message: CustomerProfileStrings.deleteError,
+                  message:
+                      _logic.deleteError ?? CustomerProfileStrings.deleteError,
                 );
               }
             },
@@ -2620,19 +2642,19 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  Widget _buildLoading() {
-    return const Center(
+  Widget _buildLoading({String message = "Loading profile..."}) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             color: CustomerProfileColors.brandGold,
             strokeWidth: 2.5,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
-            "Loading profile...",
-            style: TextStyle(
+            message,
+            style: const TextStyle(
               color: CustomerProfileColors.bodyTextMuted,
               fontSize: 14,
             ),
