@@ -170,7 +170,7 @@ void main() {
       item.dispose();
     });
 
-    test('clears linked stock reference when protected fields are edited', () {
+    test('keeps linked stock reference when sale weights are adjusted', () {
       final item = SaleItemModel(metal: MetalType.gold);
 
       item.applyStockReferenceSnapshot(
@@ -187,6 +187,30 @@ void main() {
       expect(item.linkedStockSku, 'SKU-10');
 
       item.grossCtrl.text = '6';
+
+      expect(item.hasLinkedStock, isTrue);
+      expect(item.linkedStockSku, 'SKU-10');
+
+      item.dispose();
+    });
+
+    test('clears linked stock reference when item identity is edited', () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.applyStockReferenceSnapshot(
+        huids: const ['HUID-001'],
+        grossWeight: 5,
+        lessWeight: 0,
+        stockItemId: 10,
+        stockUnitId: 20,
+        stockUnitCost: 50000,
+        sku: 'SKU-10',
+      );
+
+      expect(item.hasLinkedStock, isTrue);
+      expect(item.linkedStockSku, 'SKU-10');
+
+      item.descCtrl.text = 'Casting Ring';
 
       expect(item.hasLinkedStock, isFalse);
       expect(item.linkedStockSku, isNull);

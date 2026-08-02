@@ -72,6 +72,20 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
       return;
     }
 
+    final stockIssue = await widget.ctrl.validateStockLinkReadiness();
+    if (!mounted) {
+      return;
+    }
+    if (stockIssue != null) {
+      widget.ctrl.focusSaleItemDescription(stockIssue.rowIndex);
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: stockIssue.message,
+      );
+      return;
+    }
+
     final validationMessage = widget.ctrl.validateInvoiceReadiness();
     if (validationMessage != null) {
       widget.ctrl.focusFirstInvoiceIssue();

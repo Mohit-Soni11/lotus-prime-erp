@@ -792,13 +792,13 @@ SaleItemModel _saleItem({
   required double rate,
 }) {
   final item = SaleItemModel(metal: pos.MetalType.gold);
-  item.attachStockReference(stockItemId: stockItemId, sku: sku);
   item.descCtrl.text = 'Gold Ring';
   item.pcsCtrl.text = '1';
   item.huidCtrl.text = sku;
   item.purityCtrl.text = '22KT';
   item.grossCtrl.text = _formatNumber(grossWeight);
   item.lessCtrl.text = '0';
+  item.attachStockReference(stockItemId: stockItemId, sku: sku);
   item.rateCtrl.text = _formatNumber(rate);
   item.makingCtrl.text = '0';
   return item;

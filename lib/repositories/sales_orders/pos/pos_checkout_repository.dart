@@ -128,6 +128,9 @@ class PosCheckoutRepository {
         final itemName = item.descCtrl.text.trim().isNotEmpty
             ? item.descCtrl.text.trim()
             : item.metal.displayName;
+        final stockUnitCost = await _stockUnitCostForSaleItem(item);
+        final stockProfitAmount =
+            stockUnitCost > 0 ? item.totalValue - stockUnitCost : 0.0;
 
         await _db.into(_db.billItems).insert(
               BillItemsCompanion(
@@ -162,8 +165,8 @@ class PosCheckoutRepository {
                 linkedStockItemId: Value(item.linkedStockItemId),
                 linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
-                stockUnitCost: Value(item.linkedStockUnitCost),
-                stockProfitAmount: Value(item.stockProfitAmount),
+                stockUnitCost: Value(stockUnitCost),
+                stockProfitAmount: Value(stockProfitAmount),
               ),
             );
       }
@@ -316,6 +319,9 @@ class PosCheckoutRepository {
         final itemName = item.descCtrl.text.trim().isNotEmpty
             ? item.descCtrl.text.trim()
             : item.metal.displayName;
+        final stockUnitCost = await _stockUnitCostForSaleItem(item);
+        final stockProfitAmount =
+            stockUnitCost > 0 ? item.totalValue - stockUnitCost : 0.0;
 
         await _db.into(_db.billItems).insert(
               BillItemsCompanion(
@@ -350,8 +356,8 @@ class PosCheckoutRepository {
                 linkedStockItemId: Value(item.linkedStockItemId),
                 linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
-                stockUnitCost: Value(item.linkedStockUnitCost),
-                stockProfitAmount: Value(item.stockProfitAmount),
+                stockUnitCost: Value(stockUnitCost),
+                stockProfitAmount: Value(stockProfitAmount),
               ),
             );
       }
@@ -1013,6 +1019,29 @@ class PosCheckoutRepository {
       return _unitsForQuantity(item.pcs);
     }
     return _unitsForQuantity(item.pcs * item.unitProfile.stockPiecesPerUnit);
+  }
+
+  Future<double> _stockUnitCostForSaleItem(SaleItemModel item) async {
+    final stockItemId = item.linkedStockItemId;
+    if (stockItemId == null) {
+      return 0.0;
+    }
+    if (!await _isLotStockItem(stockItemId)) {
+      return item.linkedStockUnitCost;
+    }
+
+    final lotUnit = await _lotStockUnit(stockItemId);
+    if (lotUnit == null) {
+      return item.linkedStockUnitCost;
+    }
+
+    final currentNet = lotUnit.read<double>('net_weight');
+    final currentCost = lotUnit.read<double>('unit_cost');
+    if (currentNet <= 0 || currentCost <= 0 || item.netWt <= 0) {
+      return 0.0;
+    }
+    final factor = (item.netWt / currentNet).clamp(0.0, 1.0);
+    return currentCost * factor;
   }
 
   Future<int> _unitsForBillItem(BillItem item) async {

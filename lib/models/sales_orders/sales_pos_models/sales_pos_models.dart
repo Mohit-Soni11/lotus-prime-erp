@@ -132,7 +132,6 @@ class SaleItemModel extends ChangeNotifier {
     grossCtrl.addListener(() {
       final val = _parseSafeNumber(grossCtrl.text);
       if (_grossWt != val) {
-        _clearStockReferenceOnManualEdit();
         _grossWt = val;
         notifyListeners();
       }
@@ -141,7 +140,6 @@ class SaleItemModel extends ChangeNotifier {
     lessCtrl.addListener(() {
       final val = _parseSafeNumber(lessCtrl.text);
       if (_lessWt != val) {
-        _clearStockReferenceOnManualEdit();
         _lessWt = val;
         notifyListeners();
       }

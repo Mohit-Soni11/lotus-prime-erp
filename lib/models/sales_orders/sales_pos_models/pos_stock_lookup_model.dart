@@ -26,6 +26,8 @@ class PosStockLookupModel {
   final double netWeight;
   final double unitCost;
   final int quantity;
+  final double availableQuantity;
+  final String quantityUnitLabel;
   final String status;
 
   const PosStockLookupModel({
@@ -46,6 +48,8 @@ class PosStockLookupModel {
     required this.netWeight,
     this.unitCost = 0.0,
     required this.quantity,
+    required this.availableQuantity,
+    required this.quantityUnitLabel,
     required this.status,
   });
 
@@ -60,11 +64,18 @@ class PosStockLookupModel {
         'HUID ${huids.join(', ')}'
       else if (huid != null && huid!.trim().isNotEmpty)
         'HUID ${huid!.trim()}',
-      if (quantity > 1) '$quantity pcs set',
+      if (availableQuantity > 0)
+        '${_formatQuantity(availableQuantity)} $quantityUnitLabel available',
       if (purity.trim().isNotEmpty) purity.trim(),
       'GW ${grossWeight.toStringAsFixed(3)}',
       if (unitCost > 0) 'Cost Rs ${unitCost.toStringAsFixed(2)}',
     ];
     return parts.join(' | ');
+  }
+
+  String _formatQuantity(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.001) return rounded.toStringAsFixed(0);
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
   }
 }

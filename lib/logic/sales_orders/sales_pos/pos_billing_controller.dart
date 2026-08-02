@@ -39,6 +39,16 @@ import '../../../features/customer/domain/services/customer_contact_value.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 
+class PosStockLinkIssue {
+  final int rowIndex;
+  final String message;
+
+  const PosStockLinkIssue({
+    required this.rowIndex,
+    required this.message,
+  });
+}
+
 class PosBillingController extends ChangeNotifier {
   bool _isDisposed = false;
 
@@ -1390,6 +1400,62 @@ class PosBillingController extends ChangeNotifier {
       saleItems.any(_isBillableSaleItem) ||
       tradeInItems.any(_isBillableTradeInItem);
 
+  Future<PosStockLinkIssue?> validateStockLinkReadiness() async {
+    for (var index = 0; index < saleItems.length; index++) {
+      final item = saleItems[index];
+      if (!_isBillableSaleItem(item) || item.hasLinkedStock) {
+        continue;
+      }
+
+      final match = await _findMatchingStockForUnlinkedItem(item);
+      if (_isDisposed) {
+        return null;
+      }
+      if (match == null) {
+        continue;
+      }
+
+      final label = item.descCtrl.text.trim().isEmpty
+          ? match.displayTitle
+          : item.descCtrl.text.trim();
+      return PosStockLinkIssue(
+        rowIndex: index,
+        message:
+            'Select stock for item row ${index + 1} ($label). Matching inventory is available, but this row is not linked, so stock will not deduct.',
+      );
+    }
+    return null;
+  }
+
+  Future<PosStockLookupModel?> _findMatchingStockForUnlinkedItem(
+    SaleItemModel item,
+  ) async {
+    final huid = item.primaryHuidText.trim();
+    if (huid.isNotEmpty) {
+      final match = await _stockLookupRepo.findExactByHuid(
+        query: huid,
+        metal: item.metal,
+        purityLabel: item.purityCtrl.text,
+      );
+      if (match != null) {
+        return match;
+      }
+    }
+
+    final description = item.descCtrl.text.trim();
+    if (description.isEmpty) {
+      return null;
+    }
+
+    final matches = await _stockLookupRepo.searchByDescription(
+      query: description,
+      metal: item.metal,
+      purityLabel: item.purityCtrl.text,
+      limit: 1,
+    );
+    return matches.isEmpty ? null : matches.first;
+  }
+
   String? validateInvoiceReadiness() {
     return const PosInvoiceReadinessValidator().validate(
       PosInvoiceReadinessInput(
@@ -1449,6 +1515,20 @@ class PosBillingController extends ChangeNotifier {
       });
       return;
     }
+  }
+
+  void focusSaleItemDescription(int rowIndex) {
+    if (rowIndex < 0 || rowIndex >= saleItems.length) {
+      return;
+    }
+    final item = saleItems[rowIndex];
+    activeRowIndex = rowIndex;
+    notifyListeners();
+    Future.delayed(const Duration(milliseconds: 80), () {
+      if (saleItems.contains(item)) {
+        item.firstFieldFocus.requestFocus();
+      }
+    });
   }
 
   // ==========================================

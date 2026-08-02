@@ -47,6 +47,8 @@ void main() {
         lessWeight: 0,
         netWeight: 0.680,
         quantity: 1,
+        availableQuantity: 1,
+        quantityUnitLabel: 'pcs',
         status: 'Available',
       ),
     );

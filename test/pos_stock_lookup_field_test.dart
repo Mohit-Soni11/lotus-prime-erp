@@ -26,6 +26,8 @@ void main() {
         lessWeight: 0,
         netWeight: 12.456,
         quantity: 2,
+        availableQuantity: 1,
+        quantityUnitLabel: 'pair',
         status: 'Available',
       ),
     ];

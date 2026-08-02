@@ -116,6 +116,10 @@ class PosStockLookupRepository {
         u.purity_percent AS purity_percent,
         u.unit_cost AS unit_cost,
         u.status AS unit_status,
+        COALESCE(s.quantity, 0) AS stock_quantity,
+        COALESCE(NULLIF(TRIM(s.quantity_mode), ''), 'PIECES') AS quantity_mode,
+        COALESCE(s.packet_count, 0) AS packet_count,
+        COALESCE(s.pieces_per_packet, 1) AS pieces_per_packet,
         COALESCE(NULLIF(TRIM(u.company_name), ''), NULLIF(TRIM(s.company_name), '')) AS company_name,
         s.purity AS purity_label,
         s.category AS category,
@@ -288,6 +292,8 @@ class PosStockLookupRepository {
         .map((unit) => unit.huid.trim())
         .where((huid) => huid.isNotEmpty)
         .toList(growable: false);
+    final availablePieces = _availablePiecesForRows(effectiveRows);
+    final quantityUnitLabel = _quantityUnitLabel(row);
 
     return PosStockLookupModel(
       stockItemId: row.stockItemId,
@@ -307,9 +313,74 @@ class PosStockLookupRepository {
       lessWeight: effectiveRows.fold(0.0, (sum, unit) => sum + unit.lessWeight),
       netWeight: effectiveRows.fold(0.0, (sum, unit) => sum + unit.netWeight),
       unitCost: effectiveRows.fold(0.0, (sum, unit) => sum + unit.unitCost),
-      quantity: effectiveRows.length,
+      quantity: availablePieces,
+      availableQuantity: _availableDisplayQuantity(
+        pieces: availablePieces,
+        row: row,
+        unitLabel: quantityUnitLabel,
+      ),
+      quantityUnitLabel: quantityUnitLabel,
       status: row.status,
     );
+  }
+
+  int _availablePiecesForRows(List<_StockUnitLookupRow> rows) {
+    return rows.fold<int>(
+      0,
+      (sum, row) => sum + (_isLotUnit(row) ? row.stockQuantity : 1),
+    );
+  }
+
+  bool _isLotUnit(_StockUnitLookupRow row) {
+    return row.unitCode.toLowerCase().contains('lot') &&
+        row.huid.trim().isEmpty;
+  }
+
+  String _quantityUnitLabel(_StockUnitLookupRow row) {
+    final mode = row.quantityMode.trim().toLowerCase();
+    if (mode == 'packet' || mode == 'pack') return 'packet';
+    if (mode == 'pair') return 'pair';
+    if (mode == 'set') return 'set';
+    if (mode == 'lot' || mode == 'bulk') return 'lot';
+
+    final text = '${row.itemType} ${row.itemName}'.toLowerCase();
+    if (text.contains('packet') || text.contains('pack')) return 'packet';
+    if (text.contains('payal') ||
+        text.contains('anklet') ||
+        text.contains('jhumka') ||
+        text.contains('earring') ||
+        text.contains('tops') ||
+        text.contains('bali') ||
+        text.contains('kundal') ||
+        text.contains('bichhiya') ||
+        text.contains('toe ring')) {
+      return 'pair';
+    }
+    if (text.contains('set') ||
+        text.contains('necklace') ||
+        text.contains('haar') ||
+        text.contains('har') ||
+        text.contains('chudi')) {
+      return 'set';
+    }
+    return 'pcs';
+  }
+
+  double _availableDisplayQuantity({
+    required int pieces,
+    required _StockUnitLookupRow row,
+    required String unitLabel,
+  }) {
+    if (pieces <= 0) return 0;
+    return switch (unitLabel) {
+      'packet' => pieces / _positiveInt(row.piecesPerPacket, fallback: 1),
+      'pair' => pieces / 2,
+      _ => pieces.toDouble(),
+    };
+  }
+
+  int _positiveInt(int value, {required int fallback}) {
+    return value > 0 ? value : fallback;
   }
 
   MetalType _metalFromUnitRow(_StockUnitLookupRow row) {
@@ -338,6 +409,10 @@ class _StockUnitLookupRow {
   final double purityPercent;
   final double unitCost;
   final String status;
+  final int stockQuantity;
+  final String quantityMode;
+  final int packetCount;
+  final int piecesPerPacket;
   final String companyName;
   final String purityLabel;
   final String category;
@@ -359,6 +434,10 @@ class _StockUnitLookupRow {
     required this.purityPercent,
     required this.unitCost,
     required this.status,
+    required this.stockQuantity,
+    required this.quantityMode,
+    required this.packetCount,
+    required this.piecesPerPacket,
     required this.companyName,
     required this.purityLabel,
     required this.category,
@@ -382,6 +461,10 @@ class _StockUnitLookupRow {
       purityPercent: row.read<double>('purity_percent'),
       unitCost: row.read<double>('unit_cost'),
       status: row.read<String>('unit_status'),
+      stockQuantity: row.readNullable<int>('stock_quantity') ?? 0,
+      quantityMode: row.readNullable<String>('quantity_mode') ?? 'PIECES',
+      packetCount: row.readNullable<int>('packet_count') ?? 0,
+      piecesPerPacket: row.readNullable<int>('pieces_per_packet') ?? 1,
       companyName: row.readNullable<String>('company_name') ?? '',
       purityLabel: row.readNullable<String>('purity_label') ?? '',
       category: row.read<String>('category'),
