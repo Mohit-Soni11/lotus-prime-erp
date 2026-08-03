@@ -36,7 +36,7 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
                     crossAxisCount: columns,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    mainAxisExtent: 178,
+                    mainAxisExtent: 222,
                   ),
                   itemBuilder: (context, index) {
                     return _BreakdownCard(row: rows[index]);
@@ -71,19 +71,11 @@ class _BreakdownCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: MetalValuationColors.gold.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.workspace_premium_rounded,
-                  color: MetalValuationColors.goldDark,
-                  size: 20,
-                ),
+              MetalValuationMetalImage(
+                metalType: row.metalType,
+                borderColor: MetalValuationColors.line,
+                fallbackColor: MetalValuationColors.goldDark,
+                size: 40,
               ),
               const SizedBox(width: 12),
               Expanded(

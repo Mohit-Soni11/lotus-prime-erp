@@ -99,3 +99,62 @@ String titleCase(String value) {
     return part[0].toUpperCase() + part.substring(1).toLowerCase();
   }).join(' ');
 }
+
+String metalImageAsset(String metalType) {
+  switch (metalType.trim().toUpperCase()) {
+    case 'GOLD':
+      return 'lib/logo/gold.jpeg';
+    case 'SILVER':
+    case 'PLATINUM':
+      return 'lib/logo/silver and platinum .jpeg';
+    case 'DIAMOND':
+      return 'lib/logo/diamond .jpeg';
+    default:
+      return 'lib/logo/gold.jpeg';
+  }
+}
+
+class MetalValuationMetalImage extends StatelessWidget {
+  final String metalType;
+  final Color borderColor;
+  final Color fallbackColor;
+  final double size;
+
+  const MetalValuationMetalImage({
+    super.key,
+    required this.metalType,
+    required this.borderColor,
+    required this.fallbackColor,
+    this.size = 42,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: fallbackColor.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.asset(
+        metalImageAsset(metalType),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Icon(
+          Icons.workspace_premium_rounded,
+          color: fallbackColor,
+          size: size * 0.46,
+        ),
+      ),
+    );
+  }
+}

@@ -120,7 +120,7 @@ class _MetalSmartCardGrid extends StatelessWidget {
         crossAxisCount: compact ? 2 : 4,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: 136,
+        mainAxisExtent: 154,
       ),
       itemBuilder: (context, index) {
         return _MetalSmartCard(row: visibleRows[index]);
@@ -149,20 +149,11 @@ class _MetalSmartCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: colors.border),
-                ),
-                child: Icon(
-                  Icons.workspace_premium_rounded,
-                  color: colors.accent,
-                  size: 20,
-                ),
+              MetalValuationMetalImage(
+                metalType: row.metalType,
+                borderColor: colors.border,
+                fallbackColor: colors.accent,
+                size: 38,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -270,123 +261,5 @@ class _MetalTone {
           accent: Color(0xFF7C5A16),
         );
     }
-  }
-}
-
-class MetalValuationMetricStrip extends StatelessWidget {
-  final MetalValuationSummary summary;
-
-  const MetalValuationMetricStrip({super.key, required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth < 900 ? 2 : 4;
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: columns,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: columns == 2 ? 3.2 : 3.1,
-          children: [
-            _DeskMetric(
-              label: 'Available Units',
-              value: '${summary.availableUnits}',
-              helper: formatGram(summary.availableNetWeight),
-              icon: Icons.widgets_rounded,
-              accent: MetalValuationColors.green,
-            ),
-            _DeskMetric(
-              label: 'Sold Units',
-              value: '${summary.soldUnits}',
-              helper: formatGram(summary.soldNetWeight),
-              icon: Icons.shopping_bag_rounded,
-              accent: MetalValuationColors.red,
-            ),
-            _DeskMetric(
-              label: 'Actual Fine',
-              value: formatGram(summary.availableActualFine),
-              helper: 'Available stock',
-              icon: Icons.scale_rounded,
-              accent: MetalValuationColors.blue,
-            ),
-            _DeskMetric(
-              label: 'Valuation Fine',
-              value: formatGram(summary.availableValuationFine),
-              helper: 'Available stock',
-              icon: Icons.analytics_rounded,
-              accent: MetalValuationColors.goldDark,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _DeskMetric extends StatelessWidget {
-  final String label;
-  final String value;
-  final String helper;
-  final IconData icon;
-  final Color accent;
-
-  const _DeskMetric({
-    required this.label,
-    required this.value,
-    required this.helper,
-    required this.icon,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: valuationPanelDecoration(color: Colors.white),
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: accent, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: MetalValuationText.label),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: MetalValuationText.value.copyWith(fontSize: 20),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  helper,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: MetalValuationText.body.copyWith(
-                    fontSize: 12,
-                    color: MetalValuationColors.mutedInk,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

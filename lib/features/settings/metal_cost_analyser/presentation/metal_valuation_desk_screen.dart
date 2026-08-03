@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/application/metal_valuation_controller.dart';
-import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
 
 import 'widgets/metal_valuation_app_bar.dart';
 import 'widgets/metal_valuation_breakdown_panel.dart';
-import 'widgets/metal_valuation_filter_bar.dart';
 import 'widgets/metal_valuation_summary_panel.dart';
 import 'widgets/metal_valuation_tables.dart';
 import 'widgets/metal_valuation_tokens.dart';
@@ -69,13 +67,6 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
             children: [
               MetalValuationSummaryPanel(snapshot: snapshot),
               const SizedBox(height: 16),
-              _ControlPanel(
-                selectedFilter: _controller.filter,
-                onFilterChanged: _controller.setFilter,
-              ),
-              const SizedBox(height: 16),
-              MetalValuationMetricStrip(summary: snapshot.summary),
-              const SizedBox(height: 16),
               MetalValuationBreakdownPanel(rows: snapshot.breakdown),
               const SizedBox(height: 16),
               SoldStockValuationTable(rows: snapshot.soldStock),
@@ -97,64 +88,6 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _ControlPanel extends StatelessWidget {
-  final MetalValuationFilter selectedFilter;
-  final ValueChanged<MetalValuationFilter> onFilterChanged;
-
-  const _ControlPanel({
-    required this.selectedFilter,
-    required this.onFilterChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: valuationPanelDecoration(color: Colors.white),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: MetalValuationColors.gold.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.tune_rounded,
-              color: MetalValuationColors.goldDark,
-              size: 21,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Valuation Scope', style: MetalValuationText.sectionTitle),
-                const SizedBox(height: 3),
-                Text(
-                  'Filter the desk by metal without changing source records.',
-                  style: MetalValuationText.body,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Flexible(
-            flex: 2,
-            child: MetalValuationFilterBar(
-              selected: selectedFilter,
-              onChanged: onFilterChanged,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
