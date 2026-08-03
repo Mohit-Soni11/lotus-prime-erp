@@ -23,7 +23,8 @@ class StockSuggestionTileFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayAccent = _readableAccent(accentColor);
+    final accent = _readableAccent(accentColor);
+    final identifierAccent = _readableAccent(huidIconColor);
     final cleanMetadata = metadata
         .map((value) => value.trim())
         .where((value) => value.isNotEmpty)
@@ -31,28 +32,27 @@ class StockSuggestionTileFrame extends StatelessWidget {
           (value) =>
               !RegExp(r'^\d+\s*pcs$', caseSensitive: false).hasMatch(value),
         )
+        .take(3)
         .toList(growable: false);
 
-    return InkWell(
-      onTap: onTap,
-      hoverColor: displayAccent.withValues(alpha: 0.08),
-      splashColor: displayAccent.withValues(alpha: 0.12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 4,
-              height: 70,
-              decoration: BoxDecoration(
-                color: displayAccent,
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        hoverColor: accent.withValues(alpha: 0.07),
+        splashColor: accent.withValues(alpha: 0.12),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE7DAC5)),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 380;
+              return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -60,46 +60,34 @@ class StockSuggestionTileFrame extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          item.displayTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: SalesPosStyles.bodyText.copyWith(
-                            color: SalesPosColors.bodyTextMain,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
+                        child: _StockIdentity(
+                          title: item.displayTitle,
+                          metadata: cleanMetadata,
                         ),
                       ),
                       const SizedBox(width: 8),
                       _AvailableQuantityBadge(
                         quantity: item.availableQuantity,
                         unitLabel: item.quantityUnitLabel,
-                        accentColor: displayAccent,
+                        accentColor: accent,
                       ),
                     ],
                   ),
                   const SizedBox(height: 7),
-                  _MetadataRibbon(
-                    values: cleanMetadata.isEmpty ? [item.sku] : cleanMetadata,
-                    accentColor: displayAccent,
+                  _IdentifierLine(
+                    values: identifiers,
+                    accentColor: identifierAccent,
                   ),
-                  if (identifiers.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    _StockIdentifierStack(
-                      values: identifiers,
-                      iconColor: _readableAccent(huidIconColor),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  _NetWeightPill(
-                    netWeight: item.netWeight,
-                    accentColor: displayAccent,
+                  const SizedBox(height: 7),
+                  _StockFactsLine(
+                    item: item,
+                    accentColor: accent,
+                    compact: compact,
                   ),
                 ],
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -113,11 +101,96 @@ class StockSuggestionTileFrame extends StatelessWidget {
     return color;
   }
 
-  static String _formatWeight(double value) {
+  static String formatWeight(double value) {
     return value
         .toStringAsFixed(3)
         .replaceFirst(RegExp(r'0+$'), '')
         .replaceFirst(RegExp(r'\.$'), '');
+  }
+}
+
+class _StockIdentity extends StatelessWidget {
+  final String title;
+  final List<String> metadata;
+
+  const _StockIdentity({
+    required this.title,
+    required this.metadata,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title.trim().isEmpty ? 'Stock Item' : title.trim(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: SalesPosStyles.bodyText.copyWith(
+            color: SalesPosColors.bodyTextMain,
+            fontSize: 15.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 5),
+        _MetadataChips(values: metadata),
+      ],
+    );
+  }
+}
+
+class _MetadataChips extends StatelessWidget {
+  final List<String> values;
+
+  const _MetadataChips({required this.values});
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanValues = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+
+    if (cleanValues.isEmpty) {
+      return Text(
+        'Ready Stock',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: SalesPosStyles.caption.copyWith(
+          color: SalesPosColors.bodyTextMain,
+          fontSize: 12.5,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 5,
+      runSpacing: 5,
+      children: [
+        for (final value in cleanValues)
+          Container(
+            constraints: const BoxConstraints(maxWidth: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFBF8F1),
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(color: const Color(0xFFE7DAC5)),
+            ),
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SalesPosStyles.caption.copyWith(
+                color: SalesPosColors.bodyTextMain,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -135,12 +208,12 @@ class _AvailableQuantityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 86),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      constraints: const BoxConstraints(minWidth: 78),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: accentColor.withValues(alpha: 0.32)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accentColor.withValues(alpha: 0.28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -154,11 +227,11 @@ class _AvailableQuantityBadge extends StatelessWidget {
             style: SalesPosStyles.caption.copyWith(
               color: SalesPosColors.bodyTextMain,
               fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              height: 1.05,
+              fontWeight: FontWeight.w900,
+              height: 1,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             '${_formatQuantity(quantity)} ${_unitName(quantity, unitLabel)}',
             maxLines: 1,
@@ -168,7 +241,7 @@ class _AvailableQuantityBadge extends StatelessWidget {
               color: accentColor,
               fontSize: 15,
               fontWeight: FontWeight.w900,
-              height: 1.0,
+              height: 1,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -203,130 +276,13 @@ class _AvailableQuantityBadge extends StatelessWidget {
   }
 }
 
-class _NetWeightPill extends StatelessWidget {
-  final double netWeight;
-  final Color accentColor;
-
-  const _NetWeightPill({
-    required this.netWeight,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _StockMetricPill(
-      label: 'Net Weight',
-      value: '${StockSuggestionTileFrame._formatWeight(netWeight)} g',
-      accentColor: accentColor,
-    );
-  }
-}
-
-class _StockMetricPill extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color accentColor;
-
-  const _StockMetricPill({
-    required this.label,
-    required this.value,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.30),
-        ),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: SalesPosStyles.caption.copyWith(
-            color: SalesPosColors.bodyTextMain,
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            fontFeatures: const [FontFeature.tabularFigures()],
-          ),
-          children: [
-            TextSpan(text: '$label: '),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                color: accentColor,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MetadataRibbon extends StatelessWidget {
+class _IdentifierLine extends StatelessWidget {
   final List<String> values;
   final Color accentColor;
 
-  const _MetadataRibbon({
+  const _IdentifierLine({
     required this.values,
     required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final visibleValues = values
-        .map((value) => value.trim())
-        .where((value) => value.isNotEmpty)
-        .take(3)
-        .toList(growable: false);
-    if (visibleValues.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Wrap(
-      spacing: 5,
-      runSpacing: 5,
-      children: [
-        for (final value in visibleValues)
-          Container(
-            constraints: const BoxConstraints(maxWidth: 132),
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(7),
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.20),
-              ),
-            ),
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: SalesPosStyles.caption.copyWith(
-                color: SalesPosColors.bodyTextMain,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _StockIdentifierStack extends StatelessWidget {
-  final List<String> values;
-  final Color iconColor;
-
-  const _StockIdentifierStack({
-    required this.values,
-    required this.iconColor,
   });
 
   @override
@@ -335,71 +291,188 @@ class _StockIdentifierStack extends StatelessWidget {
         .map((value) => value.trim())
         .where((value) => value.isNotEmpty)
         .toList(growable: false);
-    final visibleValues = cleanValues.take(2).toList(growable: false);
-    final overflowCount = cleanValues.length - visibleValues.length;
+    final label = cleanValues.length > 1 ? 'HUID Set' : 'HUID';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 66,
+          child: Text(
+            cleanValues.isEmpty ? 'HUID' : label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: SalesPosStyles.caption.copyWith(
+              color: SalesPosColors.bodyTextMain,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        Expanded(
+          child: cleanValues.isEmpty
+              ? Text(
+                  'Not Linked',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SalesPosStyles.caption.copyWith(
+                    color: SalesPosColors.bodyTextMain,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                )
+              : Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: [
+                    for (final value in cleanValues.take(3))
+                      _IdentifierToken(
+                        text: value,
+                        accentColor: accentColor,
+                      ),
+                    if (cleanValues.length > 3)
+                      _IdentifierToken(
+                        text: '+${cleanValues.length - 3} more',
+                        accentColor: accentColor,
+                      ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _IdentifierToken extends StatelessWidget {
+  final String text;
+  final Color accentColor;
+
+  const _IdentifierToken({
+    required this.text,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 122),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: accentColor.withValues(alpha: 0.24)),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: SalesPosStyles.caption.copyWith(
+          color: SalesPosColors.bodyTextMain,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+class _StockFactsLine extends StatelessWidget {
+  final PosStockLookupModel item;
+  final Color accentColor;
+  final bool compact;
+
+  const _StockFactsLine({
+    required this.item,
+    required this.accentColor,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final facts = <_FactData>[
+      _FactData(
+        'Net Wt',
+        '${StockSuggestionTileFrame.formatWeight(item.netWeight)} g',
+      ),
+      if (!compact &&
+          item.grossWeight > 0 &&
+          (item.grossWeight - item.netWeight).abs() > 0.001)
+        _FactData(
+          'Gross Wt',
+          '${StockSuggestionTileFrame.formatWeight(item.grossWeight)} g',
+        ),
+      if (item.purity.trim().isNotEmpty) _FactData('Purity', item.purity),
+    ];
 
     return Wrap(
-      spacing: 5,
-      runSpacing: 5,
+      spacing: 6,
+      runSpacing: 6,
       children: [
-        for (final value in visibleValues)
-          _StockIdentifierPill(
-            text: value,
-            iconColor: iconColor,
-          ),
-        if (overflowCount > 0)
-          _StockIdentifierPill(
-            text: '+$overflowCount more',
-            iconColor: iconColor,
+        for (var index = 0; index < facts.length; index++)
+          _FactPill(
+            fact: facts[index],
+            accentColor: accentColor,
+            highlighted: index == 0,
           ),
       ],
     );
   }
 }
 
-class _StockIdentifierPill extends StatelessWidget {
-  final String text;
-  final Color iconColor;
+class _FactData {
+  final String label;
+  final String value;
 
-  const _StockIdentifierPill({
-    required this.text,
-    required this.iconColor,
+  const _FactData(this.label, this.value);
+}
+
+class _FactPill extends StatelessWidget {
+  final _FactData fact;
+  final Color accentColor;
+  final bool highlighted;
+
+  const _FactPill({
+    required this.fact,
+    required this.accentColor,
+    required this.highlighted,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 150),
-      height: 24,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: SalesPosColors.bodyPanelBg,
+        color: highlighted ? accentColor.withValues(alpha: 0.09) : Colors.white,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: iconColor.withValues(alpha: 0.20)),
+        border: Border.all(
+          color: highlighted
+              ? accentColor.withValues(alpha: 0.24)
+              : const Color(0xFFE7DAC5),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.verified_outlined,
-            size: 13,
-            color: iconColor,
+      child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          style: SalesPosStyles.caption.copyWith(
+            color: SalesPosColors.bodyTextMain,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: SalesPosStyles.caption.copyWith(
-                color: SalesPosColors.bodyTextMain,
-                fontSize: 11.5,
+          children: [
+            TextSpan(text: '${fact.label}: '),
+            TextSpan(
+              text: fact.value,
+              style: TextStyle(
+                color: highlighted ? accentColor : SalesPosColors.bodyTextMain,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w900,
-                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

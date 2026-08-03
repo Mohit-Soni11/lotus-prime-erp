@@ -182,11 +182,11 @@ class _StockSuggestionDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxHeight: 318),
+      constraints: const BoxConstraints(maxHeight: 340),
       decoration: BoxDecoration(
-        color: SalesPosColors.bodyPanelBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: SalesPosColors.bodyBorder, width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE3D6BF), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
@@ -196,24 +196,17 @@ class _StockSuggestionDropdown extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _SuggestionHeader(count: suggestions.length),
-            const _SuggestionColumnHeader(),
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
                 itemCount: suggestions.length,
-                separatorBuilder: (_, __) => const Divider(
-                  height: 1,
-                  thickness: 1,
-                  indent: 12,
-                  endIndent: 12,
-                  color: SalesPosColors.bodyBorder,
-                ),
+                separatorBuilder: (_, __) => const SizedBox(height: 6),
                 itemBuilder: (context, index) {
                   final item = suggestions[index];
                   return PosStockSuggestionTile(
@@ -238,80 +231,45 @@ class _SuggestionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 36,
+      height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(
-        color: SalesPosColors.bodyPanelBg,
+        color: Color(0xFFFFFBF3),
         border: Border(
-          bottom: BorderSide(color: SalesPosColors.bodyBorder, width: 1),
+          bottom: BorderSide(color: Color(0xFFE3D6BF), width: 1),
         ),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.inventory_2_outlined,
-            size: 15,
-            color: SalesPosColors.brandGold,
-          ),
-          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Matching stock',
+              'Matching Stock',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: SalesPosStyles.caption.copyWith(
+              style: SalesPosStyles.bodyText.copyWith(
                 color: SalesPosColors.bodyTextMain,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          Text(
-            '$count found',
-            style: SalesPosStyles.caption.copyWith(
-              color: SalesPosColors.brandGold,
-              fontWeight: FontWeight.w900,
-              fontFeatures: const [FontFeature.tabularFigures()],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: SalesPosColors.brandGold.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: SalesPosColors.brandGold.withValues(alpha: 0.24),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SuggestionColumnHeader extends StatelessWidget {
-  const _SuggestionColumnHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    final style = SalesPosStyles.caption.copyWith(
-      color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.72),
-      fontSize: 10,
-      fontWeight: FontWeight.w900,
-    );
-    return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      color: SalesPosColors.bodyBg,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 11,
-            child: Text('ITEM NAME', maxLines: 1, style: style),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 10,
-            child: Text('HUID', maxLines: 1, style: style),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 68,
             child: Text(
-              'WEIGHT',
-              maxLines: 1,
-              textAlign: TextAlign.right,
-              style: style,
+              '$count ${count == 1 ? 'result' : 'results'}',
+              style: SalesPosStyles.caption.copyWith(
+                fontSize: 12,
+                color: SalesPosColors.brandGold,
+                fontWeight: FontWeight.w900,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ],

@@ -679,11 +679,13 @@ class PosBillingController extends ChangeNotifier {
       item.purityCtrl.text = _displayPurityForSuggestion(suggestion);
       item.clearMasterRateIfOwned();
       item.makingCtrl.clear();
+      final shouldAutofillWeight =
+          _shouldAutofillWeightForStockSuggestion(suggestion);
       item.applyStockReferenceSnapshot(
         huids: suggestion.huids.isNotEmpty
             ? suggestion.huids
             : [suggestion.huid?.trim() ?? ''],
-        grossWeight: suggestion.netWeight,
+        grossWeight: shouldAutofillWeight ? suggestion.netWeight : 0,
         lessWeight: 0,
         stockItemId: suggestion.stockItemId,
         stockUnitId: suggestion.stockUnitId,
@@ -696,6 +698,16 @@ class PosBillingController extends ChangeNotifier {
     }
     clearAllStockSuggestions();
     unawaited(applySaleItemMasterRate(item, force: true));
+  }
+
+  bool _shouldAutofillWeightForStockSuggestion(
+    PosStockLookupModel suggestion,
+  ) {
+    final unitLabel = suggestion.quantityUnitLabel.trim().toLowerCase();
+    return unitLabel != 'packet' &&
+        unitLabel != 'pack' &&
+        unitLabel != 'lot' &&
+        unitLabel != 'bulk';
   }
 
   PosItemUnitProfile _unitProfileForStockSuggestion(

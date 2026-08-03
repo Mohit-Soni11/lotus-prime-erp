@@ -510,13 +510,6 @@ class _PosInvoicePdfDocumentBuilder {
                     if (activeConfig.showHuid && item.huidText.isNotEmpty) {
                       desc += '\n[HUID: ${item.huidText}]';
                     }
-                    final linkedSku = item.linkedStockSku?.trim() ?? '';
-                    final huid = item.huidText.trim();
-                    if (activeConfig.showHuid &&
-                        linkedSku.isNotEmpty &&
-                        linkedSku != huid) {
-                      desc += '\n[SKU: $linkedSku]';
-                    }
                     if (activeConfig.showPcs && item.pcs > 1) {
                       desc += ' (${item.pcs} pcs)';
                     }

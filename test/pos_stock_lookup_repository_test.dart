@@ -139,6 +139,34 @@ void main() {
 
     expect(match, isNull);
   });
+
+  test('packet stock lookup shows available packet count without half packets',
+      () async {
+    await _insertLookupStock(
+      db,
+      sku: 'SIL-PAYAL-PACK-001',
+      itemName: 'PAYAL',
+      purityLabel: '35.50',
+      grossWeight: 500,
+      huid: '',
+      metalType: 'Silver',
+      category: 'Silver',
+      quantityMode: 'packet',
+      quantity: 33,
+      packetCount: 33,
+      piecesPerPacket: 2,
+    );
+
+    final matches = await repository.searchByDescription(
+      query: 'payal',
+      metal: MetalType.silver,
+    );
+
+    expect(matches, hasLength(1));
+    expect(matches.single.quantityUnitLabel, 'packet');
+    expect(matches.single.availableQuantity, 33);
+    expect(matches.single.quantity, 33);
+  });
 }
 
 Future<int> _insertLookupStock(
@@ -149,22 +177,46 @@ Future<int> _insertLookupStock(
   required double grossWeight,
   required String huid,
   double purityPercent = 91.67,
+  String metalType = 'Gold',
+  String category = 'Gold',
+  String quantityMode = 'PIECES',
+  int quantity = 1,
+  int packetCount = 0,
+  int piecesPerPacket = 1,
 }) async {
   final stockItemId = await db.into(db.stockItems).insert(
         StockItemsCompanion.insert(
           sku: sku,
           itemName: itemName,
-          category: 'Gold',
+          category: category,
           subCategory: 'Retail',
-          metalType: const drift.Value('Gold'),
+          metalType: drift.Value(metalType),
           purity: drift.Value(purityLabel),
           grossWeight: drift.Value(grossWeight),
           netWeight: drift.Value(grossWeight),
-          quantity: const drift.Value(1),
+          quantity: drift.Value(quantity),
           status: drift.Value(stock.StockStatus.available.label),
           isActive: const drift.Value(true),
         ),
       );
+
+  await db.ensureStockInventorySchema();
+  await db.customUpdate(
+    '''
+    UPDATE stock_items
+    SET quantity_mode = ?,
+        packet_count = ?,
+        pieces_per_packet = ?
+    WHERE id = ?
+    ''',
+    variables: [
+      drift.Variable<String>(quantityMode),
+      drift.Variable<int>(packetCount),
+      drift.Variable<int>(piecesPerPacket),
+      drift.Variable<int>(stockItemId),
+    ],
+    updates: {db.stockItems},
+  );
 
   await db.customInsert(
     '''
@@ -199,7 +251,7 @@ Future<int> _insertLookupStock(
       const drift.Variable<String>('POS-LOOKUP'),
       drift.Variable<String>('$sku-U001'),
       const drift.Variable<int>(1),
-      const drift.Variable<String>('Gold'),
+      drift.Variable<String>(metalType),
       drift.Variable<String>(itemName),
       const drift.Variable<String>('Retail'),
       drift.Variable<String>(itemName),

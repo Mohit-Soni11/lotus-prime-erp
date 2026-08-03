@@ -180,6 +180,7 @@ class PosStockLookupRepository {
   }
 
   Future<void> _ensureStockItemUnitSchema() async {
+    await _db.ensureStockInventorySchema();
     await _db.customStatement('''
       CREATE TABLE IF NOT EXISTS "purchase_item_huids" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -390,8 +391,25 @@ class PosStockLookupRepository {
   int _availablePiecesForRows(List<_StockUnitLookupRow> rows) {
     return rows.fold<int>(
       0,
-      (sum, row) => sum + (_isLotUnit(row) ? row.stockQuantity : 1),
+      (sum, row) => sum + (_availableRawQuantityForRow(row)),
     );
+  }
+
+  int _availableRawQuantityForRow(_StockUnitLookupRow row) {
+    if (_isPacketUnit(row)) {
+      return row.packetCount > 0 ? row.packetCount : row.stockQuantity;
+    }
+    if (_isLotUnit(row)) {
+      return row.stockQuantity;
+    }
+    return 1;
+  }
+
+  bool _isPacketUnit(_StockUnitLookupRow row) {
+    final mode = row.quantityMode.trim().toLowerCase();
+    if (mode == 'packet' || mode == 'pack') return true;
+    final text = '${row.itemType} ${row.itemName}'.toLowerCase();
+    return text.contains('packet') || text.contains('pack');
   }
 
   bool _isLotUnit(_StockUnitLookupRow row) {
@@ -436,14 +454,10 @@ class PosStockLookupRepository {
   }) {
     if (pieces <= 0) return 0;
     return switch (unitLabel) {
-      'packet' => pieces / _positiveInt(row.piecesPerPacket, fallback: 1),
+      'packet' => pieces.toDouble(),
       'pair' => pieces.toDouble(),
       _ => pieces.toDouble(),
     };
-  }
-
-  int _positiveInt(int value, {required int fallback}) {
-    return value > 0 ? value : fallback;
   }
 
   MetalType _metalFromUnitRow(_StockUnitLookupRow row) {

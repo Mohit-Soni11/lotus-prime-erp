@@ -1136,12 +1136,6 @@ class PosLotusClassicInvoicePdfLayout {
     if (config.showHuid && item.huidText.trim().isNotEmpty) {
       parts.add('HUID: ${item.huidText.trim()}');
     }
-    final linkedSku = item.linkedStockSku?.trim() ?? '';
-    if (config.showHuid &&
-        linkedSku.isNotEmpty &&
-        linkedSku != item.huidText.trim()) {
-      parts.add('SKU: $linkedSku');
-    }
     if (config.showPcs && item.pcs > 1) {
       parts.add('${item.pcs} pcs');
     }

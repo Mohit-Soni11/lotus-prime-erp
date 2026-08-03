@@ -25,6 +25,7 @@ void main() {
           grossWeight: 0.680,
           lessWeight: 0,
           netWeight: 0.680,
+          unitCost: 45200,
           quantity: 1,
           availableQuantity: 1,
           quantityUnitLabel: 'pcs',
@@ -38,6 +39,8 @@ void main() {
     expect(find.text('Casting Tops'), findsOneWidget);
     expect(find.text('Tops'), findsOneWidget);
     expect(find.text('Test Ornaments'), findsOneWidget);
+    expect(find.textContaining('Cost'), findsNothing);
+    expect(find.textContaining('45200'), findsNothing);
   });
 
   testWidgets('routes silver suggestions to the silver card implementation',

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import 'package:lotus_erp/logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_stock_lookup_model.dart';
@@ -93,6 +94,44 @@ void main() {
     expect(item.netWt, 17.95);
     expect(item.linkedStockItemId, 1);
     expect(item.linkedStockUnitId, 10);
+
+    controller.dispose();
+  });
+
+  test('packet stock selection keeps stock link but waits for sale weight', () {
+    final controller = PosBillingController();
+    final item = SaleItemModel(metal: MetalType.silver);
+    controller.saleItems.add(item);
+
+    controller.applyStockSuggestionToRow(
+      rowIndex: 0,
+      suggestion: const PosStockLookupModel(
+        stockItemId: 7,
+        stockUnitId: 70,
+        sku: 'SIL-PAYAL-PACK-001-U001',
+        itemName: 'PAYAL',
+        description: '',
+        huid: '',
+        purity: '35.50',
+        metal: MetalType.silver,
+        categoryLabel: 'FANCY PAYAL',
+        grossWeight: 500,
+        lessWeight: 16.5,
+        netWeight: 483.5,
+        quantity: 33,
+        availableQuantity: 33,
+        quantityUnitLabel: 'packet',
+        status: 'Available',
+      ),
+    );
+
+    expect(item.unitProfile, PosItemUnitProfile.packet);
+    expect(item.pcsCtrl.text, '1');
+    expect(item.grossCtrl.text, isEmpty);
+    expect(item.lessCtrl.text, isEmpty);
+    expect(item.netWt, 0);
+    expect(item.linkedStockItemId, 7);
+    expect(item.linkedStockUnitId, 70);
 
     controller.dispose();
   });
