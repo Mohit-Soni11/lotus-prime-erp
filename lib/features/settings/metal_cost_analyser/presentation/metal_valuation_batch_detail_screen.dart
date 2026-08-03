@@ -178,40 +178,42 @@ class _BatchDetailHeader extends StatelessWidget {
           const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth < 780 ? 2 : 5;
+              final columns = constraints.maxWidth < 780 ? 2 : 3;
               return GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: columns,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
-                childAspectRatio: columns == 2 ? 3.4 : 3.7,
+                childAspectRatio: columns == 2 ? 3.1 : 4.3,
                 children: [
                   _HeaderMetric(
-                    label: 'Total Units',
-                    value: '${batch?.totalUnits ?? 0}',
-                  ),
-                  _HeaderMetric(
-                    label: 'Available Units',
-                    value: '${batch?.availableUnits ?? 0}',
-                    valueColor: MetalValuationColors.green,
-                  ),
-                  _HeaderMetric(
-                    label: 'Sold Units',
-                    value: '${batch?.soldUnits ?? 0}',
-                    valueColor: (batch?.soldUnits ?? 0) > 0
-                        ? MetalValuationColors.red
-                        : MetalValuationColors.ink,
-                  ),
-                  _HeaderMetric(
-                    label: 'Net Weight',
+                    label: 'Total Net Weight',
                     value: formatGram(batch?.totalNetWeight ?? 0),
                     valueColor: MetalValuationColors.green,
+                  ),
+                  _HeaderMetric(
+                    label: 'Total Valuation Fine',
+                    value: formatGram(batch?.valuationFineWeight ?? 0),
+                    valueColor: MetalValuationColors.goldDark,
+                  ),
+                  _HeaderMetric(
+                    label: 'Rate',
+                    value: '${formatMoney(batch?.ratePerGram ?? 0)}/g',
+                    valueColor: MetalValuationColors.goldDark,
+                  ),
+                  _HeaderMetric(
+                    label: 'Making',
+                    value: formatMoney(batch?.makingAmount ?? 0),
                   ),
                   _HeaderMetric(
                     label: 'Valuation Cost',
                     value: formatMoney(batch?.totalCost ?? 0),
                     valueColor: MetalValuationColors.goldDark,
+                  ),
+                  _HeaderMetric(
+                    label: 'Total Units',
+                    value: '${batch?.totalUnits ?? 0}',
                   ),
                 ],
               );

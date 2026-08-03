@@ -198,6 +198,8 @@ class MetalValuationRepository {
             CAST(COALESCE(SUM(u.valuation_fine_weight), 0.0) AS REAL) AS valuation_fine_weight,
             CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS REAL) AS available_fine_weight,
             CAST(COALESCE(SUM(unit_sales.sold_fine_weight), 0.0) AS REAL) AS sold_fine_weight,
+            CAST(COALESCE(AVG(NULLIF(u.rate_per_gram, 0.0)), 0.0) AS REAL) AS rate_per_gram,
+            CAST(COALESCE(SUM(u.making_amount), 0.0) AS REAL) AS making_amount,
             CAST(COALESCE(SUM(u.unit_cost), 0.0) AS REAL) AS total_cost,
             CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.unit_cost ELSE 0 END), 0.0) AS REAL) AS available_cost,
             CAST(COALESCE(SUM(unit_sales.sold_cost), 0.0) AS REAL) AS sold_cost,
@@ -231,6 +233,8 @@ class MetalValuationRepository {
             valuationFineWeight: _readDouble(row, 'valuation_fine_weight'),
             availableFineWeight: _readDouble(row, 'available_fine_weight'),
             soldFineWeight: _readDouble(row, 'sold_fine_weight'),
+            ratePerGram: _readDouble(row, 'rate_per_gram'),
+            makingAmount: _readDouble(row, 'making_amount'),
             totalCost: _readDouble(row, 'total_cost'),
             availableCost: _readDouble(row, 'available_cost'),
             soldCost: _readDouble(row, 'sold_cost'),
@@ -246,22 +250,88 @@ class MetalValuationRepository {
   ) async {
     final rows = await _db.customSelect(
       '''
+          WITH line_unit_counts AS (
+            SELECT
+              purchase_voucher_item_id,
+              COUNT(*) AS unit_count
+            FROM stock_item_units
+            GROUP BY purchase_voucher_item_id
+          )
           SELECT
-            metal_type,
-            batch_code,
-            item_type,
-            item_name,
-            company_name,
-            huid,
-            unit_code,
-            gross_weight,
-            net_weight,
-            actual_fine_weight,
-            valuation_fine_weight,
-            unit_cost
-          FROM stock_item_units
-          WHERE status = 'Available' ${_metalWhereClause(filter)}
-          ORDER BY created_at DESC, id DESC
+            u.metal_type AS metal_type,
+            COALESCE(NULLIF(u.batch_code, ''), 'Not recorded') AS batch_code,
+            COALESCE(NULLIF(u.item_type, ''), 'Not recorded') AS item_type,
+            u.item_name AS item_name,
+            COALESCE(NULLIF(u.company_name, ''), 'Unbranded') AS company_name,
+            COALESCE(NULLIF(u.huid, ''), '') AS huid,
+            u.unit_code AS unit_code,
+            CASE
+              WHEN COALESCE(luc.unit_count, 1) <= 1
+                THEN COALESCE(pvi.quantity, 1)
+              ELSE 1
+            END AS quantity,
+            COALESCE(NULLIF(pvi.quantity_mode, ''), 'PCS') AS quantity_mode,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN COALESCE(pvi.gross_weight, u.gross_weight)
+                ELSE u.gross_weight
+              END AS REAL
+            ) AS gross_weight,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN COALESCE(pvi.net_weight, u.net_weight)
+                ELSE u.net_weight
+              END AS REAL
+            ) AS net_weight,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN COALESCE(pvi.fine_weight, u.actual_fine_weight)
+                ELSE u.actual_fine_weight
+              END AS REAL
+            ) AS actual_fine_weight,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN COALESCE(pvi.valuation_fine_weight, u.valuation_fine_weight)
+                ELSE u.valuation_fine_weight
+              END AS REAL
+            ) AS valuation_fine_weight,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN COALESCE(pvi.rate, u.rate_per_gram)
+                ELSE u.rate_per_gram
+              END AS REAL
+            ) AS rate_per_gram,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN MAX(
+                    COALESCE(pvi.line_amount, u.unit_cost) -
+                    (COALESCE(pvi.valuation_fine_weight, u.valuation_fine_weight) *
+                     COALESCE(pvi.rate, u.rate_per_gram)),
+                    0.0
+                  )
+                ELSE u.making_amount
+              END AS REAL
+            ) AS making_amount,
+            CAST(
+              CASE
+                WHEN COALESCE(luc.unit_count, 1) <= 1
+                  THEN COALESCE(pvi.line_amount, u.unit_cost)
+                ELSE u.unit_cost
+              END AS REAL
+            ) AS unit_cost
+          FROM stock_item_units u
+          LEFT JOIN purchase_voucher_items pvi
+            ON pvi.id = u.purchase_voucher_item_id
+          LEFT JOIN line_unit_counts luc
+            ON luc.purchase_voucher_item_id = u.purchase_voucher_item_id
+          WHERE 1 = 1 ${_metalWhereClause(filter, alias: 'u')}
+          ORDER BY u.created_at DESC, u.id DESC
           LIMIT 120
           ''',
       variables: _metalVariables(filter),
@@ -277,10 +347,14 @@ class MetalValuationRepository {
             companyName: _readString(row, 'company_name'),
             huid: _readString(row, 'huid'),
             unitCode: _readString(row, 'unit_code'),
+            quantity: _readInt(row, 'quantity'),
+            quantityMode: _readString(row, 'quantity_mode'),
             grossWeight: _readDouble(row, 'gross_weight'),
             netWeight: _readDouble(row, 'net_weight'),
             actualFine: _readDouble(row, 'actual_fine_weight'),
             valuationFine: _readDouble(row, 'valuation_fine_weight'),
+            ratePerGram: _readDouble(row, 'rate_per_gram'),
+            makingAmount: _readDouble(row, 'making_amount'),
             unitCost: _readDouble(row, 'unit_cost'),
           ),
         )

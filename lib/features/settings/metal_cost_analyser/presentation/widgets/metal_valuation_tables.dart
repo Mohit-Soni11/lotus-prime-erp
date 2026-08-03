@@ -87,37 +87,36 @@ class ItemValuationLedgerTable extends StatelessWidget {
       title: 'Item Valuation Ledger',
       subtitle: 'Unit-level valuation for exact HUID, item and stock audit.',
       icon: Icons.inventory_rounded,
-      emptyMessage: 'No available stock valuation records found.',
+      emptyMessage: 'No item valuation records found.',
       columns: const [
-        'Metal',
-        'Batch',
+        'S.No',
         'Item Type',
         'Item',
-        'Company',
-        'HUID / Unit',
+        'HUID',
+        'Unit',
         'Gross Weight',
         'Net Weight',
-        'Actual Fine',
         'Valuation Fine',
-        'Unit Cost',
+        'Rate',
+        'Making',
+        'Valuation Cost',
       ],
-      rows: rows
-          .map(
-            (row) => [
-              titleCase(row.metalType),
-              row.batchCode,
-              row.itemType,
-              row.itemName,
-              row.companyName.isEmpty ? 'Unbranded' : row.companyName,
-              row.identifier,
-              formatGram(row.grossWeight),
-              formatGram(row.netWeight),
-              formatGram(row.actualFine),
-              formatGram(row.valuationFine),
-              formatMoney(row.unitCost),
-            ],
-          )
-          .toList(),
+      rows: [
+        for (var index = 0; index < rows.length; index++)
+          [
+            '${index + 1}',
+            rows[index].itemType,
+            rows[index].itemName,
+            rows[index].huidLabel,
+            rows[index].unitLabel,
+            formatGram(rows[index].grossWeight),
+            formatGram(rows[index].netWeight),
+            formatGram(rows[index].valuationFine),
+            '${formatMoney(rows[index].ratePerGram)}/g',
+            formatMoney(rows[index].makingAmount),
+            formatMoney(rows[index].unitCost),
+          ],
+      ],
     );
   }
 }
@@ -154,6 +153,11 @@ class BatchValuationSummaryPanel extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final columns = constraints.maxWidth < 820 ? 1 : 2;
+                final cardHeight = constraints.maxWidth < 560
+                    ? 390.0
+                    : constraints.maxWidth < 820
+                        ? 270.0
+                        : 252.0;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -162,7 +166,7 @@ class BatchValuationSummaryPanel extends StatelessWidget {
                     crossAxisCount: columns,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    mainAxisExtent: 270,
+                    mainAxisExtent: cardHeight,
                   ),
                   itemBuilder: (context, index) {
                     final row = rows[index];
@@ -264,40 +268,30 @@ class _BatchValuationCard extends StatelessWidget {
                     crossAxisCount: columns,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    childAspectRatio: columns == 2
-                        ? 2.5
-                        : columns == 3
-                            ? 2.7
-                            : 3.0,
+                    childAspectRatio: columns == 2 ? 2.65 : 3.35,
                     children: [
                       _CardFact(
                         label: 'Total Units',
                         value: '${row.totalUnits}',
                       ),
                       _CardFact(
-                        label: 'Available',
-                        value: '${row.availableUnits}',
+                        label: 'Total Net Weight',
+                        value: formatGram(row.totalNetWeight),
                         valueColor: MetalValuationColors.green,
                       ),
                       _CardFact(
-                        label: 'Sold',
-                        value: '${row.soldUnits}',
-                        valueColor: row.soldUnits > 0
-                            ? MetalValuationColors.red
-                            : MetalValuationColors.ink,
-                      ),
-                      _CardFact(
-                        label: 'Gross Weight',
-                        value: formatGram(row.totalGrossWeight),
-                      ),
-                      _CardFact(
-                        label: 'Net Weight',
-                        value: formatGram(row.totalNetWeight),
-                      ),
-                      _CardFact(
-                        label: 'Valuation Fine',
+                        label: 'Total Valuation Fine',
                         value: formatGram(row.valuationFineWeight),
                         valueColor: MetalValuationColors.goldDark,
+                      ),
+                      _CardFact(
+                        label: 'Rate',
+                        value: '${formatMoney(row.ratePerGram)}/g',
+                        valueColor: MetalValuationColors.goldDark,
+                      ),
+                      _CardFact(
+                        label: 'Making',
+                        value: formatMoney(row.makingAmount),
                       ),
                       _CardFact(
                         label: 'Valuation Cost',

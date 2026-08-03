@@ -133,10 +133,14 @@ class AvailableValuationRow {
   final String companyName;
   final String huid;
   final String unitCode;
+  final int quantity;
+  final String quantityMode;
   final double grossWeight;
   final double netWeight;
   final double actualFine;
   final double valuationFine;
+  final double ratePerGram;
+  final double makingAmount;
   final double unitCost;
 
   const AvailableValuationRow({
@@ -147,14 +151,35 @@ class AvailableValuationRow {
     required this.companyName,
     required this.huid,
     required this.unitCode,
+    required this.quantity,
+    required this.quantityMode,
     required this.grossWeight,
     required this.netWeight,
     required this.actualFine,
     required this.valuationFine,
+    required this.ratePerGram,
+    required this.makingAmount,
     required this.unitCost,
   });
 
   String get identifier => huid.trim().isEmpty ? unitCode : huid;
+
+  String get huidLabel => huid.trim().isEmpty ? 'Not linked' : huid;
+
+  String get unitLabel {
+    final count = quantity <= 0 ? 1 : quantity;
+    final mode = quantityMode.trim().toUpperCase();
+    final label = switch (mode) {
+      'PAIR' || 'PAIRS' => count == 1 ? 'pair' : 'pairs',
+      'PACK' ||
+      'PACKS' ||
+      'PACKET' ||
+      'PACKETS' =>
+        count == 1 ? 'packet' : 'packets',
+      _ => count == 1 ? 'pc' : 'pcs',
+    };
+    return '$count $label';
+  }
 }
 
 class BatchValuationRow {
@@ -173,6 +198,8 @@ class BatchValuationRow {
   final double valuationFineWeight;
   final double availableFineWeight;
   final double soldFineWeight;
+  final double ratePerGram;
+  final double makingAmount;
   final double totalCost;
   final double availableCost;
   final double soldCost;
@@ -195,6 +222,8 @@ class BatchValuationRow {
     required this.valuationFineWeight,
     required this.availableFineWeight,
     required this.soldFineWeight,
+    required this.ratePerGram,
+    required this.makingAmount,
     required this.totalCost,
     required this.availableCost,
     required this.soldCost,
