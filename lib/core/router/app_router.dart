@@ -24,6 +24,7 @@ import '../../ui/dashboard/dashboard_screen.dart';
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
 import '../../ui/settings/print_templates/print_templates_screen.dart';
 import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_desk_screen.dart';
+import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_metal_detail_screen.dart';
 import '../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
 
 import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
@@ -342,6 +343,13 @@ GoRouter createAppRouter() {
             path: RoutePaths.settingsMetalCostAnalyser,
             builder: (context, state) => MetalValuationDeskScreen(
               onBack: () => _goBackOr(context, RoutePaths.settings),
+            ),
+          ),
+          GoRoute(
+            path: '${RoutePaths.settingsMetalCostAnalyser}/metal/:metal',
+            builder: (context, state) => MetalValuationMetalDetailScreen(
+              metalType: state.pathParameters['metal'] ?? '',
+              onBack: () => context.go(RoutePaths.settingsMetalCostAnalyser),
             ),
           ),
           GoRoute(

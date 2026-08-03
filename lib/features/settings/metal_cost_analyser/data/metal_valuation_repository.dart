@@ -28,6 +28,7 @@ class MetalValuationRepository {
         'valuation_fine',
       ),
       soldNetWeight: _readDouble(soldSummary, 'net_weight'),
+      soldFineWeight: _readDouble(soldSummary, 'fine_weight'),
     );
 
     final breakdown = await _readBreakdown(filter);
@@ -66,7 +67,8 @@ class MetalValuationRepository {
             CAST(COALESCE(SUM(stock_unit_cost), 0.0) AS REAL) AS cost,
             CAST(COALESCE(SUM(item_total), 0.0) AS REAL) AS sales,
             CAST(COALESCE(SUM(stock_profit_amount), 0.0) AS REAL) AS profit,
-            CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS net_weight
+            CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS net_weight,
+            CAST(COALESCE(SUM(fine_weight), 0.0) AS REAL) AS fine_weight
           FROM bill_items
           WHERE stock_unit_cost > 0 ${_metalWhereClause(filter)}
           ''',
@@ -84,7 +86,8 @@ class MetalValuationRepository {
               metal_type,
               COUNT(*) AS available_units,
               CAST(COALESCE(SUM(unit_cost), 0.0) AS REAL) AS available_cost,
-              CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS available_net_weight
+              CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS available_net_weight,
+              CAST(COALESCE(SUM(actual_fine_weight), 0.0) AS REAL) AS available_fine_weight
             FROM stock_item_units
             WHERE status = 'Available' ${_metalWhereClause(filter)}
             GROUP BY metal_type
@@ -96,7 +99,8 @@ class MetalValuationRepository {
               CAST(COALESCE(SUM(stock_unit_cost), 0.0) AS REAL) AS sold_cost,
               CAST(COALESCE(SUM(item_total), 0.0) AS REAL) AS sale_value,
               CAST(COALESCE(SUM(stock_profit_amount), 0.0) AS REAL) AS profit,
-              CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS sold_net_weight
+              CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS sold_net_weight,
+              CAST(COALESCE(SUM(fine_weight), 0.0) AS REAL) AS sold_fine_weight
             FROM bill_items
             WHERE stock_unit_cost > 0 ${_metalWhereClause(filter)}
             GROUP BY metal_type
@@ -110,7 +114,9 @@ class MetalValuationRepository {
             CAST(COALESCE(sold.sale_value, 0.0) AS REAL) AS sale_value,
             CAST(COALESCE(sold.profit, 0.0) AS REAL) AS profit,
             CAST(COALESCE(available.available_net_weight, 0.0) AS REAL) AS available_net_weight,
-            CAST(COALESCE(sold.sold_net_weight, 0.0) AS REAL) AS sold_net_weight
+            CAST(COALESCE(available.available_fine_weight, 0.0) AS REAL) AS available_fine_weight,
+            CAST(COALESCE(sold.sold_net_weight, 0.0) AS REAL) AS sold_net_weight,
+            CAST(COALESCE(sold.sold_fine_weight, 0.0) AS REAL) AS sold_fine_weight
           FROM available
           LEFT JOIN sold ON sold.metal_type = available.metal_type
           UNION
@@ -123,7 +129,9 @@ class MetalValuationRepository {
             CAST(COALESCE(sold.sale_value, 0.0) AS REAL) AS sale_value,
             CAST(COALESCE(sold.profit, 0.0) AS REAL) AS profit,
             CAST(COALESCE(available.available_net_weight, 0.0) AS REAL) AS available_net_weight,
-            CAST(COALESCE(sold.sold_net_weight, 0.0) AS REAL) AS sold_net_weight
+            CAST(COALESCE(available.available_fine_weight, 0.0) AS REAL) AS available_fine_weight,
+            CAST(COALESCE(sold.sold_net_weight, 0.0) AS REAL) AS sold_net_weight,
+            CAST(COALESCE(sold.sold_fine_weight, 0.0) AS REAL) AS sold_fine_weight
           FROM sold
           LEFT JOIN available ON available.metal_type = sold.metal_type
           WHERE available.metal_type IS NULL
@@ -146,7 +154,9 @@ class MetalValuationRepository {
             saleValue: _readDouble(row, 'sale_value'),
             profit: _readDouble(row, 'profit'),
             availableNetWeight: _readDouble(row, 'available_net_weight'),
+            availableFineWeight: _readDouble(row, 'available_fine_weight'),
             soldNetWeight: _readDouble(row, 'sold_net_weight'),
+            soldFineWeight: _readDouble(row, 'sold_fine_weight'),
           ),
         )
         .toList();
@@ -269,7 +279,15 @@ class MetalValuationRepository {
   static DateTime? _readDateTime(QueryRow row, String key) {
     final value = row.data[key];
     if (value is DateTime) return value;
-    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is int) {
+      if (value > 100000000000000) {
+        return DateTime.fromMicrosecondsSinceEpoch(value);
+      }
+      if (value < 10000000000) {
+        return DateTime.fromMillisecondsSinceEpoch(value * 1000);
+      }
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
     if (value is String && value.trim().isNotEmpty) {
       return DateTime.tryParse(value);
     }

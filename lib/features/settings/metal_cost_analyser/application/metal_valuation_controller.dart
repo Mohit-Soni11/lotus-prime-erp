@@ -12,8 +12,11 @@ class MetalValuationController extends ChangeNotifier {
   MetalValuationSnapshot _snapshot = MetalValuationSnapshot.empty;
   String? _errorMessage;
 
-  MetalValuationController({MetalValuationRepository? repository})
-      : _repository = repository ?? MetalValuationRepository();
+  MetalValuationController({
+    MetalValuationRepository? repository,
+    MetalValuationFilter initialFilter = MetalValuationFilter.all,
+  })  : _repository = repository ?? MetalValuationRepository(),
+        _filter = initialFilter;
 
   MetalValuationLoadState get state => _state;
   MetalValuationFilter get filter => _filter;

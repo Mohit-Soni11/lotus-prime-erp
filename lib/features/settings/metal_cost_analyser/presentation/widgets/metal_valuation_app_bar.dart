@@ -5,10 +5,12 @@ import 'metal_valuation_tokens.dart';
 class MetalValuationAppBar extends StatefulWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
+  final String title;
 
   const MetalValuationAppBar({
     super.key,
     required this.onBack,
+    this.title = 'METAL VALUATION DESK',
   });
 
   @override
@@ -98,7 +100,7 @@ class _MetalValuationAppBarState extends State<MetalValuationAppBar>
               ),
             ),
             const SizedBox(width: 14),
-            Text('METAL VALUATION DESK', style: MetalValuationText.shellTitle),
+            Text(widget.title, style: MetalValuationText.shellTitle),
             const Spacer(),
             _OnlineBadge(controller: _statusController),
           ],

@@ -11,6 +11,14 @@ enum MetalValuationFilter {
   final String label;
 
   bool get isAll => this == MetalValuationFilter.all;
+
+  static MetalValuationFilter fromMetalType(String value) {
+    final normalized = value.trim().toUpperCase();
+    return MetalValuationFilter.values.firstWhere(
+      (filter) => filter.databaseValue == normalized,
+      orElse: () => MetalValuationFilter.all,
+    );
+  }
 }
 
 class MetalValuationSnapshot {
@@ -45,6 +53,7 @@ class MetalValuationSummary {
   final double availableActualFine;
   final double availableValuationFine;
   final double soldNetWeight;
+  final double soldFineWeight;
 
   const MetalValuationSummary({
     required this.availableUnits,
@@ -57,6 +66,7 @@ class MetalValuationSummary {
     required this.availableActualFine,
     required this.availableValuationFine,
     required this.soldNetWeight,
+    required this.soldFineWeight,
   });
 
   static const empty = MetalValuationSummary(
@@ -70,6 +80,7 @@ class MetalValuationSummary {
     availableActualFine: 0,
     availableValuationFine: 0,
     soldNetWeight: 0,
+    soldFineWeight: 0,
   );
 
   double get marginPercent {
@@ -87,7 +98,9 @@ class MetalValuationBreakdown {
   final double saleValue;
   final double profit;
   final double availableNetWeight;
+  final double availableFineWeight;
   final double soldNetWeight;
+  final double soldFineWeight;
 
   const MetalValuationBreakdown({
     required this.metalType,
@@ -98,7 +111,9 @@ class MetalValuationBreakdown {
     required this.saleValue,
     required this.profit,
     required this.availableNetWeight,
+    required this.availableFineWeight,
     required this.soldNetWeight,
+    required this.soldFineWeight,
   });
 
   double get marginPercent {

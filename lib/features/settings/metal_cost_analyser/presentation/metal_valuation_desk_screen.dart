@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/application/metal_valuation_controller.dart';
 
 import 'widgets/metal_valuation_app_bar.dart';
@@ -67,7 +69,14 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
             children: [
               MetalValuationSummaryPanel(snapshot: snapshot),
               const SizedBox(height: 16),
-              MetalValuationBreakdownPanel(rows: snapshot.breakdown),
+              MetalValuationBreakdownPanel(
+                rows: snapshot.breakdown,
+                onMetalSelected: (row) {
+                  final metal = Uri.encodeComponent(row.metalType);
+                  context.go(
+                      '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal');
+                },
+              ),
               const SizedBox(height: 16),
               SoldStockValuationTable(rows: snapshot.soldStock),
               const SizedBox(height: 16),

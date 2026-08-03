@@ -5,8 +5,13 @@ import 'metal_valuation_tokens.dart';
 
 class MetalValuationBreakdownPanel extends StatelessWidget {
   final List<MetalValuationBreakdown> rows;
+  final ValueChanged<MetalValuationBreakdown>? onMetalSelected;
 
-  const MetalValuationBreakdownPanel({super.key, required this.rows});
+  const MetalValuationBreakdownPanel({
+    super.key,
+    required this.rows,
+    this.onMetalSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +23,7 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
         children: [
           const _SectionHeading(
             title: 'Metal Performance',
-            subtitle: 'Cost, sale value and stock margin grouped by metal.',
+            subtitle: 'Available and sold net weight grouped by metal.',
             icon: Icons.donut_large_rounded,
           ),
           const SizedBox(height: 14),
@@ -39,7 +44,13 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
                     mainAxisExtent: 222,
                   ),
                   itemBuilder: (context, index) {
-                    return _BreakdownCard(row: rows[index]);
+                    final row = rows[index];
+                    return _BreakdownCard(
+                      row: row,
+                      onTap: onMetalSelected == null
+                          ? null
+                          : () => onMetalSelected!(row),
+                    );
                   },
                 );
               },
@@ -52,88 +63,135 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
 
 class _BreakdownCard extends StatelessWidget {
   final MetalValuationBreakdown row;
+  final VoidCallback? onTap;
 
-  const _BreakdownCard({required this.row});
+  const _BreakdownCard({required this.row, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final profitColor =
-        row.profit >= 0 ? MetalValuationColors.green : MetalValuationColors.red;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFCF7),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: MetalValuationColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFCF7),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: MetalValuationColors.line),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MetalValuationMetalImage(
-                metalType: row.metalType,
-                borderColor: MetalValuationColors.line,
-                fallbackColor: MetalValuationColors.goldDark,
-                size: 40,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  titleCase(row.metalType),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: MetalValuationText.sectionTitle.copyWith(
-                    fontSize: 18,
+              Row(
+                children: [
+                  MetalValuationMetalImage(
+                    metalType: row.metalType,
+                    borderColor: MetalValuationColors.line,
+                    fallbackColor: MetalValuationColors.goldDark,
+                    size: 40,
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      titleCase(row.metalType),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MetalValuationText.sectionTitle.copyWith(
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  _StatusPill(
+                    label: row.soldUnits > 0 ? 'Movement' : 'Available',
+                    color: row.soldUnits > 0
+                        ? MetalValuationColors.goldDark
+                        : MetalValuationColors.green,
+                  ),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                      color: MetalValuationColors.goldDark,
+                    ),
+                  ],
+                ],
               ),
-              Text(
-                '${row.availableUnits} live',
-                style: MetalValuationText.label.copyWith(
-                  color: MetalValuationColors.green,
-                ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Available Net Weight',
+                      value: formatGram(row.availableNetWeight),
+                      valueColor: MetalValuationColors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Sold Net Weight',
+                      value: formatGram(row.soldNetWeight),
+                      valueColor: row.soldNetWeight > 0
+                          ? MetalValuationColors.red
+                          : MetalValuationColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Available Units',
+                      value: '${row.availableUnits}',
+                      valueColor: MetalValuationColors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Sold Units',
+                      value: '${row.soldUnits}',
+                      valueColor: row.soldUnits > 0
+                          ? MetalValuationColors.red
+                          : MetalValuationColors.ink,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniFact(
-                  label: 'Available Cost',
-                  value: formatMoney(row.availableCost),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MiniFact(
-                  label: 'Sold Cost',
-                  value: formatMoney(row.soldCost),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniFact(
-                  label: 'Sale Value',
-                  value: formatMoney(row.saleValue),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MiniFact(
-                  label: 'Margin',
-                  value: formatMoney(row.profit),
-                  valueColor: profitColor,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusPill({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: MetalValuationText.label.copyWith(color: color),
       ),
     );
   }
