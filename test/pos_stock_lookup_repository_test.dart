@@ -140,8 +140,7 @@ void main() {
     expect(match, isNull);
   });
 
-  test('packet stock lookup shows available packet count without half packets',
-      () async {
+  test('packet stock lookup shows current available packet balance', () async {
     await _insertLookupStock(
       db,
       sku: 'SIL-PAYAL-PACK-001',
@@ -152,9 +151,12 @@ void main() {
       metalType: 'Silver',
       category: 'Silver',
       quantityMode: 'packet',
-      quantity: 33,
+      quantity: 32,
       packetCount: 33,
       piecesPerPacket: 2,
+      stockGrossWeight: 474.7,
+      stockNetWeight: 458.2,
+      unitNetWeight: 483.5,
     );
 
     final matches = await repository.searchByDescription(
@@ -164,8 +166,42 @@ void main() {
 
     expect(matches, hasLength(1));
     expect(matches.single.quantityUnitLabel, 'packet');
-    expect(matches.single.availableQuantity, 33);
-    expect(matches.single.quantity, 33);
+    expect(matches.single.availableQuantity, 32);
+    expect(matches.single.quantity, 32);
+    expect(matches.single.grossWeight, closeTo(474.7, 0.001));
+    expect(matches.single.netWeight, closeTo(458.2, 0.001));
+  });
+
+  test('gold lot lookup shows current available balance after partial sale',
+      () async {
+    await _insertLookupStock(
+      db,
+      sku: 'GOLD-NOSEPIN-LOT-001',
+      itemName: 'NOSE PIN',
+      purityLabel: '18KT',
+      grossWeight: 8.35,
+      huid: '',
+      metalType: 'Gold',
+      category: 'Gold',
+      quantityMode: 'PIECES',
+      quantity: 14,
+      unitCode: 'GOLD-NOSEPIN-LOT-001-LOT001',
+      stockGrossWeight: 7.8,
+      stockNetWeight: 7.8,
+      unitNetWeight: 8.35,
+    );
+
+    final matches = await repository.searchByDescription(
+      query: 'nose',
+      metal: MetalType.gold,
+    );
+
+    expect(matches, hasLength(1));
+    expect(matches.single.quantityUnitLabel, 'pcs');
+    expect(matches.single.availableQuantity, 14);
+    expect(matches.single.quantity, 14);
+    expect(matches.single.grossWeight, closeTo(7.8, 0.001));
+    expect(matches.single.netWeight, closeTo(7.8, 0.001));
   });
 }
 
@@ -183,7 +219,17 @@ Future<int> _insertLookupStock(
   int quantity = 1,
   int packetCount = 0,
   int piecesPerPacket = 1,
+  String? unitCode,
+  double? stockGrossWeight,
+  double? stockNetWeight,
+  double? unitGrossWeight,
+  double? unitNetWeight,
 }) async {
+  final stockGross = stockGrossWeight ?? grossWeight;
+  final stockNet = stockNetWeight ?? stockGross;
+  final unitGross = unitGrossWeight ?? grossWeight;
+  final unitNet = unitNetWeight ?? unitGross;
+
   final stockItemId = await db.into(db.stockItems).insert(
         StockItemsCompanion.insert(
           sku: sku,
@@ -192,8 +238,11 @@ Future<int> _insertLookupStock(
           subCategory: 'Retail',
           metalType: drift.Value(metalType),
           purity: drift.Value(purityLabel),
-          grossWeight: drift.Value(grossWeight),
-          netWeight: drift.Value(grossWeight),
+          grossWeight: drift.Value(stockGross),
+          stoneWeight: drift.Value(
+            (stockGross - stockNet).clamp(0.0, stockGross).toDouble(),
+          ),
+          netWeight: drift.Value(stockNet),
           quantity: drift.Value(quantity),
           status: drift.Value(stock.StockStatus.available.label),
           isActive: const drift.Value(true),
@@ -249,20 +298,20 @@ Future<int> _insertLookupStock(
     variables: [
       drift.Variable<int>(stockItemId),
       const drift.Variable<String>('POS-LOOKUP'),
-      drift.Variable<String>('$sku-U001'),
+      drift.Variable<String>(unitCode ?? '$sku-U001'),
       const drift.Variable<int>(1),
       drift.Variable<String>(metalType),
       drift.Variable<String>(itemName),
       const drift.Variable<String>('Retail'),
       drift.Variable<String>(itemName),
       drift.Variable<String>(huid),
-      drift.Variable<double>(grossWeight),
+      drift.Variable<double>(unitGross),
       const drift.Variable<double>(0),
-      drift.Variable<double>(grossWeight),
+      drift.Variable<double>(unitNet),
       drift.Variable<double>(purityPercent),
-      drift.Variable<double>(grossWeight * purityPercent / 100),
+      drift.Variable<double>(unitNet * purityPercent / 100),
       const drift.Variable<double>(0),
-      drift.Variable<double>(grossWeight * purityPercent / 100),
+      drift.Variable<double>(unitNet * purityPercent / 100),
       const drift.Variable<double>(6000),
       const drift.Variable<double>(0),
       const drift.Variable<double>(60000),

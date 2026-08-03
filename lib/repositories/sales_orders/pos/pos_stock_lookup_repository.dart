@@ -7,6 +7,21 @@ import '../../../models/sales_orders/sales_pos_models/pos_stock_lookup_model.dar
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart'
     as stock;
 
+const String _lotBalanceUnitExpression = '''
+LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+  AND TRIM(COALESCE(u.huid, '')) = ''
+''';
+
+const String _packetBalanceUnitExpression = '''
+LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack')
+  OR LOWER(COALESCE(u.item_type, '') || ' ' || COALESCE(u.item_name, '')) LIKE '%packet%'
+  OR LOWER(COALESCE(u.item_type, '') || ' ' || COALESCE(u.item_name, '')) LIKE '%pack%'
+''';
+
+const String _stockBalanceUnitExpression = '''
+($_lotBalanceUnitExpression) OR ($_packetBalanceUnitExpression)
+''';
+
 class PosStockLookupRepository {
   final AppDatabase _db;
 
@@ -134,9 +149,18 @@ class PosStockLookupRepository {
         u.item_name AS item_name,
         u.huid AS huid,
         COALESCE(ph.huid_list, '') AS huid_list,
-        u.gross_weight AS gross_weight,
-        u.less_weight AS less_weight,
-        u.net_weight AS net_weight,
+        CASE
+          WHEN $_stockBalanceUnitExpression THEN COALESCE(s.gross_weight, u.gross_weight)
+          ELSE u.gross_weight
+        END AS gross_weight,
+        CASE
+          WHEN $_stockBalanceUnitExpression THEN COALESCE(s.stone_weight, u.less_weight)
+          ELSE u.less_weight
+        END AS less_weight,
+        CASE
+          WHEN $_stockBalanceUnitExpression THEN COALESCE(s.net_weight, u.net_weight)
+          ELSE u.net_weight
+        END AS net_weight,
         u.purity_percent AS purity_percent,
         u.unit_cost AS unit_cost,
         u.status AS unit_status,
@@ -397,7 +421,7 @@ class PosStockLookupRepository {
 
   int _availableRawQuantityForRow(_StockUnitLookupRow row) {
     if (_isPacketUnit(row)) {
-      return row.packetCount > 0 ? row.packetCount : row.stockQuantity;
+      return row.stockQuantity;
     }
     if (_isLotUnit(row)) {
       return row.stockQuantity;

@@ -206,10 +206,10 @@ class StockSearchController extends ChangeNotifier {
           COALESCE(SUM($_availableQuantityExpression), 0) AS available_units,
           COALESCE(SUM($_soldQuantityExpression), 0) AS sold_units,
           COALESCE(SUM(u.gross_weight), 0.0) AS gross_weight,
-          COALESCE(SUM(
-            u.net_weight +
-            $_soldWeightExpression
-          ), 0.0) AS net_weight,
+          (
+            COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) +
+            COALESCE(SUM($_soldWeightExpression), 0.0)
+          ) AS net_weight,
           COALESCE(SUM(CASE WHEN LOWER(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS available_weight,
           COALESCE(SUM($_soldWeightExpression), 0.0) AS sold_weight,
           COALESCE(SUM(u.unit_cost), 0.0) AS stock_value
