@@ -3,9 +3,9 @@ import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/ui/settings/settings_dashboard/data/settings_data.dart';
 
 void main() {
-  test('Metal Cost Analyser settings card owns stock valuation flow', () {
+  test('Metal Valuation Desk settings card owns stock valuation flow', () {
     final item = SettingsData.items.singleWhere(
-      (item) => item.title == 'Metal Cost Analyser',
+      (item) => item.title == 'Metal Valuation Desk',
     );
 
     expect(item.id, AppRoutes.metalCostAnalyserRoute);

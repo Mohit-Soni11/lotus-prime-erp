@@ -52,8 +52,8 @@ class SettingsData {
     SettingsModel(
       id: AppRoutes.metalCostAnalyserRoute,
       icon: Icons.analytics_rounded,
-      title: 'Metal Cost Analyser',
-      subtitle: 'Purchase cost, current value & profit/loss per metal & purity',
+      title: 'Metal Valuation Desk',
+      subtitle: 'Audit stock cost, sale recovery and margin by metal',
       category: SettingsCategory.finance,
       accentColor: Color(0xFFD97706),
     ),
