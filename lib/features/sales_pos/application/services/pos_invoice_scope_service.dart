@@ -22,15 +22,25 @@ class PosInvoiceScopeService {
     final metals = collectMetals(source);
     if (metals.isEmpty) return [source];
 
+    final crossAdjustments = _crossMetalAdjustments(source, metals);
     return metals
-        .map((metal) => scopedInvoiceForMetal(source, metal))
+        .map(
+          (metal) => scopedInvoiceForMetal(
+            source,
+            metal,
+            crossMetalAdjustmentDeduction: crossAdjustments[metal] ?? 0.0,
+            isMetalScopedCopy: metals.length > 1,
+          ),
+        )
         .toList(growable: false);
   }
 
   PosInvoiceModel scopedInvoiceForMetal(
     PosInvoiceModel source,
-    MetalType? metal,
-  ) {
+    MetalType? metal, {
+    double crossMetalAdjustmentDeduction = 0.0,
+    bool isMetalScopedCopy = false,
+  }) {
     if (metal == null) return source;
 
     final scopedSaleItems = source.saleItems
@@ -64,9 +74,11 @@ class PosInvoiceScopeService {
     final scopedNetPayable = source.billingMode == BillingMode.wholesale
         ? scopedGrandTotal
         : scopedGrandTotal - scopedExchangeDeduction;
+    final adjustedScopedNetPayable =
+        scopedNetPayable - crossMetalAdjustmentDeduction;
     final paymentRatio = source.netPayable.abs() <= 0.005
         ? grossRatio
-        : scopedNetPayable / source.netPayable;
+        : adjustedScopedNetPayable / source.netPayable;
     final cashPaid = _splitPayment(source.cashPaid, paymentRatio);
     final upiPaid = _splitPayment(source.upiPaid, paymentRatio);
     final cardPaid = _splitPayment(source.cardPaid, paymentRatio);
@@ -112,19 +124,78 @@ class PosInvoiceScopeService {
       sgst: scopedGst / 2,
       totalGst: scopedGst,
       totalTradeInDeduction: scopedExchangeDeduction,
+      crossMetalAdjustmentDeduction: crossMetalAdjustmentDeduction,
       grandTotal: scopedGrandTotal,
       cashPaid: cashPaid,
       upiPaid: upiPaid,
       cardPaid: cardPaid,
       advancePaid: advancePaid,
-      balanceDue: scopedNetPayable - scopedPaid,
+      balanceDue: adjustedScopedNetPayable - scopedPaid,
       changeSettlementMethod: source.changeSettlementMethod,
       changeSettlementAmount:
           _splitPayment(source.changeSettlementAmount, paymentRatio),
       changeSettlementPaymentMode: source.changeSettlementPaymentMode,
       totalMakingCharge: scopedMakingCharge,
       promiseDate: source.promiseDate,
+      isMetalScopedCopy: isMetalScopedCopy,
     );
+  }
+
+  Map<MetalType, double> _crossMetalAdjustments(
+    PosInvoiceModel source,
+    List<MetalType> metals,
+  ) {
+    if (metals.length <= 1 ||
+        source.billingMode == BillingMode.wholesale ||
+        source.netPayable <= 0.005) {
+      return const {};
+    }
+
+    final netByMetal = {
+      for (final metal in metals) metal: _sectionNetPayable(source, metal),
+    };
+    final excess = netByMetal.values
+        .where((net) => net < -0.005)
+        .fold(0.0, (sum, net) => sum + net.abs());
+    if (excess <= 0.005) return const {};
+
+    final positiveTotal = netByMetal.values
+        .where((net) => net > 0.005)
+        .fold(0.0, (sum, net) => sum + net);
+    if (positiveTotal <= 0.005) return const {};
+
+    return {
+      for (final entry in netByMetal.entries)
+        if (entry.value > 0.005)
+          entry.key: excess * (entry.value / positiveTotal),
+    };
+  }
+
+  double _sectionNetPayable(PosInvoiceModel source, MetalType metal) {
+    final scopedSaleItems = source.saleItems
+        .where((item) => item.metal == metal)
+        .toList(growable: false);
+    final scopedOldItems = source.tradeInItems
+        .where((item) => item.metal == metal)
+        .toList(growable: false);
+    final scopedGrossAmount =
+        scopedSaleItems.fold(0.0, (sum, item) => sum + item.totalValue);
+    final grossRatio = source.grossAmount.abs() <= 0.005
+        ? 0.0
+        : scopedGrossAmount / source.grossAmount;
+    final scopedDiscount = source.discountAmount * grossRatio;
+    final scopedTaxable = scopedGrossAmount - scopedDiscount;
+    final safeTaxable = scopedTaxable < 0 ? 0.0 : scopedTaxable;
+    final taxRatio = source.taxableAmount.abs() <= 0.005
+        ? grossRatio
+        : safeTaxable / source.taxableAmount;
+    final scopedGst = source.totalGst * taxRatio;
+    final scopedGrandTotal = safeTaxable + scopedGst;
+    final scopedExchangeDeduction =
+        source.tradeInMode == TradeInAdjustMode.cashAdjust
+            ? scopedOldItems.fold(0.0, (sum, item) => sum + item.totalValue)
+            : 0.0;
+    return scopedGrandTotal - scopedExchangeDeduction;
   }
 
   double _splitPayment(double amount, double ratio) {

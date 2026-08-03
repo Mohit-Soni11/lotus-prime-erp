@@ -183,6 +183,7 @@ class PosLotusClassicInvoicePdfLayout {
                       color: _gold,
                     ),
                   pw.Expanded(
+                    flex: index == 0 ? 2 : 1,
                     child: _headerMeta(
                       label: metadata[index].label,
                       value: metadata[index].value,
@@ -271,14 +272,17 @@ class PosLotusClassicInvoicePdfLayout {
           ),
         ),
         pw.SizedBox(height: 2),
-        pw.Text(
-          value,
-          maxLines: 1,
-          overflow: pw.TextOverflow.clip,
-          style: pw.TextStyle(
-            color: PdfColors.white,
-            fontSize: 9.5,
-            fontWeight: pw.FontWeight.bold,
+        pw.FittedBox(
+          fit: pw.BoxFit.scaleDown,
+          alignment: pw.Alignment.centerLeft,
+          child: pw.Text(
+            value,
+            maxLines: 1,
+            style: pw.TextStyle(
+              color: PdfColors.white,
+              fontSize: 9.5,
+              fontWeight: pw.FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -351,10 +355,10 @@ class PosLotusClassicInvoicePdfLayout {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _eyebrow('NET PAYABLE', color: _gold),
+                _eyebrow(_amountPanelLabel(invoice), color: _gold),
                 pw.SizedBox(height: 6),
                 pw.Text(
-                  _amount(invoice.netPayable),
+                  _signedAmount(invoice.netPayable),
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
                   style: pw.TextStyle(
@@ -389,7 +393,7 @@ class PosLotusClassicInvoicePdfLayout {
                         ),
                       ),
                       pw.Text(
-                        invoice.paymentStatus.label,
+                        _paymentStatusLabel(invoice),
                         style: pw.TextStyle(
                           color: _statusColor(invoice),
                           fontSize: 8,
@@ -674,6 +678,12 @@ class PosLotusClassicInvoicePdfLayout {
           -invoice.totalTradeInDeduction,
           isDeduction: true,
         ),
+      if (invoice.crossMetalAdjustmentDeduction > 0.005)
+        _totalLine(
+          'Cross Metal Adjustment',
+          -invoice.crossMetalAdjustmentDeduction,
+          isDeduction: true,
+        ),
     ];
 
     return pw.Container(
@@ -688,8 +698,8 @@ class PosLotusClassicInvoicePdfLayout {
           ...totalLines,
           pw.Divider(color: _gold, thickness: 0.8),
           _totalLine(
-            'GRAND TOTAL',
-            invoice.netPayable,
+            _netTotalLabel(invoice),
+            invoice.netPayable.abs(),
             isBold: true,
             isGrand: true,
           ),
@@ -1016,7 +1026,7 @@ class PosLotusClassicInvoicePdfLayout {
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
       ),
       child: pw.Text(
-        invoice.paymentStatus.label,
+        _paymentStatusLabel(invoice),
         style: pw.TextStyle(
           color: _statusColor(invoice),
           fontSize: 8.4,
@@ -1073,6 +1083,13 @@ class PosLotusClassicInvoicePdfLayout {
             _miniRow('Promise Date', _dateFormat.format(invoice.promiseDate!)),
         ],
       );
+    }
+    if (_isScopedSectionExcess(invoice)) {
+      return _miniRow(
+          'Adjusted in Final Bill', _amount(invoice.netPayable.abs()));
+    }
+    if (invoice.netPayable < -0.5) {
+      return _miniRow('Customer Credit', _amount(invoice.netPayable.abs()));
     }
     return _miniRow('Balance Outstanding', 'Nil');
   }
@@ -1259,6 +1276,33 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   String _amount(double value) => 'Rs ${_amountFormat.format(value)}';
+
+  String _signedAmount(double value) {
+    if (value < -0.5) return _amount(value.abs());
+    return _amount(value);
+  }
+
+  String _amountPanelLabel(PosInvoiceModel invoice) =>
+      _isScopedSectionExcess(invoice)
+          ? 'SECTION EXCESS'
+          : invoice.netPayable < -0.5
+              ? 'CUSTOMER CREDIT'
+              : 'NET PAYABLE';
+
+  String _netTotalLabel(PosInvoiceModel invoice) =>
+      _isScopedSectionExcess(invoice)
+          ? 'ADJUSTED BALANCE'
+          : invoice.netPayable < -0.5
+              ? 'CUSTOMER CREDIT'
+              : 'GRAND TOTAL';
+
+  bool _isScopedSectionExcess(PosInvoiceModel invoice) =>
+      invoice.isMetalScopedCopy && invoice.netPayable < -0.5;
+
+  String _paymentStatusLabel(PosInvoiceModel invoice) =>
+      _isScopedSectionExcess(invoice)
+          ? 'ADJUSTED'
+          : invoice.paymentStatus.label;
 
   String _compact(double value) {
     final rounded = value.roundToDouble();

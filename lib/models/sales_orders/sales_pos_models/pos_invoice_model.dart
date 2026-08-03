@@ -112,6 +112,7 @@ class PosInvoiceModel {
   final double sgst;
   final double totalGst;
   final double totalTradeInDeduction;
+  final double crossMetalAdjustmentDeduction;
   final double grandTotal;
 
   final double cashPaid;
@@ -125,6 +126,7 @@ class PosInvoiceModel {
 
   final DateTime? promiseDate;
   final double totalMakingCharge;
+  final bool isMetalScopedCopy;
 
   double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
 
@@ -196,7 +198,7 @@ class PosInvoiceModel {
 
   double get netPayable => billingMode == BillingMode.wholesale
       ? grandTotal
-      : grandTotal - totalTradeInDeduction;
+      : grandTotal - totalTradeInDeduction - crossMetalAdjustmentDeduction;
 
   PaymentStatus get paymentStatus {
     if (netPayable < 0) return PaymentStatus.credit;
@@ -236,6 +238,7 @@ class PosInvoiceModel {
     required this.sgst,
     required this.totalGst,
     required this.totalTradeInDeduction,
+    this.crossMetalAdjustmentDeduction = 0.0,
     required this.grandTotal,
     required this.cashPaid,
     required this.upiPaid,
@@ -247,5 +250,6 @@ class PosInvoiceModel {
     this.changeSettlementAmount = 0.0,
     this.changeSettlementPaymentMode,
     this.promiseDate,
+    this.isMetalScopedCopy = false,
   });
 }

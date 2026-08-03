@@ -44,6 +44,49 @@ void main() {
       gold.dispose();
       silver.dispose();
     });
+
+    test('uses section excess to settle positive metal scoped invoices', () {
+      final gold = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Nose Pin',
+        purity: '18KT',
+        grossWeight: 1,
+        rate: 100,
+      );
+      final silver = _saleItem(
+        metal: MetalType.silver,
+        description: 'Silver Jantar',
+        purity: '60',
+        grossWeight: 1,
+        rate: 50,
+      );
+      final silverTradeIn = TradeInItemModel(metal: MetalType.silver);
+      silverTradeIn.descCtrl.text = 'Old Silver';
+      silverTradeIn.grossCtrl.text = '0.7';
+      silverTradeIn.lessCtrl.text = '0';
+      silverTradeIn.purityCtrl.text = '100';
+      silverTradeIn.rateCtrl.text = '100';
+      final invoice = _invoice(
+        saleItems: [gold, silver],
+        tradeInItems: [silverTradeIn],
+      );
+
+      final scoped =
+          const PosInvoiceScopeService().scopedInvoicesForAllMetals(invoice);
+
+      expect(scoped, hasLength(2));
+      expect(scoped[0].isMetalScopedCopy, isTrue);
+      expect(scoped[0].crossMetalAdjustmentDeduction, closeTo(20, 0.01));
+      expect(scoped[0].netPayable, closeTo(80, 0.01));
+      expect(scoped[0].cashPaid, closeTo(80, 0.01));
+      expect(scoped[0].balanceDue, closeTo(0, 0.01));
+      expect(scoped[1].netPayable, closeTo(-20, 0.01));
+      expect(scoped[1].cashPaid, closeTo(0, 0.01));
+
+      gold.dispose();
+      silver.dispose();
+      silverTradeIn.dispose();
+    });
   });
 
   group('PosInvoicePdfBuilder', () {
