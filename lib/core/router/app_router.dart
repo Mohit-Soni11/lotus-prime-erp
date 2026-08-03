@@ -24,6 +24,7 @@ import '../../ui/dashboard/dashboard_screen.dart';
 import '../../ui/settings/settings_dashboard/settings_screen.dart';
 import '../../ui/settings/print_templates/print_templates_screen.dart';
 import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_desk_screen.dart';
+import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_batch_detail_screen.dart';
 import '../../features/settings/metal_cost_analyser/presentation/metal_valuation_metal_detail_screen.dart';
 import '../../features/settings/billing_setup/presentation/screens/billing_setup_workspace_screen.dart';
 
@@ -351,6 +352,20 @@ GoRouter createAppRouter() {
               metalType: state.pathParameters['metal'] ?? '',
               onBack: () => context.go(RoutePaths.settingsMetalCostAnalyser),
             ),
+          ),
+          GoRoute(
+            path:
+                '${RoutePaths.settingsMetalCostAnalyser}/metal/:metal/batch/:batch',
+            builder: (context, state) {
+              final metal = state.pathParameters['metal'] ?? '';
+              return MetalValuationBatchDetailScreen(
+                metalType: metal,
+                batchCode: state.pathParameters['batch'] ?? '',
+                onBack: () => context.go(
+                  '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal',
+                ),
+              );
+            },
           ),
           GoRoute(
             path: RoutePaths.customerList,

@@ -24,12 +24,14 @@ enum MetalValuationFilter {
 class MetalValuationSnapshot {
   final MetalValuationSummary summary;
   final List<MetalValuationBreakdown> breakdown;
+  final List<BatchValuationRow> batchSummaries;
   final List<AvailableValuationRow> availableStock;
   final List<SoldValuationRow> soldStock;
 
   const MetalValuationSnapshot({
     required this.summary,
     required this.breakdown,
+    required this.batchSummaries,
     required this.availableStock,
     required this.soldStock,
   });
@@ -37,6 +39,7 @@ class MetalValuationSnapshot {
   static const empty = MetalValuationSnapshot(
     summary: MetalValuationSummary.empty,
     breakdown: [],
+    batchSummaries: [],
     availableStock: [],
     soldStock: [],
   );
@@ -154,9 +157,61 @@ class AvailableValuationRow {
   String get identifier => huid.trim().isEmpty ? unitCode : huid;
 }
 
+class BatchValuationRow {
+  final String batchCode;
+  final String metalType;
+  final String supplierName;
+  final DateTime? createdAt;
+  final int totalUnits;
+  final int availableUnits;
+  final int soldUnits;
+  final double totalGrossWeight;
+  final double totalNetWeight;
+  final double availableNetWeight;
+  final double soldNetWeight;
+  final double totalFineWeight;
+  final double valuationFineWeight;
+  final double availableFineWeight;
+  final double soldFineWeight;
+  final double totalCost;
+  final double availableCost;
+  final double soldCost;
+  final double saleValue;
+  final double profit;
+
+  const BatchValuationRow({
+    required this.batchCode,
+    required this.metalType,
+    required this.supplierName,
+    required this.createdAt,
+    required this.totalUnits,
+    required this.availableUnits,
+    required this.soldUnits,
+    required this.totalGrossWeight,
+    required this.totalNetWeight,
+    required this.availableNetWeight,
+    required this.soldNetWeight,
+    required this.totalFineWeight,
+    required this.valuationFineWeight,
+    required this.availableFineWeight,
+    required this.soldFineWeight,
+    required this.totalCost,
+    required this.availableCost,
+    required this.soldCost,
+    required this.saleValue,
+    required this.profit,
+  });
+
+  double get marginPercent {
+    if (saleValue == 0) return 0;
+    return profit / saleValue * 100;
+  }
+}
+
 class SoldValuationRow {
   final String billNo;
   final DateTime? billDate;
+  final String batchCode;
   final String metalType;
   final String itemName;
   final String huid;
@@ -169,6 +224,7 @@ class SoldValuationRow {
   const SoldValuationRow({
     required this.billNo,
     required this.billDate,
+    required this.batchCode,
     required this.metalType,
     required this.itemName,
     required this.huid,

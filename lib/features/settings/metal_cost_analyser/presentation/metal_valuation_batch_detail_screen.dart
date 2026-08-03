@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/application/metal_valuation_controller.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
 
@@ -8,30 +6,34 @@ import 'widgets/metal_valuation_app_bar.dart';
 import 'widgets/metal_valuation_tables.dart';
 import 'widgets/metal_valuation_tokens.dart';
 
-class MetalValuationMetalDetailScreen extends StatefulWidget {
+class MetalValuationBatchDetailScreen extends StatefulWidget {
   final String metalType;
+  final String batchCode;
   final VoidCallback? onBack;
 
-  const MetalValuationMetalDetailScreen({
+  const MetalValuationBatchDetailScreen({
     super.key,
     required this.metalType,
+    required this.batchCode,
     this.onBack,
   });
 
   @override
-  State<MetalValuationMetalDetailScreen> createState() =>
-      _MetalValuationMetalDetailScreenState();
+  State<MetalValuationBatchDetailScreen> createState() =>
+      _MetalValuationBatchDetailScreenState();
 }
 
-class _MetalValuationMetalDetailScreenState
-    extends State<MetalValuationMetalDetailScreen> {
+class _MetalValuationBatchDetailScreenState
+    extends State<MetalValuationBatchDetailScreen> {
   late final MetalValuationFilter _filter;
+  late final String _batchCode;
   late final MetalValuationController _controller;
 
   @override
   void initState() {
     super.initState();
     _filter = MetalValuationFilter.fromMetalType(widget.metalType);
+    _batchCode = Uri.decodeComponent(widget.batchCode);
     _controller = MetalValuationController(initialFilter: _filter)..load();
   }
 
@@ -46,13 +48,10 @@ class _MetalValuationMetalDetailScreenState
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        final title = _filter.isAll
-            ? 'METAL PERFORMANCE'
-            : '${_filter.label.toUpperCase()} PERFORMANCE';
         return Scaffold(
           backgroundColor: MetalValuationColors.canvas,
           appBar: MetalValuationAppBar(
-            title: title,
+            title: '${_filter.label.toUpperCase()} BATCH VALUATION',
             onBack: widget.onBack ?? () => Navigator.maybePop(context),
           ),
           body: _buildBody(),
@@ -65,14 +64,22 @@ class _MetalValuationMetalDetailScreenState
     if (_controller.hasError) {
       return Center(
         child: Text(
-          _controller.errorMessage ?? 'Unable to load metal performance.',
+          _controller.errorMessage ?? 'Unable to load batch valuation.',
           style: MetalValuationText.body,
         ),
       );
     }
 
     final snapshot = _controller.snapshot;
-    final row = snapshot.breakdown.isEmpty ? null : snapshot.breakdown.first;
+    final batch = snapshot.batchSummaries
+        .where((row) => row.batchCode == _batchCode)
+        .cast<BatchValuationRow?>()
+        .firstOrNull;
+    final availableRows = snapshot.availableStock
+        .where((row) => row.batchCode == _batchCode)
+        .toList();
+    final soldRows =
+        snapshot.soldStock.where((row) => row.batchCode == _batchCode).toList();
 
     return Stack(
       children: [
@@ -81,24 +88,15 @@ class _MetalValuationMetalDetailScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _MetalDetailHeader(
-                metalType: _filter.isAll ? widget.metalType : _filter.label,
-                row: row,
+              _BatchDetailHeader(
+                batchCode: _batchCode,
+                metalType: _filter.label,
+                batch: batch,
               ),
               const SizedBox(height: 16),
-              AvailableStockValuationTable(
-                batchRows: snapshot.batchSummaries,
-                rows: snapshot.availableStock,
-                onBatchSelected: (batch) {
-                  final metal = Uri.encodeComponent(batch.metalType);
-                  final code = Uri.encodeComponent(batch.batchCode);
-                  context.go(
-                    '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal/batch/$code',
-                  );
-                },
-              ),
+              ItemValuationLedgerTable(rows: availableRows),
               const SizedBox(height: 16),
-              SoldStockValuationTable(rows: snapshot.soldStock),
+              SoldStockValuationTable(rows: soldRows),
               const SizedBox(height: 24),
             ],
           ),
@@ -119,18 +117,19 @@ class _MetalValuationMetalDetailScreenState
   }
 }
 
-class _MetalDetailHeader extends StatelessWidget {
+class _BatchDetailHeader extends StatelessWidget {
+  final String batchCode;
   final String metalType;
-  final MetalValuationBreakdown? row;
+  final BatchValuationRow? batch;
 
-  const _MetalDetailHeader({
+  const _BatchDetailHeader({
+    required this.batchCode,
     required this.metalType,
-    required this.row,
+    required this.batch,
   });
 
   @override
   Widget build(BuildContext context) {
-    final normalizedMetal = metalType.toUpperCase();
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -147,7 +146,7 @@ class _MetalDetailHeader extends StatelessWidget {
           Row(
             children: [
               MetalValuationMetalImage(
-                metalType: normalizedMetal,
+                metalType: metalType,
                 borderColor: Colors.white,
                 fallbackColor: MetalValuationColors.goldDark,
                 size: 58,
@@ -158,15 +157,15 @@ class _MetalDetailHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${titleCase(metalType)} Stock Performance',
+                      batchCode,
                       style: MetalValuationText.sectionTitle.copyWith(
-                        fontSize: 26,
+                        fontSize: 25,
                         color: const Color(0xFF3B2A08),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Metal-specific stock movement, sold weight and live inventory.',
+                      '${formatDate(batch?.createdAt)}  |  ${batch?.supplierName ?? 'Not recorded'}',
                       style: MetalValuationText.body.copyWith(
                         color: const Color(0xFF4B3A12),
                       ),
@@ -179,44 +178,40 @@ class _MetalDetailHeader extends StatelessWidget {
           const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth < 780 ? 2 : 3;
+              final columns = constraints.maxWidth < 780 ? 2 : 5;
               return GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: columns,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
-                childAspectRatio: columns == 2 ? 3.8 : 5.2,
+                childAspectRatio: columns == 2 ? 3.4 : 3.7,
                 children: [
                   _HeaderMetric(
-                    label: 'Available Net Weight',
-                    value: formatGram(row?.availableNetWeight ?? 0),
-                    color: MetalValuationColors.green,
-                  ),
-                  _HeaderMetric(
-                    label: 'Available Total Fine',
-                    value: formatGram(row?.availableFineWeight ?? 0),
-                    color: MetalValuationColors.green,
+                    label: 'Total Units',
+                    value: '${batch?.totalUnits ?? 0}',
                   ),
                   _HeaderMetric(
                     label: 'Available Units',
-                    value: '${row?.availableUnits ?? 0}',
-                    color: MetalValuationColors.green,
-                  ),
-                  _HeaderMetric(
-                    label: 'Sold Net Weight',
-                    value: formatGram(row?.soldNetWeight ?? 0),
-                    color: MetalValuationColors.red,
-                  ),
-                  _HeaderMetric(
-                    label: 'Sold Total Fine',
-                    value: formatGram(row?.soldFineWeight ?? 0),
-                    color: MetalValuationColors.red,
+                    value: '${batch?.availableUnits ?? 0}',
+                    valueColor: MetalValuationColors.green,
                   ),
                   _HeaderMetric(
                     label: 'Sold Units',
-                    value: '${row?.soldUnits ?? 0}',
-                    color: MetalValuationColors.red,
+                    value: '${batch?.soldUnits ?? 0}',
+                    valueColor: (batch?.soldUnits ?? 0) > 0
+                        ? MetalValuationColors.red
+                        : MetalValuationColors.ink,
+                  ),
+                  _HeaderMetric(
+                    label: 'Net Weight',
+                    value: formatGram(batch?.totalNetWeight ?? 0),
+                    valueColor: MetalValuationColors.green,
+                  ),
+                  _HeaderMetric(
+                    label: 'Valuation Cost',
+                    value: formatMoney(batch?.totalCost ?? 0),
+                    valueColor: MetalValuationColors.goldDark,
                   ),
                 ],
               );
@@ -231,18 +226,18 @@ class _MetalDetailHeader extends StatelessWidget {
 class _HeaderMetric extends StatelessWidget {
   final String label;
   final String value;
-  final Color color;
+  final Color? valueColor;
 
   const _HeaderMetric({
     required this.label,
     required this.value,
-    required this.color,
+    this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(8),
@@ -259,12 +254,16 @@ class _HeaderMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: MetalValuationText.value.copyWith(
-              color: color,
-              fontSize: 20,
+              fontSize: 19,
+              color: valueColor ?? MetalValuationColors.ink,
             ),
           ),
         ],
       ),
     );
   }
+}
+
+extension _FirstOrNullExtension<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

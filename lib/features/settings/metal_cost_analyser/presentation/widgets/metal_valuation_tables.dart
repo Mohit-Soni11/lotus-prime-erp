@@ -19,6 +19,7 @@ class SoldStockValuationTable extends StatelessWidget {
       columns: const [
         'Bill',
         'Date',
+        'Batch',
         'Metal',
         'Item',
         'HUID / Unit',
@@ -32,6 +33,7 @@ class SoldStockValuationTable extends StatelessWidget {
             (row) => [
               row.billNo,
               formatDate(row.billDate),
+              row.batchCode,
               titleCase(row.metalType),
               row.itemName,
               row.identifier,
@@ -47,16 +49,43 @@ class SoldStockValuationTable extends StatelessWidget {
 }
 
 class AvailableStockValuationTable extends StatelessWidget {
+  final List<BatchValuationRow> batchRows;
+  final List<AvailableValuationRow> rows;
+  final ValueChanged<BatchValuationRow>? onBatchSelected;
+
+  const AvailableStockValuationTable({
+    super.key,
+    required this.batchRows,
+    required this.rows,
+    this.onBatchSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        BatchValuationSummaryPanel(
+          rows: batchRows,
+          onBatchSelected: onBatchSelected,
+        ),
+        const SizedBox(height: 16),
+        ItemValuationLedgerTable(rows: rows),
+      ],
+    );
+  }
+}
+
+class ItemValuationLedgerTable extends StatelessWidget {
   final List<AvailableValuationRow> rows;
 
-  const AvailableStockValuationTable({super.key, required this.rows});
+  const ItemValuationLedgerTable({super.key, required this.rows});
 
   @override
   Widget build(BuildContext context) {
     return _TablePanel(
-      title: 'Available Stock Valuation',
-      subtitle:
-          'Live inventory cost is read directly from available stock units.',
+      title: 'Item Valuation Ledger',
+      subtitle: 'Unit-level valuation for exact HUID, item and stock audit.',
       icon: Icons.inventory_rounded,
       emptyMessage: 'No available stock valuation records found.',
       columns: const [
@@ -93,6 +122,247 @@ class AvailableStockValuationTable extends StatelessWidget {
   }
 }
 
+class BatchValuationSummaryPanel extends StatelessWidget {
+  final List<BatchValuationRow> rows;
+  final ValueChanged<BatchValuationRow>? onBatchSelected;
+
+  const BatchValuationSummaryPanel({
+    super.key,
+    required this.rows,
+    this.onBatchSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: valuationPanelDecoration(color: Colors.white),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _PanelHeading(
+            title: 'Batch Valuation Summary',
+            subtitle:
+                'Batch-wise purchase date, supplier, stock weight and valuation cost.',
+            icon: Icons.dataset_rounded,
+            countLabel: '${rows.length} batches',
+          ),
+          const SizedBox(height: 14),
+          if (rows.isEmpty)
+            const _PanelEmptyState(message: 'No batch valuation records found.')
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth < 820 ? 1 : 2;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: rows.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: 270,
+                  ),
+                  itemBuilder: (context, index) {
+                    final row = rows[index];
+                    return _BatchValuationCard(
+                      row: row,
+                      onTap: onBatchSelected == null
+                          ? null
+                          : () => onBatchSelected!(row),
+                    );
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatchValuationCard extends StatelessWidget {
+  final BatchValuationRow row;
+  final VoidCallback? onTap;
+
+  const _BatchValuationCard({
+    required this.row,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFCF7),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: MetalValuationColors.line),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  MetalValuationMetalImage(
+                    metalType: row.metalType,
+                    borderColor: MetalValuationColors.line,
+                    fallbackColor: MetalValuationColors.goldDark,
+                    size: 42,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          row.batchCode,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: MetalValuationText.sectionTitle.copyWith(
+                            fontSize: 17,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${formatDate(row.createdAt)}  |  ${row.supplierName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: MetalValuationText.body.copyWith(
+                            fontSize: 12,
+                            color: MetalValuationColors.mutedInk,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onTap != null)
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: MetalValuationColors.goldDark,
+                      size: 20,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth < 560
+                      ? 2
+                      : constraints.maxWidth < 820
+                          ? 3
+                          : 4;
+                  return GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: columns,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: columns == 2
+                        ? 2.5
+                        : columns == 3
+                            ? 2.7
+                            : 3.0,
+                    children: [
+                      _CardFact(
+                        label: 'Total Units',
+                        value: '${row.totalUnits}',
+                      ),
+                      _CardFact(
+                        label: 'Available',
+                        value: '${row.availableUnits}',
+                        valueColor: MetalValuationColors.green,
+                      ),
+                      _CardFact(
+                        label: 'Sold',
+                        value: '${row.soldUnits}',
+                        valueColor: row.soldUnits > 0
+                            ? MetalValuationColors.red
+                            : MetalValuationColors.ink,
+                      ),
+                      _CardFact(
+                        label: 'Gross Weight',
+                        value: formatGram(row.totalGrossWeight),
+                      ),
+                      _CardFact(
+                        label: 'Net Weight',
+                        value: formatGram(row.totalNetWeight),
+                      ),
+                      _CardFact(
+                        label: 'Valuation Fine',
+                        value: formatGram(row.valuationFineWeight),
+                        valueColor: MetalValuationColors.goldDark,
+                      ),
+                      _CardFact(
+                        label: 'Valuation Cost',
+                        value: formatMoney(row.totalCost),
+                        valueColor: MetalValuationColors.goldDark,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardFact extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _CardFact({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: MetalValuationColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: MetalValuationText.label.copyWith(fontSize: 11),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: MetalValuationText.body.copyWith(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: valueColor ?? MetalValuationColors.ink,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TablePanel extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -120,60 +390,18 @@ class _TablePanel extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: MetalValuationColors.gold.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: MetalValuationColors.goldDark,
-                    size: 21,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: MetalValuationText.sectionTitle),
-                      const SizedBox(height: 3),
-                      Text(subtitle, style: MetalValuationText.body),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: MetalValuationColors.gold.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: MetalValuationColors.line),
-                  ),
-                  child: Text(
-                    '${rows.length} rows',
-                    style: MetalValuationText.label.copyWith(
-                      color: MetalValuationColors.goldDark,
-                    ),
-                  ),
-                ),
-              ],
+            child: _PanelHeading(
+              title: title,
+              subtitle: subtitle,
+              icon: icon,
+              countLabel: '${rows.length} rows',
             ),
           ),
           const Divider(height: 1, color: MetalValuationColors.line),
           if (rows.isEmpty)
             Padding(
               padding: const EdgeInsets.all(30),
-              child: Center(
-                child: Text(emptyMessage, style: MetalValuationText.body),
-              ),
+              child: _PanelEmptyState(message: emptyMessage),
             )
           else
             LayoutBuilder(
@@ -224,5 +452,73 @@ class _TablePanel extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _PanelHeading extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String countLabel;
+
+  const _PanelHeading({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.countLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: MetalValuationColors.gold.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: MetalValuationColors.goldDark, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: MetalValuationText.sectionTitle),
+              const SizedBox(height: 3),
+              Text(subtitle, style: MetalValuationText.body),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: MetalValuationColors.gold.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: MetalValuationColors.line),
+          ),
+          child: Text(
+            countLabel,
+            style: MetalValuationText.label.copyWith(
+              color: MetalValuationColors.goldDark,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PanelEmptyState extends StatelessWidget {
+  final String message;
+
+  const _PanelEmptyState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text(message, style: MetalValuationText.body));
   }
 }

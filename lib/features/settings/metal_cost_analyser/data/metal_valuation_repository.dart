@@ -32,12 +32,14 @@ class MetalValuationRepository {
     );
 
     final breakdown = await _readBreakdown(filter);
+    final batchSummaries = await _readBatchSummaries(filter);
     final availableRows = await _readAvailableRows(filter);
     final soldRows = await _readSoldRows(filter);
 
     return MetalValuationSnapshot(
       summary: summary,
       breakdown: breakdown,
+      batchSummaries: batchSummaries,
       availableStock: availableRows,
       soldStock: soldRows,
     );
@@ -162,6 +164,83 @@ class MetalValuationRepository {
         .toList();
   }
 
+  Future<List<BatchValuationRow>> _readBatchSummaries(
+    MetalValuationFilter filter,
+  ) async {
+    final rows = await _db.customSelect(
+      '''
+          WITH unit_sales AS (
+            SELECT
+              linked_stock_unit_id AS unit_id,
+              COUNT(*) AS sold_units,
+              CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS sold_net_weight,
+              CAST(COALESCE(SUM(fine_weight), 0.0) AS REAL) AS sold_fine_weight,
+              CAST(COALESCE(SUM(stock_unit_cost), 0.0) AS REAL) AS sold_cost,
+              CAST(COALESCE(SUM(item_total), 0.0) AS REAL) AS sale_value,
+              CAST(COALESCE(SUM(stock_profit_amount), 0.0) AS REAL) AS profit
+            FROM bill_items
+            WHERE stock_unit_cost > 0 AND linked_stock_unit_id IS NOT NULL
+            GROUP BY linked_stock_unit_id
+          )
+          SELECT
+            COALESCE(NULLIF(u.batch_code, ''), 'Not recorded') AS batch_code,
+            u.metal_type AS metal_type,
+            COALESCE(NULLIF(MAX(u.supplier_name), ''), 'Not recorded') AS supplier_name,
+            MIN(u.created_at) AS created_at,
+            COUNT(u.id) AS total_units,
+            SUM(CASE WHEN u.status = 'Available' THEN 1 ELSE 0 END) AS available_units,
+            COALESCE(SUM(unit_sales.sold_units), 0) AS sold_units,
+            CAST(COALESCE(SUM(u.gross_weight), 0.0) AS REAL) AS total_gross_weight,
+            CAST(COALESCE(SUM(u.net_weight), 0.0) AS REAL) AS total_net_weight,
+            CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.net_weight ELSE 0 END), 0.0) AS REAL) AS available_net_weight,
+            CAST(COALESCE(SUM(unit_sales.sold_net_weight), 0.0) AS REAL) AS sold_net_weight,
+            CAST(COALESCE(SUM(u.actual_fine_weight), 0.0) AS REAL) AS total_fine_weight,
+            CAST(COALESCE(SUM(u.valuation_fine_weight), 0.0) AS REAL) AS valuation_fine_weight,
+            CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS REAL) AS available_fine_weight,
+            CAST(COALESCE(SUM(unit_sales.sold_fine_weight), 0.0) AS REAL) AS sold_fine_weight,
+            CAST(COALESCE(SUM(u.unit_cost), 0.0) AS REAL) AS total_cost,
+            CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.unit_cost ELSE 0 END), 0.0) AS REAL) AS available_cost,
+            CAST(COALESCE(SUM(unit_sales.sold_cost), 0.0) AS REAL) AS sold_cost,
+            CAST(COALESCE(SUM(unit_sales.sale_value), 0.0) AS REAL) AS sale_value,
+            CAST(COALESCE(SUM(unit_sales.profit), 0.0) AS REAL) AS profit
+          FROM stock_item_units u
+          LEFT JOIN unit_sales ON unit_sales.unit_id = u.id
+          WHERE 1 = 1 ${_metalWhereClause(filter, alias: 'u')}
+          GROUP BY COALESCE(NULLIF(u.batch_code, ''), 'Not recorded'), u.metal_type
+          ORDER BY MAX(u.created_at) DESC, batch_code
+          LIMIT 80
+          ''',
+      variables: _metalVariables(filter),
+    ).get();
+
+    return rows
+        .map(
+          (row) => BatchValuationRow(
+            batchCode: _readString(row, 'batch_code'),
+            metalType: _readString(row, 'metal_type'),
+            supplierName: _readString(row, 'supplier_name'),
+            createdAt: _readDateTime(row, 'created_at'),
+            totalUnits: _readInt(row, 'total_units'),
+            availableUnits: _readInt(row, 'available_units'),
+            soldUnits: _readInt(row, 'sold_units'),
+            totalGrossWeight: _readDouble(row, 'total_gross_weight'),
+            totalNetWeight: _readDouble(row, 'total_net_weight'),
+            availableNetWeight: _readDouble(row, 'available_net_weight'),
+            soldNetWeight: _readDouble(row, 'sold_net_weight'),
+            totalFineWeight: _readDouble(row, 'total_fine_weight'),
+            valuationFineWeight: _readDouble(row, 'valuation_fine_weight'),
+            availableFineWeight: _readDouble(row, 'available_fine_weight'),
+            soldFineWeight: _readDouble(row, 'sold_fine_weight'),
+            totalCost: _readDouble(row, 'total_cost'),
+            availableCost: _readDouble(row, 'available_cost'),
+            soldCost: _readDouble(row, 'sold_cost'),
+            saleValue: _readDouble(row, 'sale_value'),
+            profit: _readDouble(row, 'profit'),
+          ),
+        )
+        .toList();
+  }
+
   Future<List<AvailableValuationRow>> _readAvailableRows(
     MetalValuationFilter filter,
   ) async {
@@ -216,6 +295,7 @@ class MetalValuationRepository {
           SELECT
             b.bill_no AS bill_no,
             b.bill_date AS bill_date,
+            u.batch_code AS batch_code,
             i.metal_type AS metal_type,
             i.item_name AS item_name,
             i.huid AS huid,
@@ -226,6 +306,7 @@ class MetalValuationRepository {
             i.stock_profit_amount AS profit
           FROM bill_items i
           INNER JOIN bills b ON b.id = i.bill_id
+          LEFT JOIN stock_item_units u ON u.id = i.linked_stock_unit_id
           WHERE i.stock_unit_cost > 0 ${_metalWhereClause(filter, alias: 'i')}
           ORDER BY b.bill_date DESC, i.id DESC
           LIMIT 120
@@ -238,6 +319,7 @@ class MetalValuationRepository {
           (row) => SoldValuationRow(
             billNo: _readString(row, 'bill_no'),
             billDate: _readDateTime(row, 'bill_date'),
+            batchCode: _readString(row, 'batch_code'),
             metalType: _readString(row, 'metal_type'),
             itemName: _readString(row, 'item_name'),
             huid: _readString(row, 'huid'),
@@ -263,7 +345,9 @@ class MetalValuationRepository {
   }
 
   static int _readInt(QueryRow row, String key) {
-    return row.readNullable<int>(key) ?? 0;
+    final value = row.data[key];
+    if (value is num) return value.toInt();
+    return int.tryParse('$value') ?? 0;
   }
 
   static double _readDouble(QueryRow row, String key) {
