@@ -15,6 +15,7 @@ class _InventoryBatchStatusPdfService {
     document.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        maxPages: 80,
         margin: const pw.EdgeInsets.all(24),
         theme: pw.ThemeData.withFont(
           base: await PdfGoogleFonts.notoSansRegular(),
@@ -30,7 +31,7 @@ class _InventoryBatchStatusPdfService {
           _statusSummary(batch),
           pw.SizedBox(height: 12),
           pw.NewPage(freeSpace: 170),
-          _statusLedger(batch),
+          ..._statusLedger(batch),
         ],
         footer: (context) => pw.Container(
           padding: const pw.EdgeInsets.only(top: 8),
@@ -169,16 +170,15 @@ class _InventoryBatchStatusPdfService {
     );
   }
 
-  static pw.Widget _statusLedger(_InventoryBatchGroup batch) {
-    return _statusSection(
-      title: 'Stock Movement Ledger',
-      children: [
-        for (final entry in batch.units.asMap().entries) ...[
-          _statusItemCard(entry.key + 1, entry.value),
-          if (entry.key != batch.units.length - 1) pw.SizedBox(height: 8),
-        ],
+  static List<pw.Widget> _statusLedger(_InventoryBatchGroup batch) {
+    return [
+      _statusSectionHeader('Stock Movement Ledger'),
+      pw.SizedBox(height: 7),
+      for (final entry in batch.units.asMap().entries) ...[
+        _statusItemCard(entry.key + 1, entry.value),
+        if (entry.key != batch.units.length - 1) pw.SizedBox(height: 8),
       ],
-    );
+    ];
   }
 
   static pw.Widget _statusItemCard(int index, _InventoryGradeUnit unit) {
@@ -305,6 +305,25 @@ class _InventoryBatchStatusPdfService {
           pw.SizedBox(height: 8),
           ...children,
         ],
+      ),
+    );
+  }
+
+  static pw.Widget _statusSectionHeader(String title) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey400, width: 0.6),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
+      ),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 12,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.black,
+        ),
       ),
     );
   }

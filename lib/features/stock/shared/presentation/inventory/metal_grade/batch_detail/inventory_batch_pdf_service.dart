@@ -15,6 +15,7 @@ class _InventoryBatchPdfService {
     document.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        maxPages: 80,
         margin: const pw.EdgeInsets.all(24),
         theme: pw.ThemeData.withFont(
           base: await PdfGoogleFonts.notoSansRegular(),
@@ -27,7 +28,7 @@ class _InventoryBatchPdfService {
             _batchOverview(batch),
             pw.SizedBox(height: 12),
             pw.NewPage(freeSpace: 190),
-            _itemLedger(batch),
+            ..._itemLedger(batch),
             pw.SizedBox(height: 12),
             pw.NewPage(freeSpace: 150),
             _purchaseValuation(batch, metal),
@@ -304,23 +305,15 @@ class _InventoryBatchPdfService {
     );
   }
 
-  static pw.Widget _itemLedger(_InventoryBatchGroup batch) {
-    return _section(
-      title: '2. Item Entry Ledger',
-      children: [
-        pw.Column(
-          children: [
-            for (final entry in batch.units.asMap().entries)
-              pw.Padding(
-                padding: pw.EdgeInsets.only(
-                  bottom: entry.key == batch.units.length - 1 ? 0 : 8,
-                ),
-                child: _unitCard(index: entry.key + 1, unit: entry.value),
-              ),
-          ],
-        ),
+  static List<pw.Widget> _itemLedger(_InventoryBatchGroup batch) {
+    return [
+      _sectionHeader('2. Item Entry Ledger'),
+      pw.SizedBox(height: 7),
+      for (final entry in batch.units.asMap().entries) ...[
+        _unitCard(index: entry.key + 1, unit: entry.value),
+        if (entry.key != batch.units.length - 1) pw.SizedBox(height: 8),
       ],
-    );
+    ];
   }
 
   static pw.Widget _unitCard({
@@ -472,6 +465,25 @@ class _InventoryBatchPdfService {
           pw.SizedBox(height: 8),
           ...children,
         ],
+      ),
+    );
+  }
+
+  static pw.Widget _sectionHeader(String title) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: PdfColors.grey400, width: 0.6),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
+      ),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 11.5,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.black,
+        ),
       ),
     );
   }

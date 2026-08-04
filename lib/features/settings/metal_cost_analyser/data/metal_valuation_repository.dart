@@ -169,7 +169,36 @@ class MetalValuationRepository {
   ) async {
     final rows = await _db.customSelect(
       '''
-          WITH unit_sales AS (
+          WITH purchase_lines AS (
+            SELECT
+              COALESCE(NULLIF(pv.voucher_no, ''), 'Not recorded') AS batch_code,
+              pvi.metal_type AS metal_type,
+              COALESCE(NULLIF(MAX(pv.party_name), ''), 'Not recorded') AS supplier_name,
+              MIN(pvi.created_at) AS created_at,
+              COALESCE(SUM(CASE WHEN pvi.quantity > 0 THEN pvi.quantity ELSE 1 END), 0) AS total_units,
+              CAST(COALESCE(SUM(pvi.gross_weight), 0.0) AS REAL) AS total_gross_weight,
+              CAST(COALESCE(SUM(pvi.net_weight), 0.0) AS REAL) AS total_net_weight,
+              CAST(COALESCE(SUM(pvi.fine_weight), 0.0) AS REAL) AS total_fine_weight,
+              CAST(COALESCE(SUM(pvi.valuation_fine_weight), 0.0) AS REAL) AS valuation_fine_weight,
+              CAST(COALESCE(AVG(NULLIF(pvi.rate, 0.0)), 0.0) AS REAL) AS rate_per_gram,
+              CAST(
+                COALESCE(
+                  SUM(
+                    MAX(
+                      pvi.line_amount - (pvi.valuation_fine_weight * pvi.rate),
+                      0.0
+                    )
+                  ),
+                  0.0
+                ) AS REAL
+              ) AS making_amount,
+              CAST(COALESCE(SUM(pvi.line_amount), 0.0) AS REAL) AS total_cost
+            FROM purchase_voucher_items pvi
+            INNER JOIN purchase_vouchers pv ON pv.id = pvi.purchase_voucher_id
+            WHERE 1 = 1 ${_metalWhereClause(filter, alias: 'pvi')}
+            GROUP BY COALESCE(NULLIF(pv.voucher_no, ''), 'Not recorded'), pvi.metal_type
+          ),
+          unit_sales AS (
             SELECT
               linked_stock_unit_id AS unit_id,
               COUNT(*) AS sold_units,
@@ -181,38 +210,95 @@ class MetalValuationRepository {
             FROM bill_items
             WHERE stock_unit_cost > 0 AND linked_stock_unit_id IS NOT NULL
             GROUP BY linked_stock_unit_id
+          ),
+          stock_balance AS (
+            SELECT
+              COALESCE(NULLIF(u.batch_code, ''), 'Not recorded') AS batch_code,
+              u.metal_type AS metal_type,
+              COALESCE(NULLIF(MAX(u.supplier_name), ''), 'Not recorded') AS supplier_name,
+              MIN(u.created_at) AS created_at,
+              COUNT(u.id) AS stock_units,
+              SUM(CASE WHEN u.status = 'Available' THEN 1 ELSE 0 END) AS available_units,
+              COALESCE(SUM(unit_sales.sold_units), 0) AS sold_units,
+              CAST(COALESCE(SUM(u.gross_weight), 0.0) AS REAL) AS current_gross_weight,
+              CAST(COALESCE(SUM(u.net_weight), 0.0) AS REAL) AS available_net_weight,
+              CAST(COALESCE(SUM(unit_sales.sold_net_weight), 0.0) AS REAL) AS sold_net_weight,
+              CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS REAL) AS available_fine_weight,
+              CAST(COALESCE(SUM(unit_sales.sold_fine_weight), 0.0) AS REAL) AS sold_fine_weight,
+              CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.unit_cost ELSE 0 END), 0.0) AS REAL) AS available_cost,
+              CAST(COALESCE(SUM(unit_sales.sold_cost), 0.0) AS REAL) AS sold_cost,
+              CAST(COALESCE(SUM(unit_sales.sale_value), 0.0) AS REAL) AS sale_value,
+              CAST(COALESCE(SUM(unit_sales.profit), 0.0) AS REAL) AS profit
+            FROM stock_item_units u
+            LEFT JOIN unit_sales ON unit_sales.unit_id = u.id
+            WHERE 1 = 1 ${_metalWhereClause(filter, alias: 'u')}
+            GROUP BY COALESCE(NULLIF(u.batch_code, ''), 'Not recorded'), u.metal_type
           )
           SELECT
-            COALESCE(NULLIF(u.batch_code, ''), 'Not recorded') AS batch_code,
-            u.metal_type AS metal_type,
-            COALESCE(NULLIF(MAX(u.supplier_name), ''), 'Not recorded') AS supplier_name,
-            MIN(u.created_at) AS created_at,
-            COUNT(u.id) AS total_units,
-            SUM(CASE WHEN u.status = 'Available' THEN 1 ELSE 0 END) AS available_units,
-            COALESCE(SUM(unit_sales.sold_units), 0) AS sold_units,
-            CAST(COALESCE(SUM(u.gross_weight), 0.0) AS REAL) AS total_gross_weight,
-            CAST(COALESCE(SUM(u.net_weight), 0.0) AS REAL) AS total_net_weight,
-            CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.net_weight ELSE 0 END), 0.0) AS REAL) AS available_net_weight,
-            CAST(COALESCE(SUM(unit_sales.sold_net_weight), 0.0) AS REAL) AS sold_net_weight,
-            CAST(COALESCE(SUM(u.actual_fine_weight), 0.0) AS REAL) AS total_fine_weight,
-            CAST(COALESCE(SUM(u.valuation_fine_weight), 0.0) AS REAL) AS valuation_fine_weight,
-            CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS REAL) AS available_fine_weight,
-            CAST(COALESCE(SUM(unit_sales.sold_fine_weight), 0.0) AS REAL) AS sold_fine_weight,
-            CAST(COALESCE(AVG(NULLIF(u.rate_per_gram, 0.0)), 0.0) AS REAL) AS rate_per_gram,
-            CAST(COALESCE(SUM(u.making_amount), 0.0) AS REAL) AS making_amount,
-            CAST(COALESCE(SUM(u.unit_cost), 0.0) AS REAL) AS total_cost,
-            CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.unit_cost ELSE 0 END), 0.0) AS REAL) AS available_cost,
-            CAST(COALESCE(SUM(unit_sales.sold_cost), 0.0) AS REAL) AS sold_cost,
-            CAST(COALESCE(SUM(unit_sales.sale_value), 0.0) AS REAL) AS sale_value,
-            CAST(COALESCE(SUM(unit_sales.profit), 0.0) AS REAL) AS profit
-          FROM stock_item_units u
-          LEFT JOIN unit_sales ON unit_sales.unit_id = u.id
-          WHERE 1 = 1 ${_metalWhereClause(filter, alias: 'u')}
-          GROUP BY COALESCE(NULLIF(u.batch_code, ''), 'Not recorded'), u.metal_type
-          ORDER BY MAX(u.created_at) DESC, batch_code
+            purchase_lines.batch_code AS batch_code,
+            purchase_lines.metal_type AS metal_type,
+            purchase_lines.supplier_name AS supplier_name,
+            purchase_lines.created_at AS created_at,
+            purchase_lines.total_units AS total_units,
+            COALESCE(stock_balance.available_units, 0) AS available_units,
+            COALESCE(stock_balance.sold_units, 0) AS sold_units,
+            purchase_lines.total_gross_weight AS total_gross_weight,
+            purchase_lines.total_net_weight AS total_net_weight,
+            COALESCE(stock_balance.available_net_weight, 0.0) AS available_net_weight,
+            COALESCE(stock_balance.sold_net_weight, 0.0) AS sold_net_weight,
+            purchase_lines.total_fine_weight AS total_fine_weight,
+            purchase_lines.valuation_fine_weight AS valuation_fine_weight,
+            COALESCE(stock_balance.available_fine_weight, 0.0) AS available_fine_weight,
+            COALESCE(stock_balance.sold_fine_weight, 0.0) AS sold_fine_weight,
+            purchase_lines.rate_per_gram AS rate_per_gram,
+            purchase_lines.making_amount AS making_amount,
+            purchase_lines.total_cost AS total_cost,
+            COALESCE(stock_balance.available_cost, 0.0) AS available_cost,
+            COALESCE(stock_balance.sold_cost, 0.0) AS sold_cost,
+            COALESCE(stock_balance.sale_value, 0.0) AS sale_value,
+            COALESCE(stock_balance.profit, 0.0) AS profit
+          FROM purchase_lines
+          LEFT JOIN stock_balance
+            ON stock_balance.batch_code = purchase_lines.batch_code
+           AND stock_balance.metal_type = purchase_lines.metal_type
+          UNION ALL
+          SELECT
+            stock_balance.batch_code AS batch_code,
+            stock_balance.metal_type AS metal_type,
+            stock_balance.supplier_name AS supplier_name,
+            stock_balance.created_at AS created_at,
+            stock_balance.stock_units AS total_units,
+            stock_balance.available_units AS available_units,
+            stock_balance.sold_units AS sold_units,
+            stock_balance.current_gross_weight AS total_gross_weight,
+            stock_balance.available_net_weight + stock_balance.sold_net_weight AS total_net_weight,
+            stock_balance.available_net_weight AS available_net_weight,
+            stock_balance.sold_net_weight AS sold_net_weight,
+            stock_balance.available_fine_weight + stock_balance.sold_fine_weight AS total_fine_weight,
+            stock_balance.available_fine_weight + stock_balance.sold_fine_weight AS valuation_fine_weight,
+            stock_balance.available_fine_weight AS available_fine_weight,
+            stock_balance.sold_fine_weight AS sold_fine_weight,
+            0.0 AS rate_per_gram,
+            0.0 AS making_amount,
+            stock_balance.available_cost + stock_balance.sold_cost AS total_cost,
+            stock_balance.available_cost AS available_cost,
+            stock_balance.sold_cost AS sold_cost,
+            stock_balance.sale_value AS sale_value,
+            stock_balance.profit AS profit
+          FROM stock_balance
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM purchase_lines
+            WHERE purchase_lines.batch_code = stock_balance.batch_code
+              AND purchase_lines.metal_type = stock_balance.metal_type
+          )
+          ORDER BY 4 DESC, 1
           LIMIT 80
           ''',
-      variables: _metalVariables(filter),
+      variables: [
+        ..._metalVariables(filter),
+        ..._metalVariables(filter),
+      ],
     ).get();
 
     return rows
