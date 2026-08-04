@@ -56,6 +56,13 @@ String _money(double value) {
   ).format(value);
 }
 
+String _purchaseRateDisplayValue(StockCategory metal, double ratePerGram) {
+  if (ratePerGram <= 0) return 'Not recorded';
+  final multiplier = metal == StockCategory.silver ? 1000.0 : 10.0;
+  final unit = metal == StockCategory.silver ? 'kg' : '10g';
+  return '${_money(ratePerGram * multiplier)} / $unit';
+}
+
 String _weight(double value) {
   return NumberFormat('##,##0.000', 'en_IN').format(value);
 }

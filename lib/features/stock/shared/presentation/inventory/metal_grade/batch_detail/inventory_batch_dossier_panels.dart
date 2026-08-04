@@ -4,6 +4,7 @@ class _BatchDossierHeader extends StatelessWidget {
   final StockMetalUiData ui;
   final String title;
   final _InventoryBatchGroup batch;
+  final StockCategory metal;
   final VoidCallback onDocuments;
   final VoidCallback? onCloseVariance;
   final bool isClosingVariance;
@@ -12,6 +13,7 @@ class _BatchDossierHeader extends StatelessWidget {
     required this.ui,
     required this.title,
     required this.batch,
+    required this.metal,
     required this.onDocuments,
     required this.onCloseVariance,
     required this.isClosingVariance,
@@ -99,6 +101,17 @@ class _BatchDossierHeader extends StatelessWidget {
                 value: batch.quantityBalanceLabel,
                 textColor: ui.textOnGradient,
               ),
+              if (batch.purchaseRatePerGram > 0)
+                _HeaderMetric(
+                  label: 'Purchase Rate',
+                  value: batch.hasMixedPurchaseRates
+                      ? 'Mixed Rates'
+                      : _purchaseRateDisplayValue(
+                          metal,
+                          batch.purchaseRatePerGram,
+                        ),
+                  textColor: ui.textOnGradient,
+                ),
               _HeaderMetric(
                 label: 'Actual Fine',
                 value: '${_weight(batch.actualFine)} g',
@@ -383,10 +396,12 @@ class _DocumentMiniAction extends StatelessWidget {
 
 class _BatchOverviewPanel extends StatelessWidget {
   final _InventoryBatchGroup batch;
+  final StockCategory metal;
   final StockMetalUiData ui;
 
   const _BatchOverviewPanel({
     required this.batch,
+    required this.metal,
     required this.ui,
   });
 
@@ -427,6 +442,17 @@ class _BatchOverviewPanel extends StatelessWidget {
                   label: 'Total Qty',
                   value: batch.totalQuantityLabel,
                   accent: ui.accent),
+              if (batch.purchaseRatePerGram > 0)
+                _DossierMetric(
+                  label: 'Purchase Rate',
+                  value: batch.hasMixedPurchaseRates
+                      ? 'Mixed Rates'
+                      : _purchaseRateDisplayValue(
+                          metal,
+                          batch.purchaseRatePerGram,
+                        ),
+                  accent: InvColors.brandGold,
+                ),
               _DossierMetric(
                   label: 'Available Qty',
                   value: batch.availableQuantityLabel,

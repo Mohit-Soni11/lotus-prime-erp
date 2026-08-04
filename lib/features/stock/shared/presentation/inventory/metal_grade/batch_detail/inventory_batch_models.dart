@@ -129,6 +129,22 @@ class _InventoryBatchGroup {
       units.fold(0.0, (sum, unit) => sum + unit.displayTotalNetWeight);
   double get totalGrossWeight =>
       units.fold(0.0, (sum, unit) => sum + unit.displayTotalGrossWeight);
+  double get purchaseRatePerGram {
+    for (final unit in units) {
+      if (unit.ratePerGram > 0) return unit.ratePerGram;
+    }
+    return 0.0;
+  }
+
+  bool get hasMixedPurchaseRates {
+    final firstRate = purchaseRatePerGram;
+    if (firstRate <= 0) return false;
+    return units.any(
+      (unit) =>
+          unit.ratePerGram > 0 && (unit.ratePerGram - firstRate).abs() > 0.004,
+    );
+  }
+
   String get displayUnitSingular {
     final unitsSeen = <String>{};
     for (final unit in units) {

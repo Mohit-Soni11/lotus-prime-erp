@@ -40,6 +40,7 @@ class _InventoryBatchDossierScreenState
                 ui: ui,
                 title: title,
                 batch: widget.batch,
+                metal: widget.metal,
                 onDocuments: () => _openDocumentCenter(context),
                 onCloseVariance: widget.batch.hasScaleVariance
                     ? () => _closeVariance(context)
@@ -57,7 +58,11 @@ class _InventoryBatchDossierScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: _BatchOverviewPanel(batch: widget.batch, ui: ui),
+                        child: _BatchOverviewPanel(
+                          batch: widget.batch,
+                          metal: widget.metal,
+                          ui: ui,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
