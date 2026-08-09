@@ -86,18 +86,6 @@ class _MetalValuationMetalDetailScreenState
                 row: row,
               ),
               const SizedBox(height: 16),
-              AvailableStockValuationTable(
-                batchRows: snapshot.batchSummaries,
-                rows: snapshot.availableStock,
-                onBatchSelected: (batch) {
-                  final metal = Uri.encodeComponent(batch.metalType);
-                  final code = Uri.encodeComponent(batch.batchCode);
-                  context.go(
-                    '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal/batch/$code',
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
               SoldStockValuationTable(
                 rows: snapshot.soldStock,
                 onInvoiceSelected: _openSoldInvoice,

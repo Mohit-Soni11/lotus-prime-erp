@@ -70,7 +70,11 @@ class MetalValuationSummaryPanel extends StatelessWidget {
               const SizedBox(height: 18),
               _MetalSmartCardGrid(
                 rows: snapshot.breakdown,
-                compact: compact,
+                columns: constraints.maxWidth < 620
+                    ? 1
+                    : compact
+                        ? 2
+                        : 4,
               ),
             ],
           );
@@ -82,11 +86,11 @@ class MetalValuationSummaryPanel extends StatelessWidget {
 
 class _MetalSmartCardGrid extends StatelessWidget {
   final List<MetalValuationBreakdown> rows;
-  final bool compact;
+  final int columns;
 
   const _MetalSmartCardGrid({
     required this.rows,
-    required this.compact,
+    required this.columns,
   });
 
   @override
@@ -117,10 +121,10 @@ class _MetalSmartCardGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: visibleRows.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: compact ? 2 : 4,
+        crossAxisCount: columns,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: 204,
+        mainAxisExtent: 236,
       ),
       itemBuilder: (context, index) {
         return _MetalSmartCard(row: visibleRows[index]);
@@ -170,60 +174,30 @@ class _MetalSmartCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Text(
-            'Available Weight',
-            style: MetalValuationText.label.copyWith(
-              color: const Color(0xFF2E2109),
-            ),
+          _SmartMetric(
+            label: 'Available Net Weight',
+            value: formatGram(row.availableNetWeight),
+            color: colors.accent,
           ),
-          const SizedBox(height: 4),
-          Text(
-            formatGram(row.availableNetWeight),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: MetalValuationText.value.copyWith(
-              fontSize: 22,
-              color: colors.accent,
-            ),
+          const SizedBox(height: 10),
+          _SmartMetric(
+            label: 'Available Cost Price',
+            value: formatMoney(row.availableCost),
+            color: const Color(0xFF2E2109),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Purity ${formatPercent(row.availablePurityPercent)} | Wastage ${formatPercent(row.availableWastagePercent)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: MetalValuationText.label.copyWith(
-              fontSize: 11,
-              color: const Color(0xFF2E2109),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Valuation Purity ${formatPercent(row.availableValuationPurityPercent)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: MetalValuationText.label.copyWith(
-              fontSize: 11,
-              color: const Color(0xFF2E2109),
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '${row.availableUnits} available',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: MetalValuationText.body.copyWith(
-                    fontSize: 12,
-                    color: const Color(0xFF2E2109),
-                  ),
+                child: _SmartChip(
+                  label: '${row.availableUnits} available',
+                  color: colors.accent,
                 ),
               ),
-              Text(
-                '${row.soldUnits} sold',
-                style: MetalValuationText.body.copyWith(
-                  fontSize: 12,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SmartChip(
+                  label: '${row.soldUnits} sold',
                   color: row.soldUnits > 0
                       ? MetalValuationColors.red
                       : const Color(0xFF2E2109),
@@ -231,7 +205,121 @@ class _MetalSmartCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _SmartFooterValue(
+                  label: 'Sold Wt',
+                  value: formatGram(row.soldNetWeight),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SmartFooterValue(
+                  label: 'Profit',
+                  value: formatMoney(row.profit),
+                  color: row.profit >= 0
+                      ? MetalValuationColors.green
+                      : MetalValuationColors.red,
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _SmartMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _SmartMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: MetalValuationText.label.copyWith(
+            color: const Color(0xFF2E2109),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: MetalValuationText.value.copyWith(
+            fontSize: 21,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SmartChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SmartChip({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.52),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: MetalValuationText.body.copyWith(
+          fontSize: 12,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _SmartFooterValue extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? color;
+
+  const _SmartFooterValue({
+    required this.label,
+    required this.value,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '$label: $value',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: MetalValuationText.label.copyWith(
+        fontSize: 11,
+        color: color ?? const Color(0xFF2E2109),
       ),
     );
   }

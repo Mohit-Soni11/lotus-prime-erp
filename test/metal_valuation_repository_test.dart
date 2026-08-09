@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/settings/metal_cost_analyser/data/metal_valuation_grade_repository.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/data/metal_valuation_repository.dart';
 
 void main() {
@@ -429,6 +430,129 @@ void main() {
     expect(sold.quantity, 1);
     expect(sold.quantityMode, 'PAIR');
     expect(sold.unitLabel, '1 pair');
+  });
+
+  test('grade valuation groups gold movement by purity grade', () async {
+    final purchaseVoucherId = await _insertPurchaseVoucher(database);
+    final purchaseItemId = await _insertPurchaseLine(
+      database,
+      purchaseVoucherId: purchaseVoucherId,
+      grossWeight: 5.631,
+      netWeight: 5.631,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 4.392,
+      ratePerGram: 14150,
+      quantity: 15,
+      lineAmount: 62296.80,
+    );
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'GOLD-NOSEPIN-LOT002',
+      itemType: 'Nose Pin',
+      itemName: 'Nose Pin',
+      netWeight: 5.631,
+      actualFineWeight: 4.22325,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 4.392,
+      ratePerGram: 14150,
+      unitCost: 62296.80,
+      purchaseVoucherId: purchaseVoucherId,
+      purchaseVoucherItemId: purchaseItemId,
+      status: 'Available',
+    );
+    await database.customStatement(
+      'UPDATE stock_item_units SET huid = ? WHERE id = ?',
+      ['', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GRADE-GOLD-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(8480.64),
+            paidAmount: const drift.Value(8480.64),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Gold'),
+            itemName: 'Nose Pin',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(0.631),
+            netWeight: const drift.Value(0.631),
+            fineWeight: const drift.Value(0.47325),
+            itemTotal: const drift.Value(8480.64),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(6980.87),
+          ),
+        );
+
+    final snapshot = await MetalValuationGradeRepository(database: database)
+        .fetchGradeSnapshot('Gold');
+    final grade = snapshot.grades.single;
+
+    expect(grade.gradeLabel, '18KT (75%)');
+    expect(grade.availableUnits, 1);
+    expect(grade.soldUnits, 1);
+    expect(grade.availableNetWeight, closeTo(5.631, 0.001));
+    expect(grade.soldNetWeight, closeTo(0.631, 0.001));
+    expect(grade.soldCost, closeTo(6974.061, 0.001));
+  });
+
+  test('grade valuation groups silver movement by item type', () async {
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SILVER-PAYAL-001',
+      itemType: 'Payal',
+      itemName: 'Payal',
+      quantityMode: 'PAIR',
+      netWeight: 120,
+      actualFineWeight: 96,
+      purityPercent: 80,
+      wastagePercent: 0,
+      valuationFineWeight: 96,
+      unitCost: 7200,
+      status: 'Sold',
+    );
+    await database.customStatement(
+      'UPDATE stock_item_units SET metal_type = ?, item_type = ? WHERE id = ?',
+      ['Silver', 'Payal', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GRADE-SILVER-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(8500),
+            paidAmount: const drift.Value(8500),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Silver'),
+            itemName: 'Payal',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(120),
+            netWeight: const drift.Value(120),
+            fineWeight: const drift.Value(96),
+            itemTotal: const drift.Value(8500),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(7200),
+          ),
+        );
+
+    final snapshot = await MetalValuationGradeRepository(database: database)
+        .fetchGradeSnapshot('Silver');
+    final grade = snapshot.grades.single;
+
+    expect(grade.gradeLabel, 'Payal');
+    expect(grade.availableUnits, 0);
+    expect(grade.soldUnits, 1);
+    expect(grade.soldNetWeight, closeTo(120, 0.001));
+    expect(grade.soldCost, closeTo(7200, 0.001));
+    expect(grade.profit, closeTo(1300, 0.001));
   });
 }
 

@@ -23,7 +23,7 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
         children: [
           const _SectionHeading(
             title: 'Metal Performance',
-            subtitle: 'Available and sold net weight grouped by metal.',
+            subtitle: 'Live stock balance, sold movement and margin by metal.',
             icon: Icons.donut_large_rounded,
           ),
           const SizedBox(height: 14),
@@ -41,7 +41,7 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
                     crossAxisCount: columns,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    mainAxisExtent: 344,
+                    mainAxisExtent: constraints.maxWidth < 560 ? 418 : 386,
                   ),
                   itemBuilder: (context, index) {
                     final row = rows[index];
@@ -120,73 +120,73 @@ class _BreakdownCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _MiniFact(
-                      label: 'Available Net Weight',
-                      value: formatGram(row.availableNetWeight),
-                      valueColor: MetalValuationColors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MiniFact(
-                      label: 'Sold Net Weight',
-                      value: formatGram(row.soldNetWeight),
-                      valueColor: row.soldNetWeight > 0
-                          ? MetalValuationColors.red
-                          : MetalValuationColors.ink,
-                    ),
-                  ),
-                ],
+              _MetricBand(
+                title: 'Available Stock',
+                value: formatGram(row.availableNetWeight),
+                caption: '${row.availableUnits} units in hand',
+                color: MetalValuationColors.green,
+                icon: Icons.inventory_2_rounded,
+              ),
+              const SizedBox(height: 10),
+              _MetricBand(
+                title: 'Sold Movement',
+                value: formatGram(row.soldNetWeight),
+                caption: '${row.soldUnits} units sold',
+                color: row.soldUnits > 0
+                    ? MetalValuationColors.red
+                    : MetalValuationColors.softInk,
+                icon: Icons.point_of_sale_rounded,
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: _MiniFact(
-                      label: 'Available Units',
-                      value: '${row.availableUnits}',
-                      valueColor: MetalValuationColors.green,
+                      label: 'Stock Cost',
+                      value: formatMoney(row.availableCost),
+                      valueColor: MetalValuationColors.ink,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _MiniFact(
-                      label: 'Sold Units',
-                      value: '${row.soldUnits}',
-                      valueColor: row.soldUnits > 0
-                          ? MetalValuationColors.red
-                          : MetalValuationColors.ink,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _MiniFact(
-                      label: 'Purity',
-                      value: formatPercent(row.availablePurityPercent),
-                      valueColor: MetalValuationColors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MiniFact(
-                      label: 'Wastage',
-                      value: formatPercent(row.availableWastagePercent),
-                      valueColor: MetalValuationColors.blue,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MiniFact(
-                      label: 'Valuation Purity',
-                      value: formatPercent(row.availableValuationPurityPercent),
+                      label: 'Sale Value',
+                      value: formatMoney(row.saleValue),
                       valueColor: MetalValuationColors.goldDark,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Profit',
+                      value: formatMoney(row.profit),
+                      valueColor: row.profit >= 0
+                          ? MetalValuationColors.green
+                          : MetalValuationColors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Sold Cost',
+                      value: formatMoney(row.soldCost),
+                      valueColor: row.soldCost > 0
+                          ? MetalValuationColors.ink
+                          : MetalValuationColors.softInk,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Margin',
+                      value: formatPercent(row.marginPercent),
+                      valueColor: row.marginPercent >= 0
+                          ? MetalValuationColors.green
+                          : MetalValuationColors.red,
                     ),
                   ),
                 ],
@@ -194,6 +194,79 @@ class _BreakdownCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MetricBand extends StatelessWidget {
+  final String title;
+  final String value;
+  final String caption;
+  final Color color;
+  final IconData icon;
+
+  const _MetricBand({
+    required this.title,
+    required this.value,
+    required this.caption,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.78),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: MetalValuationText.label),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: MetalValuationText.value.copyWith(
+                    color: color,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: Text(
+              caption,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: MetalValuationText.label.copyWith(
+                color: MetalValuationColors.mutedInk,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
