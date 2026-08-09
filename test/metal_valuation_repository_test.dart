@@ -188,7 +188,9 @@ void main() {
       [unitId],
     );
 
-    final item = (await repository.fetchSnapshot()).availableStock.single;
+    final snapshot = await repository.fetchSnapshot();
+    final item = snapshot.availableStock.single;
+    final batch = snapshot.batchSummaries.single;
 
     expect(item.itemName, 'Nose Pin');
     expect(item.unitLabel, '14 pcs');
@@ -199,7 +201,9 @@ void main() {
     expect(item.valuationPurityPercent, closeTo(78, 0.001));
     expect(item.valuationFine, closeTo(3.9, 0.001));
     expect(item.ratePerGram, closeTo(14150, 0.001));
+    expect(item.makingAmount, closeTo(130.93, 0.001));
     expect(item.unitCost, closeTo(55315.93, 0.001));
+    expect(batch.makingAmount, closeTo(130.93, 0.001));
   });
 
   test('item valuation ledger excludes sold stock units', () async {

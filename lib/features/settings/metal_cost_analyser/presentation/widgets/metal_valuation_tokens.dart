@@ -82,6 +82,8 @@ String formatMoney(double value) {
 
 String formatGram(double value) => '${value.toStringAsFixed(3)} g';
 
+String formatUnitCount(int units) => '$units ${units == 1 ? 'unit' : 'units'}';
+
 String formatPercent(double value) => '${value.toStringAsFixed(2)}%';
 
 String formatDate(DateTime? value) {

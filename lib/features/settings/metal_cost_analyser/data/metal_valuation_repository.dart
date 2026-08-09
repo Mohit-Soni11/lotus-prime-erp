@@ -276,6 +276,7 @@ class MetalValuationRepository {
               CAST(COALESCE(SUM(pvi.net_weight * COALESCE(pvi.purity, 0.0)), 0.0) AS REAL) AS purity_weighted_total,
               CAST(COALESCE(SUM(pvi.net_weight * COALESCE(pvi.wastage_percent, 0.0)), 0.0) AS REAL) AS wastage_weighted_total,
               CAST(COALESCE(AVG(NULLIF(pvi.rate, 0.0)), 0.0) AS REAL) AS rate_per_gram,
+              COUNT(DISTINCT CASE WHEN COALESCE(pvi.rate, 0.0) > 0.0 THEN printf('%.4f', pvi.rate) END) AS rate_variant_count,
               CAST(
                 COALESCE(
                   SUM(
@@ -287,6 +288,10 @@ class MetalValuationRepository {
                   0.0
                 ) AS REAL
               ) AS making_amount,
+              COUNT(DISTINCT CASE
+                WHEN MAX(COALESCE(pvi.line_amount, 0.0) - (COALESCE(pvi.valuation_fine_weight, 0.0) * COALESCE(pvi.rate, 0.0)), 0.0) > 0.0
+                  THEN printf('%.2f', MAX(COALESCE(pvi.line_amount, 0.0) - (COALESCE(pvi.valuation_fine_weight, 0.0) * COALESCE(pvi.rate, 0.0)), 0.0))
+              END) AS making_variant_count,
               CAST(COALESCE(SUM(pvi.line_amount), 0.0) AS REAL) AS total_cost
             FROM purchase_voucher_items pvi
             INNER JOIN purchase_vouchers pv ON pv.id = pvi.purchase_voucher_id
@@ -326,11 +331,59 @@ class MetalValuationRepository {
               CAST(COALESCE(SUM(unit_sales.sold_net_weight), 0.0) AS REAL) AS sold_net_weight,
               CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.actual_fine_weight ELSE 0 END), 0.0) AS REAL) AS available_fine_weight,
               CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.valuation_fine_weight ELSE 0 END), 0.0) AS REAL) AS available_valuation_fine_weight,
-              CAST(COALESCE(SUM(CASE WHEN u.status <> 'Available' THEN u.valuation_fine_weight ELSE 0 END), 0.0) AS REAL) AS sold_valuation_fine_weight,
+              CAST(
+                COALESCE(
+                  SUM(
+                    COALESCE(unit_sales.sold_net_weight, 0.0) * COALESCE(
+                      NULLIF(pvi.valuation_fine_weight, 0.0) / NULLIF(pvi.net_weight, 0.0),
+                      (COALESCE(u.purity_percent, 0.0) + COALESCE(u.wastage_percent, 0.0)) / 100.0,
+                      0.0
+                    )
+                  ),
+                  0.0
+                ) AS REAL
+              ) AS sold_valuation_fine_weight,
               CAST(COALESCE(SUM(u.net_weight * COALESCE(NULLIF(u.purity_percent, 0.0), CASE WHEN COALESCE(u.net_weight, 0.0) = 0.0 THEN 0.0 ELSE u.actual_fine_weight * 100.0 / u.net_weight END, 0.0)), 0.0) AS REAL) AS purity_weighted_total,
               CAST(COALESCE(SUM(u.net_weight * COALESCE(u.wastage_percent, 0.0)), 0.0) AS REAL) AS wastage_weighted_total,
-              CAST(COALESCE(SUM(u.net_weight * COALESCE(u.rate_per_gram, 0.0)), 0.0) AS REAL) AS rate_weighted_total,
-              CAST(COALESCE(SUM(u.making_amount), 0.0) AS REAL) AS making_amount,
+              CAST(
+                COALESCE(
+                  SUM(
+                    (
+                      CASE WHEN u.status = 'Available' THEN u.net_weight ELSE 0 END
+                      + COALESCE(unit_sales.sold_net_weight, 0.0)
+                    ) * COALESCE(u.rate_per_gram, 0.0)
+                  ),
+                  0.0
+                ) AS REAL
+              ) AS rate_weighted_total,
+              COUNT(DISTINCT CASE WHEN COALESCE(u.rate_per_gram, 0.0) > 0.0 THEN printf('%.4f', u.rate_per_gram) END) AS rate_variant_count,
+              CAST(
+                COALESCE(
+                  SUM(
+                    CASE
+                      WHEN pvi.id IS NOT NULL
+                        AND (
+                          (
+                            LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                            AND TRIM(COALESCE(u.huid, '')) = ''
+                          )
+                          OR LOWER(COALESCE(NULLIF(TRIM(si.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                        )
+                        THEN MAX(
+                          COALESCE(pvi.line_amount, 0.0) -
+                          (
+                            COALESCE(NULLIF(pvi.valuation_fine_weight, 0.0), pvi.fine_weight + pvi.wastage_fine_weight, 0.0) *
+                            COALESCE(NULLIF(pvi.rate, 0.0), u.rate_per_gram, 0.0)
+                          ),
+                          0.0
+                        )
+                      ELSE COALESCE(u.making_amount, 0.0)
+                    END
+                  ),
+                  0.0
+                ) AS REAL
+              ) AS making_amount,
+              COUNT(DISTINCT CASE WHEN COALESCE(u.making_amount, 0.0) > 0.0 THEN printf('%.2f', u.making_amount) END) AS making_variant_count,
               CAST(COALESCE(SUM(unit_sales.sold_fine_weight), 0.0) AS REAL) AS sold_fine_weight,
               CAST(COALESCE(SUM(CASE WHEN u.status = 'Available' THEN u.unit_cost ELSE 0 END), 0.0) AS REAL) AS available_cost,
               CAST(COALESCE(SUM(unit_sales.sold_cost), 0.0) AS REAL) AS sold_cost,
@@ -338,6 +391,8 @@ class MetalValuationRepository {
               CAST(COALESCE(SUM(unit_sales.profit), 0.0) AS REAL) AS profit
             FROM stock_item_units u
             LEFT JOIN unit_sales ON unit_sales.unit_id = u.id
+            LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+            LEFT JOIN stock_items si ON si.id = u.stock_item_id
             WHERE 1 = 1 ${_metalWhereClause(filter, alias: 'u')}
             GROUP BY COALESCE(NULLIF(u.batch_code, ''), 'Not recorded'), u.metal_type
           )
@@ -373,21 +428,23 @@ class MetalValuationRepository {
                 THEN COALESCE(stock_balance.available_valuation_fine_weight, 0.0) + COALESCE(stock_balance.sold_valuation_fine_weight, 0.0)
               ELSE purchase_lines.valuation_fine_weight
             END AS valuation_fine_weight,
+            COALESCE(stock_balance.available_valuation_fine_weight, 0.0) AS available_valuation_fine_weight,
+            COALESCE(stock_balance.sold_valuation_fine_weight, 0.0) AS sold_valuation_fine_weight,
             CAST(
               CASE
-                WHEN COALESCE(stock_balance.stock_units, 0) > 0
-                  AND COALESCE(stock_balance.available_net_weight + stock_balance.sold_net_weight, 0.0) <> 0.0
-                  THEN COALESCE(stock_balance.purity_weighted_total / (stock_balance.available_net_weight + stock_balance.sold_net_weight), 0.0)
-                WHEN COALESCE(purchase_lines.total_net_weight, 0.0) = 0.0 THEN 0.0
+                  WHEN COALESCE(stock_balance.stock_units, 0) > 0
+                    AND COALESCE(stock_balance.available_net_weight + stock_balance.sold_net_weight, 0.0) <> 0.0
+                    THEN COALESCE(stock_balance.purity_weighted_total / (stock_balance.available_net_weight + stock_balance.sold_net_weight), 0.0)
+                  WHEN COALESCE(purchase_lines.total_net_weight, 0.0) = 0.0 THEN 0.0
                 ELSE COALESCE(purchase_lines.purity_weighted_total / purchase_lines.total_net_weight, 0.0)
               END AS REAL
             ) AS purity_percent,
             CAST(
               CASE
-                WHEN COALESCE(stock_balance.stock_units, 0) > 0
-                  AND COALESCE(stock_balance.available_net_weight + stock_balance.sold_net_weight, 0.0) <> 0.0
-                  THEN COALESCE(stock_balance.wastage_weighted_total / (stock_balance.available_net_weight + stock_balance.sold_net_weight), 0.0)
-                WHEN COALESCE(purchase_lines.total_net_weight, 0.0) = 0.0 THEN 0.0
+                  WHEN COALESCE(stock_balance.stock_units, 0) > 0
+                    AND COALESCE(stock_balance.available_net_weight + stock_balance.sold_net_weight, 0.0) <> 0.0
+                    THEN COALESCE(stock_balance.wastage_weighted_total / (stock_balance.available_net_weight + stock_balance.sold_net_weight), 0.0)
+                  WHEN COALESCE(purchase_lines.total_net_weight, 0.0) = 0.0 THEN 0.0
                 ELSE COALESCE(purchase_lines.wastage_weighted_total / purchase_lines.total_net_weight, 0.0)
               END AS REAL
             ) AS wastage_percent,
@@ -402,9 +459,17 @@ class MetalValuationRepository {
               END AS REAL
             ) AS rate_per_gram,
             CASE
+              WHEN COALESCE(stock_balance.stock_units, 0) > 0 THEN COALESCE(stock_balance.rate_variant_count, 0)
+              ELSE COALESCE(purchase_lines.rate_variant_count, 0)
+            END AS rate_variant_count,
+            CASE
               WHEN COALESCE(stock_balance.stock_units, 0) > 0 THEN COALESCE(stock_balance.making_amount, 0.0)
               ELSE purchase_lines.making_amount
             END AS making_amount,
+            CASE
+              WHEN COALESCE(stock_balance.stock_units, 0) > 0 THEN COALESCE(stock_balance.making_variant_count, 0)
+              ELSE COALESCE(purchase_lines.making_variant_count, 0)
+            END AS making_variant_count,
             CASE
               WHEN COALESCE(stock_balance.stock_units, 0) > 0
                 THEN COALESCE(stock_balance.available_cost, 0.0) + COALESCE(stock_balance.sold_cost, 0.0)
@@ -433,6 +498,8 @@ class MetalValuationRepository {
             stock_balance.sold_net_weight AS sold_net_weight,
             stock_balance.available_fine_weight + stock_balance.sold_fine_weight AS total_fine_weight,
             stock_balance.available_valuation_fine_weight + stock_balance.sold_valuation_fine_weight AS valuation_fine_weight,
+            stock_balance.available_valuation_fine_weight AS available_valuation_fine_weight,
+            stock_balance.sold_valuation_fine_weight AS sold_valuation_fine_weight,
             CAST(
               CASE
                 WHEN COALESCE(stock_balance.available_net_weight + stock_balance.sold_net_weight, 0.0) = 0.0 THEN 0.0
@@ -453,7 +520,9 @@ class MetalValuationRepository {
                 ELSE COALESCE(stock_balance.rate_weighted_total / (stock_balance.available_net_weight + stock_balance.sold_net_weight), 0.0)
               END AS REAL
             ) AS rate_per_gram,
+            stock_balance.rate_variant_count AS rate_variant_count,
             stock_balance.making_amount AS making_amount,
+            stock_balance.making_variant_count AS making_variant_count,
             stock_balance.available_cost + stock_balance.sold_cost AS total_cost,
             stock_balance.available_cost AS available_cost,
             stock_balance.sold_cost AS sold_cost,
@@ -491,12 +560,22 @@ class MetalValuationRepository {
             soldNetWeight: _readDouble(row, 'sold_net_weight'),
             totalFineWeight: _readDouble(row, 'total_fine_weight'),
             valuationFineWeight: _readDouble(row, 'valuation_fine_weight'),
+            availableValuationFineWeight: _readDouble(
+              row,
+              'available_valuation_fine_weight',
+            ),
+            soldValuationFineWeight: _readDouble(
+              row,
+              'sold_valuation_fine_weight',
+            ),
             purityPercentValue: _readDouble(row, 'purity_percent'),
             wastagePercent: _readDouble(row, 'wastage_percent'),
             availableFineWeight: _readDouble(row, 'available_fine_weight'),
             soldFineWeight: _readDouble(row, 'sold_fine_weight'),
             ratePerGram: _readDouble(row, 'rate_per_gram'),
             makingAmount: _readDouble(row, 'making_amount'),
+            rateVariantCount: _readInt(row, 'rate_variant_count'),
+            makingVariantCount: _readInt(row, 'making_variant_count'),
             totalCost: _readDouble(row, 'total_cost'),
             availableCost: _readDouble(row, 'available_cost'),
             soldCost: _readDouble(row, 'sold_cost'),
@@ -649,6 +728,7 @@ class MetalValuationRepository {
                 ELSE COALESCE(NULLIF(u.rate_per_gram, 0.0), pvi.rate, 0.0)
               END AS REAL
             ) AS rate_per_gram,
+            COALESCE(NULLIF(s.making_charge_type, ''), 'Amount') AS making_charge_type,
             CAST(
               CASE
                 WHEN (
@@ -720,6 +800,7 @@ class MetalValuationRepository {
             valuationFine: _readDouble(row, 'valuation_fine_weight'),
             ratePerGram: _readDouble(row, 'rate_per_gram'),
             makingAmount: _readDouble(row, 'making_amount'),
+            makingChargeType: _readString(row, 'making_charge_type'),
             unitCost: _readDouble(row, 'unit_cost'),
           ),
         )

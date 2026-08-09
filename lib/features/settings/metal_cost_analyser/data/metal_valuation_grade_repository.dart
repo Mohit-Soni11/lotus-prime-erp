@@ -240,6 +240,8 @@ class MetalValuationGradeRepository {
         sold_net_weight,
         available_fine_weight + sold_fine_weight AS total_fine_weight,
         available_valuation_fine_weight + sold_valuation_fine_weight AS valuation_fine_weight,
+        available_valuation_fine_weight,
+        sold_valuation_fine_weight,
         CAST(
           CASE
             WHEN COALESCE(available_net_weight + sold_net_weight, 0.0) = 0.0 THEN 0.0
@@ -291,6 +293,14 @@ class MetalValuationGradeRepository {
               soldNetWeight: _readDouble(row, 'sold_net_weight'),
               totalFineWeight: _readDouble(row, 'total_fine_weight'),
               valuationFineWeight: _readDouble(row, 'valuation_fine_weight'),
+              availableValuationFineWeight: _readDouble(
+                row,
+                'available_valuation_fine_weight',
+              ),
+              soldValuationFineWeight: _readDouble(
+                row,
+                'sold_valuation_fine_weight',
+              ),
               purityPercentValue: _readDouble(row, 'purity_percent'),
               wastagePercent: _readDouble(row, 'wastage_percent'),
               availableFineWeight: _readDouble(row, 'available_fine_weight'),

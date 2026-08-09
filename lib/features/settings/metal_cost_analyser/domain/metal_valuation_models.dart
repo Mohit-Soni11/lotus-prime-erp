@@ -183,6 +183,7 @@ class AvailableValuationRow {
   final double valuationFine;
   final double ratePerGram;
   final double makingAmount;
+  final String makingChargeType;
   final double unitCost;
 
   const AvailableValuationRow({
@@ -203,6 +204,7 @@ class AvailableValuationRow {
     required this.valuationFine,
     required this.ratePerGram,
     required this.makingAmount,
+    this.makingChargeType = 'Amount',
     required this.unitCost,
   });
 
@@ -248,12 +250,16 @@ class BatchValuationRow {
   final double soldNetWeight;
   final double totalFineWeight;
   final double valuationFineWeight;
+  final double availableValuationFineWeight;
+  final double soldValuationFineWeight;
   final double purityPercentValue;
   final double wastagePercent;
   final double availableFineWeight;
   final double soldFineWeight;
   final double ratePerGram;
   final double makingAmount;
+  final int rateVariantCount;
+  final int makingVariantCount;
   final double totalCost;
   final double availableCost;
   final double soldCost;
@@ -274,12 +280,16 @@ class BatchValuationRow {
     required this.soldNetWeight,
     required this.totalFineWeight,
     required this.valuationFineWeight,
+    this.availableValuationFineWeight = 0,
+    this.soldValuationFineWeight = 0,
     required this.purityPercentValue,
     required this.wastagePercent,
     required this.availableFineWeight,
     required this.soldFineWeight,
     required this.ratePerGram,
     required this.makingAmount,
+    this.rateVariantCount = 1,
+    this.makingVariantCount = 1,
     required this.totalCost,
     required this.availableCost,
     required this.soldCost,

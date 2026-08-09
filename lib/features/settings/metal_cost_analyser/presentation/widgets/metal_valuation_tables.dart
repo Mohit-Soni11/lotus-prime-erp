@@ -127,6 +127,7 @@ class ItemValuationLedgerTable extends StatelessWidget {
         'Valuation Fine',
         'Rate',
         'Making',
+        'Making Type',
         'Valuation Cost',
       ],
       rows: [
@@ -145,6 +146,7 @@ class ItemValuationLedgerTable extends StatelessWidget {
             formatGram(rows[index].valuationFine),
             '${formatMoney(rows[index].ratePerGram)}/g',
             formatMoney(rows[index].makingAmount),
+            rows[index].makingChargeType,
             formatMoney(rows[index].unitCost),
           ],
       ],

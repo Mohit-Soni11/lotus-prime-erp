@@ -8,6 +8,7 @@ import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_val
 import 'widgets/metal_valuation_app_bar.dart';
 import 'widgets/metal_valuation_tables.dart';
 import 'widgets/metal_valuation_tokens.dart';
+import 'widgets/silver_item_movement_grid.dart';
 
 class MetalValuationGradeScreen extends StatefulWidget {
   final String metalType;
@@ -43,13 +44,16 @@ class _MetalValuationGradeScreenState extends State<MetalValuationGradeScreen> {
   @override
   Widget build(BuildContext context) {
     final metalLabel = titleCase(widget.metalType);
+    final isSilver = metalLabel.toLowerCase() == 'silver';
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
         return Scaffold(
           backgroundColor: MetalValuationColors.canvas,
           appBar: MetalValuationAppBar(
-            title: '${metalLabel.toUpperCase()} MOVEMENT GRADES',
+            title: isSilver
+                ? 'SILVER ITEM MOVEMENT'
+                : '${metalLabel.toUpperCase()} MOVEMENT GRADES',
             onBack: widget.onBack ?? () => Navigator.maybePop(context),
           ),
           body: Stack(
@@ -103,11 +107,14 @@ class _GradeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSilver = metalLabel.toLowerCase() == 'silver';
     if (hasError) {
       return Center(
         child: _MessagePanel(
           icon: Icons.error_outline_rounded,
-          title: 'Unable To Load $metalLabel Grades',
+          title: isSilver
+              ? 'Unable To Load $metalLabel Items'
+              : 'Unable To Load $metalLabel Grades',
           message: errorMessage ?? 'Refresh the valuation desk and try again.',
           action: FilledButton.icon(
             onPressed: onRetry,
@@ -133,9 +140,12 @@ class _GradeBody extends StatelessWidget {
             child: Center(
               child: _MessagePanel(
                 icon: Icons.layers_clear_rounded,
-                title: 'No $metalLabel Movement Found',
-                message:
-                    'Add stock or create sales bills. Grade-wise valuation cards will appear automatically.',
+                title: isSilver
+                    ? 'No $metalLabel Item Movement Found'
+                    : 'No $metalLabel Movement Found',
+                message: isSilver
+                    ? 'Add silver stock or create sales bills. Item-wise valuation cards will appear automatically.'
+                    : 'Add stock or create sales bills. Grade-wise valuation cards will appear automatically.',
               ),
             ),
           )
@@ -193,13 +203,35 @@ class _GradeHero extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 900;
-          final metrics = [
-            _HeroMetricData('Groups', '${snapshot.gradeCount}'),
-            _HeroMetricData(
-                'Available Wt', formatGram(snapshot.availableNetWeight)),
-            _HeroMetricData('Sold Wt', formatGram(snapshot.soldNetWeight)),
-            _HeroMetricData('Margin', formatPercent(snapshot.marginPercent)),
-          ];
+          final metrics = isSilver
+              ? [
+                  _HeroMetricData('Items', '${snapshot.gradeCount}'),
+                  _HeroMetricData(
+                    'Available Units',
+                    formatUnitCount(snapshot.availableUnits),
+                  ),
+                  _HeroMetricData(
+                    'Sold Units',
+                    formatUnitCount(snapshot.soldUnits),
+                  ),
+                  _HeroMetricData(
+                    'Available Cost',
+                    formatMoney(snapshot.availableCost),
+                  ),
+                ]
+              : [
+                  _HeroMetricData('Groups', '${snapshot.gradeCount}'),
+                  _HeroMetricData(
+                    'Available Wt',
+                    formatGram(snapshot.availableNetWeight),
+                  ),
+                  _HeroMetricData(
+                      'Sold Wt', formatGram(snapshot.soldNetWeight)),
+                  _HeroMetricData(
+                    'Margin',
+                    formatPercent(snapshot.marginPercent),
+                  ),
+                ];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -275,8 +307,23 @@ class _GradeGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tone = _GradeTone.forMetal(metalLabel);
+    final isSilver = metalLabel.toLowerCase() == 'silver';
     return LayoutBuilder(
       builder: (context, constraints) {
+        if (isSilver) {
+          return SilverItemMovementGrid(
+            items: grades,
+            batchesForItem: batchesForGrade,
+            onItemTap: (item) => _openGradeDetail(
+              context,
+              metalLabel,
+              item,
+              batchesForGrade(item.gradeLabel),
+            ),
+            onBatchTap: (batch) => _openBatch(context, batch),
+          );
+        }
+
         final width = constraints.maxWidth >= 1240
             ? (constraints.maxWidth - 32) / 3
             : constraints.maxWidth >= 760
@@ -332,6 +379,39 @@ class _GradeGrid extends StatelessWidget {
     final code = Uri.encodeComponent(batch.batchCode);
     context.go(
       '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal/batch/$code',
+    );
+  }
+
+  void _openGradeDetail(
+    BuildContext context,
+    String metalLabel,
+    MetalValuationGradeRow grade,
+    List<BatchValuationRow> batches,
+  ) {
+    Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        pageBuilder: (_, animation, __) => _GradeDetailScreen(
+          metalLabel: metalLabel,
+          grade: grade,
+          batches: batches,
+        ),
+        transitionsBuilder: (_, animation, __, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.025, 0),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -507,10 +587,13 @@ class _GradeDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tone = _GradeTone.forMetal(metalLabel);
+    final isSilver = metalLabel.toLowerCase() == 'silver';
     return Scaffold(
       backgroundColor: MetalValuationColors.canvas,
       appBar: MetalValuationAppBar(
-        title: '${titleCase(grade.gradeLabel).toUpperCase()} MOVEMENT',
+        title: isSilver
+            ? '${titleCase(grade.gradeLabel).toUpperCase()} ITEM MOVEMENT'
+            : '${titleCase(grade.gradeLabel).toUpperCase()} MOVEMENT',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SingleChildScrollView(
@@ -550,7 +633,9 @@ class _GradeDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          '$metalLabel grade movement grouped by exact purchase batches.',
+                          isSilver
+                              ? '$metalLabel item movement grouped by exact purchase batches.'
+                              : '$metalLabel grade movement grouped by exact purchase batches.',
                           style: MetalValuationText.body.copyWith(
                             color: tone.text.withValues(alpha: 0.82),
                           ),
