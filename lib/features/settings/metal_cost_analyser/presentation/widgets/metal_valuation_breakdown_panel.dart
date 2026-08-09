@@ -123,7 +123,7 @@ class _BreakdownCard extends StatelessWidget {
               _MetricBand(
                 title: 'Available Stock',
                 value: formatGram(row.availableNetWeight),
-                caption: '${row.availableUnits} units in hand',
+                caption: '${row.availableQuantityLabel} in hand',
                 color: MetalValuationColors.green,
                 icon: Icons.inventory_2_rounded,
               ),
@@ -131,7 +131,7 @@ class _BreakdownCard extends StatelessWidget {
               _MetricBand(
                 title: 'Sold Movement',
                 value: formatGram(row.soldNetWeight),
-                caption: '${row.soldUnits} units sold',
+                caption: '${row.soldQuantityLabel} sold',
                 color: row.soldUnits > 0
                     ? MetalValuationColors.red
                     : MetalValuationColors.softInk,

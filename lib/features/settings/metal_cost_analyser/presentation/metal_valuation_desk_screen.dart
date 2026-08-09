@@ -26,7 +26,9 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = MetalValuationController()..load();
+    _controller = MetalValuationController()
+      ..startLiveRefresh()
+      ..load();
   }
 
   @override

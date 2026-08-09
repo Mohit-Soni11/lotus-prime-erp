@@ -36,7 +36,9 @@ class _MetalValuationBatchDetailScreenState
     super.initState();
     _filter = MetalValuationFilter.fromMetalType(widget.metalType);
     _batchCode = Uri.decodeComponent(widget.batchCode);
-    _controller = MetalValuationController(initialFilter: _filter)..load();
+    _controller = MetalValuationController(initialFilter: _filter)
+      ..startLiveRefresh()
+      ..load();
   }
 
   @override

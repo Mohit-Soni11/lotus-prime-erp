@@ -725,6 +725,73 @@ void main() {
     expect(grade.soldQuantityLabel, '1 pair');
   });
 
+  test(
+      'metal performance uses current stock quantity without double subtraction',
+      () async {
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SILVER-PERFORMANCE-PAYAL-LOT001',
+      itemType: 'Payal',
+      itemName: 'Payal',
+      quantityMode: 'PAIR',
+      netWeight: 8300,
+      actualFineWeight: 6640,
+      purityPercent: 80,
+      wastagePercent: 0,
+      valuationFineWeight: 6640,
+      unitCost: 1336300,
+      status: 'Available',
+    );
+    final stockItemId = await _stockItemIdForUnit(database, unitId);
+    await database.customStatement(
+      '''
+      UPDATE stock_items
+      SET quantity = ?, quantity_mode = ?
+      WHERE id = ?
+      ''',
+      [49, 'PAIR', stockItemId],
+    );
+    await database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET metal_type = ?, item_type = ?, unit_code = ?, huid = ?
+      WHERE id = ?
+      ''',
+      ['Silver', 'Payal', 'SILVER-PERFORMANCE-PAYAL-LOT001', '', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-PERFORMANCE-PAYAL-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(8000),
+            paidAmount: const drift.Value(8000),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Silver'),
+            itemName: 'Payal',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(40),
+            netWeight: const drift.Value(40),
+            fineWeight: const drift.Value(32),
+            itemTotal: const drift.Value(8000),
+            linkedStockItemId: drift.Value(stockItemId),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(6440),
+          ),
+        );
+
+    final snapshot = await repository.fetchSnapshot();
+    final silver = snapshot.breakdown.single;
+
+    expect(silver.metalType, 'Silver');
+    expect(silver.quantityUnitLabel, 'pair');
+    expect(silver.availableQuantityLabel, '49 pairs');
+    expect(silver.soldQuantityLabel, '1 pair');
+  });
+
   test('silver item movement uses current stock quantity for pcs lot rows',
       () async {
     final unitId = await _insertStockUnit(

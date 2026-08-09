@@ -116,6 +116,9 @@ class MetalValuationBreakdown {
   final String metalType;
   final int availableUnits;
   final int soldUnits;
+  final double availableQuantity;
+  final double soldQuantity;
+  final String quantityUnitLabel;
   final double availableCost;
   final double soldCost;
   final double saleValue;
@@ -128,10 +131,13 @@ class MetalValuationBreakdown {
   final double soldNetWeight;
   final double soldFineWeight;
 
-  const MetalValuationBreakdown({
+  MetalValuationBreakdown({
     required this.metalType,
     required this.availableUnits,
     required this.soldUnits,
+    double? availableQuantity,
+    double? soldQuantity,
+    this.quantityUnitLabel = 'pcs',
     required this.availableCost,
     required this.soldCost,
     required this.saleValue,
@@ -143,12 +149,21 @@ class MetalValuationBreakdown {
     required this.availableWastagePercent,
     required this.soldNetWeight,
     required this.soldFineWeight,
-  });
+  })  : availableQuantity = availableQuantity ??
+            (availableUnits <= 0 ? 0.0 : availableUnits.toDouble()),
+        soldQuantity =
+            soldQuantity ?? (soldUnits <= 0 ? 0.0 : soldUnits.toDouble());
 
   double get marginPercent {
     if (saleValue == 0) return 0;
     return profit / saleValue * 100;
   }
+
+  String get availableQuantityLabel =>
+      valuationDisplayQuantityText(availableQuantity, quantityUnitLabel);
+
+  String get soldQuantityLabel =>
+      valuationDisplayQuantityText(soldQuantity, quantityUnitLabel);
 
   double get availableValuationPurityPercent {
     if (availablePurityPercentValue > 0 || availableWastagePercent > 0) {

@@ -217,14 +217,14 @@ class _MetalSmartCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _SmartChip(
-                      label: '${row.availableUnits} available',
+                      label: '${row.availableQuantityLabel} available',
                       color: colors.accent,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _SmartChip(
-                      label: '${row.soldUnits} sold',
+                      label: '${row.soldQuantityLabel} sold',
                       color: row.soldUnits > 0
                           ? MetalValuationColors.red
                           : const Color(0xFF2E2109),

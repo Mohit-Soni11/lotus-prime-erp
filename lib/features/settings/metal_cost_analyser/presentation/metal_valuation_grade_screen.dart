@@ -32,6 +32,7 @@ class _MetalValuationGradeScreenState extends State<MetalValuationGradeScreen> {
   void initState() {
     super.initState();
     _controller = MetalValuationGradeController(metalType: widget.metalType)
+      ..startLiveRefresh()
       ..load();
   }
 

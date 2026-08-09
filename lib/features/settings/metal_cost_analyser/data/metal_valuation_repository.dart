@@ -1,14 +1,22 @@
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/data/metal_valuation_cost_basis_sql.dart';
+import 'package:lotus_erp/features/settings/metal_cost_analyser/data/metal_valuation_quantity_sql.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
 
-class MetalValuationRepository {
+abstract class MetalValuationSnapshotReader {
+  Future<MetalValuationSnapshot> fetchSnapshot({
+    MetalValuationFilter filter = MetalValuationFilter.all,
+  });
+}
+
+class MetalValuationRepository implements MetalValuationSnapshotReader {
   final AppDatabase _db;
 
   MetalValuationRepository({AppDatabase? database})
       : _db = database ?? AppDatabase();
 
+  @override
   Future<MetalValuationSnapshot> fetchSnapshot({
     MetalValuationFilter filter = MetalValuationFilter.all,
   }) async {
@@ -124,48 +132,76 @@ class MetalValuationRepository {
     MetalValuationFilter filter,
   ) async {
     final costBasis = soldCostBasisExpression();
+    final availableUnitLabelExpression = valuationQuantityUnitLabelExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final soldUnitLabelExpression = valuationQuantityUnitLabelExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final availableDisplayQuantityExpression =
+        valuationAvailableDisplayQuantityExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final soldDisplayQuantityExpression =
+        valuationSoldDisplayQuantityExpression(
+      billAlias: 'i',
+    );
     final rows = await _db.customSelect(
       '''
           WITH available AS (
             SELECT
-              metal_type,
+              u.metal_type AS metal_type,
+              CASE
+                WHEN INSTR(GROUP_CONCAT(DISTINCT $availableUnitLabelExpression), ',') > 0 THEN 'mixed'
+                ELSE COALESCE(NULLIF(GROUP_CONCAT(DISTINCT $availableUnitLabelExpression), ''), 'pcs')
+              END AS quantity_unit_label,
               COUNT(*) AS available_units,
-              CAST(COALESCE(SUM(unit_cost), 0.0) AS REAL) AS available_cost,
-              CAST(COALESCE(SUM(net_weight), 0.0) AS REAL) AS available_net_weight,
-              CAST(COALESCE(SUM(actual_fine_weight), 0.0) AS REAL) AS available_fine_weight,
-              CAST(COALESCE(SUM(valuation_fine_weight), 0.0) AS REAL) AS available_valuation_fine_weight,
+              CAST(COALESCE(SUM($availableDisplayQuantityExpression), 0.0) AS REAL) AS available_quantity,
+              CAST(COALESCE(SUM(u.unit_cost), 0.0) AS REAL) AS available_cost,
+              CAST(COALESCE(SUM(u.net_weight), 0.0) AS REAL) AS available_net_weight,
+              CAST(COALESCE(SUM(u.actual_fine_weight), 0.0) AS REAL) AS available_fine_weight,
+              CAST(COALESCE(SUM(u.valuation_fine_weight), 0.0) AS REAL) AS available_valuation_fine_weight,
               CAST(
                 CASE
-                  WHEN COALESCE(SUM(net_weight), 0.0) = 0.0 THEN 0.0
+                  WHEN COALESCE(SUM(u.net_weight), 0.0) = 0.0 THEN 0.0
                   ELSE COALESCE(
                     SUM(
-                      net_weight * COALESCE(
-                        NULLIF(purity_percent, 0.0),
+                      u.net_weight * COALESCE(
+                        NULLIF(u.purity_percent, 0.0),
                         CASE
-                          WHEN COALESCE(net_weight, 0.0) = 0.0 THEN 0.0
-                          ELSE actual_fine_weight * 100.0 / net_weight
+                          WHEN COALESCE(u.net_weight, 0.0) = 0.0 THEN 0.0
+                          ELSE u.actual_fine_weight * 100.0 / u.net_weight
                         END,
                         0.0
                       )
-                    ) / SUM(net_weight),
+                    ) / SUM(u.net_weight),
                     0.0
                   )
                 END AS REAL
               ) AS available_purity_percent,
               CAST(
                 CASE
-                  WHEN COALESCE(SUM(net_weight), 0.0) = 0.0 THEN 0.0
-                  ELSE COALESCE(SUM(net_weight * COALESCE(wastage_percent, 0.0)) / SUM(net_weight), 0.0)
+                  WHEN COALESCE(SUM(u.net_weight), 0.0) = 0.0 THEN 0.0
+                  ELSE COALESCE(SUM(u.net_weight * COALESCE(u.wastage_percent, 0.0)) / SUM(u.net_weight), 0.0)
                 END AS REAL
               ) AS available_wastage_percent
-            FROM stock_item_units
-            WHERE status = 'Available' ${_metalWhereClause(filter)}
-            GROUP BY metal_type
+            FROM stock_item_units u
+            LEFT JOIN stock_items si ON si.id = u.stock_item_id
+            WHERE u.status = 'Available' ${_metalWhereClause(filter, alias: 'u')}
+            GROUP BY u.metal_type
           ),
           sold AS (
             SELECT
               i.metal_type AS metal_type,
+              CASE
+                WHEN INSTR(GROUP_CONCAT(DISTINCT $soldUnitLabelExpression), ',') > 0 THEN 'mixed'
+                ELSE COALESCE(NULLIF(GROUP_CONCAT(DISTINCT $soldUnitLabelExpression), ''), 'pcs')
+              END AS quantity_unit_label,
               COUNT(*) AS sold_units,
+              CAST(COALESCE(SUM($soldDisplayQuantityExpression), 0.0) AS REAL) AS sold_quantity,
               CAST(COALESCE(SUM($costBasis), 0.0) AS REAL) AS sold_cost,
               CAST(COALESCE(SUM(i.item_total), 0.0) AS REAL) AS sale_value,
               CAST(COALESCE(SUM(i.item_total - $costBasis), 0.0) AS REAL) AS profit,
@@ -183,8 +219,11 @@ class MetalValuationRepository {
           )
           SELECT
             COALESCE(available.metal_type, sold.metal_type) AS metal_type,
+            COALESCE(available.quantity_unit_label, sold.quantity_unit_label, 'pcs') AS quantity_unit_label,
             COALESCE(available.available_units, 0) AS available_units,
             COALESCE(sold.sold_units, 0) AS sold_units,
+            CAST(COALESCE(available.available_quantity, 0.0) AS REAL) AS available_quantity,
+            CAST(COALESCE(sold.sold_quantity, 0.0) AS REAL) AS sold_quantity,
             CAST(COALESCE(available.available_cost, 0.0) AS REAL) AS available_cost,
             CAST(COALESCE(sold.sold_cost, 0.0) AS REAL) AS sold_cost,
             CAST(COALESCE(sold.sale_value, 0.0) AS REAL) AS sale_value,
@@ -201,8 +240,11 @@ class MetalValuationRepository {
           UNION
           SELECT
             COALESCE(available.metal_type, sold.metal_type) AS metal_type,
+            COALESCE(available.quantity_unit_label, sold.quantity_unit_label, 'pcs') AS quantity_unit_label,
             COALESCE(available.available_units, 0) AS available_units,
             COALESCE(sold.sold_units, 0) AS sold_units,
+            CAST(COALESCE(available.available_quantity, 0.0) AS REAL) AS available_quantity,
+            CAST(COALESCE(sold.sold_quantity, 0.0) AS REAL) AS sold_quantity,
             CAST(COALESCE(available.available_cost, 0.0) AS REAL) AS available_cost,
             CAST(COALESCE(sold.sold_cost, 0.0) AS REAL) AS sold_cost,
             CAST(COALESCE(sold.sale_value, 0.0) AS REAL) AS sale_value,
@@ -231,6 +273,9 @@ class MetalValuationRepository {
             metalType: _readString(row, 'metal_type'),
             availableUnits: _readInt(row, 'available_units'),
             soldUnits: _readInt(row, 'sold_units'),
+            availableQuantity: _readDouble(row, 'available_quantity'),
+            soldQuantity: _readDouble(row, 'sold_quantity'),
+            quantityUnitLabel: _readString(row, 'quantity_unit_label'),
             availableCost: _readDouble(row, 'available_cost'),
             soldCost: _readDouble(row, 'sold_cost'),
             saleValue: _readDouble(row, 'sale_value'),

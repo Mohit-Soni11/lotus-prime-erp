@@ -1,15 +1,28 @@
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/data/metal_valuation_cost_basis_sql.dart';
+import 'package:lotus_erp/features/settings/metal_cost_analyser/data/metal_valuation_quantity_sql.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_grade_models.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
 
-class MetalValuationGradeRepository {
+abstract class MetalValuationGradeReader {
+  Future<MetalValuationGradeSnapshot> fetchGradeSnapshot(
+    String metalType, {
+    String? batchCode,
+  });
+
+  Future<List<MetalValuationGradeBatchRow>> fetchGradeBatchRows(
+    String metalType,
+  );
+}
+
+class MetalValuationGradeRepository implements MetalValuationGradeReader {
   final AppDatabase _db;
 
   MetalValuationGradeRepository({AppDatabase? database})
       : _db = database ?? AppDatabase();
 
+  @override
   Future<MetalValuationGradeSnapshot> fetchGradeSnapshot(
     String metalType, {
     String? batchCode,
@@ -18,20 +31,21 @@ class MetalValuationGradeRepository {
     final metal = _normalizeMetal(metalType);
     final availableGradeExpression = _gradeExpression(metal);
     final soldGradeExpression = _gradeExpression(metal, includeBill: true);
-    final availableUnitLabelExpression = _quantityUnitLabelExpression(
+    final availableUnitLabelExpression = valuationQuantityUnitLabelExpression(
       unitAlias: 'u',
       stockAlias: 'si',
     );
-    final soldUnitLabelExpression = _quantityUnitLabelExpression(
+    final soldUnitLabelExpression = valuationQuantityUnitLabelExpression(
       unitAlias: 'u',
       stockAlias: 'si',
     );
     final availableDisplayQuantityExpression =
-        _availableDisplayQuantityExpression(
+        valuationAvailableDisplayQuantityExpression(
       unitAlias: 'u',
       stockAlias: 'si',
     );
-    final soldDisplayQuantityExpression = _soldDisplayQuantityExpression(
+    final soldDisplayQuantityExpression =
+        valuationSoldDisplayQuantityExpression(
       billAlias: 'i',
     );
     final costBasis = soldCostBasisExpression();
@@ -151,18 +165,19 @@ class MetalValuationGradeRepository {
     return MetalValuationGradeSnapshot(metalType: metal, grades: grades);
   }
 
+  @override
   Future<List<MetalValuationGradeBatchRow>> fetchGradeBatchRows(
     String metalType,
   ) async {
     await _db.ensureStockInventorySchema();
     final metal = _normalizeMetal(metalType);
     final gradeExpression = _gradeExpression(metal);
-    final batchUnitLabelExpression = _quantityUnitLabelExpression(
+    final batchUnitLabelExpression = valuationQuantityUnitLabelExpression(
       unitAlias: 'u',
       stockAlias: 'si',
     );
     final batchAvailableDisplayQuantityExpression =
-        _availableDisplayQuantityExpression(
+        valuationAvailableDisplayQuantityExpression(
       unitAlias: 'u',
       stockAlias: 'si',
     );
@@ -424,64 +439,6 @@ class MetalValuationGradeRepository {
         END
       )
     ''';
-  }
-
-  static String _quantityUnitLabelExpression({
-    required String unitAlias,
-    required String stockAlias,
-  }) {
-    final itemText =
-        "lower(COALESCE($unitAlias.item_type, '') || ' ' || COALESCE($unitAlias.item_name, '') || ' ' || COALESCE($stockAlias.sub_category, '') || ' ' || COALESCE($stockAlias.item_name, ''))";
-    return '''
-      CASE
-        WHEN $itemText LIKE '%payal%' THEN 'pair'
-        WHEN $itemText LIKE '%anklet%' THEN 'pair'
-        WHEN $itemText LIKE '%jhumka%' THEN 'pair'
-        WHEN $itemText LIKE '%earring%' THEN 'pair'
-        WHEN $itemText LIKE '%tops%' THEN 'pair'
-        WHEN $itemText LIKE '%bali%' THEN 'pair'
-        WHEN $itemText LIKE '%kundal%' THEN 'pair'
-        WHEN $itemText LIKE '%bichhiya%' THEN 'pair'
-        WHEN $itemText LIKE '%bichiya%' THEN 'pair'
-        WHEN $itemText LIKE '%toe ring%' THEN 'pair'
-        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) = 'pair' THEN 'pair'
-        WHEN $itemText LIKE '%set%' THEN 'set'
-        WHEN $itemText LIKE '%necklace%' THEN 'set'
-        WHEN $itemText LIKE '%haar%' THEN 'set'
-        WHEN $itemText LIKE '%har%' THEN 'set'
-        WHEN $itemText LIKE '%chudi%' THEN 'set'
-        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) = 'set' THEN 'set'
-        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('packet', 'pack') THEN 'packet'
-        WHEN $itemText LIKE '%packet%' THEN 'packet'
-        WHEN $itemText LIKE '%pack%' THEN 'packet'
-        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('lot', 'bulk') THEN 'lot'
-        ELSE 'pcs'
-      END
-    ''';
-  }
-
-  static String _availableDisplayQuantityExpression({
-    required String unitAlias,
-    required String stockAlias,
-  }) {
-    final balanceUnit = '''
-      lower(COALESCE($unitAlias.unit_code, '')) LIKE '%lot%'
-        AND TRIM(COALESCE($unitAlias.huid, '')) = ''
-    ''';
-    final packetBalanceUnit = '''
-      lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('packet', 'pack')
-    ''';
-    return '''
-      CASE
-        WHEN ($balanceUnit) OR ($packetBalanceUnit)
-          THEN COALESCE($stockAlias.quantity, 0) * 1.0
-        ELSE 1
-      END
-    ''';
-  }
-
-  static String _soldDisplayQuantityExpression({required String billAlias}) {
-    return "COALESCE(NULLIF($billAlias.quantity, 0), 1)";
   }
 
   static String _normalizeMetal(String metalType) {
