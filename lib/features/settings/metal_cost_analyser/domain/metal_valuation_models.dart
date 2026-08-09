@@ -212,17 +212,11 @@ class AvailableValuationRow {
 
   String get unitLabel {
     final count = quantity <= 0 ? 1 : quantity;
-    final mode = quantityMode.trim().toUpperCase();
-    final label = switch (mode) {
-      'PAIR' || 'PAIRS' => count == 1 ? 'pair' : 'pairs',
-      'PACK' ||
-      'PACKS' ||
-      'PACKET' ||
-      'PACKETS' =>
-        count == 1 ? 'packet' : 'packets',
-      _ => count == 1 ? 'pc' : 'pcs',
-    };
-    return '$count $label';
+    return _valuationUnitLabel(
+      count: count,
+      quantityMode: quantityMode,
+      itemName: '$itemType $itemName',
+    );
   }
 
   double get valuationPurityPercent {
@@ -325,6 +319,7 @@ class SoldValuationRow {
   final String huid;
   final String unitCode;
   final int quantity;
+  final String quantityMode;
   final double netWeight;
   final double saleValue;
   final double costBasis;
@@ -342,6 +337,7 @@ class SoldValuationRow {
     required this.huid,
     required this.unitCode,
     required this.quantity,
+    required this.quantityMode,
     required this.netWeight,
     required this.saleValue,
     required this.costBasis,
@@ -355,11 +351,88 @@ class SoldValuationRow {
 
   String get unitLabel {
     final count = quantity <= 0 ? 1 : quantity;
-    return count == 1 ? '1 pc' : '$count pcs';
+    return _valuationUnitLabel(
+      count: count,
+      quantityMode: quantityMode,
+      itemName: itemName,
+    );
   }
 
   double get marginPercent {
     if (saleValue == 0) return 0;
     return profit / saleValue * 100;
   }
+}
+
+String _valuationUnitLabel({
+  required int count,
+  required String quantityMode,
+  required String itemName,
+}) {
+  final label = _valuationUnitName(
+    quantityMode: quantityMode,
+    itemName: itemName,
+    plural: count != 1,
+  );
+  return '$count $label';
+}
+
+String _valuationUnitName({
+  required String quantityMode,
+  required String itemName,
+  required bool plural,
+}) {
+  final mode = quantityMode.trim().toLowerCase();
+  final normalizedItem = itemName.trim().toLowerCase();
+  final inferredPair = _containsAny(normalizedItem, const [
+        'jhumka',
+        'jumka',
+        'jhumki',
+        'earring',
+        'ear ring',
+        'tops',
+        'bali',
+        'kundal',
+        'payal',
+        'anklet',
+        'bichhiya',
+        'bichia',
+        'toe ring',
+        'toe-ring',
+        'kada pair',
+      ]) &&
+      !_containsAny(normalizedItem, const [
+        'single',
+        'repair piece',
+        'one piece',
+        '1 piece',
+      ]);
+  final inferredSet = _containsAny(normalizedItem, const [
+    'necklace set',
+    'bridal set',
+    'jewellery set',
+    'jewelry set',
+    'chudi set',
+    'bangle set',
+    'haar set',
+    'har set',
+  ]);
+
+  if (mode == 'pair' || mode == 'pairs' || inferredPair) {
+    return plural ? 'pairs' : 'pair';
+  }
+  if (mode == 'set' || mode == 'sets' || inferredSet) {
+    return plural ? 'sets' : 'set';
+  }
+  if (mode == 'pack' || mode == 'packs' || mode == 'packet') {
+    return plural ? 'packets' : 'packet';
+  }
+  if (mode == 'lot' || mode == 'bulk') {
+    return plural ? 'lots' : 'lot';
+  }
+  return plural ? 'pcs' : 'pc';
+}
+
+bool _containsAny(String value, List<String> keywords) {
+  return keywords.any(value.contains);
 }

@@ -512,53 +512,172 @@ class MetalValuationRepository {
             u.unit_code AS unit_code,
             CASE
               WHEN (
-                LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
-                  AND TRIM(COALESCE(u.huid, '')) = ''
-              ) OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack')
-                THEN COALESCE(NULLIF(s.quantity, 0), NULLIF(pvi.quantity, 0), 1)
+                pvi.id IS NOT NULL
+                AND (
+                  (
+                    LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                    AND TRIM(COALESCE(u.huid, '')) = ''
+                  )
+                  OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                )
+              )
+                THEN COALESCE(NULLIF(pvi.quantity, 0), 1)
               ELSE 1
             END AS quantity,
             COALESCE(NULLIF(s.quantity_mode, ''), 'PCS') AS quantity_mode,
             CAST(
               CASE
                 WHEN (
-                  LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
-                    AND TRIM(COALESCE(u.huid, '')) = ''
-                ) OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack')
-                  THEN COALESCE(NULLIF(s.gross_weight, 0.0), u.gross_weight)
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN COALESCE(NULLIF(pvi.gross_weight, 0.0), u.gross_weight)
                 ELSE u.gross_weight
               END AS REAL
             ) AS gross_weight,
             CAST(
               CASE
                 WHEN (
-                  LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
-                    AND TRIM(COALESCE(u.huid, '')) = ''
-                ) OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack')
-                  THEN COALESCE(NULLIF(s.net_weight, 0.0), u.net_weight)
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN COALESCE(NULLIF(pvi.net_weight, 0.0), u.net_weight)
                 ELSE u.net_weight
               END AS REAL
             ) AS net_weight,
             CAST(
               CASE
                 WHEN (
-                  (
-                    LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
                       AND TRIM(COALESCE(u.huid, '')) = ''
-                  ) OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack')
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
                 )
-                  AND COALESCE(s.net_weight, 0.0) > 0
-                  AND COALESCE(u.purity_percent, 0.0) > 0
-                  THEN s.net_weight * u.purity_percent / 100.0
+                  THEN COALESCE(NULLIF(pvi.fine_weight, 0.0), u.actual_fine_weight)
                 ELSE u.actual_fine_weight
               END AS REAL
             ) AS actual_fine_weight,
-            CAST(COALESCE(NULLIF(u.purity_percent, 0.0), NULLIF(pvi.purity, 0.0), 0.0) AS REAL) AS purity_percent,
-            CAST(COALESCE(u.wastage_percent, 0.0) AS REAL) AS wastage_percent,
-            CAST(COALESCE(NULLIF(u.valuation_fine_weight, 0.0), pvi.valuation_fine_weight, 0.0) AS REAL) AS valuation_fine_weight,
-            CAST(COALESCE(NULLIF(u.rate_per_gram, 0.0), pvi.rate, 0.0) AS REAL) AS rate_per_gram,
-            CAST(COALESCE(u.making_amount, 0.0) AS REAL) AS making_amount,
-            CAST(COALESCE(NULLIF(u.unit_cost, 0.0), pvi.line_amount, 0.0) AS REAL) AS unit_cost
+            CAST(
+              CASE
+                WHEN (
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN COALESCE(NULLIF(pvi.purity, 0.0), u.purity_percent, 0.0)
+                ELSE COALESCE(NULLIF(u.purity_percent, 0.0), NULLIF(pvi.purity, 0.0), 0.0)
+              END AS REAL
+            ) AS purity_percent,
+            CAST(
+              CASE
+                WHEN (
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN COALESCE(pvi.wastage_percent, u.wastage_percent, 0.0)
+                ELSE COALESCE(u.wastage_percent, 0.0)
+              END AS REAL
+            ) AS wastage_percent,
+            CAST(
+              CASE
+                WHEN (
+                  (
+                    pvi.id IS NOT NULL
+                    AND (
+                      (
+                        LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                        AND TRIM(COALESCE(u.huid, '')) = ''
+                      )
+                      OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                    )
+                  )
+                )
+                  THEN COALESCE(NULLIF(pvi.valuation_fine_weight, 0.0), u.valuation_fine_weight, 0.0)
+                ELSE COALESCE(NULLIF(u.valuation_fine_weight, 0.0), pvi.valuation_fine_weight, 0.0)
+              END AS REAL
+            ) AS valuation_fine_weight,
+            CAST(
+              CASE
+                WHEN (
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN COALESCE(NULLIF(pvi.rate, 0.0), u.rate_per_gram, 0.0)
+                ELSE COALESCE(NULLIF(u.rate_per_gram, 0.0), pvi.rate, 0.0)
+              END AS REAL
+            ) AS rate_per_gram,
+            CAST(
+              CASE
+                WHEN (
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN MAX(
+                    COALESCE(pvi.line_amount, 0.0) -
+                    (
+                      COALESCE(NULLIF(pvi.valuation_fine_weight, 0.0), pvi.fine_weight + pvi.wastage_fine_weight, 0.0) *
+                      COALESCE(NULLIF(pvi.rate, 0.0), u.rate_per_gram, 0.0)
+                    ),
+                    0.0
+                  )
+                ELSE COALESCE(u.making_amount, 0.0)
+              END AS REAL
+            ) AS making_amount,
+            CAST(
+              CASE
+                WHEN (
+                  pvi.id IS NOT NULL
+                  AND (
+                    (
+                      LOWER(COALESCE(u.unit_code, '')) LIKE '%lot%'
+                      AND TRIM(COALESCE(u.huid, '')) = ''
+                    )
+                    OR LOWER(COALESCE(NULLIF(TRIM(s.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+                  )
+                )
+                  THEN COALESCE(NULLIF(pvi.line_amount, 0.0), u.unit_cost, 0.0)
+                ELSE COALESCE(NULLIF(u.unit_cost, 0.0), pvi.line_amount, 0.0)
+              END AS REAL
+            ) AS unit_cost
           FROM stock_item_units u
           LEFT JOIN purchase_voucher_items pvi
             ON pvi.id = u.purchase_voucher_item_id
@@ -614,6 +733,7 @@ class MetalValuationRepository {
             COALESCE(NULLIF(i.huid, ''), NULLIF(u.huid, ''), '') AS huid,
             COALESCE(NULLIF(u.unit_code, ''), NULLIF(i.linked_stock_sku, ''), '') AS unit_code,
             i.quantity AS quantity,
+            COALESCE(NULLIF(s.quantity_mode, ''), 'PIECES') AS quantity_mode,
             i.net_weight AS net_weight,
             COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) AS cost,
             i.item_total AS sale,
@@ -622,6 +742,7 @@ class MetalValuationRepository {
           INNER JOIN bills b ON b.id = i.bill_id
           LEFT JOIN customers c ON c.id = b.customer_id
           LEFT JOIN stock_item_units u ON u.id = i.linked_stock_unit_id
+          LEFT JOIN stock_items s ON s.id = u.stock_item_id
           WHERE COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) > 0
             AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
             ${_metalWhereClause(filter, alias: 'i')}
@@ -645,6 +766,7 @@ class MetalValuationRepository {
             huid: _readString(row, 'huid'),
             unitCode: _readString(row, 'unit_code'),
             quantity: _readInt(row, 'quantity'),
+            quantityMode: _readString(row, 'quantity_mode'),
             netWeight: _readDouble(row, 'net_weight'),
             saleValue: _readDouble(row, 'sale'),
             costBasis: _readDouble(row, 'cost'),

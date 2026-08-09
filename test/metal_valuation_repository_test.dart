@@ -140,6 +140,67 @@ void main() {
     expect(batch.totalCost, closeTo(54723, 0.001));
   });
 
+  test('item valuation ledger keeps original add-stock lot valuation',
+      () async {
+    final purchaseVoucherId = await _insertPurchaseVoucher(database);
+    final purchaseItemId = await _insertPurchaseLine(
+      database,
+      purchaseVoucherId: purchaseVoucherId,
+      grossWeight: 5,
+      netWeight: 5,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 3.9,
+      ratePerGram: 14150,
+      quantity: 14,
+      lineAmount: 55315.93,
+    );
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'GOLD-LOT-001',
+      itemType: 'Nose Pin',
+      itemName: 'Nose Pin',
+      netWeight: 5,
+      actualFineWeight: 3.75,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 3.9,
+      ratePerGram: 14150,
+      unitCost: 55315.93,
+      purchaseVoucherId: purchaseVoucherId,
+      purchaseVoucherItemId: purchaseItemId,
+      status: 'Available',
+    );
+
+    await database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET huid = '',
+          gross_weight = 3.0,
+          net_weight = 3.0,
+          actual_fine_weight = 2.25,
+          wastage_fine_weight = 0.09,
+          valuation_fine_weight = 2.34,
+          unit_cost = 33189.56
+      WHERE id = ?
+      ''',
+      [unitId],
+    );
+
+    final item = (await repository.fetchSnapshot()).availableStock.single;
+
+    expect(item.itemName, 'Nose Pin');
+    expect(item.unitLabel, '14 pcs');
+    expect(item.grossWeight, closeTo(5, 0.001));
+    expect(item.netWeight, closeTo(5, 0.001));
+    expect(item.purityPercent, closeTo(75, 0.001));
+    expect(item.wastagePercent, closeTo(3, 0.001));
+    expect(item.valuationPurityPercent, closeTo(78, 0.001));
+    expect(item.valuationFine, closeTo(3.9, 0.001));
+    expect(item.ratePerGram, closeTo(14150, 0.001));
+    expect(item.unitCost, closeTo(55315.93, 0.001));
+  });
+
   test('item valuation ledger excludes sold stock units', () async {
     await _insertStockUnit(
       database,
@@ -242,11 +303,69 @@ void main() {
     expect(snapshot.summary.saleValue, closeTo(76000, 0.001));
     expect(snapshot.summary.profit, closeTo(24000, 0.001));
   });
+
+  test('sold audit shows jewellery unit mode for pair items', () async {
+    final customerId = await database.into(database.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Reyansh Soni',
+            mobile: '9000000002',
+          ),
+        );
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SOLD-JHUMKA-001',
+      itemType: 'Jhumka',
+      itemName: 'Jhumka',
+      quantityMode: 'PAIR',
+      netWeight: 3.63,
+      actualFineWeight: 2.7225,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 2.8314,
+      unitCost: 6210.25,
+      status: 'Sold',
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GST-PAIR-001',
+            customerId: drift.Value(customerId),
+            customerName: const drift.Value('Reyansh Soni'),
+            finalAmount: const drift.Value(48787.20),
+            paidAmount: const drift.Value(48787.20),
+          ),
+        );
+
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Gold'),
+            itemName: 'Jhumka',
+            huid: const drift.Value('75JKLN, 2ASZ03'),
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(3.63),
+            netWeight: const drift.Value(3.63),
+            fineWeight: const drift.Value(2.7225),
+            itemTotal: const drift.Value(48787.20),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(6210.25),
+          ),
+        );
+
+    final sold = (await repository.fetchSnapshot()).soldStock.single;
+
+    expect(sold.itemName, 'Jhumka');
+    expect(sold.quantity, 1);
+    expect(sold.quantityMode, 'PAIR');
+    expect(sold.unitLabel, '1 pair');
+  });
 }
 
 Future<int> _insertStockUnit(
   AppDatabase database, {
   required String unitCode,
+  String itemType = 'Ring',
+  String itemName = 'Gold Ring',
+  String quantityMode = 'PIECES',
   required double netWeight,
   required double actualFineWeight,
   required double purityPercent,
@@ -265,9 +384,9 @@ Future<int> _insertStockUnit(
   final stockItemId = await database.into(database.stockItems).insert(
         StockItemsCompanion.insert(
           sku: unitCode.replaceAll('-001', ''),
-          itemName: 'Gold Ring',
+          itemName: itemName,
           category: 'Gold',
-          subCategory: 'Ring',
+          subCategory: itemType,
           metalType: const drift.Value('Gold'),
           purity: const drift.Value('22KT'),
           grossWeight: drift.Value(resolvedGrossWeight),
@@ -279,6 +398,10 @@ Future<int> _insertStockUnit(
       );
 
   await database.ensureStockInventorySchema();
+  await database.customStatement(
+    'UPDATE stock_items SET quantity_mode = ? WHERE id = ?',
+    [quantityMode, stockItemId],
+  );
   final hasPurchaseLink =
       purchaseVoucherId != null && purchaseVoucherItemId != null;
   return database.customInsert(
@@ -320,9 +443,9 @@ Future<int> _insertStockUnit(
       drift.Variable<String>(unitCode),
       const drift.Variable<int>(1),
       const drift.Variable<String>('Gold'),
-      const drift.Variable<String>('Ring'),
+      drift.Variable<String>(itemType),
       const drift.Variable<String>('Retail'),
-      const drift.Variable<String>('Gold Ring'),
+      drift.Variable<String>(itemName),
       drift.Variable<String>(unitCode),
       drift.Variable<double>(resolvedGrossWeight),
       const drift.Variable<double>(0),
@@ -374,6 +497,7 @@ Future<int> _insertPurchaseLine(
   required double wastagePercent,
   required double valuationFineWeight,
   required double ratePerGram,
+  int quantity = 1,
   required double lineAmount,
 }) {
   return database.customInsert(
@@ -411,7 +535,7 @@ Future<int> _insertPurchaseLine(
       drift.Variable<double>(netWeight * wastagePercent / 100),
       drift.Variable<double>(valuationFineWeight),
       drift.Variable<double>(ratePerGram),
-      const drift.Variable<int>(1),
+      drift.Variable<int>(quantity),
       drift.Variable<double>(lineAmount),
       drift.Variable<int>(DateTime(2026, 8, 9, 10).millisecondsSinceEpoch),
     ],
