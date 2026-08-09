@@ -55,6 +55,8 @@ class MetalValuationSummary {
   final double availableNetWeight;
   final double availableActualFine;
   final double availableValuationFine;
+  final double availablePurityPercentValue;
+  final double availableWastagePercent;
   final double soldNetWeight;
   final double soldFineWeight;
 
@@ -68,6 +70,8 @@ class MetalValuationSummary {
     required this.availableNetWeight,
     required this.availableActualFine,
     required this.availableValuationFine,
+    required this.availablePurityPercentValue,
+    required this.availableWastagePercent,
     required this.soldNetWeight,
     required this.soldFineWeight,
   });
@@ -82,6 +86,8 @@ class MetalValuationSummary {
     availableNetWeight: 0,
     availableActualFine: 0,
     availableValuationFine: 0,
+    availablePurityPercentValue: 0,
+    availableWastagePercent: 0,
     soldNetWeight: 0,
     soldFineWeight: 0,
   );
@@ -89,6 +95,20 @@ class MetalValuationSummary {
   double get marginPercent {
     if (saleValue == 0) return 0;
     return profit / saleValue * 100;
+  }
+
+  double get availableValuationPurityPercent {
+    if (availablePurityPercentValue > 0 || availableWastagePercent > 0) {
+      return availablePurityPercent + availableWastagePercent;
+    }
+    if (availableNetWeight == 0) return 0;
+    return availableValuationFine / availableNetWeight * 100;
+  }
+
+  double get availablePurityPercent {
+    if (availablePurityPercentValue > 0) return availablePurityPercentValue;
+    if (availableNetWeight == 0) return 0;
+    return availableActualFine / availableNetWeight * 100;
   }
 }
 
@@ -102,6 +122,9 @@ class MetalValuationBreakdown {
   final double profit;
   final double availableNetWeight;
   final double availableFineWeight;
+  final double availableValuationFineWeight;
+  final double availablePurityPercentValue;
+  final double availableWastagePercent;
   final double soldNetWeight;
   final double soldFineWeight;
 
@@ -115,6 +138,9 @@ class MetalValuationBreakdown {
     required this.profit,
     required this.availableNetWeight,
     required this.availableFineWeight,
+    required this.availableValuationFineWeight,
+    required this.availablePurityPercentValue,
+    required this.availableWastagePercent,
     required this.soldNetWeight,
     required this.soldFineWeight,
   });
@@ -122,6 +148,20 @@ class MetalValuationBreakdown {
   double get marginPercent {
     if (saleValue == 0) return 0;
     return profit / saleValue * 100;
+  }
+
+  double get availableValuationPurityPercent {
+    if (availablePurityPercentValue > 0 || availableWastagePercent > 0) {
+      return availablePurityPercent + availableWastagePercent;
+    }
+    if (availableNetWeight == 0) return 0;
+    return availableValuationFineWeight / availableNetWeight * 100;
+  }
+
+  double get availablePurityPercent {
+    if (availablePurityPercentValue > 0) return availablePurityPercentValue;
+    if (availableNetWeight == 0) return 0;
+    return availableFineWeight / availableNetWeight * 100;
   }
 }
 
@@ -138,6 +178,8 @@ class AvailableValuationRow {
   final double grossWeight;
   final double netWeight;
   final double actualFine;
+  final double purityPercentValue;
+  final double wastagePercent;
   final double valuationFine;
   final double ratePerGram;
   final double makingAmount;
@@ -156,6 +198,8 @@ class AvailableValuationRow {
     required this.grossWeight,
     required this.netWeight,
     required this.actualFine,
+    required this.purityPercentValue,
+    required this.wastagePercent,
     required this.valuationFine,
     required this.ratePerGram,
     required this.makingAmount,
@@ -180,6 +224,20 @@ class AvailableValuationRow {
     };
     return '$count $label';
   }
+
+  double get valuationPurityPercent {
+    if (purityPercentValue > 0 || wastagePercent > 0) {
+      return purityPercent + wastagePercent;
+    }
+    if (netWeight == 0) return 0;
+    return valuationFine / netWeight * 100;
+  }
+
+  double get purityPercent {
+    if (purityPercentValue > 0) return purityPercentValue;
+    if (netWeight == 0) return 0;
+    return actualFine / netWeight * 100;
+  }
 }
 
 class BatchValuationRow {
@@ -196,6 +254,8 @@ class BatchValuationRow {
   final double soldNetWeight;
   final double totalFineWeight;
   final double valuationFineWeight;
+  final double purityPercentValue;
+  final double wastagePercent;
   final double availableFineWeight;
   final double soldFineWeight;
   final double ratePerGram;
@@ -220,6 +280,8 @@ class BatchValuationRow {
     required this.soldNetWeight,
     required this.totalFineWeight,
     required this.valuationFineWeight,
+    required this.purityPercentValue,
+    required this.wastagePercent,
     required this.availableFineWeight,
     required this.soldFineWeight,
     required this.ratePerGram,
@@ -235,36 +297,66 @@ class BatchValuationRow {
     if (saleValue == 0) return 0;
     return profit / saleValue * 100;
   }
+
+  double get valuationPurityPercent {
+    if (purityPercentValue > 0 || wastagePercent > 0) {
+      return purityPercent + wastagePercent;
+    }
+    if (totalNetWeight == 0) return 0;
+    return valuationFineWeight / totalNetWeight * 100;
+  }
+
+  double get purityPercent {
+    if (purityPercentValue > 0) return purityPercentValue;
+    if (totalNetWeight == 0) return 0;
+    return totalFineWeight / totalNetWeight * 100;
+  }
 }
 
 class SoldValuationRow {
+  final int billId;
+  final int? customerId;
   final String billNo;
+  final String customerName;
   final DateTime? billDate;
   final String batchCode;
   final String metalType;
   final String itemName;
   final String huid;
   final String unitCode;
+  final int quantity;
   final double netWeight;
   final double saleValue;
   final double costBasis;
   final double profit;
 
   const SoldValuationRow({
+    required this.billId,
+    required this.customerId,
     required this.billNo,
+    required this.customerName,
     required this.billDate,
     required this.batchCode,
     required this.metalType,
     required this.itemName,
     required this.huid,
     required this.unitCode,
+    required this.quantity,
     required this.netWeight,
     required this.saleValue,
     required this.costBasis,
     required this.profit,
   });
 
-  String get identifier => huid.trim().isEmpty ? unitCode : huid;
+  String get customerLabel =>
+      customerName.trim().isEmpty ? 'Walk-in Customer' : customerName;
+
+  String get huidLabel => huid.trim().isEmpty ? 'Not linked' : huid;
+
+  String get unitLabel {
+    final count = quantity <= 0 ? 1 : quantity;
+    return count == 1 ? '1 pc' : '$count pcs';
+  }
 
   double get marginPercent {
     if (saleValue == 0) return 0;

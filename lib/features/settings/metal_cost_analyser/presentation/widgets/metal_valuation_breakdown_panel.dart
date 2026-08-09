@@ -41,7 +41,7 @@ class MetalValuationBreakdownPanel extends StatelessWidget {
                     crossAxisCount: columns,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    mainAxisExtent: 222,
+                    mainAxisExtent: 344,
                   ),
                   itemBuilder: (context, index) {
                     final row = rows[index];
@@ -159,6 +159,34 @@ class _BreakdownCard extends StatelessWidget {
                       valueColor: row.soldUnits > 0
                           ? MetalValuationColors.red
                           : MetalValuationColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Purity',
+                      value: formatPercent(row.availablePurityPercent),
+                      valueColor: MetalValuationColors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Wastage',
+                      value: formatPercent(row.availableWastagePercent),
+                      valueColor: MetalValuationColors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MiniFact(
+                      label: 'Valuation Purity',
+                      value: formatPercent(row.availableValuationPurityPercent),
+                      valueColor: MetalValuationColors.goldDark,
                     ),
                   ),
                 ],

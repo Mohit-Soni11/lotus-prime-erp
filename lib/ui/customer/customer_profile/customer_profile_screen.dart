@@ -25,6 +25,7 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
+  final int? initialBillId;
   final VoidCallback? onBack;
   final Function(int customerId)? onNewSale;
   final Function(int billId)? onEditBill;
@@ -40,6 +41,7 @@ class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
     super.key,
     required this.customerId,
+    this.initialBillId,
     this.onBack,
     this.onNewSale,
     this.onEditBill,
@@ -80,6 +82,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   final ScrollController _scrollCtrl = ScrollController();
   bool _deleteNavigationScheduled = false;
+  int? _focusedInitialBillId;
 
   @override
   void initState() {
@@ -164,6 +167,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   // MAIN BODY
   Widget _buildBody(CustomerProfileModel p) {
+    _scheduleInitialBillFocus(p);
     return FadeTransition(
       opacity: _fadeIn,
       child: SingleChildScrollView(
@@ -191,6 +195,34 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         ),
       ),
     );
+  }
+
+  void _scheduleInitialBillFocus(CustomerProfileModel p) {
+    final billId = widget.initialBillId;
+    if (billId == null || _focusedInitialBillId == billId) return;
+
+    CustomerBillModel? targetBill;
+    for (final bill in p.bills) {
+      if (bill.id == billId) {
+        targetBill = bill;
+        break;
+      }
+    }
+    if (targetBill == null) return;
+
+    _focusedInitialBillId = billId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _tabCtrl.animateTo(0);
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      _showBillActions(targetBill!);
+    });
   }
 
   // 1. HERO CARD

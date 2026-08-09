@@ -5,8 +5,15 @@ import 'metal_valuation_tokens.dart';
 
 class SoldStockValuationTable extends StatelessWidget {
   final List<SoldValuationRow> rows;
+  final ValueChanged<SoldValuationRow>? onInvoiceSelected;
+  final ValueChanged<SoldValuationRow>? onCustomerSelected;
 
-  const SoldStockValuationTable({super.key, required this.rows});
+  const SoldStockValuationTable({
+    super.key,
+    required this.rows,
+    this.onInvoiceSelected,
+    this.onCustomerSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,33 +24,51 @@ class SoldStockValuationTable extends StatelessWidget {
       icon: Icons.fact_check_rounded,
       emptyMessage: 'No sold stock cost records found.',
       columns: const [
+        'S.No',
         'Bill',
         'Date',
+        'Customer',
         'Batch',
         'Metal',
         'Item',
-        'HUID / Unit',
+        'HUID',
+        'Unit',
         'Net Weight',
         'Cost Basis',
         'Sale Value',
-        'Margin',
+        'Profit',
+        'Margin %',
       ],
-      rows: rows
-          .map(
-            (row) => [
-              row.billNo,
-              formatDate(row.billDate),
-              row.batchCode,
-              titleCase(row.metalType),
-              row.itemName,
-              row.identifier,
-              formatGram(row.netWeight),
-              formatMoney(row.costBasis),
-              formatMoney(row.saleValue),
-              '${formatMoney(row.profit)} (${formatPercent(row.marginPercent)})',
-            ],
-          )
-          .toList(),
+      rows: [
+        for (var index = 0; index < rows.length; index++)
+          [
+            '${index + 1}',
+            rows[index].billNo,
+            formatDate(rows[index].billDate),
+            rows[index].customerLabel,
+            rows[index].batchCode,
+            titleCase(rows[index].metalType),
+            rows[index].itemName,
+            rows[index].huidLabel,
+            rows[index].unitLabel,
+            formatGram(rows[index].netWeight),
+            formatMoney(rows[index].costBasis),
+            formatMoney(rows[index].saleValue),
+            formatMoney(rows[index].profit),
+            formatPercent(rows[index].marginPercent),
+          ],
+      ],
+      linkedColumns: {
+        if (onInvoiceSelected != null) 1,
+        if (onCustomerSelected != null) 3,
+      },
+      onCellTap: (rowIndex, columnIndex) {
+        if (columnIndex == 1) {
+          onInvoiceSelected?.call(rows[rowIndex]);
+        } else if (columnIndex == 3) {
+          onCustomerSelected?.call(rows[rowIndex]);
+        }
+      },
     );
   }
 }
@@ -96,6 +121,9 @@ class ItemValuationLedgerTable extends StatelessWidget {
         'Unit',
         'Gross Weight',
         'Net Weight',
+        'Purity',
+        'Wastage',
+        'Valuation Purity',
         'Valuation Fine',
         'Rate',
         'Making',
@@ -111,6 +139,9 @@ class ItemValuationLedgerTable extends StatelessWidget {
             rows[index].unitLabel,
             formatGram(rows[index].grossWeight),
             formatGram(rows[index].netWeight),
+            formatPercent(rows[index].purityPercent),
+            formatPercent(rows[index].wastagePercent),
+            formatPercent(rows[index].valuationPurityPercent),
             formatGram(rows[index].valuationFine),
             '${formatMoney(rows[index].ratePerGram)}/g',
             formatMoney(rows[index].makingAmount),
@@ -154,10 +185,10 @@ class BatchValuationSummaryPanel extends StatelessWidget {
               builder: (context, constraints) {
                 final columns = constraints.maxWidth < 820 ? 1 : 2;
                 final cardHeight = constraints.maxWidth < 560
-                    ? 390.0
+                    ? 506.0
                     : constraints.maxWidth < 820
-                        ? 270.0
-                        : 252.0;
+                        ? 374.0
+                        : 346.0;
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -257,7 +288,7 @@ class _BatchValuationCard extends StatelessWidget {
               const SizedBox(height: 14),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final columns = constraints.maxWidth < 560
+                  final factColumns = constraints.maxWidth < 420
                       ? 2
                       : constraints.maxWidth < 820
                           ? 3
@@ -265,10 +296,10 @@ class _BatchValuationCard extends StatelessWidget {
                   return GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: columns,
+                    crossAxisCount: factColumns,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    childAspectRatio: columns == 2 ? 2.65 : 3.35,
+                    childAspectRatio: factColumns == 2 ? 2.65 : 3.25,
                     children: [
                       _CardFact(
                         label: 'Total Units',
@@ -278,6 +309,21 @@ class _BatchValuationCard extends StatelessWidget {
                         label: 'Total Net Weight',
                         value: formatGram(row.totalNetWeight),
                         valueColor: MetalValuationColors.green,
+                      ),
+                      _CardFact(
+                        label: 'Purity',
+                        value: formatPercent(row.purityPercent),
+                        valueColor: MetalValuationColors.green,
+                      ),
+                      _CardFact(
+                        label: 'Wastage',
+                        value: formatPercent(row.wastagePercent),
+                        valueColor: MetalValuationColors.blue,
+                      ),
+                      _CardFact(
+                        label: 'Valuation Purity',
+                        value: formatPercent(row.valuationPurityPercent),
+                        valueColor: MetalValuationColors.goldDark,
                       ),
                       _CardFact(
                         label: 'Total Valuation Fine',
@@ -364,6 +410,8 @@ class _TablePanel extends StatelessWidget {
   final String emptyMessage;
   final List<String> columns;
   final List<List<String>> rows;
+  final Set<int> linkedColumns;
+  final void Function(int rowIndex, int columnIndex)? onCellTap;
 
   const _TablePanel({
     required this.title,
@@ -372,6 +420,8 @@ class _TablePanel extends StatelessWidget {
     required this.emptyMessage,
     required this.columns,
     required this.rows,
+    this.linkedColumns = const {},
+    this.onCellTap,
   });
 
   @override
@@ -421,23 +471,28 @@ class _TablePanel extends StatelessWidget {
                       columns: columns
                           .map((column) => DataColumn(label: Text(column)))
                           .toList(),
-                      rows: rows
-                          .map(
-                            (row) => DataRow(
-                              cells: row
-                                  .map(
-                                    (value) => DataCell(
-                                      Text(
-                                        value.isEmpty ? 'Not recorded' : value,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          )
-                          .toList(),
+                      rows: [
+                        for (var index = 0; index < rows.length; index++)
+                          DataRow(
+                            cells: [
+                              for (var columnIndex = 0;
+                                  columnIndex < rows[index].length;
+                                  columnIndex++)
+                                DataCell(
+                                  _TableCellText(
+                                    value: rows[index][columnIndex],
+                                    isLink: linkedColumns.contains(columnIndex),
+                                  ),
+                                  onTap: linkedColumns.contains(columnIndex)
+                                      ? () => onCellTap?.call(
+                                            index,
+                                            columnIndex,
+                                          )
+                                      : null,
+                                ),
+                            ],
+                          ),
+                      ],
                     ),
                   ),
                 );
@@ -446,6 +501,38 @@ class _TablePanel extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _TableCellText extends StatelessWidget {
+  final String value;
+  final bool isLink;
+
+  const _TableCellText({
+    required this.value,
+    required this.isLink,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue = value.isEmpty ? 'Not recorded' : value;
+    final text = Text(
+      displayValue,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: isLink
+          ? MetalValuationText.body.copyWith(
+              color: MetalValuationColors.blue,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              decoration: TextDecoration.underline,
+              decorationColor: MetalValuationColors.blue,
+            )
+          : null,
+    );
+
+    if (!isLink) return text;
+    return MouseRegion(cursor: SystemMouseCursors.click, child: text);
   }
 }
 

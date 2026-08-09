@@ -387,8 +387,11 @@ GoRouter createAppRouter() {
             path: RoutePaths.customerProfile,
             builder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
+              final initialBillId =
+                  int.tryParse(state.uri.queryParameters['billId'] ?? '');
               return CustomerProfileScreen(
                 customerId: id,
+                initialBillId: initialBillId,
                 onBack: () => _goBackOr(context, RoutePaths.customerList),
                 onDeleted: () => context.go(RoutePaths.customerList),
                 onNewSale: (_) => context.go(RoutePaths.salesPos),

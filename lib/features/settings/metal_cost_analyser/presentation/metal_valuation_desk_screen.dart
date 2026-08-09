@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/application/metal_valuation_controller.dart';
+import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
 
 import 'widgets/metal_valuation_app_bar.dart';
 import 'widgets/metal_valuation_breakdown_panel.dart';
@@ -78,7 +79,11 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              SoldStockValuationTable(rows: snapshot.soldStock),
+              SoldStockValuationTable(
+                rows: snapshot.soldStock,
+                onInvoiceSelected: _openSoldInvoice,
+                onCustomerSelected: _openSoldCustomer,
+              ),
               const SizedBox(height: 16),
               AvailableStockValuationTable(
                 batchRows: snapshot.batchSummaries,
@@ -108,6 +113,23 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
           ),
       ],
     );
+  }
+
+  void _openSoldInvoice(SoldValuationRow row) {
+    final customerId = row.customerId;
+    if (customerId == null) return;
+    context.push(
+      Uri(
+        path: RoutePaths.customerProfileFor(customerId),
+        queryParameters: {'billId': '${row.billId}'},
+      ).toString(),
+    );
+  }
+
+  void _openSoldCustomer(SoldValuationRow row) {
+    final customerId = row.customerId;
+    if (customerId == null) return;
+    context.push(RoutePaths.customerProfileFor(customerId));
   }
 }
 

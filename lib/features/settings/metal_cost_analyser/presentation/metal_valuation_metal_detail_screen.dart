@@ -98,7 +98,11 @@ class _MetalValuationMetalDetailScreenState
                 },
               ),
               const SizedBox(height: 16),
-              SoldStockValuationTable(rows: snapshot.soldStock),
+              SoldStockValuationTable(
+                rows: snapshot.soldStock,
+                onInvoiceSelected: _openSoldInvoice,
+                onCustomerSelected: _openSoldCustomer,
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -116,6 +120,23 @@ class _MetalValuationMetalDetailScreenState
           ),
       ],
     );
+  }
+
+  void _openSoldInvoice(SoldValuationRow row) {
+    final customerId = row.customerId;
+    if (customerId == null) return;
+    context.push(
+      Uri(
+        path: RoutePaths.customerProfileFor(customerId),
+        queryParameters: {'billId': '${row.billId}'},
+      ).toString(),
+    );
+  }
+
+  void _openSoldCustomer(SoldValuationRow row) {
+    final customerId = row.customerId;
+    if (customerId == null) return;
+    context.push(RoutePaths.customerProfileFor(customerId));
   }
 }
 
@@ -194,9 +215,21 @@ class _MetalDetailHeader extends StatelessWidget {
                     color: MetalValuationColors.green,
                   ),
                   _HeaderMetric(
-                    label: 'Available Total Fine',
-                    value: formatGram(row?.availableFineWeight ?? 0),
+                    label: 'Available Purity',
+                    value: formatPercent(row?.availablePurityPercent ?? 0),
                     color: MetalValuationColors.green,
+                  ),
+                  _HeaderMetric(
+                    label: 'Wastage',
+                    value: formatPercent(row?.availableWastagePercent ?? 0),
+                    color: MetalValuationColors.blue,
+                  ),
+                  _HeaderMetric(
+                    label: 'Valuation Purity',
+                    value: formatPercent(
+                      row?.availableValuationPurityPercent ?? 0,
+                    ),
+                    color: MetalValuationColors.goldDark,
                   ),
                   _HeaderMetric(
                     label: 'Available Units',

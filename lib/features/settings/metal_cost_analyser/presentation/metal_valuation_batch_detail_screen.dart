@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/application/metal_valuation_controller.dart';
 import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
 
@@ -96,7 +98,11 @@ class _MetalValuationBatchDetailScreenState
               const SizedBox(height: 16),
               ItemValuationLedgerTable(rows: availableRows),
               const SizedBox(height: 16),
-              SoldStockValuationTable(rows: soldRows),
+              SoldStockValuationTable(
+                rows: soldRows,
+                onInvoiceSelected: _openSoldInvoice,
+                onCustomerSelected: _openSoldCustomer,
+              ),
               const SizedBox(height: 24),
             ],
           ),
@@ -114,6 +120,23 @@ class _MetalValuationBatchDetailScreenState
           ),
       ],
     );
+  }
+
+  void _openSoldInvoice(SoldValuationRow row) {
+    final customerId = row.customerId;
+    if (customerId == null) return;
+    context.push(
+      Uri(
+        path: RoutePaths.customerProfileFor(customerId),
+        queryParameters: {'billId': '${row.billId}'},
+      ).toString(),
+    );
+  }
+
+  void _openSoldCustomer(SoldValuationRow row) {
+    final customerId = row.customerId;
+    if (customerId == null) return;
+    context.push(RoutePaths.customerProfileFor(customerId));
   }
 }
 
@@ -191,6 +214,21 @@ class _BatchDetailHeader extends StatelessWidget {
                     label: 'Total Net Weight',
                     value: formatGram(batch?.totalNetWeight ?? 0),
                     valueColor: MetalValuationColors.green,
+                  ),
+                  _HeaderMetric(
+                    label: 'Purity',
+                    value: formatPercent(batch?.purityPercent ?? 0),
+                    valueColor: MetalValuationColors.green,
+                  ),
+                  _HeaderMetric(
+                    label: 'Wastage',
+                    value: formatPercent(batch?.wastagePercent ?? 0),
+                    valueColor: MetalValuationColors.blue,
+                  ),
+                  _HeaderMetric(
+                    label: 'Valuation Purity',
+                    value: formatPercent(batch?.valuationPurityPercent ?? 0),
+                    valueColor: MetalValuationColors.goldDark,
                   ),
                   _HeaderMetric(
                     label: 'Total Valuation Fine',

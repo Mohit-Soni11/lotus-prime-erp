@@ -120,7 +120,7 @@ class _MetalSmartCardGrid extends StatelessWidget {
         crossAxisCount: compact ? 2 : 4,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        mainAxisExtent: 154,
+        mainAxisExtent: 204,
       ),
       itemBuilder: (context, index) {
         return _MetalSmartCard(row: visibleRows[index]);
@@ -182,8 +182,28 @@ class _MetalSmartCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: MetalValuationText.value.copyWith(
-              fontSize: 24,
+              fontSize: 22,
               color: colors.accent,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Purity ${formatPercent(row.availablePurityPercent)} | Wastage ${formatPercent(row.availableWastagePercent)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: MetalValuationText.label.copyWith(
+              fontSize: 11,
+              color: const Color(0xFF2E2109),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Valuation Purity ${formatPercent(row.availableValuationPurityPercent)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: MetalValuationText.label.copyWith(
+              fontSize: 11,
+              color: const Color(0xFF2E2109),
             ),
           ),
           const SizedBox(height: 8),
