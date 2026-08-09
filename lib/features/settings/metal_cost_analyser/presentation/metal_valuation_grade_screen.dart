@@ -550,7 +550,7 @@ class _GradeDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          '$metalLabel grade movement, stock cost and sold margin audit.',
+                          '$metalLabel grade movement grouped by exact purchase batches.',
                           style: MetalValuationText.body.copyWith(
                             color: tone.text.withValues(alpha: 0.82),
                           ),
@@ -561,73 +561,10 @@ class _GradeDetailScreen extends StatelessWidget {
                   _GradeStatusPill(
                     label: grade.statusLabel,
                     active: grade.soldUnits > 0,
+                    emphasized: true,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            _DetailSection(
-              title: 'Stock Balance',
-              children: [
-                _DetailMetric(
-                  label: 'Available Net Weight',
-                  value: formatGram(grade.availableNetWeight),
-                  color: MetalValuationColors.green,
-                ),
-                _DetailMetric(
-                  label: 'Sold Net Weight',
-                  value: formatGram(grade.soldNetWeight),
-                  color: grade.soldUnits > 0
-                      ? MetalValuationColors.red
-                      : MetalValuationColors.softInk,
-                ),
-                _DetailMetric(
-                  label: 'Total Net Weight',
-                  value: formatGram(grade.totalNetWeight),
-                  color: tone.accent,
-                ),
-                _DetailMetric(
-                  label: 'Units',
-                  value:
-                      '${grade.availableUnits} available / ${grade.soldUnits} sold',
-                  color: MetalValuationColors.ink,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _DetailSection(
-              title: 'Cost And Margin',
-              children: [
-                _DetailMetric(
-                  label: 'Available Cost',
-                  value: formatMoney(grade.availableCost),
-                  color: MetalValuationColors.ink,
-                ),
-                _DetailMetric(
-                  label: 'Sold Cost',
-                  value: formatMoney(grade.soldCost),
-                  color: MetalValuationColors.ink,
-                ),
-                _DetailMetric(
-                  label: 'Sale Value',
-                  value: formatMoney(grade.saleValue),
-                  color: tone.accent,
-                ),
-                _DetailMetric(
-                  label: 'Profit',
-                  value: formatMoney(grade.profit),
-                  color: grade.profit >= 0
-                      ? MetalValuationColors.green
-                      : MetalValuationColors.red,
-                ),
-                _DetailMetric(
-                  label: 'Margin',
-                  value: formatPercent(grade.marginPercent),
-                  color: grade.marginPercent >= 0
-                      ? MetalValuationColors.green
-                      : MetalValuationColors.red,
-                ),
-              ],
             ),
             if (batches.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -644,88 +581,6 @@ class _GradeDetailScreen extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _DetailSection extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
-
-  const _DetailSection({
-    required this.title,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: valuationPanelDecoration(color: Colors.white),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: MetalValuationText.sectionTitle),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth >= 1000
-                  ? (constraints.maxWidth - 30) / 4
-                  : constraints.maxWidth >= 640
-                      ? (constraints.maxWidth - 10) / 2
-                      : constraints.maxWidth;
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final child in children)
-                    SizedBox(width: width, child: child),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailMetric extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _DetailMetric({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: MetalValuationColors.panel,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: MetalValuationColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: MetalValuationText.label),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: MetalValuationText.value.copyWith(
-              color: color,
-              fontSize: 20,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -984,26 +839,46 @@ class _GradeFact extends StatelessWidget {
 class _GradeStatusPill extends StatelessWidget {
   final String label;
   final bool active;
+  final bool emphasized;
 
   const _GradeStatusPill({
     required this.label,
     required this.active,
+    this.emphasized = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final color =
         active ? MetalValuationColors.goldDark : MetalValuationColors.green;
+    final foreground = emphasized ? Colors.white : color;
+    final background =
+        emphasized ? MetalValuationColors.ink : color.withValues(alpha: 0.12);
+    final borderColor = emphasized
+        ? Colors.white.withValues(alpha: 0.48)
+        : color.withValues(alpha: 0.28);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: emphasized ? 14 : 10,
+        vertical: emphasized ? 8 : 6,
+      ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: background,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        border: Border.all(color: borderColor),
+        boxShadow: emphasized
+            ? [
+                BoxShadow(
+                  color: MetalValuationColors.ink.withValues(alpha: 0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : null,
       ),
       child: Text(
         label,
-        style: MetalValuationText.label.copyWith(color: color),
+        style: MetalValuationText.label.copyWith(color: foreground),
       ),
     );
   }
