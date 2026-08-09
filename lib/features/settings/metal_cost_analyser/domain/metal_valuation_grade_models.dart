@@ -55,6 +55,9 @@ class MetalValuationGradeRow {
   final String gradeLabel;
   final int availableUnits;
   final int soldUnits;
+  final double availableQuantity;
+  final double soldQuantity;
+  final String quantityUnitLabel;
   final double availableNetWeight;
   final double soldNetWeight;
   final double availableCost;
@@ -62,23 +65,40 @@ class MetalValuationGradeRow {
   final double saleValue;
   final double profit;
 
-  const MetalValuationGradeRow({
+  MetalValuationGradeRow({
     required this.gradeLabel,
     required this.availableUnits,
     required this.soldUnits,
+    double? availableQuantity,
+    double? soldQuantity,
+    this.quantityUnitLabel = 'pcs',
     required this.availableNetWeight,
     required this.soldNetWeight,
     required this.availableCost,
     required this.soldCost,
     required this.saleValue,
     required this.profit,
-  });
+  })  : availableQuantity = availableQuantity ??
+            (availableUnits <= 0 ? 0.0 : availableUnits.toDouble()),
+        soldQuantity =
+            soldQuantity ?? (soldUnits <= 0 ? 0.0 : soldUnits.toDouble());
 
   int get totalUnits => availableUnits + soldUnits;
+
+  double get totalQuantity => availableQuantity + soldQuantity;
 
   double get totalNetWeight => availableNetWeight + soldNetWeight;
 
   double get marginPercent => saleValue == 0 ? 0 : profit / saleValue * 100;
+
+  String get availableQuantityLabel =>
+      valuationDisplayQuantityText(availableQuantity, quantityUnitLabel);
+
+  String get soldQuantityLabel =>
+      valuationDisplayQuantityText(soldQuantity, quantityUnitLabel);
+
+  String get totalQuantityLabel =>
+      valuationDisplayQuantityText(totalQuantity, quantityUnitLabel);
 
   String get statusLabel {
     if (soldUnits > 0 && availableUnits > 0) return 'Movement';

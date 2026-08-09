@@ -28,6 +28,7 @@ enum SilverQuantityMode {
       'payal',
       'anklet',
       'bichhiya',
+      'bichiya',
       'toe ring',
       'jhumka',
       'earring',

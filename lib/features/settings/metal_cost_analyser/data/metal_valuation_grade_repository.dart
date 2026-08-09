@@ -18,6 +18,22 @@ class MetalValuationGradeRepository {
     final metal = _normalizeMetal(metalType);
     final availableGradeExpression = _gradeExpression(metal);
     final soldGradeExpression = _gradeExpression(metal, includeBill: true);
+    final availableUnitLabelExpression = _quantityUnitLabelExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final soldUnitLabelExpression = _quantityUnitLabelExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final availableDisplayQuantityExpression =
+        _availableDisplayQuantityExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final soldDisplayQuantityExpression = _soldDisplayQuantityExpression(
+      billAlias: 'i',
+    );
     final costBasis = soldCostBasisExpression();
     final normalizedBatch = batchCode?.trim();
     final hasBatchFilter =
@@ -31,7 +47,12 @@ class MetalValuationGradeRepository {
       WITH available AS (
         SELECT
           $availableGradeExpression AS grade_label,
+          CASE
+            WHEN INSTR(GROUP_CONCAT(DISTINCT $availableUnitLabelExpression), ',') > 0 THEN 'mixed'
+            ELSE COALESCE(NULLIF(GROUP_CONCAT(DISTINCT $availableUnitLabelExpression), ''), 'pcs')
+          END AS quantity_unit_label,
           COUNT(*) AS available_units,
+          CAST(COALESCE(SUM($availableDisplayQuantityExpression), 0.0) AS REAL) AS available_quantity,
           CAST(COALESCE(SUM(u.net_weight), 0.0) AS REAL) AS available_net_weight,
           CAST(COALESCE(SUM(u.unit_cost), 0.0) AS REAL) AS available_cost
         FROM stock_item_units u
@@ -44,7 +65,12 @@ class MetalValuationGradeRepository {
       sold AS (
         SELECT
           $soldGradeExpression AS grade_label,
+          CASE
+            WHEN INSTR(GROUP_CONCAT(DISTINCT $soldUnitLabelExpression), ',') > 0 THEN 'mixed'
+            ELSE COALESCE(NULLIF(GROUP_CONCAT(DISTINCT $soldUnitLabelExpression), ''), 'pcs')
+          END AS quantity_unit_label,
           CAST(COALESCE(SUM(COALESCE(NULLIF(i.quantity, 0), 1)), 0) AS INTEGER) AS sold_units,
+          CAST(COALESCE(SUM($soldDisplayQuantityExpression), 0.0) AS REAL) AS sold_quantity,
           CAST(COALESCE(SUM(i.net_weight), 0.0) AS REAL) AS sold_net_weight,
           CAST(COALESCE(SUM($costBasis), 0.0) AS REAL) AS sold_cost,
           CAST(COALESCE(SUM(i.item_total), 0.0) AS REAL) AS sale_value,
@@ -62,8 +88,11 @@ class MetalValuationGradeRepository {
       )
       SELECT
         COALESCE(available.grade_label, sold.grade_label) AS grade_label,
+        COALESCE(available.quantity_unit_label, sold.quantity_unit_label, 'pcs') AS quantity_unit_label,
         COALESCE(available.available_units, 0) AS available_units,
         COALESCE(sold.sold_units, 0) AS sold_units,
+        CAST(COALESCE(available.available_quantity, 0.0) AS REAL) AS available_quantity,
+        CAST(COALESCE(sold.sold_quantity, 0.0) AS REAL) AS sold_quantity,
         CAST(COALESCE(available.available_net_weight, 0.0) AS REAL) AS available_net_weight,
         CAST(COALESCE(sold.sold_net_weight, 0.0) AS REAL) AS sold_net_weight,
         CAST(COALESCE(available.available_cost, 0.0) AS REAL) AS available_cost,
@@ -75,8 +104,11 @@ class MetalValuationGradeRepository {
       UNION
       SELECT
         COALESCE(available.grade_label, sold.grade_label) AS grade_label,
+        COALESCE(available.quantity_unit_label, sold.quantity_unit_label, 'pcs') AS quantity_unit_label,
         COALESCE(available.available_units, 0) AS available_units,
         COALESCE(sold.sold_units, 0) AS sold_units,
+        CAST(COALESCE(available.available_quantity, 0.0) AS REAL) AS available_quantity,
+        CAST(COALESCE(sold.sold_quantity, 0.0) AS REAL) AS sold_quantity,
         CAST(COALESCE(available.available_net_weight, 0.0) AS REAL) AS available_net_weight,
         CAST(COALESCE(sold.sold_net_weight, 0.0) AS REAL) AS sold_net_weight,
         CAST(COALESCE(available.available_cost, 0.0) AS REAL) AS available_cost,
@@ -102,6 +134,9 @@ class MetalValuationGradeRepository {
             gradeLabel: _readString(row, 'grade_label', _fallbackLabel(metal)),
             availableUnits: _readInt(row, 'available_units'),
             soldUnits: _readInt(row, 'sold_units'),
+            availableQuantity: _readDouble(row, 'available_quantity'),
+            soldQuantity: _readDouble(row, 'sold_quantity'),
+            quantityUnitLabel: _readString(row, 'quantity_unit_label', 'pcs'),
             availableNetWeight: _readDouble(row, 'available_net_weight'),
             soldNetWeight: _readDouble(row, 'sold_net_weight'),
             availableCost: _readDouble(row, 'available_cost'),
@@ -122,6 +157,15 @@ class MetalValuationGradeRepository {
     await _db.ensureStockInventorySchema();
     final metal = _normalizeMetal(metalType);
     final gradeExpression = _gradeExpression(metal);
+    final batchUnitLabelExpression = _quantityUnitLabelExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
+    final batchAvailableDisplayQuantityExpression =
+        _availableDisplayQuantityExpression(
+      unitAlias: 'u',
+      stockAlias: 'si',
+    );
     final costBasis = soldCostBasisExpression();
 
     final rows = await _db.customSelect(
@@ -130,6 +174,7 @@ class MetalValuationGradeRepository {
         SELECT
           linked_stock_unit_id AS unit_id,
           CAST(COALESCE(SUM(COALESCE(NULLIF(i.quantity, 0), 1)), 0) AS INTEGER) AS sold_units,
+          CAST(COALESCE(SUM(COALESCE(NULLIF(i.quantity, 0), 1)), 0.0) AS REAL) AS sold_quantity,
           CAST(COALESCE(SUM(i.net_weight), 0.0) AS REAL) AS sold_net_weight,
           CAST(COALESCE(SUM(i.fine_weight), 0.0) AS REAL) AS sold_fine_weight,
           CAST(COALESCE(SUM($costBasis), 0.0) AS REAL) AS sold_cost,
@@ -152,9 +197,15 @@ class MetalValuationGradeRepository {
           u.metal_type AS metal_type,
           COALESCE(NULLIF(MAX(u.supplier_name), ''), 'Not recorded') AS supplier_name,
           MIN(u.created_at) AS created_at,
+          CASE
+            WHEN INSTR(GROUP_CONCAT(DISTINCT $batchUnitLabelExpression), ',') > 0 THEN 'mixed'
+            ELSE COALESCE(NULLIF(GROUP_CONCAT(DISTINCT $batchUnitLabelExpression), ''), 'pcs')
+          END AS quantity_unit_label,
           COUNT(u.id) AS stock_units,
           SUM(CASE WHEN lower(u.status) = 'available' THEN 1 ELSE 0 END) AS available_units,
           COALESCE(SUM(unit_sales.sold_units), 0) AS sold_units,
+          CAST(COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN $batchAvailableDisplayQuantityExpression ELSE 0 END), 0.0) AS REAL) AS available_quantity,
+          CAST(COALESCE(SUM(unit_sales.sold_quantity), 0.0) AS REAL) AS sold_quantity,
           CAST(COALESCE(SUM(u.gross_weight), 0.0) AS REAL) AS total_gross_weight,
           CAST(COALESCE(SUM(CASE WHEN lower(u.status) = 'available' THEN u.net_weight ELSE 0 END), 0.0) AS REAL) AS available_net_weight,
           CAST(COALESCE(SUM(unit_sales.sold_net_weight), 0.0) AS REAL) AS sold_net_weight,
@@ -231,9 +282,12 @@ class MetalValuationGradeRepository {
         metal_type,
         supplier_name,
         created_at,
+        quantity_unit_label,
         stock_units AS total_units,
         available_units,
         sold_units,
+        available_quantity,
+        sold_quantity,
         total_gross_weight,
         available_net_weight + sold_net_weight AS total_net_weight,
         available_net_weight,
@@ -287,6 +341,9 @@ class MetalValuationGradeRepository {
               totalUnits: _readInt(row, 'total_units'),
               availableUnits: _readInt(row, 'available_units'),
               soldUnits: _readInt(row, 'sold_units'),
+              availableQuantity: _readDouble(row, 'available_quantity'),
+              soldQuantity: _readDouble(row, 'sold_quantity'),
+              quantityUnitLabel: _readString(row, 'quantity_unit_label', 'pcs'),
               totalGrossWeight: _readDouble(row, 'total_gross_weight'),
               totalNetWeight: _readDouble(row, 'total_net_weight'),
               availableNetWeight: _readDouble(row, 'available_net_weight'),
@@ -367,6 +424,64 @@ class MetalValuationGradeRepository {
         END
       )
     ''';
+  }
+
+  static String _quantityUnitLabelExpression({
+    required String unitAlias,
+    required String stockAlias,
+  }) {
+    final itemText =
+        "lower(COALESCE($unitAlias.item_type, '') || ' ' || COALESCE($unitAlias.item_name, '') || ' ' || COALESCE($stockAlias.sub_category, '') || ' ' || COALESCE($stockAlias.item_name, ''))";
+    return '''
+      CASE
+        WHEN $itemText LIKE '%payal%' THEN 'pair'
+        WHEN $itemText LIKE '%anklet%' THEN 'pair'
+        WHEN $itemText LIKE '%jhumka%' THEN 'pair'
+        WHEN $itemText LIKE '%earring%' THEN 'pair'
+        WHEN $itemText LIKE '%tops%' THEN 'pair'
+        WHEN $itemText LIKE '%bali%' THEN 'pair'
+        WHEN $itemText LIKE '%kundal%' THEN 'pair'
+        WHEN $itemText LIKE '%bichhiya%' THEN 'pair'
+        WHEN $itemText LIKE '%bichiya%' THEN 'pair'
+        WHEN $itemText LIKE '%toe ring%' THEN 'pair'
+        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) = 'pair' THEN 'pair'
+        WHEN $itemText LIKE '%set%' THEN 'set'
+        WHEN $itemText LIKE '%necklace%' THEN 'set'
+        WHEN $itemText LIKE '%haar%' THEN 'set'
+        WHEN $itemText LIKE '%har%' THEN 'set'
+        WHEN $itemText LIKE '%chudi%' THEN 'set'
+        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) = 'set' THEN 'set'
+        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('packet', 'pack') THEN 'packet'
+        WHEN $itemText LIKE '%packet%' THEN 'packet'
+        WHEN $itemText LIKE '%pack%' THEN 'packet'
+        WHEN lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('lot', 'bulk') THEN 'lot'
+        ELSE 'pcs'
+      END
+    ''';
+  }
+
+  static String _availableDisplayQuantityExpression({
+    required String unitAlias,
+    required String stockAlias,
+  }) {
+    final balanceUnit = '''
+      lower(COALESCE($unitAlias.unit_code, '')) LIKE '%lot%'
+        AND TRIM(COALESCE($unitAlias.huid, '')) = ''
+    ''';
+    final packetBalanceUnit = '''
+      lower(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('packet', 'pack')
+    ''';
+    return '''
+      CASE
+        WHEN ($balanceUnit) OR ($packetBalanceUnit)
+          THEN COALESCE($stockAlias.quantity, 0) * 1.0
+        ELSE 1
+      END
+    ''';
+  }
+
+  static String _soldDisplayQuantityExpression({required String billAlias}) {
+    return "COALESCE(NULLIF($billAlias.quantity, 0), 1)";
   }
 
   static String _normalizeMetal(String metalType) {

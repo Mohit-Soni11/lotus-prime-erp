@@ -164,7 +164,7 @@ class _SilverStockMovement extends StatelessWidget {
         Expanded(
           child: _SilverMetricBand(
             label: 'Available Stock',
-            value: formatUnitCount(item.availableUnits),
+            value: item.availableQuantityLabel,
             helper: formatGram(item.availableNetWeight),
             color: MetalValuationColors.green,
           ),
@@ -173,7 +173,7 @@ class _SilverStockMovement extends StatelessWidget {
         Expanded(
           child: _SilverMetricBand(
             label: 'Sold Movement',
-            value: formatUnitCount(item.soldUnits),
+            value: item.soldQuantityLabel,
             helper: formatGram(item.soldNetWeight),
             color: item.soldUnits > 0
                 ? MetalValuationColors.red
@@ -366,6 +366,16 @@ class _SilverBatchMiniRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: MetalValuationText.label.copyWith(
                       color: MetalValuationColors.mutedInk,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${batch.availableQuantityLabel} available | ${batch.soldQuantityLabel} sold',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: MetalValuationText.label.copyWith(
+                      color: MetalValuationColors.softInk,
                       fontSize: 11,
                     ),
                   ),

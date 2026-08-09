@@ -577,10 +577,295 @@ void main() {
     expect(grade.gradeLabel, 'Payal');
     expect(grade.availableUnits, 0);
     expect(grade.soldUnits, 1);
+    expect(grade.quantityUnitLabel, 'pair');
+    expect(grade.soldQuantityLabel, '1 pair');
     expect(grade.soldNetWeight, closeTo(120, 0.001));
     expect(grade.soldCost, closeTo(7200, 0.001));
     expect(grade.profit, closeTo(1300, 0.001));
   });
+
+  test('silver item movement exposes real quantity unit labels', () async {
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SILVER-BICHIYA-001',
+      itemType: 'Bichiya',
+      itemName: 'Bichiya',
+      quantityMode: 'PAIR',
+      netWeight: 90,
+      actualFineWeight: 72,
+      purityPercent: 80,
+      wastagePercent: 0,
+      valuationFineWeight: 72,
+      unitCost: 5400,
+      status: 'Available',
+    );
+    final stockItemId = await _stockItemIdForUnit(database, unitId);
+    await database.customStatement(
+      '''
+      UPDATE stock_items
+      SET quantity = ?, quantity_mode = ?, packet_count = ?, pieces_per_packet = ?
+      WHERE id = ?
+      ''',
+      [21, 'PACKET', 22, 1, stockItemId],
+    );
+    await database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET metal_type = ?, item_type = ?, unit_code = ?, huid = ?
+      WHERE id = ?
+      ''',
+      ['Silver', 'Bichiya', 'SILVER-BICHIYA-LOT001', '', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GRADE-BICHIYA-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(196),
+            paidAmount: const drift.Value(196),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Silver'),
+            itemName: 'Cl Bichiya',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(0.230),
+            netWeight: const drift.Value(0.230),
+            fineWeight: const drift.Value(0.184),
+            itemTotal: const drift.Value(196),
+            linkedStockItemId: drift.Value(stockItemId),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(47.94),
+          ),
+        );
+
+    final repository = MetalValuationGradeRepository(database: database);
+    final snapshot = await repository.fetchGradeSnapshot('Silver');
+    final grade = snapshot.grades.single;
+
+    expect(grade.gradeLabel, 'Bichiya');
+    expect(grade.quantityUnitLabel, 'pair');
+    expect(grade.availableQuantityLabel, '21 pairs');
+    expect(grade.soldQuantityLabel, '1 pair');
+    expect(grade.availableNetWeight, closeTo(90, 0.001));
+    expect(grade.availableCost, closeTo(5400, 0.001));
+
+    final batch = (await repository.fetchGradeBatchRows('Silver')).single.batch;
+    expect(batch.quantityUnitLabel, 'pair');
+    expect(batch.availableQuantityLabel, '21 pairs');
+    expect(batch.soldQuantityLabel, '1 pair');
+  });
+
+  test(
+      'silver item movement uses current stock quantity without double sale subtraction',
+      () async {
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SILVER-PAYAL-LOT001',
+      itemType: 'Payal',
+      itemName: 'Payal',
+      quantityMode: 'PAIR',
+      netWeight: 8300,
+      actualFineWeight: 6640,
+      purityPercent: 80,
+      wastagePercent: 0,
+      valuationFineWeight: 6640,
+      unitCost: 1336300,
+      status: 'Available',
+    );
+    final stockItemId = await _stockItemIdForUnit(database, unitId);
+    await database.customStatement(
+      '''
+      UPDATE stock_items
+      SET quantity = ?, quantity_mode = ?
+      WHERE id = ?
+      ''',
+      [49, 'PAIR', stockItemId],
+    );
+    await database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET metal_type = ?, item_type = ?, unit_code = ?, huid = ?
+      WHERE id = ?
+      ''',
+      ['Silver', 'Payal', 'SILVER-PAYAL-LOT001', '', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GRADE-PAYAL-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(8000),
+            paidAmount: const drift.Value(8000),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Silver'),
+            itemName: 'Payal',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(40),
+            netWeight: const drift.Value(40),
+            fineWeight: const drift.Value(32),
+            itemTotal: const drift.Value(8000),
+            linkedStockItemId: drift.Value(stockItemId),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(6440),
+          ),
+        );
+
+    final snapshot = await MetalValuationGradeRepository(database: database)
+        .fetchGradeSnapshot('Silver');
+    final grade = snapshot.grades.single;
+
+    expect(grade.gradeLabel, 'Payal');
+    expect(grade.quantityUnitLabel, 'pair');
+    expect(grade.availableQuantityLabel, '49 pairs');
+    expect(grade.soldQuantityLabel, '1 pair');
+  });
+
+  test('silver item movement uses current stock quantity for pcs lot rows',
+      () async {
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SILVER-CHAIN-LOT001',
+      itemType: 'Chain',
+      itemName: 'Chain',
+      quantityMode: 'PIECES',
+      netWeight: 350,
+      actualFineWeight: 280,
+      purityPercent: 80,
+      wastagePercent: 0,
+      valuationFineWeight: 280,
+      unitCost: 56350,
+      status: 'Available',
+    );
+    final stockItemId = await _stockItemIdForUnit(database, unitId);
+    await database.customStatement(
+      '''
+      UPDATE stock_items
+      SET quantity = ?, quantity_mode = ?
+      WHERE id = ?
+      ''',
+      [49, 'PIECES', stockItemId],
+    );
+    await database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET metal_type = ?, item_type = ?, unit_code = ?, huid = ?
+      WHERE id = ?
+      ''',
+      ['Silver', 'Chain', 'SILVER-CHAIN-LOT001', '', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GRADE-CHAIN-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(1200),
+            paidAmount: const drift.Value(1200),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Silver'),
+            itemName: 'Chain',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(7),
+            netWeight: const drift.Value(7),
+            fineWeight: const drift.Value(5.6),
+            itemTotal: const drift.Value(1200),
+            linkedStockItemId: drift.Value(stockItemId),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(1127),
+          ),
+        );
+
+    final snapshot = await MetalValuationGradeRepository(database: database)
+        .fetchGradeSnapshot('Silver');
+    final grade = snapshot.grades.single;
+
+    expect(grade.gradeLabel, 'Chain');
+    expect(grade.quantityUnitLabel, 'pcs');
+    expect(grade.availableQuantityLabel, '49 pcs');
+    expect(grade.soldQuantityLabel, '1 pc');
+  });
+
+  test('silver item movement uses current stock quantity for packet rows',
+      () async {
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'SILVER-BICHIYA-PACK001',
+      itemType: 'Bichiya Packet',
+      itemName: 'Bichiya Packet',
+      quantityMode: 'PACKET',
+      netWeight: 90,
+      actualFineWeight: 72,
+      purityPercent: 80,
+      wastagePercent: 0,
+      valuationFineWeight: 72,
+      unitCost: 15315.48,
+      status: 'Available',
+    );
+    final stockItemId = await _stockItemIdForUnit(database, unitId);
+    await database.customStatement(
+      '''
+      UPDATE stock_items
+      SET quantity = ?, quantity_mode = ?, packet_count = ?, pieces_per_packet = ?
+      WHERE id = ?
+      ''',
+      [21, 'PACKET', 22, 1, stockItemId],
+    );
+    await database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET metal_type = ?, item_type = ?, unit_code = ?, huid = ?
+      WHERE id = ?
+      ''',
+      ['Silver', 'Bichiya Packet', 'SILVER-BICHIYA-PACK001', '', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-GRADE-PACKET-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(196),
+            paidAmount: const drift.Value(196),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Silver'),
+            itemName: 'Bichiya Packet',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(0.230),
+            netWeight: const drift.Value(0.230),
+            fineWeight: const drift.Value(0.184),
+            itemTotal: const drift.Value(196),
+            linkedStockItemId: drift.Value(stockItemId),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(47.94),
+          ),
+        );
+
+    final snapshot = await MetalValuationGradeRepository(database: database)
+        .fetchGradeSnapshot('Silver');
+    final grade = snapshot.grades.single;
+
+    expect(grade.gradeLabel, 'Bichiya Packet');
+    expect(grade.quantityUnitLabel, 'pair');
+    expect(grade.availableQuantityLabel, '21 pairs');
+    expect(grade.soldQuantityLabel, '1 pair');
+  });
+}
+
+Future<int> _stockItemIdForUnit(AppDatabase database, int unitId) async {
+  final row = await database.customSelect(
+    'SELECT stock_item_id FROM stock_item_units WHERE id = ?',
+    variables: [drift.Variable<int>(unitId)],
+  ).getSingle();
+  return row.read<int>('stock_item_id');
 }
 
 Future<int> _insertStockUnit(

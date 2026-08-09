@@ -207,12 +207,12 @@ class _GradeHero extends StatelessWidget {
               ? [
                   _HeroMetricData('Items', '${snapshot.gradeCount}'),
                   _HeroMetricData(
-                    'Available Units',
-                    formatUnitCount(snapshot.availableUnits),
+                    'Available Wt',
+                    formatGram(snapshot.availableNetWeight),
                   ),
                   _HeroMetricData(
-                    'Sold Units',
-                    formatUnitCount(snapshot.soldUnits),
+                    'Sold Wt',
+                    formatGram(snapshot.soldNetWeight),
                   ),
                   _HeroMetricData(
                     'Available Cost',

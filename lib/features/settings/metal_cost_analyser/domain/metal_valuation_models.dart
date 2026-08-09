@@ -244,6 +244,9 @@ class BatchValuationRow {
   final int totalUnits;
   final int availableUnits;
   final int soldUnits;
+  final double availableQuantity;
+  final double soldQuantity;
+  final String quantityUnitLabel;
   final double totalGrossWeight;
   final double totalNetWeight;
   final double availableNetWeight;
@@ -274,6 +277,9 @@ class BatchValuationRow {
     required this.totalUnits,
     required this.availableUnits,
     required this.soldUnits,
+    this.availableQuantity = 0,
+    this.soldQuantity = 0,
+    this.quantityUnitLabel = 'pcs',
     required this.totalGrossWeight,
     required this.totalNetWeight,
     required this.availableNetWeight,
@@ -301,6 +307,12 @@ class BatchValuationRow {
     if (saleValue == 0) return 0;
     return profit / saleValue * 100;
   }
+
+  String get availableQuantityLabel =>
+      valuationDisplayQuantityText(availableQuantity, quantityUnitLabel);
+
+  String get soldQuantityLabel =>
+      valuationDisplayQuantityText(soldQuantity, quantityUnitLabel);
 
   double get valuationPurityPercent {
     if (purityPercentValue > 0 || wastagePercent > 0) {
@@ -379,7 +391,7 @@ String _valuationUnitLabel({
   required String quantityMode,
   required String itemName,
 }) {
-  final label = _valuationUnitName(
+  final label = valuationUnitName(
     quantityMode: quantityMode,
     itemName: itemName,
     plural: count != 1,
@@ -387,7 +399,31 @@ String _valuationUnitLabel({
   return '$count $label';
 }
 
-String _valuationUnitName({
+String valuationDisplayQuantityText(double value, String unitLabel) {
+  final rounded = value.roundToDouble();
+  final quantity = (value - rounded).abs() < 0.001
+      ? rounded.toStringAsFixed(0)
+      : value.toStringAsFixed(1);
+  final unit = valuationQuantityUnitName(
+    unitLabel,
+    plural: (value - 1).abs() > 0.001,
+  );
+  return '$quantity $unit';
+}
+
+String valuationQuantityUnitName(String unitLabel, {required bool plural}) {
+  final normalized = unitLabel.trim().toLowerCase();
+  return switch (normalized) {
+    'packet' => plural ? 'packets' : 'packet',
+    'pair' => plural ? 'pairs' : 'pair',
+    'set' => plural ? 'sets' : 'set',
+    'lot' => plural ? 'lots' : 'lot',
+    'mixed' => plural ? 'units' : 'unit',
+    _ => plural ? 'pcs' : 'pc',
+  };
+}
+
+String valuationUnitName({
   required String quantityMode,
   required String itemName,
   required bool plural,
@@ -406,6 +442,7 @@ String _valuationUnitName({
         'payal',
         'anklet',
         'bichhiya',
+        'bichiya',
         'bichia',
         'toe ring',
         'toe-ring',
