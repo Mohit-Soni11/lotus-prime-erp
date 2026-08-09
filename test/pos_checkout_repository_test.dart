@@ -190,6 +190,45 @@ void main() {
   );
 
   test(
+    'finalizeSale scopes selected stock unit to the linked stock item',
+    () async {
+      final firstStockId = await _insertStockItem(db, sku: 'GOLD-SCOPE-001');
+      final secondStockId = await _insertStockItem(db, sku: 'GOLD-SCOPE-002');
+      final secondUnitId = await _stockUnitIdFor(db, secondStockId);
+      final saleItem = _saleItem(
+        stockItemId: firstStockId,
+        sku: 'GOLD-SCOPE-001',
+        grossWeight: 10,
+        rate: 100,
+      );
+      saleItem.attachStockReference(
+        stockItemId: firstStockId,
+        stockUnitId: secondUnitId,
+        sku: 'GOLD-SCOPE-002-U001',
+      );
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0003',
+        saleItems: [saleItem],
+        cashPaid: saleItem.totalValue,
+      );
+
+      await repository.finalizeSale(invoice: invoice, customerId: null);
+
+      final firstStock = await _stockById(db, firstStockId);
+      final secondStock = await _stockById(db, secondStockId);
+      final firstUnitStatus = await _stockUnitStatusFor(db, firstStockId);
+      final secondUnitStatus = await _stockUnitStatusFor(db, secondStockId);
+
+      expect(firstStock.status, stock.StockStatus.sold.label);
+      expect(firstUnitStatus, stock.StockStatus.sold.label);
+      expect(secondStock.status, stock.StockStatus.available.label);
+      expect(secondUnitStatus, stock.StockStatus.available.label);
+
+      _disposeItems(saleItems: [saleItem]);
+    },
+  );
+
+  test(
     'finalizeSale clears full lot stock balance on net-weight sale',
     () async {
       final stockId = await _insertSilverLotStock(
@@ -587,6 +626,96 @@ void main() {
   );
 
   test(
+    'updateSale restores partial lot cost, wastage and making before re-deducting updated stock',
+    () async {
+      final lotStockId = await _insertValuedSilverLotStock(db);
+      final replacementStockId =
+          await _insertStockItem(db, sku: 'GOLD-EDIT-REPLACEMENT');
+      final lotSale = SaleItemModel(metal: pos.MetalType.silver);
+      lotSale.descCtrl.text = 'Silver Lot Actual Weight';
+      lotSale.pcsCtrl.text = '1';
+      lotSale.purityCtrl.text = '60';
+      lotSale.grossCtrl.text = '20';
+      lotSale.lessCtrl.text = '0';
+      lotSale.rateCtrl.text = '400';
+      lotSale.makingCtrl.text = '2.5';
+      lotSale.attachStockReference(
+        stockItemId: lotStockId,
+        sku: 'SIL-VALUED-LOT-U001',
+      );
+      final firstInvoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [lotSale],
+        cashPaid: lotSale.totalValue,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: firstInvoice,
+        customerId: null,
+      );
+
+      final billItem = await _singleBillItem(db, result.billId);
+      final lotAfterSale = await _stockUnitCostAuditFor(db, lotStockId);
+
+      expect(billItem.stockUnitCost, closeTo(1300, 0.001));
+      expect(billItem.stockProfitAmount, closeTo(6750, 0.001));
+      expect(lotAfterSale.read<double>('net_weight'), closeTo(80, 0.001));
+      expect(
+          lotAfterSale.read<double>('actual_fine_weight'), closeTo(48, 0.001));
+      expect(
+          lotAfterSale.read<double>('wastage_fine_weight'), closeTo(4, 0.001));
+      expect(lotAfterSale.read<double>('valuation_fine_weight'),
+          closeTo(52, 0.001));
+      expect(lotAfterSale.read<double>('unit_cost'), closeTo(5200, 0.001));
+      expect(lotAfterSale.read<double>('making_amount'), closeTo(450, 0.001));
+
+      final replacementSale = _saleItem(
+        stockItemId: replacementStockId,
+        sku: 'GOLD-EDIT-REPLACEMENT',
+        grossWeight: 10,
+        rate: 100,
+      );
+      final editedInvoice = _invoice(
+        invoiceNumber: result.invoiceNumber,
+        saleItems: [replacementSale],
+        cashPaid: replacementSale.totalValue,
+      );
+
+      await repository.updateSale(
+        billId: result.billId,
+        invoice: editedInvoice,
+        customerId: null,
+      );
+
+      final restoredLot = await _stockById(db, lotStockId);
+      final restoredUnit = await _stockUnitCostAuditFor(db, lotStockId);
+      final replacementStock = await _stockById(db, replacementStockId);
+      final lotMovements = await _stockMovementsFor(db, lotStockId);
+
+      expect(restoredLot.quantity, 10);
+      expect(restoredLot.status, stock.StockStatus.available.label);
+      expect(restoredLot.netWeight, closeTo(100, 0.001));
+      expect(restoredUnit.read<double>('net_weight'), closeTo(100, 0.001));
+      expect(
+          restoredUnit.read<double>('actual_fine_weight'), closeTo(60, 0.001));
+      expect(
+          restoredUnit.read<double>('wastage_fine_weight'), closeTo(5, 0.001));
+      expect(restoredUnit.read<double>('valuation_fine_weight'),
+          closeTo(65, 0.001));
+      expect(restoredUnit.read<double>('unit_cost'), closeTo(6500, 0.001));
+      expect(restoredUnit.read<double>('making_amount'), closeTo(500, 0.001));
+      expect(replacementStock.status, stock.StockStatus.sold.label);
+      expect(lotMovements.map((row) => row.movementType), [
+        'SALE',
+        'SALE_RESTORE',
+      ]);
+      expect(lotMovements.map((row) => row.quantityDelta), [-1, 1]);
+
+      _disposeItems(saleItems: [lotSale, replacementSale]);
+    },
+  );
+
+  test(
     'updateSale voids previous customer account credit when excess is removed',
     () async {
       final customerId = await _insertCustomer(db);
@@ -887,9 +1016,216 @@ Future<int> _insertSilverLotStock(
   return stockItemId;
 }
 
+Future<int> _insertValuedSilverLotStock(AppDatabase db) async {
+  final createdAt = DateTime(2026, 7, 22, 12).millisecondsSinceEpoch;
+  await db.customInsert(
+    '''
+    INSERT INTO purchase_vouchers (
+      voucher_no,
+      sequence_no,
+      source_type,
+      party_name,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?)
+    ''',
+    variables: [
+      const drift.Variable<String>('PV-POS-VALUED-LOT-001'),
+      const drift.Variable<int>(1),
+      const drift.Variable<String>('SUPPLIER'),
+      const drift.Variable<String>('Test Supplier'),
+      drift.Variable<int>(createdAt),
+    ],
+  );
+  final voucherId = await _lastInsertRowId(db);
+
+  await db.customInsert(
+    '''
+    INSERT INTO purchase_voucher_items (
+      purchase_voucher_id,
+      line_no,
+      sku,
+      metal_type,
+      item_description,
+      gross_weight,
+      less_weight,
+      net_weight,
+      purity,
+      fine_weight,
+      wastage_percent,
+      wastage_fine_weight,
+      valuation_fine_weight,
+      rate,
+      quantity,
+      line_amount,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    variables: [
+      drift.Variable<int>(voucherId),
+      const drift.Variable<int>(1),
+      const drift.Variable<String>('SIL-VALUED-LOT'),
+      const drift.Variable<String>('SILVER'),
+      const drift.Variable<String>('Silver Lot Actual Weight'),
+      const drift.Variable<double>(100),
+      const drift.Variable<double>(0),
+      const drift.Variable<double>(100),
+      const drift.Variable<double>(60),
+      const drift.Variable<double>(60),
+      const drift.Variable<double>(5),
+      const drift.Variable<double>(5),
+      const drift.Variable<double>(65),
+      const drift.Variable<double>(100),
+      const drift.Variable<int>(10),
+      const drift.Variable<double>(6500),
+      drift.Variable<int>(createdAt),
+    ],
+  );
+  final purchaseItemId = await _lastInsertRowId(db);
+
+  final stockItemId = await db.into(db.stockItems).insert(
+        StockItemsCompanion.insert(
+          sku: 'SIL-VALUED-LOT',
+          itemName: 'Silver Lot Actual Weight',
+          category: 'Silver',
+          subCategory: 'Lot',
+          metalType: const drift.Value('Silver'),
+          purity: const drift.Value('60'),
+          grossWeight: const drift.Value(100),
+          stoneWeight: const drift.Value(0),
+          netWeight: const drift.Value(100),
+          quantity: const drift.Value(10),
+          purchasePrice: const drift.Value(650),
+          status: drift.Value(stock.StockStatus.available.label),
+          isActive: const drift.Value(true),
+        ),
+      );
+
+  await db.customInsert(
+    '''
+    INSERT INTO stock_item_units (
+      stock_item_id,
+      purchase_voucher_id,
+      purchase_voucher_item_id,
+      batch_code,
+      unit_code,
+      piece_no,
+      metal_type,
+      item_type,
+      segment,
+      item_name,
+      huid,
+      gross_weight,
+      less_weight,
+      net_weight,
+      purity_percent,
+      actual_fine_weight,
+      wastage_percent,
+      wastage_fine_weight,
+      valuation_fine_weight,
+      rate_per_gram,
+      making_amount,
+      unit_cost,
+      supplier_name,
+      status,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    variables: [
+      drift.Variable<int>(stockItemId),
+      drift.Variable<int>(voucherId),
+      drift.Variable<int>(purchaseItemId),
+      const drift.Variable<String>('PV-POS-VALUED-LOT-001'),
+      const drift.Variable<String>('SIL-VALUED-LOT-U001'),
+      const drift.Variable<int>(1),
+      const drift.Variable<String>('Silver'),
+      const drift.Variable<String>('Lot'),
+      const drift.Variable<String>('Local'),
+      const drift.Variable<String>('Silver Lot Actual Weight'),
+      const drift.Variable<String>(''),
+      const drift.Variable<double>(100),
+      const drift.Variable<double>(0),
+      const drift.Variable<double>(100),
+      const drift.Variable<double>(60),
+      const drift.Variable<double>(60),
+      const drift.Variable<double>(5),
+      const drift.Variable<double>(5),
+      const drift.Variable<double>(65),
+      const drift.Variable<double>(100),
+      const drift.Variable<double>(500),
+      const drift.Variable<double>(6500),
+      const drift.Variable<String>('Test Supplier'),
+      drift.Variable<String>(stock.StockStatus.available.label),
+      drift.Variable<int>(createdAt),
+    ],
+  );
+
+  return stockItemId;
+}
+
 Future<StockItem> _stockById(AppDatabase db, int id) {
   return (db.select(db.stockItems)..where((tbl) => tbl.id.equals(id)))
       .getSingle();
+}
+
+Future<int> _lastInsertRowId(AppDatabase db) async {
+  final row =
+      await db.customSelect('SELECT last_insert_rowid() AS id').getSingle();
+  return row.read<int>('id');
+}
+
+Future<BillItem> _singleBillItem(AppDatabase db, int billId) {
+  return (db.select(db.billItems)..where((tbl) => tbl.billId.equals(billId)))
+      .getSingle();
+}
+
+Future<int> _stockUnitIdFor(AppDatabase db, int stockId) async {
+  final row = await db.customSelect(
+    '''
+    SELECT id
+    FROM stock_item_units
+    WHERE stock_item_id = ?
+    ORDER BY id ASC
+    LIMIT 1
+    ''',
+    variables: [drift.Variable<int>(stockId)],
+  ).getSingle();
+  return row.read<int>('id');
+}
+
+Future<String> _stockUnitStatusFor(AppDatabase db, int stockId) async {
+  final row = await db.customSelect(
+    '''
+    SELECT status
+    FROM stock_item_units
+    WHERE stock_item_id = ?
+    ORDER BY id ASC
+    LIMIT 1
+    ''',
+    variables: [drift.Variable<int>(stockId)],
+  ).getSingle();
+  return row.read<String>('status');
+}
+
+Future<drift.QueryRow> _stockUnitCostAuditFor(
+  AppDatabase db,
+  int stockId,
+) {
+  return db.customSelect(
+    '''
+    SELECT
+      net_weight,
+      actual_fine_weight,
+      wastage_fine_weight,
+      valuation_fine_weight,
+      unit_cost,
+      making_amount
+    FROM stock_item_units
+    WHERE stock_item_id = ?
+    ORDER BY id ASC
+    LIMIT 1
+    ''',
+    variables: [drift.Variable<int>(stockId)],
+  ).getSingle();
 }
 
 Future<List<StockMovement>> _stockMovementsFor(AppDatabase db, int stockId) {

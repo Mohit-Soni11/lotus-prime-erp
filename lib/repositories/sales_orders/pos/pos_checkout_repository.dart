@@ -13,6 +13,7 @@ import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_e
 
 const String _stockUnitSaleColumns = '''
 id,
+stock_item_id,
 purchase_voucher_item_id,
 status,
 gross_weight,
@@ -21,6 +22,7 @@ net_weight,
 actual_fine_weight,
 wastage_fine_weight,
 valuation_fine_weight,
+rate_per_gram,
 unit_cost,
 making_amount
 ''';
@@ -1344,6 +1346,7 @@ class PosCheckoutRepository {
     required int quantityToSell,
   }) async {
     final selected = await _selectedStockUnit(
+      stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
     );
@@ -1394,6 +1397,7 @@ class PosCheckoutRepository {
   }
 
   Future<QueryRow?> _selectedStockUnit({
+    required int stockItemId,
     required int? stockUnitId,
     required String? stockUnitCode,
   }) async {
@@ -1405,6 +1409,7 @@ class PosCheckoutRepository {
       return null;
     }
     final variables = _stockUnitWhereVariables(
+      stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
     );
@@ -1427,6 +1432,7 @@ class PosCheckoutRepository {
     required DateTime restoredAt,
   }) async {
     final selected = await _selectedStockUnit(
+      stockItemId: stockItemId,
       stockUnitId: stockUnitId,
       stockUnitCode: stockUnitCode,
     );
@@ -1908,14 +1914,26 @@ class PosCheckoutRepository {
   }) async {
     final row = await _db.customSelect(
       '''
-      SELECT quantity_delta, gross_weight_delta, net_weight_delta, fine_weight_delta
-      FROM stock_movements
-      WHERE stock_item_id = ?
-        AND source_type = 'SALE'
-        AND source_id = ?
-        AND source_line_no = ?
-        AND movement_type = 'SALE'
-      ORDER BY id DESC
+      SELECT
+        m.quantity_delta,
+        m.gross_weight_delta,
+        m.net_weight_delta,
+        m.fine_weight_delta,
+        COALESCE(i.stock_unit_cost, 0.0) AS bill_stock_unit_cost,
+        COALESCE(i.making_charge, 0.0) AS bill_making_charge,
+        COALESCE(i.net_weight, 0.0) AS bill_net_weight,
+        u.purchase_voucher_item_id AS purchase_voucher_item_id
+      FROM stock_movements m
+      LEFT JOIN bill_items i ON CAST(i.bill_id AS TEXT) = m.source_id
+          AND i.line_no = m.source_line_no
+          AND i.linked_stock_item_id = m.stock_item_id
+      LEFT JOIN stock_item_units u ON u.stock_item_id = m.stock_item_id
+      WHERE m.stock_item_id = ?
+        AND m.source_type = 'SALE'
+        AND m.source_id = ?
+        AND m.source_line_no = ?
+        AND m.movement_type = 'SALE'
+      ORDER BY m.id DESC
       LIMIT 1
       ''',
       variables: [
@@ -1931,15 +1949,69 @@ class PosCheckoutRepository {
     final net = -row.read<double>('net_weight_delta');
     final fine = -row.read<double>('fine_weight_delta');
     final quantity = row.read<int>('quantity_delta').abs();
+    final billStockUnitCost =
+        row.readNullable<double>('bill_stock_unit_cost') ?? 0.0;
+    final billMakingCharge =
+        row.readNullable<double>('bill_making_charge') ?? 0.0;
+    final purchaseSnapshot = await _purchaseRatioRestoreSnapshot(
+      purchaseVoucherItemId: row.readNullable<int>('purchase_voucher_item_id'),
+      soldNetWeight: row.readNullable<double>('bill_net_weight') ?? net,
+    );
     return _StockLotDelta(
       grossWeight: gross,
       lessWeight: gross - net,
       netWeight: net,
       fineWeight: fine,
-      wastageFineWeight: 0,
-      valuationFineWeight: fine,
-      unitCost: stockRow.purchasePrice * quantity,
-      makingAmount: 0,
+      wastageFineWeight: purchaseSnapshot.wastageFineWeight,
+      valuationFineWeight: purchaseSnapshot.valuationFineWeight > 0
+          ? purchaseSnapshot.valuationFineWeight
+          : fine,
+      unitCost: billStockUnitCost > 0
+          ? billStockUnitCost
+          : stockRow.purchasePrice * quantity,
+      makingAmount: billMakingCharge,
+    );
+  }
+
+  Future<_LotPurchaseRestoreSnapshot> _purchaseRatioRestoreSnapshot({
+    required int? purchaseVoucherItemId,
+    required double soldNetWeight,
+  }) async {
+    if (purchaseVoucherItemId == null || soldNetWeight <= 0) {
+      return const _LotPurchaseRestoreSnapshot.zero();
+    }
+    final row = await _db.customSelect(
+      '''
+      SELECT
+        net_weight,
+        wastage_fine_weight,
+        valuation_fine_weight,
+        fine_weight
+      FROM purchase_voucher_items
+      WHERE id = ?
+      LIMIT 1
+      ''',
+      variables: [Variable<int>(purchaseVoucherItemId)],
+    ).getSingleOrNull();
+    if (row == null) {
+      return const _LotPurchaseRestoreSnapshot.zero();
+    }
+
+    final originalNetWeight = row.readNullable<double>('net_weight') ?? 0.0;
+    if (originalNetWeight <= 0) {
+      return const _LotPurchaseRestoreSnapshot.zero();
+    }
+    final factor = (soldNetWeight / originalNetWeight).clamp(0.0, 1.0);
+    final originalWastage =
+        row.readNullable<double>('wastage_fine_weight') ?? 0.0;
+    final originalValuation =
+        (row.readNullable<double>('valuation_fine_weight') ?? 0.0) > 0
+            ? row.read<double>('valuation_fine_weight')
+            : (row.readNullable<double>('fine_weight') ?? 0.0) +
+                originalWastage;
+    return _LotPurchaseRestoreSnapshot(
+      wastageFineWeight: originalWastage * factor,
+      valuationFineWeight: originalValuation * factor,
     );
   }
 
@@ -2147,23 +2219,27 @@ class PosCheckoutRepository {
     required String? stockUnitCode,
   }) {
     if (stockUnitId != null) {
-      return 'id = ?';
+      return 'stock_item_id = ? AND id = ?';
     }
     final normalized = stockUnitCode?.trim();
     if (normalized != null && normalized.isNotEmpty) {
-      return 'unit_code = ?';
+      return 'stock_item_id = ? AND unit_code = ?';
     }
     return null;
   }
 
   List<Variable<Object>> _stockUnitWhereVariables({
+    required int stockItemId,
     required int? stockUnitId,
     required String? stockUnitCode,
   }) {
     if (stockUnitId != null) {
-      return [Variable<int>(stockUnitId)];
+      return [Variable<int>(stockItemId), Variable<int>(stockUnitId)];
     }
-    return [Variable<String>(stockUnitCode!.trim())];
+    return [
+      Variable<int>(stockItemId),
+      Variable<String>(stockUnitCode!.trim())
+    ];
   }
 
   Future<void> _insertStockMovement({
@@ -2630,6 +2706,20 @@ class _StockLotDelta {
         valuationFineWeight = 0,
         unitCost = 0,
         makingAmount = 0;
+}
+
+class _LotPurchaseRestoreSnapshot {
+  final double wastageFineWeight;
+  final double valuationFineWeight;
+
+  const _LotPurchaseRestoreSnapshot({
+    required this.wastageFineWeight,
+    required this.valuationFineWeight,
+  });
+
+  const _LotPurchaseRestoreSnapshot.zero()
+      : wastageFineWeight = 0,
+        valuationFineWeight = 0;
 }
 
 class _StockLotBalance {

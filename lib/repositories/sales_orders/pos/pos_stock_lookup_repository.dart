@@ -22,6 +22,10 @@ const String _stockBalanceUnitExpression = '''
 ($_lotBalanceUnitExpression) OR ($_packetBalanceUnitExpression)
 ''';
 
+const String _lookupMetalExpression = '''
+COALESCE(NULLIF(TRIM(s.metal_type), ''), NULLIF(TRIM(u.metal_type), ''))
+''';
+
 class PosStockLookupRepository {
   final AppDatabase _db;
 
@@ -143,7 +147,7 @@ class PosStockLookupRepository {
         u.stock_item_id AS stock_item_id,
         u.unit_code AS unit_code,
         u.batch_code AS batch_code,
-        u.metal_type AS metal_type,
+        $_lookupMetalExpression AS metal_type,
         u.item_type AS item_type,
         u.segment AS segment,
         u.item_name AS item_name,
@@ -189,7 +193,7 @@ class PosStockLookupRepository {
       WHERE u.status = ?
         AND s.is_active = 1
         AND s.status = ?
-        AND lower(u.metal_type) = ?
+        AND lower($_lookupMetalExpression) = ?
       ORDER BY u.created_at DESC, u.id DESC
       LIMIT 300
       ''',

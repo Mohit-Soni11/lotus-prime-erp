@@ -84,6 +84,67 @@ void main() {
     expect(matches.single.sku, 'JHM-PCT-001-U001');
   });
 
+  test('description and HUID lookup keep gold and silver stock isolated',
+      () async {
+    await _insertLookupStock(
+      db,
+      sku: 'GOLD-RING-001',
+      itemName: 'Casting Ring',
+      purityLabel: '22KT',
+      grossWeight: 5.2,
+      huid: 'GOLD-HUID-01',
+      metalType: 'Gold',
+      category: 'Gold',
+    );
+    final silverStockId = await _insertLookupStock(
+      db,
+      sku: 'SIL-RING-001',
+      itemName: 'Casting Ring',
+      purityLabel: '925',
+      grossWeight: 12.4,
+      huid: 'SIL-HUID-01',
+      metalType: 'Silver',
+      category: 'Silver',
+    );
+    await db.customUpdate(
+      '''
+      UPDATE stock_item_units
+      SET metal_type = ?
+      WHERE stock_item_id = ?
+      ''',
+      variables: [
+        const drift.Variable<String>('Gold'),
+        drift.Variable<int>(silverStockId),
+      ],
+    );
+
+    final goldMatches = await repository.searchByDescription(
+      query: 'casting',
+      metal: MetalType.gold,
+    );
+    final silverMatches = await repository.searchByDescription(
+      query: 'casting',
+      metal: MetalType.silver,
+    );
+    final goldHuidMatch = await repository.findExactByHuid(
+      query: 'SIL-HUID-01',
+      metal: MetalType.gold,
+    );
+    final silverHuidMatch = await repository.findExactByHuid(
+      query: 'SIL-HUID-01',
+      metal: MetalType.silver,
+    );
+
+    expect(goldMatches.map((item) => item.sku), ['GOLD-RING-001-U001']);
+    expect(silverMatches.map((item) => item.sku), ['SIL-RING-001-U001']);
+    expect(goldMatches.single.metal, MetalType.gold);
+    expect(silverMatches.single.metal, MetalType.silver);
+    expect(goldHuidMatch, isNull);
+    expect(silverHuidMatch, isNotNull);
+    expect(silverHuidMatch!.sku, 'SIL-RING-001-U001');
+    expect(silverHuidMatch.metal, MetalType.silver);
+  });
+
   test(
       'unique exact description resolves typed stock without picking prefix rows',
       () async {
