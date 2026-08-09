@@ -55,6 +55,12 @@ void main() {
         '4.126',
       );
     });
+
+    test('preserves jewellery weight precision for POS inputs', () {
+      expect(PosNumberFormatter.weight(20.365), '20.365');
+      expect(PosNumberFormatter.weight(20.360), '20.36');
+      expect(PosNumberFormatter.weight(20), '20');
+    });
   });
 
   group('PosGstClassificationResolver', () {
@@ -190,6 +196,58 @@ void main() {
 
       expect(item.hasLinkedStock, isTrue);
       expect(item.linkedStockSku, 'SKU-10');
+
+      item.dispose();
+    });
+
+    test('applies stock snapshot with exact gross and less weight precision',
+        () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.applyStockReferenceSnapshot(
+        huids: const ['HUID-001'],
+        grossWeight: 20.365,
+        lessWeight: 0.125,
+        stockItemId: 10,
+        stockUnitId: 20,
+        stockUnitCost: 250000,
+        sku: 'SKU-10',
+      );
+
+      expect(item.grossCtrl.text, '20.365');
+      expect(item.lessCtrl.text, '0.125');
+      expect(item.netWt, closeTo(20.240, 0.0001));
+      expect(item.hasLinkedStock, isTrue);
+
+      item.dispose();
+    });
+
+    test('compares sale value with proportional stock cost for partial lots',
+        () {
+      final item = SaleItemModel(metal: MetalType.gold);
+
+      item.applyStockReferenceSnapshot(
+        huids: const ['HUID-001'],
+        grossWeight: 20,
+        lessWeight: 0,
+        stockItemId: 10,
+        stockUnitId: 20,
+        stockUnitCost: 200000,
+        sku: 'SKU-10',
+      );
+      item.grossCtrl.text = '0.250';
+      item.rateCtrl.text = '10000';
+      item.makingCtrl.text = '0';
+
+      expect(item.linkedStockCostBasis, closeTo(2500, 0.001));
+      expect(item.totalValue, closeTo(2500, 0.001));
+      expect(item.isAtStockCost, isTrue);
+      expect(item.isBelowStockCost, isFalse);
+
+      item.rateCtrl.text = '12000';
+
+      expect(item.totalValue, closeTo(3000, 0.001));
+      expect(item.shouldWarnStockCost, isFalse);
 
       item.dispose();
     });

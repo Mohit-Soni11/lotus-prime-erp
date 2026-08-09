@@ -176,7 +176,7 @@ class PosSaleItemsTable extends StatelessWidget {
           const SizedBox(width: 6),
           _h("ITEM DESCRIPTION", flex: 4),
           const SizedBox(width: 6),
-          _h("PCS", flex: 1, center: true),
+          _h("PCS", flex: 2, center: true),
           const SizedBox(width: 6),
           if (!isWholesale) ...[
             _h("HUID / SET", flex: 3),

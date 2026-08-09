@@ -685,8 +685,8 @@ class PosBillingController extends ChangeNotifier {
         huids: suggestion.huids.isNotEmpty
             ? suggestion.huids
             : [suggestion.huid?.trim() ?? ''],
-        grossWeight: shouldAutofillWeight ? suggestion.netWeight : 0,
-        lessWeight: 0,
+        grossWeight: shouldAutofillWeight ? suggestion.grossWeight : 0,
+        lessWeight: shouldAutofillWeight ? suggestion.lessWeight : 0,
         stockItemId: suggestion.stockItemId,
         stockUnitId: suggestion.stockUnitId,
         stockUnitCost: suggestion.unitCost,
@@ -1065,6 +1065,7 @@ class PosBillingController extends ChangeNotifier {
             stockItemId: row.linkedStockItemId!,
             stockUnitId: row.linkedStockUnitId,
             stockUnitCost: row.stockUnitCost,
+            stockSnapshotNetWeight: row.netWeight,
             sku: row.linkedStockSku!,
           );
         }
@@ -1509,6 +1510,7 @@ class PosBillingController extends ChangeNotifier {
         stockItemId: suggestion.stockItemId,
         stockUnitId: suggestion.stockUnitId,
         stockUnitCost: suggestion.unitCost,
+        stockSnapshotNetWeight: suggestion.netWeight,
         sku: suggestion.sku,
       );
       activeRowIndex = rowIndex;

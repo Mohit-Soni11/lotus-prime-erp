@@ -20,4 +20,15 @@ class PosNumberFormatter {
         .replaceFirst(RegExp(r'0+$'), '')
         .replaceFirst(RegExp(r'\.$'), '');
   }
+
+  static String weight(
+    double value, {
+    bool blankWhenZero = true,
+  }) {
+    return compact(
+      value,
+      maxFractionDigits: 3,
+      blankWhenZero: blankWhenZero,
+    );
+  }
 }

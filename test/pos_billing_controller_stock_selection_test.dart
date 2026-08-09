@@ -61,7 +61,7 @@ void main() {
     controller.dispose();
   });
 
-  test('stock selection fills sale row with net weight basis', () {
+  test('stock selection fills sale row with gross, less and net snapshot', () {
     final controller = PosBillingController();
     final item = SaleItemModel(metal: MetalType.silver);
     controller.saleItems.add(item);
@@ -89,9 +89,9 @@ void main() {
     );
 
     expect(item.descCtrl.text, 'Fancy Chain');
-    expect(item.grossCtrl.text, '17.95');
-    expect(item.lessCtrl.text, isEmpty);
-    expect(item.netWt, 17.95);
+    expect(item.grossCtrl.text, '19.6');
+    expect(item.lessCtrl.text, '1.65');
+    expect(item.netWt, closeTo(17.95, 0.0001));
     expect(item.linkedStockItemId, 1);
     expect(item.linkedStockUnitId, 10);
 

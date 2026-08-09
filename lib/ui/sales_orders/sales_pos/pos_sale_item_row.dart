@@ -524,12 +524,13 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
               textAlign: TextAlign.center,
               style: SalesPosStyles.inputText.copyWith(
                 color: metalColor,
+                fontSize: SalesPosStyles.fontBody,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 2),
+                contentPadding: EdgeInsets.only(left: 6, right: 2, bottom: 2),
               ),
               onChanged: _onPurityChanged,
             ),
@@ -537,9 +538,11 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
           PopupMenuButton<String>(
             icon:
                 Icon(SalesPosIcons.dropdownArrow, color: metalColor, size: 20),
+            iconSize: 20,
             color: SalesPosColors.bodyPanelBg,
             position: PopupMenuPosition.under,
             padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 34),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
               side: const BorderSide(color: SalesPosColors.bodyBorder),
@@ -621,8 +624,9 @@ class _PosSaleItemRowState extends State<PosSaleItemRow> {
         : (widget.item.isAtStockCost
             ? SalesPosColors.warning
             : SalesPosColors.bodyTextMain);
+    final costBasis = widget.item.linkedStockCostBasis;
     final message = widget.item.isBelowStockCost
-        ? 'Selling below stock cost. Cost Rs ${widget.item.linkedStockUnitCost.toStringAsFixed(2)}'
+        ? 'Selling below stock cost. Cost Rs ${costBasis.toStringAsFixed(2)}'
         : widget.item.isAtStockCost
             ? 'Selling at stock cost. No profit on this item.'
             : 'Item total';

@@ -683,6 +683,7 @@ class PosInvoiceController extends ChangeNotifier {
           stockItemId: source.linkedStockItemId!,
           stockUnitId: source.linkedStockUnitId,
           stockUnitCost: source.linkedStockUnitCost,
+          stockSnapshotNetWeight: source.linkedStockSnapshotNetWeight,
           sku: source.linkedStockSku ?? '',
         );
       }

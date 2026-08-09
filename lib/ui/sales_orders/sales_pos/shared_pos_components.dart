@@ -81,13 +81,19 @@ class PosAtomicTextField extends StatelessWidget {
             ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
             : null,
         textInputAction: action,
-        style: SalesPosStyles.standardRowText,
+        textAlign: isNumber ? TextAlign.right : TextAlign.left,
+        style: SalesPosStyles.standardRowText.copyWith(
+          fontSize:
+              isNumber ? SalesPosStyles.fontBody : SalesPosStyles.fontInput,
+          fontWeight: isNumber ? FontWeight.w900 : FontWeight.w800,
+          fontFeatures: isNumber ? const [FontFeature.tabularFigures()] : null,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: SalesPosStyles.subTitleMuted
               .copyWith(fontSize: SalesPosStyles.fontLabel),
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              EdgeInsets.symmetric(horizontal: isNumber ? 8 : 10, vertical: 0),
           filled: true,
           fillColor: SalesPosColors.bodyPanelBg,
           border: OutlineInputBorder(

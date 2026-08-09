@@ -191,6 +191,7 @@ class PosHoldSaleItemSnapshot {
   final int? stockUnitId;
   final String stockSku;
   final double stockUnitCost;
+  final double stockSnapshotNetWeight;
   final String description;
   final String pcsInput;
   final String huid;
@@ -208,6 +209,7 @@ class PosHoldSaleItemSnapshot {
     required this.stockUnitId,
     required this.stockSku,
     required this.stockUnitCost,
+    required this.stockSnapshotNetWeight,
     required this.description,
     required this.pcsInput,
     required this.huid,
@@ -227,6 +229,7 @@ class PosHoldSaleItemSnapshot {
       stockUnitId: item.linkedStockUnitId,
       stockSku: item.linkedStockSku ?? '',
       stockUnitCost: item.linkedStockUnitCost,
+      stockSnapshotNetWeight: item.linkedStockSnapshotNetWeight,
       description: item.descCtrl.text,
       pcsInput: item.pcsCtrl.text,
       huid: item.huidText,
@@ -247,6 +250,7 @@ class PosHoldSaleItemSnapshot {
       'stockUnitId': stockUnitId,
       'stockSku': stockSku,
       'stockUnitCost': stockUnitCost,
+      'stockSnapshotNetWeight': stockSnapshotNetWeight,
       'description': description,
       'pcsInput': pcsInput,
       'huid': huid,
@@ -273,6 +277,8 @@ class PosHoldSaleItemSnapshot {
       stockUnitId: (json['stockUnitId'] as num?)?.toInt(),
       stockSku: (json['stockSku'] ?? '').toString(),
       stockUnitCost: (json['stockUnitCost'] as num?)?.toDouble() ?? 0.0,
+      stockSnapshotNetWeight:
+          (json['stockSnapshotNetWeight'] as num?)?.toDouble() ?? 0.0,
       description: (json['description'] ?? '').toString(),
       pcsInput: (json['pcsInput'] ?? '1').toString(),
       huid: (json['huid'] ?? '').toString(),
@@ -303,6 +309,7 @@ class PosHoldSaleItemSnapshot {
         stockItemId: stockItemId!,
         stockUnitId: stockUnitId,
         stockUnitCost: stockUnitCost,
+        stockSnapshotNetWeight: stockSnapshotNetWeight,
         sku: stockSku,
       );
     }

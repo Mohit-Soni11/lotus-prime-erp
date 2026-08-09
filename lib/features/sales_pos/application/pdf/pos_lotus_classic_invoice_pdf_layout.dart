@@ -1272,7 +1272,14 @@ class PosLotusClassicInvoicePdfLayout {
 
   String _weightText(String value) {
     final clean = value.trim();
-    return clean.isEmpty ? '0.000 g' : '$clean g';
+    if (clean.isEmpty) {
+      return '0.000 g';
+    }
+    final parsed = double.tryParse(clean.replaceAll(RegExp(r'[^0-9.]'), ''));
+    if (parsed == null) {
+      return '$clean g';
+    }
+    return '${parsed.toStringAsFixed(3)} g';
   }
 
   String _amount(double value) => 'Rs ${_amountFormat.format(value)}';

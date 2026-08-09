@@ -521,17 +521,28 @@ class _PosInvoicePdfDocumentBuilder {
                         if (activeConfig.showHsnCode) _cell(_hsnCode(item)),
                         if (activeConfig.showPurity) _cell(_formatPurity(item)),
                         if (activeConfig.showGrossWt)
-                          _cell(item.grossCtrl.text.isNotEmpty
-                              ? item.grossCtrl.text
-                              : '0.000'),
+                          _cell(_formatWeightText(
+                            item.grossCtrl.text,
+                            fallback: item.netWt,
+                            includeUnit: false,
+                          )),
                         if (activeConfig.showLessWt)
-                          _cell(item.totalLessWt.toStringAsFixed(3)),
+                          _cell(_formatWeightText(
+                            item.totalLessWt.toStringAsFixed(3),
+                            includeUnit: false,
+                          )),
                         if (activeConfig.showNetWt)
-                          _cell(isWholesale
-                              ? item.fineWt.toStringAsFixed(3)
-                              : item.netWt.toStringAsFixed(3)),
+                          _cell(_formatWeightText(
+                            isWholesale
+                                ? item.fineWt.toStringAsFixed(3)
+                                : item.netWt.toStringAsFixed(3),
+                            includeUnit: false,
+                          )),
                         if (activeConfig.showFineWeight && !isWholesale)
-                          _cell(item.fineWt.toStringAsFixed(3)),
+                          _cell(_formatWeightText(
+                            item.fineWt.toStringAsFixed(3),
+                            includeUnit: false,
+                          )),
                         if (activeConfig.showRate)
                           _cell(item.rate.toStringAsFixed(0)),
                         if (activeConfig.showMaking ||
@@ -620,6 +631,19 @@ class _PosInvoicePdfDocumentBuilder {
         .toStringAsFixed(2)
         .replaceFirst(RegExp(r'0+$'), '')
         .replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  String _formatWeightText(
+    String value, {
+    double fallback = 0.0,
+    bool includeUnit = true,
+  }) {
+    final clean = value.trim();
+    final parsed = clean.isEmpty
+        ? fallback
+        : double.tryParse(clean.replaceAll(RegExp(r'[^0-9.]'), '')) ?? fallback;
+    final formatted = parsed.toStringAsFixed(3);
+    return includeUnit ? '$formatted g' : formatted;
   }
 
   String _formatPurity(SaleItemModel item) {
@@ -1543,25 +1567,27 @@ class _PosInvoicePdfDocumentBuilder {
         if (config.showGrossWt)
           _thermalKeyValue(
             'Gross',
-            '${item.grossCtrl.text.trim().isEmpty ? item.netWt.toStringAsFixed(3) : item.grossCtrl.text.trim()} g',
+            _formatWeightText(item.grossCtrl.text, fallback: item.netWt),
             fontSize,
           ),
         if (config.showLessWt)
           _thermalKeyValue(
             'Less',
-            '${item.totalLessWt.toStringAsFixed(3)} g',
+            _formatWeightText(item.totalLessWt.toStringAsFixed(3)),
             fontSize,
           ),
         if (config.showNetWt)
           _thermalKeyValue(
             isWholesale ? 'Fine' : 'Net',
-            '${(isWholesale ? item.fineWt : item.netWt).toStringAsFixed(3)} g',
+            _formatWeightText(
+              (isWholesale ? item.fineWt : item.netWt).toStringAsFixed(3),
+            ),
             fontSize,
           ),
         if (config.showFineWeight && !isWholesale)
           _thermalKeyValue(
             'Fine',
-            '${item.fineWt.toStringAsFixed(3)} g',
+            _formatWeightText(item.fineWt.toStringAsFixed(3)),
             fontSize,
           ),
         if (config.showRate)
@@ -1625,12 +1651,12 @@ class _PosInvoicePdfDocumentBuilder {
         ),
         _thermalKeyValue(
           'Gross / Net',
-          '${item.grossCtrl.text.trim().isEmpty ? item.netWt.toStringAsFixed(3) : item.grossCtrl.text.trim()} g / ${item.netWt.toStringAsFixed(3)} g',
+          '${_formatWeightText(item.grossCtrl.text, fallback: item.netWt)} / ${_formatWeightText(item.netWt.toStringAsFixed(3))}',
           fontSize,
         ),
         _thermalKeyValue(
           'Purity / Fine',
-          '${item.purityPercent.toStringAsFixed(2)}% / ${item.fineWt.toStringAsFixed(3)} g',
+          '${item.purityPercent.toStringAsFixed(2)}% / ${_formatWeightText(item.fineWt.toStringAsFixed(3))}',
           fontSize,
         ),
         _thermalKeyValue('Rate', _thermalMoney(item.rate), fontSize),

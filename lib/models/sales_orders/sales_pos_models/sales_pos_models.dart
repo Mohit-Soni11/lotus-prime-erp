@@ -58,6 +58,7 @@ class SaleItemModel extends ChangeNotifier {
   int? _linkedStockUnitId;
   String? _linkedStockSku;
   double _linkedStockUnitCost = 0.0;
+  double _linkedStockSnapshotNetWeight = 0.0;
   bool _isApplyingSmartQuantity = false;
   bool _isApplyingStockReferenceSnapshot = false;
   bool _quantityManuallyChanged = false;
@@ -190,14 +191,26 @@ class SaleItemModel extends ChangeNotifier {
   int? get linkedStockUnitId => _linkedStockUnitId;
   String? get linkedStockSku => _linkedStockSku;
   double get linkedStockUnitCost => _linkedStockUnitCost;
+  double get linkedStockSnapshotNetWeight => _linkedStockSnapshotNetWeight;
   bool get hasLinkedStock => _linkedStockItemId != null;
   bool get hasStockCost => _linkedStockUnitCost > 0;
+  double get linkedStockCostBasis {
+    if (!hasStockCost) {
+      return 0.0;
+    }
+    if (_linkedStockSnapshotNetWeight <= 0 || netWt <= 0) {
+      return _linkedStockUnitCost;
+    }
+    final factor = (netWt / _linkedStockSnapshotNetWeight).clamp(0.0, 1.0);
+    return _linkedStockUnitCost * factor;
+  }
+
   double get stockProfitAmount =>
-      hasStockCost ? totalValue - _linkedStockUnitCost : 0.0;
+      hasStockCost ? totalValue - linkedStockCostBasis : 0.0;
   bool get isBelowStockCost =>
-      hasStockCost && totalValue < _linkedStockUnitCost;
+      hasStockCost && totalValue < linkedStockCostBasis;
   bool get isAtStockCost =>
-      hasStockCost && (totalValue - _linkedStockUnitCost).abs() <= 0.5;
+      hasStockCost && (totalValue - linkedStockCostBasis).abs() <= 0.5;
   bool get shouldWarnStockCost => isBelowStockCost || isAtStockCost;
   bool get rateFromMetalRateMaster => _rateFromMetalRateMaster;
   bool get makingFromMetalRateMaster => _makingFromMetalRateMaster;
@@ -449,16 +462,19 @@ class SaleItemModel extends ChangeNotifier {
     required String sku,
     int? stockUnitId,
     double stockUnitCost = 0.0,
+    double stockSnapshotNetWeight = 0.0,
   }) {
     final normalizedSku = sku.trim();
     final didChange = _linkedStockItemId != stockItemId ||
         _linkedStockUnitId != stockUnitId ||
         _linkedStockSku != normalizedSku ||
-        _linkedStockUnitCost != stockUnitCost;
+        _linkedStockUnitCost != stockUnitCost ||
+        _linkedStockSnapshotNetWeight != stockSnapshotNetWeight;
     _linkedStockItemId = stockItemId;
     _linkedStockUnitId = stockUnitId;
     _linkedStockSku = normalizedSku;
     _linkedStockUnitCost = stockUnitCost;
+    _linkedStockSnapshotNetWeight = stockSnapshotNetWeight;
     if (didChange) {
       notifyListeners();
     }
@@ -476,12 +492,14 @@ class SaleItemModel extends ChangeNotifier {
     _isApplyingStockReferenceSnapshot = true;
     try {
       setHuidValues(huids);
-      grossCtrl.text = PosNumberFormatter.compact(grossWeight);
-      lessCtrl.text = PosNumberFormatter.compact(lessWeight);
+      grossCtrl.text = PosNumberFormatter.weight(grossWeight);
+      lessCtrl.text = PosNumberFormatter.weight(lessWeight);
       attachStockReference(
         stockItemId: stockItemId,
         stockUnitId: stockUnitId,
         stockUnitCost: stockUnitCost,
+        stockSnapshotNetWeight:
+            (grossWeight - lessWeight).clamp(0.0, double.infinity).toDouble(),
         sku: sku,
       );
     } finally {
@@ -500,6 +518,7 @@ class SaleItemModel extends ChangeNotifier {
     _linkedStockUnitId = null;
     _linkedStockSku = null;
     _linkedStockUnitCost = 0.0;
+    _linkedStockSnapshotNetWeight = 0.0;
     notifyListeners();
   }
 

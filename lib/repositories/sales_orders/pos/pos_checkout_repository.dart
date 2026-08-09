@@ -2458,6 +2458,7 @@ class PosCheckoutRepository {
         stockItemId: row.linkedStockItemId!,
         stockUnitId: row.linkedStockUnitId,
         stockUnitCost: row.stockUnitCost,
+        stockSnapshotNetWeight: row.netWeight,
         sku: row.linkedStockSku!,
       );
     }
