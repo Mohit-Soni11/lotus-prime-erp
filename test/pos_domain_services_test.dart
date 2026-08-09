@@ -425,6 +425,42 @@ void main() {
       item.dispose();
     });
 
+    test('applies GST flat discount before tax', () {
+      final item = _saleItem(
+        huid: 'HUID-001',
+        grossWeight: 0.759,
+        rate: 11400,
+        makingInput: 12,
+      );
+      item
+        ..toggleMakingChargeType(isWholesale: false)
+        ..toggleMakingChargeType(isWholesale: false);
+
+      final totals = const CalculatePosTotals()(
+        _totalsInput(
+          saleItems: [item],
+          billType: BillType.gst,
+          discountType: DiscountType.flatAmount,
+          discountInput: 0.64,
+          cashInput: 9981,
+        ),
+      );
+
+      expect(totals.grossAmount, closeTo(9690.91, 0.01));
+      expect(totals.discountAmount, 0.64);
+      expect(totals.taxableAmount, closeTo(9690.27, 0.01));
+      expect(totals.totalGst, 290.71);
+      expect(totals.grandTotal, closeTo(9980.98, 0.01));
+      expect(totals.finalPayableAmount, closeTo(9980.98, 0.01));
+      expect(totals.totalPaid, 9981);
+      expect(totals.balanceDue, closeTo(-0.02, 0.01));
+      expect(totals.changeReturnAmount, closeTo(0.02, 0.01));
+      expect(totals.invoiceBalanceDue, 0);
+      expect(totals.changeCreditSourcePaymentMode, PaymentMode.cash);
+
+      item.dispose();
+    });
+
     test('calculates wholesale totals from fine weight and bhaw', () {
       final item = _saleItem(
         huid: 'HUID-001',
@@ -483,7 +519,7 @@ SaleItemModel _saleItem({
   item.descCtrl.text = 'Gold Ring';
   item.huidCtrl.text = huid;
   item.purityCtrl.text = '22KT';
-  item.grossCtrl.text = PosNumberFormatter.compact(grossWeight);
+  item.grossCtrl.text = PosNumberFormatter.weight(grossWeight);
   item.lessCtrl.text = '0';
   item.rateCtrl.text = PosNumberFormatter.compact(rate);
   item.makingCtrl.text =
@@ -549,6 +585,8 @@ PosTotalsInput _totalsInput({
   double cardInput = 0,
   double advanceInput = 0,
   double goldBhawInput = 0,
+  DiscountType discountType = DiscountType.percentage,
+  double discountInput = 0,
 }) {
   return PosTotalsInput(
     saleItems: saleItems,
@@ -556,8 +594,8 @@ PosTotalsInput _totalsInput({
     billingMode: billingMode,
     billType: billType,
     tradeInMode: tradeInMode,
-    discountType: DiscountType.percentage,
-    discountInput: 0,
+    discountType: discountType,
+    discountInput: discountInput,
     cashInput: cashInput,
     upiInput: upiInput,
     cardInput: cardInput,

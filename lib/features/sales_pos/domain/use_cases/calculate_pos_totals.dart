@@ -356,6 +356,12 @@ class CalculatePosTotals {
         paymentAllocation.upi +
         paymentAllocation.card +
         paymentAllocation.advance;
+    final balanceDue =
+        _settledBalance(finalPayableAmount - totalPaid, input.amountTolerance);
+    final invoiceBalanceDue = _settledBalance(
+      finalPayableAmount - invoiceTotalPaid,
+      input.amountTolerance,
+    );
 
     return PosTotals(
       totalGoldWt: totalGoldWt,
@@ -410,10 +416,10 @@ class CalculatePosTotals {
       cardPaidAmount: paymentAllocation.card,
       advancePaidAmount: paymentAllocation.advance,
       totalPaid: totalPaid,
-      balanceDue: finalPayableAmount - totalPaid,
+      balanceDue: balanceDue,
       changeReturnAmount: changeReturnAmount,
       invoiceTotalPaid: invoiceTotalPaid,
-      invoiceBalanceDue: finalPayableAmount - invoiceTotalPaid,
+      invoiceBalanceDue: invoiceBalanceDue,
       changeCreditSourcePaymentMode: _changeCreditSourcePaymentMode(
         input,
         paymentAllocation,
@@ -526,6 +532,16 @@ class CalculatePosTotals {
       return PaymentMode.advance;
     }
     return PaymentMode.cash;
+  }
+
+  double _settledBalance(
+    double balance,
+    double amountTolerance,
+  ) {
+    if (balance.abs() <= amountTolerance) {
+      return 0.0;
+    }
+    return balance;
   }
 
   double _roundWeight(double value) {

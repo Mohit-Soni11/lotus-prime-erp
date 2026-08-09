@@ -311,6 +311,43 @@ void main() {
   );
 
   test(
+    'fetchPrintableSaleItems preserves three decimal jewellery weights',
+    () async {
+      final stockId = await _insertStockItem(db, sku: 'GOLD-PRECISION-001');
+      final saleItem = _saleItem(
+        stockItemId: stockId,
+        sku: 'GOLD-PRECISION-001',
+        grossWeight: 0.759,
+        rate: 11400,
+      );
+      saleItem.grossCtrl.text = '0.759';
+      saleItem.makingCtrl.text = '12';
+      saleItem
+        ..toggleMakingChargeType(isWholesale: false)
+        ..toggleMakingChargeType(isWholesale: false);
+      final invoice = _invoice(
+        invoiceNumber: 'TAX-LJ-2026-0001',
+        saleItems: [saleItem],
+        cashPaid: saleItem.totalValue,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+      final printableItems =
+          await repository.fetchPrintableSaleItems(result.billId);
+
+      expect(printableItems, hasLength(1));
+      expect(printableItems.single.grossCtrl.text, '0.759');
+      expect(printableItems.single.netWt, closeTo(0.759, 0.0001));
+      expect(printableItems.single.totalValue, closeTo(9690.912, 0.001));
+
+      _disposeItems(saleItems: [saleItem, ...printableItems]);
+    },
+  );
+
+  test(
     'finalizeSale posts mixed cash UPI and card payments to finance ledgers',
     () async {
       await _insertPrimaryBankAccount(db);

@@ -2449,8 +2449,8 @@ class PosCheckoutRepository {
     item.pcsCtrl.text = row.quantity.toString();
     item.setHuidText(row.huid ?? '');
     item.purityCtrl.text = row.purity;
-    item.grossCtrl.text = _formatPersistedNumber(row.grossWeight);
-    item.lessCtrl.text = _formatPersistedNumber(row.lessWeight);
+    item.grossCtrl.text = _formatPersistedWeight(row.grossWeight);
+    item.lessCtrl.text = _formatPersistedWeight(row.lessWeight);
     item.rateCtrl.text = _formatPersistedNumber(row.rate);
     item.makingCtrl.text = _formatPersistedNumber(row.makingChargeInput);
     if (row.linkedStockItemId != null && row.linkedStockSku != null) {
@@ -2485,6 +2485,10 @@ class PosCheckoutRepository {
 
   String _formatPersistedNumber(double value) {
     return PosNumberFormatter.compact(value);
+  }
+
+  String _formatPersistedWeight(double value) {
+    return PosNumberFormatter.weight(value);
   }
 
   Future<void> _insertCashIncome({
