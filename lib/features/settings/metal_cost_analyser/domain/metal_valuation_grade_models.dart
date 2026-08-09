@@ -1,3 +1,5 @@
+import 'package:lotus_erp/features/settings/metal_cost_analyser/domain/metal_valuation_models.dart';
+
 class MetalValuationGradeSnapshot {
   final String metalType;
   final List<MetalValuationGradeRow> grades;
@@ -37,6 +39,16 @@ class MetalValuationGradeSnapshot {
   double get profit => grades.fold(0, (sum, grade) => sum + grade.profit);
 
   double get marginPercent => saleValue == 0 ? 0 : profit / saleValue * 100;
+}
+
+class MetalValuationGradeBatchRow {
+  final String gradeLabel;
+  final BatchValuationRow batch;
+
+  const MetalValuationGradeBatchRow({
+    required this.gradeLabel,
+    required this.batch,
+  });
 }
 
 class MetalValuationGradeRow {

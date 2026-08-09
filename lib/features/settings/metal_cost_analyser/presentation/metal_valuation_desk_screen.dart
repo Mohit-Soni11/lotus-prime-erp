@@ -68,15 +68,14 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MetalValuationSummaryPanel(snapshot: snapshot),
+              MetalValuationSummaryPanel(
+                snapshot: snapshot,
+                onMetalSelected: _openMetalGrade,
+              ),
               const SizedBox(height: 16),
               MetalValuationBreakdownPanel(
                 rows: snapshot.breakdown,
-                onMetalSelected: (row) {
-                  final metal = Uri.encodeComponent(row.metalType);
-                  context.go(
-                      '${RoutePaths.settingsMetalCostAnalyser}/metal/$metal');
-                },
+                onMetalSelected: _openMetalGrade,
               ),
               const SizedBox(height: 16),
               SoldStockValuationTable(
@@ -112,6 +111,11 @@ class _MetalValuationDeskScreenState extends State<MetalValuationDeskScreen> {
         queryParameters: {'billId': '${row.billId}'},
       ).toString(),
     );
+  }
+
+  void _openMetalGrade(MetalValuationBreakdown row) {
+    final metal = Uri.encodeComponent(row.metalType);
+    context.go('${RoutePaths.settingsMetalCostAnalyser}/metal/$metal');
   }
 
   void _openSoldCustomer(SoldValuationRow row) {

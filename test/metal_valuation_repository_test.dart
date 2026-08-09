@@ -499,6 +499,29 @@ void main() {
     expect(grade.availableNetWeight, closeTo(5.631, 0.001));
     expect(grade.soldNetWeight, closeTo(0.631, 0.001));
     expect(grade.soldCost, closeTo(6974.061, 0.001));
+
+    final batchSnapshot =
+        await MetalValuationGradeRepository(database: database)
+            .fetchGradeSnapshot('Gold', batchCode: 'BATCH-VAL-001');
+    final batchGrade = batchSnapshot.grades.single;
+
+    expect(batchGrade.gradeLabel, '18KT (75%)');
+    expect(batchGrade.availableUnits, 1);
+    expect(batchGrade.soldUnits, 1);
+    expect(batchGrade.availableNetWeight, closeTo(5.631, 0.001));
+    expect(batchGrade.soldNetWeight, closeTo(0.631, 0.001));
+    expect(batchGrade.soldCost, closeTo(6974.061, 0.001));
+
+    final gradeBatches = await MetalValuationGradeRepository(database: database)
+        .fetchGradeBatchRows('Gold');
+    final gradeBatch = gradeBatches.single;
+
+    expect(gradeBatch.gradeLabel, '18KT (75%)');
+    expect(gradeBatch.batch.batchCode, 'BATCH-VAL-001');
+    expect(gradeBatch.batch.availableUnits, 1);
+    expect(gradeBatch.batch.soldUnits, 1);
+    expect(gradeBatch.batch.soldNetWeight, closeTo(0.631, 0.001));
+    expect(gradeBatch.batch.soldCost, closeTo(6974.061, 0.001));
   });
 
   test('grade valuation groups silver movement by item type', () async {

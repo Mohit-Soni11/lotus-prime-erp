@@ -5,8 +5,13 @@ import 'metal_valuation_tokens.dart';
 
 class MetalValuationSummaryPanel extends StatelessWidget {
   final MetalValuationSnapshot snapshot;
+  final ValueChanged<MetalValuationBreakdown>? onMetalSelected;
 
-  const MetalValuationSummaryPanel({super.key, required this.snapshot});
+  const MetalValuationSummaryPanel({
+    super.key,
+    required this.snapshot,
+    this.onMetalSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +75,7 @@ class MetalValuationSummaryPanel extends StatelessWidget {
               const SizedBox(height: 18),
               _MetalSmartCardGrid(
                 rows: snapshot.breakdown,
+                onMetalSelected: onMetalSelected,
                 columns: constraints.maxWidth < 620
                     ? 1
                     : compact
@@ -86,10 +92,12 @@ class MetalValuationSummaryPanel extends StatelessWidget {
 
 class _MetalSmartCardGrid extends StatelessWidget {
   final List<MetalValuationBreakdown> rows;
+  final ValueChanged<MetalValuationBreakdown>? onMetalSelected;
   final int columns;
 
   const _MetalSmartCardGrid({
     required this.rows,
+    this.onMetalSelected,
     required this.columns,
   });
 
@@ -127,7 +135,11 @@ class _MetalSmartCardGrid extends StatelessWidget {
         mainAxisExtent: 236,
       ),
       itemBuilder: (context, index) {
-        return _MetalSmartCard(row: visibleRows[index]);
+        final row = visibleRows[index];
+        return _MetalSmartCard(
+          row: row,
+          onTap: onMetalSelected == null ? null : () => onMetalSelected!(row),
+        );
       },
     );
   }
@@ -135,98 +147,115 @@ class _MetalSmartCardGrid extends StatelessWidget {
 
 class _MetalSmartCard extends StatelessWidget {
   final MetalValuationBreakdown row;
+  final VoidCallback? onTap;
 
-  const _MetalSmartCard({required this.row});
+  const _MetalSmartCard({
+    required this.row,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = _MetalTone.forMetal(row.metalType);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.background,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colors.background,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MetalValuationMetalImage(
-                metalType: row.metalType,
-                borderColor: colors.border,
-                fallbackColor: colors.accent,
-                size: 38,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  titleCase(row.metalType),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: MetalValuationText.sectionTitle.copyWith(
-                    fontSize: 18,
-                    color: const Color(0xFF2E2109),
+              Row(
+                children: [
+                  MetalValuationMetalImage(
+                    metalType: row.metalType,
+                    borderColor: colors.border,
+                    fallbackColor: colors.accent,
+                    size: 38,
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      titleCase(row.metalType),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: MetalValuationText.sectionTitle.copyWith(
+                        fontSize: 18,
+                        color: const Color(0xFF2E2109),
+                      ),
+                    ),
+                  ),
+                  if (onTap != null)
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: colors.accent,
+                      size: 18,
+                    ),
+                ],
+              ),
+              const Spacer(),
+              _SmartMetric(
+                label: 'Available Net Weight',
+                value: formatGram(row.availableNetWeight),
+                color: colors.accent,
+              ),
+              const SizedBox(height: 10),
+              _SmartMetric(
+                label: 'Available Cost Price',
+                value: formatMoney(row.availableCost),
+                color: const Color(0xFF2E2109),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _SmartChip(
+                      label: '${row.availableUnits} available',
+                      color: colors.accent,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _SmartChip(
+                      label: '${row.soldUnits} sold',
+                      color: row.soldUnits > 0
+                          ? MetalValuationColors.red
+                          : const Color(0xFF2E2109),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _SmartFooterValue(
+                      label: 'Sold Wt',
+                      value: formatGram(row.soldNetWeight),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _SmartFooterValue(
+                      label: 'Profit',
+                      value: formatMoney(row.profit),
+                      color: row.profit >= 0
+                          ? MetalValuationColors.green
+                          : MetalValuationColors.red,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const Spacer(),
-          _SmartMetric(
-            label: 'Available Net Weight',
-            value: formatGram(row.availableNetWeight),
-            color: colors.accent,
-          ),
-          const SizedBox(height: 10),
-          _SmartMetric(
-            label: 'Available Cost Price',
-            value: formatMoney(row.availableCost),
-            color: const Color(0xFF2E2109),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _SmartChip(
-                  label: '${row.availableUnits} available',
-                  color: colors.accent,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SmartChip(
-                  label: '${row.soldUnits} sold',
-                  color: row.soldUnits > 0
-                      ? MetalValuationColors.red
-                      : const Color(0xFF2E2109),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _SmartFooterValue(
-                  label: 'Sold Wt',
-                  value: formatGram(row.soldNetWeight),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SmartFooterValue(
-                  label: 'Profit',
-                  value: formatMoney(row.profit),
-                  color: row.profit >= 0
-                      ? MetalValuationColors.green
-                      : MetalValuationColors.red,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
