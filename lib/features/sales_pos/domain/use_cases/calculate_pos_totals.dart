@@ -1,5 +1,6 @@
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
+import '../services/pos_money_math.dart';
 import '../services/pos_weight_math.dart';
 
 class PosTotalsInput {
@@ -96,6 +97,7 @@ class PosTotals {
     required this.cgst,
     required this.sgst,
     required this.grandTotal,
+    required this.roundOffAmount,
     required this.finalPayableAmount,
     required this.cashPaidAmount,
     required this.upiPaidAmount,
@@ -155,6 +157,7 @@ class PosTotals {
   final double cgst;
   final double sgst;
   final double grandTotal;
+  final double roundOffAmount;
   final double finalPayableAmount;
   final double cashPaidAmount;
   final double upiPaidAmount;
@@ -258,37 +261,60 @@ class CalculatePosTotals {
     platinumJamaFine = _roundWeight(platinumJamaFine);
     diamondJamaFine = _roundWeight(diamondJamaFine);
 
-    final totalMakingCharge = goldMakingCharge +
-        silverMakingCharge +
-        platinumMakingCharge +
-        diamondMakingCharge;
+    totalGoldAmount = _roundMoney(totalGoldAmount);
+    totalSilverAmount = _roundMoney(totalSilverAmount);
+    totalPlatinumAmount = _roundMoney(totalPlatinumAmount);
+    totalDiamondAmount = _roundMoney(totalDiamondAmount);
+    totalTradeInAmount = _roundMoney(totalTradeInAmount);
+    goldMakingCharge = _roundMoney(goldMakingCharge);
+    silverMakingCharge = _roundMoney(silverMakingCharge);
+    platinumMakingCharge = _roundMoney(platinumMakingCharge);
+    diamondMakingCharge = _roundMoney(diamondMakingCharge);
 
-    final retailGrossAmount = totalGoldAmount +
-        totalSilverAmount +
-        totalPlatinumAmount +
-        totalDiamondAmount;
+    final totalMakingCharge = _roundMoney(
+      goldMakingCharge +
+          silverMakingCharge +
+          platinumMakingCharge +
+          diamondMakingCharge,
+    );
+
+    final retailGrossAmount = _roundMoney(
+      totalGoldAmount +
+          totalSilverAmount +
+          totalPlatinumAmount +
+          totalDiamondAmount,
+    );
 
     final goldNetFine = _roundWeight(goldSoldFine - goldJamaFine);
     final silverNetFine = _roundWeight(silverSoldFine - silverJamaFine);
     final platinumNetFine = _roundWeight(platinumSoldFine - platinumJamaFine);
     final diamondNetFine = _roundWeight(diamondSoldFine - diamondJamaFine);
 
-    final goldBhawAmount = goldNetFine * (input.goldBhawInput / 10);
-    final silverBhawAmount = silverNetFine * (input.silverBhawInput / 1000);
-    final platinumBhawAmount = platinumNetFine * (input.platinumBhawInput / 10);
-    final diamondBhawAmount = diamondNetFine * input.diamondBhawInput;
+    final goldBhawAmount =
+        _roundMoney(goldNetFine * (input.goldBhawInput / 10));
+    final silverBhawAmount = _roundMoney(
+      silverNetFine * (input.silverBhawInput / 1000),
+    );
+    final platinumBhawAmount = _roundMoney(
+      platinumNetFine * (input.platinumBhawInput / 10),
+    );
+    final diamondBhawAmount =
+        _roundMoney(diamondNetFine * input.diamondBhawInput);
 
-    final wholesaleTotalMetalAmount = goldBhawAmount +
-        silverBhawAmount +
-        platinumBhawAmount +
-        diamondBhawAmount;
-    final wholesaleGrossAmount = wholesaleTotalMetalAmount + totalMakingCharge;
+    final wholesaleTotalMetalAmount = _roundMoney(
+      goldBhawAmount +
+          silverBhawAmount +
+          platinumBhawAmount +
+          diamondBhawAmount,
+    );
+    final wholesaleGrossAmount =
+        _roundMoney(wholesaleTotalMetalAmount + totalMakingCharge);
 
     final grossAmount = input.billingMode == BillingMode.wholesale
         ? wholesaleGrossAmount
         : retailGrossAmount;
-    final discountAmount = _discountAmount(input, grossAmount);
-    final taxableAmount = grossAmount - discountAmount;
+    final discountAmount = _roundMoney(_discountAmount(input, grossAmount));
+    final taxableAmount = _roundMoney(grossAmount - discountAmount);
 
     final goldGst = _metalGst(
       input: input,
@@ -335,21 +361,30 @@ class CalculatePosTotals {
       metal: MetalType.diamond,
     );
 
-    final totalGst = goldGst + silverGst + platinumGst + diamondGst;
-    final cgst = totalGst / 2;
-    final sgst = totalGst / 2;
-    final grandTotal = taxableAmount + totalGst;
+    final totalGst =
+        _roundMoney(goldGst + silverGst + platinumGst + diamondGst);
+    final cgst = _roundMoney(totalGst / 2);
+    final sgst = _roundMoney(totalGst - cgst);
+    final grandTotal = _roundMoney(taxableAmount + totalGst);
     final tradeInCashDeduction =
         input.tradeInMode == TradeInAdjustMode.cashAdjust
             ? totalTradeInAmount
             : 0.0;
-    final finalPayableAmount = input.billingMode == BillingMode.wholesale
-        ? grandTotal
-        : grandTotal - tradeInCashDeduction;
+    final payableBeforeRoundOff = _roundMoney(
+      input.billingMode == BillingMode.wholesale
+          ? grandTotal
+          : grandTotal - tradeInCashDeduction,
+    );
+    final roundOffAmount =
+        PosMoneyMath.roundOffToNearestRupee(payableBeforeRoundOff);
+    final finalPayableAmount = _roundMoney(
+      payableBeforeRoundOff + roundOffAmount,
+    );
 
     final paymentAllocation = _allocatePayments(input, finalPayableAmount);
-    final totalPaid =
-        input.cashInput + input.upiInput + input.cardInput + input.advanceInput;
+    final totalPaid = _roundMoney(
+      input.cashInput + input.upiInput + input.cardInput + input.advanceInput,
+    );
     final excess = totalPaid - finalPayableAmount;
     final changeReturnAmount = excess > input.amountTolerance ? excess : 0.0;
     final invoiceTotalPaid = paymentAllocation.cash +
@@ -374,10 +409,11 @@ class CalculatePosTotals {
       totalDiamondAmount: totalDiamondAmount,
       totalTradeInAmount: totalTradeInAmount,
       tradeInCashDeduction: tradeInCashDeduction,
-      pureGoldAmount: totalGoldAmount - goldMakingCharge,
-      pureSilverAmount: totalSilverAmount - silverMakingCharge,
-      purePlatinumAmount: totalPlatinumAmount - platinumMakingCharge,
-      pureDiamondAmount: totalDiamondAmount - diamondMakingCharge,
+      pureGoldAmount: _roundMoney(totalGoldAmount - goldMakingCharge),
+      pureSilverAmount: _roundMoney(totalSilverAmount - silverMakingCharge),
+      purePlatinumAmount:
+          _roundMoney(totalPlatinumAmount - platinumMakingCharge),
+      pureDiamondAmount: _roundMoney(totalDiamondAmount - diamondMakingCharge),
       goldSoldFine: goldSoldFine,
       silverSoldFine: silverSoldFine,
       platinumSoldFine: platinumSoldFine,
@@ -410,6 +446,7 @@ class CalculatePosTotals {
       cgst: cgst,
       sgst: sgst,
       grandTotal: grandTotal,
+      roundOffAmount: roundOffAmount,
       finalPayableAmount: finalPayableAmount,
       cashPaidAmount: paymentAllocation.cash,
       upiPaidAmount: paymentAllocation.upi,
@@ -480,9 +517,9 @@ class CalculatePosTotals {
     }
     final amount = taxable * rate;
     if (!input.roundOffGstAmount) {
-      return amount;
+      return _roundMoney(amount);
     }
-    return (amount * 100).roundToDouble() / 100;
+    return _roundMoney(amount);
   }
 
   _PaymentAllocation _allocatePayments(
@@ -498,8 +535,12 @@ class CalculatePosTotals {
       if (remaining <= input.amountTolerance || raw <= 0) {
         return 0;
       }
-      final allocated = raw > remaining ? remaining : raw;
-      remaining -= allocated;
+      final available = _roundMoney(raw);
+      final allocated = available > remaining ? remaining : available;
+      remaining = _settledBalance(
+        remaining - allocated,
+        input.amountTolerance,
+      );
       return allocated;
     }
 
@@ -542,6 +583,10 @@ class CalculatePosTotals {
       return 0.0;
     }
     return balance;
+  }
+
+  double _roundMoney(double value) {
+    return PosMoneyMath.roundToPaisa(value);
   }
 
   double _roundWeight(double value) {

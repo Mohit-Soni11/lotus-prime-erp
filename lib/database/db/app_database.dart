@@ -1160,6 +1160,21 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           }
+
+          if (from < 42) {
+            if (await _tableExists('bills')) {
+              try {
+                await m.addColumn(bills, bills.roundOffAmount);
+              } catch (e, s) {
+                _handleMigrationError(e, s);
+              }
+              AppLogger.info('v42 sales bill round-off amount applied.');
+            } else {
+              AppLogger.warning(
+                'v42 sales bill round-off skipped because bills table is missing.',
+              );
+            }
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

@@ -5073,6 +5073,14 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _roundOffAmountMeta =
+      const VerificationMeta('roundOffAmount');
+  @override
+  late final GeneratedColumn<double> roundOffAmount = GeneratedColumn<double>(
+      'round_off_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
   static const VerificationMeta _finalAmountMeta =
       const VerificationMeta('finalAmount');
   @override
@@ -5200,6 +5208,7 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
         sgstAmount,
         gstAmount,
         makingTotal,
+        roundOffAmount,
         finalAmount,
         paidAmount,
         cashPaid,
@@ -5311,6 +5320,12 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           _makingTotalMeta,
           makingTotal.isAcceptableOrUnknown(
               data['making_total']!, _makingTotalMeta));
+    }
+    if (data.containsKey('round_off_amount')) {
+      context.handle(
+          _roundOffAmountMeta,
+          roundOffAmount.isAcceptableOrUnknown(
+              data['round_off_amount']!, _roundOffAmountMeta));
     }
     if (data.containsKey('final_amount')) {
       context.handle(
@@ -5427,6 +5442,8 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           .read(DriftSqlType.double, data['${effectivePrefix}gst_amount'])!,
       makingTotal: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}making_total'])!,
+      roundOffAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}round_off_amount'])!,
       finalAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}final_amount'])!,
       paidAmount: attachedDatabase.typeMapping
@@ -5483,6 +5500,7 @@ class Bill extends DataClass implements Insertable<Bill> {
   final double sgstAmount;
   final double gstAmount;
   final double makingTotal;
+  final double roundOffAmount;
   final double finalAmount;
   final double paidAmount;
   final double cashPaid;
@@ -5515,6 +5533,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       required this.sgstAmount,
       required this.gstAmount,
       required this.makingTotal,
+      required this.roundOffAmount,
       required this.finalAmount,
       required this.paidAmount,
       required this.cashPaid,
@@ -5557,6 +5576,7 @@ class Bill extends DataClass implements Insertable<Bill> {
     map['sgst_amount'] = Variable<double>(sgstAmount);
     map['gst_amount'] = Variable<double>(gstAmount);
     map['making_total'] = Variable<double>(makingTotal);
+    map['round_off_amount'] = Variable<double>(roundOffAmount);
     map['final_amount'] = Variable<double>(finalAmount);
     map['paid_amount'] = Variable<double>(paidAmount);
     map['cash_paid'] = Variable<double>(cashPaid);
@@ -5606,6 +5626,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       sgstAmount: Value(sgstAmount),
       gstAmount: Value(gstAmount),
       makingTotal: Value(makingTotal),
+      roundOffAmount: Value(roundOffAmount),
       finalAmount: Value(finalAmount),
       paidAmount: Value(paidAmount),
       cashPaid: Value(cashPaid),
@@ -5650,6 +5671,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       sgstAmount: serializer.fromJson<double>(json['sgstAmount']),
       gstAmount: serializer.fromJson<double>(json['gstAmount']),
       makingTotal: serializer.fromJson<double>(json['makingTotal']),
+      roundOffAmount: serializer.fromJson<double>(json['roundOffAmount']),
       finalAmount: serializer.fromJson<double>(json['finalAmount']),
       paidAmount: serializer.fromJson<double>(json['paidAmount']),
       cashPaid: serializer.fromJson<double>(json['cashPaid']),
@@ -5689,6 +5711,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       'sgstAmount': serializer.toJson<double>(sgstAmount),
       'gstAmount': serializer.toJson<double>(gstAmount),
       'makingTotal': serializer.toJson<double>(makingTotal),
+      'roundOffAmount': serializer.toJson<double>(roundOffAmount),
       'finalAmount': serializer.toJson<double>(finalAmount),
       'paidAmount': serializer.toJson<double>(paidAmount),
       'cashPaid': serializer.toJson<double>(cashPaid),
@@ -5724,6 +5747,7 @@ class Bill extends DataClass implements Insertable<Bill> {
           double? sgstAmount,
           double? gstAmount,
           double? makingTotal,
+          double? roundOffAmount,
           double? finalAmount,
           double? paidAmount,
           double? cashPaid,
@@ -5757,6 +5781,7 @@ class Bill extends DataClass implements Insertable<Bill> {
         sgstAmount: sgstAmount ?? this.sgstAmount,
         gstAmount: gstAmount ?? this.gstAmount,
         makingTotal: makingTotal ?? this.makingTotal,
+        roundOffAmount: roundOffAmount ?? this.roundOffAmount,
         finalAmount: finalAmount ?? this.finalAmount,
         paidAmount: paidAmount ?? this.paidAmount,
         cashPaid: cashPaid ?? this.cashPaid,
@@ -5807,6 +5832,9 @@ class Bill extends DataClass implements Insertable<Bill> {
       gstAmount: data.gstAmount.present ? data.gstAmount.value : this.gstAmount,
       makingTotal:
           data.makingTotal.present ? data.makingTotal.value : this.makingTotal,
+      roundOffAmount: data.roundOffAmount.present
+          ? data.roundOffAmount.value
+          : this.roundOffAmount,
       finalAmount:
           data.finalAmount.present ? data.finalAmount.value : this.finalAmount,
       paidAmount:
@@ -5855,6 +5883,7 @@ class Bill extends DataClass implements Insertable<Bill> {
           ..write('sgstAmount: $sgstAmount, ')
           ..write('gstAmount: $gstAmount, ')
           ..write('makingTotal: $makingTotal, ')
+          ..write('roundOffAmount: $roundOffAmount, ')
           ..write('finalAmount: $finalAmount, ')
           ..write('paidAmount: $paidAmount, ')
           ..write('cashPaid: $cashPaid, ')
@@ -5892,6 +5921,7 @@ class Bill extends DataClass implements Insertable<Bill> {
         sgstAmount,
         gstAmount,
         makingTotal,
+        roundOffAmount,
         finalAmount,
         paidAmount,
         cashPaid,
@@ -5928,6 +5958,7 @@ class Bill extends DataClass implements Insertable<Bill> {
           other.sgstAmount == this.sgstAmount &&
           other.gstAmount == this.gstAmount &&
           other.makingTotal == this.makingTotal &&
+          other.roundOffAmount == this.roundOffAmount &&
           other.finalAmount == this.finalAmount &&
           other.paidAmount == this.paidAmount &&
           other.cashPaid == this.cashPaid &&
@@ -5962,6 +5993,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
   final Value<double> sgstAmount;
   final Value<double> gstAmount;
   final Value<double> makingTotal;
+  final Value<double> roundOffAmount;
   final Value<double> finalAmount;
   final Value<double> paidAmount;
   final Value<double> cashPaid;
@@ -5994,6 +6026,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.sgstAmount = const Value.absent(),
     this.gstAmount = const Value.absent(),
     this.makingTotal = const Value.absent(),
+    this.roundOffAmount = const Value.absent(),
     this.finalAmount = const Value.absent(),
     this.paidAmount = const Value.absent(),
     this.cashPaid = const Value.absent(),
@@ -6027,6 +6060,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.sgstAmount = const Value.absent(),
     this.gstAmount = const Value.absent(),
     this.makingTotal = const Value.absent(),
+    this.roundOffAmount = const Value.absent(),
     this.finalAmount = const Value.absent(),
     this.paidAmount = const Value.absent(),
     this.cashPaid = const Value.absent(),
@@ -6060,6 +6094,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     Expression<double>? sgstAmount,
     Expression<double>? gstAmount,
     Expression<double>? makingTotal,
+    Expression<double>? roundOffAmount,
     Expression<double>? finalAmount,
     Expression<double>? paidAmount,
     Expression<double>? cashPaid,
@@ -6093,6 +6128,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       if (sgstAmount != null) 'sgst_amount': sgstAmount,
       if (gstAmount != null) 'gst_amount': gstAmount,
       if (makingTotal != null) 'making_total': makingTotal,
+      if (roundOffAmount != null) 'round_off_amount': roundOffAmount,
       if (finalAmount != null) 'final_amount': finalAmount,
       if (paidAmount != null) 'paid_amount': paidAmount,
       if (cashPaid != null) 'cash_paid': cashPaid,
@@ -6130,6 +6166,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       Value<double>? sgstAmount,
       Value<double>? gstAmount,
       Value<double>? makingTotal,
+      Value<double>? roundOffAmount,
       Value<double>? finalAmount,
       Value<double>? paidAmount,
       Value<double>? cashPaid,
@@ -6162,6 +6199,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       sgstAmount: sgstAmount ?? this.sgstAmount,
       gstAmount: gstAmount ?? this.gstAmount,
       makingTotal: makingTotal ?? this.makingTotal,
+      roundOffAmount: roundOffAmount ?? this.roundOffAmount,
       finalAmount: finalAmount ?? this.finalAmount,
       paidAmount: paidAmount ?? this.paidAmount,
       cashPaid: cashPaid ?? this.cashPaid,
@@ -6233,6 +6271,9 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     if (makingTotal.present) {
       map['making_total'] = Variable<double>(makingTotal.value);
     }
+    if (roundOffAmount.present) {
+      map['round_off_amount'] = Variable<double>(roundOffAmount.value);
+    }
     if (finalAmount.present) {
       map['final_amount'] = Variable<double>(finalAmount.value);
     }
@@ -6300,6 +6341,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
           ..write('sgstAmount: $sgstAmount, ')
           ..write('gstAmount: $gstAmount, ')
           ..write('makingTotal: $makingTotal, ')
+          ..write('roundOffAmount: $roundOffAmount, ')
           ..write('finalAmount: $finalAmount, ')
           ..write('paidAmount: $paidAmount, ')
           ..write('cashPaid: $cashPaid, ')
@@ -39380,6 +39422,7 @@ typedef $$BillsTableCreateCompanionBuilder = BillsCompanion Function({
   Value<double> sgstAmount,
   Value<double> gstAmount,
   Value<double> makingTotal,
+  Value<double> roundOffAmount,
   Value<double> finalAmount,
   Value<double> paidAmount,
   Value<double> cashPaid,
@@ -39413,6 +39456,7 @@ typedef $$BillsTableUpdateCompanionBuilder = BillsCompanion Function({
   Value<double> sgstAmount,
   Value<double> gstAmount,
   Value<double> makingTotal,
+  Value<double> roundOffAmount,
   Value<double> finalAmount,
   Value<double> paidAmount,
   Value<double> cashPaid,
@@ -39548,6 +39592,10 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
 
   ColumnFilters<double> get makingTotal => $composableBuilder(
       column: $table.makingTotal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get roundOffAmount => $composableBuilder(
+      column: $table.roundOffAmount,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get finalAmount => $composableBuilder(
       column: $table.finalAmount, builder: (column) => ColumnFilters(column));
@@ -39733,6 +39781,10 @@ class $$BillsTableOrderingComposer
   ColumnOrderings<double> get makingTotal => $composableBuilder(
       column: $table.makingTotal, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get roundOffAmount => $composableBuilder(
+      column: $table.roundOffAmount,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get finalAmount => $composableBuilder(
       column: $table.finalAmount, builder: (column) => ColumnOrderings(column));
 
@@ -39871,6 +39923,9 @@ class $$BillsTableAnnotationComposer
 
   GeneratedColumn<double> get makingTotal => $composableBuilder(
       column: $table.makingTotal, builder: (column) => column);
+
+  GeneratedColumn<double> get roundOffAmount => $composableBuilder(
+      column: $table.roundOffAmount, builder: (column) => column);
 
   GeneratedColumn<double> get finalAmount => $composableBuilder(
       column: $table.finalAmount, builder: (column) => column);
@@ -40038,6 +40093,7 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<double> sgstAmount = const Value.absent(),
             Value<double> gstAmount = const Value.absent(),
             Value<double> makingTotal = const Value.absent(),
+            Value<double> roundOffAmount = const Value.absent(),
             Value<double> finalAmount = const Value.absent(),
             Value<double> paidAmount = const Value.absent(),
             Value<double> cashPaid = const Value.absent(),
@@ -40071,6 +40127,7 @@ class $$BillsTableTableManager extends RootTableManager<
             sgstAmount: sgstAmount,
             gstAmount: gstAmount,
             makingTotal: makingTotal,
+            roundOffAmount: roundOffAmount,
             finalAmount: finalAmount,
             paidAmount: paidAmount,
             cashPaid: cashPaid,
@@ -40104,6 +40161,7 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<double> sgstAmount = const Value.absent(),
             Value<double> gstAmount = const Value.absent(),
             Value<double> makingTotal = const Value.absent(),
+            Value<double> roundOffAmount = const Value.absent(),
             Value<double> finalAmount = const Value.absent(),
             Value<double> paidAmount = const Value.absent(),
             Value<double> cashPaid = const Value.absent(),
@@ -40137,6 +40195,7 @@ class $$BillsTableTableManager extends RootTableManager<
             sgstAmount: sgstAmount,
             gstAmount: gstAmount,
             makingTotal: makingTotal,
+            roundOffAmount: roundOffAmount,
             finalAmount: finalAmount,
             paidAmount: paidAmount,
             cashPaid: cashPaid,

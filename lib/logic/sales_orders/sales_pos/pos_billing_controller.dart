@@ -1360,6 +1360,7 @@ class PosBillingController extends ChangeNotifier {
   double get cgst => _totals.cgst;
   double get sgst => _totals.sgst;
   double get grandTotal => _totals.grandTotal;
+  double get roundOffAmount => _totals.roundOffAmount;
   double get finalPayableAmount => _totals.finalPayableAmount;
   double get discountInputAmount => _discountInput;
   double get cashPaidAmount => _totals.cashPaidAmount;

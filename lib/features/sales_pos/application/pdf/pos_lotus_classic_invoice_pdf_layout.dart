@@ -684,6 +684,12 @@ class PosLotusClassicInvoicePdfLayout {
           -invoice.crossMetalAdjustmentDeduction,
           isDeduction: true,
         ),
+      if (invoice.roundOffAmount.abs() > 0.005)
+        _totalLine(
+          'Round Off',
+          invoice.roundOffAmount,
+          isDeduction: invoice.roundOffAmount < 0,
+        ),
     ];
 
     return pw.Container(

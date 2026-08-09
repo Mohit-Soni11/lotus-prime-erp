@@ -790,6 +790,12 @@ class _PosInvoicePdfDocumentBuilder {
                   );
                 }(),
               ],
+              if (invoice.roundOffAmount.abs() > 0.005)
+                _totalRow(
+                  'Round Off',
+                  invoice.roundOffAmount,
+                  isDeduction: invoice.roundOffAmount < 0,
+                ),
               pw.Divider(color: PdfColors.amber800, thickness: 1.0),
               _totalRow(
                 'GRAND TOTAL',
@@ -1695,6 +1701,14 @@ class _PosInvoicePdfDocumentBuilder {
           _thermalKeyValue(
             'Metal Adjusted',
             '- ${_thermalMoney(invoice.totalTradeInDeduction)}',
+            fontSize,
+          ),
+        if (invoice.roundOffAmount.abs() > 0.005)
+          _thermalKeyValue(
+            'Round Off',
+            invoice.roundOffAmount < 0
+                ? '- ${_thermalMoney(invoice.roundOffAmount.abs())}'
+                : _thermalMoney(invoice.roundOffAmount),
             fontSize,
           ),
         _thermalDivider(),

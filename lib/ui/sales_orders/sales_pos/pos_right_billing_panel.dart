@@ -372,6 +372,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             _buildGstDropdownSection()
           else
             _buildNonGstBadge(),
+          _buildRoundOffRow(),
         ],
       ),
     );
@@ -456,6 +457,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
             _buildGstDropdownSection()
           else
             _buildNonGstBadge(),
+          _buildRoundOffRow(),
         ],
       ),
     );
@@ -830,6 +832,24 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRoundOffRow() {
+    final roundOff = widget.ctrl.roundOffAmount;
+    if (roundOff.abs() <= 0.005) return const SizedBox.shrink();
+
+    final label = roundOff > 0
+        ? "+ Rs ${roundOff.toStringAsFixed(2)}"
+        : "- Rs ${roundOff.abs().toStringAsFixed(2)}";
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: _buildSubtleRow(
+        "Round Off",
+        roundOff,
+        customVal: label,
+        color: SalesPosColors.bodyTextMain,
       ),
     );
   }

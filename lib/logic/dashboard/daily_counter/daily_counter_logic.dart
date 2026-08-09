@@ -37,6 +37,8 @@ class DailyCounterLogic {
   final AppDatabase _db;
   DailyCounterLogic({AppDatabase? db}) : _db = db ?? AppDatabase();
 
+  static const double _amountTolerance = 0.005;
+
   // Stream controller
   final _controller = StreamController<DailyCounterModel>.broadcast();
   Stream<DailyCounterModel> get dataStream => _controller.stream;
@@ -60,15 +62,16 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.billItems)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => AppLogger.debug('❌ DailyCounter BillItems error: $e'),
+            onError: (e) =>
+                AppLogger.debug('❌ DailyCounter BillItems error: $e'),
           ),
     );
 
-    // Watch StockItems (for metal bought/added today)
+    // Watch customer old metal entries (exchange/purchase settlement).
     _subs.add(
-      (_db.select(_db.stockItems)).watch().listen(
+      (_db.select(_db.billTradeInItems)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => AppLogger.debug('❌ DailyCounter StockItems error: $e'),
+            onError: (e) => AppLogger.debug('❌ DailyCounter TradeIn error: $e'),
           ),
     );
 
@@ -147,47 +150,34 @@ class DailyCounterLogic {
           .get();
 
       for (final item in billItems) {
-        final purity = item.purity.toUpperCase();
-        // Gold puritites: 24K, 22K, 18K, 14K
-        final isGold = purity.contains('K') ||
-            purity.contains('GOLD') ||
-            purity.contains('KT');
-        // Silver purities: 925, 999, SILVER
-        final isSilver = purity.contains('925') ||
-            purity.contains('999') ||
-            purity.contains('SILVER');
-
-        if (isGold) {
-          soldGoldWt += item.grossWeight;
-          soldGoldPcs += 1;
-        } else if (isSilver) {
+        final metal = item.metalType.trim().toUpperCase();
+        if (metal.contains('SILVER')) {
           soldSilverWt += item.grossWeight;
-          soldSilverPcs += 1;
-        } else {
-          // Default: gold maan lo
+          soldSilverPcs += item.quantity;
+        } else if (metal.contains('GOLD')) {
           soldGoldWt += item.grossWeight;
-          soldGoldPcs += 1;
+          soldGoldPcs += item.quantity;
         }
       }
     }
 
-    // Metal Bought — StockItems aaj create kiye gaye
-    final todayStock = await (_db.select(_db.stockItems)
-          ..where((t) => t.createdAt.isBiggerOrEqualValue(todayStart))
-          ..where((t) => t.createdAt.isSmallerOrEqualValue(todayEnd)))
-        .get();
-
     double boughtGoldWt = 0, boughtSilverWt = 0;
     int boughtGoldPcs = 0, boughtSilverPcs = 0;
 
-    for (final item in todayStock) {
-      final metal = item.metalType.toUpperCase();
-      if (metal.contains('GOLD')) {
-        boughtGoldWt += item.grossWeight;
-        boughtGoldPcs += item.quantity;
-      } else if (metal.contains('SILVER')) {
-        boughtSilverWt += item.grossWeight;
-        boughtSilverPcs += item.quantity;
+    if (todayBillIds.isNotEmpty) {
+      final tradeInItems = await (_db.select(_db.billTradeInItems)
+            ..where((t) => t.billId.isIn(todayBillIds)))
+          .get();
+
+      for (final item in tradeInItems) {
+        final metal = item.metalType.trim().toUpperCase();
+        if (metal.contains('SILVER')) {
+          boughtSilverWt += item.grossWeight;
+          boughtSilverPcs += 1;
+        } else if (metal.contains('GOLD')) {
+          boughtGoldWt += item.grossWeight;
+          boughtGoldPcs += 1;
+        }
       }
     }
 
@@ -213,17 +203,20 @@ class DailyCounterLogic {
           ..where((t) => t.status.equals('ACTIVE')))
         .get();
 
-    int dueCustCount = 0;
+    final dueCustomers = <String>{};
     double dueTotal = 0;
 
     for (final bill in todayBills) {
       final computedDue = bill.finalAmount - bill.paidAmount;
-      final due = bill.dueAmount > 0.5 ? bill.dueAmount : computedDue;
-      if (due > 0) {
-        dueCustCount++;
+      final due = bill.dueAmount > _amountTolerance
+          ? bill.dueAmount
+          : computedDue.clamp(0.0, double.infinity).toDouble();
+      if (due > _amountTolerance) {
+        dueCustomers.add(_dueCustomerKey(bill));
         dueTotal += due;
       }
     }
+    final dueCustCount = dueCustomers.length;
 
     // New Girvi/Loans — aaj create kiye
     final todayLoans = await (_db.select(_db.loans)
@@ -269,6 +262,15 @@ class DailyCounterLogic {
       symbol: '₹',
       decimalDigits: 0,
     ).format(amount);
+  }
+
+  String _dueCustomerKey(Bill bill) {
+    if (bill.customerId != null) return 'ID:${bill.customerId}';
+    final mobile = bill.mobile?.trim();
+    if (mobile != null && mobile.isNotEmpty) return 'M:$mobile';
+    final name = bill.customerName?.trim();
+    if (name != null && name.isNotEmpty) return 'N:$name';
+    return 'B:${bill.id}';
   }
 
   // ==========================================

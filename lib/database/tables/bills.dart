@@ -29,6 +29,7 @@ class Bills extends Table with BaseTable {
   RealColumn get sgstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get gstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get makingTotal => real().withDefault(const Constant(0.0))();
+  RealColumn get roundOffAmount => real().withDefault(const Constant(0.0))();
   RealColumn get finalAmount => real().withDefault(const Constant(0.0))();
   RealColumn get paidAmount => real().withDefault(const Constant(0.0))();
   RealColumn get cashPaid => real().withDefault(const Constant(0.0))();
@@ -36,9 +37,11 @@ class Bills extends Table with BaseTable {
   RealColumn get cardPaid => real().withDefault(const Constant(0.0))();
   RealColumn get advancePaid => real().withDefault(const Constant(0.0))();
   RealColumn get dueAmount => real().withDefault(const Constant(0.0))();
-  RealColumn get tradeInDeduction => real().named('old_gold_deduction').withDefault(const Constant(0.0))();
-  TextColumn get tradeInMode =>
-      text().named('old_gold_mode').withDefault(const Constant('CASH_ADJUST'))();
+  RealColumn get tradeInDeduction =>
+      real().named('old_gold_deduction').withDefault(const Constant(0.0))();
+  TextColumn get tradeInMode => text()
+      .named('old_gold_mode')
+      .withDefault(const Constant('CASH_ADJUST'))();
 
   // Meta
   DateTimeColumn get billDate => dateTime().withDefault(currentDateAndTime)();

@@ -114,6 +114,7 @@ class PosInvoiceModel {
   final double totalTradeInDeduction;
   final double crossMetalAdjustmentDeduction;
   final double grandTotal;
+  final double roundOffAmount;
 
   final double cashPaid;
   final double upiPaid;
@@ -197,8 +198,11 @@ class PosInvoiceModel {
   }
 
   double get netPayable => billingMode == BillingMode.wholesale
-      ? grandTotal
-      : grandTotal - totalTradeInDeduction - crossMetalAdjustmentDeduction;
+      ? grandTotal + roundOffAmount
+      : grandTotal -
+          totalTradeInDeduction -
+          crossMetalAdjustmentDeduction +
+          roundOffAmount;
 
   PaymentStatus get paymentStatus {
     if (netPayable < 0) return PaymentStatus.credit;
@@ -240,6 +244,7 @@ class PosInvoiceModel {
     required this.totalTradeInDeduction,
     this.crossMetalAdjustmentDeduction = 0.0,
     required this.grandTotal,
+    this.roundOffAmount = 0.0,
     required this.cashPaid,
     required this.upiPaid,
     required this.cardPaid,

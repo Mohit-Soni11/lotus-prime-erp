@@ -129,6 +129,121 @@ void main() {
   );
 
   test(
+    'finalizeSale persists accounting money at paisa precision without false due',
+    () async {
+      final invoice = PosInvoiceModel(
+        invoiceNumber: 'TAX-AJ-2026-0002',
+        invoiceDate: DateTime(2026, 6, 25, 12),
+        billType: pos.BillType.gst,
+        billingMode: pos.BillingMode.retail,
+        shopName: 'Lotus Jewellers',
+        shopAddress: 'Patna',
+        shopPhone: '9000000000',
+        shopGstin: '10ABCDE1234F1Z5',
+        customerName: 'REYANSH SONI',
+        customerMobile: '9304479436',
+        customerCity: 'Patna',
+        customerPan: '',
+        customerGstin: '',
+        tradeInMode: pos.TradeInAdjustMode.cashAdjust,
+        saleItems: const [],
+        tradeInItems: const [],
+        grossAmount: 9690.912,
+        discountAmount: 0.62,
+        taxableAmount: 9690.292,
+        cgst: 145.355,
+        sgst: 145.355,
+        totalGst: 290.71,
+        totalTradeInDeduction: 0,
+        grandTotal: 9981.001999999999,
+        cashPaid: 9981,
+        upiPaid: 0,
+        cardPaid: 0,
+        advancePaid: 0,
+        balanceDue: 0.001999999999,
+        totalMakingCharge: 1038.312,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+
+      final bill = await (db.select(db.bills)
+            ..where((tbl) => tbl.id.equals(result.billId)))
+          .getSingle();
+      final cashRows = await db.select(db.cashTransactions).get();
+
+      expect(bill.totalAmount, 9690.91);
+      expect(bill.discount, 0.62);
+      expect(bill.taxableAmount, 9690.29);
+      expect(bill.cgstAmount, 145.36);
+      expect(bill.sgstAmount, 145.35);
+      expect(bill.gstAmount, 290.71);
+      expect(bill.cgstAmount + bill.sgstAmount, closeTo(bill.gstAmount, 0.001));
+      expect(bill.finalAmount, 9981);
+      expect(bill.paidAmount, 9981);
+      expect(bill.dueAmount, 0);
+      expect(bill.paymentStatus, 'PAID');
+      expect(cashRows.single.amount, 9981);
+    },
+  );
+
+  test('finalizeSale stores ERP round-off separately from GST values',
+      () async {
+    final invoice = PosInvoiceModel(
+      invoiceNumber: 'TAX-LJ-2026-ROUND',
+      invoiceDate: DateTime(2026, 6, 25, 12),
+      billType: pos.BillType.gst,
+      billingMode: pos.BillingMode.retail,
+      shopName: 'Lotus Jewellers',
+      shopAddress: 'Patna',
+      shopPhone: '9000000000',
+      shopGstin: '10ABCDE1234F1Z5',
+      customerName: 'Walk-in Customer',
+      customerMobile: '',
+      customerCity: 'Patna',
+      customerPan: '',
+      customerGstin: '',
+      tradeInMode: pos.TradeInAdjustMode.cashAdjust,
+      saleItems: const [],
+      tradeInItems: const [],
+      grossAmount: 9691.88,
+      discountAmount: 0,
+      taxableAmount: 9691.88,
+      cgst: 145.38,
+      sgst: 145.38,
+      totalGst: 290.76,
+      totalTradeInDeduction: 0,
+      grandTotal: 9982.64,
+      roundOffAmount: 0.36,
+      cashPaid: 9983,
+      upiPaid: 0,
+      cardPaid: 0,
+      advancePaid: 0,
+      balanceDue: 0,
+      totalMakingCharge: 0,
+    );
+
+    final result = await repository.finalizeSale(
+      invoice: invoice,
+      customerId: null,
+    );
+
+    final bill = await (db.select(db.bills)
+          ..where((tbl) => tbl.id.equals(result.billId)))
+        .getSingle();
+
+    expect(bill.taxableAmount, 9691.88);
+    expect(bill.gstAmount, 290.76);
+    expect(bill.roundOffAmount, 0.36);
+    expect(bill.finalAmount, 9983);
+    expect(bill.paidAmount, 9983);
+    expect(bill.dueAmount, 0);
+    expect(bill.paymentStatus, 'PAID');
+  });
+
+  test(
     'finalizeSale maps each linked stock movement to its bill item line number',
     () async {
       final firstStockId = await _insertStockItem(db, sku: 'GOLD-LINE-001');

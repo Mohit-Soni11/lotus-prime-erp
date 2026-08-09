@@ -451,12 +451,108 @@ void main() {
       expect(totals.taxableAmount, closeTo(9690.27, 0.01));
       expect(totals.totalGst, 290.71);
       expect(totals.grandTotal, closeTo(9980.98, 0.01));
-      expect(totals.finalPayableAmount, closeTo(9980.98, 0.01));
+      expect(totals.roundOffAmount, closeTo(0.02, 0.01));
+      expect(totals.finalPayableAmount, 9981);
       expect(totals.totalPaid, 9981);
-      expect(totals.balanceDue, closeTo(-0.02, 0.01));
-      expect(totals.changeReturnAmount, closeTo(0.02, 0.01));
+      expect(totals.balanceDue, 0);
+      expect(totals.changeReturnAmount, 0);
       expect(totals.invoiceBalanceDue, 0);
-      expect(totals.changeCreditSourcePaymentMode, PaymentMode.cash);
+      expect(totals.changeCreditSourcePaymentMode, isNull);
+
+      item.dispose();
+    });
+
+    test('settles fully paid GST invoice at paisa precision', () {
+      final item = _saleItem(
+        huid: 'HUID-001',
+        grossWeight: 0.759,
+        rate: 11400,
+        makingInput: 12,
+      );
+      item
+        ..toggleMakingChargeType(isWholesale: false)
+        ..toggleMakingChargeType(isWholesale: false);
+
+      final totals = const CalculatePosTotals()(
+        _totalsInput(
+          saleItems: [item],
+          billType: BillType.gst,
+          discountType: DiscountType.flatAmount,
+          discountInput: 0.62,
+          cashInput: 9981,
+        ),
+      );
+
+      expect(totals.grossAmount, 9690.91);
+      expect(totals.discountAmount, 0.62);
+      expect(totals.taxableAmount, 9690.29);
+      expect(totals.cgst + totals.sgst, closeTo(totals.totalGst, 0.001));
+      expect(totals.totalGst, 290.71);
+      expect(totals.grandTotal, 9981);
+      expect(totals.roundOffAmount, 0);
+      expect(totals.finalPayableAmount, 9981);
+      expect(totals.totalPaid, 9981);
+      expect(totals.balanceDue, 0);
+      expect(totals.invoiceBalanceDue, 0);
+      expect(totals.changeReturnAmount, 0);
+
+      item.dispose();
+    });
+
+    test('settles fully paid non-GST invoice without tax residue', () {
+      final item = _saleItem(
+        huid: 'HUID-001',
+        grossWeight: 0.759,
+        rate: 11400,
+        makingInput: 12,
+      );
+      item
+        ..toggleMakingChargeType(isWholesale: false)
+        ..toggleMakingChargeType(isWholesale: false);
+
+      final totals = const CalculatePosTotals()(
+        _totalsInput(
+          saleItems: [item],
+          billType: BillType.normal,
+          discountType: DiscountType.flatAmount,
+          discountInput: 0.91,
+          cashInput: 9690,
+        ),
+      );
+
+      expect(totals.grossAmount, 9690.91);
+      expect(totals.discountAmount, 0.91);
+      expect(totals.taxableAmount, 9690);
+      expect(totals.totalGst, 0);
+      expect(totals.grandTotal, 9690);
+      expect(totals.roundOffAmount, 0);
+      expect(totals.finalPayableAmount, 9690);
+      expect(totals.totalPaid, 9690);
+      expect(totals.balanceDue, 0);
+      expect(totals.invoiceBalanceDue, 0);
+
+      item.dispose();
+    });
+
+    test('rounds final payable to nearest rupee as a separate adjustment', () {
+      final item = _saleItem(
+        huid: 'HUID-001',
+        grossWeight: 1,
+        rate: 9981.64,
+      );
+
+      final totals = const CalculatePosTotals()(
+        _totalsInput(
+          saleItems: [item],
+          billType: BillType.normal,
+          cashInput: 9982,
+        ),
+      );
+
+      expect(totals.grandTotal, 9981.64);
+      expect(totals.roundOffAmount, 0.36);
+      expect(totals.finalPayableAmount, 9982);
+      expect(totals.balanceDue, 0);
 
       item.dispose();
     });

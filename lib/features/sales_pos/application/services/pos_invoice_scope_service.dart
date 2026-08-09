@@ -74,8 +74,11 @@ class PosInvoiceScopeService {
     final scopedNetPayable = source.billingMode == BillingMode.wholesale
         ? scopedGrandTotal
         : scopedGrandTotal - scopedExchangeDeduction;
+    final scopedRoundOff = source.isMetalScopedCopy
+        ? source.roundOffAmount * grossRatio
+        : source.roundOffAmount * grossRatio;
     final adjustedScopedNetPayable =
-        scopedNetPayable - crossMetalAdjustmentDeduction;
+        scopedNetPayable - crossMetalAdjustmentDeduction + scopedRoundOff;
     final paymentRatio = source.netPayable.abs() <= 0.005
         ? grossRatio
         : adjustedScopedNetPayable / source.netPayable;
@@ -126,6 +129,7 @@ class PosInvoiceScopeService {
       totalTradeInDeduction: scopedExchangeDeduction,
       crossMetalAdjustmentDeduction: crossMetalAdjustmentDeduction,
       grandTotal: scopedGrandTotal,
+      roundOffAmount: scopedRoundOff,
       cashPaid: cashPaid,
       upiPaid: upiPaid,
       cardPaid: cardPaid,
