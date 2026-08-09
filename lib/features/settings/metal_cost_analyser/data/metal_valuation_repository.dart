@@ -96,19 +96,22 @@ class MetalValuationRepository {
   }
 
   Future<QueryRow> _readSoldSummary(MetalValuationFilter filter) {
+    final costBasis = _soldCostBasisExpression();
     return _db.customSelect(
       '''
           SELECT
             COUNT(*) AS units,
-            CAST(COALESCE(SUM(COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0)), 0.0) AS REAL) AS cost,
+            CAST(COALESCE(SUM($costBasis), 0.0) AS REAL) AS cost,
             CAST(COALESCE(SUM(i.item_total), 0.0) AS REAL) AS sales,
-            CAST(COALESCE(SUM(i.item_total - COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0)), 0.0) AS REAL) AS profit,
+            CAST(COALESCE(SUM(i.item_total - $costBasis), 0.0) AS REAL) AS profit,
             CAST(COALESCE(SUM(i.net_weight), 0.0) AS REAL) AS net_weight,
             CAST(COALESCE(SUM(i.fine_weight), 0.0) AS REAL) AS fine_weight
           FROM bill_items i
           INNER JOIN bills b ON b.id = i.bill_id
           LEFT JOIN stock_item_units u ON u.id = i.linked_stock_unit_id
-          WHERE COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) > 0
+          LEFT JOIN stock_items si ON si.id = u.stock_item_id
+          LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+          WHERE $costBasis > 0
             AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
             ${_metalWhereClause(filter, alias: 'i')}
           ''',
@@ -119,6 +122,7 @@ class MetalValuationRepository {
   Future<List<MetalValuationBreakdown>> _readBreakdown(
     MetalValuationFilter filter,
   ) async {
+    final costBasis = _soldCostBasisExpression();
     final rows = await _db.customSelect(
       '''
           WITH available AS (
@@ -161,15 +165,17 @@ class MetalValuationRepository {
             SELECT
               i.metal_type AS metal_type,
               COUNT(*) AS sold_units,
-              CAST(COALESCE(SUM(COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0)), 0.0) AS REAL) AS sold_cost,
+              CAST(COALESCE(SUM($costBasis), 0.0) AS REAL) AS sold_cost,
               CAST(COALESCE(SUM(i.item_total), 0.0) AS REAL) AS sale_value,
-              CAST(COALESCE(SUM(i.item_total - COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0)), 0.0) AS REAL) AS profit,
+              CAST(COALESCE(SUM(i.item_total - $costBasis), 0.0) AS REAL) AS profit,
               CAST(COALESCE(SUM(i.net_weight), 0.0) AS REAL) AS sold_net_weight,
               CAST(COALESCE(SUM(i.fine_weight), 0.0) AS REAL) AS sold_fine_weight
             FROM bill_items i
             INNER JOIN bills b ON b.id = i.bill_id
             LEFT JOIN stock_item_units u ON u.id = i.linked_stock_unit_id
-            WHERE COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) > 0
+            LEFT JOIN stock_items si ON si.id = u.stock_item_id
+            LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+            WHERE $costBasis > 0
               AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
               ${_metalWhereClause(filter, alias: 'i')}
             GROUP BY i.metal_type
@@ -252,6 +258,7 @@ class MetalValuationRepository {
   Future<List<BatchValuationRow>> _readBatchSummaries(
     MetalValuationFilter filter,
   ) async {
+    final costBasis = _soldCostBasisExpression();
     final rows = await _db.customSelect(
       '''
           WITH purchase_lines AS (
@@ -291,13 +298,15 @@ class MetalValuationRepository {
               COUNT(*) AS sold_units,
               CAST(COALESCE(SUM(i.net_weight), 0.0) AS REAL) AS sold_net_weight,
               CAST(COALESCE(SUM(i.fine_weight), 0.0) AS REAL) AS sold_fine_weight,
-              CAST(COALESCE(SUM(COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0)), 0.0) AS REAL) AS sold_cost,
+              CAST(COALESCE(SUM($costBasis), 0.0) AS REAL) AS sold_cost,
               CAST(COALESCE(SUM(i.item_total), 0.0) AS REAL) AS sale_value,
-              CAST(COALESCE(SUM(i.item_total - COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0)), 0.0) AS REAL) AS profit
+              CAST(COALESCE(SUM(i.item_total - $costBasis), 0.0) AS REAL) AS profit
             FROM bill_items i
             INNER JOIN bills b ON b.id = i.bill_id
             LEFT JOIN stock_item_units u ON u.id = i.linked_stock_unit_id
-            WHERE COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) > 0
+            LEFT JOIN stock_items si ON si.id = u.stock_item_id
+            LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+            WHERE $costBasis > 0
               AND i.linked_stock_unit_id IS NOT NULL
               AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
             GROUP BY linked_stock_unit_id
@@ -719,6 +728,7 @@ class MetalValuationRepository {
   Future<List<SoldValuationRow>> _readSoldRows(
     MetalValuationFilter filter,
   ) async {
+    final costBasis = _soldCostBasisExpression();
     final rows = await _db.customSelect(
       '''
           SELECT
@@ -733,17 +743,18 @@ class MetalValuationRepository {
             COALESCE(NULLIF(i.huid, ''), NULLIF(u.huid, ''), '') AS huid,
             COALESCE(NULLIF(u.unit_code, ''), NULLIF(i.linked_stock_sku, ''), '') AS unit_code,
             i.quantity AS quantity,
-            COALESCE(NULLIF(s.quantity_mode, ''), 'PIECES') AS quantity_mode,
+            COALESCE(NULLIF(si.quantity_mode, ''), 'PIECES') AS quantity_mode,
             i.net_weight AS net_weight,
-            COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) AS cost,
+            $costBasis AS cost,
             i.item_total AS sale,
-            i.item_total - COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) AS profit
+            i.item_total - $costBasis AS profit
           FROM bill_items i
           INNER JOIN bills b ON b.id = i.bill_id
           LEFT JOIN customers c ON c.id = b.customer_id
           LEFT JOIN stock_item_units u ON u.id = i.linked_stock_unit_id
-          LEFT JOIN stock_items s ON s.id = u.stock_item_id
-          WHERE COALESCE(NULLIF(i.stock_unit_cost, 0.0), u.unit_cost, 0.0) > 0
+          LEFT JOIN stock_items si ON si.id = u.stock_item_id
+          LEFT JOIN purchase_voucher_items pvi ON pvi.id = u.purchase_voucher_item_id
+          WHERE $costBasis > 0
             AND UPPER(COALESCE(b.status, 'ACTIVE')) <> 'VOID'
             ${_metalWhereClause(filter, alias: 'i')}
           ORDER BY b.bill_date DESC, i.id DESC
@@ -785,6 +796,61 @@ class MetalValuationRepository {
   List<Variable<String>> _metalVariables(MetalValuationFilter filter) {
     if (filter.isAll) return const [];
     return [Variable<String>(filter.databaseValue)];
+  }
+
+  static String _soldCostBasisExpression({
+    String itemAlias = 'i',
+    String unitAlias = 'u',
+    String stockAlias = 'si',
+    String purchaseAlias = 'pvi',
+  }) {
+    final fallback =
+        'COALESCE(NULLIF($itemAlias.stock_unit_cost, 0.0), $unitAlias.unit_cost, 0.0)';
+    final originalValuationFine =
+        'COALESCE(NULLIF($purchaseAlias.valuation_fine_weight, 0.0), '
+        'COALESCE($purchaseAlias.fine_weight, 0.0) + '
+        'COALESCE($purchaseAlias.wastage_fine_weight, 0.0), 0.0)';
+    final originalRate =
+        'COALESCE(NULLIF($purchaseAlias.rate, 0.0), $unitAlias.rate_per_gram, 0.0)';
+    final originalMaking = 'MAX(COALESCE($purchaseAlias.line_amount, 0.0) - '
+        '($originalValuationFine * $originalRate), 0.0)';
+    final lotOrBulkLine = '''
+      $purchaseAlias.id IS NOT NULL
+      AND (
+        (
+          LOWER(COALESCE($unitAlias.unit_code, '')) LIKE '%lot%'
+          AND TRIM(COALESCE($unitAlias.huid, '')) = ''
+        )
+        OR LOWER(COALESCE(NULLIF(TRIM($stockAlias.quantity_mode), ''), '')) IN ('packet', 'pack', 'lot', 'bulk')
+      )
+    ''';
+    final allocatedCost = '''
+      (
+        CASE
+          WHEN COALESCE($purchaseAlias.net_weight, 0.0) > 0
+            THEN COALESCE($itemAlias.net_weight, 0.0) *
+                 ($originalValuationFine / $purchaseAlias.net_weight) *
+                 $originalRate
+          ELSE 0.0
+        END
+        +
+        CASE
+          WHEN COALESCE($purchaseAlias.quantity, 0) > 0
+            THEN $originalMaking *
+                 COALESCE(NULLIF($itemAlias.quantity, 0), 1) /
+                 $purchaseAlias.quantity
+          ELSE 0.0
+        END
+      )
+    ''';
+
+    return '''
+      CASE
+        WHEN $lotOrBulkLine
+          THEN COALESCE(NULLIF($allocatedCost, 0.0), $fallback)
+        ELSE $fallback
+      END
+    ''';
   }
 
   static int _readInt(QueryRow row, String key) {

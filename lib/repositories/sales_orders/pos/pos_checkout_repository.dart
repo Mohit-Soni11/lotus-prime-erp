@@ -13,6 +13,7 @@ import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_e
 
 const String _stockUnitSaleColumns = '''
 id,
+purchase_voucher_item_id,
 status,
 gross_weight,
 less_weight,
@@ -1034,6 +1035,14 @@ class PosCheckoutRepository {
       return item.linkedStockUnitCost;
     }
 
+    final allocatedOriginalCost = await _originalLotCostForSaleItem(
+      item: item,
+      lotUnit: lotUnit,
+    );
+    if (allocatedOriginalCost > 0) {
+      return allocatedOriginalCost;
+    }
+
     final currentNet = lotUnit.read<double>('net_weight');
     final currentCost = lotUnit.read<double>('unit_cost');
     if (currentNet <= 0 || currentCost <= 0 || item.netWt <= 0) {
@@ -1041,6 +1050,62 @@ class PosCheckoutRepository {
     }
     final factor = (item.netWt / currentNet).clamp(0.0, 1.0);
     return currentCost * factor;
+  }
+
+  Future<double> _originalLotCostForSaleItem({
+    required SaleItemModel item,
+    required QueryRow lotUnit,
+  }) async {
+    final purchaseItemId =
+        lotUnit.readNullable<int>('purchase_voucher_item_id');
+    if (purchaseItemId == null) return 0.0;
+
+    final row = await _db.customSelect(
+      '''
+      SELECT
+        net_weight,
+        valuation_fine_weight,
+        fine_weight,
+        wastage_fine_weight,
+        rate,
+        quantity,
+        line_amount
+      FROM purchase_voucher_items
+      WHERE id = ?
+      LIMIT 1
+      ''',
+      variables: [Variable<int>(purchaseItemId)],
+    ).getSingleOrNull();
+    if (row == null) return 0.0;
+
+    final originalNetWeight = row.readNullable<double>('net_weight') ?? 0.0;
+    final originalValuationFine =
+        (row.readNullable<double>('valuation_fine_weight') ?? 0.0) > 0
+            ? row.read<double>('valuation_fine_weight')
+            : (row.readNullable<double>('fine_weight') ?? 0.0) +
+                (row.readNullable<double>('wastage_fine_weight') ?? 0.0);
+    final rate = (row.readNullable<double>('rate') ?? 0.0) > 0
+        ? row.read<double>('rate')
+        : lotUnit.read<double>('rate_per_gram');
+    final originalQuantity = row.readNullable<int>('quantity') ?? 0;
+    final lineAmount = row.readNullable<double>('line_amount') ?? 0.0;
+
+    if (originalNetWeight <= 0 || originalValuationFine <= 0 || rate <= 0) {
+      return 0.0;
+    }
+
+    final soldValuationFine =
+        item.netWt * (originalValuationFine / originalNetWeight);
+    final metalCost = soldValuationFine * rate;
+    final originalMaking = _nonNegative(
+      lineAmount - (originalValuationFine * rate),
+    );
+    final soldQuantity = item.pcs < 1 ? 1 : item.pcs;
+    final makingCost = originalQuantity <= 0
+        ? 0.0
+        : originalMaking * soldQuantity / originalQuantity;
+
+    return metalCost + makingCost;
   }
 
   Future<int> _unitsForBillItem(BillItem item) async {

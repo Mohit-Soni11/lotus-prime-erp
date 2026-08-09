@@ -304,6 +304,78 @@ void main() {
     expect(snapshot.summary.profit, closeTo(24000, 0.001));
   });
 
+  test('sold audit allocates lot metal by valuation fine and making by pieces',
+      () async {
+    final purchaseVoucherId = await _insertPurchaseVoucher(database);
+    final purchaseItemId = await _insertPurchaseLine(
+      database,
+      purchaseVoucherId: purchaseVoucherId,
+      grossWeight: 5.631,
+      netWeight: 5.631,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 4.392,
+      ratePerGram: 14150,
+      quantity: 15,
+      lineAmount: 62296.80,
+    );
+    final unitId = await _insertStockUnit(
+      database,
+      unitCode: 'GOLD-NOSEPIN-LOT001',
+      itemType: 'Nose Pin',
+      itemName: 'Nose Pin',
+      netWeight: 5.631,
+      actualFineWeight: 4.22325,
+      purityPercent: 75,
+      wastagePercent: 3,
+      valuationFineWeight: 4.392,
+      ratePerGram: 14150,
+      unitCost: 62296.80,
+      purchaseVoucherId: purchaseVoucherId,
+      purchaseVoucherItemId: purchaseItemId,
+      status: 'Available',
+    );
+
+    await database.customStatement(
+      'UPDATE stock_item_units SET huid = ? WHERE id = ?',
+      ['', unitId],
+    );
+    final billId = await database.into(database.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'INV-LOT-COST-001',
+            customerName: const drift.Value('Walk-in Customer'),
+            finalAmount: const drift.Value(8480.64),
+            paidAmount: const drift.Value(8480.64),
+          ),
+        );
+    await database.into(database.billItems).insert(
+          BillItemsCompanion.insert(
+            billId: billId,
+            metalType: const drift.Value('Gold'),
+            itemName: 'Nose Pin',
+            quantity: const drift.Value(1),
+            grossWeight: const drift.Value(0.631),
+            netWeight: const drift.Value(0.631),
+            fineWeight: const drift.Value(0.47325),
+            itemTotal: const drift.Value(8480.64),
+            linkedStockUnitId: drift.Value(unitId),
+            stockUnitCost: const drift.Value(6980.87),
+          ),
+        );
+
+    final snapshot = await repository.fetchSnapshot();
+    final sold = snapshot.soldStock.single;
+    const originalMaking = 62296.80 - (4.392 * 14150);
+    const expectedCost =
+        (0.631 * (4.392 / 5.631) * 14150) + (originalMaking / 15);
+
+    expect(expectedCost, closeTo(6974.061, 0.001));
+    expect(sold.costBasis, closeTo(expectedCost, 0.001));
+    expect(sold.profit, closeTo(8480.64 - expectedCost, 0.001));
+    expect(snapshot.summary.soldCost, closeTo(expectedCost, 0.001));
+    expect(snapshot.summary.profit, closeTo(8480.64 - expectedCost, 0.001));
+  });
+
   test('sold audit shows jewellery unit mode for pair items', () async {
     final customerId = await database.into(database.customers).insert(
           CustomersCompanion.insert(
