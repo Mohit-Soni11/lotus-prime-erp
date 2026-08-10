@@ -71,6 +71,7 @@ class SalesReportFilter {
 class SalesReportSnapshot {
   final SalesReportFilter filter;
   final SalesReportSummary summary;
+  final SalesReportGstLiabilitySummary gstLiability;
   final List<SalesReportMetalSummary> metals;
   final List<SalesReportInvoiceRow> invoices;
   final List<SalesReportItemRow> items;
@@ -79,6 +80,7 @@ class SalesReportSnapshot {
   const SalesReportSnapshot({
     required this.filter,
     required this.summary,
+    required this.gstLiability,
     required this.metals,
     required this.invoices,
     required this.items,
@@ -89,6 +91,7 @@ class SalesReportSnapshot {
     return SalesReportSnapshot(
       filter: filter,
       summary: const SalesReportSummary(),
+      gstLiability: const SalesReportGstLiabilitySummary(),
       metals: const [],
       invoices: const [],
       items: const [],
@@ -143,6 +146,30 @@ class SalesReportSummary {
   double get collectionAmount => cashAmount + upiAmount + cardAmount;
   double get profitMargin =>
       finalAmount <= 0 ? 0 : (profitAmount / finalAmount) * 100;
+}
+
+class SalesReportGstLiabilitySummary {
+  final int invoiceCount;
+  final int gstInvoiceCount;
+  final int nonGstInvoiceCount;
+  final double gstTaxableAmount;
+  final double gstFinalAmount;
+  final double recordedGstAmount;
+  final double nonGstSalesAmount;
+  final double projectedGstAmount;
+
+  const SalesReportGstLiabilitySummary({
+    this.invoiceCount = 0,
+    this.gstInvoiceCount = 0,
+    this.nonGstInvoiceCount = 0,
+    this.gstTaxableAmount = 0,
+    this.gstFinalAmount = 0,
+    this.recordedGstAmount = 0,
+    this.nonGstSalesAmount = 0,
+    this.projectedGstAmount = 0,
+  });
+
+  double get combinedGstExposure => recordedGstAmount + projectedGstAmount;
 }
 
 class SalesReportMetalSummary {

@@ -9,6 +9,7 @@ import '../../../theme/reports/sales_report/sales_report_theme.dart';
 import 'sales_report_app_bar.dart';
 import 'sales_report_metal_detail_screen.dart';
 import 'sales_report_month_tax_filter.dart';
+import 'summary/sales_report_gst_liability_summary.dart';
 import 'summary/sales_report_metal_cards.dart';
 
 class SalesReportScreen extends StatefulWidget {
@@ -207,11 +208,21 @@ class _MetalFirstWorkspace extends StatelessWidget {
       controller.filter.startDate,
     );
 
-    return SalesReportMetalCards(
-      metals: snapshot.metals,
-      selectedMetal: 'ALL',
-      periodLabel: periodLabel,
-      onMetalSelected: onMetalSelected,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SalesReportGstLiabilityPanel(
+          summary: snapshot.gstLiability,
+          periodLabel: periodLabel,
+        ),
+        const SizedBox(height: 16),
+        SalesReportMetalCards(
+          metals: snapshot.metals,
+          selectedMetal: 'ALL',
+          periodLabel: periodLabel,
+          onMetalSelected: onMetalSelected,
+        ),
+      ],
     );
   }
 }

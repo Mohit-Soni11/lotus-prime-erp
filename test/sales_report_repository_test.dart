@@ -99,6 +99,17 @@ void main() {
     expect(snapshot.summary.roundOffAmount, 0.36);
     expect(snapshot.summary.stockCostAmount, 9500);
     expect(snapshot.summary.profitAmount, closeTo(4263.11, 0.001));
+    expect(snapshot.gstLiability.invoiceCount, 2);
+    expect(snapshot.gstLiability.gstInvoiceCount, 1);
+    expect(snapshot.gstLiability.nonGstInvoiceCount, 1);
+    expect(snapshot.gstLiability.gstTaxableAmount, 9690.27);
+    expect(snapshot.gstLiability.recordedGstAmount, 290.71);
+    expect(snapshot.gstLiability.nonGstSalesAmount, 4072.20);
+    expect(snapshot.gstLiability.projectedGstAmount, closeTo(122.166, 0.001));
+    expect(
+      snapshot.gstLiability.combinedGstExposure,
+      closeTo(412.876, 0.001),
+    );
 
     final gold = snapshot.metals.singleWhere((row) => row.metalType == 'Gold');
     expect(gold.netWeight, 0.759);
@@ -162,6 +173,12 @@ void main() {
     expect(snapshot.invoices.single.billNo, 'TAX-AJ-2026-0003');
     expect(snapshot.items, hasLength(1));
     expect(snapshot.items.single.metalType, 'Gold');
+    expect(snapshot.gstLiability.invoiceCount, 2);
+    expect(snapshot.gstLiability.gstInvoiceCount, 1);
+    expect(snapshot.gstLiability.nonGstInvoiceCount, 1);
+    expect(snapshot.gstLiability.recordedGstAmount, 30);
+    expect(snapshot.gstLiability.nonGstSalesAmount, 600);
+    expect(snapshot.gstLiability.projectedGstAmount, 18);
   });
 
   test('fetchReport allocates mixed invoice totals to selected metal',

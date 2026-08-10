@@ -21,6 +21,7 @@ class SalesReportRepository {
               items: items,
             )
           : sourceInvoices;
+      final gstLiability = await _fetchGstLiability(normalized);
       final metals = _buildMetalSummaries(items);
       final summary = _buildSummary(invoices, items);
       final availableMetals = await _fetchAvailableMetals();
@@ -28,6 +29,7 @@ class SalesReportRepository {
       return SalesReportSnapshot(
         filter: normalized,
         summary: summary,
+        gstLiability: gstLiability,
         metals: metals,
         invoices: invoices,
         items: items,
@@ -60,6 +62,19 @@ class SalesReportRepository {
   bool _requiresItemScopedInvoices(SalesReportFilter filter) {
     final metal = filter.metalType.trim().toUpperCase();
     return metal.isNotEmpty && metal != 'ALL';
+  }
+
+  Future<SalesReportGstLiabilitySummary> _fetchGstLiability(
+    SalesReportFilter filter,
+  ) async {
+    final monthlyFilter = filter.copyWith(
+      taxMode: SalesReportTaxMode.all,
+      paymentFilter: SalesReportPaymentFilter.all,
+      metalType: 'ALL',
+      query: '',
+    );
+    final invoices = await _fetchInvoices(monthlyFilter);
+    return _buildGstLiabilitySummary(invoices);
   }
 
   Future<List<SalesReportInvoiceRow>> _fetchInvoices(
@@ -400,6 +415,48 @@ class SalesReportRepository {
       profitAmount: profit,
       netWeight: netWeight,
     );
+  }
+
+  SalesReportGstLiabilitySummary _buildGstLiabilitySummary(
+    List<SalesReportInvoiceRow> invoices,
+  ) {
+    var gstCount = 0;
+    var nonGstCount = 0;
+    double gstTaxable = 0;
+    double gstFinal = 0;
+    double recordedGst = 0;
+    double nonGstSales = 0;
+
+    for (final invoice in invoices) {
+      if (invoice.isGst) {
+        gstCount++;
+        gstTaxable += _taxableBaseFor(invoice);
+        gstFinal += invoice.finalAmount;
+        recordedGst += invoice.gstAmount;
+      } else {
+        nonGstCount++;
+        nonGstSales += _taxableBaseFor(invoice);
+      }
+    }
+
+    return SalesReportGstLiabilitySummary(
+      invoiceCount: invoices.length,
+      gstInvoiceCount: gstCount,
+      nonGstInvoiceCount: nonGstCount,
+      gstTaxableAmount: gstTaxable,
+      gstFinalAmount: gstFinal,
+      recordedGstAmount: recordedGst,
+      nonGstSalesAmount: nonGstSales,
+      projectedGstAmount: nonGstSales * 0.03,
+    );
+  }
+
+  double _taxableBaseFor(SalesReportInvoiceRow invoice) {
+    if (invoice.taxableAmount > 0.005) return invoice.taxableAmount;
+    final discountedGross = invoice.grossAmount - invoice.discountAmount;
+    if (discountedGross > 0.005) return discountedGross;
+    if (invoice.gstAmount <= 0.005) return invoice.finalAmount;
+    return invoice.grossAmount;
   }
 
   List<SalesReportMetalSummary> _buildMetalSummaries(
