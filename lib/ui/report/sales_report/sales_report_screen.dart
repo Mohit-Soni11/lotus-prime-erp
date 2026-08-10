@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/report/sales_report/sales_report_controller.dart';
@@ -7,10 +6,9 @@ import '../../../logic/report/sales_report/sales_report_export_service.dart';
 import '../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../theme/reports/sales_report/sales_report_theme.dart';
 import 'sales_report_app_bar.dart';
+import 'sales_report_combined_workspace.dart';
 import 'sales_report_metal_detail_screen.dart';
 import 'sales_report_month_tax_filter.dart';
-import 'summary/sales_report_gst_liability_summary.dart';
-import 'summary/sales_report_metal_cards.dart';
 
 class SalesReportScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -136,9 +134,12 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     }
   }
 
-  Widget _buildWorkspace(SalesReportSnapshot snapshot) {
-    return _MetalFirstWorkspace(
-      key: ValueKey(_controller.filter.startDate),
+  Widget _buildWorkspace(SalesReportSnapshot _) {
+    final filter = _controller.filter;
+    return SalesReportCombinedWorkspace(
+      key: ValueKey(
+        '${filter.startDate.toIso8601String()}-${filter.endDate.toIso8601String()}-${filter.taxMode.name}',
+      ),
       controller: _controller,
       onMetalSelected: _openMetalLedger,
     );
@@ -183,44 +184,8 @@ class _SalesReportPageHeader extends StatelessWidget {
         Text('Sales Report', style: SalesReportStyles.pageTitle),
         const SizedBox(height: 4),
         Text(
-          'Monthly sales movement - Metal-wise billing performance',
+          'Monthly invoice ledger, item ledger and GST liability',
           style: SalesReportStyles.body,
-        ),
-      ],
-    );
-  }
-}
-
-class _MetalFirstWorkspace extends StatelessWidget {
-  final SalesReportController controller;
-  final ValueChanged<String> onMetalSelected;
-
-  const _MetalFirstWorkspace({
-    super.key,
-    required this.controller,
-    required this.onMetalSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final snapshot = controller.snapshot!;
-    final periodLabel = DateFormat('MMMM yyyy').format(
-      controller.filter.startDate,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SalesReportGstLiabilityPanel(
-          summary: snapshot.gstLiability,
-          periodLabel: periodLabel,
-        ),
-        const SizedBox(height: 16),
-        SalesReportMetalCards(
-          metals: snapshot.metals,
-          selectedMetal: 'ALL',
-          periodLabel: periodLabel,
-          onMetalSelected: onMetalSelected,
         ),
       ],
     );
