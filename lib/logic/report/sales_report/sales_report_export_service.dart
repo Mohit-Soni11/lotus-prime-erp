@@ -51,8 +51,6 @@ class SalesReportExportService {
       ['Paid Amount', _money(snapshot.summary.paidAmount)],
       ['Due Amount', _money(snapshot.summary.dueAmount)],
       ['Making Amount', _money(snapshot.summary.makingAmount)],
-      ['Stock Cost', _money(snapshot.summary.stockCostAmount)],
-      ['Profit', _money(snapshot.summary.profitAmount)],
       [],
       ['METAL SUMMARY'],
       [
@@ -64,8 +62,6 @@ class SalesReportExportService {
         'Net Weight',
         'Making',
         'Sales',
-        'Cost',
-        'Profit',
       ],
       for (final metal in snapshot.metals)
         [
@@ -77,8 +73,6 @@ class SalesReportExportService {
           _weight(metal.netWeight),
           _money(metal.makingAmount),
           _money(metal.salesAmount),
-          _money(metal.stockCostAmount),
-          _money(metal.profitAmount),
         ],
       [],
       ['INVOICE LEDGER'],
@@ -141,9 +135,6 @@ class SalesReportExportService {
         'Rate',
         'Making',
         'Item Total',
-        'Stock SKU',
-        'Stock Cost',
-        'Profit',
       ],
       for (final item in snapshot.items)
         [
@@ -162,9 +153,6 @@ class SalesReportExportService {
           _money(item.rate),
           _money(item.makingCharge),
           _money(item.itemTotal),
-          item.stockSku,
-          _money(item.stockCostAmount),
-          _money(item.profitAmount),
         ],
     ];
 

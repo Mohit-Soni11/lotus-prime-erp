@@ -8,6 +8,7 @@ import '../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../theme/reports/sales_report/sales_report_theme.dart';
 import 'sales_report_app_bar.dart';
 import 'sales_report_metal_detail_screen.dart';
+import 'sales_report_month_tax_filter.dart';
 import 'summary/sales_report_metal_cards.dart';
 
 class SalesReportScreen extends StatefulWidget {
@@ -92,10 +93,9 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                           _InlineWarning(message: _controller.errorMessage!),
                           const SizedBox(height: 12),
                         ],
-                        _SalesReportPageHeader(
-                          monthLabel:
-                              _reportMonthLabel(_controller.filter.startDate),
-                        ),
+                        const _SalesReportPageHeader(),
+                        const SizedBox(height: 16),
+                        SalesReportMonthTaxFilter(controller: _controller),
                         const SizedBox(height: 24),
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 180),
@@ -143,10 +143,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     );
   }
 
-  String _reportMonthLabel(DateTime value) {
-    return DateFormat('MMMM yyyy').format(value);
-  }
-
   void _openMetalLedger(String metalType) {
     Navigator.of(context).push(
       PageRouteBuilder<void>(
@@ -176,55 +172,18 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
 }
 
 class _SalesReportPageHeader extends StatelessWidget {
-  final String monthLabel;
-
-  const _SalesReportPageHeader({required this.monthLabel});
+  const _SalesReportPageHeader();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Sales Report', style: SalesReportStyles.pageTitle),
-              const SizedBox(height: 4),
-              Text(
-                'Monthly sales movement - Metal-wise billing performance',
-                style: SalesReportStyles.body,
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: SalesReportColors.goldGradientStart.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: SalesReportColors.brandGold.withValues(alpha: 0.30),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                SalesReportIcons.calendar,
-                size: 12,
-                color: SalesReportColors.brandGold,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                monthLabel,
-                style: SalesReportStyles.body.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: SalesReportColors.brandGold,
-                ),
-              ),
-            ],
-          ),
+        Text('Sales Report', style: SalesReportStyles.pageTitle),
+        const SizedBox(height: 4),
+        Text(
+          'Monthly sales movement - Metal-wise billing performance',
+          style: SalesReportStyles.body,
         ),
       ],
     );

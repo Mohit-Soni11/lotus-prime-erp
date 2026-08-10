@@ -133,7 +133,7 @@ class _SalesMetalInventoryCard extends StatelessWidget {
   String _subtitleFor(StockCategory category) {
     switch (category) {
       case StockCategory.gold:
-        return 'Gold invoices, HUID movement, making and profit tracking';
+        return 'Gold invoices, HUID movement, making and sales tracking';
       case StockCategory.silver:
         return 'Silver item sales, weight flow, pieces and counter movement';
       case StockCategory.diamond:
@@ -150,12 +150,16 @@ class _SalesMetalInventoryCard extends StatelessWidget {
 class SalesReportMetalDetailPanel extends StatelessWidget {
   final SalesReportMetalSummary metal;
   final String periodLabel;
+  final double recordedGstAmount;
+  final double projectedGstAmount;
   final VoidCallback onBackToCards;
 
   const SalesReportMetalDetailPanel({
     super.key,
     required this.metal,
     required this.periodLabel,
+    required this.recordedGstAmount,
+    required this.projectedGstAmount,
     required this.onBackToCards,
   });
 
@@ -189,7 +193,18 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
                   gradient: ui.gradient,
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Icon(ui.icon, color: ui.textOnGradient, size: 24),
+                clipBehavior: Clip.antiAlias,
+                child: ui.logoAsset == null
+                    ? Icon(ui.icon, color: ui.textOnGradient, size: 24)
+                    : Image.asset(
+                        ui.logoAsset!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          ui.icon,
+                          color: ui.textOnGradient,
+                          size: 24,
+                        ),
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -218,7 +233,11 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 900 ? 4 : 2;
+              final columns = constraints.maxWidth >= 1200
+                  ? 6
+                  : constraints.maxWidth >= 900
+                      ? 3
+                      : 2;
               const spacing = 10.0;
               final width =
                   (constraints.maxWidth - spacing * (columns - 1)) / columns;
@@ -227,10 +246,16 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
                     Icons.receipt_long_rounded),
                 _MetalMetric('Pieces', '${metal.pieces}',
                     Icons.confirmation_number_rounded),
-                _MetalMetric('Making', salesReportMoney(metal.makingAmount),
-                    Icons.construction_rounded),
-                _MetalMetric('Profit', salesReportMoney(metal.profitAmount),
-                    Icons.trending_up_rounded),
+                _MetalMetric('Net Weight', salesReportWeight(metal.netWeight),
+                    Icons.monitor_weight_rounded),
+                _MetalMetric('Sale Amount', salesReportMoney(metal.salesAmount),
+                    Icons.point_of_sale_rounded),
+                _MetalMetric('GST Total', salesReportMoney(recordedGstAmount),
+                    Icons.verified_rounded),
+                _MetalMetric(
+                    'Projected GST',
+                    salesReportMoney(projectedGstAmount),
+                    Icons.calculate_rounded),
               ];
 
               return Wrap(

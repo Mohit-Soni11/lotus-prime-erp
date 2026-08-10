@@ -4,11 +4,14 @@ import 'package:intl/intl.dart';
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/report/sales_report/sales_report_controller.dart';
 import '../../../logic/report/sales_report/sales_report_export_service.dart';
+import '../../../logic/report/sales_report/sales_report_invoice_scope.dart';
 import '../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../theme/reports/sales_report/sales_report_theme.dart';
 import 'bill_ledger/sales_report_invoice_ledger.dart';
 import 'item_ledger/sales_report_item_ledger.dart';
 import 'sales_report_app_bar.dart';
+import 'sales_report_month_tax_filter.dart';
+import 'summary/sales_report_grade_summary.dart';
 import 'summary/sales_report_metal_cards.dart';
 
 class SalesReportMetalDetailScreen extends StatefulWidget {
@@ -30,6 +33,7 @@ class _SalesReportMetalDetailScreenState
     extends State<SalesReportMetalDetailScreen> {
   late final SalesReportController _controller;
   final ScrollController _scrollController = ScrollController();
+  String _selectedGrade = allSalesReportGrades;
 
   @override
   void initState() {
@@ -61,7 +65,7 @@ class _SalesReportMetalDetailScreenState
         backgroundColor: SalesReportColors.bodyBg,
         appBar: SalesReportAppBar(
           title: '$metalTitle Sales Report',
-          subtitle: 'Invoice ledger, item ledger and payment audit',
+          subtitle: 'Invoice ledger, item ledger and tax audit',
           onBack: () => Navigator.of(context).pop(),
           onRefresh: () => _controller.load(),
           onExportCsv: _exportCsv,
@@ -95,6 +99,13 @@ class _SalesReportMetalDetailScreenState
               _controller.filter.startDate,
             );
             final metalSummary = _summaryFor(snapshot, widget.metalType);
+            final effectiveGrade = _effectiveSelectedGrade(snapshot.items);
+            final gradeItems = _itemsForGrade(snapshot.items, effectiveGrade);
+            final gradeInvoices = _invoicesForItems(
+              snapshot.invoices,
+              gradeItems,
+              effectiveGrade,
+            );
 
             return Scrollbar(
               controller: _scrollController,
@@ -111,8 +122,9 @@ class _SalesReportMetalDetailScreenState
                       children: [
                         _MetalLedgerHeader(
                           metalTitle: metalTitle,
-                          monthLabel: monthLabel,
                         ),
+                        const SizedBox(height: 16),
+                        SalesReportMonthTaxFilter(controller: _controller),
                         const SizedBox(height: 24),
                         if (metalSummary == null)
                           _NoMetalSalesState(
@@ -123,14 +135,29 @@ class _SalesReportMetalDetailScreenState
                           SalesReportMetalDetailPanel(
                             metal: metalSummary,
                             periodLabel: monthLabel,
+                            recordedGstAmount: salesReportRecordedGstForItems(
+                              invoices: snapshot.invoices,
+                              items: snapshot.items,
+                            ),
+                            projectedGstAmount:
+                                salesReportProjectedGstForItems(snapshot.items),
                             onBackToCards: () => Navigator.of(context).pop(),
                           ),
                           const SizedBox(height: 16),
-                          SalesReportInvoiceLedger(
+                          SalesReportGradeSummaryPanel(
                             invoices: snapshot.invoices,
+                            items: snapshot.items,
+                            selectedGrade: effectiveGrade,
+                            onGradeSelected: (grade) {
+                              setState(() => _selectedGrade = grade);
+                            },
                           ),
                           const SizedBox(height: 16),
-                          SalesReportItemLedger(items: snapshot.items),
+                          SalesReportInvoiceLedger(
+                            invoices: gradeInvoices,
+                          ),
+                          const SizedBox(height: 16),
+                          SalesReportItemLedger(items: gradeItems),
                         ],
                       ],
                     ),
@@ -179,6 +206,49 @@ class _SalesReportMetalDetailScreenState
     return null;
   }
 
+  String _effectiveSelectedGrade(List<SalesReportItemRow> items) {
+    if (_selectedGrade == allSalesReportGrades) return allSalesReportGrades;
+    final selected = _selectedGrade.trim().toUpperCase();
+    final exists = items.any(
+      (item) => _gradeLabel(item.purity) == selected,
+    );
+    return exists ? selected : allSalesReportGrades;
+  }
+
+  List<SalesReportItemRow> _itemsForGrade(
+    List<SalesReportItemRow> items,
+    String grade,
+  ) {
+    if (grade == allSalesReportGrades) return items;
+    return items
+        .where((item) => _gradeLabel(item.purity) == grade)
+        .toList(growable: false);
+  }
+
+  List<SalesReportInvoiceRow> _invoicesForItems(
+    List<SalesReportInvoiceRow> invoices,
+    List<SalesReportItemRow> items,
+    String grade,
+  ) {
+    if (items.isEmpty) return const [];
+    if (grade != allSalesReportGrades) {
+      return scopeSalesReportInvoicesToItems(
+        invoices: invoices,
+        items: items,
+      );
+    }
+    final billIds = items.map((item) => item.billId).toSet();
+    return invoices
+        .where((invoice) => billIds.contains(invoice.billId))
+        .toList(growable: false);
+  }
+
+  String _gradeLabel(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return 'UNSPECIFIED';
+    return trimmed.toUpperCase();
+  }
+
   String _metalTitle(String value) {
     final normalized = value.trim();
     if (normalized.isEmpty) return 'Metal';
@@ -188,61 +258,24 @@ class _SalesReportMetalDetailScreenState
 
 class _MetalLedgerHeader extends StatelessWidget {
   final String metalTitle;
-  final String monthLabel;
 
   const _MetalLedgerHeader({
     required this.metalTitle,
-    required this.monthLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$metalTitle Sales Ledger',
-                style: SalesReportStyles.pageTitle,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Monthly invoice, stock deduction, making and profit movement',
-                style: SalesReportStyles.body,
-              ),
-            ],
-          ),
+        Text(
+          '$metalTitle Sales Ledger',
+          style: SalesReportStyles.pageTitle,
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: SalesReportColors.goldGradientStart.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: SalesReportColors.brandGold.withValues(alpha: 0.30),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                SalesReportIcons.calendar,
-                size: 12,
-                color: SalesReportColors.brandGold,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                monthLabel,
-                style: SalesReportStyles.body.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: SalesReportColors.brandGold,
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: 4),
+        Text(
+          'Monthly invoice, tax, making and item movement',
+          style: SalesReportStyles.body,
         ),
       ],
     );

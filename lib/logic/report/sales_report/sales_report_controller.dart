@@ -90,6 +90,36 @@ class SalesReportController extends ChangeNotifier {
     load();
   }
 
+  void setReportMonth(DateTime month) {
+    final start = DateTime(month.year, month.month);
+    final end = _endOfDay(DateTime(month.year, month.month + 1, 0));
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month);
+    final previousMonth = DateTime(now.year, now.month - 1);
+
+    final preset = start == currentMonth
+        ? SalesReportDatePreset.thisMonth
+        : start == previousMonth
+            ? SalesReportDatePreset.lastMonth
+            : SalesReportDatePreset.custom;
+
+    _filter = _filter.copyWith(
+      preset: preset,
+      startDate: start,
+      endDate: end,
+    );
+    load();
+  }
+
+  void shiftReportMonth(int monthOffset) {
+    setReportMonth(
+      DateTime(
+        _filter.startDate.year,
+        _filter.startDate.month + monthOffset,
+      ),
+    );
+  }
+
   Future<void> selectCustomRange(BuildContext context) async {
     final picked = await showDateRangePicker(
       context: context,

@@ -52,7 +52,7 @@ class SalesReportFilterBar extends StatelessWidget {
               onSubmitted: (_) => controller.applySearch(),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Invoice, customer, mobile, HUID, SKU',
+                hintText: 'Invoice, customer, mobile, HUID',
                 prefixIcon: const Icon(Icons.search_rounded, size: 18),
                 suffixIcon: filter.query.isEmpty
                     ? IconButton(

@@ -163,6 +163,62 @@ void main() {
     expect(snapshot.items, hasLength(1));
     expect(snapshot.items.single.metalType, 'Gold');
   });
+
+  test('fetchReport allocates mixed invoice totals to selected metal',
+      () async {
+    final date = DateTime(2026, 8, 9, 12, 30);
+    final billId = await _insertBill(
+      db,
+      billNo: 'TAX-AJ-2026-0005',
+      billDate: date,
+      billType: 'GST',
+      totalAmount: 10000,
+      taxableAmount: 10000,
+      gstAmount: 300,
+      finalAmount: 10300,
+      paidAmount: 10300,
+      makingTotal: 1000,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      lineNo: 1,
+      metalType: 'GOLD',
+      itemName: 'RING',
+      purity: '18K',
+      netWeight: 1,
+      itemTotal: 4000,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      lineNo: 2,
+      metalType: 'SILVER',
+      itemName: 'PAYAL',
+      purity: '60',
+      netWeight: 10,
+      itemTotal: 6000,
+    );
+
+    final snapshot = await repository.fetchReport(
+      SalesReportFilter(
+        startDate: DateTime(2026, 8, 9),
+        endDate: DateTime(2026, 8, 9, 23, 59, 59),
+        metalType: 'Gold',
+      ),
+    );
+
+    expect(snapshot.items, hasLength(1));
+    expect(snapshot.items.single.itemTotal, 4000);
+
+    final invoice = snapshot.invoices.single;
+    expect(invoice.grossAmount, 4000);
+    expect(invoice.taxableAmount, 4000);
+    expect(invoice.gstAmount, 120);
+    expect(invoice.finalAmount, 4120);
+    expect(invoice.metalMix, 'GOLD');
+    expect(snapshot.summary.finalAmount, 4120);
+  });
 }
 
 Future<int> _insertBill(

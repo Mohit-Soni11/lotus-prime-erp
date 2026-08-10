@@ -13,79 +13,120 @@ class SalesReportInvoiceLedger extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: SalesReportStyles.panel(),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _LedgerHeader(
             title: 'Invoice Ledger',
-            subtitle: 'Bill-wise sales, tax, payment and due audit',
+            subtitle: 'Bill-wise taxable, GST, discount and final amount audit',
             icon: Icons.receipt_long_rounded,
           ),
           if (invoices.isEmpty)
             const _EmptyLedger(message: 'No invoices found.')
-          else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowHeight: 42,
-                dataRowMinHeight: 52,
-                dataRowMaxHeight: 58,
-                columns: const [
-                  DataColumn(label: Text('Invoice')),
-                  DataColumn(label: Text('Date')),
-                  DataColumn(label: Text('Customer')),
-                  DataColumn(label: Text('Type')),
-                  DataColumn(label: Text('Metal')),
-                  DataColumn(label: Text('Gross'), numeric: true),
-                  DataColumn(label: Text('Discount'), numeric: true),
-                  DataColumn(label: Text('GST'), numeric: true),
-                  DataColumn(label: Text('Round Off'), numeric: true),
-                  DataColumn(label: Text('Final'), numeric: true),
-                  DataColumn(label: Text('Paid'), numeric: true),
-                  DataColumn(label: Text('Due'), numeric: true),
-                  DataColumn(label: Text('Payment')),
-                ],
-                rows: [
-                  for (final invoice in invoices)
-                    DataRow(
-                      cells: [
-                        DataCell(_StrongText(invoice.billNo)),
-                        DataCell(Text(salesReportDateTime(invoice.billDate))),
-                        DataCell(_CustomerCell(invoice)),
-                        DataCell(_TypeBadge(isGst: invoice.isGst)),
-                        DataCell(Text(invoice.metalMix.replaceAll(',', ' / '))),
-                        DataCell(Text(salesReportMoney(invoice.grossAmount))),
-                        DataCell(
-                            Text(salesReportMoney(invoice.discountAmount))),
-                        DataCell(Text(salesReportMoney(invoice.gstAmount))),
-                        DataCell(
-                            Text(salesReportMoney(invoice.roundOffAmount))),
-                        DataCell(_StrongText(
-                          salesReportMoney(invoice.finalAmount),
-                          alignRight: true,
-                        )),
-                        DataCell(Text(salesReportMoney(invoice.paidAmount))),
-                        DataCell(Text(
-                          salesReportMoney(invoice.dueAmount),
-                          style: TextStyle(
-                            color: invoice.dueAmount > 0.005
-                                ? const Color(0xFFC63F3F)
-                                : SalesReportColors.positive,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        )),
-                        DataCell(Text(
-                          'C ${salesReportMoney(invoice.cashAmount)} / '
-                          'U ${salesReportMoney(invoice.upiAmount)} / '
-                          'Card ${salesReportMoney(invoice.cardAmount)}',
-                        )),
+          else ...[
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                    child: DataTable(
+                      headingRowHeight: 42,
+                      dataRowMinHeight: 52,
+                      dataRowMaxHeight: 58,
+                      columnSpacing: 26,
+                      horizontalMargin: 24,
+                      columns: const [
+                        DataColumn(label: Text('S.No')),
+                        DataColumn(label: Text('Invoice')),
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Customer')),
+                        DataColumn(label: Text('Type')),
+                        DataColumn(label: Text('Metal')),
+                        DataColumn(label: Text('Gross'), numeric: true),
+                        DataColumn(label: Text('Discount'), numeric: true),
+                        DataColumn(label: Text('Taxable'), numeric: true),
+                        DataColumn(label: Text('GST'), numeric: true),
+                        DataColumn(label: Text('Round Off'), numeric: true),
+                        DataColumn(label: Text('Final'), numeric: true),
                       ],
+                      rows: _buildRows(),
                     ),
-                ],
-              ),
+                  ),
+                );
+              },
             ),
+            _InvoiceTotalsBar(invoices: invoices),
+          ],
         ],
       ),
+    );
+  }
+
+  List<DataRow> _buildRows() {
+    return [
+      for (var index = 0; index < invoices.length; index++)
+        _buildRow(invoices[index], index),
+    ];
+  }
+
+  DataRow _buildRow(SalesReportInvoiceRow invoice, int index) {
+    return DataRow(
+      cells: [
+        DataCell(Text('${index + 1}')),
+        DataCell(_StrongText(invoice.billNo)),
+        DataCell(Text(salesReportDateTime(invoice.billDate))),
+        DataCell(_CustomerCell(invoice)),
+        DataCell(_TypeBadge(isGst: invoice.isGst)),
+        DataCell(Text(invoice.metalMix.replaceAll(',', ' / '))),
+        DataCell(Text(salesReportMoney(invoice.grossAmount))),
+        DataCell(Text(salesReportMoney(invoice.discountAmount))),
+        DataCell(Text(salesReportMoney(invoice.taxableAmount))),
+        DataCell(Text(salesReportMoney(invoice.gstAmount))),
+        DataCell(Text(salesReportMoney(invoice.roundOffAmount))),
+        DataCell(_StrongText(
+          salesReportMoney(invoice.finalAmount),
+          alignRight: true,
+        )),
+      ],
+    );
+  }
+}
+
+class _InvoiceTotalsBar extends StatelessWidget {
+  final List<SalesReportInvoiceRow> invoices;
+
+  const _InvoiceTotalsBar({required this.invoices});
+
+  @override
+  Widget build(BuildContext context) {
+    final gross = _sum((invoice) => invoice.grossAmount);
+    final discount = _sum((invoice) => invoice.discountAmount);
+    final taxable = _sum((invoice) => invoice.taxableAmount);
+    final gst = _sum((invoice) => invoice.gstAmount);
+    final finalAmount = _sum((invoice) => invoice.finalAmount);
+
+    return _TotalsStrip(
+      children: [
+        _TotalTile(label: 'Invoices', value: '${invoices.length}'),
+        _TotalTile(label: 'Gross', value: salesReportMoney(gross)),
+        _TotalTile(label: 'Discount', value: salesReportMoney(discount)),
+        _TotalTile(label: 'Taxable', value: salesReportMoney(taxable)),
+        _TotalTile(label: 'GST', value: salesReportMoney(gst)),
+        _TotalTile(
+          label: 'Final Total',
+          value: salesReportMoney(finalAmount),
+          emphasized: true,
+        ),
+      ],
+    );
+  }
+
+  double _sum(double Function(SalesReportInvoiceRow invoice) selector) {
+    return invoices.fold<double>(
+      0,
+      (total, invoice) => total + selector(invoice),
     );
   }
 }
@@ -113,8 +154,10 @@ class _LedgerHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: SalesReportStyles.pageTitle.copyWith(fontSize: 18)),
+                Text(
+                  title,
+                  style: SalesReportStyles.pageTitle.copyWith(fontSize: 18),
+                ),
                 const SizedBox(height: 2),
                 Text(subtitle, style: SalesReportStyles.body),
               ],
@@ -151,7 +194,9 @@ class _CustomerCell extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                  fontSize: 12, color: SalesReportColors.textMuted),
+                fontSize: 12,
+                color: SalesReportColors.textMuted,
+              ),
             ),
         ],
       ),
@@ -201,6 +246,85 @@ class _StrongText extends StatelessWidget {
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         color: SalesReportColors.textPrimary,
+      ),
+    );
+  }
+}
+
+class _TotalsStrip extends StatelessWidget {
+  final List<Widget> children;
+
+  const _TotalsStrip({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: SalesReportColors.bodySubtle,
+        border: Border(
+          top: BorderSide(
+            color: SalesReportColors.bodyBorder.withValues(alpha: 0.9),
+          ),
+        ),
+      ),
+      child: Wrap(spacing: 10, runSpacing: 10, children: children),
+    );
+  }
+}
+
+class _TotalTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  const _TotalTile({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent =
+        emphasized ? SalesReportColors.brandGold : SalesReportColors.textMuted;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 148, minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: emphasized
+            ? SalesReportColors.goldGradientStart.withValues(alpha: 0.12)
+            : SalesReportColors.bodyPanel,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: emphasized
+              ? SalesReportColors.brandGold.withValues(alpha: 0.35)
+              : SalesReportColors.bodyBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: SalesReportStyles.body.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: accent,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: SalesReportStyles.pageTitle.copyWith(fontSize: 17),
+            ),
+          ),
+        ],
       ),
     );
   }

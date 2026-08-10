@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../../core/logging/app_logger.dart';
 import '../../database/db/app_database.dart';
+import '../../logic/report/sales_report/sales_report_invoice_scope.dart';
 import '../../models/reports/sales_report/sales_report_models.dart';
 
 class SalesReportRepository {
@@ -12,8 +13,14 @@ class SalesReportRepository {
   Future<SalesReportSnapshot> fetchReport(SalesReportFilter filter) async {
     try {
       final normalized = _normalizeFilter(filter);
-      final invoices = await _fetchInvoices(normalized);
+      final sourceInvoices = await _fetchInvoices(normalized);
       final items = await _fetchItems(normalized);
+      final invoices = _requiresItemScopedInvoices(normalized)
+          ? scopeSalesReportInvoicesToItems(
+              invoices: sourceInvoices,
+              items: items,
+            )
+          : sourceInvoices;
       final metals = _buildMetalSummaries(items);
       final summary = _buildSummary(invoices, items);
       final availableMetals = await _fetchAvailableMetals();
@@ -48,6 +55,11 @@ class SalesReportRepository {
       59,
     );
     return filter.copyWith(startDate: start, endDate: end);
+  }
+
+  bool _requiresItemScopedInvoices(SalesReportFilter filter) {
+    final metal = filter.metalType.trim().toUpperCase();
+    return metal.isNotEmpty && metal != 'ALL';
   }
 
   Future<List<SalesReportInvoiceRow>> _fetchInvoices(
