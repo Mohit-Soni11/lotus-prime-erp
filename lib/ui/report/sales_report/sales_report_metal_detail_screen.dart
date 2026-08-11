@@ -68,7 +68,8 @@ class _SalesReportMetalDetailScreenState
           subtitle: 'Invoice ledger, item ledger and tax audit',
           onBack: () => Navigator.of(context).pop(),
           onRefresh: () => _controller.load(),
-          onExportCsv: _exportCsv,
+          onExportSelected: _handleExportSelected,
+          exportItems: _metalExportItems,
           isLoading: _controller.isLoading,
         ),
         body: ListenableBuilder(
@@ -172,17 +173,69 @@ class _SalesReportMetalDetailScreenState
     );
   }
 
-  Future<void> _exportCsv() async {
+  Future<void> _handleExportSelected(SalesReportExportAction action) async {
     final snapshot = _controller.snapshot;
     if (snapshot == null) return;
 
+    final metalTitle = _metalTitle(widget.metalType);
+    final grade = _effectiveSelectedGrade(snapshot.items);
+    final gradeItems = _itemsForGrade(snapshot.items, grade);
+    final gradeInvoices = _invoicesForItems(
+      snapshot.invoices,
+      gradeItems,
+      grade,
+    );
+    final filePrefix = '${metalTitle.toLowerCase()}-sales-report';
+
+    late final Future<String?> export;
+    late final String successMessage;
+    switch (action) {
+      case SalesReportExportAction.completePdf:
+        export = SalesReportExportService.exportCompletePdf(
+          snapshot,
+          reportTitle: '$metalTitle Sales Report',
+          filePrefix: filePrefix,
+        );
+        successMessage = '$metalTitle complete sales report PDF downloaded.';
+      case SalesReportExportAction.gradeWisePdf:
+        export = SalesReportExportService.exportGradeWisePdf(
+          snapshot,
+          metalTitle: metalTitle,
+        );
+        successMessage = '$metalTitle grade-wise report PDF downloaded.';
+      case SalesReportExportAction.invoiceLedgerCsv:
+        export = SalesReportExportService.exportInvoiceLedgerCsv(
+          snapshot,
+          invoices: gradeInvoices,
+          items: gradeItems,
+          filePrefix: '$filePrefix-invoice-ledger',
+        );
+        successMessage = '$metalTitle invoice ledger CSV downloaded.';
+      case SalesReportExportAction.itemLedgerCsv:
+        export = SalesReportExportService.exportItemLedgerCsv(
+          snapshot,
+          items: gradeItems,
+          filePrefix: '$filePrefix-item-ledger',
+        );
+        successMessage = '$metalTitle item ledger CSV downloaded.';
+      case SalesReportExportAction.completeExcel:
+        export = SalesReportExportService.exportCompleteExcel(
+          snapshot,
+          reportTitle: '$metalTitle Sales Report',
+          filePrefix: filePrefix,
+        );
+        successMessage = '$metalTitle complete sales report Excel downloaded.';
+      case SalesReportExportAction.gstLiabilityPdf:
+        return;
+    }
+
     try {
-      final path = await SalesReportExportService.exportCsv(snapshot);
+      final path = await export;
       if (!mounted || path == null) return;
       AppFeedback.show(
         context,
         type: AppFeedbackType.success,
-        message: '${_metalTitle(widget.metalType)} sales report exported.',
+        message: successMessage,
       );
     } catch (_) {
       if (!mounted) return;
@@ -193,6 +246,34 @@ class _SalesReportMetalDetailScreenState
       );
     }
   }
+
+  static const _metalExportItems = [
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completePdf,
+      label: 'Complete Metal Sales Report PDF',
+      icon: Icons.picture_as_pdf_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.gradeWisePdf,
+      label: 'Grade-wise Sales Report PDF',
+      icon: Icons.workspace_premium_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.invoiceLedgerCsv,
+      label: 'Metal Invoice Ledger CSV',
+      icon: Icons.receipt_long_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.itemLedgerCsv,
+      label: 'Metal Item Ledger CSV',
+      icon: Icons.inventory_2_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completeExcel,
+      label: 'Complete Metal Sales Excel',
+      icon: Icons.grid_on_outlined,
+    ),
+  ];
 
   SalesReportMetalSummary? _summaryFor(
     SalesReportSnapshot snapshot,

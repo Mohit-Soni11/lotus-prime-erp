@@ -52,7 +52,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         appBar: SalesReportAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
           onRefresh: () => _controller.load(),
-          onExportCsv: _exportCsv,
+          onExportSelected: _handleExportSelected,
+          exportItems: _mainExportItems,
           isLoading: _controller.isLoading,
         ),
         body: ListenableBuilder(
@@ -112,17 +113,39 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     );
   }
 
-  Future<void> _exportCsv() async {
+  Future<void> _handleExportSelected(SalesReportExportAction action) async {
     final snapshot = _controller.snapshot;
     if (snapshot == null) return;
 
+    late final Future<String?> export;
+    late final String successMessage;
+    switch (action) {
+      case SalesReportExportAction.completePdf:
+        export = SalesReportExportService.exportCompletePdf(snapshot);
+        successMessage = 'Complete sales report PDF downloaded.';
+      case SalesReportExportAction.gstLiabilityPdf:
+        export = SalesReportExportService.exportGstLiabilityPdf(snapshot);
+        successMessage = 'GST liability report PDF downloaded.';
+      case SalesReportExportAction.invoiceLedgerCsv:
+        export = SalesReportExportService.exportInvoiceLedgerCsv(snapshot);
+        successMessage = 'Invoice ledger CSV downloaded.';
+      case SalesReportExportAction.itemLedgerCsv:
+        export = SalesReportExportService.exportItemLedgerCsv(snapshot);
+        successMessage = 'Item ledger CSV downloaded.';
+      case SalesReportExportAction.completeExcel:
+        export = SalesReportExportService.exportCompleteExcel(snapshot);
+        successMessage = 'Complete sales report Excel downloaded.';
+      case SalesReportExportAction.gradeWisePdf:
+        return;
+    }
+
     try {
-      final path = await SalesReportExportService.exportCsv(snapshot);
+      final path = await export;
       if (!mounted || path == null) return;
       AppFeedback.show(
         context,
         type: AppFeedbackType.success,
-        message: 'Sales report exported.',
+        message: successMessage,
       );
     } catch (_) {
       if (!mounted) return;
@@ -133,6 +156,34 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       );
     }
   }
+
+  static const _mainExportItems = [
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completePdf,
+      label: 'Complete Sales Report PDF',
+      icon: Icons.picture_as_pdf_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.gstLiabilityPdf,
+      label: 'GST Liability Report PDF',
+      icon: Icons.account_balance_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.invoiceLedgerCsv,
+      label: 'Invoice Ledger CSV',
+      icon: Icons.receipt_long_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.itemLedgerCsv,
+      label: 'Item Ledger CSV',
+      icon: Icons.inventory_2_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completeExcel,
+      label: 'Complete Sales Report Excel',
+      icon: Icons.grid_on_outlined,
+    ),
+  ];
 
   Widget _buildWorkspace(SalesReportSnapshot _) {
     final filter = _controller.filter;

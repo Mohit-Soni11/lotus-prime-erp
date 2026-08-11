@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../../../logic/report/sales_report/sales_report_export_service.dart';
 import '../../../theme/reports/sales_report/sales_report_theme.dart';
+
+class SalesReportExportMenuItem {
+  final SalesReportExportAction action;
+  final String label;
+  final IconData icon;
+
+  const SalesReportExportMenuItem({
+    required this.action,
+    required this.label,
+    required this.icon,
+  });
+}
 
 class SalesReportAppBar extends StatefulWidget implements PreferredSizeWidget {
   final VoidCallback onBack;
   final VoidCallback? onRefresh;
-  final VoidCallback? onExportCsv;
+  final ValueChanged<SalesReportExportAction>? onExportSelected;
+  final List<SalesReportExportMenuItem> exportItems;
   final bool isLoading;
   final String title;
   final String subtitle;
@@ -14,7 +28,8 @@ class SalesReportAppBar extends StatefulWidget implements PreferredSizeWidget {
     super.key,
     required this.onBack,
     this.onRefresh,
-    this.onExportCsv,
+    this.onExportSelected,
+    this.exportItems = const [],
     this.isLoading = false,
     this.title = SalesReportStrings.moduleTitle,
     this.subtitle = SalesReportStrings.moduleSubtitle,
@@ -81,11 +96,11 @@ class _SalesReportAppBarState extends State<SalesReportAppBar>
                 subtitle: widget.subtitle,
               ),
             ),
-            if (widget.onExportCsv != null) ...[
-              _HeaderIconButton(
-                icon: SalesReportIcons.export,
-                tooltip: 'Export sales report CSV',
-                onPressed: widget.isLoading ? null : widget.onExportCsv,
+            if (widget.onExportSelected != null &&
+                widget.exportItems.isNotEmpty) ...[
+              _HeaderExportMenu(
+                items: widget.exportItems,
+                onSelected: widget.isLoading ? null : widget.onExportSelected!,
               ),
               const SizedBox(width: 8),
             ],
@@ -327,6 +342,69 @@ class _HeaderIconButton extends StatelessWidget {
                 ),
               )
             : Icon(icon, size: 18),
+      ),
+    );
+  }
+}
+
+class _HeaderExportMenu extends StatelessWidget {
+  final List<SalesReportExportMenuItem> items;
+  final ValueChanged<SalesReportExportAction>? onSelected;
+
+  const _HeaderExportMenu({
+    required this.items,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Download report',
+      child: PopupMenuButton<SalesReportExportAction>(
+        enabled: onSelected != null,
+        tooltip: '',
+        onSelected: onSelected,
+        offset: const Offset(0, 48),
+        constraints: const BoxConstraints(minWidth: 320, maxWidth: 360),
+        itemBuilder: (_) => [
+          for (final item in items)
+            PopupMenuItem<SalesReportExportAction>(
+              value: item.action,
+              height: 44,
+              child: Row(
+                children: [
+                  Icon(
+                    item.icon,
+                    size: 18,
+                    color: SalesReportColors.brandGold,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+        child: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: SalesReportColors.shellBorder.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: SalesReportColors.shellBorder),
+          ),
+          child: const Icon(
+            SalesReportIcons.export,
+            size: 18,
+            color: SalesReportColors.shellTitle,
+          ),
+        ),
       ),
     );
   }
