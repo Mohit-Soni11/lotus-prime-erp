@@ -30,13 +30,26 @@ void main() {
 
     expect(bytes.take(2), orderedEquals(const [80, 75]));
     expect(workbook, isNotNull);
-    expect(String.fromCharCodes(workbook!.content as List<int>),
-        contains('Invoice Ledger'));
+    final workbookXml = String.fromCharCodes(workbook!.content as List<int>);
+    expect(workbookXml, contains('Sales Summary'));
+    expect(workbookXml, contains('Invoice Register'));
+    expect(workbookXml, contains('Item Register'));
+    expect(workbookXml, contains('GST Register'));
     expect(summarySheet, isNotNull);
     expect(invoiceSheet, isNotNull);
     expect(itemSheet, isNotNull);
-    expect(String.fromCharCodes(summarySheet!.content as List<int>),
-        contains('Sales Summary'));
+    final summaryXml = String.fromCharCodes(summarySheet!.content as List<int>);
+    final invoiceXml = String.fromCharCodes(invoiceSheet!.content as List<int>);
+    final itemXml = String.fromCharCodes(itemSheet!.content as List<int>);
+    expect(summaryXml, contains('Sales Register Summary'));
+    expect(summaryXml, contains('Metal Wise Sales'));
+    expect(invoiceXml, contains('Gold Net Wt (g)'));
+    expect(invoiceXml, contains('<autoFilter'));
+    expect(invoiceXml, contains('<dimension ref='));
+    expect(invoiceXml, contains('<f>SUM('));
+    expect(invoiceXml, contains('<c r="H10" s="13"><f>SUM(H8:H9)</f>'));
+    expect(itemXml, contains('Making Charges'));
+    expect(itemXml, contains('<autoFilter'));
     expect(archive.findFile('xl/styles.xml'), isNotNull);
   });
 

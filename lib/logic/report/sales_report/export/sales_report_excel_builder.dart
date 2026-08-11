@@ -15,52 +15,72 @@ class SalesReportExcelBuilder {
     String reportTitle = 'Sales Report',
   }) {
     final summarySheet = _WorksheetBuilder(
-      columnWidths: const [26, 38, 20, 20, 20, 20, 20, 22],
+      columnWidths: const [18, 18, 18, 18, 18, 18, 18, 18, 18, 18],
     );
     _addReportHeader(summarySheet, snapshot, identity, reportTitle);
-    _addSalesSummary(summarySheet, snapshot);
-    _addMetalSummary(summarySheet, snapshot);
+    _addSalesRegisterSummary(summarySheet, snapshot);
+    _addMetalWeightSummary(summarySheet, snapshot);
+    _addGstRegisterSummary(summarySheet, snapshot);
 
     final invoiceSheet = _WorksheetBuilder(
-      columnWidths: const [9, 30, 24, 36, 18, 24, 38, 20, 20, 20, 20, 22],
+      columnWidths: const [
+        8,
+        24,
+        22,
+        28,
+        16,
+        14,
+        14,
+        15,
+        15,
+        15,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+      ],
     );
-    _addReportHeader(invoiceSheet, snapshot, identity, 'Invoice Ledger');
+    _addReportHeader(invoiceSheet, snapshot, identity, 'Invoice Register');
     _addInvoiceLedger(invoiceSheet, snapshot);
 
     final itemSheet = _WorksheetBuilder(
       columnWidths: const [
-        9,
-        30,
+        8,
         24,
-        34,
-        18,
-        18,
+        22,
         28,
+        14,
+        14,
         24,
+        20,
         16,
         10,
+        15,
+        15,
+        15,
+        15,
         16,
         16,
-        34,
-        18,
-        18,
-        22,
       ],
     );
-    _addReportHeader(itemSheet, snapshot, identity, 'Item Ledger');
+    _addReportHeader(itemSheet, snapshot, identity, 'Item Register');
     _addItemLedger(itemSheet, snapshot.items);
 
     final gstSheet = _WorksheetBuilder(
-      columnWidths: const [34, 24, 28, 24, 22, 22, 22],
+      columnWidths: const [8, 24, 22, 28, 15, 17, 17, 17, 17],
     );
-    _addReportHeader(gstSheet, snapshot, identity, 'GST Summary');
-    _addGstSummary(gstSheet, snapshot);
+    _addReportHeader(gstSheet, snapshot, identity, 'GST Register');
+    _addGstRegister(gstSheet, snapshot);
 
     return _buildWorkbook({
-      'Summary': summarySheet.toXml(),
-      'Invoice Ledger': invoiceSheet.toXml(),
-      'Item Ledger': itemSheet.toXml(),
-      'GST Summary': gstSheet.toXml(),
+      'Sales Summary': summarySheet.toXml(),
+      'Invoice Register': invoiceSheet.toXml(),
+      'Item Register': itemSheet.toXml(),
+      'GST Register': gstSheet.toXml(),
     });
   }
 
@@ -106,62 +126,89 @@ class SalesReportExcelBuilder {
     sheet.addBlankRow();
   }
 
-  static void _addSalesSummary(
+  static void _addSalesRegisterSummary(
     _WorksheetBuilder sheet,
     SalesReportSnapshot snapshot,
   ) {
-    sheet.addSection('Sales Summary', 'Invoice value, tax and weight totals');
+    final summary = snapshot.summary;
+    sheet.addSection(
+      'Sales Register Summary',
+      'Clean monthly totals for accountant and CA review',
+    );
     sheet.addRow([
-      _ExcelCell.text('Metric', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Value', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Total Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('GST Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Non-GST Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Gross Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Discount', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Taxable Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Output GST', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Round Off', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Invoice Total', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Balance Due', _ExcelStyle.tableHeader),
     ]);
-    for (final row
-        in SalesReportExportFormatters.salesSummaryRowsWithMetalBreakdown(
-      snapshot,
-    )) {
-      sheet.addRow([
-        _ExcelCell.text(row[0]),
-        _ExcelCell.text(row[1], _ExcelStyle.strong),
-      ]);
-    }
+    sheet.addRow([
+      _ExcelCell.number(summary.invoiceCount, _ExcelStyle.integerStrong),
+      _ExcelCell.number(summary.gstInvoiceCount, _ExcelStyle.integerStrong),
+      _ExcelCell.number(summary.nonGstInvoiceCount, _ExcelStyle.integerStrong),
+      _ExcelCell.number(summary.grossAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(summary.discountAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(summary.taxableAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(summary.gstAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(summary.roundOffAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(summary.finalAmount, _ExcelStyle.totalMoney),
+      _ExcelCell.number(summary.dueAmount, _ExcelStyle.moneyStrong),
+    ]);
     sheet.addBlankRow();
   }
 
-  static void _addGstSummary(
+  static void _addGstRegisterSummary(
     _WorksheetBuilder sheet,
     SalesReportSnapshot snapshot,
   ) {
-    sheet.addSection('GST Summary', 'Recorded GST and non-GST exposure');
+    final gst = snapshot.gstLiability;
+    sheet.addSection(
+      'GST Summary',
+      'Recorded GST is payable from GST invoices; non-GST estimate is shown separately',
+    );
     sheet.addRow([
-      _ExcelCell.text('Metric', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Value', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Recorded GST Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Recorded Taxable', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Recorded GST', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Recorded Invoice Total', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Non-GST Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Non-GST Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Optional GST Estimate', _ExcelStyle.tableHeader),
     ]);
-    for (final row in SalesReportExportFormatters.gstLiabilityRows(
-      snapshot.gstLiability,
-    )) {
-      sheet.addRow([
-        _ExcelCell.text(row[0]),
-        _ExcelCell.text(row[1], _ExcelStyle.strong),
-      ]);
-    }
+    sheet.addRow([
+      _ExcelCell.number(gst.gstInvoiceCount, _ExcelStyle.integerStrong),
+      _ExcelCell.number(gst.gstTaxableAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(gst.recordedGstAmount, _ExcelStyle.totalMoney),
+      _ExcelCell.number(gst.gstFinalAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(gst.nonGstInvoiceCount, _ExcelStyle.integerStrong),
+      _ExcelCell.number(gst.nonGstSalesAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(gst.projectedGstAmount, _ExcelStyle.moneyStrong),
+    ]);
     sheet.addBlankRow();
   }
 
-  static void _addMetalSummary(
+  static void _addMetalWeightSummary(
     _WorksheetBuilder sheet,
     SalesReportSnapshot snapshot,
   ) {
     if (snapshot.metals.isEmpty) return;
-    sheet.addSection('Metal Summary', 'Metal-wise sold quantity and value');
+    sheet.addSection(
+      'Metal Wise Sales',
+      'Sold weight and value by metal for the selected period',
+    );
     sheet.addRow([
       _ExcelCell.text('Metal', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Invoices', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Items', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Line Items', _ExcelStyle.tableHeader),
       _ExcelCell.text('Pcs', _ExcelStyle.tableHeader),
       _ExcelCell.text('Gross Wt (g)', _ExcelStyle.tableHeader),
       _ExcelCell.text('Net Wt (g)', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Making', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Item Amount', _ExcelStyle.tableHeader),
     ]);
     for (final metal in snapshot.metals) {
       sheet.addRow([
@@ -171,10 +218,36 @@ class SalesReportExcelBuilder {
         _ExcelCell.number(metal.pieces, _ExcelStyle.integer),
         _ExcelCell.number(metal.grossWeight, _ExcelStyle.weight),
         _ExcelCell.number(metal.netWeight, _ExcelStyle.weight),
-        _ExcelCell.number(metal.makingAmount, _ExcelStyle.money),
         _ExcelCell.number(metal.salesAmount, _ExcelStyle.money),
       ]);
     }
+    sheet.addRow([
+      _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
+      _ExcelCell.number(
+        snapshot.metals.fold(0, (sum, metal) => sum + metal.invoiceCount),
+        _ExcelStyle.integerStrong,
+      ),
+      _ExcelCell.number(
+        snapshot.metals.fold(0, (sum, metal) => sum + metal.itemCount),
+        _ExcelStyle.integerStrong,
+      ),
+      _ExcelCell.number(
+        snapshot.metals.fold(0, (sum, metal) => sum + metal.pieces),
+        _ExcelStyle.integerStrong,
+      ),
+      _ExcelCell.number(
+        snapshot.metals.fold(0, (sum, metal) => sum + metal.grossWeight),
+        _ExcelStyle.totalWeight,
+      ),
+      _ExcelCell.number(
+        snapshot.metals.fold(0, (sum, metal) => sum + metal.netWeight),
+        _ExcelStyle.totalWeight,
+      ),
+      _ExcelCell.number(
+        snapshot.metals.fold(0, (sum, metal) => sum + metal.salesAmount),
+        _ExcelStyle.totalMoney,
+      ),
+    ]);
     sheet.addBlankRow();
   }
 
@@ -184,42 +257,56 @@ class SalesReportExcelBuilder {
   ) {
     final weightsByBill =
         SalesReportExportFormatters.invoiceWeights(snapshot.items);
-    sheet.addSection('Invoice Ledger', 'Bill-wise sales amount and GST audit');
+    sheet.addSection(
+      'Invoice Register',
+      'Every sales bill with metal weight, tax and due amount',
+    );
     sheet.addRow([
       _ExcelCell.text('S.No', _ExcelStyle.tableHeader),
       _ExcelCell.text('Invoice No', _ExcelStyle.tableHeader),
       _ExcelCell.text('Date', _ExcelStyle.tableHeader),
       _ExcelCell.text('Customer', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Mobile', _ExcelStyle.tableHeader),
       _ExcelCell.text('Type', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Metal', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Net Wt by Metal', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Gross', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Status', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Gold Net Wt (g)', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Silver Net Wt (g)', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Other Net Wt (g)', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Gross Sales', _ExcelStyle.tableHeader),
       _ExcelCell.text('Discount', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Taxable', _ExcelStyle.tableHeader),
-      _ExcelCell.text('GST', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Final', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Taxable Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Output GST', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Round Off', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Invoice Total', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Received', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Due', _ExcelStyle.tableHeader),
     ]);
+    final tableHeaderRow = sheet.currentRow;
     for (var index = 0; index < snapshot.invoices.length; index++) {
       final invoice = snapshot.invoices[index];
+      final weights = weightsByBill[invoice.billId] ?? const <String, double>{};
       sheet.addRow([
         _ExcelCell.number(index + 1, _ExcelStyle.integer),
         _ExcelCell.text(invoice.billNo, _ExcelStyle.strong),
         _ExcelCell.text(SalesReportExportFormatters.dateTime(invoice.billDate)),
         _ExcelCell.text(invoice.customerName),
+        _ExcelCell.text(invoice.mobile),
         _ExcelCell.text(invoice.isGst ? 'GST' : 'NON-GST'),
-        _ExcelCell.text(invoice.metalMix),
-        _ExcelCell.text(
-          SalesReportExportFormatters.weightSummary(
-            weightsByBill[invoice.billId] ?? const {},
-          ),
-        ),
+        _ExcelCell.text(invoice.paymentStatus),
+        _ExcelCell.number(_metalWeight(weights, 'gold'), _ExcelStyle.weight),
+        _ExcelCell.number(_metalWeight(weights, 'silver'), _ExcelStyle.weight),
+        _ExcelCell.number(_otherMetalWeight(weights), _ExcelStyle.weight),
         _ExcelCell.number(invoice.grossAmount, _ExcelStyle.money),
         _ExcelCell.number(invoice.discountAmount, _ExcelStyle.money),
         _ExcelCell.number(invoice.taxableAmount, _ExcelStyle.money),
         _ExcelCell.number(invoice.gstAmount, _ExcelStyle.money),
+        _ExcelCell.number(invoice.roundOffAmount, _ExcelStyle.money),
         _ExcelCell.number(invoice.finalAmount, _ExcelStyle.totalMoney),
+        _ExcelCell.number(invoice.paidAmount, _ExcelStyle.money),
+        _ExcelCell.number(invoice.dueAmount, _ExcelStyle.money),
       ]);
     }
+    final dataEndRow = sheet.currentRow;
     sheet.addRow([
       _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
       _ExcelCell.empty(),
@@ -227,31 +314,53 @@ class SalesReportExcelBuilder {
       _ExcelCell.empty(),
       _ExcelCell.empty(),
       _ExcelCell.empty(),
-      _ExcelCell.text(
-        SalesReportExportFormatters.invoiceWeightTotal(snapshot.items),
-        _ExcelStyle.totalText,
+      _ExcelCell.empty(),
+      _ExcelCell.formula(
+        _sumFormula('H', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalWeight,
       ),
-      _ExcelCell.number(
-        snapshot.invoices.fold(0, (sum, row) => sum + row.grossAmount),
+      _ExcelCell.formula(
+        _sumFormula('I', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalWeight,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('J', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalWeight,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('K', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalMoney,
       ),
-      _ExcelCell.number(
-        snapshot.invoices.fold(0, (sum, row) => sum + row.discountAmount),
+      _ExcelCell.formula(
+        _sumFormula('L', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalMoney,
       ),
-      _ExcelCell.number(
-        snapshot.invoices.fold(0, (sum, row) => sum + row.taxableAmount),
+      _ExcelCell.formula(
+        _sumFormula('M', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalMoney,
       ),
-      _ExcelCell.number(
-        snapshot.invoices.fold(0, (sum, row) => sum + row.gstAmount),
+      _ExcelCell.formula(
+        _sumFormula('N', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalMoney,
       ),
-      _ExcelCell.number(
-        snapshot.invoices.fold(0, (sum, row) => sum + row.finalAmount),
+      _ExcelCell.formula(
+        _sumFormula('O', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('P', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('Q', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('R', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalMoney,
       ),
     ]);
+    sheet.setAutoFilter(tableHeaderRow, dataEndRow, 1, sheet.columnCount);
     sheet.addBlankRow();
   }
 
@@ -259,7 +368,10 @@ class SalesReportExcelBuilder {
     _WorksheetBuilder sheet,
     List<SalesReportItemRow> items,
   ) {
-    sheet.addSection('Item Ledger', 'HUID, purity, quantity and item value');
+    sheet.addSection(
+      'Item Register',
+      'Item-level HUID, purity, weight, rate and value',
+    );
     sheet.addRow([
       _ExcelCell.text('S.No', _ExcelStyle.tableHeader),
       _ExcelCell.text('Invoice No', _ExcelStyle.tableHeader),
@@ -275,9 +387,10 @@ class SalesReportExcelBuilder {
       _ExcelCell.text('Less Wt', _ExcelStyle.tableHeader),
       _ExcelCell.text('Net Wt', _ExcelStyle.tableHeader),
       _ExcelCell.text('Rate', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Making', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Total', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Making Charges', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Item Amount', _ExcelStyle.tableHeader),
     ]);
+    final tableHeaderRow = sheet.currentRow;
     for (var index = 0; index < items.length; index++) {
       final item = items[index];
       sheet.addRow([
@@ -299,6 +412,7 @@ class SalesReportExcelBuilder {
         _ExcelCell.number(item.itemTotal, _ExcelStyle.totalMoney),
       ]);
     }
+    final dataEndRow = sheet.currentRow;
     sheet.addRow([
       _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
       _ExcelCell.empty(),
@@ -309,33 +423,174 @@ class SalesReportExcelBuilder {
       _ExcelCell.empty(),
       _ExcelCell.empty(),
       _ExcelCell.empty(),
-      _ExcelCell.number(
-        items.fold(0, (sum, item) => sum + item.quantity),
-        _ExcelStyle.integer,
+      _ExcelCell.formula(
+        _sumFormula('J', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.integerStrong,
       ),
-      _ExcelCell.number(
-        items.fold(0, (sum, item) => sum + item.grossWeight),
+      _ExcelCell.formula(
+        _sumFormula('K', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalWeight,
       ),
-      _ExcelCell.number(
-        items.fold(0, (sum, item) => sum + item.lessWeight),
+      _ExcelCell.formula(
+        _sumFormula('L', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalWeight,
       ),
-      _ExcelCell.text(
-        SalesReportExportFormatters.totalNetWeightWithBreakdown(items),
-        _ExcelStyle.totalText,
+      _ExcelCell.formula(
+        _sumFormula('M', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalWeight,
       ),
       _ExcelCell.empty(),
-      _ExcelCell.number(
-        items.fold(0, (sum, item) => sum + item.makingCharge),
+      _ExcelCell.formula(
+        _sumFormula('O', tableHeaderRow + 1, dataEndRow),
         _ExcelStyle.totalMoney,
       ),
-      _ExcelCell.number(
-        items.fold(0, (sum, item) => sum + item.itemTotal),
+      _ExcelCell.formula(
+        _sumFormula('P', tableHeaderRow + 1, dataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+    ]);
+    sheet.setAutoFilter(tableHeaderRow, dataEndRow, 1, sheet.columnCount);
+  }
+
+  static void _addGstRegister(
+    _WorksheetBuilder sheet,
+    SalesReportSnapshot snapshot,
+  ) {
+    final gstInvoices =
+        snapshot.invoices.where((invoice) => invoice.isGst).toList();
+    sheet.addSection(
+      'Recorded GST Register',
+      'GST invoices only - use this section for output GST payable',
+    );
+    sheet.addRow([
+      _ExcelCell.text('S.No', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Invoice No', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Date', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Customer', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Taxable Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('CGST 1.5%', _ExcelStyle.tableHeader),
+      _ExcelCell.text('SGST 1.5%', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Total GST', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Invoice Total', _ExcelStyle.tableHeader),
+    ]);
+    final recordedHeaderRow = sheet.currentRow;
+    for (var index = 0; index < gstInvoices.length; index++) {
+      final invoice = gstInvoices[index];
+      final cgst = _roundMoney(invoice.gstAmount / 2);
+      final sgst = _roundMoney(invoice.gstAmount - cgst);
+      sheet.addRow([
+        _ExcelCell.number(index + 1, _ExcelStyle.integer),
+        _ExcelCell.text(invoice.billNo, _ExcelStyle.strong),
+        _ExcelCell.text(SalesReportExportFormatters.dateTime(invoice.billDate)),
+        _ExcelCell.text(invoice.customerName),
+        _ExcelCell.number(invoice.taxableAmount, _ExcelStyle.money),
+        _ExcelCell.number(cgst, _ExcelStyle.money),
+        _ExcelCell.number(sgst, _ExcelStyle.money),
+        _ExcelCell.number(invoice.gstAmount, _ExcelStyle.totalMoney),
+        _ExcelCell.number(invoice.finalAmount, _ExcelStyle.totalMoney),
+      ]);
+    }
+    final recordedDataEndRow = sheet.currentRow;
+    sheet.addRow([
+      _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
+      _ExcelCell.empty(),
+      _ExcelCell.empty(),
+      _ExcelCell.empty(),
+      _ExcelCell.formula(
+        _sumFormula('E', recordedHeaderRow + 1, recordedDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('F', recordedHeaderRow + 1, recordedDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('G', recordedHeaderRow + 1, recordedDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('H', recordedHeaderRow + 1, recordedDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('I', recordedHeaderRow + 1, recordedDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+    ]);
+    sheet.addBlankRow();
+
+    final nonGstInvoices =
+        snapshot.invoices.where((invoice) => !invoice.isGst).toList();
+    sheet.addSection(
+      'Non-GST Sales Estimate',
+      'Reference only - not recorded as GST payable unless you decide to declare it',
+    );
+    sheet.addRow([
+      _ExcelCell.text('S.No', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Invoice No', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Date', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Customer', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Non-GST Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Estimated GST 3%', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Estimated Total', _ExcelStyle.tableHeader),
+    ]);
+    final estimateHeaderRow = sheet.currentRow;
+    for (var index = 0; index < nonGstInvoices.length; index++) {
+      final invoice = nonGstInvoices[index];
+      final estimatedGst = _roundMoney(invoice.taxableAmount * 0.03);
+      sheet.addRow([
+        _ExcelCell.number(index + 1, _ExcelStyle.integer),
+        _ExcelCell.text(invoice.billNo, _ExcelStyle.strong),
+        _ExcelCell.text(SalesReportExportFormatters.dateTime(invoice.billDate)),
+        _ExcelCell.text(invoice.customerName),
+        _ExcelCell.number(invoice.taxableAmount, _ExcelStyle.money),
+        _ExcelCell.number(estimatedGst, _ExcelStyle.money),
+        _ExcelCell.number(
+          invoice.taxableAmount + estimatedGst,
+          _ExcelStyle.money,
+        ),
+      ]);
+    }
+    final estimateDataEndRow = sheet.currentRow;
+    sheet.addRow([
+      _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
+      _ExcelCell.empty(),
+      _ExcelCell.empty(),
+      _ExcelCell.empty(),
+      _ExcelCell.formula(
+        _sumFormula('E', estimateHeaderRow + 1, estimateDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('F', estimateHeaderRow + 1, estimateDataEndRow),
+        _ExcelStyle.totalMoney,
+      ),
+      _ExcelCell.formula(
+        _sumFormula('G', estimateHeaderRow + 1, estimateDataEndRow),
         _ExcelStyle.totalMoney,
       ),
     ]);
   }
+
+  static double _metalWeight(Map<String, double> weights, String metalName) {
+    return weights.entries
+        .where((entry) => entry.key.toLowerCase() == metalName)
+        .fold<double>(0, (total, entry) => total + entry.value);
+  }
+
+  static double _otherMetalWeight(Map<String, double> weights) {
+    return weights.entries.where((entry) {
+      final metal = entry.key.toLowerCase();
+      return metal != 'gold' && metal != 'silver';
+    }).fold<double>(0, (total, entry) => total + entry.value);
+  }
+
+  static String _sumFormula(String column, int startRow, int endRow) {
+    if (endRow < startRow) return '0';
+    return 'SUM($column$startRow:$column$endRow)';
+  }
+
+  static double _roundMoney(double value) => (value * 100).round() / 100;
 
   static Uint8List _buildWorkbook(Map<String, String> worksheets) {
     final entries = worksheets.entries.toList(growable: false);
@@ -388,8 +643,10 @@ enum _ExcelStyle {
   tableHeader,
   strong,
   money,
+  moneyStrong,
   weight,
   integer,
+  integerStrong,
   totalText,
   totalMoney,
   totalWeight,
@@ -399,8 +656,14 @@ class _ExcelCell {
   final Object? value;
   final _ExcelStyle style;
   final bool isNumber;
+  final bool isFormula;
 
-  const _ExcelCell._(this.value, this.style, this.isNumber);
+  const _ExcelCell._(
+    this.value,
+    this.style,
+    this.isNumber, {
+    this.isFormula = false,
+  });
 
   factory _ExcelCell.text(
     String value, [
@@ -414,6 +677,12 @@ class _ExcelCell {
   ]) =>
       _ExcelCell._(value, style, true);
 
+  factory _ExcelCell.formula(
+    String formula, [
+    _ExcelStyle style = _ExcelStyle.normal,
+  ]) =>
+      _ExcelCell._(formula, style, true, isFormula: true);
+
   factory _ExcelCell.empty() =>
       const _ExcelCell._('', _ExcelStyle.normal, false);
 }
@@ -422,11 +691,14 @@ class _WorksheetBuilder {
   final List<double> columnWidths;
   final List<String> _rows = [];
   final List<String> _merges = [];
+  String? _autoFilterRef;
   int _rowIndex = 0;
 
   _WorksheetBuilder({required this.columnWidths});
 
   int get columnCount => columnWidths.length;
+
+  int get currentRow => _rowIndex;
 
   void addMergedText(
     String value,
@@ -466,6 +738,17 @@ class _WorksheetBuilder {
     _rows.add('<row r="$_rowIndex"/>');
   }
 
+  void setAutoFilter(
+    int startRow,
+    int endRow,
+    int startColumn,
+    int endColumn,
+  ) {
+    if (endRow <= startRow) return;
+    _autoFilterRef =
+        '${_columnName(startColumn)}$startRow:${_columnName(endColumn)}$endRow';
+  }
+
   String toXml() {
     final columns = [
       for (var index = 0; index < columnWidths.length; index++)
@@ -474,11 +757,16 @@ class _WorksheetBuilder {
     final mergeXml = _merges.isEmpty
         ? ''
         : '<mergeCells count="${_merges.length}">${_merges.map((ref) => '<mergeCell ref="$ref"/>').join()}</mergeCells>';
+    final dimension = 'A1:${_columnName(columnCount)}$_rowIndex';
+    final autoFilterXml =
+        _autoFilterRef == null ? '' : '<autoFilter ref="$_autoFilterRef"/>';
     return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<sheetViews><sheetView workbookViewId="0"><pane ySplit="7" topLeftCell="A8" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<dimension ref="$dimension"/>
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="10" topLeftCell="A11" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
 <cols>$columns</cols>
 <sheetData>${_rows.join()}</sheetData>
+$autoFilterXml
 $mergeXml
 <pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>
 </worksheet>''';
@@ -487,8 +775,12 @@ $mergeXml
   String _cell(int column, int row, _ExcelCell cell) {
     final ref = '${_columnName(column)}$row';
     final styleId = _styleId(cell.style);
+    if (cell.isFormula) {
+      final formula = _escape(cell.value?.toString() ?? '0');
+      return '<c r="$ref" s="$styleId"><f>$formula</f><v>0</v></c>';
+    }
     if (cell.isNumber) {
-      return '<c r="$ref" s="$styleId"><v>${cell.value}</v></c>';
+      return '<c r="$ref" s="$styleId"><v>${_numberValue(cell.value, cell.style)}</v></c>';
     }
     final text = _escape(cell.value?.toString() ?? '');
     return '<c r="$ref" s="$styleId" t="inlineStr"><is><t>$text</t></is></c>';
@@ -514,10 +806,14 @@ $mergeXml
         return 7;
       case _ExcelStyle.money:
         return 8;
+      case _ExcelStyle.moneyStrong:
+        return 12;
       case _ExcelStyle.weight:
         return 9;
       case _ExcelStyle.integer:
         return 10;
+      case _ExcelStyle.integerStrong:
+        return 11;
       case _ExcelStyle.totalText:
         return 11;
       case _ExcelStyle.totalMoney:
@@ -537,6 +833,33 @@ String _columnName(int index) {
     value ~/= 26;
   }
   return chars.join();
+}
+
+String _numberValue(Object? value, _ExcelStyle style) {
+  final number = value is num ? value : num.tryParse(value?.toString() ?? '');
+  if (number == null) return '0';
+  switch (style) {
+    case _ExcelStyle.weight:
+    case _ExcelStyle.totalWeight:
+      return number.toStringAsFixed(3);
+    case _ExcelStyle.money:
+    case _ExcelStyle.moneyStrong:
+    case _ExcelStyle.totalMoney:
+      return number.toStringAsFixed(2);
+    case _ExcelStyle.integer:
+    case _ExcelStyle.integerStrong:
+      return number.round().toString();
+    case _ExcelStyle.normal:
+    case _ExcelStyle.title:
+    case _ExcelStyle.subtitle:
+    case _ExcelStyle.muted:
+    case _ExcelStyle.sectionLabel:
+    case _ExcelStyle.sectionValue:
+    case _ExcelStyle.tableHeader:
+    case _ExcelStyle.strong:
+    case _ExcelStyle.totalText:
+      return number.toString();
+  }
 }
 
 String _escape(String value) {
