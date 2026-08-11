@@ -26,6 +26,10 @@ class SalesReportExportFormatters {
 
   static String weight(double value) => '${value.toStringAsFixed(3)} g';
 
+  static double totalNetWeight(List<SalesReportItemRow> items) {
+    return items.fold(0, (sum, item) => sum + item.netWeight);
+  }
+
   static String periodLabel(SalesReportFilter filter) {
     final start = DateFormat('d MMM yyyy').format(filter.startDate);
     final end = DateFormat('d MMM yyyy').format(filter.endDate);
@@ -78,6 +82,19 @@ class SalesReportExportFormatters {
       ['Final Amount', money(summary.finalAmount)],
       ['Making Amount', money(summary.makingAmount)],
       ['Net Weight', weight(summary.netWeight)],
+    ];
+  }
+
+  static List<List<String>> salesSummaryRowsWithMetalBreakdown(
+    SalesReportSnapshot snapshot,
+  ) {
+    return [
+      ...salesSummaryRows(snapshot.summary)
+          .where((row) => row[0] != 'Net Weight'),
+      [
+        'Net Weight by Metal',
+        totalNetWeightWithBreakdown(snapshot.items),
+      ],
     ];
   }
 
@@ -136,6 +153,12 @@ class SalesReportExportFormatters {
       totals[metal] = (totals[metal] ?? 0) + item.netWeight;
     }
     return weightSummary(totals);
+  }
+
+  static String totalNetWeightWithBreakdown(List<SalesReportItemRow> items) {
+    final total = weight(totalNetWeight(items));
+    final breakdown = invoiceWeightTotal(items);
+    return breakdown == '-' ? total : '$total ($breakdown)';
   }
 
   static String weightSummary(Map<String, double> weights) {

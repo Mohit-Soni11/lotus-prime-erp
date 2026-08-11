@@ -17,7 +17,9 @@ class SalesReportCsvBuilder {
       ['Metal Filter', snapshot.filter.metalType],
       [],
       ['SALES SUMMARY'],
-      ...SalesReportExportFormatters.salesSummaryRows(snapshot.summary),
+      ...SalesReportExportFormatters.salesSummaryRowsWithMetalBreakdown(
+        snapshot,
+      ),
       [],
       ['GST LIABILITY'],
       ...SalesReportExportFormatters.gstLiabilityRows(snapshot.gstLiability),
@@ -34,6 +36,12 @@ class SalesReportCsvBuilder {
         'Sales',
       ],
       ...SalesReportExportFormatters.metalRows(snapshot.metals),
+      [
+        'Total Net Weight',
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(
+          snapshot.items,
+        ),
+      ],
       [],
       ...invoiceLedgerRows(snapshot.invoices, snapshot.items),
       [],
@@ -108,6 +116,7 @@ class SalesReportCsvBuilder {
       for (var index = 0; index < items.length; index++)
         _itemRow(index + 1, items[index]),
       _itemTotalRow(items),
+      _itemWeightBreakdownRow(items),
     ];
   }
 
@@ -222,6 +231,28 @@ class SalesReportCsvBuilder {
       SalesReportExportFormatters.money(
         items.fold(0, (sum, item) => sum + item.itemTotal),
       ),
+    ];
+  }
+
+  static List<String> _itemWeightBreakdownRow(List<SalesReportItemRow> items) {
+    return [
+      'NET WEIGHT BY METAL',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      SalesReportExportFormatters.invoiceWeightTotal(items),
+      '',
+      '',
+      '',
+      '',
     ];
   }
 

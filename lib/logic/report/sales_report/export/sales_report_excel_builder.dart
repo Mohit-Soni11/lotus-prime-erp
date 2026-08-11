@@ -14,16 +14,54 @@ class SalesReportExcelBuilder {
     required SalesReportExportIdentity identity,
     String reportTitle = 'Sales Report',
   }) {
-    final sheet = _WorksheetBuilder(
-      columnWidths: const [7, 24, 19, 28, 15, 18, 18, 15, 15, 15, 16, 16],
+    final summarySheet = _WorksheetBuilder(
+      columnWidths: const [26, 38, 20, 20, 20, 20, 20, 22],
     );
-    _addReportHeader(sheet, snapshot, identity, reportTitle);
-    _addSalesSummary(sheet, snapshot);
-    _addGstSummary(sheet, snapshot);
-    _addMetalSummary(sheet, snapshot);
-    _addInvoiceLedger(sheet, snapshot);
-    _addItemLedger(sheet, snapshot.items);
-    return _buildWorkbook(sheet.toXml());
+    _addReportHeader(summarySheet, snapshot, identity, reportTitle);
+    _addSalesSummary(summarySheet, snapshot);
+    _addMetalSummary(summarySheet, snapshot);
+
+    final invoiceSheet = _WorksheetBuilder(
+      columnWidths: const [9, 30, 24, 36, 18, 24, 38, 20, 20, 20, 20, 22],
+    );
+    _addReportHeader(invoiceSheet, snapshot, identity, 'Invoice Ledger');
+    _addInvoiceLedger(invoiceSheet, snapshot);
+
+    final itemSheet = _WorksheetBuilder(
+      columnWidths: const [
+        9,
+        30,
+        24,
+        34,
+        18,
+        18,
+        28,
+        24,
+        16,
+        10,
+        16,
+        16,
+        34,
+        18,
+        18,
+        22,
+      ],
+    );
+    _addReportHeader(itemSheet, snapshot, identity, 'Item Ledger');
+    _addItemLedger(itemSheet, snapshot.items);
+
+    final gstSheet = _WorksheetBuilder(
+      columnWidths: const [34, 24, 28, 24, 22, 22, 22],
+    );
+    _addReportHeader(gstSheet, snapshot, identity, 'GST Summary');
+    _addGstSummary(gstSheet, snapshot);
+
+    return _buildWorkbook({
+      'Summary': summarySheet.toXml(),
+      'Invoice Ledger': invoiceSheet.toXml(),
+      'Item Ledger': itemSheet.toXml(),
+      'GST Summary': gstSheet.toXml(),
+    });
   }
 
   static void _addReportHeader(
@@ -35,10 +73,20 @@ class SalesReportExcelBuilder {
     final shopName = identity.shopName.trim().isEmpty
         ? 'Sales Report'
         : identity.shopName.trim();
-    sheet.addMergedText(shopName.toUpperCase(), 1, 12, _ExcelStyle.title);
-    sheet.addMergedText(reportTitle, 1, 12, _ExcelStyle.subtitle);
+    sheet.addMergedText(
+      shopName.toUpperCase(),
+      1,
+      sheet.columnCount,
+      _ExcelStyle.title,
+    );
+    sheet.addMergedText(
+      reportTitle,
+      1,
+      sheet.columnCount,
+      _ExcelStyle.subtitle,
+    );
     for (final line in identity.headerLines.take(3)) {
-      sheet.addMergedText(line, 1, 12, _ExcelStyle.muted);
+      sheet.addMergedText(line, 1, sheet.columnCount, _ExcelStyle.muted);
     }
     sheet.addBlankRow();
     sheet.addRow([
@@ -68,7 +116,9 @@ class SalesReportExcelBuilder {
       _ExcelCell.text('Value', _ExcelStyle.tableHeader),
     ]);
     for (final row
-        in SalesReportExportFormatters.salesSummaryRows(snapshot.summary)) {
+        in SalesReportExportFormatters.salesSummaryRowsWithMetalBreakdown(
+      snapshot,
+    )) {
       sheet.addRow([
         _ExcelCell.text(row[0]),
         _ExcelCell.text(row[1], _ExcelStyle.strong),
@@ -142,7 +192,7 @@ class SalesReportExcelBuilder {
       _ExcelCell.text('Customer', _ExcelStyle.tableHeader),
       _ExcelCell.text('Type', _ExcelStyle.tableHeader),
       _ExcelCell.text('Metal', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Net Wt', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Net Wt by Metal', _ExcelStyle.tableHeader),
       _ExcelCell.text('Gross', _ExcelStyle.tableHeader),
       _ExcelCell.text('Discount', _ExcelStyle.tableHeader),
       _ExcelCell.text('Taxable', _ExcelStyle.tableHeader),
@@ -213,7 +263,9 @@ class SalesReportExcelBuilder {
     sheet.addRow([
       _ExcelCell.text('S.No', _ExcelStyle.tableHeader),
       _ExcelCell.text('Invoice No', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Date', _ExcelStyle.tableHeader),
       _ExcelCell.text('Customer', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Type', _ExcelStyle.tableHeader),
       _ExcelCell.text('Metal', _ExcelStyle.tableHeader),
       _ExcelCell.text('Item', _ExcelStyle.tableHeader),
       _ExcelCell.text('HUID', _ExcelStyle.tableHeader),
@@ -222,6 +274,8 @@ class SalesReportExcelBuilder {
       _ExcelCell.text('Gross Wt', _ExcelStyle.tableHeader),
       _ExcelCell.text('Less Wt', _ExcelStyle.tableHeader),
       _ExcelCell.text('Net Wt', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Rate', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Making', _ExcelStyle.tableHeader),
       _ExcelCell.text('Total', _ExcelStyle.tableHeader),
     ]);
     for (var index = 0; index < items.length; index++) {
@@ -229,7 +283,9 @@ class SalesReportExcelBuilder {
       sheet.addRow([
         _ExcelCell.number(index + 1, _ExcelStyle.integer),
         _ExcelCell.text(item.billNo, _ExcelStyle.strong),
+        _ExcelCell.text(SalesReportExportFormatters.dateTime(item.billDate)),
         _ExcelCell.text(item.customerName),
+        _ExcelCell.text(item.isGst ? 'GST' : 'NON-GST'),
         _ExcelCell.text(item.metalType),
         _ExcelCell.text(item.itemName),
         _ExcelCell.text(item.huid.isEmpty ? 'Not linked' : item.huid),
@@ -238,11 +294,15 @@ class SalesReportExcelBuilder {
         _ExcelCell.number(item.grossWeight, _ExcelStyle.weight),
         _ExcelCell.number(item.lessWeight, _ExcelStyle.weight),
         _ExcelCell.number(item.netWeight, _ExcelStyle.weight),
+        _ExcelCell.number(item.rate, _ExcelStyle.money),
+        _ExcelCell.number(item.makingCharge, _ExcelStyle.money),
         _ExcelCell.number(item.itemTotal, _ExcelStyle.totalMoney),
       ]);
     }
     sheet.addRow([
       _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
+      _ExcelCell.empty(),
+      _ExcelCell.empty(),
       _ExcelCell.empty(),
       _ExcelCell.empty(),
       _ExcelCell.empty(),
@@ -261,9 +321,14 @@ class SalesReportExcelBuilder {
         items.fold(0, (sum, item) => sum + item.lessWeight),
         _ExcelStyle.totalWeight,
       ),
+      _ExcelCell.text(
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(items),
+        _ExcelStyle.totalText,
+      ),
+      _ExcelCell.empty(),
       _ExcelCell.number(
-        items.fold(0, (sum, item) => sum + item.netWeight),
-        _ExcelStyle.totalWeight,
+        items.fold(0, (sum, item) => sum + item.makingCharge),
+        _ExcelStyle.totalMoney,
       ),
       _ExcelCell.number(
         items.fold(0, (sum, item) => sum + item.itemTotal),
@@ -272,16 +337,37 @@ class SalesReportExcelBuilder {
     ]);
   }
 
-  static Uint8List _buildWorkbook(String worksheetXml) {
+  static Uint8List _buildWorkbook(Map<String, String> worksheets) {
+    final entries = worksheets.entries.toList(growable: false);
     final archive = Archive()
-      ..addFile(_archiveFile('[Content_Types].xml', _contentTypesXml))
+      ..addFile(
+        _archiveFile('[Content_Types].xml', _contentTypesXml(entries.length)),
+      )
       ..addFile(_archiveFile('_rels/.rels', _rootRelsXml))
       ..addFile(_archiveFile('docProps/app.xml', _appXml))
       ..addFile(_archiveFile('docProps/core.xml', _coreXml))
-      ..addFile(_archiveFile('xl/workbook.xml', _workbookXml))
-      ..addFile(_archiveFile('xl/_rels/workbook.xml.rels', _workbookRelsXml))
-      ..addFile(_archiveFile('xl/styles.xml', _stylesXml))
-      ..addFile(_archiveFile('xl/worksheets/sheet1.xml', worksheetXml));
+      ..addFile(
+        _archiveFile(
+          'xl/workbook.xml',
+          _workbookXml(entries.map((entry) => entry.key).toList()),
+        ),
+      )
+      ..addFile(
+        _archiveFile(
+          'xl/_rels/workbook.xml.rels',
+          _workbookRelsXml(entries.length),
+        ),
+      )
+      ..addFile(_archiveFile('xl/styles.xml', _stylesXml));
+
+    for (var index = 0; index < entries.length; index++) {
+      archive.addFile(
+        _archiveFile(
+          'xl/worksheets/sheet${index + 1}.xml',
+          entries[index].value,
+        ),
+      );
+    }
 
     return Uint8List.fromList(ZipEncoder().encode(archive));
   }
@@ -340,6 +426,8 @@ class _WorksheetBuilder {
 
   _WorksheetBuilder({required this.columnWidths});
 
+  int get columnCount => columnWidths.length;
+
   void addMergedText(
     String value,
     int startColumn,
@@ -360,7 +448,7 @@ class _WorksheetBuilder {
     _rows.add(
       '<row r="$_rowIndex">${_cell(1, _rowIndex, _ExcelCell.text(title, _ExcelStyle.sectionLabel))}${_cell(2, _rowIndex, _ExcelCell.text(subtitle, _ExcelStyle.sectionValue))}</row>',
     );
-    _merges.add('B$_rowIndex:L$_rowIndex');
+    _merges.add('B$_rowIndex:${_columnName(columnCount)}$_rowIndex');
   }
 
   void addRow(List<_ExcelCell> cells) {
@@ -460,17 +548,22 @@ String _escape(String value) {
       .replaceAll("'", '&apos;');
 }
 
-const _contentTypesXml =
-    '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+String _contentTypesXml(int sheetCount) {
+  final sheetOverrides = [
+    for (var index = 1; index <= sheetCount; index++)
+      '<Override PartName="/xl/worksheets/sheet$index.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>',
+  ].join();
+  return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
 <Default Extension="xml" ContentType="application/xml"/>
 <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
 <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
 <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+$sheetOverrides
 <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
 </Types>''';
+}
 
 const _rootRelsXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -479,17 +572,28 @@ const _rootRelsXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
 </Relationships>''';
 
-const _workbookRelsXml =
-    '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+String _workbookRelsXml(int sheetCount) {
+  final sheetRelationships = [
+    for (var index = 1; index <= sheetCount; index++)
+      '<Relationship Id="rId$index" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet$index.xml"/>',
+  ].join();
+  return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+$sheetRelationships
+<Relationship Id="rId${sheetCount + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
 </Relationships>''';
+}
 
-const _workbookXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+String _workbookXml(List<String> sheetNames) {
+  final sheets = [
+    for (var index = 0; index < sheetNames.length; index++)
+      '<sheet name="${_escape(sheetNames[index])}" sheetId="${index + 1}" r:id="rId${index + 1}"/>',
+  ].join();
+  return '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<sheets><sheet name="Sales Report" sheetId="1" r:id="rId1"/></sheets>
+<sheets>$sheets</sheets>
 </workbook>''';
+}
 
 const _appXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
@@ -509,22 +613,22 @@ const _stylesXml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <numFmt numFmtId="165" formatCode="0.000"/>
 </numFmts>
 <fonts count="5">
-<font><sz val="10"/><color rgb="FF111827"/><name val="Calibri"/></font>
+<font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
 <font><b/><sz val="18"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>
-<font><b/><sz val="14"/><color rgb="FF111827"/><name val="Calibri"/></font>
-<font><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/></font>
-<font><b/><sz val="10"/><color rgb="FF111827"/><name val="Calibri"/></font>
+<font><b/><sz val="14"/><color rgb="FF000000"/><name val="Calibri"/></font>
+<font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
+<font><b/><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font>
 </fonts>
 <fills count="5">
 <fill><patternFill patternType="none"/></fill>
 <fill><patternFill patternType="gray125"/></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FF1F2937"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FF111827"/><bgColor indexed="64"/></patternFill></fill>
 <fill><patternFill patternType="solid"><fgColor rgb="FFF8E7B1"/><bgColor indexed="64"/></patternFill></fill>
-<fill><patternFill patternType="solid"><fgColor rgb="FFFDF8EA"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/><bgColor indexed="64"/></patternFill></fill>
 </fills>
 <borders count="2">
 <border><left/><right/><top/><bottom/><diagonal/></border>
-<border><left style="thin"><color rgb="FFE5E7EB"/></left><right style="thin"><color rgb="FFE5E7EB"/></right><top style="thin"><color rgb="FFE5E7EB"/></top><bottom style="thin"><color rgb="FFE5E7EB"/></bottom><diagonal/></border>
+<border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border>
 </borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
 <cellXfs count="14">

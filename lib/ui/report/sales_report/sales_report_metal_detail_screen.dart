@@ -203,6 +203,23 @@ class _SalesReportMetalDetailScreenState
           metalTitle: metalTitle,
         );
         successMessage = '$metalTitle grade-wise report PDF downloaded.';
+      case SalesReportExportAction.invoiceLedgerPdf:
+        export = SalesReportExportService.exportInvoiceLedgerPdf(
+          snapshot,
+          invoices: gradeInvoices,
+          items: gradeItems,
+          reportTitle: '$metalTitle Invoice Ledger',
+          filePrefix: '$filePrefix-invoice-ledger',
+        );
+        successMessage = '$metalTitle invoice ledger PDF downloaded.';
+      case SalesReportExportAction.itemLedgerPdf:
+        export = SalesReportExportService.exportItemLedgerPdf(
+          snapshot,
+          items: gradeItems,
+          reportTitle: '$metalTitle Item Ledger',
+          filePrefix: '$filePrefix-item-ledger',
+        );
+        successMessage = '$metalTitle item ledger PDF downloaded.';
       case SalesReportExportAction.invoiceLedgerCsv:
         export = SalesReportExportService.exportInvoiceLedgerCsv(
           snapshot,
@@ -257,6 +274,16 @@ class _SalesReportMetalDetailScreenState
       action: SalesReportExportAction.gradeWisePdf,
       label: 'Grade-wise Sales Report PDF',
       icon: Icons.workspace_premium_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.invoiceLedgerPdf,
+      label: 'Metal Invoice Ledger PDF',
+      icon: Icons.picture_as_pdf_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.itemLedgerPdf,
+      label: 'Metal Item Ledger PDF',
+      icon: Icons.picture_as_pdf_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.invoiceLedgerCsv,

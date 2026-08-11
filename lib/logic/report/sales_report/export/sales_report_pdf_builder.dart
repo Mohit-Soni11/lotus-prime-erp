@@ -10,6 +10,12 @@ import 'sales_report_export_formatters.dart';
 class SalesReportPdfBuilder {
   SalesReportPdfBuilder._();
 
+  static const PdfColor _black = PdfColors.black;
+  static const PdfColor _dark = PdfColors.black;
+  static const PdfColor _gold = PdfColor.fromInt(0xFFF2C94C);
+  static const PdfColor _softGold = PdfColor.fromInt(0xFFFFF6D8);
+  static const PdfColor _white = PdfColors.white;
+
   static Future<Uint8List> buildComplete(
     SalesReportSnapshot snapshot, {
     required String reportTitle,
@@ -32,7 +38,9 @@ class SalesReportPdfBuilder {
           _pdfSection(
             'Sales Summary',
             const ['Metric', 'Value'],
-            SalesReportExportFormatters.salesSummaryRows(snapshot.summary),
+            SalesReportExportFormatters.salesSummaryRowsWithMetalBreakdown(
+              snapshot,
+            ),
           ),
           pw.SizedBox(height: 12),
           _pdfSection(
@@ -72,26 +80,6 @@ class SalesReportPdfBuilder {
               'Final',
             ],
             _invoiceRows(snapshot.invoices, snapshot.items),
-          ),
-          pw.SizedBox(height: 12),
-          _pdfSection(
-            'Item Ledger',
-            const [
-              'S.No',
-              'Invoice',
-              'Metal',
-              'Item',
-              'HUID',
-              'Purity',
-              'Pcs',
-              'Gross',
-              'Less',
-              'Net',
-              'Rate',
-              'Making',
-              'Total',
-            ],
-            _itemRows(snapshot.items),
           ),
         ],
       ),
@@ -148,6 +136,97 @@ class SalesReportPdfBuilder {
                   ],
                 )
                 .toList(growable: false),
+          ),
+        ],
+      ),
+    );
+
+    return document.save();
+  }
+
+  static Future<Uint8List> buildInvoiceLedger(
+    SalesReportSnapshot snapshot, {
+    required SalesReportExportIdentity identity,
+    String reportTitle = 'Invoice Ledger',
+  }) async {
+    final document = pw.Document(
+      title:
+          '$reportTitle - ${SalesReportExportFormatters.periodLabel(snapshot.filter)}',
+      author: identity.shopName,
+    );
+
+    document.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a3.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: _pdfFooter,
+        build: (_) => [
+          _pdfHeader(reportTitle, snapshot.filter, identity),
+          pw.SizedBox(height: 14),
+          _pdfSection(
+            'Invoice Ledger',
+            const [
+              'S.No',
+              'Invoice',
+              'Date',
+              'Customer',
+              'Type',
+              'Metal / Net Wt',
+              'Gross',
+              'Discount',
+              'Taxable',
+              'GST',
+              'Final',
+            ],
+            _invoiceLedgerRows(snapshot.invoices, snapshot.items),
+          ),
+        ],
+      ),
+    );
+
+    return document.save();
+  }
+
+  static Future<Uint8List> buildItemLedger(
+    SalesReportSnapshot snapshot, {
+    required SalesReportExportIdentity identity,
+    String reportTitle = 'Item Ledger',
+  }) async {
+    final document = pw.Document(
+      title:
+          '$reportTitle - ${SalesReportExportFormatters.periodLabel(snapshot.filter)}',
+      author: identity.shopName,
+    );
+
+    document.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(22),
+        footer: _pdfFooter,
+        build: (_) => [
+          _pdfHeader(reportTitle, snapshot.filter, identity),
+          pw.SizedBox(height: 14),
+          _pdfSection(
+            'Item Ledger',
+            const [
+              'S.No',
+              'Invoice',
+              'Date',
+              'Customer',
+              'Type',
+              'Metal',
+              'Item',
+              'HUID',
+              'Purity',
+              'Pcs',
+              'Gross',
+              'Less',
+              'Net',
+              'Rate',
+              'Making',
+              'Total',
+            ],
+            _itemLedgerRows(snapshot.items),
           ),
         ],
       ),
@@ -227,7 +306,7 @@ class SalesReportPdfBuilder {
         : identity.shopName.trim();
     return pw.Container(
       padding: const pw.EdgeInsets.all(14),
-      decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF1F2937)),
+      decoration: const pw.BoxDecoration(color: _dark),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -240,7 +319,7 @@ class SalesReportPdfBuilder {
                   shopName.toUpperCase(),
                   style: pw.TextStyle(
                     fontSize: 16,
-                    color: PdfColors.white,
+                    color: _white,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -249,7 +328,7 @@ class SalesReportPdfBuilder {
                   title,
                   style: pw.TextStyle(
                     fontSize: 11,
-                    color: PdfColors.grey200,
+                    color: _white,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
@@ -259,8 +338,8 @@ class SalesReportPdfBuilder {
                     child: pw.Text(
                       line,
                       style: const pw.TextStyle(
-                        fontSize: 7.5,
-                        color: PdfColors.grey300,
+                        fontSize: 8.5,
+                        color: _white,
                       ),
                     ),
                   ),
@@ -272,7 +351,7 @@ class SalesReportPdfBuilder {
             SalesReportExportFormatters.periodLabel(filter),
             style: pw.TextStyle(
               fontSize: 10,
-              color: PdfColors.white,
+              color: _white,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
@@ -287,11 +366,11 @@ class SalesReportPdfBuilder {
       children: [
         pw.Text(
           'Generated ${DateFormat('d MMM yyyy, h:mm a').format(DateTime.now())}',
-          style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+          style: const pw.TextStyle(fontSize: 8, color: _black),
         ),
         pw.Text(
           'Page ${context.pageNumber} of ${context.pagesCount}',
-          style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+          style: const pw.TextStyle(fontSize: 8, color: _black),
         ),
       ],
     );
@@ -307,7 +386,11 @@ class SalesReportPdfBuilder {
       children: [
         pw.Text(
           title,
-          style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          style: pw.TextStyle(
+            fontSize: 12.5,
+            color: _black,
+            fontWeight: pw.FontWeight.bold,
+          ),
         ),
         pw.SizedBox(height: 6),
         pw.TableHelper.fromTextArray(
@@ -315,19 +398,115 @@ class SalesReportPdfBuilder {
           data:
               rows.isEmpty ? [List.filled(headers.length, 'No records')] : rows,
           headerStyle: pw.TextStyle(
-            fontSize: 7,
+            fontSize: 8.6,
             fontWeight: pw.FontWeight.bold,
+            color: _black,
           ),
-          cellStyle: const pw.TextStyle(fontSize: 7),
-          headerDecoration: const pw.BoxDecoration(
-            color: PdfColor.fromInt(0xFFF3E7C5),
-          ),
-          border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.45),
+          cellStyle: const pw.TextStyle(fontSize: 8.2, color: _black),
+          headerDecoration: const pw.BoxDecoration(color: _gold),
+          oddRowDecoration: const pw.BoxDecoration(color: _softGold),
+          border: pw.TableBorder.all(color: _black, width: 0.35),
           cellPadding:
-              const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 5),
         ),
       ],
     );
+  }
+
+  static List<List<String>> _invoiceLedgerRows(
+    List<SalesReportInvoiceRow> invoices,
+    List<SalesReportItemRow> items,
+  ) {
+    final weightsByBill = SalesReportExportFormatters.invoiceWeights(items);
+    return [
+      for (var index = 0; index < invoices.length; index++)
+        [
+          '${index + 1}',
+          invoices[index].billNo,
+          SalesReportExportFormatters.date(invoices[index].billDate),
+          invoices[index].customerName,
+          invoices[index].isGst ? 'GST' : 'NON-GST',
+          '${invoices[index].metalMix}\n${SalesReportExportFormatters.weightSummary(weightsByBill[invoices[index].billId] ?? const {})}',
+          SalesReportExportFormatters.money(invoices[index].grossAmount),
+          SalesReportExportFormatters.money(invoices[index].discountAmount),
+          SalesReportExportFormatters.money(invoices[index].taxableAmount),
+          SalesReportExportFormatters.money(invoices[index].gstAmount),
+          SalesReportExportFormatters.money(invoices[index].finalAmount),
+        ],
+      [
+        'TOTAL',
+        '',
+        '',
+        '',
+        '',
+        SalesReportExportFormatters.invoiceWeightTotal(items),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.grossAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.discountAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.taxableAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.gstAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.finalAmount),
+        ),
+      ],
+    ];
+  }
+
+  static List<List<String>> _itemLedgerRows(List<SalesReportItemRow> items) {
+    return [
+      for (var index = 0; index < items.length; index++)
+        [
+          '${index + 1}',
+          items[index].billNo,
+          SalesReportExportFormatters.date(items[index].billDate),
+          items[index].customerName,
+          items[index].isGst ? 'GST' : 'NON-GST',
+          items[index].metalType,
+          items[index].itemName,
+          items[index].huid.isEmpty ? 'Not linked' : items[index].huid,
+          items[index].purity,
+          '${items[index].quantity}',
+          SalesReportExportFormatters.weight(items[index].grossWeight),
+          SalesReportExportFormatters.weight(items[index].lessWeight),
+          SalesReportExportFormatters.weight(items[index].netWeight),
+          SalesReportExportFormatters.money(items[index].rate),
+          SalesReportExportFormatters.money(items[index].makingCharge),
+          SalesReportExportFormatters.money(items[index].itemTotal),
+        ],
+      [
+        'TOTAL',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '${items.fold(0, (sum, item) => sum + item.quantity)}',
+        SalesReportExportFormatters.weight(
+          items.fold(0, (sum, item) => sum + item.grossWeight),
+        ),
+        SalesReportExportFormatters.weight(
+          items.fold(0, (sum, item) => sum + item.lessWeight),
+        ),
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(items),
+        '',
+        SalesReportExportFormatters.money(
+          items.fold(0, (sum, item) => sum + item.makingCharge),
+        ),
+        SalesReportExportFormatters.money(
+          items.fold(0, (sum, item) => sum + item.itemTotal),
+        ),
+      ],
+    ];
   }
 
   static List<List<String>> _invoiceRows(
@@ -363,52 +542,6 @@ class SalesReportPdfBuilder {
         ),
         SalesReportExportFormatters.money(
           invoices.fold(0, (sum, row) => sum + row.finalAmount),
-        ),
-      ],
-    ];
-  }
-
-  static List<List<String>> _itemRows(List<SalesReportItemRow> items) {
-    return [
-      for (var index = 0; index < items.length; index++)
-        [
-          '${index + 1}',
-          items[index].billNo,
-          items[index].metalType,
-          items[index].itemName,
-          items[index].huid.isEmpty ? 'Not linked' : items[index].huid,
-          items[index].purity,
-          '${items[index].quantity}',
-          SalesReportExportFormatters.weight(items[index].grossWeight),
-          SalesReportExportFormatters.weight(items[index].lessWeight),
-          SalesReportExportFormatters.weight(items[index].netWeight),
-          SalesReportExportFormatters.money(items[index].rate),
-          SalesReportExportFormatters.money(items[index].makingCharge),
-          SalesReportExportFormatters.money(items[index].itemTotal),
-        ],
-      [
-        'TOTAL',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '${items.fold(0, (sum, item) => sum + item.quantity)}',
-        SalesReportExportFormatters.weight(
-          items.fold(0, (sum, item) => sum + item.grossWeight),
-        ),
-        SalesReportExportFormatters.weight(
-          items.fold(0, (sum, item) => sum + item.lessWeight),
-        ),
-        SalesReportExportFormatters.weight(
-          items.fold(0, (sum, item) => sum + item.netWeight),
-        ),
-        '',
-        SalesReportExportFormatters.money(
-          items.fold(0, (sum, item) => sum + item.makingCharge),
-        ),
-        SalesReportExportFormatters.money(
-          items.fold(0, (sum, item) => sum + item.itemTotal),
         ),
       ],
     ];

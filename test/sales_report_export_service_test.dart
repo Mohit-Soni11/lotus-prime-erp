@@ -12,6 +12,7 @@ void main() {
     expect(csv, contains('GST LIABILITY'));
     expect(csv, contains('Combined GST Exposure'));
     expect(csv, contains('Metal Net Weight'));
+    expect(csv, contains('Net Weight by Metal'));
     expect(csv, contains('Gold 0.759 g'));
     expect(csv, contains('Silver 20.361 g'));
     expect(csv, isNot(contains('Cash')));
@@ -22,11 +23,19 @@ void main() {
   test('complete sales report Excel builds a styled workbook', () {
     final bytes = SalesReportExportService.buildCompleteExcelBytes(snapshot);
     final archive = ZipDecoder().decodeBytes(bytes);
-    final sheet = archive.findFile('xl/worksheets/sheet1.xml');
+    final workbook = archive.findFile('xl/workbook.xml');
+    final summarySheet = archive.findFile('xl/worksheets/sheet1.xml');
+    final invoiceSheet = archive.findFile('xl/worksheets/sheet2.xml');
+    final itemSheet = archive.findFile('xl/worksheets/sheet3.xml');
 
     expect(bytes.take(2), orderedEquals(const [80, 75]));
-    expect(sheet, isNotNull);
-    expect(String.fromCharCodes(sheet!.content as List<int>),
+    expect(workbook, isNotNull);
+    expect(String.fromCharCodes(workbook!.content as List<int>),
+        contains('Invoice Ledger'));
+    expect(summarySheet, isNotNull);
+    expect(invoiceSheet, isNotNull);
+    expect(itemSheet, isNotNull);
+    expect(String.fromCharCodes(summarySheet!.content as List<int>),
         contains('Sales Summary'));
     expect(archive.findFile('xl/styles.xml'), isNotNull);
   });
@@ -41,6 +50,20 @@ void main() {
   test('GST liability PDF builds successfully', () async {
     final bytes =
         await SalesReportExportService.buildGstLiabilityPdfBytes(snapshot);
+
+    expect(bytes.take(4), orderedEquals(const [37, 80, 68, 70]));
+  });
+
+  test('invoice ledger PDF builds successfully', () async {
+    final bytes =
+        await SalesReportExportService.buildInvoiceLedgerPdfBytes(snapshot);
+
+    expect(bytes.take(4), orderedEquals(const [37, 80, 68, 70]));
+  });
+
+  test('item ledger PDF builds successfully', () async {
+    final bytes =
+        await SalesReportExportService.buildItemLedgerPdfBytes(snapshot);
 
     expect(bytes.take(4), orderedEquals(const [37, 80, 68, 70]));
   });

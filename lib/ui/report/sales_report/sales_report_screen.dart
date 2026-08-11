@@ -126,6 +126,12 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       case SalesReportExportAction.gstLiabilityPdf:
         export = SalesReportExportService.exportGstLiabilityPdf(snapshot);
         successMessage = 'GST liability report PDF downloaded.';
+      case SalesReportExportAction.invoiceLedgerPdf:
+        export = SalesReportExportService.exportInvoiceLedgerPdf(snapshot);
+        successMessage = 'Invoice ledger PDF downloaded.';
+      case SalesReportExportAction.itemLedgerPdf:
+        export = SalesReportExportService.exportItemLedgerPdf(snapshot);
+        successMessage = 'Item ledger PDF downloaded.';
       case SalesReportExportAction.invoiceLedgerCsv:
         export = SalesReportExportService.exportInvoiceLedgerCsv(snapshot);
         successMessage = 'Invoice ledger CSV downloaded.';
@@ -167,6 +173,16 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       action: SalesReportExportAction.gstLiabilityPdf,
       label: 'GST Liability Report PDF',
       icon: Icons.account_balance_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.invoiceLedgerPdf,
+      label: 'Invoice Ledger PDF',
+      icon: Icons.picture_as_pdf_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.itemLedgerPdf,
+      label: 'Item Ledger PDF',
+      icon: Icons.picture_as_pdf_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.invoiceLedgerCsv,

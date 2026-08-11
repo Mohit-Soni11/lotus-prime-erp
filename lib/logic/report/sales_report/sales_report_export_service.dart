@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 
 import '../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
@@ -16,6 +15,8 @@ enum SalesReportExportAction {
   completePdf,
   gstLiabilityPdf,
   gradeWisePdf,
+  invoiceLedgerPdf,
+  itemLedgerPdf,
   invoiceLedgerCsv,
   itemLedgerCsv,
   completeExcel,
@@ -86,6 +87,35 @@ class SalesReportExportService {
     );
   }
 
+  static Future<String?> exportInvoiceLedgerPdf(
+    SalesReportSnapshot snapshot, {
+    List<SalesReportInvoiceRow>? invoices,
+    List<SalesReportItemRow>? items,
+    String reportTitle = 'Invoice Ledger',
+    String? filePrefix,
+  }) async {
+    final identity = await _loadIdentity();
+    final scopedSnapshot = _copySnapshot(
+      snapshot,
+      invoices: invoices,
+      items: items,
+    );
+    final bytes = await buildInvoiceLedgerPdfBytes(
+      scopedSnapshot,
+      identity: identity,
+      reportTitle: reportTitle,
+    );
+    return _savePdf(
+      dialogTitle: 'Download $reportTitle PDF',
+      fileName: _fileName(
+        snapshot.filter,
+        filePrefix ?? 'sales-invoice-ledger',
+        'pdf',
+      ),
+      bytes: bytes,
+    );
+  }
+
   static Future<String?> exportItemLedgerCsv(
     SalesReportSnapshot snapshot, {
     List<SalesReportItemRow>? items,
@@ -99,6 +129,33 @@ class SalesReportExportService {
         'csv',
       ),
       contents: SalesReportCsvBuilder.buildItemLedger(items ?? snapshot.items),
+    );
+  }
+
+  static Future<String?> exportItemLedgerPdf(
+    SalesReportSnapshot snapshot, {
+    List<SalesReportItemRow>? items,
+    String reportTitle = 'Item Ledger',
+    String? filePrefix,
+  }) async {
+    final identity = await _loadIdentity();
+    final scopedSnapshot = _copySnapshot(
+      snapshot,
+      items: items,
+    );
+    final bytes = await buildItemLedgerPdfBytes(
+      scopedSnapshot,
+      identity: identity,
+      reportTitle: reportTitle,
+    );
+    return _savePdf(
+      dialogTitle: 'Download $reportTitle PDF',
+      fileName: _fileName(
+        snapshot.filter,
+        filePrefix ?? 'sales-item-ledger',
+        'pdf',
+      ),
+      bytes: bytes,
     );
   }
 
@@ -203,6 +260,32 @@ class SalesReportExportService {
   }
 
   @visibleForTesting
+  static Future<Uint8List> buildInvoiceLedgerPdfBytes(
+    SalesReportSnapshot snapshot, {
+    String reportTitle = 'Invoice Ledger',
+    SalesReportExportIdentity identity = SalesReportExportIdentity.fallback,
+  }) {
+    return SalesReportPdfBuilder.buildInvoiceLedger(
+      snapshot,
+      identity: identity,
+      reportTitle: reportTitle,
+    );
+  }
+
+  @visibleForTesting
+  static Future<Uint8List> buildItemLedgerPdfBytes(
+    SalesReportSnapshot snapshot, {
+    String reportTitle = 'Item Ledger',
+    SalesReportExportIdentity identity = SalesReportExportIdentity.fallback,
+  }) {
+    return SalesReportPdfBuilder.buildItemLedger(
+      snapshot,
+      identity: identity,
+      reportTitle: reportTitle,
+    );
+  }
+
+  @visibleForTesting
   static Uint8List buildCompleteExcelBytes(
     SalesReportSnapshot snapshot, {
     String reportTitle = 'Sales Report',
@@ -301,13 +384,27 @@ class SalesReportExportService {
     return lines;
   }
 
+  static SalesReportSnapshot _copySnapshot(
+    SalesReportSnapshot snapshot, {
+    List<SalesReportInvoiceRow>? invoices,
+    List<SalesReportItemRow>? items,
+  }) {
+    return SalesReportSnapshot(
+      filter: snapshot.filter,
+      summary: snapshot.summary,
+      gstLiability: snapshot.gstLiability,
+      metals: snapshot.metals,
+      invoices: invoices ?? snapshot.invoices,
+      items: items ?? snapshot.items,
+      availableMetals: snapshot.availableMetals,
+    );
+  }
+
   static String _fileName(
     SalesReportFilter filter,
     String prefix,
     String extension,
   ) {
-    final start = DateFormat('yyyyMMdd').format(filter.startDate);
-    final end = DateFormat('yyyyMMdd').format(filter.endDate);
-    return '${SalesReportExportFormatters.filePart(prefix)}-$start-$end.$extension';
+    return '${SalesReportExportFormatters.filePart(prefix)}.$extension';
   }
 }
