@@ -155,6 +155,7 @@ class _SalesReportMetalDetailScreenState
                           const SizedBox(height: 16),
                           SalesReportInvoiceLedger(
                             invoices: gradeInvoices,
+                            items: gradeItems,
                           ),
                           const SizedBox(height: 16),
                           SalesReportItemLedger(items: gradeItems),

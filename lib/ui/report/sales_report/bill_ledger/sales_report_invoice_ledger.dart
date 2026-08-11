@@ -6,11 +6,18 @@ import '../sales_report_formatters.dart';
 
 class SalesReportInvoiceLedger extends StatelessWidget {
   final List<SalesReportInvoiceRow> invoices;
+  final List<SalesReportItemRow> items;
 
-  const SalesReportInvoiceLedger({super.key, required this.invoices});
+  const SalesReportInvoiceLedger({
+    super.key,
+    required this.invoices,
+    required this.items,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final weightIndex = _MetalWeightIndex(items);
+
     return Container(
       decoration: SalesReportStyles.panel(),
       clipBehavior: Clip.antiAlias,
@@ -34,7 +41,7 @@ class SalesReportInvoiceLedger extends StatelessWidget {
                     child: DataTable(
                       headingRowHeight: 42,
                       dataRowMinHeight: 52,
-                      dataRowMaxHeight: 58,
+                      dataRowMaxHeight: 74,
                       columnSpacing: 26,
                       horizontalMargin: 24,
                       columns: const [
@@ -44,6 +51,7 @@ class SalesReportInvoiceLedger extends StatelessWidget {
                         DataColumn(label: Text('Customer')),
                         DataColumn(label: Text('Type')),
                         DataColumn(label: Text('Metal')),
+                        DataColumn(label: Text('Metal Weight')),
                         DataColumn(label: Text('Gross'), numeric: true),
                         DataColumn(label: Text('Discount'), numeric: true),
                         DataColumn(label: Text('Taxable'), numeric: true),
@@ -51,27 +59,31 @@ class SalesReportInvoiceLedger extends StatelessWidget {
                         DataColumn(label: Text('Round Off'), numeric: true),
                         DataColumn(label: Text('Final'), numeric: true),
                       ],
-                      rows: _buildRows(),
+                      rows: _buildRows(weightIndex),
                     ),
                   ),
                 );
               },
             ),
-            _InvoiceTotalsBar(invoices: invoices),
+            _InvoiceTotalsBar(invoices: invoices, items: items),
           ],
         ],
       ),
     );
   }
 
-  List<DataRow> _buildRows() {
+  List<DataRow> _buildRows(_MetalWeightIndex weightIndex) {
     return [
       for (var index = 0; index < invoices.length; index++)
-        _buildRow(invoices[index], index),
+        _buildRow(invoices[index], index, weightIndex),
     ];
   }
 
-  DataRow _buildRow(SalesReportInvoiceRow invoice, int index) {
+  DataRow _buildRow(
+    SalesReportInvoiceRow invoice,
+    int index,
+    _MetalWeightIndex weightIndex,
+  ) {
     return DataRow(
       cells: [
         DataCell(Text('${index + 1}')),
@@ -80,6 +92,8 @@ class SalesReportInvoiceLedger extends StatelessWidget {
         DataCell(_CustomerCell(invoice)),
         DataCell(_TypeBadge(isGst: invoice.isGst)),
         DataCell(Text(invoice.metalMix.replaceAll(',', ' / '))),
+        DataCell(
+            _MetalWeightCell(weights: weightIndex.forBill(invoice.billId))),
         DataCell(Text(salesReportMoney(invoice.grossAmount))),
         DataCell(Text(salesReportMoney(invoice.discountAmount))),
         DataCell(Text(salesReportMoney(invoice.taxableAmount))),
@@ -96,8 +110,9 @@ class SalesReportInvoiceLedger extends StatelessWidget {
 
 class _InvoiceTotalsBar extends StatelessWidget {
   final List<SalesReportInvoiceRow> invoices;
+  final List<SalesReportItemRow> items;
 
-  const _InvoiceTotalsBar({required this.invoices});
+  const _InvoiceTotalsBar({required this.invoices, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -106,10 +121,22 @@ class _InvoiceTotalsBar extends StatelessWidget {
     final taxable = _sum((invoice) => invoice.taxableAmount);
     final gst = _sum((invoice) => invoice.gstAmount);
     final finalAmount = _sum((invoice) => invoice.finalAmount);
+    final metalWeights = _MetalWeightIndex(items).totals;
+    final totalWeight = metalWeights.values.fold<double>(
+      0,
+      (total, weight) => total + weight,
+    );
 
     return _TotalsStrip(
       children: [
         _TotalTile(label: 'Invoices', value: '${invoices.length}'),
+        for (final entry in metalWeights.entries)
+          _TotalTile(
+            label: '${entry.key} Net Wt',
+            value: salesReportWeight(entry.value),
+          ),
+        _TotalTile(
+            label: 'Total Net Wt', value: salesReportWeight(totalWeight)),
         _TotalTile(label: 'Gross', value: salesReportMoney(gross)),
         _TotalTile(label: 'Discount', value: salesReportMoney(discount)),
         _TotalTile(label: 'Taxable', value: salesReportMoney(taxable)),
@@ -127,6 +154,53 @@ class _InvoiceTotalsBar extends StatelessWidget {
     return invoices.fold<double>(
       0,
       (total, invoice) => total + selector(invoice),
+    );
+  }
+}
+
+class _MetalWeightCell extends StatelessWidget {
+  final Map<String, double> weights;
+
+  const _MetalWeightCell({required this.weights});
+
+  @override
+  Widget build(BuildContext context) {
+    if (weights.isEmpty) {
+      return const Text(
+        '-',
+        style: TextStyle(color: SalesReportColors.textMuted),
+      );
+    }
+
+    return SizedBox(
+      width: 170,
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 5,
+        children: [
+          for (final entry in weights.entries)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: SalesReportColors.goldGradientStart.withValues(
+                  alpha: 0.10,
+                ),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
+                  color: SalesReportColors.brandGold.withValues(alpha: 0.22),
+                ),
+              ),
+              child: Text(
+                '${entry.key} ${salesReportWeight(entry.value)}',
+                style: SalesReportStyles.body.copyWith(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: SalesReportColors.textPrimary,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -166,6 +240,76 @@ class _LedgerHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _MetalWeightIndex {
+  final Map<int, Map<String, double>> _byBill;
+  final Map<String, double> totals;
+
+  _MetalWeightIndex(List<SalesReportItemRow> items)
+      : _byBill = _buildByBill(items),
+        totals = _buildTotals(items);
+
+  Map<String, double> forBill(int billId) {
+    return _byBill[billId] ?? const {};
+  }
+
+  static Map<int, Map<String, double>> _buildByBill(
+    List<SalesReportItemRow> items,
+  ) {
+    final grouped = <int, Map<String, double>>{};
+    for (final item in items) {
+      final metal = _displayMetal(item.metalType);
+      if (metal.isEmpty) continue;
+      final billWeights = grouped.putIfAbsent(item.billId, () => {});
+      billWeights[metal] = (billWeights[metal] ?? 0) + item.netWeight;
+    }
+    return {
+      for (final entry in grouped.entries) entry.key: _sortWeights(entry.value),
+    };
+  }
+
+  static Map<String, double> _buildTotals(List<SalesReportItemRow> items) {
+    final totals = <String, double>{};
+    for (final item in items) {
+      final metal = _displayMetal(item.metalType);
+      if (metal.isEmpty) continue;
+      totals[metal] = (totals[metal] ?? 0) + item.netWeight;
+    }
+    return _sortWeights(totals);
+  }
+
+  static Map<String, double> _sortWeights(Map<String, double> source) {
+    final entries = source.entries.toList()
+      ..sort((a, b) {
+        final priority = _metalPriority(a.key).compareTo(_metalPriority(b.key));
+        if (priority != 0) return priority;
+        return a.key.compareTo(b.key);
+      });
+    return Map<String, double>.fromEntries(entries);
+  }
+
+  static int _metalPriority(String metal) {
+    switch (metal.toLowerCase()) {
+      case 'gold':
+        return 0;
+      case 'silver':
+        return 1;
+      case 'platinum':
+        return 2;
+      case 'diamond':
+        return 3;
+      default:
+        return 10;
+    }
+  }
+
+  static String _displayMetal(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    final lower = trimmed.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
   }
 }
 

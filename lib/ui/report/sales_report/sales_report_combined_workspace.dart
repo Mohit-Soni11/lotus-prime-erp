@@ -42,7 +42,10 @@ class SalesReportCombinedWorkspace extends StatelessWidget {
           onMetalSelected: onMetalSelected,
         ),
         const SizedBox(height: 18),
-        SalesReportInvoiceLedger(invoices: snapshot.invoices),
+        SalesReportInvoiceLedger(
+          invoices: snapshot.invoices,
+          items: snapshot.items,
+        ),
         const SizedBox(height: 16),
         SalesReportItemLedger(items: snapshot.items),
       ],
