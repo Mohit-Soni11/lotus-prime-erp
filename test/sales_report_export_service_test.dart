@@ -11,13 +11,14 @@ void main() {
 
     expect(csv, contains('GST LIABILITY'));
     expect(csv, contains('Combined GST Exposure'));
-    expect(csv, contains('Metal Net Weight'));
+    expect(csv, contains('GSTIN'));
+    expect(csv, contains('B2B/B2C'));
+    expect(csv, contains('Place of Supply'));
+    expect(csv, contains('Old Gold Adjustment'));
+    expect(csv, contains('Return/Credit Note'));
     expect(csv, contains('Net Weight by Metal'));
     expect(csv, contains('Gold 0.759 g'));
     expect(csv, contains('Silver 20.361 g'));
-    expect(csv, isNot(contains('Cash')));
-    expect(csv, isNot(contains('UPI')));
-    expect(csv, isNot(contains('Advance')));
   });
 
   test('complete sales report Excel builds a styled workbook', () {
@@ -35,19 +36,95 @@ void main() {
     expect(workbookXml, contains('Invoice Register'));
     expect(workbookXml, contains('Item Register'));
     expect(workbookXml, contains('GST Register'));
+    expect(workbookXml, contains('HSN GST Register'));
+    expect(workbookXml, contains('Payment Register'));
+    expect(workbookXml, contains('Customer Sales Register'));
+    expect(workbookXml, contains('Advance Register'));
+    expect(workbookXml, contains('Old Gold Adjustment'));
+    expect(workbookXml, contains('Due Register'));
+    expect(workbookXml, contains('Return Credit Register'));
+    expect(workbookXml, contains('Metal Grade Register'));
     expect(summarySheet, isNotNull);
     expect(invoiceSheet, isNotNull);
     expect(itemSheet, isNotNull);
+    final gstSheet = archive.findFile('xl/worksheets/sheet4.xml');
+    final hsnGstSheet = archive.findFile('xl/worksheets/sheet5.xml');
+    final paymentSheet = archive.findFile('xl/worksheets/sheet6.xml');
+    final customerSheet = archive.findFile('xl/worksheets/sheet7.xml');
+    final advanceSheet = archive.findFile('xl/worksheets/sheet8.xml');
+    final oldGoldSheet = archive.findFile('xl/worksheets/sheet9.xml');
+    final dueSheet = archive.findFile('xl/worksheets/sheet10.xml');
+    final returnCreditSheet = archive.findFile('xl/worksheets/sheet11.xml');
+    final metalGradeSheet = archive.findFile('xl/worksheets/sheet12.xml');
+    expect(gstSheet, isNotNull);
+    expect(hsnGstSheet, isNotNull);
+    expect(paymentSheet, isNotNull);
+    expect(customerSheet, isNotNull);
+    expect(advanceSheet, isNotNull);
+    expect(oldGoldSheet, isNotNull);
+    expect(dueSheet, isNotNull);
+    expect(returnCreditSheet, isNotNull);
+    expect(metalGradeSheet, isNotNull);
     final summaryXml = String.fromCharCodes(summarySheet!.content as List<int>);
     final invoiceXml = String.fromCharCodes(invoiceSheet!.content as List<int>);
     final itemXml = String.fromCharCodes(itemSheet!.content as List<int>);
+    final gstXml = String.fromCharCodes(gstSheet!.content as List<int>);
+    final hsnGstXml = String.fromCharCodes(hsnGstSheet!.content as List<int>);
+    final paymentXml = String.fromCharCodes(paymentSheet!.content as List<int>);
+    final customerXml =
+        String.fromCharCodes(customerSheet!.content as List<int>);
+    final advanceXml = String.fromCharCodes(advanceSheet!.content as List<int>);
+    final oldGoldXml = String.fromCharCodes(oldGoldSheet!.content as List<int>);
+    final dueXml = String.fromCharCodes(dueSheet!.content as List<int>);
+    final returnCreditXml =
+        String.fromCharCodes(returnCreditSheet!.content as List<int>);
+    final metalGradeXml =
+        String.fromCharCodes(metalGradeSheet!.content as List<int>);
     expect(summaryXml, contains('Sales Register Summary'));
     expect(summaryXml, contains('Metal Wise Sales'));
-    expect(invoiceXml, contains('Gold Net Wt (g)'));
+    expect(invoiceXml, contains('GSTIN'));
+    expect(invoiceXml, contains('B2B/B2C'));
+    expect(invoiceXml, contains('Place of Supply'));
+    expect(invoiceXml, contains('CGST'));
+    expect(invoiceXml, contains('SGST'));
+    expect(invoiceXml, contains('IGST'));
+    expect(invoiceXml, contains('Old Gold Adjustment'));
+    expect(invoiceXml, contains('Return/Credit Note'));
+    expect(invoiceXml, contains('Bill Status'));
     expect(invoiceXml, contains('<autoFilter'));
     expect(invoiceXml, contains('<dimension ref='));
     expect(invoiceXml, contains('<f>SUM('));
-    expect(invoiceXml, contains('<c r="H10" s="13"><f>SUM(H8:H9)</f>'));
+    expect(invoiceXml, contains('<c r="J10" s="12"><f>SUM(J8:J9)</f>'));
+    expect(gstXml, contains('<v>145.36</v>'));
+    expect(gstXml, contains('<v>145.35</v>'));
+    expect(gstXml, contains('<v>290.71</v>'));
+    expect(hsnGstXml, contains('HSN GST Register'));
+    expect(hsnGstXml, contains('7113'));
+    expect(hsnGstXml, contains('GST Rate'));
+    expect(hsnGstXml, contains('<v>9690.27</v>'));
+    expect(hsnGstXml, contains('<v>9980.98</v>'));
+    expect(paymentXml, contains('Payment Register'));
+    expect(paymentXml, contains('Old Gold Adjustment'));
+    expect(paymentXml, contains('<v>8480.98</v>'));
+    expect(paymentXml, contains('<v>3000.00</v>'));
+    expect(customerXml, contains('Customer Sales Register'));
+    expect(customerXml, contains('REYANSH SONI'));
+    expect(customerXml, contains('<v>14053.18</v>'));
+    expect(advanceXml, contains('Advance Register'));
+    expect(advanceXml, contains('Advance Adjusted'));
+    expect(advanceXml, contains('<v>500.00</v>'));
+    expect(oldGoldXml, contains('Old Gold Adjustment Register'));
+    expect(oldGoldXml, contains('<v>1000.00</v>'));
+    expect(dueXml, contains('Due Register'));
+    expect(dueXml, contains('Outstanding invoice balances'));
+    expect(dueXml, contains('<v>1072.20</v>'));
+    expect(returnCreditXml, contains('Return Credit Register'));
+    expect(returnCreditXml, contains('No return/credit notes found'));
+    expect(metalGradeXml, contains('Metal Grade Register'));
+    expect(metalGradeXml, contains('18KT'));
+    expect(metalGradeXml, contains('60'));
+    expect(metalGradeXml, contains('<v>0.759</v>'));
+    expect(metalGradeXml, contains('<v>20.361</v>'));
     expect(itemXml, contains('Making Charges'));
     expect(itemXml, contains('<autoFilter'));
     expect(archive.findFile('xl/styles.xml'), isNotNull);
@@ -106,6 +183,9 @@ SalesReportSnapshot _snapshot() {
     gstAmount: 290.71,
     finalAmount: 9980.98,
     paidAmount: 9980.98,
+    cashAmount: 8480.98,
+    advanceAmount: 500,
+    tradeInDeduction: 1000,
     metalMix: 'GOLD',
   );
   final silverInvoice = _invoice(
@@ -175,6 +255,7 @@ SalesReportSnapshot _snapshot() {
         billNo: goldInvoice.billNo,
         metalType: 'Gold',
         itemName: 'Nose Pin',
+        hsnCode: '7113',
         purity: '18KT',
         grossWeight: 0.759,
         netWeight: 0.759,
@@ -187,6 +268,7 @@ SalesReportSnapshot _snapshot() {
         billNo: silverInvoice.billNo,
         metalType: 'Silver',
         itemName: 'Payal',
+        hsnCode: '7113',
         purity: '60',
         grossWeight: 20.361,
         netWeight: 20.361,
@@ -209,7 +291,10 @@ SalesReportInvoiceRow _invoice({
   double gstAmount = 0,
   required double finalAmount,
   required double paidAmount,
+  double? cashAmount,
   double dueAmount = 0,
+  double advanceAmount = 0,
+  double tradeInDeduction = 0,
   required String metalMix,
 }) {
   return SalesReportInvoiceRow(
@@ -218,6 +303,9 @@ SalesReportInvoiceRow _invoice({
     billDate: DateTime(2026, 8, 9, 17, 18),
     customerName: 'REYANSH SONI',
     mobile: '9304479436',
+    customerGstin: isGst ? '10ABCDE1234F1Z5' : '',
+    businessType: isGst ? 'B2B' : 'B2C',
+    placeOfSupply: 'Bihar',
     billType: isGst ? 'GST' : 'NORMAL',
     paymentStatus: dueAmount > 0 ? 'PARTIAL' : 'PAID',
     isGst: isGst,
@@ -225,18 +313,24 @@ SalesReportInvoiceRow _invoice({
     discountAmount: discountAmount,
     taxableAmount: taxableAmount,
     gstAmount: gstAmount,
+    cgstAmount: isGst ? gstAmount / 2 : 0,
+    sgstAmount: isGst ? gstAmount / 2 : 0,
+    igstAmount: 0,
     roundOffAmount: 0,
     finalAmount: finalAmount,
     paidAmount: paidAmount,
     dueAmount: dueAmount,
-    cashAmount: paidAmount,
+    cashAmount: cashAmount ?? paidAmount,
     upiAmount: 0,
     cardAmount: 0,
-    advanceAmount: 0,
+    bankAmount: 0,
+    advanceAmount: advanceAmount,
     makingAmount: 0,
-    tradeInDeduction: 0,
+    tradeInDeduction: tradeInDeduction,
+    returnCreditNoteAmount: 0,
     itemCount: 1,
     metalMix: metalMix,
+    billStatus: 'ACTIVE',
   );
 }
 
@@ -245,6 +339,7 @@ SalesReportItemRow _item({
   required String billNo,
   required String metalType,
   required String itemName,
+  String hsnCode = '',
   required String purity,
   required double grossWeight,
   required double netWeight,
@@ -261,6 +356,7 @@ SalesReportItemRow _item({
     lineNo: 1,
     metalType: metalType,
     itemName: itemName,
+    hsnCode: hsnCode,
     huid: '',
     purity: purity,
     quantity: 1,

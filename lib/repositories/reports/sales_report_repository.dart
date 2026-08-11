@@ -90,12 +90,17 @@ class SalesReportRepository {
         COALESCE(NULLIF(TRIM(b.customer_name), ''), 'Walk-in Customer')
           AS customer_name,
         COALESCE(b.mobile, '') AS mobile,
+        COALESCE(c.gst_number, '') AS customer_gstin,
+        COALESCE(c.state, '') AS place_of_supply,
         COALESCE(b.bill_type, '') AS bill_type,
         COALESCE(b.payment_status, '') AS payment_status,
         COALESCE(b.total_amount, 0.0) AS total_amount,
         COALESCE(b.discount, 0.0) AS discount_amount,
         COALESCE(b.taxable_amount, 0.0) AS taxable_amount,
         COALESCE(b.gst_amount, 0.0) AS gst_amount,
+        COALESCE(b.cgst_amount, 0.0) AS cgst_amount,
+        COALESCE(b.sgst_amount, 0.0) AS sgst_amount,
+        0.0 AS igst_amount,
         COALESCE(b.round_off_amount, 0.0) AS round_off_amount,
         COALESCE(b.final_amount, 0.0) AS final_amount,
         COALESCE(b.paid_amount, 0.0) AS paid_amount,
@@ -103,9 +108,12 @@ class SalesReportRepository {
         COALESCE(b.cash_paid, 0.0) AS cash_paid,
         COALESCE(b.upi_paid, 0.0) AS upi_paid,
         COALESCE(b.card_paid, 0.0) AS card_paid,
+        0.0 AS bank_paid,
         COALESCE(b.advance_paid, 0.0) AS advance_paid,
         COALESCE(b.making_total, 0.0) AS making_total,
         COALESCE(b.old_gold_deduction, 0.0) AS trade_in_deduction,
+        0.0 AS return_credit_note_amount,
+        COALESCE(b.status, '') AS bill_status,
         (
           SELECT COUNT(*)
           FROM bill_items i
@@ -117,6 +125,7 @@ class SalesReportRepository {
           WHERE i.bill_id = b.id
         ) AS metal_mix
       FROM bills b
+      LEFT JOIN customers c ON c.id = b.customer_id
       ${where.sql}
       ORDER BY b.bill_date DESC, b.id DESC
       ''',
@@ -132,6 +141,9 @@ class SalesReportRepository {
         billDate: row.read<DateTime>('bill_date'),
         customerName: row.read<String>('customer_name'),
         mobile: row.read<String>('mobile'),
+        customerGstin: row.read<String>('customer_gstin'),
+        businessType: _businessType(row.read<String>('customer_gstin')),
+        placeOfSupply: row.read<String>('place_of_supply'),
         billType: row.read<String>('bill_type'),
         paymentStatus: row.read<String>('payment_status'),
         isGst: _isGstBill(billNo, gstAmount, row.read<String>('bill_type')),
@@ -139,6 +151,9 @@ class SalesReportRepository {
         discountAmount: _readDouble(row, 'discount_amount'),
         taxableAmount: _readDouble(row, 'taxable_amount'),
         gstAmount: gstAmount,
+        cgstAmount: _readDouble(row, 'cgst_amount'),
+        sgstAmount: _readDouble(row, 'sgst_amount'),
+        igstAmount: _readDouble(row, 'igst_amount'),
         roundOffAmount: _readDouble(row, 'round_off_amount'),
         finalAmount: _readDouble(row, 'final_amount'),
         paidAmount: _readDouble(row, 'paid_amount'),
@@ -146,11 +161,14 @@ class SalesReportRepository {
         cashAmount: _readDouble(row, 'cash_paid'),
         upiAmount: _readDouble(row, 'upi_paid'),
         cardAmount: _readDouble(row, 'card_paid'),
+        bankAmount: _readDouble(row, 'bank_paid'),
         advanceAmount: _readDouble(row, 'advance_paid'),
         makingAmount: _readDouble(row, 'making_total'),
         tradeInDeduction: _readDouble(row, 'trade_in_deduction'),
+        returnCreditNoteAmount: _readDouble(row, 'return_credit_note_amount'),
         itemCount: row.read<int>('item_count'),
         metalMix: row.readNullable<String>('metal_mix') ?? '',
+        billStatus: row.read<String>('bill_status'),
       );
     }).toList(growable: false);
   }
@@ -170,6 +188,7 @@ class SalesReportRepository {
         i.line_no,
         COALESCE(i.metal_type, '') AS metal_type,
         COALESCE(i.item_name, '') AS item_name,
+        COALESCE(i.hsn_code, '') AS hsn_code,
         COALESCE(i.huid, '') AS huid,
         COALESCE(i.purity, '') AS purity,
         COALESCE(i.quantity, 0) AS quantity,
@@ -204,6 +223,7 @@ class SalesReportRepository {
         lineNo: row.read<int>('line_no'),
         metalType: _displayMetal(row.read<String>('metal_type')),
         itemName: row.read<String>('item_name'),
+        hsnCode: row.read<String>('hsn_code'),
         huid: row.read<String>('huid'),
         purity: row.read<String>('purity'),
         quantity: row.read<int>('quantity'),
@@ -515,6 +535,10 @@ class SalesReportRepository {
     if (normalized.isEmpty) return '';
     final lower = normalized.toLowerCase();
     return lower[0].toUpperCase() + lower.substring(1);
+  }
+
+  String _businessType(String gstin) {
+    return gstin.trim().isEmpty ? 'B2C' : 'B2B';
   }
 
   double _readDouble(QueryRow row, String column) {

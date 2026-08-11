@@ -66,28 +66,40 @@ class SalesReportCsvBuilder {
     List<SalesReportInvoiceRow> invoices,
     List<SalesReportItemRow> items,
   ) {
-    final weightsByBill = SalesReportExportFormatters.invoiceWeights(items);
     return [
       ['INVOICE LEDGER'],
       [
         'S.No',
         'Invoice No',
-        'Date',
+        'Date/Time',
+        'Status',
         'Customer',
         'Mobile',
-        'Type',
-        'Metals',
-        'Metal Net Weight',
-        'Gross',
+        'GSTIN',
+        'B2B/B2C',
+        'Place of Supply',
+        'Gross Sales',
         'Discount',
         'Taxable',
-        'GST',
+        'CGST',
+        'SGST',
+        'IGST',
         'Round Off',
-        'Final',
+        'Invoice Total',
+        'Advance',
+        'Old Gold Adjustment',
+        'Cash',
+        'UPI',
+        'Card',
+        'Bank',
+        'Paid',
+        'Due',
+        'Return/Credit Note',
+        'Bill Status',
       ],
       for (var index = 0; index < invoices.length; index++)
-        _invoiceRow(index + 1, invoices[index], weightsByBill),
-      _invoiceTotalRow(invoices, items),
+        _invoiceRow(index + 1, invoices[index]),
+      _invoiceTotalRow(invoices),
     ];
   }
 
@@ -123,30 +135,41 @@ class SalesReportCsvBuilder {
   static List<String> _invoiceRow(
     int serialNo,
     SalesReportInvoiceRow invoice,
-    Map<int, Map<String, double>> weightsByBill,
   ) {
-    final weights = weightsByBill[invoice.billId] ?? const {};
+    final split = _gstBreakup(invoice);
     return [
       '$serialNo',
       invoice.billNo,
       SalesReportExportFormatters.dateTime(invoice.billDate),
+      invoice.paymentStatus,
       invoice.customerName,
       invoice.mobile,
-      invoice.isGst ? 'GST' : 'NON-GST',
-      invoice.metalMix,
-      SalesReportExportFormatters.weightSummary(weights),
+      invoice.customerGstin,
+      invoice.businessType,
+      invoice.placeOfSupply,
       SalesReportExportFormatters.money(invoice.grossAmount),
       SalesReportExportFormatters.money(invoice.discountAmount),
       SalesReportExportFormatters.money(invoice.taxableAmount),
-      SalesReportExportFormatters.money(invoice.gstAmount),
+      SalesReportExportFormatters.money(split.cgst),
+      SalesReportExportFormatters.money(split.sgst),
+      SalesReportExportFormatters.money(split.igst),
       SalesReportExportFormatters.money(invoice.roundOffAmount),
       SalesReportExportFormatters.money(invoice.finalAmount),
+      SalesReportExportFormatters.money(invoice.advanceAmount),
+      SalesReportExportFormatters.money(invoice.tradeInDeduction),
+      SalesReportExportFormatters.money(invoice.cashAmount),
+      SalesReportExportFormatters.money(invoice.upiAmount),
+      SalesReportExportFormatters.money(invoice.cardAmount),
+      SalesReportExportFormatters.money(invoice.bankAmount),
+      SalesReportExportFormatters.money(invoice.paidAmount),
+      SalesReportExportFormatters.money(invoice.dueAmount),
+      SalesReportExportFormatters.money(invoice.returnCreditNoteAmount),
+      invoice.billStatus,
     ];
   }
 
   static List<String> _invoiceTotalRow(
     List<SalesReportInvoiceRow> invoices,
-    List<SalesReportItemRow> items,
   ) {
     return [
       'TOTAL',
@@ -156,7 +179,8 @@ class SalesReportCsvBuilder {
       '',
       '',
       '',
-      SalesReportExportFormatters.invoiceWeightTotal(items),
+      '',
+      '',
       SalesReportExportFormatters.money(
         invoices.fold(0, (sum, row) => sum + row.grossAmount),
       ),
@@ -167,7 +191,13 @@ class SalesReportCsvBuilder {
         invoices.fold(0, (sum, row) => sum + row.taxableAmount),
       ),
       SalesReportExportFormatters.money(
-        invoices.fold(0, (sum, row) => sum + row.gstAmount),
+        invoices.fold(0, (sum, row) => sum + _gstBreakup(row).cgst),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + _gstBreakup(row).sgst),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + _gstBreakup(row).igst),
       ),
       SalesReportExportFormatters.money(
         invoices.fold(0, (sum, row) => sum + row.roundOffAmount),
@@ -175,6 +205,34 @@ class SalesReportCsvBuilder {
       SalesReportExportFormatters.money(
         invoices.fold(0, (sum, row) => sum + row.finalAmount),
       ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.advanceAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.tradeInDeduction),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.cashAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.upiAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.cardAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.bankAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.paidAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.dueAmount),
+      ),
+      SalesReportExportFormatters.money(
+        invoices.fold(0, (sum, row) => sum + row.returnCreditNoteAmount),
+      ),
+      '',
     ];
   }
 
@@ -259,4 +317,40 @@ class SalesReportCsvBuilder {
   static String _csvRow(List<String> row) {
     return row.map((cell) => '"${cell.replaceAll('"', '""')}"').join(',');
   }
+
+  static _CsvGstBreakup _gstBreakup(SalesReportInvoiceRow invoice) {
+    final total = _roundMoney(invoice.gstAmount);
+    if (total.abs() <= 0.005) {
+      return const _CsvGstBreakup(cgst: 0, sgst: 0, igst: 0);
+    }
+    final storedIgst = _roundMoney(invoice.igstAmount);
+    if (storedIgst.abs() > 0.005) {
+      return _CsvGstBreakup(cgst: 0, sgst: 0, igst: total);
+    }
+    var cgst = _roundMoney(invoice.cgstAmount);
+    var sgst = _roundMoney(invoice.sgstAmount);
+    if (cgst.abs() <= 0.005 && sgst.abs() <= 0.005) {
+      cgst = _roundMoney(total / 2);
+    }
+    sgst = _roundMoney(total - cgst);
+    return _CsvGstBreakup(
+      cgst: cgst,
+      sgst: sgst,
+      igst: 0,
+    );
+  }
+
+  static double _roundMoney(double value) => (value * 100).round() / 100;
+}
+
+class _CsvGstBreakup {
+  final double cgst;
+  final double sgst;
+  final double igst;
+
+  const _CsvGstBreakup({
+    required this.cgst,
+    required this.sgst,
+    required this.igst,
+  });
 }

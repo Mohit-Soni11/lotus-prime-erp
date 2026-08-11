@@ -157,28 +157,55 @@ class SalesReportPdfBuilder {
 
     document.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a3.landscape,
+        pageFormat: const PdfPageFormat(1683.78, 1190.55),
         margin: const pw.EdgeInsets.all(24),
         footer: _pdfFooter,
         build: (_) => [
           _pdfHeader(reportTitle, snapshot.filter, identity),
           pw.SizedBox(height: 14),
           _pdfSection(
-            'Invoice Ledger',
+            'Invoice Tax Register',
             const [
               'S.No',
               'Invoice',
-              'Date',
+              'Date/Time',
+              'Status',
               'Customer',
-              'Type',
-              'Metal / Net Wt',
+              'Mobile',
+              'GSTIN',
+              'B2B/B2C',
+              'Place',
               'Gross',
               'Discount',
               'Taxable',
-              'GST',
-              'Final',
+              'CGST',
+              'SGST',
+              'IGST',
+              'Round',
+              'Invoice Total',
+              'Bill Status',
             ],
-            _invoiceLedgerRows(snapshot.invoices, snapshot.items),
+            _invoiceTaxRegisterRows(snapshot.invoices),
+          ),
+          pw.SizedBox(height: 14),
+          _pdfSection(
+            'Payment Settlement Register',
+            const [
+              'S.No',
+              'Invoice',
+              'Advance',
+              'Old Gold Adj.',
+              'Cash',
+              'UPI',
+              'Card',
+              'Bank',
+              'Paid',
+              'Due',
+              'Return/Credit',
+              'Payment Status',
+              'Bill Status',
+            ],
+            _invoiceSettlementRows(snapshot.invoices),
           ),
         ],
       ),
@@ -413,25 +440,30 @@ class SalesReportPdfBuilder {
     );
   }
 
-  static List<List<String>> _invoiceLedgerRows(
+  static List<List<String>> _invoiceTaxRegisterRows(
     List<SalesReportInvoiceRow> invoices,
-    List<SalesReportItemRow> items,
   ) {
-    final weightsByBill = SalesReportExportFormatters.invoiceWeights(items);
     return [
       for (var index = 0; index < invoices.length; index++)
         [
           '${index + 1}',
           invoices[index].billNo,
-          SalesReportExportFormatters.date(invoices[index].billDate),
+          SalesReportExportFormatters.dateTime(invoices[index].billDate),
+          invoices[index].paymentStatus,
           invoices[index].customerName,
-          invoices[index].isGst ? 'GST' : 'NON-GST',
-          '${invoices[index].metalMix}\n${SalesReportExportFormatters.weightSummary(weightsByBill[invoices[index].billId] ?? const {})}',
+          invoices[index].mobile,
+          invoices[index].customerGstin,
+          invoices[index].businessType,
+          invoices[index].placeOfSupply,
           SalesReportExportFormatters.money(invoices[index].grossAmount),
           SalesReportExportFormatters.money(invoices[index].discountAmount),
           SalesReportExportFormatters.money(invoices[index].taxableAmount),
-          SalesReportExportFormatters.money(invoices[index].gstAmount),
+          SalesReportExportFormatters.money(_gstBreakup(invoices[index]).cgst),
+          SalesReportExportFormatters.money(_gstBreakup(invoices[index]).sgst),
+          SalesReportExportFormatters.money(_gstBreakup(invoices[index]).igst),
+          SalesReportExportFormatters.money(invoices[index].roundOffAmount),
           SalesReportExportFormatters.money(invoices[index].finalAmount),
+          invoices[index].billStatus,
         ],
       [
         'TOTAL',
@@ -439,7 +471,10 @@ class SalesReportPdfBuilder {
         '',
         '',
         '',
-        SalesReportExportFormatters.invoiceWeightTotal(items),
+        '',
+        '',
+        '',
+        '',
         SalesReportExportFormatters.money(
           invoices.fold(0, (sum, row) => sum + row.grossAmount),
         ),
@@ -450,11 +485,79 @@ class SalesReportPdfBuilder {
           invoices.fold(0, (sum, row) => sum + row.taxableAmount),
         ),
         SalesReportExportFormatters.money(
-          invoices.fold(0, (sum, row) => sum + row.gstAmount),
+          invoices.fold(0, (sum, row) => sum + _gstBreakup(row).cgst),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + _gstBreakup(row).sgst),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + _gstBreakup(row).igst),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.roundOffAmount),
         ),
         SalesReportExportFormatters.money(
           invoices.fold(0, (sum, row) => sum + row.finalAmount),
         ),
+        '',
+      ],
+    ];
+  }
+
+  static List<List<String>> _invoiceSettlementRows(
+    List<SalesReportInvoiceRow> invoices,
+  ) {
+    return [
+      for (var index = 0; index < invoices.length; index++)
+        [
+          '${index + 1}',
+          invoices[index].billNo,
+          SalesReportExportFormatters.money(invoices[index].advanceAmount),
+          SalesReportExportFormatters.money(invoices[index].tradeInDeduction),
+          SalesReportExportFormatters.money(invoices[index].cashAmount),
+          SalesReportExportFormatters.money(invoices[index].upiAmount),
+          SalesReportExportFormatters.money(invoices[index].cardAmount),
+          SalesReportExportFormatters.money(invoices[index].bankAmount),
+          SalesReportExportFormatters.money(invoices[index].paidAmount),
+          SalesReportExportFormatters.money(invoices[index].dueAmount),
+          SalesReportExportFormatters.money(
+            invoices[index].returnCreditNoteAmount,
+          ),
+          invoices[index].paymentStatus,
+          invoices[index].billStatus,
+        ],
+      [
+        'TOTAL',
+        '',
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.advanceAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.tradeInDeduction),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.cashAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.upiAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.cardAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.bankAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.paidAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.dueAmount),
+        ),
+        SalesReportExportFormatters.money(
+          invoices.fold(0, (sum, row) => sum + row.returnCreditNoteAmount),
+        ),
+        '',
+        '',
       ],
     ];
   }
@@ -584,4 +687,40 @@ class SalesReportPdfBuilder {
       ],
     ];
   }
+
+  static _PdfGstBreakup _gstBreakup(SalesReportInvoiceRow invoice) {
+    final total = _roundMoney(invoice.gstAmount);
+    if (total.abs() <= 0.005) {
+      return const _PdfGstBreakup(cgst: 0, sgst: 0, igst: 0);
+    }
+    final storedIgst = _roundMoney(invoice.igstAmount);
+    if (storedIgst.abs() > 0.005) {
+      return _PdfGstBreakup(cgst: 0, sgst: 0, igst: total);
+    }
+    var cgst = _roundMoney(invoice.cgstAmount);
+    var sgst = _roundMoney(invoice.sgstAmount);
+    if (cgst.abs() <= 0.005 && sgst.abs() <= 0.005) {
+      cgst = _roundMoney(total / 2);
+    }
+    sgst = _roundMoney(total - cgst);
+    return _PdfGstBreakup(
+      cgst: cgst,
+      sgst: sgst,
+      igst: 0,
+    );
+  }
+
+  static double _roundMoney(double value) => (value * 100).round() / 100;
+}
+
+class _PdfGstBreakup {
+  final double cgst;
+  final double sgst;
+  final double igst;
+
+  const _PdfGstBreakup({
+    required this.cgst,
+    required this.sgst,
+    required this.igst,
+  });
 }

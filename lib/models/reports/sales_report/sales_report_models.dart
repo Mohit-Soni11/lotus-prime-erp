@@ -207,6 +207,9 @@ class SalesReportInvoiceRow {
   final DateTime billDate;
   final String customerName;
   final String mobile;
+  final String customerGstin;
+  final String businessType;
+  final String placeOfSupply;
   final String billType;
   final String paymentStatus;
   final bool isGst;
@@ -214,6 +217,9 @@ class SalesReportInvoiceRow {
   final double discountAmount;
   final double taxableAmount;
   final double gstAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
   final double roundOffAmount;
   final double finalAmount;
   final double paidAmount;
@@ -221,11 +227,14 @@ class SalesReportInvoiceRow {
   final double cashAmount;
   final double upiAmount;
   final double cardAmount;
+  final double bankAmount;
   final double advanceAmount;
   final double makingAmount;
   final double tradeInDeduction;
+  final double returnCreditNoteAmount;
   final int itemCount;
   final String metalMix;
+  final String billStatus;
 
   const SalesReportInvoiceRow({
     required this.billId,
@@ -233,6 +242,9 @@ class SalesReportInvoiceRow {
     required this.billDate,
     required this.customerName,
     required this.mobile,
+    this.customerGstin = '',
+    this.businessType = 'B2C',
+    this.placeOfSupply = '',
     required this.billType,
     required this.paymentStatus,
     required this.isGst,
@@ -240,6 +252,9 @@ class SalesReportInvoiceRow {
     required this.discountAmount,
     required this.taxableAmount,
     required this.gstAmount,
+    this.cgstAmount = 0,
+    this.sgstAmount = 0,
+    this.igstAmount = 0,
     required this.roundOffAmount,
     required this.finalAmount,
     required this.paidAmount,
@@ -247,11 +262,14 @@ class SalesReportInvoiceRow {
     required this.cashAmount,
     required this.upiAmount,
     required this.cardAmount,
+    this.bankAmount = 0,
     required this.advanceAmount,
     required this.makingAmount,
     required this.tradeInDeduction,
+    this.returnCreditNoteAmount = 0,
     required this.itemCount,
     required this.metalMix,
+    this.billStatus = 'ACTIVE',
   });
 }
 
@@ -264,6 +282,7 @@ class SalesReportItemRow {
   final int lineNo;
   final String metalType;
   final String itemName;
+  final String hsnCode;
   final String huid;
   final String purity;
   final int quantity;
@@ -288,6 +307,7 @@ class SalesReportItemRow {
     required this.lineNo,
     required this.metalType,
     required this.itemName,
+    this.hsnCode = '',
     required this.huid,
     required this.purity,
     required this.quantity,

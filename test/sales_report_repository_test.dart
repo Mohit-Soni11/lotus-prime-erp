@@ -21,12 +21,20 @@ void main() {
   test('fetchReport builds invoice, tax and metal summaries from POS bills',
       () async {
     final date = DateTime(2026, 8, 9, 12, 30);
+    final customerId = await _insertCustomer(
+      db,
+      name: 'REYANSH SONI',
+      mobile: '9304479436',
+      gstNumber: '10ABCDE1234F1Z5',
+      state: 'Bihar',
+    );
 
     final gstBillId = await _insertBill(
       db,
       billNo: 'TAX-AJ-2026-0001',
       billDate: date,
       billType: 'GST',
+      customerId: customerId,
       totalAmount: 9690.91,
       discount: 0.64,
       taxableAmount: 9690.27,
@@ -45,6 +53,7 @@ void main() {
       metalType: 'GOLD',
       itemName: 'NOSE PIN',
       purity: '18K',
+      hsnCode: '7113',
       huid: 'HUID123',
       grossWeight: 0.759,
       netWeight: 0.759,
@@ -109,6 +118,25 @@ void main() {
     expect(
       snapshot.gstLiability.combinedGstExposure,
       closeTo(412.876, 0.001),
+    );
+
+    final gstInvoice = snapshot.invoices.singleWhere(
+      (invoice) => invoice.billNo == 'TAX-AJ-2026-0001',
+    );
+    expect(gstInvoice.customerGstin, '10ABCDE1234F1Z5');
+    expect(gstInvoice.businessType, 'B2B');
+    expect(gstInvoice.placeOfSupply, 'Bihar');
+    expect(gstInvoice.cgstAmount, closeTo(145.355, 0.001));
+    expect(gstInvoice.sgstAmount, closeTo(145.355, 0.001));
+    expect(gstInvoice.igstAmount, 0);
+    expect(gstInvoice.bankAmount, 0);
+    expect(gstInvoice.returnCreditNoteAmount, 0);
+    expect(gstInvoice.billStatus, 'ACTIVE');
+    expect(
+      snapshot.items
+          .singleWhere((item) => item.billNo == 'TAX-AJ-2026-0001')
+          .hsnCode,
+      '7113',
     );
 
     final gold = snapshot.metals.singleWhere((row) => row.metalType == 'Gold');
@@ -243,6 +271,7 @@ Future<int> _insertBill(
   required String billNo,
   required DateTime billDate,
   required String billType,
+  int? customerId,
   double totalAmount = 0,
   double discount = 0,
   double taxableAmount = 0,
@@ -259,6 +288,7 @@ Future<int> _insertBill(
   return db.into(db.bills).insert(
         BillsCompanion.insert(
           billNo: billNo,
+          customerId: drift.Value<int?>(customerId),
           customerName: const drift.Value('REYANSH SONI'),
           mobile: const drift.Value('9304479436'),
           billType: drift.Value(billType),
@@ -284,6 +314,23 @@ Future<int> _insertBill(
       );
 }
 
+Future<int> _insertCustomer(
+  AppDatabase db, {
+  required String name,
+  required String mobile,
+  required String gstNumber,
+  required String state,
+}) {
+  return db.into(db.customers).insert(
+        CustomersCompanion.insert(
+          name: name,
+          mobile: mobile,
+          gstNumber: drift.Value(gstNumber),
+          state: drift.Value(state),
+        ),
+      );
+}
+
 Future<int> _insertItem(
   AppDatabase db, {
   required int billId,
@@ -291,6 +338,7 @@ Future<int> _insertItem(
   required String metalType,
   required String itemName,
   String purity = '22K',
+  String hsnCode = '',
   String huid = '',
   double grossWeight = 0,
   double netWeight = 0,
@@ -306,6 +354,7 @@ Future<int> _insertItem(
           lineNo: drift.Value(lineNo),
           metalType: drift.Value(metalType),
           itemName: itemName,
+          hsnCode: drift.Value(hsnCode.isEmpty ? null : hsnCode),
           huid: drift.Value(huid),
           purity: drift.Value(purity),
           grossWeight: drift.Value(grossWeight),
