@@ -153,7 +153,7 @@ class _InvoiceCountBadge extends StatelessWidget {
         border: Border.all(color: SalesReportColors.bodyBorder),
       ),
       child: Text(
-        '${summary.invoiceCount} Monthly Invoices',
+        '${summary.invoiceCount} Sales ${summary.invoiceCount == 1 ? 'Invoice' : 'Invoices'}',
         style: SalesReportStyles.body.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w900,

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/feedback/app_feedback.dart';
@@ -9,6 +11,7 @@ import 'sales_report_app_bar.dart';
 import 'sales_report_combined_workspace.dart';
 import 'sales_report_metal_detail_screen.dart';
 import 'sales_report_month_tax_filter.dart';
+import 'sales_report_pdf_preview_dialog.dart';
 
 class SalesReportScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -51,7 +54,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         backgroundColor: SalesReportColors.bodyBg,
         appBar: SalesReportAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
-          onRefresh: () => _controller.load(),
           onExportSelected: _handleExportSelected,
           exportItems: _mainExportItems,
           isLoading: _controller.isLoading,
@@ -120,15 +122,56 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     late final Future<String?> export;
     late final String successMessage;
     switch (action) {
+      case SalesReportExportAction.completePreview:
+        await _showPdfPreview(
+          title: 'Sales Report Preview',
+          subtitle: 'Complete monthly sales report',
+          fileName: 'sales-report-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildCompletePreviewPdfBytes(snapshot),
+        );
+        return;
       case SalesReportExportAction.completePdf:
         export = SalesReportExportService.exportCompletePdf(snapshot);
         successMessage = 'Complete sales report PDF downloaded.';
+      case SalesReportExportAction.completeCsv:
+        export = SalesReportExportService.exportCompleteCsv(snapshot);
+        successMessage = 'Complete sales report CSV downloaded.';
+      case SalesReportExportAction.gstLiabilityPreview:
+        await _showPdfPreview(
+          title: 'GST Liability Preview',
+          subtitle: 'Recorded GST and non-GST planning summary',
+          fileName: 'gst-liability-report-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildGstLiabilityPreviewPdfBytes(
+                  snapshot),
+        );
+        return;
       case SalesReportExportAction.gstLiabilityPdf:
         export = SalesReportExportService.exportGstLiabilityPdf(snapshot);
         successMessage = 'GST liability report PDF downloaded.';
+      case SalesReportExportAction.invoiceLedgerPreview:
+        await _showPdfPreview(
+          title: 'Invoice Ledger Preview',
+          subtitle: 'Bill-wise taxable, GST, discount and final amount audit',
+          fileName: 'sales-invoice-ledger-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildInvoiceLedgerPreviewPdfBytes(
+                  snapshot),
+        );
+        return;
       case SalesReportExportAction.invoiceLedgerPdf:
         export = SalesReportExportService.exportInvoiceLedgerPdf(snapshot);
         successMessage = 'Invoice ledger PDF downloaded.';
+      case SalesReportExportAction.itemLedgerPreview:
+        await _showPdfPreview(
+          title: 'Item Ledger Preview',
+          subtitle: 'Item-wise HUID, purity, weight, rate and making audit',
+          fileName: 'sales-item-ledger-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildItemLedgerPreviewPdfBytes(snapshot),
+        );
+        return;
       case SalesReportExportAction.itemLedgerPdf:
         export = SalesReportExportService.exportItemLedgerPdf(snapshot);
         successMessage = 'Item ledger PDF downloaded.';
@@ -141,6 +184,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       case SalesReportExportAction.completeExcel:
         export = SalesReportExportService.exportCompleteExcel(snapshot);
         successMessage = 'Complete sales report Excel downloaded.';
+      case SalesReportExportAction.gradeWisePreview:
       case SalesReportExportAction.gradeWisePdf:
         return;
     }
@@ -163,11 +207,31 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     }
   }
 
+  Future<void> _showPdfPreview({
+    required String title,
+    required String subtitle,
+    required String fileName,
+    required Future<Uint8List> Function() buildBytes,
+  }) {
+    return SalesReportPdfPreviewDialog.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      fileName: fileName,
+      buildBytes: buildBytes,
+    );
+  }
+
   static const _mainExportItems = [
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completePdf,
       label: 'Complete Sales Report PDF',
       icon: Icons.picture_as_pdf_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completeCsv,
+      label: 'Complete Sales Report CSV',
+      icon: Icons.table_chart_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.gstLiabilityPdf,

@@ -12,10 +12,16 @@ import 'export/sales_report_export_formatters.dart';
 import 'export/sales_report_pdf_builder.dart';
 
 enum SalesReportExportAction {
+  completePreview,
   completePdf,
+  completeCsv,
+  gstLiabilityPreview,
   gstLiabilityPdf,
+  gradeWisePreview,
   gradeWisePdf,
+  invoiceLedgerPreview,
   invoiceLedgerPdf,
+  itemLedgerPreview,
   itemLedgerPdf,
   invoiceLedgerCsv,
   itemLedgerCsv,
@@ -41,6 +47,73 @@ class SalesReportExportService {
         'csv',
       ),
       contents: SalesReportCsvBuilder.buildComplete(snapshot),
+    );
+  }
+
+  static Future<Uint8List> buildCompletePreviewPdfBytes(
+    SalesReportSnapshot snapshot, {
+    String reportTitle = 'Sales Report',
+  }) async {
+    final identity = await _loadIdentity();
+    return buildCompletePdfBytes(
+      snapshot,
+      reportTitle: reportTitle,
+      identity: identity,
+    );
+  }
+
+  static Future<Uint8List> buildGstLiabilityPreviewPdfBytes(
+    SalesReportSnapshot snapshot,
+  ) async {
+    final identity = await _loadIdentity();
+    return buildGstLiabilityPdfBytes(snapshot, identity: identity);
+  }
+
+  static Future<Uint8List> buildGradeWisePreviewPdfBytes(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+  }) async {
+    final identity = await _loadIdentity();
+    return buildGradeWisePdfBytes(
+      snapshot,
+      metalTitle: metalTitle,
+      identity: identity,
+    );
+  }
+
+  static Future<Uint8List> buildInvoiceLedgerPreviewPdfBytes(
+    SalesReportSnapshot snapshot, {
+    List<SalesReportInvoiceRow>? invoices,
+    List<SalesReportItemRow>? items,
+    String reportTitle = 'Invoice Ledger',
+  }) async {
+    final identity = await _loadIdentity();
+    final scopedSnapshot = _copySnapshot(
+      snapshot,
+      invoices: invoices,
+      items: items,
+    );
+    return buildInvoiceLedgerPdfBytes(
+      scopedSnapshot,
+      reportTitle: reportTitle,
+      identity: identity,
+    );
+  }
+
+  static Future<Uint8List> buildItemLedgerPreviewPdfBytes(
+    SalesReportSnapshot snapshot, {
+    List<SalesReportItemRow>? items,
+    String reportTitle = 'Item Ledger',
+  }) async {
+    final identity = await _loadIdentity();
+    final scopedSnapshot = _copySnapshot(
+      snapshot,
+      items: items,
+    );
+    return buildItemLedgerPdfBytes(
+      scopedSnapshot,
+      reportTitle: reportTitle,
+      identity: identity,
     );
   }
 

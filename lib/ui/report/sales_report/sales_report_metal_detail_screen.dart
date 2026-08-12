@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -11,6 +13,7 @@ import 'bill_ledger/sales_report_invoice_ledger.dart';
 import 'item_ledger/sales_report_item_ledger.dart';
 import 'sales_report_app_bar.dart';
 import 'sales_report_month_tax_filter.dart';
+import 'sales_report_pdf_preview_dialog.dart';
 import 'summary/sales_report_grade_summary.dart';
 import 'summary/sales_report_metal_cards.dart';
 
@@ -67,7 +70,6 @@ class _SalesReportMetalDetailScreenState
           title: '$metalTitle Sales Report',
           subtitle: 'Invoice ledger, item ledger and tax audit',
           onBack: () => Navigator.of(context).pop(),
-          onRefresh: () => _controller.load(),
           onExportSelected: _handleExportSelected,
           exportItems: _metalExportItems,
           isLoading: _controller.isLoading,
@@ -190,6 +192,18 @@ class _SalesReportMetalDetailScreenState
     late final Future<String?> export;
     late final String successMessage;
     switch (action) {
+      case SalesReportExportAction.completePreview:
+        await _showPdfPreview(
+          title: '$metalTitle Sales Report Preview',
+          subtitle: 'Complete $metalTitle monthly sales report',
+          fileName: '$filePrefix-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildCompletePreviewPdfBytes(
+            snapshot,
+            reportTitle: '$metalTitle Sales Report',
+          ),
+        );
+        return;
       case SalesReportExportAction.completePdf:
         export = SalesReportExportService.exportCompletePdf(
           snapshot,
@@ -197,12 +211,44 @@ class _SalesReportMetalDetailScreenState
           filePrefix: filePrefix,
         );
         successMessage = '$metalTitle complete sales report PDF downloaded.';
+      case SalesReportExportAction.completeCsv:
+        export = SalesReportExportService.exportCompleteCsv(
+          snapshot,
+          filePrefix: filePrefix,
+        );
+        successMessage = '$metalTitle complete sales report CSV downloaded.';
+      case SalesReportExportAction.gradeWisePreview:
+        await _showPdfPreview(
+          title: '$metalTitle Grade-wise Preview',
+          subtitle: 'Grade and purity-wise $metalTitle sales summary',
+          fileName: '$filePrefix-grade-wise-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildGradeWisePreviewPdfBytes(
+            snapshot,
+            metalTitle: metalTitle,
+          ),
+        );
+        return;
       case SalesReportExportAction.gradeWisePdf:
         export = SalesReportExportService.exportGradeWisePdf(
           snapshot,
           metalTitle: metalTitle,
         );
         successMessage = '$metalTitle grade-wise report PDF downloaded.';
+      case SalesReportExportAction.invoiceLedgerPreview:
+        await _showPdfPreview(
+          title: '$metalTitle Invoice Ledger Preview',
+          subtitle: 'Selected grade bill-wise sales and tax audit',
+          fileName: '$filePrefix-invoice-ledger-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildInvoiceLedgerPreviewPdfBytes(
+            snapshot,
+            invoices: gradeInvoices,
+            items: gradeItems,
+            reportTitle: '$metalTitle Invoice Ledger',
+          ),
+        );
+        return;
       case SalesReportExportAction.invoiceLedgerPdf:
         export = SalesReportExportService.exportInvoiceLedgerPdf(
           snapshot,
@@ -212,6 +258,19 @@ class _SalesReportMetalDetailScreenState
           filePrefix: '$filePrefix-invoice-ledger',
         );
         successMessage = '$metalTitle invoice ledger PDF downloaded.';
+      case SalesReportExportAction.itemLedgerPreview:
+        await _showPdfPreview(
+          title: '$metalTitle Item Ledger Preview',
+          subtitle: 'Selected grade item-wise HUID, purity and weight audit',
+          fileName: '$filePrefix-item-ledger-preview.pdf',
+          buildBytes: () =>
+              SalesReportExportService.buildItemLedgerPreviewPdfBytes(
+            snapshot,
+            items: gradeItems,
+            reportTitle: '$metalTitle Item Ledger',
+          ),
+        );
+        return;
       case SalesReportExportAction.itemLedgerPdf:
         export = SalesReportExportService.exportItemLedgerPdf(
           snapshot,
@@ -242,6 +301,7 @@ class _SalesReportMetalDetailScreenState
           filePrefix: filePrefix,
         );
         successMessage = '$metalTitle complete sales report Excel downloaded.';
+      case SalesReportExportAction.gstLiabilityPreview:
       case SalesReportExportAction.gstLiabilityPdf:
         return;
     }
@@ -264,11 +324,31 @@ class _SalesReportMetalDetailScreenState
     }
   }
 
+  Future<void> _showPdfPreview({
+    required String title,
+    required String subtitle,
+    required String fileName,
+    required Future<Uint8List> Function() buildBytes,
+  }) {
+    return SalesReportPdfPreviewDialog.show(
+      context,
+      title: title,
+      subtitle: subtitle,
+      fileName: fileName,
+      buildBytes: buildBytes,
+    );
+  }
+
   static const _metalExportItems = [
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completePdf,
       label: 'Complete Metal Sales Report PDF',
       icon: Icons.picture_as_pdf_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completeCsv,
+      label: 'Complete Metal Sales Report CSV',
+      icon: Icons.table_chart_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.gradeWisePdf,
@@ -297,7 +377,7 @@ class _SalesReportMetalDetailScreenState
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completeExcel,
-      label: 'Complete Metal Sales Excel',
+      label: 'Complete Metal Sales Report Excel',
       icon: Icons.grid_on_outlined,
     ),
   ];

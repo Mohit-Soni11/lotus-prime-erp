@@ -57,6 +57,11 @@ void main() {
                 icon: Icons.picture_as_pdf_outlined,
               ),
               SalesReportExportMenuItem(
+                action: SalesReportExportAction.completeCsv,
+                label: 'Complete Sales Report CSV',
+                icon: Icons.table_chart_outlined,
+              ),
+              SalesReportExportMenuItem(
                 action: SalesReportExportAction.gstLiabilityPdf,
                 label: 'GST Liability Report PDF',
                 icon: Icons.account_balance_outlined,
@@ -69,14 +74,21 @@ void main() {
 
     await tester.tap(find.byIcon(SalesReportIcons.export));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Complete Sales Report PDF'), findsOneWidget);
-    expect(find.text('GST Liability Report PDF'), findsOneWidget);
+    expect(find.text('Complete Sales Report'), findsOneWidget);
+    expect(find.text('GST Liability Report'), findsOneWidget);
+    expect(find.text('PDF Preview'), findsNWidgets(2));
+    expect(find.text('PDF Download'), findsNWidgets(2));
+    expect(find.text('CSV Download'), findsOneWidget);
 
-    await tester.tap(find.text('GST Liability Report PDF'));
+    await tester.tap(
+      find.byKey(
+        const ValueKey('sales-report-export-gstLiabilityPdf'),
+      ),
+    );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(selectedAction, SalesReportExportAction.gstLiabilityPdf);
     expect(tester.takeException(), isNull);
