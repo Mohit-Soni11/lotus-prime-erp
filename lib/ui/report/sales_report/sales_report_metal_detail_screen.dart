@@ -187,36 +187,37 @@ class _SalesReportMetalDetailScreenState
       gradeItems,
       grade,
     );
-    final filePrefix = '${metalTitle.toLowerCase()}-sales-report';
+    final filePrefix = '${metalTitle.toLowerCase()}-sales-ledger';
 
     late final Future<String?> export;
     late final String successMessage;
     switch (action) {
       case SalesReportExportAction.completePreview:
         await _showPdfPreview(
-          title: '$metalTitle Sales Report Preview',
-          subtitle: 'Complete $metalTitle monthly sales report',
+          title: '$metalTitle Sales Ledger Preview',
+          subtitle: 'Metal sales, grade-wise, invoice and item ledger',
           fileName: '$filePrefix-preview.pdf',
           buildBytes: () =>
-              SalesReportExportService.buildCompletePreviewPdfBytes(
+              SalesReportExportService.buildMetalCompletePreviewPdfBytes(
             snapshot,
-            reportTitle: '$metalTitle Sales Report',
+            metalTitle: metalTitle,
           ),
         );
         return;
       case SalesReportExportAction.completePdf:
-        export = SalesReportExportService.exportCompletePdf(
+        export = SalesReportExportService.exportMetalCompletePdf(
           snapshot,
-          reportTitle: '$metalTitle Sales Report',
+          metalTitle: metalTitle,
           filePrefix: filePrefix,
         );
-        successMessage = '$metalTitle complete sales report PDF downloaded.';
+        successMessage = '$metalTitle sales ledger PDF downloaded.';
       case SalesReportExportAction.completeCsv:
-        export = SalesReportExportService.exportCompleteCsv(
+        export = SalesReportExportService.exportMetalCompleteCsv(
           snapshot,
+          metalTitle: metalTitle,
           filePrefix: filePrefix,
         );
-        successMessage = '$metalTitle complete sales report CSV downloaded.';
+        successMessage = '$metalTitle sales ledger CSV downloaded.';
       case SalesReportExportAction.gradeWisePreview:
         await _showPdfPreview(
           title: '$metalTitle Grade-wise Preview',
@@ -295,12 +296,12 @@ class _SalesReportMetalDetailScreenState
         );
         successMessage = '$metalTitle item ledger CSV downloaded.';
       case SalesReportExportAction.completeExcel:
-        export = SalesReportExportService.exportCompleteExcel(
+        export = SalesReportExportService.exportMetalCompleteExcel(
           snapshot,
-          reportTitle: '$metalTitle Sales Report',
+          metalTitle: metalTitle,
           filePrefix: filePrefix,
         );
-        successMessage = '$metalTitle complete sales report Excel downloaded.';
+        successMessage = '$metalTitle sales ledger Excel downloaded.';
       case SalesReportExportAction.gstLiabilityPreview:
       case SalesReportExportAction.gstLiabilityPdf:
         return;
@@ -342,12 +343,12 @@ class _SalesReportMetalDetailScreenState
   static const _metalExportItems = [
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completePdf,
-      label: 'Complete Metal Sales Report PDF',
+      label: 'Metal Sales Ledger PDF',
       icon: Icons.picture_as_pdf_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completeCsv,
-      label: 'Complete Metal Sales Report CSV',
+      label: 'Metal Sales Ledger CSV',
       icon: Icons.table_chart_outlined,
     ),
     SalesReportExportMenuItem(
@@ -377,7 +378,7 @@ class _SalesReportMetalDetailScreenState
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completeExcel,
-      label: 'Complete Metal Sales Report Excel',
+      label: 'Metal Sales Ledger Excel',
       icon: Icons.grid_on_outlined,
     ),
   ];

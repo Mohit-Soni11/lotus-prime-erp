@@ -166,6 +166,38 @@ void main() {
 
     expect(bytes.take(4), orderedEquals(const [37, 80, 68, 70]));
   });
+
+  test('metal complete exports stay scoped to metal ledgers', () async {
+    final metalSnapshot = _goldSnapshot(snapshot);
+    final csv = SalesReportExportService.buildMetalCompleteCsvForTest(
+      metalSnapshot,
+      metalTitle: 'Gold',
+    );
+    final excel = SalesReportExportService.buildMetalCompleteExcelBytes(
+      metalSnapshot,
+      metalTitle: 'Gold',
+    );
+    final pdf = await SalesReportExportService.buildMetalCompletePdfBytes(
+      metalSnapshot,
+      metalTitle: 'Gold',
+    );
+    final archive = ZipDecoder().decodeBytes(excel);
+    final workbook = archive.findFile('xl/workbook.xml');
+    final workbookXml = String.fromCharCodes(workbook!.content as List<int>);
+
+    expect(csv, contains('METAL SALES LEDGER'));
+    expect(csv, contains('GRADE-WISE SALES'));
+    expect(csv, contains('INVOICE LEDGER'));
+    expect(csv, contains('ITEM LEDGER'));
+    expect(csv, isNot(contains('GST LIABILITY')));
+    expect(csv, isNot(contains('SILVER')));
+    expect(workbookXml, contains('Metal Sales Ledger'));
+    expect(workbookXml, contains('Grade-wise Sales'));
+    expect(workbookXml, contains('Invoice Ledger'));
+    expect(workbookXml, contains('Item Ledger'));
+    expect(workbookXml, isNot(contains('GST Register')));
+    expect(pdf.take(4), orderedEquals(const [37, 80, 68, 70]));
+  });
 }
 
 SalesReportSnapshot _snapshot() {
@@ -278,6 +310,47 @@ SalesReportSnapshot _snapshot() {
       ),
     ],
     availableMetals: const ['ALL', 'Gold', 'Silver'],
+  );
+}
+
+SalesReportSnapshot _goldSnapshot(SalesReportSnapshot snapshot) {
+  final invoices = snapshot.invoices
+      .where((invoice) => invoice.metalMix.toUpperCase().contains('GOLD'))
+      .toList(growable: false);
+  final items = snapshot.items
+      .where((item) => item.metalType.toUpperCase() == 'GOLD')
+      .toList(growable: false);
+  return SalesReportSnapshot(
+    filter: snapshot.filter.copyWith(metalType: 'Gold'),
+    summary: const SalesReportSummary(
+      invoiceCount: 1,
+      gstInvoiceCount: 1,
+      nonGstInvoiceCount: 0,
+      grossAmount: 9690.91,
+      discountAmount: 0.64,
+      taxableAmount: 9690.27,
+      gstAmount: 290.71,
+      finalAmount: 9980.98,
+      paidAmount: 9980.98,
+      makingAmount: 1038.31,
+      netWeight: 0.759,
+    ),
+    gstLiability: snapshot.gstLiability,
+    metals: const [
+      SalesReportMetalSummary(
+        metalType: 'Gold',
+        invoiceCount: 1,
+        itemCount: 1,
+        pieces: 1,
+        grossWeight: 0.759,
+        netWeight: 0.759,
+        makingAmount: 1038.31,
+        salesAmount: 9690.91,
+      ),
+    ],
+    invoices: invoices,
+    items: items,
+    availableMetals: snapshot.availableMetals,
   );
 }
 

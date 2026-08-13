@@ -249,6 +249,94 @@ class SalesReportExcelBuilder {
     });
   }
 
+  static Uint8List buildMetalComplete(
+    SalesReportSnapshot snapshot, {
+    required SalesReportExportIdentity identity,
+    required String metalTitle,
+  }) {
+    final summarySheet = _WorksheetBuilder(
+      columnWidths: const [18, 18, 18, 18, 18, 18, 18, 18, 18, 18],
+    );
+    _addReportHeader(summarySheet, snapshot, identity, '$metalTitle Sales');
+    _addSalesRegisterSummary(summarySheet, snapshot);
+    _addMetalWeightSummary(summarySheet, snapshot);
+
+    final gradeSheet = _WorksheetBuilder(
+      columnWidths: const [8, 14, 16, 16, 16, 14, 16, 16, 16, 16],
+    );
+    _addReportHeader(gradeSheet, snapshot, identity, '$metalTitle Grade Sales');
+    _addMetalGradeRegister(gradeSheet, snapshot);
+
+    final invoiceSheet = _WorksheetBuilder(
+      columnWidths: const [
+        8,
+        24,
+        22,
+        14,
+        28,
+        16,
+        18,
+        12,
+        20,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        18,
+        16,
+        16,
+        16,
+        16,
+        16,
+        16,
+        22,
+        14,
+      ],
+    );
+    _addReportHeader(
+      invoiceSheet,
+      snapshot,
+      identity,
+      '$metalTitle Invoice Ledger',
+    );
+    _addInvoiceLedger(invoiceSheet, snapshot);
+
+    final itemSheet = _WorksheetBuilder(
+      columnWidths: const [
+        8,
+        24,
+        22,
+        28,
+        14,
+        14,
+        24,
+        20,
+        16,
+        10,
+        15,
+        15,
+        15,
+        15,
+        16,
+        16,
+      ],
+    );
+    _addReportHeader(itemSheet, snapshot, identity, '$metalTitle Item Ledger');
+    _addItemLedger(itemSheet, snapshot.items);
+
+    return _buildWorkbook({
+      'Metal Sales Ledger': summarySheet.toXml(),
+      'Grade-wise Sales': gradeSheet.toXml(),
+      'Invoice Ledger': invoiceSheet.toXml(),
+      'Item Ledger': itemSheet.toXml(),
+    });
+  }
+
   static void _addReportHeader(
     _WorksheetBuilder sheet,
     SalesReportSnapshot snapshot,

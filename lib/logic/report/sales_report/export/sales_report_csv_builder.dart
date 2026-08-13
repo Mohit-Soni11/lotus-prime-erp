@@ -51,6 +51,78 @@ class SalesReportCsvBuilder {
     return rows.map(_csvRow).join('\r\n');
   }
 
+  static String buildMetalComplete(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+  }) {
+    final rows = <List<String>>[
+      ['METAL SALES REPORT'],
+      ['Metal', metalTitle],
+      ['Period', SalesReportExportFormatters.periodLabel(snapshot.filter)],
+      ['From', SalesReportExportFormatters.date(snapshot.filter.startDate)],
+      ['To', SalesReportExportFormatters.date(snapshot.filter.endDate)],
+      [
+        'Tax View',
+        SalesReportExportFormatters.taxModeLabel(snapshot.filter.taxMode),
+      ],
+      [],
+      ['METAL SALES LEDGER'],
+      ['Metric', 'Value'],
+      ['Invoices', '${snapshot.summary.invoiceCount}'],
+      ['GST Invoices', '${snapshot.summary.gstInvoiceCount}'],
+      ['Non-GST Invoices', '${snapshot.summary.nonGstInvoiceCount}'],
+      [
+        'Pieces',
+        '${snapshot.metals.fold(0, (sum, metal) => sum + metal.pieces)}'
+      ],
+      [
+        'Gross Weight',
+        SalesReportExportFormatters.weight(
+            snapshot.metals.fold(0, (sum, metal) => sum + metal.grossWeight))
+      ],
+      [
+        'Net Weight',
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(snapshot.items)
+      ],
+      [
+        'Making',
+        SalesReportExportFormatters.money(snapshot.summary.makingAmount)
+      ],
+      [
+        'Sales Value',
+        SalesReportExportFormatters.money(snapshot.summary.grossAmount)
+      ],
+      [
+        'Taxable',
+        SalesReportExportFormatters.money(snapshot.summary.taxableAmount)
+      ],
+      ['GST', SalesReportExportFormatters.money(snapshot.summary.gstAmount)],
+      [
+        'Final Amount',
+        SalesReportExportFormatters.money(snapshot.summary.finalAmount)
+      ],
+      [],
+      ['GRADE-WISE SALES'],
+      [
+        'Grade',
+        'Invoices',
+        'Items',
+        'Pcs',
+        'Gross Weight',
+        'Net Weight',
+        'Making',
+        'Sales',
+      ],
+      ...SalesReportExportFormatters.gradeRows(snapshot.items),
+      [],
+      ...invoiceLedgerRows(snapshot.invoices, snapshot.items),
+      [],
+      ...itemLedgerRows(snapshot.items),
+    ];
+
+    return rows.map(_csvRow).join('\r\n');
+  }
+
   static String buildInvoiceLedger(
     List<SalesReportInvoiceRow> invoices,
     List<SalesReportItemRow> items,

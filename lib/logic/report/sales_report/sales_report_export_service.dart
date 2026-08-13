@@ -50,6 +50,26 @@ class SalesReportExportService {
     );
   }
 
+  static Future<String?> exportMetalCompleteCsv(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+    String? filePrefix,
+  }) {
+    return _saveCsv(
+      dialogTitle: 'Download $metalTitle Sales Ledger',
+      fileName: _fileName(
+        snapshot.filter,
+        filePrefix ??
+            '${SalesReportExportFormatters.filePart(metalTitle)}-sales-ledger',
+        'csv',
+      ),
+      contents: SalesReportCsvBuilder.buildMetalComplete(
+        snapshot,
+        metalTitle: metalTitle,
+      ),
+    );
+  }
+
   static Future<Uint8List> buildCompletePreviewPdfBytes(
     SalesReportSnapshot snapshot, {
     String reportTitle = 'Sales Report',
@@ -67,6 +87,18 @@ class SalesReportExportService {
   ) async {
     final identity = await _loadIdentity();
     return buildGstLiabilityPdfBytes(snapshot, identity: identity);
+  }
+
+  static Future<Uint8List> buildMetalCompletePreviewPdfBytes(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+  }) async {
+    final identity = await _loadIdentity();
+    return buildMetalCompletePdfBytes(
+      snapshot,
+      metalTitle: metalTitle,
+      identity: identity,
+    );
   }
 
   static Future<Uint8List> buildGradeWisePreviewPdfBytes(
@@ -133,6 +165,30 @@ class SalesReportExportService {
       fileName: _fileName(
         snapshot.filter,
         filePrefix ?? 'sales-report',
+        'xlsx',
+      ),
+      bytes: bytes,
+      extension: 'xlsx',
+    );
+  }
+
+  static Future<String?> exportMetalCompleteExcel(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+    String? filePrefix,
+  }) async {
+    final identity = await _loadIdentity();
+    final bytes = SalesReportExcelBuilder.buildMetalComplete(
+      snapshot,
+      identity: identity,
+      metalTitle: metalTitle,
+    );
+    return _saveBytes(
+      dialogTitle: 'Download $metalTitle Sales Ledger Excel',
+      fileName: _fileName(
+        snapshot.filter,
+        filePrefix ??
+            '${SalesReportExportFormatters.filePart(metalTitle)}-sales-ledger',
         'xlsx',
       ),
       bytes: bytes,
@@ -254,6 +310,29 @@ class SalesReportExportService {
     );
   }
 
+  static Future<String?> exportMetalCompletePdf(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+    String? filePrefix,
+  }) async {
+    final identity = await _loadIdentity();
+    final bytes = await buildMetalCompletePdfBytes(
+      snapshot,
+      metalTitle: metalTitle,
+      identity: identity,
+    );
+    return _savePdf(
+      dialogTitle: 'Download $metalTitle Sales Ledger PDF',
+      fileName: _fileName(
+        snapshot.filter,
+        filePrefix ??
+            '${SalesReportExportFormatters.filePart(metalTitle)}-sales-ledger',
+        'pdf',
+      ),
+      bytes: bytes,
+    );
+  }
+
   static Future<String?> exportGstLiabilityPdf(
     SalesReportSnapshot snapshot,
   ) async {
@@ -296,6 +375,17 @@ class SalesReportExportService {
   }
 
   @visibleForTesting
+  static String buildMetalCompleteCsvForTest(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+  }) {
+    return SalesReportCsvBuilder.buildMetalComplete(
+      snapshot,
+      metalTitle: metalTitle,
+    );
+  }
+
+  @visibleForTesting
   static Future<Uint8List> buildCompletePdfBytes(
     SalesReportSnapshot snapshot, {
     String reportTitle = 'Sales Report',
@@ -315,6 +405,19 @@ class SalesReportExportService {
   }) {
     return SalesReportPdfBuilder.buildGstLiability(
       snapshot,
+      identity: identity,
+    );
+  }
+
+  @visibleForTesting
+  static Future<Uint8List> buildMetalCompletePdfBytes(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+    SalesReportExportIdentity identity = SalesReportExportIdentity.fallback,
+  }) {
+    return SalesReportPdfBuilder.buildMetalComplete(
+      snapshot,
+      metalTitle: metalTitle,
       identity: identity,
     );
   }
@@ -368,6 +471,19 @@ class SalesReportExportService {
       snapshot,
       identity: identity,
       reportTitle: reportTitle,
+    );
+  }
+
+  @visibleForTesting
+  static Uint8List buildMetalCompleteExcelBytes(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+    SalesReportExportIdentity identity = SalesReportExportIdentity.fallback,
+  }) {
+    return SalesReportExcelBuilder.buildMetalComplete(
+      snapshot,
+      identity: identity,
+      metalTitle: metalTitle,
     );
   }
 

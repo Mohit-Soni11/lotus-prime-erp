@@ -281,7 +281,12 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       PageRouteBuilder<void>(
         pageBuilder: (_, animation, __) => SalesReportMetalDetailScreen(
           metalType: metalType,
-          initialFilter: _controller.filter.copyWith(metalType: metalType),
+          initialFilter: _controller.filter.copyWith(
+            taxMode: SalesReportTaxMode.all,
+            paymentFilter: SalesReportPaymentFilter.all,
+            metalType: metalType,
+            query: '',
+          ),
         ),
         transitionsBuilder: (_, animation, __, child) {
           final curved = CurvedAnimation(

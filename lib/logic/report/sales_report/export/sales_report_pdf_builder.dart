@@ -100,6 +100,33 @@ class SalesReportPdfBuilder {
     return document.save();
   }
 
+  static Future<Uint8List> buildMetalComplete(
+    SalesReportSnapshot snapshot, {
+    required String metalTitle,
+    required SalesReportExportIdentity identity,
+  }) async {
+    final document = pw.Document(
+      title:
+          '$metalTitle Sales Report - ${SalesReportExportFormatters.periodLabel(snapshot.filter)}',
+      author: identity.shopName,
+    );
+
+    document.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(20),
+        footer: _pdfFooter,
+        build: (_) => _metalCompleteReportWidgets(
+          metalTitle: metalTitle,
+          snapshot: snapshot,
+          identity: identity,
+        ),
+      ),
+    );
+
+    return document.save();
+  }
+
   static Future<Uint8List> buildInvoiceLedger(
     SalesReportSnapshot snapshot, {
     required SalesReportExportIdentity identity,
@@ -745,6 +772,92 @@ class SalesReportPdfBuilder {
     return widgets;
   }
 
+  static List<pw.Widget> _metalCompleteReportWidgets({
+    required String metalTitle,
+    required SalesReportSnapshot snapshot,
+    required SalesReportExportIdentity identity,
+  }) {
+    final widgets = <pw.Widget>[
+      _pdfHeader('$metalTitle Sales Report', snapshot.filter, identity),
+      pw.SizedBox(height: 14),
+      _pdfSection(
+        'Metal Sales Ledger',
+        const ['Metric', 'Value'],
+        _metalSalesLedgerRows(snapshot, metalTitle),
+      ),
+    ];
+
+    if (snapshot.items.isNotEmpty) {
+      _addPdfSection(
+        widgets,
+        'Grade-wise Sales',
+        const [
+          'Grade',
+          'Invoices',
+          'Items',
+          'Pcs',
+          'Gross Wt',
+          'Net Wt',
+          'Making',
+          'Sales',
+        ],
+        SalesReportExportFormatters.gradeRows(snapshot.items),
+      );
+    }
+
+    if (snapshot.invoices.isNotEmpty) {
+      _addPdfSection(
+        widgets,
+        'Invoice Ledger',
+        const [
+          'S.No',
+          'Invoice',
+          'Date/Time',
+          'Status',
+          'Customer',
+          'Mobile',
+          'Type',
+          'Metal Weight',
+          'Gross',
+          'Discount',
+          'Taxable',
+          'GST',
+          'Final',
+          'Paid',
+          'Due',
+        ],
+        _metalInvoiceLedgerRows(snapshot.invoices, snapshot.items),
+      );
+    }
+
+    if (snapshot.items.isNotEmpty) {
+      _addPdfSection(
+        widgets,
+        'Item Ledger',
+        const [
+          'S.No',
+          'Invoice',
+          'Date',
+          'Customer',
+          'Type',
+          'Item',
+          'HUID',
+          'Purity',
+          'Pcs',
+          'Gross',
+          'Less',
+          'Net',
+          'Rate',
+          'Making',
+          'Total',
+        ],
+        _metalItemLedgerRows(snapshot.items),
+      );
+    }
+
+    return widgets;
+  }
+
   static void _addPdfSection(
     List<pw.Widget> widgets,
     String title,
@@ -841,6 +954,149 @@ class SalesReportPdfBuilder {
     final visibleRows = rowCount > 10 ? 10 : rowCount;
     final rowHeight = columnCount <= 2 ? 18.0 : 16.0;
     return 56 + (visibleRows + 1) * rowHeight;
+  }
+
+  static List<List<String>> _metalSalesLedgerRows(
+    SalesReportSnapshot snapshot,
+    String metalTitle,
+  ) {
+    final summary = snapshot.summary;
+    final pieces = snapshot.metals.fold<int>(
+      0,
+      (sum, metal) => sum + metal.pieces,
+    );
+    final grossWeight = snapshot.metals.fold<double>(
+      0,
+      (sum, metal) => sum + metal.grossWeight,
+    );
+    return [
+      ['Metal', metalTitle],
+      ['Invoices', '${summary.invoiceCount}'],
+      ['GST Invoices', '${summary.gstInvoiceCount}'],
+      ['Non-GST Invoices', '${summary.nonGstInvoiceCount}'],
+      ['Pieces', '$pieces'],
+      ['Gross Weight', SalesReportExportFormatters.weight(grossWeight)],
+      [
+        'Net Weight',
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(snapshot.items),
+      ],
+      ['Making', SalesReportExportFormatters.money(summary.makingAmount)],
+      ['Sales Value', SalesReportExportFormatters.money(summary.grossAmount)],
+      ['Taxable', SalesReportExportFormatters.money(summary.taxableAmount)],
+      ['GST', SalesReportExportFormatters.money(summary.gstAmount)],
+      ['Final Amount', SalesReportExportFormatters.money(summary.finalAmount)],
+    ];
+  }
+
+  static List<List<String>> _metalInvoiceLedgerRows(
+    List<SalesReportInvoiceRow> invoices,
+    List<SalesReportItemRow> items,
+  ) {
+    final weights = _metalWeightByBill(items);
+    return [
+      for (var index = 0; index < invoices.length; index++)
+        [
+          '${index + 1}',
+          invoices[index].billNo,
+          SalesReportExportFormatters.dateTime(invoices[index].billDate),
+          invoices[index].paymentStatus,
+          invoices[index].customerName,
+          invoices[index].mobile,
+          invoices[index].isGst ? 'GST' : 'NON-GST',
+          weights[invoices[index].billId] ?? '',
+          SalesReportExportFormatters.money(invoices[index].grossAmount),
+          SalesReportExportFormatters.money(invoices[index].discountAmount),
+          SalesReportExportFormatters.money(invoices[index].taxableAmount),
+          SalesReportExportFormatters.money(invoices[index].gstAmount),
+          SalesReportExportFormatters.money(invoices[index].finalAmount),
+          SalesReportExportFormatters.money(invoices[index].paidAmount),
+          SalesReportExportFormatters.money(invoices[index].dueAmount),
+        ],
+      [
+        'TOTAL',
+        '${invoices.length} invoices',
+        '',
+        '',
+        '',
+        '',
+        '',
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(items),
+        _moneyTotal(invoices, (row) => row.grossAmount),
+        _moneyTotal(invoices, (row) => row.discountAmount),
+        _moneyTotal(invoices, (row) => row.taxableAmount),
+        _moneyTotal(invoices, (row) => row.gstAmount),
+        _moneyTotal(invoices, (row) => row.finalAmount),
+        _moneyTotal(invoices, (row) => row.paidAmount),
+        _moneyTotal(invoices, (row) => row.dueAmount),
+      ],
+    ];
+  }
+
+  static List<List<String>> _metalItemLedgerRows(
+    List<SalesReportItemRow> items,
+  ) {
+    return [
+      for (var index = 0; index < items.length; index++)
+        [
+          '${index + 1}',
+          items[index].billNo,
+          SalesReportExportFormatters.date(items[index].billDate),
+          items[index].customerName,
+          items[index].isGst ? 'GST' : 'NON-GST',
+          items[index].itemName,
+          items[index].huid.isEmpty ? 'Not linked' : items[index].huid,
+          items[index].purity,
+          '${items[index].quantity}',
+          SalesReportExportFormatters.weight(items[index].grossWeight),
+          SalesReportExportFormatters.weight(items[index].lessWeight),
+          SalesReportExportFormatters.weight(items[index].netWeight),
+          SalesReportExportFormatters.money(items[index].rate),
+          SalesReportExportFormatters.money(items[index].makingCharge),
+          SalesReportExportFormatters.money(items[index].itemTotal),
+        ],
+      [
+        'TOTAL',
+        '${items.length} items',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '${items.fold(0, (sum, item) => sum + item.quantity)}',
+        SalesReportExportFormatters.weight(
+          items.fold(0, (sum, item) => sum + item.grossWeight),
+        ),
+        SalesReportExportFormatters.weight(
+          items.fold(0, (sum, item) => sum + item.lessWeight),
+        ),
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(items),
+        '',
+        SalesReportExportFormatters.money(
+          items.fold(0, (sum, item) => sum + item.makingCharge),
+        ),
+        SalesReportExportFormatters.money(
+          items.fold(0, (sum, item) => sum + item.itemTotal),
+        ),
+      ],
+    ];
+  }
+
+  static Map<int, String> _metalWeightByBill(List<SalesReportItemRow> items) {
+    final totals = <int, Map<String, double>>{};
+    for (final item in items) {
+      final billTotals = totals.putIfAbsent(item.billId, () => {});
+      final metal = item.metalType.trim().isEmpty ? 'Metal' : item.metalType;
+      billTotals[metal] = (billTotals[metal] ?? 0) + item.netWeight;
+    }
+    return {
+      for (final entry in totals.entries)
+        entry.key: (entry.value.entries.toList()
+              ..sort((a, b) => a.key.compareTo(b.key)))
+            .map((weight) {
+          return '${weight.key} ${SalesReportExportFormatters.weight(weight.value)}';
+        }).join(' | '),
+    };
   }
 
   static List<List<String>> _invoiceIdentityRegisterRows(
