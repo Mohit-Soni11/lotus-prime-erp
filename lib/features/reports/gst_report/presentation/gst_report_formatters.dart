@@ -17,6 +17,11 @@ class GstReportFormatters {
 
   static String date(DateTime value) => DateFormat('dd MMM yyyy').format(value);
 
+  static String shortMonth(DateTime value) => DateFormat('MMM').format(value);
+
+  static String monthYear(DateTime value) =>
+      DateFormat('MMMM yyyy').format(value);
+
   static String dateTime(DateTime value) =>
       DateFormat('dd MMM yyyy hh:mm a').format(value);
 

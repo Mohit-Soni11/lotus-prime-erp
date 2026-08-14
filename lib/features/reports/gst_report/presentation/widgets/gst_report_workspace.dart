@@ -13,10 +13,12 @@ class GstReportWorkspace extends StatelessWidget {
     super.key,
     required this.controller,
     required this.snapshot,
+    this.segment,
   });
 
   final GstReportController controller;
   final GstReportSnapshot snapshot;
+  final GstFilingSegment? segment;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class GstReportWorkspace extends StatelessWidget {
       case GstReportTab.dashboard:
         return GstDashboardView(snapshot: snapshot);
       case GstReportTab.gstr1:
-        return Gstr1RegisterView(snapshot: snapshot);
+        return Gstr1RegisterView(snapshot: snapshot, segment: segment);
       case GstReportTab.gstr3b:
         return Gstr3bSummaryView(snapshot: snapshot);
       case GstReportTab.hsnRegister:

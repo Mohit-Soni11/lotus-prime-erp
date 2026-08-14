@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/feedback/app_feedback.dart';
 import '../../application/gst_report_controller.dart';
+import '../../application/gst_report_segment_projector.dart';
+import '../../domain/gst_report_models.dart';
 import '../exports/gst_report_export_service.dart';
 import '../theme/gst_report_theme.dart';
 import '../widgets/gst_report_app_bar.dart';
@@ -10,9 +12,16 @@ import '../widgets/gst_report_period_selector.dart';
 import '../widgets/gst_report_workspace.dart';
 
 class GstReportScreen extends StatefulWidget {
-  const GstReportScreen({super.key, this.onBack});
+  const GstReportScreen({
+    super.key,
+    this.onBack,
+    this.segment,
+    this.initialTab = GstReportTab.dashboard,
+  });
 
   final VoidCallback? onBack;
+  final GstFilingSegment? segment;
+  final GstReportTab initialTab;
 
   @override
   State<GstReportScreen> createState() => _GstReportScreenState();
@@ -25,7 +34,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = GstReportController();
+    _controller = GstReportController(initialTab: widget.initialTab);
     _controller.addListener(_handleControllerChanged);
   }
 
@@ -58,22 +67,29 @@ class _GstReportScreenState extends State<GstReportScreen> {
         body: ListenableBuilder(
           listenable: _controller,
           builder: (context, _) {
-            final snapshot = _controller.snapshot;
+            final rawSnapshot = _controller.snapshot;
 
-            if (_controller.isLoading && snapshot == null) {
+            if (_controller.isLoading && rawSnapshot == null) {
               return const _LoadingState();
             }
 
-            if (_controller.errorMessage != null && snapshot == null) {
+            if (_controller.errorMessage != null && rawSnapshot == null) {
               return _ErrorState(
                 message: _controller.errorMessage!,
                 onRetry: _controller.load,
               );
             }
 
-            if (snapshot == null) {
+            if (rawSnapshot == null) {
               return const _EmptyState();
             }
+
+            final snapshot = widget.segment == null
+                ? rawSnapshot
+                : GstReportSegmentProjector.project(
+                    rawSnapshot,
+                    widget.segment!,
+                  );
 
             return Scrollbar(
               controller: _scrollController,
@@ -92,7 +108,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
                           _InlineWarning(message: _controller.errorMessage!),
                           const SizedBox(height: 12),
                         ],
-                        const _GstReportPageHeader(),
+                        _GstReportPageHeader(segment: widget.segment),
                         const SizedBox(height: 16),
                         GstReportPeriodSelector(controller: _controller),
                         const SizedBox(height: 14),
@@ -109,6 +125,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
                             ),
                             controller: _controller,
                             snapshot: snapshot,
+                            segment: widget.segment,
                           ),
                         ),
                       ],
@@ -124,8 +141,11 @@ class _GstReportScreenState extends State<GstReportScreen> {
   }
 
   Future<void> _handleExportSelected(GstReportExportAction action) async {
-    final snapshot = _controller.snapshot;
-    if (snapshot == null) return;
+    final rawSnapshot = _controller.snapshot;
+    if (rawSnapshot == null) return;
+    final snapshot = widget.segment == null
+        ? rawSnapshot
+        : GstReportSegmentProjector.project(rawSnapshot, widget.segment!);
 
     try {
       final path = await GstReportExportService.export(snapshot, action);
@@ -185,17 +205,23 @@ class _GstReportScreenState extends State<GstReportScreen> {
 }
 
 class _GstReportPageHeader extends StatelessWidget {
-  const _GstReportPageHeader();
+  const _GstReportPageHeader({this.segment});
+
+  final GstFilingSegment? segment;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(GstReportStrings.moduleTitle, style: GstReportStyles.pageTitle),
+        Text(
+          segment?.title ?? GstReportStrings.moduleTitle,
+          style: GstReportStyles.pageTitle,
+        ),
         const SizedBox(height: 4),
         Text(
-          'Dashboard, GSTR-1, GSTR-3B, HSN register and filing audit workspace',
+          segment?.subtitle ??
+              'Dashboard, GSTR-1, GSTR-3B, HSN register and filing audit workspace',
           style: GstReportStyles.body,
         ),
       ],

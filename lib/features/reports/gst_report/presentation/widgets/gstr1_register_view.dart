@@ -9,12 +9,30 @@ class Gstr1RegisterView extends StatelessWidget {
   const Gstr1RegisterView({
     super.key,
     required this.snapshot,
+    this.segment,
   });
 
   final GstReportSnapshot snapshot;
+  final GstFilingSegment? segment;
 
   @override
   Widget build(BuildContext context) {
+    if (segment == GstFilingSegment.b2b) {
+      return _InvoiceSection(
+        title: 'B2B Invoices',
+        subtitle: 'Registered customer outward supplies',
+        rows: snapshot.gstr1B2bInvoices,
+      );
+    }
+
+    if (segment == GstFilingSegment.b2c) {
+      return _InvoiceSection(
+        title: 'B2C Invoices',
+        subtitle: 'Consumer and unregistered customer outward supplies',
+        rows: snapshot.gstr1B2cInvoices,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

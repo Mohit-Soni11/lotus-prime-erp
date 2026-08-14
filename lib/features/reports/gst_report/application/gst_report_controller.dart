@@ -8,8 +8,10 @@ class GstReportController extends ChangeNotifier {
   GstReportController({
     GstReportRepository? repository,
     GstReportPeriod? initialPeriod,
+    GstReportTab initialTab = GstReportTab.dashboard,
   })  : _repository = repository ?? GstReportRepository(),
-        _period = initialPeriod ?? GstReportPeriod.currentMonth() {
+        _period = initialPeriod ?? GstReportPeriod.currentMonth(),
+        _selectedTab = initialTab {
     load();
   }
 
@@ -17,7 +19,7 @@ class GstReportController extends ChangeNotifier {
 
   GstReportPeriod _period;
   GstReportSnapshot? _snapshot;
-  GstReportTab _selectedTab = GstReportTab.dashboard;
+  GstReportTab _selectedTab;
   bool _isLoading = true;
   String? _errorMessage;
 

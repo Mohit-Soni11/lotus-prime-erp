@@ -12,6 +12,11 @@ enum GstAuditSeverity {
   info,
 }
 
+enum GstFilingSegment {
+  b2b,
+  b2c,
+}
+
 class GstReportPeriod {
   const GstReportPeriod({
     required this.startDate,
