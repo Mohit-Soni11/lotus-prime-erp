@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../application/gst_report_controller.dart';
 import '../../domain/gst_filing_period.dart';
+import '../../domain/gst_report_models.dart';
 import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
 
@@ -17,6 +18,8 @@ class GstReportPeriodSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final filing = GstFilingPeriod.fromMonth(controller.period.month);
     final stateCode = controller.snapshot?.identity.stateCode ?? '';
+    final snapshot = controller.snapshot;
+    final workflow = controller.workflowSnapshot;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -32,17 +35,26 @@ class GstReportPeriodSelector extends StatelessWidget {
             filing: filing,
             disabled: controller.isLoading,
             onPreviousMonth: () => controller.shiftReportMonth(-1),
-            onNextMonth: () => controller.shiftReportMonth(1),
+            onNextMonth: controller.canShiftReportMonth(1)
+                ? () => controller.shiftReportMonth(1)
+                : null,
             onOpenPicker: () => _openPeriodPicker(context, filing),
           ),
           const SizedBox(height: 14),
           _QuarterTimeline(
             filing: filing,
+            workflow: workflow,
             disabled: controller.isLoading,
+            canSelectMonth: controller.canSelectMonth,
             onMonthSelected: controller.setReportMonth,
           ),
           const SizedBox(height: 14),
-          _DueDateStrip(filing: filing, stateCode: stateCode),
+          _DueDateStrip(
+            filing: filing,
+            stateCode: stateCode,
+            snapshot: snapshot,
+            workflow: workflow,
+          ),
         ],
       ),
     );
@@ -55,7 +67,10 @@ class GstReportPeriodSelector extends StatelessWidget {
     if (controller.isLoading) return;
     final picked = await showDialog<DateTime>(
       context: context,
-      builder: (_) => _GstPeriodPickerDialog(initialMonth: filing.month),
+      builder: (_) => _GstPeriodPickerDialog(
+        initialMonth: filing.month,
+        canSelectMonth: controller.canSelectMonth,
+      ),
     );
     if (picked != null) {
       controller.setReportMonth(picked);
@@ -75,7 +90,7 @@ class _PeriodHeader extends StatelessWidget {
   final GstFilingPeriod filing;
   final bool disabled;
   final VoidCallback onPreviousMonth;
-  final VoidCallback onNextMonth;
+  final VoidCallback? onNextMonth;
   final VoidCallback onOpenPicker;
 
   @override
@@ -165,12 +180,16 @@ class _PeriodHeader extends StatelessWidget {
 class _QuarterTimeline extends StatelessWidget {
   const _QuarterTimeline({
     required this.filing,
+    required this.workflow,
     required this.disabled,
+    required this.canSelectMonth,
     required this.onMonthSelected,
   });
 
   final GstFilingPeriod filing;
+  final GstFilingWorkflowSnapshot? workflow;
   final bool disabled;
+  final bool Function(DateTime month) canSelectMonth;
   final ValueChanged<DateTime> onMonthSelected;
 
   @override
@@ -192,7 +211,13 @@ class _QuarterTimeline extends StatelessWidget {
                   quarter: quarter,
                   selectedMonth: filing.month,
                   currentMonth: DateTime(now.year, now.month),
+                  completed: workflow?.isQuarterComplete(
+                        GstFilingPeriod.fromMonth(quarter.months.first)
+                            .quarterKey,
+                      ) ??
+                      false,
                   disabled: disabled,
+                  canSelectMonth: canSelectMonth,
                   onMonthSelected: onMonthSelected,
                 ),
               ),
@@ -208,14 +233,18 @@ class _QuarterBlock extends StatelessWidget {
     required this.quarter,
     required this.selectedMonth,
     required this.currentMonth,
+    required this.completed,
     required this.disabled,
+    required this.canSelectMonth,
     required this.onMonthSelected,
   });
 
   final GstQuarterCycle quarter;
   final DateTime selectedMonth;
   final DateTime currentMonth;
+  final bool completed;
   final bool disabled;
+  final bool Function(DateTime month) canSelectMonth;
   final ValueChanged<DateTime> onMonthSelected;
 
   @override
@@ -239,16 +268,41 @@ class _QuarterBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${quarter.label} ${GstReportFormatters.shortMonth(quarter.months.first)}-${GstReportFormatters.shortMonth(quarter.months.last)}',
-            style: GstReportStyles.body.copyWith(
-              color: selected
-                  ? GstReportColors.taxGreen
-                  : GstReportColors.textPrimary,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${quarter.label} ${GstReportFormatters.shortMonth(quarter.months.first)}-${GstReportFormatters.shortMonth(quarter.months.last)}',
+                  style: GstReportStyles.body.copyWith(
+                    color: selected || completed
+                        ? GstReportColors.taxGreen
+                        : GstReportColors.textPrimary,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (completed)
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 17,
+                  color: GstReportColors.success,
+                ),
+            ],
           ),
+          if (completed) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Quarter filed',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GstReportStyles.body.copyWith(
+                color: GstReportColors.success,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -258,7 +312,7 @@ class _QuarterBlock extends StatelessWidget {
                     month: month,
                     selected: _sameMonth(month, selectedMonth),
                     current: _sameMonth(month, currentMonth),
-                    disabled: disabled,
+                    disabled: disabled || !canSelectMonth(month),
                     onTap: () => onMonthSelected(month),
                   ),
                 ),
@@ -289,10 +343,15 @@ class _MonthChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? GstReportColors.taxGreen : GstReportColors.textSecondary;
+    final color = disabled
+        ? GstReportColors.textMuted.withValues(alpha: 0.55)
+        : selected
+            ? GstReportColors.taxGreen
+            : GstReportColors.textSecondary;
     return Tooltip(
-      message: GstReportFormatters.monthYear(month),
+      message: disabled
+          ? '${GstReportFormatters.monthYear(month)} is locked until the month starts'
+          : GstReportFormatters.monthYear(month),
       child: InkWell(
         onTap: disabled ? null : onTap,
         borderRadius: BorderRadius.circular(9),
@@ -305,7 +364,9 @@ class _MonthChip extends StatelessWidget {
                 ? GstReportColors.taxGreen
                 : current
                     ? GstReportColors.brandGold.withValues(alpha: 0.13)
-                    : GstReportColors.bodyPanel,
+                    : disabled
+                        ? GstReportColors.bodySubtle.withValues(alpha: 0.55)
+                        : GstReportColors.bodyPanel,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
               color: selected
@@ -335,14 +396,29 @@ class _DueDateStrip extends StatelessWidget {
   const _DueDateStrip({
     required this.filing,
     required this.stateCode,
+    required this.snapshot,
+    required this.workflow,
   });
 
   final GstFilingPeriod filing;
   final String stateCode;
+  final GstReportSnapshot? snapshot;
+  final GstFilingWorkflowSnapshot? workflow;
 
   @override
   Widget build(BuildContext context) {
     final gstr3bDue = filing.gstr3bDueDateForStateCode(stateCode);
+    final monthLabel = GstReportFormatters.monthYear(filing.month);
+    final monthlyStatus = workflow?.statusFor(GstFilingTask.monthlyTaxPayment);
+    final iffStatus = workflow?.statusFor(GstFilingTask.b2bIffUpload);
+    final quarterStatus = workflow?.statusFor(GstFilingTask.quarterReturnFiled);
+    final b2bInvoices = snapshot?.gstr1B2bInvoices ?? const <GstInvoiceRow>[];
+    final b2bTax = _sum(b2bInvoices, (row) => row.gstAmount);
+    final monthlyAmount = monthlyStatus?.completed ?? false
+        ? monthlyStatus!.amountSnapshot
+        : snapshot?.dashboard.totalGst ?? 0;
+    final iffAmount =
+        iffStatus?.completed ?? false ? iffStatus!.amountSnapshot : b2bTax;
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 980;
@@ -354,12 +430,23 @@ class _DueDateStrip extends StatelessWidget {
           children: [
             SizedBox(
               width: cardWidth,
-              child: _DueCard(
-                title: 'Monthly Tax Payment',
-                date: filing.monthlyTaxPaymentDueDate,
-                icon: Icons.payments_rounded,
-                note: 'PMT-06 monthly tax payment',
-              ),
+              child: filing.hasMonthlyTaxPayment
+                  ? _DueCard(
+                      title: 'Monthly Tax Payment',
+                      date: filing.monthlyTaxPaymentDueDate,
+                      icon: Icons.payments_rounded,
+                      note: 'For $monthLabel PMT-06 payment',
+                      amountLabel: GstReportFormatters.money(monthlyAmount),
+                      completed: monthlyStatus?.completed ?? false,
+                      completedAt: monthlyStatus?.completedAt,
+                    )
+                  : _InfoDueCard(
+                      title: 'Monthly Tax Payment',
+                      value: 'Not required',
+                      icon: Icons.payments_rounded,
+                      note:
+                          '${filing.quarterLabel} close month settles through quarterly 3B',
+                    ),
             ),
             SizedBox(
               width: cardWidth,
@@ -374,8 +461,11 @@ class _DueDateStrip extends StatelessWidget {
                       title: 'IFF B2B Optional',
                       date: filing.iffDueDate!,
                       icon: Icons.receipt_long_rounded,
-                      note:
-                          'B2B upload window for month ${filing.monthPositionInQuarter}',
+                      note: 'For $monthLabel B2B invoices',
+                      amountLabel:
+                          '${b2bInvoices.length} invoices | ${GstReportFormatters.money(iffAmount)}',
+                      completed: iffStatus?.completed ?? false,
+                      completedAt: iffStatus?.completedAt,
                     ),
             ),
             SizedBox(
@@ -385,13 +475,22 @@ class _DueDateStrip extends StatelessWidget {
                 date: gstr3bDue,
                 icon: Icons.fact_check_rounded,
                 note:
-                    'GSTR-1 ${GstReportFormatters.date(filing.gstr1QuarterDueDate)} | 3B ${stateCode.trim().isEmpty ? '22/24' : gstr3bDue.day}',
+                    'For ${filing.quarterLabel} ${filing.quarterRangeLabel}; GSTR-1 ${GstReportFormatters.date(filing.gstr1QuarterDueDate)}',
+                amountLabel: quarterStatus?.completed ?? false
+                    ? GstReportFormatters.money(quarterStatus!.amountSnapshot)
+                    : 'Available in quarter closing month',
+                completed: quarterStatus?.completed ?? false,
+                completedAt: quarterStatus?.completedAt,
               ),
             ),
           ],
         );
       },
     );
+  }
+
+  double _sum<T>(Iterable<T> rows, double Function(T row) selector) {
+    return rows.fold<double>(0, (sum, row) => sum + selector(row));
   }
 }
 
@@ -401,12 +500,18 @@ class _DueCard extends StatelessWidget {
     required this.date,
     required this.icon,
     required this.note,
+    this.amountLabel,
+    this.completed = false,
+    this.completedAt,
   });
 
   final String title;
   final DateTime date;
   final IconData icon;
   final String note;
+  final String? amountLabel;
+  final bool completed;
+  final DateTime? completedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -414,10 +519,14 @@ class _DueCard extends StatelessWidget {
     return _DueCardShell(
       title: title,
       value: GstReportFormatters.date(date),
-      badge: status.label,
-      color: status.color,
+      badge: completed ? 'DONE' : status.label,
+      color: completed ? GstReportColors.success : status.color,
       icon: icon,
-      note: note,
+      note: completed && completedAt != null
+          ? '$note | Completed ${GstReportFormatters.dateTime(completedAt!)}'
+          : note,
+      amountLabel: amountLabel,
+      completed: completed,
     );
   }
 }
@@ -444,6 +553,7 @@ class _InfoDueCard extends StatelessWidget {
       color: GstReportColors.information,
       icon: icon,
       note: note,
+      completed: false,
     );
   }
 }
@@ -456,6 +566,8 @@ class _DueCardShell extends StatelessWidget {
     required this.color,
     required this.icon,
     required this.note,
+    required this.completed,
+    this.amountLabel,
   });
 
   final String title;
@@ -464,11 +576,13 @@ class _DueCardShell extends StatelessWidget {
   final Color color;
   final IconData icon;
   final String note;
+  final String? amountLabel;
+  final bool completed;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 86),
+      constraints: const BoxConstraints(minHeight: 118),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.07),
@@ -536,6 +650,19 @@ class _DueCardShell extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GstReportStyles.body.copyWith(fontSize: 11),
                 ),
+                if (amountLabel != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    amountLabel!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GstReportStyles.body.copyWith(
+                      color: GstReportColors.textPrimary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -618,9 +745,13 @@ class _MonthArrowButton extends StatelessWidget {
 }
 
 class _GstPeriodPickerDialog extends StatefulWidget {
-  const _GstPeriodPickerDialog({required this.initialMonth});
+  const _GstPeriodPickerDialog({
+    required this.initialMonth,
+    required this.canSelectMonth,
+  });
 
   final DateTime initialMonth;
+  final bool Function(DateTime month) canSelectMonth;
 
   @override
   State<_GstPeriodPickerDialog> createState() => _GstPeriodPickerDialogState();
@@ -639,6 +770,8 @@ class _GstPeriodPickerDialogState extends State<_GstPeriodPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final filing = GstFilingPeriod.fromMonth(DateTime(_financialYearStart, 4));
+    final currentFy =
+        GstFilingPeriod.fromMonth(DateTime.now()).financialYearStart;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -719,7 +852,9 @@ class _GstPeriodPickerDialogState extends State<_GstPeriodPickerDialog> {
                   _MonthArrowButton(
                     tooltip: 'Next financial year',
                     icon: Icons.chevron_right_rounded,
-                    onPressed: () => setState(() => _financialYearStart++),
+                    onPressed: _financialYearStart >= currentFy
+                        ? null
+                        : () => setState(() => _financialYearStart++),
                   ),
                 ],
               ),
@@ -727,6 +862,7 @@ class _GstPeriodPickerDialogState extends State<_GstPeriodPickerDialog> {
               _DialogQuarterGrid(
                 filing: filing,
                 initialMonth: widget.initialMonth,
+                canSelectMonth: widget.canSelectMonth,
                 onSelected: (month) => Navigator.of(context).pop(month),
               ),
             ],
@@ -741,11 +877,13 @@ class _DialogQuarterGrid extends StatelessWidget {
   const _DialogQuarterGrid({
     required this.filing,
     required this.initialMonth,
+    required this.canSelectMonth,
     required this.onSelected,
   });
 
   final GstFilingPeriod filing;
   final DateTime initialMonth;
+  final bool Function(DateTime month) canSelectMonth;
   final ValueChanged<DateTime> onSelected;
 
   @override
@@ -761,7 +899,9 @@ class _DialogQuarterGrid extends StatelessWidget {
               quarter: quarter,
               selectedMonth: DateTime(initialMonth.year, initialMonth.month),
               currentMonth: DateTime(DateTime.now().year, DateTime.now().month),
+              completed: false,
               disabled: false,
+              canSelectMonth: canSelectMonth,
               onMonthSelected: onSelected,
             ),
           ),

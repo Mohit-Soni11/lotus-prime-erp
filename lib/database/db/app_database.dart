@@ -109,6 +109,7 @@ class AppDatabase extends _$AppDatabase {
   Future<void>? _lowStockAlertSchemaFuture;
   Future<void>? _marketRefillReportSchemaFuture;
   Future<void>? _stockTransferSchemaFuture;
+  Future<void>? _gstFilingWorkflowSchemaFuture;
 
   /// Handles migration errors safely.
   ///
@@ -178,6 +179,46 @@ class AppDatabase extends _$AppDatabase {
     } catch (error, stackTrace) {
       _handleMigrationError(error, stackTrace);
     }
+  }
+
+  Future<void> ensureGstFilingWorkflowSchema() async {
+    final cached = _gstFilingWorkflowSchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureGstFilingWorkflowSchemaInternal();
+    _gstFilingWorkflowSchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _gstFilingWorkflowSchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureGstFilingWorkflowSchemaInternal() async {
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS "gst_filing_workflow_statuses" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "period_month" TEXT NOT NULL,
+        "financial_year" TEXT NOT NULL,
+        "quarter_key" TEXT NOT NULL,
+        "quarter_label" TEXT NOT NULL,
+        "task_key" TEXT NOT NULL,
+        "segment" TEXT NOT NULL DEFAULT '',
+        "amount_snapshot" REAL NOT NULL DEFAULT 0.0,
+        "invoice_count_snapshot" INTEGER NOT NULL DEFAULT 0,
+        "completed" INTEGER NOT NULL DEFAULT 0,
+        "completed_at" TEXT,
+        "created_at" TEXT NOT NULL,
+        "updated_at" TEXT NOT NULL,
+        UNIQUE("period_month", "task_key", "segment")
+      )
+    ''');
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_gst_filing_workflow_period" ON "gst_filing_workflow_statuses" ("period_month", "completed")',
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS "idx_gst_filing_workflow_quarter" ON "gst_filing_workflow_statuses" ("quarter_key", "task_key", "completed")',
+    );
   }
 
   Future<void> ensureStockInventorySchema() async {

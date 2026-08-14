@@ -17,6 +17,139 @@ enum GstFilingSegment {
   b2c,
 }
 
+enum GstFilingTask {
+  monthlyTaxPayment,
+  b2bIffUpload,
+  b2bReturnFiled,
+  b2cReturnFiled,
+  quarterReturnFiled,
+}
+
+extension GstFilingTaskMetadata on GstFilingTask {
+  String get storageKey {
+    switch (this) {
+      case GstFilingTask.monthlyTaxPayment:
+        return 'monthly_tax_payment';
+      case GstFilingTask.b2bIffUpload:
+        return 'b2b_iff_upload';
+      case GstFilingTask.b2bReturnFiled:
+        return 'b2b_return_filed';
+      case GstFilingTask.b2cReturnFiled:
+        return 'b2c_return_filed';
+      case GstFilingTask.quarterReturnFiled:
+        return 'quarter_return_filed';
+    }
+  }
+
+  String get segmentKey {
+    switch (this) {
+      case GstFilingTask.b2bIffUpload:
+      case GstFilingTask.b2bReturnFiled:
+        return 'B2B';
+      case GstFilingTask.b2cReturnFiled:
+        return 'B2C';
+      case GstFilingTask.monthlyTaxPayment:
+      case GstFilingTask.quarterReturnFiled:
+        return '';
+    }
+  }
+
+  static GstFilingTask? fromStorageKey(String value) {
+    for (final task in GstFilingTask.values) {
+      if (task.storageKey == value) return task;
+    }
+    return null;
+  }
+}
+
+class GstFilingTaskStatus {
+  const GstFilingTaskStatus({
+    required this.task,
+    required this.periodMonth,
+    required this.quarterKey,
+    required this.quarterLabel,
+    this.amountSnapshot = 0,
+    this.invoiceCountSnapshot = 0,
+    this.completed = false,
+    this.completedAt,
+  });
+
+  factory GstFilingTaskStatus.empty({
+    required GstFilingTask task,
+    required DateTime periodMonth,
+    required String quarterKey,
+    required String quarterLabel,
+  }) {
+    return GstFilingTaskStatus(
+      task: task,
+      periodMonth: periodMonth,
+      quarterKey: quarterKey,
+      quarterLabel: quarterLabel,
+    );
+  }
+
+  final GstFilingTask task;
+  final DateTime periodMonth;
+  final String quarterKey;
+  final String quarterLabel;
+  final double amountSnapshot;
+  final int invoiceCountSnapshot;
+  final bool completed;
+  final DateTime? completedAt;
+}
+
+class GstFilingWorkflowSnapshot {
+  const GstFilingWorkflowSnapshot({
+    required this.periodMonth,
+    required this.quarterKey,
+    required this.quarterLabel,
+    required this.statuses,
+    required this.completedQuarterKeys,
+  });
+
+  factory GstFilingWorkflowSnapshot.empty({
+    required DateTime periodMonth,
+    required String quarterKey,
+    required String quarterLabel,
+  }) {
+    return GstFilingWorkflowSnapshot(
+      periodMonth: periodMonth,
+      quarterKey: quarterKey,
+      quarterLabel: quarterLabel,
+      statuses: {
+        for (final task in GstFilingTask.values)
+          task: GstFilingTaskStatus.empty(
+            task: task,
+            periodMonth: periodMonth,
+            quarterKey: quarterKey,
+            quarterLabel: quarterLabel,
+          ),
+      },
+      completedQuarterKeys: const {},
+    );
+  }
+
+  final DateTime periodMonth;
+  final String quarterKey;
+  final String quarterLabel;
+  final Map<GstFilingTask, GstFilingTaskStatus> statuses;
+  final Set<String> completedQuarterKeys;
+
+  GstFilingTaskStatus statusFor(GstFilingTask task) {
+    return statuses[task] ??
+        GstFilingTaskStatus.empty(
+          task: task,
+          periodMonth: periodMonth,
+          quarterKey: quarterKey,
+          quarterLabel: quarterLabel,
+        );
+  }
+
+  bool isTaskComplete(GstFilingTask task) => statusFor(task).completed;
+
+  bool isQuarterComplete(String key) => completedQuarterKeys.contains(key);
+}
+
 class GstReportPeriod {
   const GstReportPeriod({
     required this.startDate,

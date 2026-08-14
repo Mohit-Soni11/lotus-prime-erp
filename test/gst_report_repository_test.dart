@@ -146,6 +146,54 @@ void main() {
       GstAuditSeverity.info,
     );
   });
+
+  test('filing workflow status persists monthly and quarterly snapshots',
+      () async {
+    final august = GstReportPeriod.forMonth(DateTime(2026, 8));
+
+    await repository.setFilingTaskCompletion(
+      period: august,
+      task: GstFilingTask.monthlyTaxPayment,
+      completed: true,
+      amountSnapshot: 510.05,
+      invoiceCountSnapshot: 2,
+    );
+
+    final monthlyWorkflow =
+        await repository.fetchFilingWorkflowSnapshot(august);
+    final monthlyStatus = monthlyWorkflow.statusFor(
+      GstFilingTask.monthlyTaxPayment,
+    );
+
+    expect(monthlyStatus.completed, isTrue);
+    expect(monthlyStatus.amountSnapshot, 510.05);
+    expect(monthlyStatus.invoiceCountSnapshot, 2);
+    expect(monthlyStatus.completedAt, isNotNull);
+
+    await repository.setFilingTaskCompletion(
+      period: GstReportPeriod.forMonth(DateTime(2026, 9)),
+      task: GstFilingTask.quarterReturnFiled,
+      completed: true,
+      amountSnapshot: 1510.75,
+      invoiceCountSnapshot: 9,
+    );
+
+    final quarterWorkflow = await repository.fetchFilingWorkflowSnapshot(
+      GstReportPeriod.forMonth(DateTime(2026, 8)),
+    );
+
+    expect(quarterWorkflow.isQuarterComplete('FY2026-Q2'), isTrue);
+    expect(
+      quarterWorkflow.statusFor(GstFilingTask.quarterReturnFiled).completed,
+      isTrue,
+    );
+    expect(
+      quarterWorkflow
+          .statusFor(GstFilingTask.quarterReturnFiled)
+          .amountSnapshot,
+      1510.75,
+    );
+  });
 }
 
 Future<int> _insertBill(

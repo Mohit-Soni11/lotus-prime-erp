@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../application/gst_report_controller.dart';
 import '../../application/gst_report_segment_projector.dart';
+import '../../domain/gst_filing_period.dart';
 import '../../domain/gst_report_models.dart';
 import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
+import '../widgets/gst_filing_completion_dialog.dart';
 import '../widgets/gst_filing_segment_card.dart';
 import '../widgets/gst_report_app_bar.dart';
 import '../widgets/gst_report_period_selector.dart';
@@ -86,6 +88,9 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
                     const SizedBox(height: 18),
                     _SegmentGrid(
                       snapshot: snapshot,
+                      controller: _controller,
+                      workflow: _controller.workflowSnapshot,
+                      onCompleteSegmentFiling: _confirmSegmentCompletion,
                       onSegmentSelected: _openSegmentWorkspace,
                     ),
                   ],
@@ -103,6 +108,7 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
       PageRouteBuilder<void>(
         pageBuilder: (_, animation, __) => GstReportScreen(
           segment: segment,
+          initialPeriod: _controller.period,
           initialTab: GstReportTab.dashboard,
           onBack: () => Navigator.of(context).pop(),
         ),
@@ -124,6 +130,20 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _confirmSegmentCompletion(GstFilingSegment segment) async {
+    final snapshot = _controller.snapshot;
+    if (snapshot == null || !_controller.canCompleteSelectedPeriod) return;
+
+    final confirmed = await GstFilingCompletionDialog.show(
+      context: context,
+      segment: segment,
+      snapshot: snapshot,
+      filing: GstFilingPeriod.fromMonth(_controller.period.month),
+    );
+    if (!confirmed || !mounted) return;
+    await _controller.completeSegmentFiling(segment);
   }
 }
 
@@ -216,10 +236,16 @@ class _QrmpStatusStrip extends StatelessWidget {
 class _SegmentGrid extends StatelessWidget {
   const _SegmentGrid({
     required this.snapshot,
+    required this.controller,
+    required this.workflow,
+    required this.onCompleteSegmentFiling,
     required this.onSegmentSelected,
   });
 
   final GstReportSnapshot snapshot;
+  final GstReportController controller;
+  final GstFilingWorkflowSnapshot? workflow;
+  final ValueChanged<GstFilingSegment> onCompleteSegmentFiling;
   final ValueChanged<GstFilingSegment> onSegmentSelected;
 
   @override
@@ -243,6 +269,11 @@ class _SegmentGrid extends StatelessWidget {
                   taxableValue: _taxableValue(segment),
                   taxPayable: _taxPayable(segment),
                   auditCount: _auditCount(segment),
+                  filingStatus: _filingStatus(segment),
+                  completionEnabled: _completionEnabled(segment) &&
+                      _filingStatus(segment)?.completed != true,
+                  completionDisabledReason: _completionDisabledReason(segment),
+                  onCompleteFiling: () => onCompleteSegmentFiling(segment),
                   onTap: () => onSegmentSelected(segment),
                 ),
               ),
@@ -274,6 +305,33 @@ class _SegmentGrid extends StatelessWidget {
     return projected.auditFindings
         .where((item) => item.severity != GstAuditSeverity.info)
         .length;
+  }
+
+  GstFilingTaskStatus? _filingStatus(GstFilingSegment segment) {
+    switch (segment) {
+      case GstFilingSegment.b2b:
+        return workflow?.statusFor(GstFilingTask.b2bReturnFiled);
+      case GstFilingSegment.b2c:
+        return workflow?.statusFor(GstFilingTask.b2cReturnFiled);
+    }
+  }
+
+  bool _completionEnabled(GstFilingSegment segment) {
+    return controller.canCompleteSelectedPeriod &&
+        (_filingStatus(segment)?.completed != true);
+  }
+
+  String _completionDisabledReason(GstFilingSegment segment) {
+    if (_filingStatus(segment)?.completed == true) {
+      return 'This GST filing workspace is already completed.';
+    }
+    if (controller.isSelectedMonthInFuture) {
+      return 'Future GST periods are locked.';
+    }
+    if (!controller.canCompleteSelectedPeriod) {
+      return 'Available from ${GstReportFormatters.date(controller.filingCompletionOpensAt)} after this GST month closes.';
+    }
+    return 'Review the confirmation checklist before completing.';
   }
 
   List<GstInvoiceRow> _invoices(GstFilingSegment segment) {

@@ -76,11 +76,15 @@ class GstFilingPeriod {
 
   bool get isQuarterClosingMonth => monthPositionInQuarter == 3;
 
+  bool get hasMonthlyTaxPayment => !isQuarterClosingMonth;
+
   String get financialYearLabel {
     return 'FY $financialYearStart-${financialYearEnd.toString().substring(2)}';
   }
 
   String get quarterLabel => 'Q$quarter';
+
+  String get quarterKey => 'FY$financialYearStart-Q$quarter';
 
   String get quarterRangeLabel {
     final months = quarterMonths;
@@ -118,6 +122,10 @@ class GstFilingPeriod {
         ),
       );
     });
+  }
+
+  DateTime get quarterEndMonth {
+    return DateTime(quarterStartMonth.year, quarterStartMonth.month + 2);
   }
 
   DateTime gstr3bDueDateForStateCode(String stateCode) {

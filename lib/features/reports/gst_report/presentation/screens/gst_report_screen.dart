@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../../core/feedback/app_feedback.dart';
 import '../../application/gst_report_controller.dart';
 import '../../application/gst_report_segment_projector.dart';
+import '../../domain/gst_filing_period.dart';
 import '../../domain/gst_report_models.dart';
 import '../exports/gst_report_export_service.dart';
+import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
+import '../widgets/gst_filing_completion_dialog.dart';
 import '../widgets/gst_report_app_bar.dart';
 import '../widgets/gst_report_navigation_tabs.dart';
 import '../widgets/gst_report_period_selector.dart';
@@ -16,11 +19,13 @@ class GstReportScreen extends StatefulWidget {
     super.key,
     this.onBack,
     this.segment,
+    this.initialPeriod,
     this.initialTab = GstReportTab.dashboard,
   });
 
   final VoidCallback? onBack;
   final GstFilingSegment? segment;
+  final GstReportPeriod? initialPeriod;
   final GstReportTab initialTab;
 
   @override
@@ -34,7 +39,10 @@ class _GstReportScreenState extends State<GstReportScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = GstReportController(initialTab: widget.initialTab);
+    _controller = GstReportController(
+      initialPeriod: widget.initialPeriod,
+      initialTab: widget.initialTab,
+    );
     _controller.addListener(_handleControllerChanged);
   }
 
@@ -109,6 +117,18 @@ class _GstReportScreenState extends State<GstReportScreen> {
                           const SizedBox(height: 12),
                         ],
                         _GstReportPageHeader(segment: widget.segment),
+                        if (widget.segment != null) ...[
+                          const SizedBox(height: 12),
+                          _SegmentFilingControlBar(
+                            segment: widget.segment!,
+                            snapshot: snapshot,
+                            controller: _controller,
+                            onComplete: () => _confirmSegmentCompletion(
+                              widget.segment!,
+                              snapshot,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         GstReportPeriodSelector(controller: _controller),
                         const SizedBox(height: 14),
@@ -165,6 +185,21 @@ class _GstReportScreenState extends State<GstReportScreen> {
     }
   }
 
+  Future<void> _confirmSegmentCompletion(
+    GstFilingSegment segment,
+    GstReportSnapshot snapshot,
+  ) async {
+    if (!_controller.canCompleteSelectedPeriod) return;
+    final confirmed = await GstFilingCompletionDialog.show(
+      context: context,
+      segment: segment,
+      snapshot: snapshot,
+      filing: GstFilingPeriod.fromMonth(_controller.period.month),
+    );
+    if (!confirmed || !mounted) return;
+    await _controller.completeSegmentFiling(segment);
+  }
+
   static const _exportItems = [
     GstReportExportMenuItem(
       action: GstReportExportAction.summaryPdf,
@@ -202,6 +237,192 @@ class _GstReportScreenState extends State<GstReportScreen> {
       icon: Icons.picture_as_pdf_outlined,
     ),
   ];
+}
+
+class _SegmentFilingControlBar extends StatelessWidget {
+  const _SegmentFilingControlBar({
+    required this.segment,
+    required this.snapshot,
+    required this.controller,
+    required this.onComplete,
+  });
+
+  final GstFilingSegment segment;
+  final GstReportSnapshot snapshot;
+  final GstReportController controller;
+  final VoidCallback onComplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final completed = controller.isSegmentFilingComplete(segment);
+    final enabled = controller.canCompleteSelectedPeriod && !completed;
+    final statusColor = completed
+        ? GstReportColors.success
+        : enabled
+            ? GstReportColors.taxGreen
+            : GstReportColors.warning;
+    final amount = _segmentTaxPayable(segment, snapshot);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: statusColor.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              completed
+                  ? Icons.check_circle_rounded
+                  : Icons.pending_actions_rounded,
+              color: statusColor,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  completed
+                      ? '${segment.code} filing completed'
+                      : '${segment.code} filing completion',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GstReportStyles.body.copyWith(
+                    color: GstReportColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  _statusText(completed, enabled),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GstReportStyles.body.copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _MiniAmountPill(
+            label: '${segment.code} GST',
+            value: GstReportFormatters.money(amount),
+          ),
+          const SizedBox(width: 12),
+          FilledButton.icon(
+            onPressed: enabled ? onComplete : null,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(190, 42),
+              backgroundColor: GstReportColors.taxGreen,
+              disabledBackgroundColor: completed
+                  ? GstReportColors.success.withValues(alpha: 0.12)
+                  : GstReportColors.bodySubtle,
+              disabledForegroundColor: completed
+                  ? GstReportColors.success
+                  : GstReportColors.textMuted.withValues(alpha: 0.72),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(11),
+              ),
+            ),
+            icon: Icon(
+              completed ? Icons.check_circle_rounded : Icons.verified_rounded,
+              size: 18,
+            ),
+            label: Text(
+              completed
+                  ? 'Filing Completed'
+                  : 'Complete ${segment.code} Filing',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _statusText(bool completed, bool enabled) {
+    if (completed) {
+      return 'This month is marked complete and saved in GST filing records.';
+    }
+    if (enabled) {
+      return 'Review the return checklist before marking this month complete.';
+    }
+    if (controller.isSelectedMonthInFuture) {
+      return 'Future GST periods are locked.';
+    }
+    return 'Button opens on ${GstReportFormatters.date(controller.filingCompletionOpensAt)} after this GST month closes.';
+  }
+
+  double _segmentTaxPayable(
+    GstFilingSegment segment,
+    GstReportSnapshot snapshot,
+  ) {
+    final invoices = switch (segment) {
+      GstFilingSegment.b2b => snapshot.gstr1B2bInvoices,
+      GstFilingSegment.b2c => snapshot.gstr1B2cInvoices,
+    };
+    return invoices.fold<double>(0, (sum, row) => sum + row.gstAmount);
+  }
+}
+
+class _MiniAmountPill extends StatelessWidget {
+  const _MiniAmountPill({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: GstReportColors.bodyPanel,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: GstReportColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _GstReportPageHeader extends StatelessWidget {

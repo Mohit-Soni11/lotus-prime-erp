@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../database/db/app_database.dart';
 import '../../../../models/setting/tax_gst/hsn_code_model.dart';
+import '../domain/gst_filing_period.dart';
 import '../domain/gst_report_models.dart';
 
 class GstReportRepository {
@@ -51,6 +52,145 @@ class GstReportRepository {
       );
       rethrow;
     }
+  }
+
+  Future<GstFilingWorkflowSnapshot> fetchFilingWorkflowSnapshot(
+    GstReportPeriod period,
+  ) async {
+    await _db.ensureGstFilingWorkflowSchema();
+    final filing = GstFilingPeriod.fromMonth(period.month);
+    final periodKey = _monthKey(period.month);
+    final statuses = {
+      for (final task in GstFilingTask.values)
+        task: GstFilingTaskStatus.empty(
+          task: task,
+          periodMonth: period.month,
+          quarterKey: filing.quarterKey,
+          quarterLabel: _quarterTitle(filing),
+        ),
+    };
+
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        period_month,
+        quarter_key,
+        quarter_label,
+        task_key,
+        amount_snapshot,
+        invoice_count_snapshot,
+        completed,
+        completed_at
+      FROM gst_filing_workflow_statuses
+      WHERE period_month = ?
+        OR (quarter_key = ? AND task_key = ?)
+      ''',
+      variables: [
+        Variable<String>(periodKey),
+        Variable<String>(filing.quarterKey),
+        Variable<String>(GstFilingTask.quarterReturnFiled.storageKey),
+      ],
+    ).get();
+
+    for (final row in rows) {
+      final task = GstFilingTaskMetadata.fromStorageKey(
+        row.read<String>('task_key'),
+      );
+      if (task == null) continue;
+      statuses[task] = GstFilingTaskStatus(
+        task: task,
+        periodMonth: _parseMonthKey(row.read<String>('period_month')),
+        quarterKey: row.read<String>('quarter_key'),
+        quarterLabel: row.read<String>('quarter_label'),
+        amountSnapshot: _readDouble(row, 'amount_snapshot'),
+        invoiceCountSnapshot: row.read<int>('invoice_count_snapshot'),
+        completed: row.read<int>('completed') == 1,
+        completedAt:
+            _parseNullableDate(row.readNullable<String>('completed_at')),
+      );
+    }
+
+    final completedQuarterRows = await _db.customSelect(
+      '''
+      SELECT DISTINCT quarter_key
+      FROM gst_filing_workflow_statuses
+      WHERE financial_year = ?
+        AND task_key = ?
+        AND completed = 1
+      ''',
+      variables: [
+        Variable<String>(filing.financialYearLabel),
+        Variable<String>(GstFilingTask.quarterReturnFiled.storageKey),
+      ],
+    ).get();
+
+    return GstFilingWorkflowSnapshot(
+      periodMonth: period.month,
+      quarterKey: filing.quarterKey,
+      quarterLabel: _quarterTitle(filing),
+      statuses: statuses,
+      completedQuarterKeys: completedQuarterRows
+          .map((row) => row.read<String>('quarter_key'))
+          .toSet(),
+    );
+  }
+
+  Future<void> setFilingTaskCompletion({
+    required GstReportPeriod period,
+    required GstFilingTask task,
+    required bool completed,
+    required double amountSnapshot,
+    required int invoiceCountSnapshot,
+  }) async {
+    await _db.ensureGstFilingWorkflowSchema();
+    final filing = GstFilingPeriod.fromMonth(period.month);
+    final effectiveMonth = task == GstFilingTask.quarterReturnFiled
+        ? filing.quarterEndMonth
+        : period.month;
+    final now = DateTime.now().toIso8601String();
+    final completedAt = completed ? now : null;
+
+    await _db.customStatement(
+      '''
+      INSERT INTO gst_filing_workflow_statuses (
+        period_month,
+        financial_year,
+        quarter_key,
+        quarter_label,
+        task_key,
+        segment,
+        amount_snapshot,
+        invoice_count_snapshot,
+        completed,
+        completed_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(period_month, task_key, segment) DO UPDATE SET
+        financial_year = excluded.financial_year,
+        quarter_key = excluded.quarter_key,
+        quarter_label = excluded.quarter_label,
+        amount_snapshot = excluded.amount_snapshot,
+        invoice_count_snapshot = excluded.invoice_count_snapshot,
+        completed = excluded.completed,
+        completed_at = excluded.completed_at,
+        updated_at = excluded.updated_at
+      ''',
+      [
+        _monthKey(effectiveMonth),
+        filing.financialYearLabel,
+        filing.quarterKey,
+        _quarterTitle(filing),
+        task.storageKey,
+        task.segmentKey,
+        amountSnapshot,
+        invoiceCountSnapshot,
+        completed ? 1 : 0,
+        completedAt,
+        now,
+        now,
+      ],
+    );
   }
 
   Future<GstReportShopIdentity> _fetchIdentity() async {
@@ -459,6 +599,27 @@ class GstReportRepository {
   }
 
   double _roundMoney(double amount) => (amount * 100).round() / 100;
+
+  String _monthKey(DateTime value) {
+    final month = DateTime(value.year, value.month);
+    return '${month.year.toString().padLeft(4, '0')}-'
+        '${month.month.toString().padLeft(2, '0')}-01';
+  }
+
+  DateTime _parseMonthKey(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return DateTime.now();
+    return DateTime(parsed.year, parsed.month);
+  }
+
+  DateTime? _parseNullableDate(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    return DateTime.tryParse(value);
+  }
+
+  String _quarterTitle(GstFilingPeriod filing) {
+    return '${filing.quarterLabel} ${filing.quarterRangeLabel}';
+  }
 
   String _firstText(List<String?> values, {String fallback = ''}) {
     for (final value in values) {

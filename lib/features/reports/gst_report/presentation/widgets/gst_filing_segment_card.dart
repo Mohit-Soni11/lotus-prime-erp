@@ -15,6 +15,10 @@ class GstFilingSegmentCard extends StatefulWidget {
     required this.taxPayable,
     required this.auditCount,
     required this.onTap,
+    this.filingStatus,
+    this.completionEnabled = true,
+    this.completionDisabledReason,
+    this.onCompleteFiling,
   });
 
   final GstFilingSegment segment;
@@ -23,6 +27,10 @@ class GstFilingSegmentCard extends StatefulWidget {
   final double taxPayable;
   final int auditCount;
   final VoidCallback onTap;
+  final GstFilingTaskStatus? filingStatus;
+  final bool completionEnabled;
+  final String? completionDisabledReason;
+  final VoidCallback? onCompleteFiling;
 
   @override
   State<GstFilingSegmentCard> createState() => _GstFilingSegmentCardState();
@@ -36,6 +44,7 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
     final palette = _paletteFor(widget.segment);
     final active = _hovered;
     final borderColor = palette.accent.withValues(alpha: active ? 0.40 : 0.26);
+    final filed = widget.filingStatus?.completed ?? false;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -126,6 +135,11 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
                             ],
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        _FilingStatePill(
+                          filed: filed,
+                          accent: palette.accent,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 22),
@@ -177,35 +191,51 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    Container(
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: palette.accent.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: palette.accent.withValues(alpha: 0.28),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Open ${widget.segment.code} Workspace',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: palette.accent,
-                              letterSpacing: 0,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: palette.accent.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(13),
+                              border: Border.all(
+                                color: palette.accent.withValues(alpha: 0.28),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Open ${widget.segment.code} Workspace',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: palette.accent,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 18,
+                                  color: palette.accent,
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 18,
-                            color: palette.accent,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _CompletionButton(
+                            filed: filed,
+                            accent: palette.accent,
+                            enabled: widget.completionEnabled,
+                            disabledReason: widget.completionDisabledReason,
+                            onPressed: widget.onCompleteFiling,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -316,6 +346,107 @@ class _MetricTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilingStatePill extends StatelessWidget {
+  const _FilingStatePill({
+    required this.filed,
+    required this.accent,
+  });
+
+  final bool filed;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = filed ? GstReportColors.success : accent;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            filed ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            filed ? 'Completed' : 'Pending',
+            style: GoogleFonts.inter(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w900,
+              color: color,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompletionButton extends StatelessWidget {
+  const _CompletionButton({
+    required this.filed,
+    required this.accent,
+    required this.enabled,
+    required this.disabledReason,
+    required this.onPressed,
+  });
+
+  final bool filed;
+  final Color accent;
+  final bool enabled;
+  final String? disabledReason;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = enabled && !filed;
+    final color = filed ? GstReportColors.success : accent;
+    return Tooltip(
+      message: filed
+          ? 'GST filing is already completed for this workspace'
+          : active
+              ? 'Review and complete this GST filing workspace'
+              : disabledReason ?? 'Available after this GST month is complete',
+      child: FilledButton.icon(
+        onPressed: active ? onPressed : null,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 46),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          backgroundColor: color.withValues(alpha: filed ? 0.12 : 0.92),
+          foregroundColor: filed ? GstReportColors.success : Colors.white,
+          disabledForegroundColor:
+              GstReportColors.textMuted.withValues(alpha: 0.65),
+          disabledBackgroundColor: GstReportColors.bodySubtle,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+          ),
+        ),
+        icon: Icon(
+          filed ? Icons.check_circle_rounded : Icons.verified_rounded,
+          size: 17,
+        ),
+        label: Text(
+          filed ? 'Filing Completed' : 'Complete Filing',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+          ),
+        ),
       ),
     );
   }
