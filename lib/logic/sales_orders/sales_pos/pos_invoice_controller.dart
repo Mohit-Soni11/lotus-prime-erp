@@ -74,6 +74,7 @@ class PosInvoiceController extends ChangeNotifier {
   String _realShopAddress = "Address not set";
   String _realShopPhone = "Phone not set";
   String _realShopGstin = "Not Registered";
+  String _realShopStateCode = "";
   String _realShopLogoPath = "";
   String _realShopLogoShape = "square";
   ShopPrintDocumentProfile _shopPrintProfile = ShopPrintDocumentProfile.empty;
@@ -571,6 +572,8 @@ class PosInvoiceController extends ChangeNotifier {
         if (taxData != null) {
           final gstin = taxData['gstin']?.toString() ?? '';
           _realShopGstin = gstin.isNotEmpty ? gstin : "Not Registered";
+          _realShopStateCode =
+              taxData['state_code']?.toString() ?? _stateCodeFromGstin(gstin);
         }
 
         AppLogger.debug(
@@ -625,6 +628,7 @@ class PosInvoiceController extends ChangeNotifier {
       shopAddress: _realShopAddress,
       shopPhone: _realShopPhone,
       shopGstin: _realShopGstin,
+      shopStateCode: _realShopStateCode,
       shopLogoPath: _realShopLogoPath,
       shopLogoShape: _realShopLogoShape,
       shopPrintFields: _shopPrintProfile.fields,
@@ -636,6 +640,8 @@ class PosInvoiceController extends ChangeNotifier {
       customerCity: billing.cityCtrl.text,
       customerPan: billing.panCtrl.text,
       customerGstin: billing.gstCtrl.text,
+      customerStateCode: _stateCodeFromGstin(billing.gstCtrl.text),
+      placeOfSupply: billing.cityCtrl.text,
       tradeInMode: billing.tradeInMode,
       customerMetalSettlementType: billing.customerMetalSettlementType,
       saleItems: _buildPrintableSaleItemSnapshots(),
@@ -730,6 +736,7 @@ class PosInvoiceController extends ChangeNotifier {
       shopAddress: source.shopAddress,
       shopPhone: source.shopPhone,
       shopGstin: source.shopGstin,
+      shopStateCode: source.shopStateCode,
       shopLogoPath: source.shopLogoPath,
       shopLogoShape: source.shopLogoShape,
       shopPrintFields: source.shopPrintFields,
@@ -741,6 +748,8 @@ class PosInvoiceController extends ChangeNotifier {
       customerCity: source.customerCity,
       customerPan: source.customerPan,
       customerGstin: source.customerGstin,
+      customerStateCode: source.customerStateCode,
+      placeOfSupply: source.placeOfSupply,
       tradeInMode: source.tradeInMode,
       customerMetalSettlementType: source.customerMetalSettlementType,
       saleItems: source.saleItems,
@@ -779,6 +788,7 @@ class PosInvoiceController extends ChangeNotifier {
       shopAddress: source.shopAddress,
       shopPhone: source.shopPhone,
       shopGstin: source.shopGstin,
+      shopStateCode: source.shopStateCode,
       shopLogoPath: source.shopLogoPath,
       shopLogoShape: source.shopLogoShape,
       shopPrintFields: source.shopPrintFields,
@@ -790,6 +800,8 @@ class PosInvoiceController extends ChangeNotifier {
       customerCity: source.customerCity,
       customerPan: source.customerPan,
       customerGstin: source.customerGstin,
+      customerStateCode: source.customerStateCode,
+      placeOfSupply: source.placeOfSupply,
       tradeInMode: source.tradeInMode,
       customerMetalSettlementType: source.customerMetalSettlementType,
       saleItems: saleItems,
@@ -1075,6 +1087,7 @@ class PosInvoiceController extends ChangeNotifier {
         shopAddress: invoice!.shopAddress,
         shopPhone: invoice!.shopPhone,
         shopGstin: invoice!.shopGstin,
+        shopStateCode: invoice!.shopStateCode,
         shopLogoPath: invoice!.shopLogoPath,
         shopLogoShape: invoice!.shopLogoShape,
         shopPrintFields: invoice!.shopPrintFields,
@@ -1086,6 +1099,8 @@ class PosInvoiceController extends ChangeNotifier {
         customerCity: invoice!.customerCity,
         customerPan: invoice!.customerPan,
         customerGstin: invoice!.customerGstin,
+        customerStateCode: invoice!.customerStateCode,
+        placeOfSupply: invoice!.placeOfSupply,
         tradeInMode: invoice!.tradeInMode,
         customerMetalSettlementType: invoice!.customerMetalSettlementType,
         saleItems: invoice!.saleItems,
@@ -1134,5 +1149,12 @@ class PosInvoiceController extends ChangeNotifier {
     _isDisposed = true;
     _resetState();
     super.dispose();
+  }
+
+  String _stateCodeFromGstin(String gstin) {
+    final normalized = gstin.trim().toUpperCase();
+    if (normalized.length < 2) return '';
+    final prefix = normalized.substring(0, 2);
+    return RegExp(r'^\d{2}$').hasMatch(prefix) ? prefix : '';
   }
 }

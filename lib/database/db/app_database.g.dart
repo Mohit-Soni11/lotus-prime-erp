@@ -4993,6 +4993,36 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
   late final GeneratedColumn<String> mobile = GeneratedColumn<String>(
       'mobile', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _customerGstinSnapshotMeta =
+      const VerificationMeta('customerGstinSnapshot');
+  @override
+  late final GeneratedColumn<String> customerGstinSnapshot =
+      GeneratedColumn<String>('customer_gstin_snapshot', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _placeOfSupplySnapshotMeta =
+      const VerificationMeta('placeOfSupplySnapshot');
+  @override
+  late final GeneratedColumn<String> placeOfSupplySnapshot =
+      GeneratedColumn<String>('place_of_supply_snapshot', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _customerStateCodeSnapshotMeta =
+      const VerificationMeta('customerStateCodeSnapshot');
+  @override
+  late final GeneratedColumn<String> customerStateCodeSnapshot =
+      GeneratedColumn<String>('customer_state_code_snapshot', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _shopGstinSnapshotMeta =
+      const VerificationMeta('shopGstinSnapshot');
+  @override
+  late final GeneratedColumn<String> shopGstinSnapshot =
+      GeneratedColumn<String>('shop_gstin_snapshot', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _shopStateCodeSnapshotMeta =
+      const VerificationMeta('shopStateCodeSnapshot');
+  @override
+  late final GeneratedColumn<String> shopStateCodeSnapshot =
+      GeneratedColumn<String>('shop_state_code_snapshot', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _billingModeMeta =
       const VerificationMeta('billingMode');
   @override
@@ -5054,6 +5084,14 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
   @override
   late final GeneratedColumn<double> sgstAmount = GeneratedColumn<double>(
       'sgst_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _igstAmountMeta =
+      const VerificationMeta('igstAmount');
+  @override
+  late final GeneratedColumn<double> igstAmount = GeneratedColumn<double>(
+      'igst_amount', aliasedName, false,
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
@@ -5198,6 +5236,11 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
         customerId,
         customerName,
         mobile,
+        customerGstinSnapshot,
+        placeOfSupplySnapshot,
+        customerStateCodeSnapshot,
+        shopGstinSnapshot,
+        shopStateCodeSnapshot,
         billingMode,
         billType,
         paymentStatus,
@@ -5206,6 +5249,7 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
         taxableAmount,
         cgstAmount,
         sgstAmount,
+        igstAmount,
         gstAmount,
         makingTotal,
         roundOffAmount,
@@ -5267,6 +5311,37 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
       context.handle(_mobileMeta,
           mobile.isAcceptableOrUnknown(data['mobile']!, _mobileMeta));
     }
+    if (data.containsKey('customer_gstin_snapshot')) {
+      context.handle(
+          _customerGstinSnapshotMeta,
+          customerGstinSnapshot.isAcceptableOrUnknown(
+              data['customer_gstin_snapshot']!, _customerGstinSnapshotMeta));
+    }
+    if (data.containsKey('place_of_supply_snapshot')) {
+      context.handle(
+          _placeOfSupplySnapshotMeta,
+          placeOfSupplySnapshot.isAcceptableOrUnknown(
+              data['place_of_supply_snapshot']!, _placeOfSupplySnapshotMeta));
+    }
+    if (data.containsKey('customer_state_code_snapshot')) {
+      context.handle(
+          _customerStateCodeSnapshotMeta,
+          customerStateCodeSnapshot.isAcceptableOrUnknown(
+              data['customer_state_code_snapshot']!,
+              _customerStateCodeSnapshotMeta));
+    }
+    if (data.containsKey('shop_gstin_snapshot')) {
+      context.handle(
+          _shopGstinSnapshotMeta,
+          shopGstinSnapshot.isAcceptableOrUnknown(
+              data['shop_gstin_snapshot']!, _shopGstinSnapshotMeta));
+    }
+    if (data.containsKey('shop_state_code_snapshot')) {
+      context.handle(
+          _shopStateCodeSnapshotMeta,
+          shopStateCodeSnapshot.isAcceptableOrUnknown(
+              data['shop_state_code_snapshot']!, _shopStateCodeSnapshotMeta));
+    }
     if (data.containsKey('billing_mode')) {
       context.handle(
           _billingModeMeta,
@@ -5310,6 +5385,12 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           _sgstAmountMeta,
           sgstAmount.isAcceptableOrUnknown(
               data['sgst_amount']!, _sgstAmountMeta));
+    }
+    if (data.containsKey('igst_amount')) {
+      context.handle(
+          _igstAmountMeta,
+          igstAmount.isAcceptableOrUnknown(
+              data['igst_amount']!, _igstAmountMeta));
     }
     if (data.containsKey('gst_amount')) {
       context.handle(_gstAmountMeta,
@@ -5422,6 +5503,20 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           .read(DriftSqlType.string, data['${effectivePrefix}customer_name']),
       mobile: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}mobile']),
+      customerGstinSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}customer_gstin_snapshot']),
+      placeOfSupplySnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}place_of_supply_snapshot']),
+      customerStateCodeSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}customer_state_code_snapshot']),
+      shopGstinSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}shop_gstin_snapshot']),
+      shopStateCodeSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}shop_state_code_snapshot']),
       billingMode: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}billing_mode'])!,
       billType: attachedDatabase.typeMapping
@@ -5438,6 +5533,8 @@ class $BillsTable extends Bills with TableInfo<$BillsTable, Bill> {
           .read(DriftSqlType.double, data['${effectivePrefix}cgst_amount'])!,
       sgstAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}sgst_amount'])!,
+      igstAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}igst_amount'])!,
       gstAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}gst_amount'])!,
       makingTotal: attachedDatabase.typeMapping
@@ -5490,6 +5587,11 @@ class Bill extends DataClass implements Insertable<Bill> {
   final int? customerId;
   final String? customerName;
   final String? mobile;
+  final String? customerGstinSnapshot;
+  final String? placeOfSupplySnapshot;
+  final String? customerStateCodeSnapshot;
+  final String? shopGstinSnapshot;
+  final String? shopStateCodeSnapshot;
   final String billingMode;
   final String billType;
   final String paymentStatus;
@@ -5498,6 +5600,7 @@ class Bill extends DataClass implements Insertable<Bill> {
   final double taxableAmount;
   final double cgstAmount;
   final double sgstAmount;
+  final double igstAmount;
   final double gstAmount;
   final double makingTotal;
   final double roundOffAmount;
@@ -5523,6 +5626,11 @@ class Bill extends DataClass implements Insertable<Bill> {
       this.customerId,
       this.customerName,
       this.mobile,
+      this.customerGstinSnapshot,
+      this.placeOfSupplySnapshot,
+      this.customerStateCodeSnapshot,
+      this.shopGstinSnapshot,
+      this.shopStateCodeSnapshot,
       required this.billingMode,
       required this.billType,
       required this.paymentStatus,
@@ -5531,6 +5639,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       required this.taxableAmount,
       required this.cgstAmount,
       required this.sgstAmount,
+      required this.igstAmount,
       required this.gstAmount,
       required this.makingTotal,
       required this.roundOffAmount,
@@ -5566,6 +5675,22 @@ class Bill extends DataClass implements Insertable<Bill> {
     if (!nullToAbsent || mobile != null) {
       map['mobile'] = Variable<String>(mobile);
     }
+    if (!nullToAbsent || customerGstinSnapshot != null) {
+      map['customer_gstin_snapshot'] = Variable<String>(customerGstinSnapshot);
+    }
+    if (!nullToAbsent || placeOfSupplySnapshot != null) {
+      map['place_of_supply_snapshot'] = Variable<String>(placeOfSupplySnapshot);
+    }
+    if (!nullToAbsent || customerStateCodeSnapshot != null) {
+      map['customer_state_code_snapshot'] =
+          Variable<String>(customerStateCodeSnapshot);
+    }
+    if (!nullToAbsent || shopGstinSnapshot != null) {
+      map['shop_gstin_snapshot'] = Variable<String>(shopGstinSnapshot);
+    }
+    if (!nullToAbsent || shopStateCodeSnapshot != null) {
+      map['shop_state_code_snapshot'] = Variable<String>(shopStateCodeSnapshot);
+    }
     map['billing_mode'] = Variable<String>(billingMode);
     map['bill_type'] = Variable<String>(billType);
     map['payment_status'] = Variable<String>(paymentStatus);
@@ -5574,6 +5699,7 @@ class Bill extends DataClass implements Insertable<Bill> {
     map['taxable_amount'] = Variable<double>(taxableAmount);
     map['cgst_amount'] = Variable<double>(cgstAmount);
     map['sgst_amount'] = Variable<double>(sgstAmount);
+    map['igst_amount'] = Variable<double>(igstAmount);
     map['gst_amount'] = Variable<double>(gstAmount);
     map['making_total'] = Variable<double>(makingTotal);
     map['round_off_amount'] = Variable<double>(roundOffAmount);
@@ -5616,6 +5742,22 @@ class Bill extends DataClass implements Insertable<Bill> {
           : Value(customerName),
       mobile:
           mobile == null && nullToAbsent ? const Value.absent() : Value(mobile),
+      customerGstinSnapshot: customerGstinSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerGstinSnapshot),
+      placeOfSupplySnapshot: placeOfSupplySnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeOfSupplySnapshot),
+      customerStateCodeSnapshot:
+          customerStateCodeSnapshot == null && nullToAbsent
+              ? const Value.absent()
+              : Value(customerStateCodeSnapshot),
+      shopGstinSnapshot: shopGstinSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(shopGstinSnapshot),
+      shopStateCodeSnapshot: shopStateCodeSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(shopStateCodeSnapshot),
       billingMode: Value(billingMode),
       billType: Value(billType),
       paymentStatus: Value(paymentStatus),
@@ -5624,6 +5766,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       taxableAmount: Value(taxableAmount),
       cgstAmount: Value(cgstAmount),
       sgstAmount: Value(sgstAmount),
+      igstAmount: Value(igstAmount),
       gstAmount: Value(gstAmount),
       makingTotal: Value(makingTotal),
       roundOffAmount: Value(roundOffAmount),
@@ -5661,6 +5804,16 @@ class Bill extends DataClass implements Insertable<Bill> {
       customerId: serializer.fromJson<int?>(json['customerId']),
       customerName: serializer.fromJson<String?>(json['customerName']),
       mobile: serializer.fromJson<String?>(json['mobile']),
+      customerGstinSnapshot:
+          serializer.fromJson<String?>(json['customerGstinSnapshot']),
+      placeOfSupplySnapshot:
+          serializer.fromJson<String?>(json['placeOfSupplySnapshot']),
+      customerStateCodeSnapshot:
+          serializer.fromJson<String?>(json['customerStateCodeSnapshot']),
+      shopGstinSnapshot:
+          serializer.fromJson<String?>(json['shopGstinSnapshot']),
+      shopStateCodeSnapshot:
+          serializer.fromJson<String?>(json['shopStateCodeSnapshot']),
       billingMode: serializer.fromJson<String>(json['billingMode']),
       billType: serializer.fromJson<String>(json['billType']),
       paymentStatus: serializer.fromJson<String>(json['paymentStatus']),
@@ -5669,6 +5822,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       taxableAmount: serializer.fromJson<double>(json['taxableAmount']),
       cgstAmount: serializer.fromJson<double>(json['cgstAmount']),
       sgstAmount: serializer.fromJson<double>(json['sgstAmount']),
+      igstAmount: serializer.fromJson<double>(json['igstAmount']),
       gstAmount: serializer.fromJson<double>(json['gstAmount']),
       makingTotal: serializer.fromJson<double>(json['makingTotal']),
       roundOffAmount: serializer.fromJson<double>(json['roundOffAmount']),
@@ -5701,6 +5855,15 @@ class Bill extends DataClass implements Insertable<Bill> {
       'customerId': serializer.toJson<int?>(customerId),
       'customerName': serializer.toJson<String?>(customerName),
       'mobile': serializer.toJson<String?>(mobile),
+      'customerGstinSnapshot':
+          serializer.toJson<String?>(customerGstinSnapshot),
+      'placeOfSupplySnapshot':
+          serializer.toJson<String?>(placeOfSupplySnapshot),
+      'customerStateCodeSnapshot':
+          serializer.toJson<String?>(customerStateCodeSnapshot),
+      'shopGstinSnapshot': serializer.toJson<String?>(shopGstinSnapshot),
+      'shopStateCodeSnapshot':
+          serializer.toJson<String?>(shopStateCodeSnapshot),
       'billingMode': serializer.toJson<String>(billingMode),
       'billType': serializer.toJson<String>(billType),
       'paymentStatus': serializer.toJson<String>(paymentStatus),
@@ -5709,6 +5872,7 @@ class Bill extends DataClass implements Insertable<Bill> {
       'taxableAmount': serializer.toJson<double>(taxableAmount),
       'cgstAmount': serializer.toJson<double>(cgstAmount),
       'sgstAmount': serializer.toJson<double>(sgstAmount),
+      'igstAmount': serializer.toJson<double>(igstAmount),
       'gstAmount': serializer.toJson<double>(gstAmount),
       'makingTotal': serializer.toJson<double>(makingTotal),
       'roundOffAmount': serializer.toJson<double>(roundOffAmount),
@@ -5737,6 +5901,11 @@ class Bill extends DataClass implements Insertable<Bill> {
           Value<int?> customerId = const Value.absent(),
           Value<String?> customerName = const Value.absent(),
           Value<String?> mobile = const Value.absent(),
+          Value<String?> customerGstinSnapshot = const Value.absent(),
+          Value<String?> placeOfSupplySnapshot = const Value.absent(),
+          Value<String?> customerStateCodeSnapshot = const Value.absent(),
+          Value<String?> shopGstinSnapshot = const Value.absent(),
+          Value<String?> shopStateCodeSnapshot = const Value.absent(),
           String? billingMode,
           String? billType,
           String? paymentStatus,
@@ -5745,6 +5914,7 @@ class Bill extends DataClass implements Insertable<Bill> {
           double? taxableAmount,
           double? cgstAmount,
           double? sgstAmount,
+          double? igstAmount,
           double? gstAmount,
           double? makingTotal,
           double? roundOffAmount,
@@ -5771,6 +5941,21 @@ class Bill extends DataClass implements Insertable<Bill> {
         customerName:
             customerName.present ? customerName.value : this.customerName,
         mobile: mobile.present ? mobile.value : this.mobile,
+        customerGstinSnapshot: customerGstinSnapshot.present
+            ? customerGstinSnapshot.value
+            : this.customerGstinSnapshot,
+        placeOfSupplySnapshot: placeOfSupplySnapshot.present
+            ? placeOfSupplySnapshot.value
+            : this.placeOfSupplySnapshot,
+        customerStateCodeSnapshot: customerStateCodeSnapshot.present
+            ? customerStateCodeSnapshot.value
+            : this.customerStateCodeSnapshot,
+        shopGstinSnapshot: shopGstinSnapshot.present
+            ? shopGstinSnapshot.value
+            : this.shopGstinSnapshot,
+        shopStateCodeSnapshot: shopStateCodeSnapshot.present
+            ? shopStateCodeSnapshot.value
+            : this.shopStateCodeSnapshot,
         billingMode: billingMode ?? this.billingMode,
         billType: billType ?? this.billType,
         paymentStatus: paymentStatus ?? this.paymentStatus,
@@ -5779,6 +5964,7 @@ class Bill extends DataClass implements Insertable<Bill> {
         taxableAmount: taxableAmount ?? this.taxableAmount,
         cgstAmount: cgstAmount ?? this.cgstAmount,
         sgstAmount: sgstAmount ?? this.sgstAmount,
+        igstAmount: igstAmount ?? this.igstAmount,
         gstAmount: gstAmount ?? this.gstAmount,
         makingTotal: makingTotal ?? this.makingTotal,
         roundOffAmount: roundOffAmount ?? this.roundOffAmount,
@@ -5813,6 +5999,21 @@ class Bill extends DataClass implements Insertable<Bill> {
           ? data.customerName.value
           : this.customerName,
       mobile: data.mobile.present ? data.mobile.value : this.mobile,
+      customerGstinSnapshot: data.customerGstinSnapshot.present
+          ? data.customerGstinSnapshot.value
+          : this.customerGstinSnapshot,
+      placeOfSupplySnapshot: data.placeOfSupplySnapshot.present
+          ? data.placeOfSupplySnapshot.value
+          : this.placeOfSupplySnapshot,
+      customerStateCodeSnapshot: data.customerStateCodeSnapshot.present
+          ? data.customerStateCodeSnapshot.value
+          : this.customerStateCodeSnapshot,
+      shopGstinSnapshot: data.shopGstinSnapshot.present
+          ? data.shopGstinSnapshot.value
+          : this.shopGstinSnapshot,
+      shopStateCodeSnapshot: data.shopStateCodeSnapshot.present
+          ? data.shopStateCodeSnapshot.value
+          : this.shopStateCodeSnapshot,
       billingMode:
           data.billingMode.present ? data.billingMode.value : this.billingMode,
       billType: data.billType.present ? data.billType.value : this.billType,
@@ -5829,6 +6030,8 @@ class Bill extends DataClass implements Insertable<Bill> {
           data.cgstAmount.present ? data.cgstAmount.value : this.cgstAmount,
       sgstAmount:
           data.sgstAmount.present ? data.sgstAmount.value : this.sgstAmount,
+      igstAmount:
+          data.igstAmount.present ? data.igstAmount.value : this.igstAmount,
       gstAmount: data.gstAmount.present ? data.gstAmount.value : this.gstAmount,
       makingTotal:
           data.makingTotal.present ? data.makingTotal.value : this.makingTotal,
@@ -5873,6 +6076,11 @@ class Bill extends DataClass implements Insertable<Bill> {
           ..write('customerId: $customerId, ')
           ..write('customerName: $customerName, ')
           ..write('mobile: $mobile, ')
+          ..write('customerGstinSnapshot: $customerGstinSnapshot, ')
+          ..write('placeOfSupplySnapshot: $placeOfSupplySnapshot, ')
+          ..write('customerStateCodeSnapshot: $customerStateCodeSnapshot, ')
+          ..write('shopGstinSnapshot: $shopGstinSnapshot, ')
+          ..write('shopStateCodeSnapshot: $shopStateCodeSnapshot, ')
           ..write('billingMode: $billingMode, ')
           ..write('billType: $billType, ')
           ..write('paymentStatus: $paymentStatus, ')
@@ -5881,6 +6089,7 @@ class Bill extends DataClass implements Insertable<Bill> {
           ..write('taxableAmount: $taxableAmount, ')
           ..write('cgstAmount: $cgstAmount, ')
           ..write('sgstAmount: $sgstAmount, ')
+          ..write('igstAmount: $igstAmount, ')
           ..write('gstAmount: $gstAmount, ')
           ..write('makingTotal: $makingTotal, ')
           ..write('roundOffAmount: $roundOffAmount, ')
@@ -5911,6 +6120,11 @@ class Bill extends DataClass implements Insertable<Bill> {
         customerId,
         customerName,
         mobile,
+        customerGstinSnapshot,
+        placeOfSupplySnapshot,
+        customerStateCodeSnapshot,
+        shopGstinSnapshot,
+        shopStateCodeSnapshot,
         billingMode,
         billType,
         paymentStatus,
@@ -5919,6 +6133,7 @@ class Bill extends DataClass implements Insertable<Bill> {
         taxableAmount,
         cgstAmount,
         sgstAmount,
+        igstAmount,
         gstAmount,
         makingTotal,
         roundOffAmount,
@@ -5948,6 +6163,11 @@ class Bill extends DataClass implements Insertable<Bill> {
           other.customerId == this.customerId &&
           other.customerName == this.customerName &&
           other.mobile == this.mobile &&
+          other.customerGstinSnapshot == this.customerGstinSnapshot &&
+          other.placeOfSupplySnapshot == this.placeOfSupplySnapshot &&
+          other.customerStateCodeSnapshot == this.customerStateCodeSnapshot &&
+          other.shopGstinSnapshot == this.shopGstinSnapshot &&
+          other.shopStateCodeSnapshot == this.shopStateCodeSnapshot &&
           other.billingMode == this.billingMode &&
           other.billType == this.billType &&
           other.paymentStatus == this.paymentStatus &&
@@ -5956,6 +6176,7 @@ class Bill extends DataClass implements Insertable<Bill> {
           other.taxableAmount == this.taxableAmount &&
           other.cgstAmount == this.cgstAmount &&
           other.sgstAmount == this.sgstAmount &&
+          other.igstAmount == this.igstAmount &&
           other.gstAmount == this.gstAmount &&
           other.makingTotal == this.makingTotal &&
           other.roundOffAmount == this.roundOffAmount &&
@@ -5983,6 +6204,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
   final Value<int?> customerId;
   final Value<String?> customerName;
   final Value<String?> mobile;
+  final Value<String?> customerGstinSnapshot;
+  final Value<String?> placeOfSupplySnapshot;
+  final Value<String?> customerStateCodeSnapshot;
+  final Value<String?> shopGstinSnapshot;
+  final Value<String?> shopStateCodeSnapshot;
   final Value<String> billingMode;
   final Value<String> billType;
   final Value<String> paymentStatus;
@@ -5991,6 +6217,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
   final Value<double> taxableAmount;
   final Value<double> cgstAmount;
   final Value<double> sgstAmount;
+  final Value<double> igstAmount;
   final Value<double> gstAmount;
   final Value<double> makingTotal;
   final Value<double> roundOffAmount;
@@ -6016,6 +6243,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.customerId = const Value.absent(),
     this.customerName = const Value.absent(),
     this.mobile = const Value.absent(),
+    this.customerGstinSnapshot = const Value.absent(),
+    this.placeOfSupplySnapshot = const Value.absent(),
+    this.customerStateCodeSnapshot = const Value.absent(),
+    this.shopGstinSnapshot = const Value.absent(),
+    this.shopStateCodeSnapshot = const Value.absent(),
     this.billingMode = const Value.absent(),
     this.billType = const Value.absent(),
     this.paymentStatus = const Value.absent(),
@@ -6024,6 +6256,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.taxableAmount = const Value.absent(),
     this.cgstAmount = const Value.absent(),
     this.sgstAmount = const Value.absent(),
+    this.igstAmount = const Value.absent(),
     this.gstAmount = const Value.absent(),
     this.makingTotal = const Value.absent(),
     this.roundOffAmount = const Value.absent(),
@@ -6050,6 +6283,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.customerId = const Value.absent(),
     this.customerName = const Value.absent(),
     this.mobile = const Value.absent(),
+    this.customerGstinSnapshot = const Value.absent(),
+    this.placeOfSupplySnapshot = const Value.absent(),
+    this.customerStateCodeSnapshot = const Value.absent(),
+    this.shopGstinSnapshot = const Value.absent(),
+    this.shopStateCodeSnapshot = const Value.absent(),
     this.billingMode = const Value.absent(),
     this.billType = const Value.absent(),
     this.paymentStatus = const Value.absent(),
@@ -6058,6 +6296,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     this.taxableAmount = const Value.absent(),
     this.cgstAmount = const Value.absent(),
     this.sgstAmount = const Value.absent(),
+    this.igstAmount = const Value.absent(),
     this.gstAmount = const Value.absent(),
     this.makingTotal = const Value.absent(),
     this.roundOffAmount = const Value.absent(),
@@ -6084,6 +6323,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     Expression<int>? customerId,
     Expression<String>? customerName,
     Expression<String>? mobile,
+    Expression<String>? customerGstinSnapshot,
+    Expression<String>? placeOfSupplySnapshot,
+    Expression<String>? customerStateCodeSnapshot,
+    Expression<String>? shopGstinSnapshot,
+    Expression<String>? shopStateCodeSnapshot,
     Expression<String>? billingMode,
     Expression<String>? billType,
     Expression<String>? paymentStatus,
@@ -6092,6 +6336,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     Expression<double>? taxableAmount,
     Expression<double>? cgstAmount,
     Expression<double>? sgstAmount,
+    Expression<double>? igstAmount,
     Expression<double>? gstAmount,
     Expression<double>? makingTotal,
     Expression<double>? roundOffAmount,
@@ -6118,6 +6363,15 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       if (customerId != null) 'customer_id': customerId,
       if (customerName != null) 'customer_name': customerName,
       if (mobile != null) 'mobile': mobile,
+      if (customerGstinSnapshot != null)
+        'customer_gstin_snapshot': customerGstinSnapshot,
+      if (placeOfSupplySnapshot != null)
+        'place_of_supply_snapshot': placeOfSupplySnapshot,
+      if (customerStateCodeSnapshot != null)
+        'customer_state_code_snapshot': customerStateCodeSnapshot,
+      if (shopGstinSnapshot != null) 'shop_gstin_snapshot': shopGstinSnapshot,
+      if (shopStateCodeSnapshot != null)
+        'shop_state_code_snapshot': shopStateCodeSnapshot,
       if (billingMode != null) 'billing_mode': billingMode,
       if (billType != null) 'bill_type': billType,
       if (paymentStatus != null) 'payment_status': paymentStatus,
@@ -6126,6 +6380,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       if (taxableAmount != null) 'taxable_amount': taxableAmount,
       if (cgstAmount != null) 'cgst_amount': cgstAmount,
       if (sgstAmount != null) 'sgst_amount': sgstAmount,
+      if (igstAmount != null) 'igst_amount': igstAmount,
       if (gstAmount != null) 'gst_amount': gstAmount,
       if (makingTotal != null) 'making_total': makingTotal,
       if (roundOffAmount != null) 'round_off_amount': roundOffAmount,
@@ -6156,6 +6411,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       Value<int?>? customerId,
       Value<String?>? customerName,
       Value<String?>? mobile,
+      Value<String?>? customerGstinSnapshot,
+      Value<String?>? placeOfSupplySnapshot,
+      Value<String?>? customerStateCodeSnapshot,
+      Value<String?>? shopGstinSnapshot,
+      Value<String?>? shopStateCodeSnapshot,
       Value<String>? billingMode,
       Value<String>? billType,
       Value<String>? paymentStatus,
@@ -6164,6 +6424,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       Value<double>? taxableAmount,
       Value<double>? cgstAmount,
       Value<double>? sgstAmount,
+      Value<double>? igstAmount,
       Value<double>? gstAmount,
       Value<double>? makingTotal,
       Value<double>? roundOffAmount,
@@ -6189,6 +6450,15 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
       mobile: mobile ?? this.mobile,
+      customerGstinSnapshot:
+          customerGstinSnapshot ?? this.customerGstinSnapshot,
+      placeOfSupplySnapshot:
+          placeOfSupplySnapshot ?? this.placeOfSupplySnapshot,
+      customerStateCodeSnapshot:
+          customerStateCodeSnapshot ?? this.customerStateCodeSnapshot,
+      shopGstinSnapshot: shopGstinSnapshot ?? this.shopGstinSnapshot,
+      shopStateCodeSnapshot:
+          shopStateCodeSnapshot ?? this.shopStateCodeSnapshot,
       billingMode: billingMode ?? this.billingMode,
       billType: billType ?? this.billType,
       paymentStatus: paymentStatus ?? this.paymentStatus,
@@ -6197,6 +6467,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
       taxableAmount: taxableAmount ?? this.taxableAmount,
       cgstAmount: cgstAmount ?? this.cgstAmount,
       sgstAmount: sgstAmount ?? this.sgstAmount,
+      igstAmount: igstAmount ?? this.igstAmount,
       gstAmount: gstAmount ?? this.gstAmount,
       makingTotal: makingTotal ?? this.makingTotal,
       roundOffAmount: roundOffAmount ?? this.roundOffAmount,
@@ -6241,6 +6512,25 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     if (mobile.present) {
       map['mobile'] = Variable<String>(mobile.value);
     }
+    if (customerGstinSnapshot.present) {
+      map['customer_gstin_snapshot'] =
+          Variable<String>(customerGstinSnapshot.value);
+    }
+    if (placeOfSupplySnapshot.present) {
+      map['place_of_supply_snapshot'] =
+          Variable<String>(placeOfSupplySnapshot.value);
+    }
+    if (customerStateCodeSnapshot.present) {
+      map['customer_state_code_snapshot'] =
+          Variable<String>(customerStateCodeSnapshot.value);
+    }
+    if (shopGstinSnapshot.present) {
+      map['shop_gstin_snapshot'] = Variable<String>(shopGstinSnapshot.value);
+    }
+    if (shopStateCodeSnapshot.present) {
+      map['shop_state_code_snapshot'] =
+          Variable<String>(shopStateCodeSnapshot.value);
+    }
     if (billingMode.present) {
       map['billing_mode'] = Variable<String>(billingMode.value);
     }
@@ -6264,6 +6554,9 @@ class BillsCompanion extends UpdateCompanion<Bill> {
     }
     if (sgstAmount.present) {
       map['sgst_amount'] = Variable<double>(sgstAmount.value);
+    }
+    if (igstAmount.present) {
+      map['igst_amount'] = Variable<double>(igstAmount.value);
     }
     if (gstAmount.present) {
       map['gst_amount'] = Variable<double>(gstAmount.value);
@@ -6331,6 +6624,11 @@ class BillsCompanion extends UpdateCompanion<Bill> {
           ..write('customerId: $customerId, ')
           ..write('customerName: $customerName, ')
           ..write('mobile: $mobile, ')
+          ..write('customerGstinSnapshot: $customerGstinSnapshot, ')
+          ..write('placeOfSupplySnapshot: $placeOfSupplySnapshot, ')
+          ..write('customerStateCodeSnapshot: $customerStateCodeSnapshot, ')
+          ..write('shopGstinSnapshot: $shopGstinSnapshot, ')
+          ..write('shopStateCodeSnapshot: $shopStateCodeSnapshot, ')
           ..write('billingMode: $billingMode, ')
           ..write('billType: $billType, ')
           ..write('paymentStatus: $paymentStatus, ')
@@ -6339,6 +6637,7 @@ class BillsCompanion extends UpdateCompanion<Bill> {
           ..write('taxableAmount: $taxableAmount, ')
           ..write('cgstAmount: $cgstAmount, ')
           ..write('sgstAmount: $sgstAmount, ')
+          ..write('igstAmount: $igstAmount, ')
           ..write('gstAmount: $gstAmount, ')
           ..write('makingTotal: $makingTotal, ')
           ..write('roundOffAmount: $roundOffAmount, ')
@@ -6526,6 +6825,54 @@ class $BillItemsTable extends BillItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
+  static const VerificationMeta _taxableAmountSnapshotMeta =
+      const VerificationMeta('taxableAmountSnapshot');
+  @override
+  late final GeneratedColumn<double> taxableAmountSnapshot =
+      GeneratedColumn<double>('taxable_amount_snapshot', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _gstRateSnapshotMeta =
+      const VerificationMeta('gstRateSnapshot');
+  @override
+  late final GeneratedColumn<double> gstRateSnapshot = GeneratedColumn<double>(
+      'gst_rate_snapshot', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _cgstAmountSnapshotMeta =
+      const VerificationMeta('cgstAmountSnapshot');
+  @override
+  late final GeneratedColumn<double> cgstAmountSnapshot =
+      GeneratedColumn<double>('cgst_amount_snapshot', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _sgstAmountSnapshotMeta =
+      const VerificationMeta('sgstAmountSnapshot');
+  @override
+  late final GeneratedColumn<double> sgstAmountSnapshot =
+      GeneratedColumn<double>('sgst_amount_snapshot', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _igstAmountSnapshotMeta =
+      const VerificationMeta('igstAmountSnapshot');
+  @override
+  late final GeneratedColumn<double> igstAmountSnapshot =
+      GeneratedColumn<double>('igst_amount_snapshot', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _gstAmountSnapshotMeta =
+      const VerificationMeta('gstAmountSnapshot');
+  @override
+  late final GeneratedColumn<double> gstAmountSnapshot =
+      GeneratedColumn<double>('gst_amount_snapshot', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
   static const VerificationMeta _linkedStockItemIdMeta =
       const VerificationMeta('linkedStockItemId');
   @override
@@ -6583,6 +6930,12 @@ class $BillItemsTable extends BillItems
         makingChargeInput,
         makingCharge,
         itemTotal,
+        taxableAmountSnapshot,
+        gstRateSnapshot,
+        cgstAmountSnapshot,
+        sgstAmountSnapshot,
+        igstAmountSnapshot,
+        gstAmountSnapshot,
         linkedStockItemId,
         linkedStockUnitId,
         linkedStockSku,
@@ -6700,6 +7053,42 @@ class $BillItemsTable extends BillItems
       context.handle(_itemTotalMeta,
           itemTotal.isAcceptableOrUnknown(data['item_total']!, _itemTotalMeta));
     }
+    if (data.containsKey('taxable_amount_snapshot')) {
+      context.handle(
+          _taxableAmountSnapshotMeta,
+          taxableAmountSnapshot.isAcceptableOrUnknown(
+              data['taxable_amount_snapshot']!, _taxableAmountSnapshotMeta));
+    }
+    if (data.containsKey('gst_rate_snapshot')) {
+      context.handle(
+          _gstRateSnapshotMeta,
+          gstRateSnapshot.isAcceptableOrUnknown(
+              data['gst_rate_snapshot']!, _gstRateSnapshotMeta));
+    }
+    if (data.containsKey('cgst_amount_snapshot')) {
+      context.handle(
+          _cgstAmountSnapshotMeta,
+          cgstAmountSnapshot.isAcceptableOrUnknown(
+              data['cgst_amount_snapshot']!, _cgstAmountSnapshotMeta));
+    }
+    if (data.containsKey('sgst_amount_snapshot')) {
+      context.handle(
+          _sgstAmountSnapshotMeta,
+          sgstAmountSnapshot.isAcceptableOrUnknown(
+              data['sgst_amount_snapshot']!, _sgstAmountSnapshotMeta));
+    }
+    if (data.containsKey('igst_amount_snapshot')) {
+      context.handle(
+          _igstAmountSnapshotMeta,
+          igstAmountSnapshot.isAcceptableOrUnknown(
+              data['igst_amount_snapshot']!, _igstAmountSnapshotMeta));
+    }
+    if (data.containsKey('gst_amount_snapshot')) {
+      context.handle(
+          _gstAmountSnapshotMeta,
+          gstAmountSnapshot.isAcceptableOrUnknown(
+              data['gst_amount_snapshot']!, _gstAmountSnapshotMeta));
+    }
     if (data.containsKey('linked_stock_item_id')) {
       context.handle(
           _linkedStockItemIdMeta,
@@ -6781,6 +7170,19 @@ class $BillItemsTable extends BillItems
           .read(DriftSqlType.double, data['${effectivePrefix}making_charge'])!,
       itemTotal: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}item_total'])!,
+      taxableAmountSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}taxable_amount_snapshot'])!,
+      gstRateSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}gst_rate_snapshot'])!,
+      cgstAmountSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}cgst_amount_snapshot'])!,
+      sgstAmountSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}sgst_amount_snapshot'])!,
+      igstAmountSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}igst_amount_snapshot'])!,
+      gstAmountSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}gst_amount_snapshot'])!,
       linkedStockItemId: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}linked_stock_item_id']),
       linkedStockUnitId: attachedDatabase.typeMapping.read(
@@ -6822,6 +7224,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
   final double makingChargeInput;
   final double makingCharge;
   final double itemTotal;
+  final double taxableAmountSnapshot;
+  final double gstRateSnapshot;
+  final double cgstAmountSnapshot;
+  final double sgstAmountSnapshot;
+  final double igstAmountSnapshot;
+  final double gstAmountSnapshot;
   final int? linkedStockItemId;
   final int? linkedStockUnitId;
   final String? linkedStockSku;
@@ -6849,6 +7257,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       required this.makingChargeInput,
       required this.makingCharge,
       required this.itemTotal,
+      required this.taxableAmountSnapshot,
+      required this.gstRateSnapshot,
+      required this.cgstAmountSnapshot,
+      required this.sgstAmountSnapshot,
+      required this.igstAmountSnapshot,
+      required this.gstAmountSnapshot,
       this.linkedStockItemId,
       this.linkedStockUnitId,
       this.linkedStockSku,
@@ -6884,6 +7298,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
     map['making_charge_input'] = Variable<double>(makingChargeInput);
     map['making_charge'] = Variable<double>(makingCharge);
     map['item_total'] = Variable<double>(itemTotal);
+    map['taxable_amount_snapshot'] = Variable<double>(taxableAmountSnapshot);
+    map['gst_rate_snapshot'] = Variable<double>(gstRateSnapshot);
+    map['cgst_amount_snapshot'] = Variable<double>(cgstAmountSnapshot);
+    map['sgst_amount_snapshot'] = Variable<double>(sgstAmountSnapshot);
+    map['igst_amount_snapshot'] = Variable<double>(igstAmountSnapshot);
+    map['gst_amount_snapshot'] = Variable<double>(gstAmountSnapshot);
     if (!nullToAbsent || linkedStockItemId != null) {
       map['linked_stock_item_id'] = Variable<int>(linkedStockItemId);
     }
@@ -6925,6 +7345,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       makingChargeInput: Value(makingChargeInput),
       makingCharge: Value(makingCharge),
       itemTotal: Value(itemTotal),
+      taxableAmountSnapshot: Value(taxableAmountSnapshot),
+      gstRateSnapshot: Value(gstRateSnapshot),
+      cgstAmountSnapshot: Value(cgstAmountSnapshot),
+      sgstAmountSnapshot: Value(sgstAmountSnapshot),
+      igstAmountSnapshot: Value(igstAmountSnapshot),
+      gstAmountSnapshot: Value(gstAmountSnapshot),
       linkedStockItemId: linkedStockItemId == null && nullToAbsent
           ? const Value.absent()
           : Value(linkedStockItemId),
@@ -6964,6 +7390,16 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       makingChargeInput: serializer.fromJson<double>(json['makingChargeInput']),
       makingCharge: serializer.fromJson<double>(json['makingCharge']),
       itemTotal: serializer.fromJson<double>(json['itemTotal']),
+      taxableAmountSnapshot:
+          serializer.fromJson<double>(json['taxableAmountSnapshot']),
+      gstRateSnapshot: serializer.fromJson<double>(json['gstRateSnapshot']),
+      cgstAmountSnapshot:
+          serializer.fromJson<double>(json['cgstAmountSnapshot']),
+      sgstAmountSnapshot:
+          serializer.fromJson<double>(json['sgstAmountSnapshot']),
+      igstAmountSnapshot:
+          serializer.fromJson<double>(json['igstAmountSnapshot']),
+      gstAmountSnapshot: serializer.fromJson<double>(json['gstAmountSnapshot']),
       linkedStockItemId: serializer.fromJson<int?>(json['linkedStockItemId']),
       linkedStockUnitId: serializer.fromJson<int?>(json['linkedStockUnitId']),
       linkedStockSku: serializer.fromJson<String?>(json['linkedStockSku']),
@@ -6996,6 +7432,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       'makingChargeInput': serializer.toJson<double>(makingChargeInput),
       'makingCharge': serializer.toJson<double>(makingCharge),
       'itemTotal': serializer.toJson<double>(itemTotal),
+      'taxableAmountSnapshot': serializer.toJson<double>(taxableAmountSnapshot),
+      'gstRateSnapshot': serializer.toJson<double>(gstRateSnapshot),
+      'cgstAmountSnapshot': serializer.toJson<double>(cgstAmountSnapshot),
+      'sgstAmountSnapshot': serializer.toJson<double>(sgstAmountSnapshot),
+      'igstAmountSnapshot': serializer.toJson<double>(igstAmountSnapshot),
+      'gstAmountSnapshot': serializer.toJson<double>(gstAmountSnapshot),
       'linkedStockItemId': serializer.toJson<int?>(linkedStockItemId),
       'linkedStockUnitId': serializer.toJson<int?>(linkedStockUnitId),
       'linkedStockSku': serializer.toJson<String?>(linkedStockSku),
@@ -7026,6 +7468,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           double? makingChargeInput,
           double? makingCharge,
           double? itemTotal,
+          double? taxableAmountSnapshot,
+          double? gstRateSnapshot,
+          double? cgstAmountSnapshot,
+          double? sgstAmountSnapshot,
+          double? igstAmountSnapshot,
+          double? gstAmountSnapshot,
           Value<int?> linkedStockItemId = const Value.absent(),
           Value<int?> linkedStockUnitId = const Value.absent(),
           Value<String?> linkedStockSku = const Value.absent(),
@@ -7053,6 +7501,13 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         makingChargeInput: makingChargeInput ?? this.makingChargeInput,
         makingCharge: makingCharge ?? this.makingCharge,
         itemTotal: itemTotal ?? this.itemTotal,
+        taxableAmountSnapshot:
+            taxableAmountSnapshot ?? this.taxableAmountSnapshot,
+        gstRateSnapshot: gstRateSnapshot ?? this.gstRateSnapshot,
+        cgstAmountSnapshot: cgstAmountSnapshot ?? this.cgstAmountSnapshot,
+        sgstAmountSnapshot: sgstAmountSnapshot ?? this.sgstAmountSnapshot,
+        igstAmountSnapshot: igstAmountSnapshot ?? this.igstAmountSnapshot,
+        gstAmountSnapshot: gstAmountSnapshot ?? this.gstAmountSnapshot,
         linkedStockItemId: linkedStockItemId.present
             ? linkedStockItemId.value
             : this.linkedStockItemId,
@@ -7098,6 +7553,24 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ? data.makingCharge.value
           : this.makingCharge,
       itemTotal: data.itemTotal.present ? data.itemTotal.value : this.itemTotal,
+      taxableAmountSnapshot: data.taxableAmountSnapshot.present
+          ? data.taxableAmountSnapshot.value
+          : this.taxableAmountSnapshot,
+      gstRateSnapshot: data.gstRateSnapshot.present
+          ? data.gstRateSnapshot.value
+          : this.gstRateSnapshot,
+      cgstAmountSnapshot: data.cgstAmountSnapshot.present
+          ? data.cgstAmountSnapshot.value
+          : this.cgstAmountSnapshot,
+      sgstAmountSnapshot: data.sgstAmountSnapshot.present
+          ? data.sgstAmountSnapshot.value
+          : this.sgstAmountSnapshot,
+      igstAmountSnapshot: data.igstAmountSnapshot.present
+          ? data.igstAmountSnapshot.value
+          : this.igstAmountSnapshot,
+      gstAmountSnapshot: data.gstAmountSnapshot.present
+          ? data.gstAmountSnapshot.value
+          : this.gstAmountSnapshot,
       linkedStockItemId: data.linkedStockItemId.present
           ? data.linkedStockItemId.value
           : this.linkedStockItemId,
@@ -7140,6 +7613,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ..write('makingChargeInput: $makingChargeInput, ')
           ..write('makingCharge: $makingCharge, ')
           ..write('itemTotal: $itemTotal, ')
+          ..write('taxableAmountSnapshot: $taxableAmountSnapshot, ')
+          ..write('gstRateSnapshot: $gstRateSnapshot, ')
+          ..write('cgstAmountSnapshot: $cgstAmountSnapshot, ')
+          ..write('sgstAmountSnapshot: $sgstAmountSnapshot, ')
+          ..write('igstAmountSnapshot: $igstAmountSnapshot, ')
+          ..write('gstAmountSnapshot: $gstAmountSnapshot, ')
           ..write('linkedStockItemId: $linkedStockItemId, ')
           ..write('linkedStockUnitId: $linkedStockUnitId, ')
           ..write('linkedStockSku: $linkedStockSku, ')
@@ -7172,6 +7651,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         makingChargeInput,
         makingCharge,
         itemTotal,
+        taxableAmountSnapshot,
+        gstRateSnapshot,
+        cgstAmountSnapshot,
+        sgstAmountSnapshot,
+        igstAmountSnapshot,
+        gstAmountSnapshot,
         linkedStockItemId,
         linkedStockUnitId,
         linkedStockSku,
@@ -7203,6 +7688,12 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           other.makingChargeInput == this.makingChargeInput &&
           other.makingCharge == this.makingCharge &&
           other.itemTotal == this.itemTotal &&
+          other.taxableAmountSnapshot == this.taxableAmountSnapshot &&
+          other.gstRateSnapshot == this.gstRateSnapshot &&
+          other.cgstAmountSnapshot == this.cgstAmountSnapshot &&
+          other.sgstAmountSnapshot == this.sgstAmountSnapshot &&
+          other.igstAmountSnapshot == this.igstAmountSnapshot &&
+          other.gstAmountSnapshot == this.gstAmountSnapshot &&
           other.linkedStockItemId == this.linkedStockItemId &&
           other.linkedStockUnitId == this.linkedStockUnitId &&
           other.linkedStockSku == this.linkedStockSku &&
@@ -7232,6 +7723,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
   final Value<double> makingChargeInput;
   final Value<double> makingCharge;
   final Value<double> itemTotal;
+  final Value<double> taxableAmountSnapshot;
+  final Value<double> gstRateSnapshot;
+  final Value<double> cgstAmountSnapshot;
+  final Value<double> sgstAmountSnapshot;
+  final Value<double> igstAmountSnapshot;
+  final Value<double> gstAmountSnapshot;
   final Value<int?> linkedStockItemId;
   final Value<int?> linkedStockUnitId;
   final Value<String?> linkedStockSku;
@@ -7259,6 +7756,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.makingChargeInput = const Value.absent(),
     this.makingCharge = const Value.absent(),
     this.itemTotal = const Value.absent(),
+    this.taxableAmountSnapshot = const Value.absent(),
+    this.gstRateSnapshot = const Value.absent(),
+    this.cgstAmountSnapshot = const Value.absent(),
+    this.sgstAmountSnapshot = const Value.absent(),
+    this.igstAmountSnapshot = const Value.absent(),
+    this.gstAmountSnapshot = const Value.absent(),
     this.linkedStockItemId = const Value.absent(),
     this.linkedStockUnitId = const Value.absent(),
     this.linkedStockSku = const Value.absent(),
@@ -7287,6 +7790,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.makingChargeInput = const Value.absent(),
     this.makingCharge = const Value.absent(),
     this.itemTotal = const Value.absent(),
+    this.taxableAmountSnapshot = const Value.absent(),
+    this.gstRateSnapshot = const Value.absent(),
+    this.cgstAmountSnapshot = const Value.absent(),
+    this.sgstAmountSnapshot = const Value.absent(),
+    this.igstAmountSnapshot = const Value.absent(),
+    this.gstAmountSnapshot = const Value.absent(),
     this.linkedStockItemId = const Value.absent(),
     this.linkedStockUnitId = const Value.absent(),
     this.linkedStockSku = const Value.absent(),
@@ -7316,6 +7825,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     Expression<double>? makingChargeInput,
     Expression<double>? makingCharge,
     Expression<double>? itemTotal,
+    Expression<double>? taxableAmountSnapshot,
+    Expression<double>? gstRateSnapshot,
+    Expression<double>? cgstAmountSnapshot,
+    Expression<double>? sgstAmountSnapshot,
+    Expression<double>? igstAmountSnapshot,
+    Expression<double>? gstAmountSnapshot,
     Expression<int>? linkedStockItemId,
     Expression<int>? linkedStockUnitId,
     Expression<String>? linkedStockSku,
@@ -7345,6 +7860,16 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       if (makingChargeInput != null) 'making_charge_input': makingChargeInput,
       if (makingCharge != null) 'making_charge': makingCharge,
       if (itemTotal != null) 'item_total': itemTotal,
+      if (taxableAmountSnapshot != null)
+        'taxable_amount_snapshot': taxableAmountSnapshot,
+      if (gstRateSnapshot != null) 'gst_rate_snapshot': gstRateSnapshot,
+      if (cgstAmountSnapshot != null)
+        'cgst_amount_snapshot': cgstAmountSnapshot,
+      if (sgstAmountSnapshot != null)
+        'sgst_amount_snapshot': sgstAmountSnapshot,
+      if (igstAmountSnapshot != null)
+        'igst_amount_snapshot': igstAmountSnapshot,
+      if (gstAmountSnapshot != null) 'gst_amount_snapshot': gstAmountSnapshot,
       if (linkedStockItemId != null) 'linked_stock_item_id': linkedStockItemId,
       if (linkedStockUnitId != null) 'linked_stock_unit_id': linkedStockUnitId,
       if (linkedStockSku != null) 'linked_stock_sku': linkedStockSku,
@@ -7375,6 +7900,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       Value<double>? makingChargeInput,
       Value<double>? makingCharge,
       Value<double>? itemTotal,
+      Value<double>? taxableAmountSnapshot,
+      Value<double>? gstRateSnapshot,
+      Value<double>? cgstAmountSnapshot,
+      Value<double>? sgstAmountSnapshot,
+      Value<double>? igstAmountSnapshot,
+      Value<double>? gstAmountSnapshot,
       Value<int?>? linkedStockItemId,
       Value<int?>? linkedStockUnitId,
       Value<String?>? linkedStockSku,
@@ -7402,6 +7933,13 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       makingChargeInput: makingChargeInput ?? this.makingChargeInput,
       makingCharge: makingCharge ?? this.makingCharge,
       itemTotal: itemTotal ?? this.itemTotal,
+      taxableAmountSnapshot:
+          taxableAmountSnapshot ?? this.taxableAmountSnapshot,
+      gstRateSnapshot: gstRateSnapshot ?? this.gstRateSnapshot,
+      cgstAmountSnapshot: cgstAmountSnapshot ?? this.cgstAmountSnapshot,
+      sgstAmountSnapshot: sgstAmountSnapshot ?? this.sgstAmountSnapshot,
+      igstAmountSnapshot: igstAmountSnapshot ?? this.igstAmountSnapshot,
+      gstAmountSnapshot: gstAmountSnapshot ?? this.gstAmountSnapshot,
       linkedStockItemId: linkedStockItemId ?? this.linkedStockItemId,
       linkedStockUnitId: linkedStockUnitId ?? this.linkedStockUnitId,
       linkedStockSku: linkedStockSku ?? this.linkedStockSku,
@@ -7476,6 +8014,25 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     if (itemTotal.present) {
       map['item_total'] = Variable<double>(itemTotal.value);
     }
+    if (taxableAmountSnapshot.present) {
+      map['taxable_amount_snapshot'] =
+          Variable<double>(taxableAmountSnapshot.value);
+    }
+    if (gstRateSnapshot.present) {
+      map['gst_rate_snapshot'] = Variable<double>(gstRateSnapshot.value);
+    }
+    if (cgstAmountSnapshot.present) {
+      map['cgst_amount_snapshot'] = Variable<double>(cgstAmountSnapshot.value);
+    }
+    if (sgstAmountSnapshot.present) {
+      map['sgst_amount_snapshot'] = Variable<double>(sgstAmountSnapshot.value);
+    }
+    if (igstAmountSnapshot.present) {
+      map['igst_amount_snapshot'] = Variable<double>(igstAmountSnapshot.value);
+    }
+    if (gstAmountSnapshot.present) {
+      map['gst_amount_snapshot'] = Variable<double>(gstAmountSnapshot.value);
+    }
     if (linkedStockItemId.present) {
       map['linked_stock_item_id'] = Variable<int>(linkedStockItemId.value);
     }
@@ -7518,6 +8075,12 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
           ..write('makingChargeInput: $makingChargeInput, ')
           ..write('makingCharge: $makingCharge, ')
           ..write('itemTotal: $itemTotal, ')
+          ..write('taxableAmountSnapshot: $taxableAmountSnapshot, ')
+          ..write('gstRateSnapshot: $gstRateSnapshot, ')
+          ..write('cgstAmountSnapshot: $cgstAmountSnapshot, ')
+          ..write('sgstAmountSnapshot: $sgstAmountSnapshot, ')
+          ..write('igstAmountSnapshot: $igstAmountSnapshot, ')
+          ..write('gstAmountSnapshot: $gstAmountSnapshot, ')
           ..write('linkedStockItemId: $linkedStockItemId, ')
           ..write('linkedStockUnitId: $linkedStockUnitId, ')
           ..write('linkedStockSku: $linkedStockSku, ')
@@ -39412,6 +39975,11 @@ typedef $$BillsTableCreateCompanionBuilder = BillsCompanion Function({
   Value<int?> customerId,
   Value<String?> customerName,
   Value<String?> mobile,
+  Value<String?> customerGstinSnapshot,
+  Value<String?> placeOfSupplySnapshot,
+  Value<String?> customerStateCodeSnapshot,
+  Value<String?> shopGstinSnapshot,
+  Value<String?> shopStateCodeSnapshot,
   Value<String> billingMode,
   Value<String> billType,
   Value<String> paymentStatus,
@@ -39420,6 +39988,7 @@ typedef $$BillsTableCreateCompanionBuilder = BillsCompanion Function({
   Value<double> taxableAmount,
   Value<double> cgstAmount,
   Value<double> sgstAmount,
+  Value<double> igstAmount,
   Value<double> gstAmount,
   Value<double> makingTotal,
   Value<double> roundOffAmount,
@@ -39446,6 +40015,11 @@ typedef $$BillsTableUpdateCompanionBuilder = BillsCompanion Function({
   Value<int?> customerId,
   Value<String?> customerName,
   Value<String?> mobile,
+  Value<String?> customerGstinSnapshot,
+  Value<String?> placeOfSupplySnapshot,
+  Value<String?> customerStateCodeSnapshot,
+  Value<String?> shopGstinSnapshot,
+  Value<String?> shopStateCodeSnapshot,
   Value<String> billingMode,
   Value<String> billType,
   Value<String> paymentStatus,
@@ -39454,6 +40028,7 @@ typedef $$BillsTableUpdateCompanionBuilder = BillsCompanion Function({
   Value<double> taxableAmount,
   Value<double> cgstAmount,
   Value<double> sgstAmount,
+  Value<double> igstAmount,
   Value<double> gstAmount,
   Value<double> makingTotal,
   Value<double> roundOffAmount,
@@ -39563,6 +40138,26 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
   ColumnFilters<String> get mobile => $composableBuilder(
       column: $table.mobile, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get customerGstinSnapshot => $composableBuilder(
+      column: $table.customerGstinSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get placeOfSupplySnapshot => $composableBuilder(
+      column: $table.placeOfSupplySnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get customerStateCodeSnapshot => $composableBuilder(
+      column: $table.customerStateCodeSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get shopGstinSnapshot => $composableBuilder(
+      column: $table.shopGstinSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get shopStateCodeSnapshot => $composableBuilder(
+      column: $table.shopStateCodeSnapshot,
+      builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get billingMode => $composableBuilder(
       column: $table.billingMode, builder: (column) => ColumnFilters(column));
 
@@ -39586,6 +40181,9 @@ class $$BillsTableFilterComposer extends Composer<_$AppDatabase, $BillsTable> {
 
   ColumnFilters<double> get sgstAmount => $composableBuilder(
       column: $table.sgstAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get igstAmount => $composableBuilder(
+      column: $table.igstAmount, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get gstAmount => $composableBuilder(
       column: $table.gstAmount, builder: (column) => ColumnFilters(column));
@@ -39749,6 +40347,26 @@ class $$BillsTableOrderingComposer
   ColumnOrderings<String> get mobile => $composableBuilder(
       column: $table.mobile, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get customerGstinSnapshot => $composableBuilder(
+      column: $table.customerGstinSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get placeOfSupplySnapshot => $composableBuilder(
+      column: $table.placeOfSupplySnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get customerStateCodeSnapshot => $composableBuilder(
+      column: $table.customerStateCodeSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get shopGstinSnapshot => $composableBuilder(
+      column: $table.shopGstinSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get shopStateCodeSnapshot => $composableBuilder(
+      column: $table.shopStateCodeSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get billingMode => $composableBuilder(
       column: $table.billingMode, builder: (column) => ColumnOrderings(column));
 
@@ -39774,6 +40392,9 @@ class $$BillsTableOrderingComposer
 
   ColumnOrderings<double> get sgstAmount => $composableBuilder(
       column: $table.sgstAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get igstAmount => $composableBuilder(
+      column: $table.igstAmount, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get gstAmount => $composableBuilder(
       column: $table.gstAmount, builder: (column) => ColumnOrderings(column));
@@ -39894,6 +40515,21 @@ class $$BillsTableAnnotationComposer
   GeneratedColumn<String> get mobile =>
       $composableBuilder(column: $table.mobile, builder: (column) => column);
 
+  GeneratedColumn<String> get customerGstinSnapshot => $composableBuilder(
+      column: $table.customerGstinSnapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get placeOfSupplySnapshot => $composableBuilder(
+      column: $table.placeOfSupplySnapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get customerStateCodeSnapshot => $composableBuilder(
+      column: $table.customerStateCodeSnapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get shopGstinSnapshot => $composableBuilder(
+      column: $table.shopGstinSnapshot, builder: (column) => column);
+
+  GeneratedColumn<String> get shopStateCodeSnapshot => $composableBuilder(
+      column: $table.shopStateCodeSnapshot, builder: (column) => column);
+
   GeneratedColumn<String> get billingMode => $composableBuilder(
       column: $table.billingMode, builder: (column) => column);
 
@@ -39917,6 +40553,9 @@ class $$BillsTableAnnotationComposer
 
   GeneratedColumn<double> get sgstAmount => $composableBuilder(
       column: $table.sgstAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get igstAmount => $composableBuilder(
+      column: $table.igstAmount, builder: (column) => column);
 
   GeneratedColumn<double> get gstAmount =>
       $composableBuilder(column: $table.gstAmount, builder: (column) => column);
@@ -40083,6 +40722,11 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<int?> customerId = const Value.absent(),
             Value<String?> customerName = const Value.absent(),
             Value<String?> mobile = const Value.absent(),
+            Value<String?> customerGstinSnapshot = const Value.absent(),
+            Value<String?> placeOfSupplySnapshot = const Value.absent(),
+            Value<String?> customerStateCodeSnapshot = const Value.absent(),
+            Value<String?> shopGstinSnapshot = const Value.absent(),
+            Value<String?> shopStateCodeSnapshot = const Value.absent(),
             Value<String> billingMode = const Value.absent(),
             Value<String> billType = const Value.absent(),
             Value<String> paymentStatus = const Value.absent(),
@@ -40091,6 +40735,7 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<double> taxableAmount = const Value.absent(),
             Value<double> cgstAmount = const Value.absent(),
             Value<double> sgstAmount = const Value.absent(),
+            Value<double> igstAmount = const Value.absent(),
             Value<double> gstAmount = const Value.absent(),
             Value<double> makingTotal = const Value.absent(),
             Value<double> roundOffAmount = const Value.absent(),
@@ -40117,6 +40762,11 @@ class $$BillsTableTableManager extends RootTableManager<
             customerId: customerId,
             customerName: customerName,
             mobile: mobile,
+            customerGstinSnapshot: customerGstinSnapshot,
+            placeOfSupplySnapshot: placeOfSupplySnapshot,
+            customerStateCodeSnapshot: customerStateCodeSnapshot,
+            shopGstinSnapshot: shopGstinSnapshot,
+            shopStateCodeSnapshot: shopStateCodeSnapshot,
             billingMode: billingMode,
             billType: billType,
             paymentStatus: paymentStatus,
@@ -40125,6 +40775,7 @@ class $$BillsTableTableManager extends RootTableManager<
             taxableAmount: taxableAmount,
             cgstAmount: cgstAmount,
             sgstAmount: sgstAmount,
+            igstAmount: igstAmount,
             gstAmount: gstAmount,
             makingTotal: makingTotal,
             roundOffAmount: roundOffAmount,
@@ -40151,6 +40802,11 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<int?> customerId = const Value.absent(),
             Value<String?> customerName = const Value.absent(),
             Value<String?> mobile = const Value.absent(),
+            Value<String?> customerGstinSnapshot = const Value.absent(),
+            Value<String?> placeOfSupplySnapshot = const Value.absent(),
+            Value<String?> customerStateCodeSnapshot = const Value.absent(),
+            Value<String?> shopGstinSnapshot = const Value.absent(),
+            Value<String?> shopStateCodeSnapshot = const Value.absent(),
             Value<String> billingMode = const Value.absent(),
             Value<String> billType = const Value.absent(),
             Value<String> paymentStatus = const Value.absent(),
@@ -40159,6 +40815,7 @@ class $$BillsTableTableManager extends RootTableManager<
             Value<double> taxableAmount = const Value.absent(),
             Value<double> cgstAmount = const Value.absent(),
             Value<double> sgstAmount = const Value.absent(),
+            Value<double> igstAmount = const Value.absent(),
             Value<double> gstAmount = const Value.absent(),
             Value<double> makingTotal = const Value.absent(),
             Value<double> roundOffAmount = const Value.absent(),
@@ -40185,6 +40842,11 @@ class $$BillsTableTableManager extends RootTableManager<
             customerId: customerId,
             customerName: customerName,
             mobile: mobile,
+            customerGstinSnapshot: customerGstinSnapshot,
+            placeOfSupplySnapshot: placeOfSupplySnapshot,
+            customerStateCodeSnapshot: customerStateCodeSnapshot,
+            shopGstinSnapshot: shopGstinSnapshot,
+            shopStateCodeSnapshot: shopStateCodeSnapshot,
             billingMode: billingMode,
             billType: billType,
             paymentStatus: paymentStatus,
@@ -40193,6 +40855,7 @@ class $$BillsTableTableManager extends RootTableManager<
             taxableAmount: taxableAmount,
             cgstAmount: cgstAmount,
             sgstAmount: sgstAmount,
+            igstAmount: igstAmount,
             gstAmount: gstAmount,
             makingTotal: makingTotal,
             roundOffAmount: roundOffAmount,
@@ -40333,6 +40996,12 @@ typedef $$BillItemsTableCreateCompanionBuilder = BillItemsCompanion Function({
   Value<double> makingChargeInput,
   Value<double> makingCharge,
   Value<double> itemTotal,
+  Value<double> taxableAmountSnapshot,
+  Value<double> gstRateSnapshot,
+  Value<double> cgstAmountSnapshot,
+  Value<double> sgstAmountSnapshot,
+  Value<double> igstAmountSnapshot,
+  Value<double> gstAmountSnapshot,
   Value<int?> linkedStockItemId,
   Value<int?> linkedStockUnitId,
   Value<String?> linkedStockSku,
@@ -40361,6 +41030,12 @@ typedef $$BillItemsTableUpdateCompanionBuilder = BillItemsCompanion Function({
   Value<double> makingChargeInput,
   Value<double> makingCharge,
   Value<double> itemTotal,
+  Value<double> taxableAmountSnapshot,
+  Value<double> gstRateSnapshot,
+  Value<double> cgstAmountSnapshot,
+  Value<double> sgstAmountSnapshot,
+  Value<double> igstAmountSnapshot,
+  Value<double> gstAmountSnapshot,
   Value<int?> linkedStockItemId,
   Value<int?> linkedStockUnitId,
   Value<String?> linkedStockSku,
@@ -40457,6 +41132,30 @@ class $$BillItemsTableFilterComposer
 
   ColumnFilters<double> get itemTotal => $composableBuilder(
       column: $table.itemTotal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get taxableAmountSnapshot => $composableBuilder(
+      column: $table.taxableAmountSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get gstRateSnapshot => $composableBuilder(
+      column: $table.gstRateSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get cgstAmountSnapshot => $composableBuilder(
+      column: $table.cgstAmountSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get sgstAmountSnapshot => $composableBuilder(
+      column: $table.sgstAmountSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get igstAmountSnapshot => $composableBuilder(
+      column: $table.igstAmountSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get gstAmountSnapshot => $composableBuilder(
+      column: $table.gstAmountSnapshot,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get linkedStockItemId => $composableBuilder(
       column: $table.linkedStockItemId,
@@ -40571,6 +41270,30 @@ class $$BillItemsTableOrderingComposer
   ColumnOrderings<double> get itemTotal => $composableBuilder(
       column: $table.itemTotal, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get taxableAmountSnapshot => $composableBuilder(
+      column: $table.taxableAmountSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get gstRateSnapshot => $composableBuilder(
+      column: $table.gstRateSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get cgstAmountSnapshot => $composableBuilder(
+      column: $table.cgstAmountSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get sgstAmountSnapshot => $composableBuilder(
+      column: $table.sgstAmountSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get igstAmountSnapshot => $composableBuilder(
+      column: $table.igstAmountSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get gstAmountSnapshot => $composableBuilder(
+      column: $table.gstAmountSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get linkedStockItemId => $composableBuilder(
       column: $table.linkedStockItemId,
       builder: (column) => ColumnOrderings(column));
@@ -40681,6 +41404,24 @@ class $$BillItemsTableAnnotationComposer
   GeneratedColumn<double> get itemTotal =>
       $composableBuilder(column: $table.itemTotal, builder: (column) => column);
 
+  GeneratedColumn<double> get taxableAmountSnapshot => $composableBuilder(
+      column: $table.taxableAmountSnapshot, builder: (column) => column);
+
+  GeneratedColumn<double> get gstRateSnapshot => $composableBuilder(
+      column: $table.gstRateSnapshot, builder: (column) => column);
+
+  GeneratedColumn<double> get cgstAmountSnapshot => $composableBuilder(
+      column: $table.cgstAmountSnapshot, builder: (column) => column);
+
+  GeneratedColumn<double> get sgstAmountSnapshot => $composableBuilder(
+      column: $table.sgstAmountSnapshot, builder: (column) => column);
+
+  GeneratedColumn<double> get igstAmountSnapshot => $composableBuilder(
+      column: $table.igstAmountSnapshot, builder: (column) => column);
+
+  GeneratedColumn<double> get gstAmountSnapshot => $composableBuilder(
+      column: $table.gstAmountSnapshot, builder: (column) => column);
+
   GeneratedColumn<int> get linkedStockItemId => $composableBuilder(
       column: $table.linkedStockItemId, builder: (column) => column);
 
@@ -40761,6 +41502,12 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<double> makingChargeInput = const Value.absent(),
             Value<double> makingCharge = const Value.absent(),
             Value<double> itemTotal = const Value.absent(),
+            Value<double> taxableAmountSnapshot = const Value.absent(),
+            Value<double> gstRateSnapshot = const Value.absent(),
+            Value<double> cgstAmountSnapshot = const Value.absent(),
+            Value<double> sgstAmountSnapshot = const Value.absent(),
+            Value<double> igstAmountSnapshot = const Value.absent(),
+            Value<double> gstAmountSnapshot = const Value.absent(),
             Value<int?> linkedStockItemId = const Value.absent(),
             Value<int?> linkedStockUnitId = const Value.absent(),
             Value<String?> linkedStockSku = const Value.absent(),
@@ -40789,6 +41536,12 @@ class $$BillItemsTableTableManager extends RootTableManager<
             makingChargeInput: makingChargeInput,
             makingCharge: makingCharge,
             itemTotal: itemTotal,
+            taxableAmountSnapshot: taxableAmountSnapshot,
+            gstRateSnapshot: gstRateSnapshot,
+            cgstAmountSnapshot: cgstAmountSnapshot,
+            sgstAmountSnapshot: sgstAmountSnapshot,
+            igstAmountSnapshot: igstAmountSnapshot,
+            gstAmountSnapshot: gstAmountSnapshot,
             linkedStockItemId: linkedStockItemId,
             linkedStockUnitId: linkedStockUnitId,
             linkedStockSku: linkedStockSku,
@@ -40817,6 +41570,12 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<double> makingChargeInput = const Value.absent(),
             Value<double> makingCharge = const Value.absent(),
             Value<double> itemTotal = const Value.absent(),
+            Value<double> taxableAmountSnapshot = const Value.absent(),
+            Value<double> gstRateSnapshot = const Value.absent(),
+            Value<double> cgstAmountSnapshot = const Value.absent(),
+            Value<double> sgstAmountSnapshot = const Value.absent(),
+            Value<double> igstAmountSnapshot = const Value.absent(),
+            Value<double> gstAmountSnapshot = const Value.absent(),
             Value<int?> linkedStockItemId = const Value.absent(),
             Value<int?> linkedStockUnitId = const Value.absent(),
             Value<String?> linkedStockSku = const Value.absent(),
@@ -40845,6 +41604,12 @@ class $$BillItemsTableTableManager extends RootTableManager<
             makingChargeInput: makingChargeInput,
             makingCharge: makingCharge,
             itemTotal: itemTotal,
+            taxableAmountSnapshot: taxableAmountSnapshot,
+            gstRateSnapshot: gstRateSnapshot,
+            cgstAmountSnapshot: cgstAmountSnapshot,
+            sgstAmountSnapshot: sgstAmountSnapshot,
+            igstAmountSnapshot: igstAmountSnapshot,
+            gstAmountSnapshot: gstAmountSnapshot,
             linkedStockItemId: linkedStockItemId,
             linkedStockUnitId: linkedStockUnitId,
             linkedStockSku: linkedStockSku,

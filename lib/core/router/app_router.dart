@@ -71,6 +71,7 @@ import '../../ui/girvi/notice_auction/notice_auction_screen.dart';
 
 import '../../ui/report/day_book/day_book_screen.dart';
 import '../../ui/report/sales_report/sales_report_screen.dart';
+import '../../features/reports/gst_report/presentation/screens/gst_report_screen.dart';
 
 import '../../ui/layout/app_shell.dart';
 import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_ledger_screen.dart';
@@ -666,8 +667,8 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.reportGst,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.gstReportRoute),
+            builder: (context, state) => GstReportScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),
           GoRoute(

@@ -100,6 +100,17 @@ class PosCheckoutRepository {
                     ? invoice.customerMobile.trim()
                     : null,
               ),
+              customerGstinSnapshot: Value(_nullable(invoice.customerGstin)),
+              placeOfSupplySnapshot: Value(_nullable(
+                invoice.placeOfSupply.trim().isNotEmpty
+                    ? invoice.placeOfSupply
+                    : invoice.customerCity,
+              )),
+              customerStateCodeSnapshot: Value(
+                _nullable(invoice.customerStateCode),
+              ),
+              shopGstinSnapshot: Value(_nullable(invoice.shopGstin)),
+              shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
               billingMode: Value(_dbBillingMode(invoice.billingMode)),
               billType: Value(_dbBillType(invoice.billType)),
               paymentStatus: Value(_resolvePaymentStatus(money)),
@@ -108,6 +119,7 @@ class PosCheckoutRepository {
               taxableAmount: Value(money.taxableAmount),
               cgstAmount: Value(money.cgst),
               sgstAmount: Value(money.sgst),
+              igstAmount: Value(money.igst),
               gstAmount: Value(money.totalGst),
               makingTotal: Value(money.totalMakingCharge),
               roundOffAmount: Value(money.roundOffAmount),
@@ -130,6 +142,7 @@ class PosCheckoutRepository {
 
       for (var index = 0; index < invoice.saleItems.length; index++) {
         final item = invoice.saleItems[index];
+        final lineTax = _lineTaxSnapshot(item, invoice, money);
         final itemName = item.descCtrl.text.trim().isNotEmpty
             ? item.descCtrl.text.trim()
             : item.metal.displayName;
@@ -167,6 +180,12 @@ class PosCheckoutRepository {
                 ),
                 makingCharge: Value(item.makingAmt),
                 itemTotal: Value(item.totalValue),
+                taxableAmountSnapshot: Value(lineTax.taxableAmount),
+                gstRateSnapshot: Value(lineTax.gstRate),
+                cgstAmountSnapshot: Value(lineTax.cgst),
+                sgstAmountSnapshot: Value(lineTax.sgst),
+                igstAmountSnapshot: Value(lineTax.igst),
+                gstAmountSnapshot: Value(lineTax.totalGst),
                 linkedStockItemId: Value(item.linkedStockItemId),
                 linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
@@ -287,6 +306,16 @@ class PosCheckoutRepository {
                 ? invoice.customerMobile.trim()
                 : null,
           ),
+          customerGstinSnapshot: Value(_nullable(invoice.customerGstin)),
+          placeOfSupplySnapshot: Value(_nullable(
+            invoice.placeOfSupply.trim().isNotEmpty
+                ? invoice.placeOfSupply
+                : invoice.customerCity,
+          )),
+          customerStateCodeSnapshot:
+              Value(_nullable(invoice.customerStateCode)),
+          shopGstinSnapshot: Value(_nullable(invoice.shopGstin)),
+          shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
           billingMode: Value(_dbBillingMode(invoice.billingMode)),
           billType: Value(_dbBillType(invoice.billType)),
           paymentStatus: Value(_resolvePaymentStatus(money)),
@@ -295,6 +324,7 @@ class PosCheckoutRepository {
           taxableAmount: Value(money.taxableAmount),
           cgstAmount: Value(money.cgst),
           sgstAmount: Value(money.sgst),
+          igstAmount: Value(money.igst),
           gstAmount: Value(money.totalGst),
           makingTotal: Value(money.totalMakingCharge),
           roundOffAmount: Value(money.roundOffAmount),
@@ -323,6 +353,7 @@ class PosCheckoutRepository {
 
       for (var index = 0; index < invoice.saleItems.length; index++) {
         final item = invoice.saleItems[index];
+        final lineTax = _lineTaxSnapshot(item, invoice, money);
         final itemName = item.descCtrl.text.trim().isNotEmpty
             ? item.descCtrl.text.trim()
             : item.metal.displayName;
@@ -360,6 +391,12 @@ class PosCheckoutRepository {
                 ),
                 makingCharge: Value(item.makingAmt),
                 itemTotal: Value(item.totalValue),
+                taxableAmountSnapshot: Value(lineTax.taxableAmount),
+                gstRateSnapshot: Value(lineTax.gstRate),
+                cgstAmountSnapshot: Value(lineTax.cgst),
+                sgstAmountSnapshot: Value(lineTax.sgst),
+                igstAmountSnapshot: Value(lineTax.igst),
+                gstAmountSnapshot: Value(lineTax.totalGst),
                 linkedStockItemId: Value(item.linkedStockItemId),
                 linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
@@ -2401,8 +2438,10 @@ class PosCheckoutRepository {
 
   _PosInvoiceMoneySnapshot _moneySnapshot(PosInvoiceModel invoice) {
     final totalGst = _roundMoney(invoice.totalGst);
-    final cgst = _roundMoney(totalGst / 2);
-    final sgst = _roundMoney(totalGst - cgst);
+    final interState = _isInterStateSupply(invoice);
+    final cgst = interState ? 0.0 : _roundMoney(totalGst / 2);
+    final sgst = interState ? 0.0 : _roundMoney(totalGst - cgst);
+    final igst = interState ? totalGst : 0.0;
     final cashPaid = _roundMoney(invoice.cashPaid);
     final upiPaid = _roundMoney(invoice.upiPaid);
     final cardPaid = _roundMoney(invoice.cardPaid);
@@ -2418,6 +2457,7 @@ class PosCheckoutRepository {
       taxableAmount: _roundMoney(invoice.taxableAmount),
       cgst: cgst,
       sgst: sgst,
+      igst: igst,
       totalGst: totalGst,
       totalMakingCharge: _roundMoney(invoice.totalMakingCharge),
       roundOffAmount: _roundMoney(invoice.roundOffAmount),
@@ -2431,6 +2471,48 @@ class PosCheckoutRepository {
       dueAmount: dueAmount,
       tradeInDeduction: _roundMoney(invoice.totalTradeInDeduction),
     );
+  }
+
+  _PosLineTaxSnapshot _lineTaxSnapshot(
+    SaleItemModel item,
+    PosInvoiceModel invoice,
+    _PosInvoiceMoneySnapshot money,
+  ) {
+    final ratio = _allocationRatio(
+      scopedGross: item.totalValue,
+      invoiceGross: money.grossAmount,
+    );
+    final taxable = _roundMoney(money.taxableAmount * ratio);
+    final cgst = _roundMoney(money.cgst * ratio);
+    final sgst = _roundMoney(money.sgst * ratio);
+    final igst = _roundMoney(money.igst * ratio);
+    final totalGst = _roundMoney(cgst + sgst + igst);
+    final gstRate = taxable.abs() <= 0.005 ? 0.0 : (totalGst / taxable) * 100;
+
+    return _PosLineTaxSnapshot(
+      taxableAmount: taxable,
+      gstRate: _roundMoney(gstRate),
+      cgst: cgst,
+      sgst: sgst,
+      igst: igst,
+      totalGst: totalGst,
+    );
+  }
+
+  double _allocationRatio({
+    required double scopedGross,
+    required double invoiceGross,
+  }) {
+    if (scopedGross <= 0.005) return 0;
+    if (invoiceGross.abs() <= 0.005) return 1;
+    return scopedGross / invoiceGross;
+  }
+
+  bool _isInterStateSupply(PosInvoiceModel invoice) {
+    final shopState = invoice.shopStateCode.trim();
+    final customerState = invoice.customerStateCode.trim();
+    if (shopState.isEmpty || customerState.isEmpty) return false;
+    return shopState != customerState;
   }
 
   String _resolvePaymentStatus(_PosInvoiceMoneySnapshot money) {
@@ -2785,6 +2867,7 @@ class _PosInvoiceMoneySnapshot {
     required this.taxableAmount,
     required this.cgst,
     required this.sgst,
+    required this.igst,
     required this.totalGst,
     required this.totalMakingCharge,
     required this.roundOffAmount,
@@ -2804,6 +2887,7 @@ class _PosInvoiceMoneySnapshot {
   final double taxableAmount;
   final double cgst;
   final double sgst;
+  final double igst;
   final double totalGst;
   final double totalMakingCharge;
   final double roundOffAmount;
@@ -2816,6 +2900,24 @@ class _PosInvoiceMoneySnapshot {
   final double balanceAmount;
   final double dueAmount;
   final double tradeInDeduction;
+}
+
+class _PosLineTaxSnapshot {
+  const _PosLineTaxSnapshot({
+    required this.taxableAmount,
+    required this.gstRate,
+    required this.cgst,
+    required this.sgst,
+    required this.igst,
+    required this.totalGst,
+  });
+
+  final double taxableAmount;
+  final double gstRate;
+  final double cgst;
+  final double sgst;
+  final double igst;
+  final double totalGst;
 }
 
 class _StockLotBalance {

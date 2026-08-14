@@ -17,6 +17,11 @@ class Bills extends Table with BaseTable {
   // Snapshot Data
   TextColumn get customerName => text().nullable()();
   TextColumn get mobile => text().nullable()();
+  TextColumn get customerGstinSnapshot => text().nullable()();
+  TextColumn get placeOfSupplySnapshot => text().nullable()();
+  TextColumn get customerStateCodeSnapshot => text().nullable()();
+  TextColumn get shopGstinSnapshot => text().nullable()();
+  TextColumn get shopStateCodeSnapshot => text().nullable()();
   TextColumn get billingMode => text().withDefault(const Constant('RETAIL'))();
   TextColumn get billType => text().withDefault(const Constant('NORMAL'))();
   TextColumn get paymentStatus => text().withDefault(const Constant('PAID'))();
@@ -27,6 +32,7 @@ class Bills extends Table with BaseTable {
   RealColumn get taxableAmount => real().withDefault(const Constant(0.0))();
   RealColumn get cgstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get sgstAmount => real().withDefault(const Constant(0.0))();
+  RealColumn get igstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get gstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get makingTotal => real().withDefault(const Constant(0.0))();
   RealColumn get roundOffAmount => real().withDefault(const Constant(0.0))();

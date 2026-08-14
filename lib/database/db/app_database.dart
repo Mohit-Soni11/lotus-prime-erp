@@ -1175,6 +1175,76 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           }
+
+          if (from < 43) {
+            if (await _tableExists('bills')) {
+              await _addColumnIfMissing(
+                tableName: 'bills',
+                columnName: 'customer_gstin_snapshot',
+                declaration: 'TEXT',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bills',
+                columnName: 'place_of_supply_snapshot',
+                declaration: 'TEXT',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bills',
+                columnName: 'customer_state_code_snapshot',
+                declaration: 'TEXT',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bills',
+                columnName: 'shop_gstin_snapshot',
+                declaration: 'TEXT',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bills',
+                columnName: 'shop_state_code_snapshot',
+                declaration: 'TEXT',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bills',
+                columnName: 'igst_amount',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+            }
+            if (await _tableExists('bill_items')) {
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'taxable_amount_snapshot',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'gst_rate_snapshot',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'cgst_amount_snapshot',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'sgst_amount_snapshot',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'igst_amount_snapshot',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'gst_amount_snapshot',
+                declaration: 'REAL NOT NULL DEFAULT 0.0',
+              );
+            }
+            AppLogger.info(
+              'v43 GST filing invoice snapshot columns applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

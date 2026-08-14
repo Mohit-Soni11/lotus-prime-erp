@@ -1,0 +1,244 @@
+enum GstReportTab {
+  dashboard,
+  gstr1,
+  gstr3b,
+  hsnRegister,
+  audit,
+}
+
+enum GstAuditSeverity {
+  critical,
+  warning,
+  info,
+}
+
+class GstReportPeriod {
+  const GstReportPeriod({
+    required this.startDate,
+    required this.endDate,
+  });
+
+  factory GstReportPeriod.currentMonth() {
+    final now = DateTime.now();
+    return GstReportPeriod.forMonth(DateTime(now.year, now.month));
+  }
+
+  factory GstReportPeriod.forMonth(DateTime month) {
+    return GstReportPeriod(
+      startDate: DateTime(month.year, month.month),
+      endDate: DateTime(month.year, month.month + 1, 0, 23, 59, 59),
+    );
+  }
+
+  final DateTime startDate;
+  final DateTime endDate;
+
+  DateTime get month => DateTime(startDate.year, startDate.month);
+}
+
+class GstReportShopIdentity {
+  const GstReportShopIdentity({
+    this.shopName = 'Lotus ERP',
+    this.gstin = '',
+    this.stateCode = '',
+    this.stateName = '',
+  });
+
+  final String shopName;
+  final String gstin;
+  final String stateCode;
+  final String stateName;
+}
+
+class GstReportDashboardSummary {
+  const GstReportDashboardSummary({
+    this.totalInvoices = 0,
+    this.gstInvoiceCount = 0,
+    this.nonGstInvoiceCount = 0,
+    this.taxableSales = 0,
+    this.cgstAmount = 0,
+    this.sgstAmount = 0,
+    this.igstAmount = 0,
+    this.totalGst = 0,
+    this.gstInvoiceValue = 0,
+    this.nonGstSalesEstimate = 0,
+  });
+
+  final int totalInvoices;
+  final int gstInvoiceCount;
+  final int nonGstInvoiceCount;
+  final double taxableSales;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double totalGst;
+  final double gstInvoiceValue;
+  final double nonGstSalesEstimate;
+}
+
+class GstInvoiceRow {
+  const GstInvoiceRow({
+    required this.billId,
+    required this.invoiceNo,
+    required this.invoiceDate,
+    required this.customerName,
+    required this.customerGstin,
+    required this.placeOfSupply,
+    required this.billType,
+    required this.taxableAmount,
+    required this.cgstAmount,
+    required this.sgstAmount,
+    required this.igstAmount,
+    required this.gstAmount,
+    required this.roundOffAmount,
+    required this.invoiceValue,
+    required this.isGst,
+  });
+
+  final int billId;
+  final String invoiceNo;
+  final DateTime invoiceDate;
+  final String customerName;
+  final String customerGstin;
+  final String placeOfSupply;
+  final String billType;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double roundOffAmount;
+  final double invoiceValue;
+  final bool isGst;
+
+  bool get isB2B => customerGstin.trim().isNotEmpty;
+}
+
+class GstHsnSummaryRow {
+  const GstHsnSummaryRow({
+    required this.hsnCode,
+    required this.description,
+    required this.gstRate,
+    required this.invoiceType,
+    required this.invoiceCount,
+    required this.lineCount,
+    required this.quantity,
+    required this.taxableAmount,
+    required this.cgstAmount,
+    required this.sgstAmount,
+    required this.igstAmount,
+    required this.gstAmount,
+    required this.invoiceValue,
+  });
+
+  final String hsnCode;
+  final String description;
+  final double gstRate;
+  final String invoiceType;
+  final int invoiceCount;
+  final int lineCount;
+  final int quantity;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double invoiceValue;
+}
+
+class GstRateSummaryRow {
+  const GstRateSummaryRow({
+    required this.rate,
+    required this.invoiceCount,
+    required this.taxableAmount,
+    required this.cgstAmount,
+    required this.sgstAmount,
+    required this.igstAmount,
+    required this.gstAmount,
+    required this.invoiceValue,
+  });
+
+  final double rate;
+  final int invoiceCount;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double invoiceValue;
+}
+
+class Gstr3bSummary {
+  const Gstr3bSummary({
+    this.outwardTaxableValue = 0,
+    this.outwardCgst = 0,
+    this.outwardSgst = 0,
+    this.outwardIgst = 0,
+    this.nilExemptNonGstValue = 0,
+  });
+
+  final double outwardTaxableValue;
+  final double outwardCgst;
+  final double outwardSgst;
+  final double outwardIgst;
+  final double nilExemptNonGstValue;
+
+  double get netTaxPayable => outwardCgst + outwardSgst + outwardIgst;
+}
+
+class GstAuditFinding {
+  const GstAuditFinding({
+    required this.severity,
+    required this.title,
+    required this.message,
+    this.invoiceNo = '',
+  });
+
+  final GstAuditSeverity severity;
+  final String title;
+  final String message;
+  final String invoiceNo;
+}
+
+class GstReportSnapshot {
+  const GstReportSnapshot({
+    required this.period,
+    required this.identity,
+    required this.dashboard,
+    required this.gstr1B2bInvoices,
+    required this.gstr1B2cInvoices,
+    required this.hsnSummary,
+    required this.rateSummary,
+    required this.gstr3b,
+    required this.auditFindings,
+  });
+
+  factory GstReportSnapshot.empty(GstReportPeriod period) {
+    return GstReportSnapshot(
+      period: period,
+      identity: const GstReportShopIdentity(),
+      dashboard: const GstReportDashboardSummary(),
+      gstr1B2bInvoices: const [],
+      gstr1B2cInvoices: const [],
+      hsnSummary: const [],
+      rateSummary: const [],
+      gstr3b: const Gstr3bSummary(),
+      auditFindings: const [],
+    );
+  }
+
+  final GstReportPeriod period;
+  final GstReportShopIdentity identity;
+  final GstReportDashboardSummary dashboard;
+  final List<GstInvoiceRow> gstr1B2bInvoices;
+  final List<GstInvoiceRow> gstr1B2cInvoices;
+  final List<GstHsnSummaryRow> hsnSummary;
+  final List<GstRateSummaryRow> rateSummary;
+  final Gstr3bSummary gstr3b;
+  final List<GstAuditFinding> auditFindings;
+
+  List<GstInvoiceRow> get gstInvoices => [
+        ...gstr1B2bInvoices,
+        ...gstr1B2cInvoices,
+      ];
+}

@@ -87,6 +87,7 @@ class PosInvoiceModel {
   final String shopAddress;
   final String shopPhone;
   final String shopGstin;
+  final String shopStateCode;
   final String shopLogoPath;
   final String shopLogoShape;
   final List<ShopPrintDocumentField> shopPrintFields;
@@ -99,6 +100,8 @@ class PosInvoiceModel {
   final String customerCity;
   final String customerPan;
   final String customerGstin;
+  final String customerStateCode;
+  final String placeOfSupply;
   final TradeInAdjustMode tradeInMode;
   final CustomerMetalSettlementType customerMetalSettlementType;
 
@@ -219,6 +222,7 @@ class PosInvoiceModel {
     required this.shopAddress,
     required this.shopPhone,
     required this.shopGstin,
+    this.shopStateCode = '',
     this.shopLogoPath = '',
     this.shopLogoShape = 'square',
     this.shopPrintFields = const <ShopPrintDocumentField>[],
@@ -230,6 +234,8 @@ class PosInvoiceModel {
     required this.customerCity,
     required this.customerPan,
     required this.customerGstin,
+    this.customerStateCode = '',
+    this.placeOfSupply = '',
     required this.tradeInMode,
     this.customerMetalSettlementType =
         CustomerMetalSettlementType.exchangeAdjustment,
