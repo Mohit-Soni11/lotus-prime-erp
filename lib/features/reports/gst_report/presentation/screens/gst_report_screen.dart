@@ -255,12 +255,17 @@ class _SegmentFilingControlBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completed = controller.isSegmentFilingComplete(segment);
-    final enabled = controller.canCompleteSelectedPeriod && !completed;
+    final hasActivity = _hasActivity(segment, snapshot);
+    final noSales = !hasActivity && !completed;
+    final enabled =
+        hasActivity && controller.canCompleteSelectedPeriod && !completed;
     final statusColor = completed
         ? GstReportColors.success
-        : enabled
-            ? GstReportColors.taxGreen
-            : GstReportColors.warning;
+        : noSales
+            ? GstReportColors.textMuted
+            : enabled
+                ? GstReportColors.taxGreen
+                : GstReportColors.warning;
     final amount = _segmentTaxPayable(segment, snapshot);
     return Container(
       padding: const EdgeInsets.all(14),
@@ -282,7 +287,9 @@ class _SegmentFilingControlBar extends StatelessWidget {
             child: Icon(
               completed
                   ? Icons.check_circle_rounded
-                  : Icons.pending_actions_rounded,
+                  : noSales
+                      ? Icons.block_rounded
+                      : Icons.pending_actions_rounded,
               color: statusColor,
               size: 21,
             ),
@@ -295,7 +302,9 @@ class _SegmentFilingControlBar extends StatelessWidget {
                 Text(
                   completed
                       ? '${segment.code} filing completed'
-                      : '${segment.code} filing completion',
+                      : noSales
+                          ? '${segment.code} no sales'
+                          : '${segment.code} filing completion',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GstReportStyles.body.copyWith(
@@ -335,13 +344,19 @@ class _SegmentFilingControlBar extends StatelessWidget {
               ),
             ),
             icon: Icon(
-              completed ? Icons.check_circle_rounded : Icons.verified_rounded,
+              completed
+                  ? Icons.check_circle_rounded
+                  : noSales
+                      ? Icons.block_rounded
+                      : Icons.verified_rounded,
               size: 18,
             ),
             label: Text(
               completed
                   ? 'Filing Completed'
-                  : 'Complete ${segment.code} Filing',
+                  : noSales
+                      ? 'No Filing Required'
+                      : 'Complete ${segment.code} Filing',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -354,6 +369,9 @@ class _SegmentFilingControlBar extends StatelessWidget {
   String _statusText(bool completed, bool enabled) {
     if (completed) {
       return 'This month is marked complete and saved in GST filing records.';
+    }
+    if (!_hasActivity(segment, snapshot)) {
+      return 'No GST sales found for this workspace in this period.';
     }
     if (enabled) {
       return 'Review the return checklist before marking this month complete.';
@@ -373,6 +391,21 @@ class _SegmentFilingControlBar extends StatelessWidget {
       GstFilingSegment.b2c => snapshot.gstr1B2cInvoices,
     };
     return invoices.fold<double>(0, (sum, row) => sum + row.gstAmount);
+  }
+
+  bool _hasActivity(GstFilingSegment segment, GstReportSnapshot snapshot) {
+    final invoices = switch (segment) {
+      GstFilingSegment.b2b => snapshot.gstr1B2bInvoices,
+      GstFilingSegment.b2c => snapshot.gstr1B2cInvoices,
+    };
+    if (invoices.isNotEmpty) return true;
+    if (snapshot.dashboard.taxableSales.abs() > 0.005) return true;
+    if (snapshot.dashboard.totalGst.abs() > 0.005) return true;
+    if (segment == GstFilingSegment.b2c) {
+      return snapshot.dashboard.nonGstInvoiceCount > 0 ||
+          snapshot.dashboard.nonGstSalesEstimate.abs() > 0.005;
+    }
+    return false;
   }
 }
 

@@ -103,8 +103,8 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
     );
   }
 
-  void _openSegmentWorkspace(GstFilingSegment segment) {
-    Navigator.of(context).push(
+  Future<void> _openSegmentWorkspace(GstFilingSegment segment) async {
+    await Navigator.of(context).push(
       PageRouteBuilder<void>(
         pageBuilder: (_, animation, __) => GstReportScreen(
           segment: segment,
@@ -130,6 +130,8 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
         },
       ),
     );
+    if (!mounted) return;
+    await _controller.load(silent: true);
   }
 
   Future<void> _confirmSegmentCompletion(GstFilingSegment segment) async {
@@ -270,7 +272,9 @@ class _SegmentGrid extends StatelessWidget {
                   taxPayable: _taxPayable(segment),
                   auditCount: _auditCount(segment),
                   filingStatus: _filingStatus(segment),
-                  completionEnabled: _completionEnabled(segment) &&
+                  hasActivity: _hasActivity(segment),
+                  completionEnabled: _hasActivity(segment) &&
+                      _completionEnabled(segment) &&
                       _filingStatus(segment)?.completed != true,
                   completionDisabledReason: _completionDisabledReason(segment),
                   onCompleteFiling: () => onCompleteSegmentFiling(segment),
@@ -317,13 +321,17 @@ class _SegmentGrid extends StatelessWidget {
   }
 
   bool _completionEnabled(GstFilingSegment segment) {
-    return controller.canCompleteSelectedPeriod &&
+    return _hasActivity(segment) &&
+        controller.canCompleteSelectedPeriod &&
         (_filingStatus(segment)?.completed != true);
   }
 
   String _completionDisabledReason(GstFilingSegment segment) {
     if (_filingStatus(segment)?.completed == true) {
       return 'This GST filing workspace is already completed.';
+    }
+    if (!_hasActivity(segment)) {
+      return 'No GST sales found for this workspace in this period.';
     }
     if (controller.isSelectedMonthInFuture) {
       return 'Future GST periods are locked.';
@@ -332,6 +340,18 @@ class _SegmentGrid extends StatelessWidget {
       return 'Available from ${GstReportFormatters.date(controller.filingCompletionOpensAt)} after this GST month closes.';
     }
     return 'Review the confirmation checklist before completing.';
+  }
+
+  bool _hasActivity(GstFilingSegment segment) {
+    final invoices = _invoices(segment);
+    if (invoices.isNotEmpty) return true;
+    if (_taxableValue(segment).abs() > 0.005) return true;
+    if (_taxPayable(segment).abs() > 0.005) return true;
+    if (segment == GstFilingSegment.b2c) {
+      return snapshot.dashboard.nonGstInvoiceCount > 0 ||
+          snapshot.dashboard.nonGstSalesEstimate.abs() > 0.005;
+    }
+    return false;
   }
 
   List<GstInvoiceRow> _invoices(GstFilingSegment segment) {

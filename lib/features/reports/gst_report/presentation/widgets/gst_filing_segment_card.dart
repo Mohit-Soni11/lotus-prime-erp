@@ -16,6 +16,7 @@ class GstFilingSegmentCard extends StatefulWidget {
     required this.auditCount,
     required this.onTap,
     this.filingStatus,
+    this.hasActivity = true,
     this.completionEnabled = true,
     this.completionDisabledReason,
     this.onCompleteFiling,
@@ -28,6 +29,7 @@ class GstFilingSegmentCard extends StatefulWidget {
   final int auditCount;
   final VoidCallback onTap;
   final GstFilingTaskStatus? filingStatus;
+  final bool hasActivity;
   final bool completionEnabled;
   final String? completionDisabledReason;
   final VoidCallback? onCompleteFiling;
@@ -45,6 +47,7 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
     final active = _hovered;
     final borderColor = palette.accent.withValues(alpha: active ? 0.40 : 0.26);
     final filed = widget.filingStatus?.completed ?? false;
+    final noSales = !widget.hasActivity && !filed;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
@@ -138,6 +141,7 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
                         const SizedBox(width: 12),
                         _FilingStatePill(
                           filed: filed,
+                          noSales: noSales,
                           accent: palette.accent,
                         ),
                       ],
@@ -229,6 +233,7 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
                         Expanded(
                           child: _CompletionButton(
                             filed: filed,
+                            noSales: noSales,
                             accent: palette.accent,
                             enabled: widget.completionEnabled,
                             disabledReason: widget.completionDisabledReason,
@@ -354,15 +359,21 @@ class _MetricTile extends StatelessWidget {
 class _FilingStatePill extends StatelessWidget {
   const _FilingStatePill({
     required this.filed,
+    required this.noSales,
     required this.accent,
   });
 
   final bool filed;
+  final bool noSales;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final color = filed ? GstReportColors.success : accent;
+    final color = filed
+        ? GstReportColors.success
+        : noSales
+            ? GstReportColors.textMuted
+            : accent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -374,13 +385,21 @@ class _FilingStatePill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            filed ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+            filed
+                ? Icons.check_circle_rounded
+                : noSales
+                    ? Icons.block_rounded
+                    : Icons.pending_actions_rounded,
             size: 16,
             color: color,
           ),
           const SizedBox(width: 6),
           Text(
-            filed ? 'Completed' : 'Pending',
+            filed
+                ? 'Completed'
+                : noSales
+                    ? 'No Sales'
+                    : 'Pending',
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: FontWeight.w900,
@@ -397,6 +416,7 @@ class _FilingStatePill extends StatelessWidget {
 class _CompletionButton extends StatelessWidget {
   const _CompletionButton({
     required this.filed,
+    required this.noSales,
     required this.accent,
     required this.enabled,
     required this.disabledReason,
@@ -404,6 +424,7 @@ class _CompletionButton extends StatelessWidget {
   });
 
   final bool filed;
+  final bool noSales;
   final Color accent;
   final bool enabled;
   final String? disabledReason;
@@ -411,14 +432,21 @@ class _CompletionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = enabled && !filed;
-    final color = filed ? GstReportColors.success : accent;
+    final active = enabled && !filed && !noSales;
+    final color = filed
+        ? GstReportColors.success
+        : noSales
+            ? GstReportColors.textMuted
+            : accent;
     return Tooltip(
       message: filed
           ? 'GST filing is already completed for this workspace'
-          : active
-              ? 'Review and complete this GST filing workspace'
-              : disabledReason ?? 'Available after this GST month is complete',
+          : noSales
+              ? 'No GST sales found for this workspace in this period'
+              : active
+                  ? 'Review and complete this GST filing workspace'
+                  : disabledReason ??
+                      'Available after this GST month is complete',
       child: FilledButton.icon(
         onPressed: active ? onPressed : null,
         style: FilledButton.styleFrom(
@@ -434,11 +462,19 @@ class _CompletionButton extends StatelessWidget {
           ),
         ),
         icon: Icon(
-          filed ? Icons.check_circle_rounded : Icons.verified_rounded,
+          filed
+              ? Icons.check_circle_rounded
+              : noSales
+                  ? Icons.block_rounded
+                  : Icons.verified_rounded,
           size: 17,
         ),
         label: Text(
-          filed ? 'Filing Completed' : 'Complete Filing',
+          filed
+              ? 'Filing Completed'
+              : noSales
+                  ? 'No Filing Required'
+                  : 'Complete Filing',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
