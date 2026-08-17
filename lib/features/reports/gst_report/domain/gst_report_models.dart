@@ -193,25 +193,57 @@ class GstReportDashboardSummary {
     this.totalInvoices = 0,
     this.gstInvoiceCount = 0,
     this.nonGstInvoiceCount = 0,
+    this.exclusive = const GstPricingModeSummary(),
+    this.inclusive = const GstPricingModeSummary(),
+    this.gstExclusiveSales = 0,
+    this.gstInclusiveSales = 0,
     this.taxableSales = 0,
     this.cgstAmount = 0,
     this.sgstAmount = 0,
     this.igstAmount = 0,
     this.totalGst = 0,
     this.gstInvoiceValue = 0,
-    this.nonGstSalesEstimate = 0,
-  });
+    double? taxReviewSales,
+    double? nonGstSalesEstimate,
+  }) : taxReviewSales = taxReviewSales ?? nonGstSalesEstimate ?? 0;
 
   final int totalInvoices;
   final int gstInvoiceCount;
   final int nonGstInvoiceCount;
+  final GstPricingModeSummary exclusive;
+  final GstPricingModeSummary inclusive;
+  final double gstExclusiveSales;
+  final double gstInclusiveSales;
   final double taxableSales;
   final double cgstAmount;
   final double sgstAmount;
   final double igstAmount;
   final double totalGst;
   final double gstInvoiceValue;
-  final double nonGstSalesEstimate;
+  final double taxReviewSales;
+
+  double get outputGstLiability => totalGst;
+  double get nonGstSalesEstimate => taxReviewSales;
+}
+
+class GstPricingModeSummary {
+  const GstPricingModeSummary({
+    this.invoiceCount = 0,
+    this.invoiceValue = 0,
+    this.taxableValue = 0,
+    this.cgstAmount = 0,
+    this.sgstAmount = 0,
+    this.igstAmount = 0,
+    this.outputGst = 0,
+  });
+
+  final int invoiceCount;
+  final double invoiceValue;
+  final double taxableValue;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double outputGst;
 }
 
 class GstInvoiceRow {
@@ -223,6 +255,8 @@ class GstInvoiceRow {
     required this.customerGstin,
     required this.placeOfSupply,
     required this.billType,
+    this.gstPricingMode = 'GST_EXCLUSIVE',
+    this.documentType = 'TAX_INVOICE',
     required this.taxableAmount,
     required this.cgstAmount,
     required this.sgstAmount,
@@ -240,6 +274,8 @@ class GstInvoiceRow {
   final String customerGstin;
   final String placeOfSupply;
   final String billType;
+  final String gstPricingMode;
+  final String documentType;
   final double taxableAmount;
   final double cgstAmount;
   final double sgstAmount;

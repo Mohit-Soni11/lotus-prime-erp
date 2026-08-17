@@ -20,6 +20,7 @@ class PosHoldBillModel {
   final String customerGst;
   final BillingMode billingMode;
   final BillType billType;
+  final GstPricingMode gstPricingMode;
   final TradeInAdjustMode tradeInMode;
   final CustomerMetalSettlementType customerMetalSettlementType;
   final DiscountType discountType;
@@ -48,6 +49,7 @@ class PosHoldBillModel {
     required this.customerGst,
     required this.billingMode,
     required this.billType,
+    required this.gstPricingMode,
     required this.tradeInMode,
     required this.customerMetalSettlementType,
     required this.discountType,
@@ -80,6 +82,7 @@ class PosHoldBillModel {
       'customerGst': customerGst,
       'billingMode': billingMode.name,
       'billType': billType.name,
+      'gstPricingMode': gstPricingMode.name,
       'oldGoldMode': tradeInMode.name,
       'customerMetalSettlementType': customerMetalSettlementType.name,
       'discountType': discountType.name,
@@ -119,6 +122,9 @@ class PosHoldBillModel {
       customerGst: (json['customerGst'] ?? '').toString(),
       billingMode: _billingModeFromName((json['billingMode'] ?? '').toString()),
       billType: _billTypeFromName((json['billType'] ?? '').toString()),
+      gstPricingMode: _gstPricingModeFromName(
+        (json['gstPricingMode'] ?? '').toString(),
+      ),
       tradeInMode: _tradeInModeFromName((json['oldGoldMode'] ?? '').toString()),
       customerMetalSettlementType: _customerMetalSettlementTypeFromName(
         (json['customerMetalSettlementType'] ?? '').toString(),
@@ -156,6 +162,13 @@ class PosHoldBillModel {
     return BillType.values.firstWhere(
       (type) => type.name == name,
       orElse: () => BillType.normal,
+    );
+  }
+
+  static GstPricingMode _gstPricingModeFromName(String name) {
+    return GstPricingMode.values.firstWhere(
+      (mode) => mode.name == name,
+      orElse: () => GstPricingMode.exclusive,
     );
   }
 

@@ -1519,7 +1519,7 @@ class _PosInvoicePdfDocumentBuilder {
         _thermalKeyValue('Date', _thermalDate(invoice.invoiceDate), fontSize),
         _thermalKeyValue(
           'Bill Type',
-          invoice.billType == BillType.gst ? 'GST Invoice' : 'Sales Invoice',
+          _invoiceTypeLabel(invoice),
           fontSize,
         ),
       ],
@@ -1892,6 +1892,13 @@ class _PosInvoicePdfDocumentBuilder {
 
   String _thermalMoney(double amount) {
     return 'Rs ${amount.toStringAsFixed(2)}';
+  }
+
+  String _invoiceTypeLabel(PosInvoiceModel invoice) {
+    if (invoice.billType != BillType.gst) return 'Sales Invoice';
+    return invoice.gstPricingMode == GstPricingMode.inclusive
+        ? 'GST Inclusive Tax Invoice'
+        : 'GST Exclusive Tax Invoice';
   }
 
   BillSettings _getMetalConfig(MetalType metal) {

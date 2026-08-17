@@ -349,7 +349,7 @@ class _SegmentGrid extends StatelessWidget {
     if (_taxPayable(segment).abs() > 0.005) return true;
     if (segment == GstFilingSegment.b2c) {
       return snapshot.dashboard.nonGstInvoiceCount > 0 ||
-          snapshot.dashboard.nonGstSalesEstimate.abs() > 0.005;
+          snapshot.dashboard.taxReviewSales.abs() > 0.005;
     }
     return false;
   }

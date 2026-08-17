@@ -31,16 +31,43 @@ class GstReportCsvBuilder {
     return [
       ['GST DASHBOARD'],
       ['GST Invoices', '${summary.gstInvoiceCount}'],
-      ['Taxable Sales', GstReportFormatters.money(summary.taxableSales)],
+      ['Total Invoice Value', GstReportFormatters.money(summary.gstInvoiceValue)],
+      ..._pricingSummaryRows('GST EXCLUSIVE SALES', summary.exclusive),
+      ..._pricingSummaryRows('GST INCLUSIVE SALES', summary.inclusive),
+      [
+        'GST Exclusive Sales',
+        GstReportFormatters.money(summary.gstExclusiveSales),
+      ],
+      [
+        'GST Inclusive Sales',
+        GstReportFormatters.money(summary.gstInclusiveSales),
+      ],
+      ['Total Taxable Value', GstReportFormatters.money(summary.taxableSales)],
       ['CGST', GstReportFormatters.money(summary.cgstAmount)],
       ['SGST', GstReportFormatters.money(summary.sgstAmount)],
       ['IGST', GstReportFormatters.money(summary.igstAmount)],
-      ['Total GST Payable', GstReportFormatters.money(summary.totalGst)],
+      ['Output GST Liability', GstReportFormatters.money(summary.totalGst)],
       [
-        'Non-GST Sales Estimate',
+        'Tax Review Sales',
         GstReportFormatters.money(summary.nonGstSalesEstimate),
       ],
       ['Audit Findings', '${snapshot.auditFindings.length}'],
+    ];
+  }
+
+  static List<List<String>> _pricingSummaryRows(
+    String title,
+    GstPricingModeSummary summary,
+  ) {
+    return [
+      [title],
+      ['Invoice Count', '${summary.invoiceCount}'],
+      ['Invoice Value', GstReportFormatters.money(summary.invoiceValue)],
+      ['Taxable Value', GstReportFormatters.money(summary.taxableValue)],
+      ['CGST', GstReportFormatters.money(summary.cgstAmount)],
+      ['SGST', GstReportFormatters.money(summary.sgstAmount)],
+      ['IGST', GstReportFormatters.money(summary.igstAmount)],
+      ['Output GST', GstReportFormatters.money(summary.outputGst)],
     ];
   }
 
@@ -57,6 +84,7 @@ class GstReportCsvBuilder {
         'Customer',
         'GSTIN',
         'Place of Supply',
+        'Pricing Mode',
         'Taxable',
         'CGST',
         'SGST',
@@ -72,6 +100,7 @@ class GstReportCsvBuilder {
           invoices[index].customerName,
           invoices[index].customerGstin,
           invoices[index].placeOfSupply,
+          _pricingLabel(invoices[index].gstPricingMode),
           invoices[index].taxableAmount.toStringAsFixed(2),
           invoices[index].cgstAmount.toStringAsFixed(2),
           invoices[index].sgstAmount.toStringAsFixed(2),
@@ -133,7 +162,7 @@ class GstReportCsvBuilder {
         summary.netTaxPayable.toStringAsFixed(2),
       ],
       [
-        '3.1(c) Nil/Exempt/Non-GST',
+        '3.1(c) Nil/Exempt/Non-taxable',
         summary.nilExemptNonGstValue.toStringAsFixed(2),
         '0.00',
         '0.00',
@@ -170,6 +199,7 @@ class GstReportCsvBuilder {
       '',
       '',
       '',
+      '',
       sum((row) => row.taxableAmount).toStringAsFixed(2),
       sum((row) => row.cgstAmount).toStringAsFixed(2),
       sum((row) => row.sgstAmount).toStringAsFixed(2),
@@ -181,5 +211,11 @@ class GstReportCsvBuilder {
 
   static String _csvRow(List<String> row) {
     return row.map((cell) => '"${cell.replaceAll('"', '""')}"').join(',');
+  }
+
+  static String _pricingLabel(String value) {
+    return value.trim().toUpperCase() == 'GST_INCLUSIVE'
+        ? 'GST Inclusive'
+        : 'GST Exclusive';
   }
 }

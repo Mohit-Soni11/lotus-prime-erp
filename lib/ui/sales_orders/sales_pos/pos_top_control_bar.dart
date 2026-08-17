@@ -28,6 +28,8 @@ class PosTopControlBar extends StatelessWidget {
       builder: (context, _) {
         final bool isRetail = ctrl.billingMode == BillingMode.retail;
         final bool isGstOn = ctrl.billType == BillType.gst;
+        final bool isGstInclusive =
+            ctrl.gstPricingMode == GstPricingMode.inclusive;
 
         return Align(
           alignment: Alignment.centerLeft,
@@ -316,6 +318,48 @@ class PosTopControlBar extends StatelessWidget {
                           ),
                         ),
                       ),
+
+                      if (isGstOn) ...[
+                        const SizedBox(width: 16),
+                        Container(
+                          height: 52,
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: SalesPosColors.bodyBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border:
+                                Border.all(color: SalesPosColors.bodyBorder),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: SalesPosColors.shadowLight,
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildPricingTab(
+                                title: 'EXCLUSIVE',
+                                subtitle: '+ GST',
+                                isActive: !isGstInclusive,
+                                onTap: () => ctrl.toggleGstPricingMode(
+                                  GstPricingMode.exclusive,
+                                ),
+                              ),
+                              _buildPricingTab(
+                                title: 'INCLUSIVE',
+                                subtitle: 'GST inside',
+                                isActive: isGstInclusive,
+                                onTap: () => ctrl.toggleGstPricingMode(
+                                  GstPricingMode.inclusive,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -408,6 +452,67 @@ class PosTopControlBar extends StatelessWidget {
         color: isActive ? activeColor : SalesPosColors.bodyTextMuted,
       ),
       child: Text(label),
+    );
+  }
+
+  Widget _buildPricingTab({
+    required String title,
+    required String subtitle,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: 122,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(7),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isActive
+                ? SalesPosColors.success.withValues(alpha: 0.10)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(
+              color: isActive
+                  ? SalesPosColors.success.withValues(alpha: 0.35)
+                  : Colors.transparent,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isActive
+                      ? SalesPosColors.success
+                      : SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
+                  fontSize: SalesPosStyles.fontCaption,
+                  letterSpacing: 0,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: SalesPosColors.bodyTextMuted,
+                  fontWeight: FontWeight.w800,
+                  fontSize: SalesPosStyles.fontCaption,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

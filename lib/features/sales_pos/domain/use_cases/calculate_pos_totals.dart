@@ -9,6 +9,7 @@ class PosTotalsInput {
     required this.tradeInItems,
     required this.billingMode,
     required this.billType,
+    this.gstPricingMode = GstPricingMode.exclusive,
     required this.tradeInMode,
     required this.discountType,
     required this.discountInput,
@@ -31,6 +32,7 @@ class PosTotalsInput {
   final List<TradeInItemModel> tradeInItems;
   final BillingMode billingMode;
   final BillType billType;
+  final GstPricingMode gstPricingMode;
   final TradeInAdjustMode tradeInMode;
   final DiscountType discountType;
   final double discountInput;
@@ -314,7 +316,7 @@ class CalculatePosTotals {
         ? wholesaleGrossAmount
         : retailGrossAmount;
     final discountAmount = _roundMoney(_discountAmount(input, grossAmount));
-    final taxableAmount = _roundMoney(grossAmount - discountAmount);
+    final saleAmountAfterDiscount = _roundMoney(grossAmount - discountAmount);
 
     final goldGst = _metalGst(
       input: input,
@@ -365,7 +367,15 @@ class CalculatePosTotals {
         _roundMoney(goldGst + silverGst + platinumGst + diamondGst);
     final cgst = _roundMoney(totalGst / 2);
     final sgst = _roundMoney(totalGst - cgst);
-    final grandTotal = _roundMoney(taxableAmount + totalGst);
+    final isGstInclusiveInvoice =
+        input.billType == BillType.gst &&
+            input.gstPricingMode == GstPricingMode.inclusive;
+    final taxableAmount = isGstInclusiveInvoice
+        ? _roundMoney(saleAmountAfterDiscount - totalGst)
+        : saleAmountAfterDiscount;
+    final grandTotal = isGstInclusiveInvoice
+        ? saleAmountAfterDiscount
+        : _roundMoney(taxableAmount + totalGst);
     final tradeInCashDeduction =
         input.tradeInMode == TradeInAdjustMode.cashAdjust
             ? totalTradeInAmount
@@ -515,7 +525,9 @@ class CalculatePosTotals {
     if (taxable <= 0 || rate <= 0) {
       return 0;
     }
-    final amount = taxable * rate;
+    final amount = input.gstPricingMode == GstPricingMode.inclusive
+        ? taxable * rate / (1 + rate)
+        : taxable * rate;
     if (!input.roundOffGstAmount) {
       return _roundMoney(amount);
     }

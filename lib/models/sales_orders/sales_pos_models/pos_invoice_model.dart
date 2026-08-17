@@ -81,6 +81,8 @@ class PosInvoiceModel {
   final String invoiceNumber;
   final DateTime invoiceDate;
   final BillType billType;
+  final GstPricingMode gstPricingMode;
+  final SalesDocumentType documentType;
   final BillingMode billingMode;
 
   final String shopName;
@@ -217,6 +219,8 @@ class PosInvoiceModel {
     required this.invoiceNumber,
     required this.invoiceDate,
     required this.billType,
+    this.gstPricingMode = GstPricingMode.exclusive,
+    this.documentType = SalesDocumentType.taxInvoice,
     required this.billingMode,
     required this.shopName,
     required this.shopAddress,

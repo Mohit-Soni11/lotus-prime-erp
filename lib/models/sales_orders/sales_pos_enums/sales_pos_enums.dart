@@ -72,6 +72,49 @@ extension BillTypeExtension on BillType {
   String get displayName => this == BillType.gst ? 'GST' : 'NORMAL';
 }
 
+/// Represents whether GST is charged over the item value or included inside it.
+enum GstPricingMode {
+  exclusive,
+  inclusive,
+}
+
+extension GstPricingModeExtension on GstPricingMode {
+  String get displayName {
+    switch (this) {
+      case GstPricingMode.exclusive:
+        return 'GST Exclusive';
+      case GstPricingMode.inclusive:
+        return 'GST Inclusive';
+    }
+  }
+
+  String get storageValue {
+    switch (this) {
+      case GstPricingMode.exclusive:
+        return 'GST_EXCLUSIVE';
+      case GstPricingMode.inclusive:
+        return 'GST_INCLUSIVE';
+    }
+  }
+}
+
+/// Keeps sale documents distinct from future non-sale quotations.
+enum SalesDocumentType {
+  taxInvoice,
+  quotation,
+}
+
+extension SalesDocumentTypeExtension on SalesDocumentType {
+  String get storageValue {
+    switch (this) {
+      case SalesDocumentType.taxInvoice:
+        return 'TAX_INVOICE';
+      case SalesDocumentType.quotation:
+        return 'QUOTATION';
+    }
+  }
+}
+
 /// Represents how trade-in metal value is adjusted against the final bill.
 enum TradeInAdjustMode {
   cashAdjust,

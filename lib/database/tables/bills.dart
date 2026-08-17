@@ -24,6 +24,12 @@ class Bills extends Table with BaseTable {
   TextColumn get shopStateCodeSnapshot => text().nullable()();
   TextColumn get billingMode => text().withDefault(const Constant('RETAIL'))();
   TextColumn get billType => text().withDefault(const Constant('NORMAL'))();
+  TextColumn get documentType =>
+      text().withDefault(const Constant('TAX_INVOICE'))();
+  TextColumn get gstPricingMode =>
+      text().withDefault(const Constant('GST_EXCLUSIVE'))();
+  TextColumn get taxTreatment =>
+      text().withDefault(const Constant('TAXABLE_SUPPLY'))();
   TextColumn get paymentStatus => text().withDefault(const Constant('PAID'))();
 
   // Financials
@@ -34,6 +40,12 @@ class Bills extends Table with BaseTable {
   RealColumn get sgstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get igstAmount => real().withDefault(const Constant(0.0))();
   RealColumn get gstAmount => real().withDefault(const Constant(0.0))();
+  RealColumn get gstExclusiveSalesAmount =>
+      real().withDefault(const Constant(0.0))();
+  RealColumn get gstInclusiveSalesAmount =>
+      real().withDefault(const Constant(0.0))();
+  RealColumn get outputGstLiabilitySnapshot =>
+      real().withDefault(const Constant(0.0))();
   RealColumn get makingTotal => real().withDefault(const Constant(0.0))();
   RealColumn get roundOffAmount => real().withDefault(const Constant(0.0))();
   RealColumn get finalAmount => real().withDefault(const Constant(0.0))();

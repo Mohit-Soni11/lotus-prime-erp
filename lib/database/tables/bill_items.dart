@@ -30,6 +30,10 @@ class BillItems extends Table with BaseTable {
   RealColumn get makingChargeInput => real().withDefault(const Constant(0.0))();
   RealColumn get makingCharge => real().withDefault(const Constant(0.0))();
   RealColumn get itemTotal => real().withDefault(const Constant(0.0))();
+  TextColumn get gstPricingModeSnapshot =>
+      text().withDefault(const Constant('GST_EXCLUSIVE'))();
+  TextColumn get taxTreatmentSnapshot =>
+      text().withDefault(const Constant('TAXABLE_SUPPLY'))();
   RealColumn get taxableAmountSnapshot =>
       real().withDefault(const Constant(0.0))();
   RealColumn get gstRateSnapshot => real().withDefault(const Constant(0.0))();
@@ -40,6 +44,8 @@ class BillItems extends Table with BaseTable {
   RealColumn get igstAmountSnapshot =>
       real().withDefault(const Constant(0.0))();
   RealColumn get gstAmountSnapshot => real().withDefault(const Constant(0.0))();
+  RealColumn get invoiceValueSnapshot =>
+      real().withDefault(const Constant(0.0))();
   IntColumn get linkedStockItemId => integer().nullable()();
   IntColumn get linkedStockUnitId => integer().nullable()();
   TextColumn get linkedStockSku => text().nullable()();

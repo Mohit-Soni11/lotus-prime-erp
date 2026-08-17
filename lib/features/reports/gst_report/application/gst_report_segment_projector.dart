@@ -28,7 +28,7 @@ class GstReportSegmentProjector {
         outwardCgst: dashboard.cgstAmount,
         outwardSgst: dashboard.sgstAmount,
         outwardIgst: dashboard.igstAmount,
-        nilExemptNonGstValue: dashboard.nonGstSalesEstimate,
+        nilExemptNonGstValue: 0,
       ),
       auditFindings: audit,
     );
@@ -51,6 +51,17 @@ class GstReportSegmentProjector {
     List<GstInvoiceRow> invoices,
     GstFilingSegment segment,
   ) {
+    final exclusiveInvoices = invoices
+        .where((row) =>
+            row.gstPricingMode.trim().toUpperCase() != 'GST_INCLUSIVE')
+        .toList(growable: false);
+    final inclusiveInvoices = invoices
+        .where((row) =>
+            row.gstPricingMode.trim().toUpperCase() == 'GST_INCLUSIVE')
+        .toList(growable: false);
+    final exclusive = _pricingSummary(exclusiveInvoices);
+    final inclusive = _pricingSummary(inclusiveInvoices);
+
     return GstReportDashboardSummary(
       totalInvoices: invoices.length +
           (segment == GstFilingSegment.b2c
@@ -60,13 +71,17 @@ class GstReportSegmentProjector {
       nonGstInvoiceCount: segment == GstFilingSegment.b2c
           ? snapshot.dashboard.nonGstInvoiceCount
           : 0,
+      exclusive: exclusive,
+      inclusive: inclusive,
+      gstExclusiveSales: exclusive.taxableValue,
+      gstInclusiveSales: inclusive.taxableValue,
       taxableSales: _sum(invoices, (row) => row.taxableAmount),
       cgstAmount: _sum(invoices, (row) => row.cgstAmount),
       sgstAmount: _sum(invoices, (row) => row.sgstAmount),
       igstAmount: _sum(invoices, (row) => row.igstAmount),
       totalGst: _sum(invoices, (row) => row.gstAmount),
       gstInvoiceValue: _sum(invoices, (row) => row.invoiceValue),
-      nonGstSalesEstimate: segment == GstFilingSegment.b2c
+      taxReviewSales: segment == GstFilingSegment.b2c
           ? snapshot.dashboard.nonGstSalesEstimate
           : 0,
     );
@@ -122,7 +137,23 @@ class GstReportSegmentProjector {
   }
 
   static double _sum<T>(Iterable<T> rows, double Function(T row) selector) {
-    return rows.fold<double>(0, (sum, row) => sum + selector(row));
+    return _roundMoney(
+      rows.fold<double>(0, (sum, row) => sum + selector(row)),
+    );
+  }
+
+  static double _roundMoney(double amount) => (amount * 100).round() / 100;
+
+  static GstPricingModeSummary _pricingSummary(List<GstInvoiceRow> invoices) {
+    return GstPricingModeSummary(
+      invoiceCount: invoices.length,
+      invoiceValue: _sum(invoices, (row) => row.invoiceValue),
+      taxableValue: _sum(invoices, (row) => row.taxableAmount),
+      cgstAmount: _sum(invoices, (row) => row.cgstAmount),
+      sgstAmount: _sum(invoices, (row) => row.sgstAmount),
+      igstAmount: _sum(invoices, (row) => row.igstAmount),
+      outputGst: _sum(invoices, (row) => row.gstAmount),
+    );
   }
 }
 
@@ -150,7 +181,7 @@ extension GstFilingSegmentPresentation on GstFilingSegment {
       case GstFilingSegment.b2b:
         return 'Registered customer invoices, GSTIN checks and IFF-ready view';
       case GstFilingSegment.b2c:
-        return 'Consumer invoices, place-of-supply and non-GST estimate view';
+        return 'Consumer invoices, place-of-supply and GST inclusive sales view';
     }
   }
 }

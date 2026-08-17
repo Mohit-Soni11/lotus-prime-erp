@@ -10,6 +10,7 @@ class GstReportRepository {
   GstReportRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   final AppDatabase _db;
+  static const double _defaultInclusiveGstRate = 0.03;
 
   Future<GstReportSnapshot> fetch(GstReportPeriod period) async {
     try {
@@ -40,7 +41,7 @@ class GstReportRepository {
           outwardCgst: dashboard.cgstAmount,
           outwardSgst: dashboard.sgstAmount,
           outwardIgst: dashboard.igstAmount,
-          nilExemptNonGstValue: dashboard.nonGstSalesEstimate,
+          nilExemptNonGstValue: 0,
         ),
         auditFindings: audit,
       );
@@ -239,6 +240,9 @@ class GstReportRepository {
           ''
         ) AS place_of_supply,
         COALESCE(b.bill_type, '') AS bill_type,
+        COALESCE(b.document_type, 'TAX_INVOICE') AS document_type,
+        COALESCE(b.gst_pricing_mode, 'GST_EXCLUSIVE') AS gst_pricing_mode,
+        COALESCE(b.total_amount, 0.0) AS total_amount,
         COALESCE(b.taxable_amount, 0.0) AS taxable_amount,
         COALESCE(b.cgst_amount, 0.0) AS cgst_amount,
         COALESCE(b.sgst_amount, 0.0) AS sgst_amount,
@@ -251,10 +255,13 @@ class GstReportRepository {
       WHERE b.status = 'ACTIVE'
         AND b.bill_date >= ?
         AND b.bill_date <= ?
+        AND UPPER(COALESCE(b.document_type, 'TAX_INVOICE')) <> 'QUOTATION'
+        AND UPPER(COALESCE(b.tax_treatment, 'TAXABLE_SUPPLY')) = 'TAXABLE_SUPPLY'
         AND (
           COALESCE(b.gst_amount, 0.0) > 0.005
-          OR UPPER(COALESCE(b.bill_type, '')) IN ('GST', 'TAX', 'TAX_INVOICE')
-          OR b.bill_no LIKE 'TAX-%'
+          OR COALESCE(b.taxable_amount, 0.0) > 0.005
+          OR COALESCE(b.total_amount, 0.0) > 0.005
+          OR COALESCE(b.final_amount, 0.0) > 0.005
         )
       ORDER BY b.bill_date ASC, b.id ASC
       ''',
@@ -265,14 +272,34 @@ class GstReportRepository {
     ).get();
 
     return rows.map((row) {
-      final totalGst = _readDouble(row, 'gst_amount');
+      final storedGst = _readDouble(row, 'gst_amount');
+      final storedTaxable = _readDouble(row, 'taxable_amount');
+      final grossFallback = _firstPositive([
+        storedTaxable,
+        _readDouble(row, 'total_amount'),
+        _readDouble(row, 'final_amount') - _readDouble(row, 'round_off_amount'),
+      ]);
+      final rawPricingMode = row.read<String>('gst_pricing_mode');
+      final legacyInclusive = storedGst <= 0.005 && grossFallback > 0.005;
+      final pricingMode = legacyInclusive ? 'GST_INCLUSIVE' : rawPricingMode;
+      final computedGst = legacyInclusive
+          ? _roundMoney(grossFallback * _defaultInclusiveGstRate /
+              (1 + _defaultInclusiveGstRate))
+          : storedGst;
+      final computedTaxable = legacyInclusive
+          ? _roundMoney(grossFallback - computedGst)
+          : storedTaxable;
       final storedIgst = _readDouble(row, 'igst_amount');
       final split = _normalizedTaxSplit(
-        totalGst: totalGst,
+        totalGst: computedGst,
         cgst: _readDouble(row, 'cgst_amount'),
         sgst: _readDouble(row, 'sgst_amount'),
         igst: storedIgst,
       );
+      final effectiveGst = _roundMoney(split.cgst + split.sgst + split.igst);
+      final invoiceValue = legacyInclusive
+          ? grossFallback
+          : _readDouble(row, 'final_amount');
 
       return GstInvoiceRow(
         billId: row.read<int>('id'),
@@ -282,13 +309,15 @@ class GstReportRepository {
         customerGstin: row.read<String>('customer_gstin'),
         placeOfSupply: row.read<String>('place_of_supply'),
         billType: row.read<String>('bill_type'),
-        taxableAmount: _readDouble(row, 'taxable_amount'),
+        documentType: row.read<String>('document_type'),
+        gstPricingMode: pricingMode,
+        taxableAmount: computedTaxable,
         cgstAmount: split.cgst,
         sgstAmount: split.sgst,
         igstAmount: split.igst,
-        gstAmount: totalGst,
+        gstAmount: effectiveGst,
         roundOffAmount: _readDouble(row, 'round_off_amount'),
-        invoiceValue: _readDouble(row, 'final_amount'),
+        invoiceValue: invoiceValue,
         isGst: true,
       );
     }).toList(growable: false);
@@ -323,10 +352,13 @@ class GstReportRepository {
       WHERE b.status = 'ACTIVE'
         AND b.bill_date >= ?
         AND b.bill_date <= ?
+        AND UPPER(COALESCE(b.document_type, 'TAX_INVOICE')) <> 'QUOTATION'
+        AND UPPER(COALESCE(b.tax_treatment, 'TAXABLE_SUPPLY')) = 'TAXABLE_SUPPLY'
         AND (
           COALESCE(b.gst_amount, 0.0) > 0.005
-          OR UPPER(COALESCE(b.bill_type, '')) IN ('GST', 'TAX', 'TAX_INVOICE')
-          OR b.bill_no LIKE 'TAX-%'
+          OR COALESCE(b.taxable_amount, 0.0) > 0.005
+          OR COALESCE(b.total_amount, 0.0) > 0.005
+          OR COALESCE(b.final_amount, 0.0) > 0.005
         )
       ORDER BY i.hsn_code ASC, b.id ASC, i.line_no ASC
       ''',
@@ -425,10 +457,13 @@ class GstReportRepository {
       WHERE b.status = 'ACTIVE'
         AND b.bill_date >= ?
         AND b.bill_date <= ?
+        AND UPPER(COALESCE(b.document_type, 'TAX_INVOICE')) <> 'QUOTATION'
+        AND UPPER(COALESCE(b.tax_treatment, 'TAXABLE_SUPPLY')) = 'TAXABLE_SUPPLY'
         AND NOT (
           COALESCE(b.gst_amount, 0.0) > 0.005
-          OR UPPER(COALESCE(b.bill_type, '')) IN ('GST', 'TAX', 'TAX_INVOICE')
-          OR b.bill_no LIKE 'TAX-%'
+          OR COALESCE(b.taxable_amount, 0.0) > 0.005
+          OR COALESCE(b.total_amount, 0.0) > 0.005
+          OR COALESCE(b.final_amount, 0.0) > 0.005
         )
       ''',
       variables: [
@@ -459,17 +494,30 @@ class GstReportRepository {
     List<GstInvoiceRow> invoices,
     _NonGstSalesSummary nonGstSales,
   ) {
+    final exclusiveInvoices = invoices
+        .where((row) => _isExclusivePricing(row.gstPricingMode))
+        .toList(growable: false);
+    final inclusiveInvoices = invoices
+        .where((row) => _isInclusivePricing(row.gstPricingMode))
+        .toList(growable: false);
+    final exclusive = _pricingSummary(exclusiveInvoices);
+    final inclusive = _pricingSummary(inclusiveInvoices);
+
     return GstReportDashboardSummary(
       totalInvoices: invoices.length + nonGstSales.invoiceCount,
       gstInvoiceCount: invoices.length,
       nonGstInvoiceCount: nonGstSales.invoiceCount,
+      exclusive: exclusive,
+      inclusive: inclusive,
+      gstExclusiveSales: exclusive.taxableValue,
+      gstInclusiveSales: inclusive.taxableValue,
       taxableSales: _sum(invoices, (row) => row.taxableAmount),
       cgstAmount: _sum(invoices, (row) => row.cgstAmount),
       sgstAmount: _sum(invoices, (row) => row.sgstAmount),
       igstAmount: _sum(invoices, (row) => row.igstAmount),
       totalGst: _sum(invoices, (row) => row.gstAmount),
       gstInvoiceValue: _sum(invoices, (row) => row.invoiceValue),
-      nonGstSalesEstimate: nonGstSales.salesAmount,
+      taxReviewSales: nonGstSales.salesAmount,
     );
   }
 
@@ -520,6 +568,23 @@ class GstReportRepository {
           severity: GstAuditSeverity.warning,
           title: 'Place of Supply Missing',
           message: 'Set place of supply for accurate CGST/SGST/IGST filing.',
+          invoiceNo: invoice.invoiceNo,
+        ));
+      }
+      if (invoice.taxableAmount > 0.005 && invoice.gstAmount <= 0.005) {
+        findings.add(GstAuditFinding(
+          severity: GstAuditSeverity.critical,
+          title: 'Taxable Invoice With Zero GST',
+          message:
+              'Completed taxable sale must be GST Exclusive or GST Inclusive, not zero-GST.',
+          invoiceNo: invoice.invoiceNo,
+        ));
+      }
+      if (invoice.documentType.trim().toUpperCase() == 'QUOTATION') {
+        findings.add(GstAuditFinding(
+          severity: GstAuditSeverity.critical,
+          title: 'Quotation Included In GST',
+          message: 'Quotation or estimate must be converted before GST filing.',
           invoiceNo: invoice.invoiceNo,
         ));
       }
@@ -575,13 +640,8 @@ class GstReportRepository {
     if (roundedIgst.abs() > 0.005) {
       return _TaxSplit(cgst: 0, sgst: 0, igst: roundedTotal);
     }
-    var roundedCgst = _roundMoney(cgst);
-    var roundedSgst = _roundMoney(sgst);
-    if (roundedCgst.abs() <= 0.005 && roundedSgst.abs() <= 0.005) {
-      roundedCgst = _roundMoney(roundedTotal / 2);
-    }
-    roundedSgst = _roundMoney(roundedTotal - roundedCgst);
-    return _TaxSplit(cgst: roundedCgst, sgst: roundedSgst, igst: 0);
+    final half = _roundMoney(roundedTotal / 2);
+    return _TaxSplit(cgst: half, sgst: half, igst: 0);
   }
 
   double _allocationRatio(double itemTotal, double invoiceTaxable) {
@@ -595,10 +655,39 @@ class GstReportRepository {
   }
 
   double _sum<T>(Iterable<T> rows, double Function(T row) selector) {
-    return rows.fold<double>(0, (sum, row) => sum + selector(row));
+    return _roundMoney(
+      rows.fold<double>(0, (sum, row) => sum + selector(row)),
+    );
   }
 
   double _roundMoney(double amount) => (amount * 100).round() / 100;
+
+  double _firstPositive(List<double> values) {
+    for (final value in values) {
+      if (value > 0.005) return value;
+    }
+    return 0;
+  }
+
+  GstPricingModeSummary _pricingSummary(List<GstInvoiceRow> invoices) {
+    return GstPricingModeSummary(
+      invoiceCount: invoices.length,
+      invoiceValue: _sum(invoices, (row) => row.invoiceValue),
+      taxableValue: _sum(invoices, (row) => row.taxableAmount),
+      cgstAmount: _sum(invoices, (row) => row.cgstAmount),
+      sgstAmount: _sum(invoices, (row) => row.sgstAmount),
+      igstAmount: _sum(invoices, (row) => row.igstAmount),
+      outputGst: _sum(invoices, (row) => row.gstAmount),
+    );
+  }
+
+  bool _isInclusivePricing(String value) {
+    return value.trim().toUpperCase() == 'GST_INCLUSIVE';
+  }
+
+  bool _isExclusivePricing(String value) {
+    return !_isInclusivePricing(value);
+  }
 
   String _monthKey(DateTime value) {
     final month = DateTime(value.year, value.month);

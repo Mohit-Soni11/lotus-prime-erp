@@ -145,7 +145,7 @@ class GstFilingCompletionDialog extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: _SummaryMetric(
-                          label: 'Total GST Payable',
+                          label: 'Output GST Liability',
                           value: GstReportFormatters.money(
                             snapshot.dashboard.totalGst,
                           ),

@@ -115,17 +115,24 @@ void main() {
     expect(snapshot.identity.shopName, 'Anjali Jewellers Private Limited');
     expect(snapshot.identity.gstin, '10ABCDE1234F1Z5');
     expect(snapshot.dashboard.totalInvoices, 3);
-    expect(snapshot.dashboard.gstInvoiceCount, 2);
-    expect(snapshot.dashboard.nonGstInvoiceCount, 1);
-    expect(snapshot.dashboard.nonGstSalesEstimate, 5000);
-    expect(snapshot.dashboard.taxableSales, 11200);
-    expect(snapshot.dashboard.cgstAmount, 150);
-    expect(snapshot.dashboard.sgstAmount, 150);
+    expect(snapshot.dashboard.gstInvoiceCount, 3);
+    expect(snapshot.dashboard.nonGstInvoiceCount, 0);
+    expect(snapshot.dashboard.nonGstSalesEstimate, 0);
+    expect(snapshot.dashboard.exclusive.invoiceCount, 2);
+    expect(snapshot.dashboard.exclusive.taxableValue, 11200);
+    expect(snapshot.dashboard.exclusive.outputGst, 336);
+    expect(snapshot.dashboard.inclusive.invoiceCount, 1);
+    expect(snapshot.dashboard.inclusive.invoiceValue, 5000);
+    expect(snapshot.dashboard.inclusive.taxableValue, 4854.37);
+    expect(snapshot.dashboard.inclusive.outputGst, 145.64);
+    expect(snapshot.dashboard.taxableSales, 16054.37);
+    expect(snapshot.dashboard.cgstAmount, 222.82);
+    expect(snapshot.dashboard.sgstAmount, 222.82);
     expect(snapshot.dashboard.igstAmount, 36);
-    expect(snapshot.dashboard.totalGst, 336);
+    expect(snapshot.dashboard.totalGst, 481.64);
     expect(snapshot.gstr1B2bInvoices, hasLength(1));
-    expect(snapshot.gstr1B2cInvoices, hasLength(1));
-    expect(snapshot.gstr3b.netTaxPayable, 336);
+    expect(snapshot.gstr1B2cInvoices, hasLength(2));
+    expect(snapshot.gstr3b.netTaxPayable, 481.64);
     expect(snapshot.hsnSummary, hasLength(2));
 
     final b2bHsn = snapshot.hsnSummary.singleWhere(

@@ -36,12 +36,10 @@ class GstDashboardView extends StatelessWidget {
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
-            final cardWidth = constraints.maxWidth >= 1500
-                ? (constraints.maxWidth - 56) / 5
-                : constraints.maxWidth >= 980
+            final cardWidth = constraints.maxWidth >= 1200
                     ? (constraints.maxWidth - 42) / 4
-                    : constraints.maxWidth >= 680
-                        ? (constraints.maxWidth - 28) / 3
+                    : constraints.maxWidth >= 760
+                        ? (constraints.maxWidth - 14) / 2
                         : constraints.maxWidth;
 
             return Wrap(
@@ -51,20 +49,23 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'GST Invoice Count',
+                    title: 'Total Invoices',
                     value: GstReportFormatters.count(dashboard.gstInvoiceCount),
                     subtitle:
-                        '${dashboard.nonGstInvoiceCount} non-GST bills found',
+                        '${dashboard.exclusive.invoiceCount} exclusive / ${dashboard.inclusive.invoiceCount} inclusive',
                     icon: Icons.receipt_long_outlined,
                   ),
                 ),
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Taxable Sales',
-                    value: GstReportFormatters.money(dashboard.taxableSales),
-                    icon: Icons.currency_rupee_rounded,
-                    accentColor: GstReportColors.information,
+                    title: 'Total Value',
+                    value: GstReportFormatters.money(
+                      dashboard.gstInvoiceValue,
+                    ),
+                    subtitle: 'Exclusive + inclusive invoices',
+                    icon: Icons.payments_rounded,
+                    accentColor: GstReportColors.taxGreen,
                   ),
                 ),
                 _MetricBox(
@@ -97,7 +98,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Total GST Payable',
+                    title: 'Output GST Liability',
                     value: GstReportFormatters.money(dashboard.totalGst),
                     icon: Icons.account_balance_wallet_outlined,
                     accentColor: GstReportColors.danger,
@@ -106,11 +107,13 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Non-GST Estimate',
+                    title: 'Review Sales',
                     value: GstReportFormatters.money(
                       dashboard.nonGstSalesEstimate,
                     ),
-                    subtitle: 'Purchase integration ready',
+                    subtitle: dashboard.nonGstInvoiceCount == 0
+                        ? 'No review bills'
+                        : '${dashboard.nonGstInvoiceCount} bills need review',
                     icon: Icons.request_quote_outlined,
                     accentColor: GstReportColors.textMuted,
                   ),
@@ -132,6 +135,8 @@ class GstDashboardView extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
+        _PricingBreakdownGrid(dashboard: dashboard),
+        const SizedBox(height: 16),
         _RateSummaryPanel(rows: snapshot.rateSummary),
       ],
     );
@@ -150,6 +155,198 @@ class _MetricBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(width: width, child: child);
+  }
+}
+
+class _PricingBreakdownGrid extends StatelessWidget {
+  const _PricingBreakdownGrid({required this.dashboard});
+
+  final GstReportDashboardSummary dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth >= 980
+            ? (constraints.maxWidth - 14) / 2
+            : constraints.maxWidth;
+        return Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: [
+            SizedBox(
+              width: width,
+              child: _PricingModeSummaryCard(
+                title: 'GST Exclusive Invoice Summary',
+                subtitle: 'GST charged separately over taxable value',
+                icon: Icons.add_card_rounded,
+                accent: GstReportColors.information,
+                summary: dashboard.exclusive,
+              ),
+            ),
+            SizedBox(
+              width: width,
+              child: _PricingModeSummaryCard(
+                title: 'GST Inclusive Invoice Summary',
+                subtitle: 'GST reverse-calculated from customer final price',
+                icon: Icons.price_check_rounded,
+                accent: GstReportColors.success,
+                summary: dashboard.inclusive,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PricingModeSummaryCard extends StatelessWidget {
+  const _PricingModeSummaryCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.accent,
+    required this.summary,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color accent;
+  final GstPricingModeSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = [
+      ('Invoices', GstReportFormatters.count(summary.invoiceCount)),
+      ('Total Value', GstReportFormatters.money(summary.invoiceValue)),
+      ('Taxable Value', GstReportFormatters.money(summary.taxableValue)),
+      ('CGST', GstReportFormatters.money(summary.cgstAmount)),
+      ('SGST', GstReportFormatters.money(summary.sgstAmount)),
+      ('IGST', GstReportFormatters.money(summary.igstAmount)),
+      ('Output GST', GstReportFormatters.money(summary.outputGst)),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: GstReportColors.bodyPanel,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, color: accent, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GstReportStyles.sectionTitle,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GstReportStyles.body.copyWith(
+                        color: GstReportColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final row in rows)
+                _SummaryChip(
+                  label: row.$1,
+                  value: row.$2,
+                  accent: accent,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.055),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

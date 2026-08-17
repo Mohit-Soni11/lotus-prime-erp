@@ -113,6 +113,9 @@ class PosCheckoutRepository {
               shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
               billingMode: Value(_dbBillingMode(invoice.billingMode)),
               billType: Value(_dbBillType(invoice.billType)),
+              documentType: Value(invoice.documentType.storageValue),
+              gstPricingMode: Value(invoice.gstPricingMode.storageValue),
+              taxTreatment: const Value('TAXABLE_SUPPLY'),
               paymentStatus: Value(_resolvePaymentStatus(money)),
               totalAmount: Value(money.grossAmount),
               discount: Value(money.discountAmount),
@@ -121,6 +124,17 @@ class PosCheckoutRepository {
               sgstAmount: Value(money.sgst),
               igstAmount: Value(money.igst),
               gstAmount: Value(money.totalGst),
+              gstExclusiveSalesAmount: Value(
+                invoice.gstPricingMode == GstPricingMode.exclusive
+                    ? money.taxableAmount
+                    : 0.0,
+              ),
+              gstInclusiveSalesAmount: Value(
+                invoice.gstPricingMode == GstPricingMode.inclusive
+                    ? money.taxableAmount
+                    : 0.0,
+              ),
+              outputGstLiabilitySnapshot: Value(money.totalGst),
               makingTotal: Value(money.totalMakingCharge),
               roundOffAmount: Value(money.roundOffAmount),
               finalAmount: Value(money.netPayable),
@@ -180,12 +194,16 @@ class PosCheckoutRepository {
                 ),
                 makingCharge: Value(item.makingAmt),
                 itemTotal: Value(item.totalValue),
+                gstPricingModeSnapshot:
+                    Value(invoice.gstPricingMode.storageValue),
+                taxTreatmentSnapshot: const Value('TAXABLE_SUPPLY'),
                 taxableAmountSnapshot: Value(lineTax.taxableAmount),
                 gstRateSnapshot: Value(lineTax.gstRate),
                 cgstAmountSnapshot: Value(lineTax.cgst),
                 sgstAmountSnapshot: Value(lineTax.sgst),
                 igstAmountSnapshot: Value(lineTax.igst),
                 gstAmountSnapshot: Value(lineTax.totalGst),
+                invoiceValueSnapshot: Value(lineTax.invoiceValue),
                 linkedStockItemId: Value(item.linkedStockItemId),
                 linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
@@ -318,6 +336,9 @@ class PosCheckoutRepository {
           shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
           billingMode: Value(_dbBillingMode(invoice.billingMode)),
           billType: Value(_dbBillType(invoice.billType)),
+          documentType: Value(invoice.documentType.storageValue),
+          gstPricingMode: Value(invoice.gstPricingMode.storageValue),
+          taxTreatment: const Value('TAXABLE_SUPPLY'),
           paymentStatus: Value(_resolvePaymentStatus(money)),
           totalAmount: Value(money.grossAmount),
           discount: Value(money.discountAmount),
@@ -326,6 +347,17 @@ class PosCheckoutRepository {
           sgstAmount: Value(money.sgst),
           igstAmount: Value(money.igst),
           gstAmount: Value(money.totalGst),
+          gstExclusiveSalesAmount: Value(
+            invoice.gstPricingMode == GstPricingMode.exclusive
+                ? money.taxableAmount
+                : 0.0,
+          ),
+          gstInclusiveSalesAmount: Value(
+            invoice.gstPricingMode == GstPricingMode.inclusive
+                ? money.taxableAmount
+                : 0.0,
+          ),
+          outputGstLiabilitySnapshot: Value(money.totalGst),
           makingTotal: Value(money.totalMakingCharge),
           roundOffAmount: Value(money.roundOffAmount),
           finalAmount: Value(money.netPayable),
@@ -391,12 +423,16 @@ class PosCheckoutRepository {
                 ),
                 makingCharge: Value(item.makingAmt),
                 itemTotal: Value(item.totalValue),
+                gstPricingModeSnapshot:
+                    Value(invoice.gstPricingMode.storageValue),
+                taxTreatmentSnapshot: const Value('TAXABLE_SUPPLY'),
                 taxableAmountSnapshot: Value(lineTax.taxableAmount),
                 gstRateSnapshot: Value(lineTax.gstRate),
                 cgstAmountSnapshot: Value(lineTax.cgst),
                 sgstAmountSnapshot: Value(lineTax.sgst),
                 igstAmountSnapshot: Value(lineTax.igst),
                 gstAmountSnapshot: Value(lineTax.totalGst),
+                invoiceValueSnapshot: Value(lineTax.invoiceValue),
                 linkedStockItemId: Value(item.linkedStockItemId),
                 linkedStockUnitId: Value(item.linkedStockUnitId),
                 linkedStockSku: Value(item.linkedStockSku),
@@ -2496,6 +2532,7 @@ class PosCheckoutRepository {
       sgst: sgst,
       igst: igst,
       totalGst: totalGst,
+      invoiceValue: _roundMoney(taxable + totalGst),
     );
   }
 
@@ -2910,6 +2947,7 @@ class _PosLineTaxSnapshot {
     required this.sgst,
     required this.igst,
     required this.totalGst,
+    required this.invoiceValue,
   });
 
   final double taxableAmount;
@@ -2918,6 +2956,7 @@ class _PosLineTaxSnapshot {
   final double sgst;
   final double igst;
   final double totalGst;
+  final double invoiceValue;
 }
 
 class _StockLotBalance {

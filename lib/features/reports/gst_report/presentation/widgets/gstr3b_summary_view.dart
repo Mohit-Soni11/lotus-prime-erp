@@ -45,7 +45,7 @@ class Gstr3bSummaryView extends StatelessWidget {
                 SizedBox(
                   width: width,
                   child: GstReportMetricCard(
-                    title: 'CGST Payable',
+                    title: 'Output CGST',
                     value: GstReportFormatters.money(summary.outwardCgst),
                     icon: Icons.account_balance_rounded,
                   ),
@@ -53,7 +53,7 @@ class Gstr3bSummaryView extends StatelessWidget {
                 SizedBox(
                   width: width,
                   child: GstReportMetricCard(
-                    title: 'SGST Payable',
+                    title: 'Output SGST',
                     value: GstReportFormatters.money(summary.outwardSgst),
                     icon: Icons.account_balance_rounded,
                   ),
@@ -61,7 +61,7 @@ class Gstr3bSummaryView extends StatelessWidget {
                 SizedBox(
                   width: width,
                   child: GstReportMetricCard(
-                    title: 'IGST Payable',
+                    title: 'Output IGST',
                     value: GstReportFormatters.money(summary.outwardIgst),
                     icon: Icons.sync_alt_rounded,
                     accentColor: GstReportColors.warning,
@@ -111,7 +111,7 @@ class Gstr3bSummaryView extends StatelessWidget {
                   ))),
                 ]),
                 DataRow(cells: [
-                  const DataCell(Text('Nil / exempt / non-GST')),
+                  const DataCell(Text('Nil / exempt / non-taxable')),
                   DataCell(Text(GstReportFormatters.money(
                     summary.nilExemptNonGstValue,
                   ))),
@@ -155,8 +155,8 @@ class Gstr3bSummaryView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         GstReportPanel(
-          title: 'Net Tax Payable',
-          subtitle: 'CGST + SGST + IGST before ITC adjustment',
+          title: 'Output GST Liability',
+          subtitle: 'CGST + SGST + IGST before purchase ITC adjustment',
           icon: Icons.payments_outlined,
           child: Text(
             GstReportFormatters.money(summary.netTaxPayable),

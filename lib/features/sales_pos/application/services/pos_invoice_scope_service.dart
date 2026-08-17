@@ -100,6 +100,8 @@ class PosInvoiceScopeService {
       invoiceNumber: _metalInvoiceNumber(source, metal),
       invoiceDate: source.invoiceDate,
       billType: source.billType,
+      gstPricingMode: source.gstPricingMode,
+      documentType: source.documentType,
       billingMode: source.billingMode,
       shopName: source.shopName,
       shopAddress: source.shopAddress,

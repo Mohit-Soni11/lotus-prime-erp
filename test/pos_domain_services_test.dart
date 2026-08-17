@@ -425,6 +425,33 @@ void main() {
       item.dispose();
     });
 
+    test('reverse-calculates GST inclusive retail invoice totals', () {
+      final item = _saleItem(
+        huid: 'HUID-001',
+        grossWeight: 10,
+        rate: 1000,
+      );
+
+      final totals = const CalculatePosTotals()(
+        _totalsInput(
+          saleItems: [item],
+          billType: BillType.gst,
+          gstPricingMode: GstPricingMode.inclusive,
+          cashInput: 10000,
+        ),
+      );
+
+      expect(totals.grossAmount, 10000);
+      expect(totals.taxableAmount, 9708.74);
+      expect(totals.totalGst, 291.26);
+      expect(totals.grandTotal, 10000);
+      expect(totals.finalPayableAmount, 10000);
+      expect(totals.cashPaidAmount, 10000);
+      expect(totals.balanceDue, 0);
+
+      item.dispose();
+    });
+
     test('applies GST flat discount before tax', () {
       final item = _saleItem(
         huid: 'HUID-001',
@@ -675,6 +702,7 @@ PosTotalsInput _totalsInput({
   List<TradeInItemModel> tradeInItems = const [],
   BillingMode billingMode = BillingMode.retail,
   BillType billType = BillType.normal,
+  GstPricingMode gstPricingMode = GstPricingMode.exclusive,
   TradeInAdjustMode tradeInMode = TradeInAdjustMode.cashAdjust,
   double cashInput = 0,
   double upiInput = 0,
@@ -689,6 +717,7 @@ PosTotalsInput _totalsInput({
     tradeInItems: tradeInItems,
     billingMode: billingMode,
     billType: billType,
+    gstPricingMode: gstPricingMode,
     tradeInMode: tradeInMode,
     discountType: discountType,
     discountInput: discountInput,

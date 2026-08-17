@@ -362,7 +362,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           const SizedBox(height: 8),
           _buildPillarRow(
               widget.ctrl.billType == BillType.gst
-                  ? "Taxable Value"
+                  ? widget.ctrl.gstPricingMode == GstPricingMode.inclusive
+                      ? "Taxable Value (Reverse)"
+                      : "Taxable Value"
                   : "Net Value",
               widget.ctrl.taxableAmount,
               isMid: true),
@@ -448,7 +450,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           const SizedBox(height: 8),
           _buildPillarRow(
               widget.ctrl.billType == BillType.gst
-                  ? "Taxable Value"
+                  ? widget.ctrl.gstPricingMode == GstPricingMode.inclusive
+                      ? "Taxable Value (Reverse)"
+                      : "Taxable Value"
                   : "Net Value",
               widget.ctrl.taxableAmount,
               isMid: true),
@@ -995,6 +999,9 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     String gstTitle = isWholesale
         ? "Total GST (Metal ${widget.ctrl.jewelleryGstRateLabel}, Labour ${widget.ctrl.makingGstRateLabel})"
         : "Total GST (${widget.ctrl.jewelleryGstRateLabel})";
+    if (widget.ctrl.gstPricingMode == GstPricingMode.inclusive) {
+      gstTitle = '$gstTitle - Included';
+    }
     final classificationLines = widget.ctrl.gstClassificationLines;
 
     return Padding(

@@ -161,7 +161,7 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: _MetricTile(
-                            label: 'Tax Payable',
+                            label: 'Output GST',
                             value: GstReportFormatters.money(widget.taxPayable),
                             accent: palette.accent,
                             tint: palette.tint,
@@ -266,7 +266,7 @@ class _GstFilingSegmentCardState extends State<GstFilingSegmentCard> {
       case GstFilingSegment.b2b:
         return 'Registered customer GSTIN ledger, IFF-ready B2B invoices and HSN filing checks';
       case GstFilingSegment.b2c:
-        return 'Retail customer GST sales, place-of-supply tax split and non-GST estimate view';
+        return 'Retail customer GST sales, place-of-supply tax split and GST inclusive sale view';
     }
   }
 

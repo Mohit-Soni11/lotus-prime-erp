@@ -110,6 +110,7 @@ class AppDatabase extends _$AppDatabase {
   Future<void>? _marketRefillReportSchemaFuture;
   Future<void>? _stockTransferSchemaFuture;
   Future<void>? _gstFilingWorkflowSchemaFuture;
+  Future<void>? _salesGstPricingSchemaFuture;
 
   /// Handles migration errors safely.
   ///
@@ -191,6 +192,71 @@ class AppDatabase extends _$AppDatabase {
     } catch (_) {
       _gstFilingWorkflowSchemaFuture = null;
       rethrow;
+    }
+  }
+
+  Future<void> ensureSalesGstPricingSchema() async {
+    final cached = _salesGstPricingSchemaFuture;
+    if (cached != null) return cached;
+    final future = _ensureSalesGstPricingSchemaInternal();
+    _salesGstPricingSchemaFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      _salesGstPricingSchemaFuture = null;
+      rethrow;
+    }
+  }
+
+  Future<void> _ensureSalesGstPricingSchemaInternal() async {
+    if (await _tableExists('bills')) {
+      await _addColumnIfMissing(
+        tableName: 'bills',
+        columnName: 'document_type',
+        declaration: "TEXT NOT NULL DEFAULT 'TAX_INVOICE'",
+      );
+      await _addColumnIfMissing(
+        tableName: 'bills',
+        columnName: 'gst_pricing_mode',
+        declaration: "TEXT NOT NULL DEFAULT 'GST_EXCLUSIVE'",
+      );
+      await _addColumnIfMissing(
+        tableName: 'bills',
+        columnName: 'tax_treatment',
+        declaration: "TEXT NOT NULL DEFAULT 'TAXABLE_SUPPLY'",
+      );
+      await _addColumnIfMissing(
+        tableName: 'bills',
+        columnName: 'gst_exclusive_sales_amount',
+        declaration: 'REAL NOT NULL DEFAULT 0.0',
+      );
+      await _addColumnIfMissing(
+        tableName: 'bills',
+        columnName: 'gst_inclusive_sales_amount',
+        declaration: 'REAL NOT NULL DEFAULT 0.0',
+      );
+      await _addColumnIfMissing(
+        tableName: 'bills',
+        columnName: 'output_gst_liability_snapshot',
+        declaration: 'REAL NOT NULL DEFAULT 0.0',
+      );
+    }
+    if (await _tableExists('bill_items')) {
+      await _addColumnIfMissing(
+        tableName: 'bill_items',
+        columnName: 'gst_pricing_mode_snapshot',
+        declaration: "TEXT NOT NULL DEFAULT 'GST_EXCLUSIVE'",
+      );
+      await _addColumnIfMissing(
+        tableName: 'bill_items',
+        columnName: 'tax_treatment_snapshot',
+        declaration: "TEXT NOT NULL DEFAULT 'TAXABLE_SUPPLY'",
+      );
+      await _addColumnIfMissing(
+        tableName: 'bill_items',
+        columnName: 'invoice_value_snapshot',
+        declaration: 'REAL NOT NULL DEFAULT 0.0',
+      );
     }
   }
 
@@ -1286,6 +1352,13 @@ class AppDatabase extends _$AppDatabase {
               'v43 GST filing invoice snapshot columns applied.',
             );
           }
+
+          if (from < 45) {
+            await ensureSalesGstPricingSchema();
+            AppLogger.info(
+              'v45 sales GST pricing mode and document snapshots applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -1302,6 +1375,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureSalesCustomerMetalSettlementSchema();
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockInventorySchemaInternal();
+          await ensureSalesGstPricingSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (

@@ -894,7 +894,8 @@ class PosBillingController extends ChangeNotifier {
 
   // --- CORE STATES ---
   BillingMode billingMode = BillingMode.retail;
-  BillType billType = BillType.normal;
+  BillType billType = BillType.gst;
+  GstPricingMode gstPricingMode = GstPricingMode.exclusive;
   TradeInAdjustMode tradeInMode = TradeInAdjustMode.cashAdjust;
   CustomerMetalSettlementType customerMetalSettlementType =
       CustomerMetalSettlementType.exchangeAdjustment;
@@ -1023,6 +1024,7 @@ class PosBillingController extends ChangeNotifier {
       _committedInvoiceNumber = bill.billNo;
       billingMode = _billingModeFromDb(bill.billingMode);
       billType = _billTypeFromDb(bill.billType);
+      gstPricingMode = _gstPricingModeFromDb(bill.gstPricingMode);
       tradeInMode = _tradeInModeFromDb(bill.tradeInMode);
       customerMetalSettlementType = details.tradeInItems.isEmpty
           ? CustomerMetalSettlementType.exchangeAdjustment
@@ -1116,7 +1118,8 @@ class PosBillingController extends ChangeNotifier {
       convertedAdvanceOrderNo = order.orderNo;
       await _restoreSelectedCustomer(order.customerId);
       billingMode = BillingMode.retail;
-      billType = BillType.normal;
+      billType = BillType.gst;
+      gstPricingMode = GstPricingMode.exclusive;
 
       final item = SaleItemModel(metal: _metalFromDb(order.metalType));
       item.addListener(_onChildItemChanged);
@@ -1211,6 +1214,12 @@ class PosBillingController extends ChangeNotifier {
     return value.trim().toUpperCase() == 'GST' ? BillType.gst : BillType.normal;
   }
 
+  GstPricingMode _gstPricingModeFromDb(String value) {
+    return value.trim().toUpperCase() == GstPricingMode.inclusive.storageValue
+        ? GstPricingMode.inclusive
+        : GstPricingMode.exclusive;
+  }
+
   TradeInAdjustMode _tradeInModeFromDb(String value) {
     return value.trim().toUpperCase() == 'METAL_ADJUST'
         ? TradeInAdjustMode.metalAdjust
@@ -1294,6 +1303,7 @@ class PosBillingController extends ChangeNotifier {
         tradeInItems: tradeInItems,
         billingMode: billingMode,
         billType: billType,
+        gstPricingMode: gstPricingMode,
         tradeInMode: tradeInMode,
         discountType: discountType,
         discountInput: _discountInput,
@@ -1723,6 +1733,17 @@ class PosBillingController extends ChangeNotifier {
     unawaited(refreshInvoiceSequencePreview());
   }
 
+  void toggleGstPricingMode(GstPricingMode mode) {
+    if (gstPricingMode == mode) return;
+    gstPricingMode = mode;
+    if (billType != BillType.gst) {
+      billType = BillType.gst;
+      unawaited(refreshInvoiceSequencePreview());
+    }
+    _clearChangeReturnMethod();
+    notifyListeners();
+  }
+
   void toggleDiscountType(DiscountType type) {
     discountType = type;
     _clearChangeReturnMethod();
@@ -1799,6 +1820,7 @@ class PosBillingController extends ChangeNotifier {
       customerGst: gstCtrl.text,
       billingMode: billingMode,
       billType: billType,
+      gstPricingMode: gstPricingMode,
       tradeInMode: tradeInMode,
       customerMetalSettlementType: customerMetalSettlementType,
       discountType: discountType,
@@ -1825,6 +1847,7 @@ class PosBillingController extends ChangeNotifier {
   void _restoreHoldSnapshot(PosHoldBillModel holdBill) {
     billingMode = holdBill.billingMode;
     billType = holdBill.billType;
+    gstPricingMode = holdBill.gstPricingMode;
     tradeInMode = holdBill.tradeInMode;
     customerMetalSettlementType = holdBill.customerMetalSettlementType;
     discountType = holdBill.discountType;
