@@ -70,6 +70,11 @@ class GstFilingTaskStatus {
     required this.quarterLabel,
     this.amountSnapshot = 0,
     this.invoiceCountSnapshot = 0,
+    this.portalReference = '',
+    this.cpin = '',
+    this.cin = '',
+    this.paymentMode = '',
+    this.notes = '',
     this.completed = false,
     this.completedAt,
   });
@@ -94,6 +99,11 @@ class GstFilingTaskStatus {
   final String quarterLabel;
   final double amountSnapshot;
   final int invoiceCountSnapshot;
+  final String portalReference;
+  final String cpin;
+  final String cin;
+  final String paymentMode;
+  final String notes;
   final bool completed;
   final DateTime? completedAt;
 }
@@ -254,6 +264,10 @@ class GstInvoiceRow {
     required this.customerName,
     required this.customerGstin,
     required this.placeOfSupply,
+    this.customerStateCode = '',
+    this.placeOfSupplyStateCode = '',
+    this.shopStateCode = '',
+    this.supplyType = 'INTRA_STATE',
     required this.billType,
     this.gstPricingMode = 'GST_EXCLUSIVE',
     this.documentType = 'TAX_INVOICE',
@@ -273,6 +287,10 @@ class GstInvoiceRow {
   final String customerName;
   final String customerGstin;
   final String placeOfSupply;
+  final String customerStateCode;
+  final String placeOfSupplyStateCode;
+  final String shopStateCode;
+  final String supplyType;
   final String billType;
   final String gstPricingMode;
   final String documentType;

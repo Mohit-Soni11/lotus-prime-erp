@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../data/gst_report_repository.dart';
 import '../domain/gst_filing_period.dart';
+import '../domain/gst_quarter_filing_ledger.dart';
 import '../domain/gst_report_models.dart';
 
 class GstReportController extends ChangeNotifier {
@@ -21,6 +22,7 @@ class GstReportController extends ChangeNotifier {
   GstReportPeriod _period;
   GstReportSnapshot? _snapshot;
   GstFilingWorkflowSnapshot? _workflowSnapshot;
+  GstQuarterFilingLedger? _quarterLedger;
   GstReportTab _selectedTab;
   bool _isLoading = true;
   String? _errorMessage;
@@ -28,6 +30,7 @@ class GstReportController extends ChangeNotifier {
   GstReportPeriod get period => _period;
   GstReportSnapshot? get snapshot => _snapshot;
   GstFilingWorkflowSnapshot? get workflowSnapshot => _workflowSnapshot;
+  GstQuarterFilingLedger? get quarterLedger => _quarterLedger;
   GstReportTab get selectedTab => _selectedTab;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -47,6 +50,7 @@ class GstReportController extends ChangeNotifier {
       _snapshot = await _repository.fetch(_period);
       _workflowSnapshot =
           await _repository.fetchFilingWorkflowSnapshot(_period);
+      _quarterLedger = await _repository.fetchQuarterFilingLedger(_period);
       _errorMessage = null;
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -56,6 +60,7 @@ class GstReportController extends ChangeNotifier {
       );
       _snapshot ??= GstReportSnapshot.empty(_period);
       _workflowSnapshot ??= _emptyWorkflowSnapshot(_period);
+      _quarterLedger ??= _emptyQuarterLedger(_period);
       _errorMessage = 'Unable to load GST report.';
     } finally {
       _isLoading = false;
@@ -134,6 +139,7 @@ class GstReportController extends ChangeNotifier {
       }
       _workflowSnapshot =
           await _repository.fetchFilingWorkflowSnapshot(_period);
+      _quarterLedger = await _repository.fetchQuarterFilingLedger(_period);
       notifyListeners();
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -164,6 +170,7 @@ class GstReportController extends ChangeNotifier {
       );
       _workflowSnapshot =
           await _repository.fetchFilingWorkflowSnapshot(_period);
+      _quarterLedger = await _repository.fetchQuarterFilingLedger(_period);
       notifyListeners();
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -247,6 +254,52 @@ class GstReportController extends ChangeNotifier {
       periodMonth: period.month,
       quarterKey: filing.quarterKey,
       quarterLabel: '${filing.quarterLabel} ${filing.quarterRangeLabel}',
+    );
+  }
+
+  GstQuarterFilingLedger _emptyQuarterLedger(GstReportPeriod period) {
+    final filing = GstFilingPeriod.fromMonth(period.month);
+    return GstQuarterFilingLedger(
+      filing: filing,
+      months: [
+        for (final month in filing.quarterMonths)
+          _emptyQuarterMonthLedger(month),
+      ],
+      quarterReturnStatus: GstFilingTaskStatus.empty(
+        task: GstFilingTask.quarterReturnFiled,
+        periodMonth: filing.quarterEndMonth,
+        quarterKey: filing.quarterKey,
+        quarterLabel: '${filing.quarterLabel} ${filing.quarterRangeLabel}',
+      ),
+      quarterTaxLiability: 0,
+      quarterInvoiceCount: 0,
+    );
+  }
+
+  GstQuarterFilingMonthLedger _emptyQuarterMonthLedger(DateTime month) {
+    final filing = GstFilingPeriod.fromMonth(month);
+    final quarterLabel = '${filing.quarterLabel} ${filing.quarterRangeLabel}';
+    GstFilingTaskStatus status(GstFilingTask task) {
+      return GstFilingTaskStatus.empty(
+        task: task,
+        periodMonth: filing.month,
+        quarterKey: filing.quarterKey,
+        quarterLabel: quarterLabel,
+      );
+    }
+
+    return GstQuarterFilingMonthLedger(
+      filing: filing,
+      taxLiability: 0,
+      invoiceCount: 0,
+      b2bInvoiceCount: 0,
+      b2bTaxLiability: 0,
+      b2cInvoiceCount: 0,
+      b2cTaxLiability: 0,
+      monthlyPaymentStatus: status(GstFilingTask.monthlyTaxPayment),
+      b2bIffStatus: status(GstFilingTask.b2bIffUpload),
+      b2bReturnStatus: status(GstFilingTask.b2bReturnFiled),
+      b2cReturnStatus: status(GstFilingTask.b2cReturnFiled),
     );
   }
 

@@ -100,7 +100,9 @@ class Gstr3bFilingSnapshot {
   ) {
     final accumulators = <String, _InterStateAccumulator>{};
     for (final invoice in snapshot.gstr1B2cInvoices) {
-      if (invoice.igstAmount <= 0.005) continue;
+      if (invoice.supplyType != 'INTER_STATE' || invoice.igstAmount <= 0.005) {
+        continue;
+      }
       final place = invoice.placeOfSupply.trim().isEmpty
           ? 'Place of supply pending'
           : invoice.placeOfSupply.trim();

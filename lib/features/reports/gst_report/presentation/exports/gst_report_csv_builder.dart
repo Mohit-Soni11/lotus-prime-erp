@@ -33,7 +33,10 @@ class GstReportCsvBuilder {
     return [
       ['GST DASHBOARD'],
       ['GST Invoices', '${summary.gstInvoiceCount}'],
-      ['Total Invoice Value', GstReportFormatters.money(summary.gstInvoiceValue)],
+      [
+        'Total Invoice Value',
+        GstReportFormatters.money(summary.gstInvoiceValue)
+      ],
       ..._pricingSummaryRows('GST EXCLUSIVE SALES', summary.exclusive),
       ..._pricingSummaryRows('GST INCLUSIVE SALES', summary.inclusive),
       [
@@ -86,6 +89,9 @@ class GstReportCsvBuilder {
         'Customer',
         'GSTIN',
         'Place of Supply',
+        'Place State Code',
+        'Shop State Code',
+        'Supply Type',
         'Pricing Mode',
         'Taxable',
         'CGST',
@@ -102,6 +108,11 @@ class GstReportCsvBuilder {
           invoices[index].customerName,
           invoices[index].customerGstin,
           invoices[index].placeOfSupply,
+          invoices[index].placeOfSupplyStateCode,
+          invoices[index].shopStateCode,
+          invoices[index].supplyType == 'INTER_STATE'
+              ? 'Inter-State'
+              : 'Intra-State',
           _pricingLabel(invoices[index].gstPricingMode),
           invoices[index].taxableAmount.toStringAsFixed(2),
           invoices[index].cgstAmount.toStringAsFixed(2),
@@ -132,7 +143,8 @@ class GstReportCsvBuilder {
       [],
       ...invoiceLedgerRows('4A/4B/6B/6C - B2B INVOICES', filing.b2bInvoices),
       [],
-      ...invoiceLedgerRows('5A/5B - B2C LARGE INVOICES', filing.b2cLargeInvoices),
+      ...invoiceLedgerRows(
+          '5A/5B - B2C LARGE INVOICES', filing.b2cLargeInvoices),
       [],
       ...b2cSmallRows(filing.b2cSmallSummary),
       [],
@@ -305,7 +317,10 @@ class GstReportCsvBuilder {
       ['Shop', snapshot.identity.shopName],
       ['GSTIN', snapshot.identity.gstin],
       ['Period', GstReportFormatters.periodLabel(snapshot.period)],
-      ['Readiness', filing.readiness.canFile ? 'READY TO REVIEW' : 'ACTION REQUIRED'],
+      [
+        'Readiness',
+        filing.readiness.canFile ? 'READY TO REVIEW' : 'ACTION REQUIRED'
+      ],
       ['Blocking Issues', '${filing.readiness.blockerCount}'],
       ['Review Warnings', '${filing.readiness.warningCount}'],
       for (final blocker in filing.readiness.blockers) ['BLOCKER', blocker],
@@ -380,7 +395,14 @@ class GstReportCsvBuilder {
         ],
       [],
       ['TABLE 6.1 - PAYMENT OF TAX'],
-      ['Tax Head', 'Tax Payable', 'ITC Available', 'Cash Payable', 'Interest', 'Late Fee'],
+      [
+        'Tax Head',
+        'Tax Payable',
+        'ITC Available',
+        'Cash Payable',
+        'Interest',
+        'Late Fee'
+      ],
       for (final row in filing.paymentRows)
         [
           row.taxHead,
@@ -394,11 +416,17 @@ class GstReportCsvBuilder {
       ['DOCUMENTS AND PORTAL CHECKLIST'],
       ['Item', 'Required Action'],
       ['GSTR-1 / IFF Liability', 'Match outward tax with Table 3.1(a).'],
-      ['GSTR-2B ITC Statement', 'Download from portal before entering Table 4.'],
+      [
+        'GSTR-2B ITC Statement',
+        'Download from portal before entering Table 4.'
+      ],
       ['Purchase Invoices', 'Keep supplier invoices for ITC evidence.'],
       ['RCM Expenses', 'Check reverse charge purchases and expenses.'],
       ['Cash Ledger / PMT-06', 'For QRMP month 1 and 2, pay monthly challan.'],
-      ['Interest / Late Fee', 'Confirm portal-calculated amount before filing.'],
+      [
+        'Interest / Late Fee',
+        'Confirm portal-calculated amount before filing.'
+      ],
     ];
   }
 
@@ -424,6 +452,9 @@ class GstReportCsvBuilder {
     return [
       'TOTAL',
       '${invoices.length} invoices',
+      '',
+      '',
+      '',
       '',
       '',
       '',

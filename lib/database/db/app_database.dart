@@ -272,6 +272,11 @@ class AppDatabase extends _$AppDatabase {
         "segment" TEXT NOT NULL DEFAULT '',
         "amount_snapshot" REAL NOT NULL DEFAULT 0.0,
         "invoice_count_snapshot" INTEGER NOT NULL DEFAULT 0,
+        "portal_reference" TEXT,
+        "cpin" TEXT,
+        "cin" TEXT,
+        "payment_mode" TEXT,
+        "notes" TEXT,
         "completed" INTEGER NOT NULL DEFAULT 0,
         "completed_at" TEXT,
         "created_at" TEXT NOT NULL,
@@ -284,6 +289,31 @@ class AppDatabase extends _$AppDatabase {
     );
     await customStatement(
       'CREATE INDEX IF NOT EXISTS "idx_gst_filing_workflow_quarter" ON "gst_filing_workflow_statuses" ("quarter_key", "task_key", "completed")',
+    );
+    await _addColumnIfMissing(
+      tableName: 'gst_filing_workflow_statuses',
+      columnName: 'portal_reference',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'gst_filing_workflow_statuses',
+      columnName: 'cpin',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'gst_filing_workflow_statuses',
+      columnName: 'cin',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'gst_filing_workflow_statuses',
+      columnName: 'payment_mode',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'gst_filing_workflow_statuses',
+      columnName: 'notes',
+      declaration: 'TEXT',
     );
   }
 

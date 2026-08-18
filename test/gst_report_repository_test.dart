@@ -126,20 +126,20 @@ void main() {
     expect(snapshot.dashboard.inclusive.invoiceCount, 1);
     expect(snapshot.dashboard.inclusive.invoiceValue, 5000);
     expect(snapshot.dashboard.inclusive.taxableValue, 4854.37);
-    expect(snapshot.dashboard.inclusive.outputGst, 145.64);
+    expect(snapshot.dashboard.inclusive.outputGst, 145.63);
     expect(snapshot.dashboard.taxableSales, 16054.37);
     expect(snapshot.dashboard.cgstAmount, 222.82);
-    expect(snapshot.dashboard.sgstAmount, 222.82);
+    expect(snapshot.dashboard.sgstAmount, 222.81);
     expect(snapshot.dashboard.igstAmount, 36);
-    expect(snapshot.dashboard.totalGst, 481.64);
+    expect(snapshot.dashboard.totalGst, 481.63);
     expect(snapshot.gstr1B2bInvoices, hasLength(1));
     expect(snapshot.gstr1B2cInvoices, hasLength(2));
-    expect(snapshot.gstr3b.netTaxPayable, 481.64);
+    expect(snapshot.gstr3b.netTaxPayable, 481.63);
     expect(snapshot.rateSummary, hasLength(1));
     expect(snapshot.rateSummary.single.rate, 3);
     expect(snapshot.rateSummary.single.invoiceCount, 3);
     expect(snapshot.rateSummary.single.taxableAmount, 16054.37);
-    expect(snapshot.rateSummary.single.gstAmount, 481.64);
+    expect(snapshot.rateSummary.single.gstAmount, 481.63);
     expect(snapshot.rateSummary.single.invoiceValue, 16536);
     final gstr1 = Gstr1FilingSnapshot.fromReport(snapshot);
     expect(gstr1.b2bInvoices, hasLength(1));
@@ -153,10 +153,18 @@ void main() {
     final gstr3b = Gstr3bFilingSnapshot.fromReport(snapshot);
     expect(gstr3b.table31Rows.first.code, '3.1(a)');
     expect(gstr3b.table31Rows.first.taxableValue, 16054.37);
-    expect(gstr3b.table31Rows.first.totalTax, 481.64);
-    expect(gstr3b.paymentRows.singleWhere((row) => row.taxHead == 'CGST').cashPayable, 222.82);
-    expect(gstr3b.paymentRows.singleWhere((row) => row.taxHead == 'SGST').cashPayable, 222.82);
-    expect(gstr3b.netCashPayable, 481.64);
+    expect(gstr3b.table31Rows.first.totalTax, 481.63);
+    expect(
+        gstr3b.paymentRows
+            .singleWhere((row) => row.taxHead == 'CGST')
+            .cashPayable,
+        222.82);
+    expect(
+        gstr3b.paymentRows
+            .singleWhere((row) => row.taxHead == 'SGST')
+            .cashPayable,
+        222.81);
+    expect(gstr3b.netCashPayable, 481.63);
     expect(gstr3b.itcRows, hasLength(8));
     expect(snapshot.hsnSummary, hasLength(2));
 
@@ -189,6 +197,11 @@ void main() {
       completed: true,
       amountSnapshot: 510.05,
       invoiceCountSnapshot: 2,
+      portalReference: 'PMT-06-AUG-2026',
+      cpin: '12345678901234',
+      cin: 'SBIN260825000001',
+      paymentMode: 'Net Banking',
+      notes: 'Paid from GST cash ledger workflow',
     );
 
     final monthlyWorkflow =
@@ -200,6 +213,11 @@ void main() {
     expect(monthlyStatus.completed, isTrue);
     expect(monthlyStatus.amountSnapshot, 510.05);
     expect(monthlyStatus.invoiceCountSnapshot, 2);
+    expect(monthlyStatus.portalReference, 'PMT-06-AUG-2026');
+    expect(monthlyStatus.cpin, '12345678901234');
+    expect(monthlyStatus.cin, 'SBIN260825000001');
+    expect(monthlyStatus.paymentMode, 'Net Banking');
+    expect(monthlyStatus.notes, 'Paid from GST cash ledger workflow');
     expect(monthlyStatus.completedAt, isNotNull);
 
     await repository.setFilingTaskCompletion(
@@ -225,6 +243,112 @@ void main() {
           .amountSnapshot,
       1510.75,
     );
+
+    final ledger = await repository.fetchQuarterFilingLedger(august);
+    expect(ledger.months, hasLength(3));
+    expect(ledger.filing.quarterLabel, 'Q2');
+    expect(ledger.months[1].monthlyPaymentStatus.completed, isTrue);
+    expect(ledger.months[1].monthlyPaymentStatus.amountSnapshot, 510.05);
+    expect(ledger.quarterReturnStatus.completed, isTrue);
+    expect(ledger.quarterReturnStatus.amountSnapshot, 1510.75);
+    expect(ledger.paidTaxSnapshot, 510.05);
+  });
+
+  test('report normalizes inter-state output tax to IGST from place of supply',
+      () async {
+    await db.into(db.shopProfiles).insert(
+          ShopProfilesCompanion.insert(
+            shopName: const drift.Value('Anjali Jewellers'),
+            legalName: const drift.Value('Anjali Jewellers Private Limited'),
+            state: const drift.Value('Bihar'),
+            gstin: const drift.Value('10ABCDE1234F1Z5'),
+          ),
+        );
+
+    final billId = await _insertBill(
+      db,
+      billNo: 'TAX-AJ-2026-0101',
+      customerName: 'Walk-in Customer',
+      placeOfSupply: 'Maharashtra',
+      shopGstin: '10ABCDE1234F1Z5',
+      shopStateCode: '10',
+      customerStateCode: '27',
+      billDate: DateTime(2026, 8, 10, 12),
+      taxableAmount: 10000,
+      cgstAmount: 150,
+      sgstAmount: 150,
+      gstAmount: 300,
+      finalAmount: 10300,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      hsnCode: '7113',
+      quantity: 1,
+      taxableAmount: 10000,
+      cgstAmount: 150,
+      sgstAmount: 150,
+      gstAmount: 300,
+      gstRate: 3,
+      itemTotal: 10300,
+    );
+
+    final snapshot =
+        await repository.fetch(GstReportPeriod.forMonth(DateTime(2026, 8)));
+    final invoice = snapshot.gstr1B2cInvoices.single;
+
+    expect(invoice.supplyType, 'INTER_STATE');
+    expect(invoice.cgstAmount, 0);
+    expect(invoice.sgstAmount, 0);
+    expect(invoice.igstAmount, 300);
+    expect(snapshot.dashboard.igstAmount, 300);
+  });
+
+  test(
+      'legacy inclusive sales use item GST rate snapshots instead of flat rate',
+      () async {
+    await db.into(db.shopProfiles).insert(
+          ShopProfilesCompanion.insert(
+            shopName: const drift.Value('Anjali Jewellers'),
+            legalName: const drift.Value('Anjali Jewellers Private Limited'),
+            state: const drift.Value('Bihar'),
+            gstin: const drift.Value('10ABCDE1234F1Z5'),
+          ),
+        );
+
+    final billId = await _insertBill(
+      db,
+      billNo: 'TAX-AJ-2026-0102',
+      customerName: 'Walk-in Customer',
+      placeOfSupply: 'Bihar',
+      shopGstin: '10ABCDE1234F1Z5',
+      shopStateCode: '10',
+      customerStateCode: '10',
+      billDate: DateTime(2026, 8, 11, 12),
+      taxableAmount: 0,
+      gstAmount: 0,
+      finalAmount: 1120,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      hsnCode: '7113',
+      quantity: 1,
+      taxableAmount: 0,
+      gstAmount: 0,
+      gstRate: 12,
+      itemTotal: 1120,
+    );
+
+    final snapshot =
+        await repository.fetch(GstReportPeriod.forMonth(DateTime(2026, 8)));
+    final invoice = snapshot.gstr1B2cInvoices.single;
+
+    expect(invoice.gstPricingMode, 'GST_INCLUSIVE');
+    expect(invoice.taxableAmount, 1000);
+    expect(invoice.gstAmount, 120);
+    expect(invoice.cgstAmount, 60);
+    expect(invoice.sgstAmount, 60);
   });
 }
 

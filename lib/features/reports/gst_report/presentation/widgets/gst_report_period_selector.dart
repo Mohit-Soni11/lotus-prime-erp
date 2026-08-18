@@ -251,76 +251,84 @@ class _QuarterBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected =
         quarter.months.any((month) => _sameMonth(month, selectedMonth));
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: selected
-            ? GstReportColors.taxGreen.withValues(alpha: 0.08)
-            : GstReportColors.bodySubtle,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+    return SizedBox(
+      height: 104,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
           color: selected
-              ? GstReportColors.taxGreen.withValues(alpha: 0.34)
-              : GstReportColors.bodyBorder,
+              ? GstReportColors.taxGreen.withValues(alpha: 0.08)
+              : GstReportColors.bodySubtle,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? GstReportColors.taxGreen.withValues(alpha: 0.34)
+                : GstReportColors.bodyBorder,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${quarter.label} ${GstReportFormatters.shortMonth(quarter.months.first)}-${GstReportFormatters.shortMonth(quarter.months.last)}',
-                  style: GstReportStyles.body.copyWith(
-                    color: selected || completed
-                        ? GstReportColors.taxGreen
-                        : GstReportColors.textPrimary,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w900,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${quarter.label} ${GstReportFormatters.shortMonth(quarter.months.first)}-${GstReportFormatters.shortMonth(quarter.months.last)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GstReportStyles.body.copyWith(
+                      color: selected || completed
+                          ? GstReportColors.taxGreen
+                          : GstReportColors.textPrimary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ),
-              if (completed)
-                const Icon(
-                  Icons.check_circle_rounded,
-                  size: 17,
-                  color: GstReportColors.success,
-                ),
-            ],
-          ),
-          if (completed) ...[
+                if (completed)
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 17,
+                    color: GstReportColors.success,
+                  ),
+              ],
+            ),
             const SizedBox(height: 4),
-            Text(
-              'Quarter filed',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GstReportStyles.body.copyWith(
-                color: GstReportColors.success,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
+            SizedBox(
+              height: 14,
+              child: completed
+                  ? Text(
+                      'Quarter filed',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GstReportStyles.body.copyWith(
+                        color: GstReportColors.success,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                for (final month in quarter.months) ...[
+                  Expanded(
+                    child: _MonthChip(
+                      month: month,
+                      selected: _sameMonth(month, selectedMonth),
+                      current: _sameMonth(month, currentMonth),
+                      disabled: disabled || !canSelectMonth(month),
+                      onTap: () => onMonthSelected(month),
+                    ),
+                  ),
+                  if (month != quarter.months.last) const SizedBox(width: 6),
+                ],
+              ],
             ),
           ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              for (final month in quarter.months) ...[
-                Expanded(
-                  child: _MonthChip(
-                    month: month,
-                    selected: _sameMonth(month, selectedMonth),
-                    current: _sameMonth(month, currentMonth),
-                    disabled: disabled || !canSelectMonth(month),
-                    onTap: () => onMonthSelected(month),
-                  ),
-                ),
-                if (month != quarter.months.last) const SizedBox(width: 6),
-              ],
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

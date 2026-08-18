@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../features/sales_pos/domain/services/pos_money_math.dart';
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
@@ -2546,10 +2547,16 @@ class PosCheckoutRepository {
   }
 
   bool _isInterStateSupply(PosInvoiceModel invoice) {
-    final shopState = invoice.shopStateCode.trim();
-    final customerState = invoice.customerStateCode.trim();
-    if (shopState.isEmpty || customerState.isEmpty) return false;
-    return shopState != customerState;
+    final jurisdiction = GstJurisdictionResolver.resolve(
+      shopGstin: invoice.shopGstin,
+      shopStateCode: invoice.shopStateCode,
+      shopStateName: invoice.shopAddress,
+      customerGstin: invoice.customerGstin,
+      customerStateCode: invoice.customerStateCode,
+      customerStateName: invoice.customerCity,
+      placeOfSupply: invoice.placeOfSupply,
+    );
+    return jurisdiction.isResolved && jurisdiction.isInterState;
   }
 
   String _resolvePaymentStatus(_PosInvoiceMoneySnapshot money) {

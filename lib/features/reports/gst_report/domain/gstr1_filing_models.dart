@@ -89,9 +89,8 @@ class Gstr1FilingSnapshot {
       final place = invoice.placeOfSupply.trim().isEmpty
           ? 'Place of supply pending'
           : invoice.placeOfSupply.trim();
-      final supplyType = invoice.igstAmount.abs() > 0.005
-          ? 'Inter-State'
-          : 'Intra-State';
+      final supplyType =
+          invoice.supplyType == 'INTER_STATE' ? 'Inter-State' : 'Intra-State';
       final key = '$place|$supplyType|${rate.toStringAsFixed(2)}';
       final acc = accumulators.putIfAbsent(
         key,
@@ -121,7 +120,8 @@ class Gstr1FilingSnapshot {
     List<GstInvoiceRow> invoices,
   ) {
     if (invoices.isEmpty) return const [];
-    final sorted = [...invoices]..sort((a, b) => a.invoiceNo.compareTo(b.invoiceNo));
+    final sorted = [...invoices]
+      ..sort((a, b) => a.invoiceNo.compareTo(b.invoiceNo));
     return [
       Gstr1DocumentSummaryRow(
         documentType: 'Tax Invoice',
@@ -202,6 +202,10 @@ class Gstr1FilingSnapshot {
   }) {
     if (invoice.isB2B) return false;
     if (invoice.invoiceValue <= _b2cLargeThreshold(period)) return false;
+    if (invoice.placeOfSupplyStateCode.isNotEmpty &&
+        invoice.shopStateCode.isNotEmpty) {
+      return invoice.placeOfSupplyStateCode != invoice.shopStateCode;
+    }
     final place = _normalize(invoice.placeOfSupply);
     final shopState = _normalize(identity.stateName);
     if (place.isEmpty || shopState.isEmpty) return false;

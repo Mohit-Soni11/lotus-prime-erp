@@ -1,16 +1,18 @@
 import 'package:drift/drift.dart';
 
+import '../../../../core/tax/gst_jurisdiction.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../database/db/app_database.dart';
 import '../../../../models/setting/tax_gst/hsn_code_model.dart';
 import '../domain/gst_filing_period.dart';
+import '../domain/gst_quarter_filing_ledger.dart';
 import '../domain/gst_report_models.dart';
 
 class GstReportRepository {
   GstReportRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   final AppDatabase _db;
-  static const double _defaultInclusiveGstRate = 0.03;
+  static const double _defaultInclusiveGstRatePercent = 3.0;
 
   Future<GstReportSnapshot> fetch(GstReportPeriod period) async {
     try {
@@ -80,6 +82,11 @@ class GstReportRepository {
         task_key,
         amount_snapshot,
         invoice_count_snapshot,
+        COALESCE(portal_reference, '') AS portal_reference,
+        COALESCE(cpin, '') AS cpin,
+        COALESCE(cin, '') AS cin,
+        COALESCE(payment_mode, '') AS payment_mode,
+        COALESCE(notes, '') AS notes,
         completed,
         completed_at
       FROM gst_filing_workflow_statuses
@@ -105,6 +112,11 @@ class GstReportRepository {
         quarterLabel: row.read<String>('quarter_label'),
         amountSnapshot: _readDouble(row, 'amount_snapshot'),
         invoiceCountSnapshot: row.read<int>('invoice_count_snapshot'),
+        portalReference: row.read<String>('portal_reference'),
+        cpin: row.read<String>('cpin'),
+        cin: row.read<String>('cin'),
+        paymentMode: row.read<String>('payment_mode'),
+        notes: row.read<String>('notes'),
         completed: row.read<int>('completed') == 1,
         completedAt:
             _parseNullableDate(row.readNullable<String>('completed_at')),
@@ -136,12 +148,78 @@ class GstReportRepository {
     );
   }
 
+  Future<GstQuarterFilingLedger> fetchQuarterFilingLedger(
+    GstReportPeriod period,
+  ) async {
+    final filing = GstFilingPeriod.fromMonth(period.month);
+    final monthLedgers = <GstQuarterFilingMonthLedger>[];
+
+    for (final month in filing.quarterMonths) {
+      final monthPeriod = GstReportPeriod.forMonth(month);
+      final monthSnapshot = await fetch(monthPeriod);
+      final workflow = await fetchFilingWorkflowSnapshot(monthPeriod);
+      monthLedgers.add(
+        GstQuarterFilingMonthLedger(
+          filing: GstFilingPeriod.fromMonth(month),
+          taxLiability: monthSnapshot.dashboard.outputGstLiability,
+          invoiceCount: monthSnapshot.dashboard.gstInvoiceCount,
+          b2bInvoiceCount: monthSnapshot.gstr1B2bInvoices.length,
+          b2bTaxLiability: _sum(
+            monthSnapshot.gstr1B2bInvoices,
+            (row) => row.gstAmount,
+          ),
+          b2cInvoiceCount: monthSnapshot.gstr1B2cInvoices.length,
+          b2cTaxLiability: _sum(
+            monthSnapshot.gstr1B2cInvoices,
+            (row) => row.gstAmount,
+          ),
+          monthlyPaymentStatus:
+              workflow.statusFor(GstFilingTask.monthlyTaxPayment),
+          b2bIffStatus: workflow.statusFor(GstFilingTask.b2bIffUpload),
+          b2bReturnStatus: workflow.statusFor(GstFilingTask.b2bReturnFiled),
+          b2cReturnStatus: workflow.statusFor(GstFilingTask.b2cReturnFiled),
+        ),
+      );
+    }
+
+    final quarterSnapshot = await fetch(
+      GstReportPeriod(
+        startDate: filing.quarterStartMonth,
+        endDate: DateTime(
+          filing.quarterEndMonth.year,
+          filing.quarterEndMonth.month + 1,
+          0,
+          23,
+          59,
+          59,
+        ),
+      ),
+    );
+    final quarterWorkflow = await fetchFilingWorkflowSnapshot(
+      GstReportPeriod.forMonth(filing.quarterEndMonth),
+    );
+
+    return GstQuarterFilingLedger(
+      filing: filing,
+      months: monthLedgers,
+      quarterReturnStatus:
+          quarterWorkflow.statusFor(GstFilingTask.quarterReturnFiled),
+      quarterTaxLiability: quarterSnapshot.dashboard.outputGstLiability,
+      quarterInvoiceCount: quarterSnapshot.dashboard.gstInvoiceCount,
+    );
+  }
+
   Future<void> setFilingTaskCompletion({
     required GstReportPeriod period,
     required GstFilingTask task,
     required bool completed,
     required double amountSnapshot,
     required int invoiceCountSnapshot,
+    String portalReference = '',
+    String cpin = '',
+    String cin = '',
+    String paymentMode = '',
+    String notes = '',
   }) async {
     await _db.ensureGstFilingWorkflowSchema();
     final filing = GstFilingPeriod.fromMonth(period.month);
@@ -162,17 +240,27 @@ class GstReportRepository {
         segment,
         amount_snapshot,
         invoice_count_snapshot,
+        portal_reference,
+        cpin,
+        cin,
+        payment_mode,
+        notes,
         completed,
         completed_at,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(period_month, task_key, segment) DO UPDATE SET
         financial_year = excluded.financial_year,
         quarter_key = excluded.quarter_key,
         quarter_label = excluded.quarter_label,
         amount_snapshot = excluded.amount_snapshot,
         invoice_count_snapshot = excluded.invoice_count_snapshot,
+        portal_reference = excluded.portal_reference,
+        cpin = excluded.cpin,
+        cin = excluded.cin,
+        payment_mode = excluded.payment_mode,
+        notes = excluded.notes,
         completed = excluded.completed,
         completed_at = excluded.completed_at,
         updated_at = excluded.updated_at
@@ -186,6 +274,11 @@ class GstReportRepository {
         task.segmentKey,
         amountSnapshot,
         invoiceCountSnapshot,
+        _nullableText(portalReference),
+        _nullableText(cpin),
+        _nullableText(cin),
+        _nullableText(paymentMode),
+        _nullableText(notes),
         completed ? 1 : 0,
         completedAt,
         now,
@@ -212,8 +305,12 @@ class GstReportRepository {
         taxConfig?.stateCode,
         _stateCodeFromGstin(taxConfig?.gstin),
         _stateCodeFromGstin(shop?.gstin),
+        GstJurisdictionResolver.stateCodeFromText(shop?.state),
       ]),
-      stateName: shop?.state ?? '',
+      stateName: _firstText([
+        GstJurisdictionResolver.stateNameFromText(shop?.state),
+        shop?.state,
+      ]),
     );
   }
 
@@ -237,8 +334,16 @@ class GstReportRepository {
         COALESCE(
           NULLIF(TRIM(b.place_of_supply_snapshot), ''),
           NULLIF(TRIM(c.state), ''),
+          NULLIF(TRIM(c.city), ''),
           ''
         ) AS place_of_supply,
+        COALESCE(
+          NULLIF(TRIM(b.customer_state_code_snapshot), ''),
+          ''
+        ) AS customer_state_code,
+        COALESCE(NULLIF(TRIM(c.state), ''), '') AS customer_state_name,
+        COALESCE(NULLIF(TRIM(b.shop_state_code_snapshot), ''), '') AS shop_state_code,
+        COALESCE(NULLIF(TRIM(b.shop_gstin_snapshot), ''), '') AS shop_gstin,
         COALESCE(b.bill_type, '') AS bill_type,
         COALESCE(b.document_type, 'TAX_INVOICE') AS document_type,
         COALESCE(b.gst_pricing_mode, 'GST_EXCLUSIVE') AS gst_pricing_mode,
@@ -248,6 +353,17 @@ class GstReportRepository {
         COALESCE(b.sgst_amount, 0.0) AS sgst_amount,
         COALESCE(b.igst_amount, 0.0) AS igst_amount,
         COALESCE(b.gst_amount, 0.0) AS gst_amount,
+        COALESCE((
+          SELECT SUM(
+            COALESCE(i.item_total, 0.0) *
+            (
+              COALESCE(NULLIF(i.gst_rate_snapshot, 0.0), $_defaultInclusiveGstRatePercent) /
+              (100.0 + COALESCE(NULLIF(i.gst_rate_snapshot, 0.0), $_defaultInclusiveGstRatePercent))
+            )
+          )
+          FROM bill_items i
+          WHERE i.bill_id = b.id
+        ), 0.0) AS legacy_inclusive_gst,
         COALESCE(b.round_off_amount, 0.0) AS round_off_amount,
         COALESCE(b.final_amount, 0.0) AS final_amount
       FROM bills b
@@ -282,32 +398,62 @@ class GstReportRepository {
       final rawPricingMode = row.read<String>('gst_pricing_mode');
       final legacyInclusive = storedGst <= 0.005 && grossFallback > 0.005;
       final pricingMode = legacyInclusive ? 'GST_INCLUSIVE' : rawPricingMode;
+      final itemRateInclusiveGst = _readDouble(row, 'legacy_inclusive_gst');
       final computedGst = legacyInclusive
-          ? _roundMoney(grossFallback * _defaultInclusiveGstRate /
-              (1 + _defaultInclusiveGstRate))
+          ? _roundMoney(
+              itemRateInclusiveGst > 0.005
+                  ? itemRateInclusiveGst
+                  : grossFallback *
+                      _defaultInclusiveGstRatePercent /
+                      (100 + _defaultInclusiveGstRatePercent),
+            )
           : storedGst;
       final computedTaxable = legacyInclusive
           ? _roundMoney(grossFallback - computedGst)
           : storedTaxable;
       final storedIgst = _readDouble(row, 'igst_amount');
+      final customerGstin = row.read<String>('customer_gstin');
+      final customerStateCode = row.read<String>('customer_state_code');
+      final customerStateName = row.read<String>('customer_state_name');
+      final rawPlaceOfSupply = row.read<String>('place_of_supply');
+      final jurisdiction = GstJurisdictionResolver.resolve(
+        shopGstin: _firstText([row.read<String>('shop_gstin'), identity.gstin]),
+        shopStateCode: _firstText([
+          row.read<String>('shop_state_code'),
+          identity.stateCode,
+        ]),
+        shopStateName: identity.stateName,
+        customerGstin: customerGstin,
+        customerStateCode: customerStateCode,
+        customerStateName: customerStateName,
+        placeOfSupply: rawPlaceOfSupply,
+      );
       final split = _normalizedTaxSplit(
         totalGst: computedGst,
         cgst: _readDouble(row, 'cgst_amount'),
         sgst: _readDouble(row, 'sgst_amount'),
         igst: storedIgst,
+        jurisdiction: jurisdiction,
       );
       final effectiveGst = _roundMoney(split.cgst + split.sgst + split.igst);
-      final invoiceValue = legacyInclusive
-          ? grossFallback
-          : _readDouble(row, 'final_amount');
+      final invoiceValue =
+          legacyInclusive ? grossFallback : _readDouble(row, 'final_amount');
+      final placeOfSupply = _firstText([
+        jurisdiction.placeOfSupplyName,
+        rawPlaceOfSupply,
+      ]);
 
       return GstInvoiceRow(
         billId: row.read<int>('id'),
         invoiceNo: row.read<String>('bill_no'),
         invoiceDate: row.read<DateTime>('bill_date'),
         customerName: row.read<String>('customer_name'),
-        customerGstin: row.read<String>('customer_gstin'),
-        placeOfSupply: row.read<String>('place_of_supply'),
+        customerGstin: customerGstin,
+        placeOfSupply: placeOfSupply,
+        customerStateCode: customerStateCode,
+        placeOfSupplyStateCode: jurisdiction.placeOfSupplyStateCode,
+        shopStateCode: jurisdiction.shopStateCode,
+        supplyType: jurisdiction.supplyType,
         billType: row.read<String>('bill_type'),
         documentType: row.read<String>('document_type'),
         gstPricingMode: pricingMode,
@@ -397,6 +543,14 @@ class GstReportRepository {
         igst: _readDouble(row, 'igst_snapshot').abs() > 0.005
             ? _readDouble(row, 'igst_snapshot')
             : invoice.igstAmount * ratio,
+        jurisdiction: GstJurisdiction(
+          shopStateCode: invoice.shopStateCode,
+          placeOfSupplyStateCode: invoice.placeOfSupplyStateCode,
+          placeOfSupplyName: invoice.placeOfSupply,
+          isInterState: invoice.supplyType == 'INTER_STATE',
+          isResolved: invoice.shopStateCode.isNotEmpty &&
+              invoice.placeOfSupplyStateCode.isNotEmpty,
+        ),
       );
       final gstRateSnapshot = _readDouble(row, 'gst_rate_snapshot');
       final gstRate = gstRateSnapshot.abs() > 0.005
@@ -550,15 +704,46 @@ class GstReportRepository {
     required List<GstHsnSummaryRow> hsnRows,
   }) {
     final findings = <GstAuditFinding>[];
-    if (identity.gstin.trim().isEmpty) {
+    final shopGstin = GstJurisdictionResolver.validateGstin(identity.gstin);
+    if (shopGstin.isEmpty) {
       findings.add(const GstAuditFinding(
         severity: GstAuditSeverity.critical,
         title: 'Shop GSTIN Missing',
         message: 'Configure shop GSTIN before preparing GST returns.',
       ));
+    } else if (!shopGstin.isValidFormat) {
+      findings.add(const GstAuditFinding(
+        severity: GstAuditSeverity.critical,
+        title: 'Invalid Shop GSTIN',
+        message: 'Shop GSTIN must be a valid 15-character GSTIN.',
+      ));
+    }
+    if (shopGstin.stateCode.isNotEmpty &&
+        identity.stateCode.isNotEmpty &&
+        shopGstin.stateCode != identity.stateCode) {
+      findings.add(GstAuditFinding(
+        severity: GstAuditSeverity.critical,
+        title: 'Shop State Code Mismatch',
+        message:
+            'GSTIN state ${shopGstin.stateCode} does not match configured state ${identity.stateCode}.',
+      ));
+    }
+    final configuredStateCode =
+        GstJurisdictionResolver.stateCodeFromText(identity.stateName);
+    if (configuredStateCode.isNotEmpty &&
+        identity.stateCode.isNotEmpty &&
+        configuredStateCode != identity.stateCode) {
+      findings.add(GstAuditFinding(
+        severity: GstAuditSeverity.critical,
+        title: 'Shop State Name Mismatch',
+        message:
+            'Configured state ${identity.stateName} maps to $configuredStateCode, but the saved state code is ${identity.stateCode}.',
+      ));
     }
     for (final invoice in invoices) {
-      if (invoice.isB2B && invoice.customerGstin.length != 15) {
+      final customerGstin =
+          GstJurisdictionResolver.validateGstin(invoice.customerGstin);
+      if (invoice.isB2B && !customerGstin.isValidFormat) {
         findings.add(GstAuditFinding(
           severity: GstAuditSeverity.critical,
           title: 'Invalid Customer GSTIN',
@@ -566,11 +751,23 @@ class GstReportRepository {
           invoiceNo: invoice.invoiceNo,
         ));
       }
-      if (invoice.placeOfSupply.trim().isEmpty) {
+      if (invoice.placeOfSupplyStateCode.trim().isEmpty) {
         findings.add(GstAuditFinding(
           severity: GstAuditSeverity.warning,
           title: 'Place of Supply Missing',
-          message: 'Set place of supply for accurate CGST/SGST/IGST filing.',
+          message:
+              'Set customer state or GSTIN so CGST/SGST/IGST can be classified correctly.',
+          invoiceNo: invoice.invoiceNo,
+        ));
+      }
+      if (customerGstin.stateCode.isNotEmpty &&
+          invoice.placeOfSupplyStateCode.isNotEmpty &&
+          customerGstin.stateCode != invoice.placeOfSupplyStateCode) {
+        findings.add(GstAuditFinding(
+          severity: GstAuditSeverity.warning,
+          title: 'GSTIN State And Place Of Supply Differ',
+          message:
+              'Customer GSTIN state ${customerGstin.stateCode} differs from place of supply ${invoice.placeOfSupplyStateCode}. Verify delivery state before filing.',
           invoiceNo: invoice.invoiceNo,
         ));
       }
@@ -598,6 +795,31 @@ class GstReportRepository {
           severity: GstAuditSeverity.critical,
           title: 'GST Split Mismatch',
           message: 'CGST, SGST and IGST do not match recorded GST total.',
+          invoiceNo: invoice.invoiceNo,
+        ));
+      }
+      if (invoice.placeOfSupplyStateCode.isNotEmpty &&
+          invoice.shopStateCode.isNotEmpty &&
+          invoice.shopStateCode != invoice.placeOfSupplyStateCode &&
+          invoice.igstAmount <= 0.005 &&
+          invoice.gstAmount > 0.005) {
+        findings.add(GstAuditFinding(
+          severity: GstAuditSeverity.critical,
+          title: 'IGST Required',
+          message:
+              'Inter-state supply must be reported under IGST, not CGST/SGST.',
+          invoiceNo: invoice.invoiceNo,
+        ));
+      }
+      if (invoice.placeOfSupplyStateCode.isNotEmpty &&
+          invoice.shopStateCode.isNotEmpty &&
+          invoice.shopStateCode == invoice.placeOfSupplyStateCode &&
+          invoice.igstAmount > 0.005) {
+        findings.add(GstAuditFinding(
+          severity: GstAuditSeverity.critical,
+          title: 'CGST/SGST Required',
+          message:
+              'Intra-state supply must be reported under CGST and SGST, not IGST.',
           invoiceNo: invoice.invoiceNo,
         ));
       }
@@ -637,14 +859,16 @@ class GstReportRepository {
     required double cgst,
     required double sgst,
     required double igst,
+    required GstJurisdiction jurisdiction,
   }) {
-    final roundedTotal = _roundMoney(totalGst);
-    final roundedIgst = _roundMoney(igst);
-    if (roundedIgst.abs() > 0.005) {
-      return _TaxSplit(cgst: 0, sgst: 0, igst: roundedTotal);
-    }
-    final half = _roundMoney(roundedTotal / 2);
-    return _TaxSplit(cgst: half, sgst: half, igst: 0);
+    final split = GstJurisdictionResolver.splitOutputTax(
+      totalGst: totalGst,
+      jurisdiction: jurisdiction,
+      storedCgst: cgst,
+      storedSgst: sgst,
+      storedIgst: igst,
+    );
+    return _TaxSplit(cgst: split.cgst, sgst: split.sgst, igst: split.igst);
   }
 
   double _allocationRatio(double itemTotal, double invoiceTaxable) {
@@ -723,11 +947,13 @@ class GstReportRepository {
     return fallback;
   }
 
+  String? _nullableText(String value) {
+    final clean = value.trim();
+    return clean.isEmpty ? null : clean;
+  }
+
   String _stateCodeFromGstin(String? gstin) {
-    final normalized = gstin?.trim().toUpperCase() ?? '';
-    if (normalized.length < 2) return '';
-    final code = normalized.substring(0, 2);
-    return RegExp(r'^\d{2}$').hasMatch(code) ? code : '';
+    return GstJurisdictionResolver.stateCodeFromGstin(gstin);
   }
 }
 

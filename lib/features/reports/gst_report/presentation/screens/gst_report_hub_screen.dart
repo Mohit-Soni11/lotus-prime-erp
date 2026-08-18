@@ -8,6 +8,7 @@ import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
 import '../widgets/gst_filing_completion_dialog.dart';
 import '../widgets/gst_filing_segment_card.dart';
+import '../widgets/gst_quarter_filing_ledger_panel.dart';
 import '../widgets/gst_report_app_bar.dart';
 import '../widgets/gst_report_period_selector.dart';
 import 'gst_report_screen.dart';
@@ -93,6 +94,13 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
                       onCompleteSegmentFiling: _confirmSegmentCompletion,
                       onSegmentSelected: _openSegmentWorkspace,
                     ),
+                    if (_controller.quarterLedger != null) ...[
+                      const SizedBox(height: 18),
+                      GstQuarterFilingLedgerPanel(
+                        ledger: _controller.quarterLedger!,
+                        stateCode: snapshot.identity.stateCode,
+                      ),
+                    ],
                   ],
                 ),
               ),
