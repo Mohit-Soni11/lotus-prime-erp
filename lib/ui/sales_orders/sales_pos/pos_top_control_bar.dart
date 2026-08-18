@@ -27,7 +27,6 @@ class PosTopControlBar extends StatelessWidget {
       listenable: ctrl,
       builder: (context, _) {
         final bool isRetail = ctrl.billingMode == BillingMode.retail;
-        final bool isGstOn = ctrl.billType == BillType.gst;
         final bool isGstInclusive =
             ctrl.gstPricingMode == GstPricingMode.inclusive;
 
@@ -59,54 +58,59 @@ class PosTopControlBar extends StatelessWidget {
                   // HEADING ROW
                   //
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // LEFT PART: Lines and Titles
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _accentLine(20, 1.0),
-                              const SizedBox(height: 3),
-                              _accentLine(13, 0.45),
-                              const SizedBox(height: 3),
-                              _accentLine(7, 0.18),
-                            ],
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "INVOICE PREFERENCES",
-                                style: SalesPosStyles.highVisHeader,
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _accentLine(20, 1.0),
+                                const SizedBox(height: 3),
+                                _accentLine(13, 0.45),
+                                const SizedBox(height: 3),
+                                _accentLine(7, 0.18),
+                              ],
+                            ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "INVOICE PREFERENCES",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: SalesPosStyles.highVisHeader,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  AnimatedDefaultTextStyle(
+                                    duration: const Duration(milliseconds: 260),
+                                    style: const TextStyle(
+                                      fontSize: SalesPosStyles.fontCaption,
+                                      fontWeight: FontWeight.bold,
+                                      color: SalesPosColors.success,
+                                    ),
+                                    child: Text(
+                                      "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}    Tax Invoice",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              AnimatedDefaultTextStyle(
-                                duration: const Duration(milliseconds: 260),
-                                style: TextStyle(
-                                  fontSize: SalesPosStyles.fontCaption,
-                                  fontWeight: FontWeight.bold,
-                                  color: isGstOn
-                                      ? SalesPosColors.success
-                                      : SalesPosColors.bodyTextMuted,
-                                ),
-                                child: Text(
-                                  "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}    ${isGstOn ? 'GST Invoice' : 'Sales Invoice'}",
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
 
-                      const SizedBox(width: 40),
+                      const SizedBox(width: 12),
 
                       // RIGHT PART: Status pill (Badge)
                       AnimatedContainer(
@@ -114,14 +118,11 @@ class PosTopControlBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isGstOn
-                              ? SalesPosColors.success.withValues(alpha: 0.07)
-                              : SalesPosColors.bodyBg,
+                          color: SalesPosColors.success.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isGstOn
-                                ? SalesPosColors.success.withValues(alpha: 0.35)
-                                : SalesPosColors.bodyBorder,
+                            color:
+                                SalesPosColors.success.withValues(alpha: 0.35),
                           ),
                         ),
                         child: Row(
@@ -131,25 +132,25 @@ class PosTopControlBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 260),
                               width: 6,
                               height: 6,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isGstOn
-                                    ? SalesPosColors.success
-                                    : SalesPosColors.textDark,
+                                color: SalesPosColors.success,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            AnimatedDefaultTextStyle(
-                              duration: const Duration(milliseconds: 260),
+                            const AnimatedDefaultTextStyle(
+                              duration: Duration(milliseconds: 260),
                               style: TextStyle(
                                 fontSize: SalesPosStyles.fontCaption,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0,
-                                color: isGstOn
-                                    ? SalesPosColors.success
-                                    : SalesPosColors.textDark,
+                                color: SalesPosColors.success,
                               ),
-                              child: Text(isGstOn ? "GST ACTIVE" : "NORMAL"),
+                              child: Text(
+                                "GST ACTIVE",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -208,158 +209,44 @@ class PosTopControlBar extends StatelessWidget {
 
                       const SizedBox(width: 16),
 
-                      // --- BILL TYPE (NORMAL / GST) ---
-                      InkWell(
-                        onTap: () {
-                          ctrl.toggleBillType(
-                            isGstOn ? BillType.normal : BillType.gst,
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(10),
-                        splashColor:
-                            SalesPosColors.success.withValues(alpha: 0.06),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 260),
-                          height: 52,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: isGstOn
-                                ? SalesPosColors.success.withValues(alpha: 0.05)
-                                : SalesPosColors.bodyPanelBg,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isGstOn
-                                  ? SalesPosColors.success
-                                      .withValues(alpha: 0.40)
-                                  : SalesPosColors.bodyBorder,
-                              width: isGstOn ? 1.5 : 1.0,
+                      // --- GST PRICING MODE ---
+                      Container(
+                        height: 52,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: SalesPosColors.bodyBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: SalesPosColors.bodyBorder),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: SalesPosColors.shadowLight,
+                              blurRadius: 4,
+                              offset: Offset(0, 1),
                             ),
-                            boxShadow: isGstOn
-                                ? [
-                                    BoxShadow(
-                                      color: SalesPosColors.success
-                                          .withValues(alpha: 0.12),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ]
-                                : const [
-                                    BoxShadow(
-                                      color: SalesPosColors.shadowLight,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 1),
-                                    ),
-                                  ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "TAX STATUS",
-                                    style: TextStyle(
-                                      fontSize: SalesPosStyles.fontCaption,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 0,
-                                      color: SalesPosColors.textDark,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    child: Text(
-                                      isGstOn ? "GST INVOICE" : "NORMAL",
-                                      key: ValueKey(isGstOn),
-                                      style: TextStyle(
-                                        fontSize: SalesPosStyles.fontInput,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 0,
-                                        color: isGstOn
-                                            ? SalesPosColors.success
-                                            : SalesPosColors.textDark,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildPricingTab(
+                              title: 'EXCLUSIVE',
+                              subtitle: '+ GST',
+                              isActive: !isGstInclusive,
+                              onTap: () => ctrl.toggleGstPricingMode(
+                                GstPricingMode.exclusive,
                               ),
-                              const SizedBox(width: 24),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  _buildToggleLabel(
-                                    label: "NRM",
-                                    isActive: !isGstOn,
-                                    activeColor: SalesPosColors.textDark,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    isGstOn
-                                        ? SalesPosIcons.gstToggleOn
-                                        : SalesPosIcons.gstToggleOff,
-                                    color: isGstOn
-                                        ? SalesPosColors.success
-                                        : SalesPosColors.bodyTextMuted,
-                                    size: 36,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  _buildToggleLabel(
-                                    label: "TAX",
-                                    isActive: isGstOn,
-                                    activeColor: SalesPosColors.success,
-                                  ),
-                                ],
+                            ),
+                            _buildPricingTab(
+                              title: 'INCLUSIVE',
+                              subtitle: 'GST inside',
+                              isActive: isGstInclusive,
+                              onTap: () => ctrl.toggleGstPricingMode(
+                                GstPricingMode.inclusive,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-
-                      if (isGstOn) ...[
-                        const SizedBox(width: 16),
-                        Container(
-                          height: 52,
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: SalesPosColors.bodyBg,
-                            borderRadius: BorderRadius.circular(10),
-                            border:
-                                Border.all(color: SalesPosColors.bodyBorder),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: SalesPosColors.shadowLight,
-                                blurRadius: 4,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildPricingTab(
-                                title: 'EXCLUSIVE',
-                                subtitle: '+ GST',
-                                isActive: !isGstInclusive,
-                                onTap: () => ctrl.toggleGstPricingMode(
-                                  GstPricingMode.exclusive,
-                                ),
-                              ),
-                              _buildPricingTab(
-                                title: 'INCLUSIVE',
-                                subtitle: 'GST inside',
-                                isActive: isGstInclusive,
-                                onTap: () => ctrl.toggleGstPricingMode(
-                                  GstPricingMode.inclusive,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ],
@@ -410,7 +297,7 @@ class PosTopControlBar extends StatelessWidget {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
@@ -422,36 +309,27 @@ class PosTopControlBar extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              Text(
-                title,
-                style: TextStyle(
-                  color: SalesPosColors.textDark,
-                  fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
-                  fontSize: SalesPosStyles.fontLabel,
-                  letterSpacing: 0,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: SalesPosColors.textDark,
+                      fontWeight: isActive ? FontWeight.w900 : FontWeight.w700,
+                      fontSize: SalesPosStyles.fontLabel,
+                      height: 1,
+                      letterSpacing: 0,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildToggleLabel({
-    required String label,
-    required bool isActive,
-    required Color activeColor,
-  }) {
-    return AnimatedDefaultTextStyle(
-      duration: const Duration(milliseconds: 220),
-      style: TextStyle(
-        fontSize: SalesPosStyles.fontCaption,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0,
-        color: isActive ? activeColor : SalesPosColors.bodyTextMuted,
-      ),
-      child: Text(label),
     );
   }
 
@@ -463,12 +341,13 @@ class PosTopControlBar extends StatelessWidget {
   }) {
     return SizedBox(
       width: 122,
+      height: 44,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(7),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: isActive
                 ? SalesPosColors.success.withValues(alpha: 0.10)
@@ -480,36 +359,42 @@ class PosTopControlBar extends StatelessWidget {
                   : Colors.transparent,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isActive
-                      ? SalesPosColors.success
-                      : SalesPosColors.textDark,
-                  fontWeight: FontWeight.w900,
-                  fontSize: SalesPosStyles.fontCaption,
-                  letterSpacing: 0,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isActive
+                        ? SalesPosColors.success
+                        : SalesPosColors.textDark,
+                    fontWeight: FontWeight.w900,
+                    fontSize: SalesPosStyles.fontCaption,
+                    height: 1,
+                    letterSpacing: 0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: SalesPosColors.bodyTextMuted,
-                  fontWeight: FontWeight.w800,
-                  fontSize: SalesPosStyles.fontCaption,
-                  letterSpacing: 0,
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: SalesPosColors.bodyTextMuted,
+                    fontWeight: FontWeight.w800,
+                    fontSize: SalesPosStyles.fontCaption,
+                    height: 1,
+                    letterSpacing: 0,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

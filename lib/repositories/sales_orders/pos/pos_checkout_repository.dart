@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_money_math.dart';
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
@@ -82,7 +83,10 @@ class PosCheckoutRepository {
       final resolved = await _resolveInvoiceNumber(
         invoicePrefix: _invoicePrefixFromBillNo(invoice.invoiceNumber),
         shopInitials: _shopInitialsFromBillNo(invoice.invoiceNumber),
-        financialYear: _financialYearFromBillNo(invoice.invoiceNumber),
+        financialYear: _financialYearFromBillNo(
+          invoice.invoiceNumber,
+          invoice.invoiceDate,
+        ),
         preferredInvoiceNumber: invoice.invoiceNumber,
       );
       final money = _moneySnapshot(invoice);
@@ -113,7 +117,7 @@ class PosCheckoutRepository {
               shopGstinSnapshot: Value(_nullable(invoice.shopGstin)),
               shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
               billingMode: Value(_dbBillingMode(invoice.billingMode)),
-              billType: Value(_dbBillType(invoice.billType)),
+              billType: const Value('GST'),
               documentType: Value(invoice.documentType.storageValue),
               gstPricingMode: Value(invoice.gstPricingMode.storageValue),
               taxTreatment: const Value('TAXABLE_SUPPLY'),
@@ -313,7 +317,7 @@ class PosCheckoutRepository {
       await (_db.update(_db.bills)..where((tbl) => tbl.id.equals(billId)))
           .write(
         BillsCompanion(
-          billNo: Value(invoice.invoiceNumber),
+          billNo: Value(existingBill.billNo),
           customerId: Value(customerId),
           customerName: Value(
             invoice.customerName.trim().isNotEmpty
@@ -336,7 +340,7 @@ class PosCheckoutRepository {
           shopGstinSnapshot: Value(_nullable(invoice.shopGstin)),
           shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
           billingMode: Value(_dbBillingMode(invoice.billingMode)),
-          billType: Value(_dbBillType(invoice.billType)),
+          billType: const Value('GST'),
           documentType: Value(invoice.documentType.storageValue),
           gstPricingMode: Value(invoice.gstPricingMode.storageValue),
           taxTreatment: const Value('TAXABLE_SUPPLY'),
@@ -451,20 +455,20 @@ class PosCheckoutRepository {
       await _consumeLinkedStock(
         invoice.saleItems,
         sourceId: billId.toString(),
-        sourceNumber: invoice.invoiceNumber,
+        sourceNumber: existingBill.billNo,
       );
       await _postSalePaymentLedgerEntries(
         invoice: invoice,
-        billNumber: invoice.invoiceNumber,
+        billNumber: existingBill.billNo,
       );
       await _postCustomerAccountCreditEntry(
         invoice: invoice,
-        billNumber: invoice.invoiceNumber,
+        billNumber: existingBill.billNo,
         customerId: customerId,
       );
       await _postCustomerChangeReturnFinanceEntries(
         invoice: invoice,
-        billNumber: invoice.invoiceNumber,
+        billNumber: existingBill.billNo,
       );
     });
   }
@@ -2385,29 +2389,35 @@ class PosCheckoutRepository {
     required String financialYear,
     String? preferredInvoiceNumber,
   }) async {
-    final pattern = _invoicePattern(
-      invoicePrefix: invoicePrefix,
-      shopInitials: shopInitials,
-      financialYear: financialYear,
-    );
+    final normalizedCode =
+        PosInvoiceSeriesFormatter.normalizeBusinessCode(shopInitials);
+    final normalizedYear =
+        PosInvoiceSeriesFormatter.normalizeFinancialYearToken(financialYear);
     final bills = await _db.select(_db.bills).get();
 
     if (preferredInvoiceNumber != null &&
         !_billNumberExists(bills, preferredInvoiceNumber)) {
-      final preferredSequence = _parseSequence(preferredInvoiceNumber, pattern);
-      if (preferredSequence != null) {
+      final parsed = PosInvoiceSeriesFormatter.parse(preferredInvoiceNumber);
+      if (parsed != null &&
+          !parsed.isLegacy &&
+          parsed.businessCode == normalizedCode &&
+          parsed.financialYearToken == normalizedYear &&
+          parsed.sequence > 0) {
         return _ResolvedInvoiceNumber(
           billNumber: preferredInvoiceNumber,
-          sequence: preferredSequence,
+          sequence: parsed.sequence,
         );
       }
     }
 
     var maxSequence = 0;
     for (final bill in bills) {
-      final parsedSequence = _parseSequence(bill.billNo, pattern);
-      if (parsedSequence != null && parsedSequence > maxSequence) {
-        maxSequence = parsedSequence;
+      final parsed = PosInvoiceSeriesFormatter.parse(bill.billNo);
+      if (parsed != null &&
+          parsed.businessCode == normalizedCode &&
+          parsed.financialYearToken == normalizedYear &&
+          parsed.sequence > maxSequence) {
+        maxSequence = parsed.sequence;
       }
     }
 
@@ -2415,8 +2425,8 @@ class PosCheckoutRepository {
     return _ResolvedInvoiceNumber(
       billNumber: _buildBillNumber(
         invoicePrefix: invoicePrefix,
-        shopInitials: shopInitials,
-        financialYear: financialYear,
+        shopInitials: normalizedCode,
+        financialYear: normalizedYear,
         sequence: nextSequence,
       ),
       sequence: nextSequence,
@@ -2427,46 +2437,30 @@ class PosCheckoutRepository {
     return bills.any((bill) => bill.billNo == billNumber);
   }
 
-  RegExp _invoicePattern({
-    required String invoicePrefix,
-    required String shopInitials,
-    required String financialYear,
-  }) {
-    return RegExp(
-      '^${RegExp.escape(invoicePrefix)}-${RegExp.escape(shopInitials)}-${RegExp.escape(financialYear)}-(\\d+)\$',
-    );
-  }
-
-  int? _parseSequence(String billNumber, RegExp pattern) {
-    final match = pattern.firstMatch(billNumber);
-    if (match == null) {
-      return null;
-    }
-    return int.tryParse(match.group(1) ?? '');
-  }
-
   String _buildBillNumber({
     required String invoicePrefix,
     required String shopInitials,
     required String financialYear,
     required int sequence,
   }) {
-    return '$invoicePrefix-$shopInitials-$financialYear-${sequence.toString().padLeft(4, '0')}';
+    return PosInvoiceSeriesFormatter.build(
+      businessCode: shopInitials,
+      financialYearToken: financialYear,
+      sequence: sequence,
+    );
   }
 
   String _invoicePrefixFromBillNo(String billNumber) {
-    final parts = billNumber.split('-');
-    return parts.isNotEmpty ? parts.first : 'INV';
+    return '';
   }
 
   String _shopInitialsFromBillNo(String billNumber) {
-    final parts = billNumber.split('-');
-    return parts.length > 1 ? parts[1] : 'SH';
+    return PosInvoiceSeriesFormatter.parse(billNumber)?.businessCode ?? 'SH';
   }
 
-  String _financialYearFromBillNo(String billNumber) {
-    final parts = billNumber.split('-');
-    return parts.length > 2 ? parts[2] : DateTime.now().year.toString();
+  String _financialYearFromBillNo(String billNumber, DateTime invoiceDate) {
+    return PosInvoiceSeriesFormatter.parse(billNumber)?.financialYearToken ??
+        PosInvoiceSeriesFormatter.financialYearToken(invoiceDate);
   }
 
   double _parseSafeNumber(String text) {
@@ -2574,10 +2568,6 @@ class PosCheckoutRepository {
 
   String _dbBillingMode(BillingMode mode) {
     return mode == BillingMode.retail ? 'RETAIL' : 'WHOLESALE';
-  }
-
-  String _dbBillType(BillType type) {
-    return type == BillType.gst ? 'GST' : 'NORMAL';
   }
 
   String _dbTradeInMode(TradeInAdjustMode mode) {

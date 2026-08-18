@@ -622,7 +622,7 @@ class PosInvoiceController extends ChangeNotifier {
     return PosInvoiceModel(
       invoiceNumber: billing.formattedInvoice,
       invoiceDate: billing.editingBillDate ?? DateTime.now(),
-      billType: billing.billType,
+      billType: BillType.gst,
       gstPricingMode: billing.gstPricingMode,
       documentType: SalesDocumentType.taxInvoice,
       billingMode: billing.billingMode,
@@ -838,15 +838,21 @@ class PosInvoiceController extends ChangeNotifier {
 
     final editingBillId = billing.editingBillId;
     if (editingBillId != null) {
+      final lockedBill = await (_db.select(_db.bills)
+            ..where((tbl) => tbl.id.equals(editingBillId)))
+          .getSingleOrNull();
+      final lockedInvoiceNumber = lockedBill?.billNo ?? inv.invoiceNumber;
       await _checkoutRepo.updateSale(
         billId: editingBillId,
         invoice: inv,
         customerId: billing.selectedCustomer?.id,
       );
       savedBillDbId = editingBillId;
-      invoice = inv;
+      invoice = lockedInvoiceNumber == inv.invoiceNumber
+          ? inv
+          : _copyInvoiceWithNumber(inv, lockedInvoiceNumber);
       await _syncPrintableInvoiceLinesFromDatabase();
-      billing.markCurrentSaleCommitted(inv.invoiceNumber);
+      billing.markCurrentSaleCommitted(lockedInvoiceNumber);
       isSavedToDb = true;
       return;
     }

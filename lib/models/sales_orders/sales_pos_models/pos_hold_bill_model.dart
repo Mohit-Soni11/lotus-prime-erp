@@ -159,10 +159,7 @@ class PosHoldBillModel {
   }
 
   static BillType _billTypeFromName(String name) {
-    return BillType.values.firstWhere(
-      (type) => type.name == name,
-      orElse: () => BillType.normal,
-    );
+    return BillType.gst;
   }
 
   static GstPricingMode _gstPricingModeFromName(String name) {

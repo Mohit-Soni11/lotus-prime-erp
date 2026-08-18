@@ -29,7 +29,7 @@ void main() {
   });
 
   test(
-    'counter dry-run cuts a non-GST cash bill and links customer, stock and PDF',
+    'counter dry-run cuts an inclusive tax invoice and links customer, stock and PDF',
     () async {
       final customerId = await _insertCustomer(db);
       final stockId = await _insertStockItem(
@@ -52,7 +52,8 @@ void main() {
       );
       final invoice = _invoice(
         invoiceNumber: 'INV-LJ-2026-0101',
-        billType: pos.BillType.normal,
+        billType: pos.BillType.gst,
+        gstPricingMode: pos.GstPricingMode.inclusive,
         customerName: 'Aarav Soni',
         customerMobile: '9304479436',
         saleItems: [saleItem],
@@ -72,8 +73,8 @@ void main() {
       final movements = await _stockMovementsFor(db, stockId);
       final pdfBytes = await _buildPdf(invoice);
 
-      expect(result.invoiceNumber, 'INV-LJ-2026-0101');
-      expect(bill.billType, 'NORMAL');
+      expect(result.invoiceNumber, 'LJ-26-001');
+      expect(bill.billType, 'GST');
       expect(bill.gstAmount, 0);
       expect(bill.paymentStatus, 'PAID');
       expect(bill.customerId, customerId);
@@ -148,7 +149,7 @@ void main() {
       final profile = await customerProfileRepository.fetchProfile(customerId);
       final pdfBytes = await _buildPdf(invoice);
 
-      expect(result.invoiceNumber, 'TAX-LJ-2026-0201');
+      expect(result.invoiceNumber, 'LJ-26-001');
       expect(bill.billType, 'GST');
       expect(bill.taxableAmount, saleItem.totalValue);
       expect(bill.cgstAmount, cgst);
@@ -299,6 +300,7 @@ SaleItemModel _stockSaleItem({
 PosInvoiceModel _invoice({
   required String invoiceNumber,
   required pos.BillType billType,
+  pos.GstPricingMode gstPricingMode = pos.GstPricingMode.exclusive,
   required String customerName,
   required String customerMobile,
   String customerGstin = '',
@@ -316,6 +318,7 @@ PosInvoiceModel _invoice({
     invoiceNumber: invoiceNumber,
     invoiceDate: DateTime(2026, 8, 9, 12),
     billType: billType,
+    gstPricingMode: gstPricingMode,
     billingMode: pos.BillingMode.retail,
     shopName: 'Lotus Jewellers',
     shopAddress: 'Patna, Bihar',

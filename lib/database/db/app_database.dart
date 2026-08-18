@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../config/db_config.dart';
 import '../../config/env_config.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_trade_in_items.dart';
@@ -208,6 +209,10 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  Future<void> ensureSalesInvoiceSeriesMigration() async {
+    await _ensureSalesInvoiceSeriesMigrationInternal();
+  }
+
   Future<void> _ensureSalesGstPricingSchemaInternal() async {
     if (await _tableExists('bills')) {
       await _addColumnIfMissing(
@@ -258,6 +263,170 @@ class AppDatabase extends _$AppDatabase {
         declaration: 'REAL NOT NULL DEFAULT 0.0',
       );
     }
+  }
+
+  Future<void> _ensureSalesInvoiceSeriesMigrationInternal() async {
+    if (!await _tableExists('bills')) return;
+    await ensureSalesGstPricingSchema();
+
+    final billRows = await (select(bills)
+          ..orderBy([
+            (tbl) => OrderingTerm(expression: tbl.billDate),
+            (tbl) => OrderingTerm(expression: tbl.id),
+          ]))
+        .get();
+
+    final reserved = <String, Set<int>>{};
+    for (final bill in billRows) {
+      final parsed = PosInvoiceSeriesFormatter.parse(bill.billNo);
+      if (parsed == null || parsed.isLegacy || parsed.sequence < 1) continue;
+      _reservedSeries(
+        reserved,
+        parsed.businessCode,
+        parsed.financialYearToken,
+      ).add(parsed.sequence);
+    }
+
+    final mappings = <_SalesInvoiceNumberMigration>[];
+    for (final bill in billRows) {
+      final parsed = PosInvoiceSeriesFormatter.parse(bill.billNo);
+      if (parsed == null || !parsed.isLegacy) continue;
+
+      final fyToken =
+          PosInvoiceSeriesFormatter.financialYearToken(bill.billDate);
+      final used = _reservedSeries(reserved, parsed.businessCode, fyToken);
+      var sequence = parsed.sequence < 1 ? 1 : parsed.sequence;
+      while (used.contains(sequence)) {
+        sequence++;
+      }
+      used.add(sequence);
+
+      final nextBillNo = PosInvoiceSeriesFormatter.build(
+        businessCode: parsed.businessCode,
+        financialYearToken: fyToken,
+        sequence: sequence,
+      );
+      if (nextBillNo == bill.billNo) continue;
+      mappings.add(
+        _SalesInvoiceNumberMigration(
+          billId: bill.id,
+          oldBillNo: bill.billNo,
+          newBillNo: nextBillNo,
+          legacyWasNonGst: bill.billNo.toUpperCase().startsWith('INV-') ||
+              bill.billNo.toUpperCase().startsWith('EST-') ||
+              bill.billType.trim().toUpperCase() != 'GST',
+        ),
+      );
+    }
+
+    if (mappings.isEmpty) return;
+
+    await transaction(() async {
+      for (final mapping in mappings) {
+        await customUpdate(
+          'UPDATE "bills" SET "bill_no" = ? WHERE "id" = ?',
+          variables: [
+            Variable.withString('__LOTUS_INVOICE_MIGRATION_${mapping.billId}'),
+            Variable.withInt(mapping.billId),
+          ],
+          updates: {bills},
+        );
+      }
+
+      for (final mapping in mappings) {
+        await _rewriteSalesInvoiceReference(
+          tableName: 'cash_transactions',
+          columnName: 'reference_id',
+          oldBillNo: mapping.oldBillNo,
+          newBillNo: mapping.newBillNo,
+        );
+        await _rewriteSalesInvoiceReference(
+          tableName: 'bank_transactions',
+          columnName: 'reference_id',
+          oldBillNo: mapping.oldBillNo,
+          newBillNo: mapping.newBillNo,
+        );
+        await _rewriteSalesInvoiceReference(
+          tableName: 'customer_account_ledger',
+          columnName: 'source_reference',
+          oldBillNo: mapping.oldBillNo,
+          newBillNo: mapping.newBillNo,
+        );
+        await customUpdate(
+          '''
+          UPDATE "stock_movements"
+          SET "source_number" = ?
+          WHERE "source_number" = ?
+          ''',
+          variables: [
+            Variable.withString(mapping.newBillNo),
+            Variable.withString(mapping.oldBillNo),
+          ],
+          updates: {stockMovements},
+        );
+
+        await customUpdate(
+          '''
+          UPDATE "bills"
+          SET
+            "bill_no" = ?,
+            "bill_type" = 'GST',
+            "document_type" = 'TAX_INVOICE',
+            "gst_pricing_mode" = CASE
+              WHEN ? = 1 THEN 'GST_INCLUSIVE'
+              ELSE COALESCE(NULLIF("gst_pricing_mode", ''), 'GST_EXCLUSIVE')
+            END,
+            "tax_treatment" = 'TAXABLE_SUPPLY',
+            "updated_at" = ?
+          WHERE "id" = ?
+          ''',
+          variables: [
+            Variable.withString(mapping.newBillNo),
+            Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
+            Variable.withDateTime(DateTime.now()),
+            Variable.withInt(mapping.billId),
+          ],
+          updates: {bills},
+        );
+      }
+    });
+
+    AppLogger.info(
+      'Migrated ${mappings.length} legacy sales invoice numbers to compact FY series.',
+    );
+  }
+
+  Set<int> _reservedSeries(
+    Map<String, Set<int>> reserved,
+    String businessCode,
+    String financialYearToken,
+  ) {
+    final key = '$businessCode|$financialYearToken';
+    return reserved.putIfAbsent(key, () => <int>{});
+  }
+
+  Future<void> _rewriteSalesInvoiceReference({
+    required String tableName,
+    required String columnName,
+    required String oldBillNo,
+    required String newBillNo,
+  }) async {
+    if (!await _tableExists(tableName)) return;
+    final columns = await _tableColumns(tableName);
+    if (!columns.contains(columnName.toLowerCase())) return;
+    await customUpdate(
+      '''
+      UPDATE "$tableName"
+      SET "$columnName" = ? || substr("$columnName", length(?) + 1)
+      WHERE "$columnName" = ? OR "$columnName" LIKE ?
+      ''',
+      variables: [
+        Variable.withString(newBillNo),
+        Variable.withString(oldBillNo),
+        Variable.withString(oldBillNo),
+        Variable.withString('$oldBillNo#%'),
+      ],
+    );
   }
 
   Future<void> _ensureGstFilingWorkflowSchemaInternal() async {
@@ -1389,6 +1558,13 @@ class AppDatabase extends _$AppDatabase {
               'v45 sales GST pricing mode and document snapshots applied.',
             );
           }
+
+          if (from < 46) {
+            await ensureSalesInvoiceSeriesMigration();
+            AppLogger.info(
+              'v46 compact financial-year sales invoice series applied.',
+            );
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -1406,6 +1582,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockInventorySchemaInternal();
           await ensureSalesGstPricingSchema();
+          await ensureSalesInvoiceSeriesMigration();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -2368,3 +2545,17 @@ const List<String> _girviNoticeActionIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_type" ON "girvi_notice_actions" ("action_type")',
   'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_delivery" ON "girvi_notice_actions" ("girvi_id", "delivery_status", "delivered_at" DESC)',
 ];
+
+class _SalesInvoiceNumberMigration {
+  const _SalesInvoiceNumberMigration({
+    required this.billId,
+    required this.oldBillNo,
+    required this.newBillNo,
+    required this.legacyWasNonGst,
+  });
+
+  final int billId;
+  final String oldBillNo;
+  final String newBillNo;
+  final bool legacyWasNonGst;
+}

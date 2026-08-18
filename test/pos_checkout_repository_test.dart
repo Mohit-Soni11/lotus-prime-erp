@@ -100,7 +100,7 @@ void main() {
       final stockMovements = await _stockMovementsFor(db, stockId);
       final cashRows = await db.select(db.cashTransactions).get();
 
-      expect(result.invoiceNumber, 'INV-LJ-2026-0001');
+      expect(result.invoiceNumber, 'LJ-26-001');
       expect(result.invoiceSequence, 1);
       expect(bill.finalAmount, 910);
       expect(bill.tradeInDeduction, 90);
@@ -114,13 +114,13 @@ void main() {
       expect(stockRow.status, stock.StockStatus.sold.label);
       expect(stockMovements, hasLength(1));
       expect(stockMovements.single.movementType, 'SALE');
-      expect(stockMovements.single.sourceNumber, 'INV-LJ-2026-0001');
+      expect(stockMovements.single.sourceNumber, result.invoiceNumber);
       expect(stockMovements.single.sourceLineNo, 1);
       expect(stockMovements.single.quantityDelta, -1);
       expect(stockMovements.single.grossWeightDelta, -10);
       expect(stockMovements.single.netWeightDelta, -10);
       expect(cashRows, hasLength(1));
-      expect(cashRows.single.referenceId, 'INV-LJ-2026-0001#CASH');
+      expect(cashRows.single.referenceId, '${result.invoiceNumber}#CASH');
       expect(cashRows.single.amount, 910);
       expect(cashRows.single.isVoided, isFalse);
 
@@ -475,7 +475,7 @@ void main() {
         cardPaid: 300,
       );
 
-      await repository.finalizeSale(
+      final result = await repository.finalizeSale(
         invoice: invoice,
         customerId: null,
       );
@@ -486,11 +486,11 @@ void main() {
       expect(cashRows, hasLength(1));
       expect(cashRows.single.paymentMode, cash_book.PaymentMode.cash.dbValue);
       expect(cashRows.single.amount, 100);
-      expect(cashRows.single.referenceId, 'INV-LJ-2026-0001#CASH');
+      expect(cashRows.single.referenceId, '${result.invoiceNumber}#CASH');
       expect(bankRows, hasLength(2));
       expect(
         bankRows.map((row) => row.referenceId).toSet(),
-        {'INV-LJ-2026-0001#UPI', 'INV-LJ-2026-0001#CARD'},
+        {'${result.invoiceNumber}#UPI', '${result.invoiceNumber}#CARD'},
       );
       expect(bankRows.map((row) => row.amount).toSet(), {200.0, 300.0});
       expect(bankRows.every((row) => !row.isVoided), isTrue);
@@ -573,16 +573,17 @@ void main() {
       expect(customerCredits.single.entryType, 'CREDIT');
       expect(customerCredits.single.sourceType, 'POS_CHANGE_CREDIT');
       expect(customerCredits.single.sourceReference,
-          'INV-LJ-2026-0001#ACCOUNT_CREDIT');
+          '${result.invoiceNumber}#ACCOUNT_CREDIT');
       expect(customerCredits.single.amount, 25);
       expect(customerCredits.single.isVoided, isFalse);
 
       expect(cashRows, hasLength(2));
       final saleCash = cashRows.singleWhere(
-        (row) => row.referenceId == 'INV-LJ-2026-0001#CASH',
+        (row) => row.referenceId == '${result.invoiceNumber}#CASH',
       );
       final creditCash = cashRows.singleWhere(
-        (row) => row.referenceId == 'INV-LJ-2026-0001#ACCOUNT_CREDIT#CASH',
+        (row) =>
+            row.referenceId == '${result.invoiceNumber}#ACCOUNT_CREDIT#CASH',
       );
       expect(saleCash.amount, 1000);
       expect(saleCash.category, cash_book.IncomeCategory.sale.dbValue);
@@ -611,7 +612,7 @@ void main() {
         changeSettlementPaymentMode: pos.PaymentMode.cash,
       );
 
-      await repository.finalizeSale(
+      final result = await repository.finalizeSale(
         invoice: invoice,
         customerId: null,
       );
@@ -622,13 +623,16 @@ void main() {
       expect(cashRows, hasLength(2));
       expect(
         cashRows
-            .singleWhere((row) => row.referenceId == 'INV-LJ-2026-0001#CASH')
+            .singleWhere(
+              (row) => row.referenceId == '${result.invoiceNumber}#CASH',
+            )
             .amount,
         1000,
       );
       final cashExcess = cashRows.singleWhere(
         (row) =>
-            row.referenceId == 'INV-LJ-2026-0001#CHANGE_RETURN#SOURCE_CASH',
+            row.referenceId ==
+            '${result.invoiceNumber}#CHANGE_RETURN#SOURCE_CASH',
       );
       expect(cashExcess.amount, 30);
       expect(cashExcess.referenceType, 'CUSTOMER_CHANGE');
@@ -641,7 +645,7 @@ void main() {
       expect(bankRows.single.amount, 30);
       expect(
         bankRows.single.referenceId,
-        'INV-LJ-2026-0001#CHANGE_RETURN#RETURN_UPI',
+        '${result.invoiceNumber}#CHANGE_RETURN#RETURN_UPI',
       );
 
       _disposeItems(saleItems: [saleItem]);
@@ -905,7 +909,9 @@ void main() {
       final credits = await db.select(db.customerAccountLedger).get();
       final creditCashRows = (await db.select(db.cashTransactions).get())
           .where(
-            (row) => row.referenceId == 'INV-LJ-2026-0001#ACCOUNT_CREDIT#CASH',
+            (row) =>
+                row.referenceId ==
+                '${result.invoiceNumber}#ACCOUNT_CREDIT#CASH',
           )
           .toList();
 
@@ -981,8 +987,8 @@ void main() {
       expect(bill.cashPaid, 700);
       expect(bill.paymentStatus, 'PAID');
       expect(updatedBooking.status, 'DELIVERED');
-      expect(
-          updatedBooking.notes, 'Converted to sales invoice INV-LJ-2026-0001');
+      expect(updatedBooking.notes,
+          'Converted to sales invoice ${result.invoiceNumber}');
       expect(cashRows, hasLength(1));
       expect(cashRows.single.amount, 700);
 

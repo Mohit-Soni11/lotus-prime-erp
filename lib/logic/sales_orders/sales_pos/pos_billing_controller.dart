@@ -10,6 +10,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
+import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import '../../../features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
 import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
@@ -66,8 +67,9 @@ class PosBillingController extends ChangeNotifier {
   //  Shop name is loaded from the active shop setup.
   String shopName = "Lotus Jewellers";
 
-  //  Current financial year label used for invoice numbering.
-  String get currentFinancialYear => DateTime.now().year.toString();
+  // Current financial-year token used for invoice numbering.
+  String get currentFinancialYear =>
+      PosInvoiceSeriesFormatter.financialYearToken(DateTime.now());
   int nextSequence = 1;
   String? _committedInvoiceNumber;
 
@@ -1211,7 +1213,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   BillType _billTypeFromDb(String value) {
-    return value.trim().toUpperCase() == 'GST' ? BillType.gst : BillType.normal;
+    return BillType.gst;
   }
 
   GstPricingMode _gstPricingModeFromDb(String value) {
@@ -1243,17 +1245,16 @@ class PosBillingController extends ChangeNotifier {
     return PosNumberParser.parseNonNegative(text);
   }
 
-  String get shopInitials {
-    final words =
-        shopName.trim().split(' ').where((e) => e.isNotEmpty).toList();
-    if (words.isEmpty) return 'SH'; // Safe fallback
-    return words.map((e) => e[0]).join('').toUpperCase();
-  }
+  String get shopInitials => PosInvoiceSeriesFormatter.businessCode(shopName);
 
-  String get invoicePrefix => billType == BillType.gst ? "TAX" : "INV";
+  String get invoicePrefix => '';
   String get formattedInvoice =>
       _committedInvoiceNumber ??
-      "$invoicePrefix-$shopInitials-$currentFinancialYear-${nextSequence.toString().padLeft(4, '0')}";
+      PosInvoiceSeriesFormatter.build(
+        businessCode: shopInitials,
+        financialYearToken: currentFinancialYear,
+        sequence: nextSequence,
+      );
   bool get isCurrentSaleCommitted => _committedInvoiceNumber != null;
 
   Future<void> refreshInvoiceSequencePreview() async {
@@ -1727,7 +1728,8 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void toggleBillType(BillType type) {
-    billType = type;
+    if (billType == BillType.gst) return;
+    billType = BillType.gst;
     _clearChangeReturnMethod();
     notifyListeners();
     unawaited(refreshInvoiceSequencePreview());
