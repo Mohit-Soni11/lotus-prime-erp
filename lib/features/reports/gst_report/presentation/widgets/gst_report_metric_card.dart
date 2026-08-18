@@ -20,9 +20,10 @@ class GstReportMetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedSubtitle = subtitle ?? '';
+
     return Container(
-      constraints: const BoxConstraints(minHeight: 116),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: GstReportColors.bodyPanel,
         borderRadius: BorderRadius.circular(10),
@@ -37,7 +38,6 @@ class GstReportMetricCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
@@ -66,22 +66,20 @@ class GstReportMetricCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const Spacer(),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GstReportStyles.pageTitle.copyWith(fontSize: 22),
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GstReportStyles.body.copyWith(fontSize: 12),
-            ),
-          ],
+          const SizedBox(height: 4),
+          Text(
+            resolvedSubtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(fontSize: 12),
+          ),
         ],
       ),
     );

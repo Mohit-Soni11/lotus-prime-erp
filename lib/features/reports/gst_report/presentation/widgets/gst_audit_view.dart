@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/gst_audit_workspace_models.dart';
 import '../../domain/gst_report_models.dart';
+import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
+import 'gst_audit_action_panel.dart';
+import 'gst_audit_control_board.dart';
+import 'gst_audit_coverage_panel.dart';
+import 'gst_audit_summary_cards.dart';
 import 'gst_report_panel.dart';
 
 class GstAuditView extends StatelessWidget {
@@ -14,116 +20,131 @@ class GstAuditView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final findings = snapshot.auditFindings;
+    final audit = GstAuditWorkspaceSnapshot.fromReport(snapshot);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AuditStatusPanel(
+          audit: audit,
+          periodLabel: GstReportFormatters.periodLabel(snapshot.period),
+        ),
+        const SizedBox(height: 16),
+        GstAuditSummaryCards(audit: audit),
+        const SizedBox(height: 16),
+        GstAuditControlBoard(items: audit.controlItems),
+        const SizedBox(height: 16),
+        GstAuditActionPanel(items: audit.actionItems),
+        const SizedBox(height: 16),
+        GstAuditCoveragePanel(items: audit.coverageItems),
+      ],
+    );
+  }
+}
+
+class _AuditStatusPanel extends StatelessWidget {
+  const _AuditStatusPanel({
+    required this.audit,
+    required this.periodLabel,
+  });
+
+  final GstAuditWorkspaceSnapshot audit;
+  final String periodLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent =
+        audit.isReadyForPortal ? GstReportColors.success : GstReportColors.danger;
+
     return GstReportPanel(
-      title: 'GST Audit / Error Check',
-      subtitle: 'Resolve critical findings before preparing return files',
+      title: 'GST Audit Command Center',
+      subtitle: periodLabel,
       icon: GstReportIcons.audit,
-      child: Column(
-        children: [
-          for (var index = 0; index < findings.length; index++) ...[
-            _AuditTile(finding: findings[index]),
-            if (index != findings.length - 1) const SizedBox(height: 10),
-          ],
-        ],
+      trailing: _ReadinessPill(
+        label: audit.portalStatusLabel,
+        accent: accent,
       ),
-    );
-  }
-}
-
-class _AuditTile extends StatelessWidget {
-  const _AuditTile({required this.finding});
-
-  final GstAuditFinding finding;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _colorFor(finding.severity);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(_iconFor(finding.severity), color: color, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        finding.title,
-                        style: GstReportStyles.body.copyWith(
-                          color: GstReportColors.textPrimary,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    if (finding.invoiceNo.isNotEmpty) ...[
-                      const SizedBox(width: 10),
-                      _InvoicePill(invoiceNo: finding.invoiceNo),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(finding.message, style: GstReportStyles.body),
-              ],
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: accent.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(
+                audit.isReadyForPortal
+                    ? Icons.verified_rounded
+                    : Icons.priority_high_rounded,
+                color: accent,
+                size: 22,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    audit.isReadyForPortal
+                        ? 'This GST period is ready for portal review.'
+                        : 'Resolve critical issues before filing this GST period.',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GstReportStyles.body.copyWith(
+                      color: GstReportColors.textPrimary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Audit covers invoice tax snapshots, customer GSTIN, place of supply, HSN Table 12, GSTR-1 and GSTR-3B readiness.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GstReportStyles.body.copyWith(fontSize: 12.5),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-
-  static Color _colorFor(GstAuditSeverity severity) {
-    switch (severity) {
-      case GstAuditSeverity.critical:
-        return GstReportColors.danger;
-      case GstAuditSeverity.warning:
-        return GstReportColors.warning;
-      case GstAuditSeverity.info:
-        return GstReportColors.success;
-    }
-  }
-
-  static IconData _iconFor(GstAuditSeverity severity) {
-    switch (severity) {
-      case GstAuditSeverity.critical:
-        return Icons.error_outline_rounded;
-      case GstAuditSeverity.warning:
-        return Icons.warning_amber_rounded;
-      case GstAuditSeverity.info:
-        return Icons.check_circle_outline_rounded;
-    }
-  }
 }
 
-class _InvoicePill extends StatelessWidget {
-  const _InvoicePill({required this.invoiceNo});
+class _ReadinessPill extends StatelessWidget {
+  const _ReadinessPill({
+    required this.label,
+    required this.accent,
+  });
 
-  final String invoiceNo;
+  final String label;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: GstReportColors.bodyPanel,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: GstReportColors.bodyBorder),
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Text(
-        invoiceNo,
+        label,
         style: GstReportStyles.body.copyWith(
-          color: GstReportColors.textPrimary,
-          fontSize: 11,
+          color: accent,
+          fontSize: 12,
           fontWeight: FontWeight.w900,
         ),
       ),

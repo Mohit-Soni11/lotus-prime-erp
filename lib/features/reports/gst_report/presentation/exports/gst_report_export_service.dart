@@ -35,26 +35,16 @@ class GstReportExportService {
       case GstReportExportAction.gstr1Csv:
         return _saveCsv(
           dialogTitle: 'Download GSTR-1 CSV',
-          fileName: _fileName(snapshot, 'gstr-1-register', 'csv'),
-          contents: <List<String>>[
-            ...GstReportCsvBuilder.invoiceLedgerRows(
-              'GSTR-1 B2B INVOICES',
-              snapshot.gstr1B2bInvoices,
-            ),
-            const [],
-            ...GstReportCsvBuilder.invoiceLedgerRows(
-              'GSTR-1 B2C INVOICES',
-              snapshot.gstr1B2cInvoices,
-            ),
-            const [],
-            ...GstReportCsvBuilder.hsnRows(snapshot.hsnSummary),
-          ].map(_csvRow).join('\r\n'),
+          fileName: _fileName(snapshot, 'gstr-1-filing-workspace', 'csv'),
+          contents: GstReportCsvBuilder.gstr1PortalRows(snapshot)
+              .map(_csvRow)
+              .join('\r\n'),
         );
       case GstReportExportAction.gstr3bCsv:
         return _saveCsv(
           dialogTitle: 'Download GSTR-3B Summary CSV',
-          fileName: _fileName(snapshot, 'gstr-3b-summary', 'csv'),
-          contents: GstReportCsvBuilder.gstr3bRows(snapshot.gstr3b)
+          fileName: _fileName(snapshot, 'gstr-3b-filing-workspace', 'csv'),
+          contents: GstReportCsvBuilder.gstr3bPortalRows(snapshot)
               .map(_csvRow)
               .join('\r\n'),
         );

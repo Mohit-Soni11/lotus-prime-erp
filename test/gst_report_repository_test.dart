@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/reports/gst_report/data/gst_report_repository.dart';
+import 'package:lotus_erp/features/reports/gst_report/domain/gstr1_filing_models.dart';
+import 'package:lotus_erp/features/reports/gst_report/domain/gstr3b_filing_models.dart';
 import 'package:lotus_erp/features/reports/gst_report/domain/gst_report_models.dart';
 
 void main() {
@@ -133,6 +135,29 @@ void main() {
     expect(snapshot.gstr1B2bInvoices, hasLength(1));
     expect(snapshot.gstr1B2cInvoices, hasLength(2));
     expect(snapshot.gstr3b.netTaxPayable, 481.64);
+    expect(snapshot.rateSummary, hasLength(1));
+    expect(snapshot.rateSummary.single.rate, 3);
+    expect(snapshot.rateSummary.single.invoiceCount, 3);
+    expect(snapshot.rateSummary.single.taxableAmount, 16054.37);
+    expect(snapshot.rateSummary.single.gstAmount, 481.64);
+    expect(snapshot.rateSummary.single.invoiceValue, 16536);
+    final gstr1 = Gstr1FilingSnapshot.fromReport(snapshot);
+    expect(gstr1.b2bInvoices, hasLength(1));
+    expect(gstr1.b2cLargeInvoices, isEmpty);
+    expect(gstr1.b2cSmallSummary, hasLength(2));
+    expect(gstr1.hsnB2bSummary, hasLength(1));
+    expect(gstr1.hsnB2cSummary, hasLength(1));
+    expect(gstr1.documentSummary.first.documentType, 'Tax Invoice');
+    expect(gstr1.documentSummary.first.totalIssued, 3);
+    expect(gstr1.readiness.isPortalReady, isTrue);
+    final gstr3b = Gstr3bFilingSnapshot.fromReport(snapshot);
+    expect(gstr3b.table31Rows.first.code, '3.1(a)');
+    expect(gstr3b.table31Rows.first.taxableValue, 16054.37);
+    expect(gstr3b.table31Rows.first.totalTax, 481.64);
+    expect(gstr3b.paymentRows.singleWhere((row) => row.taxHead == 'CGST').cashPayable, 222.82);
+    expect(gstr3b.paymentRows.singleWhere((row) => row.taxHead == 'SGST').cashPayable, 222.82);
+    expect(gstr3b.netCashPayable, 481.64);
+    expect(gstr3b.itcRows, hasLength(8));
     expect(snapshot.hsnSummary, hasLength(2));
 
     final b2bHsn = snapshot.hsnSummary.singleWhere(

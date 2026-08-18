@@ -1,3 +1,5 @@
+import '../../domain/gstr1_filing_models.dart';
+import '../../domain/gstr3b_filing_models.dart';
 import '../../domain/gst_report_models.dart';
 import '../gst_report_formatters.dart';
 
@@ -19,7 +21,7 @@ class GstReportCsvBuilder {
       [],
       ...hsnRows(snapshot.hsnSummary),
       [],
-      ...gstr3bRows(snapshot.gstr3b),
+      ...gstr3bPortalRows(snapshot),
       [],
       ...auditRows(snapshot.auditFindings),
     ];
@@ -112,39 +114,162 @@ class GstReportCsvBuilder {
     ];
   }
 
-  static List<List<String>> hsnRows(List<GstHsnSummaryRow> rows) {
+  static List<List<String>> gstr1PortalRows(GstReportSnapshot snapshot) {
+    final filing = Gstr1FilingSnapshot.fromReport(snapshot);
     return [
-      ['HSN GST REGISTER'],
+      ['GSTR-1 PORTAL FILING WORKSPACE'],
+      ['Shop', snapshot.identity.shopName],
+      ['GSTIN', snapshot.identity.gstin],
+      ['Period', GstReportFormatters.periodLabel(snapshot.period)],
       [
-        'Invoice Type',
-        'HSN/SAC',
-        'Description',
+        'Portal Readiness',
+        filing.readiness.isPortalReady ? 'READY' : 'ACTION REQUIRED',
+      ],
+      ['Blocking Issues', '${filing.readiness.blockerCount}'],
+      ['Review Warnings', '${filing.readiness.warningCount}'],
+      for (final blocker in filing.readiness.blockers) ['BLOCKER', blocker],
+      for (final warning in filing.readiness.warnings) ['WARNING', warning],
+      [],
+      ...invoiceLedgerRows('4A/4B/6B/6C - B2B INVOICES', filing.b2bInvoices),
+      [],
+      ...invoiceLedgerRows('5A/5B - B2C LARGE INVOICES', filing.b2cLargeInvoices),
+      [],
+      ...b2cSmallRows(filing.b2cSmallSummary),
+      [],
+      ...hsnRows(filing.hsnB2bSummary),
+      [],
+      ...hsnRows(filing.hsnB2cSummary),
+      [],
+      ...documentIssuedRows(filing.documentSummary),
+      [],
+      ...additionalGstr1Rows(),
+    ];
+  }
+
+  static List<List<String>> b2cSmallRows(
+    List<Gstr1B2cSmallSummaryRow> rows,
+  ) {
+    return [
+      ['7 - B2C SMALL CONSOLIDATED SUMMARY'],
+      [
+        'Place of Supply',
+        'Supply Type',
         'Rate',
         'Invoices',
-        'Lines',
-        'Quantity',
-        'Taxable',
+        'Taxable Value',
         'CGST',
         'SGST',
         'IGST',
-        'Total GST',
+        'Output GST',
         'Invoice Value',
       ],
       for (final row in rows)
         [
-          row.invoiceType,
-          row.hsnCode,
-          row.description,
-          GstReportFormatters.rate(row.gstRate),
+          row.placeOfSupply,
+          row.supplyType,
+          GstReportFormatters.rate(row.rate),
           '${row.invoiceCount}',
-          '${row.lineCount}',
-          '${row.quantity}',
-          row.taxableAmount.toStringAsFixed(2),
+          row.taxableValue.toStringAsFixed(2),
           row.cgstAmount.toStringAsFixed(2),
           row.sgstAmount.toStringAsFixed(2),
           row.igstAmount.toStringAsFixed(2),
-          row.gstAmount.toStringAsFixed(2),
+          row.outputGst.toStringAsFixed(2),
           row.invoiceValue.toStringAsFixed(2),
+        ],
+    ];
+  }
+
+  static List<List<String>> documentIssuedRows(
+    List<Gstr1DocumentSummaryRow> rows,
+  ) {
+    return [
+      ['13 - DOCUMENTS ISSUED'],
+      [
+        'Document Type',
+        'From Number',
+        'To Number',
+        'Total Issued',
+        'Cancelled',
+        'Net Issued',
+      ],
+      for (final row in rows)
+        [
+          row.documentType,
+          row.fromNumber,
+          row.toNumber,
+          '${row.totalIssued}',
+          '${row.cancelled}',
+          '${row.netIssued}',
+        ],
+    ];
+  }
+
+  static List<List<String>> additionalGstr1Rows() {
+    return const [
+      ['ADDITIONAL GSTR-1 TABLES'],
+      ['Section', 'Status', 'Note'],
+      [
+        '9B - Credit / Debit Notes',
+        'No records',
+        'Connect sales return workflow when available.',
+      ],
+      [
+        '8 - Nil / Exempt / Non-GST Supplies',
+        'No records',
+        'Jewellery taxable supplies are reported in regular outward tables.',
+      ],
+      [
+        '11A/11B - Advances / Adjustments',
+        'No records',
+        'Connect advance workflow when tax-on-advance is enabled.',
+      ],
+      [
+        'Amendments',
+        'No records',
+        'Use only for corrections to previously filed periods.',
+      ],
+      ['6A - Exports / SEZ', 'Not used', 'Domestic jewellery supplies only.'],
+      ['E-Commerce / 9(5)', 'Not used', 'No ECO operator configured.'],
+    ];
+  }
+
+  static List<List<String>> hsnRows(List<GstHsnSummaryRow> rows) {
+    return [
+      ['GSTR-1 TABLE 12 - HSN SUMMARY OF OUTWARD SALES'],
+      [
+        'HSN/SAC',
+        'Description',
+        'UQC',
+        'Total Quantity',
+        'Total Value',
+        'Total Taxable Value',
+        'Rate',
+        'Invoices',
+        'Lines',
+        'IGST',
+        'CGST',
+        'SGST',
+        'Cess',
+        'Output GST',
+        'Sales Type',
+      ],
+      for (final row in rows)
+        [
+          row.hsnCode,
+          row.description,
+          'PCS',
+          '${row.quantity}',
+          row.invoiceValue.toStringAsFixed(2),
+          row.taxableAmount.toStringAsFixed(2),
+          GstReportFormatters.rate(row.gstRate),
+          '${row.invoiceCount}',
+          '${row.lineCount}',
+          row.igstAmount.toStringAsFixed(2),
+          row.cgstAmount.toStringAsFixed(2),
+          row.sgstAmount.toStringAsFixed(2),
+          '0.00',
+          row.gstAmount.toStringAsFixed(2),
+          row.invoiceType,
         ],
     ];
   }
@@ -170,6 +295,110 @@ class GstReportCsvBuilder {
         '0.00',
       ],
       ['ITC', 'Pending purchase report integration', '', '', '', ''],
+    ];
+  }
+
+  static List<List<String>> gstr3bPortalRows(GstReportSnapshot snapshot) {
+    final filing = Gstr3bFilingSnapshot.fromReport(snapshot);
+    return [
+      ['GSTR-3B FILING WORKSPACE'],
+      ['Shop', snapshot.identity.shopName],
+      ['GSTIN', snapshot.identity.gstin],
+      ['Period', GstReportFormatters.periodLabel(snapshot.period)],
+      ['Readiness', filing.readiness.canFile ? 'READY TO REVIEW' : 'ACTION REQUIRED'],
+      ['Blocking Issues', '${filing.readiness.blockerCount}'],
+      ['Review Warnings', '${filing.readiness.warningCount}'],
+      for (final blocker in filing.readiness.blockers) ['BLOCKER', blocker],
+      for (final warning in filing.readiness.warnings) ['WARNING', warning],
+      [],
+      ['PORTAL VERIFICATION NOTES'],
+      ['Topic', 'When Required', 'Portal Action', 'ERP Status'],
+      for (final note in filing.portalNotes)
+        [
+          note.title,
+          note.whenRequired,
+          note.portalAction,
+          note.erpStatus,
+        ],
+      [],
+      ['TABLE 3.1 - TAX LIABILITY SUMMARY'],
+      [
+        'Table',
+        'Nature of Supply',
+        'Taxable Value',
+        'IGST',
+        'CGST',
+        'SGST',
+        'Cess',
+        'Total Tax',
+        'Note',
+      ],
+      for (final row in filing.table31Rows)
+        [
+          row.code,
+          row.title,
+          row.taxableValue.toStringAsFixed(2),
+          row.igst.toStringAsFixed(2),
+          row.cgst.toStringAsFixed(2),
+          row.sgst.toStringAsFixed(2),
+          row.cess.toStringAsFixed(2),
+          row.totalTax.toStringAsFixed(2),
+          row.note,
+        ],
+      [],
+      ['TABLE 3.2 - INTER-STATE SUPPLIES'],
+      ['Place of Supply', 'Recipient Type', 'Taxable Value', 'IGST'],
+      for (final row in filing.table32Rows)
+        [
+          row.placeOfSupply,
+          'Unregistered Person',
+          row.taxableValue.toStringAsFixed(2),
+          row.igst.toStringAsFixed(2),
+        ],
+      [],
+      ['TABLE 4 - ELIGIBLE ITC'],
+      ['Section', 'ITC Type', 'IGST', 'CGST', 'SGST', 'Cess', 'Status'],
+      for (final row in filing.itcRows)
+        [
+          row.section,
+          row.title,
+          row.igst.toStringAsFixed(2),
+          row.cgst.toStringAsFixed(2),
+          row.sgst.toStringAsFixed(2),
+          row.cess.toStringAsFixed(2),
+          row.status,
+        ],
+      [],
+      ['TABLE 5 - EXEMPT / NIL / NON-GST INWARD SUPPLIES'],
+      ['Nature of Supply', 'Inter-State Value', 'Intra-State Value', 'Status'],
+      for (final row in filing.exemptInwardRows)
+        [
+          row.title,
+          row.interStateValue.toStringAsFixed(2),
+          row.intraStateValue.toStringAsFixed(2),
+          row.status,
+        ],
+      [],
+      ['TABLE 6.1 - PAYMENT OF TAX'],
+      ['Tax Head', 'Tax Payable', 'ITC Available', 'Cash Payable', 'Interest', 'Late Fee'],
+      for (final row in filing.paymentRows)
+        [
+          row.taxHead,
+          row.taxPayable.toStringAsFixed(2),
+          row.itcAvailable.toStringAsFixed(2),
+          row.cashPayable.toStringAsFixed(2),
+          row.interest.toStringAsFixed(2),
+          row.lateFee.toStringAsFixed(2),
+        ],
+      [],
+      ['DOCUMENTS AND PORTAL CHECKLIST'],
+      ['Item', 'Required Action'],
+      ['GSTR-1 / IFF Liability', 'Match outward tax with Table 3.1(a).'],
+      ['GSTR-2B ITC Statement', 'Download from portal before entering Table 4.'],
+      ['Purchase Invoices', 'Keep supplier invoices for ITC evidence.'],
+      ['RCM Expenses', 'Check reverse charge purchases and expenses.'],
+      ['Cash Ledger / PMT-06', 'For QRMP month 1 and 2, pay monthly challan.'],
+      ['Interest / Late Fee', 'Confirm portal-calculated amount before filing.'],
     ];
   }
 

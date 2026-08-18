@@ -18,7 +18,7 @@ class GstReportRepository {
       final invoices = await _fetchInvoices(period, identity);
       final nonGstSales = await _fetchNonGstSalesSummary(period);
       final hsnRows = await _fetchHsnSummary(period, invoices);
-      final rateRows = _buildRateSummary(hsnRows);
+      final rateRows = _buildRateSummary(invoices);
       final dashboard = _buildDashboard(invoices, nonGstSales);
       final audit = _buildAuditFindings(
         identity: identity,
@@ -521,21 +521,24 @@ class GstReportRepository {
     );
   }
 
-  List<GstRateSummaryRow> _buildRateSummary(List<GstHsnSummaryRow> hsnRows) {
+  List<GstRateSummaryRow> _buildRateSummary(List<GstInvoiceRow> invoices) {
     final accumulators = <String, _RateAccumulator>{};
-    for (final row in hsnRows) {
-      final key = row.gstRate.toStringAsFixed(2);
+    for (final invoice in invoices) {
+      final rate = invoice.taxableAmount.abs() <= 0.005
+          ? 0.0
+          : _roundMoney((invoice.gstAmount / invoice.taxableAmount) * 100);
+      final key = rate.toStringAsFixed(2);
       final acc = accumulators.putIfAbsent(
         key,
-        () => _RateAccumulator(rate: row.gstRate),
+        () => _RateAccumulator(rate: rate),
       );
-      acc.invoiceCount += row.invoiceCount;
-      acc.taxableAmount += row.taxableAmount;
-      acc.cgstAmount += row.cgstAmount;
-      acc.sgstAmount += row.sgstAmount;
-      acc.igstAmount += row.igstAmount;
-      acc.gstAmount += row.gstAmount;
-      acc.invoiceValue += row.invoiceValue;
+      acc.invoiceCount++;
+      acc.taxableAmount += invoice.taxableAmount;
+      acc.cgstAmount += invoice.cgstAmount;
+      acc.sgstAmount += invoice.sgstAmount;
+      acc.igstAmount += invoice.igstAmount;
+      acc.gstAmount += invoice.gstAmount;
+      acc.invoiceValue += invoice.invoiceValue;
     }
     return accumulators.values.map((acc) => acc.toRow()).toList()
       ..sort((a, b) => a.rate.compareTo(b.rate));
@@ -807,12 +810,14 @@ class _RateAccumulator {
     return GstRateSummaryRow(
       rate: rate,
       invoiceCount: invoiceCount,
-      taxableAmount: taxableAmount,
-      cgstAmount: cgstAmount,
-      sgstAmount: sgstAmount,
-      igstAmount: igstAmount,
-      gstAmount: gstAmount,
-      invoiceValue: invoiceValue,
+      taxableAmount: _roundMoney(taxableAmount),
+      cgstAmount: _roundMoney(cgstAmount),
+      sgstAmount: _roundMoney(sgstAmount),
+      igstAmount: _roundMoney(igstAmount),
+      gstAmount: _roundMoney(gstAmount),
+      invoiceValue: _roundMoney(invoiceValue),
     );
   }
+
+  double _roundMoney(double amount) => (amount * 100).round() / 100;
 }

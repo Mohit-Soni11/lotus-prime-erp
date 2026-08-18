@@ -122,7 +122,7 @@ class _TabButton extends StatelessWidget {
       case GstReportTab.gstr3b:
         return 'GSTR-3B';
       case GstReportTab.hsnRegister:
-        return 'HSN Register';
+        return 'HSN Table 12';
       case GstReportTab.audit:
         return 'Audit';
     }

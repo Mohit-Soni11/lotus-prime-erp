@@ -12,6 +12,8 @@ class GstDashboardView extends StatelessWidget {
     required this.snapshot,
   });
 
+  static const double _metricCardHeight = 140;
+
   final GstReportSnapshot snapshot;
 
   @override
@@ -49,7 +51,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Total Invoices',
+                    title: 'Total Invoice Count',
                     value: GstReportFormatters.count(dashboard.gstInvoiceCount),
                     subtitle:
                         '${dashboard.exclusive.invoiceCount} exclusive / ${dashboard.inclusive.invoiceCount} inclusive',
@@ -59,7 +61,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Total Value',
+                    title: 'Total Invoice Value',
                     value: GstReportFormatters.money(
                       dashboard.gstInvoiceValue,
                     ),
@@ -71,7 +73,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'CGST',
+                    title: 'Output CGST',
                     value: GstReportFormatters.money(dashboard.cgstAmount),
                     icon: Icons.south_west_rounded,
                     accentColor: GstReportColors.success,
@@ -80,7 +82,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'SGST',
+                    title: 'Output SGST',
                     value: GstReportFormatters.money(dashboard.sgstAmount),
                     icon: Icons.south_east_rounded,
                     accentColor: GstReportColors.success,
@@ -89,7 +91,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'IGST',
+                    title: 'Output IGST',
                     value: GstReportFormatters.money(dashboard.igstAmount),
                     icon: Icons.sync_alt_rounded,
                     accentColor: GstReportColors.warning,
@@ -107,7 +109,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Review Sales',
+                    title: 'Review Queue Value',
                     value: GstReportFormatters.money(
                       dashboard.nonGstSalesEstimate,
                     ),
@@ -121,7 +123,7 @@ class GstDashboardView extends StatelessWidget {
                 _MetricBox(
                   width: cardWidth,
                   child: GstReportMetricCard(
-                    title: 'Mismatch Alerts',
+                    title: 'Audit Alerts',
                     value: '$criticalCount critical / $warningCount warning',
                     subtitle: 'Open Audit tab before filing',
                     icon: Icons.error_outline_rounded,
@@ -154,7 +156,11 @@ class _MetricBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: width, child: child);
+    return SizedBox(
+      width: width,
+      height: GstDashboardView._metricCardHeight,
+      child: child,
+    );
   }
 }
 
@@ -189,7 +195,7 @@ class _PricingBreakdownGrid extends StatelessWidget {
               child: _PricingModeSummaryCard(
                 title: 'GST Inclusive Invoice Summary',
                 subtitle: 'GST reverse-calculated from customer final price',
-                icon: Icons.price_check_rounded,
+                icon: Icons.calculate_rounded,
                 accent: GstReportColors.success,
                 summary: dashboard.inclusive,
               ),
@@ -433,59 +439,167 @@ class _RateSummaryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GstReportPanel(
-      title: 'Tax Rate Wise Sales',
-      subtitle: 'Auto grouped from HSN register rows',
+      title: 'GST Rate Wise Outward Summary',
+      subtitle: 'Rate-level taxable value, output tax and invoice value for return cross-checks',
       icon: Icons.percent_rounded,
       child: rows.isEmpty
           ? const GstReportEmptyState(message: 'No tax-rate summary found.')
-          : SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columnSpacing: 26,
-                headingRowColor: WidgetStateProperty.all(
-                  GstReportColors.bodySubtle,
-                ),
-                columns: const [
-                  DataColumn(label: Text('Rate')),
-                  DataColumn(label: Text('Invoices')),
-                  DataColumn(label: Text('Taxable')),
-                  DataColumn(label: Text('CGST')),
-                  DataColumn(label: Text('SGST')),
-                  DataColumn(label: Text('IGST')),
-                  DataColumn(label: Text('GST')),
-                  DataColumn(label: Text('Invoice Value')),
-                ],
-                rows: [
-                  for (final row in rows)
-                    DataRow(
-                      cells: [
-                        DataCell(Text(GstReportFormatters.rate(row.rate))),
-                        DataCell(Text(GstReportFormatters.count(
-                          row.invoiceCount,
-                        ))),
-                        DataCell(Text(GstReportFormatters.money(
-                          row.taxableAmount,
-                        ))),
-                        DataCell(Text(GstReportFormatters.money(
-                          row.cgstAmount,
-                        ))),
-                        DataCell(Text(GstReportFormatters.money(
-                          row.sgstAmount,
-                        ))),
-                        DataCell(Text(GstReportFormatters.money(
-                          row.igstAmount,
-                        ))),
-                        DataCell(Text(GstReportFormatters.money(
-                          row.gstAmount,
-                        ))),
-                        DataCell(Text(GstReportFormatters.money(
-                          row.invoiceValue,
-                        ))),
-                      ],
-                    ),
-                ],
-              ),
-            ),
+          : _RateSummaryGrid(rows: rows),
     );
   }
+}
+
+class _RateSummaryGrid extends StatelessWidget {
+  const _RateSummaryGrid({required this.rows});
+
+  final List<GstRateSummaryRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    const minWidth = 1040.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth < minWidth
+            ? minWidth
+            : constraints.maxWidth;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: width,
+            child: Column(
+              children: [
+                const _RateSummaryHeader(),
+                const SizedBox(height: 8),
+                for (final row in rows) ...[
+                  _RateSummaryDataRow(row: row),
+                  if (row != rows.last) const SizedBox(height: 8),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RateSummaryHeader extends StatelessWidget {
+  const _RateSummaryHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _RateSummaryLine(
+      cells: [
+        _RateSummaryCell(label: 'Rate', flex: 8),
+        _RateSummaryCell(label: 'Invoices', flex: 9),
+        _RateSummaryCell(label: 'Taxable Value', flex: 14),
+        _RateSummaryCell(label: 'Output CGST', flex: 12),
+        _RateSummaryCell(label: 'Output SGST', flex: 12),
+        _RateSummaryCell(label: 'Output IGST', flex: 12),
+        _RateSummaryCell(label: 'Output GST', flex: 12),
+        _RateSummaryCell(label: 'Invoice Value', flex: 15),
+      ],
+      isHeader: true,
+    );
+  }
+}
+
+class _RateSummaryDataRow extends StatelessWidget {
+  const _RateSummaryDataRow({required this.row});
+
+  final GstRateSummaryRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RateSummaryLine(
+      cells: [
+        _RateSummaryCell(
+          label: GstReportFormatters.rate(row.rate),
+          flex: 8,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.count(row.invoiceCount),
+          flex: 9,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.money(row.taxableAmount),
+          flex: 14,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.money(row.cgstAmount),
+          flex: 12,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.money(row.sgstAmount),
+          flex: 12,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.money(row.igstAmount),
+          flex: 12,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.money(row.gstAmount),
+          flex: 12,
+        ),
+        _RateSummaryCell(
+          label: GstReportFormatters.money(row.invoiceValue),
+          flex: 15,
+        ),
+      ],
+    );
+  }
+}
+
+class _RateSummaryLine extends StatelessWidget {
+  const _RateSummaryLine({
+    required this.cells,
+    this.isHeader = false,
+  });
+
+  final List<_RateSummaryCell> cells;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isHeader ? GstReportColors.bodySubtle : GstReportColors.bodyPanel,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GstReportColors.bodyBorder),
+      ),
+      child: Row(
+        children: [
+          for (var index = 0; index < cells.length; index++) ...[
+            Expanded(
+              flex: cells[index].flex,
+              child: Text(
+                cells[index].label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GstReportStyles.body.copyWith(
+                  color: isHeader
+                      ? GstReportColors.textMuted
+                      : GstReportColors.textPrimary,
+                  fontSize: isHeader ? 11.5 : 12.5,
+                  fontWeight: isHeader ? FontWeight.w900 : FontWeight.w800,
+                ),
+              ),
+            ),
+            if (index != cells.length - 1) const SizedBox(width: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RateSummaryCell {
+  const _RateSummaryCell({
+    required this.label,
+    required this.flex,
+  });
+
+  final String label;
+  final int flex;
 }
