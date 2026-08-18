@@ -89,13 +89,16 @@ class Gstr1FilingSnapshot {
       final place = invoice.placeOfSupply.trim().isEmpty
           ? 'Place of supply pending'
           : invoice.placeOfSupply.trim();
+      final placeStateCode = invoice.placeOfSupplyStateCode.trim();
       final supplyType =
           invoice.supplyType == 'INTER_STATE' ? 'Inter-State' : 'Intra-State';
-      final key = '$place|$supplyType|${rate.toStringAsFixed(2)}';
+      final key =
+          '$placeStateCode|$place|$supplyType|${rate.toStringAsFixed(2)}';
       final acc = accumulators.putIfAbsent(
         key,
         () => _B2cSmallAccumulator(
           placeOfSupply: place,
+          placeOfSupplyStateCode: placeStateCode,
           supplyType: supplyType,
           rate: rate,
         ),
@@ -239,6 +242,7 @@ class Gstr1FilingSnapshot {
 class Gstr1B2cSmallSummaryRow {
   const Gstr1B2cSmallSummaryRow({
     required this.placeOfSupply,
+    this.placeOfSupplyStateCode = '',
     required this.supplyType,
     required this.rate,
     required this.invoiceCount,
@@ -251,6 +255,7 @@ class Gstr1B2cSmallSummaryRow {
   });
 
   final String placeOfSupply;
+  final String placeOfSupplyStateCode;
   final String supplyType;
   final double rate;
   final int invoiceCount;
@@ -306,11 +311,13 @@ class Gstr1Readiness {
 class _B2cSmallAccumulator {
   _B2cSmallAccumulator({
     required this.placeOfSupply,
+    required this.placeOfSupplyStateCode,
     required this.supplyType,
     required this.rate,
   });
 
   final String placeOfSupply;
+  final String placeOfSupplyStateCode;
   final String supplyType;
   final double rate;
   int invoiceCount = 0;
@@ -324,6 +331,7 @@ class _B2cSmallAccumulator {
   Gstr1B2cSmallSummaryRow toRow() {
     return Gstr1B2cSmallSummaryRow(
       placeOfSupply: placeOfSupply,
+      placeOfSupplyStateCode: placeOfSupplyStateCode,
       supplyType: supplyType,
       rate: rate,
       invoiceCount: invoiceCount,

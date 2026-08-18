@@ -50,11 +50,14 @@ void main() {
             onExportSelected: (action) => selectedAction = action,
             exportItems: const [
               GstReportExportMenuItem(
+                section: 'Recommended',
                 action: GstReportExportAction.summaryPdf,
                 label: 'GST Summary PDF',
+                subtitle: 'Readable filing review',
                 icon: Icons.picture_as_pdf_outlined,
               ),
               GstReportExportMenuItem(
+                section: 'GSTR-1',
                 action: GstReportExportAction.gstr1Csv,
                 label: 'GSTR-1 CSV',
                 icon: Icons.table_chart_outlined,
@@ -70,7 +73,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('GST Summary PDF'), findsOneWidget);
+    expect(find.text('Readable filing review'), findsOneWidget);
     expect(find.text('GSTR-1 CSV'), findsOneWidget);
+    expect(find.text('RECOMMENDED'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey('gst-report-export-gstr1Csv')),
@@ -79,6 +84,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(selectedAction, GstReportExportAction.gstr1Csv);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('GST report app bar hides manual refresh control',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: GstReportStyles.theme,
+        home: Scaffold(
+          appBar: GstReportAppBar(onBack: () {}),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(GstReportIcons.refresh), findsNothing);
+    expect(find.text(GstReportStrings.systemOnline), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

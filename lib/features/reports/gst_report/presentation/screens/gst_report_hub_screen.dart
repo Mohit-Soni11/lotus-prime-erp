@@ -54,7 +54,6 @@ class _GstReportHubScreenState extends State<GstReportHubScreen> {
         backgroundColor: GstReportColors.bodyBg,
         appBar: GstReportAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
-          onRefresh: _controller.load,
           isLoading: _controller.isLoading,
         ),
         body: ListenableBuilder(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/logging/app_logger.dart';
@@ -7,6 +9,8 @@ import '../domain/gst_quarter_filing_ledger.dart';
 import '../domain/gst_report_models.dart';
 
 class GstReportController extends ChangeNotifier {
+  static const Duration _liveRefreshInterval = Duration(seconds: 30);
+
   GstReportController({
     GstReportRepository? repository,
     GstReportPeriod? initialPeriod,
@@ -15,6 +19,11 @@ class GstReportController extends ChangeNotifier {
         _period = initialPeriod ?? GstReportPeriod.currentMonth(),
         _selectedTab = initialTab {
     load();
+    _liveRefreshTimer = Timer.periodic(_liveRefreshInterval, (_) {
+      if (!_isLoading && !_isLiveRefreshing) {
+        load(silent: true);
+      }
+    });
   }
 
   final GstReportRepository _repository;
@@ -25,6 +34,9 @@ class GstReportController extends ChangeNotifier {
   GstQuarterFilingLedger? _quarterLedger;
   GstReportTab _selectedTab;
   bool _isLoading = true;
+  bool _isLiveRefreshing = false;
+  bool _disposed = false;
+  Timer? _liveRefreshTimer;
   String? _errorMessage;
 
   GstReportPeriod get period => _period;
@@ -40,10 +52,13 @@ class GstReportController extends ChangeNotifier {
   }
 
   Future<void> load({bool silent = false}) async {
+    if (silent) {
+      _isLiveRefreshing = true;
+    }
     if (!silent) {
       _isLoading = true;
       _errorMessage = null;
-      notifyListeners();
+      _notifyListeners();
     }
 
     try {
@@ -63,15 +78,29 @@ class GstReportController extends ChangeNotifier {
       _quarterLedger ??= _emptyQuarterLedger(_period);
       _errorMessage = 'Unable to load GST report.';
     } finally {
+      if (silent) {
+        _isLiveRefreshing = false;
+      }
       _isLoading = false;
-      notifyListeners();
+      _notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _liveRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _notifyListeners() {
+    if (!_disposed) notifyListeners();
   }
 
   void selectTab(GstReportTab tab) {
     if (_selectedTab == tab) return;
     _selectedTab = tab;
-    notifyListeners();
+    _notifyListeners();
   }
 
   void setReportMonth(DateTime month) {
@@ -140,7 +169,7 @@ class GstReportController extends ChangeNotifier {
       _workflowSnapshot =
           await _repository.fetchFilingWorkflowSnapshot(_period);
       _quarterLedger = await _repository.fetchQuarterFilingLedger(_period);
-      notifyListeners();
+      _notifyListeners();
     } catch (error, stackTrace) {
       AppLogger.error(
         'GstReportController.completeSegmentFiling failed.',
@@ -148,7 +177,7 @@ class GstReportController extends ChangeNotifier {
         stackTrace: stackTrace,
       );
       _errorMessage = 'Unable to complete GST filing status.';
-      notifyListeners();
+      _notifyListeners();
     }
   }
 
@@ -171,7 +200,7 @@ class GstReportController extends ChangeNotifier {
       _workflowSnapshot =
           await _repository.fetchFilingWorkflowSnapshot(_period);
       _quarterLedger = await _repository.fetchQuarterFilingLedger(_period);
-      notifyListeners();
+      _notifyListeners();
     } catch (error, stackTrace) {
       AppLogger.error(
         'GstReportController.toggleFilingTask failed.',
@@ -179,7 +208,7 @@ class GstReportController extends ChangeNotifier {
         stackTrace: stackTrace,
       );
       _errorMessage = 'Unable to update GST filing status.';
-      notifyListeners();
+      _notifyListeners();
     }
   }
 

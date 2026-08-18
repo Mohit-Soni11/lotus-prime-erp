@@ -8,11 +8,17 @@ class GstReportExportMenuItem {
     required this.action,
     required this.label,
     required this.icon,
+    required this.section,
+    this.subtitle = '',
+    this.primary = false,
   });
 
   final GstReportExportAction action;
   final String label;
   final IconData icon;
+  final String section;
+  final String subtitle;
+  final bool primary;
 }
 
 class GstReportAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -334,31 +340,8 @@ class _HeaderExportMenu extends StatelessWidget {
         tooltip: '',
         onSelected: onSelected,
         offset: const Offset(0, 48),
-        constraints: const BoxConstraints(minWidth: 292, maxWidth: 340),
-        itemBuilder: (_) => [
-          for (final item in items)
-            PopupMenuItem<GstReportExportAction>(
-              key: ValueKey('gst-report-export-${item.action.name}'),
-              value: item.action,
-              height: 38,
-              child: Row(
-                children: [
-                  Icon(item.icon, size: 17, color: GstReportColors.taxGreen),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      item.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GstReportStyles.body.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+        constraints: const BoxConstraints(minWidth: 380, maxWidth: 430),
+        itemBuilder: (_) => _menuEntries(),
         child: Container(
           width: 104,
           height: 42,
@@ -390,6 +373,116 @@ class _HeaderExportMenu extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  List<PopupMenuEntry<GstReportExportAction>> _menuEntries() {
+    final entries = <PopupMenuEntry<GstReportExportAction>>[];
+    String? currentSection;
+    for (final item in items) {
+      if (item.section != currentSection) {
+        currentSection = item.section;
+        entries.add(_ExportSectionHeader(title: item.section));
+      }
+      entries.add(
+        PopupMenuItem<GstReportExportAction>(
+          key: ValueKey('gst-report-export-${item.action.name}'),
+          value: item.action,
+          height: item.subtitle.isEmpty ? 44 : 58,
+          child: _ExportMenuRow(item: item),
+        ),
+      );
+    }
+    return entries;
+  }
+}
+
+class _ExportSectionHeader extends PopupMenuEntry<GstReportExportAction> {
+  const _ExportSectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  double get height => 30;
+
+  @override
+  bool represents(GstReportExportAction? value) => false;
+
+  @override
+  State<_ExportSectionHeader> createState() => _ExportSectionHeaderState();
+}
+
+class _ExportSectionHeaderState extends State<_ExportSectionHeader> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 11, 14, 5),
+      child: Text(
+        widget.title.toUpperCase(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GstReportStyles.body.copyWith(
+          color: GstReportColors.textSecondary,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _ExportMenuRow extends StatelessWidget {
+  const _ExportMenuRow({required this.item});
+
+  final GstReportExportMenuItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        item.primary ? GstReportColors.brandGold : GstReportColors.taxGreen;
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: item.primary ? 0.18 : 0.1),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(item.icon, size: 17, color: color),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GstReportStyles.body.copyWith(
+                  color: GstReportColors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              if (item.subtitle.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  item.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GstReportStyles.body.copyWith(
+                    color: GstReportColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,8 +4,10 @@ import '../../../../../core/feedback/app_feedback.dart';
 import '../../application/gst_report_controller.dart';
 import '../../application/gst_report_segment_projector.dart';
 import '../../domain/gst_filing_period.dart';
+import '../../domain/gstr1_filing_models.dart';
 import '../../domain/gst_report_models.dart';
 import '../exports/gst_report_export_service.dart';
+import '../exports/gst_report_portal_pack_builder.dart';
 import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
 import '../widgets/gst_filing_completion_dialog.dart';
@@ -61,15 +63,21 @@ class _GstReportScreenState extends State<GstReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final rawExportSnapshot = _controller.snapshot;
+    final segmentExportSnapshot = _segmentExportSnapshot;
+
     return Theme(
       data: GstReportStyles.theme,
       child: Scaffold(
         backgroundColor: GstReportColors.bodyBg,
         appBar: GstReportAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
-          onRefresh: _controller.load,
           onExportSelected: _handleExportSelected,
-          exportItems: _exportItems,
+          exportItems: _exportItemsFor(
+            widget.segment,
+            rawExportSnapshot,
+            segmentExportSnapshot,
+          ),
           isLoading: _controller.isLoading,
         ),
         body: ListenableBuilder(
@@ -163,7 +171,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
   Future<void> _handleExportSelected(GstReportExportAction action) async {
     final rawSnapshot = _controller.snapshot;
     if (rawSnapshot == null) return;
-    final snapshot = widget.segment == null
+    final snapshot = _usesFullPeriodSnapshot(action) || widget.segment == null
         ? rawSnapshot
         : GstReportSegmentProjector.project(rawSnapshot, widget.segment!);
 
@@ -185,6 +193,13 @@ class _GstReportScreenState extends State<GstReportScreen> {
     }
   }
 
+  GstReportSnapshot? get _segmentExportSnapshot {
+    final rawSnapshot = _controller.snapshot;
+    if (rawSnapshot == null) return null;
+    if (widget.segment == null) return rawSnapshot;
+    return GstReportSegmentProjector.project(rawSnapshot, widget.segment!);
+  }
+
   Future<void> _confirmSegmentCompletion(
     GstFilingSegment segment,
     GstReportSnapshot snapshot,
@@ -200,43 +215,370 @@ class _GstReportScreenState extends State<GstReportScreen> {
     await _controller.completeSegmentFiling(segment);
   }
 
-  static const _exportItems = [
-    GstReportExportMenuItem(
-      action: GstReportExportAction.summaryPdf,
-      label: 'GST Summary PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-    GstReportExportMenuItem(
-      action: GstReportExportAction.gstr1Csv,
-      label: 'GSTR-1 CSV',
-      icon: Icons.table_chart_outlined,
-    ),
-    GstReportExportMenuItem(
-      action: GstReportExportAction.gstr3bCsv,
-      label: 'GSTR-3B CSV',
-      icon: Icons.summarize_outlined,
-    ),
-    GstReportExportMenuItem(
-      action: GstReportExportAction.hsnCsv,
-      label: 'HSN Register CSV',
-      icon: Icons.grid_on_outlined,
-    ),
-    GstReportExportMenuItem(
-      action: GstReportExportAction.hsnPdf,
-      label: 'HSN Register PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-    GstReportExportMenuItem(
-      action: GstReportExportAction.invoiceLedgerCsv,
-      label: 'GST Invoice Ledger CSV',
-      icon: Icons.receipt_long_outlined,
-    ),
-    GstReportExportMenuItem(
-      action: GstReportExportAction.invoiceLedgerPdf,
-      label: 'GST Invoice Ledger PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-  ];
+  static List<GstReportExportMenuItem> _exportItemsFor(
+    GstFilingSegment? segment,
+    GstReportSnapshot? rawSnapshot,
+    GstReportSnapshot? segmentSnapshot,
+  ) {
+    if (rawSnapshot == null || segmentSnapshot == null) return const [];
+
+    switch (segment) {
+      case GstFilingSegment.b2b:
+        return _b2bExportItems(rawSnapshot, segmentSnapshot);
+      case GstFilingSegment.b2c:
+        return _b2cExportItems(rawSnapshot, segmentSnapshot);
+      case null:
+        return _completeExportItems(rawSnapshot);
+    }
+  }
+
+  static List<GstReportExportMenuItem> _completeExportItems(
+    GstReportSnapshot snapshot,
+  ) {
+    final filing = Gstr1FilingSnapshot.fromReport(snapshot);
+    final items = <GstReportExportMenuItem>[];
+
+    if (_hasPortalUploadDocuments(snapshot, null)) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.portalUtilityPackZip,
+          label: 'Smart GST Filing Pack',
+          subtitle: 'Auto-detected GSTR-1 Offline Tool CSV sections',
+          section: 'Recommended',
+          icon: Icons.folder_zip_outlined,
+          primary: true,
+        ),
+      );
+    }
+    items.add(
+      const GstReportExportMenuItem(
+        action: GstReportExportAction.filingGuidePdf,
+        label: 'GST Portal Filing Guide PDF',
+        subtitle: 'GSTR-1 upload list and GSTR-3B portal entry sheet',
+        section: 'Recommended',
+        icon: Icons.fact_check_outlined,
+        primary: true,
+      ),
+    );
+    if (filing.b2bInvoices.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1B2bCsv,
+          label: 'GSTR-1 B2B Invoice CSV',
+          subtitle: 'Registered customer invoices for IFF/GSTR-1',
+          section: 'GSTR-1 Offline Utility Data',
+          icon: Icons.business_center_outlined,
+        ),
+      );
+    }
+    if (filing.b2cLargeInvoices.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1B2clCsv,
+          label: 'GSTR-1 B2CL CSV',
+          subtitle: 'Large interstate B2C invoices only',
+          section: 'GSTR-1 Offline Utility Data',
+          icon: Icons.storefront_outlined,
+        ),
+      );
+    }
+    if (filing.b2cSmallSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1B2csCsv,
+          label: 'GSTR-1 B2CS CSV',
+          subtitle: 'Small B2C consolidated summary only',
+          section: 'GSTR-1 Offline Utility Data',
+          icon: Icons.storefront_outlined,
+        ),
+      );
+    }
+    if (filing.hsnB2bSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1HsnB2bCsv,
+          label: 'HSN Table 12 B2B CSV',
+          subtitle: 'HSN summary for registered customer sales',
+          section: 'GSTR-1 Offline Utility Data',
+          icon: Icons.grid_view_outlined,
+        ),
+      );
+    }
+    if (filing.hsnB2cSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1HsnB2cCsv,
+          label: 'HSN Table 12 B2C CSV',
+          subtitle: 'HSN summary for retail customer sales',
+          section: 'GSTR-1 Offline Utility Data',
+          icon: Icons.grid_on_outlined,
+        ),
+      );
+    }
+    if (filing.documentSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1DocumentsCsv,
+          label: 'Document Summary CSV',
+          subtitle: 'Tax invoice, credit note and debit note count',
+          section: 'GSTR-1 Offline Utility Data',
+          icon: Icons.receipt_long_outlined,
+        ),
+      );
+    }
+
+    items.addAll(
+      const [
+        GstReportExportMenuItem(
+          action: GstReportExportAction.gstr3bCsv,
+          label: 'GSTR-3B Portal Entry CSV',
+          subtitle: 'Manual portal values; this is not an upload file',
+          section: 'Portal Entry Reference',
+          icon: Icons.summarize_outlined,
+        ),
+        GstReportExportMenuItem(
+          action: GstReportExportAction.summaryPdf,
+          label: 'GST Summary PDF',
+          subtitle: 'Readable filing review for records',
+          section: 'Review Records',
+          icon: Icons.picture_as_pdf_outlined,
+        ),
+        GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1Csv,
+          label: 'GSTR-1 Review CSV',
+          subtitle: 'Complete outward supply working sheet',
+          section: 'Review Records',
+          icon: Icons.table_chart_outlined,
+        ),
+        GstReportExportMenuItem(
+          action: GstReportExportAction.hsnCsv,
+          label: 'Complete HSN Working CSV',
+          subtitle: 'Internal B2B and B2C HSN register',
+          section: 'Review Records',
+          icon: Icons.grid_on_outlined,
+        ),
+        GstReportExportMenuItem(
+          action: GstReportExportAction.hsnPdf,
+          label: 'Complete HSN Working PDF',
+          subtitle: 'Printable HSN register for records',
+          section: 'Review Records',
+          icon: Icons.picture_as_pdf_outlined,
+        ),
+        GstReportExportMenuItem(
+          action: GstReportExportAction.invoiceLedgerCsv,
+          label: 'GST Invoice Ledger CSV',
+          subtitle: 'Invoice-wise GST breakup and audit reference',
+          section: 'Audit Records',
+          icon: Icons.receipt_long_outlined,
+        ),
+        GstReportExportMenuItem(
+          action: GstReportExportAction.invoiceLedgerPdf,
+          label: 'GST Invoice Ledger PDF',
+          subtitle: 'Printable invoice-wise GST ledger',
+          section: 'Audit Records',
+          icon: Icons.picture_as_pdf_outlined,
+        ),
+      ],
+    );
+    return items;
+  }
+
+  static List<GstReportExportMenuItem> _b2bExportItems(
+    GstReportSnapshot rawSnapshot,
+    GstReportSnapshot snapshot,
+  ) {
+    final fullFiling = Gstr1FilingSnapshot.fromReport(rawSnapshot);
+    final filing = Gstr1FilingSnapshot.fromReport(snapshot);
+    final items = <GstReportExportMenuItem>[];
+    if (_hasPortalUploadDocuments(rawSnapshot, null)) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.portalUtilityPackZip,
+          label: 'Smart GST Filing Pack',
+          subtitle: 'All required month files, auto-detected',
+          section: 'Recommended',
+          icon: Icons.auto_awesome_motion_outlined,
+          primary: true,
+        ),
+      );
+    }
+    items.add(
+      const GstReportExportMenuItem(
+        action: GstReportExportAction.filingGuidePdf,
+        label: 'GST Portal Filing Guide PDF',
+        subtitle: 'Required, skipped and portal-entry sections',
+        section: 'Recommended',
+        icon: Icons.fact_check_outlined,
+        primary: true,
+      ),
+    );
+    if (_hasPortalUploadDocuments(snapshot, GstFilingSegment.b2b)) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.b2bPortalUtilityPackZip,
+          label: 'B2B Working Pack',
+          subtitle: 'Only non-empty B2B GST Offline Tool CSV sections',
+          section: 'B2B Filing Data',
+          icon: Icons.folder_zip_outlined,
+        ),
+      );
+    }
+    if (filing.b2bInvoices.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1B2bCsv,
+          label: 'GSTR-1 B2B Invoice CSV',
+          subtitle: 'Registered customer invoices for IFF/GSTR-1',
+          section: 'B2B Filing Data',
+          icon: Icons.business_center_outlined,
+        ),
+      );
+    }
+    if (filing.hsnB2bSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1HsnB2bCsv,
+          label: 'HSN Table 12 B2B CSV',
+          subtitle: 'HSN summary for registered customer sales',
+          section: 'B2B Filing Data',
+          icon: Icons.grid_view_outlined,
+        ),
+      );
+    }
+    if (fullFiling.documentSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1DocumentsCsv,
+          label: 'Document Summary CSV',
+          subtitle: 'Return-level invoice series count for Table 13',
+          section: 'Return-Level Filing Data',
+          icon: Icons.receipt_long_outlined,
+        ),
+      );
+    }
+    return items;
+  }
+
+  static List<GstReportExportMenuItem> _b2cExportItems(
+    GstReportSnapshot rawSnapshot,
+    GstReportSnapshot snapshot,
+  ) {
+    final fullFiling = Gstr1FilingSnapshot.fromReport(rawSnapshot);
+    final filing = Gstr1FilingSnapshot.fromReport(snapshot);
+    final items = <GstReportExportMenuItem>[];
+    if (_hasPortalUploadDocuments(rawSnapshot, null)) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.portalUtilityPackZip,
+          label: 'Smart GST Filing Pack',
+          subtitle: 'All required month files, auto-detected',
+          section: 'Recommended',
+          icon: Icons.auto_awesome_motion_outlined,
+          primary: true,
+        ),
+      );
+    }
+    items.add(
+      const GstReportExportMenuItem(
+        action: GstReportExportAction.filingGuidePdf,
+        label: 'GST Portal Filing Guide PDF',
+        subtitle: 'Required, skipped and portal-entry sections',
+        section: 'Recommended',
+        icon: Icons.fact_check_outlined,
+        primary: true,
+      ),
+    );
+    if (_hasPortalUploadDocuments(snapshot, GstFilingSegment.b2c)) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.b2cPortalUtilityPackZip,
+          label: 'B2C Working Pack',
+          subtitle: 'Only non-empty B2C GST Offline Tool CSV sections',
+          section: 'B2C Filing Data',
+          icon: Icons.folder_zip_outlined,
+        ),
+      );
+    }
+    if (filing.b2cLargeInvoices.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1B2clCsv,
+          label: 'GSTR-1 B2CL CSV',
+          subtitle: 'Large interstate B2C invoices only',
+          section: 'B2C Filing Data',
+          icon: Icons.storefront_outlined,
+        ),
+      );
+    }
+    if (filing.b2cSmallSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1B2csCsv,
+          label: 'GSTR-1 B2CS CSV',
+          subtitle: 'Small B2C consolidated summary only',
+          section: 'B2C Filing Data',
+          icon: Icons.storefront_outlined,
+        ),
+      );
+    }
+    if (filing.hsnB2cSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1HsnB2cCsv,
+          label: 'HSN Table 12 B2C CSV',
+          subtitle: 'HSN summary for retail customer sales',
+          section: 'B2C Filing Data',
+          icon: Icons.grid_on_outlined,
+        ),
+      );
+    }
+    if (fullFiling.documentSummary.isNotEmpty) {
+      items.add(
+        const GstReportExportMenuItem(
+          action: GstReportExportAction.gstr1DocumentsCsv,
+          label: 'Document Summary CSV',
+          subtitle: 'Return-level invoice series count for Table 13',
+          section: 'Return-Level Filing Data',
+          icon: Icons.receipt_long_outlined,
+        ),
+      );
+    }
+    return items;
+  }
+
+  static bool _usesFullPeriodSnapshot(GstReportExportAction action) {
+    return switch (action) {
+      GstReportExportAction.portalUtilityPackZip ||
+      GstReportExportAction.filingGuidePdf ||
+      GstReportExportAction.gstr1DocumentsCsv ||
+      GstReportExportAction.gstr3bCsv ||
+      GstReportExportAction.summaryPdf ||
+      GstReportExportAction.gstr1Csv ||
+      GstReportExportAction.hsnCsv ||
+      GstReportExportAction.hsnPdf ||
+      GstReportExportAction.invoiceLedgerCsv ||
+      GstReportExportAction.invoiceLedgerPdf =>
+        true,
+      GstReportExportAction.b2bPortalUtilityPackZip ||
+      GstReportExportAction.b2cPortalUtilityPackZip ||
+      GstReportExportAction.gstr1B2bCsv ||
+      GstReportExportAction.gstr1B2clCsv ||
+      GstReportExportAction.gstr1B2csCsv ||
+      GstReportExportAction.gstr1HsnB2bCsv ||
+      GstReportExportAction.gstr1HsnB2cCsv =>
+        false,
+    };
+  }
+
+  static bool _hasPortalUploadDocuments(
+    GstReportSnapshot snapshot,
+    GstFilingSegment? segment,
+  ) {
+    return GstReportPortalPackBuilder.documents(
+      snapshot,
+      segment: segment,
+    ).isNotEmpty;
+  }
 }
 
 class _SegmentFilingControlBar extends StatelessWidget {

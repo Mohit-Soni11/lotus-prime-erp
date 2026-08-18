@@ -165,6 +165,7 @@ class GstReportCsvBuilder {
       ['7 - B2C SMALL CONSOLIDATED SUMMARY'],
       [
         'Place of Supply',
+        'Place State Code',
         'Supply Type',
         'Rate',
         'Invoices',
@@ -178,6 +179,7 @@ class GstReportCsvBuilder {
       for (final row in rows)
         [
           row.placeOfSupply,
+          row.placeOfSupplyStateCode,
           row.supplyType,
           GstReportFormatters.rate(row.rate),
           '${row.invoiceCount}',
