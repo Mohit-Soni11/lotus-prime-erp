@@ -190,12 +190,22 @@ class GstReportShopIdentity {
     this.gstin = '',
     this.stateCode = '',
     this.stateName = '',
+    this.configuredStateName = '',
   });
 
   final String shopName;
   final String gstin;
   final String stateCode;
   final String stateName;
+  final String configuredStateName;
+
+  bool get hasStateMismatch {
+    final registered = _normalizeStateName(stateName);
+    final configured = _normalizeStateName(configuredStateName);
+    return registered.isNotEmpty &&
+        configured.isNotEmpty &&
+        registered != configured;
+  }
 }
 
 class GstReportDashboardSummary {
@@ -433,4 +443,8 @@ class GstReportSnapshot {
         ...gstr1B2bInvoices,
         ...gstr1B2cInvoices,
       ];
+}
+
+String _normalizeStateName(String value) {
+  return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 }

@@ -224,9 +224,9 @@ class _GstReportScreenState extends State<GstReportScreen> {
 
     switch (segment) {
       case GstFilingSegment.b2b:
-        return _b2bExportItems(rawSnapshot, segmentSnapshot);
+        return _b2bExportItems(segmentSnapshot);
       case GstFilingSegment.b2c:
-        return _b2cExportItems(rawSnapshot, segmentSnapshot);
+        return _b2cExportItems(segmentSnapshot);
       case null:
         return _completeExportItems(rawSnapshot);
     }
@@ -242,31 +242,21 @@ class _GstReportScreenState extends State<GstReportScreen> {
       items.add(
         const GstReportExportMenuItem(
           action: GstReportExportAction.portalUtilityPackZip,
-          label: 'Smart GST Filing Pack',
-          subtitle: 'Auto-detected GSTR-1 Offline Tool CSV sections',
-          section: 'Recommended',
+          label: 'GSTR-1 Upload CSV Pack',
+          subtitle: 'Only non-empty official Offline Tool section files',
+          section: 'GST Portal Upload',
           icon: Icons.folder_zip_outlined,
           primary: true,
         ),
       );
     }
-    items.add(
-      const GstReportExportMenuItem(
-        action: GstReportExportAction.filingGuidePdf,
-        label: 'GST Portal Filing Guide PDF',
-        subtitle: 'GSTR-1 upload list and GSTR-3B portal entry sheet',
-        section: 'Recommended',
-        icon: Icons.fact_check_outlined,
-        primary: true,
-      ),
-    );
     if (filing.b2bInvoices.isNotEmpty) {
       items.add(
         const GstReportExportMenuItem(
           action: GstReportExportAction.gstr1B2bCsv,
           label: 'GSTR-1 B2B Invoice CSV',
           subtitle: 'Registered customer invoices for IFF/GSTR-1',
-          section: 'GSTR-1 Offline Utility Data',
+          section: 'GSTR-1 Section CSV',
           icon: Icons.business_center_outlined,
         ),
       );
@@ -277,7 +267,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1B2clCsv,
           label: 'GSTR-1 B2CL CSV',
           subtitle: 'Large interstate B2C invoices only',
-          section: 'GSTR-1 Offline Utility Data',
+          section: 'GSTR-1 Section CSV',
           icon: Icons.storefront_outlined,
         ),
       );
@@ -288,7 +278,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1B2csCsv,
           label: 'GSTR-1 B2CS CSV',
           subtitle: 'Small B2C consolidated summary only',
-          section: 'GSTR-1 Offline Utility Data',
+          section: 'GSTR-1 Section CSV',
           icon: Icons.storefront_outlined,
         ),
       );
@@ -299,7 +289,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1HsnB2bCsv,
           label: 'HSN Table 12 B2B CSV',
           subtitle: 'HSN summary for registered customer sales',
-          section: 'GSTR-1 Offline Utility Data',
+          section: 'GSTR-1 Section CSV',
           icon: Icons.grid_view_outlined,
         ),
       );
@@ -310,7 +300,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1HsnB2cCsv,
           label: 'HSN Table 12 B2C CSV',
           subtitle: 'HSN summary for retail customer sales',
-          section: 'GSTR-1 Offline Utility Data',
+          section: 'GSTR-1 Section CSV',
           icon: Icons.grid_on_outlined,
         ),
       );
@@ -320,8 +310,8 @@ class _GstReportScreenState extends State<GstReportScreen> {
         const GstReportExportMenuItem(
           action: GstReportExportAction.gstr1DocumentsCsv,
           label: 'Document Summary CSV',
-          subtitle: 'Tax invoice, credit note and debit note count',
-          section: 'GSTR-1 Offline Utility Data',
+          subtitle: 'Table 13 invoice series count for the return',
+          section: 'GSTR-1 Section CSV',
           icon: Icons.receipt_long_outlined,
         ),
       );
@@ -331,51 +321,51 @@ class _GstReportScreenState extends State<GstReportScreen> {
       const [
         GstReportExportMenuItem(
           action: GstReportExportAction.gstr3bCsv,
-          label: 'GSTR-3B Portal Entry CSV',
+          label: 'GSTR-3B Entry Reference CSV',
           subtitle: 'Manual portal values; this is not an upload file',
-          section: 'Portal Entry Reference',
+          section: 'GSTR-3B Manual Entry',
           icon: Icons.summarize_outlined,
         ),
         GstReportExportMenuItem(
           action: GstReportExportAction.summaryPdf,
           label: 'GST Summary PDF',
           subtitle: 'Readable filing review for records',
-          section: 'Review Records',
+          section: 'Audit / Review',
           icon: Icons.picture_as_pdf_outlined,
         ),
         GstReportExportMenuItem(
           action: GstReportExportAction.gstr1Csv,
           label: 'GSTR-1 Review CSV',
           subtitle: 'Complete outward supply working sheet',
-          section: 'Review Records',
+          section: 'Audit / Review',
           icon: Icons.table_chart_outlined,
         ),
         GstReportExportMenuItem(
           action: GstReportExportAction.hsnCsv,
           label: 'Complete HSN Working CSV',
           subtitle: 'Internal B2B and B2C HSN register',
-          section: 'Review Records',
+          section: 'Audit / Review',
           icon: Icons.grid_on_outlined,
         ),
         GstReportExportMenuItem(
           action: GstReportExportAction.hsnPdf,
           label: 'Complete HSN Working PDF',
           subtitle: 'Printable HSN register for records',
-          section: 'Review Records',
+          section: 'Audit / Review',
           icon: Icons.picture_as_pdf_outlined,
         ),
         GstReportExportMenuItem(
           action: GstReportExportAction.invoiceLedgerCsv,
           label: 'GST Invoice Ledger CSV',
           subtitle: 'Invoice-wise GST breakup and audit reference',
-          section: 'Audit Records',
+          section: 'Audit / Review',
           icon: Icons.receipt_long_outlined,
         ),
         GstReportExportMenuItem(
           action: GstReportExportAction.invoiceLedgerPdf,
           label: 'GST Invoice Ledger PDF',
           subtitle: 'Printable invoice-wise GST ledger',
-          section: 'Audit Records',
+          section: 'Audit / Review',
           icon: Icons.picture_as_pdf_outlined,
         ),
       ],
@@ -384,42 +374,19 @@ class _GstReportScreenState extends State<GstReportScreen> {
   }
 
   static List<GstReportExportMenuItem> _b2bExportItems(
-    GstReportSnapshot rawSnapshot,
     GstReportSnapshot snapshot,
   ) {
-    final fullFiling = Gstr1FilingSnapshot.fromReport(rawSnapshot);
     final filing = Gstr1FilingSnapshot.fromReport(snapshot);
     final items = <GstReportExportMenuItem>[];
-    if (_hasPortalUploadDocuments(rawSnapshot, null)) {
-      items.add(
-        const GstReportExportMenuItem(
-          action: GstReportExportAction.portalUtilityPackZip,
-          label: 'Smart GST Filing Pack',
-          subtitle: 'All required month files, auto-detected',
-          section: 'Recommended',
-          icon: Icons.auto_awesome_motion_outlined,
-          primary: true,
-        ),
-      );
-    }
-    items.add(
-      const GstReportExportMenuItem(
-        action: GstReportExportAction.filingGuidePdf,
-        label: 'GST Portal Filing Guide PDF',
-        subtitle: 'Required, skipped and portal-entry sections',
-        section: 'Recommended',
-        icon: Icons.fact_check_outlined,
-        primary: true,
-      ),
-    );
     if (_hasPortalUploadDocuments(snapshot, GstFilingSegment.b2b)) {
       items.add(
         const GstReportExportMenuItem(
           action: GstReportExportAction.b2bPortalUtilityPackZip,
-          label: 'B2B Working Pack',
-          subtitle: 'Only non-empty B2B GST Offline Tool CSV sections',
-          section: 'B2B Filing Data',
+          label: 'B2B Upload CSV Pack',
+          subtitle: 'Official B2B and HSN B2B section files only',
+          section: 'GST Portal Upload',
           icon: Icons.folder_zip_outlined,
+          primary: true,
         ),
       );
     }
@@ -429,7 +396,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1B2bCsv,
           label: 'GSTR-1 B2B Invoice CSV',
           subtitle: 'Registered customer invoices for IFF/GSTR-1',
-          section: 'B2B Filing Data',
+          section: 'B2B Section CSV',
           icon: Icons.business_center_outlined,
         ),
       );
@@ -440,19 +407,8 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1HsnB2bCsv,
           label: 'HSN Table 12 B2B CSV',
           subtitle: 'HSN summary for registered customer sales',
-          section: 'B2B Filing Data',
+          section: 'B2B Section CSV',
           icon: Icons.grid_view_outlined,
-        ),
-      );
-    }
-    if (fullFiling.documentSummary.isNotEmpty) {
-      items.add(
-        const GstReportExportMenuItem(
-          action: GstReportExportAction.gstr1DocumentsCsv,
-          label: 'Document Summary CSV',
-          subtitle: 'Return-level invoice series count for Table 13',
-          section: 'Return-Level Filing Data',
-          icon: Icons.receipt_long_outlined,
         ),
       );
     }
@@ -460,42 +416,19 @@ class _GstReportScreenState extends State<GstReportScreen> {
   }
 
   static List<GstReportExportMenuItem> _b2cExportItems(
-    GstReportSnapshot rawSnapshot,
     GstReportSnapshot snapshot,
   ) {
-    final fullFiling = Gstr1FilingSnapshot.fromReport(rawSnapshot);
     final filing = Gstr1FilingSnapshot.fromReport(snapshot);
     final items = <GstReportExportMenuItem>[];
-    if (_hasPortalUploadDocuments(rawSnapshot, null)) {
-      items.add(
-        const GstReportExportMenuItem(
-          action: GstReportExportAction.portalUtilityPackZip,
-          label: 'Smart GST Filing Pack',
-          subtitle: 'All required month files, auto-detected',
-          section: 'Recommended',
-          icon: Icons.auto_awesome_motion_outlined,
-          primary: true,
-        ),
-      );
-    }
-    items.add(
-      const GstReportExportMenuItem(
-        action: GstReportExportAction.filingGuidePdf,
-        label: 'GST Portal Filing Guide PDF',
-        subtitle: 'Required, skipped and portal-entry sections',
-        section: 'Recommended',
-        icon: Icons.fact_check_outlined,
-        primary: true,
-      ),
-    );
     if (_hasPortalUploadDocuments(snapshot, GstFilingSegment.b2c)) {
       items.add(
         const GstReportExportMenuItem(
           action: GstReportExportAction.b2cPortalUtilityPackZip,
-          label: 'B2C Working Pack',
-          subtitle: 'Only non-empty B2C GST Offline Tool CSV sections',
-          section: 'B2C Filing Data',
+          label: 'B2C Upload CSV Pack',
+          subtitle: 'Official B2CL/B2CS and HSN B2C section files only',
+          section: 'GST Portal Upload',
           icon: Icons.folder_zip_outlined,
+          primary: true,
         ),
       );
     }
@@ -505,7 +438,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1B2clCsv,
           label: 'GSTR-1 B2CL CSV',
           subtitle: 'Large interstate B2C invoices only',
-          section: 'B2C Filing Data',
+          section: 'B2C Section CSV',
           icon: Icons.storefront_outlined,
         ),
       );
@@ -516,7 +449,7 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1B2csCsv,
           label: 'GSTR-1 B2CS CSV',
           subtitle: 'Small B2C consolidated summary only',
-          section: 'B2C Filing Data',
+          section: 'B2C Section CSV',
           icon: Icons.storefront_outlined,
         ),
       );
@@ -527,19 +460,8 @@ class _GstReportScreenState extends State<GstReportScreen> {
           action: GstReportExportAction.gstr1HsnB2cCsv,
           label: 'HSN Table 12 B2C CSV',
           subtitle: 'HSN summary for retail customer sales',
-          section: 'B2C Filing Data',
+          section: 'B2C Section CSV',
           icon: Icons.grid_on_outlined,
-        ),
-      );
-    }
-    if (fullFiling.documentSummary.isNotEmpty) {
-      items.add(
-        const GstReportExportMenuItem(
-          action: GstReportExportAction.gstr1DocumentsCsv,
-          label: 'Document Summary CSV',
-          subtitle: 'Return-level invoice series count for Table 13',
-          section: 'Return-Level Filing Data',
-          icon: Icons.receipt_long_outlined,
         ),
       );
     }

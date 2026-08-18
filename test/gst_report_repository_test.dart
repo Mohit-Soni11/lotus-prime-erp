@@ -95,7 +95,7 @@ void main() {
       itemTotal: 1236,
     );
 
-    await _insertBill(
+    final inclusiveBillId = await _insertBill(
       db,
       billNo: 'INV-AJ-2026-0003',
       billType: 'NORMAL',
@@ -108,6 +108,16 @@ void main() {
       taxableAmount: 0,
       gstAmount: 0,
       finalAmount: 5000,
+    );
+    await _insertItem(
+      db,
+      billId: inclusiveBillId,
+      hsnCode: '7113',
+      quantity: 1,
+      taxableAmount: 0,
+      gstAmount: 0,
+      gstRate: 3,
+      itemTotal: 5000,
     );
 
     final snapshot = await repository.fetch(
@@ -126,20 +136,20 @@ void main() {
     expect(snapshot.dashboard.inclusive.invoiceCount, 1);
     expect(snapshot.dashboard.inclusive.invoiceValue, 5000);
     expect(snapshot.dashboard.inclusive.taxableValue, 4854.37);
-    expect(snapshot.dashboard.inclusive.outputGst, 145.63);
+    expect(snapshot.dashboard.inclusive.outputGst, 145.64);
     expect(snapshot.dashboard.taxableSales, 16054.37);
     expect(snapshot.dashboard.cgstAmount, 222.82);
-    expect(snapshot.dashboard.sgstAmount, 222.81);
+    expect(snapshot.dashboard.sgstAmount, 222.82);
     expect(snapshot.dashboard.igstAmount, 36);
-    expect(snapshot.dashboard.totalGst, 481.63);
+    expect(snapshot.dashboard.totalGst, 481.64);
     expect(snapshot.gstr1B2bInvoices, hasLength(1));
     expect(snapshot.gstr1B2cInvoices, hasLength(2));
-    expect(snapshot.gstr3b.netTaxPayable, 481.63);
+    expect(snapshot.gstr3b.netTaxPayable, 481.64);
     expect(snapshot.rateSummary, hasLength(1));
     expect(snapshot.rateSummary.single.rate, 3);
     expect(snapshot.rateSummary.single.invoiceCount, 3);
     expect(snapshot.rateSummary.single.taxableAmount, 16054.37);
-    expect(snapshot.rateSummary.single.gstAmount, 481.63);
+    expect(snapshot.rateSummary.single.gstAmount, 481.64);
     expect(snapshot.rateSummary.single.invoiceValue, 16536);
     final gstr1 = Gstr1FilingSnapshot.fromReport(snapshot);
     expect(gstr1.b2bInvoices, hasLength(1));
@@ -147,13 +157,23 @@ void main() {
     expect(gstr1.b2cSmallSummary, hasLength(2));
     expect(gstr1.hsnB2bSummary, hasLength(1));
     expect(gstr1.hsnB2cSummary, hasLength(1));
-    expect(gstr1.documentSummary.first.documentType, 'Tax Invoice');
-    expect(gstr1.documentSummary.first.totalIssued, 3);
+    expect(
+      gstr1.documentSummary.first.documentType,
+      'Invoices for outward supply',
+    );
+    expect(gstr1.documentSummary, hasLength(2));
+    expect(
+      gstr1.documentSummary.fold<int>(
+        0,
+        (total, row) => total + row.totalIssued,
+      ),
+      3,
+    );
     expect(gstr1.readiness.isPortalReady, isTrue);
     final gstr3b = Gstr3bFilingSnapshot.fromReport(snapshot);
     expect(gstr3b.table31Rows.first.code, '3.1(a)');
     expect(gstr3b.table31Rows.first.taxableValue, 16054.37);
-    expect(gstr3b.table31Rows.first.totalTax, 481.63);
+    expect(gstr3b.table31Rows.first.totalTax, 481.64);
     expect(
         gstr3b.paymentRows
             .singleWhere((row) => row.taxHead == 'CGST')
@@ -163,8 +183,8 @@ void main() {
         gstr3b.paymentRows
             .singleWhere((row) => row.taxHead == 'SGST')
             .cashPayable,
-        222.81);
-    expect(gstr3b.netCashPayable, 481.63);
+        222.82);
+    expect(gstr3b.netCashPayable, 481.64);
     expect(gstr3b.itcRows, hasLength(8));
     expect(snapshot.hsnSummary, hasLength(2));
 
@@ -180,6 +200,10 @@ void main() {
     final b2cHsn = snapshot.hsnSummary.singleWhere(
       (row) => row.invoiceType == 'B2C',
     );
+    expect(b2cHsn.invoiceCount, 2);
+    expect(b2cHsn.taxableAmount, 6054.37);
+    expect(b2cHsn.cgstAmount, 72.82);
+    expect(b2cHsn.sgstAmount, 72.82);
     expect(b2cHsn.igstAmount, 36);
     expect(
       snapshot.auditFindings.single.severity,
@@ -252,6 +276,34 @@ void main() {
     expect(ledger.quarterReturnStatus.completed, isTrue);
     expect(ledger.quarterReturnStatus.amountSnapshot, 1510.75);
     expect(ledger.paidTaxSnapshot, 510.05);
+  });
+
+  test('shop GSTIN state is authoritative and profile mismatch blocks filing',
+      () async {
+    await db.into(db.shopProfiles).insert(
+          ShopProfilesCompanion.insert(
+            shopName: const drift.Value('Anjali Jewellers'),
+            legalName: const drift.Value('Anjali Jewellers Private Limited'),
+            state: const drift.Value('Bihar'),
+            gstin: const drift.Value('07AAGFF2194N1Z1'),
+          ),
+        );
+
+    final snapshot =
+        await repository.fetch(GstReportPeriod.forMonth(DateTime(2026, 8)));
+    final filing = Gstr1FilingSnapshot.fromReport(snapshot);
+
+    expect(snapshot.identity.stateCode, '07');
+    expect(snapshot.identity.stateName, 'Delhi');
+    expect(snapshot.identity.configuredStateName, 'Bihar');
+    expect(snapshot.identity.hasStateMismatch, isTrue);
+    expect(
+      snapshot.auditFindings.any(
+        (finding) => finding.title == 'Shop State Name Mismatch',
+      ),
+      isTrue,
+    );
+    expect(filing.readiness.isPortalReady, isFalse);
   });
 
   test('report normalizes inter-state output tax to IGST from place of supply',
@@ -350,6 +402,84 @@ void main() {
     expect(invoice.cgstAmount, 60);
     expect(invoice.sgstAmount, 60);
   });
+
+  test('HSN register reconciles to invoice totals when item snapshots drift',
+      () async {
+    await db.into(db.shopProfiles).insert(
+          ShopProfilesCompanion.insert(
+            shopName: const drift.Value('Anjali Jewellers'),
+            legalName: const drift.Value('Anjali Jewellers Private Limited'),
+            state: const drift.Value('Bihar'),
+            gstin: const drift.Value('10ABCDE1234F1Z5'),
+          ),
+        );
+
+    final billId = await _insertBill(
+      db,
+      billNo: 'TAX-AJ-2026-0201',
+      customerName: 'Walk-in Customer',
+      placeOfSupply: 'Bihar',
+      shopGstin: '10ABCDE1234F1Z5',
+      shopStateCode: '10',
+      customerStateCode: '10',
+      billDate: DateTime(2026, 8, 12, 12),
+      taxableAmount: 10000,
+      cgstAmount: 150,
+      sgstAmount: 150,
+      gstAmount: 300,
+      finalAmount: 10300,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      lineNo: 1,
+      hsnCode: '71131120',
+      quantity: 1,
+      taxableAmount: 8000,
+      cgstAmount: 120,
+      sgstAmount: 120,
+      gstAmount: 240,
+      gstRate: 3,
+      itemTotal: 8240,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      lineNo: 2,
+      hsnCode: '71131910',
+      quantity: 1,
+      taxableAmount: 1500,
+      cgstAmount: 22.50,
+      sgstAmount: 22.50,
+      gstAmount: 45,
+      gstRate: 3,
+      itemTotal: 2060,
+    );
+
+    final snapshot =
+        await repository.fetch(GstReportPeriod.forMonth(DateTime(2026, 8)));
+    final hsnTaxable = snapshot.hsnSummary.fold<double>(
+      0,
+      (total, row) => total + row.taxableAmount,
+    );
+    final hsnCgst = snapshot.hsnSummary.fold<double>(
+      0,
+      (total, row) => total + row.cgstAmount,
+    );
+    final hsnSgst = snapshot.hsnSummary.fold<double>(
+      0,
+      (total, row) => total + row.sgstAmount,
+    );
+    final hsnInvoiceValue = snapshot.hsnSummary.fold<double>(
+      0,
+      (total, row) => total + row.invoiceValue,
+    );
+
+    expect(hsnTaxable, snapshot.dashboard.taxableSales);
+    expect(hsnCgst, snapshot.dashboard.cgstAmount);
+    expect(hsnSgst, snapshot.dashboard.sgstAmount);
+    expect(hsnInvoiceValue, snapshot.dashboard.gstInvoiceValue);
+  });
 }
 
 Future<int> _insertBill(
@@ -400,6 +530,7 @@ Future<int> _insertBill(
 Future<int> _insertItem(
   AppDatabase db, {
   required int billId,
+  int lineNo = 1,
   required String hsnCode,
   required int quantity,
   required double taxableAmount,
@@ -413,7 +544,7 @@ Future<int> _insertItem(
   return db.into(db.billItems).insert(
         BillItemsCompanion.insert(
           billId: billId,
-          lineNo: const drift.Value(1),
+          lineNo: drift.Value(lineNo),
           metalType: const drift.Value('GOLD'),
           itemName: 'Gold Ring',
           hsnCode: drift.Value(hsnCode),

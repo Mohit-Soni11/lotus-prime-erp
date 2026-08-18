@@ -293,6 +293,18 @@ class GstReportRepository {
           ..orderBy([(table) => OrderingTerm.desc(table.id)])
           ..limit(1))
         .getSingleOrNull();
+    final gstin = _firstText([taxConfig?.gstin, shop?.gstin]);
+    final configuredStateName = _firstText([
+      GstJurisdictionResolver.stateNameFromText(shop?.state),
+      shop?.state,
+    ]);
+    final stateCode = _firstText([
+      _stateCodeFromGstin(gstin),
+      taxConfig?.stateCode,
+      GstJurisdictionResolver.stateCodeFromText(shop?.state),
+    ]);
+    final registeredStateName =
+        GstJurisdictionResolver.canonicalStateName(stateCode);
 
     return GstReportShopIdentity(
       shopName: _firstText([
@@ -300,17 +312,10 @@ class GstReportRepository {
         shop?.shopName,
         taxConfig?.legalName,
       ], fallback: 'Lotus ERP'),
-      gstin: _firstText([taxConfig?.gstin, shop?.gstin]),
-      stateCode: _firstText([
-        taxConfig?.stateCode,
-        _stateCodeFromGstin(taxConfig?.gstin),
-        _stateCodeFromGstin(shop?.gstin),
-        GstJurisdictionResolver.stateCodeFromText(shop?.state),
-      ]),
-      stateName: _firstText([
-        GstJurisdictionResolver.stateNameFromText(shop?.state),
-        shop?.state,
-      ]),
+      gstin: gstin,
+      stateCode: stateCode,
+      stateName: _firstText([registeredStateName, configuredStateName]),
+      configuredStateName: configuredStateName,
     );
   }
 
@@ -506,7 +511,7 @@ class GstReportRepository {
           OR COALESCE(b.total_amount, 0.0) > 0.005
           OR COALESCE(b.final_amount, 0.0) > 0.005
         )
-      ORDER BY i.hsn_code ASC, b.id ASC, i.line_no ASC
+      ORDER BY b.id ASC, i.line_no ASC, i.id ASC
       ''',
       variables: [
         Variable<DateTime>(period.startDate),
@@ -514,72 +519,69 @@ class GstReportRepository {
       ],
     ).get();
 
-    final accumulators = <String, _HsnAccumulator>{};
+    final rowsByBill = <int, List<QueryRow>>{};
     for (final row in rows) {
       final billId = row.read<int>('bill_id');
-      final invoice = invoiceById[billId];
-      if (invoice == null) continue;
+      if (!invoiceById.containsKey(billId)) continue;
+      rowsByBill.putIfAbsent(billId, () => <QueryRow>[]).add(row);
+    }
 
-      final itemTotal = _readDouble(row, 'item_total');
-      final ratio = _allocationRatio(
-        itemTotal,
-        invoice.invoiceValue - invoice.roundOffAmount,
-      );
-      final snapshotGst = _readDouble(row, 'gst_snapshot');
-      final fallbackGst = invoice.gstAmount * ratio;
-      final totalGst = snapshotGst.abs() > 0.005 ? snapshotGst : fallbackGst;
-      final taxableSnapshot = _readDouble(row, 'taxable_snapshot');
-      final taxable = taxableSnapshot.abs() > 0.005
-          ? taxableSnapshot
-          : invoice.taxableAmount * ratio;
-      final split = _normalizedTaxSplit(
-        totalGst: totalGst,
-        cgst: _readDouble(row, 'cgst_snapshot').abs() > 0.005
-            ? _readDouble(row, 'cgst_snapshot')
-            : invoice.cgstAmount * ratio,
-        sgst: _readDouble(row, 'sgst_snapshot').abs() > 0.005
-            ? _readDouble(row, 'sgst_snapshot')
-            : invoice.sgstAmount * ratio,
-        igst: _readDouble(row, 'igst_snapshot').abs() > 0.005
-            ? _readDouble(row, 'igst_snapshot')
-            : invoice.igstAmount * ratio,
-        jurisdiction: GstJurisdiction(
-          shopStateCode: invoice.shopStateCode,
-          placeOfSupplyStateCode: invoice.placeOfSupplyStateCode,
-          placeOfSupplyName: invoice.placeOfSupply,
-          isInterState: invoice.supplyType == 'INTER_STATE',
-          isResolved: invoice.shopStateCode.isNotEmpty &&
-              invoice.placeOfSupplyStateCode.isNotEmpty,
-        ),
-      );
-      final gstRateSnapshot = _readDouble(row, 'gst_rate_snapshot');
-      final gstRate = gstRateSnapshot.abs() > 0.005
-          ? gstRateSnapshot
-          : taxable.abs() <= 0.005
-              ? 0.0
-              : (totalGst / taxable) * 100;
-      final hsn = row.read<String>('hsn_code');
+    final accumulators = <String, _HsnAccumulator>{};
+    for (final entry in rowsByBill.entries) {
+      final invoice = invoiceById[entry.key];
+      if (invoice == null) continue;
+      final allocatedLines = _allocateInvoiceHsnLines(invoice, entry.value);
+
+      for (final line in allocatedLines) {
+        final hsn = line.row.read<String>('hsn_code');
+        final invoiceType = invoice.isB2B ? 'B2B' : 'B2C';
+        final key = '$invoiceType|$hsn|${line.gstRate.toStringAsFixed(2)}';
+        final acc = accumulators.putIfAbsent(
+          key,
+          () => _HsnAccumulator(
+            hsnCode: hsn,
+            description:
+                hsnDescriptions[hsn] ?? line.row.read<String>('item_name'),
+            gstRate: line.gstRate,
+            invoiceType: invoiceType,
+          ),
+        );
+
+        acc.invoiceIds.add(invoice.billId);
+        acc.lineCount++;
+        acc.quantity += line.row.read<int>('quantity');
+        acc.taxableAmount += line.taxableAmount;
+        acc.cgstAmount += line.cgstAmount;
+        acc.sgstAmount += line.sgstAmount;
+        acc.igstAmount += line.igstAmount;
+        acc.gstAmount += line.gstAmount;
+        acc.invoiceValue += line.invoiceValue;
+      }
+    }
+    for (final invoice in invoices) {
+      if (rowsByBill.containsKey(invoice.billId)) continue;
+      final gstRate = invoice.taxableAmount.abs() <= 0.005
+          ? 0.0
+          : (invoice.gstAmount / invoice.taxableAmount) * 100;
       final invoiceType = invoice.isB2B ? 'B2B' : 'B2C';
-      final key = '$invoiceType|$hsn|${gstRate.toStringAsFixed(2)}';
+      final key = '$invoiceType|UNMAPPED|${gstRate.toStringAsFixed(2)}';
       final acc = accumulators.putIfAbsent(
         key,
         () => _HsnAccumulator(
-          hsnCode: hsn,
-          description: hsnDescriptions[hsn] ?? row.read<String>('item_name'),
+          hsnCode: 'UNMAPPED',
+          description: 'Invoice item details pending',
           gstRate: gstRate,
           invoiceType: invoiceType,
         ),
       );
 
       acc.invoiceIds.add(invoice.billId);
-      acc.lineCount++;
-      acc.quantity += row.read<int>('quantity');
-      acc.taxableAmount += taxable;
-      acc.cgstAmount += split.cgst;
-      acc.sgstAmount += split.sgst;
-      acc.igstAmount += split.igst;
-      acc.gstAmount += totalGst;
-      acc.invoiceValue += taxable + totalGst + (invoice.roundOffAmount * ratio);
+      acc.taxableAmount += invoice.taxableAmount;
+      acc.cgstAmount += invoice.cgstAmount;
+      acc.sgstAmount += invoice.sgstAmount;
+      acc.igstAmount += invoice.igstAmount;
+      acc.gstAmount += invoice.gstAmount;
+      acc.invoiceValue += invoice.invoiceValue;
     }
 
     final summaries = accumulators.values.map((acc) => acc.toRow()).toList()
@@ -591,6 +593,82 @@ class GstReportRepository {
         return a.gstRate.compareTo(b.gstRate);
       });
     return summaries;
+  }
+
+  List<_AllocatedHsnLine> _allocateInvoiceHsnLines(
+    GstInvoiceRow invoice,
+    List<QueryRow> rows,
+  ) {
+    if (rows.isEmpty) return const [];
+    final bases = rows.map((row) {
+      final snapshotTaxable = _readDouble(row, 'taxable_snapshot');
+      final snapshotGst = _readDouble(row, 'gst_snapshot');
+      final itemTotal = _readDouble(row, 'item_total');
+      return _firstPositive([
+        snapshotTaxable + snapshotGst,
+        itemTotal,
+        snapshotTaxable,
+      ]);
+    }).toList(growable: false);
+    final totalBasis = bases.fold<double>(0, (sum, value) => sum + value);
+    final equalRatio = 1 / rows.length;
+
+    var remainingTaxable = invoice.taxableAmount;
+    var remainingCgst = invoice.cgstAmount;
+    var remainingSgst = invoice.sgstAmount;
+    var remainingIgst = invoice.igstAmount;
+    var remainingGst = invoice.gstAmount;
+    var remainingInvoiceValue = invoice.invoiceValue;
+
+    final allocated = <_AllocatedHsnLine>[];
+    for (var index = 0; index < rows.length; index++) {
+      final row = rows[index];
+      final isLast = index == rows.length - 1;
+      final ratio = totalBasis > 0.005 ? bases[index] / totalBasis : equalRatio;
+      final taxable = isLast
+          ? _roundMoney(remainingTaxable)
+          : _roundMoney(invoice.taxableAmount * ratio);
+      final cgst = isLast
+          ? _roundMoney(remainingCgst)
+          : _roundMoney(invoice.cgstAmount * ratio);
+      final sgst = isLast
+          ? _roundMoney(remainingSgst)
+          : _roundMoney(invoice.sgstAmount * ratio);
+      final igst = isLast
+          ? _roundMoney(remainingIgst)
+          : _roundMoney(invoice.igstAmount * ratio);
+      final gst = isLast
+          ? _roundMoney(remainingGst)
+          : _roundMoney(invoice.gstAmount * ratio);
+      final invoiceValue = isLast
+          ? _roundMoney(remainingInvoiceValue)
+          : _roundMoney(invoice.invoiceValue * ratio);
+      final gstRateSnapshot = _readDouble(row, 'gst_rate_snapshot');
+      final gstRate = gstRateSnapshot.abs() > 0.005
+          ? gstRateSnapshot
+          : taxable.abs() <= 0.005
+              ? 0.0
+              : (gst / taxable) * 100;
+
+      allocated.add(_AllocatedHsnLine(
+        row: row,
+        taxableAmount: taxable,
+        cgstAmount: cgst,
+        sgstAmount: sgst,
+        igstAmount: igst,
+        gstAmount: gst,
+        invoiceValue: invoiceValue,
+        gstRate: gstRate,
+      ));
+
+      remainingTaxable = _roundMoney(remainingTaxable - taxable);
+      remainingCgst = _roundMoney(remainingCgst - cgst);
+      remainingSgst = _roundMoney(remainingSgst - sgst);
+      remainingIgst = _roundMoney(remainingIgst - igst);
+      remainingGst = _roundMoney(remainingGst - gst);
+      remainingInvoiceValue = _roundMoney(remainingInvoiceValue - invoiceValue);
+    }
+    return allocated;
   }
 
   Future<_NonGstSalesSummary> _fetchNonGstSalesSummary(
@@ -729,7 +807,7 @@ class GstReportRepository {
       ));
     }
     final configuredStateCode =
-        GstJurisdictionResolver.stateCodeFromText(identity.stateName);
+        GstJurisdictionResolver.stateCodeFromText(identity.configuredStateName);
     if (configuredStateCode.isNotEmpty &&
         identity.stateCode.isNotEmpty &&
         configuredStateCode != identity.stateCode) {
@@ -737,7 +815,7 @@ class GstReportRepository {
         severity: GstAuditSeverity.critical,
         title: 'Shop State Name Mismatch',
         message:
-            'Configured state ${identity.stateName} maps to $configuredStateCode, but the saved state code is ${identity.stateCode}.',
+            'Shop profile state ${identity.configuredStateName} maps to $configuredStateCode, but GST registration state is ${identity.stateCode}.',
       ));
     }
     for (final invoice in invoices) {
@@ -871,12 +949,6 @@ class GstReportRepository {
     return _TaxSplit(cgst: split.cgst, sgst: split.sgst, igst: split.igst);
   }
 
-  double _allocationRatio(double itemTotal, double invoiceTaxable) {
-    if (itemTotal <= 0.005) return 0;
-    if (invoiceTaxable.abs() <= 0.005) return 1;
-    return itemTotal / invoiceTaxable;
-  }
-
   double _readDouble(QueryRow row, String column) {
     return row.readNullable<double>(column) ?? 0.0;
   }
@@ -979,6 +1051,28 @@ class _NonGstSalesSummary {
   final double salesAmount;
 }
 
+class _AllocatedHsnLine {
+  const _AllocatedHsnLine({
+    required this.row,
+    required this.taxableAmount,
+    required this.cgstAmount,
+    required this.sgstAmount,
+    required this.igstAmount,
+    required this.gstAmount,
+    required this.invoiceValue,
+    required this.gstRate,
+  });
+
+  final QueryRow row;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double invoiceValue;
+  final double gstRate;
+}
+
 class _HsnAccumulator {
   _HsnAccumulator({
     required this.hsnCode,
@@ -1010,14 +1104,16 @@ class _HsnAccumulator {
       invoiceCount: invoiceIds.length,
       lineCount: lineCount,
       quantity: quantity,
-      taxableAmount: taxableAmount,
-      cgstAmount: cgstAmount,
-      sgstAmount: sgstAmount,
-      igstAmount: igstAmount,
-      gstAmount: gstAmount,
-      invoiceValue: invoiceValue,
+      taxableAmount: _roundMoney(taxableAmount),
+      cgstAmount: _roundMoney(cgstAmount),
+      sgstAmount: _roundMoney(sgstAmount),
+      igstAmount: _roundMoney(igstAmount),
+      gstAmount: _roundMoney(gstAmount),
+      invoiceValue: _roundMoney(invoiceValue),
     );
   }
+
+  double _roundMoney(double amount) => (amount * 100).round() / 100;
 }
 
 class _RateAccumulator {

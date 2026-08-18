@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/gstr1_filing_models.dart';
 import '../../domain/gst_report_models.dart';
 import '../gst_report_formatters.dart';
 import '../theme/gst_report_theme.dart';
@@ -25,6 +26,7 @@ class GstDashboardView extends StatelessWidget {
     final warningCount = snapshot.auditFindings
         .where((item) => item.severity == GstAuditSeverity.warning)
         .length;
+    final filing = Gstr1FilingSnapshot.fromReport(snapshot);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,16 +35,19 @@ class GstDashboardView extends StatelessWidget {
           title: 'GST Dashboard',
           subtitle: GstReportFormatters.periodLabel(snapshot.period),
           icon: GstReportIcons.dashboard,
-          child: _ShopIdentityStrip(identity: snapshot.identity),
+          child: _DashboardFilingContext(
+            identity: snapshot.identity,
+            documents: filing.documentSummary,
+          ),
         ),
         const SizedBox(height: 16),
         LayoutBuilder(
           builder: (context, constraints) {
             final cardWidth = constraints.maxWidth >= 1200
-                    ? (constraints.maxWidth - 42) / 4
-                    : constraints.maxWidth >= 760
-                        ? (constraints.maxWidth - 14) / 2
-                        : constraints.maxWidth;
+                ? (constraints.maxWidth - 42) / 4
+                : constraints.maxWidth >= 760
+                    ? (constraints.maxWidth - 14) / 2
+                    : constraints.maxWidth;
 
             return Wrap(
               spacing: 14,
@@ -140,6 +145,30 @@ class GstDashboardView extends StatelessWidget {
         _PricingBreakdownGrid(dashboard: dashboard),
         const SizedBox(height: 16),
         _RateSummaryPanel(rows: snapshot.rateSummary),
+      ],
+    );
+  }
+}
+
+class _DashboardFilingContext extends StatelessWidget {
+  const _DashboardFilingContext({
+    required this.identity,
+    required this.documents,
+  });
+
+  final GstReportShopIdentity identity;
+  final List<Gstr1DocumentSummaryRow> documents;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ShopIdentityStrip(identity: identity),
+        if (documents.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _InvoiceSeriesStrip(rows: documents),
+        ],
       ],
     );
   }
@@ -363,24 +392,167 @@ class _ShopIdentityStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _IdentityChip(label: 'Shop', value: identity.shopName),
+            _IdentityChip(
+              label: 'GSTIN',
+              value: identity.gstin.isEmpty ? 'Not configured' : identity.gstin,
+            ),
+            _IdentityChip(
+              label: 'Registered State Code',
+              value:
+                  identity.stateCode.isEmpty ? 'Pending' : identity.stateCode,
+            ),
+            _IdentityChip(
+              label: 'Registered State',
+              value:
+                  identity.stateName.isEmpty ? 'Pending' : identity.stateName,
+            ),
+            if (identity.configuredStateName.isNotEmpty)
+              _IdentityChip(
+                label: 'Profile State',
+                value: identity.configuredStateName,
+                accent: identity.hasStateMismatch
+                    ? GstReportColors.danger
+                    : GstReportColors.success,
+              ),
+          ],
+        ),
+        if (identity.hasStateMismatch) ...[
+          const SizedBox(height: 12),
+          _StateMismatchNotice(identity: identity),
+        ],
+      ],
+    );
+  }
+}
+
+class _InvoiceSeriesStrip extends StatelessWidget {
+  const _InvoiceSeriesStrip({required this.rows});
+
+  final List<Gstr1DocumentSummaryRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
-        _IdentityChip(label: 'Shop', value: identity.shopName),
-        _IdentityChip(
-          label: 'GSTIN',
-          value: identity.gstin.isEmpty ? 'Not configured' : identity.gstin,
-        ),
-        _IdentityChip(
-          label: 'State Code',
-          value: identity.stateCode.isEmpty ? 'Pending' : identity.stateCode,
-        ),
-        _IdentityChip(
-          label: 'State',
-          value: identity.stateName.isEmpty ? 'Pending' : identity.stateName,
-        ),
+        for (final row in rows)
+          _InvoiceSeriesChip(
+            fromNumber: row.fromNumber,
+            toNumber: row.toNumber,
+            totalIssued: row.totalIssued,
+          ),
       ],
+    );
+  }
+}
+
+class _InvoiceSeriesChip extends StatelessWidget {
+  const _InvoiceSeriesChip({
+    required this.fromNumber,
+    required this.toNumber,
+    required this.totalIssued,
+  });
+
+  final String fromNumber;
+  final String toNumber;
+  final int totalIssued;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 280, maxWidth: 380),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: GstReportColors.taxGreen.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: GstReportColors.taxGreen.withValues(alpha: 0.20),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Monthly Invoice Series',
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            '$fromNumber to $toNumber',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            '$totalIssued invoices issued',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GstReportStyles.body.copyWith(
+              color: GstReportColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StateMismatchNotice extends StatelessWidget {
+  const _StateMismatchNotice({required this.identity});
+
+  final GstReportShopIdentity identity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: GstReportColors.danger.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(9),
+        border:
+            Border.all(color: GstReportColors.danger.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: GstReportColors.danger,
+            size: 19,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'GSTIN state is ${identity.stateName}, but shop profile state is ${identity.configuredStateName}. Correct the shop identity before filing.',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GstReportStyles.body.copyWith(
+                color: GstReportColors.danger,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -389,20 +561,29 @@ class _IdentityChip extends StatelessWidget {
   const _IdentityChip({
     required this.label,
     required this.value,
+    this.accent,
   });
 
   final String label;
   final String value;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveAccent = accent ?? GstReportColors.bodyBorder;
     return Container(
       constraints: const BoxConstraints(minWidth: 180),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: GstReportColors.bodySubtle,
+        color: accent == null
+            ? GstReportColors.bodySubtle
+            : effectiveAccent.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: GstReportColors.bodyBorder),
+        border: Border.all(
+          color: accent == null
+              ? GstReportColors.bodyBorder
+              : effectiveAccent.withValues(alpha: 0.24),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,7 +621,8 @@ class _RateSummaryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return GstReportPanel(
       title: 'GST Rate Wise Outward Summary',
-      subtitle: 'Rate-level taxable value, output tax and invoice value for return cross-checks',
+      subtitle:
+          'Rate-level taxable value, output tax and invoice value for return cross-checks',
       icon: Icons.percent_rounded,
       child: rows.isEmpty
           ? const GstReportEmptyState(message: 'No tax-rate summary found.')
@@ -459,9 +641,8 @@ class _RateSummaryGrid extends StatelessWidget {
     const minWidth = 1040.0;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth < minWidth
-            ? minWidth
-            : constraints.maxWidth;
+        final width =
+            constraints.maxWidth < minWidth ? minWidth : constraints.maxWidth;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: SizedBox(
@@ -564,7 +745,8 @@ class _RateSummaryLine extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isHeader ? GstReportColors.bodySubtle : GstReportColors.bodyPanel,
+        color:
+            isHeader ? GstReportColors.bodySubtle : GstReportColors.bodyPanel,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: GstReportColors.bodyBorder),
       ),

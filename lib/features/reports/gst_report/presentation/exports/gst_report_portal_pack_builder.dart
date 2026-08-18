@@ -128,7 +128,15 @@ class GstReportPortalPackBuilder {
   }
 
   static String csvRow(List<String> row) {
-    return row.map((cell) => '"${cell.replaceAll('"', '""')}"').join(',');
+    return row.map(_csvCell).join(',');
+  }
+
+  static String _csvCell(String cell) {
+    final escaped = cell.replaceAll('"', '""');
+    final needsQuotes = escaped.contains(',') ||
+        escaped.contains('"') ||
+        escaped.contains('\n');
+    return needsQuotes ? '"$escaped"' : escaped;
   }
 
   static List<List<String>> _b2bRows(List<GstInvoiceRow> invoices) {
@@ -137,7 +145,7 @@ class GstReportPortalPackBuilder {
         'GSTIN/UIN of Recipient',
         'Receiver Name',
         'Invoice Number',
-        'Invoice Date',
+        'Invoice date',
         'Invoice Value',
         'Place Of Supply',
         'Reverse Charge',
@@ -171,7 +179,7 @@ class GstReportPortalPackBuilder {
     return [
       [
         'Invoice Number',
-        'Invoice Date',
+        'Invoice date',
         'Invoice Value',
         'Place Of Supply',
         'Applicable % of Tax Rate',
@@ -200,8 +208,8 @@ class GstReportPortalPackBuilder {
       [
         'Type',
         'Place Of Supply',
-        'Applicable % of Tax Rate',
         'Rate',
+        'Applicable % of Tax Rate',
         'Taxable Value',
         'Cess Amount',
         'E-Commerce GSTIN',
@@ -210,8 +218,8 @@ class GstReportPortalPackBuilder {
         [
           'OE',
           _portalPlace(row.placeOfSupplyStateCode, row.placeOfSupply),
-          '',
           row.rate.toStringAsFixed(2),
+          '',
           _money(row.taxableValue),
           '0.00',
           '',
@@ -232,12 +240,13 @@ class GstReportPortalPackBuilder {
         'Central Tax Amount',
         'State/UT Tax Amount',
         'Cess Amount',
+        'Rate',
       ],
       for (final row in rows)
         [
           row.hsnCode,
           row.description,
-          'PCS',
+          'PCS-PIECES',
           '${row.quantity}',
           _money(row.invoiceValue),
           _money(row.taxableAmount),
@@ -245,6 +254,7 @@ class GstReportPortalPackBuilder {
           _money(row.cgstAmount),
           _money(row.sgstAmount),
           '0.00',
+          row.gstRate.toStringAsFixed(2),
         ],
     ];
   }
@@ -257,7 +267,6 @@ class GstReportPortalPackBuilder {
         'Sr. No. To',
         'Total Number',
         'Cancelled',
-        'Net Issued',
       ],
       for (final row in rows)
         [
@@ -266,13 +275,12 @@ class GstReportPortalPackBuilder {
           row.toNumber,
           '${row.totalIssued}',
           '${row.cancelled}',
-          '${row.netIssued}',
         ],
     ];
   }
 
   static String _portalDate(DateTime value) {
-    return DateFormat('dd-MM-yyyy').format(value);
+    return DateFormat('dd-MMM-yy').format(value);
   }
 
   static String _portalPlace(String stateCode, String placeOfSupply) {

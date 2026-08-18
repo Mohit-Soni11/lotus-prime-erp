@@ -123,31 +123,19 @@ class Gstr1FilingSnapshot {
     List<GstInvoiceRow> invoices,
   ) {
     if (invoices.isEmpty) return const [];
-    final sorted = [...invoices]
-      ..sort((a, b) => a.invoiceNo.compareTo(b.invoiceNo));
-    return [
-      Gstr1DocumentSummaryRow(
-        documentType: 'Tax Invoice',
-        fromNumber: sorted.first.invoiceNo,
-        toNumber: sorted.last.invoiceNo,
-        totalIssued: sorted.length,
-        cancelled: 0,
-      ),
-      const Gstr1DocumentSummaryRow(
-        documentType: 'Credit Note',
-        fromNumber: 'Not issued',
-        toNumber: 'Not issued',
-        totalIssued: 0,
-        cancelled: 0,
-      ),
-      const Gstr1DocumentSummaryRow(
-        documentType: 'Debit Note',
-        fromNumber: 'Not issued',
-        toNumber: 'Not issued',
-        totalIssued: 0,
-        cancelled: 0,
-      ),
-    ];
+    final series = <String, _DocumentSeriesAccumulator>{};
+    for (final invoice in invoices) {
+      final serial = _DocumentSerial.parse(invoice.invoiceNo);
+      final acc = series.putIfAbsent(
+        serial.seriesKey,
+        () => _DocumentSeriesAccumulator(),
+      );
+      acc.add(serial);
+    }
+
+    final rows = series.values.map((acc) => acc.toRow()).toList()
+      ..sort((a, b) => a.fromNumber.compareTo(b.fromNumber));
+    return rows;
   }
 
   static Gstr1Readiness _buildReadiness(
@@ -163,6 +151,11 @@ class Gstr1FilingSnapshot {
     if (snapshot.identity.stateCode.trim().isEmpty ||
         snapshot.identity.stateName.trim().isEmpty) {
       blockers.add('Shop state identity is incomplete.');
+    }
+    if (snapshot.identity.hasStateMismatch) {
+      blockers.add(
+        'Shop GSTIN state is ${snapshot.identity.stateName}, but shop profile state is ${snapshot.identity.configuredStateName}.',
+      );
     }
     for (final invoice in snapshot.gstr1B2bInvoices) {
       if (invoice.customerGstin.trim().length != 15) {
@@ -306,6 +299,64 @@ class Gstr1Readiness {
   final List<String> warnings;
 
   bool get isPortalReady => blockerCount == 0;
+}
+
+class _DocumentSerial {
+  const _DocumentSerial({
+    required this.value,
+    required this.seriesKey,
+    this.number,
+  });
+
+  factory _DocumentSerial.parse(String value) {
+    final clean = value.trim();
+    final match = RegExp(r'^(.*?)(\d+)$').firstMatch(clean);
+    if (match == null) {
+      return _DocumentSerial(value: clean, seriesKey: clean);
+    }
+    final prefix = match.group(1) ?? '';
+    final digits = match.group(2) ?? '';
+    return _DocumentSerial(
+      value: clean,
+      seriesKey: prefix,
+      number: int.tryParse(digits),
+    );
+  }
+
+  final String value;
+  final String seriesKey;
+  final int? number;
+}
+
+class _DocumentSeriesAccumulator {
+  final List<_DocumentSerial> _serials;
+
+  _DocumentSeriesAccumulator() : _serials = <_DocumentSerial>[];
+
+  void add(_DocumentSerial serial) {
+    _serials.add(serial);
+  }
+
+  Gstr1DocumentSummaryRow toRow() {
+    final sorted = [..._serials]..sort(_compareSerials);
+    return Gstr1DocumentSummaryRow(
+      documentType: 'Invoices for outward supply',
+      fromNumber: sorted.first.value,
+      toNumber: sorted.last.value,
+      totalIssued: sorted.length,
+      cancelled: 0,
+    );
+  }
+
+  int _compareSerials(_DocumentSerial a, _DocumentSerial b) {
+    final numberA = a.number;
+    final numberB = b.number;
+    if (numberA != null && numberB != null) {
+      final numberCompare = numberA.compareTo(numberB);
+      if (numberCompare != 0) return numberCompare;
+    }
+    return a.value.compareTo(b.value);
+  }
 }
 
 class _B2cSmallAccumulator {

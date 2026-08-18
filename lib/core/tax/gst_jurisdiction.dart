@@ -100,8 +100,7 @@ class GstJurisdictionResolver {
         return GstTaxSplit(cgst: 0, sgst: 0, igst: roundedTotal);
       }
       final half = roundMoney(roundedTotal / 2);
-      return GstTaxSplit(
-          cgst: half, sgst: roundMoney(roundedTotal - half), igst: 0);
+      return GstTaxSplit(cgst: half, sgst: half, igst: 0);
     }
     final roundedIgst = roundMoney(storedIgst);
     if (roundedIgst.abs() > 0.005) {
@@ -118,8 +117,7 @@ class GstJurisdictionResolver {
       );
     }
     final half = roundMoney(roundedTotal / 2);
-    return GstTaxSplit(
-        cgst: half, sgst: roundMoney(roundedTotal - half), igst: 0);
+    return GstTaxSplit(cgst: half, sgst: half, igst: 0);
   }
 
   static GstinValidationResult validateGstin(String value) {

@@ -47,7 +47,7 @@ void main() {
       gstr1B2cInvoices: [
         GstInvoiceRow(
           billId: 2,
-          invoiceNo: 'TAX-AJ-002',
+          invoiceNo: 'INV-AJ-003',
           invoiceDate: DateTime(2026, 8, 7),
           customerName: 'Walk-in',
           customerGstin: '',
@@ -136,20 +136,42 @@ void main() {
         .contents;
     expect(b2bCsv, contains('GSTIN/UIN of Recipient'));
     expect(b2bCsv, contains('10AAAAA0000A1Z5'));
-    expect(b2bCsv, contains('06-08-2026'));
+    expect(b2bCsv, contains('06-Aug-26'));
+    expect(b2bCsv, contains('Regular B2B'));
     expect(b2bCsv, contains('10-Bihar'));
 
     final b2cCsv = documents
         .singleWhere((doc) => doc.fileName.startsWith('03-gstr1-b2cs'))
         .contents;
-    expect(b2cCsv, contains('Type'));
+    expect(
+      b2cCsv,
+      contains(
+        'Type,Place Of Supply,Rate,Applicable % of Tax Rate,Taxable Value,Cess Amount,E-Commerce GSTIN',
+      ),
+    );
     expect(b2cCsv, contains('OE'));
 
     final hsnB2cCsv = documents
         .singleWhere((doc) => doc.fileName.startsWith('05-gstr1-hsn-b2c'))
         .contents;
     expect(hsnB2cCsv, contains('Integrated Tax Amount'));
+    expect(hsnB2cCsv, contains('PCS-PIECES'));
     expect(hsnB2cCsv, contains('30.00'));
+
+    final documentsCsv = documents
+        .singleWhere((doc) => doc.fileName.startsWith('06-gstr1-documents'))
+        .contents;
+    expect(
+      documentsCsv,
+      contains(
+        'Nature of Document,Sr. No. From,Sr. No. To,Total Number,Cancelled',
+      ),
+    );
+    expect(documentsCsv, contains('Invoices for outward supply'));
+    expect(documentsCsv, contains('INV-AJ-003,INV-AJ-003,1,0'));
+    expect(documentsCsv, contains('TAX-AJ-001,TAX-AJ-001,1,0'));
+    expect(documentsCsv, isNot(contains('TAX-AJ-001,INV-AJ-003,2')));
+    expect(documentsCsv, isNot(contains('Net Issued')));
 
     final b2cPack = GstReportPortalPackBuilder.documents(
       snapshot,

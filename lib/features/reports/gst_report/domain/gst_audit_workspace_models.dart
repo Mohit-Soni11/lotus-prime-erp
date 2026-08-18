@@ -150,7 +150,8 @@ class GstAuditWorkspaceSnapshot {
   ) {
     final hasIdentity = snapshot.identity.gstin.trim().length == 15 &&
         snapshot.identity.stateCode.trim().isNotEmpty &&
-        snapshot.identity.stateName.trim().isNotEmpty;
+        snapshot.identity.stateName.trim().isNotEmpty &&
+        !snapshot.identity.hasStateMismatch;
     final hsnBlocked = snapshot.hsnSummary.any(
       (row) => row.hsnCode.trim().toUpperCase() == 'UNMAPPED',
     );
@@ -169,7 +170,7 @@ class GstAuditWorkspaceSnapshot {
         title: 'Business Identity',
         subtitle: hasIdentity
             ? 'Shop GSTIN, state code and state are available.'
-            : 'Shop GSTIN or state identity is incomplete.',
+            : 'Shop GSTIN and registered state must match the shop profile.',
         status: hasIdentity
             ? GstAuditControlStatus.clear
             : GstAuditControlStatus.blocked,
@@ -251,9 +252,10 @@ class GstAuditWorkspaceSnapshot {
         title: 'Shop GSTIN and State',
         clear: snapshot.identity.gstin.trim().length == 15 &&
             snapshot.identity.stateCode.trim().isNotEmpty &&
-            snapshot.identity.stateName.trim().isNotEmpty,
+            snapshot.identity.stateName.trim().isNotEmpty &&
+            !snapshot.identity.hasStateMismatch,
         clearNote: 'Legal identity is ready for return filing.',
-        issueNote: 'Complete shop GSTIN, state code and state.',
+        issueNote: 'Correct shop GSTIN, registered state and profile state.',
       ),
       _coverage(
         title: 'B2B Customer GSTIN',
