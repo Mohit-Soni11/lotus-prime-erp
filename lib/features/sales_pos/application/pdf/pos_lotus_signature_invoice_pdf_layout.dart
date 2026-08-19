@@ -66,8 +66,9 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _header(PosInvoiceModel invoice) {
     final addressLines = _addressLines(invoice);
-    final contactLine = _shopContactLine(invoice);
-    final statutoryLine = _shopStatutoryLine(invoice);
+    final phoneLine = _shopPhoneLine(invoice);
+    final emailLine = _shopEmailLine(invoice);
+    final gstinLine = _shopGstinLine(invoice);
 
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
@@ -82,86 +83,78 @@ class PosLotusSignatureInvoicePdfLayout {
             padding: const pw.EdgeInsets.only(right: 14),
             child: _brandMark(invoice),
           ),
-          pw.Container(width: 1, height: 86, color: _line),
+          pw.Container(width: 1, height: 122, color: _line),
           pw.SizedBox(width: 18),
           pw.Expanded(
-            child: pw.Column(
+            child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            _fallback(invoice.printShopName, invoice.shopName),
-                            maxLines: 1,
-                            overflow: pw.TextOverflow.clip,
-                            style: pw.TextStyle(
-                              fontSize: 22,
-                              fontWeight: pw.FontWeight.bold,
-                              letterSpacing: 0.8,
-                              color: _ink,
-                            ),
-                          ),
-                          pw.SizedBox(height: 4),
-                          pw.Text(
-                            _metalInvoiceLabel(invoice),
-                            style: pw.TextStyle(
-                              fontSize: 11,
-                              fontWeight: pw.FontWeight.bold,
-                              color: _gold,
-                              letterSpacing: 0.7,
-                            ),
-                          ),
-                          pw.SizedBox(height: 12),
-                          if (addressLines.isNotEmpty)
-                            _headerAddressBlock(
-                              addressLines.take(2).toList(growable: false),
-                            ),
-                        ],
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        _fallback(invoice.printShopName, invoice.shopName),
+                        maxLines: 1,
+                        overflow: pw.TextOverflow.clip,
+                        style: pw.TextStyle(
+                          fontSize: 22,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 0.8,
+                          color: _ink,
+                        ),
                       ),
-                    ),
-                    pw.SizedBox(width: 18),
-                    pw.Container(
-                      width: 150,
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.end,
-                        children: [
-                          pw.Text(
-                            _invoiceTitle(invoice),
-                            style: pw.TextStyle(
-                              fontSize: 16,
-                              fontWeight: pw.FontWeight.bold,
-                              letterSpacing: 0.6,
-                            ),
-                          ),
-                          pw.Container(
-                            width: 58,
-                            height: 1,
-                            margin:
-                                const pw.EdgeInsets.only(top: 6, bottom: 20),
-                            color: _gold,
-                          ),
-                          _invoiceMeta('Invoice No.', invoice.invoiceNumber),
-                          _invoiceMeta(
-                            'Invoice Date',
-                            _dateFormat.format(invoice.invoiceDate),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                      pw.SizedBox(height: 9),
+                      if (addressLines.isNotEmpty)
+                        _headerAddressBlock(
+                          addressLines.take(2).toList(growable: false),
+                        ),
+                      if (phoneLine.isNotEmpty)
+                        _headerInfoLine('phone', phoneLine),
+                      if (emailLine.isNotEmpty)
+                        _headerInfoLine('mail', emailLine),
+                      if (gstinLine.isNotEmpty) _headerGstinLine(gstinLine),
+                    ],
+                  ),
                 ),
-                if (contactLine.isNotEmpty || statutoryLine.isNotEmpty) ...[
-                  pw.SizedBox(height: 7),
-                  if (contactLine.isNotEmpty)
-                    _headerInfoLine('TEL', contactLine),
-                  if (statutoryLine.isNotEmpty)
-                    _headerInfoLine('ID', statutoryLine),
-                ],
+                pw.SizedBox(width: 18),
+                pw.Container(
+                  width: 150,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        _invoiceTitle(invoice),
+                        style: pw.TextStyle(
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      pw.Container(
+                        width: 58,
+                        height: 1,
+                        margin: const pw.EdgeInsets.only(top: 6, bottom: 4),
+                        color: _gold,
+                      ),
+                      pw.Text(
+                        _metalInvoiceLabel(invoice),
+                        style: pw.TextStyle(
+                          fontSize: 8.8,
+                          fontWeight: pw.FontWeight.bold,
+                          color: _gold,
+                          letterSpacing: 0.45,
+                        ),
+                      ),
+                      pw.SizedBox(height: 16),
+                      _invoiceMeta('Invoice No.', invoice.invoiceNumber),
+                      _invoiceMeta(
+                        'Invoice Date',
+                        _dateFormat.format(invoice.invoiceDate),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -749,15 +742,58 @@ class PosLotusSignatureInvoicePdfLayout {
     );
   }
 
-  pw.Widget _headerInfoLine(String iconKey, String value) {
+  pw.Widget _headerInfoLine(
+    String iconKey,
+    String value, {
+    bool strong = false,
+    PdfColor? color,
+  }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 5),
+      padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _headerIconBadge(iconKey),
           pw.SizedBox(width: 7),
-          pw.Expanded(child: _headerText(value)),
+          pw.Expanded(
+            child: _headerText(
+              value,
+              strong: strong,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _headerGstinLine(String gstin) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _headerIconBadge('gst'),
+          pw.SizedBox(width: 7),
+          pw.Expanded(
+            child: pw.RichText(
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
+              text: pw.TextSpan(
+                style: const pw.TextStyle(fontSize: 8.2, color: _ink),
+                children: [
+                  pw.TextSpan(
+                    text: 'GSTIN: ',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                  pw.TextSpan(
+                    text: gstin,
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -789,17 +825,35 @@ class PosLotusSignatureInvoicePdfLayout {
   <circle cx="12" cy="10" r="2.2"/>
 </svg>
 ''';
-      case 'TEL':
+      case 'phone':
         return '''
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.7 19.7 0 0 1-8.6-3.1 19.1 19.1 0 0 1-5.9-5.9A19.7 19.7 0 0 1 2.2 4.2 2 2 0 0 1 4.2 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0 1 22 16.9z"/>
 </svg>
 ''';
-      case 'ID':
+      case 'care':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 14v-2a8 8 0 0 1 16 0v2"/>
+  <path d="M18 19c0 1.1-.9 2-2 2h-4"/>
+  <rect x="3" y="12" width="4" height="6" rx="1.5"/>
+  <rect x="17" y="12" width="4" height="6" rx="1.5"/>
+</svg>
+''';
+      case 'mail':
         return '''
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <rect x="3" y="5" width="18" height="14" rx="2"/>
   <path d="m3 7 9 6 9-6"/>
+</svg>
+''';
+      case 'gst':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="4" y="3" width="16" height="18" rx="2"/>
+  <path d="M8 8h8"/>
+  <path d="M8 12h8"/>
+  <path d="M8 16h4"/>
 </svg>
 ''';
       default:
@@ -811,12 +865,20 @@ class PosLotusSignatureInvoicePdfLayout {
     }
   }
 
-  pw.Widget _headerText(String value) {
+  pw.Widget _headerText(
+    String value, {
+    bool strong = false,
+    PdfColor? color,
+  }) {
     return pw.Text(
       value,
       maxLines: 1,
       overflow: pw.TextOverflow.clip,
-      style: const pw.TextStyle(fontSize: 8.4, color: _ink),
+      style: pw.TextStyle(
+        fontSize: 8.2,
+        fontWeight: strong ? pw.FontWeight.bold : pw.FontWeight.normal,
+        color: color ?? _ink,
+      ),
     );
   }
 
@@ -963,7 +1025,7 @@ class PosLotusSignatureInvoicePdfLayout {
     ];
   }
 
-  String _shopContactLine(PosInvoiceModel invoice) {
+  String _shopPhoneLine(PosInvoiceModel invoice) {
     final primaryPhone = _fallback(
       invoice.shopPrintValue('mobile_number'),
       invoice.printShopPhone,
@@ -973,31 +1035,30 @@ class PosLotusSignatureInvoicePdfLayout {
     final callValue = _formatPhone(primaryPhone);
     final whatsappValue = _formatPhone(whatsapp);
     final careValue = _formatPhone(customerCare);
+    final primaryValue = callValue.isNotEmpty ? callValue : whatsappValue;
+    final values = <String>[
+      if (primaryValue.isNotEmpty) primaryValue,
+      if (careValue.isNotEmpty && careValue != primaryValue) careValue,
+    ];
 
-    final parts = <String>[];
-    final callAndWhatsapp = callValue.isNotEmpty ? callValue : whatsappValue;
-    if (callAndWhatsapp.isNotEmpty) {
-      parts.add('Call / WhatsApp: $callAndWhatsapp');
-    }
-    if (careValue.isNotEmpty) {
-      parts.add('Customer Care: $careValue');
-    }
-    return parts.join('  |  ');
+    return values.join('  |  ');
   }
 
-  String _shopStatutoryLine(PosInvoiceModel invoice) {
+  String _shopEmailLine(PosInvoiceModel invoice) {
     final email = invoice.shopPrintValue('business_email');
+    return email.trim();
+  }
+
+  String _shopGstinLine(PosInvoiceModel invoice) {
     final gstin = _fallback(
       invoice.shopPrintValue('gstin'),
       invoice.printShopGstin,
     );
-    final parts = <String>[
-      if (email.trim().isNotEmpty) 'Email: ${email.trim()}',
-      if (gstin.trim().isNotEmpty &&
-          gstin.trim().toLowerCase() != 'not registered')
-        'GSTIN: ${gstin.trim()}',
-    ];
-    return parts.join('  |  ');
+    if (gstin.trim().isEmpty ||
+        gstin.trim().toLowerCase() == 'not registered') {
+      return '';
+    }
+    return gstin.trim();
   }
 
   String _formatAddressTail(List<String> parts) {
