@@ -363,7 +363,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           _buildPillarRow(
               widget.ctrl.billType == BillType.gst
                   ? widget.ctrl.gstPricingMode == GstPricingMode.inclusive
-                      ? "Taxable Value (Reverse)"
+                      ? "Taxable Value (Legacy Included)"
                       : "Taxable Value"
                   : "Net Value",
               widget.ctrl.taxableAmount,
@@ -451,7 +451,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
           _buildPillarRow(
               widget.ctrl.billType == BillType.gst
                   ? widget.ctrl.gstPricingMode == GstPricingMode.inclusive
-                      ? "Taxable Value (Reverse)"
+                      ? "Taxable Value (Legacy Included)"
                       : "Taxable Value"
                   : "Net Value",
               widget.ctrl.taxableAmount,
@@ -1002,6 +1002,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     if (widget.ctrl.gstPricingMode == GstPricingMode.inclusive) {
       gstTitle = '$gstTitle - Included';
     }
+    final isInterStateSupply = widget.ctrl.isInterStateSupplyPreview;
     final classificationLines = widget.ctrl.gstClassificationLines;
 
     return Padding(
@@ -1055,15 +1056,29 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               child: Column(
                 children: [
                   _buildSubtleRow(
+                    "Supply Type",
+                    0,
+                    customVal: widget.ctrl.gstJurisdictionLabel,
+                  ),
+                  if (isInterStateSupply)
+                    _buildSubtleRow(
+                      "IGST (${widget.ctrl.jewelleryGstRateLabel})",
+                      widget.ctrl.outputIgst,
+                    )
+                  else ...[
+                    _buildSubtleRow(
                       isWholesale
                           ? "Total CGST Amount"
                           : "CGST (${widget.ctrl.halfJewelleryGstRateLabel})",
-                      widget.ctrl.cgst),
-                  _buildSubtleRow(
+                      widget.ctrl.outputCgst,
+                    ),
+                    _buildSubtleRow(
                       isWholesale
                           ? "Total SGST Amount"
                           : "SGST (${widget.ctrl.halfJewelleryGstRateLabel})",
-                      widget.ctrl.sgst),
+                      widget.ctrl.outputSgst,
+                    ),
+                  ],
                   Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Divider(

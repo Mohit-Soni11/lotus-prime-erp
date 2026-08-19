@@ -55,8 +55,24 @@ class PrintTemplateRegistry {
     ],
   );
 
+  static const PrintTemplateDefinition lotusEconomy = PrintTemplateDefinition(
+    id: 'lotus_economy',
+    name: 'Lotus Economy Tax Invoice',
+    shortName: 'Lotus Economy',
+    description:
+        'Low-ink statutory A4 invoice with compact tables, thin borders and clean GST totals.',
+    designReference:
+        'Professional monochrome tax invoice optimized for daily printing and accounting records.',
+    isSystemDefault: false,
+    supportedDocuments: [
+      PrintTemplateDocumentType.salesInvoice,
+      PrintTemplateDocumentType.salesReturn,
+    ],
+  );
+
   static const List<PrintTemplateDefinition> templates = [
     lotusClassic,
+    lotusEconomy,
   ];
 
   static List<String> get templateIds {

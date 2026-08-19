@@ -5,6 +5,7 @@ import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_print_config.dart';
+import 'pos_lotus_economy_invoice_pdf_layout.dart';
 import 'pos_lotus_classic_invoice_pdf_layout.dart';
 
 class PosInvoiceTemplateRenderContext {
@@ -30,6 +31,15 @@ class PosInvoiceTemplateRendererRegistry {
   static final Map<String, PosInvoiceTemplateRenderer> _a4Renderers = {
     PrintTemplateRegistry.defaultTemplateId: (invoice, context) {
       return PosLotusClassicInvoicePdfLayout(
+        scopeService: context.scopeService,
+        metalPrintSettings: context.metalPrintSettings,
+      ).build(
+        invoice,
+        includePolicyBlock: context.includePolicyBlock,
+      );
+    },
+    PrintTemplateRegistry.lotusEconomy.id: (invoice, context) {
+      return PosLotusEconomyInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
       ).build(

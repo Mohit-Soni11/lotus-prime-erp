@@ -389,7 +389,7 @@ class GstAuditWorkspaceSnapshot {
       return 'Set place of supply before export or filing.';
     }
     if (title.contains('zero gst')) {
-      return 'Choose GST Exclusive or GST Inclusive treatment.';
+      return 'Recheck the Tax Invoice GST snapshot before filing.';
     }
     if (title.contains('split')) {
       return 'Recalculate tax split from the invoice snapshot.';

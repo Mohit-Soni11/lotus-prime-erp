@@ -19,15 +19,4 @@ class PosMoneyMath {
     final rounded = roundToPaisa(value);
     return rounded.abs() <= tolerance ? 0 : rounded;
   }
-
-  static double roundToNearestRupee(double value) {
-    final adjusted =
-        value >= 0 ? value + _roundingEpsilon : value - _roundingEpsilon;
-    final rounded = adjusted.roundToDouble();
-    return rounded == -0.0 ? 0 : rounded;
-  }
-
-  static double roundOffToNearestRupee(double value) {
-    return roundToPaisa(roundToNearestRupee(value) - roundToPaisa(value));
-  }
 }

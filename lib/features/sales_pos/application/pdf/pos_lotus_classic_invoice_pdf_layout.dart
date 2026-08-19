@@ -669,8 +669,12 @@ class PosLotusClassicInvoicePdfLayout {
       if (invoice.discountAmount > 0)
         _totalLine('Discount', -invoice.discountAmount, isDeduction: true),
       if (invoice.billType == BillType.gst && showGstBreakup) ...[
-        _totalLine('CGST', invoice.cgst),
-        _totalLine('SGST', invoice.sgst),
+        if (invoice.hasIgstBreakup)
+          _totalLine('IGST', invoice.igst)
+        else ...[
+          _totalLine('CGST', invoice.cgst),
+          _totalLine('SGST', invoice.sgst),
+        ],
       ],
       if (invoice.totalTradeInDeduction > 0)
         _totalLine(
@@ -1151,8 +1155,8 @@ class PosLotusClassicInvoicePdfLayout {
   String _billTypeLabel(PosInvoiceModel invoice) {
     if (invoice.billType != BillType.gst) return 'Sales Invoice';
     return invoice.gstPricingMode == GstPricingMode.inclusive
-        ? 'GST Inclusive Tax Invoice'
-        : 'GST Exclusive Tax Invoice';
+        ? 'Legacy GST Included Tax Invoice'
+        : 'Tax Invoice';
   }
 
   String _itemDescription(SaleItemModel item, BillSettings config) {

@@ -135,6 +135,13 @@ class PosInvoiceModel {
   final bool isMetalScopedCopy;
 
   double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
+  double get igst {
+    final amount = totalGst - cgst - sgst;
+    if (amount.abs() <= 0.005) return 0;
+    return (amount * 100).round() / 100;
+  }
+
+  bool get hasIgstBreakup => igst.abs() > 0.005;
 
   String get printShopName {
     final configured = shopPrintValue('shop_name');

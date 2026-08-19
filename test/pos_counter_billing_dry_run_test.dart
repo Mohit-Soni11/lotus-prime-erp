@@ -29,7 +29,7 @@ void main() {
   });
 
   test(
-    'counter dry-run cuts an inclusive tax invoice and links customer, stock and PDF',
+    'counter dry-run cuts a transparent tax invoice and links customer, stock and PDF',
     () async {
       final customerId = await _insertCustomer(db);
       final stockId = await _insertStockItem(
@@ -53,7 +53,6 @@ void main() {
       final invoice = _invoice(
         invoiceNumber: 'INV-LJ-2026-0101',
         billType: pos.BillType.gst,
-        gstPricingMode: pos.GstPricingMode.inclusive,
         customerName: 'Aarav Soni',
         customerMobile: '9304479436',
         saleItems: [saleItem],

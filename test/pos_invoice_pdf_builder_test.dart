@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import 'package:lotus_erp/features/sales_pos/application/services/pos_invoice_scope_service.dart';
@@ -151,6 +152,45 @@ void main() {
       item.dispose();
     });
 
+    test('generates valid A4 PDF bytes with Lotus Economy template', () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Nose Pin',
+        purity: '18KT',
+        grossWeight: 0.562,
+        rate: 11400,
+      );
+      item.makingCtrl.text = '12';
+      final invoice = _invoice(
+        saleItems: [item],
+        billType: BillType.gst,
+        cgst: 107.63,
+        sgst: 107.63,
+        totalGst: 215.26,
+      );
+
+      final bytes = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          templateId: PrintTemplateRegistry.lotusEconomy.id,
+          metalPrintSettings: {
+            MetalType.gold: BillSettings(
+              showHsnCode: true,
+              showMakingType: true,
+            ),
+          },
+        ),
+      );
+
+      expect(bytes.length, greaterThan(1000));
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+
+      item.dispose();
+    });
+
     test('generates full thermal receipt bytes for 80mm and 57mm formats',
         () async {
       final item = _saleItem(
@@ -220,15 +260,20 @@ SaleItemModel _saleItem({
 PosInvoiceModel _invoice({
   required List<SaleItemModel> saleItems,
   List<TradeInItemModel> tradeInItems = const <TradeInItemModel>[],
+  BillType billType = BillType.normal,
+  double cgst = 0,
+  double sgst = 0,
+  double totalGst = 0,
 }) {
   final grossAmount = saleItems.fold(0.0, (sum, item) => sum + item.totalValue);
   final tradeInDeduction =
       tradeInItems.fold(0.0, (sum, item) => sum + item.totalValue);
-  final netPayable = grossAmount - tradeInDeduction;
+  final grandTotal = grossAmount + totalGst;
+  final netPayable = grandTotal - tradeInDeduction;
   return PosInvoiceModel(
     invoiceNumber: 'POS-001',
     invoiceDate: DateTime(2026, 6, 26),
-    billType: BillType.normal,
+    billType: billType,
     billingMode: BillingMode.retail,
     shopName: 'ANJALI JEWELLERS',
     shopAddress: 'Patna',
@@ -247,11 +292,11 @@ PosInvoiceModel _invoice({
     grossAmount: grossAmount,
     discountAmount: 0,
     taxableAmount: grossAmount,
-    cgst: 0,
-    sgst: 0,
-    totalGst: 0,
+    cgst: cgst,
+    sgst: sgst,
+    totalGst: totalGst,
     totalTradeInDeduction: tradeInDeduction,
-    grandTotal: grossAmount,
+    grandTotal: grandTotal,
     cashPaid: netPayable,
     upiPaid: 0,
     cardPaid: 0,

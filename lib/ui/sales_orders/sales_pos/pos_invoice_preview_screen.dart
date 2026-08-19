@@ -101,10 +101,27 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
 
   Future<void> _exportPdf() async {
     setState(() => _isSavingPdf = true);
+    final shouldStartNewSaleAfterExport =
+        !_invCtrl.isSavedToDb && !widget.billingCtrl.isCurrentSaleCommitted;
 
     final path = await _invCtrl.downloadPdf();
 
     if (path != null && mounted) {
+      if (shouldStartNewSaleAfterExport) {
+        setState(() => _isSavingPdf = false);
+        widget.billingCtrl.clearEntirePOS();
+        Navigator.of(context).pop();
+        if (!mounted) return;
+        AppFeedback.show(
+          context,
+          type: AppFeedbackType.success,
+          message:
+              'Invoice finalized and exported successfully. POS is ready for the next customer.',
+          duration: const Duration(seconds: 3),
+        );
+        return;
+      }
+
       setState(() {
         _isSavingPdf = false;
         _isPdfSaved = true;

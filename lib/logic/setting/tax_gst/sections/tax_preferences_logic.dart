@@ -25,7 +25,7 @@ class TaxPreferencesLogic extends ChangeNotifier {
   void populateFrom(TaxGstConfigData? data) {
     if (data == null) return;
     autoSplitIgst = data.autoSplitIgst;
-    taxInclusivePricing = data.taxInclusivePricing;
+    taxInclusivePricing = false;
     roundOffGstAmount = data.roundOffGstAmount;
     showGstBreakup = data.showGstBreakupOnBill;
     compositeSupply = data.compositeSupplyMode;
@@ -38,7 +38,7 @@ class TaxPreferencesLogic extends ChangeNotifier {
         autoSplitIgst = value;
         break;
       case 'inclusive':
-        taxInclusivePricing = value;
+        taxInclusivePricing = false;
         break;
       case 'roundOff':
         roundOffGstAmount = value;
@@ -71,7 +71,7 @@ class TaxPreferencesLogic extends ChangeNotifier {
     try {
       await _dao.savePreferences(
         autoSplitIgst: autoSplitIgst,
-        taxInclusive: taxInclusivePricing,
+        taxInclusive: false,
         roundOff: roundOffGstAmount,
         showBreakup: showGstBreakup,
         compositeMode: compositeSupply,

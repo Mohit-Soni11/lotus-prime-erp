@@ -18,6 +18,8 @@ class PosHoldBillModel {
   final String customerCity;
   final String customerPan;
   final String customerGst;
+  final String placeOfSupplyStateCode;
+  final String placeOfSupply;
   final BillingMode billingMode;
   final BillType billType;
   final GstPricingMode gstPricingMode;
@@ -47,6 +49,8 @@ class PosHoldBillModel {
     required this.customerCity,
     required this.customerPan,
     required this.customerGst,
+    this.placeOfSupplyStateCode = '',
+    this.placeOfSupply = '',
     required this.billingMode,
     required this.billType,
     required this.gstPricingMode,
@@ -80,6 +84,8 @@ class PosHoldBillModel {
       'customerCity': customerCity,
       'customerPan': customerPan,
       'customerGst': customerGst,
+      'placeOfSupplyStateCode': placeOfSupplyStateCode,
+      'placeOfSupply': placeOfSupply,
       'billingMode': billingMode.name,
       'billType': billType.name,
       'gstPricingMode': gstPricingMode.name,
@@ -120,6 +126,8 @@ class PosHoldBillModel {
       customerCity: (json['customerCity'] ?? '').toString(),
       customerPan: (json['customerPan'] ?? '').toString(),
       customerGst: (json['customerGst'] ?? '').toString(),
+      placeOfSupplyStateCode: (json['placeOfSupplyStateCode'] ?? '').toString(),
+      placeOfSupply: (json['placeOfSupply'] ?? '').toString(),
       billingMode: _billingModeFromName((json['billingMode'] ?? '').toString()),
       billType: _billTypeFromName((json['billType'] ?? '').toString()),
       gstPricingMode: _gstPricingModeFromName(

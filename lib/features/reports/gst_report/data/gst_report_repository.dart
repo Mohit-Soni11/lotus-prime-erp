@@ -854,7 +854,7 @@ class GstReportRepository {
           severity: GstAuditSeverity.critical,
           title: 'Taxable Invoice With Zero GST',
           message:
-              'Completed taxable sale must be GST Exclusive or GST Inclusive, not zero-GST.',
+              'Completed taxable sale must be a transparent Tax Invoice with GST captured.',
           invoiceNo: invoice.invoiceNo,
         ));
       }

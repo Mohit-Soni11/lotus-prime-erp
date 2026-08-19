@@ -47,9 +47,8 @@ class _InvoiceRegisterGrid extends StatelessWidget {
     const minWidth = 1480.0;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth < minWidth
-            ? minWidth
-            : constraints.maxWidth;
+        final width =
+            constraints.maxWidth < minWidth ? minWidth : constraints.maxWidth;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: SizedBox(
@@ -84,7 +83,7 @@ class _InvoiceHeaderLine extends StatelessWidget {
         _InvoiceCell(label: 'Customer', flex: 17),
         _InvoiceCell(label: 'GSTIN', flex: 14),
         _InvoiceCell(label: 'Place of Supply', flex: 12),
-        _InvoiceCell(label: 'Pricing', flex: 10),
+        _InvoiceCell(label: 'Tax Mode', flex: 10),
         _InvoiceCell(label: 'Taxable Value', flex: 12),
         _InvoiceCell(label: 'CGST', flex: 10),
         _InvoiceCell(label: 'SGST', flex: 10),
@@ -111,7 +110,8 @@ class _InvoiceDataLine extends StatelessWidget {
       accent: accent,
       cells: [
         _InvoiceCell(label: row.invoiceNo, flex: 15, strong: true),
-        _InvoiceCell(label: GstReportFormatters.date(row.invoiceDate), flex: 10),
+        _InvoiceCell(
+            label: GstReportFormatters.date(row.invoiceDate), flex: 10),
         _InvoiceCell(label: row.customerName, flex: 17),
         _InvoiceCell(label: _gstinLabel(row), flex: 14),
         _InvoiceCell(label: _fallback(row.placeOfSupply), flex: 12),
@@ -121,9 +121,12 @@ class _InvoiceDataLine extends StatelessWidget {
           flex: 12,
           strong: true,
         ),
-        _InvoiceCell(label: GstReportFormatters.money(row.cgstAmount), flex: 10),
-        _InvoiceCell(label: GstReportFormatters.money(row.sgstAmount), flex: 10),
-        _InvoiceCell(label: GstReportFormatters.money(row.igstAmount), flex: 10),
+        _InvoiceCell(
+            label: GstReportFormatters.money(row.cgstAmount), flex: 10),
+        _InvoiceCell(
+            label: GstReportFormatters.money(row.sgstAmount), flex: 10),
+        _InvoiceCell(
+            label: GstReportFormatters.money(row.igstAmount), flex: 10),
         _InvoiceCell(
           label: GstReportFormatters.money(row.gstAmount),
           flex: 11,
@@ -151,8 +154,8 @@ class _InvoiceDataLine extends StatelessWidget {
 
   static String _pricingLabel(String value) {
     return value.trim().toUpperCase() == 'GST_INCLUSIVE'
-        ? 'Inclusive'
-        : 'Exclusive';
+        ? 'Legacy Included'
+        : 'Transparent';
   }
 }
 

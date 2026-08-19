@@ -478,13 +478,13 @@ void main() {
       expect(totals.taxableAmount, closeTo(9690.27, 0.01));
       expect(totals.totalGst, 290.71);
       expect(totals.grandTotal, closeTo(9980.98, 0.01));
-      expect(totals.roundOffAmount, closeTo(0.02, 0.01));
-      expect(totals.finalPayableAmount, 9981);
+      expect(totals.roundOffAmount, 0);
+      expect(totals.finalPayableAmount, closeTo(9980.98, 0.01));
       expect(totals.totalPaid, 9981);
-      expect(totals.balanceDue, 0);
-      expect(totals.changeReturnAmount, 0);
+      expect(totals.balanceDue, closeTo(-0.02, 0.01));
+      expect(totals.changeReturnAmount, closeTo(0.02, 0.01));
       expect(totals.invoiceBalanceDue, 0);
-      expect(totals.changeCreditSourcePaymentMode, isNull);
+      expect(totals.changeCreditSourcePaymentMode, PaymentMode.cash);
 
       item.dispose();
     });
@@ -561,7 +561,8 @@ void main() {
       item.dispose();
     });
 
-    test('rounds final payable to nearest rupee as a separate adjustment', () {
+    test('keeps final payable at paisa precision without automatic round off',
+        () {
       final item = _saleItem(
         huid: 'HUID-001',
         grossWeight: 1,
@@ -577,9 +578,10 @@ void main() {
       );
 
       expect(totals.grandTotal, 9981.64);
-      expect(totals.roundOffAmount, 0.36);
-      expect(totals.finalPayableAmount, 9982);
-      expect(totals.balanceDue, 0);
+      expect(totals.roundOffAmount, 0);
+      expect(totals.finalPayableAmount, 9981.64);
+      expect(totals.changeReturnAmount, closeTo(0.36, 0.01));
+      expect(totals.balanceDue, closeTo(-0.36, 0.01));
 
       item.dispose();
     });

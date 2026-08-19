@@ -60,7 +60,7 @@ abstract final class TaxGstStrings {
   static const String card04Title = 'Tax Computation';
   static const String card04Subtitle =
       'IGST auto-split, inclusive pricing & rounding rules';
-  static const String card04Tag = 'Auto-split · Round-off · Pricing Mode';
+  static const String card04Tag = 'Auto-split · Round-off · Tax Invoice';
   static const String card04SectionTitle = 'Tax Computation Preferences';
   static const String card04SectionSub =
       'Controls how GST is calculated and displayed on bills';

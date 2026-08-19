@@ -72,7 +72,8 @@ extension BillTypeExtension on BillType {
   String get displayName => this == BillType.gst ? 'GST' : 'NORMAL';
 }
 
-/// Represents whether GST is charged over the item value or included inside it.
+/// Preserves historical tax-pricing snapshots. New POS invoices use transparent
+/// GST pricing where GST is charged separately over taxable value.
 enum GstPricingMode {
   exclusive,
   inclusive,
@@ -82,9 +83,9 @@ extension GstPricingModeExtension on GstPricingMode {
   String get displayName {
     switch (this) {
       case GstPricingMode.exclusive:
-        return 'GST Exclusive';
+        return 'Transparent Tax Invoice';
       case GstPricingMode.inclusive:
-        return 'GST Inclusive';
+        return 'Legacy GST Included';
     }
   }
 

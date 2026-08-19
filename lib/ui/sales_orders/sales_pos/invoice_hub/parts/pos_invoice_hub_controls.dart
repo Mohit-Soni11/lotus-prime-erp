@@ -189,9 +189,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
 
     final metals = _invCtrl.presentMetals;
     final billingModeLabel =
-        widget.billingCtrl.billingMode == BillingMode.wholesale
-            ? 'Wholesale'
-            : 'Retail';
+        widget.billingCtrl.billingMode == BillingMode.wholesale ? 'B2B' : 'B2C';
     final billTypeLabel = widget.billingCtrl.billType == BillType.gst
         ? 'GST Invoice'
         : 'Sales Invoice';

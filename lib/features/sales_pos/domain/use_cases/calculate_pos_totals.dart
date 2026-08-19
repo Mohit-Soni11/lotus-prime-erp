@@ -367,9 +367,8 @@ class CalculatePosTotals {
         _roundMoney(goldGst + silverGst + platinumGst + diamondGst);
     final cgst = _roundMoney(totalGst / 2);
     final sgst = _roundMoney(totalGst - cgst);
-    final isGstInclusiveInvoice =
-        input.billType == BillType.gst &&
-            input.gstPricingMode == GstPricingMode.inclusive;
+    final isGstInclusiveInvoice = input.billType == BillType.gst &&
+        input.gstPricingMode == GstPricingMode.inclusive;
     final taxableAmount = isGstInclusiveInvoice
         ? _roundMoney(saleAmountAfterDiscount - totalGst)
         : saleAmountAfterDiscount;
@@ -385,11 +384,8 @@ class CalculatePosTotals {
           ? grandTotal
           : grandTotal - tradeInCashDeduction,
     );
-    final roundOffAmount =
-        PosMoneyMath.roundOffToNearestRupee(payableBeforeRoundOff);
-    final finalPayableAmount = _roundMoney(
-      payableBeforeRoundOff + roundOffAmount,
-    );
+    const roundOffAmount = 0.0;
+    final finalPayableAmount = payableBeforeRoundOff;
 
     final paymentAllocation = _allocatePayments(input, finalPayableAmount);
     final totalPaid = _roundMoney(

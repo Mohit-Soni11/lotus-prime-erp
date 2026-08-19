@@ -27,8 +27,6 @@ class PosTopControlBar extends StatelessWidget {
       listenable: ctrl,
       builder: (context, _) {
         final bool isRetail = ctrl.billingMode == BillingMode.retail;
-        final bool isGstInclusive =
-            ctrl.gstPricingMode == GstPricingMode.inclusive;
 
         return Align(
           alignment: Alignment.centerLeft,
@@ -98,7 +96,7 @@ class PosTopControlBar extends StatelessWidget {
                                       color: SalesPosColors.success,
                                     ),
                                     child: Text(
-                                      "${isRetail ? 'Retail Trade' : 'Wholesale Trade'}    Tax Invoice",
+                                      "${isRetail ? 'B2C Retail' : 'B2B Registered'}    Tax Invoice",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -172,7 +170,7 @@ class PosTopControlBar extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // --- MODE SEGMENT (RETAIL / WHOLESALE) ---
+                      // --- MODE SEGMENT (B2C / B2B) ---
                       Container(
                         height: 52,
                         padding: const EdgeInsets.all(4),
@@ -192,13 +190,13 @@ class PosTopControlBar extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _buildModeTab(
-                              title: "RETAIL",
+                              title: "B2C",
                               isActive: isRetail,
                               onTap: () =>
                                   ctrl.toggleBillingMode(BillingMode.retail),
                             ),
                             _buildModeTab(
-                              title: "WHOLESALE",
+                              title: "B2B",
                               isActive: !isRetail,
                               onTap: () =>
                                   ctrl.toggleBillingMode(BillingMode.wholesale),
@@ -208,45 +206,7 @@ class PosTopControlBar extends StatelessWidget {
                       ),
 
                       const SizedBox(width: 16),
-
-                      // --- GST PRICING MODE ---
-                      Container(
-                        height: 52,
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: SalesPosColors.bodyBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: SalesPosColors.bodyBorder),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: SalesPosColors.shadowLight,
-                              blurRadius: 4,
-                              offset: Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildPricingTab(
-                              title: 'EXCLUSIVE',
-                              subtitle: '+ GST',
-                              isActive: !isGstInclusive,
-                              onTap: () => ctrl.toggleGstPricingMode(
-                                GstPricingMode.exclusive,
-                              ),
-                            ),
-                            _buildPricingTab(
-                              title: 'INCLUSIVE',
-                              subtitle: 'GST inside',
-                              isActive: isGstInclusive,
-                              onTap: () => ctrl.toggleGstPricingMode(
-                                GstPricingMode.inclusive,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildTaxInvoicePolicyCard(),
                     ],
                   ),
                 ],
@@ -333,59 +293,65 @@ class PosTopControlBar extends StatelessWidget {
     );
   }
 
-  Widget _buildPricingTab({
-    required String title,
-    required String subtitle,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      width: 122,
-      height: 44,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(7),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: isActive
-                ? SalesPosColors.success.withValues(alpha: 0.10)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(
-              color: isActive
-                  ? SalesPosColors.success.withValues(alpha: 0.35)
-                  : Colors.transparent,
+  Widget _buildTaxInvoicePolicyCard() {
+    return Container(
+      width: 252,
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: SalesPosColors.success.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: SalesPosColors.success.withValues(alpha: 0.28),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: SalesPosColors.shadowLight,
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: SalesPosColors.success.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              size: 18,
+              color: SalesPosColors.success,
             ),
           ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
+          const SizedBox(width: 10),
+          const Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  'TAX INVOICE',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isActive
-                        ? SalesPosColors.success
-                        : SalesPosColors.textDark,
+                    color: SalesPosColors.success,
                     fontWeight: FontWeight.w900,
                     fontSize: SalesPosStyles.fontCaption,
                     height: 1,
                     letterSpacing: 0,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 4),
                 Text(
-                  subtitle,
+                  'GST shown separately',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: SalesPosColors.bodyTextMuted,
                     fontWeight: FontWeight.w800,
                     fontSize: SalesPosStyles.fontCaption,
@@ -396,7 +362,7 @@ class PosTopControlBar extends StatelessWidget {
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

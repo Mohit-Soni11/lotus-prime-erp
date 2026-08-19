@@ -45,15 +45,6 @@ class TaxPreferencesSection extends StatelessWidget {
             onChanged: (v) => logic.toggle('autoSplit', v),
           ),
           TaxGstToggleRow(
-            icon: TaxGstIcons.fieldRate,
-            title: TaxGstStrings.toggleTaxInclusiveTitle,
-            subtitle: TaxGstStrings.toggleTaxInclusiveSub,
-            value: logic.taxInclusivePricing,
-            accentColor: a,
-            isEnabled: e,
-            onChanged: (v) => logic.toggle('inclusive', v),
-          ),
-          TaxGstToggleRow(
             icon: TaxGstIcons.statusSuccess,
             title: TaxGstStrings.toggleRoundOffTitle,
             subtitle: TaxGstStrings.toggleRoundOffSub,

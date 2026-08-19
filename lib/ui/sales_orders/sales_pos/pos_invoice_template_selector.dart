@@ -57,7 +57,7 @@ class PosInvoiceTemplateSelector extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const _TemplateThumbnail(),
+                    _TemplateThumbnail(template: selectedTemplate),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -339,7 +339,7 @@ class _TemplateOptionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const _TemplateThumbnail(),
+            _TemplateThumbnail(template: template),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -446,40 +446,50 @@ class _ChangeButton extends StatelessWidget {
 }
 
 class _TemplateThumbnail extends StatelessWidget {
-  const _TemplateThumbnail();
+  final PrintTemplateDefinition template;
+
+  const _TemplateThumbnail({required this.template});
 
   @override
   Widget build(BuildContext context) {
+    final isEconomy = template.id == PrintTemplateRegistry.lotusEconomy.id;
+    final pageColor = isEconomy ? Colors.white : const Color(0xFF172437);
+    final accentColor =
+        isEconomy ? SalesPosColors.shellTextTitle : SalesPosColors.brandGold;
+    final lineColor = isEconomy
+        ? SalesPosColors.shellBorder
+        : Colors.white.withValues(alpha: 0.82);
+
     return Container(
       width: 36,
       height: 46,
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: const Color(0xFF172437),
+        color: pageColor,
         borderRadius: BorderRadius.circular(7),
         border: Border.all(
-          color: SalesPosColors.brandGold.withValues(alpha: 0.75),
+          color: accentColor.withValues(alpha: 0.75),
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 6,
-            margin: const EdgeInsets.fromLTRB(7, 6, 7, 4),
+            height: isEconomy ? 1.5 : 6,
             decoration: BoxDecoration(
-              color: SalesPosColors.brandGold,
+              color: accentColor,
               borderRadius: BorderRadius.circular(3),
             ),
           ),
-          Container(height: 1, color: SalesPosColors.brandGold),
           const SizedBox(height: 4),
           ...List.generate(
             3,
             (index) => Container(
               height: 2.8,
-              margin: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.3),
+              width: index == 1 ? 16 : double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 1.3),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.82),
+                color: lineColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

@@ -736,8 +736,12 @@ class _PosInvoicePdfDocumentBuilder {
                   isDeduction: true,
                 ),
               if (invoice.billType == BillType.gst && showGstBreakup) ...[
-                _totalRow('CGST', invoice.cgst),
-                _totalRow('SGST', invoice.sgst),
+                if (invoice.hasIgstBreakup)
+                  _totalRow('IGST', invoice.igst)
+                else ...[
+                  _totalRow('CGST', invoice.cgst),
+                  _totalRow('SGST', invoice.sgst),
+                ],
               ],
               if (invoice.totalTradeInDeduction > 0) ...[
                 () {
@@ -1692,8 +1696,12 @@ class _PosInvoicePdfDocumentBuilder {
         if (invoice.billType == BillType.gst) ...[
           _thermalKeyValue(
               'Taxable Value', _thermalMoney(invoice.taxableAmount), fontSize),
-          _thermalKeyValue('CGST', _thermalMoney(invoice.cgst), fontSize),
-          _thermalKeyValue('SGST', _thermalMoney(invoice.sgst), fontSize),
+          if (invoice.hasIgstBreakup)
+            _thermalKeyValue('IGST', _thermalMoney(invoice.igst), fontSize)
+          else ...[
+            _thermalKeyValue('CGST', _thermalMoney(invoice.cgst), fontSize),
+            _thermalKeyValue('SGST', _thermalMoney(invoice.sgst), fontSize),
+          ],
           _thermalKeyValue(
               'Total GST', _thermalMoney(invoice.totalGst), fontSize),
         ],
@@ -1897,8 +1905,8 @@ class _PosInvoicePdfDocumentBuilder {
   String _invoiceTypeLabel(PosInvoiceModel invoice) {
     if (invoice.billType != BillType.gst) return 'Sales Invoice';
     return invoice.gstPricingMode == GstPricingMode.inclusive
-        ? 'GST Inclusive Tax Invoice'
-        : 'GST Exclusive Tax Invoice';
+        ? 'Legacy GST Included Tax Invoice'
+        : 'Tax Invoice';
   }
 
   BillSettings _getMetalConfig(MetalType metal) {

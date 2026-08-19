@@ -13,6 +13,7 @@ import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import '../../../features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
 import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
+import '../../../core/tax/gst_jurisdiction.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_hold_bill_model.dart';
@@ -66,6 +67,53 @@ class PosBillingController extends ChangeNotifier {
   // --- GLOBAL CONFIG ---
   //  Shop name is loaded from the active shop setup.
   String shopName = "Lotus Jewellers";
+  String _shopStateCode = '';
+  String _shopStateName = '';
+  String _placeOfSupplyStateCode = '';
+
+  String get shopStateCode => _shopStateCode;
+  String get shopStateName => _shopStateName;
+  bool get isB2BBilling => billingMode == BillingMode.wholesale;
+  String get placeOfSupplyStateCode {
+    final resolved = GstJurisdictionResolver.firstStateCode([
+      _placeOfSupplyStateCode,
+      selectedCustomer?.gstNumber,
+      selectedCustomer?.state,
+      cityCtrl.text,
+      _shopStateCode,
+    ]);
+    return resolved;
+  }
+
+  String get placeOfSupplyName => GstJurisdictionResolver.firstText([
+        GstJurisdictionResolver.canonicalStateName(placeOfSupplyStateCode),
+        selectedCustomer?.state,
+        _shopStateName,
+      ]);
+
+  GstJurisdiction get _gstJurisdictionPreview =>
+      GstJurisdictionResolver.resolve(
+        shopGstin: '',
+        shopStateCode: _shopStateCode,
+        shopStateName: _shopStateName,
+        customerGstin: gstCtrl.text,
+        customerStateCode: placeOfSupplyStateCode,
+        customerStateName: placeOfSupplyName,
+        placeOfSupply: placeOfSupplyName,
+      );
+
+  bool get isInterStateSupplyPreview {
+    final jurisdiction = _gstJurisdictionPreview;
+    return jurisdiction.isResolved && jurisdiction.isInterState;
+  }
+
+  String get gstJurisdictionLabel {
+    final jurisdiction = _gstJurisdictionPreview;
+    if (!jurisdiction.isResolved) return 'Shop GST state pending';
+    return jurisdiction.isInterState
+        ? 'Inter-state supply: IGST'
+        : 'Intra-state supply: CGST + SGST';
+  }
 
   // Current financial-year token used for invoice numbering.
   String get currentFinancialYear =>
@@ -101,6 +149,7 @@ class PosBillingController extends ChangeNotifier {
       final tenantId = await ShopSessionManager.getPermanentTenantId();
       final shopData = await _shopRepo.fetchExistingSetup(tenantId);
       if (_isDisposed) return;
+      var shouldNotify = false;
       if (shopData != null) {
         final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
         if (basicInfo != null) {
@@ -109,9 +158,31 @@ class PosBillingController extends ChangeNotifier {
           final name = brand.isNotEmpty ? brand : display;
           if (name.isNotEmpty) {
             shopName = name.trim();
-            notifyListeners();
+            shouldNotify = true;
           }
         }
+        final addressData = shopData['address'] as Map<String, dynamic>?;
+        final taxData = shopData['tax_compliance'] as Map<String, dynamic>?;
+        final rawState = addressData?['state']?.toString() ?? '';
+        final rawGstin = taxData?['gstin']?.toString() ?? '';
+        final stateCode = GstJurisdictionResolver.firstStateCode([
+          taxData?['state_code']?.toString(),
+          rawGstin,
+          rawState,
+        ]);
+        final stateName = GstJurisdictionResolver.firstText([
+          GstJurisdictionResolver.canonicalStateName(stateCode),
+          rawState,
+        ]);
+        if (_shopStateCode != stateCode || _shopStateName != stateName) {
+          _shopStateCode = stateCode;
+          _shopStateName = stateName;
+          shouldNotify = true;
+        }
+        _ensureDefaultPlaceOfSupply(notify: false);
+      }
+      if (shouldNotify) {
+        notifyListeners();
       }
     } catch (_) {
       // Keep the default name when shop setup cannot be loaded.
@@ -320,6 +391,13 @@ class PosBillingController extends ChangeNotifier {
     nameCtrl.text = customer.name;
     mobileCtrl.text = customer.mobile;
     cityCtrl.text = customer.city;
+    panCtrl.text = customer.panNumber.trim().toUpperCase();
+    gstCtrl.text = customer.gstNumber.trim().toUpperCase();
+    _setPlaceOfSupplyFromCustomer(
+      stateText: customer.state,
+      gstin: customer.gstNumber,
+      notify: false,
+    );
     customerSuggestions = [];
     customerNotFound = false;
     _pendingQuickAddMobile = '';
@@ -390,6 +468,10 @@ class PosBillingController extends ChangeNotifier {
               city: Value(enteredAddress.isEmpty ? null : enteredAddress),
               addressLine1:
                   Value(enteredAddress.isEmpty ? null : enteredAddress),
+              state:
+                  Value(placeOfSupplyName.isEmpty ? null : placeOfSupplyName),
+              panNumber: Value(_nullableUpper(panCtrl.text)),
+              gstNumber: Value(_nullableUpper(gstCtrl.text)),
               type: const Value('Regular'),
               customerTier: const Value('Regular'),
               notes: enteredMobile.isEmpty
@@ -409,6 +491,9 @@ class PosBillingController extends ChangeNotifier {
         name: row.name,
         mobile: CustomerContactValue.displayMobile(row.mobile),
         city: _customerAddressSummary(row),
+        state: row.state ?? '',
+        gstNumber: row.gstNumber ?? '',
+        panNumber: row.panNumber ?? '',
         type: CustomerType.fromString(row.type),
         billCount: 0,
         createdAt: row.createdAt,
@@ -436,6 +521,9 @@ class PosBillingController extends ChangeNotifier {
       name: name,
       mobile: CustomerContactValue.displayMobile(row.mobile),
       city: _customerAddressSummary(row),
+      state: row.state ?? '',
+      gstNumber: row.gstNumber ?? '',
+      panNumber: row.panNumber ?? '',
       type: CustomerType.fromString(row.type),
       billCount: 0,
       createdAt: row.createdAt,
@@ -460,6 +548,60 @@ class PosBillingController extends ChangeNotifier {
       }
     }
     return uniqueParts.join(', ');
+  }
+
+  String? _nullableUpper(String value) {
+    final clean = value.trim().toUpperCase();
+    return clean.isEmpty ? null : clean;
+  }
+
+  void _ensureDefaultPlaceOfSupply({required bool notify}) {
+    if (_placeOfSupplyStateCode.isNotEmpty) return;
+    _applyPlaceOfSupplyStateCode(_shopStateCode, notify: notify);
+  }
+
+  void _setPlaceOfSupplyFromCustomer({
+    required String stateText,
+    required String gstin,
+    required bool notify,
+  }) {
+    final code = GstJurisdictionResolver.firstStateCode([
+      gstin,
+      stateText,
+      _shopStateCode,
+    ]);
+    _applyPlaceOfSupplyStateCode(code, notify: notify);
+  }
+
+  void _setPlaceOfSupplyFromSnapshot({
+    required String? stateCode,
+    required String? placeOfSupply,
+    required bool notify,
+  }) {
+    final code = GstJurisdictionResolver.firstStateCode([
+      stateCode,
+      placeOfSupply,
+      _shopStateCode,
+    ]);
+    _applyPlaceOfSupplyStateCode(code, notify: notify);
+  }
+
+  void _syncPlaceOfSupplyFromGstin() {
+    final code = GstJurisdictionResolver.stateCodeFromGstin(gstCtrl.text);
+    if (code.isEmpty || code == _placeOfSupplyStateCode) return;
+    _applyPlaceOfSupplyStateCode(code, notify: true);
+  }
+
+  void _applyPlaceOfSupplyStateCode(String code, {required bool notify}) {
+    final cleanCode = GstJurisdictionResolver.stateCodeFromText(code);
+    if (cleanCode.isEmpty) return;
+    if (_placeOfSupplyStateCode == cleanCode) {
+      return;
+    }
+    _placeOfSupplyStateCode = cleanCode;
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   //  Fetch bill history, outstanding balance, and last visit details.
@@ -990,6 +1132,7 @@ class PosBillingController extends ChangeNotifier {
       _diaBhawInput = _parseSafeNumber(diaBhawCtrl.text);
       notifyListeners();
     });
+    gstCtrl.addListener(_syncPlaceOfSupplyFromGstin);
     unawaited(_prefillWholesaleBhawFromMaster());
   }
 
@@ -1039,6 +1182,11 @@ class PosBillingController extends ChangeNotifier {
       nameCtrl.text = bill.customerName ?? '';
       mobileCtrl.text = bill.mobile ?? '';
       cityCtrl.clear();
+      _setPlaceOfSupplyFromSnapshot(
+        stateCode: bill.customerStateCodeSnapshot,
+        placeOfSupply: bill.placeOfSupplySnapshot,
+        notify: false,
+      );
       discountCtrl.text = _formatEditNumber(bill.discount);
       cashCtrl.text = _formatEditNumber(bill.cashPaid);
       upiCtrl.text = _formatEditNumber(bill.upiPaid);
@@ -1048,6 +1196,11 @@ class PosBillingController extends ChangeNotifier {
       if (bill.customerId != null) {
         await _restoreSelectedCustomer(bill.customerId);
       }
+      _setPlaceOfSupplyFromSnapshot(
+        stateCode: bill.customerStateCodeSnapshot,
+        placeOfSupply: bill.placeOfSupplySnapshot,
+        notify: false,
+      );
 
       for (final row in details.items) {
         final item = SaleItemModel(
@@ -1370,6 +1523,9 @@ class PosBillingController extends ChangeNotifier {
   double get totalGst => _totals.totalGst;
   double get cgst => _totals.cgst;
   double get sgst => _totals.sgst;
+  double get outputCgst => isInterStateSupplyPreview ? 0.0 : _totals.cgst;
+  double get outputSgst => isInterStateSupplyPreview ? 0.0 : _totals.sgst;
+  double get outputIgst => isInterStateSupplyPreview ? _totals.totalGst : 0.0;
   double get grandTotal => _totals.grandTotal;
   double get roundOffAmount => _totals.roundOffAmount;
   double get finalPayableAmount => _totals.finalPayableAmount;
@@ -1562,7 +1718,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   String? validateInvoiceReadiness() {
-    return const PosInvoiceReadinessValidator().validate(
+    final baseError = const PosInvoiceReadinessValidator().validate(
       PosInvoiceReadinessInput(
         saleItems: saleItems,
         tradeInItems: tradeInItems,
@@ -1582,6 +1738,23 @@ class PosBillingController extends ChangeNotifier {
         weightTolerance: _invoiceWeightTolerance,
       ),
     );
+    if (baseError != null) return baseError;
+
+    if (isB2BBilling) {
+      if (selectedCustomer == null) {
+        return 'Select or create a B2B customer before generating the tax invoice.';
+      }
+      final gstin = gstCtrl.text.trim();
+      final result = GstJurisdictionResolver.validateGstin(gstin);
+      if (result.isEmpty) {
+        return 'Add customer GSTIN before generating a B2B tax invoice.';
+      }
+      if (!result.isValidFormat) {
+        return 'Enter a valid customer GSTIN before generating a B2B tax invoice.';
+      }
+    }
+
+    return null;
   }
 
   void focusFirstInvoiceIssue() {
@@ -1736,12 +1909,11 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void toggleGstPricingMode(GstPricingMode mode) {
-    if (gstPricingMode == mode) return;
-    gstPricingMode = mode;
-    if (billType != BillType.gst) {
-      billType = BillType.gst;
-      unawaited(refreshInvoiceSequencePreview());
-    }
+    final changed =
+        gstPricingMode != GstPricingMode.exclusive || billType != BillType.gst;
+    gstPricingMode = GstPricingMode.exclusive;
+    billType = BillType.gst;
+    if (!changed) return;
     _clearChangeReturnMethod();
     notifyListeners();
   }
@@ -1785,7 +1957,10 @@ class PosBillingController extends ChangeNotifier {
     await _holdRepo.saveHeldBills(heldBills);
   }
 
-  Future<void> _restoreSelectedCustomer(int? customerId) async {
+  Future<void> _restoreSelectedCustomer(
+    int? customerId, {
+    bool syncPlaceOfSupply = true,
+  }) async {
     if (customerId == null) {
       return;
     }
@@ -1803,6 +1978,15 @@ class PosBillingController extends ChangeNotifier {
       nameCtrl.text = selectedCustomer!.name;
       mobileCtrl.text = selectedCustomer!.mobile;
       cityCtrl.text = selectedCustomer!.city;
+      panCtrl.text = selectedCustomer!.panNumber.trim().toUpperCase();
+      gstCtrl.text = selectedCustomer!.gstNumber.trim().toUpperCase();
+      if (syncPlaceOfSupply) {
+        _setPlaceOfSupplyFromCustomer(
+          stateText: selectedCustomer!.state,
+          gstin: selectedCustomer!.gstNumber,
+          notify: false,
+        );
+      }
       notifyListeners();
       unawaited(_fetchCustomerHistory(row.id));
     } catch (_) {
@@ -1820,9 +2004,11 @@ class PosBillingController extends ChangeNotifier {
       customerCity: cityCtrl.text,
       customerPan: panCtrl.text,
       customerGst: gstCtrl.text,
+      placeOfSupplyStateCode: placeOfSupplyStateCode,
+      placeOfSupply: placeOfSupplyName,
       billingMode: billingMode,
-      billType: billType,
-      gstPricingMode: gstPricingMode,
+      billType: BillType.gst,
+      gstPricingMode: GstPricingMode.exclusive,
       tradeInMode: tradeInMode,
       customerMetalSettlementType: customerMetalSettlementType,
       discountType: discountType,
@@ -1848,8 +2034,8 @@ class PosBillingController extends ChangeNotifier {
 
   void _restoreHoldSnapshot(PosHoldBillModel holdBill) {
     billingMode = holdBill.billingMode;
-    billType = holdBill.billType;
-    gstPricingMode = holdBill.gstPricingMode;
+    billType = BillType.gst;
+    gstPricingMode = GstPricingMode.exclusive;
     tradeInMode = holdBill.tradeInMode;
     customerMetalSettlementType = holdBill.customerMetalSettlementType;
     discountType = holdBill.discountType;
@@ -1860,6 +2046,11 @@ class PosBillingController extends ChangeNotifier {
     cityCtrl.text = holdBill.customerCity;
     panCtrl.text = holdBill.customerPan;
     gstCtrl.text = holdBill.customerGst;
+    _setPlaceOfSupplyFromSnapshot(
+      stateCode: holdBill.placeOfSupplyStateCode,
+      placeOfSupply: holdBill.placeOfSupply,
+      notify: false,
+    );
 
     discountCtrl.text = holdBill.discountInput;
     cashCtrl.text = holdBill.cashInput;
@@ -1885,7 +2076,12 @@ class PosBillingController extends ChangeNotifier {
     }
 
     activeRowIndex = saleItems.isEmpty ? -1 : 0;
-    unawaited(_restoreSelectedCustomer(holdBill.selectedCustomerId));
+    unawaited(
+      _restoreSelectedCustomer(
+        holdBill.selectedCustomerId,
+        syncPlaceOfSupply: false,
+      ),
+    );
   }
 
   bool holdCurrentBill() {
@@ -1941,11 +2137,15 @@ class PosBillingController extends ChangeNotifier {
     isLoadingHistory = false;
     clearAllStockSuggestions();
     promiseDate = null; //  Reset the promise date.
+    billType = BillType.gst;
+    gstPricingMode = GstPricingMode.exclusive;
     nameCtrl.clear();
     mobileCtrl.clear();
     cityCtrl.clear();
     panCtrl.clear();
     gstCtrl.clear();
+    _placeOfSupplyStateCode = '';
+    _ensureDefaultPlaceOfSupply(notify: false);
 
     discountCtrl.clear();
     cashCtrl.clear();

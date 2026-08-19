@@ -314,44 +314,7 @@ class _TemplateCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 78,
-            height: 104,
-            decoration: BoxDecoration(
-              color: const Color(0xFF172437),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFC89421), width: 1.2),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  height: 16,
-                  margin: const EdgeInsets.fromLTRB(8, 10, 8, 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC89421),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                Container(
-                  height: 1,
-                  color: const Color(0xFFC89421),
-                ),
-                const SizedBox(height: 8),
-                ...List.generate(
-                  4,
-                  (index) => Container(
-                    height: 6,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.86),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _TemplateThumbnail(template: template),
           const SizedBox(width: 18),
           Expanded(
             child: Column(
@@ -469,6 +432,77 @@ class _TemplateCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TemplateThumbnail extends StatelessWidget {
+  final PrintTemplateDefinition template;
+
+  const _TemplateThumbnail({required this.template});
+
+  @override
+  Widget build(BuildContext context) {
+    final isEconomy = template.id == PrintTemplateRegistry.lotusEconomy.id;
+    final pageColor = isEconomy ? Colors.white : const Color(0xFF172437);
+    final accentColor =
+        isEconomy ? const Color(0xFF111827) : const Color(0xFFC89421);
+    final lineColor = isEconomy
+        ? const Color(0xFFCBD5E1)
+        : Colors.white.withValues(alpha: 0.86);
+
+    return Container(
+      width: 78,
+      height: 104,
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: pageColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accentColor, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: isEconomy ? 2 : 16,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...List.generate(
+            5,
+            (index) => Container(
+              height: index == 0 ? 6 : 4,
+              width: index.isEven ? double.infinity : 44,
+              margin: const EdgeInsets.only(bottom: 5),
+              decoration: BoxDecoration(
+                color: index == 0 ? accentColor : lineColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const Spacer(),
+          Row(
+            children: List.generate(
+              3,
+              (index) => Expanded(
+                child: Container(
+                  height: 10,
+                  margin: EdgeInsets.only(right: index == 2 ? 0 : 3),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isEconomy ? const Color(0xFFCBD5E1) : accentColor,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
             ),
           ),
         ],

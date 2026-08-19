@@ -4,7 +4,6 @@
 // DESCRIPTION: Immutable view models for the production customer directory.
 // -----------------------------------------------------------------------------
 
-
 import '../customer_enums/customer_list_enums.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,6 +15,9 @@ class CustomerListItemModel {
   final String name;
   final String mobile;
   final String city;
+  final String state;
+  final String gstNumber;
+  final String panNumber;
   final CustomerType type;
   final int billCount;
   final int activeAdvanceCount;
@@ -34,6 +36,9 @@ class CustomerListItemModel {
     required this.name,
     required this.mobile,
     required this.city,
+    this.state = '',
+    this.gstNumber = '',
+    this.panNumber = '',
     required this.type,
     required this.billCount,
     this.activeAdvanceCount = 0,

@@ -27,6 +27,7 @@ class GstDashboardView extends StatelessWidget {
         .where((item) => item.severity == GstAuditSeverity.warning)
         .length;
     final filing = Gstr1FilingSnapshot.fromReport(snapshot);
+    final hasLegacyIncluded = dashboard.inclusive.invoiceCount > 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,8 +59,9 @@ class GstDashboardView extends StatelessWidget {
                   child: GstReportMetricCard(
                     title: 'Total Invoice Count',
                     value: GstReportFormatters.count(dashboard.gstInvoiceCount),
-                    subtitle:
-                        '${dashboard.exclusive.invoiceCount} exclusive / ${dashboard.inclusive.invoiceCount} inclusive',
+                    subtitle: hasLegacyIncluded
+                        ? '${dashboard.exclusive.invoiceCount} transparent / ${dashboard.inclusive.invoiceCount} legacy included'
+                        : 'Transparent tax invoices',
                     icon: Icons.receipt_long_outlined,
                   ),
                 ),
@@ -70,7 +72,7 @@ class GstDashboardView extends StatelessWidget {
                     value: GstReportFormatters.money(
                       dashboard.gstInvoiceValue,
                     ),
-                    subtitle: 'Exclusive + inclusive invoices',
+                    subtitle: 'Taxable value + output GST',
                     icon: Icons.payments_rounded,
                     accentColor: GstReportColors.taxGreen,
                   ),
@@ -142,7 +144,7 @@ class GstDashboardView extends StatelessWidget {
           },
         ),
         const SizedBox(height: 16),
-        _PricingBreakdownGrid(dashboard: dashboard),
+        _TaxInvoiceBreakdownGrid(dashboard: dashboard),
         const SizedBox(height: 16),
         _RateSummaryPanel(rows: snapshot.rateSummary),
       ],
@@ -193,8 +195,8 @@ class _MetricBox extends StatelessWidget {
   }
 }
 
-class _PricingBreakdownGrid extends StatelessWidget {
-  const _PricingBreakdownGrid({required this.dashboard});
+class _TaxInvoiceBreakdownGrid extends StatelessWidget {
+  const _TaxInvoiceBreakdownGrid({required this.dashboard});
 
   final GstReportDashboardSummary dashboard;
 
@@ -202,7 +204,8 @@ class _PricingBreakdownGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth >= 980
+        final showLegacyIncluded = dashboard.inclusive.invoiceCount > 0;
+        final width = showLegacyIncluded && constraints.maxWidth >= 980
             ? (constraints.maxWidth - 14) / 2
             : constraints.maxWidth;
         return Wrap(
@@ -212,23 +215,24 @@ class _PricingBreakdownGrid extends StatelessWidget {
             SizedBox(
               width: width,
               child: _PricingModeSummaryCard(
-                title: 'GST Exclusive Invoice Summary',
+                title: 'Transparent Tax Invoice Summary',
                 subtitle: 'GST charged separately over taxable value',
-                icon: Icons.add_card_rounded,
+                icon: Icons.receipt_long_rounded,
                 accent: GstReportColors.information,
                 summary: dashboard.exclusive,
               ),
             ),
-            SizedBox(
-              width: width,
-              child: _PricingModeSummaryCard(
-                title: 'GST Inclusive Invoice Summary',
-                subtitle: 'GST reverse-calculated from customer final price',
-                icon: Icons.calculate_rounded,
-                accent: GstReportColors.success,
-                summary: dashboard.inclusive,
+            if (showLegacyIncluded)
+              SizedBox(
+                width: width,
+                child: _PricingModeSummaryCard(
+                  title: 'Legacy GST Included Summary',
+                  subtitle: 'Old bills retained for historical GST reports',
+                  icon: Icons.history_edu_rounded,
+                  accent: GstReportColors.warning,
+                  summary: dashboard.inclusive,
+                ),
               ),
-            ),
           ],
         );
       },

@@ -189,6 +189,8 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   @override
   Widget build(BuildContext context) {
+    final isB2B = widget.ctrl.isB2BBilling;
+
     return FadeTransition(
       opacity: _fadeAnim,
       child: SlideTransition(
@@ -265,7 +267,9 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            "Search or add a new customer",
+                            isB2B
+                                ? "Select a registered customer for GSTIN billing"
+                                : "Search or add a new customer",
                             style: SalesPosStyles.subTitleMuted,
                           ),
                         ],
@@ -345,8 +349,28 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 12),
 
+                      if (isB2B) ...[
+                        Expanded(
+                          flex: 3,
+                          child: _buildInput(
+                            label: "CUSTOMER GSTIN",
+                            hint: "15-character GSTIN",
+                            controller: widget.ctrl.gstCtrl,
+                            isCaps: true,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r"[a-zA-Z0-9]"),
+                              ),
+                              LengthLimitingTextInputFormatter(15),
+                            ],
+                            icon: Icons.badge_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+
                       Expanded(
-                        flex: 4,
+                        flex: isB2B ? 4 : 5,
                         child: _buildInput(
                           label: "ADDRESS",
                           hint: "Customer address",

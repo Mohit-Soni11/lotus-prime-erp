@@ -37,16 +37,24 @@ class GstReportCsvBuilder {
         'Total Invoice Value',
         GstReportFormatters.money(summary.gstInvoiceValue)
       ],
-      ..._pricingSummaryRows('GST EXCLUSIVE SALES', summary.exclusive),
-      ..._pricingSummaryRows('GST INCLUSIVE SALES', summary.inclusive),
+      ..._pricingSummaryRows(
+        'TRANSPARENT TAX INVOICE SALES',
+        summary.exclusive,
+      ),
+      if (summary.inclusive.invoiceCount > 0)
+        ..._pricingSummaryRows(
+          'LEGACY GST INCLUDED SALES',
+          summary.inclusive,
+        ),
       [
-        'GST Exclusive Sales',
+        'Transparent Tax Invoice Sales',
         GstReportFormatters.money(summary.gstExclusiveSales),
       ],
-      [
-        'GST Inclusive Sales',
-        GstReportFormatters.money(summary.gstInclusiveSales),
-      ],
+      if (summary.inclusive.invoiceCount > 0)
+        [
+          'Legacy GST Included Sales',
+          GstReportFormatters.money(summary.gstInclusiveSales),
+        ],
       ['Total Taxable Value', GstReportFormatters.money(summary.taxableSales)],
       ['CGST', GstReportFormatters.money(summary.cgstAmount)],
       ['SGST', GstReportFormatters.money(summary.sgstAmount)],
@@ -92,7 +100,7 @@ class GstReportCsvBuilder {
         'Place State Code',
         'Shop State Code',
         'Supply Type',
-        'Pricing Mode',
+        'Tax Mode',
         'Taxable',
         'CGST',
         'SGST',
@@ -477,7 +485,7 @@ class GstReportCsvBuilder {
 
   static String _pricingLabel(String value) {
     return value.trim().toUpperCase() == 'GST_INCLUSIVE'
-        ? 'GST Inclusive'
-        : 'GST Exclusive';
+        ? 'Legacy GST Included'
+        : 'Transparent Tax Invoice';
   }
 }

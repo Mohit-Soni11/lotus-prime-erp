@@ -619,11 +619,15 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   PosInvoiceModel _buildInvoiceSnapshot() {
+    final gstPricingMode = billing.isEditingExistingBill &&
+            billing.gstPricingMode == GstPricingMode.inclusive
+        ? GstPricingMode.inclusive
+        : GstPricingMode.exclusive;
     return PosInvoiceModel(
       invoiceNumber: billing.formattedInvoice,
       invoiceDate: billing.editingBillDate ?? DateTime.now(),
       billType: BillType.gst,
-      gstPricingMode: billing.gstPricingMode,
+      gstPricingMode: gstPricingMode,
       documentType: SalesDocumentType.taxInvoice,
       billingMode: billing.billingMode,
       shopName: _realShopName,
@@ -642,8 +646,8 @@ class PosInvoiceController extends ChangeNotifier {
       customerCity: billing.cityCtrl.text,
       customerPan: billing.panCtrl.text,
       customerGstin: billing.gstCtrl.text,
-      customerStateCode: _stateCodeFromGstin(billing.gstCtrl.text),
-      placeOfSupply: billing.cityCtrl.text,
+      customerStateCode: billing.placeOfSupplyStateCode,
+      placeOfSupply: billing.placeOfSupplyName,
       tradeInMode: billing.tradeInMode,
       customerMetalSettlementType: billing.customerMetalSettlementType,
       saleItems: _buildPrintableSaleItemSnapshots(),
@@ -651,8 +655,8 @@ class PosInvoiceController extends ChangeNotifier {
       grossAmount: billing.grossAmount,
       discountAmount: billing.discountAmount,
       taxableAmount: billing.taxableAmount,
-      cgst: billing.cgst,
-      sgst: billing.sgst,
+      cgst: billing.outputCgst,
+      sgst: billing.outputSgst,
       totalGst: billing.totalGst,
       totalTradeInDeduction: billing.tradeInCashDeduction,
       grandTotal: billing.grandTotal,
