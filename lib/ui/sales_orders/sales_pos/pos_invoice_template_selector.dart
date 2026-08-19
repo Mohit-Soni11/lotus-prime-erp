@@ -453,12 +453,19 @@ class _TemplateThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEconomy = template.id == PrintTemplateRegistry.lotusEconomy.id;
-    final pageColor = isEconomy ? Colors.white : const Color(0xFF172437);
-    final accentColor =
-        isEconomy ? SalesPosColors.shellTextTitle : SalesPosColors.brandGold;
+    final isSignature = template.id == PrintTemplateRegistry.lotusSignature.id;
+    final pageColor =
+        isEconomy || isSignature ? Colors.white : const Color(0xFF172437);
+    final accentColor = isEconomy
+        ? SalesPosColors.shellTextTitle
+        : isSignature
+            ? const Color(0xFFB87819)
+            : SalesPosColors.brandGold;
     final lineColor = isEconomy
         ? SalesPosColors.shellBorder
-        : Colors.white.withValues(alpha: 0.82);
+        : isSignature
+            ? const Color(0xFFE8D7B3)
+            : Colors.white.withValues(alpha: 0.82);
 
     return Container(
       width: 36,
@@ -475,7 +482,7 @@ class _TemplateThumbnail extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: isEconomy ? 1.5 : 6,
+            height: isEconomy ? 1.5 : (isSignature ? 1.2 : 6),
             decoration: BoxDecoration(
               color: accentColor,
               borderRadius: BorderRadius.circular(3),
@@ -494,6 +501,19 @@ class _TemplateThumbnail extends StatelessWidget {
               ),
             ),
           ),
+          if (isSignature) ...[
+            const Spacer(),
+            Center(
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accentColor, width: 0.8),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

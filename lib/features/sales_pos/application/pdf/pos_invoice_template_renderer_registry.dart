@@ -7,6 +7,7 @@ import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_lotus_economy_invoice_pdf_layout.dart';
 import 'pos_lotus_classic_invoice_pdf_layout.dart';
+import 'pos_lotus_signature_invoice_pdf_layout.dart';
 
 class PosInvoiceTemplateRenderContext {
   final PosInvoiceScopeService scopeService;
@@ -40,6 +41,15 @@ class PosInvoiceTemplateRendererRegistry {
     },
     PrintTemplateRegistry.lotusEconomy.id: (invoice, context) {
       return PosLotusEconomyInvoicePdfLayout(
+        scopeService: context.scopeService,
+        metalPrintSettings: context.metalPrintSettings,
+      ).build(
+        invoice,
+        includePolicyBlock: context.includePolicyBlock,
+      );
+    },
+    PrintTemplateRegistry.lotusSignature.id: (invoice, context) {
+      return PosLotusSignatureInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
       ).build(

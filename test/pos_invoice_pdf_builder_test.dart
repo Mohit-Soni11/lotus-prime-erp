@@ -191,6 +191,46 @@ void main() {
       item.dispose();
     });
 
+    test('generates valid A4 PDF bytes with Lotus Signature template',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Nose Pin',
+        purity: '18KT',
+        grossWeight: 0.562,
+        rate: 11400,
+      );
+      item.makingCtrl.text = '12';
+      final invoice = _invoice(
+        saleItems: [item],
+        billType: BillType.gst,
+        cgst: 107.63,
+        sgst: 107.63,
+        totalGst: 215.26,
+      );
+
+      final bytes = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          templateId: PrintTemplateRegistry.lotusSignature.id,
+          metalPrintSettings: {
+            MetalType.gold: BillSettings(
+              showHsnCode: true,
+              showMakingType: true,
+            ),
+          },
+        ),
+      );
+
+      expect(bytes.length, greaterThan(1000));
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+
+      item.dispose();
+    });
+
     test('generates full thermal receipt bytes for 80mm and 57mm formats',
         () async {
       final item = _saleItem(

@@ -70,9 +70,25 @@ class PrintTemplateRegistry {
     ],
   );
 
+  static const PrintTemplateDefinition lotusSignature = PrintTemplateDefinition(
+    id: 'lotus_signature',
+    name: 'Lotus Signature Tax Invoice',
+    shortName: 'Lotus Signature',
+    description:
+        'Elegant white and gold jewellery tax invoice with refined customer, item and settlement sections.',
+    designReference:
+        'Premium branded A4 invoice inspired by luxury jewellery bill formats.',
+    isSystemDefault: false,
+    supportedDocuments: [
+      PrintTemplateDocumentType.salesInvoice,
+      PrintTemplateDocumentType.salesReturn,
+    ],
+  );
+
   static const List<PrintTemplateDefinition> templates = [
     lotusClassic,
     lotusEconomy,
+    lotusSignature,
   ];
 
   static List<String> get templateIds {

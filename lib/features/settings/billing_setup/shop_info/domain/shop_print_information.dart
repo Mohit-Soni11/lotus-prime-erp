@@ -350,7 +350,7 @@ class ShopPrintInformationCatalog {
         sourceSection: 'Basic Info',
         value: helpDeskNumber,
         group: ShopPrintFieldGroup.contact,
-        defaultEnabled: false,
+        defaultEnabled: true,
       ),
       ShopPrintField(
         id: 'business_email',
