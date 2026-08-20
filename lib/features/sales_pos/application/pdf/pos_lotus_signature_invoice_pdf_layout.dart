@@ -83,8 +83,8 @@ class PosLotusSignatureInvoicePdfLayout {
             padding: const pw.EdgeInsets.only(right: 14),
             child: _brandMark(invoice),
           ),
-          pw.Container(width: 1, height: 122, color: _line),
-          pw.SizedBox(width: 18),
+          pw.Container(width: 1, height: 102, color: _line),
+          pw.SizedBox(width: 16),
           pw.Expanded(
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -104,7 +104,7 @@ class PosLotusSignatureInvoicePdfLayout {
                           color: _ink,
                         ),
                       ),
-                      pw.SizedBox(height: 9),
+                      pw.SizedBox(height: 8),
                       if (addressLines.isNotEmpty)
                         _headerAddressBlock(
                           addressLines.take(2).toList(growable: false),
@@ -117,9 +117,10 @@ class PosLotusSignatureInvoicePdfLayout {
                     ],
                   ),
                 ),
-                pw.SizedBox(width: 18),
+                pw.SizedBox(width: 14),
                 pw.Container(
-                  width: 150,
+                  width: 120,
+                  padding: const pw.EdgeInsets.only(top: 3),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
@@ -146,7 +147,7 @@ class PosLotusSignatureInvoicePdfLayout {
                           letterSpacing: 0.45,
                         ),
                       ),
-                      pw.SizedBox(height: 16),
+                      pw.SizedBox(height: 12),
                       _invoiceMeta('Invoice No.', invoice.invoiceNumber),
                       _invoiceMeta(
                         'Invoice Date',
@@ -227,26 +228,30 @@ class PosLotusSignatureInvoicePdfLayout {
           child: _outlinedBox(
             'BILL TO',
             [
-              pw.Text(
+              _heroDetailLine(
+                'customer',
+                'Customer Name',
                 _fallback(invoice.customerName, 'Walk-in Customer')
                     .toUpperCase(),
-                maxLines: 1,
-                overflow: pw.TextOverflow.clip,
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                ),
               ),
-              pw.SizedBox(height: 10),
               if (invoice.customerMobile.trim().isNotEmpty)
-                _detailLine('Mobile', _formatPhone(invoice.customerMobile)),
+                _detailLine(
+                  'phone',
+                  'Mobile',
+                  _formatPhone(invoice.customerMobile),
+                ),
               if (invoice.customerCity.trim().isNotEmpty)
                 _detailLine(
+                  'location',
                   'Address',
                   _formatCustomerAddress(invoice.customerCity),
                 ),
               if (invoice.customerGstin.trim().isNotEmpty)
-                _detailLine('GSTIN', invoice.customerGstin),
+                _detailLine(
+                  'gst',
+                  'Customer GSTIN',
+                  invoice.customerGstin,
+                ),
             ],
           ),
         ),
@@ -255,17 +260,16 @@ class PosLotusSignatureInvoicePdfLayout {
           child: _outlinedBox(
             'INVOICE DETAILS',
             [
-              _pair('Invoice No.', invoice.invoiceNumber),
-              _pair('Invoice Date', _dateFormat.format(invoice.invoiceDate)),
-              _pair('Place of Supply', _stateText(invoice)),
-              _pair('Due Date', _dueDate(invoice)),
-              _pair(
-                'Payment Status',
+              _detailLine('location', 'Place of Supply', _stateText(invoice)),
+              _detailLine(
+                'status',
+                'Status',
                 invoice.paymentStatus.label,
                 valueColor: invoice.paymentStatus == PaymentStatus.paid
                     ? PdfColors.green800
                     : _ink,
               ),
+              _detailLine('calendar', 'Due Date', _dueDate(invoice)),
             ],
           ),
         ),
@@ -609,13 +613,9 @@ class PosLotusSignatureInvoicePdfLayout {
             border: pw.Border.all(color: _gold, width: 0.8),
             borderRadius: pw.BorderRadius.circular(3),
           ),
-          child: pw.Text(
-            title.substring(0, 1),
-            style: pw.TextStyle(
-              fontSize: 8,
-              fontWeight: pw.FontWeight.bold,
-              color: _gold,
-            ),
+          child: pw.Padding(
+            padding: const pw.EdgeInsets.all(3),
+            child: pw.SvgImage(svg: _sectionIconSvg(title)),
           ),
         ),
         pw.SizedBox(width: 8),
@@ -693,20 +693,21 @@ class PosLotusSignatureInvoicePdfLayout {
     PdfColor? valueColor,
   }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 7),
+      padding: const pw.EdgeInsets.only(bottom: 5),
       child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.end,
         children: [
-          pw.Expanded(
-              child: pw.Text(label, style: const pw.TextStyle(fontSize: 8.8))),
+          pw.Text(label, style: const pw.TextStyle(fontSize: 8.8)),
+          pw.SizedBox(width: 5),
           pw.Text(':', style: const pw.TextStyle(fontSize: 8.8)),
-          pw.SizedBox(width: 8),
+          pw.SizedBox(width: 6),
           pw.Container(
-            width: 70,
+            width: 60,
             child: pw.Text(
               value,
               textAlign: pw.TextAlign.left,
               style: pw.TextStyle(
-                fontSize: 8.8,
+                fontSize: 9,
                 fontWeight: pw.FontWeight.bold,
                 color: valueColor ?? _ink,
               ),
@@ -719,20 +720,20 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _headerAddressBlock(List<String> lines) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 5),
+      padding: const pw.EdgeInsets.only(bottom: 3),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _headerIconBadge('location'),
-          pw.SizedBox(width: 7),
+          pw.SizedBox(width: 6),
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 for (final line in lines)
                   pw.Padding(
-                    padding: const pw.EdgeInsets.only(bottom: 2),
-                    child: _headerText(line),
+                    padding: const pw.EdgeInsets.only(bottom: 1),
+                    child: _headerText(line, strong: true),
                   ),
               ],
             ),
@@ -749,12 +750,12 @@ class PosLotusSignatureInvoicePdfLayout {
     PdfColor? color,
   }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 4),
+      padding: const pw.EdgeInsets.only(bottom: 2),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _headerIconBadge(iconKey),
-          pw.SizedBox(width: 7),
+          pw.SizedBox(width: 6),
           pw.Expanded(
             child: _headerText(
               value,
@@ -769,18 +770,18 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _headerGstinLine(String gstin) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 4),
+      padding: const pw.EdgeInsets.only(bottom: 2),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _headerIconBadge('gst'),
-          pw.SizedBox(width: 7),
+          pw.SizedBox(width: 6),
           pw.Expanded(
             child: pw.RichText(
               maxLines: 1,
               overflow: pw.TextOverflow.clip,
               text: pw.TextSpan(
-                style: const pw.TextStyle(fontSize: 8.2, color: _ink),
+                style: const pw.TextStyle(fontSize: 9, color: _ink),
                 children: [
                   pw.TextSpan(
                     text: 'GSTIN: ',
@@ -801,18 +802,46 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _headerIconBadge(String iconKey) {
     return pw.Container(
-      width: 18,
-      height: 18,
+      width: 15,
+      height: 15,
       alignment: pw.Alignment.center,
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: _gold, width: 0.8),
         borderRadius: pw.BorderRadius.circular(3),
       ),
       child: pw.Padding(
-        padding: const pw.EdgeInsets.all(3.2),
+        padding: const pw.EdgeInsets.all(2.5),
         child: pw.SvgImage(svg: _headerIconSvg(iconKey)),
       ),
     );
+  }
+
+  pw.Widget _detailIconBadge(String iconKey) {
+    return pw.Container(
+      width: 16,
+      height: 16,
+      alignment: pw.Alignment.center,
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: _gold, width: 0.7),
+        borderRadius: pw.BorderRadius.circular(3),
+      ),
+      child: pw.Padding(
+        padding: const pw.EdgeInsets.all(3),
+        child: pw.SvgImage(svg: _headerIconSvg(iconKey)),
+      ),
+    );
+  }
+
+  String _sectionIconSvg(String title) {
+    final normalized = title.toLowerCase();
+    if (normalized.contains('bill')) return _headerIconSvg('customer');
+    if (normalized.contains('invoice')) return _headerIconSvg('invoice');
+    if (normalized.contains('item')) return _headerIconSvg('items');
+    if (normalized.contains('payment')) return _headerIconSvg('payment');
+    if (normalized.contains('amount')) return _headerIconSvg('amount');
+    if (normalized.contains('settlement')) return _headerIconSvg('settlement');
+    if (normalized.contains('terms')) return _headerIconSvg('policy');
+    return _headerIconSvg('invoice');
   }
 
   String _headerIconSvg(String iconKey) {
@@ -856,6 +885,78 @@ class PosLotusSignatureInvoicePdfLayout {
   <path d="M8 16h4"/>
 </svg>
 ''';
+      case 'customer':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 21a8 8 0 0 0-16 0"/>
+  <circle cx="12" cy="7" r="4"/>
+</svg>
+''';
+      case 'invoice':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7 3h10l3 3v15H4V3h3z"/>
+  <path d="M16 3v4h4"/>
+  <path d="M8 11h8"/>
+  <path d="M8 15h6"/>
+</svg>
+''';
+      case 'calendar':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="5" width="18" height="16" rx="2"/>
+  <path d="M16 3v4"/>
+  <path d="M8 3v4"/>
+  <path d="M3 10h18"/>
+</svg>
+''';
+      case 'status':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="12" cy="12" r="9"/>
+  <path d="m8 12 2.5 2.5L16 9"/>
+</svg>
+''';
+      case 'items':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="m21 8-9-5-9 5 9 5 9-5z"/>
+  <path d="M3 8v8l9 5 9-5V8"/>
+  <path d="M12 13v8"/>
+</svg>
+''';
+      case 'payment':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="6" width="18" height="12" rx="2"/>
+  <path d="M3 10h18"/>
+  <path d="M7 15h4"/>
+</svg>
+''';
+      case 'amount':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="4" y="3" width="16" height="18" rx="2"/>
+  <path d="M8 8h8"/>
+  <path d="M8 12h8"/>
+  <path d="M8 16h5"/>
+</svg>
+''';
+      case 'settlement':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M7 7h11l-3-3"/>
+  <path d="M17 17H6l3 3"/>
+  <path d="M18 7 6 19"/>
+</svg>
+''';
+      case 'policy':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3z"/>
+  <path d="m9 12 2 2 4-4"/>
+</svg>
+''';
       default:
         return '''
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -875,21 +976,89 @@ class PosLotusSignatureInvoicePdfLayout {
       maxLines: 1,
       overflow: pw.TextOverflow.clip,
       style: pw.TextStyle(
-        fontSize: 8.2,
-        fontWeight: strong ? pw.FontWeight.bold : pw.FontWeight.normal,
+        fontSize: 9,
+        fontWeight: strong ? pw.FontWeight.bold : pw.FontWeight.bold,
         color: color ?? _ink,
       ),
     );
   }
 
-  pw.Widget _detailLine(String label, String value) {
+  pw.Widget _heroDetailLine(String iconKey, String label, String value) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 6),
-      child: pw.Text(
-        '$label: $value',
-        maxLines: 2,
-        overflow: pw.TextOverflow.clip,
-        style: const pw.TextStyle(fontSize: 9.2, color: _ink),
+      padding: const pw.EdgeInsets.only(bottom: 9),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _detailIconBadge(iconKey),
+          pw.SizedBox(width: 8),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  label,
+                  style: pw.TextStyle(
+                    fontSize: 7.4,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _muted,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  value,
+                  maxLines: 1,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 15,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _detailLine(
+    String iconKey,
+    String label,
+    String value, {
+    PdfColor? valueColor,
+  }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          _detailIconBadge(iconKey),
+          pw.SizedBox(width: 8),
+          pw.Container(
+            width: 72,
+            child: pw.Text(
+              label,
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
+              style: const pw.TextStyle(fontSize: 8.6, color: _muted),
+            ),
+          ),
+          pw.Text(':', style: const pw.TextStyle(fontSize: 8.8)),
+          pw.SizedBox(width: 7),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              maxLines: 2,
+              overflow: pw.TextOverflow.clip,
+              style: pw.TextStyle(
+                fontSize: 9.2,
+                fontWeight: pw.FontWeight.bold,
+                color: valueColor ?? _ink,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
