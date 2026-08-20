@@ -1472,7 +1472,7 @@ class _PosInvoicePdfDocumentBuilder {
         if (invoice.customerGstin.trim().isNotEmpty)
           _thermalKeyValue('GSTIN', invoice.customerGstin.trim(), fontSize),
         _thermalSaleItems(invoice, fontSize),
-        if (invoice.tradeInItems.isNotEmpty)
+        if (_showCustomerMetalSettlement(invoice))
           _thermalMetalSettlement(invoice, fontSize),
         _thermalTotals(invoice, fontSize),
         _thermalPayments(invoice, fontSize),
@@ -1616,6 +1616,12 @@ class _PosInvoicePdfDocumentBuilder {
             boldValue: true,
           ),
       ],
+    );
+  }
+
+  bool _showCustomerMetalSettlement(PosInvoiceModel invoice) {
+    return invoice.tradeInItems.any(
+      (item) => _getMetalConfig(item.metal).showExchangeBreakdown,
     );
   }
 
