@@ -110,9 +110,9 @@ class PosLotusSignatureInvoicePdfLayout {
                           addressLines.take(2).toList(growable: false),
                         ),
                       if (phoneLine.isNotEmpty)
-                        _headerInfoLine('phone', phoneLine),
+                        _headerInfoLine('phone', phoneLine, strong: true),
                       if (emailLine.isNotEmpty)
-                        _headerInfoLine('mail', emailLine),
+                        _headerInfoLine('mail', emailLine, strong: true),
                       if (gstinLine.isNotEmpty) _headerGstinLine(gstinLine),
                     ],
                   ),
@@ -228,11 +228,11 @@ class PosLotusSignatureInvoicePdfLayout {
           child: _outlinedBox(
             'BILL TO',
             [
-              _heroDetailLine(
+              _detailLine(
                 'customer',
                 'Customer Name',
-                _fallback(invoice.customerName, 'Walk-in Customer')
-                    .toUpperCase(),
+                _fallback(invoice.customerName, 'Walk-in Customer'),
+                valueFontSize: 9.8,
               ),
               if (invoice.customerMobile.trim().isNotEmpty)
                 _detailLine(
@@ -249,8 +249,9 @@ class PosLotusSignatureInvoicePdfLayout {
               if (invoice.customerGstin.trim().isNotEmpty)
                 _detailLine(
                   'gst',
-                  'Customer GSTIN',
+                  'Customer GSTIN (if applicable)',
                   invoice.customerGstin,
+                  showDivider: false,
                 ),
             ],
           ),
@@ -260,7 +261,11 @@ class PosLotusSignatureInvoicePdfLayout {
           child: _outlinedBox(
             'INVOICE DETAILS',
             [
-              _detailLine('location', 'Place of Supply', _stateText(invoice)),
+              _detailLine(
+                'location',
+                'Place of Supply',
+                _stateText(invoice),
+              ),
               _detailLine(
                 'status',
                 'Status',
@@ -269,7 +274,12 @@ class PosLotusSignatureInvoicePdfLayout {
                     ? PdfColors.green800
                     : _ink,
               ),
-              _detailLine('calendar', 'Due Date', _dueDate(invoice)),
+              _detailLine(
+                'calendar',
+                'Due Date',
+                _dueDate(invoice),
+                showDivider: false,
+              ),
             ],
           ),
         ),
@@ -697,9 +707,23 @@ class PosLotusSignatureInvoicePdfLayout {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.end,
         children: [
-          pw.Text(label, style: const pw.TextStyle(fontSize: 8.8)),
+          pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 8.8,
+              fontWeight: pw.FontWeight.bold,
+              color: _ink,
+            ),
+          ),
           pw.SizedBox(width: 5),
-          pw.Text(':', style: const pw.TextStyle(fontSize: 8.8)),
+          pw.Text(
+            ':',
+            style: pw.TextStyle(
+              fontSize: 8.8,
+              fontWeight: pw.FontWeight.bold,
+              color: _ink,
+            ),
+          ),
           pw.SizedBox(width: 6),
           pw.Container(
             width: 60,
@@ -1027,38 +1051,62 @@ class PosLotusSignatureInvoicePdfLayout {
     String label,
     String value, {
     PdfColor? valueColor,
+    double valueFontSize = 9.6,
+    bool showDivider = true,
   }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 7),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _detailIconBadge(iconKey),
-          pw.SizedBox(width: 8),
-          pw.Container(
-            width: 72,
-            child: pw.Text(
-              label,
-              maxLines: 1,
-              overflow: pw.TextOverflow.clip,
-              style: const pw.TextStyle(fontSize: 8.6, color: _muted),
-            ),
-          ),
-          pw.Text(':', style: const pw.TextStyle(fontSize: 8.8)),
-          pw.SizedBox(width: 7),
-          pw.Expanded(
-            child: pw.Text(
-              value,
-              maxLines: 2,
-              overflow: pw.TextOverflow.clip,
-              style: pw.TextStyle(
-                fontSize: 9.2,
-                fontWeight: pw.FontWeight.bold,
-                color: valueColor ?? _ink,
+      child: pw.Container(
+        padding: const pw.EdgeInsets.only(bottom: 6),
+        decoration: showDivider
+            ? const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(color: _line, width: 0.45),
+                ),
+              )
+            : null,
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            _detailIconBadge(iconKey),
+            pw.SizedBox(width: 8),
+            pw.SizedBox(
+              width: 82,
+              child: pw.Text(
+                label,
+                maxLines: 2,
+                overflow: pw.TextOverflow.clip,
+                style: pw.TextStyle(
+                  fontSize: 9.0,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _ink,
+                ),
               ),
             ),
-          ),
-        ],
+            pw.SizedBox(width: 5),
+            pw.Text(
+              ':',
+              style: pw.TextStyle(
+                fontSize: 9.4,
+                fontWeight: pw.FontWeight.bold,
+                color: _ink,
+              ),
+            ),
+            pw.SizedBox(width: 7),
+            pw.Expanded(
+              child: pw.Text(
+                value,
+                maxLines: 2,
+                overflow: pw.TextOverflow.clip,
+                style: pw.TextStyle(
+                  fontSize: valueFontSize,
+                  fontWeight: pw.FontWeight.bold,
+                  color: valueColor ?? _ink,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1353,8 +1401,37 @@ class PosLotusSignatureInvoicePdfLayout {
     required bool isWholesale,
   }) {
     final amount = isWholesale ? item.wholesaleLabourAmt : item.makingAmt;
-    if (!config.showMakingType) return _plainAmount(amount);
-    return '${_plainAmount(amount)} ${_makingUnit(item.makingChargeType)}';
+
+    // Making Rate Type has priority when enabled: show the entered rate
+    // (for example 12%, 15%, 120/g) instead of the calculated amount.
+    if (config.showMakingType) {
+      final input = double.tryParse(
+            item.makingCtrl.text.replaceAll(RegExp(r'[^0-9.]'), ''),
+          ) ??
+          0.0;
+      if (input > 0) {
+        return '${_formatMakingInput(input)}${_makingUnit(item.makingChargeType)}';
+      }
+    }
+
+    // Making Rate Type OFF -> show the calculated Making Amount only.
+    // This prevents values such as 534.36% when the amount is 534.36.
+    if (config.showMaking) {
+      return _plainAmount(amount);
+    }
+
+    return '';
+  }
+
+  String _formatMakingInput(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0001) {
+      return rounded.toStringAsFixed(0);
+    }
+    return value
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 
   String _makingUnit(MakingChargeType type) {
