@@ -156,7 +156,6 @@ class PosInvoiceReadinessValidator {
 
   String? _validateUniqueSaleItemReferences(List<SaleItemModel> saleItems) {
     final huidRows = <String, int>{};
-    final stockRows = <int, int>{};
 
     for (int index = 0; index < saleItems.length; index++) {
       final rowNumber = index + 1;
@@ -170,15 +169,6 @@ class PosInvoiceReadinessValidator {
           return 'HUID $huid is already used in item row $firstRow. Remove the duplicate from row $rowNumber.';
         }
         huidRows[huid] = rowNumber;
-      }
-
-      final stockItemId = saleItems[index].linkedStockItemId;
-      if (stockItemId != null) {
-        final firstRow = stockRows[stockItemId];
-        if (firstRow != null) {
-          return 'The same stock item is selected in row $firstRow and row $rowNumber. Select a different item before generating the invoice.';
-        }
-        stockRows[stockItemId] = rowNumber;
       }
     }
 

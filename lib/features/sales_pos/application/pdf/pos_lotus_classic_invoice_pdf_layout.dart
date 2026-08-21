@@ -10,6 +10,7 @@ import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart'
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
+import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_header_details.dart';
 
@@ -760,31 +761,11 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _policyBlock(PosInvoiceModel invoice) {
-    final entries = <({String title, String body})>[];
-    for (final metal in scopeService.collectMetals(invoice)) {
-      final config = _getMetalConfig(metal);
-      if (config.printTermsAndConditions &&
-          _hasPrintableCopy(config.termsAndConditions)) {
-        entries.add((
-          title: '${metal.displayName} Terms & Conditions',
-          body: config.termsAndConditions.trim(),
-        ));
-      }
-      if (config.printReturnPolicy &&
-          _hasPrintableCopy(config.returnPolicyText)) {
-        entries.add((
-          title: '${metal.displayName} Return Policy',
-          body: config.returnPolicyText.trim(),
-        ));
-      }
-      if (config.printBuybackPolicy &&
-          _hasPrintableCopy(config.buybackPolicyText)) {
-        entries.add((
-          title: '${metal.displayName} Buyback Policy',
-          body: config.buybackPolicyText.trim(),
-        ));
-      }
-    }
+    final entries = PosInvoicePolicyCopy.entries(
+      invoice: invoice,
+      scopeService: scopeService,
+      metalPrintSettings: metalPrintSettings,
+    );
 
     if (entries.isEmpty) return pw.SizedBox.shrink();
 
@@ -812,7 +793,7 @@ class PosLotusClassicInvoicePdfLayout {
             ),
             pw.SizedBox(height: 2),
             pw.Text(
-              entries[index].body,
+              entries[index].body.trimRight(),
               style: const pw.TextStyle(
                 color: _ink,
                 fontSize: 8,

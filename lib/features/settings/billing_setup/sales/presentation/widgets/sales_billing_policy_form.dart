@@ -452,9 +452,9 @@ class _TermsAndPrintFields extends StatelessWidget {
         const SizedBox(height: 14),
         _TextInput(
           label: 'Footer Message',
-          helper: 'Short English and Hindi footer printed at bill bottom',
+          helper: 'Complete English and Hindi footer printed at bill bottom',
           hintText:
-              'Thank you for shopping with us! Visit us again.\nखरीदारी के लिए धन्यवाद! फिर पधारें.',
+              'Thank you for shopping with us! Visit us again.\nखरीदारी के लिए धन्यवाद! फिर पधारें.\nThis is a computer generated tax invoice.',
           controller: footerController,
           maxLines: 4,
           onChanged: (value) => onInputChanged(

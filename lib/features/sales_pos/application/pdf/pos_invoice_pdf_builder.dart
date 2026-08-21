@@ -10,7 +10,10 @@ import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
+import 'pos_invoice_financial_breakdown.dart';
+import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
+import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_shop_header_details.dart';
 import 'pos_invoice_template_renderer_registry.dart';
 
@@ -44,10 +47,12 @@ class PosInvoicePdfBuilder {
   Future<Uint8List> build({
     required PosInvoiceModel invoice,
     required PosInvoicePdfBuildOptions options,
-  }) {
+  }) async {
+    final textRenderer = await PosInvoicePdfTextRenderer.create();
     return _PosInvoicePdfDocumentBuilder(
       scopeService: _scopeService,
       options: options,
+      textRenderer: textRenderer,
     ).build(invoice);
   }
 }
@@ -74,10 +79,12 @@ class _PosInvoicePdfDocumentBuilder {
 
   final PosInvoiceScopeService scopeService;
   final PosInvoicePdfBuildOptions options;
+  final PosInvoicePdfTextRenderer textRenderer;
 
   const _PosInvoicePdfDocumentBuilder({
     required this.scopeService,
     required this.options,
+    required this.textRenderer,
   });
 
   Future<Uint8List> build(PosInvoiceModel invoice) async {
@@ -98,6 +105,7 @@ class _PosInvoicePdfDocumentBuilder {
               options.activeMetal,
             ),
           ];
+    await _warmPolicyText(scopedInvoices, pageFormat);
 
     for (int i = 0; i < options.copies; i++) {
       for (final scopedInvoice in scopedInvoices) {
@@ -111,6 +119,56 @@ class _PosInvoicePdfDocumentBuilder {
       }
     }
     return doc.save();
+  }
+
+  Future<void> _warmPolicyText(
+    List<PosInvoiceModel> invoices,
+    PdfPageFormat pageFormat,
+  ) async {
+    final lines = invoices
+        .expand(
+          (invoice) => PosInvoicePolicyCopy.entries(
+            invoice: invoice,
+            scopeService: scopeService,
+            metalPrintSettings: options.metalPrintSettings,
+          ),
+        )
+        .expand((entry) => PosInvoicePolicyCopy.lines(entry.body))
+        .toSet();
+
+    await textRenderer.warmPolicyLines(
+      lines,
+      specs: [
+        PosInvoicePdfTextSpec(
+          fontSize: _pdfPolicyBodySize,
+          color: _pdfTextColor,
+          bold: false,
+          maxWidth: _fallbackPolicyBodyWidth(pageFormat),
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 10.9,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 456,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 10.4,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 456,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 8.3,
+          color: PdfColors.grey700,
+          bold: false,
+          maxWidth: 470,
+        ),
+      ],
+    );
+  }
+
+  double _fallbackPolicyBodyWidth(PdfPageFormat pageFormat) {
+    return pageFormat.width - 56;
   }
 
   Future<pw.Font?> _loadDevanagariFont() async {
@@ -249,6 +307,7 @@ class _PosInvoicePdfDocumentBuilder {
       context: PosInvoiceTemplateRenderContext(
         scopeService: scopeService,
         metalPrintSettings: options.metalPrintSettings,
+        textRenderer: textRenderer,
       ),
       includeDuplicateStamp: includeDuplicateStamp,
     );
@@ -270,7 +329,10 @@ class _PosInvoicePdfDocumentBuilder {
         ),
         header: (_) => _policyPageHeader(invoice),
         footer: (context) => _policyPageFooter(context),
-        build: (_) => _policyPageContent(entries),
+        build: (_) => _policyPageContent(
+          entries,
+          bodyWidth: _fallbackPolicyBodyWidth(pageFormat),
+        ),
       ),
     );
   }
@@ -304,6 +366,7 @@ class _PosInvoicePdfDocumentBuilder {
         scopeService: scopeService,
         metalPrintSettings: options.metalPrintSettings,
         includePolicyBlock: includePolicyBlock,
+        textRenderer: textRenderer,
       ),
     );
     if (templateLayout != null) {
@@ -754,7 +817,12 @@ class _PosInvoicePdfDocumentBuilder {
                   _totalRow('CGST', invoice.cgst),
                   _totalRow('SGST', invoice.sgst),
                 ],
-              ],
+              ] else if (invoice.billType == BillType.gst &&
+                  invoice.totalGst > 0.005)
+                _totalRow(
+                  PosInvoiceFinancialBreakdown.combinedGstLabel(invoice),
+                  invoice.totalGst,
+                ),
               if (invoice.totalTradeInDeduction > 0)
                 _totalRow(
                   'Less: Customer Metal Settlement',
@@ -1104,35 +1172,12 @@ class _PosInvoicePdfDocumentBuilder {
     }
   }
 
-  List<({String title, String body})> _policyEntries(PosInvoiceModel invoice) {
-    final entries = <({String title, String body})>[];
-
-    for (final metal in scopeService.collectMetals(invoice)) {
-      final config = _getMetalConfig(metal);
-      if (config.printTermsAndConditions &&
-          _hasPrintableCopy(config.termsAndConditions)) {
-        entries.add((
-          title: '${metal.displayName} Terms & Conditions',
-          body: config.termsAndConditions.trim(),
-        ));
-      }
-      if (config.printReturnPolicy &&
-          _hasPrintableCopy(config.returnPolicyText)) {
-        entries.add((
-          title: '${metal.displayName} Return Policy',
-          body: config.returnPolicyText.trim(),
-        ));
-      }
-      if (config.printBuybackPolicy &&
-          _hasPrintableCopy(config.buybackPolicyText)) {
-        entries.add((
-          title: '${metal.displayName} Buyback Policy',
-          body: config.buybackPolicyText.trim(),
-        ));
-      }
-    }
-
-    return entries;
+  List<PosInvoicePolicyEntry> _policyEntries(PosInvoiceModel invoice) {
+    return PosInvoicePolicyCopy.entries(
+      invoice: invoice,
+      scopeService: scopeService,
+      metalPrintSettings: options.metalPrintSettings,
+    );
   }
 
   pw.Widget _policyPageHeader(PosInvoiceModel invoice) {
@@ -1226,8 +1271,9 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   List<pw.Widget> _policyPageContent(
-    List<({String title, String body})> entries,
-  ) {
+    List<PosInvoicePolicyEntry> entries, {
+    required double bodyWidth,
+  }) {
     final widgets = <pw.Widget>[];
 
     for (var index = 0; index < entries.length; index++) {
@@ -1255,14 +1301,17 @@ class _PosInvoicePdfDocumentBuilder {
         ),
       );
       widgets.add(pw.SizedBox(height: 6));
-      widgets.addAll(_policyBodyLines(entry.body));
+      widgets.addAll(_policyBodyLines(entry.body, bodyWidth: bodyWidth));
     }
 
     return widgets;
   }
 
-  List<pw.Widget> _policyBodyLines(String body) {
-    final rawLines = body.replaceAll('\r\n', '\n').split('\n');
+  List<pw.Widget> _policyBodyLines(
+    String body, {
+    required double bodyWidth,
+  }) {
+    final rawLines = PosInvoicePolicyCopy.lines(body);
     final widgets = <pw.Widget>[];
 
     for (final rawLine in rawLines) {
@@ -1274,8 +1323,9 @@ class _PosInvoicePdfDocumentBuilder {
       widgets.add(
         pw.Padding(
           padding: const pw.EdgeInsets.only(bottom: 3),
-          child: pw.Text(
+          child: textRenderer.text(
             line,
+            maxWidth: bodyWidth,
             style: const pw.TextStyle(
               fontSize: _pdfPolicyBodySize,
               color: _pdfTextColor,
@@ -1292,25 +1342,11 @@ class _PosInvoicePdfDocumentBuilder {
   pw.Widget _pdfPolicyBlock(PosInvoiceModel invoice) {
     final entries = <pw.Widget>[];
 
-    for (final metal in scopeService.collectMetals(invoice)) {
-      final config = _getMetalConfig(metal);
+    for (final entry in _policyEntries(invoice)) {
       _addPolicyEntry(
         entries,
-        title: '${metal.displayName} TERMS & CONDITIONS',
-        body: config.termsAndConditions,
-        enabled: config.printTermsAndConditions,
-      );
-      _addPolicyEntry(
-        entries,
-        title: '${metal.displayName} RETURN POLICY',
-        body: config.returnPolicyText,
-        enabled: config.printReturnPolicy,
-      );
-      _addPolicyEntry(
-        entries,
-        title: '${metal.displayName} BUYBACK POLICY',
-        body: config.buybackPolicyText,
-        enabled: config.printBuybackPolicy,
+        title: entry.title.toUpperCase(),
+        body: entry.body,
       );
     }
 
@@ -1335,10 +1371,8 @@ class _PosInvoicePdfDocumentBuilder {
     List<pw.Widget> entries, {
     required String title,
     required String body,
-    required bool enabled,
   }) {
-    final text = body.trim();
-    if (!enabled || !_hasPrintableCopy(text)) return;
+    if (!_hasPrintableCopy(body)) return;
 
     if (entries.isNotEmpty) {
       entries.add(pw.SizedBox(height: 7));
@@ -1354,16 +1388,7 @@ class _PosInvoicePdfDocumentBuilder {
       ),
     );
     entries.add(pw.SizedBox(height: 2));
-    entries.add(
-      pw.Text(
-        text,
-        style: const pw.TextStyle(
-          fontSize: _pdfPolicyBodySize,
-          color: _pdfTextColor,
-          lineSpacing: 1.2,
-        ),
-      ),
-    );
+    entries.addAll(_policyBodyLines(body, bodyWidth: 500));
   }
 
   pw.Widget _pdfFooter(PosInvoiceModel invoice) {
@@ -1662,6 +1687,9 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _thermalTotals(PosInvoiceModel invoice, double fontSize) {
+    final showGstBreakup = scopeService
+        .collectMetals(invoice)
+        .any((metal) => _getMetalConfig(metal).showGstBreakup);
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -1677,14 +1705,23 @@ class _PosInvoicePdfDocumentBuilder {
         if (invoice.billType == BillType.gst) ...[
           _thermalKeyValue(
               'Taxable Value', _thermalMoney(invoice.taxableAmount), fontSize),
-          if (invoice.hasIgstBreakup)
-            _thermalKeyValue('IGST', _thermalMoney(invoice.igst), fontSize)
-          else ...[
-            _thermalKeyValue('CGST', _thermalMoney(invoice.cgst), fontSize),
-            _thermalKeyValue('SGST', _thermalMoney(invoice.sgst), fontSize),
-          ],
-          _thermalKeyValue(
-              'Total GST', _thermalMoney(invoice.totalGst), fontSize),
+          if (showGstBreakup) ...[
+            if (invoice.hasIgstBreakup)
+              _thermalKeyValue('IGST', _thermalMoney(invoice.igst), fontSize)
+            else ...[
+              if (invoice.cgst > posInvoiceMoneyEpsilon)
+                _thermalKeyValue('CGST', _thermalMoney(invoice.cgst), fontSize),
+              if (invoice.sgst > posInvoiceMoneyEpsilon)
+                _thermalKeyValue('SGST', _thermalMoney(invoice.sgst), fontSize),
+            ],
+            _thermalKeyValue(
+                'Total GST', _thermalMoney(invoice.totalGst), fontSize),
+          ] else if (invoice.totalGst > posInvoiceMoneyEpsilon)
+            _thermalKeyValue(
+              PosInvoiceFinancialBreakdown.combinedGstLabel(invoice),
+              _thermalMoney(invoice.totalGst),
+              fontSize,
+            ),
         ],
         if (invoice.totalTradeInDeduction > 0.5)
           _thermalKeyValue(
@@ -1783,15 +1820,7 @@ class _PosInvoicePdfDocumentBuilder {
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(fontSize: fontSize - 0.4),
           ),
-        pw.SizedBox(height: 3),
-        pw.Text(
-          'Thank you',
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(
-            fontSize: fontSize,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
+        if (footerMessages.isNotEmpty) pw.SizedBox(height: 3),
         pw.Text(
           'E&OE',
           textAlign: pw.TextAlign.center,

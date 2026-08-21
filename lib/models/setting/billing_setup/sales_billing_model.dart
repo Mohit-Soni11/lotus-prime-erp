@@ -210,7 +210,8 @@ class SalesBillingModel {
             'Original bill is mandatory for buyback.\n'
             'बायबैक के लिए मूल बिल आवश्यक है.',
     this.footerMessage = 'Thank you for shopping with us! Visit us again.\n'
-        'खरीदारी के लिए धन्यवाद! फिर पधारें.',
+        'खरीदारी के लिए धन्यवाद! फिर पधारें.\n'
+        'This is a computer generated tax invoice.',
     // Template
     this.selectedTemplate = 'default',
     this.printTermsAndConditions = true,
@@ -267,7 +268,8 @@ class SalesBillingModel {
               'HUID/original invoice may be required for compliance and valuation.\n'
               'नियमों और मूल्यांकन के लिए HUID या मूल बिल मांगा जा सकता है.',
           footerMessage: 'Thank you for shopping with us! Visit us again.\n'
-              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.\n'
+              'This is a computer generated tax invoice.',
         );
 
       case BillingMetal.silver:
@@ -313,7 +315,8 @@ class SalesBillingModel {
               'Original invoice is recommended for faster valuation.\n'
               'तेज मूल्यांकन के लिए मूल बिल साथ लाना बेहतर है.',
           footerMessage: 'Thank you for shopping with us! Visit us again.\n'
-              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.\n'
+              'This is a computer generated tax invoice.',
         );
 
       case BillingMetal.diamond:
@@ -366,7 +369,8 @@ class SalesBillingModel {
               'Final value is confirmed only after expert inspection.\n'
               'अंतिम मूल्य expert inspection के बाद ही तय होगा.',
           footerMessage: 'Thank you for shopping with us! Visit us again.\n'
-              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.\n'
+              'This is a computer generated tax invoice.',
         );
 
       case BillingMetal.platinum:
@@ -412,7 +416,8 @@ class SalesBillingModel {
               'Deductions may apply for testing, refining or item condition.\n'
               'Testing, refining या item condition के अनुसार कटौती लागू हो सकती है.',
           footerMessage: 'Thank you for shopping with us! Visit us again.\n'
-              'खरीदारी के लिए धन्यवाद! फिर पधारें.',
+              'खरीदारी के लिए धन्यवाद! फिर पधारें.\n'
+              'This is a computer generated tax invoice.',
         );
 
       default:

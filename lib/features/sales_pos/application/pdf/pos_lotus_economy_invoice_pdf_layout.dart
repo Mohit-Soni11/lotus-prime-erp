@@ -7,6 +7,7 @@ import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart'
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
+import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_header_details.dart';
 
@@ -116,6 +117,7 @@ class PosLotusEconomyInvoicePdfLayout {
   }
 
   pw.Widget _partyAndTaxPanel(PosInvoiceModel invoice) {
+    final showGstBreakup = _showGstBreakup(invoice);
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -150,13 +152,21 @@ class PosLotusEconomyInvoicePdfLayout {
             title: 'TAX SNAPSHOT',
             children: [
               _keyLine('Taxable Value', _amount(invoice.taxableAmount)),
-              if (invoice.hasIgstBreakup)
-                _keyLine('IGST', _amount(invoice.igst))
-              else ...[
-                _keyLine('CGST', _amount(invoice.cgst)),
-                _keyLine('SGST', _amount(invoice.sgst)),
-              ],
-              _keyLine('Total GST', _amount(invoice.totalGst)),
+              if (showGstBreakup) ...[
+                if (invoice.hasIgstBreakup)
+                  _keyLine('IGST', _amount(invoice.igst))
+                else ...[
+                  if (invoice.cgst > posInvoiceMoneyEpsilon)
+                    _keyLine('CGST', _amount(invoice.cgst)),
+                  if (invoice.sgst > posInvoiceMoneyEpsilon)
+                    _keyLine('SGST', _amount(invoice.sgst)),
+                ],
+                _keyLine('Total GST', _amount(invoice.totalGst)),
+              ] else if (invoice.totalGst > posInvoiceMoneyEpsilon)
+                _keyLine(
+                  PosInvoiceFinancialBreakdown.combinedGstLabel(invoice),
+                  _amount(invoice.totalGst),
+                ),
               _keyLine('Place of Supply',
                   _fallback(invoice.placeOfSupply, invoice.customerStateCode)),
             ],
@@ -300,7 +310,7 @@ class PosLotusEconomyInvoicePdfLayout {
     final status = PosInvoiceFinancialBreakdown.status(invoice);
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
-      showGstBreakup: true,
+      showGstBreakup: _showGstBreakup(invoice),
     );
     final statusColor = status.isDue ? _danger : _success;
 
@@ -393,8 +403,9 @@ class PosLotusEconomyInvoicePdfLayout {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                if (footer.isNotEmpty) _smallText(footer),
-                _smallText('This is a computer generated tax invoice.'),
+                if (footer.isNotEmpty)
+                  for (final line in _splitFooterLines(footer))
+                    _smallText(line),
               ],
             ),
           ),
@@ -596,7 +607,7 @@ class PosLotusEconomyInvoicePdfLayout {
         overflow: pw.TextOverflow.clip,
         style: const pw.TextStyle(
           fontSize: 7.8,
-          color: _muted,
+          color: _ink,
         ),
       ),
     );
@@ -655,27 +666,13 @@ class PosLotusEconomyInvoicePdfLayout {
   }
 
   List<String> _policyLines(PosInvoiceModel invoice) {
-    final config = _primaryConfig(invoice);
-    final lines = <String>[];
-    if (config.printTermsAndConditions) {
-      lines.addAll(_splitPolicy(config.termsAndConditions));
-    }
-    if (config.printReturnPolicy) {
-      lines.addAll(_splitPolicy(config.returnPolicyText));
-    }
-    if (config.printBuybackPolicy) {
-      lines.addAll(_splitPolicy(config.buybackPolicyText));
-    }
-    return lines
+    return PosInvoicePolicyCopy.entries(
+      invoice: invoice,
+      scopeService: scopeService,
+      metalPrintSettings: metalPrintSettings,
+    )
+        .expand((entry) => PosInvoicePolicyCopy.lines(entry.body))
         .where((line) => line.trim().isNotEmpty)
-        .toList(growable: false);
-  }
-
-  List<String> _splitPolicy(String value) {
-    return value
-        .split(RegExp(r'[\r\n]+'))
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
         .toList(growable: false);
   }
 
@@ -689,6 +686,21 @@ class PosLotusEconomyInvoicePdfLayout {
     final config = _primaryConfig(invoice);
     if (!config.printFooterMessage) return '';
     return config.footerMessage.trim();
+  }
+
+  bool _showGstBreakup(PosInvoiceModel invoice) {
+    return scopeService
+        .collectMetals(invoice)
+        .any((metal) => _configFor(metal).showGstBreakup);
+  }
+
+  List<String> _splitFooterLines(String value) {
+    return value
+        .replaceAll('\r\n', '\n')
+        .split('\n')
+        .map(_clean)
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
   }
 
   String _invoiceTitle(PosInvoiceModel invoice) {

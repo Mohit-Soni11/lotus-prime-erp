@@ -21,6 +21,18 @@ void main() {
       expect(settings.printBuybackPolicy, isTrue);
       expect(settings.printFooterMessage, isFalse);
     });
+
+    test('uses Billing Setup footer copy as the print source', () {
+      final model = SalesBillingModel.defaultFor(BillingMetal.gold);
+
+      final settings = BillSettings.fromSalesBilling(model);
+
+      expect(
+        settings.footerMessage,
+        contains('This is a computer generated tax invoice.'),
+      );
+      expect(settings.footerMessage, model.footerMessage);
+    });
   });
 
   group('PosInvoiceTemplateRendererRegistry', () {

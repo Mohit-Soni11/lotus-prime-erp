@@ -56,7 +56,8 @@ class BillSettings {
     this.showFineWeight = false,
     this.showGstBreakup = false,
     this.showHsnCode = false,
-    this.footerMessage = 'Thank you for shopping with us! Visit us again.',
+    this.footerMessage = 'Thank you for shopping with us! Visit us again.\n'
+        'This is a computer generated tax invoice.',
     this.termsAndConditions = '',
     this.returnPolicyText = '',
     this.buybackPolicyText = '',

@@ -134,6 +134,13 @@ class PosInvoiceFinancialBreakdown {
             ),
         ],
       ],
+      if (invoice.billType == BillType.gst &&
+          !showGstBreakup &&
+          invoice.totalGst > posInvoiceMoneyEpsilon)
+        PosInvoiceAmountSummaryEntry(
+          label: combinedGstLabel(invoice),
+          amount: invoice.totalGst,
+        ),
       if (invoice.totalTradeInDeduction > posInvoiceMoneyEpsilon)
         PosInvoiceAmountSummaryEntry(
           label: 'Customer Metal Settlement',
@@ -165,5 +172,29 @@ class PosInvoiceFinancialBreakdown {
   static String paymentModeSummary(PosInvoiceModel invoice) {
     final labels = payments(invoice).map((entry) => entry.label).toList();
     return labels.isEmpty ? 'No Payment Recorded' : labels.join(' + ');
+  }
+
+  static String combinedGstLabel(PosInvoiceModel invoice) {
+    final taxableValue = invoice.taxableAmount.abs();
+    final gstValue = invoice.totalGst.abs();
+    if (taxableValue <= posInvoiceMoneyEpsilon ||
+        gstValue <= posInvoiceMoneyEpsilon) {
+      return 'GST';
+    }
+
+    final rate = (gstValue / taxableValue) * 100;
+    if (!rate.isFinite || rate <= 0) return 'GST';
+    return 'GST ${_compactRate(rate)}%';
+  }
+
+  static String _compactRate(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0001) {
+      return rounded.toStringAsFixed(0);
+    }
+    return value
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 }

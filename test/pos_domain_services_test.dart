@@ -344,7 +344,8 @@ void main() {
       second.dispose();
     });
 
-    test('blocks duplicate linked stock items before invoice generation', () {
+    test('allows repeated linked stock item rows before invoice generation',
+        () {
       final first = _saleItem(huid: 'HUID-001', stockItemId: 10);
       final second = _saleItem(huid: 'HUID-002', stockItemId: 10);
 
@@ -352,7 +353,7 @@ void main() {
         _input(saleItems: [first, second]),
       );
 
-      expect(result, contains('same stock item'));
+      expect(result, isNull);
       first.dispose();
       second.dispose();
     });

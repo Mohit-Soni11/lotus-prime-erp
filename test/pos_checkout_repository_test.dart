@@ -391,6 +391,68 @@ void main() {
   );
 
   test(
+    'finalizeSale allows repeated lot stock rows and deducts total weight',
+    () async {
+      final stockId = await _insertSilverLotStock(
+        db,
+        sku: 'SIL-REPEAT-LOT',
+        quantity: 8,
+        grossWeight: 12.45,
+        lessWeight: 0.50,
+        netWeight: 11.95,
+      );
+      final firstSale = SaleItemModel(metal: pos.MetalType.silver);
+      firstSale.descCtrl.text = 'CHAND';
+      firstSale.pcsCtrl.text = '1';
+      firstSale.purityCtrl.text = '999';
+      firstSale.grossCtrl.text = '2.500';
+      firstSale.lessCtrl.text = '0';
+      firstSale.rateCtrl.text = '100';
+      firstSale.makingCtrl.text = '0';
+      firstSale.attachStockReference(
+        stockItemId: stockId,
+        sku: 'SIL-REPEAT-LOT-U001',
+      );
+
+      final secondSale = SaleItemModel(metal: pos.MetalType.silver);
+      secondSale.descCtrl.text = 'CHAND';
+      secondSale.pcsCtrl.text = '1';
+      secondSale.purityCtrl.text = '999';
+      secondSale.grossCtrl.text = '3.450';
+      secondSale.lessCtrl.text = '0';
+      secondSale.rateCtrl.text = '100';
+      secondSale.makingCtrl.text = '0';
+      secondSale.attachStockReference(
+        stockItemId: stockId,
+        sku: 'SIL-REPEAT-LOT-U001',
+      );
+
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-REPEAT-LOT',
+        saleItems: [firstSale, secondSale],
+        cashPaid: firstSale.totalValue + secondSale.totalValue,
+      );
+
+      await repository.finalizeSale(invoice: invoice, customerId: null);
+
+      final stockRow = await _stockById(db, stockId);
+      final lotUnit = await _stockUnitCostAuditFor(db, stockId);
+      final movements = await _stockMovementsFor(db, stockId);
+
+      expect(stockRow.quantity, 6);
+      expect(stockRow.status, stock.StockStatus.available.label);
+      expect(stockRow.netWeight, closeTo(6, 0.001));
+      expect(lotUnit.read<double>('net_weight'), closeTo(6, 0.001));
+      expect(movements.map((row) => row.quantityDelta), [-1, -1]);
+      expect(movements.map((row) => row.sourceLineNo), [1, 2]);
+      expect(movements[0].netWeightDelta, closeTo(-2.5, 0.001));
+      expect(movements[1].netWeightDelta, closeTo(-3.45, 0.001));
+
+      _disposeItems(saleItems: [firstSale, secondSale]);
+    },
+  );
+
+  test(
     'finalizeSale saves and reloads invoice HSN code snapshot',
     () async {
       final stockId = await _insertStockItem(db, sku: 'GOLD-HSN-001');

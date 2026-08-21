@@ -40,7 +40,7 @@ class PosInvoiceController extends ChangeNotifier {
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final ShopPrintInformationRepository _shopPrintRepo =
       ShopPrintInformationRepository();
-  final SalesBillingRepo _salesBillingRepo = SalesBillingRepo();
+  final SalesBillingRepo _salesBillingRepo;
   final PosInvoiceScopeService _scopeService = const PosInvoiceScopeService();
   final PosInvoicePdfBuilder _pdfBuilder = const PosInvoicePdfBuilder();
   final PosInvoiceOutputService _outputService =
@@ -49,7 +49,10 @@ class PosInvoiceController extends ChangeNotifier {
   final InvoicePrintConfig printConfig = InvoicePrintConfig();
   final Map<MetalType, BillSettings> metalPrintSettings = {};
 
-  PosInvoiceController({required this.billing});
+  PosInvoiceController({
+    required this.billing,
+    SalesBillingRepo? salesBillingRepo,
+  }) : _salesBillingRepo = salesBillingRepo ?? SalesBillingRepo();
 
   InvoiceGenState genState = InvoiceGenState.idle;
   PosInvoiceModel? invoice;
@@ -1039,7 +1042,8 @@ class PosInvoiceController extends ChangeNotifier {
     PrintFormat fmt, {
     MetalType? activeMetal,
     bool includeAllMetals = false,
-  }) {
+  }) async {
+    await _refreshSavedPrintCopy(inv);
     return _pdfBuilder.build(
       invoice: inv,
       options: PosInvoicePdfBuildOptions(
@@ -1052,6 +1056,30 @@ class PosInvoiceController extends ChangeNotifier {
         metalPrintSettings: metalPrintSettings,
       ),
     );
+  }
+
+  Future<void> _refreshSavedPrintCopy(PosInvoiceModel inv) async {
+    for (final metal in _collectMetals(inv)) {
+      try {
+        final setup = await _salesBillingRepo.fetchForMetal(metal.name);
+        final latest = _settingsFromBillingSetup(setup);
+        final current = metalPrintSettings[metal];
+        if (current == null) {
+          metalPrintSettings[metal] = latest;
+          continue;
+        }
+
+        current.termsAndConditions = latest.termsAndConditions;
+        current.returnPolicyText = latest.returnPolicyText;
+        current.buybackPolicyText = latest.buybackPolicyText;
+        current.footerMessage = latest.footerMessage;
+      } catch (_) {
+        metalPrintSettings.putIfAbsent(
+          metal,
+          () => _defaultSettingsForMetal(metal),
+        );
+      }
+    }
   }
 
   Future<bool> printInvoice(

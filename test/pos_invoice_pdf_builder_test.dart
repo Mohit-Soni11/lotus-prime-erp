@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_financial_breakdown.dart';
+import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_policy_copy.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import 'package:lotus_erp/features/sales_pos/application/services/pos_invoice_scope_service.dart';
@@ -10,6 +11,8 @@ import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/sales_pos_models.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('PosInvoiceScopeService', () {
     test('creates metal scoped invoices with independent totals', () {
       final gold = _saleItem(
@@ -211,6 +214,89 @@ void main() {
       );
 
       expect(_pdfPageCount(bytes), greaterThan(1));
+
+      item.dispose();
+    });
+
+    test('policy copy entries preserve exact Billing Setup text', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(saleItems: [item]);
+      const exactTerms =
+          'Gold items once sold will not be taken back or exchanged.\n'
+          'सोने की वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.\n'
+          '\n'
+          'Custom line added by store.';
+
+      final entries = PosInvoicePolicyCopy.entries(
+        invoice: invoice,
+        scopeService: const PosInvoiceScopeService(),
+        metalPrintSettings: {
+          MetalType.gold: BillSettings(
+            termsAndConditions: exactTerms,
+            printTermsAndConditions: true,
+            printReturnPolicy: false,
+            printBuybackPolicy: false,
+          ),
+        },
+      );
+
+      expect(entries, hasLength(1));
+      expect(entries.single.title, 'GOLD Terms & Conditions');
+      expect(entries.single.body, exactTerms);
+      expect(
+        PosInvoicePolicyCopy.lines(entries.single.body),
+        [
+          'Gold items once sold will not be taken back or exchanged.',
+          'सोने की वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.',
+          '',
+          'Custom line added by store.',
+        ],
+      );
+
+      item.dispose();
+    });
+
+    test('builds every A4 template with exact Devanagari policy copy',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(saleItems: [item]);
+      const terms = 'Policy English line changed by store.\n'
+          'सोने की वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.';
+
+      for (final templateId in PrintTemplateRegistry.templateIds) {
+        final bytes = await const PosInvoicePdfBuilder().build(
+          invoice: invoice,
+          options: PosInvoicePdfBuildOptions(
+            format: PrintFormat.a4,
+            copies: 1,
+            includeDuplicateStamp: false,
+            templateId: templateId,
+            metalPrintSettings: {
+              MetalType.gold: BillSettings(
+                termsAndConditions: terms,
+                printTermsAndConditions: true,
+                printReturnPolicy: false,
+                printBuybackPolicy: false,
+              ),
+            },
+          ),
+        );
+
+        expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+        expect(_pdfPageCount(bytes), greaterThan(1));
+      }
 
       item.dispose();
     });
@@ -442,6 +528,35 @@ void main() {
       expect(labels, containsAll(['CGST', 'SGST', 'Net Payable']));
       expect(labels, isNot(contains('Invoice Discount')));
       expect(labels, isNot(contains('Customer Metal Settlement')));
+      expect(labels, isNot(contains('IGST')));
+
+      item.dispose();
+    });
+
+    test('uses combined GST row when GST breakup is disabled', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 750,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        billType: BillType.gst,
+        cgst: 90,
+        sgst: 90,
+        totalGst: 180,
+      );
+
+      final labels = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: false,
+      ).map((row) => row.label);
+
+      expect(labels, contains('GST 3%'));
+      expect(labels, isNot(contains('CGST')));
+      expect(labels, isNot(contains('SGST')));
       expect(labels, isNot(contains('IGST')));
 
       item.dispose();

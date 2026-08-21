@@ -81,6 +81,43 @@ void main() {
         ).returnWindowDays);
   });
 
+  test('Sales Billing preserves exact bilingual policy copy when saving',
+      () async {
+    await controller.load();
+
+    final input = controller.state.currentInput!;
+    const exactTerms =
+        'Gold items once sold will not be taken back or exchanged.\n'
+        'सोने की वस्तु बिक्री के बाद वापस या एक्सचेंज नहीं की जाएगी.\n'
+        '\n'
+        'Store-added English line.';
+    const exactReturnPolicy =
+        'Gold jewellery is eligible for exchange within 7 days.\n'
+        'सोने की ज्वेलरी मूल बिल के साथ 7 दिनों के अंदर मान्य है.';
+    const exactBuybackPolicy =
+        'Buyback is calculated after purity verification.\n'
+        'बायबैक शुद्धता जांच के बाद calculated होगा.';
+    const exactFooter = 'Thank you for shopping with us! Visit us again.\n'
+        'खरीदारी के लिए धन्यवाद! फिर पधारें.';
+
+    controller.updateCurrentInput(
+      input.copyWith(
+        termsAndConditions: exactTerms,
+        returnPolicyText: exactReturnPolicy,
+        buybackPolicyText: exactBuybackPolicy,
+        footerMessage: exactFooter,
+      ),
+    );
+
+    expect(await controller.saveCurrent(), isTrue);
+
+    final saved = await repo.fetchForMetal(BillingMetal.gold);
+    expect(saved.termsAndConditions, exactTerms);
+    expect(saved.returnPolicyText, exactReturnPolicy);
+    expect(saved.buybackPolicyText, exactBuybackPolicy);
+    expect(saved.footerMessage, exactFooter);
+  });
+
   test('Sales Billing saves the selected print template for the metal',
       () async {
     await controller.load();

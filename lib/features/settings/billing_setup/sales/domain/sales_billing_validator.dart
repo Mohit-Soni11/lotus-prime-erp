@@ -43,10 +43,10 @@ class SalesBillingValidator {
       label: 'Purity deduction',
       messages: messages,
     );
-    final termsAndConditions = input.termsAndConditions.trim();
-    final returnPolicyText = input.returnPolicyText.trim();
-    final buybackPolicyText = input.buybackPolicyText.trim();
-    final footerMessage = input.footerMessage.trim();
+    final termsAndConditions = input.termsAndConditions;
+    final returnPolicyText = input.returnPolicyText;
+    final buybackPolicyText = input.buybackPolicyText;
+    final footerMessage = input.footerMessage;
 
     _requireText(
       termsAndConditions,
@@ -130,7 +130,7 @@ class SalesBillingValidator {
     required String label,
     required List<String> messages,
   }) {
-    if (value.isEmpty) {
+    if (value.trim().isEmpty) {
       messages.add('$label cannot be empty.');
     }
   }
