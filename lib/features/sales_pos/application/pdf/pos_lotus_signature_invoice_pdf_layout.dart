@@ -28,11 +28,13 @@ class PosLotusSignatureInvoicePdfLayout {
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final Map<String, pw.MemoryImage> policyIconImages;
   final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosLotusSignatureInvoicePdfLayout({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.policyIconImages = const {},
     this.textRenderer,
   });
 
@@ -691,6 +693,16 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _policyIconBadge(String iconKey) {
+    final image = policyIconImages[iconKey];
+    if (image != null) {
+      return pw.Container(
+        width: 34,
+        height: 34,
+        alignment: pw.Alignment.center,
+        child: pw.Image(image, fit: pw.BoxFit.contain),
+      );
+    }
+
     return pw.Container(
       width: 34,
       height: 34,
@@ -1212,27 +1224,36 @@ class PosLotusSignatureInvoicePdfLayout {
 ''';
       case 'policy':
         return '''
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3z"/>
-  <path d="m9 12 2 2 4-4"/>
+<svg width="22" height="22" viewBox="0 0 64 64" fill="none" stroke="$stroke" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M19 10h21l9 9v31H19V10z"/>
+  <path d="M40 10v10h9"/>
+  <path d="M25 28h17"/>
+  <path d="M25 36h13"/>
+  <path d="M40 34l8-3 8 3v7.5c0 5.8-3.6 9.8-8 11.5-4.4-1.7-8-5.7-8-11.5V34z"/>
+  <path d="m44.5 42 2.4 2.5 5-5.5"/>
 </svg>
 ''';
       case 'policy_return':
         return '''
-<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M17 2l4 4-4 4"/>
-  <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-  <path d="M7 22l-4-4 4-4"/>
-  <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+<svg width="22" height="22" viewBox="0 0 64 64" fill="none" stroke="$stroke" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M19 26h26"/>
+  <path d="M37 16l10 10-10 10"/>
+  <path d="M45 38H19"/>
+  <path d="M27 28 17 38l10 10"/>
 </svg>
 ''';
       case 'policy_buyback':
         return '''
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M5 8 L17 8"/>
-  <path d="M14 5 L17 8 L14 11"/>
-  <path d="M19 16 L7 16"/>
-  <path d="M10 13 L7 16 L10 19"/>
+<svg width="22" height="22" viewBox="0 0 64 64" fill="none" stroke="$stroke" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M17 22h30"/>
+  <path d="M39 13l10 9-10 9"/>
+  <path d="M47 42H17"/>
+  <path d="M25 33 15 42l10 9"/>
+  <circle cx="32" cy="32" r="10"/>
+  <path d="M27 25h11"/>
+  <path d="M27 30h11"/>
+  <path d="M29 25c7.5 0 7.5 10 0 10"/>
+  <path d="M29 35l8 8"/>
 </svg>
 ''';
       default:

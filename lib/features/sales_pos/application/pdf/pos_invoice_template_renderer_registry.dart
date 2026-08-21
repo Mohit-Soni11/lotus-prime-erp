@@ -14,12 +14,14 @@ import 'pos_lotus_signature_invoice_pdf_layout.dart';
 class PosInvoiceTemplateRenderContext {
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final Map<String, pw.MemoryImage> policyIconImages;
   final bool includePolicyBlock;
   final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosInvoiceTemplateRenderContext({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.policyIconImages = const {},
     this.includePolicyBlock = true,
     this.textRenderer,
   });
@@ -66,6 +68,7 @@ class PosInvoiceTemplateRendererRegistry {
       return PosLotusSignatureInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
+        policyIconImages: context.policyIconImages,
         textRenderer: context.textRenderer,
       ).build(
         invoice,
@@ -86,6 +89,7 @@ class PosInvoiceTemplateRendererRegistry {
       PosLotusSignatureInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
+        policyIconImages: context.policyIconImages,
         textRenderer: context.textRenderer,
       ).addPolicyPages(
         doc,

@@ -76,12 +76,9 @@ class LotusPdfTextRenderer {
     final spec = LotusPdfTextSpec.fromStyle(style, maxWidth: maxWidth);
     final rendered = _cache[_TextKey(value, spec)];
     if (rendered == null) {
-      return pw.Text(
-        value,
-        textAlign: textAlign,
-        maxLines: maxLines,
-        overflow: overflow,
-        style: style,
+      throw StateError(
+        'Devanagari text was requested before it was warmed with the same '
+        'style and maxWidth: "$value"',
       );
     }
 

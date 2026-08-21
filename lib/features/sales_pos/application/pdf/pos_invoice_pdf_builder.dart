@@ -49,15 +49,24 @@ class PosInvoicePdfBuilder {
     required PosInvoicePdfBuildOptions options,
   }) async {
     final textRenderer = await PosInvoicePdfTextRenderer.create();
+    final policyIconImages =
+        await _PosInvoicePdfDocumentBuilder.loadPolicyIconImages();
     return _PosInvoicePdfDocumentBuilder(
       scopeService: _scopeService,
       options: options,
       textRenderer: textRenderer,
+      policyIconImages: policyIconImages,
     ).build(invoice);
   }
 }
 
 class _PosInvoicePdfDocumentBuilder {
+  static const Map<String, String> _policyIconAssetPaths = {
+    'policy': 'lib/logo/1.png',
+    'policy_return': 'lib/logo/2.png',
+    'policy_buyback': 'lib/logo/3.png',
+  };
+
   static const PdfColor _pdfTextColor = PdfColors.black;
   static const PdfColor _pdfMutedTextColor = PdfColors.black;
   static const PdfColor _pdfBorderColor = PdfColors.grey600;
@@ -80,11 +89,13 @@ class _PosInvoicePdfDocumentBuilder {
   final PosInvoiceScopeService scopeService;
   final PosInvoicePdfBuildOptions options;
   final PosInvoicePdfTextRenderer textRenderer;
+  final Map<String, pw.MemoryImage> policyIconImages;
 
   const _PosInvoicePdfDocumentBuilder({
     required this.scopeService,
     required this.options,
     required this.textRenderer,
+    required this.policyIconImages,
   });
 
   Future<Uint8List> build(PosInvoiceModel invoice) async {
@@ -119,6 +130,30 @@ class _PosInvoicePdfDocumentBuilder {
       }
     }
     return doc.save();
+  }
+
+  static Future<Map<String, pw.MemoryImage>> loadPolicyIconImages() async {
+    final images = <String, pw.MemoryImage>{};
+    for (final entry in _policyIconAssetPaths.entries) {
+      final image = await _loadImage(entry.value);
+      if (image != null) images[entry.key] = image;
+    }
+    return images;
+  }
+
+  static Future<pw.MemoryImage?> _loadImage(String assetPath) async {
+    try {
+      final data = await rootBundle.load(assetPath);
+      return pw.MemoryImage(data.buffer.asUint8List());
+    } catch (_) {
+      try {
+        final file = File(assetPath);
+        if (file.existsSync()) {
+          return pw.MemoryImage(await file.readAsBytes());
+        }
+      } catch (_) {}
+    }
+    return null;
   }
 
   Future<void> _warmPolicyText(
@@ -319,6 +354,7 @@ class _PosInvoicePdfDocumentBuilder {
       context: PosInvoiceTemplateRenderContext(
         scopeService: scopeService,
         metalPrintSettings: options.metalPrintSettings,
+        policyIconImages: policyIconImages,
         textRenderer: textRenderer,
       ),
       includeDuplicateStamp: includeDuplicateStamp,
@@ -377,6 +413,7 @@ class _PosInvoicePdfDocumentBuilder {
       context: PosInvoiceTemplateRenderContext(
         scopeService: scopeService,
         metalPrintSettings: options.metalPrintSettings,
+        policyIconImages: policyIconImages,
         includePolicyBlock: includePolicyBlock,
         textRenderer: textRenderer,
       ),
