@@ -447,6 +447,48 @@ void main() {
       item.dispose();
     });
 
+    test('hides customer metal settlement when display config disables it', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final oldMetal = TradeInItemModel(metal: MetalType.gold);
+      oldMetal.descCtrl.text = 'Old Gold';
+      oldMetal.grossCtrl.text = '2';
+      oldMetal.lessCtrl.text = '0';
+      oldMetal.purityCtrl.text = '100';
+      oldMetal.rateCtrl.text = '1000';
+      final invoice = _invoice(
+        saleItems: [item],
+        tradeInItems: [oldMetal],
+      );
+
+      final visibleLabels = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: true,
+      ).map((row) => row.label);
+      final hiddenLabels = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: true,
+        showCustomerMetalSettlement: false,
+      ).map((row) => row.label);
+      final scopedSettlementRow = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: true,
+        customerMetalSettlementAmount: 750,
+      ).firstWhere((row) => row.label == 'Customer Metal Settlement');
+
+      expect(visibleLabels, contains('Customer Metal Settlement'));
+      expect(hiddenLabels, isNot(contains('Customer Metal Settlement')));
+      expect(scopedSettlementRow.amount, 750);
+
+      item.dispose();
+      oldMetal.dispose();
+    });
+
     test('uses IGST and hides CGST SGST for interstate tax snapshots', () {
       final item = _saleItem(
         metal: MetalType.gold,

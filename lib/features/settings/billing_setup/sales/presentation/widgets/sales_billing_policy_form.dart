@@ -369,8 +369,8 @@ class _PolicyFields extends StatelessWidget {
         const SizedBox(height: 16),
         _ResponsivePair(
           first: _TextInput(
-            label: 'Return Policy Note',
-            helper: 'English and Hindi print copy for return rules',
+            label: 'Return Policy',
+            helper: 'English and Hindi invoice copy for return rules',
             hintText:
                 'Example:\nExchange and refund both are available within 24 hours.\n24 घंटे के अंदर एक्सचेंज और रिफंड दोनों उपलब्ध हैं.\n\nDamaged items may attract making charge deduction.\nटूटी हुई वस्तु पर मेकिंग चार्ज काटा जा सकता है.',
             controller: returnPolicyController,
@@ -380,8 +380,8 @@ class _PolicyFields extends StatelessWidget {
             ),
           ),
           second: _TextInput(
-            label: 'Buyback Policy Note',
-            helper: 'English and Hindi print copy for buyback rules',
+            label: 'Buyback Policy',
+            helper: 'English and Hindi invoice copy for buyback rules',
             hintText:
                 'Example:\nBuyback value depends on purity, rate and item condition.\nबायबैक मूल्य शुद्धता, दर और वस्तु की स्थिति पर निर्भर करेगा.\n\nFinal settlement is confirmed after inspection.\nअंतिम भुगतान जांच के बाद तय होगा.',
             controller: buybackPolicyController,
@@ -439,7 +439,7 @@ class _TermsAndPrintFields extends StatelessWidget {
     return Column(
       children: [
         _TextInput(
-          label: 'Terms and Conditions',
+          label: 'Terms & Conditions',
           helper: 'English and Hindi print copy, one point per line',
           hintText:
               'Example:\nOriginal bill is mandatory for service claims.\nसेवा दावे के लिए मूल बिल आवश्यक है.\n\nItems damaged after purchase are not eligible for return.\nखरीद के बाद क्षतिग्रस्त वस्तु रिटर्न के लिए मान्य नहीं होगी.',
@@ -496,29 +496,29 @@ class _PrintVisibilityGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       SalesBillingToggleTile(
-        label: 'Print Terms',
-        description: 'Include terms and conditions on invoice print.',
+        label: 'Print Terms & Conditions',
+        description: 'Include Terms & Conditions on invoice PDF.',
         value: model.printTermsAndConditions,
         accent: accent,
         onChanged: onPrintTermsChanged,
       ),
       SalesBillingToggleTile(
         label: 'Print Return Policy',
-        description: 'Include return policy copy on invoice print.',
+        description: 'Include Return Policy copy on invoice PDF.',
         value: model.printReturnPolicy,
         accent: accent,
         onChanged: onPrintReturnPolicyChanged,
       ),
       SalesBillingToggleTile(
         label: 'Print Buyback Policy',
-        description: 'Include buyback policy copy on invoice print.',
+        description: 'Include Buyback Policy copy on invoice PDF.',
         value: model.printBuybackPolicy,
         accent: accent,
         onChanged: onPrintBuybackPolicyChanged,
       ),
       SalesBillingToggleTile(
         label: 'Print Footer',
-        description: 'Include footer message on invoice print.',
+        description: 'Include footer message on invoice PDF.',
         value: model.printFooterMessage,
         accent: accent,
         onChanged: onPrintFooterChanged,

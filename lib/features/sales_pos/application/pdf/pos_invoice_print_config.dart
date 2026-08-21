@@ -60,9 +60,9 @@ class BillSettings {
     this.termsAndConditions = '',
     this.returnPolicyText = '',
     this.buybackPolicyText = '',
-    this.printTermsAndConditions = false,
-    this.printReturnPolicy = false,
-    this.printBuybackPolicy = false,
+    this.printTermsAndConditions = true,
+    this.printReturnPolicy = true,
+    this.printBuybackPolicy = true,
     this.printFooterMessage = true,
     this.selectedTemplate = TemplateOptions.defaultTemplate,
   });

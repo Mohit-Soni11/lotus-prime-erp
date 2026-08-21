@@ -1947,9 +1947,9 @@ class AppDatabase extends _$AppDatabase {
 
   Map<String, bool> _parseLegacySalesPrintFlags(String payload) {
     final values = <String, bool>{
-      'terms': false,
-      'return': false,
-      'buyback': false,
+      'terms': true,
+      'return': true,
+      'buyback': true,
       'footer': true,
     };
 
@@ -2235,9 +2235,9 @@ const List<String> _billingSetupSchemaSafetySql = [
     "buyback_policy_text" TEXT NOT NULL DEFAULT '',
     "footer_message" TEXT NOT NULL DEFAULT '',
     "selected_template" TEXT NOT NULL DEFAULT 'default',
-    "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 0,
-    "print_return_policy" INTEGER NOT NULL DEFAULT 0,
-    "print_buyback_policy" INTEGER NOT NULL DEFAULT 0,
+    "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 1,
+    "print_return_policy" INTEGER NOT NULL DEFAULT 1,
+    "print_buyback_policy" INTEGER NOT NULL DEFAULT 1,
     "print_footer_message" INTEGER NOT NULL DEFAULT 1
   )
   ''',
@@ -2337,9 +2337,9 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "buyback_policy_text" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
-  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 0',
-  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_return_policy" INTEGER NOT NULL DEFAULT 0',
-  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_buyback_policy" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_return_policy" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_buyback_policy" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_footer_message" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "updated_at" INTEGER',

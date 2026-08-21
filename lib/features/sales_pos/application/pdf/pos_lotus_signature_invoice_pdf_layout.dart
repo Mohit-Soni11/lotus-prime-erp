@@ -50,7 +50,7 @@ class PosLotusSignatureInvoicePdfLayout {
           _customerAndInvoiceDetails(invoice),
           pw.SizedBox(height: 14),
           _saleItemSections(invoice),
-          if (invoice.tradeInItems.isNotEmpty) ...[
+          if (_visibleTradeInItems(invoice).isNotEmpty) ...[
             pw.SizedBox(height: 10),
             _tradeInSection(invoice),
           ],
@@ -457,7 +457,7 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _tradeInSection(PosInvoiceModel invoice) {
-    final rows = invoice.tradeInItems.asMap().entries.map((entry) {
+    final rows = _visibleTradeInItems(invoice).asMap().entries.map((entry) {
       final item = entry.value;
       return [
         '${entry.key + 1}',
@@ -546,9 +546,13 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _amountSummary(PosInvoiceModel invoice) {
+    final visibleTradeInItems = _visibleTradeInItems(invoice);
+    final visibleTradeInTotal = _tradeInTotal(visibleTradeInItems);
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: true,
+      showCustomerMetalSettlement: visibleTradeInItems.isNotEmpty,
+      customerMetalSettlementAmount: visibleTradeInTotal,
     );
 
     return _outlinedBox(
@@ -659,16 +663,6 @@ class PosLotusSignatureInvoicePdfLayout {
                 fontWeight: pw.FontWeight.bold,
                 letterSpacing: 0.25,
               ),
-            ),
-          ),
-          pw.SizedBox(width: 16),
-          pw.Text(
-            entry.metal.displayName.toUpperCase(),
-            style: pw.TextStyle(
-              color: _gold,
-              fontSize: 10.4,
-              fontWeight: pw.FontWeight.bold,
-              letterSpacing: 0.35,
             ),
           ),
         ],
@@ -1269,20 +1263,20 @@ class PosLotusSignatureInvoicePdfLayout {
       case 'policy_return':
         return '''
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M3 7h13a5 5 0 0 1 0 10H8"/>
-  <path d="m7 3-4 4 4 4"/>
-  <path d="M21 17H8"/>
-  <path d="m17 13 4 4-4 4"/>
+  <path d="M17 2l4 4-4 4"/>
+  <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+  <path d="M7 22l-4-4 4-4"/>
+  <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
 </svg>
 ''';
       case 'policy_buyback':
         return '''
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M20 12a8 8 0 1 1-2.3-5.7"/>
-  <path d="M20 4v5h-5"/>
-  <path d="M9 8h6"/>
-  <path d="M9 11h6"/>
-  <path d="M12 11c0 3-3 3-3 3l5 4"/>
+  <path d="M19 8a7 7 0 1 0 1.7 7"/>
+  <path d="M19 3v5h-5"/>
+  <path d="M8 7h8"/>
+  <path d="M8 10h8"/>
+  <path d="M11 10c0 3-3 3-3 3l5 4"/>
 </svg>
 ''';
       default:
@@ -1469,6 +1463,16 @@ class PosLotusSignatureInvoicePdfLayout {
   BillSettings _configFor(MetalType metal) {
     return metalPrintSettings[metal] ??
         BillSettings(showHsnCode: true, showMakingType: true);
+  }
+
+  List<TradeInItemModel> _visibleTradeInItems(PosInvoiceModel invoice) {
+    return invoice.tradeInItems
+        .where((item) => _configFor(item.metal).showExchangeBreakdown)
+        .toList(growable: false);
+  }
+
+  double _tradeInTotal(List<TradeInItemModel> items) {
+    return items.fold<double>(0, (sum, item) => sum + item.totalValue);
   }
 
   List<String> _addressLines(PosInvoiceModel invoice) {

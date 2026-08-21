@@ -50,17 +50,17 @@ class SalesBillingValidator {
 
     _requireText(
       termsAndConditions,
-      label: 'Terms and conditions',
+      label: 'Terms & Conditions',
       messages: messages,
     );
     _requireText(
       returnPolicyText,
-      label: 'Return policy',
+      label: 'Return Policy',
       messages: messages,
     );
     _requireText(
       buybackPolicyText,
-      label: 'Buyback policy',
+      label: 'Buyback Policy',
       messages: messages,
     );
     _requireText(

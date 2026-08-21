@@ -156,8 +156,8 @@ class SalesBillingMetalProfiles {
         ),
         SalesBillingFieldDefinition(
           key: SalesBillingFieldKey.oldGoldLine,
-          label: 'Old Gold Exchange',
-          description: 'Exchange deduction when customer gives old gold.',
+          label: 'Customer Metal Settlement',
+          description: 'Metal exchange or settlement details on the invoice.',
         ),
       ]);
     }

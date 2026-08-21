@@ -97,7 +97,13 @@ class PosInvoiceFinancialBreakdown {
   static List<PosInvoiceAmountSummaryEntry> summaryRows(
     PosInvoiceModel invoice, {
     required bool showGstBreakup,
+    bool showCustomerMetalSettlement = true,
+    bool showCrossMetalSettlement = true,
+    double? customerMetalSettlementAmount,
   }) {
+    final visibleCustomerMetalSettlement =
+        customerMetalSettlementAmount ?? invoice.totalTradeInDeduction;
+
     return [
       PosInvoiceAmountSummaryEntry(
         label: 'Gross Sale Value',
@@ -134,13 +140,15 @@ class PosInvoiceFinancialBreakdown {
             ),
         ],
       ],
-      if (invoice.totalTradeInDeduction > posInvoiceMoneyEpsilon)
+      if (showCustomerMetalSettlement &&
+          visibleCustomerMetalSettlement > posInvoiceMoneyEpsilon)
         PosInvoiceAmountSummaryEntry(
           label: 'Customer Metal Settlement',
-          amount: invoice.totalTradeInDeduction,
+          amount: visibleCustomerMetalSettlement,
           isDeduction: true,
         ),
-      if (invoice.crossMetalAdjustmentDeduction > posInvoiceMoneyEpsilon)
+      if (showCrossMetalSettlement &&
+          invoice.crossMetalAdjustmentDeduction > posInvoiceMoneyEpsilon)
         PosInvoiceAmountSummaryEntry(
           label: 'Cross-Metal Settlement',
           amount: invoice.crossMetalAdjustmentDeduction,

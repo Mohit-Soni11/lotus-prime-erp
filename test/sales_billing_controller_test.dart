@@ -45,6 +45,11 @@ void main() {
       ),
       greaterThan(0),
     );
+
+    final gold = controller.state.settingsByMetal[BillingMetal.gold]!;
+    expect(gold.printTermsAndConditions, isTrue);
+    expect(gold.printReturnPolicy, isTrue);
+    expect(gold.printBuybackPolicy, isTrue);
   });
 
   test('Sales Billing saves only the selected metal settings', () async {

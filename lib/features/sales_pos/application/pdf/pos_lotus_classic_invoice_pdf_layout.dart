@@ -52,7 +52,7 @@ class PosLotusClassicInvoicePdfLayout {
         ),
         pw.SizedBox(height: 8),
         _saleItemSections(invoice),
-        if (invoice.tradeInItems.isNotEmpty) ...[
+        if (_visibleTradeInItems(invoice).isNotEmpty) ...[
           pw.SizedBox(height: 8),
           _sectionHeading(
             number: '02',
@@ -600,6 +600,7 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _tradeInTable(PosInvoiceModel invoice) {
+    final visibleItems = _visibleTradeInItems(invoice);
     const headers = [
       'S/N',
       'Metal',
@@ -611,7 +612,7 @@ class PosLotusClassicInvoicePdfLayout {
       'Deduction',
     ];
 
-    final rows = invoice.tradeInItems.asMap().entries.map((entry) {
+    final rows = visibleItems.asMap().entries.map((entry) {
       final item = entry.value;
       return [
         '${entry.key + 1}',
@@ -673,12 +674,16 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _totalsBlock(PosInvoiceModel invoice) {
+    final visibleTradeInItems = _visibleTradeInItems(invoice);
+    final visibleTradeInTotal = _tradeInTotal(visibleTradeInItems);
     final showGstBreakup = scopeService
         .collectMetals(invoice)
         .any((metal) => _getMetalConfig(metal).showGstBreakup);
     final totalLines = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: showGstBreakup,
+      showCustomerMetalSettlement: visibleTradeInItems.isNotEmpty,
+      customerMetalSettlementAmount: visibleTradeInTotal,
     );
 
     return pw.Container(
@@ -1260,6 +1265,16 @@ class PosLotusClassicInvoicePdfLayout {
 
   BillSettings _getMetalConfig(MetalType metal) {
     return metalPrintSettings[metal] ?? BillSettings();
+  }
+
+  List<TradeInItemModel> _visibleTradeInItems(PosInvoiceModel invoice) {
+    return invoice.tradeInItems
+        .where((item) => _getMetalConfig(item.metal).showExchangeBreakdown)
+        .toList(growable: false);
+  }
+
+  double _tradeInTotal(List<TradeInItemModel> items) {
+    return items.fold<double>(0, (sum, item) => sum + item.totalValue);
   }
 
   bool _hasPrintableCopy(String value) {

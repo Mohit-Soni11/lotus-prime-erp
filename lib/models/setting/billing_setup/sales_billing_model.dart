@@ -213,9 +213,9 @@ class SalesBillingModel {
         'खरीदारी के लिए धन्यवाद! फिर पधारें.',
     // Template
     this.selectedTemplate = 'default',
-    this.printTermsAndConditions = false,
-    this.printReturnPolicy = false,
-    this.printBuybackPolicy = false,
+    this.printTermsAndConditions = true,
+    this.printReturnPolicy = true,
+    this.printBuybackPolicy = true,
     this.printFooterMessage = true,
   });
 

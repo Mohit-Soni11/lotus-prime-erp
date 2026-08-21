@@ -27537,7 +27537,7 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
           requiredDuringInsert: false,
           defaultConstraints: GeneratedColumn.constraintIsAlways(
               'CHECK ("print_terms_and_conditions" IN (0, 1))'),
-          defaultValue: const Constant(false));
+          defaultValue: const Constant(true));
   static const VerificationMeta _printReturnPolicyMeta =
       const VerificationMeta('printReturnPolicy');
   @override
@@ -27547,7 +27547,7 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("print_return_policy" IN (0, 1))'),
-      defaultValue: const Constant(false));
+      defaultValue: const Constant(true));
   static const VerificationMeta _printBuybackPolicyMeta =
       const VerificationMeta('printBuybackPolicy');
   @override
@@ -27557,7 +27557,7 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("print_buyback_policy" IN (0, 1))'),
-      defaultValue: const Constant(false));
+      defaultValue: const Constant(true));
   static const VerificationMeta _printFooterMessageMeta =
       const VerificationMeta('printFooterMessage');
   @override

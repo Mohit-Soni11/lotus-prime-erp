@@ -729,8 +729,11 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel invoice) {
-    final showExchangeBreakdown = invoice.tradeInItems.any(
-      (item) => _getMetalConfig(item.metal).showExchangeBreakdown,
+    final visibleTradeInItems = _visibleTradeInItems(invoice);
+    final showExchangeBreakdown = visibleTradeInItems.isNotEmpty;
+    final visibleTradeInDeduction = visibleTradeInItems.fold<double>(
+      0,
+      (sum, item) => sum + item.totalValue,
     );
     final showGstBreakup = scopeService
         .collectMetals(invoice)
@@ -758,22 +761,22 @@ class _PosInvoicePdfDocumentBuilder {
                   _totalRow('SGST', invoice.sgst),
                 ],
               ],
-              if (invoice.totalTradeInDeduction > 0) ...[
+              if (visibleTradeInDeduction > 0) ...[
                 () {
-                  final goldExchange = invoice.tradeInItems
+                  final goldExchange = visibleTradeInItems
                       .where((item) => item.metal == MetalType.gold)
                       .fold(0.0, (sum, item) => sum + item.totalValue);
-                  final silverExchange = invoice.tradeInItems
+                  final silverExchange = visibleTradeInItems
                       .where((item) => item.metal == MetalType.silver)
                       .fold(0.0, (sum, item) => sum + item.totalValue);
-                  final platinumExchange = invoice.tradeInItems
+                  final platinumExchange = visibleTradeInItems
                       .where((item) => item.metal == MetalType.platinum)
                       .fold(0.0, (sum, item) => sum + item.totalValue);
 
                   if (!showExchangeBreakdown) {
                     return _totalRow(
                       'Less: Customer Metal Adjustment',
-                      -invoice.totalTradeInDeduction,
+                      -visibleTradeInDeduction,
                       isDeduction: true,
                     );
                   }
@@ -802,7 +805,7 @@ class _PosInvoicePdfDocumentBuilder {
                           platinumExchange == 0)
                         _totalRow(
                           'Less: Customer Metal Adjustment',
-                          -invoice.totalTradeInDeduction,
+                          -visibleTradeInDeduction,
                           isDeduction: true,
                         ),
                     ],
@@ -1633,31 +1636,41 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   bool _showCustomerMetalSettlement(PosInvoiceModel invoice) {
-    return invoice.tradeInItems.any(
-      (item) => _getMetalConfig(item.metal).showExchangeBreakdown,
-    );
+    return _visibleTradeInItems(invoice).isNotEmpty;
   }
 
   pw.Widget _thermalMetalSettlement(
     PosInvoiceModel invoice,
     double fontSize,
   ) {
+    final visibleItems = _visibleTradeInItems(invoice);
+    final settlementTotal = visibleItems.fold<double>(
+      0,
+      (sum, item) => sum + item.totalValue,
+    );
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         _thermalSectionTitle('Customer Metal Settlement', fontSize),
-        for (var i = 0; i < invoice.tradeInItems.length; i++) ...[
-          _thermalTradeInBlock(i + 1, invoice.tradeInItems[i], fontSize),
-          if (i < invoice.tradeInItems.length - 1) _thermalDashedDivider(),
+        for (var i = 0; i < visibleItems.length; i++) ...[
+          _thermalTradeInBlock(i + 1, visibleItems[i], fontSize),
+          if (i < visibleItems.length - 1) _thermalDashedDivider(),
         ],
         _thermalKeyValue(
           'Settlement Total',
-          '- ${_thermalMoney(invoice.totalTradeInDeduction)}',
+          '- ${_thermalMoney(settlementTotal)}',
           fontSize,
           boldValue: true,
         ),
       ],
     );
+  }
+
+  List<TradeInItemModel> _visibleTradeInItems(PosInvoiceModel invoice) {
+    return invoice.tradeInItems
+        .where((item) => _getMetalConfig(item.metal).showExchangeBreakdown)
+        .toList(growable: false);
   }
 
   pw.Widget _thermalTradeInBlock(
@@ -1700,6 +1713,11 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _thermalTotals(PosInvoiceModel invoice, double fontSize) {
+    final visibleTradeInTotal = _visibleTradeInItems(invoice).fold<double>(
+      0,
+      (sum, item) => sum + item.totalValue,
+    );
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -1724,10 +1742,10 @@ class _PosInvoicePdfDocumentBuilder {
           _thermalKeyValue(
               'Total GST', _thermalMoney(invoice.totalGst), fontSize),
         ],
-        if (invoice.totalTradeInDeduction > 0.5)
+        if (_showCustomerMetalSettlement(invoice) && visibleTradeInTotal > 0.5)
           _thermalKeyValue(
             'Metal Adjusted',
-            '- ${_thermalMoney(invoice.totalTradeInDeduction)}',
+            '- ${_thermalMoney(visibleTradeInTotal)}',
             fontSize,
           ),
         if (invoice.roundOffAmount.abs() > 0.005)

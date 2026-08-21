@@ -126,11 +126,11 @@ class SalesBillingSettings extends Table with BaseTable {
       text().withDefault(const Constant('default'))();
 
   BoolColumn get printTermsAndConditions =>
-      boolean().withDefault(const Constant(false))();
+      boolean().withDefault(const Constant(true))();
   BoolColumn get printReturnPolicy =>
-      boolean().withDefault(const Constant(false))();
+      boolean().withDefault(const Constant(true))();
   BoolColumn get printBuybackPolicy =>
-      boolean().withDefault(const Constant(false))();
+      boolean().withDefault(const Constant(true))();
   BoolColumn get printFooterMessage =>
       boolean().withDefault(const Constant(true))();
 }

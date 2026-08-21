@@ -41,7 +41,7 @@ class PosLotusEconomyInvoicePdfLayout {
         _partyAndTaxPanel(invoice),
         pw.SizedBox(height: 8),
         _saleItemSections(invoice),
-        if (invoice.tradeInItems.isNotEmpty) ...[
+        if (_visibleTradeInItems(invoice).isNotEmpty) ...[
           pw.SizedBox(height: 8),
           _tradeInSection(invoice),
         ],
@@ -259,7 +259,7 @@ class PosLotusEconomyInvoicePdfLayout {
   }
 
   pw.Widget _tradeInSection(PosInvoiceModel invoice) {
-    final rows = invoice.tradeInItems.asMap().entries.map((entry) {
+    final rows = _visibleTradeInItems(invoice).asMap().entries.map((entry) {
       final item = entry.value;
       return [
         '${entry.key + 1}',
@@ -298,9 +298,13 @@ class PosLotusEconomyInvoicePdfLayout {
   pw.Widget _totalsAndPayment(PosInvoiceModel invoice) {
     final payments = PosInvoiceFinancialBreakdown.payments(invoice);
     final status = PosInvoiceFinancialBreakdown.status(invoice);
+    final visibleTradeInItems = _visibleTradeInItems(invoice);
+    final visibleTradeInTotal = _tradeInTotal(visibleTradeInItems);
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: true,
+      showCustomerMetalSettlement: visibleTradeInItems.isNotEmpty,
+      customerMetalSettlementAmount: visibleTradeInTotal,
     );
     final statusColor = status.isDue ? _danger : _success;
 
@@ -646,6 +650,16 @@ class PosLotusEconomyInvoicePdfLayout {
           showHsnCode: true,
           showMakingType: true,
         );
+  }
+
+  List<TradeInItemModel> _visibleTradeInItems(PosInvoiceModel invoice) {
+    return invoice.tradeInItems
+        .where((item) => _configFor(item.metal).showExchangeBreakdown)
+        .toList(growable: false);
+  }
+
+  double _tradeInTotal(List<TradeInItemModel> items) {
+    return items.fold<double>(0, (sum, item) => sum + item.totalValue);
   }
 
   List<String> _policyLines(PosInvoiceModel invoice) {
