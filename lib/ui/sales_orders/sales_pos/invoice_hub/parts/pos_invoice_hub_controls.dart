@@ -316,6 +316,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
     final color = _metalColor(metal);
 
     return InkWell(
+      key: ValueKey('invoice-display-selector-${metal.name}'),
       borderRadius: BorderRadius.circular(10),
       onTap: () => _invCtrl.setActivePrintMetal(metal),
       child: AnimatedContainer(
@@ -356,6 +357,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
 
   Widget _buildMetalBillingSetupCard(MetalType metal) {
     return PosInvoiceMetalSetupCard(
+      key: ValueKey('invoice-display-profile-${metal.name}'),
       metal: metal,
       controller: _invCtrl,
       accentColor: _metalColor(metal),

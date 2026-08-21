@@ -1,3 +1,4 @@
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../features/print_templates/domain/print_template_registry.dart';
@@ -25,6 +26,14 @@ typedef PosInvoiceTemplateRenderer = pw.Widget Function(
   PosInvoiceModel invoice,
   PosInvoiceTemplateRenderContext context,
 );
+
+typedef PosInvoiceTemplatePolicyPageRenderer = void Function({
+  required pw.Document doc,
+  required PosInvoiceModel invoice,
+  required PdfPageFormat pageFormat,
+  required PosInvoiceTemplateRenderContext context,
+  required bool includeDuplicateStamp,
+});
 
 class PosInvoiceTemplateRendererRegistry {
   PosInvoiceTemplateRendererRegistry._();
@@ -59,6 +68,27 @@ class PosInvoiceTemplateRendererRegistry {
     },
   };
 
+  static final Map<String, PosInvoiceTemplatePolicyPageRenderer>
+      _a4PolicyRenderers = {
+    PrintTemplateRegistry.lotusSignature.id: ({
+      required doc,
+      required invoice,
+      required pageFormat,
+      required context,
+      required includeDuplicateStamp,
+    }) {
+      PosLotusSignatureInvoicePdfLayout(
+        scopeService: context.scopeService,
+        metalPrintSettings: context.metalPrintSettings,
+      ).addPolicyPages(
+        doc,
+        invoice,
+        pageFormat,
+        includeDuplicateStamp: includeDuplicateStamp,
+      );
+    },
+  };
+
   static pw.Widget? tryBuildA4({
     required String templateId,
     required PosInvoiceModel invoice,
@@ -72,5 +102,26 @@ class PosInvoiceTemplateRendererRegistry {
 
   static bool hasA4Renderer(String templateId) {
     return _a4Renderers.containsKey(PrintTemplateRegistry.byId(templateId).id);
+  }
+
+  static bool tryAddA4PolicyPages({
+    required String templateId,
+    required pw.Document doc,
+    required PosInvoiceModel invoice,
+    required PdfPageFormat pageFormat,
+    required PosInvoiceTemplateRenderContext context,
+    required bool includeDuplicateStamp,
+  }) {
+    final resolvedTemplate = PrintTemplateRegistry.byId(templateId);
+    final renderer = _a4PolicyRenderers[resolvedTemplate.id];
+    if (renderer == null) return false;
+    renderer(
+      doc: doc,
+      invoice: invoice,
+      pageFormat: pageFormat,
+      context: context,
+      includeDuplicateStamp: includeDuplicateStamp,
+    );
+    return true;
   }
 }

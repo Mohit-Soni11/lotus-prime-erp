@@ -9,6 +9,7 @@ import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
+import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_print_config.dart';
 
 class PosLotusSignatureInvoicePdfLayout {
@@ -20,6 +21,8 @@ class PosLotusSignatureInvoicePdfLayout {
   static const _ink = PdfColors.black;
   static const _muted = PdfColors.grey700;
   static const _line = PdfColor(0.76, 0.67, 0.53);
+  static const _success = PdfColor.fromInt(0xFF166534);
+  static const _danger = PdfColor.fromInt(0xFFB91C1C);
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
@@ -60,6 +63,30 @@ class PosLotusSignatureInvoicePdfLayout {
           pw.Spacer(),
           _footer(invoice),
         ],
+      ),
+    );
+  }
+
+  void addPolicyPages(
+    pw.Document doc,
+    PosInvoiceModel invoice,
+    PdfPageFormat pageFormat, {
+    required bool includeDuplicateStamp,
+  }) {
+    final entries = _policyEntries(invoice);
+    if (entries.isEmpty) return;
+
+    doc.addPage(
+      pw.MultiPage(
+        pageTheme: pw.PageTheme(
+          pageFormat: pageFormat,
+          margin: const pw.EdgeInsets.all(24),
+          buildBackground: includeDuplicateStamp
+              ? (_) => pw.Center(child: _duplicateWatermark(fontSize: 60))
+              : null,
+        ),
+        footer: (context) => _policyPageFooter(invoice, context),
+        build: (_) => _policyPageContent(entries),
       ),
     );
   }
@@ -221,6 +248,9 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _customerAndInvoiceDetails(PosInvoiceModel invoice) {
+    final status = PosInvoiceFinancialBreakdown.status(invoice);
+    final statusColor = status.isDue ? _danger : _success;
+
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -268,18 +298,18 @@ class PosLotusSignatureInvoicePdfLayout {
               ),
               _detailLine(
                 'status',
-                'Status',
-                invoice.paymentStatus.label,
-                valueColor: invoice.paymentStatus == PaymentStatus.paid
-                    ? PdfColors.green800
-                    : _ink,
+                'Payment Status',
+                status.label,
+                valueColor: statusColor,
               ),
-              _detailLine(
-                'calendar',
-                'Due Date',
-                _dueDate(invoice),
-                showDivider: false,
-              ),
+              if (status.isDue && invoice.promiseDate != null)
+                _detailLine(
+                  'calendar',
+                  'Due Date',
+                  _dueDate(invoice),
+                  valueColor: _danger,
+                  showDivider: false,
+                ),
             ],
           ),
         ),
@@ -464,22 +494,46 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _paymentAndTotals(PosInvoiceModel invoice) {
+    final payments = PosInvoiceFinancialBreakdown.payments(invoice);
+    final status = PosInvoiceFinancialBreakdown.status(invoice);
+    final statusColor = status.isDue ? _danger : _success;
+
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Expanded(
           child: _outlinedBox(
-            'PAYMENT DETAILS',
+            'PAYMENT RECEIVED',
             [
-              _pair('Payment Mode', _paymentMode(invoice)),
-              _pair('Amount Received', _amount(invoice.totalPaid)),
+              if (payments.isEmpty)
+                _pair('Payment Modes', 'No Payment Recorded')
+              else
+                for (final payment in payments)
+                  _pair(payment.label, _amount(payment.amount)),
+              _pair('Total Received', _amount(invoice.totalPaid)),
+              _pair(
+                'Payment Status',
+                status.label,
+                valueColor: statusColor,
+              ),
               _pair(
                 'Balance Outstanding',
                 invoice.balanceDue > 0.005
                     ? _amount(invoice.balanceDue)
                     : 'Nil',
+                valueColor: status.isDue ? _danger : _success,
               ),
-              _pair('Promise Date', _dueDate(invoice)),
+              if (status.isDue && invoice.promiseDate != null)
+                _pair(
+                  'Due Date',
+                  _dueDate(invoice),
+                  valueColor: _danger,
+                ),
+              if (invoice.changeSettlementAmount > 0.005)
+                _pair(
+                  'Excess Payment Settlement',
+                  _amount(invoice.changeSettlementAmount),
+                ),
             ],
           ),
         ),
@@ -492,47 +546,27 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _amountSummary(PosInvoiceModel invoice) {
+    final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
+      invoice,
+      showGstBreakup: true,
+    );
+
     return _outlinedBox(
       'AMOUNT SUMMARY',
       [
-        _summaryLine('Subtotal', _amount(invoice.grossAmount)),
-        _summaryLine(
-          'Discount',
-          invoice.discountAmount > 0.005
-              ? '- ${_amount(invoice.discountAmount)}'
-              : _amount(0),
-        ),
-        pw.SizedBox(height: 6),
-        if (invoice.hasIgstBreakup)
+        for (final row in summaryRows) ...[
+          if (row.isEmphasized)
+            pw.Container(
+              height: 1,
+              margin: const pw.EdgeInsets.symmetric(vertical: 8),
+              color: _gold,
+            ),
           _summaryLine(
-            'IGST (${_percent(_taxRate(invoice.igst, invoice.taxableAmount))})',
-            _amount(invoice.igst),
-          )
-        else ...[
-          _summaryLine(
-            'CGST (${_percent(_taxRate(invoice.cgst, invoice.taxableAmount))})',
-            _amount(invoice.cgst),
-          ),
-          _summaryLine(
-            'SGST (${_percent(_taxRate(invoice.sgst, invoice.taxableAmount))})',
-            _amount(invoice.sgst),
+            row.isEmphasized ? row.label.toUpperCase() : row.label,
+            _summaryAmount(row),
+            strong: row.isEmphasized,
           ),
         ],
-        if (invoice.totalTradeInDeduction > 0.005)
-          _summaryLine(
-            'Metal Settlement',
-            '- ${_amount(invoice.totalTradeInDeduction)}',
-          ),
-        pw.Container(
-          height: 1,
-          margin: const pw.EdgeInsets.symmetric(vertical: 8),
-          color: _gold,
-        ),
-        _summaryLine(
-          'NET PAYABLE',
-          _amount(invoice.netPayable),
-          strong: true,
-        ),
       ],
     );
   }
@@ -542,6 +576,252 @@ class PosLotusSignatureInvoicePdfLayout {
       'TERMS & POLICIES',
       _policyLines(invoice).take(4).map(_bulletLine).toList(growable: false),
     );
+  }
+
+  pw.Widget _policyPageFooter(PosInvoiceModel invoice, pw.Context context) {
+    final shopName = _fallback(invoice.printShopName, invoice.shopName);
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 12),
+      padding: const pw.EdgeInsets.only(top: 8),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(top: pw.BorderSide(color: _line, width: 0.7)),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            shopName.isEmpty ? _invoiceTitle(invoice) : shopName,
+            maxLines: 1,
+            overflow: pw.TextOverflow.clip,
+            style: const pw.TextStyle(fontSize: 7.5, color: _muted),
+          ),
+          pw.Text(
+            'Page ${context.pageNumber} of ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 7.5, color: _muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<pw.Widget> _policyPageContent(
+    List<({MetalType metal, String title, String body})> entries,
+  ) {
+    return [
+      for (var index = 0; index < entries.length; index++) ...[
+        if (index > 0) pw.SizedBox(height: 12),
+        ..._policyEntryWidgets(entries[index]),
+      ],
+    ];
+  }
+
+  List<pw.Widget> _policyEntryWidgets(
+    ({MetalType metal, String title, String body}) entry,
+  ) {
+    final groups = _policyBulletGroups(entry.body);
+    return [
+      _policyEntryHeader(entry),
+      for (final chunk in _policyBodyChunks(groups))
+        _policyBodyContainer(
+          chunk.groups,
+          isLastChunk: chunk.isLast,
+        ),
+    ];
+  }
+
+  pw.Widget _policyEntryHeader(
+    ({MetalType metal, String title, String body}) entry,
+  ) {
+    return pw.Container(
+      width: double.infinity,
+      decoration: pw.BoxDecoration(
+        color: _softGold,
+        border: pw.Border.all(color: _gold, width: 0.85),
+        borderRadius: const pw.BorderRadius.only(
+          topLeft: pw.Radius.circular(8),
+          topRight: pw.Radius.circular(8),
+        ),
+      ),
+      padding: const pw.EdgeInsets.fromLTRB(16, 13, 18, 13),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          _policyIconBadge(_policyIconKey(entry.title)),
+          pw.SizedBox(width: 18),
+          pw.Expanded(
+            child: pw.Text(
+              entry.title.toUpperCase(),
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
+              style: pw.TextStyle(
+                color: _ink,
+                fontSize: 14.6,
+                fontWeight: pw.FontWeight.bold,
+                letterSpacing: 0.25,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 16),
+          pw.Text(
+            entry.metal.displayName.toUpperCase(),
+            style: pw.TextStyle(
+              color: _gold,
+              fontSize: 10.4,
+              fontWeight: pw.FontWeight.bold,
+              letterSpacing: 0.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _policyBodyContainer(
+    List<List<String>> groups, {
+    required bool isLastChunk,
+  }) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.fromLTRB(24, 18, 24, 18),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: _gold, width: 0.85),
+        borderRadius: isLastChunk
+            ? const pw.BorderRadius.only(
+                bottomLeft: pw.Radius.circular(8),
+                bottomRight: pw.Radius.circular(8),
+              )
+            : null,
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: groups.map(_policyBulletGroup).toList(growable: false),
+      ),
+    );
+  }
+
+  pw.Widget _policyIconBadge(String iconKey) {
+    return pw.Container(
+      width: 34,
+      height: 34,
+      alignment: pw.Alignment.center,
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: _gold, width: 0.9),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Padding(
+        padding: const pw.EdgeInsets.all(6),
+        child: pw.SvgImage(svg: _headerIconSvg(iconKey)),
+      ),
+    );
+  }
+
+  String _policyIconKey(String title) {
+    final normalized = title.toLowerCase();
+    if (normalized.contains('return')) return 'policy_return';
+    if (normalized.contains('buyback')) return 'policy_buyback';
+    return 'policy';
+  }
+
+  pw.Widget _policyBulletGroup(List<String> lines) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 11),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 4.2,
+            height: 4.2,
+            margin: const pw.EdgeInsets.only(top: 6.4, right: 14),
+            decoration: const pw.BoxDecoration(
+              color: _gold,
+              shape: pw.BoxShape.circle,
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < lines.length; index++)
+                  pw.Padding(
+                    padding: pw.EdgeInsets.only(top: index == 0 ? 0 : 5),
+                    child: pw.Text(
+                      lines[index],
+                      style: pw.TextStyle(
+                        fontSize: index == 0 ? 10.9 : 10.4,
+                        color: _ink,
+                        lineSpacing: 1.25,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<List<String>> _policyBulletGroups(String body) {
+    final groups = <List<String>>[];
+    var current = <String>[];
+
+    void flush() {
+      if (current.isEmpty) return;
+      groups.add(current);
+      current = <String>[];
+    }
+
+    for (final rawLine in body.replaceAll('\r\n', '\n').split('\n')) {
+      final trimmed = rawLine.trim();
+      if (trimmed.isEmpty) {
+        flush();
+        continue;
+      }
+
+      final line = _stripPolicyMarker(trimmed);
+      final startsMarkedBullet = _startsWithPolicyMarker(trimmed);
+      final isTranslationLine = _containsDevanagari(line);
+      final currentHasTranslation = current.any(_containsDevanagari);
+      final shouldStartNewGroup = startsMarkedBullet ||
+          current.isEmpty ||
+          (!isTranslationLine && current.isNotEmpty) ||
+          (isTranslationLine && currentHasTranslation);
+
+      if (shouldStartNewGroup) {
+        flush();
+      }
+      current.add(line);
+    }
+
+    flush();
+    return groups;
+  }
+
+  List<({List<List<String>> groups, bool isLast})> _policyBodyChunks(
+    List<List<String>> groups,
+  ) {
+    const groupsPerChunk = 8;
+    final chunks = <({List<List<String>> groups, bool isLast})>[];
+    for (var start = 0; start < groups.length; start += groupsPerChunk) {
+      final end = (start + groupsPerChunk).clamp(0, groups.length);
+      chunks.add((
+        groups: groups.sublist(start, end),
+        isLast: end == groups.length,
+      ));
+    }
+    return chunks;
+  }
+
+  bool _startsWithPolicyMarker(String value) {
+    return RegExp(r'^([*\-\u2022]|\d+[\.)])\s+').hasMatch(value.trim());
+  }
+
+  String _stripPolicyMarker(String value) {
+    return value.trim().replaceFirst(RegExp(r'^([*\-\u2022]|\d+[\.)])\s+'), '');
+  }
+
+  bool _containsDevanagari(String value) {
+    return value.runes.any((rune) => rune >= 0x0900 && rune <= 0x097F);
   }
 
   pw.Widget _footer(PosInvoiceModel invoice) {
@@ -971,9 +1251,12 @@ class PosLotusSignatureInvoicePdfLayout {
       case 'settlement':
         return '''
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M7 7h11l-3-3"/>
-  <path d="M17 17H6l3 3"/>
-  <path d="M18 7 6 19"/>
+  <path d="M7 7h10"/>
+  <path d="m14 4 3 3-3 3"/>
+  <path d="M17 17H7"/>
+  <path d="m10 14-3 3 3 3"/>
+  <path d="M6.5 7 8 5.5 9.5 7 8 8.5 6.5 7z"/>
+  <path d="M14.5 17 16 15.5 17.5 17 16 18.5 14.5 17z"/>
 </svg>
 ''';
       case 'policy':
@@ -981,6 +1264,25 @@ class PosLotusSignatureInvoicePdfLayout {
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3z"/>
   <path d="m9 12 2 2 4-4"/>
+</svg>
+''';
+      case 'policy_return':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 7h13a5 5 0 0 1 0 10H8"/>
+  <path d="m7 3-4 4 4 4"/>
+  <path d="M21 17H8"/>
+  <path d="m17 13 4 4-4 4"/>
+</svg>
+''';
+      case 'policy_buyback':
+        return '''
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="$stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 12a8 8 0 1 1-2.3-5.7"/>
+  <path d="M20 4v5h-5"/>
+  <path d="M9 8h6"/>
+  <path d="M9 11h6"/>
+  <path d="M12 11c0 3-3 3-3 3l5 4"/>
 </svg>
 ''';
       default:
@@ -1277,20 +1579,50 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   List<String> _policyLines(PosInvoiceModel invoice) {
-    final config = _primaryConfig(invoice);
-    final lines = <String>[];
-    if (config.printTermsAndConditions) {
-      lines.addAll(_splitPolicy(config.termsAndConditions));
-    }
-    if (config.printReturnPolicy) {
-      lines.addAll(_splitPolicy(config.returnPolicyText));
-    }
-    if (config.printBuybackPolicy) {
-      lines.addAll(_splitPolicy(config.buybackPolicyText));
-    }
-    return lines
+    return _policyEntries(invoice)
+        .expand((entry) => _splitPolicy(entry.body))
         .where((line) => line.trim().isNotEmpty)
         .toList(growable: false);
+  }
+
+  List<({MetalType metal, String title, String body})> _policyEntries(
+    PosInvoiceModel invoice,
+  ) {
+    final entries = <({MetalType metal, String title, String body})>[];
+
+    for (final metal in scopeService.collectMetals(invoice)) {
+      final config = _configFor(metal);
+      if (config.printTermsAndConditions &&
+          _hasPrintableCopy(config.termsAndConditions)) {
+        entries.add((
+          metal: metal,
+          title: '${metal.displayName} Terms & Conditions',
+          body: config.termsAndConditions.trim(),
+        ));
+      }
+      if (config.printReturnPolicy &&
+          _hasPrintableCopy(config.returnPolicyText)) {
+        entries.add((
+          metal: metal,
+          title: '${metal.displayName} Return Policy',
+          body: config.returnPolicyText.trim(),
+        ));
+      }
+      if (config.printBuybackPolicy &&
+          _hasPrintableCopy(config.buybackPolicyText)) {
+        entries.add((
+          metal: metal,
+          title: '${metal.displayName} Buyback Policy',
+          body: config.buybackPolicyText.trim(),
+        ));
+      }
+    }
+
+    return entries;
+  }
+
+  bool _hasPrintableCopy(String value) {
+    return value.trim().isNotEmpty;
   }
 
   List<String> _splitPolicy(String value) {
@@ -1317,6 +1649,20 @@ class PosLotusSignatureInvoicePdfLayout {
     return invoice.billType == BillType.gst ? 'TAX INVOICE' : 'SALES INVOICE';
   }
 
+  pw.Widget _duplicateWatermark({required double fontSize}) {
+    return pw.Transform.rotate(
+      angle: 0.785,
+      child: pw.Text(
+        'DUPLICATE',
+        style: pw.TextStyle(
+          color: PdfColors.grey300,
+          fontSize: fontSize,
+          fontWeight: pw.FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   String _metalInvoiceLabel(PosInvoiceModel invoice) {
     final metals = scopeService.collectMetals(invoice);
     if (metals.length == 1) {
@@ -1332,16 +1678,6 @@ class PosLotusSignatureInvoicePdfLayout {
   String _dueDate(PosInvoiceModel invoice) {
     final date = invoice.promiseDate;
     return date == null ? '-' : _dateFormat.format(date);
-  }
-
-  String _paymentMode(PosInvoiceModel invoice) {
-    final modes = <String>[
-      if (invoice.cashPaid > 0.005) 'Cash',
-      if (invoice.upiPaid > 0.005) 'UPI / Bank',
-      if (invoice.cardPaid > 0.005) 'Card',
-      if (invoice.advancePaid > 0.005) 'Advance',
-    ];
-    return modes.isEmpty ? 'Unpaid' : modes.join(' + ');
   }
 
   String _description(SaleItemModel item, BillSettings config) {
@@ -1420,15 +1756,9 @@ class PosLotusSignatureInvoicePdfLayout {
 
   String _plainAmount(double value) => _amountFormat.format(value);
 
-  double _taxRate(double taxAmount, double taxableAmount) {
-    if (taxableAmount.abs() <= 0.005) return 0;
-    return taxAmount / taxableAmount * 100;
-  }
-
-  String _percent(double value) {
-    if (value.abs() <= 0.005) return '0%';
-    final rounded = (value * 100).round() / 100;
-    return '${rounded.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '')}%';
+  String _summaryAmount(PosInvoiceAmountSummaryEntry row) {
+    final prefix = row.isDeduction ? '- ' : '';
+    return '$prefix${_amount(row.amount.abs())}';
   }
 
   String _firstBrandWord(String value) {

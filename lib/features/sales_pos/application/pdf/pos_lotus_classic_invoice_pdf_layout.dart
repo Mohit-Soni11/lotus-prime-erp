@@ -9,7 +9,9 @@ import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
+import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_print_config.dart';
+import 'pos_invoice_shop_header_details.dart';
 
 class PosLotusClassicInvoicePdfLayout {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
@@ -71,6 +73,7 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _header(PosInvoiceModel invoice) {
+    final shopHeader = PosInvoiceShopHeaderDetails.fromInvoice(invoice);
     final metadata = <({String label, String value})>[
       (label: 'INVOICE NUMBER', value: invoice.invoiceNumber),
       (label: 'INVOICE DATE', value: _dateFormat.format(invoice.invoiceDate)),
@@ -98,9 +101,9 @@ class PosLotusClassicInvoicePdfLayout {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      if (invoice.printShopName.trim().isNotEmpty)
+                      if (shopHeader.shopName.isNotEmpty)
                         pw.Text(
-                          invoice.printShopName,
+                          shopHeader.shopName,
                           maxLines: 1,
                           overflow: pw.TextOverflow.clip,
                           style: pw.TextStyle(
@@ -110,22 +113,11 @@ class PosLotusClassicInvoicePdfLayout {
                             letterSpacing: 0.4,
                           ),
                         ),
-                      if (invoice.printShopName.trim().isNotEmpty)
+                      if (shopHeader.shopName.isNotEmpty)
                         pw.SizedBox(height: 3),
-                      for (final line
-                          in _headerPrintLines(invoice).take(4)) ...[
+                      for (final line in shopHeader.lines.take(4)) ...[
                         pw.SizedBox(height: 2),
-                        pw.Text(
-                          line,
-                          maxLines: 1,
-                          overflow: pw.TextOverflow.clip,
-                          style: pw.TextStyle(
-                            color: _gold,
-                            fontSize: 7.4,
-                            fontWeight: pw.FontWeight.bold,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
+                        _shopHeaderLine(line),
                       ],
                     ],
                   ),
@@ -199,7 +191,8 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _brandMark(PosInvoiceModel invoice) {
-    final initials = _initials(invoice.printShopName);
+    final details = PosInvoiceShopHeaderDetails.fromInvoice(invoice);
+    final initials = _initials(details.shopName);
     final logoImage = _loadLogoImage(invoice.shopLogoPath);
     final logoShape = invoice.shopLogoShape.trim().toLowerCase();
     final isSquare = logoShape != 'circle';
@@ -245,15 +238,33 @@ class PosLotusClassicInvoicePdfLayout {
     );
   }
 
-  List<String> _headerPrintLines(PosInvoiceModel invoice) {
-    if (invoice.shopPrintProfileApplied) {
-      return invoice.shopPrintHeaderLines;
-    }
-    if (invoice.shopPrintHeaderLines.isEmpty) {
-      final configuredAddress = invoice.shopAddress.trim();
-      return configuredAddress.isEmpty ? const [] : [configuredAddress];
-    }
-    return invoice.shopPrintHeaderLines;
+  pw.Widget _shopHeaderLine(PosInvoiceShopHeaderLine line) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          '${line.label}: ',
+          style: pw.TextStyle(
+            color: _gold,
+            fontSize: 7.4,
+            fontWeight: pw.FontWeight.bold,
+            letterSpacing: 0.2,
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(
+            line.value,
+            maxLines: 1,
+            overflow: pw.TextOverflow.clip,
+            style: const pw.TextStyle(
+              color: PdfColors.white,
+              fontSize: 7.4,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   pw.Widget _headerMeta({
@@ -665,37 +676,10 @@ class PosLotusClassicInvoicePdfLayout {
     final showGstBreakup = scopeService
         .collectMetals(invoice)
         .any((metal) => _getMetalConfig(metal).showGstBreakup);
-    final totalLines = <pw.Widget>[
-      _totalLine('Gross Amount', invoice.grossAmount),
-      if (invoice.discountAmount > 0)
-        _totalLine('Discount', -invoice.discountAmount, isDeduction: true),
-      if (invoice.billType == BillType.gst && showGstBreakup) ...[
-        if (invoice.hasIgstBreakup)
-          _totalLine('IGST', invoice.igst)
-        else ...[
-          _totalLine('CGST', invoice.cgst),
-          _totalLine('SGST', invoice.sgst),
-        ],
-      ],
-      if (invoice.totalTradeInDeduction > 0)
-        _totalLine(
-          'Customer Metal Adjustment',
-          -invoice.totalTradeInDeduction,
-          isDeduction: true,
-        ),
-      if (invoice.crossMetalAdjustmentDeduction > 0.005)
-        _totalLine(
-          'Cross Metal Adjustment',
-          -invoice.crossMetalAdjustmentDeduction,
-          isDeduction: true,
-        ),
-      if (invoice.roundOffAmount.abs() > 0.005)
-        _totalLine(
-          'Round Off',
-          invoice.roundOffAmount,
-          isDeduction: invoice.roundOffAmount < 0,
-        ),
-    ];
+    final totalLines = PosInvoiceFinancialBreakdown.summaryRows(
+      invoice,
+      showGstBreakup: showGstBreakup,
+    );
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
@@ -706,28 +690,23 @@ class PosLotusClassicInvoicePdfLayout {
       ),
       child: pw.Column(
         children: [
-          ...totalLines,
-          pw.Divider(color: _gold, thickness: 0.8),
-          _totalLine(
-            _netTotalLabel(invoice),
-            invoice.netPayable.abs(),
-            isBold: true,
-            isGrand: true,
-          ),
+          for (final row in totalLines) ...[
+            if (row.isEmphasized) pw.Divider(color: _gold, thickness: 0.8),
+            _totalLine(
+              row.label,
+              row.amount,
+              isBold: row.isEmphasized,
+              isDeduction: row.isDeduction,
+              isGrand: row.isEmphasized,
+            ),
+          ],
         ],
       ),
     );
   }
 
   pw.Widget _paymentBlock(PosInvoiceModel invoice) {
-    final payments = <({String label, double amount})>[
-      if (invoice.cashPaid > 0) (label: 'Cash', amount: invoice.cashPaid),
-      if (invoice.upiPaid > 0)
-        (label: 'UPI / Bank Transfer', amount: invoice.upiPaid),
-      if (invoice.cardPaid > 0) (label: 'Card', amount: invoice.cardPaid),
-      if (invoice.advancePaid > 0)
-        (label: 'Customer Advance', amount: invoice.advancePaid),
-    ];
+    final payments = PosInvoiceFinancialBreakdown.payments(invoice);
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
@@ -756,7 +735,7 @@ class PosLotusClassicInvoicePdfLayout {
           pw.SizedBox(height: 8),
           if (payments.isEmpty)
             pw.Text(
-              'No payment recorded.',
+              'No payment has been recorded.',
               style: const pw.TextStyle(color: _ink, fontSize: 8.5),
             )
           else
@@ -1088,10 +1067,18 @@ class PosLotusClassicInvoicePdfLayout {
     if (hasDue) {
       return pw.Column(
         children: [
-          _miniRow('Total Paid', _amount(invoice.totalPaid)),
-          _miniRow('Balance Outstanding', _amount(invoice.balanceDue)),
+          _miniRow('Total Received', _amount(invoice.totalPaid)),
+          _miniRow(
+            'Balance Outstanding',
+            _amount(invoice.balanceDue),
+            valueColor: _danger,
+          ),
           if (invoice.promiseDate != null)
-            _miniRow('Promise Date', _dateFormat.format(invoice.promiseDate!)),
+            _miniRow(
+              'Due Date',
+              _dateFormat.format(invoice.promiseDate!),
+              valueColor: _danger,
+            ),
         ],
       );
     }
@@ -1102,10 +1089,19 @@ class PosLotusClassicInvoicePdfLayout {
     if (invoice.netPayable < -0.5) {
       return _miniRow('Customer Credit', _amount(invoice.netPayable.abs()));
     }
-    return _miniRow('Balance Outstanding', 'Nil');
+    return _miniRow(
+      'Payment Status',
+      'PAID',
+      valueColor: _success,
+    );
   }
 
-  pw.Widget _miniRow(String label, String value) {
+  pw.Widget _miniRow(
+    String label,
+    String value, {
+    PdfColor? labelColor,
+    PdfColor? valueColor,
+  }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(top: 2.5),
       child: pw.Row(
@@ -1113,13 +1109,13 @@ class PosLotusClassicInvoicePdfLayout {
         children: [
           pw.Text(
             label,
-            style: const pw.TextStyle(color: _ink, fontSize: 8),
+            style: pw.TextStyle(color: labelColor ?? _ink, fontSize: 8),
           ),
           pw.Text(
             value,
             textAlign: pw.TextAlign.right,
             style: pw.TextStyle(
-              color: _ink,
+              color: valueColor ?? _ink,
               fontSize: 8,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -1251,23 +1247,15 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   PdfColor _statusColor(PosInvoiceModel invoice) {
-    switch (invoice.paymentStatus) {
-      case PaymentStatus.paid:
-      case PaymentStatus.credit:
-        return _success;
-      case PaymentStatus.due:
-        return _danger;
-    }
+    final status = PosInvoiceFinancialBreakdown.status(invoice);
+    return status.isDue ? _danger : _success;
   }
 
   PdfColor _statusFill(PosInvoiceModel invoice) {
-    switch (invoice.paymentStatus) {
-      case PaymentStatus.paid:
-      case PaymentStatus.credit:
-        return const PdfColor.fromInt(0xFFDCFCE7);
-      case PaymentStatus.due:
-        return const PdfColor.fromInt(0xFFFEE2E2);
-    }
+    final status = PosInvoiceFinancialBreakdown.status(invoice);
+    return status.isDue
+        ? const PdfColor.fromInt(0xFFFEE2E2)
+        : const PdfColor.fromInt(0xFFDCFCE7);
   }
 
   BillSettings _getMetalConfig(MetalType metal) {
@@ -1310,20 +1298,13 @@ class PosLotusClassicInvoicePdfLayout {
               ? 'CUSTOMER CREDIT'
               : 'NET PAYABLE';
 
-  String _netTotalLabel(PosInvoiceModel invoice) =>
-      _isScopedSectionExcess(invoice)
-          ? 'ADJUSTED BALANCE'
-          : invoice.netPayable < -0.5
-              ? 'CUSTOMER CREDIT'
-              : 'GRAND TOTAL';
-
   bool _isScopedSectionExcess(PosInvoiceModel invoice) =>
       invoice.isMetalScopedCopy && invoice.netPayable < -0.5;
 
   String _paymentStatusLabel(PosInvoiceModel invoice) =>
       _isScopedSectionExcess(invoice)
           ? 'ADJUSTED'
-          : invoice.paymentStatus.label;
+          : PosInvoiceFinancialBreakdown.status(invoice).label;
 
   String _compact(double value) {
     final rounded = value.roundToDouble();

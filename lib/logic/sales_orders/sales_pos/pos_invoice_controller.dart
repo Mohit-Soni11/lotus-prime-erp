@@ -67,6 +67,8 @@ class PosInvoiceController extends ChangeNotifier {
   int printCopies = 1;
   bool includeDuplicateStamp = false;
   MetalType? activePrintMetal;
+  int _previewBuildSerial = 0;
+  bool _hasWorkspaceTemplateSelection = false;
 
   DateTime? dueDate;
 
@@ -129,9 +131,9 @@ class PosInvoiceController extends ChangeNotifier {
   Future<void> setActivePrintMetal(MetalType metal) async {
     if (activePrintMetal == metal) return;
     activePrintMetal = metal;
-    _applyTemplateForActiveMetal();
     notifyListeners();
     await _refreshActivePreviewPdf();
+    notifyListeners();
   }
 
   BillSettings getMetalConfig(MetalType metal) {
@@ -424,12 +426,13 @@ class PosInvoiceController extends ChangeNotifier {
     } else if (activePrintMetal == null || !metals.contains(activePrintMetal)) {
       activePrintMetal = metals.first;
     }
-    if (metals.isNotEmpty) {
+    if (metals.isNotEmpty && !_hasWorkspaceTemplateSelection) {
       _applyTemplateForActiveMetal();
     }
   }
 
   void _applyTemplateForActiveMetal({MetalType? preferredMetal}) {
+    if (_hasWorkspaceTemplateSelection) return;
     final metal = preferredMetal ?? effectiveActiveMetal;
     if (metal == null) return;
     if (preferredMetal != null && effectiveActiveMetal != preferredMetal) {
@@ -476,6 +479,7 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> selectPrintTemplate(String templateId) async {
     final resolvedTemplate = PrintTemplateRegistry.byId(templateId);
+    _hasWorkspaceTemplateSelection = true;
     if (selectedTemplateId == resolvedTemplate.id) return;
 
     selectedTemplateId = resolvedTemplate.id;
@@ -1012,11 +1016,22 @@ class PosInvoiceController extends ChangeNotifier {
 
   Future<void> _refreshActivePreviewPdf() async {
     if (invoice == null) return;
-    pdfBytes = await _buildPdf(
+    final buildSerial = ++_previewBuildSerial;
+    final activeMetal = effectiveActiveMetal;
+    final format = selectedFormat;
+    final templateId = selectedTemplateId;
+    final bytes = await _buildPdf(
       invoice!,
-      selectedFormat,
-      activeMetal: effectiveActiveMetal,
+      format,
+      activeMetal: activeMetal,
     );
+    if (buildSerial != _previewBuildSerial ||
+        activeMetal != effectiveActiveMetal ||
+        format != selectedFormat ||
+        templateId != selectedTemplateId) {
+      return;
+    }
+    pdfBytes = bytes;
   }
 
   Future<Uint8List> _buildPdf(
@@ -1053,7 +1068,7 @@ class PosInvoiceController extends ChangeNotifier {
     final printBytes = await _buildPdf(
       invoice!,
       format,
-      includeAllMetals: true,
+      activeMetal: effectiveActiveMetal,
     );
     if (!context.mounted) return false;
     return _outputService.printPdf(
@@ -1071,7 +1086,7 @@ class PosInvoiceController extends ChangeNotifier {
       buildPdfBytes: () => _buildPdf(
         invoice!,
         selectedFormat,
-        includeAllMetals: true,
+        activeMetal: effectiveActiveMetal,
       ),
     );
   }
@@ -1089,7 +1104,7 @@ class PosInvoiceController extends ChangeNotifier {
       buildPdfBytes: () => _buildPdf(
         invoice!,
         selectedFormat,
-        includeAllMetals: true,
+        activeMetal: effectiveActiveMetal,
       ),
     );
   }
@@ -1172,6 +1187,7 @@ class PosInvoiceController extends ChangeNotifier {
     errorMessage = null;
     isSavedToDb = false;
     savedBillDbId = null;
+    _previewBuildSerial++;
   }
 
   @override

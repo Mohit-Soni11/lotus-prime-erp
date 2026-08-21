@@ -97,7 +97,7 @@ class PosInvoiceScopeService {
     );
 
     return PosInvoiceModel(
-      invoiceNumber: _metalInvoiceNumber(source, metal),
+      invoiceNumber: source.invoiceNumber,
       invoiceDate: source.invoiceDate,
       billType: source.billType,
       gstPricingMode: source.gstPricingMode,
@@ -211,10 +211,5 @@ class PosInvoiceScopeService {
     if (amount <= 0 || ratio <= 0) return 0.0;
     final value = amount * ratio;
     return value > amount ? amount : value;
-  }
-
-  String _metalInvoiceNumber(PosInvoiceModel source, MetalType metal) {
-    if (collectMetals(source).length <= 1) return source.invoiceNumber;
-    return '${source.invoiceNumber}-${metal.displayName.toUpperCase()}';
   }
 }

@@ -11,6 +11,7 @@ import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart'
 import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_print_config.dart';
+import 'pos_invoice_shop_header_details.dart';
 import 'pos_invoice_template_renderer_registry.dart';
 
 class PosInvoicePdfBuildOptions {
@@ -239,6 +240,20 @@ class _PosInvoicePdfDocumentBuilder {
   void _addA4PolicyPages(
       pw.Document doc, PosInvoiceModel invoice, PdfPageFormat pageFormat,
       {required bool includeDuplicateStamp}) {
+    final templateHandled =
+        PosInvoiceTemplateRendererRegistry.tryAddA4PolicyPages(
+      templateId: options.templateId,
+      doc: doc,
+      invoice: invoice,
+      pageFormat: pageFormat,
+      context: PosInvoiceTemplateRenderContext(
+        scopeService: scopeService,
+        metalPrintSettings: options.metalPrintSettings,
+      ),
+      includeDuplicateStamp: includeDuplicateStamp,
+    );
+    if (templateHandled) return;
+
     final entries = _policyEntries(invoice);
     if (entries.isEmpty) return;
 
@@ -1486,23 +1501,21 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _thermalHeader(PosInvoiceModel invoice, double fontSize) {
-    final shopName = invoice.printShopName.trim().isEmpty
-        ? invoice.shopName.trim()
-        : invoice.printShopName.trim();
+    final shopHeader = PosInvoiceShopHeaderDetails.fromInvoice(invoice);
 
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        if (shopName.isNotEmpty)
+        if (shopHeader.shopName.isNotEmpty)
           pw.Text(
-            shopName.toUpperCase(),
+            shopHeader.shopName.toUpperCase(),
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(
               fontSize: fontSize + 3,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
-        for (final line in invoice.shopPrintHeaderLines.take(5))
+        for (final line in shopHeader.thermalLines.take(5))
           if (line.trim().isNotEmpty)
             pw.Text(
               line.trim(),

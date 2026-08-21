@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
+import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_financial_breakdown.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import 'package:lotus_erp/features/sales_pos/application/services/pos_invoice_scope_service.dart';
@@ -31,15 +32,20 @@ void main() {
           const PosInvoiceScopeService().scopedInvoicesForAllMetals(invoice);
 
       expect(scoped, hasLength(2));
-      expect(scoped[0].invoiceNumber, 'POS-001-GOLD');
+      expect(scoped[0].invoiceNumber, 'POS-001');
       expect(scoped[0].shopLogoPath, 'C:/Lotus/logo.png');
       expect(scoped[0].shopLogoShape, 'square');
       expect(scoped[0].saleItems, [gold]);
+      expect(scoped[0].saleItems.every((item) => item.metal == MetalType.gold),
+          isTrue);
       expect(scoped[0].grossAmount, gold.totalValue);
-      expect(scoped[1].invoiceNumber, 'POS-001-SILVER');
+      expect(scoped[1].invoiceNumber, 'POS-001');
       expect(scoped[1].shopLogoPath, 'C:/Lotus/logo.png');
       expect(scoped[1].shopLogoShape, 'square');
       expect(scoped[1].saleItems, [silver]);
+      expect(
+          scoped[1].saleItems.every((item) => item.metal == MetalType.silver),
+          isTrue);
       expect(scoped[1].grossAmount, silver.totalValue);
 
       gold.dispose();
@@ -91,6 +97,63 @@ void main() {
   });
 
   group('PosInvoicePdfBuilder', () {
+    test('builds selected metal only across every A4 invoice template',
+        () async {
+      final gold = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final silver = _saleItem(
+        metal: MetalType.silver,
+        description: 'Silver Chain',
+        purity: '925',
+        grossWeight: 10,
+        rate: 100,
+      );
+      final invoice = _invoice(saleItems: [gold, silver]);
+
+      for (final template in [
+        PrintTemplateRegistry.lotusClassic,
+        PrintTemplateRegistry.lotusEconomy,
+        PrintTemplateRegistry.lotusSignature,
+      ]) {
+        for (final metal in [MetalType.gold, MetalType.silver]) {
+          final scoped = const PosInvoiceScopeService().scopedInvoiceForMetal(
+            invoice,
+            metal,
+          );
+
+          expect(scoped.invoiceNumber, invoice.invoiceNumber);
+          expect(scoped.saleItems, hasLength(1));
+          expect(scoped.saleItems.single.metal, metal);
+
+          final bytes = await const PosInvoicePdfBuilder().build(
+            invoice: invoice,
+            options: PosInvoicePdfBuildOptions(
+              format: PrintFormat.a4,
+              copies: 1,
+              includeDuplicateStamp: false,
+              templateId: template.id,
+              activeMetal: metal,
+              metalPrintSettings: {
+                MetalType.gold: BillSettings(),
+                MetalType.silver: BillSettings(),
+              },
+            ),
+          );
+
+          expect(bytes.length, greaterThan(1000));
+          expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+        }
+      }
+
+      gold.dispose();
+      silver.dispose();
+    });
+
     test('generates valid A4 PDF bytes', () async {
       final item = _saleItem(
         metal: MetalType.gold,
@@ -231,6 +294,53 @@ void main() {
       item.dispose();
     });
 
+    test('Lotus Signature prints enabled policy settings on policy pages',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Kada',
+        purity: '22KT',
+        grossWeight: 12,
+        rate: 11800,
+      );
+      final invoice = _invoice(saleItems: [item]);
+
+      final withoutPolicies = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          templateId: PrintTemplateRegistry.lotusSignature.id,
+          metalPrintSettings: {MetalType.gold: BillSettings()},
+        ),
+      );
+      final withPolicies = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          templateId: PrintTemplateRegistry.lotusSignature.id,
+          metalPrintSettings: {
+            MetalType.gold: BillSettings(
+              termsAndConditions:
+                  'Weight and purity are verified before billing.\nWarranty follows the approved store policy.',
+              buybackPolicyText:
+                  'Buyback is subject to current purity verification.',
+              printTermsAndConditions: true,
+              printBuybackPolicy: true,
+            ),
+          },
+        ),
+      );
+
+      expect(_pdfPageCount(withoutPolicies), 1);
+      expect(_pdfPageCount(withPolicies), greaterThan(1));
+
+      item.dispose();
+    });
+
     test('generates full thermal receipt bytes for 80mm and 57mm formats',
         () async {
       final item = _saleItem(
@@ -273,6 +383,98 @@ void main() {
       oldMetal.dispose();
     });
   });
+
+  group('PosInvoiceFinancialBreakdown', () {
+    test('uses exact payment modes and due status from invoice data', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        cashPaid: 12000,
+        upiPaid: 2500,
+        cardPaid: 0,
+        advancePaid: 500,
+        balanceDue: 750,
+      );
+
+      final payments = PosInvoiceFinancialBreakdown.payments(invoice);
+      expect(payments.map((entry) => entry.label), [
+        'Cash',
+        'UPI / Bank Transfer',
+        'Customer Advance',
+      ]);
+      expect(payments.map((entry) => entry.amount), [12000, 2500, 500]);
+
+      final status = PosInvoiceFinancialBreakdown.status(invoice);
+      expect(status.label, 'DUE');
+      expect(status.isDue, isTrue);
+
+      item.dispose();
+    });
+
+    test('builds smart amount summary rows only for applicable values', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        billType: BillType.gst,
+        cgst: 90,
+        sgst: 90,
+        totalGst: 180,
+      );
+
+      final labels = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: true,
+      ).map((row) => row.label);
+
+      expect(labels, containsAll(['Gross Sale Value', 'Taxable Value']));
+      expect(labels, containsAll(['CGST', 'SGST', 'Net Payable']));
+      expect(labels, isNot(contains('Invoice Discount')));
+      expect(labels, isNot(contains('Customer Metal Settlement')));
+      expect(labels, isNot(contains('IGST')));
+
+      item.dispose();
+    });
+
+    test('uses IGST and hides CGST SGST for interstate tax snapshots', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        billType: BillType.gst,
+        cgst: 0,
+        sgst: 0,
+        totalGst: 180,
+      );
+
+      final labels = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: true,
+      ).map((row) => row.label);
+
+      expect(labels, contains('IGST'));
+      expect(labels, isNot(contains('CGST')));
+      expect(labels, isNot(contains('SGST')));
+
+      item.dispose();
+    });
+  });
 }
 
 int _pdfPageCount(List<int> bytes) {
@@ -304,6 +506,11 @@ PosInvoiceModel _invoice({
   double cgst = 0,
   double sgst = 0,
   double totalGst = 0,
+  double? cashPaid,
+  double upiPaid = 0,
+  double cardPaid = 0,
+  double advancePaid = 0,
+  double balanceDue = 0,
 }) {
   final grossAmount = saleItems.fold(0.0, (sum, item) => sum + item.totalValue);
   final tradeInDeduction =
@@ -337,11 +544,11 @@ PosInvoiceModel _invoice({
     totalGst: totalGst,
     totalTradeInDeduction: tradeInDeduction,
     grandTotal: grandTotal,
-    cashPaid: netPayable,
-    upiPaid: 0,
-    cardPaid: 0,
-    advancePaid: 0,
-    balanceDue: 0,
+    cashPaid: cashPaid ?? netPayable,
+    upiPaid: upiPaid,
+    cardPaid: cardPaid,
+    advancePaid: advancePaid,
+    balanceDue: balanceDue,
     totalMakingCharge: 0,
   );
 }
