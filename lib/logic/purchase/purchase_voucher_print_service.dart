@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../../core/pdf/lotus_pdf_text_renderer.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../models/setting/billing_setup/purchase_billing_model.dart';
 import '../../models/setting/billing_setup/sales_billing_model.dart';
@@ -34,6 +35,8 @@ class PurchaseVoucherPrintService {
       lines.map((item) => item.metal),
     );
     final shopProfile = await _shopPrintRepo.loadDocumentProfile();
+    final textRenderer = await LotusPdfTextRenderer.create();
+    await _warmPolicyText(settingsByMetal, textRenderer);
     final sourceLabel = ctrl.purchaseSource == PurchaseSource.fromCustomer
         ? 'Seller Purchase'
         : 'Supplier Purchase';
@@ -138,7 +141,7 @@ class PurchaseVoucherPrintService {
               ),
             ),
           ),
-          ..._policySections(settingsByMetal),
+          ..._policySections(settingsByMetal, textRenderer),
           _footer(settingsByMetal),
         ],
       ),
@@ -274,6 +277,7 @@ class PurchaseVoucherPrintService {
 
   static List<pw.Widget> _policySections(
     Map<PurchaseMetalType, PurchaseBillingModel> settingsByMetal,
+    LotusPdfTextRenderer textRenderer,
   ) {
     final entries = <pw.Widget>[];
 
@@ -284,21 +288,25 @@ class PurchaseVoucherPrintService {
         entries,
         title: '$metalName TERMS & SELLER DECLARATION',
         body: settings.termsAndConditions,
+        textRenderer: textRenderer,
       );
       _addPolicyEntry(
         entries,
         title: '$metalName SELLER OWNERSHIP DECLARATION',
         body: settings.sellerDeclarationText,
+        textRenderer: textRenderer,
       );
       _addPolicyEntry(
         entries,
         title: '$metalName SELLER RECLAIM POLICY',
-        body: _reclaimPolicyBody(settings),
+        body: settings.returnPolicyText,
+        textRenderer: textRenderer,
       );
       _addPolicyEntry(
         entries,
         title: '$metalName VALUATION & PAYOUT POLICY',
         body: settings.buybackPolicyText,
+        textRenderer: textRenderer,
       );
     }
 
@@ -325,9 +333,9 @@ class PurchaseVoucherPrintService {
     List<pw.Widget> entries, {
     required String title,
     required String body,
+    required LotusPdfTextRenderer textRenderer,
   }) {
-    final text = body.trim();
-    if (!_hasPrintableCopy(text)) return;
+    if (!_hasPrintableCopy(body)) return;
 
     if (entries.isNotEmpty) {
       entries.add(pw.SizedBox(height: 7));
@@ -343,31 +351,74 @@ class PurchaseVoucherPrintService {
       ),
     );
     entries.add(pw.SizedBox(height: 2));
-    entries.add(
-      pw.Text(
-        text,
-        style: const pw.TextStyle(
+    entries.addAll(_policyBodyLines(body, textRenderer));
+  }
+
+  static List<pw.Widget> _policyBodyLines(
+    String body,
+    LotusPdfTextRenderer textRenderer,
+  ) {
+    const style = pw.TextStyle(
+      fontSize: 8.8,
+      color: PdfColors.black,
+      lineSpacing: 1.3,
+    );
+    final lines = body
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .split('\n')
+        .map((line) => line.trimRight())
+        .toList(growable: false);
+
+    return [
+      for (final line in lines)
+        if (line.trim().isEmpty)
+          pw.SizedBox(height: 4)
+        else
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 2.5),
+            child: textRenderer.text(
+              line,
+              style: style,
+              maxWidth: 500,
+            ),
+          ),
+    ];
+  }
+
+  static Future<void> _warmPolicyText(
+    Map<PurchaseMetalType, PurchaseBillingModel> settingsByMetal,
+    LotusPdfTextRenderer textRenderer,
+  ) async {
+    final lines = settingsByMetal.values
+        .expand(
+          (settings) => <String>[
+            settings.termsAndConditions,
+            settings.sellerDeclarationText,
+            settings.returnPolicyText,
+            settings.buybackPolicyText,
+          ],
+        )
+        .expand(
+          (body) => body
+              .replaceAll('\r\n', '\n')
+              .replaceAll('\r', '\n')
+              .split('\n')
+              .map((line) => line.trimRight()),
+        )
+        .toSet();
+
+    await textRenderer.warmTextLines(
+      lines,
+      specs: const [
+        LotusPdfTextSpec(
           fontSize: 8.8,
           color: PdfColors.black,
-          lineSpacing: 1.2,
+          bold: false,
+          maxWidth: 500,
         ),
-      ),
+      ],
     );
-  }
-
-  static String _reclaimPolicyBody(PurchaseBillingModel settings) {
-    final flatPenalty = _formatAmount(settings.lateReclaimPenaltyAmount);
-    final threshold = _formatAmount(settings.highValueReclaimThreshold);
-    final percent = _formatAmount(settings.highValueReclaimPenaltyPercent);
-    return '${settings.returnPolicyText.trim()}\n'
-        'Late reclaim penalty: Rs. $flatPenalty for regular-value payouts; '
-        '$percent% for payouts above Rs. $threshold.';
-  }
-
-  static String _formatAmount(double value) {
-    return value == value.roundToDouble()
-        ? value.toStringAsFixed(0)
-        : value.toStringAsFixed(2);
   }
 
   static pw.Widget _footer(

@@ -163,6 +163,18 @@ class _PosInvoicePdfDocumentBuilder {
           bold: false,
           maxWidth: 470,
         ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 8,
+          color: PdfColor.fromInt(0xFF111827),
+          bold: false,
+          maxWidth: 500,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 8.4,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 500,
+        ),
       ],
     );
   }

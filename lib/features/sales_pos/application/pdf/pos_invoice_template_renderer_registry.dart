@@ -46,6 +46,7 @@ class PosInvoiceTemplateRendererRegistry {
       return PosLotusClassicInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
+        textRenderer: context.textRenderer,
       ).build(
         invoice,
         includePolicyBlock: context.includePolicyBlock,
@@ -55,6 +56,7 @@ class PosInvoiceTemplateRendererRegistry {
       return PosLotusEconomyInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
+        textRenderer: context.textRenderer,
       ).build(
         invoice,
         includePolicyBlock: context.includePolicyBlock,

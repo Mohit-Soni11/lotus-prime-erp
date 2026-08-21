@@ -85,6 +85,49 @@ void main() {
     );
   });
 
+  test('Purchase Billing preserves exact bilingual policy copy when saving',
+      () async {
+    await controller.load();
+
+    final input = controller.state.currentInput!;
+    const exactTerms =
+        'Seller confirms clean ownership.\n'
+        'विक्रेता साफ स्वामित्व की पुष्टि करता है।\n'
+        '\n'
+        'Store note remains unchanged.';
+    const exactSellerDeclaration =
+        'Seller accepts valuation before payout.\n'
+        'विक्रेता भुगतान से पहले मूल्यांकन स्वीकार करता है।';
+    const exactReturnPolicy =
+        'Seller reclaim is allowed only with the original voucher.\n'
+        'मूल वाउचर के साथ ही रिक्लेम मान्य होगा।';
+    const exactBuybackPolicy =
+        'Payout follows purity verification.\n'
+        'भुगतान शुद्धता जांच के अनुसार होगा।';
+    const exactFooter =
+        'Purchase voucher generated from saved Billing Setup copy.\n'
+        'खरीद वाउचर सेव की गई बिलिंग सेटअप कॉपी से बनेगा।';
+
+    controller.updateCurrentInput(
+      input.copyWith(
+        termsAndConditions: exactTerms,
+        sellerDeclarationText: exactSellerDeclaration,
+        returnPolicyText: exactReturnPolicy,
+        buybackPolicyText: exactBuybackPolicy,
+        footerMessage: exactFooter,
+      ),
+    );
+
+    expect(await controller.saveCurrent(), isTrue);
+
+    final saved = await repo.fetchForMetal(BillingMetal.gold);
+    expect(saved.termsAndConditions, exactTerms);
+    expect(saved.sellerDeclarationText, exactSellerDeclaration);
+    expect(saved.returnPolicyText, exactReturnPolicy);
+    expect(saved.buybackPolicyText, exactBuybackPolicy);
+    expect(saved.footerMessage, exactFooter);
+  });
+
   test('Purchase Billing blocks invalid policy values before saving', () async {
     await controller.load();
 

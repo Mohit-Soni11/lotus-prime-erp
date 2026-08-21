@@ -48,11 +48,11 @@ class PurchaseBillingValidator {
       label: 'High-value reclaim penalty',
       messages: messages,
     );
-    final termsAndConditions = input.termsAndConditions.trim();
-    final sellerDeclarationText = input.sellerDeclarationText.trim();
-    final returnPolicyText = input.returnPolicyText.trim();
-    final buybackPolicyText = input.buybackPolicyText.trim();
-    final footerMessage = input.footerMessage.trim();
+    final termsAndConditions = input.termsAndConditions;
+    final sellerDeclarationText = input.sellerDeclarationText;
+    final returnPolicyText = input.returnPolicyText;
+    final buybackPolicyText = input.buybackPolicyText;
+    final footerMessage = input.footerMessage;
 
     _requireText(
       termsAndConditions,

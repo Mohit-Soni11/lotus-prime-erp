@@ -97,8 +97,6 @@ class PurchaseBillingRepo {
   }
 
   PurchaseBillingModel _rowToModel(PurchaseBillingSetting row) {
-    final defaults = PurchaseBillingModel.defaultFor(row.metal);
-
     return PurchaseBillingModel(
       metal: row.metal,
       showGrossWeight: row.showGrossWeight,
@@ -118,76 +116,18 @@ class PurchaseBillingRepo {
       showCertificationNo: row.showCertificationNo,
       showGstBreakup: row.showGstBreakup,
       showHsnCode: row.showHsnCode,
-      returnWindowDays: _upgradeLegacyReturnWindow(row, defaults),
-      returnMode: _upgradeLegacyReturnMode(row, defaults),
+      returnWindowDays: row.returnWindowDays,
+      returnMode: row.returnMode,
       purityDeductPercent: row.purityDeductPercent,
       lateReclaimPenaltyAmount: row.lateReclaimPenaltyAmount,
       highValueReclaimThreshold: row.highValueReclaimThreshold,
       highValueReclaimPenaltyPercent: row.highValueReclaimPenaltyPercent,
-      termsAndConditions: _upgradeLegacyPurchaseCopy(
-        row.termsAndConditions,
-        defaults.termsAndConditions,
-      ),
-      sellerDeclarationText: _upgradeLegacyPurchaseCopy(
-        row.sellerDeclarationText,
-        defaults.sellerDeclarationText,
-      ),
-      returnPolicyText: _upgradeLegacyPurchaseCopy(
-        row.returnPolicyText,
-        defaults.returnPolicyText,
-      ),
-      buybackPolicyText: _upgradeLegacyPurchaseCopy(
-        row.buybackPolicyText,
-        defaults.buybackPolicyText,
-      ),
-      footerMessage: _upgradeLegacyPurchaseCopy(
-        row.footerMessage,
-        defaults.footerMessage,
-      ),
+      termsAndConditions: row.termsAndConditions,
+      sellerDeclarationText: row.sellerDeclarationText,
+      returnPolicyText: row.returnPolicyText,
+      buybackPolicyText: row.buybackPolicyText,
+      footerMessage: row.footerMessage,
       selectedTemplate: row.selectedTemplate,
     );
-  }
-
-  String _upgradeLegacyPurchaseCopy(String storedValue, String fallback) {
-    final text = storedValue.trim();
-    if (text.isEmpty || _usesLegacySupplierPurchaseCopy(text)) {
-      return fallback;
-    }
-    return storedValue;
-  }
-
-  int _upgradeLegacyReturnWindow(
-    PurchaseBillingSetting row,
-    PurchaseBillingModel fallback,
-  ) {
-    if (row.returnWindowDays == 3 &&
-        (_usesLegacySupplierPurchaseCopy(row.termsAndConditions) ||
-            _usesLegacySupplierPurchaseCopy(row.returnPolicyText))) {
-      return fallback.returnWindowDays;
-    }
-    return row.returnWindowDays;
-  }
-
-  String _upgradeLegacyReturnMode(
-    PurchaseBillingSetting row,
-    PurchaseBillingModel fallback,
-  ) {
-    if (row.returnMode == 'Credit Note' &&
-        (_usesLegacySupplierPurchaseCopy(row.termsAndConditions) ||
-            _usesLegacySupplierPurchaseCopy(row.returnPolicyText))) {
-      return fallback.returnMode;
-    }
-    return row.returnMode;
-  }
-
-  bool _usesLegacySupplierPurchaseCopy(String value) {
-    final normalized = value.toLowerCase();
-    return normalized.contains('supplier return') ||
-        normalized.contains('your supply') ||
-        normalized.contains('short delivery') ||
-        normalized.contains('quality will be checked on delivery') ||
-        normalized.contains('purchase returns are accepted') ||
-        normalized.contains('buyback settlement') ||
-        normalized.contains('supplier settlement');
   }
 }

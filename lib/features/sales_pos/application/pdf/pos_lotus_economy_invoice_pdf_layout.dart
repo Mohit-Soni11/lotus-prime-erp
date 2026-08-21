@@ -8,6 +8,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
+import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_header_details.dart';
 
@@ -24,10 +25,12 @@ class PosLotusEconomyInvoicePdfLayout {
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosLotusEconomyInvoicePdfLayout({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.textRenderer,
   });
 
   pw.Widget build(
@@ -385,7 +388,19 @@ class PosLotusEconomyInvoicePdfLayout {
     final lines = _policyLines(invoice);
     return _box(
       title: 'TERMS',
-      children: lines.take(5).map(_smallText).toList(growable: false),
+      children: lines.take(5).map(_policyLine).toList(growable: false),
+    );
+  }
+
+  pw.Widget _policyLine(String value) {
+    const style = pw.TextStyle(fontSize: 8.4, color: _ink);
+    final renderer = textRenderer;
+    if (renderer == null || value.trim().isEmpty) {
+      return _smallText(value);
+    }
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 2),
+      child: renderer.text(value, style: style, maxWidth: 500),
     );
   }
 

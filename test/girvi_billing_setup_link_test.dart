@@ -121,7 +121,7 @@ void main() {
     expect(saved.printCustomerDeclaration, isTrue);
   });
 
-  test('legacy blank footer is upgraded to the safe receipt message', () async {
+  test('blank saved footer remains the source of truth', () async {
     final legacy = GirviBillingModel.defaults.copyWith(
       footerMessage: '',
       printFooterMessage: false,
@@ -137,11 +137,8 @@ void main() {
 
     final loaded = await repo.fetch();
 
-    expect(loaded.printFooterMessage, isTrue);
-    expect(
-      loaded.footerMessage,
-      GirviBillingModel.defaultFooterMessage,
-    );
+    expect(loaded.printFooterMessage, isFalse);
+    expect(loaded.footerMessage, '');
   });
 
   test('Girvi metal settings stay independent', () {

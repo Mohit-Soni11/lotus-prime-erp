@@ -65,11 +65,11 @@ class GirviBillingValidator {
       unitLabel: 'days',
       messages: messages,
     );
-    final termsAndConditions = input.termsAndConditions.trim();
-    final termsAndConditionsHindi = input.termsAndConditionsHindi.trim();
-    final customerDeclaration = input.customerDeclaration.trim();
-    final customerDeclarationHindi = input.customerDeclarationHindi.trim();
-    final footerMessage = input.footerMessage.trim();
+    final termsAndConditions = input.termsAndConditions;
+    final termsAndConditionsHindi = input.termsAndConditionsHindi;
+    final customerDeclaration = input.customerDeclaration;
+    final customerDeclarationHindi = input.customerDeclarationHindi;
+    final footerMessage = input.footerMessage;
 
     if (prefix.isEmpty) {
       messages.add('Ticket prefix cannot be empty.');

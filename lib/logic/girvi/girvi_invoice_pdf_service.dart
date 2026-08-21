@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/pdf/lotus_pdf_text_renderer.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
@@ -57,6 +58,8 @@ class GirviInvoicePdfService {
     bool duplicateStamp = false,
   }) async {
     final devanagariFont = await _loadDevanagariFont();
+    final textRenderer = await LotusPdfTextRenderer.create();
+    await _warmPolicyText(settings, textRenderer, format);
     final brandLogo = _loadBrandLogo(branding);
     final pdf = pw.Document(
       theme: await _buildTheme(devanagariFont),
@@ -98,12 +101,60 @@ class GirviInvoicePdfService {
             branding,
             brandLogo,
             devanagariFont,
+            textRenderer,
           ),
         ),
       );
     }
 
     return pdf.save();
+  }
+
+  Future<void> _warmPolicyText(
+    GirviBillingModel settings,
+    LotusPdfTextRenderer textRenderer,
+    GirviInvoiceFormat format,
+  ) async {
+    final compact = format == GirviInvoiceFormat.compactA5;
+    final lines = <String>[
+      settings.termsAndConditions,
+      settings.termsAndConditionsHindi,
+      settings.customerDeclaration,
+      settings.customerDeclarationHindi,
+      settings.footerMessage,
+    ]
+        .expand(
+          (body) => body
+              .replaceAll('\r\n', '\n')
+              .replaceAll('\r', '\n')
+              .split('\n')
+              .map((line) => line.trimRight()),
+        )
+        .toSet();
+
+    await textRenderer.warmTextLines(
+      lines,
+      specs: [
+        LotusPdfTextSpec(
+          fontSize: compact ? 7.2 : 8.5,
+          color: _navySoft,
+          bold: false,
+          maxWidth: compact ? 430 : 470,
+        ),
+        LotusPdfTextSpec(
+          fontSize: compact ? 7.4 : 8.8,
+          color: _navySoft,
+          bold: false,
+          maxWidth: compact ? 430 : 500,
+        ),
+        const LotusPdfTextSpec(
+          fontSize: 8,
+          color: _muted,
+          bold: false,
+          maxWidth: 500,
+        ),
+      ],
+    );
   }
 
   Future<pw.Font?> _loadDevanagariFont() async {
@@ -173,6 +224,7 @@ class GirviInvoicePdfService {
     GirviInvoiceBranding branding,
     pw.MemoryImage? brandLogo,
     pw.Font? devanagariFont,
+    LotusPdfTextRenderer textRenderer,
   ) {
     final compact = format == GirviInvoiceFormat.compactA5;
     final sectionGap = compact ? 8.0 : 10.0;
@@ -312,6 +364,7 @@ class GirviInvoicePdfService {
             hindi: terms[index].hindi,
             compact: compact,
             devanagariFont: devanagariFont,
+            textRenderer: textRenderer,
           ),
         );
       }
@@ -330,6 +383,7 @@ class GirviInvoicePdfService {
             hindi: settings.customerDeclarationHindi,
             compact: compact,
             devanagariFont: devanagariFont,
+            textRenderer: textRenderer,
           ),
         );
     }
@@ -346,8 +400,8 @@ class GirviInvoicePdfService {
   ) {
     List<String> lines(String value) => value
         .split(RegExp(r'\r?\n'))
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
+        .map((line) => line.trimRight())
+        .where((line) => line.trim().isNotEmpty)
         .toList(growable: false);
 
     final englishLines = lines(english);
@@ -1410,7 +1464,14 @@ class GirviInvoicePdfService {
     required String hindi,
     required bool compact,
     required pw.Font? devanagariFont,
+    required LotusPdfTextRenderer textRenderer,
   }) {
+    final hindiStyle = pw.TextStyle(
+      font: devanagariFont,
+      color: _navySoft,
+      fontSize: compact ? 7.2 : 8.5,
+      lineSpacing: 2,
+    );
     return pw.Container(
       width: double.infinity,
       padding: pw.EdgeInsets.all(compact ? 7 : 9),
@@ -1459,14 +1520,10 @@ class GirviInvoicePdfService {
                 if (english.isNotEmpty && hindi.isNotEmpty)
                   pw.SizedBox(height: compact ? 3 : 4),
                 if (hindi.isNotEmpty)
-                  pw.Text(
+                  textRenderer.text(
                     hindi,
-                    style: pw.TextStyle(
-                      font: devanagariFont,
-                      color: _navySoft,
-                      fontSize: compact ? 7.2 : 8.5,
-                      lineSpacing: 2,
-                    ),
+                    style: hindiStyle,
+                    maxWidth: compact ? 430 : 470,
                   ),
               ],
             ),
@@ -1482,7 +1539,14 @@ class GirviInvoicePdfService {
     required String hindi,
     required bool compact,
     required pw.Font? devanagariFont,
+    required LotusPdfTextRenderer textRenderer,
   }) {
+    final hindiStyle = pw.TextStyle(
+      font: devanagariFont,
+      color: _navySoft,
+      fontSize: compact ? 7.4 : 8.8,
+      lineSpacing: 2.2,
+    );
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -1506,7 +1570,7 @@ class GirviInvoicePdfService {
             children: [
               if (english.trim().isNotEmpty)
                 pw.Text(
-                  english.trim(),
+                  english.trimRight(),
                   style: pw.TextStyle(
                     color: _ink,
                     fontSize: compact ? 7.2 : 8.5,
@@ -1516,14 +1580,10 @@ class GirviInvoicePdfService {
               if (english.trim().isNotEmpty && hindi.trim().isNotEmpty)
                 pw.SizedBox(height: compact ? 5 : 7),
               if (hindi.trim().isNotEmpty)
-                pw.Text(
-                  hindi.trim(),
-                  style: pw.TextStyle(
-                    font: devanagariFont,
-                    color: _navySoft,
-                    fontSize: compact ? 7.4 : 8.8,
-                    lineSpacing: 2.2,
-                  ),
+                textRenderer.text(
+                  hindi.trimRight(),
+                  style: hindiStyle,
+                  maxWidth: compact ? 430 : 500,
                 ),
             ],
           ),

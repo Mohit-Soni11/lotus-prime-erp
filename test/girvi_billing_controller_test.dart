@@ -83,6 +83,46 @@ void main() {
     expect(controller.state.isDirty, isFalse);
   });
 
+  test('Girvi Billing preserves exact bilingual policy copy when saving',
+      () async {
+    await controller.load();
+
+    const exactTerms =
+        'Interest is payable every month.\n'
+        'Original receipt is required for release.';
+    const exactTermsHindi =
+        'ब्याज हर महीने देय होगा।\n'
+        'छुड़ाने के लिए मूल रसीद आवश्यक है।';
+    const exactDeclaration =
+        'I have verified all pledge details.\n'
+        'I accept the shop valuation.';
+    const exactDeclarationHindi =
+        'मैंने सभी गिरवी विवरण जांच लिए हैं।\n'
+        'मैं दुकान का मूल्यांकन स्वीकार करता हूं।';
+    const exactFooter =
+        'Please keep this pledge receipt safely.\n'
+        'कृपया यह गिरवी रसीद सुरक्षित रखें।';
+
+    controller.updateInput(
+      controller.state.input.copyWith(
+        termsAndConditions: exactTerms,
+        termsAndConditionsHindi: exactTermsHindi,
+        customerDeclaration: exactDeclaration,
+        customerDeclarationHindi: exactDeclarationHindi,
+        footerMessage: exactFooter,
+      ),
+    );
+
+    expect(await controller.save(), isTrue);
+
+    final saved = await repo.fetch();
+    expect(saved.termsAndConditions, exactTerms);
+    expect(saved.termsAndConditionsHindi, exactTermsHindi);
+    expect(saved.customerDeclaration, exactDeclaration);
+    expect(saved.customerDeclarationHindi, exactDeclarationHindi);
+    expect(saved.footerMessage, exactFooter);
+  });
+
   test('Girvi Billing blocks invalid policy values before saving', () async {
     await controller.load();
 

@@ -11,6 +11,7 @@ import '../../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../services/pos_invoice_scope_service.dart';
 import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
+import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_header_details.dart';
 
@@ -29,10 +30,12 @@ class PosLotusClassicInvoicePdfLayout {
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosLotusClassicInvoicePdfLayout({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.textRenderer,
   });
 
   pw.Widget build(
@@ -792,18 +795,42 @@ class PosLotusClassicInvoicePdfLayout {
               ),
             ),
             pw.SizedBox(height: 2),
-            pw.Text(
-              entries[index].body.trimRight(),
-              style: const pw.TextStyle(
-                color: _ink,
-                fontSize: 8,
-                lineSpacing: 1.1,
-              ),
-            ),
+            ..._policyBodyLines(entries[index].body),
           ],
         ],
       ),
     );
+  }
+
+  List<pw.Widget> _policyBodyLines(String body) {
+    const style = pw.TextStyle(
+      color: _ink,
+      fontSize: 8,
+      lineSpacing: 1.3,
+    );
+    final lines = PosInvoicePolicyCopy.lines(body);
+    return [
+      for (final rawLine in lines)
+        if (rawLine.trim().isEmpty)
+          pw.SizedBox(height: 4)
+        else
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 2.5),
+            child: _policyText(rawLine, style: style, maxWidth: 500),
+          ),
+    ];
+  }
+
+  pw.Widget _policyText(
+    String value, {
+    required pw.TextStyle style,
+    required double maxWidth,
+  }) {
+    final renderer = textRenderer;
+    if (renderer == null) {
+      return pw.Text(value, style: style);
+    }
+    return renderer.text(value, style: style, maxWidth: maxWidth);
   }
 
   pw.Widget _footer(PosInvoiceModel invoice) {
