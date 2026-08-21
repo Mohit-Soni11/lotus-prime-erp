@@ -6,7 +6,20 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../domain/print_template_registry.dart';
+
+class PrintTemplatePreviewPartyProfile {
+  final String name;
+  final String mobile;
+  final String address;
+
+  const PrintTemplatePreviewPartyProfile({
+    required this.name,
+    required this.mobile,
+    required this.address,
+  });
+}
 
 class PrintTemplatePreviewPdfService {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
@@ -24,6 +37,7 @@ class PrintTemplatePreviewPdfService {
     required PrintTemplateDefinition template,
     required PrintTemplateDocumentType documentType,
     PdfPageFormat pageFormat = PdfPageFormat.a4,
+    ShopPrintDocumentProfile? shopProfile,
   }) async {
     final pdf = pw.Document(
       theme: await _buildTheme(),
@@ -41,7 +55,7 @@ class PrintTemplatePreviewPdfService {
         ),
         footer: (context) => _footer(context, template),
         build: (_) => [
-          _heroHeader(template, documentType),
+          _heroHeader(template, documentType, shopProfile),
           pw.SizedBox(height: 10),
           _partyAndAmountPanel(documentType),
           pw.SizedBox(height: 10),
@@ -98,6 +112,7 @@ class PrintTemplatePreviewPdfService {
   pw.Widget _heroHeader(
     PrintTemplateDefinition template,
     PrintTemplateDocumentType documentType,
+    ShopPrintDocumentProfile? shopProfile,
   ) {
     final metadata = <({String label, String value})>[
       (label: 'DOCUMENT NUMBER', value: _documentNumber(documentType)),
@@ -118,14 +133,14 @@ class PrintTemplatePreviewPdfService {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                _brandMark(),
+                _brandMark(shopProfile),
                 pw.SizedBox(width: 14),
                 pw.Expanded(
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        'ANJALI JEWELLERS',
+                        _shopName(shopProfile),
                         style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: 19,
@@ -135,7 +150,7 @@ class PrintTemplatePreviewPdfService {
                       ),
                       pw.SizedBox(height: 3),
                       pw.Text(
-                        'EAST LAKSHMI NAGAR, KHEMNICHAK, PATNA, BIHAR',
+                        _shopAddress(shopProfile),
                         maxLines: 2,
                         overflow: pw.TextOverflow.clip,
                         style: pw.TextStyle(
@@ -146,7 +161,7 @@ class PrintTemplatePreviewPdfService {
                       ),
                       pw.SizedBox(height: 2),
                       pw.Text(
-                        'Mobile: 9304479436',
+                        _shopPhoneLine(shopProfile),
                         style: pw.TextStyle(
                           color: _gold,
                           fontSize: 7.2,
@@ -218,7 +233,7 @@ class PrintTemplatePreviewPdfService {
     );
   }
 
-  pw.Widget _brandMark() {
+  pw.Widget _brandMark(ShopPrintDocumentProfile? shopProfile) {
     return pw.Container(
       width: 52,
       height: 52,
@@ -234,7 +249,7 @@ class PrintTemplatePreviewPdfService {
           borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
         ),
         child: pw.Text(
-          'AJ',
+          _brandInitials(shopProfile),
           style: pw.TextStyle(
             color: _gold,
             fontSize: 20,
@@ -288,8 +303,8 @@ class PrintTemplatePreviewPdfService {
   pw.Widget _partyAndAmountPanel(PrintTemplateDocumentType type) {
     final isPurchase = type == PrintTemplateDocumentType.purchaseVoucher ||
         type == PrintTemplateDocumentType.purchaseReturn;
+    final party = _partyProfile(type);
     final partyTitle = isPurchase ? 'COUNTERPARTY DETAILS' : 'CUSTOMER DETAILS';
-    final partyName = isPurchase ? 'MAA DURGA SUPPLIERS' : 'REYANSH SONI';
     final amountTitle = type == PrintTemplateDocumentType.girviReceipt
         ? 'LOAN AMOUNT'
         : type == PrintTemplateDocumentType.bookingAdvance
@@ -315,7 +330,7 @@ class PrintTemplatePreviewPdfService {
                 _eyebrow(partyTitle),
                 pw.SizedBox(height: 7),
                 pw.Text(
-                  partyName,
+                  party.name,
                   style: pw.TextStyle(
                     color: _ink,
                     fontSize: 14,
@@ -328,14 +343,14 @@ class PrintTemplatePreviewPdfService {
                     pw.Expanded(
                       child: _metaPair(
                         label: 'MOBILE',
-                        value: isPurchase ? '9876543210' : '9304479436',
+                        value: party.mobile,
                       ),
                     ),
                     pw.SizedBox(width: 12),
                     pw.Expanded(
                       child: _metaPair(
                         label: 'ADDRESS',
-                        value: isPurchase ? 'PATNA WHOLESALE MARKET' : 'PATNA',
+                        value: party.address,
                       ),
                     ),
                   ],
@@ -768,6 +783,73 @@ class PrintTemplatePreviewPdfService {
         return 'ADV-00019';
       case PrintTemplateDocumentType.girviReceipt:
         return 'GRV-0016';
+    }
+  }
+
+  String _shopName(ShopPrintDocumentProfile? profile) {
+    final name = profile?.primaryName.trim() ?? '';
+    return name.isEmpty ? 'SHOP NAME NOT CONFIGURED' : name.toUpperCase();
+  }
+
+  String _shopAddress(ShopPrintDocumentProfile? profile) {
+    final address = profile?.primaryAddress.trim() ?? '';
+    return address.isEmpty
+        ? 'Complete Shop Setup to print business address'
+        : address.toUpperCase();
+  }
+
+  String _shopPhoneLine(ShopPrintDocumentProfile? profile) {
+    final phone = profile?.primaryPhone.trim() ?? '';
+    return phone.isEmpty ? 'Mobile: Not configured' : 'Mobile: $phone';
+  }
+
+  String _brandInitials(ShopPrintDocumentProfile? profile) {
+    final name = profile?.primaryName.trim() ?? '';
+    if (name.isEmpty) return 'LS';
+
+    final parts = name
+        .split(RegExp(r'\s+'))
+        .where((part) => part.trim().isNotEmpty)
+        .toList(growable: false);
+    if (parts.isEmpty) return 'LS';
+    if (parts.length == 1) {
+      return parts.first
+          .substring(0, parts.first.length >= 2 ? 2 : 1)
+          .toUpperCase();
+    }
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  PrintTemplatePreviewPartyProfile _partyProfile(
+    PrintTemplateDocumentType type,
+  ) {
+    switch (type) {
+      case PrintTemplateDocumentType.purchaseVoucher:
+      case PrintTemplateDocumentType.purchaseReturn:
+        return const PrintTemplatePreviewPartyProfile(
+          name: 'Sample Supplier',
+          mobile: 'Supplier mobile',
+          address: 'Supplier billing address',
+        );
+      case PrintTemplateDocumentType.bookingAdvance:
+        return const PrintTemplatePreviewPartyProfile(
+          name: 'Sample Booking Customer',
+          mobile: 'Customer mobile',
+          address: 'Customer billing address',
+        );
+      case PrintTemplateDocumentType.girviReceipt:
+        return const PrintTemplatePreviewPartyProfile(
+          name: 'Sample Girvi Customer',
+          mobile: 'Customer mobile',
+          address: 'Customer address',
+        );
+      case PrintTemplateDocumentType.salesInvoice:
+      case PrintTemplateDocumentType.salesReturn:
+        return const PrintTemplatePreviewPartyProfile(
+          name: 'Sample Customer',
+          mobile: 'Customer mobile',
+          address: 'Customer billing address',
+        );
     }
   }
 

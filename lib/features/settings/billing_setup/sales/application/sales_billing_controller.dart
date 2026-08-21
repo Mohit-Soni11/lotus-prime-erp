@@ -78,6 +78,7 @@ class SalesBillingController extends ChangeNotifier {
   }
 
   void updateSelectedTemplate(String templateId) {
+    if (!TemplateOptions.all.contains(templateId)) return;
     _updateCurrentSettings(
       (model) => model.copyWith(selectedTemplate: templateId),
     );

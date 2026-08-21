@@ -561,7 +561,9 @@ class PosLotusSignatureInvoicePdfLayout {
                 shape: pw.BoxShape.circle,
               ),
               child: pw.Text(
-                'AJ',
+                _initials(invoice.printShopName.isEmpty
+                    ? invoice.shopName
+                    : invoice.printShopName),
                 style: pw.TextStyle(
                   fontSize: 15,
                   fontWeight: pw.FontWeight.bold,
@@ -1007,45 +1009,6 @@ class PosLotusSignatureInvoicePdfLayout {
     );
   }
 
-  pw.Widget _heroDetailLine(String iconKey, String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 9),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _detailIconBadge(iconKey),
-          pw.SizedBox(width: 8),
-          pw.Expanded(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  label,
-                  style: pw.TextStyle(
-                    fontSize: 7.4,
-                    fontWeight: pw.FontWeight.bold,
-                    color: _muted,
-                  ),
-                ),
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  value,
-                  maxLines: 1,
-                  overflow: pw.TextOverflow.clip,
-                  style: pw.TextStyle(
-                    fontSize: 15,
-                    fontWeight: pw.FontWeight.bold,
-                    color: _ink,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   pw.Widget _detailLine(
     String iconKey,
     String label,
@@ -1471,7 +1434,7 @@ class PosLotusSignatureInvoicePdfLayout {
   String _firstBrandWord(String value) {
     final words = value.trim().split(RegExp(r'\s+'));
     return words.isEmpty || words.first.isEmpty
-        ? 'ANJALI'
+        ? 'LOTUS'
         : words.first.toUpperCase();
   }
 
@@ -1481,9 +1444,9 @@ class PosLotusSignatureInvoicePdfLayout {
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .toList();
-    if (words.isEmpty) return 'AJ';
+    if (words.isEmpty) return 'LS';
     final initials = words.take(2).map((word) => word[0].toUpperCase()).join();
-    return initials.isEmpty ? 'AJ' : initials;
+    return initials.isEmpty ? 'LS' : initials;
   }
 
   String _fallback(String value, String fallback) {

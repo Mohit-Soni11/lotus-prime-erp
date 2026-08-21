@@ -183,6 +183,7 @@ class _SalesBillingWorkspaceScreenState
                         onPrintBuybackPolicyChanged:
                             _controller.updatePrintBuybackPolicy,
                         onPrintFooterChanged: _controller.updatePrintFooter,
+                        onTemplateChanged: _controller.updateSelectedTemplate,
                       ),
                       const SizedBox(height: 32),
                       _SaveButton(

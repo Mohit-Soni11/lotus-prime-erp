@@ -7,6 +7,8 @@ import '../../../constants/app_routes.dart';
 import '../../../features/print_templates/application/print_template_preview_pdf_service.dart';
 import '../../../features/print_templates/data/print_template_repository.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
+import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
+import '../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../../theme/settings/settings_dashboard/settings_theme.dart';
 
 class PrintTemplatesScreen extends StatefulWidget {
@@ -18,6 +20,8 @@ class PrintTemplatesScreen extends StatefulWidget {
 
 class _PrintTemplatesScreenState extends State<PrintTemplatesScreen> {
   final PrintTemplateRepository _repository = PrintTemplateRepository();
+  final ShopPrintInformationRepository _shopPrintRepository =
+      ShopPrintInformationRepository();
   final PrintTemplatePreviewPdfService _previewService =
       PrintTemplatePreviewPdfService();
   bool _isApplying = false;
@@ -46,6 +50,7 @@ class _PrintTemplatesScreenState extends State<PrintTemplatesScreen> {
       builder: (context) => _TemplatePreviewDialog(
         template: template,
         previewService: _previewService,
+        shopProfileFuture: _shopPrintRepository.loadDocumentProfile(),
       ),
     );
   }
@@ -534,10 +539,12 @@ class _TemplateThumbnail extends StatelessWidget {
 class _TemplatePreviewDialog extends StatefulWidget {
   final PrintTemplateDefinition template;
   final PrintTemplatePreviewPdfService previewService;
+  final Future<ShopPrintDocumentProfile> shopProfileFuture;
 
   const _TemplatePreviewDialog({
     required this.template,
     required this.previewService,
+    required this.shopProfileFuture,
   });
 
   @override
@@ -582,27 +589,42 @@ class _TemplatePreviewDialogState extends State<_TemplatePreviewDialog> {
                   onChanged: (type) => setState(() => _selectedType = type),
                 ),
                 Expanded(
-                  child: PdfPreview(
-                    key:
-                        ValueKey('${widget.template.id}-${_selectedType.name}'),
-                    build: (format) => widget.previewService.build(
-                      template: widget.template,
-                      documentType: _selectedType,
-                      pageFormat: format,
-                    ),
-                    initialPageFormat: PdfPageFormat.a4,
-                    allowPrinting: false,
-                    allowSharing: false,
-                    canChangeOrientation: false,
-                    canChangePageFormat: false,
-                    canDebug: false,
-                    useActions: false,
-                    maxPageWidth: 760,
-                    pdfFileName:
-                        '${widget.template.id}_${_selectedType.name}_preview.pdf',
-                    scrollViewDecoration: const BoxDecoration(
-                      color: Color(0xFF111827),
-                    ),
+                  child: FutureBuilder<ShopPrintDocumentProfile>(
+                    future: widget.shopProfileFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFD4AF37),
+                          ),
+                        );
+                      }
+
+                      return PdfPreview(
+                        key: ValueKey(
+                          '${widget.template.id}-${_selectedType.name}-${snapshot.data?.tenantId ?? 'fallback'}',
+                        ),
+                        build: (format) => widget.previewService.build(
+                          template: widget.template,
+                          documentType: _selectedType,
+                          pageFormat: format,
+                          shopProfile: snapshot.data,
+                        ),
+                        initialPageFormat: PdfPageFormat.a4,
+                        allowPrinting: false,
+                        allowSharing: false,
+                        canChangeOrientation: false,
+                        canChangePageFormat: false,
+                        canDebug: false,
+                        useActions: false,
+                        maxPageWidth: 760,
+                        pdfFileName:
+                            '${widget.template.id}_${_selectedType.name}_preview.pdf',
+                        scrollViewDecoration: const BoxDecoration(
+                          color: Color(0xFF111827),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

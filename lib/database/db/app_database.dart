@@ -1890,6 +1890,78 @@ class AppDatabase extends _$AppDatabase {
     for (final statement in _billingSetupSchemaSafetySql) {
       await runIfNeeded(statement);
     }
+    await _migrateLegacySalesBillingPrintPreferences();
+  }
+
+  Future<void> _migrateLegacySalesBillingPrintPreferences() async {
+    const marker = '|print:';
+    try {
+      final rows = await customSelect(
+        '''
+        SELECT "id", "selected_template"
+        FROM "sales_billing_settings"
+        WHERE "selected_template" LIKE ?
+        ''',
+        variables: [Variable.withString('%$marker%')],
+      ).get();
+
+      for (final row in rows) {
+        final id = row.read<int>('id');
+        final storedTemplate = row.read<String>('selected_template');
+        final markerIndex = storedTemplate.indexOf(marker);
+        if (markerIndex == -1) continue;
+
+        final baseTemplate = storedTemplate.substring(0, markerIndex).trim();
+        final payload = storedTemplate.substring(markerIndex + marker.length);
+        final flags = _parseLegacySalesPrintFlags(payload);
+
+        await customStatement(
+          '''
+          UPDATE "sales_billing_settings"
+          SET
+            "selected_template" = ?,
+            "print_terms_and_conditions" = ?,
+            "print_return_policy" = ?,
+            "print_buyback_policy" = ?,
+            "print_footer_message" = ?
+          WHERE "id" = ?
+          ''',
+          [
+            baseTemplate.isEmpty ? 'default' : baseTemplate,
+            flags['terms'] == true ? 1 : 0,
+            flags['return'] == true ? 1 : 0,
+            flags['buyback'] == true ? 1 : 0,
+            flags['footer'] == false ? 0 : 1,
+            id,
+          ],
+        );
+      }
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Legacy sales billing print preference migration skipped: $error',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Map<String, bool> _parseLegacySalesPrintFlags(String payload) {
+    final values = <String, bool>{
+      'terms': false,
+      'return': false,
+      'buyback': false,
+      'footer': true,
+    };
+
+    for (final part in payload.split(',')) {
+      final pieces = part.split('=');
+      if (pieces.length != 2) continue;
+      final key = pieces.first.trim();
+      if (!values.containsKey(key)) continue;
+      values[key] = pieces.last.trim() == '1';
+    }
+
+    return values;
   }
 
   Future<void> _repairBillingSetupTables(Migrator m) async {
@@ -1973,6 +2045,14 @@ class AppDatabase extends _$AppDatabase {
         m.addColumn(salesBillingSettings, salesBillingSettings.footerMessage));
     await runIfNeeded(() => m.addColumn(
         salesBillingSettings, salesBillingSettings.selectedTemplate));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.printTermsAndConditions));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.printReturnPolicy));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.printBuybackPolicy));
+    await runIfNeeded(() => m.addColumn(
+        salesBillingSettings, salesBillingSettings.printFooterMessage));
 
     await runIfNeeded(() => m.addColumn(
         purchaseBillingSettings, purchaseBillingSettings.showGrossWeight));
@@ -2154,7 +2234,11 @@ const List<String> _billingSetupSchemaSafetySql = [
     "return_policy_text" TEXT NOT NULL DEFAULT '',
     "buyback_policy_text" TEXT NOT NULL DEFAULT '',
     "footer_message" TEXT NOT NULL DEFAULT '',
-    "selected_template" TEXT NOT NULL DEFAULT 'default'
+    "selected_template" TEXT NOT NULL DEFAULT 'default',
+    "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 0,
+    "print_return_policy" INTEGER NOT NULL DEFAULT 0,
+    "print_buyback_policy" INTEGER NOT NULL DEFAULT 0,
+    "print_footer_message" INTEGER NOT NULL DEFAULT 1
   )
   ''',
   '''
@@ -2253,6 +2337,10 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "buyback_policy_text" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_return_policy" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_buyback_policy" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "sales_billing_settings" ADD COLUMN "print_footer_message" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "updated_at" INTEGER',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "metal" TEXT NOT NULL DEFAULT ""',

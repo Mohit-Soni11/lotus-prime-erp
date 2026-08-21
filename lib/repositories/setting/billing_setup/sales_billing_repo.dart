@@ -93,12 +93,20 @@ class SalesBillingRepo {
       returnPolicyText: Value(model.returnPolicyText),
       buybackPolicyText: Value(model.buybackPolicyText),
       footerMessage: Value(model.footerMessage),
-      selectedTemplate: Value(SalesBillingTemplateOptions.encode(model)),
+      selectedTemplate: Value(
+        _resolveTemplateId(model.selectedTemplate),
+      ),
+      printTermsAndConditions: Value(model.printTermsAndConditions),
+      printReturnPolicy: Value(model.printReturnPolicy),
+      printBuybackPolicy: Value(model.printBuybackPolicy),
+      printFooterMessage: Value(model.printFooterMessage),
     );
   }
 
   SalesBillingModel _rowToModel(SalesBillingSetting row) {
     final storedTemplate = row.selectedTemplate;
+    final hasLegacyPrintOptions =
+        SalesBillingTemplateOptions.hasLegacyPrintOptions(storedTemplate);
     return SalesBillingModel(
       metal: row.metal,
       showPieces: row.showPieces,
@@ -135,26 +143,57 @@ class SalesBillingRepo {
       selectedTemplate: SalesBillingTemplateOptions.baseTemplate(
         storedTemplate,
       ),
-      printTermsAndConditions: SalesBillingTemplateOptions.readFlag(
-        storedTemplate,
-        'terms',
+      printTermsAndConditions: _resolvePrintFlag(
+        storedTemplate: storedTemplate,
+        hasLegacyPrintOptions: hasLegacyPrintOptions,
+        key: 'terms',
+        storedValue: row.printTermsAndConditions,
         defaultValue: false,
       ),
-      printReturnPolicy: SalesBillingTemplateOptions.readFlag(
-        storedTemplate,
-        'return',
+      printReturnPolicy: _resolvePrintFlag(
+        storedTemplate: storedTemplate,
+        hasLegacyPrintOptions: hasLegacyPrintOptions,
+        key: 'return',
+        storedValue: row.printReturnPolicy,
         defaultValue: false,
       ),
-      printBuybackPolicy: SalesBillingTemplateOptions.readFlag(
-        storedTemplate,
-        'buyback',
+      printBuybackPolicy: _resolvePrintFlag(
+        storedTemplate: storedTemplate,
+        hasLegacyPrintOptions: hasLegacyPrintOptions,
+        key: 'buyback',
+        storedValue: row.printBuybackPolicy,
         defaultValue: false,
       ),
-      printFooterMessage: SalesBillingTemplateOptions.readFlag(
-        storedTemplate,
-        'footer',
+      printFooterMessage: _resolvePrintFlag(
+        storedTemplate: storedTemplate,
+        hasLegacyPrintOptions: hasLegacyPrintOptions,
+        key: 'footer',
+        storedValue: row.printFooterMessage,
         defaultValue: true,
       ),
+    );
+  }
+
+  String _resolveTemplateId(String selectedTemplate) {
+    final baseTemplate =
+        SalesBillingTemplateOptions.baseTemplate(selectedTemplate).trim();
+    return baseTemplate.isEmpty
+        ? TemplateOptions.defaultTemplate
+        : baseTemplate;
+  }
+
+  bool _resolvePrintFlag({
+    required String storedTemplate,
+    required bool hasLegacyPrintOptions,
+    required String key,
+    required bool storedValue,
+    required bool defaultValue,
+  }) {
+    if (!hasLegacyPrintOptions) return storedValue;
+    return SalesBillingTemplateOptions.readFlag(
+      storedTemplate,
+      key,
+      defaultValue: defaultValue,
     );
   }
 }

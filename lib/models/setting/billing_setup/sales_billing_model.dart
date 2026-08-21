@@ -76,6 +76,10 @@ class TemplateOptions {
 class SalesBillingTemplateOptions {
   static const String _marker = '|print:';
 
+  static bool hasLegacyPrintOptions(String storedTemplate) {
+    return storedTemplate.contains(_marker);
+  }
+
   static String baseTemplate(String storedTemplate) {
     final markerIndex = storedTemplate.indexOf(_marker);
     if (markerIndex == -1) return storedTemplate;
@@ -99,21 +103,6 @@ class SalesBillingTemplateOptions {
       }
     }
     return defaultValue;
-  }
-
-  static String encode(SalesBillingModel model) {
-    final baseTemplate = SalesBillingTemplateOptions.baseTemplate(
-      model.selectedTemplate,
-    ).trim();
-    final resolvedTemplate =
-        baseTemplate.isEmpty ? TemplateOptions.defaultTemplate : baseTemplate;
-    final flags = [
-      'terms=${model.printTermsAndConditions ? 1 : 0}',
-      'return=${model.printReturnPolicy ? 1 : 0}',
-      'buyback=${model.printBuybackPolicy ? 1 : 0}',
-      'footer=${model.printFooterMessage ? 1 : 0}',
-    ].join(',');
-    return '$resolvedTemplate$_marker$flags';
   }
 }
 

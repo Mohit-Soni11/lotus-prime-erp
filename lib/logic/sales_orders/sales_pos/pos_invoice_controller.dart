@@ -129,6 +129,7 @@ class PosInvoiceController extends ChangeNotifier {
   Future<void> setActivePrintMetal(MetalType metal) async {
     if (activePrintMetal == metal) return;
     activePrintMetal = metal;
+    _applyTemplateForActiveMetal();
     notifyListeners();
     await _refreshActivePreviewPdf();
   }
@@ -310,6 +311,7 @@ class PosInvoiceController extends ChangeNotifier {
     }
 
     metalPrintSettings[metal] = restored;
+    _applyTemplateForActiveMetal(preferredMetal: metal);
 
     if (invoice != null) {
       await _refreshActivePreviewPdf();
@@ -322,6 +324,7 @@ class PosInvoiceController extends ChangeNotifier {
     if (metal == null) return;
 
     metalPrintSettings[metal] = _settingsFromBillingSetup(model);
+    _applyTemplateForActiveMetal(preferredMetal: metal);
 
     if (invoice != null) {
       await _refreshActivePreviewPdf();
@@ -422,12 +425,21 @@ class PosInvoiceController extends ChangeNotifier {
       activePrintMetal = metals.first;
     }
     if (metals.isNotEmpty) {
-      final configuredTemplate =
-          settings[activePrintMetal ?? metals.first]?.selectedTemplate ?? '';
-      if (configuredTemplate.trim().isNotEmpty) {
-        selectedTemplateId = PrintTemplateRegistry.byId(configuredTemplate).id;
-      }
+      _applyTemplateForActiveMetal();
     }
+  }
+
+  void _applyTemplateForActiveMetal({MetalType? preferredMetal}) {
+    final metal = preferredMetal ?? effectiveActiveMetal;
+    if (metal == null) return;
+    if (preferredMetal != null && effectiveActiveMetal != preferredMetal) {
+      return;
+    }
+
+    final configuredTemplate =
+        metalPrintSettings[metal]?.selectedTemplate.trim() ?? '';
+    if (configuredTemplate.isEmpty) return;
+    selectedTemplateId = PrintTemplateRegistry.byId(configuredTemplate).id;
   }
 
   List<MetalType> _collectMetals(PosInvoiceModel inv) {

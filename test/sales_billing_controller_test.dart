@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/features/settings/billing_setup/sales/application/sales_billing_controller.dart';
 import 'package:lotus_erp/features/settings/billing_setup/sales/data/sales_billing_settings_repository.dart';
 import 'package:lotus_erp/features/settings/billing_setup/sales/domain/sales_billing_metal_profile.dart';
@@ -73,6 +74,83 @@ void main() {
         SalesBillingModel.defaultFor(
           BillingMetal.silver,
         ).returnWindowDays);
+  });
+
+  test('Sales Billing saves the selected print template for the metal',
+      () async {
+    await controller.load();
+
+    controller.updateSelectedTemplate(PrintTemplateRegistry.lotusSignature.id);
+
+    expect(controller.state.isCurrentDirty, isTrue);
+    expect(await controller.saveCurrent(), isTrue);
+
+    final gold = await repo.fetchForMetal(BillingMetal.gold);
+    expect(gold.selectedTemplate, PrintTemplateRegistry.lotusSignature.id);
+  });
+
+  test('Sales Billing stores print preferences in dedicated columns', () async {
+    final model = SalesBillingModel.defaultFor(BillingMetal.gold).copyWith(
+      selectedTemplate: PrintTemplateRegistry.lotusClassic.id,
+      printTermsAndConditions: true,
+      printReturnPolicy: true,
+      printBuybackPolicy: false,
+      printFooterMessage: false,
+    );
+
+    expect(await repo.saveForMetal(model), isTrue);
+
+    final row = await (db.select(db.salesBillingSettings)
+          ..where((table) => table.metal.equals(BillingMetal.gold)))
+        .getSingle();
+
+    expect(row.selectedTemplate, PrintTemplateRegistry.lotusClassic.id);
+    expect(row.printTermsAndConditions, isTrue);
+    expect(row.printReturnPolicy, isTrue);
+    expect(row.printBuybackPolicy, isFalse);
+    expect(row.printFooterMessage, isFalse);
+  });
+
+  test('Sales Billing migrates legacy encoded print preferences', () async {
+    await db.ensureBillingSetupSchema();
+    await db.customStatement(
+      '''
+      INSERT INTO "sales_billing_settings" (
+        "metal",
+        "selected_template"
+      ) VALUES (?, ?)
+      ''',
+      [
+        BillingMetal.gold,
+        '${PrintTemplateRegistry.lotusSignature.id}|print:terms=1,return=1,buyback=1,footer=0',
+      ],
+    );
+
+    final loaded = await repo.fetchForMetal(BillingMetal.gold);
+    expect(loaded.selectedTemplate, PrintTemplateRegistry.lotusSignature.id);
+    expect(loaded.printTermsAndConditions, isTrue);
+    expect(loaded.printReturnPolicy, isTrue);
+    expect(loaded.printBuybackPolicy, isTrue);
+    expect(loaded.printFooterMessage, isFalse);
+
+    final row = await (db.select(db.salesBillingSettings)
+          ..where((table) => table.metal.equals(BillingMetal.gold)))
+        .getSingle();
+    expect(row.selectedTemplate, PrintTemplateRegistry.lotusSignature.id);
+    expect(row.printTermsAndConditions, isTrue);
+    expect(row.printReturnPolicy, isTrue);
+    expect(row.printBuybackPolicy, isTrue);
+    expect(row.printFooterMessage, isFalse);
+  });
+
+  test('Sales Billing ignores unknown print template ids', () async {
+    await controller.load();
+
+    controller.updateSelectedTemplate('unknown-template');
+
+    expect(controller.state.currentSettings?.selectedTemplate,
+        PrintTemplateRegistry.defaultTemplateId);
+    expect(controller.state.isCurrentDirty, isFalse);
   });
 
   test('Sales Billing blocks invalid policy values before saving', () async {

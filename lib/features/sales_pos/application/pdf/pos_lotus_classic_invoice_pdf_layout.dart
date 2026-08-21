@@ -250,7 +250,8 @@ class PosLotusClassicInvoicePdfLayout {
       return invoice.shopPrintHeaderLines;
     }
     if (invoice.shopPrintHeaderLines.isEmpty) {
-      return [_fallback(invoice.shopAddress, 'PATNA')];
+      final configuredAddress = invoice.shopAddress.trim();
+      return configuredAddress.isEmpty ? const [] : [configuredAddress];
     }
     return invoice.shopPrintHeaderLines;
   }
@@ -1341,9 +1342,9 @@ class PosLotusClassicInvoicePdfLayout {
         .split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty)
         .toList();
-    if (words.isEmpty) return 'AJ';
+    if (words.isEmpty) return 'LS';
     final initials = words.take(2).map((word) => word[0].toUpperCase()).join();
-    return initials.isEmpty ? 'AJ' : initials;
+    return initials.isEmpty ? 'LS' : initials;
   }
 
   pw.MemoryImage? _loadLogoImage(String rawPath) {

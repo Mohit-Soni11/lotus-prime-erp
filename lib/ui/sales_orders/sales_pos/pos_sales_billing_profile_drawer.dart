@@ -205,6 +205,8 @@ class _PosSalesBillingProfileDrawerState
                                   _controller.updatePrintBuybackPolicy,
                               onPrintFooterChanged:
                                   _controller.updatePrintFooter,
+                              onTemplateChanged:
+                                  _controller.updateSelectedTemplate,
                             ),
                           ],
                         ),

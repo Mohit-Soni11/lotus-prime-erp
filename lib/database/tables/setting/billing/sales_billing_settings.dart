@@ -120,9 +120,17 @@ class SalesBillingSettings extends Table with BaseTable {
   // ═══════════════════════════════════════════════════════════════════════════
   // SECTION 4 — PRINT TEMPLATE
   // Which invoice template to use when printing this metal's bill.
-  // Currently only 'default'. Future: 'thermal_58mm', 'a4_gst', 'a5_minimal'
   // ═══════════════════════════════════════════════════════════════════════════
 
   TextColumn get selectedTemplate =>
       text().withDefault(const Constant('default'))();
+
+  BoolColumn get printTermsAndConditions =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get printReturnPolicy =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get printBuybackPolicy =>
+      boolean().withDefault(const Constant(false))();
+  BoolColumn get printFooterMessage =>
+      boolean().withDefault(const Constant(true))();
 }

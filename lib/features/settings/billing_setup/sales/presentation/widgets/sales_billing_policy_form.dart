@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../../../models/setting/billing_setup/sales_billing_model.dart';
 import '../../../../../../../theme/settings/billing_setup/billing_setup_colors.dart';
+import '../../../../../../../theme/settings/billing_setup/billing_setup_strings.dart';
 import '../../domain/sales_billing_metal_profile.dart';
 import '../../domain/sales_billing_policy_input.dart';
 import 'sales_billing_section_card.dart';
@@ -28,6 +29,7 @@ class SalesBillingPolicyForm extends StatelessWidget {
   final ValueChanged<bool> onPrintReturnPolicyChanged;
   final ValueChanged<bool> onPrintBuybackPolicyChanged;
   final ValueChanged<bool> onPrintFooterChanged;
+  final ValueChanged<String> onTemplateChanged;
 
   const SalesBillingPolicyForm({
     super.key,
@@ -48,6 +50,7 @@ class SalesBillingPolicyForm extends StatelessWidget {
     required this.onPrintReturnPolicyChanged,
     required this.onPrintBuybackPolicyChanged,
     required this.onPrintFooterChanged,
+    required this.onTemplateChanged,
   });
 
   @override
@@ -108,7 +111,114 @@ class SalesBillingPolicyForm extends StatelessWidget {
             onPrintFooterChanged: onPrintFooterChanged,
           ),
         ),
+        const SizedBox(height: 16),
+        SalesBillingSectionCard(
+          title: 'Invoice Design Template',
+          subtitle: 'Choose the default PDF layout used by new sales invoices',
+          icon: Icons.design_services_outlined,
+          accent: accent,
+          child: _TemplateFields(
+            model: model,
+            accent: accent,
+            onTemplateChanged: onTemplateChanged,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _TemplateFields extends StatelessWidget {
+  final SalesBillingModel model;
+  final Color accent;
+  final ValueChanged<String> onTemplateChanged;
+
+  const _TemplateFields({
+    required this.model,
+    required this.accent,
+    required this.onTemplateChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SelectInput(
+          label: BillingSetupStrings.lblTemplate,
+          helper:
+              'Saved per metal and applied automatically in New Sales invoice preview.',
+          value: model.selectedTemplate,
+          items: TemplateOptions.all,
+          itemLabel: TemplateOptions.labelFor,
+          accent: accent,
+          onChanged: onTemplateChanged,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: TemplateOptions.all
+              .map(
+                (templateId) => _TemplateStatusChip(
+                  label: TemplateOptions.labelFor(templateId),
+                  selected: templateId == model.selectedTemplate,
+                  accent: accent,
+                ),
+              )
+              .toList(growable: false),
+        ),
+      ],
+    );
+  }
+}
+
+class _TemplateStatusChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color accent;
+
+  const _TemplateStatusChip({
+    required this.label,
+    required this.selected,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: selected ? accent.withValues(alpha: 0.10) : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: selected
+              ? accent.withValues(alpha: 0.42)
+              : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            selected
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
+            size: 15,
+            color: selected ? accent : BillingSetupColors.textMuted,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: selected ? accent : BillingSetupColors.textDark,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

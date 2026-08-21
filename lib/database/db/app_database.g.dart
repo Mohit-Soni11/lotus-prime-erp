@@ -27528,6 +27528,46 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('default'));
+  static const VerificationMeta _printTermsAndConditionsMeta =
+      const VerificationMeta('printTermsAndConditions');
+  @override
+  late final GeneratedColumn<bool> printTermsAndConditions =
+      GeneratedColumn<bool>('print_terms_and_conditions', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("print_terms_and_conditions" IN (0, 1))'),
+          defaultValue: const Constant(false));
+  static const VerificationMeta _printReturnPolicyMeta =
+      const VerificationMeta('printReturnPolicy');
+  @override
+  late final GeneratedColumn<bool> printReturnPolicy = GeneratedColumn<bool>(
+      'print_return_policy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_return_policy" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _printBuybackPolicyMeta =
+      const VerificationMeta('printBuybackPolicy');
+  @override
+  late final GeneratedColumn<bool> printBuybackPolicy = GeneratedColumn<bool>(
+      'print_buyback_policy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_buyback_policy" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _printFooterMessageMeta =
+      const VerificationMeta('printFooterMessage');
+  @override
+  late final GeneratedColumn<bool> printFooterMessage = GeneratedColumn<bool>(
+      'print_footer_message', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_footer_message" IN (0, 1))'),
+      defaultValue: const Constant(true));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -27565,7 +27605,11 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
         returnPolicyText,
         buybackPolicyText,
         footerMessage,
-        selectedTemplate
+        selectedTemplate,
+        printTermsAndConditions,
+        printReturnPolicy,
+        printBuybackPolicy,
+        printFooterMessage
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -27784,6 +27828,31 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
           selectedTemplate.isAcceptableOrUnknown(
               data['selected_template']!, _selectedTemplateMeta));
     }
+    if (data.containsKey('print_terms_and_conditions')) {
+      context.handle(
+          _printTermsAndConditionsMeta,
+          printTermsAndConditions.isAcceptableOrUnknown(
+              data['print_terms_and_conditions']!,
+              _printTermsAndConditionsMeta));
+    }
+    if (data.containsKey('print_return_policy')) {
+      context.handle(
+          _printReturnPolicyMeta,
+          printReturnPolicy.isAcceptableOrUnknown(
+              data['print_return_policy']!, _printReturnPolicyMeta));
+    }
+    if (data.containsKey('print_buyback_policy')) {
+      context.handle(
+          _printBuybackPolicyMeta,
+          printBuybackPolicy.isAcceptableOrUnknown(
+              data['print_buyback_policy']!, _printBuybackPolicyMeta));
+    }
+    if (data.containsKey('print_footer_message')) {
+      context.handle(
+          _printFooterMessageMeta,
+          printFooterMessage.isAcceptableOrUnknown(
+              data['print_footer_message']!, _printFooterMessageMeta));
+    }
     return context;
   }
 
@@ -27867,6 +27936,15 @@ class $SalesBillingSettingsTable extends SalesBillingSettings
           .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
       selectedTemplate: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}selected_template'])!,
+      printTermsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}print_terms_and_conditions'])!,
+      printReturnPolicy: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_return_policy'])!,
+      printBuybackPolicy: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_buyback_policy'])!,
+      printFooterMessage: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_footer_message'])!,
     );
   }
 
@@ -27914,6 +27992,10 @@ class SalesBillingSetting extends DataClass
   final String buybackPolicyText;
   final String footerMessage;
   final String selectedTemplate;
+  final bool printTermsAndConditions;
+  final bool printReturnPolicy;
+  final bool printBuybackPolicy;
+  final bool printFooterMessage;
   const SalesBillingSetting(
       {required this.id,
       required this.createdAt,
@@ -27950,7 +28032,11 @@ class SalesBillingSetting extends DataClass
       required this.returnPolicyText,
       required this.buybackPolicyText,
       required this.footerMessage,
-      required this.selectedTemplate});
+      required this.selectedTemplate,
+      required this.printTermsAndConditions,
+      required this.printReturnPolicy,
+      required this.printBuybackPolicy,
+      required this.printFooterMessage});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -27993,6 +28079,10 @@ class SalesBillingSetting extends DataClass
     map['buyback_policy_text'] = Variable<String>(buybackPolicyText);
     map['footer_message'] = Variable<String>(footerMessage);
     map['selected_template'] = Variable<String>(selectedTemplate);
+    map['print_terms_and_conditions'] = Variable<bool>(printTermsAndConditions);
+    map['print_return_policy'] = Variable<bool>(printReturnPolicy);
+    map['print_buyback_policy'] = Variable<bool>(printBuybackPolicy);
+    map['print_footer_message'] = Variable<bool>(printFooterMessage);
     return map;
   }
 
@@ -28036,6 +28126,10 @@ class SalesBillingSetting extends DataClass
       buybackPolicyText: Value(buybackPolicyText),
       footerMessage: Value(footerMessage),
       selectedTemplate: Value(selectedTemplate),
+      printTermsAndConditions: Value(printTermsAndConditions),
+      printReturnPolicy: Value(printReturnPolicy),
+      printBuybackPolicy: Value(printBuybackPolicy),
+      printFooterMessage: Value(printFooterMessage),
     );
   }
 
@@ -28085,6 +28179,11 @@ class SalesBillingSetting extends DataClass
       buybackPolicyText: serializer.fromJson<String>(json['buybackPolicyText']),
       footerMessage: serializer.fromJson<String>(json['footerMessage']),
       selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
+      printTermsAndConditions:
+          serializer.fromJson<bool>(json['printTermsAndConditions']),
+      printReturnPolicy: serializer.fromJson<bool>(json['printReturnPolicy']),
+      printBuybackPolicy: serializer.fromJson<bool>(json['printBuybackPolicy']),
+      printFooterMessage: serializer.fromJson<bool>(json['printFooterMessage']),
     );
   }
   @override
@@ -28128,6 +28227,11 @@ class SalesBillingSetting extends DataClass
       'buybackPolicyText': serializer.toJson<String>(buybackPolicyText),
       'footerMessage': serializer.toJson<String>(footerMessage),
       'selectedTemplate': serializer.toJson<String>(selectedTemplate),
+      'printTermsAndConditions':
+          serializer.toJson<bool>(printTermsAndConditions),
+      'printReturnPolicy': serializer.toJson<bool>(printReturnPolicy),
+      'printBuybackPolicy': serializer.toJson<bool>(printBuybackPolicy),
+      'printFooterMessage': serializer.toJson<bool>(printFooterMessage),
     };
   }
 
@@ -28167,7 +28271,11 @@ class SalesBillingSetting extends DataClass
           String? returnPolicyText,
           String? buybackPolicyText,
           String? footerMessage,
-          String? selectedTemplate}) =>
+          String? selectedTemplate,
+          bool? printTermsAndConditions,
+          bool? printReturnPolicy,
+          bool? printBuybackPolicy,
+          bool? printFooterMessage}) =>
       SalesBillingSetting(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -28207,6 +28315,11 @@ class SalesBillingSetting extends DataClass
         buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
         footerMessage: footerMessage ?? this.footerMessage,
         selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+        printTermsAndConditions:
+            printTermsAndConditions ?? this.printTermsAndConditions,
+        printReturnPolicy: printReturnPolicy ?? this.printReturnPolicy,
+        printBuybackPolicy: printBuybackPolicy ?? this.printBuybackPolicy,
+        printFooterMessage: printFooterMessage ?? this.printFooterMessage,
       );
   SalesBillingSetting copyWithCompanion(SalesBillingSettingsCompanion data) {
     return SalesBillingSetting(
@@ -28301,6 +28414,18 @@ class SalesBillingSetting extends DataClass
       selectedTemplate: data.selectedTemplate.present
           ? data.selectedTemplate.value
           : this.selectedTemplate,
+      printTermsAndConditions: data.printTermsAndConditions.present
+          ? data.printTermsAndConditions.value
+          : this.printTermsAndConditions,
+      printReturnPolicy: data.printReturnPolicy.present
+          ? data.printReturnPolicy.value
+          : this.printReturnPolicy,
+      printBuybackPolicy: data.printBuybackPolicy.present
+          ? data.printBuybackPolicy.value
+          : this.printBuybackPolicy,
+      printFooterMessage: data.printFooterMessage.present
+          ? data.printFooterMessage.value
+          : this.printFooterMessage,
     );
   }
 
@@ -28342,7 +28467,11 @@ class SalesBillingSetting extends DataClass
           ..write('returnPolicyText: $returnPolicyText, ')
           ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
-          ..write('selectedTemplate: $selectedTemplate')
+          ..write('selectedTemplate: $selectedTemplate, ')
+          ..write('printTermsAndConditions: $printTermsAndConditions, ')
+          ..write('printReturnPolicy: $printReturnPolicy, ')
+          ..write('printBuybackPolicy: $printBuybackPolicy, ')
+          ..write('printFooterMessage: $printFooterMessage')
           ..write(')'))
         .toString();
   }
@@ -28384,7 +28513,11 @@ class SalesBillingSetting extends DataClass
         returnPolicyText,
         buybackPolicyText,
         footerMessage,
-        selectedTemplate
+        selectedTemplate,
+        printTermsAndConditions,
+        printReturnPolicy,
+        printBuybackPolicy,
+        printFooterMessage
       ]);
   @override
   bool operator ==(Object other) =>
@@ -28425,7 +28558,11 @@ class SalesBillingSetting extends DataClass
           other.returnPolicyText == this.returnPolicyText &&
           other.buybackPolicyText == this.buybackPolicyText &&
           other.footerMessage == this.footerMessage &&
-          other.selectedTemplate == this.selectedTemplate);
+          other.selectedTemplate == this.selectedTemplate &&
+          other.printTermsAndConditions == this.printTermsAndConditions &&
+          other.printReturnPolicy == this.printReturnPolicy &&
+          other.printBuybackPolicy == this.printBuybackPolicy &&
+          other.printFooterMessage == this.printFooterMessage);
 }
 
 class SalesBillingSettingsCompanion
@@ -28466,6 +28603,10 @@ class SalesBillingSettingsCompanion
   final Value<String> buybackPolicyText;
   final Value<String> footerMessage;
   final Value<String> selectedTemplate;
+  final Value<bool> printTermsAndConditions;
+  final Value<bool> printReturnPolicy;
+  final Value<bool> printBuybackPolicy;
+  final Value<bool> printFooterMessage;
   const SalesBillingSettingsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -28503,6 +28644,10 @@ class SalesBillingSettingsCompanion
     this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
+    this.printTermsAndConditions = const Value.absent(),
+    this.printReturnPolicy = const Value.absent(),
+    this.printBuybackPolicy = const Value.absent(),
+    this.printFooterMessage = const Value.absent(),
   });
   SalesBillingSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -28541,6 +28686,10 @@ class SalesBillingSettingsCompanion
     this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
+    this.printTermsAndConditions = const Value.absent(),
+    this.printReturnPolicy = const Value.absent(),
+    this.printBuybackPolicy = const Value.absent(),
+    this.printFooterMessage = const Value.absent(),
   }) : metal = Value(metal);
   static Insertable<SalesBillingSetting> custom({
     Expression<int>? id,
@@ -28579,6 +28728,10 @@ class SalesBillingSettingsCompanion
     Expression<String>? buybackPolicyText,
     Expression<String>? footerMessage,
     Expression<String>? selectedTemplate,
+    Expression<bool>? printTermsAndConditions,
+    Expression<bool>? printReturnPolicy,
+    Expression<bool>? printBuybackPolicy,
+    Expression<bool>? printFooterMessage,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -28624,6 +28777,13 @@ class SalesBillingSettingsCompanion
       if (buybackPolicyText != null) 'buyback_policy_text': buybackPolicyText,
       if (footerMessage != null) 'footer_message': footerMessage,
       if (selectedTemplate != null) 'selected_template': selectedTemplate,
+      if (printTermsAndConditions != null)
+        'print_terms_and_conditions': printTermsAndConditions,
+      if (printReturnPolicy != null) 'print_return_policy': printReturnPolicy,
+      if (printBuybackPolicy != null)
+        'print_buyback_policy': printBuybackPolicy,
+      if (printFooterMessage != null)
+        'print_footer_message': printFooterMessage,
     });
   }
 
@@ -28663,7 +28823,11 @@ class SalesBillingSettingsCompanion
       Value<String>? returnPolicyText,
       Value<String>? buybackPolicyText,
       Value<String>? footerMessage,
-      Value<String>? selectedTemplate}) {
+      Value<String>? selectedTemplate,
+      Value<bool>? printTermsAndConditions,
+      Value<bool>? printReturnPolicy,
+      Value<bool>? printBuybackPolicy,
+      Value<bool>? printFooterMessage}) {
     return SalesBillingSettingsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
@@ -28703,6 +28867,11 @@ class SalesBillingSettingsCompanion
       buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      printTermsAndConditions:
+          printTermsAndConditions ?? this.printTermsAndConditions,
+      printReturnPolicy: printReturnPolicy ?? this.printReturnPolicy,
+      printBuybackPolicy: printBuybackPolicy ?? this.printBuybackPolicy,
+      printFooterMessage: printFooterMessage ?? this.printFooterMessage,
     );
   }
 
@@ -28820,6 +28989,19 @@ class SalesBillingSettingsCompanion
     if (selectedTemplate.present) {
       map['selected_template'] = Variable<String>(selectedTemplate.value);
     }
+    if (printTermsAndConditions.present) {
+      map['print_terms_and_conditions'] =
+          Variable<bool>(printTermsAndConditions.value);
+    }
+    if (printReturnPolicy.present) {
+      map['print_return_policy'] = Variable<bool>(printReturnPolicy.value);
+    }
+    if (printBuybackPolicy.present) {
+      map['print_buyback_policy'] = Variable<bool>(printBuybackPolicy.value);
+    }
+    if (printFooterMessage.present) {
+      map['print_footer_message'] = Variable<bool>(printFooterMessage.value);
+    }
     return map;
   }
 
@@ -28861,7 +29043,11 @@ class SalesBillingSettingsCompanion
           ..write('returnPolicyText: $returnPolicyText, ')
           ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
-          ..write('selectedTemplate: $selectedTemplate')
+          ..write('selectedTemplate: $selectedTemplate, ')
+          ..write('printTermsAndConditions: $printTermsAndConditions, ')
+          ..write('printReturnPolicy: $printReturnPolicy, ')
+          ..write('printBuybackPolicy: $printBuybackPolicy, ')
+          ..write('printFooterMessage: $printFooterMessage')
           ..write(')'))
         .toString();
   }
@@ -53042,6 +53228,10 @@ typedef $$SalesBillingSettingsTableCreateCompanionBuilder
   Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
+  Value<bool> printTermsAndConditions,
+  Value<bool> printReturnPolicy,
+  Value<bool> printBuybackPolicy,
+  Value<bool> printFooterMessage,
 });
 typedef $$SalesBillingSettingsTableUpdateCompanionBuilder
     = SalesBillingSettingsCompanion Function({
@@ -53081,6 +53271,10 @@ typedef $$SalesBillingSettingsTableUpdateCompanionBuilder
   Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
+  Value<bool> printTermsAndConditions,
+  Value<bool> printReturnPolicy,
+  Value<bool> printBuybackPolicy,
+  Value<bool> printFooterMessage,
 });
 
 class $$SalesBillingSettingsTableFilterComposer
@@ -53221,6 +53415,22 @@ class $$SalesBillingSettingsTableFilterComposer
 
   ColumnFilters<String> get selectedTemplate => $composableBuilder(
       column: $table.selectedTemplate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printReturnPolicy => $composableBuilder(
+      column: $table.printReturnPolicy,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printBuybackPolicy => $composableBuilder(
+      column: $table.printBuybackPolicy,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -53365,6 +53575,22 @@ class $$SalesBillingSettingsTableOrderingComposer
   ColumnOrderings<String> get selectedTemplate => $composableBuilder(
       column: $table.selectedTemplate,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printReturnPolicy => $composableBuilder(
+      column: $table.printReturnPolicy,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printBuybackPolicy => $composableBuilder(
+      column: $table.printBuybackPolicy,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$SalesBillingSettingsTableAnnotationComposer
@@ -53483,6 +53709,18 @@ class $$SalesBillingSettingsTableAnnotationComposer
 
   GeneratedColumn<String> get selectedTemplate => $composableBuilder(
       column: $table.selectedTemplate, builder: (column) => column);
+
+  GeneratedColumn<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<bool> get printReturnPolicy => $composableBuilder(
+      column: $table.printReturnPolicy, builder: (column) => column);
+
+  GeneratedColumn<bool> get printBuybackPolicy => $composableBuilder(
+      column: $table.printBuybackPolicy, builder: (column) => column);
+
+  GeneratedColumn<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage, builder: (column) => column);
 }
 
 class $$SalesBillingSettingsTableTableManager extends RootTableManager<
@@ -53551,6 +53789,10 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
+            Value<bool> printTermsAndConditions = const Value.absent(),
+            Value<bool> printReturnPolicy = const Value.absent(),
+            Value<bool> printBuybackPolicy = const Value.absent(),
+            Value<bool> printFooterMessage = const Value.absent(),
           }) =>
               SalesBillingSettingsCompanion(
             id: id,
@@ -53589,6 +53831,10 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
+            printTermsAndConditions: printTermsAndConditions,
+            printReturnPolicy: printReturnPolicy,
+            printBuybackPolicy: printBuybackPolicy,
+            printFooterMessage: printFooterMessage,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -53627,6 +53873,10 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
+            Value<bool> printTermsAndConditions = const Value.absent(),
+            Value<bool> printReturnPolicy = const Value.absent(),
+            Value<bool> printBuybackPolicy = const Value.absent(),
+            Value<bool> printFooterMessage = const Value.absent(),
           }) =>
               SalesBillingSettingsCompanion.insert(
             id: id,
@@ -53665,6 +53915,10 @@ class $$SalesBillingSettingsTableTableManager extends RootTableManager<
             buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
+            printTermsAndConditions: printTermsAndConditions,
+            printReturnPolicy: printReturnPolicy,
+            printBuybackPolicy: printBuybackPolicy,
+            printFooterMessage: printFooterMessage,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
