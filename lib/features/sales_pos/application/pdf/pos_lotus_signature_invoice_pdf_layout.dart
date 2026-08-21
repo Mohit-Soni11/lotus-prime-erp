@@ -21,10 +21,14 @@ class PosLotusSignatureInvoicePdfLayout {
   static const _gold = PdfColor(0.72, 0.47, 0.10);
   static const _softGold = PdfColor(0.98, 0.95, 0.88);
   static const _ink = PdfColors.black;
-  static const _muted = PdfColors.grey700;
   static const _line = PdfColor(0.76, 0.67, 0.53);
   static const _success = PdfColor.fromInt(0xFF166534);
   static const _danger = PdfColor.fromInt(0xFFB91C1C);
+  static const _policyEnglishFontSize = 10.9;
+  static const _policyHindiFontSize = 10.4;
+  static const _footerMessageFontSize = 9.0;
+  static const _footerMessageMaxWidth = 360.0;
+  static const _policyPageShopNameMaxWidth = 220.0;
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
@@ -589,24 +593,71 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _policyPageFooter(PosInvoiceModel invoice, pw.Context context) {
     final shopName = _fallback(invoice.printShopName, invoice.shopName);
+    final footerLines = _splitFooterLines(_footerMessage(invoice));
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 12),
       padding: const pw.EdgeInsets.only(top: 8),
       decoration: const pw.BoxDecoration(
         border: pw.Border(top: pw.BorderSide(color: _line, width: 0.7)),
       ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text(
-            shopName.isEmpty ? _invoiceTitle(invoice) : shopName,
-            maxLines: 1,
-            overflow: pw.TextOverflow.clip,
-            style: const pw.TextStyle(fontSize: 7.5, color: _muted),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    for (final line in footerLines)
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.only(bottom: 2),
+                        child: _policyText(
+                          line,
+                          maxWidth: _footerMessageMaxWidth,
+                          style: const pw.TextStyle(
+                            fontSize: _footerMessageFontSize,
+                            color: _ink,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(width: 24),
+              pw.Container(
+                width: 128,
+                child: pw.Column(
+                  children: [
+                    pw.Container(height: 16),
+                    pw.Container(height: 0.7, color: _ink),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Authorized Signature',
+                      style: const pw.TextStyle(fontSize: 8.5, color: _ink),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          pw.Text(
-            'Page ${context.pageNumber} of ${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 7.5, color: _muted),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              _policyText(
+                shopName.isEmpty ? _invoiceTitle(invoice) : shopName,
+                maxWidth: _policyPageShopNameMaxWidth,
+                maxLines: 1,
+                overflow: pw.TextOverflow.clip,
+                style: const pw.TextStyle(fontSize: 7.5, color: _ink),
+              ),
+              pw.Text(
+                'Page ${context.pageNumber} of ${context.pagesCount}',
+                style: const pw.TextStyle(fontSize: 7.5, color: _ink),
+              ),
+            ],
           ),
         ],
       ),
@@ -755,7 +806,11 @@ class PosLotusSignatureInvoicePdfLayout {
                       lines[index],
                       maxWidth: 456,
                       style: pw.TextStyle(
-                        fontSize: index == 0 ? 10.9 : 10.4,
+                        fontSize: PosInvoicePolicyCopy.containsDevanagari(
+                          lines[index],
+                        )
+                            ? _policyHindiFontSize
+                            : _policyEnglishFontSize,
                         color: _ink,
                         lineSpacing: 1.25,
                       ),
@@ -826,10 +881,11 @@ class PosLotusSignatureInvoicePdfLayout {
                     for (final line in _splitFooterLines(footer))
                       pw.Padding(
                         padding: const pw.EdgeInsets.only(bottom: 2),
-                        child: pw.Text(
+                        child: _policyText(
                           line,
+                          maxWidth: _footerMessageMaxWidth,
                           style: const pw.TextStyle(
-                            fontSize: 9,
+                            fontSize: _footerMessageFontSize,
                             color: _ink,
                           ),
                         ),
@@ -1407,7 +1463,7 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _bulletLine(String value) {
     final text = '- $value';
-    const style = pw.TextStyle(fontSize: 8.3, color: _muted);
+    const style = pw.TextStyle(fontSize: 8.3, color: _ink);
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: _policyText(

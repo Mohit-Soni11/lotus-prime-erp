@@ -17,7 +17,7 @@ class PosLotusEconomyInvoicePdfLayout {
   static final _dateFormat = DateFormat('dd MMM yyyy');
 
   static const _ink = PdfColors.black;
-  static const _muted = PdfColors.grey700;
+  static const _muted = PdfColors.black;
   static const _line = PdfColors.grey500;
   static const _lightLine = PdfColors.grey300;
   static const _success = PdfColor.fromInt(0xFF166534);

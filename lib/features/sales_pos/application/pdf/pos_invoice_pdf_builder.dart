@@ -169,6 +169,8 @@ class _PosInvoicePdfDocumentBuilder {
           ),
         )
         .expand((entry) => PosInvoicePolicyCopy.lines(entry.body))
+        .followedBy(_footerTextLines(invoices))
+        .followedBy(_policyPageShopNames(invoices))
         .toSet();
 
     await textRenderer.warmPolicyLines(
@@ -194,9 +196,33 @@ class _PosInvoicePdfDocumentBuilder {
         ),
         const PosInvoicePdfTextSpec(
           fontSize: 8.3,
-          color: PdfColors.grey700,
+          color: PdfColors.black,
           bold: false,
           maxWidth: 470,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 9,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 360,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 7.5,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 360,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 7.5,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 220,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: _pdfLabelSize,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
           fontSize: 8,
@@ -212,6 +238,26 @@ class _PosInvoicePdfDocumentBuilder {
         ),
       ],
     );
+  }
+
+  Iterable<String> _footerTextLines(List<PosInvoiceModel> invoices) sync* {
+    for (final invoice in invoices) {
+      for (final metal in scopeService.collectMetals(invoice)) {
+        final config = options.metalPrintSettings[metal] ?? BillSettings();
+        if (!config.printFooterMessage) continue;
+        yield* PosInvoicePolicyCopy.lines(
+          config.footerMessage,
+          keepBlankLines: false,
+        );
+      }
+    }
+  }
+
+  Iterable<String> _policyPageShopNames(List<PosInvoiceModel> invoices) {
+    return invoices.map((invoice) {
+      final printName = invoice.printShopName.trim();
+      return printName.isEmpty ? invoice.shopName.trim() : printName;
+    }).where((name) => name.isNotEmpty);
   }
 
   double _fallbackPolicyBodyWidth(PdfPageFormat pageFormat) {
@@ -376,7 +422,7 @@ class _PosInvoicePdfDocumentBuilder {
               : null,
         ),
         header: (_) => _policyPageHeader(invoice),
-        footer: (context) => _policyPageFooter(context),
+        footer: (context) => _policyPageFooter(invoice, context),
         build: (_) => _policyPageContent(
           entries,
           bodyWidth: _fallbackPolicyBodyWidth(pageFormat),
@@ -1290,7 +1336,8 @@ class _PosInvoicePdfDocumentBuilder {
     );
   }
 
-  pw.Widget _policyPageFooter(pw.Context context) {
+  pw.Widget _policyPageFooter(PosInvoiceModel invoice, pw.Context context) {
+    final footerLines = _footerTextLinesForInvoice(invoice);
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 10),
       padding: const pw.EdgeInsets.only(top: 6),
@@ -1298,20 +1345,33 @@ class _PosInvoicePdfDocumentBuilder {
         border: pw.Border(top: pw.BorderSide(color: _pdfLightBorderColor)),
       ),
       child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
         children: [
-          pw.Text(
-            'This page is part of the invoice terms and policies.',
-            style: const pw.TextStyle(
-              fontSize: 7.5,
-              color: _pdfMutedTextColor,
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                for (final line in footerLines)
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(bottom: 2),
+                    child: textRenderer.text(
+                      line,
+                      maxWidth: 360,
+                      style: const pw.TextStyle(
+                        fontSize: 7.5,
+                        color: _pdfTextColor,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
+          pw.SizedBox(width: 20),
           pw.Text(
             'Page ${context.pageNumber} of ${context.pagesCount}',
             style: const pw.TextStyle(
               fontSize: 7.5,
-              color: _pdfMutedTextColor,
+              color: _pdfTextColor,
             ),
           ),
         ],
@@ -1441,17 +1501,7 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _pdfFooter(PosInvoiceModel invoice) {
-    final footerMessages = scopeService
-        .collectMetals(invoice)
-        .map((metal) {
-          final config = _getMetalConfig(metal);
-          return config.printFooterMessage ? config.footerMessage.trim() : '';
-        })
-        .where((message) => message.isNotEmpty)
-        .where(_hasPrintableCopy)
-        .toSet()
-        .toList();
-    final footerMessage = footerMessages.join(' | ');
+    final footerLines = _footerTextLinesForInvoice(invoice);
 
     return pw.Column(
       children: [
@@ -1461,12 +1511,22 @@ class _PosInvoicePdfDocumentBuilder {
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
             pw.Expanded(
-              child: pw.Text(
-                footerMessage,
-                style: const pw.TextStyle(
-                  fontSize: _pdfLabelSize,
-                  color: _pdfTextColor,
-                ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  for (final line in footerLines)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(bottom: 2),
+                      child: textRenderer.text(
+                        line,
+                        maxWidth: 360,
+                        style: const pw.TextStyle(
+                          fontSize: _pdfLabelSize,
+                          color: _pdfTextColor,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             pw.Text(
@@ -1482,6 +1542,30 @@ class _PosInvoicePdfDocumentBuilder {
         ),
       ],
     );
+  }
+
+  List<String> _footerTextLinesForInvoice(PosInvoiceModel invoice) {
+    return _footerMessages(invoice)
+        .expand(
+          (message) => PosInvoicePolicyCopy.lines(
+            message,
+            keepBlankLines: false,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  List<String> _footerMessages(PosInvoiceModel invoice) {
+    return scopeService
+        .collectMetals(invoice)
+        .map((metal) {
+          final config = _getMetalConfig(metal);
+          return config.printFooterMessage ? config.footerMessage.trim() : '';
+        })
+        .where((message) => message.isNotEmpty)
+        .where(_hasPrintableCopy)
+        .toSet()
+        .toList(growable: false);
   }
 
   bool _hasPrintableCopy(String value) {
