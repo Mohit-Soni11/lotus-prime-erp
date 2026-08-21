@@ -447,7 +447,7 @@ void main() {
       item.dispose();
     });
 
-    test('hides customer metal settlement when display config disables it', () {
+    test('shows customer metal settlement summary from transaction data', () {
       final item = _saleItem(
         metal: MetalType.gold,
         description: 'Gold Ring',
@@ -470,20 +470,13 @@ void main() {
         invoice,
         showGstBreakup: true,
       ).map((row) => row.label);
-      final hiddenLabels = PosInvoiceFinancialBreakdown.summaryRows(
+      final settlementRow = PosInvoiceFinancialBreakdown.summaryRows(
         invoice,
         showGstBreakup: true,
-        showCustomerMetalSettlement: false,
-      ).map((row) => row.label);
-      final scopedSettlementRow = PosInvoiceFinancialBreakdown.summaryRows(
-        invoice,
-        showGstBreakup: true,
-        customerMetalSettlementAmount: 750,
       ).firstWhere((row) => row.label == 'Customer Metal Settlement');
 
       expect(visibleLabels, contains('Customer Metal Settlement'));
-      expect(hiddenLabels, isNot(contains('Customer Metal Settlement')));
-      expect(scopedSettlementRow.amount, 750);
+      expect(settlementRow.amount, invoice.totalTradeInDeduction);
 
       item.dispose();
       oldMetal.dispose();

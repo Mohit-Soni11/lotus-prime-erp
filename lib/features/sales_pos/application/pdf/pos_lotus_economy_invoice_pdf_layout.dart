@@ -298,13 +298,9 @@ class PosLotusEconomyInvoicePdfLayout {
   pw.Widget _totalsAndPayment(PosInvoiceModel invoice) {
     final payments = PosInvoiceFinancialBreakdown.payments(invoice);
     final status = PosInvoiceFinancialBreakdown.status(invoice);
-    final visibleTradeInItems = _visibleTradeInItems(invoice);
-    final visibleTradeInTotal = _tradeInTotal(visibleTradeInItems);
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: true,
-      showCustomerMetalSettlement: visibleTradeInItems.isNotEmpty,
-      customerMetalSettlementAmount: visibleTradeInTotal,
     );
     final statusColor = status.isDue ? _danger : _success;
 
@@ -656,10 +652,6 @@ class PosLotusEconomyInvoicePdfLayout {
     return invoice.tradeInItems
         .where((item) => _configFor(item.metal).showExchangeBreakdown)
         .toList(growable: false);
-  }
-
-  double _tradeInTotal(List<TradeInItemModel> items) {
-    return items.fold<double>(0, (sum, item) => sum + item.totalValue);
   }
 
   List<String> _policyLines(PosInvoiceModel invoice) {

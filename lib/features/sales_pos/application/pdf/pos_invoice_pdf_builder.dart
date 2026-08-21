@@ -729,12 +729,6 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _pdfTotalsBlock(PosInvoiceModel invoice) {
-    final visibleTradeInItems = _visibleTradeInItems(invoice);
-    final showExchangeBreakdown = visibleTradeInItems.isNotEmpty;
-    final visibleTradeInDeduction = visibleTradeInItems.fold<double>(
-      0,
-      (sum, item) => sum + item.totalValue,
-    );
     final showGstBreakup = scopeService
         .collectMetals(invoice)
         .any((metal) => _getMetalConfig(metal).showGstBreakup);
@@ -761,57 +755,12 @@ class _PosInvoicePdfDocumentBuilder {
                   _totalRow('SGST', invoice.sgst),
                 ],
               ],
-              if (visibleTradeInDeduction > 0) ...[
-                () {
-                  final goldExchange = visibleTradeInItems
-                      .where((item) => item.metal == MetalType.gold)
-                      .fold(0.0, (sum, item) => sum + item.totalValue);
-                  final silverExchange = visibleTradeInItems
-                      .where((item) => item.metal == MetalType.silver)
-                      .fold(0.0, (sum, item) => sum + item.totalValue);
-                  final platinumExchange = visibleTradeInItems
-                      .where((item) => item.metal == MetalType.platinum)
-                      .fold(0.0, (sum, item) => sum + item.totalValue);
-
-                  if (!showExchangeBreakdown) {
-                    return _totalRow(
-                      'Less: Customer Metal Adjustment',
-                      -visibleTradeInDeduction,
-                      isDeduction: true,
-                    );
-                  }
-                  return pw.Column(
-                    children: [
-                      if (goldExchange > 0)
-                        _totalRow(
-                          'Less: Gold Settlement',
-                          -goldExchange,
-                          isDeduction: true,
-                        ),
-                      if (silverExchange > 0)
-                        _totalRow(
-                          'Less: Silver Settlement',
-                          -silverExchange,
-                          isDeduction: true,
-                        ),
-                      if (platinumExchange > 0)
-                        _totalRow(
-                          'Less: Platinum Settlement',
-                          -platinumExchange,
-                          isDeduction: true,
-                        ),
-                      if (goldExchange == 0 &&
-                          silverExchange == 0 &&
-                          platinumExchange == 0)
-                        _totalRow(
-                          'Less: Customer Metal Adjustment',
-                          -visibleTradeInDeduction,
-                          isDeduction: true,
-                        ),
-                    ],
-                  );
-                }(),
-              ],
+              if (invoice.totalTradeInDeduction > 0)
+                _totalRow(
+                  'Less: Customer Metal Settlement',
+                  -invoice.totalTradeInDeduction,
+                  isDeduction: true,
+                ),
               if (invoice.roundOffAmount.abs() > 0.005)
                 _totalRow(
                   'Round Off',
@@ -1713,11 +1662,6 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _thermalTotals(PosInvoiceModel invoice, double fontSize) {
-    final visibleTradeInTotal = _visibleTradeInItems(invoice).fold<double>(
-      0,
-      (sum, item) => sum + item.totalValue,
-    );
-
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -1742,10 +1686,10 @@ class _PosInvoicePdfDocumentBuilder {
           _thermalKeyValue(
               'Total GST', _thermalMoney(invoice.totalGst), fontSize),
         ],
-        if (_showCustomerMetalSettlement(invoice) && visibleTradeInTotal > 0.5)
+        if (invoice.totalTradeInDeduction > 0.5)
           _thermalKeyValue(
             'Metal Adjusted',
-            '- ${_thermalMoney(visibleTradeInTotal)}',
+            '- ${_thermalMoney(invoice.totalTradeInDeduction)}',
             fontSize,
           ),
         if (invoice.roundOffAmount.abs() > 0.005)

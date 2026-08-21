@@ -674,16 +674,12 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   pw.Widget _totalsBlock(PosInvoiceModel invoice) {
-    final visibleTradeInItems = _visibleTradeInItems(invoice);
-    final visibleTradeInTotal = _tradeInTotal(visibleTradeInItems);
     final showGstBreakup = scopeService
         .collectMetals(invoice)
         .any((metal) => _getMetalConfig(metal).showGstBreakup);
     final totalLines = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: showGstBreakup,
-      showCustomerMetalSettlement: visibleTradeInItems.isNotEmpty,
-      customerMetalSettlementAmount: visibleTradeInTotal,
     );
 
     return pw.Container(
@@ -1271,10 +1267,6 @@ class PosLotusClassicInvoicePdfLayout {
     return invoice.tradeInItems
         .where((item) => _getMetalConfig(item.metal).showExchangeBreakdown)
         .toList(growable: false);
-  }
-
-  double _tradeInTotal(List<TradeInItemModel> items) {
-    return items.fold<double>(0, (sum, item) => sum + item.totalValue);
   }
 
   bool _hasPrintableCopy(String value) {

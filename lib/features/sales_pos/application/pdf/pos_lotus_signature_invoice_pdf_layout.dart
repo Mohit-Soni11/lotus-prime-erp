@@ -546,13 +546,9 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   pw.Widget _amountSummary(PosInvoiceModel invoice) {
-    final visibleTradeInItems = _visibleTradeInItems(invoice);
-    final visibleTradeInTotal = _tradeInTotal(visibleTradeInItems);
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: true,
-      showCustomerMetalSettlement: visibleTradeInItems.isNotEmpty,
-      customerMetalSettlementAmount: visibleTradeInTotal,
     );
 
     return _outlinedBox(
@@ -1469,10 +1465,6 @@ class PosLotusSignatureInvoicePdfLayout {
     return invoice.tradeInItems
         .where((item) => _configFor(item.metal).showExchangeBreakdown)
         .toList(growable: false);
-  }
-
-  double _tradeInTotal(List<TradeInItemModel> items) {
-    return items.fold<double>(0, (sum, item) => sum + item.totalValue);
   }
 
   List<String> _addressLines(PosInvoiceModel invoice) {
