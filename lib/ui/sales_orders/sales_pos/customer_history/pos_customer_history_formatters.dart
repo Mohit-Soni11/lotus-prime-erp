@@ -1,10 +1,15 @@
+import 'package:intl/intl.dart';
+
 class PosCustomerHistoryFormatters {
   const PosCustomerHistoryFormatters._();
 
+  static final NumberFormat _amountFormat = NumberFormat(
+    '#,##,##0.00',
+    'en_IN',
+  );
+
   static String amount(double value) {
-    if (value >= 100000) return 'Rs ${(value / 100000).toStringAsFixed(2)}L';
-    if (value >= 1000) return 'Rs ${(value / 1000).toStringAsFixed(1)}K';
-    return 'Rs ${value.toStringAsFixed(0)}';
+    return 'Rs ${_amountFormat.format(value.abs())}';
   }
 
   static String lastVisit(List<dynamic> bills) {

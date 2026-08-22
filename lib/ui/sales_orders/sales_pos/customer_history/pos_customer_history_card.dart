@@ -33,9 +33,9 @@ class PosCustomerHistoryCard extends StatelessWidget {
                 Text(
                   'Loading customer account...',
                   style: TextStyle(
-                    color: SalesPosColors.bodyTextMuted,
-                    fontSize: SalesPosStyles.fontCaption,
-                    fontWeight: FontWeight.w600,
+                    color: SalesPosColors.textDark,
+                    fontSize: SalesPosStyles.fontBody,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -198,20 +198,25 @@ class _HistoryHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 14),
-        Expanded(
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'CUSTOMER ACCOUNT',
                 style: SalesPosStyles.highVisHeader,
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 'Purchase history, visits and due status',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: SalesPosStyles.subTitleMuted,
+                style: TextStyle(
+                  color: SalesPosColors.textDark,
+                  fontSize: SalesPosStyles.fontBody,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
+                ),
               ),
             ],
           ),
@@ -229,7 +234,7 @@ class _HistoryHeader extends StatelessWidget {
             customerType.toUpperCase(),
             style: const TextStyle(
               color: SalesPosColors.goldHoverDark,
-              fontSize: SalesPosStyles.fontCaption,
+              fontSize: SalesPosStyles.fontLabel,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -257,7 +262,7 @@ class _EmptyHistoryNotice extends StatelessWidget {
           Icon(
             Icons.person_add_alt_1_rounded,
             size: 17,
-            color: SalesPosColors.bodyTextMuted,
+            color: SalesPosColors.textDark,
           ),
           SizedBox(width: 8),
           Expanded(
@@ -266,9 +271,9 @@ class _EmptyHistoryNotice extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: SalesPosColors.bodyTextMuted,
-                fontSize: SalesPosStyles.fontCaption,
-                fontWeight: FontWeight.w600,
+                color: SalesPosColors.textDark,
+                fontSize: SalesPosStyles.fontBody,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -303,7 +308,7 @@ class _MetricTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: SalesPosColors.bodyTextMuted),
+          Icon(icon, size: 16, color: SalesPosColors.textDark),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -315,9 +320,9 @@ class _MetricTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: SalesPosColors.bodyTextMuted,
-                    fontSize: SalesPosStyles.fontCaption,
-                    fontWeight: FontWeight.w600,
+                    color: SalesPosColors.textDark,
+                    fontSize: SalesPosStyles.fontLabel,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -327,7 +332,7 @@ class _MetricTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: valueColor,
-                    fontSize: SalesPosStyles.fontCaption,
+                    fontSize: SalesPosStyles.fontBody,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -373,7 +378,7 @@ class _StatusStrip extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: color,
-                fontSize: SalesPosStyles.fontCaption,
+                fontSize: SalesPosStyles.fontLabel,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -382,7 +387,7 @@ class _StatusStrip extends StatelessWidget {
             value,
             style: TextStyle(
               color: color,
-              fontSize: SalesPosStyles.fontCaption,
+              fontSize: SalesPosStyles.fontLabel,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -451,7 +456,7 @@ class _DueSummary extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: SalesPosColors.danger,
-                          fontSize: SalesPosStyles.fontCaption,
+                          fontSize: SalesPosStyles.fontBody,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -463,9 +468,9 @@ class _DueSummary extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: SalesPosColors.bodyTextMuted,
-                          fontSize: SalesPosStyles.fontCaption,
-                          fontWeight: FontWeight.w600,
+                          color: SalesPosColors.textDark,
+                          fontSize: SalesPosStyles.fontLabel,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ],
@@ -500,9 +505,9 @@ class _DueSummary extends StatelessWidget {
                   Text(
                     '+${dueBills.length - previewBills.length} more',
                     style: const TextStyle(
-                      color: SalesPosColors.bodyTextMuted,
-                      fontSize: SalesPosStyles.fontCaption,
-                      fontWeight: FontWeight.w700,
+                      color: SalesPosColors.textDark,
+                      fontSize: SalesPosStyles.fontLabel,
+                      fontWeight: FontWeight.w800,
                     ),
                   )
                 else
@@ -520,7 +525,7 @@ class _DueSummary extends StatelessWidget {
                         color: SalesPosColors.danger.withValues(alpha: 0.55),
                       ),
                       textStyle: const TextStyle(
-                        fontSize: SalesPosStyles.fontCaption,
+                        fontSize: SalesPosStyles.fontLabel,
                         fontWeight: FontWeight.w900,
                       ),
                       shape: RoundedRectangleBorder(
@@ -572,15 +577,15 @@ class _DuePreviewRow extends StatelessWidget {
         children: [
           const Icon(
             Icons.receipt_outlined,
-            size: 13,
-            color: SalesPosColors.bodyTextMuted,
+            size: 14,
+            color: SalesPosColors.textDark,
           ),
           const SizedBox(width: 6),
           Text(
             billNo,
             style: const TextStyle(
               color: SalesPosColors.textDark,
-              fontSize: SalesPosStyles.fontCaption,
+              fontSize: SalesPosStyles.fontLabel,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -591,18 +596,24 @@ class _DuePreviewRow extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: SalesPosColors.bodyTextMuted,
-                fontSize: SalesPosStyles.fontCaption,
-                fontWeight: FontWeight.w500,
+                color: SalesPosColors.textDark,
+                fontSize: SalesPosStyles.fontLabel,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          Text(
-            PosCustomerHistoryFormatters.amount(amount),
-            style: const TextStyle(
-              color: SalesPosColors.danger,
-              fontSize: SalesPosStyles.fontCaption,
-              fontWeight: FontWeight.w900,
+          SizedBox(
+            width: 190,
+            child: Text(
+              PosCustomerHistoryFormatters.amount(amount),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: SalesPosColors.danger,
+                fontSize: SalesPosStyles.fontLabel,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
