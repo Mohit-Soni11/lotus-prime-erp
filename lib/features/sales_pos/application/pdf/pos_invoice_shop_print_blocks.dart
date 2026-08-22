@@ -179,7 +179,7 @@ class PosInvoiceShopPrintBlocks {
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
       ),
       child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           if (useQr && payload.isNotEmpty) ...[
             pw.Container(
@@ -297,7 +297,7 @@ class PosInvoiceShopPrintBlocks {
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
-              mainAxisAlignment: pw.MainAxisAlignment.center,
+              mainAxisAlignment: pw.MainAxisAlignment.start,
               children: [
                 _safeText(
                   shopName.isEmpty
@@ -308,7 +308,7 @@ class PosInvoiceShopPrintBlocks {
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
                   style: pw.TextStyle(
-                    fontSize: 11.6,
+                    fontSize: 12.8,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
@@ -317,7 +317,7 @@ class PosInvoiceShopPrintBlocks {
                 pw.Text(
                   'Scan for official online channels.',
                   style: pw.TextStyle(
-                    fontSize: 10.2,
+                    fontSize: 11.4,
                     color: PdfColors.black,
                     fontWeight: pw.FontWeight.bold,
                   ),
@@ -344,7 +344,7 @@ class PosInvoiceShopPrintBlocks {
                           child: pw.Text(
                             entry.platform.label,
                             style: pw.TextStyle(
-                              fontSize: 8.6,
+                              fontSize: 9.2,
                               color: PdfColors.black,
                               fontWeight: pw.FontWeight.bold,
                             ),

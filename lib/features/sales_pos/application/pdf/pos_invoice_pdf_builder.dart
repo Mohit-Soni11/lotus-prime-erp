@@ -263,6 +263,12 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 390,
         ),
         const PosInvoicePdfTextSpec(
+          fontSize: 12.8,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 390,
+        ),
+        const PosInvoicePdfTextSpec(
           fontSize: 10.2,
           color: PdfColors.black,
           bold: true,

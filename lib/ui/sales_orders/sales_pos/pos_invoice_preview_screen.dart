@@ -20,6 +20,7 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'invoice_hub/parts/pos_invoice_hub_actions.dart';
 part 'invoice_hub/parts/pos_invoice_hub_controls.dart';
+part 'invoice_hub/parts/pos_invoice_hub_export_picker.dart';
 part 'invoice_hub/parts/pos_invoice_hub_header.dart';
 part 'invoice_hub/parts/pos_invoice_hub_preview.dart';
 
@@ -100,11 +101,18 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   }
 
   Future<void> _exportPdf() async {
+    final target = await _showInvoiceExportTargetPicker();
+    if (target == null) return;
+    if (!mounted) return;
+
     setState(() => _isSavingPdf = true);
     final shouldStartNewSaleAfterExport =
         !_invCtrl.isSavedToDb && !widget.billingCtrl.isCurrentSaleCommitted;
 
-    final path = await _invCtrl.downloadPdf();
+    final path = await _invCtrl.downloadPdf(
+      metal: target.metal,
+      includeAllMetals: target.includeAllMetals,
+    );
 
     if (path != null && mounted) {
       if (shouldStartNewSaleAfterExport) {
@@ -116,7 +124,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           context,
           type: AppFeedbackType.success,
           message:
-              'Invoice finalized and exported successfully. POS is ready for the next customer.',
+              '${target.successLabel} exported successfully. POS is ready for the next customer.',
           duration: const Duration(seconds: 3),
         );
         return;
@@ -130,6 +138,10 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) setState(() => _isPdfSaved = false);
       });
+      AppFeedback.success(
+        context,
+        message: '${target.successLabel} exported successfully.',
+      );
       return;
     }
 

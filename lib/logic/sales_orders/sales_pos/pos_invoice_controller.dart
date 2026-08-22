@@ -5,6 +5,7 @@ import '../../../features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart
 import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_output_service.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_scope_service.dart';
+import '../../../features/sales_pos/domain/services/pos_invoice_file_naming.dart';
 import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
 import '../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 
@@ -662,7 +663,7 @@ class PosInvoiceController extends ChangeNotifier {
       shopSignatureShape: _shopPrintProfile.signatureShape,
       customerName: billing.nameCtrl.text,
       customerMobile: billing.mobileCtrl.text,
-      customerCity: billing.cityCtrl.text,
+      customerCity: _customerAddressForInvoice(),
       customerPan: billing.panCtrl.text,
       customerGstin: billing.gstCtrl.text,
       customerStateCode: billing.placeOfSupplyStateCode,
@@ -691,6 +692,25 @@ class PosInvoiceController extends ChangeNotifier {
       changeSettlementPaymentMode: billing.changeCreditSourcePaymentMode,
       promiseDate: dueDate,
     );
+  }
+
+  String _customerAddressForInvoice() {
+    final enteredAddress = billing.cityCtrl.text.trim();
+    final selectedAddress = billing.selectedCustomer?.city.trim() ?? '';
+    if (selectedAddress.isEmpty) return enteredAddress;
+    if (enteredAddress.isEmpty) return selectedAddress;
+
+    final normalizedEntered = _normalizeAddressForComparison(enteredAddress);
+    final normalizedSelected = _normalizeAddressForComparison(selectedAddress);
+    if (normalizedSelected.length > normalizedEntered.length &&
+        normalizedSelected.contains(normalizedEntered)) {
+      return selectedAddress;
+    }
+    return enteredAddress;
+  }
+
+  String _normalizeAddressForComparison(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
   }
 
   List<SaleItemModel> _buildPrintableSaleItemSnapshots() {
@@ -1023,18 +1043,72 @@ class PosInvoiceController extends ChangeNotifier {
     await shareInvoicePdf();
   }
 
-  Future<String?> downloadPdf() async {
+  Future<Uint8List?> buildExportPdfBytes({
+    MetalType? metal,
+    bool includeAllMetals = false,
+  }) async {
     await finalizeInvoiceIfNeeded();
-    if (pdfBytes == null || invoice == null) return null;
+    final currentInvoice = invoice;
+    if (currentInvoice == null) return null;
+
+    return _buildPdf(
+      currentInvoice,
+      selectedFormat,
+      activeMetal: includeAllMetals ? null : metal ?? effectiveActiveMetal,
+      includeAllMetals: includeAllMetals,
+    );
+  }
+
+  Future<String?> downloadPdf({
+    MetalType? metal,
+    bool includeAllMetals = false,
+  }) async {
+    await finalizeInvoiceIfNeeded();
+    final currentInvoice = invoice;
+    if (currentInvoice == null) return null;
+
+    final targetMetal = includeAllMetals ? null : metal ?? effectiveActiveMetal;
+    final downloadInvoice = includeAllMetals
+        ? currentInvoice
+        : _scopeService.scopedInvoiceForMetal(currentInvoice, targetMetal);
 
     return _outputService.downloadPdf(
-      invoice: invoice!,
+      invoice: downloadInvoice,
+      fileName: _exportFileNameFor(
+        invoice: currentInvoice,
+        metal: targetMetal,
+        includeAllMetals: includeAllMetals,
+      ),
       buildPdfBytes: () => _buildPdf(
-        invoice!,
+        currentInvoice,
         selectedFormat,
-        activeMetal: effectiveActiveMetal,
+        activeMetal: targetMetal,
+        includeAllMetals: includeAllMetals,
       ),
     );
+  }
+
+  String _exportFileNameFor({
+    required PosInvoiceModel invoice,
+    required MetalType? metal,
+    required bool includeAllMetals,
+  }) {
+    final baseName = PosInvoiceFileNaming.pdfBaseName(invoice);
+    if (includeAllMetals) {
+      return '${baseName}_All_Metals.pdf';
+    }
+    if (metal == null) {
+      return '$baseName.pdf';
+    }
+    return '${baseName}_${_fileToken(metal.displayName)}.pdf';
+  }
+
+  String _fileToken(String value) {
+    final clean = value
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    return clean.isEmpty ? 'Invoice' : clean;
   }
 
   Future<void> switchFormat(PrintFormat fmt) async {

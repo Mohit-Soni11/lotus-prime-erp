@@ -135,11 +135,11 @@ class PosLotusSignatureInvoicePdfLayout {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Container(
-            width: 120,
+            width: 124,
             padding: const pw.EdgeInsets.only(right: 14),
             child: _brandMark(invoice),
           ),
-          pw.Container(width: 1, height: 102, color: _line),
+          pw.Container(width: 1, height: 124, color: _line),
           pw.SizedBox(width: 16),
           pw.Expanded(
             child: pw.Row(
@@ -154,7 +154,7 @@ class PosLotusSignatureInvoicePdfLayout {
                         maxLines: 1,
                         overflow: pw.TextOverflow.clip,
                         style: pw.TextStyle(
-                          fontSize: 22,
+                          fontSize: 24,
                           fontWeight: pw.FontWeight.bold,
                           letterSpacing: 0.8,
                           color: _ink,
@@ -177,7 +177,7 @@ class PosLotusSignatureInvoicePdfLayout {
                 ),
                 pw.SizedBox(width: 14),
                 pw.Container(
-                  width: 120,
+                  width: 132,
                   padding: const pw.EdgeInsets.only(top: 3),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -185,7 +185,7 @@ class PosLotusSignatureInvoicePdfLayout {
                       pw.Text(
                         _invoiceTitle(invoice),
                         style: pw.TextStyle(
-                          fontSize: 16,
+                          fontSize: 17.5,
                           fontWeight: pw.FontWeight.bold,
                           letterSpacing: 0.6,
                         ),
@@ -199,13 +199,13 @@ class PosLotusSignatureInvoicePdfLayout {
                       pw.Text(
                         _metalInvoiceLabel(invoice),
                         style: pw.TextStyle(
-                          fontSize: 8.8,
+                          fontSize: 10.8,
                           fontWeight: pw.FontWeight.bold,
                           color: _gold,
-                          letterSpacing: 0.45,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      pw.SizedBox(height: 12),
+                      pw.SizedBox(height: 13),
                       _invoiceMeta('Invoice No.', invoice.invoiceNumber),
                       _invoiceMeta(
                         'Invoice Date',
@@ -228,9 +228,14 @@ class PosLotusSignatureInvoicePdfLayout {
         : null;
     if (logoImage != null) {
       return pw.Container(
-        height: 82,
+        height: 94,
+        width: 104,
         alignment: pw.Alignment.center,
-        child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+        child: pw.Image(
+          logoImage,
+          fit: pw.BoxFit.contain,
+          alignment: pw.Alignment.center,
+        ),
       );
     }
 
@@ -293,7 +298,7 @@ class PosLotusSignatureInvoicePdfLayout {
                 'customer',
                 'Customer Name',
                 _fallback(invoice.customerName, 'Walk-in Customer'),
-                valueFontSize: 9.8,
+                valueFontSize: 10.6,
               ),
               if (invoice.customerMobile.trim().isNotEmpty)
                 _detailLine(
@@ -302,11 +307,8 @@ class PosLotusSignatureInvoicePdfLayout {
                   _formatPhone(invoice.customerMobile),
                 ),
               if (invoice.customerCity.trim().isNotEmpty)
-                _detailLine(
-                  'location',
-                  'Address',
-                  _formatCustomerAddress(invoice.customerCity),
-                ),
+                _addressDetailLine(
+                    _formatCustomerAddress(invoice.customerCity)),
               if (invoice.customerGstin.trim().isNotEmpty)
                 _detailLine(
                   'gst',
@@ -411,13 +413,13 @@ class PosLotusSignatureInvoicePdfLayout {
               pw.Text(
                 'Section Total (${metal.displayName})',
                 style:
-                    pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                    pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
               ),
               pw.SizedBox(width: 28),
               pw.Text(
                 _amount(sectionTotal),
                 style:
-                    pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                    pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
               ),
             ],
           ),
@@ -678,7 +680,7 @@ class PosLotusSignatureInvoicePdfLayout {
                 maxLines: 1,
                 overflow: pw.TextOverflow.clip,
                 style: pw.TextStyle(
-                  fontSize: 9.8,
+                  fontSize: 10.2,
                   color: _ink,
                   fontWeight: pw.FontWeight.bold,
                 ),
@@ -978,8 +980,8 @@ class PosLotusSignatureInvoicePdfLayout {
     return pw.Row(
       children: [
         pw.Container(
-          width: 18,
-          height: 18,
+          width: 20,
+          height: 20,
           alignment: pw.Alignment.center,
           decoration: pw.BoxDecoration(
             border: pw.Border.all(color: _gold, width: 0.8),
@@ -994,7 +996,7 @@ class PosLotusSignatureInvoicePdfLayout {
         pw.Text(
           title,
           style: pw.TextStyle(
-            fontSize: 11,
+            fontSize: 12.2,
             fontWeight: pw.FontWeight.bold,
             color: _gold,
             letterSpacing: 0.4,
@@ -1051,7 +1053,7 @@ class PosLotusSignatureInvoicePdfLayout {
         maxLines: header ? 1 : 2,
         overflow: pw.TextOverflow.clip,
         style: pw.TextStyle(
-          fontSize: header ? 7.8 : 7.7,
+          fontSize: header ? 8.4 : 8.3,
           fontWeight: pw.FontWeight.bold,
           color: _ink,
         ),
@@ -1072,7 +1074,7 @@ class PosLotusSignatureInvoicePdfLayout {
           pw.Text(
             label,
             style: pw.TextStyle(
-              fontSize: 8.8,
+              fontSize: 10.3,
               fontWeight: pw.FontWeight.bold,
               color: _ink,
             ),
@@ -1081,19 +1083,21 @@ class PosLotusSignatureInvoicePdfLayout {
           pw.Text(
             ':',
             style: pw.TextStyle(
-              fontSize: 8.8,
+              fontSize: 10.3,
               fontWeight: pw.FontWeight.bold,
               color: _ink,
             ),
           ),
           pw.SizedBox(width: 6),
           pw.Container(
-            width: 60,
+            width: 70,
             child: pw.Text(
               value,
               textAlign: pw.TextAlign.left,
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
               style: pw.TextStyle(
-                fontSize: 9,
+                fontSize: 10.7,
                 fontWeight: pw.FontWeight.bold,
                 color: valueColor ?? _ink,
               ),
@@ -1167,7 +1171,11 @@ class PosLotusSignatureInvoicePdfLayout {
               maxLines: 1,
               overflow: pw.TextOverflow.clip,
               text: pw.TextSpan(
-                style: const pw.TextStyle(fontSize: 9, color: _ink),
+                style: pw.TextStyle(
+                  fontSize: 9.8,
+                  color: _ink,
+                  fontWeight: pw.FontWeight.bold,
+                ),
                 children: [
                   pw.TextSpan(
                     text: 'GSTIN: ',
@@ -1188,15 +1196,15 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _headerIconBadge(String iconKey) {
     return pw.Container(
-      width: 15,
-      height: 15,
+      width: 18,
+      height: 18,
       alignment: pw.Alignment.center,
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: _gold, width: 0.8),
         borderRadius: pw.BorderRadius.circular(3),
       ),
       child: pw.Padding(
-        padding: const pw.EdgeInsets.all(2.5),
+        padding: const pw.EdgeInsets.all(3),
         child: pw.SvgImage(svg: _headerIconSvg(iconKey)),
       ),
     );
@@ -1204,15 +1212,15 @@ class PosLotusSignatureInvoicePdfLayout {
 
   pw.Widget _detailIconBadge(String iconKey) {
     return pw.Container(
-      width: 16,
-      height: 16,
+      width: 19,
+      height: 19,
       alignment: pw.Alignment.center,
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: _gold, width: 0.7),
         borderRadius: pw.BorderRadius.circular(3),
       ),
       child: pw.Padding(
-        padding: const pw.EdgeInsets.all(3),
+        padding: const pw.EdgeInsets.all(3.2),
         child: pw.SvgImage(svg: _headerIconSvg(iconKey)),
       ),
     );
@@ -1392,7 +1400,7 @@ class PosLotusSignatureInvoicePdfLayout {
       maxLines: 1,
       overflow: pw.TextOverflow.clip,
       style: pw.TextStyle(
-        fontSize: 9,
+        fontSize: 10.2,
         fontWeight: strong ? pw.FontWeight.bold : pw.FontWeight.bold,
         color: color ?? _ink,
       ),
@@ -1404,7 +1412,8 @@ class PosLotusSignatureInvoicePdfLayout {
     String label,
     String value, {
     PdfColor? valueColor,
-    double valueFontSize = 9.6,
+    double valueFontSize = 10.4,
+    int valueMaxLines = 2,
     bool showDivider = true,
   }) {
     return pw.Padding(
@@ -1430,7 +1439,7 @@ class PosLotusSignatureInvoicePdfLayout {
                 maxLines: 2,
                 overflow: pw.TextOverflow.clip,
                 style: pw.TextStyle(
-                  fontSize: 9.0,
+                  fontSize: 9.8,
                   fontWeight: pw.FontWeight.bold,
                   color: _ink,
                 ),
@@ -1440,7 +1449,7 @@ class PosLotusSignatureInvoicePdfLayout {
             pw.Text(
               ':',
               style: pw.TextStyle(
-                fontSize: 9.4,
+                fontSize: 10.1,
                 fontWeight: pw.FontWeight.bold,
                 color: _ink,
               ),
@@ -1449,12 +1458,61 @@ class PosLotusSignatureInvoicePdfLayout {
             pw.Expanded(
               child: pw.Text(
                 value,
-                maxLines: 2,
+                maxLines: valueMaxLines,
                 overflow: pw.TextOverflow.clip,
                 style: pw.TextStyle(
                   fontSize: valueFontSize,
                   fontWeight: pw.FontWeight.bold,
                   color: valueColor ?? _ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _addressDetailLine(String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Container(
+        padding: const pw.EdgeInsets.only(bottom: 6),
+        decoration: const pw.BoxDecoration(
+          border: pw.Border(
+            bottom: pw.BorderSide(color: _line, width: 0.45),
+          ),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                _detailIconBadge('location'),
+                pw.SizedBox(width: 8),
+                pw.Text(
+                  'Address',
+                  style: pw.TextStyle(
+                    fontSize: 9.8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _ink,
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 4),
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(left: 27),
+              child: pw.Text(
+                value,
+                maxLines: 4,
+                overflow: pw.TextOverflow.clip,
+                style: pw.TextStyle(
+                  fontSize: 10.2,
+                  fontWeight: pw.FontWeight.bold,
+                  color: _ink,
+                  lineSpacing: 1.05,
                 ),
               ),
             ),
@@ -1474,15 +1532,34 @@ class PosLotusSignatureInvoicePdfLayout {
       child: pw.Row(
         children: [
           pw.Expanded(
-              child: pw.Text(label, style: const pw.TextStyle(fontSize: 9))),
-          pw.Text(':', style: const pw.TextStyle(fontSize: 9)),
+            child: pw.Text(
+              label,
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
+              style: pw.TextStyle(
+                fontSize: 10.2,
+                fontWeight: pw.FontWeight.bold,
+                color: _ink,
+              ),
+            ),
+          ),
+          pw.Text(
+            ':',
+            style: pw.TextStyle(
+              fontSize: 10.2,
+              fontWeight: pw.FontWeight.bold,
+              color: _ink,
+            ),
+          ),
           pw.SizedBox(width: 8),
           pw.Container(
             width: 108,
             child: pw.Text(
               value,
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
               style: pw.TextStyle(
-                fontSize: 9.2,
+                fontSize: 10.2,
                 fontWeight: pw.FontWeight.bold,
                 color: valueColor ?? _ink,
               ),
@@ -1506,15 +1583,17 @@ class PosLotusSignatureInvoicePdfLayout {
           pw.Text(
             label,
             style: pw.TextStyle(
-              fontSize: strong ? 12 : 9.5,
-              fontWeight: strong ? pw.FontWeight.bold : pw.FontWeight.normal,
+              fontSize: strong ? 13.2 : 10.4,
+              fontWeight: pw.FontWeight.bold,
+              color: _ink,
             ),
           ),
           pw.Text(
             value,
             style: pw.TextStyle(
-              fontSize: strong ? 12.5 : 9.5,
+              fontSize: strong ? 13.6 : 10.4,
               fontWeight: pw.FontWeight.bold,
+              color: _ink,
             ),
           ),
         ],

@@ -176,11 +176,12 @@ class PosInvoiceOutputService {
   Future<String?> downloadPdf({
     required PosInvoiceModel invoice,
     required Future<Uint8List> Function() buildPdfBytes,
+    String? fileName,
   }) async {
     try {
       final selectedPath = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Invoice PDF',
-        fileName: buildExportFileName(invoice),
+        fileName: fileName ?? buildExportFileName(invoice),
         type: FileType.custom,
         allowedExtensions: const ['pdf'],
         lockParentWindow: true,
