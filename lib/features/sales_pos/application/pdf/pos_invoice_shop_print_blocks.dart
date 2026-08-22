@@ -173,7 +173,7 @@ class PosInvoiceShopPrintBlocks {
 
     return pw.Container(
       width: double.infinity,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: borderColor, width: 0.55),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
@@ -183,8 +183,8 @@ class PosInvoiceShopPrintBlocks {
         children: [
           if (useQr && payload.isNotEmpty) ...[
             pw.Container(
-              width: 30,
-              height: 30,
+              width: 34,
+              height: 34,
               padding: const pw.EdgeInsets.all(2),
               decoration: pw.BoxDecoration(
                 border: pw.Border.all(color: accentColor, width: 0.55),
@@ -212,7 +212,7 @@ class PosInvoiceShopPrintBlocks {
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
                   style: pw.TextStyle(
-                    fontSize: 7.2,
+                    fontSize: 8.2,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
@@ -224,11 +224,135 @@ class PosInvoiceShopPrintBlocks {
                   maxWidth: 430,
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
-                  style: const pw.TextStyle(
-                    fontSize: 6.5,
+                  style: pw.TextStyle(
+                    fontSize: 7.2,
+                    color: PdfColors.black,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget? policySocialPanel(
+    PosInvoiceModel invoice, {
+    required PosInvoicePdfTextRenderer? textRenderer,
+    required PdfColor borderColor,
+    required PdfColor accentColor,
+  }) {
+    final useQr = _isQrEnabled(invoice);
+    final entries =
+        useQr ? _qrEntries(invoice) : _enabledSocialEntries(invoice);
+    if (entries.isEmpty) return null;
+
+    if (!useQr) {
+      return _linksSection(
+        entries,
+        textRenderer: textRenderer,
+        borderColor: borderColor,
+        compact: false,
+      );
+    }
+
+    final shopName = _shopName(invoice);
+    final payload = qrPayloadForInvoice(invoice);
+    if (payload.isEmpty) return null;
+
+    final filledEntries = entries
+        .where((entry) => entry.value.trim().isNotEmpty)
+        .take(4)
+        .toList(growable: false);
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        border: pw.Border.all(color: borderColor, width: 0.7),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.Container(
+            width: 70,
+            height: 70,
+            padding: const pw.EdgeInsets.all(3),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: accentColor, width: 0.8),
+            ),
+            child: pw.BarcodeWidget(
+              barcode: pw.Barcode.qrCode(),
+              data: payload,
+              drawText: false,
+              color: PdfColors.black,
+              backgroundColor: PdfColors.white,
+            ),
+          ),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              mainAxisAlignment: pw.MainAxisAlignment.center,
+              children: [
+                _safeText(
+                  shopName.isEmpty
+                      ? 'Connect with us'
+                      : 'Connect with $shopName',
+                  textRenderer: textRenderer,
+                  maxWidth: 390,
+                  maxLines: 1,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 10.8,
+                    fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
                 ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  'Scan the QR code for official website and social channels.',
+                  style: pw.TextStyle(
+                    fontSize: 9.4,
+                    color: PdfColors.black,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                if (filledEntries.isNotEmpty) ...[
+                  pw.SizedBox(height: 7),
+                  pw.Wrap(
+                    spacing: 7,
+                    runSpacing: 5,
+                    children: [
+                      for (final entry in filledEntries)
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
+                          decoration: pw.BoxDecoration(
+                            border:
+                                pw.Border.all(color: accentColor, width: 0.5),
+                            borderRadius: const pw.BorderRadius.all(
+                              pw.Radius.circular(3),
+                            ),
+                          ),
+                          child: pw.Text(
+                            entry.platform.label,
+                            style: pw.TextStyle(
+                              fontSize: 8.2,
+                              color: PdfColors.black,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

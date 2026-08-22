@@ -409,7 +409,11 @@ class PosLotusEconomyInvoicePdfLayout {
   }
 
   pw.Widget _policyLine(String value) {
-    const style = pw.TextStyle(fontSize: 8.4, color: _ink);
+    final style = pw.TextStyle(
+      fontSize: 9.8,
+      color: _ink,
+      fontWeight: pw.FontWeight.bold,
+    );
     final renderer = textRenderer;
     if (renderer == null || value.trim().isEmpty) {
       return _smallText(value);
@@ -446,12 +450,12 @@ class PosLotusEconomyInvoicePdfLayout {
             child: pw.Column(
               children: [
                 pw.Container(height: 30),
-                pw.Container(height: 0.7, color: _line),
+                pw.Container(height: 0.8, color: _ink),
                 pw.SizedBox(height: 4),
                 pw.Text(
                   'Authorized Signature',
                   style: pw.TextStyle(
-                    fontSize: 8.5,
+                    fontSize: 9.6,
                     fontWeight: pw.FontWeight.bold,
                     color: _ink,
                   ),
@@ -636,9 +640,10 @@ class PosLotusEconomyInvoicePdfLayout {
         value,
         maxLines: 1,
         overflow: pw.TextOverflow.clip,
-        style: const pw.TextStyle(
-          fontSize: 7.8,
+        style: pw.TextStyle(
+          fontSize: 9.2,
           color: _ink,
+          fontWeight: pw.FontWeight.bold,
         ),
       ),
     );

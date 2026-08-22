@@ -806,6 +806,71 @@ void main() {
 
       item.dispose();
     });
+
+    test('keeps readable Gold policy and QR on the second A4 page', () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Nose Pin',
+        purity: '18KT',
+        grossWeight: 6.366,
+        rate: 11400,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: const [
+          ShopPrintDocumentField(
+            id: 'shop_name',
+            label: 'Shop Name',
+            value: 'ANJALI JEWELLERS',
+            group: ShopPrintFieldGroup.identity,
+          ),
+          ShopPrintDocumentField(
+            id: 'social_media_qr',
+            label: 'Social Media QR',
+            value: 'Instagram: @anjalijewellers',
+            group: ShopPrintFieldGroup.social,
+          ),
+        ],
+      );
+      final settings = BillSettings(
+        termsAndConditions:
+            'Gold items once sold will not be taken back or exchanged.\n'
+            'Guarantee is provided as per BIS Hallmark standards.\n'
+            'HUID is mandatory for all gold items as per Govt. norms.\n'
+            'Original bill is mandatory for any service claim.',
+        returnPolicyText:
+            'Gold jewellery is eligible for exchange within 7 days with the original invoice.\n'
+            'Used, damaged, altered or custom-made items are not eligible for return.',
+        buybackPolicyText:
+            'Gold buyback is calculated on the current market rate after purity verification.\n'
+            'HUID/original invoice may be required for compliance and valuation.',
+        printTermsAndConditions: true,
+        printReturnPolicy: true,
+        printBuybackPolicy: true,
+      );
+
+      for (final templateId in [
+        PrintTemplateRegistry.lotusClassic.id,
+        PrintTemplateRegistry.lotusEconomy.id,
+        PrintTemplateRegistry.lotusSignature.id,
+      ]) {
+        final bytes = await const PosInvoicePdfBuilder().build(
+          invoice: invoice,
+          options: PosInvoicePdfBuildOptions(
+            format: PrintFormat.a4,
+            copies: 1,
+            includeDuplicateStamp: false,
+            templateId: templateId,
+            metalPrintSettings: {MetalType.gold: settings},
+          ),
+        );
+
+        expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+        expect(_pdfPageCount(bytes), 2);
+      }
+
+      item.dispose();
+    });
   });
 
   group('PosInvoiceFinancialBreakdown', () {

@@ -804,7 +804,7 @@ class PosLotusClassicInvoicePdfLayout {
               entries[index].title.toUpperCase(),
               style: pw.TextStyle(
                 color: _gold,
-                fontSize: 8,
+                fontSize: 8.8,
                 fontWeight: pw.FontWeight.bold,
                 letterSpacing: 0.25,
               ),
@@ -818,10 +818,11 @@ class PosLotusClassicInvoicePdfLayout {
   }
 
   List<pw.Widget> _policyBodyLines(String body) {
-    const style = pw.TextStyle(
+    final style = pw.TextStyle(
       color: _ink,
-      fontSize: 8,
-      lineSpacing: 1.3,
+      fontSize: 10.2,
+      fontWeight: pw.FontWeight.bold,
+      lineSpacing: 1.18,
     );
     final lines = PosInvoicePolicyCopy.lines(body);
     return [
@@ -871,7 +872,11 @@ class PosLotusClassicInvoicePdfLayout {
                 footerMessages.join(' | '),
                 maxLines: 2,
                 overflow: pw.TextOverflow.clip,
-                style: const pw.TextStyle(color: _ink, fontSize: 7.5),
+                style: pw.TextStyle(
+                  color: _ink,
+                  fontSize: 9.4,
+                  fontWeight: pw.FontWeight.bold,
+                ),
               ),
             ),
             pw.SizedBox(width: 24),
@@ -886,7 +891,7 @@ class PosLotusClassicInvoicePdfLayout {
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   color: _ink,
-                  fontSize: 8.2,
+                  fontSize: 9,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),

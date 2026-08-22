@@ -84,8 +84,8 @@ class _PosInvoicePdfDocumentBuilder {
   static const double _pdfTotalSize = 10.5;
   static const double _pdfGrandLabelSize = 12.5;
   static const double _pdfGrandValueSize = 13.5;
-  static const double _pdfPolicyTitleSize = 9;
-  static const double _pdfPolicyBodySize = 8.8;
+  static const double _pdfPolicyTitleSize = 12;
+  static const double _pdfPolicyBodySize = 11.2;
 
   final PosInvoiceScopeService scopeService;
   final PosInvoicePdfBuildOptions options;
@@ -181,19 +181,19 @@ class _PosInvoicePdfDocumentBuilder {
         PosInvoicePdfTextSpec(
           fontSize: _pdfPolicyBodySize,
           color: _pdfTextColor,
-          bold: false,
+          bold: true,
           maxWidth: _fallbackPolicyBodyWidth(pageFormat),
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 10.9,
+          fontSize: 12.1,
           color: PdfColors.black,
-          bold: false,
+          bold: true,
           maxWidth: 456,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 10.4,
+          fontSize: 11.6,
           color: PdfColors.black,
-          bold: false,
+          bold: true,
           maxWidth: 456,
         ),
         const PosInvoicePdfTextSpec(
@@ -203,21 +203,33 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 470,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 9,
+          fontSize: 10.2,
           color: PdfColors.black,
-          bold: false,
+          bold: true,
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 7.5,
+          fontSize: 10.2,
           color: PdfColors.black,
-          bold: false,
+          bold: true,
+          maxWidth: 500,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 9.8,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 500,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 9.4,
+          color: PdfColors.black,
+          bold: true,
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 7.5,
+          fontSize: 9.2,
           color: PdfColors.black,
-          bold: false,
+          bold: true,
           maxWidth: 220,
         ),
         const PosInvoicePdfTextSpec(
@@ -233,10 +245,16 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 8.2,
+          fontSize: 10.8,
           color: PdfColors.black,
           bold: true,
-          maxWidth: 360,
+          maxWidth: 390,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 7.2,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 430,
         ),
         const PosInvoicePdfTextSpec(
           fontSize: 7.4,
@@ -1327,8 +1345,8 @@ class _PosInvoicePdfDocumentBuilder {
 
   pw.Widget _policyPageHeader(PosInvoiceModel invoice) {
     return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 14),
-      padding: const pw.EdgeInsets.fromLTRB(12, 10, 12, 10),
+      margin: const pw.EdgeInsets.only(bottom: 9),
+      padding: const pw.EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: pw.BoxDecoration(
         color: _pdfHeaderFillColor,
         border: pw.Border.all(color: _pdfLightBorderColor, width: 0.6),
@@ -1355,7 +1373,7 @@ class _PosInvoicePdfDocumentBuilder {
                     ? _invoiceTitle(invoice)
                     : '${invoice.printShopName} | ${_invoiceTitle(invoice)}',
                 style: const pw.TextStyle(
-                  fontSize: 8.5,
+                  fontSize: 8.8,
                   color: _pdfMutedTextColor,
                 ),
               ),
@@ -1367,14 +1385,14 @@ class _PosInvoicePdfDocumentBuilder {
               pw.Text(
                 'Invoice No.',
                 style: const pw.TextStyle(
-                  fontSize: 7.5,
+                  fontSize: 8,
                   color: _pdfMutedTextColor,
                 ),
               ),
               pw.Text(
                 invoice.invoiceNumber,
                 style: pw.TextStyle(
-                  fontSize: 9.5,
+                  fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                   color: _pdfTextColor,
                 ),
@@ -1388,17 +1406,9 @@ class _PosInvoicePdfDocumentBuilder {
 
   pw.Widget _policyPageFooter(PosInvoiceModel invoice, pw.Context context) {
     final footerLines = _footerTextLinesForInvoice(invoice);
-    final socialStrip = context.pageNumber == context.pagesCount
-        ? PosInvoiceShopPrintBlocks.compactSocialStrip(
-            invoice,
-            textRenderer: textRenderer,
-            borderColor: _pdfLightBorderColor,
-            accentColor: _pdfBorderColor,
-          )
-        : null;
     return pw.Container(
-      margin: const pw.EdgeInsets.only(top: 10),
-      padding: const pw.EdgeInsets.only(top: 6),
+      margin: const pw.EdgeInsets.only(top: 7),
+      padding: const pw.EdgeInsets.only(top: 5),
       decoration: const pw.BoxDecoration(
         border: pw.Border(top: pw.BorderSide(color: _pdfLightBorderColor)),
       ),
@@ -1409,19 +1419,16 @@ class _PosInvoicePdfDocumentBuilder {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                if (socialStrip != null) ...[
-                  socialStrip,
-                  pw.SizedBox(height: 5),
-                ],
                 for (final line in footerLines)
                   pw.Padding(
                     padding: const pw.EdgeInsets.only(bottom: 2),
                     child: textRenderer.text(
                       line,
                       maxWidth: 360,
-                      style: const pw.TextStyle(
-                        fontSize: 7.5,
+                      style: pw.TextStyle(
+                        fontSize: 9.4,
                         color: _pdfTextColor,
+                        fontWeight: pw.FontWeight.bold,
                       ),
                     ),
                   ),
@@ -1431,9 +1438,10 @@ class _PosInvoicePdfDocumentBuilder {
           pw.SizedBox(width: 20),
           pw.Text(
             'Page ${context.pageNumber} of ${context.pagesCount}',
-            style: const pw.TextStyle(
-              fontSize: 7.5,
+            style: pw.TextStyle(
+              fontSize: 9.1,
               color: _pdfTextColor,
+              fontWeight: pw.FontWeight.bold,
             ),
           ),
         ],
@@ -1449,14 +1457,14 @@ class _PosInvoicePdfDocumentBuilder {
     final widgets = <pw.Widget>[];
 
     if (entries.isEmpty) {
-      final socialStrip = PosInvoiceShopPrintBlocks.compactSocialStrip(
+      final socialPanel = PosInvoiceShopPrintBlocks.policySocialPanel(
         invoice,
         textRenderer: textRenderer,
         borderColor: _pdfLightBorderColor,
         accentColor: _pdfBorderColor,
       );
-      if (socialStrip != null) {
-        widgets.add(socialStrip);
+      if (socialPanel != null) {
+        widgets.add(socialPanel);
       }
       return widgets;
     }
@@ -1471,22 +1479,33 @@ class _PosInvoicePdfDocumentBuilder {
           width: double.infinity,
           padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
           decoration: pw.BoxDecoration(
-            color: _pdfSoftFillColor,
-            border: pw.Border.all(color: _pdfLightBorderColor, width: 0.5),
+            color: PdfColors.white,
+            border: pw.Border.all(color: PdfColors.black, width: 0.55),
             borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
           ),
           child: pw.Text(
             entry.title.toUpperCase(),
             style: pw.TextStyle(
-              fontSize: 9.5,
+              fontSize: _pdfPolicyTitleSize,
               fontWeight: pw.FontWeight.bold,
               color: _pdfTextColor,
             ),
           ),
         ),
       );
-      widgets.add(pw.SizedBox(height: 6));
+      widgets.add(pw.SizedBox(height: 4));
       widgets.addAll(_policyBodyLines(entry.body, bodyWidth: bodyWidth));
+    }
+
+    final socialPanel = PosInvoiceShopPrintBlocks.policySocialPanel(
+      invoice,
+      textRenderer: textRenderer,
+      borderColor: _pdfLightBorderColor,
+      accentColor: _pdfBorderColor,
+    );
+    if (socialPanel != null) {
+      widgets.add(pw.SizedBox(height: 14));
+      widgets.add(socialPanel);
     }
 
     return widgets;
@@ -1507,14 +1526,15 @@ class _PosInvoicePdfDocumentBuilder {
       }
       widgets.add(
         pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 3),
+          padding: const pw.EdgeInsets.only(bottom: 2),
           child: textRenderer.text(
             line,
             maxWidth: bodyWidth,
-            style: const pw.TextStyle(
+            style: pw.TextStyle(
               fontSize: _pdfPolicyBodySize,
               color: _pdfTextColor,
-              lineSpacing: 1.2,
+              fontWeight: pw.FontWeight.bold,
+              lineSpacing: 1.05,
             ),
           ),
         ),
