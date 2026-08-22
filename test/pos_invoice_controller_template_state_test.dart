@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,11 +13,13 @@ import 'package:lotus_erp/models/customer/customer_list/customer_list_ui_model.d
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import 'package:lotus_erp/models/setting/billing_setup/sales_billing_model.dart';
+import 'package:lotus_erp/repositories/sales_orders/pos/pos_checkout_repository.dart';
 import 'package:lotus_erp/repositories/setting/billing_setup/sales_billing_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -34,40 +37,46 @@ void main() {
 
   test('selected PDF template stays active when switching invoice metal',
       () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
     final billing = PosBillingController();
-    final controller = PosInvoiceController(billing: billing);
+    final controller = _invoiceControllerForTest(billing, db);
 
-    billing.saleItems.addAll([
-      SaleItemModel(metal: MetalType.gold),
-      SaleItemModel(metal: MetalType.silver),
-    ]);
+    try {
+      billing.saleItems.addAll([
+        SaleItemModel(metal: MetalType.gold),
+        SaleItemModel(metal: MetalType.silver),
+      ]);
 
-    await controller
-        .selectPrintTemplate(PrintTemplateRegistry.lotusSignature.id);
-    await controller.setActivePrintMetal(MetalType.gold);
-    await controller.setActivePrintMetal(MetalType.silver);
+      await controller
+          .selectPrintTemplate(PrintTemplateRegistry.lotusSignature.id);
+      await controller.setActivePrintMetal(MetalType.gold);
+      await controller.setActivePrintMetal(MetalType.silver);
 
-    expect(
-      controller.selectedTemplateId,
-      PrintTemplateRegistry.lotusSignature.id,
-    );
+      expect(
+        controller.selectedTemplateId,
+        PrintTemplateRegistry.lotusSignature.id,
+      );
 
-    await controller.selectPrintTemplate(PrintTemplateRegistry.lotusEconomy.id);
-    await controller.setActivePrintMetal(MetalType.gold);
+      await controller
+          .selectPrintTemplate(PrintTemplateRegistry.lotusEconomy.id);
+      await controller.setActivePrintMetal(MetalType.gold);
 
-    expect(
-      controller.selectedTemplateId,
-      PrintTemplateRegistry.lotusEconomy.id,
-    );
-
-    controller.dispose();
-    billing.dispose();
+      expect(
+        controller.selectedTemplateId,
+        PrintTemplateRegistry.lotusEconomy.id,
+      );
+    } finally {
+      controller.dispose();
+      billing.dispose();
+      await db.close();
+    }
   });
 
   test('invoice snapshot prints the richer selected customer address',
       () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
     final billing = PosBillingController();
-    final controller = PosInvoiceController(billing: billing);
+    final controller = _invoiceControllerForTest(billing, db);
     const selectedAddress =
         'EAST LAKSHMI NAGAR, KHEMNICHAK, PATNA, Bihar, 800027';
 
@@ -102,12 +111,14 @@ void main() {
     } finally {
       controller.dispose();
       billing.dispose();
+      await db.close();
     }
   });
 
   test('export PDF bytes can target one metal or all metals', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
     final billing = PosBillingController();
-    final controller = PosInvoiceController(billing: billing);
+    final controller = _invoiceControllerForTest(billing, db);
     final gold = SaleItemModel(metal: MetalType.gold);
     gold.descCtrl.text = 'Gold Ring';
     gold.purityCtrl.text = '22KT';
@@ -144,6 +155,7 @@ void main() {
     } finally {
       controller.dispose();
       billing.dispose();
+      await db.close();
     }
   });
 
@@ -161,7 +173,9 @@ void main() {
     final billing = PosBillingController();
     final controller = PosInvoiceController(
       billing: billing,
+      database: db,
       salesBillingRepo: repo,
+      checkoutRepository: PosCheckoutRepository(db: db),
     );
     final item = SaleItemModel(metal: MetalType.gold);
     item.descCtrl.text = 'Gold Ring';
@@ -199,4 +213,16 @@ void main() {
       await db.close();
     }
   });
+}
+
+PosInvoiceController _invoiceControllerForTest(
+  PosBillingController billing,
+  AppDatabase db,
+) {
+  return PosInvoiceController(
+    billing: billing,
+    database: db,
+    salesBillingRepo: SalesBillingRepo(db: db),
+    checkoutRepository: PosCheckoutRepository(db: db),
+  );
 }

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../core/pdf/lotus_pdf_theme.dart';
 import '../../../../models/reports/sales_report/sales_report_models.dart';
 import 'sales_report_export_formatters.dart';
 
@@ -32,6 +33,7 @@ class SalesReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(20),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => _completeReportWidgets(
           reportTitle: reportTitle,
@@ -58,6 +60,7 @@ class SalesReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(28),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => [
           _pdfHeader('GST Liability Report', snapshot.filter, identity),
@@ -115,6 +118,7 @@ class SalesReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(20),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => _metalCompleteReportWidgets(
           metalTitle: metalTitle,
@@ -142,6 +146,7 @@ class SalesReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(20),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => [
           _pdfHeader(reportTitle, snapshot.filter, identity),
@@ -234,6 +239,7 @@ class SalesReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(22),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => [
           _pdfHeader(reportTitle, snapshot.filter, identity),
@@ -292,6 +298,7 @@ class SalesReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(24),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => [
           _pdfHeader(

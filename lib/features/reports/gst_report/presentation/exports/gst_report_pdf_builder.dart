@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../../core/pdf/lotus_pdf_theme.dart';
 import '../../domain/gstr1_filing_models.dart';
 import '../../domain/gstr3b_filing_models.dart';
 import '../../domain/gst_report_models.dart';
@@ -35,6 +36,7 @@ class GstReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(20),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _footer,
         build: (_) => [
           _header('GST Portal Filing Guide', snapshot),
@@ -119,6 +121,7 @@ class GstReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(28),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _footer,
         build: (_) => [
           _header('GST Summary', snapshot),
@@ -163,6 +166,7 @@ class GstReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(20),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _footer,
         build: (_) => [
           _header('GST Invoice Ledger', snapshot),
@@ -228,6 +232,7 @@ class GstReportPdfBuilder {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
         margin: const pw.EdgeInsets.all(20),
+        theme: await LotusPdfTheme.reportTheme(),
         footer: _footer,
         build: (_) => [
           _header('HSN GST Register', snapshot),

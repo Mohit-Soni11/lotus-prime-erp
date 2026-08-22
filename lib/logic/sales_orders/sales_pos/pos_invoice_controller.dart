@@ -52,8 +52,13 @@ class PosInvoiceController extends ChangeNotifier {
 
   PosInvoiceController({
     required this.billing,
+    AppDatabase? database,
     SalesBillingRepo? salesBillingRepo,
-  }) : _salesBillingRepo = salesBillingRepo ?? SalesBillingRepo();
+    PosCheckoutRepository? checkoutRepository,
+  })  : _db = database ?? AppDatabase(),
+        _salesBillingRepo = salesBillingRepo ?? SalesBillingRepo(db: database),
+        _checkoutRepo =
+            checkoutRepository ?? PosCheckoutRepository(db: database);
 
   InvoiceGenState genState = InvoiceGenState.idle;
   PosInvoiceModel? invoice;
@@ -63,8 +68,8 @@ class PosInvoiceController extends ChangeNotifier {
   //  Database save state
   bool isSavedToDb = false;
   int? savedBillDbId;
-  final AppDatabase _db = AppDatabase();
-  final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
+  final AppDatabase _db;
+  final PosCheckoutRepository _checkoutRepo;
 
   PrintFormat selectedFormat = PrintFormat.a4;
   String selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
