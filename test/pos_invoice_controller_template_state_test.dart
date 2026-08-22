@@ -146,12 +146,18 @@ void main() {
       final allBytes = await controller.buildExportPdfBytes(
         includeAllMetals: true,
       );
+      final printBytes = await controller.buildPrintPdfBytes(
+        controller.selectedFormat,
+      );
 
       expect(goldBytes, isNotNull);
       expect(allBytes, isNotNull);
+      expect(printBytes, isNotNull);
       expect(String.fromCharCodes(goldBytes!.take(4)), '%PDF');
       expect(String.fromCharCodes(allBytes!.take(4)), '%PDF');
+      expect(String.fromCharCodes(printBytes!.take(4)), '%PDF');
       expect(allBytes.length, greaterThan(goldBytes.length));
+      expect(printBytes.length, allBytes.length);
     } finally {
       controller.dispose();
       billing.dispose();

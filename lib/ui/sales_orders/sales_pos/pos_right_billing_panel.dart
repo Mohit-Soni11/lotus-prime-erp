@@ -1199,6 +1199,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               SalesPosIcons.advancePayment),
           if (!isEmptyCart) ...[
             const SizedBox(height: 18),
+            if (widget.ctrl.shouldShowMetalPaymentAllocation) ...[
+              PosMetalPaymentAllocationCard(
+                allocations: widget.ctrl.metalPaymentAllocations,
+                settleFirstMetals: widget.ctrl.settleFirstMetals,
+                onToggle: widget.ctrl.toggleSettleFirstMetal,
+              ),
+              const SizedBox(height: 12),
+            ],
             PosPaymentBreakdownCard(
               amountPayable: widget.ctrl.finalPayableAmount,
               amountReceived: widget.ctrl.totalPaid,

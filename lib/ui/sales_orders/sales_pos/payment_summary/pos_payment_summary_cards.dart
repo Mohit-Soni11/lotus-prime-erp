@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
 class PosAmountPayableCard extends StatelessWidget {
@@ -254,6 +255,211 @@ class PosPaymentBreakdownCard extends StatelessWidget {
   }
 
   String _amount(double value) => 'Rs ${value.abs().toStringAsFixed(2)}';
+}
+
+class PosMetalPaymentAllocationCard extends StatelessWidget {
+  final List<PosInvoiceMetalPaymentAllocation> allocations;
+  final Set<MetalType> settleFirstMetals;
+  final ValueChanged<MetalType> onToggle;
+
+  const PosMetalPaymentAllocationCard({
+    super.key,
+    required this.allocations,
+    required this.settleFirstMetals,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (allocations.length <= 1) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SalesPosColors.bodyBorder, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.account_tree_rounded,
+                size: 18,
+                color: SalesPosColors.textDark,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'METAL SETTLEMENT ALLOCATION',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: SalesPosColors.textDark,
+                    fontSize: SalesPosStyles.fontLabel,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (final allocation in allocations) ...[
+            _MetalAllocationRow(
+              allocation: allocation,
+              isSelected: settleFirstMetals.contains(allocation.metal),
+              onToggle: () => onToggle(allocation.metal),
+            ),
+            if (allocation != allocations.last) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetalAllocationRow extends StatelessWidget {
+  final PosInvoiceMetalPaymentAllocation allocation;
+  final bool isSelected;
+  final VoidCallback onToggle;
+
+  const _MetalAllocationRow({
+    required this.allocation,
+    required this.isSelected,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final due = allocation.balanceDue;
+    final isDue = due > 0.005;
+
+    return InkWell(
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? SalesPosColors.brandGold.withValues(alpha: 0.10)
+              : SalesPosColors.formInputBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected
+                ? SalesPosColors.brandGold.withValues(alpha: 0.50)
+                : SalesPosColors.bodyBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Checkbox(
+              value: isSelected,
+              onChanged: (_) => onToggle(),
+              activeColor: SalesPosColors.brandGold,
+              side:
+                  const BorderSide(color: SalesPosColors.textDark, width: 1.4),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 70,
+              child: Text(
+                allocation.metal.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: SalesPosColors.textDark,
+                  fontSize: SalesPosStyles.fontLabel,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 10,
+                runSpacing: 4,
+                children: [
+                  _MetalAllocationValue(
+                    label: 'Bill',
+                    value: _amount(allocation.netPayable),
+                    color: SalesPosColors.textDark,
+                  ),
+                  _MetalAllocationValue(
+                    label: 'Paid',
+                    value: _amount(allocation.totalPaid),
+                    color: SalesPosColors.success,
+                  ),
+                  _MetalAllocationValue(
+                    label: isDue ? 'Due' : 'Clear',
+                    value: _amount(due.abs()),
+                    color:
+                        isDue ? SalesPosColors.danger : SalesPosColors.success,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _amount(double value) => 'Rs ${value.abs().toStringAsFixed(2)}';
+}
+
+class _MetalAllocationValue extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MetalAllocationValue({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 90,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: SalesPosColors.textDark,
+              fontSize: SalesPosStyles.fontCaption,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: color,
+              fontSize: SalesPosStyles.fontCaption,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _BreakdownRow extends StatelessWidget {

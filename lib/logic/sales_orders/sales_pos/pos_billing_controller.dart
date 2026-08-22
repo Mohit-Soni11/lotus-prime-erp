@@ -11,10 +11,12 @@ import 'package:drift/drift.dart' show Value;
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
+import '../../../features/sales_pos/domain/services/pos_metal_payment_allocator.dart';
 import '../../../features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
 import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
 import '../../../core/tax/gst_jurisdiction.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_hold_bill_model.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_stock_lookup_model.dart';
@@ -130,6 +132,9 @@ class PosBillingController extends ChangeNotifier {
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
   final PosStockLookupRepository _stockLookupRepo = PosStockLookupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
+  final PosMetalPaymentAllocator _metalPaymentAllocator =
+      const PosMetalPaymentAllocator();
+  final Set<MetalType> _settleFirstMetals = <MetalType>{};
 
   static const double _defaultJewelleryGstRate = 0.03;
   static const double _defaultMakingGstRate = 0.05;
@@ -1546,6 +1551,44 @@ class PosBillingController extends ChangeNotifier {
   double get invoiceTotalPaid => _totals.invoiceTotalPaid;
   double get invoiceBalanceDue => _totals.invoiceBalanceDue;
 
+  List<MetalType> get presentPaymentAllocationMetals {
+    return _metalPaymentAllocator.collectMetals(
+      saleItems: saleItems,
+      tradeInItems: tradeInItems,
+    );
+  }
+
+  Set<MetalType> get settleFirstMetals {
+    final present = presentPaymentAllocationMetals.toSet();
+    return _settleFirstMetals.where(present.contains).toSet();
+  }
+
+  List<PosInvoiceMetalPaymentAllocation> get metalPaymentAllocations {
+    return _metalPaymentAllocator.allocate(
+      saleItems: saleItems,
+      tradeInItems: tradeInItems,
+      billingMode: billingMode,
+      tradeInMode: tradeInMode,
+      grossAmount: grossAmount,
+      discountAmount: discountAmount,
+      taxableAmount: taxableAmount,
+      totalGst: totalGst,
+      roundOffAmount: roundOffAmount,
+      netPayable: finalPayableAmount,
+      cashPaid: cashPaidAmount,
+      upiPaid: upiPaidAmount,
+      cardPaid: cardPaidAmount,
+      advancePaid: advancePaidAmount,
+      settleFirstMetals: settleFirstMetals,
+    );
+  }
+
+  bool get shouldShowMetalPaymentAllocation {
+    return presentPaymentAllocationMetals.length > 1 &&
+        finalPayableAmount > _invoiceAmountTolerance &&
+        invoiceTotalPaid > _invoiceAmountTolerance;
+  }
+
   PaymentMode? get changeCreditSourcePaymentMode {
     return _totals.changeCreditSourcePaymentMode;
   }
@@ -1570,6 +1613,29 @@ class PosBillingController extends ChangeNotifier {
     if (changeReturnMethod != null) {
       changeReturnMethod = null;
     }
+  }
+
+  void toggleSettleFirstMetal(MetalType metal) {
+    final present = presentPaymentAllocationMetals.toSet();
+    if (!present.contains(metal)) return;
+    if (_settleFirstMetals.contains(metal)) {
+      _settleFirstMetals.remove(metal);
+    } else {
+      _settleFirstMetals.add(metal);
+    }
+    notifyListeners();
+  }
+
+  void clearMetalSettlementPreferences() {
+    if (_settleFirstMetals.isEmpty) return;
+    _settleFirstMetals.clear();
+    notifyListeners();
+  }
+
+  void _pruneMetalSettlementPreferences() {
+    if (_settleFirstMetals.isEmpty) return;
+    final present = presentPaymentAllocationMetals.toSet();
+    _settleFirstMetals.removeWhere((metal) => !present.contains(metal));
   }
 
   static const double _invoiceWeightTolerance = 0.0005;
@@ -1814,6 +1880,7 @@ class PosBillingController extends ChangeNotifier {
   // ==========================================
   void _onChildItemChanged() {
     _clearChangeReturnMethod();
+    _pruneMetalSettlementPreferences();
     notifyListeners();
   }
 
@@ -1840,6 +1907,7 @@ class PosBillingController extends ChangeNotifier {
     saleItems[index].removeListener(_onChildItemChanged);
     saleItems[index].dispose();
     saleItems.removeAt(index);
+    _pruneMetalSettlementPreferences();
     if (activeRowIndex >= saleItems.length) {
       activeRowIndex = saleItems.length - 1;
     }
@@ -1873,6 +1941,7 @@ class PosBillingController extends ChangeNotifier {
     tradeInItems[index].removeListener(_onChildItemChanged);
     tradeInItems[index].dispose();
     tradeInItems.removeAt(index);
+    _pruneMetalSettlementPreferences();
     notifyListeners();
   }
 
@@ -2130,6 +2199,7 @@ class PosBillingController extends ChangeNotifier {
     tradeInMode = TradeInAdjustMode.cashAdjust;
     customerMetalSettlementType =
         CustomerMetalSettlementType.exchangeAdjustment;
+    _settleFirstMetals.clear();
     selectedCustomer = null;
     customerSuggestions = [];
     customerNotFound = false;

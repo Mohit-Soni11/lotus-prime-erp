@@ -1,21 +1,17 @@
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../domain/services/pos_metal_payment_allocator.dart';
 
 class PosInvoiceScopeService {
   const PosInvoiceScopeService();
 
+  static const _allocator = PosMetalPaymentAllocator();
+
   List<MetalType> collectMetals(PosInvoiceModel invoice) {
-    final present = <MetalType>{
-      ...invoice.saleItems.map((item) => item.metal),
-      ...invoice.tradeInItems.map((item) => item.metal),
-    };
-    const ordered = [
-      MetalType.gold,
-      MetalType.silver,
-      MetalType.platinum,
-      MetalType.diamond,
-    ];
-    return ordered.where(present.contains).toList();
+    return _allocator.collectMetals(
+      saleItems: invoice.saleItems,
+      tradeInItems: invoice.tradeInItems,
+    );
   }
 
   List<PosInvoiceModel> scopedInvoicesForAllMetals(PosInvoiceModel source) {
@@ -77,13 +73,18 @@ class PosInvoiceScopeService {
     final scopedRoundOff = source.roundOffAmount * grossRatio;
     final adjustedScopedNetPayable =
         scopedNetPayable - crossMetalAdjustmentDeduction + scopedRoundOff;
+    final manualAllocation = _metalPaymentAllocationFor(source, metal);
     final paymentRatio = source.netPayable.abs() <= 0.005
         ? grossRatio
         : adjustedScopedNetPayable / source.netPayable;
-    final cashPaid = _splitPayment(source.cashPaid, paymentRatio);
-    final upiPaid = _splitPayment(source.upiPaid, paymentRatio);
-    final cardPaid = _splitPayment(source.cardPaid, paymentRatio);
-    final advancePaid = _splitPayment(source.advancePaid, paymentRatio);
+    final cashPaid = manualAllocation?.cashPaid ??
+        _splitPayment(source.cashPaid, paymentRatio);
+    final upiPaid = manualAllocation?.upiPaid ??
+        _splitPayment(source.upiPaid, paymentRatio);
+    final cardPaid = manualAllocation?.cardPaid ??
+        _splitPayment(source.cardPaid, paymentRatio);
+    final advancePaid = manualAllocation?.advancePaid ??
+        _splitPayment(source.advancePaid, paymentRatio);
     final scopedPaid = cashPaid + upiPaid + cardPaid + advancePaid;
     final scopedMakingCharge = scopedSaleItems.fold(
       0.0,
@@ -118,6 +119,16 @@ class PosInvoiceScopeService {
       totalMakingCharge: scopedMakingCharge,
       isMetalScopedCopy: isMetalScopedCopy,
     );
+  }
+
+  PosInvoiceMetalPaymentAllocation? _metalPaymentAllocationFor(
+    PosInvoiceModel source,
+    MetalType metal,
+  ) {
+    for (final allocation in source.metalPaymentAllocations) {
+      if (allocation.metal == metal) return allocation;
+    }
+    return null;
   }
 
   Map<MetalType, double> _crossMetalAdjustments(

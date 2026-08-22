@@ -696,6 +696,7 @@ class PosInvoiceController extends ChangeNotifier {
       changeSettlementAmount: billing.changeReturnAmount,
       changeSettlementPaymentMode: billing.changeCreditSourcePaymentMode,
       promiseDate: dueDate,
+      metalPaymentAllocations: billing.metalPaymentAllocations,
     );
   }
 
@@ -1018,16 +1019,25 @@ class PosInvoiceController extends ChangeNotifier {
       await _refreshActivePreviewPdf();
       notifyListeners();
     }
-    final printBytes = await _buildPdf(
-      invoice!,
-      format,
-      activeMetal: effectiveActiveMetal,
-    );
+    final printBytes = await buildPrintPdfBytes(format);
+    if (printBytes == null) return false;
     if (!context.mounted) return false;
     return _outputService.printPdf(
       context: context,
       bytes: printBytes,
       invoice: invoice!,
+    );
+  }
+
+  Future<Uint8List?> buildPrintPdfBytes(PrintFormat format) async {
+    await finalizeInvoiceIfNeeded();
+    final currentInvoice = invoice;
+    if (currentInvoice == null) return null;
+
+    return _buildPdf(
+      currentInvoice,
+      format,
+      includeAllMetals: true,
     );
   }
 

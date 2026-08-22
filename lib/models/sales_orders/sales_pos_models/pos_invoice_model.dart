@@ -77,6 +77,35 @@ extension PaymentStatusExt on PaymentStatus {
   }
 }
 
+class PosInvoiceMetalPaymentAllocation {
+  final MetalType metal;
+  final double netPayable;
+  final double cashPaid;
+  final double upiPaid;
+  final double cardPaid;
+  final double advancePaid;
+  final bool settleFirst;
+
+  const PosInvoiceMetalPaymentAllocation({
+    required this.metal,
+    required this.netPayable,
+    this.cashPaid = 0,
+    this.upiPaid = 0,
+    this.cardPaid = 0,
+    this.advancePaid = 0,
+    this.settleFirst = false,
+  });
+
+  double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
+
+  double get balanceDue {
+    final due = netPayable - totalPaid;
+    return due.abs() <= 0.005 ? 0 : due;
+  }
+
+  bool get isFullySettled => balanceDue <= 0.005;
+}
+
 class PosInvoiceModel {
   static const Object _notProvided = Object();
 
@@ -135,6 +164,7 @@ class PosInvoiceModel {
   final DateTime? promiseDate;
   final double totalMakingCharge;
   final bool isMetalScopedCopy;
+  final List<PosInvoiceMetalPaymentAllocation> metalPaymentAllocations;
 
   double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
   double get igst {
@@ -275,6 +305,7 @@ class PosInvoiceModel {
     this.changeSettlementPaymentMode,
     this.promiseDate,
     this.isMetalScopedCopy = false,
+    this.metalPaymentAllocations = const <PosInvoiceMetalPaymentAllocation>[],
   });
 
   PosInvoiceModel copyWith({
@@ -327,6 +358,7 @@ class PosInvoiceModel {
     Object? promiseDate = _notProvided,
     double? totalMakingCharge,
     bool? isMetalScopedCopy,
+    List<PosInvoiceMetalPaymentAllocation>? metalPaymentAllocations,
   }) {
     return PosInvoiceModel(
       invoiceNumber: invoiceNumber ?? this.invoiceNumber,
@@ -395,6 +427,8 @@ class PosInvoiceModel {
           : promiseDate as DateTime?,
       totalMakingCharge: totalMakingCharge ?? this.totalMakingCharge,
       isMetalScopedCopy: isMetalScopedCopy ?? this.isMetalScopedCopy,
+      metalPaymentAllocations:
+          metalPaymentAllocations ?? this.metalPaymentAllocations,
     );
   }
 }
