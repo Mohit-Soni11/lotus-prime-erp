@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
+import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_digital_profile_link.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_financial_breakdown.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_policy_copy.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
@@ -668,7 +669,7 @@ void main() {
       );
       expect(
         PosInvoiceShopPrintBlocks.qrPayloadForInvoice(invoice),
-        'https://anjalijewellers.example',
+        PosInvoiceDigitalProfileLink.productionBaseUrl,
       );
 
       final bytes = await const PosInvoicePdfBuilder().build(
@@ -722,7 +723,7 @@ void main() {
       );
       expect(
         PosInvoiceShopPrintBlocks.qrPayloadForInvoice(invoice),
-        'Connect with ANJALI JEWELLERS',
+        PosInvoiceDigitalProfileLink.productionBaseUrl,
       );
 
       final bytes = await const PosInvoicePdfBuilder().build(
@@ -771,7 +772,7 @@ void main() {
 
       expect(
         PosInvoiceShopPrintBlocks.qrPayloadForInvoice(invoice),
-        'https://instagram.com/anjalijewellers',
+        PosInvoiceDigitalProfileLink.productionBaseUrl,
       );
 
       for (final templateId in [

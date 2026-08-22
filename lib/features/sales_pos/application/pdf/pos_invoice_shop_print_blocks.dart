@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import 'pos_invoice_digital_profile_link.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 
 class PosInvoiceShopPrintBlocks {
@@ -365,6 +366,17 @@ class PosInvoiceShopPrintBlocks {
     final entries = _qrEntries(invoice);
     if (entries.isEmpty) return '';
 
+    final digitalProfileUrl =
+        PosInvoiceDigitalProfileLink.urlForInvoice(invoice);
+    if (digitalProfileUrl.isNotEmpty) return digitalProfileUrl;
+
+    return _fallbackQrPayload(invoice, entries);
+  }
+
+  static String _fallbackQrPayload(
+    PosInvoiceModel invoice,
+    List<_SocialEntry> entries,
+  ) {
     final website = entries.where((entry) => entry.platform.id == 'website');
     final preferred = [
       ...website,
