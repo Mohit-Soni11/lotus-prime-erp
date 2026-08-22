@@ -13,6 +13,7 @@ import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
+import 'pos_invoice_shop_print_blocks.dart';
 
 class PosLotusSignatureInvoicePdfLayout {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
@@ -71,10 +72,22 @@ class PosLotusSignatureInvoicePdfLayout {
             _policyPreview(invoice),
           ],
           pw.Spacer(),
+          ..._shopPrintSocialSection(invoice),
           _footer(invoice),
         ],
       ),
     );
+  }
+
+  List<pw.Widget> _shopPrintSocialSection(PosInvoiceModel invoice) {
+    final section = PosInvoiceShopPrintBlocks.socialSection(
+      invoice,
+      textRenderer: textRenderer,
+      borderColor: _line,
+      accentColor: _gold,
+    );
+    if (section == null) return const [];
+    return [section, pw.SizedBox(height: 10)];
   }
 
   void addPolicyPages(
@@ -106,6 +119,7 @@ class PosLotusSignatureInvoicePdfLayout {
     final phoneLine = _shopPhoneLine(invoice);
     final emailLine = _shopEmailLine(invoice);
     final gstinLine = _shopGstinLine(invoice);
+    final bisLine = _shopBisLine(invoice);
 
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
@@ -151,6 +165,8 @@ class PosLotusSignatureInvoicePdfLayout {
                       if (emailLine.isNotEmpty)
                         _headerInfoLine('mail', emailLine, strong: true),
                       if (gstinLine.isNotEmpty) _headerGstinLine(gstinLine),
+                      if (bisLine.isNotEmpty)
+                        _headerInfoLine('gst', bisLine, strong: true),
                     ],
                   ),
                 ),
@@ -1602,6 +1618,12 @@ class PosLotusSignatureInvoicePdfLayout {
       return '';
     }
     return gstin.trim();
+  }
+
+  String _shopBisLine(PosInvoiceModel invoice) {
+    final value = PosInvoiceShopPrintBlocks.bisRegistrationNumber(invoice);
+    if (value.isEmpty) return '';
+    return 'BIS Registration Number: $value';
   }
 
   String _formatAddressTail(List<String> parts) {

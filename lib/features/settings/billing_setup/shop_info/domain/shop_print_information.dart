@@ -26,7 +26,7 @@ class ShopPrintField {
     required this.defaultEnabled,
   });
 
-  bool get isConfigured => value.trim().isNotEmpty;
+  bool get isConfigured => id == 'social_media_qr' || value.trim().isNotEmpty;
 }
 
 class ShopPrintInformationState {
@@ -372,7 +372,7 @@ class ShopPrintInformationCatalog {
       ),
       ShopPrintField(
         id: 'bis_license',
-        label: 'BIS Registration No.',
+        label: 'BIS Registration Number',
         description: 'Single or metal-wise BIS registration reference.',
         sourceSection: 'GST & Legal',
         value: _bisRegistrationValue(tax),
@@ -505,17 +505,26 @@ class ShopPrintInformationCatalog {
   }
 
   static String _bisRegistrationValue(Map<String, dynamic> tax) {
-    final legacy = _value(tax['bis_license_no']);
-    if (legacy.isNotEmpty) return legacy;
-
-    final gold = _value(tax['gold_bis_license_no']);
-    final silver = _value(tax['silver_bis_license_no']);
-    if (gold.isNotEmpty && silver.isNotEmpty) {
-      if (gold.toUpperCase() == silver.toUpperCase()) return gold;
-      return 'Gold: $gold | Silver: $silver';
-    }
-    if (gold.isNotEmpty) return gold;
-    return silver;
+    final entries = tax.entries
+        .where((entry) =>
+            entry.key.endsWith('_bis_license_no') &&
+            entry.key != 'bis_license_no')
+        .map((entry) {
+          final value = _value(entry.value);
+          if (value.isEmpty) return '';
+          final metal = entry.key
+              .replaceFirst(RegExp(r'_bis_license_no$'), '')
+              .split('_')
+              .where((part) => part.isNotEmpty)
+              .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+              .join(' ');
+          if (metal.isEmpty) return '';
+          return '$metal: $value';
+        })
+        .where((entry) => entry.isNotEmpty)
+        .toList(growable: false);
+    if (entries.isNotEmpty) return entries.join(' | ');
+    return _value(tax['bis_license_no']);
   }
 
   static String _pathStatus(Object? value) {

@@ -4,7 +4,10 @@ import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_financi
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_policy_copy.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_print_config.dart';
+import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_shop_header_details.dart';
+import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_shop_print_blocks.dart';
 import 'package:lotus_erp/features/sales_pos/application/services/pos_invoice_scope_service.dart';
+import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_number_formatter.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
@@ -468,6 +471,226 @@ void main() {
       item.dispose();
       oldMetal.dispose();
     });
+
+    test('connects Shop Print Profile BIS and social fields to A4 PDFs',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: const [
+          ShopPrintDocumentField(
+            id: 'shop_name',
+            label: 'Shop Name',
+            value: 'ANJALI JEWELLERS',
+            group: ShopPrintFieldGroup.identity,
+          ),
+          ShopPrintDocumentField(
+            id: 'gstin',
+            label: 'GSTIN',
+            value: '10ABCDE1234F1Z5',
+            group: ShopPrintFieldGroup.statutory,
+          ),
+          ShopPrintDocumentField(
+            id: 'bis_license',
+            label: 'BIS Registration Number',
+            value: 'Gold: BIS-GLD-123 | Silver: BIS-SLV-456',
+            group: ShopPrintFieldGroup.statutory,
+          ),
+          ShopPrintDocumentField(
+            id: 'website',
+            label: 'Website',
+            value: 'https://anjalijewellers.example',
+            group: ShopPrintFieldGroup.social,
+          ),
+          ShopPrintDocumentField(
+            id: 'instagram',
+            label: 'Instagram',
+            value: 'https://instagram.com/anjalijewellers',
+            group: ShopPrintFieldGroup.social,
+          ),
+        ],
+      );
+
+      final headerLines =
+          PosInvoiceShopHeaderDetails.fromInvoice(invoice).lines;
+      expect(
+        headerLines.map((line) => '${line.label}: ${line.value}'),
+        contains('BIS Registration Number: BIS-GLD-123'),
+      );
+      expect(
+        PosInvoiceShopPrintBlocks.printableTextLines(invoice),
+        containsAll([
+          'https://anjalijewellers.example',
+          'https://instagram.com/anjalijewellers',
+        ]),
+      );
+
+      for (final template in [
+        PrintTemplateRegistry.lotusClassic,
+        PrintTemplateRegistry.lotusEconomy,
+        PrintTemplateRegistry.lotusSignature,
+      ]) {
+        final bytes = await const PosInvoicePdfBuilder().build(
+          invoice: invoice,
+          options: PosInvoicePdfBuildOptions(
+            format: PrintFormat.a4,
+            copies: 1,
+            includeDuplicateStamp: false,
+            templateId: template.id,
+            metalPrintSettings: {MetalType.gold: BillSettings()},
+          ),
+        );
+
+        expect(bytes.length, greaterThan(1000));
+        expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      }
+
+      item.dispose();
+    });
+
+    test('selects metal-wise BIS registration number from Shop Print Profile',
+        () {
+      final silverItem = _saleItem(
+        metal: MetalType.silver,
+        description: 'Silver Payal',
+        purity: '925',
+        grossWeight: 18,
+        rate: 80,
+      );
+      final invoice = _invoice(
+        saleItems: [silverItem],
+        shopPrintFields: const [
+          ShopPrintDocumentField(
+            id: 'bis_license',
+            label: 'BIS Registration Number',
+            value: 'Gold: BIS-GLD-123 | Silver: BIS-SLV-456',
+            group: ShopPrintFieldGroup.statutory,
+          ),
+        ],
+      );
+
+      expect(
+        PosInvoiceShopPrintBlocks.bisRegistrationNumber(invoice),
+        'BIS-SLV-456',
+      );
+      expect(
+        PosInvoiceShopHeaderDetails.fromInvoice(invoice)
+            .lines
+            .map((line) => '${line.label}: ${line.value}'),
+        contains('BIS Registration Number: BIS-SLV-456'),
+      );
+
+      silverItem.dispose();
+    });
+
+    test('uses Shop Print Social Media QR without individual social toggles',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: const [
+          ShopPrintDocumentField(
+            id: 'shop_name',
+            label: 'Shop Name',
+            value: 'ANJALI JEWELLERS',
+            group: ShopPrintFieldGroup.identity,
+          ),
+          ShopPrintDocumentField(
+            id: 'social_media_qr',
+            label: 'Social Media QR',
+            value: 'Website: https://anjalijewellers.example\n'
+                'YouTube: https://youtube.com/@anjalijewellers',
+            group: ShopPrintFieldGroup.social,
+          ),
+        ],
+      );
+
+      expect(
+        PosInvoiceShopPrintBlocks.printableTextLines(invoice),
+        containsAll([
+          'Connect with ANJALI JEWELLERS',
+          'https://anjalijewellers.example',
+          'https://youtube.com/@anjalijewellers',
+        ]),
+      );
+
+      final bytes = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          templateId: PrintTemplateRegistry.lotusSignature.id,
+          metalPrintSettings: {MetalType.gold: BillSettings()},
+        ),
+      );
+
+      expect(bytes.length, greaterThan(1000));
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+
+      item.dispose();
+    });
+
+    test('generates Shop Print Social Media QR when links are not configured',
+        () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: const [
+          ShopPrintDocumentField(
+            id: 'shop_name',
+            label: 'Shop Name',
+            value: 'ANJALI JEWELLERS',
+            group: ShopPrintFieldGroup.identity,
+          ),
+          ShopPrintDocumentField(
+            id: 'social_media_qr',
+            label: 'Social Media QR',
+            value: '',
+            group: ShopPrintFieldGroup.social,
+          ),
+        ],
+      );
+
+      expect(
+        PosInvoiceShopPrintBlocks.printableTextLines(invoice),
+        contains('Connect with ANJALI JEWELLERS'),
+      );
+
+      final bytes = await const PosInvoicePdfBuilder().build(
+        invoice: invoice,
+        options: PosInvoicePdfBuildOptions(
+          format: PrintFormat.a4,
+          copies: 1,
+          includeDuplicateStamp: false,
+          templateId: PrintTemplateRegistry.lotusSignature.id,
+          metalPrintSettings: {MetalType.gold: BillSettings()},
+        ),
+      );
+
+      expect(bytes.length, greaterThan(1000));
+      expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+
+      item.dispose();
+    });
   });
 
   group('PosInvoiceFinancialBreakdown', () {
@@ -652,6 +875,8 @@ SaleItemModel _saleItem({
 PosInvoiceModel _invoice({
   required List<SaleItemModel> saleItems,
   List<TradeInItemModel> tradeInItems = const <TradeInItemModel>[],
+  List<ShopPrintDocumentField> shopPrintFields =
+      const <ShopPrintDocumentField>[],
   BillType billType = BillType.normal,
   double cgst = 0,
   double sgst = 0,
@@ -678,6 +903,8 @@ PosInvoiceModel _invoice({
     shopGstin: '',
     shopLogoPath: 'C:/Lotus/logo.png',
     shopLogoShape: 'square',
+    shopPrintFields: shopPrintFields,
+    shopPrintProfileApplied: shopPrintFields.isNotEmpty,
     customerName: 'Reyansh Soni',
     customerMobile: '9304479436',
     customerCity: 'Patna',

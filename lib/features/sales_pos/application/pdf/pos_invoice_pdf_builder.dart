@@ -14,6 +14,7 @@ import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
+import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_shop_header_details.dart';
 import 'pos_invoice_template_renderer_registry.dart';
 
@@ -171,6 +172,7 @@ class _PosInvoicePdfDocumentBuilder {
         .expand((entry) => PosInvoicePolicyCopy.lines(entry.body))
         .followedBy(_footerTextLines(invoices))
         .followedBy(_policyPageShopNames(invoices))
+        .followedBy(_shopPrintTextLines(invoices))
         .toSet();
 
     await textRenderer.warmPolicyLines(
@@ -225,6 +227,30 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
+          fontSize: 9,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 360,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 8.2,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 360,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 7.4,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 130,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 6.8,
+          color: PdfColors.black,
+          bold: false,
+          maxWidth: 96,
+        ),
+        const PosInvoicePdfTextSpec(
           fontSize: 8,
           color: PdfColor.fromInt(0xFF111827),
           bold: false,
@@ -258,6 +284,12 @@ class _PosInvoicePdfDocumentBuilder {
       final printName = invoice.printShopName.trim();
       return printName.isEmpty ? invoice.shopName.trim() : printName;
     }).where((name) => name.isNotEmpty);
+  }
+
+  Iterable<String> _shopPrintTextLines(List<PosInvoiceModel> invoices) sync* {
+    for (final invoice in invoices) {
+      yield* PosInvoiceShopPrintBlocks.printableTextLines(invoice);
+    }
   }
 
   double _fallbackPolicyBodyWidth(PdfPageFormat pageFormat) {
@@ -482,9 +514,21 @@ class _PosInvoicePdfDocumentBuilder {
         _pdfPaymentBlock(invoice),
         if (includePolicyBlock) _pdfPolicyBlock(invoice),
         pw.Spacer(),
+        ..._pdfShopPrintSocialSection(invoice),
         _pdfFooter(invoice),
       ],
     );
+  }
+
+  List<pw.Widget> _pdfShopPrintSocialSection(PosInvoiceModel invoice) {
+    final section = PosInvoiceShopPrintBlocks.socialSection(
+      invoice,
+      textRenderer: textRenderer,
+      borderColor: _pdfLightBorderColor,
+      accentColor: _pdfBorderColor,
+    );
+    if (section == null) return const [];
+    return [section, pw.SizedBox(height: 8)];
   }
 
   pw.Widget _pdfA4Header(PosInvoiceModel invoice) {

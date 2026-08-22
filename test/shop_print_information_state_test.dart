@@ -25,19 +25,29 @@ void main() {
       group: ShopPrintFieldGroup.social,
       defaultEnabled: false,
     );
+    const dynamicQrField = ShopPrintField(
+      id: 'social_media_qr',
+      label: 'Social Media QR',
+      description: 'System generated social landing page QR.',
+      sourceSection: 'Branding',
+      value: '',
+      group: ShopPrintFieldGroup.social,
+      defaultEnabled: false,
+    );
 
     const state = ShopPrintInformationState(
       tenantId: 'tenant_001',
-      fields: [configuredField, missingField],
-      enabledFieldIds: {'shop_name', 'website'},
+      fields: [configuredField, missingField, dynamicQrField],
+      enabledFieldIds: {'shop_name', 'website', 'social_media_qr'},
     );
 
-    expect(state.configuredCount, 1);
+    expect(state.configuredCount, 2);
     expect(state.missingCount, 1);
-    expect(state.enabledCount, 1);
-    expect(state.configuredFieldIds, {'shop_name'});
+    expect(state.enabledCount, 2);
+    expect(state.configuredFieldIds, {'shop_name', 'social_media_qr'});
     expect(state.isEnabled(configuredField), isTrue);
     expect(state.isEnabled(missingField), isFalse);
+    expect(state.isEnabled(dynamicQrField), isTrue);
   });
 
   test('shop print information persists selected fields in Drift', () async {
@@ -136,7 +146,12 @@ void main() {
     );
     expect(profile.headerLines, contains('Help Desk Number: 9123456780'));
     expect(profile.headerLines, contains('GSTIN: 10ABCDE1234F1Z5'));
-    expect(profile.headerLines, contains('BIS Registration No.: BIS-REG-123'));
+    expect(
+      profile.headerLines,
+      contains(
+        'BIS Registration Number: Gold: BIS-REG-123 | Silver: BIS-REG-123',
+      ),
+    );
     expect(
       profile.headerLines.any((line) => line.startsWith('Taxpayer Type:')),
       isFalse,

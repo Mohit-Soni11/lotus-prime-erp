@@ -1,4 +1,5 @@
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import 'pos_invoice_shop_print_blocks.dart';
 
 class PosInvoiceShopHeaderDetails {
   final String shopName;
@@ -28,6 +29,7 @@ class PosInvoiceShopHeaderDetails {
       invoice.printShopGstin,
       invoice.shopGstin,
     ]);
+    final bisLicense = PosInvoiceShopPrintBlocks.bisRegistrationNumber(invoice);
 
     return PosInvoiceShopHeaderDetails(
       shopName: _firstPresent([invoice.printShopName, invoice.shopName]),
@@ -43,6 +45,11 @@ class PosInvoiceShopHeaderDetails {
           PosInvoiceShopHeaderLine(label: 'Email', value: email),
         if (_isRegisteredGstin(gstin))
           PosInvoiceShopHeaderLine(label: 'GSTIN', value: gstin),
+        if (bisLicense.isNotEmpty)
+          PosInvoiceShopHeaderLine(
+            label: 'BIS Registration Number',
+            value: bisLicense,
+          ),
       ],
     );
   }

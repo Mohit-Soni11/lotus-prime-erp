@@ -10,6 +10,7 @@ import 'pos_invoice_financial_breakdown.dart';
 import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_print_config.dart';
+import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_shop_header_details.dart';
 
 class PosLotusEconomyInvoicePdfLayout {
@@ -56,9 +57,22 @@ class PosLotusEconomyInvoicePdfLayout {
           _compactPolicyBlock(invoice),
         ],
         pw.Spacer(),
+        ..._shopPrintSocialSection(invoice),
         _footer(invoice),
       ],
     );
+  }
+
+  List<pw.Widget> _shopPrintSocialSection(PosInvoiceModel invoice) {
+    final section = PosInvoiceShopPrintBlocks.socialSection(
+      invoice,
+      textRenderer: textRenderer,
+      borderColor: _line,
+      accentColor: _ink,
+      compact: true,
+    );
+    if (section == null) return const [];
+    return [section, pw.SizedBox(height: 6)];
   }
 
   pw.Widget _header(PosInvoiceModel invoice) {
