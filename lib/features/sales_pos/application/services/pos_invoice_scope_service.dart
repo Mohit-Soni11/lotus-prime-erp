@@ -74,9 +74,7 @@ class PosInvoiceScopeService {
     final scopedNetPayable = source.billingMode == BillingMode.wholesale
         ? scopedGrandTotal
         : scopedGrandTotal - scopedExchangeDeduction;
-    final scopedRoundOff = source.isMetalScopedCopy
-        ? source.roundOffAmount * grossRatio
-        : source.roundOffAmount * grossRatio;
+    final scopedRoundOff = source.roundOffAmount * grossRatio;
     final adjustedScopedNetPayable =
         scopedNetPayable - crossMetalAdjustmentDeduction + scopedRoundOff;
     final paymentRatio = source.netPayable.abs() <= 0.005
@@ -96,33 +94,7 @@ class PosInvoiceScopeService {
               : item.makingAmt),
     );
 
-    return PosInvoiceModel(
-      invoiceNumber: source.invoiceNumber,
-      invoiceDate: source.invoiceDate,
-      billType: source.billType,
-      gstPricingMode: source.gstPricingMode,
-      documentType: source.documentType,
-      billingMode: source.billingMode,
-      shopName: source.shopName,
-      shopAddress: source.shopAddress,
-      shopPhone: source.shopPhone,
-      shopGstin: source.shopGstin,
-      shopStateCode: source.shopStateCode,
-      shopLogoPath: source.shopLogoPath,
-      shopLogoShape: source.shopLogoShape,
-      shopPrintFields: source.shopPrintFields,
-      shopPrintProfileApplied: source.shopPrintProfileApplied,
-      shopSignaturePath: source.shopSignaturePath,
-      shopSignatureShape: source.shopSignatureShape,
-      customerName: source.customerName,
-      customerMobile: source.customerMobile,
-      customerCity: source.customerCity,
-      customerPan: source.customerPan,
-      customerGstin: source.customerGstin,
-      customerStateCode: source.customerStateCode,
-      placeOfSupply: source.placeOfSupply,
-      tradeInMode: source.tradeInMode,
-      customerMetalSettlementType: source.customerMetalSettlementType,
+    return source.copyWith(
       saleItems: scopedSaleItems,
       tradeInItems: scopedOldItems,
       grossAmount: scopedGrossAmount,
@@ -143,9 +115,7 @@ class PosInvoiceScopeService {
       changeSettlementMethod: source.changeSettlementMethod,
       changeSettlementAmount:
           _splitPayment(source.changeSettlementAmount, paymentRatio),
-      changeSettlementPaymentMode: source.changeSettlementPaymentMode,
       totalMakingCharge: scopedMakingCharge,
-      promiseDate: source.promiseDate,
       isMetalScopedCopy: isMetalScopedCopy,
     );
   }

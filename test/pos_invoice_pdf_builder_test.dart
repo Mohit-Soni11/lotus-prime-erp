@@ -16,6 +16,47 @@ import 'package:lotus_erp/models/sales_orders/sales_pos_models/sales_pos_models.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  group('PosInvoiceModel', () {
+    test('copyWith preserves print metadata and clears nullable fields', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final promiseDate = DateTime(2026, 8, 22);
+      const printFields = [
+        ShopPrintDocumentField(
+          id: 'bis_license',
+          label: 'BIS Registration Number',
+          value: 'Gold: BIS-GLD-123',
+          group: ShopPrintFieldGroup.statutory,
+        ),
+      ];
+      final invoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: printFields,
+      ).copyWith(
+        roundOffAmount: 0.47,
+        crossMetalAdjustmentDeduction: 12.5,
+        promiseDate: promiseDate,
+      );
+
+      final renumbered = invoice.copyWith(invoiceNumber: 'POS-002');
+
+      expect(renumbered.invoiceNumber, 'POS-002');
+      expect(renumbered.shopPrintFields, printFields);
+      expect(renumbered.shopPrintProfileApplied, isTrue);
+      expect(renumbered.roundOffAmount, 0.47);
+      expect(renumbered.crossMetalAdjustmentDeduction, 12.5);
+      expect(renumbered.promiseDate, promiseDate);
+      expect(renumbered.copyWith(promiseDate: null).promiseDate, isNull);
+
+      item.dispose();
+    });
+  });
+
   group('PosInvoiceScopeService', () {
     test('creates metal scoped invoices with independent totals', () {
       final gold = _saleItem(
@@ -298,7 +339,7 @@ void main() {
         );
 
         expect(String.fromCharCodes(bytes.take(4)), '%PDF');
-        expect(_pdfPageCount(bytes), greaterThan(1));
+        expect(_pdfPageCount(bytes), 2);
       }
 
       item.dispose();
@@ -625,6 +666,10 @@ void main() {
           'https://youtube.com/@anjalijewellers',
         ]),
       );
+      expect(
+        PosInvoiceShopPrintBlocks.qrPayloadForInvoice(invoice),
+        'https://anjalijewellers.example',
+      );
 
       final bytes = await const PosInvoicePdfBuilder().build(
         invoice: invoice,
@@ -639,6 +684,7 @@ void main() {
 
       expect(bytes.length, greaterThan(1000));
       expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      expect(_pdfPageCount(bytes), greaterThan(1));
 
       item.dispose();
     });
@@ -674,6 +720,10 @@ void main() {
         PosInvoiceShopPrintBlocks.printableTextLines(invoice),
         contains('Connect with ANJALI JEWELLERS'),
       );
+      expect(
+        PosInvoiceShopPrintBlocks.qrPayloadForInvoice(invoice),
+        'Connect with ANJALI JEWELLERS',
+      );
 
       final bytes = await const PosInvoicePdfBuilder().build(
         invoice: invoice,
@@ -688,6 +738,71 @@ void main() {
 
       expect(bytes.length, greaterThan(1000));
       expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      expect(_pdfPageCount(bytes), greaterThan(1));
+
+      item.dispose();
+    });
+
+    test('places Shop Print Social Media QR on A4 policy pages', () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: const [
+          ShopPrintDocumentField(
+            id: 'shop_name',
+            label: 'Shop Name',
+            value: 'ANJALI JEWELLERS',
+            group: ShopPrintFieldGroup.identity,
+          ),
+          ShopPrintDocumentField(
+            id: 'social_media_qr',
+            label: 'Social Media QR',
+            value: 'Instagram: @anjalijewellers',
+            group: ShopPrintFieldGroup.social,
+          ),
+        ],
+      );
+
+      expect(
+        PosInvoiceShopPrintBlocks.qrPayloadForInvoice(invoice),
+        'https://instagram.com/anjalijewellers',
+      );
+
+      for (final templateId in [
+        PrintTemplateRegistry.lotusClassic.id,
+        PrintTemplateRegistry.lotusEconomy.id,
+        PrintTemplateRegistry.lotusSignature.id,
+      ]) {
+        final bytes = await const PosInvoicePdfBuilder().build(
+          invoice: invoice,
+          options: PosInvoicePdfBuildOptions(
+            format: PrintFormat.a4,
+            copies: 1,
+            includeDuplicateStamp: false,
+            templateId: templateId,
+            metalPrintSettings: {
+              MetalType.gold: BillSettings(
+                termsAndConditions: '',
+                returnPolicyText: '',
+                buybackPolicyText:
+                    'Buyback will follow store-approved purity verification.',
+                printTermsAndConditions: false,
+                printReturnPolicy: false,
+                printBuybackPolicy: true,
+              ),
+            },
+          ),
+        );
+
+        expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+        expect(_pdfPageCount(bytes), greaterThan(1));
+      }
 
       item.dispose();
     });

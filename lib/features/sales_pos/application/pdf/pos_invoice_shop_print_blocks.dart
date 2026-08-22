@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -143,6 +141,120 @@ class PosInvoiceShopPrintBlocks {
     );
   }
 
+  static bool hasPrintableSocialSection(PosInvoiceModel invoice) {
+    if (_isQrEnabled(invoice)) {
+      return _qrEntries(invoice).isNotEmpty;
+    }
+    return _enabledSocialEntries(invoice).isNotEmpty;
+  }
+
+  static pw.Widget? compactSocialStrip(
+    PosInvoiceModel invoice, {
+    required PosInvoicePdfTextRenderer? textRenderer,
+    required PdfColor borderColor,
+    required PdfColor accentColor,
+  }) {
+    final useQr = _isQrEnabled(invoice);
+    final entries =
+        useQr ? _qrEntries(invoice) : _enabledSocialEntries(invoice);
+    if (entries.isEmpty) return null;
+
+    final shopName = _shopName(invoice);
+    final payload = qrPayloadForInvoice(invoice);
+    final filledEntries = entries
+        .where((entry) => entry.value.trim().isNotEmpty)
+        .take(3)
+        .toList(growable: false);
+    final detail = filledEntries.isEmpty
+        ? 'Scan for official social channels.'
+        : filledEntries
+            .map((entry) => '${entry.platform.label}: ${entry.value.trim()}')
+            .join('  |  ');
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: borderColor, width: 0.55),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          if (useQr && payload.isNotEmpty) ...[
+            pw.Container(
+              width: 30,
+              height: 30,
+              padding: const pw.EdgeInsets.all(2),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: accentColor, width: 0.55),
+              ),
+              child: pw.BarcodeWidget(
+                barcode: pw.Barcode.qrCode(),
+                data: payload,
+                drawText: false,
+                color: PdfColors.black,
+                backgroundColor: PdfColors.white,
+              ),
+            ),
+            pw.SizedBox(width: 8),
+          ],
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _safeText(
+                  shopName.isEmpty
+                      ? 'Connect with us'
+                      : 'Connect with $shopName',
+                  textRenderer: textRenderer,
+                  maxWidth: 390,
+                  maxLines: 1,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 7.2,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                _safeText(
+                  detail,
+                  textRenderer: textRenderer,
+                  maxWidth: 430,
+                  maxLines: 1,
+                  overflow: pw.TextOverflow.clip,
+                  style: const pw.TextStyle(
+                    fontSize: 6.5,
+                    color: PdfColors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String qrPayloadForInvoice(PosInvoiceModel invoice) {
+    final entries = _qrEntries(invoice);
+    if (entries.isEmpty) return '';
+
+    final website = entries.where((entry) => entry.platform.id == 'website');
+    final preferred = [
+      ...website,
+      ...entries.where((entry) => entry.platform.id != 'website'),
+    ].where((entry) => entry.value.trim().isNotEmpty);
+
+    if (preferred.isNotEmpty) {
+      return _normalizedSocialUrl(preferred.first);
+    }
+
+    final shopName = _shopName(invoice);
+    return shopName.isEmpty ? 'Connect with us' : 'Connect with $shopName';
+  }
+
   static pw.Widget _linksSection(
     List<_SocialEntry> entries, {
     required PosInvoicePdfTextRenderer? textRenderer,
@@ -205,7 +317,7 @@ class PosInvoiceShopPrintBlocks {
             ),
             child: pw.BarcodeWidget(
               barcode: pw.Barcode.qrCode(),
-              data: _landingPageDataUrl(shopName, entries),
+              data: qrPayloadForInvoice(invoice),
               drawText: false,
               color: PdfColors.black,
               backgroundColor: PdfColors.white,
@@ -380,22 +492,34 @@ class PosInvoiceShopPrintBlocks {
     );
   }
 
-  static String _landingPageDataUrl(
-      String shopName, List<_SocialEntry> entries) {
-    final title = htmlEscape.convert(shopName.isEmpty ? 'Our Store' : shopName);
-    final buttons = entries.map((entry) {
-      final label = htmlEscape.convert(entry.platform.label);
-      final link = entry.value.trim();
-      if (link.isEmpty) {
-        return '<button class="link unavailable" onclick="showUnavailable()">$label</button>';
-      }
-      final href = htmlEscape.convert(_normalizedUrl(link));
-      return '<a class="link" href="$href" target="_blank" rel="noopener">$label</a>';
-    }).join();
-    final html = '''
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>$title</title><style>body{margin:0;font-family:Arial,sans-serif;background:#fff8ed;color:#111827}.wrap{max-width:460px;margin:0 auto;padding:32px 20px;text-align:center}h1{font-size:24px;margin:0 0 8px}.sub{font-size:14px;margin:0 0 22px;color:#111827}.link{box-sizing:border-box;display:block;width:100%;margin:10px 0;padding:14px 16px;border:1px solid #b8781a;border-radius:10px;color:#111827;text-decoration:none;font-weight:700;background:#fff;font-size:15px}.unavailable{cursor:pointer}.status{min-height:20px;margin:16px 0 0;color:#8a5a11;font-weight:700}</style></head><body><main class="wrap"><h1>$title</h1><p class="sub">Official website and social channels</p>$buttons<p id="status" class="status"></p></main><script>function showUnavailable(){document.getElementById('status').textContent='Link Not Available Yet';}</script></body></html>
-''';
-    return 'data:text/html;charset=utf-8,${Uri.encodeComponent(html)}';
+  static String _normalizedSocialUrl(_SocialEntry entry) {
+    final text = entry.value.trim();
+    if (text.isEmpty) return text;
+    if (text.startsWith(RegExp(r'https?://', caseSensitive: false))) {
+      return text;
+    }
+
+    final handle = text.startsWith('@') ? text.substring(1) : text;
+    switch (entry.platform.id) {
+      case 'instagram':
+        return 'https://instagram.com/$handle';
+      case 'facebook':
+        return 'https://facebook.com/$handle';
+      case 'youtube':
+        return text.startsWith('@')
+            ? 'https://youtube.com/$text'
+            : 'https://youtube.com/@$handle';
+      case 'whatsapp_channel':
+        if (text.startsWith(RegExp(r'whatsapp:', caseSensitive: false))) {
+          return text;
+        }
+        if (text.startsWith('wa.me/') ||
+            text.startsWith('chat.whatsapp.com/')) {
+          return 'https://$text';
+        }
+        return text;
+    }
+    return _normalizedUrl(text);
   }
 
   static String _normalizedUrl(String value) {

@@ -52,12 +52,14 @@ class PosLotusEconomyInvoicePdfLayout {
         ],
         pw.SizedBox(height: 8),
         _totalsAndPayment(invoice),
-        if (includePolicyBlock && _policyLines(invoice).isNotEmpty) ...[
-          pw.SizedBox(height: 8),
-          _compactPolicyBlock(invoice),
+        if (includePolicyBlock) ...[
+          if (_policyLines(invoice).isNotEmpty) ...[
+            pw.SizedBox(height: 8),
+            _compactPolicyBlock(invoice),
+          ],
+          ..._shopPrintSocialSection(invoice),
         ],
         pw.Spacer(),
-        ..._shopPrintSocialSection(invoice),
         _footer(invoice),
       ],
     );

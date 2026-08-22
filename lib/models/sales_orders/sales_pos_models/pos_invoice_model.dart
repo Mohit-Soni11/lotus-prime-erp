@@ -78,6 +78,8 @@ extension PaymentStatusExt on PaymentStatus {
 }
 
 class PosInvoiceModel {
+  static const Object _notProvided = Object();
+
   final String invoiceNumber;
   final DateTime invoiceDate;
   final BillType billType;
@@ -274,4 +276,125 @@ class PosInvoiceModel {
     this.promiseDate,
     this.isMetalScopedCopy = false,
   });
+
+  PosInvoiceModel copyWith({
+    String? invoiceNumber,
+    DateTime? invoiceDate,
+    BillType? billType,
+    GstPricingMode? gstPricingMode,
+    SalesDocumentType? documentType,
+    BillingMode? billingMode,
+    String? shopName,
+    String? shopAddress,
+    String? shopPhone,
+    String? shopGstin,
+    String? shopStateCode,
+    String? shopLogoPath,
+    String? shopLogoShape,
+    List<ShopPrintDocumentField>? shopPrintFields,
+    bool? shopPrintProfileApplied,
+    String? shopSignaturePath,
+    String? shopSignatureShape,
+    String? customerName,
+    String? customerMobile,
+    String? customerCity,
+    String? customerPan,
+    String? customerGstin,
+    String? customerStateCode,
+    String? placeOfSupply,
+    TradeInAdjustMode? tradeInMode,
+    CustomerMetalSettlementType? customerMetalSettlementType,
+    List<SaleItemModel>? saleItems,
+    List<TradeInItemModel>? tradeInItems,
+    double? grossAmount,
+    double? discountAmount,
+    double? taxableAmount,
+    double? cgst,
+    double? sgst,
+    double? totalGst,
+    double? totalTradeInDeduction,
+    double? crossMetalAdjustmentDeduction,
+    double? grandTotal,
+    double? roundOffAmount,
+    double? cashPaid,
+    double? upiPaid,
+    double? cardPaid,
+    double? advancePaid,
+    double? balanceDue,
+    Object? changeSettlementMethod = _notProvided,
+    double? changeSettlementAmount,
+    Object? changeSettlementPaymentMode = _notProvided,
+    Object? promiseDate = _notProvided,
+    double? totalMakingCharge,
+    bool? isMetalScopedCopy,
+  }) {
+    return PosInvoiceModel(
+      invoiceNumber: invoiceNumber ?? this.invoiceNumber,
+      invoiceDate: invoiceDate ?? this.invoiceDate,
+      billType: billType ?? this.billType,
+      gstPricingMode: gstPricingMode ?? this.gstPricingMode,
+      documentType: documentType ?? this.documentType,
+      billingMode: billingMode ?? this.billingMode,
+      shopName: shopName ?? this.shopName,
+      shopAddress: shopAddress ?? this.shopAddress,
+      shopPhone: shopPhone ?? this.shopPhone,
+      shopGstin: shopGstin ?? this.shopGstin,
+      shopStateCode: shopStateCode ?? this.shopStateCode,
+      shopLogoPath: shopLogoPath ?? this.shopLogoPath,
+      shopLogoShape: shopLogoShape ?? this.shopLogoShape,
+      shopPrintFields: shopPrintFields ?? this.shopPrintFields,
+      shopPrintProfileApplied:
+          shopPrintProfileApplied ?? this.shopPrintProfileApplied,
+      shopSignaturePath: shopSignaturePath ?? this.shopSignaturePath,
+      shopSignatureShape: shopSignatureShape ?? this.shopSignatureShape,
+      customerName: customerName ?? this.customerName,
+      customerMobile: customerMobile ?? this.customerMobile,
+      customerCity: customerCity ?? this.customerCity,
+      customerPan: customerPan ?? this.customerPan,
+      customerGstin: customerGstin ?? this.customerGstin,
+      customerStateCode: customerStateCode ?? this.customerStateCode,
+      placeOfSupply: placeOfSupply ?? this.placeOfSupply,
+      tradeInMode: tradeInMode ?? this.tradeInMode,
+      customerMetalSettlementType:
+          customerMetalSettlementType ?? this.customerMetalSettlementType,
+      saleItems: saleItems ?? this.saleItems,
+      tradeInItems: tradeInItems ?? this.tradeInItems,
+      grossAmount: grossAmount ?? this.grossAmount,
+      discountAmount: discountAmount ?? this.discountAmount,
+      taxableAmount: taxableAmount ?? this.taxableAmount,
+      cgst: cgst ?? this.cgst,
+      sgst: sgst ?? this.sgst,
+      totalGst: totalGst ?? this.totalGst,
+      totalTradeInDeduction:
+          totalTradeInDeduction ?? this.totalTradeInDeduction,
+      crossMetalAdjustmentDeduction:
+          crossMetalAdjustmentDeduction ?? this.crossMetalAdjustmentDeduction,
+      grandTotal: grandTotal ?? this.grandTotal,
+      roundOffAmount: roundOffAmount ?? this.roundOffAmount,
+      cashPaid: cashPaid ?? this.cashPaid,
+      upiPaid: upiPaid ?? this.upiPaid,
+      cardPaid: cardPaid ?? this.cardPaid,
+      advancePaid: advancePaid ?? this.advancePaid,
+      balanceDue: balanceDue ?? this.balanceDue,
+      changeSettlementMethod: identical(
+        changeSettlementMethod,
+        _notProvided,
+      )
+          ? this.changeSettlementMethod
+          : changeSettlementMethod as RefundMethod?,
+      changeSettlementAmount:
+          changeSettlementAmount ?? this.changeSettlementAmount,
+      changeSettlementPaymentMode: identical(
+        changeSettlementPaymentMode,
+        _notProvided,
+      )
+          ? this.changeSettlementPaymentMode
+          : changeSettlementPaymentMode as PaymentMode?,
+      promiseDate: identical(promiseDate, _notProvided)
+          ? this.promiseDate
+          : promiseDate as DateTime?,
+      totalMakingCharge: totalMakingCharge ?? this.totalMakingCharge,
+      isMetalScopedCopy: isMetalScopedCopy ?? this.isMetalScopedCopy,
+    );
+  }
 }

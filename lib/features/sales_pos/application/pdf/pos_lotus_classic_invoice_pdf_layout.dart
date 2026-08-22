@@ -70,9 +70,11 @@ class PosLotusClassicInvoicePdfLayout {
         pw.SizedBox(height: 10),
         _totalsAndPayment(invoice),
         pw.SizedBox(height: 10),
-        if (includePolicyBlock) _policyBlock(invoice),
+        if (includePolicyBlock) ...[
+          _policyBlock(invoice),
+          ..._shopPrintSocialSection(invoice),
+        ],
         pw.Spacer(),
-        ..._shopPrintSocialSection(invoice),
         _footer(invoice),
       ],
     );

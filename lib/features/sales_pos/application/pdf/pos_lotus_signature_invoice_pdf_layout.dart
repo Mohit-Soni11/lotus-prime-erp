@@ -67,12 +67,14 @@ class PosLotusSignatureInvoicePdfLayout {
           ],
           pw.SizedBox(height: 14),
           _paymentAndTotals(invoice),
-          if (includePolicyBlock && _policyLines(invoice).isNotEmpty) ...[
-            pw.SizedBox(height: 10),
-            _policyPreview(invoice),
+          if (includePolicyBlock) ...[
+            if (_policyLines(invoice).isNotEmpty) ...[
+              pw.SizedBox(height: 10),
+              _policyPreview(invoice),
+            ],
+            ..._shopPrintSocialSection(invoice),
           ],
           pw.Spacer(),
-          ..._shopPrintSocialSection(invoice),
           _footer(invoice),
         ],
       ),
@@ -97,7 +99,10 @@ class PosLotusSignatureInvoicePdfLayout {
     required bool includeDuplicateStamp,
   }) {
     final entries = _policyEntries(invoice);
-    if (entries.isEmpty) return;
+    if (entries.isEmpty &&
+        !PosInvoiceShopPrintBlocks.hasPrintableSocialSection(invoice)) {
+      return;
+    }
 
     doc.addPage(
       pw.MultiPage(
@@ -109,7 +114,7 @@ class PosLotusSignatureInvoicePdfLayout {
               : null,
         ),
         footer: (context) => _policyPageFooter(invoice, context),
-        build: (_) => _policyPageContent(entries),
+        build: (_) => _policyPageContent(invoice, entries),
       ),
     );
   }
@@ -610,6 +615,14 @@ class PosLotusSignatureInvoicePdfLayout {
   pw.Widget _policyPageFooter(PosInvoiceModel invoice, pw.Context context) {
     final shopName = _fallback(invoice.printShopName, invoice.shopName);
     final footerLines = _splitFooterLines(_footerMessage(invoice));
+    final socialStrip = context.pageNumber == context.pagesCount
+        ? PosInvoiceShopPrintBlocks.compactSocialStrip(
+            invoice,
+            textRenderer: textRenderer,
+            borderColor: _line,
+            accentColor: _gold,
+          )
+        : null;
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 12),
       padding: const pw.EdgeInsets.only(top: 8),
@@ -619,6 +632,10 @@ class PosLotusSignatureInvoicePdfLayout {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
+          if (socialStrip != null) ...[
+            socialStrip,
+            pw.SizedBox(height: 6),
+          ],
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
@@ -680,7 +697,20 @@ class PosLotusSignatureInvoicePdfLayout {
     );
   }
 
-  List<pw.Widget> _policyPageContent(List<PosInvoicePolicyEntry> entries) {
+  List<pw.Widget> _policyPageContent(
+    PosInvoiceModel invoice,
+    List<PosInvoicePolicyEntry> entries,
+  ) {
+    if (entries.isEmpty) {
+      final socialStrip = PosInvoiceShopPrintBlocks.compactSocialStrip(
+        invoice,
+        textRenderer: textRenderer,
+        borderColor: _line,
+        accentColor: _gold,
+      );
+      return socialStrip == null ? const [] : [socialStrip];
+    }
+
     return [
       for (var index = 0; index < entries.length; index++) ...[
         if (index > 0) pw.SizedBox(height: 12),

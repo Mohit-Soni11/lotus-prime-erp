@@ -723,11 +723,7 @@ class PosInvoiceController extends ChangeNotifier {
     }).toList(growable: false);
   }
 
-  // ==========================================
-  //  STEP 1: Reserve the next sequence number from the database.
-  // Drift tables do not expose count() directly here.
-  //         select().get() se list lo, .length lo
-  // ==========================================
+  // Reserve the next sequence number from the database for the preview invoice.
   Future<void> _syncNextInvoicePreview() async {
     if (billing.isCurrentSaleCommitted) {
       return;
@@ -745,115 +741,19 @@ class PosInvoiceController extends ChangeNotifier {
     }
   }
 
-  // ==========================================
-  //  STEP 2: Persist the bill and line items to the database.
-  // ==========================================
+  // Persist the bill and line items to the database.
   PosInvoiceModel _copyInvoiceWithNumber(
     PosInvoiceModel source,
     String invoiceNumber,
   ) {
-    return PosInvoiceModel(
-      invoiceNumber: invoiceNumber,
-      invoiceDate: source.invoiceDate,
-      billType: source.billType,
-      gstPricingMode: source.gstPricingMode,
-      documentType: source.documentType,
-      billingMode: source.billingMode,
-      shopName: source.shopName,
-      shopAddress: source.shopAddress,
-      shopPhone: source.shopPhone,
-      shopGstin: source.shopGstin,
-      shopStateCode: source.shopStateCode,
-      shopLogoPath: source.shopLogoPath,
-      shopLogoShape: source.shopLogoShape,
-      shopPrintFields: source.shopPrintFields,
-      shopPrintProfileApplied: source.shopPrintProfileApplied,
-      shopSignaturePath: source.shopSignaturePath,
-      shopSignatureShape: source.shopSignatureShape,
-      customerName: source.customerName,
-      customerMobile: source.customerMobile,
-      customerCity: source.customerCity,
-      customerPan: source.customerPan,
-      customerGstin: source.customerGstin,
-      customerStateCode: source.customerStateCode,
-      placeOfSupply: source.placeOfSupply,
-      tradeInMode: source.tradeInMode,
-      customerMetalSettlementType: source.customerMetalSettlementType,
-      saleItems: source.saleItems,
-      tradeInItems: source.tradeInItems,
-      grossAmount: source.grossAmount,
-      discountAmount: source.discountAmount,
-      taxableAmount: source.taxableAmount,
-      cgst: source.cgst,
-      sgst: source.sgst,
-      totalGst: source.totalGst,
-      totalTradeInDeduction: source.totalTradeInDeduction,
-      grandTotal: source.grandTotal,
-      cashPaid: source.cashPaid,
-      upiPaid: source.upiPaid,
-      cardPaid: source.cardPaid,
-      advancePaid: source.advancePaid,
-      balanceDue: source.balanceDue,
-      changeSettlementMethod: source.changeSettlementMethod,
-      changeSettlementAmount: source.changeSettlementAmount,
-      changeSettlementPaymentMode: source.changeSettlementPaymentMode,
-      totalMakingCharge: source.totalMakingCharge,
-      promiseDate: source.promiseDate,
-    );
+    return source.copyWith(invoiceNumber: invoiceNumber);
   }
 
   PosInvoiceModel _copyInvoiceWithSaleItems(
     PosInvoiceModel source,
     List<SaleItemModel> saleItems,
   ) {
-    return PosInvoiceModel(
-      invoiceNumber: source.invoiceNumber,
-      invoiceDate: source.invoiceDate,
-      billType: source.billType,
-      gstPricingMode: source.gstPricingMode,
-      documentType: source.documentType,
-      billingMode: source.billingMode,
-      shopName: source.shopName,
-      shopAddress: source.shopAddress,
-      shopPhone: source.shopPhone,
-      shopGstin: source.shopGstin,
-      shopStateCode: source.shopStateCode,
-      shopLogoPath: source.shopLogoPath,
-      shopLogoShape: source.shopLogoShape,
-      shopPrintFields: source.shopPrintFields,
-      shopPrintProfileApplied: source.shopPrintProfileApplied,
-      shopSignaturePath: source.shopSignaturePath,
-      shopSignatureShape: source.shopSignatureShape,
-      customerName: source.customerName,
-      customerMobile: source.customerMobile,
-      customerCity: source.customerCity,
-      customerPan: source.customerPan,
-      customerGstin: source.customerGstin,
-      customerStateCode: source.customerStateCode,
-      placeOfSupply: source.placeOfSupply,
-      tradeInMode: source.tradeInMode,
-      customerMetalSettlementType: source.customerMetalSettlementType,
-      saleItems: saleItems,
-      tradeInItems: source.tradeInItems,
-      grossAmount: source.grossAmount,
-      discountAmount: source.discountAmount,
-      taxableAmount: source.taxableAmount,
-      cgst: source.cgst,
-      sgst: source.sgst,
-      totalGst: source.totalGst,
-      totalTradeInDeduction: source.totalTradeInDeduction,
-      grandTotal: source.grandTotal,
-      cashPaid: source.cashPaid,
-      upiPaid: source.upiPaid,
-      cardPaid: source.cardPaid,
-      advancePaid: source.advancePaid,
-      balanceDue: source.balanceDue,
-      totalMakingCharge: source.totalMakingCharge,
-      changeSettlementMethod: source.changeSettlementMethod,
-      changeSettlementAmount: source.changeSettlementAmount,
-      changeSettlementPaymentMode: source.changeSettlementPaymentMode,
-      promiseDate: source.promiseDate,
-    );
+    return source.copyWith(saleItems: saleItems);
   }
 
   Future<void> _saveBillToDatabase(PosInvoiceModel inv) async {
@@ -1149,55 +1049,7 @@ class PosInvoiceController extends ChangeNotifier {
   Future<void> setDueDate(DateTime? date) async {
     dueDate = date;
     if (invoice != null) {
-      invoice = PosInvoiceModel(
-        invoiceNumber: invoice!.invoiceNumber,
-        invoiceDate: invoice!.invoiceDate,
-        billType: invoice!.billType,
-        gstPricingMode: invoice!.gstPricingMode,
-        documentType: invoice!.documentType,
-        billingMode: invoice!.billingMode,
-        shopName: invoice!.shopName,
-        shopAddress: invoice!.shopAddress,
-        shopPhone: invoice!.shopPhone,
-        shopGstin: invoice!.shopGstin,
-        shopStateCode: invoice!.shopStateCode,
-        shopLogoPath: invoice!.shopLogoPath,
-        shopLogoShape: invoice!.shopLogoShape,
-        shopPrintFields: invoice!.shopPrintFields,
-        shopPrintProfileApplied: invoice!.shopPrintProfileApplied,
-        shopSignaturePath: invoice!.shopSignaturePath,
-        shopSignatureShape: invoice!.shopSignatureShape,
-        customerName: invoice!.customerName,
-        customerMobile: invoice!.customerMobile,
-        customerCity: invoice!.customerCity,
-        customerPan: invoice!.customerPan,
-        customerGstin: invoice!.customerGstin,
-        customerStateCode: invoice!.customerStateCode,
-        placeOfSupply: invoice!.placeOfSupply,
-        tradeInMode: invoice!.tradeInMode,
-        customerMetalSettlementType: invoice!.customerMetalSettlementType,
-        saleItems: invoice!.saleItems,
-        tradeInItems: invoice!.tradeInItems,
-        grossAmount: invoice!.grossAmount,
-        discountAmount: invoice!.discountAmount,
-        taxableAmount: invoice!.taxableAmount,
-        cgst: invoice!.cgst,
-        sgst: invoice!.sgst,
-        totalGst: invoice!.totalGst,
-        totalTradeInDeduction: invoice!.totalTradeInDeduction,
-        grandTotal: invoice!.grandTotal,
-        roundOffAmount: invoice!.roundOffAmount,
-        cashPaid: invoice!.cashPaid,
-        upiPaid: invoice!.upiPaid,
-        cardPaid: invoice!.cardPaid,
-        advancePaid: invoice!.advancePaid,
-        balanceDue: invoice!.balanceDue,
-        changeSettlementMethod: invoice!.changeSettlementMethod,
-        changeSettlementAmount: invoice!.changeSettlementAmount,
-        changeSettlementPaymentMode: invoice!.changeSettlementPaymentMode,
-        totalMakingCharge: invoice!.totalMakingCharge,
-        promiseDate: dueDate,
-      );
+      invoice = invoice!.copyWith(promiseDate: dueDate);
       await _refreshActivePreviewPdf();
     }
     notifyListeners();

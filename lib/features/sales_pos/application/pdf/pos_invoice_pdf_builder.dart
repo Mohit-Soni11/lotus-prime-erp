@@ -440,7 +440,10 @@ class _PosInvoicePdfDocumentBuilder {
     if (templateHandled) return;
 
     final entries = _policyEntries(invoice);
-    if (entries.isEmpty) return;
+    if (entries.isEmpty &&
+        !PosInvoiceShopPrintBlocks.hasPrintableSocialSection(invoice)) {
+      return;
+    }
 
     doc.addPage(
       pw.MultiPage(
@@ -456,6 +459,7 @@ class _PosInvoicePdfDocumentBuilder {
         header: (_) => _policyPageHeader(invoice),
         footer: (context) => _policyPageFooter(invoice, context),
         build: (_) => _policyPageContent(
+          invoice,
           entries,
           bodyWidth: _fallbackPolicyBodyWidth(pageFormat),
         ),
@@ -512,9 +516,11 @@ class _PosInvoicePdfDocumentBuilder {
         _pdfTotalsBlock(invoice),
         pw.SizedBox(height: 14),
         _pdfPaymentBlock(invoice),
-        if (includePolicyBlock) _pdfPolicyBlock(invoice),
+        if (includePolicyBlock) ...[
+          _pdfPolicyBlock(invoice),
+          ..._pdfShopPrintSocialSection(invoice),
+        ],
         pw.Spacer(),
-        ..._pdfShopPrintSocialSection(invoice),
         _pdfFooter(invoice),
       ],
     );
@@ -1382,6 +1388,14 @@ class _PosInvoicePdfDocumentBuilder {
 
   pw.Widget _policyPageFooter(PosInvoiceModel invoice, pw.Context context) {
     final footerLines = _footerTextLinesForInvoice(invoice);
+    final socialStrip = context.pageNumber == context.pagesCount
+        ? PosInvoiceShopPrintBlocks.compactSocialStrip(
+            invoice,
+            textRenderer: textRenderer,
+            borderColor: _pdfLightBorderColor,
+            accentColor: _pdfBorderColor,
+          )
+        : null;
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 10),
       padding: const pw.EdgeInsets.only(top: 6),
@@ -1395,6 +1409,10 @@ class _PosInvoicePdfDocumentBuilder {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
+                if (socialStrip != null) ...[
+                  socialStrip,
+                  pw.SizedBox(height: 5),
+                ],
                 for (final line in footerLines)
                   pw.Padding(
                     padding: const pw.EdgeInsets.only(bottom: 2),
@@ -1424,10 +1442,24 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   List<pw.Widget> _policyPageContent(
+    PosInvoiceModel invoice,
     List<PosInvoicePolicyEntry> entries, {
     required double bodyWidth,
   }) {
     final widgets = <pw.Widget>[];
+
+    if (entries.isEmpty) {
+      final socialStrip = PosInvoiceShopPrintBlocks.compactSocialStrip(
+        invoice,
+        textRenderer: textRenderer,
+        borderColor: _pdfLightBorderColor,
+        accentColor: _pdfBorderColor,
+      );
+      if (socialStrip != null) {
+        widgets.add(socialStrip);
+      }
+      return widgets;
+    }
 
     for (var index = 0; index < entries.length; index++) {
       final entry = entries[index];
