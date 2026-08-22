@@ -269,7 +269,7 @@ class PosInvoiceShopPrintBlocks {
 
     return pw.Container(
       width: double.infinity,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: pw.BoxDecoration(
         color: PdfColors.white,
         border: pw.Border.all(color: borderColor, width: 0.7),
@@ -279,8 +279,8 @@ class PosInvoiceShopPrintBlocks {
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
           pw.Container(
-            width: 70,
-            height: 70,
+            width: 78,
+            height: 78,
             padding: const pw.EdgeInsets.all(3),
             decoration: pw.BoxDecoration(
               border: pw.Border.all(color: accentColor, width: 0.8),
@@ -293,7 +293,7 @@ class PosInvoiceShopPrintBlocks {
               backgroundColor: PdfColors.white,
             ),
           ),
-          pw.SizedBox(width: 12),
+          pw.SizedBox(width: 14),
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -308,16 +308,16 @@ class PosInvoiceShopPrintBlocks {
                   maxLines: 1,
                   overflow: pw.TextOverflow.clip,
                   style: pw.TextStyle(
-                    fontSize: 10.8,
+                    fontSize: 11.6,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.black,
                   ),
                 ),
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 5),
                 pw.Text(
-                  'Scan the QR code for official website and social channels.',
+                  'Scan for official online channels.',
                   style: pw.TextStyle(
-                    fontSize: 9.4,
+                    fontSize: 10.2,
                     color: PdfColors.black,
                     fontWeight: pw.FontWeight.bold,
                   ),
@@ -344,7 +344,7 @@ class PosInvoiceShopPrintBlocks {
                           child: pw.Text(
                             entry.platform.label,
                             style: pw.TextStyle(
-                              fontSize: 8.2,
+                              fontSize: 8.6,
                               color: PdfColors.black,
                               fontWeight: pw.FontWeight.bold,
                             ),

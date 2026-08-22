@@ -804,7 +804,7 @@ class PosLotusClassicInvoicePdfLayout {
               entries[index].title.toUpperCase(),
               style: pw.TextStyle(
                 color: _gold,
-                fontSize: 8.8,
+                fontSize: 9.2,
                 fontWeight: pw.FontWeight.bold,
                 letterSpacing: 0.25,
               ),
@@ -820,7 +820,7 @@ class PosLotusClassicInvoicePdfLayout {
   List<pw.Widget> _policyBodyLines(String body) {
     final style = pw.TextStyle(
       color: _ink,
-      fontSize: 10.2,
+      fontSize: 10.7,
       fontWeight: pw.FontWeight.bold,
       lineSpacing: 1.18,
     );
@@ -874,7 +874,7 @@ class PosLotusClassicInvoicePdfLayout {
                 overflow: pw.TextOverflow.clip,
                 style: pw.TextStyle(
                   color: _ink,
-                  fontSize: 9.4,
+                  fontSize: 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -891,7 +891,7 @@ class PosLotusClassicInvoicePdfLayout {
                 textAlign: pw.TextAlign.center,
                 style: pw.TextStyle(
                   color: _ink,
-                  fontSize: 9,
+                  fontSize: 9.6,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -910,7 +910,7 @@ class PosLotusClassicInvoicePdfLayout {
         textAlign: pw.TextAlign.center,
         style: pw.TextStyle(
           color: PdfColors.white,
-          fontSize: 7,
+          fontSize: 7.4,
           fontWeight: pw.FontWeight.bold,
         ),
       ),
@@ -923,9 +923,10 @@ class PosLotusClassicInvoicePdfLayout {
       child: pw.Text(
         text,
         textAlign: pw.TextAlign.center,
-        style: const pw.TextStyle(
+        style: pw.TextStyle(
           color: _ink,
-          fontSize: 7.7,
+          fontSize: 8.1,
+          fontWeight: pw.FontWeight.bold,
           lineSpacing: 1.1,
         ),
       ),

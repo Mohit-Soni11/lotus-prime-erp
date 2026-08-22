@@ -84,8 +84,8 @@ class _PosInvoicePdfDocumentBuilder {
   static const double _pdfTotalSize = 10.5;
   static const double _pdfGrandLabelSize = 12.5;
   static const double _pdfGrandValueSize = 13.5;
-  static const double _pdfPolicyTitleSize = 12;
-  static const double _pdfPolicyBodySize = 11.2;
+  static const double _pdfPolicyTitleSize = 12.6;
+  static const double _pdfPolicyBodySize = 11.7;
 
   final PosInvoiceScopeService scopeService;
   final PosInvoicePdfBuildOptions options;
@@ -185,13 +185,13 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: _fallbackPolicyBodyWidth(pageFormat),
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 12.1,
+          fontSize: 12.6,
           color: PdfColors.black,
           bold: true,
           maxWidth: 456,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 11.6,
+          fontSize: 12.0,
           color: PdfColors.black,
           bold: true,
           maxWidth: 456,
@@ -203,13 +203,25 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 470,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 10.2,
+          fontSize: 10.8,
           color: PdfColors.black,
           bold: true,
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
           fontSize: 10.2,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 500,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 10.7,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 500,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 10.3,
           color: PdfColors.black,
           bold: true,
           maxWidth: 500,
@@ -221,13 +233,13 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 500,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 9.4,
+          fontSize: 10.2,
           color: PdfColors.black,
           bold: true,
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 9.2,
+          fontSize: 9.8,
           color: PdfColors.black,
           bold: true,
           maxWidth: 220,
@@ -245,10 +257,16 @@ class _PosInvoicePdfDocumentBuilder {
           maxWidth: 360,
         ),
         const PosInvoicePdfTextSpec(
-          fontSize: 10.8,
+          fontSize: 11.6,
           color: PdfColors.black,
           bold: true,
           maxWidth: 390,
+        ),
+        const PosInvoicePdfTextSpec(
+          fontSize: 10.2,
+          color: PdfColors.black,
+          bold: true,
+          maxWidth: 430,
         ),
         const PosInvoicePdfTextSpec(
           fontSize: 7.2,
@@ -829,9 +847,10 @@ class _PosInvoicePdfDocumentBuilder {
       padding: const pw.EdgeInsets.all(5),
       child: pw.Text(
         text,
-        style: const pw.TextStyle(
+        style: pw.TextStyle(
           fontSize: _pdfTableCellSize,
           color: _pdfTextColor,
+          fontWeight: pw.FontWeight.bold,
         ),
       ),
     );
@@ -1426,7 +1445,7 @@ class _PosInvoicePdfDocumentBuilder {
                       line,
                       maxWidth: 360,
                       style: pw.TextStyle(
-                        fontSize: 9.4,
+                        fontSize: 10.2,
                         color: _pdfTextColor,
                         fontWeight: pw.FontWeight.bold,
                       ),
@@ -1439,7 +1458,7 @@ class _PosInvoicePdfDocumentBuilder {
           pw.Text(
             'Page ${context.pageNumber} of ${context.pagesCount}',
             style: pw.TextStyle(
-              fontSize: 9.1,
+              fontSize: 9.8,
               color: _pdfTextColor,
               fontWeight: pw.FontWeight.bold,
             ),

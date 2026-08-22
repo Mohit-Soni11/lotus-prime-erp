@@ -25,9 +25,9 @@ class PosLotusSignatureInvoicePdfLayout {
   static const _line = PdfColor(0.76, 0.67, 0.53);
   static const _success = PdfColor.fromInt(0xFF166534);
   static const _danger = PdfColor.fromInt(0xFFB91C1C);
-  static const _policyEnglishFontSize = 12.1;
-  static const _policyHindiFontSize = 11.6;
-  static const _footerMessageFontSize = 10.2;
+  static const _policyEnglishFontSize = 12.6;
+  static const _policyHindiFontSize = 12.0;
+  static const _footerMessageFontSize = 10.8;
   static const _footerMessageMaxWidth = 360.0;
   static const _policyPageShopNameMaxWidth = 220.0;
 
@@ -658,7 +658,7 @@ class PosLotusSignatureInvoicePdfLayout {
                     pw.Text(
                       'Authorized Signature',
                       style: pw.TextStyle(
-                        fontSize: 9.8,
+                        fontSize: 10.4,
                         color: _ink,
                         fontWeight: pw.FontWeight.bold,
                       ),
@@ -678,7 +678,7 @@ class PosLotusSignatureInvoicePdfLayout {
                 maxLines: 1,
                 overflow: pw.TextOverflow.clip,
                 style: pw.TextStyle(
-                  fontSize: 9.2,
+                  fontSize: 9.8,
                   color: _ink,
                   fontWeight: pw.FontWeight.bold,
                 ),
@@ -686,7 +686,7 @@ class PosLotusSignatureInvoicePdfLayout {
               pw.Text(
                 'Page ${context.pageNumber} of ${context.pagesCount}',
                 style: pw.TextStyle(
-                  fontSize: 9.2,
+                  fontSize: 9.8,
                   color: _ink,
                   fontWeight: pw.FontWeight.bold,
                 ),
@@ -768,7 +768,7 @@ class PosLotusSignatureInvoicePdfLayout {
               overflow: pw.TextOverflow.clip,
               style: pw.TextStyle(
                 color: _ink,
-                fontSize: 13.2,
+                fontSize: 13.8,
                 fontWeight: pw.FontWeight.bold,
                 letterSpacing: 0.25,
               ),
@@ -1051,8 +1051,8 @@ class PosLotusSignatureInvoicePdfLayout {
         maxLines: header ? 1 : 2,
         overflow: pw.TextOverflow.clip,
         style: pw.TextStyle(
-          fontSize: header ? 7.6 : 7.4,
-          fontWeight: header ? pw.FontWeight.bold : pw.FontWeight.normal,
+          fontSize: header ? 7.8 : 7.7,
+          fontWeight: pw.FontWeight.bold,
           color: _ink,
         ),
       ),

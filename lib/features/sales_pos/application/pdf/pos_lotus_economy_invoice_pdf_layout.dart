@@ -410,7 +410,7 @@ class PosLotusEconomyInvoicePdfLayout {
 
   pw.Widget _policyLine(String value) {
     final style = pw.TextStyle(
-      fontSize: 9.8,
+      fontSize: 10.3,
       color: _ink,
       fontWeight: pw.FontWeight.bold,
     );
@@ -455,7 +455,7 @@ class PosLotusEconomyInvoicePdfLayout {
                 pw.Text(
                   'Authorized Signature',
                   style: pw.TextStyle(
-                    fontSize: 9.6,
+                    fontSize: 10.1,
                     fontWeight: pw.FontWeight.bold,
                     color: _ink,
                   ),
@@ -561,8 +561,8 @@ class PosLotusEconomyInvoicePdfLayout {
         maxLines: header ? 1 : 2,
         overflow: pw.TextOverflow.clip,
         style: pw.TextStyle(
-          fontSize: header ? 7.5 : 7.3,
-          fontWeight: header ? pw.FontWeight.bold : pw.FontWeight.normal,
+          fontSize: header ? 7.8 : 7.7,
+          fontWeight: pw.FontWeight.bold,
           color: _ink,
         ),
       ),
@@ -641,7 +641,7 @@ class PosLotusEconomyInvoicePdfLayout {
         maxLines: 1,
         overflow: pw.TextOverflow.clip,
         style: pw.TextStyle(
-          fontSize: 9.2,
+          fontSize: 9.8,
           color: _ink,
           fontWeight: pw.FontWeight.bold,
         ),
