@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
+import 'purchase_item_grid_spec.dart';
 import 'purchase_item_row.dart';
 
 class PurchaseItemsTable extends StatelessWidget {
   final PurchaseEntryController ctrl;
 
   const PurchaseItemsTable({super.key, required this.ctrl});
-
-  static const double _tableWidth = 1180;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +17,13 @@ class PurchaseItemsTable extends StatelessWidget {
       builder: (context, _) {
         return LayoutBuilder(
           builder: (context, constraints) {
-            final needsHorizontalScroll = constraints.maxWidth < _tableWidth;
+            final hasItems = ctrl.items.isNotEmpty;
+            final tableWidth =
+                constraints.maxWidth > PurchaseItemGridSpec.minTableWidth
+                    ? constraints.maxWidth
+                    : PurchaseItemGridSpec.minTableWidth;
+            final needsHorizontalScroll = hasItems &&
+                constraints.maxWidth < PurchaseItemGridSpec.minTableWidth;
 
             return Container(
               decoration: BoxDecoration(
@@ -40,34 +45,9 @@ class PurchaseItemsTable extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(needsHorizontalScroll),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: needsHorizontalScroll
-                        ? const BouncingScrollPhysics()
-                        : const NeverScrollableScrollPhysics(),
-                    child: SizedBox(
-                      width: _tableWidth,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildColumnHeaders(),
-                          ctrl.items.isEmpty
-                              ? _buildEmptyState()
-                              : ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: ctrl.items.length,
-                                  itemBuilder: (context, index) =>
-                                      PurchaseItemRow(
-                                    index: index,
-                                    item: ctrl.items[index],
-                                    ctrl: ctrl,
-                                  ),
-                                ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  hasItems
+                      ? _buildRows(tableWidth, needsHorizontalScroll)
+                      : _buildEmptyState(),
                   _buildBottomSummary(),
                 ],
               ),
@@ -75,6 +55,41 @@ class PurchaseItemsTable extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  Widget _buildRows(double tableWidth, bool needsHorizontalScroll) {
+    final table = Column(
+      key: const ValueKey('purchase-metal-table'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildColumnHeaders(),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: ctrl.items.length,
+          itemBuilder: (context, index) => PurchaseItemRow(
+            key: ObjectKey(ctrl.items[index]),
+            index: index,
+            item: ctrl.items[index],
+            ctrl: ctrl,
+          ),
+        ),
+      ],
+    );
+
+    if (!needsHorizontalScroll) {
+      return table;
+    }
+
+    return SingleChildScrollView(
+      key: const ValueKey('purchase-metal-scroll-table'),
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: SizedBox(
+        width: tableWidth,
+        child: table,
+      ),
     );
   }
 
@@ -122,7 +137,7 @@ class PurchaseItemsTable extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Capture old metal received from customer with precise weight, purity, and payout value',
+                  'Record old metal received from customer with precise weight, purity, and payout value',
                   style: PurchaseEntryStyles.subTitleMuted,
                 ),
                 if (needsHorizontalScroll) ...[
@@ -186,27 +201,34 @@ class PurchaseItemsTable extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _header('S.NO', flex: 1, center: true),
-          const SizedBox(width: 6),
-          _header('METAL', flex: 3),
-          const SizedBox(width: 6),
-          _header('ITEM DESCRIPTION', flex: 4),
-          const SizedBox(width: 6),
-          _header('GROSS', flex: 2),
-          const SizedBox(width: 6),
-          _header('LESS', flex: 2),
-          const SizedBox(width: 6),
-          _header('NET WT', flex: 2),
-          const SizedBox(width: 6),
-          _header('PURITY', flex: 2),
-          const SizedBox(width: 6),
-          _header('FINE WT', flex: 2),
-          const SizedBox(width: 6),
-          _header('RATE', flex: 3),
-          const SizedBox(width: 6),
-          _header('VALUE', flex: 3, right: true),
-          const SizedBox(width: 6),
-          _header('ACT', flex: 1, center: true),
+          _header('S.NO', flex: PurchaseItemGridSpec.serialFlex, center: true),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('METAL', flex: PurchaseItemGridSpec.metalFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header(
+            'ITEM DESCRIPTION',
+            flex: PurchaseItemGridSpec.descriptionFlex,
+          ),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('GROSS', flex: PurchaseItemGridSpec.weightFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('LESS', flex: PurchaseItemGridSpec.weightFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('NET WT', flex: PurchaseItemGridSpec.weightFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('PURITY', flex: PurchaseItemGridSpec.purityFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('FINE WT', flex: PurchaseItemGridSpec.weightFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('RATE', flex: PurchaseItemGridSpec.rateFlex),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header(
+            'VALUE',
+            flex: PurchaseItemGridSpec.valueFlex,
+            right: true,
+          ),
+          const SizedBox(width: PurchaseItemGridSpec.columnGap),
+          _header('ACT', flex: PurchaseItemGridSpec.actionFlex, center: true),
         ],
       ),
     );
@@ -222,6 +244,9 @@ class PurchaseItemsTable extends StatelessWidget {
       flex: flex,
       child: Text(
         title,
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.visible,
         textAlign: right
             ? TextAlign.right
             : (center ? TextAlign.center : TextAlign.left),
@@ -232,26 +257,30 @@ class PurchaseItemsTable extends StatelessWidget {
 
   Widget _buildEmptyState() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 42),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 74,
+              height: 74,
               decoration: BoxDecoration(
-                color: PurchaseEntryColors.bodyBg,
+                color: PurchaseEntryColors.purchaseAccent.withValues(
+                  alpha: 0.08,
+                ),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: PurchaseEntryColors.bodyBorder,
+                  color: PurchaseEntryColors.purchaseAccent.withValues(
+                    alpha: 0.28,
+                  ),
                   width: 2.0,
                 ),
               ),
               child: const Icon(
-                PurchaseEntryIcons.purchaseHeader,
+                Icons.lock_outline_rounded,
                 color: PurchaseEntryColors.purchaseAccent,
-                size: 32,
+                size: 34,
               ),
             ),
             const SizedBox(height: 18),
@@ -266,10 +295,12 @@ class PurchaseItemsTable extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Add a purchase line to start this voucher.',
+              PurchaseEntryStrings.noItemsSub,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: PurchaseEntryColors.textMuted,
-                fontSize: 13,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -349,7 +380,7 @@ class PurchaseItemsTable extends StatelessWidget {
             ),
             SizedBox(width: 8),
             Text(
-              PurchaseEntryStrings.addItemBtn,
+              PurchaseEntryStrings.recordCustomerMetalBtn,
               style: TextStyle(
                 color: PurchaseEntryColors.purchaseAccent,
                 fontSize: 14,

@@ -3,9 +3,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
-import '../../../logic/purchase/purchase_voucher_print_service.dart';
-import '../../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
+import 'purchase_voucher_workspace_screen.dart';
 
 class PurchaseRightPanel extends StatefulWidget {
   final PurchaseEntryController ctrl;
@@ -18,6 +17,80 @@ class PurchaseRightPanel extends StatefulWidget {
 
 class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
   String _currency(double amount) => 'Rs. ${amount.toStringAsFixed(2)}';
+
+  Future<void> _pickPayoutCommitmentDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = widget.ctrl.payoutCommitmentDate;
+    final initialDate =
+        selected == null || selected.isBefore(today) ? today : selected;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: today,
+      lastDate: DateTime(today.year + 5, today.month, today.day),
+      builder: (context, child) {
+        final baseTheme = Theme.of(context);
+        const colorScheme = ColorScheme.light(
+          primary: PurchaseEntryColors.purchaseAccent,
+          onPrimary: Colors.white,
+          surface: PurchaseEntryColors.bodyPanel,
+          onSurface: PurchaseEntryColors.textMain,
+        );
+
+        return Theme(
+          data: baseTheme.copyWith(
+            colorScheme: colorScheme,
+            dialogTheme: baseTheme.dialogTheme.copyWith(
+              backgroundColor: PurchaseEntryColors.bodyPanel,
+            ),
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: PurchaseEntryColors.bodyPanel,
+              headerBackgroundColor: PurchaseEntryColors.purchaseAccent,
+              headerForegroundColor: Colors.white,
+              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.disabled)) {
+                  return PurchaseEntryColors.textMain.withValues(alpha: 0.35);
+                }
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                return PurchaseEntryColors.textMain;
+              }),
+              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return PurchaseEntryColors.purchaseAccent;
+                }
+                return null;
+              }),
+              todayForegroundColor: const WidgetStatePropertyAll(
+                PurchaseEntryColors.purchaseAccent,
+              ),
+              todayBorder: const BorderSide(
+                color: PurchaseEntryColors.purchaseAccent,
+                width: 1.5,
+              ),
+              yearForegroundColor: const WidgetStatePropertyAll(
+                PurchaseEntryColors.textMain,
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: PurchaseEntryColors.purchaseAccent,
+                textStyle: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.ctrl.setPayoutCommitmentDate(picked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +166,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           _sectionHead(
             icon: PurchaseEntryIcons.invoiceOutline,
             title: PurchaseEntryStrings.purchaseSummary,
-            subtitle: 'Review customer metal valuation and payout',
+            subtitle: 'Review assessed metal value and seller payable amount',
           ),
           if (widget.ctrl.totalGoldValue > 0)
             _subtleRow(
@@ -130,154 +203,18 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 width: 1.5,
               ),
             ),
-            child:
-                _pillarRow('Gross Purchase', widget.ctrl.grossPurchaseAmount),
+            child: _pillarRow(
+              'Assessed Metal Value',
+              widget.ctrl.grossPurchaseAmount,
+            ),
           ),
           const SizedBox(height: 12),
-          _discountCard(),
-          const SizedBox(height: 12),
           _pillarRow(
-            'Net Purchase',
+            'Seller Payable',
             widget.ctrl.netPurchaseAmount,
             isMid: true,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _discountCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: PurchaseEntryColors.bodyBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: PurchaseEntryColors.bodyBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Discount',
-            style: TextStyle(
-              color: PurchaseEntryColors.textMain,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _discountToggle(
-                  title: 'Flat',
-                  active: widget.ctrl.discountType ==
-                      PurchaseDiscountType.flatAmount,
-                  onTap: () => widget.ctrl
-                      .toggleDiscountType(PurchaseDiscountType.flatAmount),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _discountToggle(
-                  title: 'Percent',
-                  active: widget.ctrl.discountType ==
-                      PurchaseDiscountType.percentage,
-                  onTap: () => widget.ctrl
-                      .toggleDiscountType(PurchaseDiscountType.percentage),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 44,
-            child: TextField(
-              controller: widget.ctrl.discountCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-              ],
-              style: PurchaseEntryStyles.inputText.copyWith(fontSize: 14),
-              decoration: InputDecoration(
-                prefixText:
-                    widget.ctrl.discountType == PurchaseDiscountType.flatAmount
-                        ? 'Rs. '
-                        : null,
-                suffixText:
-                    widget.ctrl.discountType == PurchaseDiscountType.percentage
-                        ? '%'
-                        : null,
-                hintText:
-                    widget.ctrl.discountType == PurchaseDiscountType.flatAmount
-                        ? 'Enter discount amount'
-                        : 'Enter discount percentage',
-                hintStyle: PurchaseEntryStyles.subTitleMuted.copyWith(
-                  fontSize: 13,
-                ),
-                filled: true,
-                fillColor: PurchaseEntryColors.bodyPanel,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide:
-                      const BorderSide(color: PurchaseEntryColors.bodyBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide:
-                      const BorderSide(color: PurchaseEntryColors.bodyBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: PurchaseEntryColors.purchaseAccent,
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _subtleRow('Discount Applied', widget.ctrl.discountAmount),
-        ],
-      ),
-    );
-  }
-
-  Widget _discountToggle({
-    required String title,
-    required bool active,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 38,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: active
-              ? PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12)
-              : PurchaseEntryColors.bodyPanel,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: active
-                ? PurchaseEntryColors.purchaseAccent
-                : PurchaseEntryColors.bodyBorder,
-          ),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: active
-                ? PurchaseEntryColors.purchaseAccent
-                : PurchaseEntryColors.textMain,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
       ),
     );
   }
@@ -300,16 +237,16 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           _sectionHead(
             icon: PurchaseEntryIcons.cashPay,
             title: PurchaseEntryStrings.paymentDisburse,
-            subtitle: 'Record how the payout is being settled',
+            subtitle: 'Record payout released against customer metal purchase',
           ),
           _paymentInput(
-              'Cash Paid', widget.ctrl.cashCtrl, PurchaseEntryIcons.cashPay),
+              'Cash Payout', widget.ctrl.cashCtrl, PurchaseEntryIcons.cashPay),
           const SizedBox(height: 12),
-          _paymentInput('UPI / Bank Paid', widget.ctrl.upiCtrl,
+          _paymentInput('UPI / Bank Payout', widget.ctrl.upiCtrl,
               PurchaseEntryIcons.upiPay),
           const SizedBox(height: 12),
           _paymentInput(
-              'Card Paid', widget.ctrl.cardCtrl, PurchaseEntryIcons.cardPay),
+              'Card Payout', widget.ctrl.cardCtrl, PurchaseEntryIcons.cardPay),
           const SizedBox(height: 18),
           if (isEmpty)
             Container(
@@ -325,7 +262,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
               ),
               child: const Center(
                 child: Text(
-                  'NO PURCHASE LINES ADDED',
+                  'NO CUSTOMER METAL RECORDED',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -356,10 +293,10 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                     children: [
                       Text(
                         isOverpaid
-                            ? 'OVERPAID'
+                            ? 'PAYOUT EXCESS'
                             : isSettled
-                                ? 'PAYMENT COMPLETE'
-                                : 'BALANCE TO SETTLE',
+                                ? 'PAYOUT SETTLED'
+                                : 'PENDING SELLER PAYOUT',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
@@ -388,6 +325,10 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 ],
               ),
             ),
+          if (widget.ctrl.hasPendingSellerPayout) ...[
+            const SizedBox(height: 14),
+            _payoutCommitmentDateField(),
+          ],
         ],
       ),
     );
@@ -422,7 +363,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isCredit ? 'CREDIT NOTE' : 'TOTAL PAYABLE',
+                      isCredit ? 'PAYOUT CREDIT' : 'SELLER PAYABLE',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
@@ -468,8 +409,10 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                   height: 54,
                   child: OutlinedButton.icon(
                     onPressed: canPrint
-                        ? () =>
-                            PurchaseVoucherPrintService.printDraft(widget.ctrl)
+                        ? () => PurchaseVoucherWorkspaceScreen.push(
+                              context,
+                              controller: widget.ctrl,
+                            )
                         : null,
                     icon: const Icon(PurchaseEntryIcons.printVoucher, size: 18),
                     label: const Text(
@@ -659,6 +602,89 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
             fontWeight: FontWeight.w900,
             color: PurchaseEntryColors.textMain,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _payoutCommitmentDateField() {
+    final hasDate = widget.ctrl.payoutCommitmentDate != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'PAYOUT COMMITMENT DATE',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: PurchaseEntryColors.textMain,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 46,
+          child: TextField(
+            controller: widget.ctrl.payoutCommitmentDateCtrl,
+            readOnly: true,
+            onTap: _pickPayoutCommitmentDate,
+            style: PurchaseEntryStyles.inputText.copyWith(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Select seller payout date',
+              prefixIcon: const Icon(
+                PurchaseEntryIcons.calendarDate,
+                size: 18,
+                color: PurchaseEntryColors.purchaseAccent,
+              ),
+              suffixIcon: hasDate
+                  ? IconButton(
+                      tooltip: 'Clear payout commitment date',
+                      onPressed: widget.ctrl.clearPayoutCommitmentDate,
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: PurchaseEntryColors.textMain,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: PurchaseEntryColors.textMain,
+                    ),
+              hintStyle: PurchaseEntryStyles.subTitleMuted.copyWith(
+                fontSize: 13,
+              ),
+              filled: true,
+              fillColor: PurchaseEntryColors.bodyBg,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: PurchaseEntryColors.bodyBorder,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: PurchaseEntryColors.bodyBorder,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: PurchaseEntryColors.purchaseAccent,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Scheduled date to release the remaining seller payout.',
+          style: PurchaseEntryStyles.subTitleMuted.copyWith(fontSize: 12),
         ),
       ],
     );

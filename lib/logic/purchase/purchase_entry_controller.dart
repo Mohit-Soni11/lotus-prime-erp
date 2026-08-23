@@ -29,7 +29,8 @@ class PurchaseEntryController extends ChangeNotifier {
   final ShopSetupRepository _shopRepository = ShopSetupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
 
-  PurchaseDiscountType discountType = PurchaseDiscountType.flatAmount;
+  static const String sellerPayoutPendingMode = 'SELLER_PAYOUT_PENDING';
+  static const String sellerPayoutExcessMode = 'SELLER_PAYOUT_EXCESS';
 
   final TextEditingController mobileCtrl = TextEditingController();
   final TextEditingController nameCtrl = TextEditingController();
@@ -41,13 +42,15 @@ class PurchaseEntryController extends ChangeNotifier {
   final TextEditingController cashCtrl = TextEditingController();
   final TextEditingController upiCtrl = TextEditingController();
   final TextEditingController cardCtrl = TextEditingController();
-  final TextEditingController discountCtrl = TextEditingController();
+  final TextEditingController payoutCommitmentDateCtrl =
+      TextEditingController();
 
   final ScrollController tableScrollCtrl = ScrollController();
 
   List<CustomerListItemModel> customerSuggestions = [];
   CustomerListItemModel? selectedCustomer;
   bool counterpartNotFound = false;
+  DateTime? payoutCommitmentDate;
 
   bool _isSaving = false;
   bool _disposed = false;
@@ -80,7 +83,6 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    addItem();
     await Future.wait([
       _syncVoucherPrefix(),
       _syncNextPurchaseSequence(),
@@ -138,15 +140,9 @@ class PurchaseEntryController extends ChangeNotifier {
     cashCtrl.addListener(_notify);
     upiCtrl.addListener(_notify);
     cardCtrl.addListener(_notify);
-    discountCtrl.addListener(_notify);
   }
 
   void _notify() => notifyListeners();
-
-  void toggleDiscountType(PurchaseDiscountType type) {
-    discountType = type;
-    notifyListeners();
-  }
 
   void addItem() {
     final item = PurchaseItemModel();
@@ -156,6 +152,10 @@ class PurchaseEntryController extends ChangeNotifier {
     unawaited(applyPurchaseMasterBuyRate(item, force: true));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_disposed || item.isDisposed || !items.contains(item)) {
+        return;
+      }
+      item.firstFieldFocus.requestFocus();
       if (tableScrollCtrl.hasClients) {
         tableScrollCtrl.animateTo(
           tableScrollCtrl.position.maxScrollExtent,
@@ -170,10 +170,11 @@ class PurchaseEntryController extends ChangeNotifier {
     if (index < 0 || index >= items.length) {
       return;
     }
+    FocusManager.instance.primaryFocus?.unfocus();
     final item = items.removeAt(index);
     item.removeListener(_notify);
-    item.dispose();
     notifyListeners();
+    _disposeItemAfterUnmount(item);
   }
 
   Future<void> applyPurchaseMasterBuyRate(
@@ -188,6 +189,10 @@ class PurchaseEntryController extends ChangeNotifier {
       purityLabel: purityText.isEmpty ? null : purityText,
       purityPercent: purityText.isEmpty ? null : purityPercent,
     );
+
+    if (_disposed || item.isDisposed || !items.contains(item)) {
+      return;
+    }
 
     if (item.metal != metalSnapshot ||
         item.purityCtrl.text.trim() != purityText) {
@@ -458,17 +463,9 @@ class PurchaseEntryController extends ChangeNotifier {
   double get grossPurchaseAmount =>
       items.fold(0.0, (sum, item) => sum + item.totalValue);
 
-  double get discountValueInput => _parseAmount(discountCtrl.text);
-
-  double get discountAmount {
-    if (discountType == PurchaseDiscountType.percentage) {
-      return grossPurchaseAmount * discountValueInput / 100.0;
-    }
-    return discountValueInput;
-  }
-
-  double get netPurchaseAmount =>
-      (grossPurchaseAmount - discountAmount).clamp(0.0, double.infinity);
+  double get discountValueInput => 0.0;
+  double get discountAmount => 0.0;
+  double get netPurchaseAmount => grossPurchaseAmount;
 
   double get grandTotal => netPurchaseAmount;
 
@@ -477,6 +474,37 @@ class PurchaseEntryController extends ChangeNotifier {
   double get cardPaid => _parseAmount(cardCtrl.text);
   double get totalPaid => cashPaid + upiPaid + cardPaid;
   double get balanceDue => grandTotal - totalPaid;
+  bool get hasPendingSellerPayout => balanceDue > 0.005;
+  bool get hasSellerPayoutExcess => balanceDue < -0.005;
+
+  void setPayoutCommitmentDate(DateTime? date) {
+    payoutCommitmentDate =
+        date == null ? null : DateTime(date.year, date.month, date.day);
+    payoutCommitmentDateCtrl.text = payoutCommitmentDate == null
+        ? ''
+        : formatDisplayDate(payoutCommitmentDate!);
+    notifyListeners();
+  }
+
+  void clearPayoutCommitmentDate() => setPayoutCommitmentDate(null);
+
+  static String formatDisplayDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
+  }
 
   Future<bool> savePurchase() async {
     if (_isSaving) {
@@ -509,15 +537,17 @@ class PurchaseEntryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final pendingSellerPayout = hasPendingSellerPayout;
+      final sellerPayoutExcess = hasSellerPayoutExcess;
       final result = await _purchaseRepository.savePurchase(
         PurchaseVoucherDraft(
           sequenceNo: _purchaseNo,
           voucherNo: formattedPurchaseNo,
           source: purchaseSource,
           taxType: PurchaseTaxType.normal,
-          discountType: discountType,
-          discountValue: discountValueInput,
-          discountAmount: discountAmount,
+          discountType: PurchaseDiscountType.flatAmount,
+          discountValue: 0.0,
+          discountAmount: 0.0,
           grossAmount: grossPurchaseAmount,
           taxableAmount: netPurchaseAmount,
           gstAmount: 0.0,
@@ -530,6 +560,12 @@ class PurchaseEntryController extends ChangeNotifier {
           cardPaid: cardPaid,
           totalPaid: totalPaid,
           balanceDue: balanceDue,
+          dueMode: pendingSellerPayout ? sellerPayoutPendingMode : null,
+          excessMode: sellerPayoutExcess ? sellerPayoutExcessMode : null,
+          promiseDate: pendingSellerPayout ? payoutCommitmentDate : null,
+          paymentMeta: pendingSellerPayout
+              ? 'Remaining seller payout scheduled by commitment date.'
+              : null,
           party: PurchaseVoucherPartyDraft(
             customerId: selectedCustomer?.id,
             supplierId: null,
@@ -579,9 +615,10 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   void _resetForm() {
-    for (final item in items) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final removedItems = List<PurchaseItemModel>.from(items);
+    for (final item in removedItems) {
       item.removeListener(_notify);
-      item.dispose();
     }
     items.clear();
 
@@ -592,15 +629,25 @@ class PurchaseEntryController extends ChangeNotifier {
     cashCtrl.clear();
     upiCtrl.clear();
     cardCtrl.clear();
-    discountCtrl.clear();
+    payoutCommitmentDateCtrl.clear();
 
-    discountType = PurchaseDiscountType.flatAmount;
+    payoutCommitmentDate = null;
     customerSuggestions = [];
     selectedCustomer = null;
     counterpartNotFound = false;
     _saveErrorMessage = null;
 
-    addItem();
+    for (final item in removedItems) {
+      _disposeItemAfterUnmount(item);
+    }
+  }
+
+  void _disposeItemAfterUnmount(PurchaseItemModel item) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!item.isDisposed) {
+        item.dispose();
+      }
+    });
   }
 
   double _parseAmount(String text) {
@@ -622,9 +669,14 @@ class PurchaseEntryController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    FocusManager.instance.primaryFocus?.unfocus();
     for (final item in items) {
-      item.dispose();
+      item.removeListener(_notify);
+      if (!item.isDisposed) {
+        item.dispose();
+      }
     }
+    items.clear();
     mobileCtrl.dispose();
     nameCtrl.dispose();
     cityCtrl.dispose();
@@ -632,7 +684,7 @@ class PurchaseEntryController extends ChangeNotifier {
     cashCtrl.dispose();
     upiCtrl.dispose();
     cardCtrl.dispose();
-    discountCtrl.dispose();
+    payoutCommitmentDateCtrl.dispose();
     tableScrollCtrl.dispose();
     super.dispose();
   }

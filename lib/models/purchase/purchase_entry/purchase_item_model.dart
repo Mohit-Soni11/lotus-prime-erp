@@ -27,6 +27,7 @@ class PurchaseItemModel extends ChangeNotifier {
   bool _isApplyingMasterRate = false;
   bool _rateFromMetalRateMaster = false;
   String? _rateSourceLabel;
+  bool _isDisposed = false;
 
   PurchaseItemModel({this.metal = PurchaseMetalType.gold}) {
     purityCtrl.text = '100';
@@ -59,6 +60,7 @@ class PurchaseItemModel extends ChangeNotifier {
   double get totalValue => fineWt * rate;
   bool get rateFromMetalRateMaster => _rateFromMetalRateMaster;
   String? get rateSourceLabel => _rateSourceLabel;
+  bool get isDisposed => _isDisposed;
 
   bool get hasContent =>
       descCtrl.text.trim().isNotEmpty ||
@@ -121,6 +123,10 @@ class PurchaseItemModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_isDisposed) {
+      return;
+    }
+    _isDisposed = true;
     descCtrl.dispose();
     grossCtrl.dispose();
     lessCtrl.dispose();

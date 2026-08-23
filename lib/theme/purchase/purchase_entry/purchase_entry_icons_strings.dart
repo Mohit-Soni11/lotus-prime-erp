@@ -49,12 +49,13 @@ class PurchaseEntryStrings {
   static const String invoiceNumber = 'VOUCHER NUMBER';
   static const String customerDetails = 'SELLER DETAILS';
   static const String searchOrAdd = 'Search or add customer seller details';
-  static const String purchaseSummary = 'METAL PURCHASE SUMMARY';
+  static const String purchaseSummary = 'CUSTOMER METAL VALUATION';
   static const String paymentDisburse = 'SELLER PAYOUT';
   static const String addItemBtn = 'ADD METAL ITEM';
+  static const String recordCustomerMetalBtn = 'RECORD CUSTOMER METAL';
   static const String saveBtn = 'SAVE METAL PURCHASE';
   static const String printBtn = 'PRINT VOUCHER';
-  static const String noItems = 'NO ITEMS ADDED';
+  static const String noItems = 'NO CUSTOMER METAL';
   static const String noItemsSub =
-      'Add old gold, silver, platinum, or diamond received from customer';
+      'Click below to record old metal received from the customer.';
 }

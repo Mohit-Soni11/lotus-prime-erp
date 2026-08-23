@@ -67,6 +67,7 @@ class PrintTemplateRegistry {
     supportedDocuments: [
       PrintTemplateDocumentType.salesInvoice,
       PrintTemplateDocumentType.salesReturn,
+      PrintTemplateDocumentType.purchaseVoucher,
     ],
   );
 
@@ -82,6 +83,7 @@ class PrintTemplateRegistry {
     supportedDocuments: [
       PrintTemplateDocumentType.salesInvoice,
       PrintTemplateDocumentType.salesReturn,
+      PrintTemplateDocumentType.purchaseVoucher,
     ],
   );
 

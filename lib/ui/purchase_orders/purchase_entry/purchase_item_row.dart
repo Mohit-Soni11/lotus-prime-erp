@@ -7,6 +7,7 @@ import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../../models/purchase/purchase_entry/purchase_item_model.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
+import 'purchase_item_grid_spec.dart';
 
 class PurchaseItemRow extends StatefulWidget {
   final int index;
@@ -98,12 +99,18 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(flex: 1, child: _buildSNo(_metalColor)),
-                const SizedBox(width: 6),
-                Expanded(flex: 3, child: _buildMetalDropdown()),
-                const SizedBox(width: 6),
                 Expanded(
-                  flex: 4,
+                  flex: PurchaseItemGridSpec.serialFlex,
+                  child: _buildSNo(_metalColor),
+                ),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
+                Expanded(
+                  flex: PurchaseItemGridSpec.metalFlex,
+                  child: _buildMetalDropdown(),
+                ),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
+                Expanded(
+                  flex: PurchaseItemGridSpec.descriptionFlex,
                   child: _atomicTextField(
                     controller: widget.item.descCtrl,
                     hint: 'Item description',
@@ -111,46 +118,49 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
                     textInputAction: TextInputAction.next,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
                 Expanded(
-                  flex: 2,
+                  flex: PurchaseItemGridSpec.weightFlex,
                   child: _atomicTextField(
                     controller: widget.item.grossCtrl,
                     hint: '0.000',
                     isNumber: true,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
                 Expanded(
-                  flex: 2,
+                  flex: PurchaseItemGridSpec.weightFlex,
                   child: _atomicTextField(
                     controller: widget.item.lessCtrl,
                     hint: '0.000',
                     isNumber: true,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
                 Expanded(
-                  flex: 2,
+                  flex: PurchaseItemGridSpec.weightFlex,
                   child: _autoCell(
                     widget.item.netWt.toStringAsFixed(3),
                     _metalColor,
                   ),
                 ),
-                const SizedBox(width: 6),
-                Expanded(flex: 2, child: _buildPurityInput()),
-                const SizedBox(width: 6),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
                 Expanded(
-                  flex: 2,
+                  flex: PurchaseItemGridSpec.purityFlex,
+                  child: _buildPurityInput(),
+                ),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
+                Expanded(
+                  flex: PurchaseItemGridSpec.weightFlex,
                   child: _autoCell(
                     widget.item.fineWt.toStringAsFixed(3),
                     _metalColor,
                     isBold: true,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
                 Expanded(
-                  flex: 3,
+                  flex: PurchaseItemGridSpec.rateFlex,
                   child: _atomicTextField(
                     controller: widget.item.rateCtrl,
                     hint: '0.00',
@@ -159,9 +169,9 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
                     onSubmitted: (_) => widget.ctrl.addItem(),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
                 Expanded(
-                  flex: 3,
+                  flex: PurchaseItemGridSpec.valueFlex,
                   child: _autoCell(
                     'Rs. ${widget.item.totalValue.toStringAsFixed(2)}',
                     PurchaseEntryColors.textMain,
@@ -169,8 +179,11 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
                     isBold: true,
                   ),
                 ),
-                const SizedBox(width: 6),
-                Expanded(flex: 1, child: _buildDeleteButton()),
+                const SizedBox(width: PurchaseItemGridSpec.columnGap),
+                Expanded(
+                  flex: PurchaseItemGridSpec.actionFlex,
+                  child: _buildDeleteButton(),
+                ),
               ],
             ),
           ),
@@ -204,12 +217,12 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
 
   Widget _buildMetalDropdown() {
     return Container(
-      height: 38,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: _metalColor.withValues(alpha: 0.10),
         border: Border.all(color: _metalColor.withValues(alpha: 0.40)),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<PurchaseMetalType>(
@@ -245,11 +258,11 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
 
   Widget _buildPurityInput() {
     return Container(
-      height: 38,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: PurchaseEntryColors.bodyBg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: _metalColor.withValues(alpha: 0.35)),
       ),
       child: TextFormField(
@@ -268,7 +281,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
         decoration: InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 11),
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
           hintText: 'Purity',
           hintStyle: PurchaseEntryStyles.subTitleMuted.copyWith(
             color: _metalColor.withValues(alpha: 0.50),
@@ -289,46 +302,57 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
     final action = textInputAction ??
         (onSubmitted != null ? TextInputAction.done : TextInputAction.next);
 
-    return SizedBox(
-      height: 38,
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: isNumber
-            ? const TextInputType.numberWithOptions(decimal: true)
-            : TextInputType.text,
-        inputFormatters: isNumber
-            ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
-            : null,
-        textAlign: isNumber ? TextAlign.right : TextAlign.left,
-        textInputAction: action,
-        style: PurchaseEntryStyles.inputText.copyWith(
-          fontSize: 14,
-          fontFeatures: isNumber ? const [FontFeature.tabularFigures()] : null,
-        ),
-        onSubmitted: onSubmitted,
-        decoration: InputDecoration(
-          hintText: hint,
-          isDense: true,
-          hintStyle: TextStyle(
-            color: PurchaseEntryColors.textMuted.withValues(alpha: 0.5),
-            fontSize: 13,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-          filled: true,
-          fillColor: PurchaseEntryColors.formInputBg,
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: PurchaseEntryColors.bodyBorder),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: PurchaseEntryColors.purchaseAccent,
-              width: 2,
+    return Focus(
+      child: Builder(
+        builder: (context) {
+          final hasFocus = Focus.of(context).hasFocus;
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+            height: 36,
+            padding: EdgeInsets.symmetric(horizontal: isNumber ? 8 : 10),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: PurchaseEntryColors.bodyPanel,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: hasFocus
+                    ? PurchaseEntryColors.purchaseAccent
+                    : PurchaseEntryColors.bodyBorder,
+                width: hasFocus ? 1.5 : 1,
+              ),
             ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              keyboardType: isNumber
+                  ? const TextInputType.numberWithOptions(decimal: true)
+                  : TextInputType.text,
+              inputFormatters: isNumber
+                  ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
+                  : null,
+              textAlign: isNumber ? TextAlign.right : TextAlign.left,
+              textInputAction: action,
+              style: PurchaseEntryStyles.inputText.copyWith(
+                fontSize: isNumber ? 14 : 15,
+                fontWeight: isNumber ? FontWeight.w900 : FontWeight.w800,
+                fontFeatures:
+                    isNumber ? const [FontFeature.tabularFigures()] : null,
+              ),
+              onSubmitted: onSubmitted,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isCollapsed: true,
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: PurchaseEntryColors.textMuted.withValues(alpha: 0.5),
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -343,12 +367,12 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
         align == TextAlign.right ? Alignment.centerRight : Alignment.centerLeft;
 
     return Container(
-      height: 38,
+      height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: alignment,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
@@ -365,27 +389,30 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
 
   Widget _buildDeleteButton() {
     return Center(
-      child: Tooltip(
-        message: 'Remove line',
-        waitDuration: const Duration(milliseconds: 400),
-        child: InkWell(
-          onTap: () => widget.ctrl.removeItem(widget.index),
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: PurchaseEntryColors.danger.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: PurchaseEntryColors.danger.withValues(alpha: 0.35),
-              ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              widget.ctrl.removeItem(widget.index);
+            }
+          });
+        },
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: PurchaseEntryColors.danger.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: PurchaseEntryColors.danger.withValues(alpha: 0.35),
             ),
-            child: const Icon(
-              PurchaseEntryIcons.deleteItem,
-              color: PurchaseEntryColors.danger,
-              size: 20,
-            ),
+          ),
+          child: const Icon(
+            PurchaseEntryIcons.deleteItem,
+            color: PurchaseEntryColors.danger,
+            size: 20,
           ),
         ),
       ),
