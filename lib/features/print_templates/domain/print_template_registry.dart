@@ -124,7 +124,7 @@ extension PrintTemplateDocumentTypeLabel on PrintTemplateDocumentType {
       case PrintTemplateDocumentType.salesReturn:
         return 'Sales Return';
       case PrintTemplateDocumentType.purchaseVoucher:
-        return 'Purchase Voucher';
+        return 'Customer Metal Purchase Voucher';
       case PrintTemplateDocumentType.purchaseReturn:
         return 'Purchase Return';
       case PrintTemplateDocumentType.bookingAdvance:

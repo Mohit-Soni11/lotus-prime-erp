@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../logic/purchase/purchase_entry_controller.dart';
-import '../../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import 'purchase_item_row.dart';
 
@@ -80,8 +79,6 @@ class PurchaseItemsTable extends StatelessWidget {
   }
 
   Widget _buildHeader(bool needsHorizontalScroll) {
-    final isCustomer = ctrl.purchaseSource == PurchaseSource.fromCustomer;
-
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
@@ -118,18 +115,14 @@ class PurchaseItemsTable extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  isCustomer
-                      ? 'PURCHASE LINES FROM SELLER'
-                      : 'PURCHASE LINES FROM SUPPLIER',
+                  'CUSTOMER METAL ITEMS',
                   style: PurchaseEntryStyles.highVisHeader.copyWith(
                     color: PurchaseEntryColors.purchaseAccent,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isCustomer
-                      ? 'Capture each inward item with precise weight, purity, and payout value'
-                      : 'Capture each inward stock line with purchase valuation and metal detail',
+                  'Capture old metal received from customer with precise weight, purity, and payout value',
                   style: PurchaseEntryStyles.subTitleMuted,
                 ),
                 if (needsHorizontalScroll) ...[
@@ -356,7 +349,7 @@ class PurchaseItemsTable extends StatelessWidget {
             ),
             SizedBox(width: 8),
             Text(
-              'ADD PURCHASE LINE',
+              PurchaseEntryStrings.addItemBtn,
               style: TextStyle(
                 color: PurchaseEntryColors.purchaseAccent,
                 fontSize: 14,

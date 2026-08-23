@@ -1,18 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' show Value;
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../helpers/search/fuzzy_search_helper.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../models/purchase/purchase_entry/purchase_item_model.dart';
 import '../../models/setting/metal_rate/metal_rate_model.dart';
-import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 import '../../repositories/purchase/purchase_entry_repository.dart';
 import '../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
-import 'package:lotus_erp/repositories/supplier/supplier_repository.dart';
+import '../../repositories/setting/shop_setup/shop_session_manager.dart';
+import '../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class PurchaseEntryController extends ChangeNotifier {
@@ -22,20 +24,17 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   final AppDatabase _db = AppDatabase();
-  late final SupplierRepository _supplierRepository = SupplierRepository(_db);
   late final PurchaseEntryRepository _purchaseRepository =
       PurchaseEntryRepository(db: _db);
+  final ShopSetupRepository _shopRepository = ShopSetupRepository();
   final MetalRateQuoteService _rateQuoteService = MetalRateQuoteService();
 
-  PurchaseSource purchaseSource = PurchaseSource.fromCustomer;
-  PurchaseTaxType taxType = PurchaseTaxType.normal;
   PurchaseDiscountType discountType = PurchaseDiscountType.flatAmount;
 
   final TextEditingController mobileCtrl = TextEditingController();
   final TextEditingController nameCtrl = TextEditingController();
   final TextEditingController cityCtrl = TextEditingController();
   final TextEditingController panCtrl = TextEditingController();
-  final TextEditingController gstCtrl = TextEditingController();
 
   final List<PurchaseItemModel> items = [];
 
@@ -47,46 +46,87 @@ class PurchaseEntryController extends ChangeNotifier {
   final ScrollController tableScrollCtrl = ScrollController();
 
   List<CustomerListItemModel> customerSuggestions = [];
-  List<SupplierListItemModel> supplierSuggestions = [];
   CustomerListItemModel? selectedCustomer;
-  SupplierListItemModel? selectedSupplier;
   bool counterpartNotFound = false;
 
   bool _isSaving = false;
   bool _disposed = false;
   String? _saveErrorMessage;
   int _purchaseNo = 1;
+  String _voucherPrefix = 'AJ';
 
   bool get isSaving => _isSaving;
   String? get saveErrorMessage => _saveErrorMessage;
   String get formattedPurchaseNo =>
-      'PUR-${DateTime.now().year}-${_purchaseNo.toString().padLeft(4, '0')}';
+      '$_voucherPrefix-PUR-${DateTime.now().year}-${_purchaseNo.toString().padLeft(4, '0')}';
 
-  bool get hasSelectedCounterparty =>
-      purchaseSource == PurchaseSource.fromCustomer
-          ? selectedCustomer != null
-          : selectedSupplier != null;
+  PurchaseSource get purchaseSource => PurchaseSource.fromCustomer;
+
+  bool get hasSelectedCounterparty => selectedCustomer != null;
+
+  bool get canQuickCreateSeller {
+    if (selectedCustomer != null) return false;
+    final cleanMobile = mobileCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final hasName = nameCtrl.text.trim().isNotEmpty;
+    final hasValidMobile = cleanMobile.length == 10;
+    return hasName || hasValidMobile;
+  }
 
   String? get selectedCounterpartyCaption {
-    if (purchaseSource == PurchaseSource.fromCustomer &&
-        selectedCustomer != null) {
+    if (selectedCustomer != null) {
       return 'Linked seller profile';
-    }
-    if (purchaseSource == PurchaseSource.fromSupplier &&
-        selectedSupplier != null) {
-      return 'Linked supplier profile';
     }
     return null;
   }
 
-  List<dynamic> get activeSuggestions =>
-      purchaseSource == PurchaseSource.fromCustomer
-          ? customerSuggestions
-          : supplierSuggestions;
-
   Future<void> _init() async {
     addItem();
-    await _syncNextPurchaseSequence();
+    await Future.wait([
+      _syncVoucherPrefix(),
+      _syncNextPurchaseSequence(),
+    ]);
+  }
+
+  Future<void> _syncVoucherPrefix() async {
+    try {
+      final tenantId = await ShopSessionManager.getPermanentTenantId();
+      final shopData = await _shopRepository.fetchExistingSetup(tenantId);
+      if (_disposed || shopData == null) {
+        return;
+      }
+
+      final basicInfo = shopData['basic_info'] as Map<String, dynamic>?;
+      final sourceName = [
+        basicInfo?['brand_display_name'],
+        basicInfo?['display_name'],
+        basicInfo?['legal_name'],
+      ]
+          .map((value) => value?.toString().trim() ?? '')
+          .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+      final resolvedPrefix = _voucherPrefixFromShopName(sourceName);
+      if (resolvedPrefix.isNotEmpty && resolvedPrefix != _voucherPrefix) {
+        _voucherPrefix = resolvedPrefix;
+        notifyListeners();
+      }
+    } catch (error) {
+      AppLogger.debug('Purchase voucher prefix sync failed: $error');
+    }
+  }
+
+  String _voucherPrefixFromShopName(String value) {
+    final words = RegExp(r'[A-Za-z0-9]+')
+        .allMatches(value.toUpperCase())
+        .map((match) => match.group(0) ?? '')
+        .where((word) => word.isNotEmpty)
+        .toList(growable: false);
+
+    if (words.length >= 2) {
+      return words.take(4).map((word) => word[0]).join();
+    }
+    if (words.length == 1) {
+      return words.single.substring(0, words.single.length.clamp(1, 3));
+    }
+    return _voucherPrefix;
   }
 
   Future<void> _syncNextPurchaseSequence() async {
@@ -102,24 +142,6 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   void _notify() => notifyListeners();
-
-  void toggleSource(PurchaseSource source) {
-    if (purchaseSource == source) {
-      return;
-    }
-    purchaseSource = source;
-    taxType = source == PurchaseSource.fromCustomer
-        ? PurchaseTaxType.normal
-        : taxType;
-    clearCounterpartySelection(clearFields: true);
-    clearCounterpartySuggestions();
-    notifyListeners();
-  }
-
-  void toggleTaxType(PurchaseTaxType type) {
-    taxType = type;
-    notifyListeners();
-  }
 
   void toggleDiscountType(PurchaseDiscountType type) {
     discountType = type;
@@ -202,14 +224,6 @@ class PurchaseEntryController extends ChangeNotifier {
     }
   }
 
-  Future<void> searchCounterparty(String query) async {
-    if (purchaseSource == PurchaseSource.fromCustomer) {
-      await searchCustomers(query);
-      return;
-    }
-    await searchSuppliers(query);
-  }
-
   Future<void> searchCustomers(String query) async {
     final term = query.trim().toLowerCase();
     if (term.isEmpty) {
@@ -247,8 +261,9 @@ class PurchaseEntryController extends ChangeNotifier {
             (row) => CustomerListItemModel(
               id: row.id,
               name: row.name,
-              mobile: row.mobile,
-              city: row.city ?? '',
+              mobile: CustomerContactValue.displayMobile(row.mobile),
+              city: _formatCustomerAddress(row),
+              panNumber: row.panNumber ?? '',
               type: CustomerType.fromString(row.type),
               billCount: 0,
               createdAt: row.createdAt,
@@ -256,7 +271,6 @@ class PurchaseEntryController extends ChangeNotifier {
             ),
           )
           .toList();
-      supplierSuggestions = [];
       counterpartNotFound = customerSuggestions.isEmpty;
     } catch (error) {
       AppLogger.debug('Purchase customer search failed: $error');
@@ -266,40 +280,9 @@ class PurchaseEntryController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> searchSuppliers(String query) async {
-    final term = query.trim();
-    if (term.isEmpty) {
-      clearCounterpartySuggestions();
-      return;
-    }
-
-    if (selectedSupplier != null) {
-      final matchesName =
-          nameCtrl.text.trim() == selectedSupplier!.businessName;
-      final matchesMobile = mobileCtrl.text.trim() == selectedSupplier!.mobile;
-      if (matchesName || matchesMobile) {
-        return;
-      }
-      selectedSupplier = null;
-    }
-
-    try {
-      supplierSuggestions = await _supplierRepository.searchSuppliers(term);
-      customerSuggestions = [];
-      counterpartNotFound = supplierSuggestions.isEmpty;
-    } catch (error) {
-      AppLogger.debug('Purchase supplier search failed: $error');
-      supplierSuggestions = [];
-      counterpartNotFound = false;
-    }
-    notifyListeners();
-  }
-
   Future<void> selectCustomer(CustomerListItemModel customer) async {
     selectedCustomer = customer;
-    selectedSupplier = null;
     customerSuggestions = [];
-    supplierSuggestions = [];
     counterpartNotFound = false;
 
     final fullRow = await (_db.select(
@@ -309,46 +292,143 @@ class PurchaseEntryController extends ChangeNotifier {
 
     nameCtrl.text = customer.name;
     mobileCtrl.text = customer.mobile;
-    cityCtrl.text = fullRow?.city ?? customer.city;
-    panCtrl.text = fullRow?.panNumber ?? '';
-    gstCtrl.text = fullRow?.gstNumber ?? '';
+    cityCtrl.text =
+        fullRow == null ? customer.city : _formatCustomerAddress(fullRow);
+    panCtrl.text = _primaryIdentityNumber(fullRow);
     notifyListeners();
   }
 
-  Future<void> selectSupplier(SupplierListItemModel supplier) async {
-    selectedSupplier = supplier;
-    selectedCustomer = null;
-    customerSuggestions = [];
-    supplierSuggestions = [];
-    counterpartNotFound = false;
+  Future<bool> quickCreateSeller() async {
+    final enteredName = nameCtrl.text.trim();
+    final enteredMobile = mobileCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final enteredAddress = cityCtrl.text.trim();
+    final enteredIdentity = panCtrl.text.trim().toUpperCase();
 
-    final fullRow = await _supplierRepository.getById(supplier.id);
+    if (enteredName.isEmpty && enteredMobile.isEmpty) {
+      return false;
+    }
+    if (enteredMobile.isNotEmpty && enteredMobile.length != 10) {
+      return false;
+    }
 
-    nameCtrl.text = supplier.businessName;
-    mobileCtrl.text = supplier.mobile;
-    cityCtrl.text = fullRow?.state ?? '';
-    panCtrl.text = fullRow?.panNumber ?? '';
-    gstCtrl.text = fullRow?.gstNumber ?? '';
-    notifyListeners();
+    try {
+      if (enteredMobile.isNotEmpty) {
+        final existing = await (_db.select(_db.customers)
+              ..where((tbl) => tbl.mobile.equals(enteredMobile)))
+            .getSingleOrNull();
+        if (existing != null) {
+          await selectCustomer(_customerListItemFromRow(existing));
+          return true;
+        }
+      }
+
+      final displayName = enteredName.isNotEmpty
+          ? enteredName
+          : 'Seller ${enteredMobile.substring(enteredMobile.length - 4)}';
+      final identity = _sellerIdentityValues(enteredIdentity);
+      final id = await _db.into(_db.customers).insert(
+            CustomersCompanion(
+              name: Value(displayName),
+              firstName: Value(displayName),
+              mobile: Value(CustomerContactValue.storageMobile(enteredMobile)),
+              city: Value(enteredAddress.isEmpty ? null : enteredAddress),
+              addressLine1:
+                  Value(enteredAddress.isEmpty ? null : enteredAddress),
+              panNumber: Value(identity.panNumber),
+              idProofType: Value(identity.idProofType),
+              idProofNumber: Value(identity.idProofNumber),
+              type: const Value('Regular'),
+              customerTier: const Value('Regular'),
+              notes: const Value('Created from Customer Metal Purchase.'),
+            ),
+          );
+
+      final row = await (_db.select(_db.customers)
+            ..where((tbl) => tbl.id.equals(id)))
+          .getSingleOrNull();
+      if (row == null) {
+        return false;
+      }
+
+      await selectCustomer(_customerListItemFromRow(row));
+      return true;
+    } catch (error) {
+      AppLogger.debug('PurchaseEntryController.quickCreateSeller: $error');
+      return false;
+    }
+  }
+
+  CustomerListItemModel _customerListItemFromRow(Customer row) {
+    return CustomerListItemModel(
+      id: row.id,
+      name: row.name,
+      mobile: CustomerContactValue.displayMobile(row.mobile),
+      city: _formatCustomerAddress(row),
+      panNumber: row.panNumber ?? '',
+      type: CustomerType.fromString(row.type),
+      billCount: 0,
+      createdAt: row.createdAt,
+      initials: CustomerListItemModel.buildInitials(row.name),
+    );
+  }
+
+  _SellerIdentityValues _sellerIdentityValues(String value) {
+    if (value.isEmpty) {
+      return const _SellerIdentityValues();
+    }
+    final panPattern = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$');
+    if (panPattern.hasMatch(value)) {
+      return _SellerIdentityValues(panNumber: value);
+    }
+    final digitsOnly = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.length == 12) {
+      return _SellerIdentityValues(
+        idProofType: 'Aadhaar',
+        idProofNumber: digitsOnly,
+      );
+    }
+    return _SellerIdentityValues(idProofNumber: value);
+  }
+
+  String _formatCustomerAddress(Customer customer) {
+    return [
+      customer.addressLine1,
+      customer.addressLine2,
+      customer.city,
+      customer.state,
+      customer.pincode,
+      customer.country,
+    ]
+        .map((value) => value?.trim() ?? '')
+        .where((value) => value.isNotEmpty)
+        .join(', ');
+  }
+
+  String _primaryIdentityNumber(Customer? customer) {
+    if (customer == null) {
+      return '';
+    }
+    final pan = customer.panNumber?.trim().toUpperCase() ?? '';
+    if (pan.isNotEmpty) {
+      return pan;
+    }
+    return customer.idProofNumber?.trim().toUpperCase() ?? '';
   }
 
   void clearCounterpartySuggestions() {
     customerSuggestions = [];
-    supplierSuggestions = [];
     counterpartNotFound = false;
     notifyListeners();
   }
 
   void clearCounterpartySelection({bool clearFields = false}) {
     selectedCustomer = null;
-    selectedSupplier = null;
     counterpartNotFound = false;
     if (clearFields) {
       mobileCtrl.clear();
       nameCtrl.clear();
       cityCtrl.clear();
       panCtrl.clear();
-      gstCtrl.clear();
     }
     notifyListeners();
   }
@@ -387,14 +467,10 @@ class PurchaseEntryController extends ChangeNotifier {
     return discountValueInput;
   }
 
-  double get taxableAmount =>
+  double get netPurchaseAmount =>
       (grossPurchaseAmount - discountAmount).clamp(0.0, double.infinity);
 
-  double get totalGst =>
-      taxType == PurchaseTaxType.gst ? taxableAmount * 0.03 : 0.0;
-  double get cgst => totalGst / 2.0;
-  double get sgst => totalGst / 2.0;
-  double get grandTotal => taxableAmount + totalGst;
+  double get grandTotal => netPurchaseAmount;
 
   double get cashPaid => _parseAmount(cashCtrl.text);
   double get upiPaid => _parseAmount(upiCtrl.text);
@@ -423,7 +499,7 @@ class PurchaseEntryController extends ChangeNotifier {
 
     if (nameCtrl.text.trim().isEmpty) {
       _saveErrorMessage =
-          'Enter or select a seller or supplier before saving this voucher.';
+          'Enter or select the customer seller before saving this voucher.';
       notifyListeners();
       return false;
     }
@@ -438,15 +514,15 @@ class PurchaseEntryController extends ChangeNotifier {
           sequenceNo: _purchaseNo,
           voucherNo: formattedPurchaseNo,
           source: purchaseSource,
-          taxType: taxType,
+          taxType: PurchaseTaxType.normal,
           discountType: discountType,
           discountValue: discountValueInput,
           discountAmount: discountAmount,
           grossAmount: grossPurchaseAmount,
-          taxableAmount: taxableAmount,
-          gstAmount: totalGst,
-          cgstAmount: cgst,
-          sgstAmount: sgst,
+          taxableAmount: netPurchaseAmount,
+          gstAmount: 0.0,
+          cgstAmount: 0.0,
+          sgstAmount: 0.0,
           grandTotal: grandTotal,
           cashPaid: cashPaid,
           upiPaid: upiPaid,
@@ -456,13 +532,13 @@ class PurchaseEntryController extends ChangeNotifier {
           balanceDue: balanceDue,
           party: PurchaseVoucherPartyDraft(
             customerId: selectedCustomer?.id,
-            supplierId: selectedSupplier?.id,
+            supplierId: null,
             name: nameCtrl.text.trim(),
             mobile:
                 mobileCtrl.text.trim().isEmpty ? null : mobileCtrl.text.trim(),
             city: cityCtrl.text.trim().isEmpty ? null : cityCtrl.text.trim(),
             panNumber: panCtrl.text.trim().isEmpty ? null : panCtrl.text.trim(),
-            gstNumber: gstCtrl.text.trim().isEmpty ? null : gstCtrl.text.trim(),
+            gstNumber: null,
           ),
           items: enteredItems
               .map(
@@ -513,16 +589,14 @@ class PurchaseEntryController extends ChangeNotifier {
     nameCtrl.clear();
     cityCtrl.clear();
     panCtrl.clear();
-    gstCtrl.clear();
     cashCtrl.clear();
     upiCtrl.clear();
     cardCtrl.clear();
     discountCtrl.clear();
 
+    discountType = PurchaseDiscountType.flatAmount;
     customerSuggestions = [];
-    supplierSuggestions = [];
     selectedCustomer = null;
-    selectedSupplier = null;
     counterpartNotFound = false;
     _saveErrorMessage = null;
 
@@ -555,7 +629,6 @@ class PurchaseEntryController extends ChangeNotifier {
     nameCtrl.dispose();
     cityCtrl.dispose();
     panCtrl.dispose();
-    gstCtrl.dispose();
     cashCtrl.dispose();
     upiCtrl.dispose();
     cardCtrl.dispose();
@@ -563,4 +636,16 @@ class PurchaseEntryController extends ChangeNotifier {
     tableScrollCtrl.dispose();
     super.dispose();
   }
+}
+
+class _SellerIdentityValues {
+  final String? panNumber;
+  final String? idProofType;
+  final String? idProofNumber;
+
+  const _SellerIdentityValues({
+    this.panNumber,
+    this.idProofType,
+    this.idProofNumber,
+  });
 }

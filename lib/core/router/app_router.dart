@@ -490,7 +490,9 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.purchaseEntry,
-            builder: (_, __) => const PurchaseEntryScreen(),
+            builder: (context, state) => PurchaseEntryScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
           ),
           GoRoute(
             path: RoutePaths.customerMetalPurchaseLedger,

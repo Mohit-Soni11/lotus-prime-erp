@@ -37,9 +37,11 @@ class PurchaseVoucherPrintService {
     final shopProfile = await _shopPrintRepo.loadDocumentProfile();
     final textRenderer = await LotusPdfTextRenderer.create();
     await _warmPolicyText(settingsByMetal, textRenderer);
-    final sourceLabel = ctrl.purchaseSource == PurchaseSource.fromCustomer
-        ? 'Seller Purchase'
-        : 'Supplier Purchase';
+    final isCustomerPurchase =
+        ctrl.purchaseSource == PurchaseSource.fromCustomer;
+    final sourceLabel = isCustomerPurchase
+        ? 'Customer Old Metal Purchase'
+        : 'Supplier Stock Purchase';
     final doc = pw.Document(
       theme: await _buildTheme(await _loadDevanagariFont()),
     );
@@ -51,7 +53,9 @@ class PurchaseVoucherPrintService {
         build: (context) => [
           _shopHeader(
             profile: shopProfile,
-            documentTitle: 'Purchase Voucher',
+            documentTitle: isCustomerPurchase
+                ? 'Customer Metal Purchase Voucher'
+                : 'Purchase Voucher',
             documentSubtitle: sourceLabel,
             documentNumber: ctrl.formattedPurchaseNo,
             documentDate: formattedDate,
@@ -78,8 +82,6 @@ class PurchaseVoucherPrintService {
                   pw.Text('Mobile: ${ctrl.mobileCtrl.text.trim()}'),
                 if (ctrl.cityCtrl.text.trim().isNotEmpty)
                   pw.Text('Location: ${ctrl.cityCtrl.text.trim()}'),
-                if (ctrl.gstCtrl.text.trim().isNotEmpty)
-                  pw.Text('GST: ${ctrl.gstCtrl.text.trim()}'),
               ],
             ),
           ),
@@ -128,8 +130,7 @@ class PurchaseVoucherPrintService {
                 children: [
                   _summaryRow('Gross Purchase', ctrl.grossPurchaseAmount),
                   _summaryRow('Discount', ctrl.discountAmount),
-                  _summaryRow('Taxable Value', ctrl.taxableAmount),
-                  _summaryRow('GST', ctrl.totalGst),
+                  _summaryRow('Net Purchase', ctrl.netPurchaseAmount),
                   pw.Divider(),
                   _summaryRow('Grand Total', ctrl.grandTotal, emphasize: true),
                   _summaryRow('Cash Paid', ctrl.cashPaid),

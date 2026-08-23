@@ -2,20 +2,15 @@
 // FILE        : quick_actions_card.dart
 // MODULE      : Dashboard / Quick Actions
 // LAYER       : UI
-// DESCRIPTION : 4 Quick Action buttons â€” 2x2 grid.
-//               âœ… "New Entry"  â†’ Triggers bottom sheet popup
-//                  4 options: New Sale / Purchase Entry / Collateral / Advance
-//               âœ… "Adjust"     â†’ Triggers bottom sheet popup
-//                  2 options: Due Adjust / Interest Adjustment
-//               âœ… "Add Stock"  â†’ Direct navigation
-//               âœ… "Cash Book"  â†’ Direct navigation
+// DESCRIPTION : Four quick action buttons in a 2x2 grid.
+//               "New Entry" opens New Sale, Customer Metal Purchase,
+//               Collateral / Loan, and Booking Advance actions.
+//               "Adjust" opens Due Adjust and Interest Payment actions.
+//               "Add Stock" and "Cash Book" navigate directly.
 //
 //               POPUP DESIGN:
-//               â€¢ Dark glassmorphism bottom sheet
-//               â€¢ Each option card contains an icon circle, label, and subtitle
-//               â€¢ Slide-up animation with backdrop blur
-//               â€¢ Gold shimmer header
-//               â€¢ Scale animation on option selection
+//               Dark glassmorphism bottom sheet with labeled option cards,
+//               slide-up motion, backdrop blur, and selection feedback.
 // =============================================================================
 
 import 'dart:ui';

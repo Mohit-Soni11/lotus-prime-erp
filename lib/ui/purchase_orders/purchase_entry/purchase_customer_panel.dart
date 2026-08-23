@@ -3,11 +3,9 @@ import 'package:flutter/services.dart';
 
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
-import '../../../models/purchase/purchase_enums/purchase_enums.dart';
-import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import '../../customer/add_customer/add_customer_screen.dart';
-import 'package:lotus_erp/features/stock/shared/presentation/supplier/add_supplier/add_supplier_screen.dart';
 
 class PurchaseCustomerPanel extends StatefulWidget {
   final PurchaseEntryController ctrl;
@@ -65,12 +63,12 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
 
   void _onNameChanged() {
     _isMobileActive = false;
-    widget.ctrl.searchCounterparty(widget.ctrl.nameCtrl.text);
+    widget.ctrl.searchCustomers(widget.ctrl.nameCtrl.text);
   }
 
   void _onMobileChanged() {
     _isMobileActive = true;
-    widget.ctrl.searchCounterparty(widget.ctrl.mobileCtrl.text);
+    widget.ctrl.searchCustomers(widget.ctrl.mobileCtrl.text);
   }
 
   void _onControllerChanged() {
@@ -80,7 +78,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
 
     setState(() {});
 
-    if (widget.ctrl.activeSuggestions.isEmpty) {
+    if (widget.ctrl.customerSuggestions.isEmpty) {
       _removeSuggestionOverlay();
       return;
     }
@@ -124,11 +122,6 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                   await widget.ctrl.selectCustomer(customer);
                   _removeSuggestionOverlay();
                 },
-                onSelectSupplier: (supplier) async {
-                  FocusScope.of(context).unfocus();
-                  await widget.ctrl.selectSupplier(supplier);
-                  _removeSuggestionOverlay();
-                },
               ),
             ),
           ),
@@ -142,27 +135,15 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
     _removeSuggestionOverlay();
     FocusScope.of(context).unfocus();
 
-    if (widget.ctrl.purchaseSource == PurchaseSource.fromCustomer) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AddCustomerScreen(
-            onBack: () => Navigator.pop(context),
-            onSaved: () => Navigator.pop(context),
-          ),
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCustomerScreen(
+          onBack: () => Navigator.pop(context),
+          onSaved: () => Navigator.pop(context),
         ),
-      );
-    } else {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AddSupplierScreen(
-            onBack: () => Navigator.pop(context),
-            onSaved: () => Navigator.pop(context),
-          ),
-        ),
-      );
-    }
+      ),
+    );
 
     if (!mounted) {
       return;
@@ -172,15 +153,29 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
         ? widget.ctrl.nameCtrl.text
         : widget.ctrl.mobileCtrl.text;
     if (query.isNotEmpty) {
-      await widget.ctrl.searchCounterparty(query);
+      await widget.ctrl.searchCustomers(query);
     }
+  }
+
+  Future<void> _quickCreateSeller() async {
+    _removeSuggestionOverlay();
+    FocusScope.of(context).unfocus();
+
+    final ok = await widget.ctrl.quickCreateSeller();
+    if (!mounted) {
+      return;
+    }
+    AppFeedback.show(
+      context,
+      type: ok ? AppFeedbackType.success : AppFeedbackType.error,
+      message: ok
+          ? 'Seller added for this purchase.'
+          : 'Enter seller name or a valid 10-digit mobile number.',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isCustomer =
-        widget.ctrl.purchaseSource == PurchaseSource.fromCustomer;
-
     return FadeTransition(
       opacity: _fadeAnim,
       child: SlideTransition(
@@ -213,7 +208,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildHeader(isCustomer),
+              _buildHeader(),
               const SizedBox(height: 16),
               Container(
                 height: 1.5,
@@ -230,103 +225,123 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
               const SizedBox(height: 16),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 1150;
                   final singleColumn = constraints.maxWidth < 760;
-                  final halfWidth = (constraints.maxWidth - 12) / 2;
+                  final twoColumn = constraints.maxWidth < 1120;
 
-                  double fieldWidth(
-                    double desktopWidth, {
-                    bool expandWhenCompact = false,
-                  }) {
-                    if (singleColumn) {
-                      return constraints.maxWidth;
-                    }
-                    if (compact) {
-                      return expandWhenCompact
-                          ? constraints.maxWidth
-                          : halfWidth;
-                    }
-                    return desktopWidth;
+                  final mobileField = CompositedTransformTarget(
+                    link: _mobileSuggestionLink,
+                    child: _buildInput(
+                      label: 'MOBILE',
+                      hint: '10-digit',
+                      controller: widget.ctrl.mobileCtrl,
+                      isNumber: true,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      icon: PurchaseEntryIcons.mobilePhone,
+                    ),
+                  );
+
+                  final nameField = CompositedTransformTarget(
+                    link: _nameSuggestionLink,
+                    child: _buildInput(
+                      label: 'SELLER NAME',
+                      hint: 'Enter full name',
+                      controller: widget.ctrl.nameCtrl,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r"[a-zA-Z ]"),
+                        ),
+                      ],
+                      textCapitalization: TextCapitalization.words,
+                      icon: PurchaseEntryIcons.customerName,
+                    ),
+                  );
+
+                  final addressField = _buildInput(
+                    label: 'ADDRESS',
+                    hint: 'Full seller address',
+                    controller: widget.ctrl.cityCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    icon: PurchaseEntryIcons.cityLocation,
+                  );
+
+                  final identityField = _buildInput(
+                    label: 'PAN / AADHAAR ID',
+                    hint: 'PAN or Aadhaar number',
+                    controller: widget.ctrl.panCtrl,
+                    isCaps: true,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z0-9]")),
+                    ],
+                    icon: PurchaseEntryIcons.panCard,
+                  );
+
+                  if (singleColumn) {
+                    return Column(
+                      children: [
+                        mobileField,
+                        const SizedBox(height: 12),
+                        nameField,
+                        const SizedBox(height: 12),
+                        addressField,
+                        const SizedBox(height: 12),
+                        identityField,
+                        const SizedBox(height: 16),
+                        _buildActionRow(),
+                      ],
+                    );
                   }
 
-                  return Column(
+                  if (twoColumn) {
+                    final halfWidth = (constraints.maxWidth - 12) / 2;
+                    return Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            SizedBox(width: halfWidth, child: mobileField),
+                            const SizedBox(width: 12),
+                            SizedBox(width: halfWidth, child: nameField),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            SizedBox(width: halfWidth, child: addressField),
+                            const SizedBox(width: 12),
+                            SizedBox(width: halfWidth, child: identityField),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildActionRow(),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: fieldWidth(180),
-                            child: CompositedTransformTarget(
-                              link: _mobileSuggestionLink,
-                              child: _buildInput(
-                                label: 'MOBILE NUMBER',
-                                hint: 'Search by phone',
-                                controller: widget.ctrl.mobileCtrl,
-                                isNumber: true,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(10),
-                                ],
-                                icon: PurchaseEntryIcons.mobilePhone,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(260),
-                            child: CompositedTransformTarget(
-                              link: _nameSuggestionLink,
-                              child: _buildInput(
-                                label: isCustomer
-                                    ? 'SELLER NAME'
-                                    : 'SUPPLIER NAME',
-                                hint: isCustomer
-                                    ? 'Search by seller name'
-                                    : 'Search by supplier name',
-                                controller: widget.ctrl.nameCtrl,
-                                icon: PurchaseEntryIcons.customerName,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(180),
-                            child: _buildInput(
-                              label:
-                                  isCustomer ? 'CITY / AREA' : 'STATE / REGION',
-                              hint: isCustomer
-                                  ? 'Enter city or area'
-                                  : 'Enter state or region',
-                              controller: widget.ctrl.cityCtrl,
-                              icon: PurchaseEntryIcons.cityLocation,
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(190),
-                            child: _buildInput(
-                              label: 'PAN / ID NUMBER',
-                              hint: 'Primary identity number',
-                              controller: widget.ctrl.panCtrl,
-                              isCaps: true,
-                              textCapitalization: TextCapitalization.characters,
-                              icon: PurchaseEntryIcons.panCard,
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth(220, expandWhenCompact: true),
-                            child: _buildInput(
-                              label: 'GST NUMBER',
-                              hint: 'GSTIN if applicable',
-                              controller: widget.ctrl.gstCtrl,
-                              isCaps: true,
-                              textCapitalization: TextCapitalization.characters,
-                              maxLength: 15,
-                              icon: PurchaseEntryIcons.gstNumber,
-                            ),
-                          ),
-                        ],
+                      Expanded(flex: 2, child: mobileField),
+                      const SizedBox(width: 12),
+                      Expanded(flex: 3, child: nameField),
+                      const SizedBox(width: 12),
+                      Expanded(flex: 5, child: addressField),
+                      const SizedBox(width: 12),
+                      Expanded(flex: 3, child: identityField),
+                      const SizedBox(width: 16),
+                      SizedBox(
+                        width: 142,
+                        child: _ActionButton(
+                          title: 'Create Seller',
+                          icon: PurchaseEntryIcons.newSeller,
+                          isPrimary: true,
+                          onTap: _openCreateFlow,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      _buildActionRow(isCustomer, compact),
                     ],
                   );
                 },
@@ -334,7 +349,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
               if (widget.ctrl.hasSelectedCounterparty ||
                   widget.ctrl.counterpartNotFound) ...[
                 const SizedBox(height: 16),
-                _buildStatusCard(isCustomer),
+                _buildStatusCard(),
               ],
             ],
           ),
@@ -343,13 +358,13 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
     );
   }
 
-  Widget _buildHeader(bool isCustomer) {
+  Widget _buildHeader() {
     final bool showCreateCta = widget.ctrl.counterpartNotFound;
     final badge = showCreateCta
         ? _PrimaryActionChip(
-            title: isCustomer ? 'Create Seller' : 'Create Supplier',
-            icon: PurchaseEntryIcons.newSupplier,
-            onTap: _openCreateFlow,
+            title: 'Quick Add',
+            icon: Icons.flash_on_rounded,
+            onTap: _quickCreateSeller,
           )
         : Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -395,15 +410,13 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isCustomer ? 'SELLER PROFILE' : 'SUPPLIER PROFILE',
+              const Text(
+                'SELLER DETAILS',
                 style: PurchaseEntryStyles.highVisHeader,
               ),
               const SizedBox(height: 2),
               Text(
-                isCustomer
-                    ? 'Search an existing seller or create a new profile instantly'
-                    : 'Search an existing supplier or create a new vendor profile',
+                'Search or add a customer seller',
                 style: PurchaseEntryStyles.subTitleMuted,
               ),
             ],
@@ -468,44 +481,28 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
     );
   }
 
-  Widget _buildActionRow(bool isCustomer, bool compact) {
+  Widget _buildActionRow() {
     final actions = [
       Expanded(
         child: _ActionButton(
-          title: 'Clear',
-          icon: Icons.refresh_rounded,
-          onTap: () {
-            _removeSuggestionOverlay();
-            widget.ctrl.clearCounterpartySelection(clearFields: true);
-            widget.ctrl.clearCounterpartySuggestions();
-          },
-        ),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: _ActionButton(
-          title: isCustomer ? 'Create Seller' : 'Create Supplier',
-          icon: PurchaseEntryIcons.newSupplier,
+          title: 'Create Seller',
+          icon: PurchaseEntryIcons.newSeller,
           isPrimary: true,
           onTap: _openCreateFlow,
         ),
       ),
     ];
 
-    if (compact) {
-      return Row(children: actions);
-    }
-
     return Align(
       alignment: Alignment.centerRight,
       child: SizedBox(
-        width: 320,
+        width: 156,
         child: Row(children: actions),
       ),
     );
   }
 
-  Widget _buildStatusCard(bool isCustomer) {
+  Widget _buildStatusCard() {
     if (widget.ctrl.counterpartNotFound) {
       return Container(
         width: double.infinity,
@@ -526,9 +523,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                isCustomer
-                    ? 'No matching seller profile was found. You can continue with the entered details or create a new seller record now.'
-                    : 'No matching supplier record was found. You can continue with the entered details or create a new supplier record now.',
+                'No matching seller profile was found. Use Quick Add for instant save, or Create Seller for the full customer form.',
                 style: PurchaseEntryStyles.subTitleMuted.copyWith(
                   color: PurchaseEntryColors.textMain,
                 ),
@@ -545,9 +540,6 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
     final detailParts = [
       widget.ctrl.mobileCtrl.text.trim(),
       widget.ctrl.cityCtrl.text.trim(),
-      widget.ctrl.gstCtrl.text.trim().isEmpty
-          ? ''
-          : 'GST ${widget.ctrl.gstCtrl.text.trim()}',
     ].where((value) => value.isNotEmpty).toList();
 
     return Container(
@@ -701,18 +693,14 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
 class _PurchaseLookupDropdown extends StatelessWidget {
   final PurchaseEntryController ctrl;
   final Future<void> Function(CustomerListItemModel customer) onSelectCustomer;
-  final Future<void> Function(SupplierListItemModel supplier) onSelectSupplier;
 
   const _PurchaseLookupDropdown({
     required this.ctrl,
     required this.onSelectCustomer,
-    required this.onSelectSupplier,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isCustomer = ctrl.purchaseSource == PurchaseSource.fromCustomer;
-
     return Container(
       constraints: const BoxConstraints(maxHeight: 280),
       decoration: BoxDecoration(
@@ -730,52 +718,20 @@ class _PurchaseLookupDropdown extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(vertical: 8),
         shrinkWrap: true,
-        itemCount: ctrl.activeSuggestions.length,
+        itemCount: ctrl.customerSuggestions.length,
         separatorBuilder: (_, __) => const Divider(
           height: 1,
           color: PurchaseEntryColors.bodyBorder,
         ),
         itemBuilder: (context, index) {
-          if (isCustomer) {
-            final customer = ctrl.customerSuggestions[index];
-            return ListTile(
-              dense: true,
-              leading: CircleAvatar(
-                backgroundColor:
-                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12),
-                child: Text(
-                  customer.initials,
-                  style: const TextStyle(
-                    color: PurchaseEntryColors.purchaseAccent,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              title: Text(
-                customer.name,
-                style: const TextStyle(
-                  color: PurchaseEntryColors.textMain,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                [customer.mobile, customer.city]
-                    .where((value) => value.isNotEmpty)
-                    .join(' | '),
-                style: PurchaseEntryStyles.subTitleMuted,
-              ),
-              onTap: () => onSelectCustomer(customer),
-            );
-          }
-
-          final supplier = ctrl.supplierSuggestions[index];
+          final customer = ctrl.customerSuggestions[index];
           return ListTile(
             dense: true,
             leading: CircleAvatar(
               backgroundColor:
                   PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12),
               child: Text(
-                supplier.avatarInitial,
+                customer.initials,
                 style: const TextStyle(
                   color: PurchaseEntryColors.purchaseAccent,
                   fontWeight: FontWeight.w800,
@@ -783,20 +739,19 @@ class _PurchaseLookupDropdown extends StatelessWidget {
               ),
             ),
             title: Text(
-              supplier.businessName,
+              customer.name,
               style: const TextStyle(
                 color: PurchaseEntryColors.textMain,
                 fontWeight: FontWeight.w700,
               ),
             ),
             subtitle: Text(
-              [
-                supplier.mobile,
-                supplier.supplierType.label,
-              ].where((value) => value.isNotEmpty).join(' | '),
+              [customer.mobile, customer.city]
+                  .where((value) => value.isNotEmpty)
+                  .join(' | '),
               style: PurchaseEntryStyles.subTitleMuted,
             ),
-            onTap: () => onSelectSupplier(supplier),
+            onTap: () => onSelectCustomer(customer),
           );
         },
       ),

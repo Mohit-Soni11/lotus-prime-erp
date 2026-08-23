@@ -116,15 +116,15 @@ class BillingSetupStrings {
   static const String subInvoiceDisplay =
       'What appears on each line item of the bill';
 
-  static const String secVoucherDisplay = 'Purchase Voucher Display';
+  static const String secVoucherDisplay = 'Customer Metal Purchase Display';
   static const String subVoucherDisplay =
-      'What appears on each line item of the purchase voucher';
+      'What appears on each customer metal purchase line';
 
   static const String secReturnBuyback = 'Return & Buyback Policy';
   static const String subReturnBuyback =
       'Rules for this metal\'s return & exchange';
 
-  static const String secPurchaseReturn = 'Seller Purchase Policy';
+  static const String secPurchaseReturn = 'Customer Metal Purchase Policy';
   static const String subPurchaseReturn =
       'KYC, ownership, valuation and payout rules';
 

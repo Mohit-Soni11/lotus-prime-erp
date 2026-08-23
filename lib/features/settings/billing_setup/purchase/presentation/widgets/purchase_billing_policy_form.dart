@@ -49,8 +49,8 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
     return Column(
       children: [
         PurchaseBillingSectionCard(
-          title: 'Purchase Voucher Display',
-          subtitle: 'Choose the fields printed on each purchase row',
+          title: 'Customer Metal Purchase Display',
+          subtitle: 'Choose the fields printed on each metal purchase row',
           icon: Icons.request_quote_outlined,
           accent: accent,
           child: _DisplayFieldGrid(
@@ -61,7 +61,7 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         PurchaseBillingSectionCard(
-          title: 'Seller Purchase Policy',
+          title: 'Customer Metal Purchase Policy',
           subtitle: 'Control reclaim limits, penalty rules and valuation copy',
           icon: Icons.verified_user_outlined,
           accent: accent,

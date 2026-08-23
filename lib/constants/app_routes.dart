@@ -105,7 +105,7 @@ class AppRoutes {
     salesReturnExchangeRoute: 'Returns & Exchanges',
     bookingAdvanceRoute: 'Booking & Advance',
     deliveryManagementRoute: 'Delivery Management',
-    purchaseEntryRoute: 'Purchase Entry',
+    purchaseEntryRoute: 'Customer Metal Purchase',
     purchaseReturnRoute: 'Purchase Return',
     customerMetalPurchaseLedgerRoute: 'Customer Metal Settlement Ledger',
     inventoryRoute: 'Inventory Ledger',
@@ -184,7 +184,7 @@ class RoutePaths {
 
   // Purchase
   static const String purchaseEntry = '/app/purchase/entry';
-  // purchaseOldGold removed — consolidated into Purchase Entry
+  // Old-metal purchase is handled through Customer Metal Purchase.
   static const String purchaseReturn = '/app/purchase/return';
   static const String customerMetalPurchaseLedger =
       '/app/purchase/customer-metal-purchases';
@@ -269,7 +269,7 @@ class RouteMapper {
     AppRoutes.bookingAdvanceRoute: RoutePaths.salesBooking,
     AppRoutes.deliveryManagementRoute: RoutePaths.salesDelivery,
     AppRoutes.purchaseEntryRoute: RoutePaths.purchaseEntry,
-    // oldGoldBuyRoute removed
+    // Old-metal purchase is handled through Customer Metal Purchase.
     AppRoutes.purchaseReturnRoute: RoutePaths.purchaseReturn,
     AppRoutes.customerMetalPurchaseLedgerRoute:
         RoutePaths.customerMetalPurchaseLedger,

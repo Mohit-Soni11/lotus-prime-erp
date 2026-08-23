@@ -17,8 +17,6 @@ class PurchaseRightPanel extends StatefulWidget {
 }
 
 class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
-  bool _gstExpanded = false;
-
   String _currency(double amount) => 'Rs. ${amount.toStringAsFixed(2)}';
 
   @override
@@ -95,7 +93,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           _sectionHead(
             icon: PurchaseEntryIcons.invoiceOutline,
             title: PurchaseEntryStrings.purchaseSummary,
-            subtitle: 'Review valuation, discount, and tax before saving',
+            subtitle: 'Review customer metal valuation and payout',
           ),
           if (widget.ctrl.totalGoldValue > 0)
             _subtleRow(
@@ -139,17 +137,10 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           _discountCard(),
           const SizedBox(height: 12),
           _pillarRow(
-            widget.ctrl.taxType == PurchaseTaxType.gst
-                ? 'Taxable Value'
-                : 'Net Purchase',
-            widget.ctrl.taxableAmount,
+            'Net Purchase',
+            widget.ctrl.netPurchaseAmount,
             isMid: true,
           ),
-          const SizedBox(height: 10),
-          if (widget.ctrl.taxType == PurchaseTaxType.gst)
-            _buildGstSection()
-          else
-            _buildNoGstBadge(),
         ],
       ),
     );
@@ -285,100 +276,6 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                 ? PurchaseEntryColors.purchaseAccent
                 : PurchaseEntryColors.textMain,
             fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGstSection() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () => setState(() => _gstExpanded = !_gstExpanded),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'GST (3%)',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: PurchaseEntryColors.textMain,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      _currency(widget.ctrl.totalGst),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: PurchaseEntryColors.textMain,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _gstExpanded
-                          ? PurchaseEntryIcons.arrowUp
-                          : PurchaseEntryIcons.arrowDown,
-                      color: PurchaseEntryColors.textMain,
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (_gstExpanded)
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.05),
-                border: Border.all(
-                  color: PurchaseEntryColors.purchaseAccent
-                      .withValues(alpha: 0.25),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  _subtleRow('CGST (1.5%)', widget.ctrl.cgst),
-                  _subtleRow('SGST (1.5%)', widget.ctrl.sgst),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoGstBadge() {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: PurchaseEntryColors.bodyBg,
-        border: Border.all(
-          color: PurchaseEntryColors.bodyBorder,
-          width: 1.5,
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Center(
-        child: Text(
-          'STANDARD PURCHASE - NO GST APPLIED',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: PurchaseEntryColors.textMain,
-            letterSpacing: 0.8,
           ),
         ),
       ),
@@ -576,7 +473,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                         : null,
                     icon: const Icon(PurchaseEntryIcons.printVoucher, size: 18),
                     label: const Text(
-                      'PRINT',
+                      PurchaseEntryStrings.printBtn,
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 14,
@@ -616,7 +513,7 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                                   ? AppFeedbackType.success
                                   : AppFeedbackType.error,
                               message: saved
-                                  ? 'Purchase voucher saved successfully.'
+                                  ? 'Customer metal purchase saved successfully.'
                                   : widget.ctrl.saveErrorMessage ??
                                       'The purchase could not be saved. Review the details and try again.',
                             );

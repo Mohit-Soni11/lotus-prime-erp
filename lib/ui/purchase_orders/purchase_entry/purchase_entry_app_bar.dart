@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : purchase_entry_app_bar.dart
-// MODULE      : Purchase Entry
+// MODULE      : Customer Metal Purchase
 // LAYER       : UI
 // DESCRIPTION : Dark-shell AppBar matching Sales POS design language.
 //               âœ… Removed System Login Badge
@@ -113,38 +113,50 @@ class _PurchaseEntryAppBarState extends State<PurchaseEntryAppBar> {
             ),
             const SizedBox(width: 14),
 
-            // â”€â”€ 4. Perfectly Aligned Main Title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            if (_shopName.isNotEmpty) ...[
-              Text(
-                _shopName.toUpperCase(),
-                style: PurchaseEntryStyles.headerTitle.copyWith(
-                  fontSize: 14,
-                  color: PurchaseEntryStyles.headerTitle.color
-                          ?.withValues(alpha: 0.8) ??
-                      Colors.white70,
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10.0),
-                child: Text(
-                  'â€¢',
-                  style: TextStyle(
-                    color: PurchaseEntryColors.brandGold,
-                    fontSize: 18,
+            Expanded(
+              child: Row(
+                children: [
+                  if (_shopName.isNotEmpty) ...[
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        _shopName.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: PurchaseEntryStyles.headerTitle.copyWith(
+                          fontSize: 14,
+                          color: PurchaseEntryStyles.headerTitle.color
+                                  ?.withValues(alpha: 0.8) ??
+                              Colors.white70,
+                        ),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10.0),
+                      child: Text(
+                        '-',
+                        style: TextStyle(
+                          color: PurchaseEntryColors.brandGold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Text(
+                      PurchaseEntryStrings.screenTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PurchaseEntryStyles.headerTitle,
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-
-            Text(
-              PurchaseEntryStrings.screenTitle,
-              style: PurchaseEntryStyles.headerTitle,
             ),
 
-            // Spacer pushes everything else to the right
-            const Spacer(),
+            const SizedBox(width: 12),
 
-            // â”€â”€ 5. System Online Radar Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const _RadarStatusWidget(),
           ],
         ),

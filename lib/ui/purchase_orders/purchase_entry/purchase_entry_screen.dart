@@ -10,7 +10,12 @@ import 'purchase_right_panel.dart';
 import 'purchase_top_control_bar.dart';
 
 class PurchaseEntryScreen extends StatefulWidget {
-  const PurchaseEntryScreen({super.key});
+  final VoidCallback onBack;
+
+  const PurchaseEntryScreen({
+    super.key,
+    required this.onBack,
+  });
 
   @override
   State<PurchaseEntryScreen> createState() => _PurchaseEntryScreenState();
@@ -38,7 +43,7 @@ class _PurchaseEntryScreenState extends State<PurchaseEntryScreen> {
       child: Scaffold(
         backgroundColor: PurchaseEntryColors.bodyBg,
         appBar: PurchaseEntryAppBar(
-          onBack: () => Navigator.pop(context),
+          onBack: widget.onBack,
         ),
         body: SafeArea(
           child: LayoutBuilder(
@@ -104,7 +109,7 @@ class _PurchaseEntryScreenState extends State<PurchaseEntryScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    PurchaseTopControlBar(ctrl: _ctrl),
+                    const PurchaseTopControlBar(),
                     const SizedBox(width: 16),
                     Expanded(
                       child: PurchaseInvoiceStatusBar(ctrl: _ctrl),
@@ -116,7 +121,7 @@ class _PurchaseEntryScreenState extends State<PurchaseEntryScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                PurchaseTopControlBar(ctrl: _ctrl),
+                const PurchaseTopControlBar(),
                 const SizedBox(height: 12),
                 PurchaseInvoiceStatusBar(ctrl: _ctrl),
               ],

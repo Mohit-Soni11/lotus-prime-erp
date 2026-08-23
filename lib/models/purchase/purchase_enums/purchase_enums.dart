@@ -1,11 +1,11 @@
 // =============================================================================
 // FILE        : purchase_enums.dart
-// MODULE      : Purchase Entry
+// MODULE      : Purchase
 // LAYER       : Models / Enums
-// DESCRIPTION : All enums for Purchase Entry. Single source of truth.
+// DESCRIPTION : Shared purchase enums for customer metal and stock flows.
 // =============================================================================
 
-/// Kaun se source se purchase ho rahi hai
+/// Purchase counterparty source.
 enum PurchaseSource {
   fromCustomer('From Customer'),
   fromSupplier('From Supplier');
@@ -14,7 +14,7 @@ enum PurchaseSource {
   const PurchaseSource(this.label);
 }
 
-/// GST lagana hai ya nahi
+/// Tax treatment for a purchase voucher.
 enum PurchaseTaxType {
   normal,
   gst,
@@ -45,7 +45,7 @@ extension PurchaseMetalTypeExtension on PurchaseMetalType {
   String get apiValue => name.toUpperCase();
 }
 
-/// Payment mode jab hum seller ko pay kar rahe hain
+/// Payment mode used when paying the seller.
 enum PurchasePaymentMode {
   cash,
   upi,

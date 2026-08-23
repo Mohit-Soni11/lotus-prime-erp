@@ -2,13 +2,11 @@
 // FILE        : quick_actions_logic.dart
 // MODULE      : Dashboard / Quick Actions
 // LAYER       : Logic (Business Logic)
-// DESCRIPTION : Complete business logic for the Quick Actions card.
-//               ✅ UPDATE:
-//               • "New Entry" button → Triggers 4-option popup
-//                  (New Sale / Purchase Entry / Collateral / Advance)
-//               • "Adjust" button   → Triggers 2-option popup
-//                  (Due Adjust / Interest Adjustment)
-//               Pattern: ChangeNotifier (Similar to ShopCardLogic)
+// DESCRIPTION : Business logic for the dashboard quick actions card.
+//               "New Entry" opens New Sale, Customer Metal Purchase,
+//               Collateral / Loan, and Booking Advance actions.
+//               "Adjust" opens Due Adjust and Interest Payment actions.
+//               Pattern: ChangeNotifier.
 // =============================================================================
 
 import 'dart:async';
@@ -109,9 +107,9 @@ class QuickActionsLogic extends ChangeNotifier {
     ),
     QuickActionPopupOption(
       id: 'purchase_entry',
-      label: 'Purchase Entry',
-      subtitle: 'Record a new purchase from a supplier',
-      icon: Icons.shopping_bag_rounded,
+      label: 'Customer Metal Purchase',
+      subtitle: 'Buy and record old metal from a customer',
+      icon: Icons.move_to_inbox_rounded,
       accentColor: Color(0xFF10B981),
       routeId: AppRoutes.purchaseEntryRoute,
     ),

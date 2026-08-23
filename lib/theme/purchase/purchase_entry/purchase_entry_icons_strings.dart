@@ -14,9 +14,8 @@ class PurchaseEntryIcons {
   static const IconData customerName = Icons.badge_outlined;
   static const IconData cityLocation = Icons.location_on_outlined;
   static const IconData panCard = Icons.credit_card_outlined;
-  static const IconData gstNumber = Icons.receipt_outlined;
   static const IconData searchItem = Icons.search_rounded;
-  static const IconData newSupplier = Icons.person_add_outlined;
+  static const IconData newSeller = Icons.person_add_outlined;
   static const IconData purchaseHeader = Icons.move_to_inbox_rounded;
   static const IconData addItem = Icons.add_circle_outline_rounded;
   static const IconData deleteItem = Icons.remove_circle_outline_rounded;
@@ -44,17 +43,18 @@ class PurchaseEntryIcons {
 class PurchaseEntryStrings {
   PurchaseEntryStrings._();
 
-  static const String screenTitle = 'PURCHASE ENTRY';
+  static const String screenTitle = 'CUSTOMER METAL PURCHASE';
   static const String systemOnline = 'SYSTEM ONLINE';
-  static const String invoicePreferences = 'PURCHASE PREFERENCES';
+  static const String invoicePreferences = 'METAL INTAKE SETUP';
   static const String invoiceNumber = 'VOUCHER NUMBER';
   static const String customerDetails = 'SELLER DETAILS';
-  static const String searchOrAdd = 'Search or add seller info';
-  static const String purchaseSummary = 'PURCHASE SUMMARY';
-  static const String paymentDisburse = 'PAYMENT DISBURSEMENT';
-  static const String addItemBtn = 'ADD PURCHASE ITEM';
-  static const String saveBtn = 'SAVE PURCHASE';
+  static const String searchOrAdd = 'Search or add customer seller details';
+  static const String purchaseSummary = 'METAL PURCHASE SUMMARY';
+  static const String paymentDisburse = 'SELLER PAYOUT';
+  static const String addItemBtn = 'ADD METAL ITEM';
+  static const String saveBtn = 'SAVE METAL PURCHASE';
   static const String printBtn = 'PRINT VOUCHER';
   static const String noItems = 'NO ITEMS ADDED';
-  static const String noItemsSub = 'Click below to add a purchased item';
+  static const String noItemsSub =
+      'Add old gold, silver, platinum, or diamond received from customer';
 }

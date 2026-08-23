@@ -11,6 +11,7 @@ import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import 'customer_history/pos_customer_history_card.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
+import '../../customer/add_customer/add_customer_screen.dart';
 
 class PosCustomerDetailsPanel extends StatefulWidget {
   final PosBillingController ctrl;
@@ -185,6 +186,32 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
       type: AppFeedbackType.error,
       message: 'Enter customer name or a valid 10-digit mobile number.',
     );
+  }
+
+  Future<void> _openCreateCustomerFlow() async {
+    _removeSuggestionOverlay();
+    FocusScope.of(context).unfocus();
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCustomerScreen(
+          onBack: () => Navigator.pop(context),
+          onSaved: () => Navigator.pop(context),
+        ),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    final query = widget.ctrl.nameCtrl.text.trim().isNotEmpty
+        ? widget.ctrl.nameCtrl.text
+        : widget.ctrl.mobileCtrl.text;
+    if (query.trim().isNotEmpty) {
+      await widget.ctrl.searchCustomersByName(query);
+    }
   }
 
   @override
@@ -385,21 +412,10 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _HoverAnimatedButton(
-                            title: "Search",
-                            icon: SalesPosIcons.searchItem,
-                            isPrimary: false,
-                            onTap: () => widget.ctrl.searchCustomersByName(
-                              widget.ctrl.mobileCtrl.text.isNotEmpty
-                                  ? widget.ctrl.mobileCtrl.text
-                                  : widget.ctrl.nameCtrl.text,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _HoverAnimatedButton(
-                            title: "Quick Add",
+                            title: "Create Customer",
                             icon: SalesPosIcons.newCustomerAdd,
                             isPrimary: true,
-                            onTap: _quickAddCustomer,
+                            onTap: _openCreateCustomerFlow,
                           ),
                         ],
                       ),
@@ -1021,7 +1037,7 @@ class _HoverAnimatedButtonState extends State<_HoverAnimatedButton> {
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
             height: 42,
-            width: 140,
+            width: 158,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               gradient: widget.isPrimary

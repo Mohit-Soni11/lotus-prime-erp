@@ -1,6 +1,6 @@
 // =============================================================================
 // FILE        : purchase_invoice_status_bar.dart
-// MODULE      : Purchase Entry
+// MODULE      : Customer Metal Purchase
 // LAYER       : UI
 // DESCRIPTION : Voucher number, date & time bar. Matching Sales POS design.
 // =============================================================================
@@ -8,7 +8,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
-import '../../../models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/logic/dashboard/date_card/date_card_logic.dart';
 
 class PurchaseInvoiceStatusBar extends StatefulWidget {
@@ -54,10 +53,7 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
     super.dispose();
   }
 
-  bool get _isGst => widget.ctrl.taxType == PurchaseTaxType.gst;
-
-  Color get _accent =>
-      _isGst ? PurchaseEntryColors.success : PurchaseEntryColors.purchaseAccent;
+  static const Color _accent = PurchaseEntryColors.purchaseAccent;
 
   @override
   Widget build(BuildContext context) {
@@ -120,77 +116,60 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
                       ],
                     ),
                     const SizedBox(width: 12),
-                    Column(
+                    const Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           PurchaseEntryStrings.invoiceNumber,
                           style: PurchaseEntryStyles.highVisHeader,
                         ),
-                        const SizedBox(height: 4),
-                        AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 260),
+                        SizedBox(height: 4),
+                        Text(
+                          'Customer metal purchase',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: _isGst
-                                ? PurchaseEntryColors.success
-                                : PurchaseEntryColors.textDark,
-                          ),
-                          child: Text(
-                            _isGst ? 'GST Purchase' : 'Normal Purchase',
+                            color: PurchaseEntryColors.textDark,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-
                 const SizedBox(width: 40),
-
-                // Status pill
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 260),
+                Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _isGst
-                        ? PurchaseEntryColors.success.withValues(alpha: 0.07)
-                        : PurchaseEntryColors.bodyBg,
+                    color: PurchaseEntryColors.bodyBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: _isGst
-                          ? PurchaseEntryColors.success.withValues(alpha: 0.35)
-                          : PurchaseEntryColors.bodyBorder,
+                      color: PurchaseEntryColors.bodyBorder,
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 260),
-                        width: 6,
-                        height: 6,
+                      DecoratedBox(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _isGst
-                              ? PurchaseEntryColors.success
-                              : PurchaseEntryColors.purchaseAccent,
+                          color: PurchaseEntryColors.purchaseAccent,
+                        ),
+                        child: SizedBox(
+                          width: 6,
+                          height: 6,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 260),
+                      SizedBox(width: 6),
+                      Text(
+                        'PURCHASE',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.8,
-                          color: _isGst
-                              ? PurchaseEntryColors.success
-                              : PurchaseEntryColors.purchaseAccent,
+                          color: PurchaseEntryColors.purchaseAccent,
                         ),
-                        child: Text(_isGst ? 'GST PURCHASE' : 'PURCHASE'),
                       ),
                     ],
                   ),
@@ -222,7 +201,7 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
                       border:
                           Border.all(color: _accent.withValues(alpha: 0.25)),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       PurchaseEntryIcons.invoiceOutline,
                       color: _accent,
                       size: 24,
@@ -249,7 +228,7 @@ class _PurchaseInvoiceStatusBarState extends State<PurchaseInvoiceStatusBar>
                       const SizedBox(height: 4),
                       Text(
                         widget.ctrl.formattedPurchaseNo,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: _accent,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
