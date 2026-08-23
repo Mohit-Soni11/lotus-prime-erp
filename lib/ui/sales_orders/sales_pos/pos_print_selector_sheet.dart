@@ -52,6 +52,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
   late String _selectedTemplateId;
   int _copies = 1;
   bool _duplicateStamp = false;
+  bool _useDriverSettings = true;
 
   @override
   void initState() {
@@ -60,6 +61,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
     _selectedTemplateId = widget.invoiceCtrl.selectedTemplateId;
     _copies = widget.invoiceCtrl.printCopies;
     _duplicateStamp = _copies > 1 && widget.invoiceCtrl.includeDuplicateStamp;
+    _useDriverSettings = widget.invoiceCtrl.usePrinterDriverSettings;
 
     _animCtrl = AnimationController(
       vsync: this,
@@ -301,7 +303,10 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                     if (_copies == 1) _duplicateStamp = false;
                   });
                   widget.invoiceCtrl.updatePrintOptions(
-                      copies: _copies, duplicate: _duplicateStamp);
+                    copies: _copies,
+                    duplicate: _duplicateStamp,
+                    useDriverSettings: _useDriverSettings,
+                  );
                 },
               ),
             ],
@@ -344,9 +349,57 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                     ? (v) {
                         setState(() => _duplicateStamp = v);
                         widget.invoiceCtrl.updatePrintOptions(
-                            copies: _copies, duplicate: _duplicateStamp);
+                          copies: _copies,
+                          duplicate: _duplicateStamp,
+                          useDriverSettings: _useDriverSettings,
+                        );
                       }
                     : null,
+                activeThumbColor: SalesPosColors.brandGold,
+                inactiveThumbColor: SalesPosColors.shellTextMuted,
+                inactiveTrackColor: SalesPosColors.bodyBorder,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: SalesPosColors.bodyPanelBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SalesPosColors.bodyBorder),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.settings_applications_rounded,
+                  color: SalesPosColors.bodyTextMain, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Printer Driver Settings",
+                          style: TextStyle(
+                              color: SalesPosColors.bodyTextMain,
+                              fontSize: SalesPosStyles.fontLabel,
+                              fontWeight: FontWeight.w700)),
+                      Text("Use saved duplex, paper tray and printer defaults",
+                          style: TextStyle(
+                              color: SalesPosColors.shellTextMuted,
+                              fontSize: SalesPosStyles.fontCaption)),
+                    ]),
+              ),
+              Switch(
+                value: _useDriverSettings,
+                onChanged: (v) {
+                  setState(() => _useDriverSettings = v);
+                  widget.invoiceCtrl.updatePrintOptions(
+                    copies: _copies,
+                    duplicate: _duplicateStamp,
+                    useDriverSettings: _useDriverSettings,
+                  );
+                },
                 activeThumbColor: SalesPosColors.brandGold,
                 inactiveThumbColor: SalesPosColors.shellTextMuted,
                 inactiveTrackColor: SalesPosColors.bodyBorder,
@@ -394,6 +447,8 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                   widget.invoiceCtrl.printCopies = _copies;
                   widget.invoiceCtrl.includeDuplicateStamp =
                       _copies > 1 && _duplicateStamp;
+                  widget.invoiceCtrl.usePrinterDriverSettings =
+                      _useDriverSettings;
                   Navigator.pop(context);
                   widget.onPrint();
                 },

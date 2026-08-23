@@ -75,6 +75,7 @@ class PosInvoiceController extends ChangeNotifier {
   String selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
   int printCopies = 1;
   bool includeDuplicateStamp = false;
+  bool usePrinterDriverSettings = true;
   MetalType? activePrintMetal;
   int _previewBuildSerial = 0;
   bool _hasWorkspaceTemplateSelection = false;
@@ -475,11 +476,15 @@ class PosInvoiceController extends ChangeNotifier {
     return null;
   }
 
-  Future<void> updatePrintOptions(
-      {required int copies, required bool duplicate}) async {
+  Future<void> updatePrintOptions({
+    required int copies,
+    required bool duplicate,
+    bool? useDriverSettings,
+  }) async {
     final normalizedCopies = copies.clamp(1, 5).toInt();
     printCopies = normalizedCopies;
     includeDuplicateStamp = normalizedCopies > 1 && duplicate;
+    usePrinterDriverSettings = useDriverSettings ?? usePrinterDriverSettings;
     if (invoice != null) {
       await _refreshActivePreviewPdf();
       notifyListeners();
@@ -1026,6 +1031,7 @@ class PosInvoiceController extends ChangeNotifier {
       context: context,
       bytes: printBytes,
       invoice: invoice!,
+      usePrinterSettings: usePrinterDriverSettings,
     );
   }
 

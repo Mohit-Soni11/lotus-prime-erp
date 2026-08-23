@@ -18,11 +18,13 @@ class PosInvoiceOutputService {
     required BuildContext context,
     required Uint8List bytes,
     required PosInvoiceModel invoice,
+    bool usePrinterSettings = true,
   }) {
     return _printPdfWithNamedOutput(
       context: context,
       bytes: bytes,
       invoice: invoice,
+      usePrinterSettings: usePrinterSettings,
     );
   }
 
@@ -30,6 +32,7 @@ class PosInvoiceOutputService {
     required BuildContext context,
     required Uint8List bytes,
     required PosInvoiceModel invoice,
+    required bool usePrinterSettings,
   }) async {
     final printer = await Printing.pickPrinter(
       context: context,
@@ -44,6 +47,7 @@ class PosInvoiceOutputService {
     return Printing.directPrintPdf(
       printer: printer,
       name: PosInvoiceFileNaming.pdfBaseName(invoice),
+      usePrinterSettings: usePrinterSettings,
       onLayout: (_) async => bytes,
     );
   }

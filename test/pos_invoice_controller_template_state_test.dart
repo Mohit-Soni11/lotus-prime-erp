@@ -139,6 +139,11 @@ void main() {
     try {
       await controller.generateInvoice();
       billing.markCurrentSaleCommitted(controller.invoice!.invoiceNumber);
+      await controller.updatePrintOptions(
+        copies: 1,
+        duplicate: false,
+        useDriverSettings: false,
+      );
 
       final goldBytes = await controller.buildExportPdfBytes(
         metal: MetalType.gold,
@@ -156,6 +161,7 @@ void main() {
       expect(String.fromCharCodes(goldBytes!.take(4)), '%PDF');
       expect(String.fromCharCodes(allBytes!.take(4)), '%PDF');
       expect(String.fromCharCodes(printBytes!.take(4)), '%PDF');
+      expect(controller.usePrinterDriverSettings, isFalse);
       expect(allBytes.length, greaterThan(goldBytes.length));
       expect(printBytes.length, allBytes.length);
     } finally {

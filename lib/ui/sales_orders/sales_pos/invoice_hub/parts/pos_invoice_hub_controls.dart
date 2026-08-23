@@ -495,6 +495,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
   Widget _buildPrintOptions() {
     final copies = _invCtrl.printCopies;
     final duplicateEnabled = _invCtrl.includeDuplicateStamp;
+    final useDriverSettings = _invCtrl.usePrinterDriverSettings;
     final canDecrease = copies > 1;
     final canIncrease = copies < 5;
     final canMarkDuplicate = copies > 1;
@@ -590,6 +591,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                     _invCtrl.updatePrintOptions(
                       copies: copies - 1,
                       duplicate: duplicateEnabled,
+                      useDriverSettings: useDriverSettings,
                     );
                   },
                   onIncrease: () {
@@ -597,6 +599,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                     _invCtrl.updatePrintOptions(
                       copies: copies + 1,
                       duplicate: duplicateEnabled,
+                      useDriverSettings: useDriverSettings,
                     );
                   },
                 ),
@@ -614,8 +617,28 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                       ? (value) => _invCtrl.updatePrintOptions(
                             copies: copies,
                             duplicate: value,
+                            useDriverSettings: useDriverSettings,
                           )
                       : null,
+                  activeThumbColor: SalesPosColors.brandGold,
+                  activeTrackColor:
+                      SalesPosColors.brandGold.withValues(alpha: 0.32),
+                  inactiveThumbColor: SalesPosColors.shellTextMuted,
+                  inactiveTrackColor: SalesPosColors.shellBg,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _PrintControlSurface(
+                icon: Icons.settings_applications_rounded,
+                title: 'Printer Driver Settings',
+                subtitle: 'Use saved duplex, paper tray and printer defaults',
+                trailing: Switch(
+                  value: useDriverSettings,
+                  onChanged: (value) => _invCtrl.updatePrintOptions(
+                    copies: copies,
+                    duplicate: duplicateEnabled,
+                    useDriverSettings: value,
+                  ),
                   activeThumbColor: SalesPosColors.brandGold,
                   activeTrackColor:
                       SalesPosColors.brandGold.withValues(alpha: 0.32),
@@ -646,6 +669,15 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                           ? Icons.verified_rounded
                           : Icons.lock_open_rounded,
                       label: duplicateEnabled ? 'Stamped' : 'Clean',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PrintMetaPill(
+                      icon: useDriverSettings
+                          ? Icons.settings_rounded
+                          : Icons.straighten_rounded,
+                      label: useDriverSettings ? 'Driver' : 'App size',
                     ),
                   ),
                 ],
