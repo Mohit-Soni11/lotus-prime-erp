@@ -328,8 +328,8 @@ class CustomerMetalPurchaseInvoiceService {
       shopProfile: shopProfile,
       template: template,
       profile: PrintTemplatePdfProfile.forTemplate(template.id),
-      title: 'CUSTOMER METAL PURCHASE',
-      subtitle: 'Purchase Invoice',
+      title: 'METAL PURCHASE',
+      subtitle: 'Customer Payout Invoice',
       documentNumberLabel: 'Invoice No',
       documentNumber: invoice.purchaseNo,
       documentDateLabel: 'Invoice Date',
@@ -340,8 +340,9 @@ class CustomerMetalPurchaseInvoiceService {
       itemTable: _printableItemTable(invoice.lineItems, displaySettings),
       settlementPanels: [
         _printablePayoutPanel(invoice),
-        _printablePaymentPanel(invoice),
       ],
+      showHeaderDocumentMeta: false,
+      showHeaderBadge: false,
       policySections: const [
         LotusPrintablePolicySection(
           title: 'Purchase Declaration',
@@ -370,24 +371,27 @@ class CustomerMetalPurchaseInvoiceService {
             value: _fallback(invoice.sellerName, 'Walk-in Seller'),
             highlight: true,
           ),
-        if (settings.showSupplierDetails)
+        if (settings.showSupplierDetails &&
+            invoice.sellerMobile.trim().isNotEmpty)
           LotusPrintableDetail(
             iconKey: 'phone',
             label: 'Mobile',
-            value: _fallback(invoice.sellerMobile, '-'),
+            value: invoice.sellerMobile.trim(),
           ),
-        if (settings.showSupplierDetails)
+        if (settings.showSupplierDetails &&
+            invoice.sellerAddress.trim().isNotEmpty)
           LotusPrintableDetail(
             iconKey: 'location',
             label: 'Address',
-            value: _fallback(invoice.sellerAddress, '-'),
+            value: invoice.sellerAddress.trim(),
             multiline: true,
           ),
-        if (settings.showPanNumber)
+        if (settings.showPanNumber &&
+            invoice.sellerPanOrAadhaar.trim().isNotEmpty)
           LotusPrintableDetail(
             iconKey: 'gst',
             label: 'PAN / ID',
-            value: _fallback(invoice.sellerPanOrAadhaar, '-'),
+            value: invoice.sellerPanOrAadhaar.trim(),
           ),
       ],
     );
@@ -414,13 +418,7 @@ class CustomerMetalPurchaseInvoiceService {
         const LotusPrintableDetail(
           iconKey: 'items',
           label: 'Type',
-          value: 'Customer Metal Purchase',
-        ),
-        LotusPrintableDetail(
-          iconKey: 'status',
-          label: 'Payout Status',
-          value: _payoutStatus(invoice),
-          highlight: true,
+          value: 'Customer Sold Metal',
         ),
         if (invoice.payoutCommitmentDate != null)
           LotusPrintableDetail(
@@ -460,21 +458,44 @@ class CustomerMetalPurchaseInvoiceService {
       details: [
         LotusPrintableDetail(
           iconKey: 'amount',
-          label: 'Gross Value',
+          label: 'Assessed Value',
           value: _amount(invoice.grossPurchaseAmount),
-        ),
-        LotusPrintableDetail(
-          iconKey: 'amount',
-          label: 'Seller Payable',
-          value: _amount(invoice.sellerPayable),
           highlight: true,
         ),
-        LotusPrintableDetail(
-          iconKey: 'status',
-          label: 'Balance Status',
-          value: _payoutStatus(invoice),
-          highlight: true,
-        ),
+        if (_amountsDiffer(invoice.grossPurchaseAmount, invoice.sellerPayable))
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Seller Payable',
+            value: _amount(invoice.sellerPayable),
+            highlight: true,
+          ),
+        if (invoice.cashPaid > 0.005)
+          LotusPrintableDetail(
+            iconKey: 'payment',
+            label: 'Cash Paid',
+            value: _amount(invoice.cashPaid),
+          ),
+        if (invoice.upiPaid > 0.005)
+          LotusPrintableDetail(
+            iconKey: 'payment',
+            label: 'UPI / Bank Paid',
+            value: _amount(invoice.upiPaid),
+          ),
+        if (invoice.cardPaid > 0.005)
+          LotusPrintableDetail(
+            iconKey: 'payment',
+            label: 'Card Paid',
+            value: _amount(invoice.cardPaid),
+          ),
+        if (!invoice.hasPendingSellerPayout &&
+            !invoice.hasSellerPayoutExcess &&
+            invoice.totalPaid > 0.005)
+          const LotusPrintableDetail(
+            iconKey: 'status',
+            label: 'Settlement',
+            value: 'Paid in Full',
+            highlight: true,
+          ),
         if (invoice.balanceDue.abs() > 0.005)
           LotusPrintableDetail(
             iconKey: 'amount',
@@ -484,37 +505,6 @@ class CustomerMetalPurchaseInvoiceService {
             value: _amount(invoice.balanceDue.abs()),
             highlight: true,
           ),
-      ],
-    );
-  }
-
-  static LotusPrintablePanel _printablePaymentPanel(
-    CustomerMetalPurchaseInvoiceData invoice,
-  ) {
-    return LotusPrintablePanel(
-      title: 'PAYMENT BREAKUP',
-      details: [
-        LotusPrintableDetail(
-          iconKey: 'payment',
-          label: 'Cash Paid',
-          value: _amount(invoice.cashPaid),
-        ),
-        LotusPrintableDetail(
-          iconKey: 'payment',
-          label: 'UPI / Bank Paid',
-          value: _amount(invoice.upiPaid),
-        ),
-        LotusPrintableDetail(
-          iconKey: 'payment',
-          label: 'Card Paid',
-          value: _amount(invoice.cardPaid),
-        ),
-        LotusPrintableDetail(
-          iconKey: 'amount',
-          label: 'Total Paid',
-          value: _amount(invoice.totalPaid),
-          highlight: true,
-        ),
       ],
     );
   }
@@ -530,7 +520,7 @@ class CustomerMetalPurchaseInvoiceService {
     return [
       const _PurchaseInvoiceColumn(
         key: 'index',
-        label: '#',
+        label: 'S. No.',
         width: 0.45,
       ),
       const _PurchaseInvoiceColumn(
@@ -1044,5 +1034,9 @@ class CustomerMetalPurchaseInvoiceService {
   static String _fallback(String value, String fallback) {
     final clean = value.trim();
     return clean.isEmpty ? fallback : clean;
+  }
+
+  static bool _amountsDiffer(double first, double second) {
+    return (first - second).abs() > 0.005;
   }
 }

@@ -276,10 +276,18 @@ class _LotusDocumentLayoutEngine {
                 ),
               ),
               pw.SizedBox(height: 8),
-              _metaText(document.documentNumberLabel, document.documentNumber,
-                  profile),
-              _metaText(
-                  document.documentDateLabel, document.documentDate, profile),
+              if (document.showHeaderDocumentMeta) ...[
+                _metaText(
+                  document.documentNumberLabel,
+                  document.documentNumber,
+                  profile,
+                ),
+                _metaText(
+                  document.documentDateLabel,
+                  document.documentDate,
+                  profile,
+                ),
+              ],
             ],
           ),
         ],
@@ -374,27 +382,31 @@ class _LotusDocumentLayoutEngine {
                         margin: const pw.EdgeInsets.only(top: 6, bottom: 4),
                         color: profile.accentColor,
                       ),
-                      pw.Text(
-                        document.badgeLabel,
-                        textAlign: pw.TextAlign.right,
-                        style: pw.TextStyle(
-                          fontSize: 10.8,
-                          fontWeight: pw.FontWeight.bold,
-                          color: profile.accentColor,
-                          letterSpacing: 0.5,
+                      if (document.showHeaderBadge &&
+                          document.badgeLabel.trim().isNotEmpty)
+                        pw.Text(
+                          document.badgeLabel,
+                          textAlign: pw.TextAlign.right,
+                          style: pw.TextStyle(
+                            fontSize: 10.8,
+                            fontWeight: pw.FontWeight.bold,
+                            color: profile.accentColor,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                      pw.SizedBox(height: 13),
-                      _invoiceMeta(
-                        document.documentNumberLabel,
-                        document.documentNumber,
-                        profile,
-                      ),
-                      _invoiceMeta(
-                        document.documentDateLabel,
-                        document.documentDate,
-                        profile,
-                      ),
+                      if (document.showHeaderDocumentMeta) ...[
+                        pw.SizedBox(height: 13),
+                        _invoiceMeta(
+                          document.documentNumberLabel,
+                          document.documentNumber,
+                          profile,
+                        ),
+                        _invoiceMeta(
+                          document.documentDateLabel,
+                          document.documentDate,
+                          profile,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -779,10 +791,10 @@ class _LotusDocumentLayoutEngine {
           ),
           pw.SizedBox(width: 6),
           pw.Container(
-            width: 74,
+            width: 98,
             child: pw.Text(
               value,
-              maxLines: 1,
+              maxLines: 2,
               overflow: pw.TextOverflow.clip,
               style: pw.TextStyle(
                 fontSize: 10.7,

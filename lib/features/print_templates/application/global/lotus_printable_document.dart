@@ -19,6 +19,8 @@ class LotusPrintableDocument {
   final List<LotusPrintablePanel> settlementPanels;
   final List<LotusPrintablePolicySection> policySections;
   final String footerMessage;
+  final bool showHeaderDocumentMeta;
+  final bool showHeaderBadge;
 
   const LotusPrintableDocument({
     required this.shopProfile,
@@ -37,6 +39,8 @@ class LotusPrintableDocument {
     required this.settlementPanels,
     required this.policySections,
     required this.footerMessage,
+    this.showHeaderDocumentMeta = true,
+    this.showHeaderBadge = true,
   });
 }
 
