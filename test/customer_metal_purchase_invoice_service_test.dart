@@ -125,6 +125,20 @@ void main() {
       throwsA(isA<StateError>()),
     );
   });
+
+  test('scopes mixed metal invoice totals to selected metal', () {
+    final scoped = _mixedMetalInvoice.scopedToMetal('silver');
+
+    expect(scoped.lineItems, hasLength(1));
+    expect(scoped.lineItems.single.metalKey, 'silver');
+    expect(scoped.grossPurchaseAmount, 4000);
+    expect(scoped.sellerPayable, 4000);
+    expect(scoped.cashPaid, 2000);
+    expect(scoped.upiPaid, 1000);
+    expect(scoped.totalPaid, 3000);
+    expect(scoped.balanceDue, 1000);
+    expect(scoped.hasPendingSellerPayout, isTrue);
+  });
 }
 
 const _invoice = CustomerMetalPurchaseInvoiceData(
@@ -186,4 +200,48 @@ const _profile = ShopPrintDocumentProfile(
       group: ShopPrintFieldGroup.statutory,
     ),
   ],
+);
+
+const _mixedMetalInvoice = CustomerMetalPurchaseInvoiceData(
+  purchaseNo: 'AJ-PUR-2026-0006',
+  sellerName: 'Mixed Seller',
+  sellerMobile: '9304479436',
+  sellerAddress: 'Patna',
+  sellerPanOrAadhaar: '',
+  payoutCommitmentDate: null,
+  lineItems: [
+    CustomerMetalPurchaseInvoiceLine(
+      metalKey: 'gold',
+      metalName: 'GOLD',
+      description: 'Old Gold Ring',
+      grossWeight: 1,
+      lessWeight: 0,
+      netWeight: 1,
+      purity: 100,
+      fineWeight: 1,
+      rate: 6000,
+      totalValue: 6000,
+    ),
+    CustomerMetalPurchaseInvoiceLine(
+      metalKey: 'silver',
+      metalName: 'SILVER',
+      description: 'Old Silver Anklet',
+      grossWeight: 50,
+      lessWeight: 0,
+      netWeight: 50,
+      purity: 100,
+      fineWeight: 50,
+      rate: 80,
+      totalValue: 4000,
+    ),
+  ],
+  grossPurchaseAmount: 10000,
+  sellerPayable: 10000,
+  cashPaid: 5000,
+  upiPaid: 2500,
+  cardPaid: 0,
+  totalPaid: 7500,
+  balanceDue: 2500,
+  hasPendingSellerPayout: true,
+  hasSellerPayoutExcess: false,
 );

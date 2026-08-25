@@ -80,6 +80,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   bool _isLoadingDisplaySettings = true;
   bool _isLoadingShopPrintProfile = true;
   String? _errorMessage;
+  int _pdfRevision = 0;
 
   @override
   void initState() {
@@ -138,11 +139,14 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
         shopProfileOverride: _shopPrintProfile,
         copies: _printCopies,
         includeDuplicateStamp: _includeDuplicateStamp,
+        metalScope:
+            _selectedFormat == PrintFormat.a4 ? _activeMetalKey() : null,
       );
       if (!mounted) return;
       setState(() {
         _pdfBytes = bytes;
         _isBuilding = false;
+        _pdfRevision++;
       });
     } catch (error) {
       if (!mounted) return;
@@ -216,6 +220,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     final updatedState = state.copyWith(enabledFieldIds: enabledIds);
     final updatedProfile =
         await _shopPrintRepo.buildDocumentProfile(updatedState);
+    await _shopPrintRepo.save(updatedState);
     if (!mounted) return;
     setState(() {
       _shopPrintState = updatedState;
@@ -1385,7 +1390,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
       duration: const Duration(milliseconds: 220),
       child: Padding(
         key: ValueKey(
-            '$_selectedTemplateId-${_selectedFormat.name}-${bytes.length}'),
+            '$_selectedTemplateId-${_selectedFormat.name}-${_activeMetalKey()}-$_pdfRevision'),
         padding: const EdgeInsets.all(30),
         child: PdfPreview(
           build: (_) async => bytes,

@@ -477,6 +477,26 @@ class PurchaseEntryController extends ChangeNotifier {
   bool get hasPendingSellerPayout => balanceDue > 0.005;
   bool get hasSellerPayoutExcess => balanceDue < -0.005;
 
+  String? get invoiceReadinessError {
+    final enteredItems = items.where((item) => item.hasContent).toList();
+    if (enteredItems.isEmpty) {
+      return 'Add at least one purchase item before generating invoice.';
+    }
+    if (enteredItems.any((item) => !item.isValidEntry)) {
+      return 'Complete every purchase line with a net weight and rate before generating invoice.';
+    }
+    if (nameCtrl.text.trim().isEmpty) {
+      return 'Enter or select the customer seller before generating invoice.';
+    }
+    if (totalPaid <= 0.005) {
+      return 'Enter at least one seller payout amount before generating invoice.';
+    }
+    if (hasPendingSellerPayout && payoutCommitmentDate == null) {
+      return 'Select payout commitment date for remaining seller payout.';
+    }
+    return null;
+  }
+
   void setPayoutCommitmentDate(DateTime? date) {
     payoutCommitmentDate =
         date == null ? null : DateTime(date.year, date.month, date.day);
@@ -528,6 +548,16 @@ class PurchaseEntryController extends ChangeNotifier {
     if (nameCtrl.text.trim().isEmpty) {
       _saveErrorMessage =
           'Enter or select the customer seller before saving this voucher.';
+      notifyListeners();
+      return false;
+    }
+
+    final readinessError = invoiceReadinessError;
+    if (readinessError != null) {
+      _saveErrorMessage = readinessError.replaceFirst(
+        'generating invoice',
+        'saving this voucher',
+      );
       notifyListeners();
       return false;
     }

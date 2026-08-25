@@ -135,14 +135,19 @@ class _LotusDocumentLayoutEngine {
     return [
       if (isDuplicateCopy) _duplicateStamp(profile),
       _standardHeader(document),
-      pw.SizedBox(height: profile.sectionGap),
-      _panel(document.primaryPanel, profile),
-      pw.SizedBox(height: profile.sectionGap),
-      _panel(document.secondaryPanel, profile),
+      if (_hasPanelDetails(document.primaryPanel)) ...[
+        pw.SizedBox(height: profile.sectionGap),
+        _panel(document.primaryPanel, profile),
+      ],
+      if (_hasPanelDetails(document.secondaryPanel)) ...[
+        pw.SizedBox(height: profile.sectionGap),
+        _panel(document.secondaryPanel, profile),
+      ],
       pw.SizedBox(height: profile.sectionGap),
       _itemTable(document.itemTable, profile),
       pw.SizedBox(height: profile.sectionGap),
-      for (final panel in document.settlementPanels) ...[
+      for (final panel
+          in document.settlementPanels.where(_hasPanelDetails)) ...[
         _panel(panel, profile),
         pw.SizedBox(height: profile.sectionGap),
       ],
@@ -157,6 +162,12 @@ class _LotusDocumentLayoutEngine {
   }) {
     final document = context.document;
     final profile = document.profile;
+    final hasPrimaryPanel = _hasPanelDetails(document.primaryPanel);
+    final hasSecondaryPanel = _hasPanelDetails(document.secondaryPanel);
+    final settlementPanels = document.settlementPanels
+        .where(_hasPanelDetails)
+        .take(2)
+        .toList(growable: false);
     return [
       if (isDuplicateCopy) _duplicateStamp(profile),
       pw.Container(
@@ -173,11 +184,14 @@ class _LotusDocumentLayoutEngine {
             pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Expanded(
-                    child: _signaturePanel(document.primaryPanel, profile)),
-                pw.SizedBox(width: 14),
-                pw.Expanded(
-                    child: _signaturePanel(document.secondaryPanel, profile)),
+                if (hasPrimaryPanel)
+                  pw.Expanded(
+                      child: _signaturePanel(document.primaryPanel, profile)),
+                if (hasPrimaryPanel && hasSecondaryPanel)
+                  pw.SizedBox(width: 14),
+                if (hasSecondaryPanel)
+                  pw.Expanded(
+                      child: _signaturePanel(document.secondaryPanel, profile)),
               ],
             ),
             pw.SizedBox(height: 14),
@@ -185,17 +199,17 @@ class _LotusDocumentLayoutEngine {
             pw.SizedBox(height: 8),
             _itemTable(document.itemTable, profile),
             pw.SizedBox(height: 14),
-            if (document.settlementPanels.isNotEmpty)
+            if (settlementPanels.isNotEmpty)
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   for (var index = 0;
-                      index < document.settlementPanels.take(2).length;
+                      index < settlementPanels.length;
                       index++) ...[
                     if (index > 0) pw.SizedBox(width: 14),
                     pw.Expanded(
                       child: _signaturePanel(
-                        document.settlementPanels[index],
+                        settlementPanels[index],
                         profile,
                       ),
                     ),
@@ -232,14 +246,15 @@ class _LotusDocumentLayoutEngine {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(
-                  shopName,
-                  style: pw.TextStyle(
-                    color: profile.headerPrimaryTextColor,
-                    fontSize: profile.titleFontSize,
-                    fontWeight: pw.FontWeight.bold,
+                if (shopName.isNotEmpty)
+                  pw.Text(
+                    shopName,
+                    style: pw.TextStyle(
+                      color: profile.headerPrimaryTextColor,
+                      fontSize: profile.titleFontSize,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
-                ),
                 for (final line in document.shopProfile.headerLines.take(6))
                   pw.Padding(
                     padding: const pw.EdgeInsets.only(top: 2),
@@ -323,18 +338,20 @@ class _LotusDocumentLayoutEngine {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        shopName,
-                        maxLines: 1,
-                        overflow: pw.TextOverflow.clip,
-                        style: pw.TextStyle(
-                          fontSize: 24,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 0.8,
-                          color: profile.bodyTextColor,
+                      if (shopName.isNotEmpty) ...[
+                        pw.Text(
+                          shopName,
+                          maxLines: 1,
+                          overflow: pw.TextOverflow.clip,
+                          style: pw.TextStyle(
+                            fontSize: 24,
+                            fontWeight: pw.FontWeight.bold,
+                            letterSpacing: 0.8,
+                            color: profile.bodyTextColor,
+                          ),
                         ),
-                      ),
-                      pw.SizedBox(height: 8),
+                        pw.SizedBox(height: 8),
+                      ],
                       if (document.shopProfile.primaryAddress.isNotEmpty)
                         _headerLine(
                           'location',
@@ -831,6 +848,9 @@ class _LotusDocumentLayoutEngine {
       );
     }
     final shopName = _shopName(document);
+    if (shopName.isEmpty) {
+      return pw.SizedBox(height: 94, width: 104);
+    }
     return pw.Column(
       mainAxisAlignment: pw.MainAxisAlignment.center,
       children: [
@@ -910,7 +930,12 @@ class _LotusDocumentLayoutEngine {
 
   static String _shopName(LotusPrintableDocument document) {
     final name = document.shopProfile.primaryName.trim();
-    return name.isEmpty ? 'Lotus ERP' : name;
+    if (name.isNotEmpty) return name;
+    return document.useFallbackShopName ? 'Lotus ERP' : '';
+  }
+
+  static bool _hasPanelDetails(LotusPrintablePanel panel) {
+    return panel.details.any((detail) => detail.value.trim().isNotEmpty);
   }
 
   static String _shopPhoneLine(LotusPrintableDocument document) {

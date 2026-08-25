@@ -23,11 +23,12 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
   }
 
   Future<void> _generateInvoice() async {
-    if (!_hasInvoiceItems) {
+    final readinessError = widget.ctrl.invoiceReadinessError;
+    if (readinessError != null) {
       AppFeedback.show(
         context,
         type: AppFeedbackType.error,
-        message: 'Add at least one metal item before generating invoice.',
+        message: readinessError,
       );
       return;
     }

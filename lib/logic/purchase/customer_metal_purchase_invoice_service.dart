@@ -122,6 +122,58 @@ class CustomerMetalPurchaseInvoiceData {
       hasSellerPayoutExcess: controller.hasSellerPayoutExcess,
     );
   }
+
+  CustomerMetalPurchaseInvoiceData scopedToMetal(String? metalKey) {
+    final normalized = metalKey?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) return this;
+
+    final scopedItems = lineItems
+        .where((item) =>
+            item.metalKey.trim().toLowerCase() == normalized ||
+            item.metalName.trim().toLowerCase() == normalized)
+        .toList(growable: false);
+    if (scopedItems.isEmpty || scopedItems.length == lineItems.length) {
+      return this;
+    }
+
+    final scopedGross = scopedItems.fold<double>(
+      0,
+      (sum, item) => sum + item.totalValue,
+    );
+    final ratio = grossPurchaseAmount.abs() <= 0.005
+        ? 0.0
+        : scopedGross / grossPurchaseAmount;
+    final scopedPayable = _roundCurrency(sellerPayable * ratio);
+    final scopedCashPaid = _roundCurrency(cashPaid * ratio);
+    final scopedUpiPaid = _roundCurrency(upiPaid * ratio);
+    final scopedCardPaid = _roundCurrency(cardPaid * ratio);
+    final scopedTotalPaid =
+        _roundCurrency(scopedCashPaid + scopedUpiPaid + scopedCardPaid);
+    final scopedBalanceDue = _roundCurrency(scopedPayable - scopedTotalPaid);
+
+    return CustomerMetalPurchaseInvoiceData(
+      purchaseNo: purchaseNo,
+      sellerName: sellerName,
+      sellerMobile: sellerMobile,
+      sellerAddress: sellerAddress,
+      sellerPanOrAadhaar: sellerPanOrAadhaar,
+      payoutCommitmentDate: payoutCommitmentDate,
+      lineItems: scopedItems,
+      grossPurchaseAmount: _roundCurrency(scopedGross),
+      sellerPayable: scopedPayable,
+      cashPaid: scopedCashPaid,
+      upiPaid: scopedUpiPaid,
+      cardPaid: scopedCardPaid,
+      totalPaid: scopedTotalPaid,
+      balanceDue: scopedBalanceDue,
+      hasPendingSellerPayout: scopedBalanceDue > 0.005,
+      hasSellerPayoutExcess: scopedBalanceDue < -0.005,
+    );
+  }
+
+  static double _roundCurrency(double value) {
+    return double.parse(value.toStringAsFixed(2));
+  }
 }
 
 class _PurchaseInvoiceColumn {
@@ -172,6 +224,7 @@ class CustomerMetalPurchaseInvoiceService {
         const <String, PurchaseBillingModel>{},
     int copies = 1,
     bool includeDuplicateStamp = false,
+    String? metalScope,
   }) async {
     return buildInvoiceBytesForData(
       CustomerMetalPurchaseInvoiceData.fromController(controller),
@@ -182,6 +235,7 @@ class CustomerMetalPurchaseInvoiceService {
       displaySettings: displaySettings,
       copies: copies,
       includeDuplicateStamp: includeDuplicateStamp,
+      metalScope: metalScope,
     );
   }
 
@@ -195,8 +249,11 @@ class CustomerMetalPurchaseInvoiceService {
         const <String, PurchaseBillingModel>{},
     int copies = 1,
     bool includeDuplicateStamp = false,
+    String? metalScope,
   }) async {
-    if (invoice.lineItems.isEmpty) {
+    final scopedInvoice = invoice.scopedToMetal(metalScope);
+
+    if (scopedInvoice.lineItems.isEmpty) {
       throw StateError(
           'Add at least one metal item before generating invoice.');
     }
@@ -207,7 +264,7 @@ class CustomerMetalPurchaseInvoiceService {
     final printableDocument = format == PrintFormat.a4
         ? _printableDocument(
             shopProfile: shopProfile,
-            invoice: invoice,
+            invoice: scopedInvoice,
             invoiceDate: invoiceDate ?? DateTime.now(),
             templateId: resolvedTemplate.id,
             displaySettings: displaySettings,
@@ -254,7 +311,7 @@ class CustomerMetalPurchaseInvoiceService {
 
             final content = _thermalContent(
               shopProfile,
-              invoice,
+              scopedInvoice,
               invoiceDate ?? DateTime.now(),
               format,
               displaySettings,
@@ -324,6 +381,7 @@ class CustomerMetalPurchaseInvoiceService {
     required Map<String, PurchaseBillingModel> displaySettings,
   }) {
     final template = PrintTemplateRegistry.byId(templateId);
+    final settings = _settingsForInvoice(invoice, displaySettings);
     return LotusPrintableDocument(
       shopProfile: shopProfile,
       template: template,
@@ -343,16 +401,12 @@ class CustomerMetalPurchaseInvoiceService {
       ],
       showHeaderDocumentMeta: false,
       showHeaderBadge: false,
-      policySections: const [
-        LotusPrintablePolicySection(
-          title: 'Purchase Declaration',
-          body:
-              'Customer confirms that the listed metal has been sold to the business after weight, purity and value verification.\n'
-              'This document records the assessed purchase value and payout settlement for customer metal received.',
-        ),
-      ],
-      footerMessage:
-          'This is a computer generated customer metal purchase invoice.',
+      useFallbackShopName: false,
+      policySections: _printablePolicySections(settings),
+      footerMessage: _fallback(
+        settings.footerMessage,
+        'This is a computer generated customer metal purchase invoice.',
+      ),
     );
   }
 
@@ -430,6 +484,33 @@ class CustomerMetalPurchaseInvoiceService {
           ),
       ],
     );
+  }
+
+  static List<LotusPrintablePolicySection> _printablePolicySections(
+    PurchaseBillingModel settings,
+  ) {
+    return [
+      if (settings.sellerDeclarationText.trim().isNotEmpty)
+        LotusPrintablePolicySection(
+          title: 'Seller Declaration',
+          body: settings.sellerDeclarationText.trim(),
+        ),
+      if (settings.termsAndConditions.trim().isNotEmpty)
+        LotusPrintablePolicySection(
+          title: 'Terms & Conditions',
+          body: settings.termsAndConditions.trim(),
+        ),
+      if (settings.returnPolicyText.trim().isNotEmpty)
+        LotusPrintablePolicySection(
+          title: 'Seller Reclaim Policy',
+          body: settings.returnPolicyText.trim(),
+        ),
+      if (settings.buybackPolicyText.trim().isNotEmpty)
+        LotusPrintablePolicySection(
+          title: 'Payout Policy',
+          body: settings.buybackPolicyText.trim(),
+        ),
+    ];
   }
 
   static LotusPrintableTable _printableItemTable(
