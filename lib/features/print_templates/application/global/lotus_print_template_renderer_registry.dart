@@ -52,11 +52,14 @@ class LotusPrintTemplateRendererRegistry {
     LotusPrintableDocument document,
     LotusPdfTextRenderer textRenderer,
   ) async {
-    final lines = document.policySections
-        .expand((section) => section.body.split('\n'))
-        .map((line) => line.trimRight())
-        .where((line) => line.isNotEmpty)
-        .toSet();
+    final footerLines = document.footerMessage
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .split('\n');
+    final lines = [
+      ...document.policySections.expand((section) => section.body.split('\n')),
+      ...footerLines,
+    ].map((line) => line.trimRight()).where((line) => line.isNotEmpty).toSet();
     if (lines.isEmpty) return;
     await textRenderer.warmTextLines(
       lines,
@@ -78,6 +81,12 @@ class LotusPrintTemplateRendererRegistry {
           color: document.profile.bodyTextColor,
           bold: true,
           maxWidth: 456,
+        ),
+        LotusPdfTextSpec(
+          fontSize: _LotusDocumentLayoutEngine._legalFooterFontSize,
+          color: document.profile.bodyTextColor,
+          bold: false,
+          maxWidth: 500,
         ),
       ],
     );
@@ -140,6 +149,7 @@ class LotusSignatureDocumentPdfLayout {
 class _LotusDocumentLayoutEngine {
   static const double _policyEnglishFontSize = 12.6;
   static const double _policyHindiFontSize = 12.0;
+  static const double _legalFooterFontSize = 7.6;
 
   static List<pw.Widget> buildStandard(
     LotusPrintTemplateRenderContext context, {
@@ -167,7 +177,7 @@ class _LotusDocumentLayoutEngine {
         pw.SizedBox(height: profile.sectionGap),
       ],
       ..._policySections(context),
-      _footer(document),
+      _footer(context),
     ];
   }
 
@@ -235,7 +245,7 @@ class _LotusDocumentLayoutEngine {
         ),
       ),
       ..._policySections(context),
-      _footer(document),
+      _footer(context),
     ];
   }
 
@@ -609,7 +619,7 @@ class _LotusDocumentLayoutEngine {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'METAL PURCHASE POLICIES',
+                  'METAL PURCHASE POLICY',
                   style: pw.TextStyle(
                     fontSize: 15,
                     fontWeight: pw.FontWeight.bold,
@@ -630,29 +640,6 @@ class _LotusDocumentLayoutEngine {
               ],
             ),
           ),
-          pw.SizedBox(width: 12),
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.end,
-            children: [
-              pw.Text(
-                document.documentNumberLabel,
-                style: pw.TextStyle(
-                  fontSize: 8.8,
-                  fontWeight: pw.FontWeight.bold,
-                  color: profile.accentColor,
-                ),
-              ),
-              pw.SizedBox(height: 2),
-              pw.Text(
-                document.documentNumber,
-                style: pw.TextStyle(
-                  fontSize: 10.2,
-                  fontWeight: pw.FontWeight.bold,
-                  color: profile.bodyTextColor,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -664,16 +651,30 @@ class _LotusDocumentLayoutEngine {
   ) {
     final profile = context.document.profile;
     final groups = _policyBilingualGroups(section.body);
-    final chunks = _policyBodyChunks(groups);
-    if (chunks.isEmpty) return const [];
+    if (groups.isEmpty) return const [];
+    final leadingGroups = groups.take(2).toList(growable: false);
+    final remainingGroups = groups.skip(2).toList(growable: false);
+    final remainingChunks = _policyBodyChunks(remainingGroups);
+    final hasRemainingChunks = remainingChunks.isNotEmpty;
 
     return [
-      _policySectionHeader(section.title, profile),
-      for (var index = 0; index < chunks.length; index++)
+      pw.Inseparable(
+        child: pw.Column(
+          children: [
+            _policySectionHeader(section.title, profile),
+            _policyBodyBlock(
+              leadingGroups,
+              context,
+              isLastChunk: !hasRemainingChunks,
+            ),
+          ],
+        ),
+      ),
+      for (var index = 0; index < remainingChunks.length; index++)
         _policyBodyBlock(
-          chunks[index],
+          remainingChunks[index],
           context,
-          isLastChunk: index == chunks.length - 1,
+          isLastChunk: index == remainingChunks.length - 1,
         ),
     ];
   }
@@ -829,7 +830,7 @@ class _LotusDocumentLayoutEngine {
   }
 
   static List<List<List<String>>> _policyBodyChunks(List<List<String>> groups) {
-    const groupsPerChunk = 20;
+    const groupsPerChunk = 12;
     final chunks = <List<List<String>>>[];
     for (var start = 0; start < groups.length; start += groupsPerChunk) {
       final end = (start + groupsPerChunk).clamp(0, groups.length);
@@ -869,8 +870,12 @@ class _LotusDocumentLayoutEngine {
     ];
   }
 
-  static pw.Widget _footer(LotusPrintableDocument document) {
+  static pw.Widget _footer(LotusPrintTemplateRenderContext context) {
+    final document = context.document;
     final profile = document.profile;
+    if (document.showLegalSignatureFooter) {
+      return pw.Inseparable(child: _legalSignatureFooter(context));
+    }
     return pw.Column(
       children: [
         pw.SizedBox(height: 12),
@@ -897,6 +902,159 @@ class _LotusDocumentLayoutEngine {
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _legalSignatureFooter(
+    LotusPrintTemplateRenderContext context,
+  ) {
+    final document = context.document;
+    final profile = document.profile;
+    final footerMessage = document.footerMessage.trim();
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(height: 8),
+        pw.Divider(color: profile.borderColor),
+        if (footerMessage.isNotEmpty) ...[
+          pw.SizedBox(height: 5),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.fromLTRB(8, 5, 8, 5),
+            decoration: pw.BoxDecoration(
+              color: profile.policyPanelColor,
+              border: pw.Border.all(color: profile.borderColor, width: 0.75),
+              borderRadius: pw.BorderRadius.circular(7),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Acknowledgement',
+                  style: pw.TextStyle(
+                    fontSize: 7.8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: profile.accentColor,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                ..._footerMessageLines(footerMessage, context),
+              ],
+            ),
+          ),
+        ],
+        pw.SizedBox(height: 13),
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            pw.Expanded(
+              child: _signatureFooterBlock(
+                profile,
+                title: 'Seller / Customer Signature',
+                caption: 'Signature confirming voluntary sale and payout terms',
+              ),
+            ),
+            pw.SizedBox(width: 14),
+            pw.Container(
+              width: 112,
+              height: 42,
+              padding: const pw.EdgeInsets.all(6),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: profile.borderColor, width: 0.8),
+                borderRadius: pw.BorderRadius.circular(7),
+              ),
+              child: pw.Center(
+                child: pw.Text(
+                  'Shop Stamp',
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: profile.bodyTextColor,
+                  ),
+                ),
+              ),
+            ),
+            pw.SizedBox(width: 14),
+            pw.Expanded(
+              child: _signatureFooterBlock(
+                profile,
+                title: 'Authorised Signatory',
+                caption: _shopName(document).isEmpty
+                    ? 'For business'
+                    : 'For ${_shopName(document)}',
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 5),
+        pw.Text(
+          'This document is valid after seller signature and authorised business confirmation.',
+          style: pw.TextStyle(
+            fontSize: 6.8,
+            color: profile.bodyTextColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static List<pw.Widget> _footerMessageLines(
+    String value,
+    LotusPrintTemplateRenderContext context,
+  ) {
+    final profile = context.document.profile;
+    final textStyle = pw.TextStyle(
+      fontSize: _legalFooterFontSize,
+      color: profile.bodyTextColor,
+      lineSpacing: 1.15,
+    );
+    return value
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        .map(
+          (line) => pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 2),
+            child: context.textRenderer.text(
+              line.trimRight(),
+              maxWidth: 500,
+              style: textStyle,
+            ),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  static pw.Widget _signatureFooterBlock(
+    dynamic profile, {
+    required String title,
+    required String caption,
+  }) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Container(height: 0.75, color: profile.borderColor),
+        pw.SizedBox(height: 4),
+        pw.Text(
+          title,
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(
+            fontSize: 8,
+            fontWeight: pw.FontWeight.bold,
+            color: profile.bodyTextColor,
+          ),
+        ),
+        pw.SizedBox(height: 1.5),
+        pw.Text(
+          caption,
+          textAlign: pw.TextAlign.center,
+          style: pw.TextStyle(
+            fontSize: 6.2,
+            color: profile.bodyTextColor,
+          ),
         ),
       ],
     );

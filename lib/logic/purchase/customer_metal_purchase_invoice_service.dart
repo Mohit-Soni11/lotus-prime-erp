@@ -403,11 +403,9 @@ class CustomerMetalPurchaseInvoiceService {
       showHeaderBadge: false,
       useFallbackShopName: false,
       renderPolicySectionsAsPages: true,
+      showLegalSignatureFooter: true,
       policySections: _printablePolicySections(settings),
-      footerMessage: _fallback(
-        settings.footerMessage,
-        'This is a computer generated customer metal purchase invoice.',
-      ),
+      footerMessage: _purchaseFooterMessage(settings),
     );
   }
 
@@ -490,26 +488,27 @@ class CustomerMetalPurchaseInvoiceService {
   static List<LotusPrintablePolicySection> _printablePolicySections(
     PurchaseBillingModel settings,
   ) {
+    final sellerDeclaration = _sellerDeclarationText(settings);
     return [
-      if (settings.sellerDeclarationText.trim().isNotEmpty)
+      if (sellerDeclaration.isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Seller Declaration',
-          body: settings.sellerDeclarationText.trim(),
+          body: sellerDeclaration,
         ),
       if (settings.termsAndConditions.trim().isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Terms & Conditions',
           body: settings.termsAndConditions.trim(),
         ),
-      if (settings.returnPolicyText.trim().isNotEmpty)
-        LotusPrintablePolicySection(
-          title: 'Seller Reclaim Policy',
-          body: settings.returnPolicyText.trim(),
-        ),
       if (settings.buybackPolicyText.trim().isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Payout Policy',
           body: settings.buybackPolicyText.trim(),
+        ),
+      if (settings.returnPolicyText.trim().isNotEmpty)
+        LotusPrintablePolicySection(
+          title: 'Seller Reclaim Policy',
+          body: settings.returnPolicyText.trim(),
         ),
     ];
   }
@@ -1118,7 +1117,45 @@ class CustomerMetalPurchaseInvoiceService {
     return clean.isEmpty ? fallback : clean;
   }
 
+  static String _sellerDeclarationText(PurchaseBillingModel settings) {
+    final text = settings.sellerDeclarationText.trim();
+    if (text.isEmpty || _isLegacySellerDeclaration(text)) {
+      return _legalSellerDeclarationText;
+    }
+    return text;
+  }
+
+  static bool _isLegacySellerDeclaration(String value) {
+    return value.contains(
+      'Seller declares that the item is his or her lawful property',
+    );
+  }
+
+  static String _purchaseFooterMessage(PurchaseBillingModel settings) {
+    final text = settings.footerMessage.trim();
+    if (text.isEmpty || text.contains('Thank you for trusting us')) {
+      return _legalPurchaseFooterMessage;
+    }
+    return text;
+  }
+
   static bool _amountsDiffer(double first, double second) {
     return (first - second).abs() > 0.005;
   }
+
+  static const String _legalSellerDeclarationText =
+      'I, the seller, confirm that the metal item(s) described in this purchase invoice are my lawful property and are being sold voluntarily to the business after verification of weight, purity, description and value.\n'
+      'मैं, विक्रेता, पुष्टि करता/करती हूं कि इस purchase invoice में वर्णित metal item(s) मेरी वैध संपत्ति हैं और weight, purity, description तथा value verification के बाद स्वेच्छा से business को बेचे जा रहे हैं.\n'
+      'I declare that the item(s) are free from theft, dispute, pledge, loan, lien, encumbrance, police case or any third-party claim.\n'
+      'मैं घोषणा करता/करती हूं कि item(s) theft, dispute, pledge, loan, lien, encumbrance, police case या किसी third-party claim से मुक्त हैं.\n'
+      'I have reviewed and accepted the assessed value, payout amount, payment mode and any pending payout commitment date before signing this document.\n'
+      'मैंने इस document पर signature करने से पहले assessed value, payout amount, payment mode और pending payout commitment date को समझकर स्वीकार किया है.\n'
+      'If any declaration is later found false or any claim arises, I shall remain fully responsible, indemnify the business, and cooperate with police, legal authorities and the business.\n'
+      'यदि कोई declaration बाद में false पाई जाती है या कोई claim आता है, तो पूरी जिम्मेदारी मेरी होगी और मैं business, police तथा legal authorities के साथ cooperate करूंगा/करूंगी.\n'
+      'After the agreed payout is released or recorded, ownership and possession rights of the item(s) stand transferred to the business.\n'
+      'Agreed payout release या record होने के बाद item(s) का ownership और possession rights business को transfer माना जाएगा.';
+
+  static const String _legalPurchaseFooterMessage =
+      'Seller and business acknowledge that this purchase invoice records the verified metal valuation, payout settlement and ownership transfer.\n'
+      'विक्रेता और business स्वीकार करते हैं कि यह purchase invoice verified metal valuation, payout settlement और ownership transfer का record है.';
 }

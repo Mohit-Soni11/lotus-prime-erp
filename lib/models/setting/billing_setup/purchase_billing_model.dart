@@ -260,12 +260,16 @@ const _defaultTerms =
     'Payout के बाद item का ownership shop को transfer माना जाएगा.';
 
 const _defaultSellerDeclaration =
-    'Seller declares that the item is his or her lawful property and is free from theft, dispute, pledge, loan, lien or third-party claim.\n'
-    'विक्रेता घोषणा करता/करती है कि item उसका वैध स्वामित्व है और theft, dispute, pledge, loan, lien या third-party claim से मुक्त है.\n'
-    'If the item is later found stolen, disputed or illegal, the seller accepts full responsibility and will cooperate with police or legal authorities.\n'
-    'यदि item बाद में stolen, disputed या illegal पाया जाता है, तो पूरी जिम्मेदारी विक्रेता की होगी और वह police/legal authorities के साथ cooperate करेगा/करेगी.\n'
-    'The shop is not responsible for any false declaration, hidden fact or incorrect identity information provided by the seller.\n'
-    'Seller द्वारा दी गई false declaration, hidden fact या incorrect identity information के लिए shop जिम्मेदार नहीं होगी.';
+    'I, the seller, confirm that the metal item(s) described in this purchase invoice are my lawful property and are being sold voluntarily to the business after verification of weight, purity, description and value.\n'
+    'मैं, विक्रेता, पुष्टि करता/करती हूं कि इस purchase invoice में वर्णित metal item(s) मेरी वैध संपत्ति हैं और weight, purity, description तथा value verification के बाद स्वेच्छा से business को बेचे जा रहे हैं.\n'
+    'I declare that the item(s) are free from theft, dispute, pledge, loan, lien, encumbrance, police case or any third-party claim.\n'
+    'मैं घोषणा करता/करती हूं कि item(s) theft, dispute, pledge, loan, lien, encumbrance, police case या किसी third-party claim से मुक्त हैं.\n'
+    'I have reviewed and accepted the assessed value, payout amount, payment mode and any pending payout commitment date before signing this document.\n'
+    'मैंने इस document पर signature करने से पहले assessed value, payout amount, payment mode और pending payout commitment date को समझकर स्वीकार किया है.\n'
+    'If any declaration is later found false or any claim arises, I shall remain fully responsible, indemnify the business, and cooperate with police, legal authorities and the business.\n'
+    'यदि कोई declaration बाद में false पाई जाती है या कोई claim आता है, तो पूरी जिम्मेदारी मेरी होगी और मैं business, police तथा legal authorities के साथ cooperate करूंगा/करूंगी.\n'
+    'After the agreed payout is released or recorded, ownership and possession rights of the item(s) stand transferred to the business.\n'
+    'Agreed payout release या record होने के बाद item(s) का ownership और possession rights business को transfer माना जाएगा.';
 
 const _defaultReclaimPolicy =
     'Seller may request return of the sold item only within 1 day from the purchase voucher date, subject to item availability.\n'
@@ -279,8 +283,9 @@ const _defaultPayoutNote =
     'Stone, dust, wax, thread, non-metal parts, testing loss or melting loss may be deducted before payout.\n'
     'Payout से पहले stone, dust, wax, thread, non-metal parts, testing loss या melting loss deduct हो सकता है.';
 
-const _defaultFooter = 'Thank you for trusting us.\n'
-    'हम पर भरोसा करने के लिए धन्यवाद.';
+const _defaultFooter =
+    'Seller and business acknowledge that this purchase invoice records the verified metal valuation, payout settlement and ownership transfer.\n'
+    'विक्रेता और business स्वीकार करते हैं कि यह purchase invoice verified metal valuation, payout settlement और ownership transfer का record है.';
 
 const _goldTerms =
     'Seller must submit Aadhaar or valid government ID before gold payout.\n'
