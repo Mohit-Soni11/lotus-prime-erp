@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
-import 'purchase_voucher_workspace_screen.dart';
+import 'customer_metal_purchase_invoice_preview_screen.dart';
 
 class PurchaseRightPanel extends StatefulWidget {
   final PurchaseEntryController ctrl;
@@ -17,6 +17,26 @@ class PurchaseRightPanel extends StatefulWidget {
 
 class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
   String _currency(double amount) => 'Rs. ${amount.toStringAsFixed(2)}';
+
+  bool get _hasInvoiceItems {
+    return widget.ctrl.items.any((item) => item.hasContent);
+  }
+
+  Future<void> _generateInvoice() async {
+    if (!_hasInvoiceItems) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: 'Add at least one metal item before generating invoice.',
+      );
+      return;
+    }
+
+    await CustomerMetalPurchaseInvoicePreviewScreen.push(
+      context,
+      controller: widget.ctrl,
+    );
+  }
 
   Future<void> _pickPayoutCommitmentDate() async {
     final now = DateTime.now();
@@ -336,8 +356,8 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
 
   Widget _buildActionButtons() {
     final isCredit = widget.ctrl.grandTotal < 0;
+    final canGenerateInvoice = _hasInvoiceItems && !widget.ctrl.isSaving;
     const totalColor = PurchaseEntryColors.purchaseAccent;
-    final canPrint = widget.ctrl.items.any((item) => item.hasContent);
 
     return Padding(
       padding: const EdgeInsets.all(18),
@@ -405,40 +425,6 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 54,
-                  child: OutlinedButton.icon(
-                    onPressed: canPrint
-                        ? () => PurchaseVoucherWorkspaceScreen.push(
-                              context,
-                              controller: widget.ctrl,
-                            )
-                        : null,
-                    icon: const Icon(PurchaseEntryIcons.printVoucher, size: 18),
-                    label: const Text(
-                      PurchaseEntryStrings.printBtn,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: PurchaseEntryColors.purchaseAccent,
-                      side: BorderSide(
-                        color: PurchaseEntryColors.purchaseAccent
-                            .withValues(alpha: 0.80),
-                        width: 2.0,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
                 flex: 2,
                 child: SizedBox(
                   height: 54,
@@ -491,6 +477,37 @@ class _PurchaseRightPanelState extends State<PurchaseRightPanel> {
                       disabledBackgroundColor:
                           PurchaseEntryColors.success.withValues(alpha: 0.55),
                       elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: SizedBox(
+                  height: 54,
+                  child: OutlinedButton.icon(
+                    onPressed: canGenerateInvoice ? _generateInvoice : null,
+                    icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                    label: const Text(
+                      'GENERATE INVOICE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: PurchaseEntryColors.purchaseAccent,
+                      disabledForegroundColor:
+                          PurchaseEntryColors.shellMuted.withValues(alpha: 0.7),
+                      side: BorderSide(
+                        color: PurchaseEntryColors.purchaseAccent
+                            .withValues(alpha: 0.45),
+                        width: 1.6,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
