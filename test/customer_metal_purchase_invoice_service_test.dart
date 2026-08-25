@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import 'package:lotus_erp/logic/purchase/customer_metal_purchase_invoice_service.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
@@ -59,6 +60,29 @@ void main() {
       expect(bytes.length, greaterThan(1000), reason: format.name);
       expect(String.fromCharCodes(bytes.take(5)), '%PDF-', reason: format.name);
     }
+  });
+
+  test('builds all customer metal purchase A4 invoice templates', () async {
+    final lengths = <int>{};
+
+    for (final template in PrintTemplateRegistry.forDocument(
+      PrintTemplateDocumentType.purchaseVoucher,
+    )) {
+      final bytes =
+          await CustomerMetalPurchaseInvoiceService.buildInvoiceBytesForData(
+        _invoice,
+        shopProfileOverride: _profile,
+        invoiceDate: DateTime(2026, 8, 23),
+        templateId: template.id,
+        format: PrintFormat.a4,
+      );
+
+      lengths.add(bytes.length);
+      expect(bytes.length, greaterThan(1000), reason: template.id);
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-', reason: template.id);
+    }
+
+    expect(lengths.length, greaterThan(1));
   });
 
   test('builds purchase invoice print run with duplicate copies', () async {
