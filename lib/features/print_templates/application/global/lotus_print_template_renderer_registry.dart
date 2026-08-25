@@ -67,6 +67,18 @@ class LotusPrintTemplateRendererRegistry {
           bold: false,
           maxWidth: 500,
         ),
+        LotusPdfTextSpec(
+          fontSize: _LotusDocumentLayoutEngine._policyEnglishFontSize,
+          color: document.profile.bodyTextColor,
+          bold: true,
+          maxWidth: 456,
+        ),
+        LotusPdfTextSpec(
+          fontSize: _LotusDocumentLayoutEngine._policyHindiFontSize,
+          color: document.profile.bodyTextColor,
+          bold: true,
+          maxWidth: 456,
+        ),
       ],
     );
   }
@@ -126,6 +138,9 @@ class LotusSignatureDocumentPdfLayout {
 }
 
 class _LotusDocumentLayoutEngine {
+  static const double _policyEnglishFontSize = 12.6;
+  static const double _policyHindiFontSize = 12.0;
+
   static List<pw.Widget> buildStandard(
     LotusPrintTemplateRenderContext context, {
     required bool isDuplicateCopy,
@@ -529,6 +544,17 @@ class _LotusDocumentLayoutEngine {
         .where((section) => section.body.trim().isNotEmpty)
         .toList(growable: false);
     if (sections.isEmpty) return const [];
+    if (document.renderPolicySectionsAsPages) {
+      return [
+        pw.NewPage(),
+        _policyPageHeader(document),
+        pw.SizedBox(height: 14),
+        for (var index = 0; index < sections.length; index++) ...[
+          if (index > 0) pw.SizedBox(height: 12),
+          ..._policySectionBlocks(sections[index], context),
+        ],
+      ];
+    }
     return [
       pw.SizedBox(height: 16),
       pw.Container(
@@ -560,6 +586,260 @@ class _LotusDocumentLayoutEngine {
         ),
       ),
     ];
+  }
+
+  static pw.Widget _policyPageHeader(LotusPrintableDocument document) {
+    final profile = document.profile;
+    final shopName = _shopName(document);
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: pw.BoxDecoration(
+        color: profile.policyPanelColor,
+        border: pw.Border.all(color: profile.accentColor, width: 0.9),
+        borderRadius: pw.BorderRadius.circular(8),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          _iconBadge('policy', profile, size: 28, padding: 4),
+          pw.SizedBox(width: 10),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'METAL PURCHASE POLICIES',
+                  style: pw.TextStyle(
+                    fontSize: 15,
+                    fontWeight: pw.FontWeight.bold,
+                    color: profile.bodyTextColor,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                if (shopName.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    shopName,
+                    style: pw.TextStyle(
+                      fontSize: 9.8,
+                      color: profile.bodyTextColor,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 12),
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              pw.Text(
+                document.documentNumberLabel,
+                style: pw.TextStyle(
+                  fontSize: 8.8,
+                  fontWeight: pw.FontWeight.bold,
+                  color: profile.accentColor,
+                ),
+              ),
+              pw.SizedBox(height: 2),
+              pw.Text(
+                document.documentNumber,
+                style: pw.TextStyle(
+                  fontSize: 10.2,
+                  fontWeight: pw.FontWeight.bold,
+                  color: profile.bodyTextColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  static List<pw.Widget> _policySectionBlocks(
+    LotusPrintablePolicySection section,
+    LotusPrintTemplateRenderContext context,
+  ) {
+    final profile = context.document.profile;
+    final groups = _policyBilingualGroups(section.body);
+    final chunks = _policyBodyChunks(groups);
+    if (chunks.isEmpty) return const [];
+
+    return [
+      _policySectionHeader(section.title, profile),
+      for (var index = 0; index < chunks.length; index++)
+        _policyBodyBlock(
+          chunks[index],
+          context,
+          isLastChunk: index == chunks.length - 1,
+        ),
+    ];
+  }
+
+  static pw.Widget _policySectionHeader(String title, dynamic profile) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.fromLTRB(11, 8, 11, 8),
+      decoration: pw.BoxDecoration(
+        color: profile.policyPanelColor,
+        border: pw.Border.all(color: profile.accentColor, width: 0.85),
+        borderRadius: const pw.BorderRadius.only(
+          topLeft: pw.Radius.circular(8),
+          topRight: pw.Radius.circular(8),
+        ),
+      ),
+      child: pw.Row(
+        children: [
+          _iconBadge(_sectionIconKey(title), profile, size: 24, padding: 4),
+          pw.SizedBox(width: 10),
+          pw.Expanded(
+            child: pw.Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              overflow: pw.TextOverflow.clip,
+              style: pw.TextStyle(
+                fontSize: 13.4,
+                fontWeight: pw.FontWeight.bold,
+                color: profile.bodyTextColor,
+                letterSpacing: 0.25,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _policyBodyBlock(
+    List<List<String>> groups,
+    LotusPrintTemplateRenderContext context, {
+    required bool isLastChunk,
+  }) {
+    final profile = context.document.profile;
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.fromLTRB(12, 8, 12, 7),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: profile.accentColor, width: 0.85),
+        borderRadius: isLastChunk
+            ? const pw.BorderRadius.only(
+                bottomLeft: pw.Radius.circular(8),
+                bottomRight: pw.Radius.circular(8),
+              )
+            : null,
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: groups
+            .map((group) => _policyBulletGroup(group, context))
+            .toList(growable: false),
+      ),
+    );
+  }
+
+  static pw.Widget _policyBulletGroup(
+    List<String> lines,
+    LotusPrintTemplateRenderContext context,
+  ) {
+    final profile = context.document.profile;
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4.5),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 3.8,
+            height: 3.8,
+            margin: const pw.EdgeInsets.only(top: 6.2, right: 8),
+            decoration: pw.BoxDecoration(
+              color: profile.accentColor,
+              shape: pw.BoxShape.circle,
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < lines.length; index++)
+                  pw.Padding(
+                    padding: pw.EdgeInsets.only(top: index == 0 ? 0 : 2),
+                    child: context.textRenderer.text(
+                      lines[index],
+                      maxWidth: 456,
+                      style: pw.TextStyle(
+                        fontSize: _containsDevanagari(lines[index])
+                            ? _policyHindiFontSize
+                            : _policyEnglishFontSize,
+                        color: profile.bodyTextColor,
+                        fontWeight: pw.FontWeight.bold,
+                        lineSpacing: 1.05,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static List<List<String>> _policyBilingualGroups(String body) {
+    final groups = <List<String>>[];
+    var current = <String>[];
+
+    void flush() {
+      if (current.isEmpty) return;
+      groups.add(current);
+      current = <String>[];
+    }
+
+    for (final rawLine in _policyLines(body)) {
+      final line = rawLine.trim();
+      if (line.isEmpty) {
+        flush();
+        continue;
+      }
+
+      final isTranslationLine = _containsDevanagari(line);
+      final currentHasTranslation = current.any(_containsDevanagari);
+      final shouldStartNewGroup = current.isEmpty ||
+          (!isTranslationLine && current.isNotEmpty) ||
+          (isTranslationLine && currentHasTranslation);
+
+      if (shouldStartNewGroup) {
+        flush();
+      }
+      current.add(line);
+    }
+
+    flush();
+    return groups;
+  }
+
+  static List<String> _policyLines(String value) {
+    return value
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .split('\n')
+        .map((line) => line.trimRight())
+        .toList(growable: false);
+  }
+
+  static List<List<List<String>>> _policyBodyChunks(List<List<String>> groups) {
+    const groupsPerChunk = 20;
+    final chunks = <List<List<String>>>[];
+    for (var start = 0; start < groups.length; start += groupsPerChunk) {
+      final end = (start + groupsPerChunk).clamp(0, groups.length);
+      chunks.add(groups.sublist(start, end));
+    }
+    return chunks;
+  }
+
+  static bool _containsDevanagari(String value) {
+    return RegExp(r'[\u0900-\u097F]').hasMatch(value);
   }
 
   static List<pw.Widget> _policyBody(

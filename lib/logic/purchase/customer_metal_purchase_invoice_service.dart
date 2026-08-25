@@ -402,6 +402,7 @@ class CustomerMetalPurchaseInvoiceService {
       showHeaderDocumentMeta: false,
       showHeaderBadge: false,
       useFallbackShopName: false,
+      renderPolicySectionsAsPages: true,
       policySections: _printablePolicySections(settings),
       footerMessage: _fallback(
         settings.footerMessage,

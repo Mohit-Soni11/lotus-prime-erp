@@ -260,7 +260,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     await _buildPdf();
   }
 
-  Future<void> _togglePurchaseDisplayField(
+  Future<PurchaseBillingModel> _togglePurchaseDisplayField(
     PurchaseBillingFieldKey key,
     bool value,
   ) async {
@@ -269,6 +269,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     setState(() => _purchaseBillingSettings[updated.metal] = updated);
     await _billingRepo.saveForMetal(updated);
     await _buildPdf();
+    return updated;
   }
 
   Future<void> _restoreActivePurchaseBillingSetup() async {
@@ -1895,6 +1896,13 @@ class _PurchaseShopPrintProfileDrawerState
     extends State<_PurchaseShopPrintProfileDrawer> {
   bool _isSaving = false;
   bool _isReloading = false;
+  ShopPrintInformationState? _localState;
+
+  @override
+  void initState() {
+    super.initState();
+    _localState = widget.stateProvider();
+  }
 
   Future<void> _save() async {
     setState(() => _isSaving = true);
@@ -1908,7 +1916,10 @@ class _PurchaseShopPrintProfileDrawerState
     setState(() => _isReloading = true);
     await widget.onReload();
     if (!mounted) return;
-    setState(() => _isReloading = false);
+    setState(() {
+      _localState = widget.stateProvider();
+      _isReloading = false;
+    });
   }
 
   @override
@@ -1950,7 +1961,7 @@ class _PurchaseShopPrintProfileDrawerState
   }
 
   Widget _body() {
-    final state = widget.stateProvider();
+    final state = _localState ?? widget.stateProvider();
     if (state == null) {
       return const Center(
         child: CircularProgressIndicator(
@@ -1972,8 +1983,22 @@ class _PurchaseShopPrintProfileDrawerState
                 .toList(growable: false),
             isEnabled: state.isEnabled,
             onChanged: (field, enabled) async {
+              final current = _localState ?? widget.stateProvider();
+              if (current != null) {
+                final enabledIds = {...current.enabledFieldIds};
+                if (enabled) {
+                  enabledIds.add(field.id);
+                } else {
+                  enabledIds.remove(field.id);
+                }
+                setState(() {
+                  _localState = current.copyWith(enabledFieldIds: enabledIds);
+                });
+              }
               await widget.onFieldChanged(field, enabled);
-              if (mounted) setState(() {});
+              if (mounted) {
+                setState(() => _localState = widget.stateProvider());
+              }
             },
             onMissingFieldTap: widget.onMissingFieldTap,
           ),
@@ -2769,10 +2794,13 @@ class _PurchaseDisplayProfileCard extends StatelessWidget {
   }
 }
 
-class _PurchaseDisplayProfileDrawer extends StatelessWidget {
+class _PurchaseDisplayProfileDrawer extends StatefulWidget {
   final PurchaseBillingModel model;
   final Color accentColor;
-  final void Function(PurchaseBillingFieldKey key, bool value) onFieldChanged;
+  final Future<PurchaseBillingModel> Function(
+    PurchaseBillingFieldKey key,
+    bool value,
+  ) onFieldChanged;
   final VoidCallback onClose;
 
   const _PurchaseDisplayProfileDrawer({
@@ -2783,10 +2811,51 @@ class _PurchaseDisplayProfileDrawer extends StatelessWidget {
   });
 
   @override
+  State<_PurchaseDisplayProfileDrawer> createState() =>
+      _PurchaseDisplayProfileDrawerState();
+}
+
+class _PurchaseDisplayProfileDrawerState
+    extends State<_PurchaseDisplayProfileDrawer> {
+  late PurchaseBillingModel _model = widget.model;
+  final Set<PurchaseBillingFieldKey> _updatingFields = {};
+
+  @override
+  void didUpdateWidget(covariant _PurchaseDisplayProfileDrawer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.model != widget.model && _updatingFields.isEmpty) {
+      _model = widget.model;
+    }
+  }
+
+  Future<void> _setField(PurchaseBillingFieldKey key, bool value) async {
+    final previous = _model;
+    final optimistic =
+        PurchaseBillingMetalProfiles.setValue(previous, key, value);
+    setState(() {
+      _model = optimistic;
+      _updatingFields.add(key);
+    });
+
+    try {
+      final saved = await widget.onFieldChanged(key, value);
+      if (!mounted) return;
+      setState(() => _model = saved);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _model = previous);
+    } finally {
+      if (mounted) {
+        setState(() => _updatingFields.remove(key));
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final panelWidth = width < 560 ? width - 24 : 430.0;
-    final fields = PurchaseBillingMetalProfiles.fieldsFor(model.metal);
+    final fields = PurchaseBillingMetalProfiles.fieldsFor(_model.metal);
 
     return Container(
       width: panelWidth,
@@ -2815,12 +2884,12 @@ class _PurchaseDisplayProfileDrawer extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.14),
+                      color: widget.accentColor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.tune_rounded,
-                      color: accentColor,
+                      color: widget.accentColor,
                       size: 19,
                     ),
                   ),
@@ -2830,7 +2899,7 @@ class _PurchaseDisplayProfileDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${_PurchaseDisplayProfileCard._metalLabel(model.metal)} DISPLAY',
+                          '${_PurchaseDisplayProfileCard._metalLabel(_model.metal)} DISPLAY',
                           style: const TextStyle(
                             color: PurchaseEntryColors.shellTitle,
                             fontSize: 14,
@@ -2849,7 +2918,7 @@ class _PurchaseDisplayProfileDrawer extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: onClose,
+                    onPressed: widget.onClose,
                     icon: const Icon(
                       Icons.close_rounded,
                       color: PurchaseEntryColors.shellMuted,
@@ -2865,12 +2934,13 @@ class _PurchaseDisplayProfileDrawer extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final field = fields[index];
                   final value =
-                      PurchaseBillingMetalProfiles.valueFor(model, field.key);
+                      PurchaseBillingMetalProfiles.valueFor(_model, field.key);
                   return _PurchaseDisplayToggleTile(
                     field: field,
                     value: value,
-                    accentColor: accentColor,
-                    onChanged: (value) => onFieldChanged(field.key, value),
+                    accentColor: widget.accentColor,
+                    isUpdating: _updatingFields.contains(field.key),
+                    onChanged: (value) => _setField(field.key, value),
                   );
                 },
                 separatorBuilder: (context, index) =>
@@ -2889,12 +2959,14 @@ class _PurchaseDisplayToggleTile extends StatelessWidget {
   final PurchaseBillingFieldDefinition field;
   final bool value;
   final Color accentColor;
+  final bool isUpdating;
   final ValueChanged<bool> onChanged;
 
   const _PurchaseDisplayToggleTile({
     required this.field,
     required this.value,
     required this.accentColor,
+    this.isUpdating = false,
     required this.onChanged,
   });
 
@@ -2943,14 +3015,24 @@ class _PurchaseDisplayToggleTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Switch(
-            value: value,
-            activeThumbColor: accentColor,
-            activeTrackColor: accentColor.withValues(alpha: 0.32),
-            inactiveThumbColor: PurchaseEntryColors.shellMuted,
-            inactiveTrackColor: PurchaseEntryColors.shellBg,
-            onChanged: onChanged,
-          ),
+          if (isUpdating)
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                color: accentColor,
+                strokeWidth: 2,
+              ),
+            )
+          else
+            Switch(
+              value: value,
+              activeThumbColor: accentColor,
+              activeTrackColor: accentColor.withValues(alpha: 0.32),
+              inactiveThumbColor: PurchaseEntryColors.shellMuted,
+              inactiveTrackColor: PurchaseEntryColors.shellBg,
+              onChanged: onChanged,
+            ),
         ],
       ),
     );

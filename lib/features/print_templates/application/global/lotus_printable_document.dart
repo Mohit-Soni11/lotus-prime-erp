@@ -22,6 +22,7 @@ class LotusPrintableDocument {
   final bool showHeaderDocumentMeta;
   final bool showHeaderBadge;
   final bool useFallbackShopName;
+  final bool renderPolicySectionsAsPages;
 
   const LotusPrintableDocument({
     required this.shopProfile,
@@ -43,6 +44,7 @@ class LotusPrintableDocument {
     this.showHeaderDocumentMeta = true,
     this.showHeaderBadge = true,
     this.useFallbackShopName = true,
+    this.renderPolicySectionsAsPages = false,
   });
 }
 
