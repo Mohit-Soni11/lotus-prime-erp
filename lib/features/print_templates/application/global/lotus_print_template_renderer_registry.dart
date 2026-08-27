@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../../core/pdf/lotus_pdf_text_renderer.dart';
@@ -150,6 +151,7 @@ class _LotusDocumentLayoutEngine {
   static const double _policyEnglishFontSize = 12.6;
   static const double _policyHindiFontSize = 12.0;
   static const double _legalFooterFontSize = 7.6;
+  static const double _policyStartMinimumSpace = 190;
 
   static List<pw.Widget> buildStandard(
     LotusPrintTemplateRenderContext context, {
@@ -252,6 +254,7 @@ class _LotusDocumentLayoutEngine {
   static pw.Widget _standardHeader(LotusPrintableDocument document) {
     final profile = document.profile;
     final shopName = _shopName(document);
+    final hasDocumentHeader = _hasDocumentHeader(document);
     return pw.Container(
       width: double.infinity,
       padding: pw.EdgeInsets.all(profile.headerPadding),
@@ -272,13 +275,10 @@ class _LotusDocumentLayoutEngine {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 if (shopName.isNotEmpty)
-                  pw.Text(
+                  _headerShopNameText(
                     shopName,
-                    style: pw.TextStyle(
-                      color: profile.headerPrimaryTextColor,
-                      fontSize: profile.titleFontSize,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
+                    fontSize: profile.titleFontSize,
+                    color: profile.headerPrimaryTextColor,
                   ),
                 for (final line in document.shopProfile.headerLines.take(6))
                   pw.Padding(
@@ -294,42 +294,10 @@ class _LotusDocumentLayoutEngine {
               ],
             ),
           ),
-          pw.SizedBox(width: 16),
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.end,
-            children: [
-              pw.Text(
-                document.title,
-                textAlign: pw.TextAlign.right,
-                style: pw.TextStyle(
-                  color: profile.headerPrimaryTextColor,
-                  fontSize: profile.documentTitleFontSize,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                document.subtitle,
-                style: pw.TextStyle(
-                  color: profile.headerSecondaryTextColor,
-                  fontSize: profile.bodyFontSize,
-                ),
-              ),
-              pw.SizedBox(height: 8),
-              if (document.showHeaderDocumentMeta) ...[
-                _metaText(
-                  document.documentNumberLabel,
-                  document.documentNumber,
-                  profile,
-                ),
-                _metaText(
-                  document.documentDateLabel,
-                  document.documentDate,
-                  profile,
-                ),
-              ],
-            ],
-          ),
+          if (hasDocumentHeader) ...[
+            pw.SizedBox(width: 16),
+            _standardHeaderDocumentBlock(document, profile),
+          ],
         ],
       ),
     );
@@ -338,6 +306,7 @@ class _LotusDocumentLayoutEngine {
   static pw.Widget _signatureHeader(LotusPrintableDocument document) {
     final profile = document.profile;
     final shopName = _shopName(document);
+    final hasDocumentHeader = _hasDocumentHeader(document);
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 12),
       decoration: pw.BoxDecoration(
@@ -364,16 +333,11 @@ class _LotusDocumentLayoutEngine {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       if (shopName.isNotEmpty) ...[
-                        pw.Text(
+                        _headerShopNameText(
                           shopName,
-                          maxLines: 1,
-                          overflow: pw.TextOverflow.clip,
-                          style: pw.TextStyle(
-                            fontSize: 24,
-                            fontWeight: pw.FontWeight.bold,
-                            letterSpacing: 0.8,
-                            color: profile.bodyTextColor,
-                          ),
+                          fontSize: 24,
+                          color: profile.bodyTextColor,
+                          letterSpacing: 0.8,
                         ),
                         pw.SizedBox(height: 8),
                       ],
@@ -399,62 +363,123 @@ class _LotusDocumentLayoutEngine {
                     ],
                   ),
                 ),
-                pw.SizedBox(width: 14),
-                pw.Container(
-                  width: 150,
-                  padding: const pw.EdgeInsets.only(top: 3),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        document.title,
-                        textAlign: pw.TextAlign.right,
-                        maxLines: 2,
-                        overflow: pw.TextOverflow.clip,
-                        style: pw.TextStyle(
-                          fontSize: 16.5,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 0.4,
-                          color: profile.bodyTextColor,
-                        ),
-                      ),
-                      pw.Container(
-                        width: 58,
-                        height: 1,
-                        margin: const pw.EdgeInsets.only(top: 6, bottom: 4),
-                        color: profile.accentColor,
-                      ),
-                      if (document.showHeaderBadge &&
-                          document.badgeLabel.trim().isNotEmpty)
-                        pw.Text(
-                          document.badgeLabel,
-                          textAlign: pw.TextAlign.right,
-                          style: pw.TextStyle(
-                            fontSize: 10.8,
-                            fontWeight: pw.FontWeight.bold,
-                            color: profile.accentColor,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      if (document.showHeaderDocumentMeta) ...[
-                        pw.SizedBox(height: 13),
-                        _invoiceMeta(
-                          document.documentNumberLabel,
-                          document.documentNumber,
-                          profile,
-                        ),
-                        _invoiceMeta(
-                          document.documentDateLabel,
-                          document.documentDate,
-                          profile,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                if (hasDocumentHeader) ...[
+                  pw.SizedBox(width: 14),
+                  _signatureHeaderDocumentBlock(document, profile),
+                ],
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  static bool _hasDocumentHeader(LotusPrintableDocument document) {
+    return document.title.trim().isNotEmpty ||
+        document.subtitle.trim().isNotEmpty ||
+        (document.showHeaderBadge && document.badgeLabel.trim().isNotEmpty) ||
+        document.showHeaderDocumentMeta;
+  }
+
+  static pw.Widget _standardHeaderDocumentBlock(
+    LotusPrintableDocument document,
+    dynamic profile,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.end,
+      children: [
+        if (document.title.trim().isNotEmpty)
+          pw.Text(
+            document.title,
+            textAlign: pw.TextAlign.right,
+            style: pw.TextStyle(
+              color: profile.headerPrimaryTextColor,
+              fontSize: profile.documentTitleFontSize,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        if (document.subtitle.trim().isNotEmpty) ...[
+          pw.SizedBox(height: 4),
+          pw.Text(
+            document.subtitle,
+            style: pw.TextStyle(
+              color: profile.headerSecondaryTextColor,
+              fontSize: profile.bodyFontSize,
+            ),
+          ),
+        ],
+        if (document.showHeaderDocumentMeta) ...[
+          pw.SizedBox(height: 8),
+          _metaText(
+            document.documentNumberLabel,
+            document.documentNumber,
+            profile,
+          ),
+          _metaText(
+            document.documentDateLabel,
+            document.documentDate,
+            profile,
+          ),
+        ],
+      ],
+    );
+  }
+
+  static pw.Widget _signatureHeaderDocumentBlock(
+    LotusPrintableDocument document,
+    dynamic profile,
+  ) {
+    return pw.Container(
+      width: 150,
+      padding: const pw.EdgeInsets.only(top: 3),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
+        children: [
+          if (document.title.trim().isNotEmpty) ...[
+            pw.Text(
+              document.title,
+              textAlign: pw.TextAlign.right,
+              maxLines: 2,
+              overflow: pw.TextOverflow.clip,
+              style: pw.TextStyle(
+                fontSize: 16.5,
+                fontWeight: pw.FontWeight.bold,
+                letterSpacing: 0.4,
+                color: profile.bodyTextColor,
+              ),
+            ),
+            pw.Container(
+              width: 58,
+              height: 1,
+              margin: const pw.EdgeInsets.only(top: 6, bottom: 4),
+              color: profile.accentColor,
+            ),
+          ],
+          if (document.showHeaderBadge && document.badgeLabel.trim().isNotEmpty)
+            pw.Text(
+              document.badgeLabel,
+              textAlign: pw.TextAlign.right,
+              style: pw.TextStyle(
+                fontSize: 10.8,
+                fontWeight: pw.FontWeight.bold,
+                color: profile.accentColor,
+                letterSpacing: 0.5,
+              ),
+            ),
+          if (document.showHeaderDocumentMeta) ...[
+            pw.SizedBox(height: 13),
+            _invoiceMeta(
+              document.documentNumberLabel,
+              document.documentNumber,
+              profile,
+            ),
+            _invoiceMeta(
+              document.documentDateLabel,
+              document.documentDate,
+              profile,
+            ),
+          ],
         ],
       ),
     );
@@ -556,7 +581,9 @@ class _LotusDocumentLayoutEngine {
     if (sections.isEmpty) return const [];
     if (document.renderPolicySectionsAsPages) {
       return [
-        pw.NewPage(),
+        document.startPolicySectionsOnNewPage
+            ? pw.NewPage()
+            : pw.NewPage(freeSpace: _policyStartMinimumSpace),
         _policyPageHeader(document),
         pw.SizedBox(height: 14),
         for (var index = 0; index < sections.length; index++) ...[
@@ -652,8 +679,8 @@ class _LotusDocumentLayoutEngine {
     final profile = context.document.profile;
     final groups = _policyBilingualGroups(section.body);
     if (groups.isEmpty) return const [];
-    final leadingGroups = groups.take(2).toList(growable: false);
-    final remainingGroups = groups.skip(2).toList(growable: false);
+    final leadingGroups = groups.take(1).toList(growable: false);
+    final remainingGroups = groups.skip(1).toList(growable: false);
     final remainingChunks = _policyBodyChunks(remainingGroups);
     final hasRemainingChunks = remainingChunks.isNotEmpty;
 
@@ -953,7 +980,8 @@ class _LotusDocumentLayoutEngine {
               child: _signatureFooterBlock(
                 profile,
                 title: 'Seller / Customer Signature',
-                caption: 'Signature confirming voluntary sale and payout terms',
+                caption:
+                    'Customer confirms all terms and accepts full responsibility',
               ),
             ),
             pw.SizedBox(width: 14),
@@ -990,7 +1018,7 @@ class _LotusDocumentLayoutEngine {
         ),
         pw.SizedBox(height: 5),
         pw.Text(
-          'This document is valid after seller signature and authorised business confirmation.',
+          'By signing, the seller/customer confirms that all invoice terms, policies, valuation and payout details have been read and accepted, and takes full responsibility for the declaration.',
           style: pw.TextStyle(
             fontSize: 6.8,
             color: profile.bodyTextColor,
@@ -1026,6 +1054,28 @@ class _LotusDocumentLayoutEngine {
           ),
         )
         .toList(growable: false);
+  }
+
+  static pw.Widget _headerShopNameText(
+    String shopName, {
+    required double fontSize,
+    required PdfColor color,
+    double letterSpacing = 0,
+  }) {
+    return pw.FittedBox(
+      fit: pw.BoxFit.scaleDown,
+      alignment: pw.Alignment.centerLeft,
+      child: pw.Text(
+        shopName,
+        maxLines: 1,
+        style: pw.TextStyle(
+          fontSize: fontSize,
+          fontWeight: pw.FontWeight.bold,
+          letterSpacing: letterSpacing,
+          color: color,
+        ),
+      ),
+    );
   }
 
   static pw.Widget _signatureFooterBlock(

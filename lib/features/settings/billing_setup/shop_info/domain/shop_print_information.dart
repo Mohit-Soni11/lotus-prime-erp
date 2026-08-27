@@ -168,9 +168,11 @@ class ShopPrintDocumentProfile {
   }
 
   String get primaryName {
-    final shopName = valueOf('shop_name');
+    final shopName = valueOf('shop_name').trim();
+    final legalName = valueOf('legal_name').trim();
+    if (_shouldPreferFormalName(shopName, legalName)) return legalName;
     if (shopName.isNotEmpty) return shopName;
-    return valueOf('legal_name');
+    return legalName;
   }
 
   String get primaryAddress {
@@ -191,11 +193,37 @@ class ShopPrintDocumentProfile {
   String get gstin => valueOf('gstin');
 
   List<String> get headerLines {
+    final primary = primaryName.toLowerCase();
     return fields
-        .where((field) => field.id != 'shop_name')
+        .where((field) {
+          if (field.id == 'shop_name') return false;
+          if (field.id == 'legal_name' &&
+              field.value.trim().toLowerCase() == primary) {
+            return false;
+          }
+          return true;
+        })
         .map((field) => field.displayText)
         .where((value) => value.trim().isNotEmpty)
         .toList(growable: false);
+  }
+
+  static bool _shouldPreferFormalName(String shopName, String legalName) {
+    if (shopName.isEmpty || legalName.isEmpty) return false;
+    final normalizedShop = shopName.toLowerCase();
+    final normalizedLegal = legalName.toLowerCase();
+    if (normalizedShop == normalizedLegal) return false;
+    final shopWordCount = shopName
+        .split(RegExp(r'\s+'))
+        .where((part) => part.trim().isNotEmpty)
+        .length;
+    final legalWordCount = legalName
+        .split(RegExp(r'\s+'))
+        .where((part) => part.trim().isNotEmpty)
+        .length;
+    return shopWordCount <= 1 &&
+        legalWordCount > shopWordCount &&
+        normalizedLegal.contains(normalizedShop);
   }
 
   List<String> linesForGroups(Set<ShopPrintFieldGroup> groups) {
@@ -274,9 +302,9 @@ class ShopPrintInformationCatalog {
     final socialQrPayload = _socialDirectoryPayload(branding);
 
     final shopName = _firstValue([
-      basic['brand_display_name'],
       basic['display_name'],
       basic['legal_name'],
+      basic['brand_display_name'],
     ]);
 
     return [

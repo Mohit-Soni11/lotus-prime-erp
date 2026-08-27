@@ -1,5 +1,6 @@
-import 'dart:typed_data';
+import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/feedback/app_feedback.dart';
+import '../../../core/pdf/lotus_pdf_page_counter.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../features/settings/billing_setup/purchase/domain/purchase_billing_metal_profile.dart';
 import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
@@ -81,6 +83,11 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   bool _isLoadingShopPrintProfile = true;
   String? _errorMessage;
   int _pdfRevision = 0;
+  int _pdfBuildSerial = 0;
+  int _shopPrintSyncSerial = 0;
+  Timer? _pdfRebuildDebounce;
+  Timer? _shopPrintSyncDebounce;
+  final Map<String, Timer> _purchaseBillingSaveDebounces = {};
 
   @override
   void initState() {
@@ -123,10 +130,34 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     }
   }
 
-  Future<void> _buildPdf() async {
+  @override
+  void dispose() {
+    _pdfRebuildDebounce?.cancel();
+    final shouldFlushShopPrint =
+        _shopPrintSyncDebounce?.isActive == true && _shopPrintState != null;
+    _shopPrintSyncDebounce?.cancel();
+    if (shouldFlushShopPrint) {
+      unawaited(_shopPrintRepo.save(_shopPrintState!));
+    }
+    for (final entry in _purchaseBillingSaveDebounces.entries) {
+      entry.value.cancel();
+      final latest = _purchaseBillingSettings[entry.key];
+      if (latest != null) {
+        unawaited(_billingRepo.saveForMetal(latest));
+      }
+    }
+    _purchaseBillingSaveDebounces.clear();
+    _pdfBuildSerial++;
+    super.dispose();
+  }
+
+  Future<void> _buildPdf({bool showLoading = true}) async {
     if (!mounted) return;
+    final buildSerial = ++_pdfBuildSerial;
     setState(() {
-      _isBuilding = true;
+      if (showLoading) {
+        _isBuilding = true;
+      }
       _errorMessage = null;
     });
 
@@ -142,20 +173,31 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
         metalScope:
             _selectedFormat == PrintFormat.a4 ? _activeMetalKey() : null,
       );
-      if (!mounted) return;
+      if (!mounted || buildSerial != _pdfBuildSerial) return;
       setState(() {
         _pdfBytes = bytes;
         _isBuilding = false;
         _pdfRevision++;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || buildSerial != _pdfBuildSerial) return;
       setState(() {
         _pdfBytes = null;
         _isBuilding = false;
         _errorMessage = error.toString();
       });
     }
+  }
+
+  void _schedulePdfRebuild({
+    Duration delay = const Duration(milliseconds: 180),
+  }) {
+    _pdfRebuildDebounce?.cancel();
+    _pdfRebuildDebounce = Timer(delay, () {
+      if (mounted) {
+        _buildPdf(showLoading: false);
+      }
+    });
   }
 
   Future<void> _selectTemplate(String templateId) async {
@@ -218,15 +260,26 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     }
 
     final updatedState = state.copyWith(enabledFieldIds: enabledIds);
-    final updatedProfile =
-        await _shopPrintRepo.buildDocumentProfile(updatedState);
-    await _shopPrintRepo.save(updatedState);
     if (!mounted) return;
-    setState(() {
-      _shopPrintState = updatedState;
-      _shopPrintProfile = updatedProfile;
+    setState(() => _shopPrintState = updatedState);
+    _scheduleShopPrintProfileSync();
+  }
+
+  void _scheduleShopPrintProfileSync({
+    Duration delay = const Duration(milliseconds: 180),
+  }) {
+    _shopPrintSyncDebounce?.cancel();
+    final syncSerial = ++_shopPrintSyncSerial;
+    _shopPrintSyncDebounce = Timer(delay, () async {
+      final state = _shopPrintState;
+      if (state == null) return;
+      final profile = await _shopPrintRepo.buildDocumentProfile(state);
+      if (!mounted || syncSerial != _shopPrintSyncSerial) return;
+      await _shopPrintRepo.save(state);
+      if (!mounted || syncSerial != _shopPrintSyncSerial) return;
+      setState(() => _shopPrintProfile = profile);
+      _schedulePdfRebuild(delay: Duration.zero);
     });
-    await _buildPdf();
   }
 
   Future<void> _saveShopPrintInformationSetup() async {
@@ -267,9 +320,22 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     final current = _activePurchaseBillingSettings();
     final updated = PurchaseBillingMetalProfiles.setValue(current, key, value);
     setState(() => _purchaseBillingSettings[updated.metal] = updated);
-    await _billingRepo.saveForMetal(updated);
-    await _buildPdf();
+    _schedulePurchaseBillingSave(updated.metal);
+    _schedulePdfRebuild();
     return updated;
+  }
+
+  void _schedulePurchaseBillingSave(String metal) {
+    _purchaseBillingSaveDebounces.remove(metal)?.cancel();
+    _purchaseBillingSaveDebounces[metal] = Timer(
+      const Duration(milliseconds: 220),
+      () async {
+        final latest = _purchaseBillingSettings[metal];
+        if (latest == null) return;
+        await _billingRepo.saveForMetal(latest);
+        _purchaseBillingSaveDebounces.remove(metal);
+      },
+    );
   }
 
   Future<void> _restoreActivePurchaseBillingSetup() async {
@@ -291,11 +357,11 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     await _buildPdf();
   }
 
-  Future<void> _updatePrintOptions({
+  void _updatePrintOptions({
     required int copies,
     required bool duplicate,
     bool? useDriverSettings,
-  }) async {
+  }) {
     final normalizedCopies = copies.clamp(1, 5).toInt();
     setState(() {
       _printCopies = normalizedCopies;
@@ -303,7 +369,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
       _usePrinterDriverSettings =
           useDriverSettings ?? _usePrinterDriverSettings;
     });
-    await _buildPdf();
+    _schedulePdfRebuild();
   }
 
   Future<bool> _printInvoice({
@@ -1085,10 +1151,34 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     }
   }
 
+  String _printRunSummary({
+    required int copies,
+    required int? totalPages,
+  }) {
+    final copyLabel = LotusPdfPageCounter.copyLabel(copies);
+    if (totalPages == null) return '$copyLabel selected';
+    return '$copyLabel selected - ${LotusPdfPageCounter.pageLabel(totalPages)} to print';
+  }
+
+  String _copyControlSubtitle({
+    required int? totalPages,
+    required int? pagesPerCopy,
+  }) {
+    if (totalPages == null || pagesPerCopy == null) {
+      return 'Maximum 5 copies per print run';
+    }
+    return '${LotusPdfPageCounter.pageLabel(pagesPerCopy)} per copy - ${LotusPdfPageCounter.pageLabel(totalPages)} total';
+  }
+
   Widget _printControlsSection() {
     final copies = _printCopies;
     final duplicateEnabled = _includeDuplicateStamp;
     final useDriverSettings = _usePrinterDriverSettings;
+    final totalPages = LotusPdfPageCounter.tryCountPages(_pdfBytes);
+    final pagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
+      totalPages: totalPages,
+      copies: copies,
+    );
     final canDecrease = copies > 1;
     final canIncrease = copies < 5;
     final canMarkDuplicate = copies > 1;
@@ -1157,7 +1247,10 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$copies ${copies == 1 ? 'copy' : 'copies'} selected',
+                          _printRunSummary(
+                            copies: copies,
+                            totalPages: totalPages,
+                          ),
                           style: const TextStyle(
                             color: PurchaseEntryColors.shellMuted,
                             fontSize: 11,
@@ -1177,7 +1270,10 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
               _PrintControlSurface(
                 icon: Icons.copy_all_rounded,
                 title: 'Copies',
-                subtitle: 'Maximum 5 copies per print run',
+                subtitle: _copyControlSubtitle(
+                  totalPages: totalPages,
+                  pagesPerCopy: pagesPerCopy,
+                ),
                 trailing: _CopyStepper(
                   value: copies,
                   canDecrease: canDecrease,
@@ -1255,7 +1351,9 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                   Expanded(
                     child: _PrintMetaPill(
                       icon: Icons.layers_rounded,
-                      label: copies == 1 ? 'Single copy' : '$copies copies',
+                      label: pagesPerCopy == null
+                          ? (copies == 1 ? 'Single copy' : '$copies copies')
+                          : '${LotusPdfPageCounter.pageLabel(pagesPerCopy)}/copy',
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1326,8 +1424,8 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                   Expanded(
                     child: _PurchaseInvoiceActionButton(
                       label: _hasFinalizedPurchaseInvoice
-                          ? 'START NEW PURCHASE'
-                          : 'SAVE & NEW PURCHASE',
+                          ? 'NEW PURCHASE'
+                          : 'SAVE & NEW',
                       icon: Icons.done_all_rounded,
                       onPressed:
                           canUsePdf && !isBusy ? _saveAndNewPurchase : null,
@@ -1339,9 +1437,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                   const SizedBox(width: 10),
                   Expanded(
                     child: _PurchaseInvoiceActionButton(
-                      label: _isPrinting
-                          ? 'PRINTING...'
-                          : 'FINALISE, PRINT & NEW PURCHASE',
+                      label: _isPrinting ? 'PRINTING...' : 'PRINT & NEW',
                       icon: Icons.print_rounded,
                       onPressed: canUsePdf && !isBusy
                           ? _finalizePrintAndNewPurchase
@@ -1558,7 +1654,7 @@ class _PurchaseInvoiceActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = isPrimary ? 48.0 : 42.0;
+    final height = isPrimary ? 52.0 : 42.0;
     final foreground = filled ? Colors.white : accentColor;
     final background = filled ? accentColor : Colors.transparent;
     final disabledColor = PurchaseEntryColors.shellMuted.withValues(
@@ -1579,7 +1675,7 @@ class _PurchaseInvoiceActionButton extends StatelessWidget {
                 disabledBackgroundColor: accentColor.withValues(alpha: 0.26),
                 disabledForegroundColor: disabledColor,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1597,7 +1693,7 @@ class _PurchaseInvoiceActionButton extends StatelessWidget {
                       ? PurchaseEntryColors.shellBorder
                       : accentColor.withValues(alpha: 0.45),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1626,7 +1722,7 @@ class _PurchaseInvoiceActionButton extends StatelessWidget {
         maxLines: 1,
         style: TextStyle(
           color: color,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -2819,6 +2915,7 @@ class _PurchaseDisplayProfileDrawerState
     extends State<_PurchaseDisplayProfileDrawer> {
   late PurchaseBillingModel _model = widget.model;
   final Set<PurchaseBillingFieldKey> _updatingFields = {};
+  final Map<PurchaseBillingFieldKey, int> _fieldUpdateSerials = {};
 
   @override
   void didUpdateWidget(covariant _PurchaseDisplayProfileDrawer oldWidget) {
@@ -2830,6 +2927,8 @@ class _PurchaseDisplayProfileDrawerState
 
   Future<void> _setField(PurchaseBillingFieldKey key, bool value) async {
     final previous = _model;
+    final requestSerial = (_fieldUpdateSerials[key] ?? 0) + 1;
+    _fieldUpdateSerials[key] = requestSerial;
     final optimistic =
         PurchaseBillingMetalProfiles.setValue(previous, key, value);
     setState(() {
@@ -2839,13 +2938,13 @@ class _PurchaseDisplayProfileDrawerState
 
     try {
       final saved = await widget.onFieldChanged(key, value);
-      if (!mounted) return;
+      if (!mounted || _fieldUpdateSerials[key] != requestSerial) return;
       setState(() => _model = saved);
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || _fieldUpdateSerials[key] != requestSerial) return;
       setState(() => _model = previous);
     } finally {
-      if (mounted) {
+      if (mounted && _fieldUpdateSerials[key] == requestSerial) {
         setState(() => _updatingFields.remove(key));
       }
     }
@@ -3015,24 +3114,29 @@ class _PurchaseDisplayToggleTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          if (isUpdating)
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                color: accentColor,
-                strokeWidth: 2,
-              ),
-            )
-          else
-            Switch(
-              value: value,
-              activeThumbColor: accentColor,
-              activeTrackColor: accentColor.withValues(alpha: 0.32),
-              inactiveThumbColor: PurchaseEntryColors.shellMuted,
-              inactiveTrackColor: PurchaseEntryColors.shellBg,
-              onChanged: onChanged,
+          AnimatedOpacity(
+            opacity: isUpdating ? 1 : 0,
+            duration: const Duration(milliseconds: 140),
+            child: SizedBox(
+              width: 14,
+              height: 14,
+              child: isUpdating
+                  ? CircularProgressIndicator(
+                      color: accentColor,
+                      strokeWidth: 1.7,
+                    )
+                  : null,
             ),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            value: value,
+            activeThumbColor: accentColor,
+            activeTrackColor: accentColor.withValues(alpha: 0.32),
+            inactiveThumbColor: PurchaseEntryColors.shellMuted,
+            inactiveTrackColor: PurchaseEntryColors.shellBg,
+            onChanged: onChanged,
+          ),
         ],
       ),
     );

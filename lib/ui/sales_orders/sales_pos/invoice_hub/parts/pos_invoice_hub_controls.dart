@@ -492,10 +492,34 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
     );
   }
 
+  String _printRunSummary({
+    required int copies,
+    required int? totalPages,
+  }) {
+    final copyLabel = LotusPdfPageCounter.copyLabel(copies);
+    if (totalPages == null) return '$copyLabel selected';
+    return '$copyLabel selected - ${LotusPdfPageCounter.pageLabel(totalPages)} to print';
+  }
+
+  String _copyControlSubtitle({
+    required int? totalPages,
+    required int? pagesPerCopy,
+  }) {
+    if (totalPages == null || pagesPerCopy == null) {
+      return 'Maximum 5 copies per print run';
+    }
+    return '${LotusPdfPageCounter.pageLabel(pagesPerCopy)} per copy - ${LotusPdfPageCounter.pageLabel(totalPages)} total';
+  }
+
   Widget _buildPrintOptions() {
     final copies = _invCtrl.printCopies;
     final duplicateEnabled = _invCtrl.includeDuplicateStamp;
     final useDriverSettings = _invCtrl.usePrinterDriverSettings;
+    final totalPages = LotusPdfPageCounter.tryCountPages(_invCtrl.pdfBytes);
+    final pagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
+      totalPages: totalPages,
+      copies: copies,
+    );
     final canDecrease = copies > 1;
     final canIncrease = copies < 5;
     final canMarkDuplicate = copies > 1;
@@ -561,7 +585,10 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$copies ${copies == 1 ? 'copy' : 'copies'} selected',
+                          _printRunSummary(
+                            copies: copies,
+                            totalPages: totalPages,
+                          ),
                           style: const TextStyle(
                             color: SalesPosColors.shellTextMuted,
                             fontSize: SalesPosStyles.fontCaption,
@@ -581,7 +608,10 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
               _PrintControlSurface(
                 icon: Icons.copy_all_rounded,
                 title: 'Copies',
-                subtitle: 'Maximum 5 copies per print run',
+                subtitle: _copyControlSubtitle(
+                  totalPages: totalPages,
+                  pagesPerCopy: pagesPerCopy,
+                ),
                 trailing: _CopyStepper(
                   value: copies,
                   canDecrease: canDecrease,
@@ -659,7 +689,9 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                   Expanded(
                     child: _PrintMetaPill(
                       icon: Icons.layers_rounded,
-                      label: copies == 1 ? 'Single copy' : '$copies copies',
+                      label: pagesPerCopy == null
+                          ? (copies == 1 ? 'Single copy' : '$copies copies')
+                          : '${LotusPdfPageCounter.pageLabel(pagesPerCopy)}/copy',
                     ),
                   ),
                   const SizedBox(width: 8),

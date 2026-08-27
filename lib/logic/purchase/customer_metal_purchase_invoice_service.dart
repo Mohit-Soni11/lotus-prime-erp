@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -328,6 +329,26 @@ class CustomerMetalPurchaseInvoiceService {
     return document.save();
   }
 
+  @visibleForTesting
+  static LotusPrintableDocument buildPrintableDocumentForTesting(
+    CustomerMetalPurchaseInvoiceData invoice, {
+    ShopPrintDocumentProfile shopProfile = ShopPrintDocumentProfile.empty,
+    DateTime? invoiceDate,
+    String templateId = PrintTemplateRegistry.defaultTemplateId,
+    Map<String, PurchaseBillingModel> displaySettings =
+        const <String, PurchaseBillingModel>{},
+    String? metalScope,
+  }) {
+    final scopedInvoice = invoice.scopedToMetal(metalScope);
+    return _printableDocument(
+      shopProfile: shopProfile,
+      invoice: scopedInvoice,
+      invoiceDate: invoiceDate ?? DateTime.now(),
+      templateId: PrintTemplateRegistry.byId(templateId).id,
+      displaySettings: displaySettings,
+    );
+  }
+
   static List<pw.Widget> _thermalContent(
     ShopPrintDocumentProfile shopProfile,
     CustomerMetalPurchaseInvoiceData invoice,
@@ -386,8 +407,8 @@ class CustomerMetalPurchaseInvoiceService {
       shopProfile: shopProfile,
       template: template,
       profile: PrintTemplatePdfProfile.forTemplate(template.id),
-      title: 'METAL PURCHASE',
-      subtitle: 'Customer Payout Invoice',
+      title: '',
+      subtitle: '',
       documentNumberLabel: 'Invoice No',
       documentNumber: invoice.purchaseNo,
       documentDateLabel: 'Invoice Date',
@@ -403,6 +424,7 @@ class CustomerMetalPurchaseInvoiceService {
       showHeaderBadge: false,
       useFallbackShopName: false,
       renderPolicySectionsAsPages: true,
+      startPolicySectionsOnNewPage: false,
       showLegalSignatureFooter: true,
       policySections: _printablePolicySections(settings),
       footerMessage: _purchaseFooterMessage(settings),
@@ -677,16 +699,18 @@ class CustomerMetalPurchaseInvoiceService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        pw.Text(
-          _shopName(profile).toUpperCase(),
-          textAlign: pw.TextAlign.center,
-          style: pw.TextStyle(
-            color: _ink,
-            fontSize: compact ? 10.5 : 12,
-            fontWeight: pw.FontWeight.bold,
+        if (_shopName(profile).isNotEmpty) ...[
+          pw.Text(
+            _shopName(profile).toUpperCase(),
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              color: _ink,
+              fontSize: compact ? 10.5 : 12,
+              fontWeight: pw.FontWeight.bold,
+            ),
           ),
-        ),
-        pw.SizedBox(height: 3),
+          pw.SizedBox(height: 3),
+        ],
         for (final line in lines)
           pw.Padding(
             padding: const pw.EdgeInsets.only(bottom: 2),
@@ -1063,7 +1087,7 @@ class CustomerMetalPurchaseInvoiceService {
   }
 
   static String _shopName(ShopPrintDocumentProfile profile) {
-    return _fallback(profile.primaryName, 'Lotus Jewellers');
+    return profile.primaryName.trim();
   }
 
   static String _fileName(CustomerMetalPurchaseInvoiceData invoice) {
@@ -1127,8 +1151,11 @@ class CustomerMetalPurchaseInvoiceService {
 
   static bool _isLegacySellerDeclaration(String value) {
     return value.contains(
-      'Seller declares that the item is his or her lawful property',
-    );
+          'Seller declares that the item is his or her lawful property',
+        ) ||
+        value.contains(
+          'I, the seller, confirm that the metal item(s) described in this purchase invoice',
+        );
   }
 
   static String _purchaseFooterMessage(PurchaseBillingModel settings) {
@@ -1144,18 +1171,14 @@ class CustomerMetalPurchaseInvoiceService {
   }
 
   static const String _legalSellerDeclarationText =
-      'I, the seller, confirm that the metal item(s) described in this purchase invoice are my lawful property and are being sold voluntarily to the business after verification of weight, purity, description and value.\n'
-      'मैं, विक्रेता, पुष्टि करता/करती हूं कि इस purchase invoice में वर्णित metal item(s) मेरी वैध संपत्ति हैं और weight, purity, description तथा value verification के बाद स्वेच्छा से business को बेचे जा रहे हैं.\n'
-      'I declare that the item(s) are free from theft, dispute, pledge, loan, lien, encumbrance, police case or any third-party claim.\n'
-      'मैं घोषणा करता/करती हूं कि item(s) theft, dispute, pledge, loan, lien, encumbrance, police case या किसी third-party claim से मुक्त हैं.\n'
-      'I have reviewed and accepted the assessed value, payout amount, payment mode and any pending payout commitment date before signing this document.\n'
-      'मैंने इस document पर signature करने से पहले assessed value, payout amount, payment mode और pending payout commitment date को समझकर स्वीकार किया है.\n'
-      'If any declaration is later found false or any claim arises, I shall remain fully responsible, indemnify the business, and cooperate with police, legal authorities and the business.\n'
-      'यदि कोई declaration बाद में false पाई जाती है या कोई claim आता है, तो पूरी जिम्मेदारी मेरी होगी और मैं business, police तथा legal authorities के साथ cooperate करूंगा/करूंगी.\n'
+      'The seller confirms lawful ownership of the listed metal item(s), voluntary sale to the business, and acceptance of the verified weight, purity, value, payout mode and commitment date, if any.\n'
+      'विक्रेता listed metal item(s) के lawful ownership, business को voluntary sale, verified weight, purity, value, payout mode और commitment date, यदि कोई हो, को स्वीकार करता/करती है.\n'
+      'The seller declares that the item(s) are free from theft, dispute, pledge, loan, lien, police case or third-party claim, and accepts full responsibility for any false declaration or future claim.\n'
+      'विक्रेता घोषणा करता/करती है कि item(s) theft, dispute, pledge, loan, lien, police case या third-party claim से मुक्त हैं और false declaration या future claim की पूरी जिम्मेदारी स्वीकार करता/करती है.\n'
       'After the agreed payout is released or recorded, ownership and possession rights of the item(s) stand transferred to the business.\n'
       'Agreed payout release या record होने के बाद item(s) का ownership और possession rights business को transfer माना जाएगा.';
 
   static const String _legalPurchaseFooterMessage =
-      'Seller and business acknowledge that this purchase invoice records the verified metal valuation, payout settlement and ownership transfer.\n'
-      'विक्रेता और business स्वीकार करते हैं कि यह purchase invoice verified metal valuation, payout settlement और ownership transfer का record है.';
+      'The seller/customer confirms that all invoice terms, policies, metal valuation and payout details have been read, verified and accepted, and accepts full responsibility for the declaration and ownership claim.\n'
+      'विक्रेता/customer पुष्टि करता/करती है कि सभी invoice terms, policies, metal valuation और payout details पढ़कर verify और accept कर लिए गए हैं, और declaration तथा ownership claim की पूरी जिम्मेदारी स्वीकार करता/करती है.';
 }

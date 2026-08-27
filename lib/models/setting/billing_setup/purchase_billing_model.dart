@@ -260,14 +260,10 @@ const _defaultTerms =
     'Payout के बाद item का ownership shop को transfer माना जाएगा.';
 
 const _defaultSellerDeclaration =
-    'I, the seller, confirm that the metal item(s) described in this purchase invoice are my lawful property and are being sold voluntarily to the business after verification of weight, purity, description and value.\n'
-    'मैं, विक्रेता, पुष्टि करता/करती हूं कि इस purchase invoice में वर्णित metal item(s) मेरी वैध संपत्ति हैं और weight, purity, description तथा value verification के बाद स्वेच्छा से business को बेचे जा रहे हैं.\n'
-    'I declare that the item(s) are free from theft, dispute, pledge, loan, lien, encumbrance, police case or any third-party claim.\n'
-    'मैं घोषणा करता/करती हूं कि item(s) theft, dispute, pledge, loan, lien, encumbrance, police case या किसी third-party claim से मुक्त हैं.\n'
-    'I have reviewed and accepted the assessed value, payout amount, payment mode and any pending payout commitment date before signing this document.\n'
-    'मैंने इस document पर signature करने से पहले assessed value, payout amount, payment mode और pending payout commitment date को समझकर स्वीकार किया है.\n'
-    'If any declaration is later found false or any claim arises, I shall remain fully responsible, indemnify the business, and cooperate with police, legal authorities and the business.\n'
-    'यदि कोई declaration बाद में false पाई जाती है या कोई claim आता है, तो पूरी जिम्मेदारी मेरी होगी और मैं business, police तथा legal authorities के साथ cooperate करूंगा/करूंगी.\n'
+    'The seller confirms lawful ownership of the listed metal item(s), voluntary sale to the business, and acceptance of the verified weight, purity, value, payout mode and commitment date, if any.\n'
+    'विक्रेता listed metal item(s) के lawful ownership, business को voluntary sale, verified weight, purity, value, payout mode और commitment date, यदि कोई हो, को स्वीकार करता/करती है.\n'
+    'The seller declares that the item(s) are free from theft, dispute, pledge, loan, lien, police case or third-party claim, and accepts full responsibility for any false declaration or future claim.\n'
+    'विक्रेता घोषणा करता/करती है कि item(s) theft, dispute, pledge, loan, lien, police case या third-party claim से मुक्त हैं और false declaration या future claim की पूरी जिम्मेदारी स्वीकार करता/करती है.\n'
     'After the agreed payout is released or recorded, ownership and possession rights of the item(s) stand transferred to the business.\n'
     'Agreed payout release या record होने के बाद item(s) का ownership और possession rights business को transfer माना जाएगा.';
 

@@ -8,6 +8,7 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
+import '../../../core/pdf/lotus_pdf_page_counter.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
@@ -75,6 +76,31 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
   void dispose() {
     _animCtrl.dispose();
     super.dispose();
+  }
+
+  int? get _estimatedTotalPages {
+    final currentTotal =
+        LotusPdfPageCounter.tryCountPages(widget.invoiceCtrl.pdfBytes);
+    final currentPagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
+      totalPages: currentTotal,
+      copies: widget.invoiceCtrl.printCopies,
+    );
+    if (currentPagesPerCopy == null) return currentTotal;
+    return currentPagesPerCopy * _copies;
+  }
+
+  String _copySubtitle() {
+    final currentTotal =
+        LotusPdfPageCounter.tryCountPages(widget.invoiceCtrl.pdfBytes);
+    final currentPagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
+      totalPages: currentTotal,
+      copies: widget.invoiceCtrl.printCopies,
+    );
+    final estimatedTotal = _estimatedTotalPages;
+    if (currentPagesPerCopy == null || estimatedTotal == null) {
+      return 'Print multiple copies at once';
+    }
+    return '${LotusPdfPageCounter.pageLabel(currentPagesPerCopy)} per copy - ${LotusPdfPageCounter.pageLabel(estimatedTotal)} total';
   }
 
   @override
@@ -280,17 +306,17 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
               const Icon(Icons.file_copy_outlined,
                   color: SalesPosColors.bodyTextMain, size: 18),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Number of copies",
+                      const Text("Number of copies",
                           style: TextStyle(
                               color: SalesPosColors.bodyTextMain,
                               fontSize: SalesPosStyles.fontLabel,
                               fontWeight: FontWeight.w700)),
-                      Text("Print multiple copies at once",
-                          style: TextStyle(
+                      Text(_copySubtitle(),
+                          style: const TextStyle(
                               color: SalesPosColors.shellTextMuted,
                               fontSize: SalesPosStyles.fontCaption)),
                     ]),
@@ -412,6 +438,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
   }
 
   Widget _buildActionBar() {
+    final estimatedTotalPages = _estimatedTotalPages;
     return Padding(
       padding: EdgeInsets.fromLTRB(
           20, 14, 20, MediaQuery.of(context).viewInsets.bottom + 20),
@@ -455,7 +482,9 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                 icon: const Icon(Icons.print_rounded,
                     color: Colors.white, size: 20),
                 label: Text(
-                    "PRINT NOW  ($_copies ${_copies == 1 ? 'COPY' : 'COPIES'})",
+                    estimatedTotalPages == null
+                        ? "PRINT NOW  ($_copies ${_copies == 1 ? 'COPY' : 'COPIES'})"
+                        : "PRINT NOW  (${LotusPdfPageCounter.pageLabel(estimatedTotalPages).toUpperCase()})",
                     style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,

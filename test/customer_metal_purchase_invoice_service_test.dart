@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import 'package:lotus_erp/logic/purchase/customer_metal_purchase_invoice_service.dart';
+import 'package:lotus_erp/models/setting/billing_setup/purchase_billing_model.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 
 void main() {
@@ -124,6 +125,64 @@ void main() {
       ),
       throwsA(isA<StateError>()),
     );
+  });
+
+  test('printable purchase header hides title while invoice details keep type',
+      () {
+    final document =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _invoice,
+      shopProfile: _profile,
+      invoiceDate: DateTime(2026, 8, 23),
+    );
+
+    final labels =
+        document.secondaryPanel.details.map((detail) => detail.label).toList();
+
+    expect(labels, containsAll(['Invoice No', 'Date', 'Type']));
+    expect(document.title, isEmpty);
+    expect(document.subtitle, isEmpty);
+  });
+
+  test('printable purchase policies follow the scoped metal billing setup', () {
+    final goldSettings = PurchaseBillingModel.defaultFor('gold').copyWith(
+      sellerDeclarationText: 'Gold custom seller declaration',
+      termsAndConditions: 'Gold custom terms',
+      buybackPolicyText: 'Gold custom payout policy',
+      returnPolicyText: 'Gold custom reclaim policy',
+      footerMessage: 'Gold custom footer',
+    );
+    final silverSettings = PurchaseBillingModel.defaultFor('silver').copyWith(
+      sellerDeclarationText: 'Silver custom seller declaration',
+      termsAndConditions: 'Silver custom terms',
+      buybackPolicyText: 'Silver custom payout policy',
+      returnPolicyText: 'Silver custom reclaim policy',
+      footerMessage: 'Silver custom footer',
+    );
+
+    final document =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _mixedMetalInvoice,
+      shopProfile: _profile,
+      invoiceDate: DateTime(2026, 8, 23),
+      displaySettings: {
+        'gold': goldSettings,
+        'silver': silverSettings,
+      },
+      metalScope: 'silver',
+    );
+    final policyCopy = document.policySections
+        .map((section) => '${section.title}: ${section.body}')
+        .join('\n');
+
+    expect(document.itemTable.rows, hasLength(1));
+    expect(document.itemTable.rows.single, contains('SILVER'));
+    expect(policyCopy, contains('Silver custom seller declaration'));
+    expect(policyCopy, contains('Silver custom terms'));
+    expect(policyCopy, contains('Silver custom payout policy'));
+    expect(policyCopy, contains('Silver custom reclaim policy'));
+    expect(policyCopy, isNot(contains('Gold custom')));
+    expect(document.footerMessage, 'Silver custom footer');
   });
 
   test('scopes mixed metal invoice totals to selected metal', () {

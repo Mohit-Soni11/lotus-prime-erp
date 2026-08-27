@@ -179,4 +179,29 @@ void main() {
     );
     expect(profile.headerLines, contains('UPI ID: lotus@upi'));
   });
+
+  test('shop print profile prefers full invoice shop name over short brand',
+      () {
+    const payload = {
+      'basic_info': {
+        'brand_display_name': 'ANJALI',
+        'display_name': 'ANJALI JEWELLERS',
+        'legal_name': 'ANJALI JEWELLERS',
+      },
+    };
+    final fields = ShopPrintInformationCatalog.fromPayload(payload);
+    final state = ShopPrintInformationState(
+      tenantId: 'tenant_full_shop_name',
+      fields: fields,
+      enabledFieldIds: {'shop_name', 'legal_name'},
+    );
+
+    final profile = ShopPrintDocumentProfile.fromState(state, payload);
+
+    expect(profile.primaryName, 'ANJALI JEWELLERS');
+    expect(
+      profile.headerLines.any((line) => line == 'Legal Name: ANJALI JEWELLERS'),
+      isFalse,
+    );
+  });
 }

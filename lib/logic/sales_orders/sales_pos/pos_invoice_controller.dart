@@ -1,3 +1,5 @@
+import 'dart:async';
+
 //  Database persistence dependencies
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
@@ -78,6 +80,9 @@ class PosInvoiceController extends ChangeNotifier {
   bool usePrinterDriverSettings = true;
   MetalType? activePrintMetal;
   int _previewBuildSerial = 0;
+  int _shopPrintProfileSerial = 0;
+  Timer? _previewRefreshDebounce;
+  Timer? _shopPrintProfileDebounce;
   bool _hasWorkspaceTemplateSelection = false;
 
   DateTime? dueDate;
@@ -302,10 +307,10 @@ class PosInvoiceController extends ChangeNotifier {
         break;
     }
 
-    if (invoice != null) {
-      await _refreshActivePreviewPdf();
-    }
     notifyListeners();
+    if (invoice != null) {
+      _scheduleActivePreviewPdfRefresh();
+    }
   }
 
   Future<void> toggleMetalCustomization(MetalType metal, String key) async {
@@ -325,10 +330,10 @@ class PosInvoiceController extends ChangeNotifier {
     metalPrintSettings[metal] = restored;
     _applyTemplateForActiveMetal(preferredMetal: metal);
 
-    if (invoice != null) {
-      await _refreshActivePreviewPdf();
-    }
     notifyListeners();
+    if (invoice != null) {
+      _scheduleActivePreviewPdfRefresh();
+    }
   }
 
   Future<void> applySalesBillingSetupModel(SalesBillingModel model) async {
@@ -338,10 +343,10 @@ class PosInvoiceController extends ChangeNotifier {
     metalPrintSettings[metal] = _settingsFromBillingSetup(model);
     _applyTemplateForActiveMetal(preferredMetal: metal);
 
-    if (invoice != null) {
-      await _refreshActivePreviewPdf();
-    }
     notifyListeners();
+    if (invoice != null) {
+      _scheduleActivePreviewPdfRefresh();
+    }
   }
 
   Future<void> setMetalCopySuiteEnabled(MetalType metal, bool enabled) async {
@@ -351,10 +356,10 @@ class PosInvoiceController extends ChangeNotifier {
     config.printBuybackPolicy = enabled;
     config.printFooterMessage = enabled;
 
-    if (invoice != null) {
-      await _refreshActivePreviewPdf();
-    }
     notifyListeners();
+    if (invoice != null) {
+      _scheduleActivePreviewPdfRefresh();
+    }
   }
 
   bool getShopPrintFieldValue(String fieldId) {
@@ -381,8 +386,8 @@ class PosInvoiceController extends ChangeNotifier {
     }
 
     _shopPrintState = state.copyWith(enabledFieldIds: enabledIds);
-    await _refreshShopPrintProfile();
     notifyListeners();
+    _scheduleShopPrintProfileRefresh();
   }
 
   Future<void> restoreShopPrintInformationSetup() async {
@@ -413,6 +418,28 @@ class PosInvoiceController extends ChangeNotifier {
       invoice = _buildInvoiceSnapshot();
       await _refreshActivePreviewPdf();
     }
+  }
+
+  void _scheduleShopPrintProfileRefresh({
+    Duration delay = const Duration(milliseconds: 180),
+  }) {
+    _shopPrintProfileDebounce?.cancel();
+    final profileSerial = ++_shopPrintProfileSerial;
+    _shopPrintProfileDebounce = Timer(delay, () async {
+      await _ensureShopPrintStateLoaded();
+      final state = _shopPrintState;
+      if (state == null) return;
+
+      final printProfile = await _shopPrintRepo.buildDocumentProfile(state);
+      if (_isDisposed || profileSerial != _shopPrintProfileSerial) return;
+
+      _applyShopPrintProfile(printProfile);
+      if (invoice != null) {
+        invoice = _buildInvoiceSnapshot();
+        _scheduleActivePreviewPdfRefresh(delay: Duration.zero);
+      }
+      notifyListeners();
+    });
   }
 
   Future<void> _loadMetalBillingSettings(PosInvoiceModel inv) async {
@@ -485,9 +512,9 @@ class PosInvoiceController extends ChangeNotifier {
     printCopies = normalizedCopies;
     includeDuplicateStamp = normalizedCopies > 1 && duplicate;
     usePrinterDriverSettings = useDriverSettings ?? usePrinterDriverSettings;
+    notifyListeners();
     if (invoice != null) {
-      await _refreshActivePreviewPdf();
-      notifyListeners();
+      _scheduleActivePreviewPdfRefresh();
     }
   }
 
@@ -544,12 +571,12 @@ class PosInvoiceController extends ChangeNotifier {
         break;
     }
 
+    notifyListeners();
     if (invoice != null &&
         invoice!.billingMode == mode &&
         invoice!.billType == type) {
-      await _refreshActivePreviewPdf();
+      _scheduleActivePreviewPdfRefresh();
     }
-    notifyListeners();
   }
 
   Future<void> _fetchRealShopData() async {
@@ -968,6 +995,18 @@ class PosInvoiceController extends ChangeNotifier {
     pdfBytes = bytes;
   }
 
+  void _scheduleActivePreviewPdfRefresh({
+    Duration delay = const Duration(milliseconds: 180),
+  }) {
+    _previewRefreshDebounce?.cancel();
+    _previewRefreshDebounce = Timer(delay, () async {
+      await _refreshActivePreviewPdf();
+      if (!_isDisposed) {
+        notifyListeners();
+      }
+    });
+  }
+
   Future<Uint8List> _buildPdf(
     PosInvoiceModel inv,
     PrintFormat fmt, {
@@ -1156,6 +1195,8 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   void _resetState() {
+    _previewRefreshDebounce?.cancel();
+    _shopPrintProfileDebounce?.cancel();
     genState = InvoiceGenState.idle;
     invoice = null;
     pdfBytes = null;
