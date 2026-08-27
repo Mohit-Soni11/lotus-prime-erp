@@ -1417,7 +1417,7 @@ class _LotusDocumentLayoutEngine {
   }
 
   static String _shopName(LotusPrintableDocument document) {
-    final name = document.shopProfile.primaryName.trim();
+    final name = document.shopProfile.invoiceHeaderName.trim();
     if (name.isNotEmpty) return name;
     return document.useFallbackShopName ? 'Lotus ERP' : '';
   }

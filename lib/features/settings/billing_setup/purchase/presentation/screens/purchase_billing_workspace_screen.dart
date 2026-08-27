@@ -186,6 +186,14 @@ class _PurchaseBillingWorkspaceScreenState
                         footerController: _footerController,
                         onInputChanged: _controller.updateCurrentInput,
                         onFieldChanged: _controller.toggleField,
+                        onPrintTermsChanged: _controller.updatePrintTerms,
+                        onPrintSellerDeclarationChanged:
+                            _controller.updatePrintSellerDeclaration,
+                        onPrintReturnPolicyChanged:
+                            _controller.updatePrintReturnPolicy,
+                        onPrintBuybackPolicyChanged:
+                            _controller.updatePrintBuybackPolicy,
+                        onPrintFooterChanged: _controller.updatePrintFooter,
                       ),
                       const SizedBox(height: 32),
                       _SaveButton(

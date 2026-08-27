@@ -74,6 +74,36 @@ class PurchaseBillingController extends ChangeNotifier {
     );
   }
 
+  void updatePrintTerms(bool enabled) {
+    _updateCurrentSettings(
+      (model) => model.copyWith(printTermsAndConditions: enabled),
+    );
+  }
+
+  void updatePrintSellerDeclaration(bool enabled) {
+    _updateCurrentSettings(
+      (model) => model.copyWith(printSellerDeclaration: enabled),
+    );
+  }
+
+  void updatePrintReturnPolicy(bool enabled) {
+    _updateCurrentSettings(
+      (model) => model.copyWith(printReturnPolicy: enabled),
+    );
+  }
+
+  void updatePrintBuybackPolicy(bool enabled) {
+    _updateCurrentSettings(
+      (model) => model.copyWith(printBuybackPolicy: enabled),
+    );
+  }
+
+  void updatePrintFooter(bool enabled) {
+    _updateCurrentSettings(
+      (model) => model.copyWith(printFooterMessage: enabled),
+    );
+  }
+
   void resetCurrentToDefaults() {
     final metal = _state.selectedMetal;
     final model = PurchaseBillingModel.defaultFor(metal);

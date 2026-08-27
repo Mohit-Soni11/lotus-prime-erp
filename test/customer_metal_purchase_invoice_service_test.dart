@@ -144,6 +144,22 @@ void main() {
     expect(document.subtitle, isEmpty);
   });
 
+  test('printable purchase shop header obeys business profile shop name toggle',
+      () {
+    final document =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _invoice,
+      shopProfile: _profileWithoutShopName,
+      invoiceDate: DateTime(2026, 8, 23),
+    );
+
+    expect(document.shopProfile.primaryName, 'Anjali Jewellers');
+    expect(document.shopProfile.invoiceHeaderName, isEmpty);
+    expect(document.shopProfile.headerLines,
+        contains('Legal Name: Anjali Jewellers'));
+    expect(document.useFallbackShopName, isFalse);
+  });
+
   test('printable purchase policies follow the scoped metal billing setup', () {
     final goldSettings = PurchaseBillingModel.defaultFor('gold').copyWith(
       sellerDeclarationText: 'Gold custom seller declaration',
@@ -183,6 +199,95 @@ void main() {
     expect(policyCopy, contains('Silver custom reclaim policy'));
     expect(policyCopy, isNot(contains('Gold custom')));
     expect(document.footerMessage, 'Silver custom footer');
+  });
+
+  test('printable purchase display follows metal-wise billing field toggles',
+      () {
+    final goldSettings = PurchaseBillingModel.defaultFor('gold').copyWith(
+      showGrossWeight: false,
+      showLessWeight: false,
+      showSupplierDetails: false,
+      showPanNumber: false,
+    );
+    final silverSettings = PurchaseBillingModel.defaultFor('silver').copyWith(
+      showGrossWeight: true,
+      showLessWeight: true,
+      showSupplierDetails: true,
+      showPanNumber: true,
+    );
+
+    final document =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _mixedMetalInvoice,
+      shopProfile: _profile,
+      invoiceDate: DateTime(2026, 8, 23),
+      displaySettings: {
+        'gold': goldSettings,
+        'silver': silverSettings,
+      },
+      metalScope: 'gold',
+    );
+
+    expect(document.itemTable.rows, hasLength(1));
+    expect(document.itemTable.rows.single, contains('GOLD'));
+    expect(document.itemTable.headers, isNot(contains('Gross')));
+    expect(document.itemTable.headers, isNot(contains('Less')));
+    expect(document.itemTable.headers, containsAll(['Net', 'Purity', 'Fine']));
+    expect(document.primaryPanel.details, isEmpty);
+
+    final silverDocument =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _mixedMetalInvoice,
+      shopProfile: _profile,
+      invoiceDate: DateTime(2026, 8, 23),
+      displaySettings: {
+        'gold': goldSettings,
+        'silver': silverSettings,
+      },
+      metalScope: 'silver',
+    );
+
+    expect(silverDocument.itemTable.rows, hasLength(1));
+    expect(silverDocument.itemTable.rows.single, contains('SILVER'));
+    expect(silverDocument.itemTable.headers, containsAll(['Gross', 'Less']));
+    expect(
+      silverDocument.primaryPanel.details.map((detail) => detail.label),
+      containsAll(['Seller Name', 'Mobile']),
+    );
+  });
+
+  test('printable purchase policies obey metal-wise print visibility toggles',
+      () {
+    final settings = PurchaseBillingModel.defaultFor('gold').copyWith(
+      printSellerDeclaration: false,
+      printTermsAndConditions: false,
+      printBuybackPolicy: true,
+      printReturnPolicy: false,
+      printFooterMessage: false,
+      sellerDeclarationText: 'Hidden seller declaration',
+      termsAndConditions: 'Hidden terms',
+      buybackPolicyText: 'Visible payout policy',
+      returnPolicyText: 'Hidden reclaim policy',
+      footerMessage: 'Hidden footer',
+    );
+
+    final document =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _invoice,
+      shopProfile: _profile,
+      invoiceDate: DateTime(2026, 8, 23),
+      displaySettings: {'gold': settings},
+      metalScope: 'gold',
+    );
+    final policyCopy = document.policySections
+        .map((section) => '${section.title}: ${section.body}')
+        .join('\n');
+
+    expect(policyCopy, contains('Visible payout policy'));
+    expect(policyCopy, isNot(contains('Hidden seller declaration')));
+    expect(policyCopy, isNot(contains('Hidden terms')));
+    expect(policyCopy, isNot(contains('Hidden reclaim policy')));
+    expect(document.footerMessage, isEmpty);
   });
 
   test('scopes mixed metal invoice totals to selected metal', () {
@@ -257,6 +362,30 @@ const _profile = ShopPrintDocumentProfile(
       label: 'GSTIN',
       value: '10ABCDE1234F1Z5',
       group: ShopPrintFieldGroup.statutory,
+    ),
+  ],
+);
+
+const _profileWithoutShopName = ShopPrintDocumentProfile(
+  tenantId: 'test-shop',
+  fields: [
+    ShopPrintDocumentField(
+      id: 'legal_name',
+      label: 'Legal Name',
+      value: 'Anjali Jewellers',
+      group: ShopPrintFieldGroup.identity,
+    ),
+    ShopPrintDocumentField(
+      id: 'business_address',
+      label: 'Business Address',
+      value: 'Main Road, Patna, Bihar',
+      group: ShopPrintFieldGroup.address,
+    ),
+    ShopPrintDocumentField(
+      id: 'mobile_number',
+      label: 'Business Mobile',
+      value: '9304479436',
+      group: ShopPrintFieldGroup.contact,
     ),
   ],
 );

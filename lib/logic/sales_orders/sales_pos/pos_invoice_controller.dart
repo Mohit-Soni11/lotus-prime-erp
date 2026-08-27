@@ -660,15 +660,9 @@ class PosInvoiceController extends ChangeNotifier {
 
   void _applyShopPrintProfile(ShopPrintDocumentProfile profile) {
     _shopPrintProfile = profile;
-    if (profile.primaryName.isNotEmpty) {
-      _realShopName = profile.primaryName;
-    }
-    if (profile.primaryAddress.isNotEmpty) {
-      _realShopAddress = profile.primaryAddress;
-    }
-    if (profile.primaryPhone.isNotEmpty) {
-      _realShopPhone = profile.primaryPhone;
-    }
+    _realShopName = profile.invoiceHeaderName;
+    _realShopAddress = profile.primaryAddress;
+    _realShopPhone = profile.primaryPhone;
     _realShopGstin =
         profile.gstin.isNotEmpty ? profile.gstin : "Not Registered";
     _realShopLogoPath = profile.logoPath ?? '';

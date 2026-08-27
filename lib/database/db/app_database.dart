@@ -2112,6 +2112,16 @@ class AppDatabase extends _$AppDatabase {
         purchaseBillingSettings, purchaseBillingSettings.footerMessage));
     await runIfNeeded(() => m.addColumn(
         purchaseBillingSettings, purchaseBillingSettings.selectedTemplate));
+    await runIfNeeded(() => m.addColumn(purchaseBillingSettings,
+        purchaseBillingSettings.printTermsAndConditions));
+    await runIfNeeded(() => m.addColumn(purchaseBillingSettings,
+        purchaseBillingSettings.printSellerDeclaration));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.printReturnPolicy));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.printBuybackPolicy));
+    await runIfNeeded(() => m.addColumn(
+        purchaseBillingSettings, purchaseBillingSettings.printFooterMessage));
 
     await runIfNeeded(() =>
         m.addColumn(girviBillingSettings, girviBillingSettings.girviPrefix));

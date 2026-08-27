@@ -175,6 +175,14 @@ class ShopPrintDocumentProfile {
     return legalName;
   }
 
+  String get invoiceHeaderName {
+    final shopName = valueOf('shop_name').trim();
+    if (shopName.isEmpty) return '';
+    final legalName = valueOf('legal_name').trim();
+    if (_shouldPreferFormalName(shopName, legalName)) return legalName;
+    return shopName;
+  }
+
   String get primaryAddress {
     final fullAddress = valueOf('business_address');
     if (fullAddress.isNotEmpty) return fullAddress;
@@ -193,12 +201,13 @@ class ShopPrintDocumentProfile {
   String get gstin => valueOf('gstin');
 
   List<String> get headerLines {
-    final primary = primaryName.toLowerCase();
+    final headerName = invoiceHeaderName.toLowerCase();
     return fields
         .where((field) {
           if (field.id == 'shop_name') return false;
           if (field.id == 'legal_name' &&
-              field.value.trim().toLowerCase() == primary) {
+              headerName.isNotEmpty &&
+              field.value.trim().toLowerCase() == headerName) {
             return false;
           }
           return true;

@@ -24,6 +24,11 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
   final TextEditingController footerController;
   final ValueChanged<PurchaseBillingPolicyInput> onInputChanged;
   final void Function(PurchaseBillingFieldKey key, bool value) onFieldChanged;
+  final ValueChanged<bool> onPrintTermsChanged;
+  final ValueChanged<bool> onPrintSellerDeclarationChanged;
+  final ValueChanged<bool> onPrintReturnPolicyChanged;
+  final ValueChanged<bool> onPrintBuybackPolicyChanged;
+  final ValueChanged<bool> onPrintFooterChanged;
 
   const PurchaseBillingPolicyForm({
     super.key,
@@ -40,6 +45,11 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
     required this.footerController,
     required this.onInputChanged,
     required this.onFieldChanged,
+    required this.onPrintTermsChanged,
+    required this.onPrintSellerDeclarationChanged,
+    required this.onPrintReturnPolicyChanged,
+    required this.onPrintBuybackPolicyChanged,
+    required this.onPrintFooterChanged,
   });
 
   @override
@@ -85,11 +95,18 @@ class PurchaseBillingPolicyForm extends StatelessWidget {
           icon: Icons.article_outlined,
           accent: accent,
           child: _TermsAndFooterFields(
+            model: model,
             input: input,
+            accent: accent,
             termsController: termsController,
             sellerDeclarationController: sellerDeclarationController,
             footerController: footerController,
             onInputChanged: onInputChanged,
+            onPrintTermsChanged: onPrintTermsChanged,
+            onPrintSellerDeclarationChanged: onPrintSellerDeclarationChanged,
+            onPrintReturnPolicyChanged: onPrintReturnPolicyChanged,
+            onPrintBuybackPolicyChanged: onPrintBuybackPolicyChanged,
+            onPrintFooterChanged: onPrintFooterChanged,
           ),
         ),
       ],
@@ -263,18 +280,32 @@ class _PolicyFields extends StatelessWidget {
 }
 
 class _TermsAndFooterFields extends StatelessWidget {
+  final PurchaseBillingModel model;
   final PurchaseBillingPolicyInput input;
+  final Color accent;
   final TextEditingController termsController;
   final TextEditingController sellerDeclarationController;
   final TextEditingController footerController;
   final ValueChanged<PurchaseBillingPolicyInput> onInputChanged;
+  final ValueChanged<bool> onPrintTermsChanged;
+  final ValueChanged<bool> onPrintSellerDeclarationChanged;
+  final ValueChanged<bool> onPrintReturnPolicyChanged;
+  final ValueChanged<bool> onPrintBuybackPolicyChanged;
+  final ValueChanged<bool> onPrintFooterChanged;
 
   const _TermsAndFooterFields({
+    required this.model,
     required this.input,
+    required this.accent,
     required this.termsController,
     required this.sellerDeclarationController,
     required this.footerController,
     required this.onInputChanged,
+    required this.onPrintTermsChanged,
+    required this.onPrintSellerDeclarationChanged,
+    required this.onPrintReturnPolicyChanged,
+    required this.onPrintBuybackPolicyChanged,
+    required this.onPrintFooterChanged,
   });
 
   @override
@@ -317,7 +348,95 @@ class _TermsAndFooterFields extends StatelessWidget {
             input.copyWith(footerMessage: value),
           ),
         ),
+        const SizedBox(height: 14),
+        _PrintVisibilityGrid(
+          model: model,
+          accent: accent,
+          onPrintTermsChanged: onPrintTermsChanged,
+          onPrintSellerDeclarationChanged: onPrintSellerDeclarationChanged,
+          onPrintReturnPolicyChanged: onPrintReturnPolicyChanged,
+          onPrintBuybackPolicyChanged: onPrintBuybackPolicyChanged,
+          onPrintFooterChanged: onPrintFooterChanged,
+        ),
       ],
+    );
+  }
+}
+
+class _PrintVisibilityGrid extends StatelessWidget {
+  final PurchaseBillingModel model;
+  final Color accent;
+  final ValueChanged<bool> onPrintTermsChanged;
+  final ValueChanged<bool> onPrintSellerDeclarationChanged;
+  final ValueChanged<bool> onPrintReturnPolicyChanged;
+  final ValueChanged<bool> onPrintBuybackPolicyChanged;
+  final ValueChanged<bool> onPrintFooterChanged;
+
+  const _PrintVisibilityGrid({
+    required this.model,
+    required this.accent,
+    required this.onPrintTermsChanged,
+    required this.onPrintSellerDeclarationChanged,
+    required this.onPrintReturnPolicyChanged,
+    required this.onPrintBuybackPolicyChanged,
+    required this.onPrintFooterChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      PurchaseBillingToggleTile(
+        label: 'Print Seller Declaration',
+        description: 'Include ownership and responsibility declaration on PDF.',
+        value: model.printSellerDeclaration,
+        accent: accent,
+        onChanged: onPrintSellerDeclarationChanged,
+      ),
+      PurchaseBillingToggleTile(
+        label: 'Print Terms & Conditions',
+        description: 'Include Terms & Conditions on purchase PDF.',
+        value: model.printTermsAndConditions,
+        accent: accent,
+        onChanged: onPrintTermsChanged,
+      ),
+      PurchaseBillingToggleTile(
+        label: 'Print Payout Policy',
+        description: 'Include valuation and payout policy copy.',
+        value: model.printBuybackPolicy,
+        accent: accent,
+        onChanged: onPrintBuybackPolicyChanged,
+      ),
+      PurchaseBillingToggleTile(
+        label: 'Print Reclaim Policy',
+        description: 'Include seller reclaim and penalty policy copy.',
+        value: model.printReturnPolicy,
+        accent: accent,
+        onChanged: onPrintReturnPolicyChanged,
+      ),
+      PurchaseBillingToggleTile(
+        label: 'Print Footer',
+        description: 'Include footer message and acknowledgement on PDF.',
+        value: model.printFooterMessage,
+        accent: accent,
+        onChanged: onPrintFooterChanged,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 660 ? 2 : 1;
+        const gap = 12.0;
+        final itemWidth =
+            (constraints.maxWidth - (gap * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: items
+              .map((item) => SizedBox(width: itemWidth, child: item))
+              .toList(growable: false),
+        );
+      },
     );
   }
 }

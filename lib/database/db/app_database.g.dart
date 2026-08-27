@@ -29359,6 +29359,56 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('default'));
+  static const VerificationMeta _printTermsAndConditionsMeta =
+      const VerificationMeta('printTermsAndConditions');
+  @override
+  late final GeneratedColumn<bool> printTermsAndConditions =
+      GeneratedColumn<bool>('print_terms_and_conditions', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("print_terms_and_conditions" IN (0, 1))'),
+          defaultValue: const Constant(true));
+  static const VerificationMeta _printSellerDeclarationMeta =
+      const VerificationMeta('printSellerDeclaration');
+  @override
+  late final GeneratedColumn<bool> printSellerDeclaration =
+      GeneratedColumn<bool>('print_seller_declaration', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("print_seller_declaration" IN (0, 1))'),
+          defaultValue: const Constant(true));
+  static const VerificationMeta _printReturnPolicyMeta =
+      const VerificationMeta('printReturnPolicy');
+  @override
+  late final GeneratedColumn<bool> printReturnPolicy = GeneratedColumn<bool>(
+      'print_return_policy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_return_policy" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _printBuybackPolicyMeta =
+      const VerificationMeta('printBuybackPolicy');
+  @override
+  late final GeneratedColumn<bool> printBuybackPolicy = GeneratedColumn<bool>(
+      'print_buyback_policy', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_buyback_policy" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _printFooterMessageMeta =
+      const VerificationMeta('printFooterMessage');
+  @override
+  late final GeneratedColumn<bool> printFooterMessage = GeneratedColumn<bool>(
+      'print_footer_message', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_footer_message" IN (0, 1))'),
+      defaultValue: const Constant(true));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -29393,7 +29443,12 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
         returnPolicyText,
         buybackPolicyText,
         footerMessage,
-        selectedTemplate
+        selectedTemplate,
+        printTermsAndConditions,
+        printSellerDeclaration,
+        printReturnPolicy,
+        printBuybackPolicy,
+        printFooterMessage
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -29596,6 +29651,37 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
           selectedTemplate.isAcceptableOrUnknown(
               data['selected_template']!, _selectedTemplateMeta));
     }
+    if (data.containsKey('print_terms_and_conditions')) {
+      context.handle(
+          _printTermsAndConditionsMeta,
+          printTermsAndConditions.isAcceptableOrUnknown(
+              data['print_terms_and_conditions']!,
+              _printTermsAndConditionsMeta));
+    }
+    if (data.containsKey('print_seller_declaration')) {
+      context.handle(
+          _printSellerDeclarationMeta,
+          printSellerDeclaration.isAcceptableOrUnknown(
+              data['print_seller_declaration']!, _printSellerDeclarationMeta));
+    }
+    if (data.containsKey('print_return_policy')) {
+      context.handle(
+          _printReturnPolicyMeta,
+          printReturnPolicy.isAcceptableOrUnknown(
+              data['print_return_policy']!, _printReturnPolicyMeta));
+    }
+    if (data.containsKey('print_buyback_policy')) {
+      context.handle(
+          _printBuybackPolicyMeta,
+          printBuybackPolicy.isAcceptableOrUnknown(
+              data['print_buyback_policy']!, _printBuybackPolicyMeta));
+    }
+    if (data.containsKey('print_footer_message')) {
+      context.handle(
+          _printFooterMessageMeta,
+          printFooterMessage.isAcceptableOrUnknown(
+              data['print_footer_message']!, _printFooterMessageMeta));
+    }
     return context;
   }
 
@@ -29676,6 +29762,18 @@ class $PurchaseBillingSettingsTable extends PurchaseBillingSettings
           .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
       selectedTemplate: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}selected_template'])!,
+      printTermsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}print_terms_and_conditions'])!,
+      printSellerDeclaration: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}print_seller_declaration'])!,
+      printReturnPolicy: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_return_policy'])!,
+      printBuybackPolicy: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_buyback_policy'])!,
+      printFooterMessage: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_footer_message'])!,
     );
   }
 
@@ -29720,6 +29818,11 @@ class PurchaseBillingSetting extends DataClass
   final String buybackPolicyText;
   final String footerMessage;
   final String selectedTemplate;
+  final bool printTermsAndConditions;
+  final bool printSellerDeclaration;
+  final bool printReturnPolicy;
+  final bool printBuybackPolicy;
+  final bool printFooterMessage;
   const PurchaseBillingSetting(
       {required this.id,
       required this.createdAt,
@@ -29753,7 +29856,12 @@ class PurchaseBillingSetting extends DataClass
       required this.returnPolicyText,
       required this.buybackPolicyText,
       required this.footerMessage,
-      required this.selectedTemplate});
+      required this.selectedTemplate,
+      required this.printTermsAndConditions,
+      required this.printSellerDeclaration,
+      required this.printReturnPolicy,
+      required this.printBuybackPolicy,
+      required this.printFooterMessage});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -29795,6 +29903,11 @@ class PurchaseBillingSetting extends DataClass
     map['buyback_policy_text'] = Variable<String>(buybackPolicyText);
     map['footer_message'] = Variable<String>(footerMessage);
     map['selected_template'] = Variable<String>(selectedTemplate);
+    map['print_terms_and_conditions'] = Variable<bool>(printTermsAndConditions);
+    map['print_seller_declaration'] = Variable<bool>(printSellerDeclaration);
+    map['print_return_policy'] = Variable<bool>(printReturnPolicy);
+    map['print_buyback_policy'] = Variable<bool>(printBuybackPolicy);
+    map['print_footer_message'] = Variable<bool>(printFooterMessage);
     return map;
   }
 
@@ -29835,6 +29948,11 @@ class PurchaseBillingSetting extends DataClass
       buybackPolicyText: Value(buybackPolicyText),
       footerMessage: Value(footerMessage),
       selectedTemplate: Value(selectedTemplate),
+      printTermsAndConditions: Value(printTermsAndConditions),
+      printSellerDeclaration: Value(printSellerDeclaration),
+      printReturnPolicy: Value(printReturnPolicy),
+      printBuybackPolicy: Value(printBuybackPolicy),
+      printFooterMessage: Value(printFooterMessage),
     );
   }
 
@@ -29883,6 +30001,13 @@ class PurchaseBillingSetting extends DataClass
       buybackPolicyText: serializer.fromJson<String>(json['buybackPolicyText']),
       footerMessage: serializer.fromJson<String>(json['footerMessage']),
       selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
+      printTermsAndConditions:
+          serializer.fromJson<bool>(json['printTermsAndConditions']),
+      printSellerDeclaration:
+          serializer.fromJson<bool>(json['printSellerDeclaration']),
+      printReturnPolicy: serializer.fromJson<bool>(json['printReturnPolicy']),
+      printBuybackPolicy: serializer.fromJson<bool>(json['printBuybackPolicy']),
+      printFooterMessage: serializer.fromJson<bool>(json['printFooterMessage']),
     );
   }
   @override
@@ -29925,6 +30050,12 @@ class PurchaseBillingSetting extends DataClass
       'buybackPolicyText': serializer.toJson<String>(buybackPolicyText),
       'footerMessage': serializer.toJson<String>(footerMessage),
       'selectedTemplate': serializer.toJson<String>(selectedTemplate),
+      'printTermsAndConditions':
+          serializer.toJson<bool>(printTermsAndConditions),
+      'printSellerDeclaration': serializer.toJson<bool>(printSellerDeclaration),
+      'printReturnPolicy': serializer.toJson<bool>(printReturnPolicy),
+      'printBuybackPolicy': serializer.toJson<bool>(printBuybackPolicy),
+      'printFooterMessage': serializer.toJson<bool>(printFooterMessage),
     };
   }
 
@@ -29961,7 +30092,12 @@ class PurchaseBillingSetting extends DataClass
           String? returnPolicyText,
           String? buybackPolicyText,
           String? footerMessage,
-          String? selectedTemplate}) =>
+          String? selectedTemplate,
+          bool? printTermsAndConditions,
+          bool? printSellerDeclaration,
+          bool? printReturnPolicy,
+          bool? printBuybackPolicy,
+          bool? printFooterMessage}) =>
       PurchaseBillingSetting(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -30000,6 +30136,13 @@ class PurchaseBillingSetting extends DataClass
         buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
         footerMessage: footerMessage ?? this.footerMessage,
         selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+        printTermsAndConditions:
+            printTermsAndConditions ?? this.printTermsAndConditions,
+        printSellerDeclaration:
+            printSellerDeclaration ?? this.printSellerDeclaration,
+        printReturnPolicy: printReturnPolicy ?? this.printReturnPolicy,
+        printBuybackPolicy: printBuybackPolicy ?? this.printBuybackPolicy,
+        printFooterMessage: printFooterMessage ?? this.printFooterMessage,
       );
   PurchaseBillingSetting copyWithCompanion(
       PurchaseBillingSettingsCompanion data) {
@@ -30089,6 +30232,21 @@ class PurchaseBillingSetting extends DataClass
       selectedTemplate: data.selectedTemplate.present
           ? data.selectedTemplate.value
           : this.selectedTemplate,
+      printTermsAndConditions: data.printTermsAndConditions.present
+          ? data.printTermsAndConditions.value
+          : this.printTermsAndConditions,
+      printSellerDeclaration: data.printSellerDeclaration.present
+          ? data.printSellerDeclaration.value
+          : this.printSellerDeclaration,
+      printReturnPolicy: data.printReturnPolicy.present
+          ? data.printReturnPolicy.value
+          : this.printReturnPolicy,
+      printBuybackPolicy: data.printBuybackPolicy.present
+          ? data.printBuybackPolicy.value
+          : this.printBuybackPolicy,
+      printFooterMessage: data.printFooterMessage.present
+          ? data.printFooterMessage.value
+          : this.printFooterMessage,
     );
   }
 
@@ -30128,7 +30286,12 @@ class PurchaseBillingSetting extends DataClass
           ..write('returnPolicyText: $returnPolicyText, ')
           ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
-          ..write('selectedTemplate: $selectedTemplate')
+          ..write('selectedTemplate: $selectedTemplate, ')
+          ..write('printTermsAndConditions: $printTermsAndConditions, ')
+          ..write('printSellerDeclaration: $printSellerDeclaration, ')
+          ..write('printReturnPolicy: $printReturnPolicy, ')
+          ..write('printBuybackPolicy: $printBuybackPolicy, ')
+          ..write('printFooterMessage: $printFooterMessage')
           ..write(')'))
         .toString();
   }
@@ -30167,7 +30330,12 @@ class PurchaseBillingSetting extends DataClass
         returnPolicyText,
         buybackPolicyText,
         footerMessage,
-        selectedTemplate
+        selectedTemplate,
+        printTermsAndConditions,
+        printSellerDeclaration,
+        printReturnPolicy,
+        printBuybackPolicy,
+        printFooterMessage
       ]);
   @override
   bool operator ==(Object other) =>
@@ -30206,7 +30374,12 @@ class PurchaseBillingSetting extends DataClass
           other.returnPolicyText == this.returnPolicyText &&
           other.buybackPolicyText == this.buybackPolicyText &&
           other.footerMessage == this.footerMessage &&
-          other.selectedTemplate == this.selectedTemplate);
+          other.selectedTemplate == this.selectedTemplate &&
+          other.printTermsAndConditions == this.printTermsAndConditions &&
+          other.printSellerDeclaration == this.printSellerDeclaration &&
+          other.printReturnPolicy == this.printReturnPolicy &&
+          other.printBuybackPolicy == this.printBuybackPolicy &&
+          other.printFooterMessage == this.printFooterMessage);
 }
 
 class PurchaseBillingSettingsCompanion
@@ -30244,6 +30417,11 @@ class PurchaseBillingSettingsCompanion
   final Value<String> buybackPolicyText;
   final Value<String> footerMessage;
   final Value<String> selectedTemplate;
+  final Value<bool> printTermsAndConditions;
+  final Value<bool> printSellerDeclaration;
+  final Value<bool> printReturnPolicy;
+  final Value<bool> printBuybackPolicy;
+  final Value<bool> printFooterMessage;
   const PurchaseBillingSettingsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -30278,6 +30456,11 @@ class PurchaseBillingSettingsCompanion
     this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
+    this.printTermsAndConditions = const Value.absent(),
+    this.printSellerDeclaration = const Value.absent(),
+    this.printReturnPolicy = const Value.absent(),
+    this.printBuybackPolicy = const Value.absent(),
+    this.printFooterMessage = const Value.absent(),
   });
   PurchaseBillingSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -30313,6 +30496,11 @@ class PurchaseBillingSettingsCompanion
     this.buybackPolicyText = const Value.absent(),
     this.footerMessage = const Value.absent(),
     this.selectedTemplate = const Value.absent(),
+    this.printTermsAndConditions = const Value.absent(),
+    this.printSellerDeclaration = const Value.absent(),
+    this.printReturnPolicy = const Value.absent(),
+    this.printBuybackPolicy = const Value.absent(),
+    this.printFooterMessage = const Value.absent(),
   }) : metal = Value(metal);
   static Insertable<PurchaseBillingSetting> custom({
     Expression<int>? id,
@@ -30348,6 +30536,11 @@ class PurchaseBillingSettingsCompanion
     Expression<String>? buybackPolicyText,
     Expression<String>? footerMessage,
     Expression<String>? selectedTemplate,
+    Expression<bool>? printTermsAndConditions,
+    Expression<bool>? printSellerDeclaration,
+    Expression<bool>? printReturnPolicy,
+    Expression<bool>? printBuybackPolicy,
+    Expression<bool>? printFooterMessage,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -30392,6 +30585,15 @@ class PurchaseBillingSettingsCompanion
       if (buybackPolicyText != null) 'buyback_policy_text': buybackPolicyText,
       if (footerMessage != null) 'footer_message': footerMessage,
       if (selectedTemplate != null) 'selected_template': selectedTemplate,
+      if (printTermsAndConditions != null)
+        'print_terms_and_conditions': printTermsAndConditions,
+      if (printSellerDeclaration != null)
+        'print_seller_declaration': printSellerDeclaration,
+      if (printReturnPolicy != null) 'print_return_policy': printReturnPolicy,
+      if (printBuybackPolicy != null)
+        'print_buyback_policy': printBuybackPolicy,
+      if (printFooterMessage != null)
+        'print_footer_message': printFooterMessage,
     });
   }
 
@@ -30428,7 +30630,12 @@ class PurchaseBillingSettingsCompanion
       Value<String>? returnPolicyText,
       Value<String>? buybackPolicyText,
       Value<String>? footerMessage,
-      Value<String>? selectedTemplate}) {
+      Value<String>? selectedTemplate,
+      Value<bool>? printTermsAndConditions,
+      Value<bool>? printSellerDeclaration,
+      Value<bool>? printReturnPolicy,
+      Value<bool>? printBuybackPolicy,
+      Value<bool>? printFooterMessage}) {
     return PurchaseBillingSettingsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
@@ -30467,6 +30674,13 @@ class PurchaseBillingSettingsCompanion
       buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      printTermsAndConditions:
+          printTermsAndConditions ?? this.printTermsAndConditions,
+      printSellerDeclaration:
+          printSellerDeclaration ?? this.printSellerDeclaration,
+      printReturnPolicy: printReturnPolicy ?? this.printReturnPolicy,
+      printBuybackPolicy: printBuybackPolicy ?? this.printBuybackPolicy,
+      printFooterMessage: printFooterMessage ?? this.printFooterMessage,
     );
   }
 
@@ -30577,6 +30791,23 @@ class PurchaseBillingSettingsCompanion
     if (selectedTemplate.present) {
       map['selected_template'] = Variable<String>(selectedTemplate.value);
     }
+    if (printTermsAndConditions.present) {
+      map['print_terms_and_conditions'] =
+          Variable<bool>(printTermsAndConditions.value);
+    }
+    if (printSellerDeclaration.present) {
+      map['print_seller_declaration'] =
+          Variable<bool>(printSellerDeclaration.value);
+    }
+    if (printReturnPolicy.present) {
+      map['print_return_policy'] = Variable<bool>(printReturnPolicy.value);
+    }
+    if (printBuybackPolicy.present) {
+      map['print_buyback_policy'] = Variable<bool>(printBuybackPolicy.value);
+    }
+    if (printFooterMessage.present) {
+      map['print_footer_message'] = Variable<bool>(printFooterMessage.value);
+    }
     return map;
   }
 
@@ -30616,7 +30847,12 @@ class PurchaseBillingSettingsCompanion
           ..write('returnPolicyText: $returnPolicyText, ')
           ..write('buybackPolicyText: $buybackPolicyText, ')
           ..write('footerMessage: $footerMessage, ')
-          ..write('selectedTemplate: $selectedTemplate')
+          ..write('selectedTemplate: $selectedTemplate, ')
+          ..write('printTermsAndConditions: $printTermsAndConditions, ')
+          ..write('printSellerDeclaration: $printSellerDeclaration, ')
+          ..write('printReturnPolicy: $printReturnPolicy, ')
+          ..write('printBuybackPolicy: $printBuybackPolicy, ')
+          ..write('printFooterMessage: $printFooterMessage')
           ..write(')'))
         .toString();
   }
@@ -53979,6 +54215,11 @@ typedef $$PurchaseBillingSettingsTableCreateCompanionBuilder
   Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
+  Value<bool> printTermsAndConditions,
+  Value<bool> printSellerDeclaration,
+  Value<bool> printReturnPolicy,
+  Value<bool> printBuybackPolicy,
+  Value<bool> printFooterMessage,
 });
 typedef $$PurchaseBillingSettingsTableUpdateCompanionBuilder
     = PurchaseBillingSettingsCompanion Function({
@@ -54015,6 +54256,11 @@ typedef $$PurchaseBillingSettingsTableUpdateCompanionBuilder
   Value<String> buybackPolicyText,
   Value<String> footerMessage,
   Value<String> selectedTemplate,
+  Value<bool> printTermsAndConditions,
+  Value<bool> printSellerDeclaration,
+  Value<bool> printReturnPolicy,
+  Value<bool> printBuybackPolicy,
+  Value<bool> printFooterMessage,
 });
 
 class $$PurchaseBillingSettingsTableFilterComposer
@@ -54145,6 +54391,26 @@ class $$PurchaseBillingSettingsTableFilterComposer
 
   ColumnFilters<String> get selectedTemplate => $composableBuilder(
       column: $table.selectedTemplate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printSellerDeclaration => $composableBuilder(
+      column: $table.printSellerDeclaration,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printReturnPolicy => $composableBuilder(
+      column: $table.printReturnPolicy,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printBuybackPolicy => $composableBuilder(
+      column: $table.printBuybackPolicy,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -54280,6 +54546,26 @@ class $$PurchaseBillingSettingsTableOrderingComposer
   ColumnOrderings<String> get selectedTemplate => $composableBuilder(
       column: $table.selectedTemplate,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printSellerDeclaration => $composableBuilder(
+      column: $table.printSellerDeclaration,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printReturnPolicy => $composableBuilder(
+      column: $table.printReturnPolicy,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printBuybackPolicy => $composableBuilder(
+      column: $table.printBuybackPolicy,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$PurchaseBillingSettingsTableAnnotationComposer
@@ -54391,6 +54677,21 @@ class $$PurchaseBillingSettingsTableAnnotationComposer
 
   GeneratedColumn<String> get selectedTemplate => $composableBuilder(
       column: $table.selectedTemplate, builder: (column) => column);
+
+  GeneratedColumn<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<bool> get printSellerDeclaration => $composableBuilder(
+      column: $table.printSellerDeclaration, builder: (column) => column);
+
+  GeneratedColumn<bool> get printReturnPolicy => $composableBuilder(
+      column: $table.printReturnPolicy, builder: (column) => column);
+
+  GeneratedColumn<bool> get printBuybackPolicy => $composableBuilder(
+      column: $table.printBuybackPolicy, builder: (column) => column);
+
+  GeneratedColumn<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage, builder: (column) => column);
 }
 
 class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
@@ -54457,6 +54758,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
+            Value<bool> printTermsAndConditions = const Value.absent(),
+            Value<bool> printSellerDeclaration = const Value.absent(),
+            Value<bool> printReturnPolicy = const Value.absent(),
+            Value<bool> printBuybackPolicy = const Value.absent(),
+            Value<bool> printFooterMessage = const Value.absent(),
           }) =>
               PurchaseBillingSettingsCompanion(
             id: id,
@@ -54492,6 +54798,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
+            printTermsAndConditions: printTermsAndConditions,
+            printSellerDeclaration: printSellerDeclaration,
+            printReturnPolicy: printReturnPolicy,
+            printBuybackPolicy: printBuybackPolicy,
+            printFooterMessage: printFooterMessage,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -54527,6 +54838,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             Value<String> buybackPolicyText = const Value.absent(),
             Value<String> footerMessage = const Value.absent(),
             Value<String> selectedTemplate = const Value.absent(),
+            Value<bool> printTermsAndConditions = const Value.absent(),
+            Value<bool> printSellerDeclaration = const Value.absent(),
+            Value<bool> printReturnPolicy = const Value.absent(),
+            Value<bool> printBuybackPolicy = const Value.absent(),
+            Value<bool> printFooterMessage = const Value.absent(),
           }) =>
               PurchaseBillingSettingsCompanion.insert(
             id: id,
@@ -54562,6 +54878,11 @@ class $$PurchaseBillingSettingsTableTableManager extends RootTableManager<
             buybackPolicyText: buybackPolicyText,
             footerMessage: footerMessage,
             selectedTemplate: selectedTemplate,
+            printTermsAndConditions: printTermsAndConditions,
+            printSellerDeclaration: printSellerDeclaration,
+            printReturnPolicy: printReturnPolicy,
+            printBuybackPolicy: printBuybackPolicy,
+            printFooterMessage: printFooterMessage,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

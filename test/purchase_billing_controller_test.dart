@@ -53,6 +53,11 @@ void main() {
     final input = controller.state.currentInput!;
     controller
       ..toggleField(PurchaseBillingFieldKey.huid, false)
+      ..updatePrintTerms(false)
+      ..updatePrintSellerDeclaration(false)
+      ..updatePrintReturnPolicy(false)
+      ..updatePrintBuybackPolicy(false)
+      ..updatePrintFooter(false)
       ..updateCurrentInput(
         input.copyWith(
           returnWindowDays: '1',
@@ -75,6 +80,11 @@ void main() {
     expect(gold.lateReclaimPenaltyAmount, 2500);
     expect(gold.highValueReclaimThreshold, 100000);
     expect(gold.highValueReclaimPenaltyPercent, 12);
+    expect(gold.printTermsAndConditions, isFalse);
+    expect(gold.printSellerDeclaration, isFalse);
+    expect(gold.printReturnPolicy, isFalse);
+    expect(gold.printBuybackPolicy, isFalse);
+    expect(gold.printFooterMessage, isFalse);
     expect(
       gold.sellerDeclarationText,
       'Seller accepts full ownership responsibility.',
@@ -90,19 +100,16 @@ void main() {
     await controller.load();
 
     final input = controller.state.currentInput!;
-    const exactTerms =
-        'Seller confirms clean ownership.\n'
+    const exactTerms = 'Seller confirms clean ownership.\n'
         'विक्रेता साफ स्वामित्व की पुष्टि करता है।\n'
         '\n'
         'Store note remains unchanged.';
-    const exactSellerDeclaration =
-        'Seller accepts valuation before payout.\n'
+    const exactSellerDeclaration = 'Seller accepts valuation before payout.\n'
         'विक्रेता भुगतान से पहले मूल्यांकन स्वीकार करता है।';
     const exactReturnPolicy =
         'Seller reclaim is allowed only with the original voucher.\n'
         'मूल वाउचर के साथ ही रिक्लेम मान्य होगा।';
-    const exactBuybackPolicy =
-        'Payout follows purity verification.\n'
+    const exactBuybackPolicy = 'Payout follows purity verification.\n'
         'भुगतान शुद्धता जांच के अनुसार होगा।';
     const exactFooter =
         'Purchase voucher generated from saved Billing Setup copy.\n'

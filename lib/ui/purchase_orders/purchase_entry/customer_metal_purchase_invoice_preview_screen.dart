@@ -18,6 +18,7 @@ import '../../../logic/purchase/customer_metal_purchase_invoice_service.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../models/purchase/purchase_enums/purchase_enums.dart';
 import '../../../models/setting/billing_setup/purchase_billing_model.dart';
+import '../../../models/setting/billing_setup/sales_billing_model.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../repositories/setting/billing_setup/purchase_billing_repo.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
@@ -109,7 +110,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
 
     try {
       final settings = <String, PurchaseBillingModel>{};
-      for (final metal in _presentMetalKeys()) {
+      for (final metal in BillingMetal.all) {
         settings[metal] = await _billingRepo.fetchForMetal(metal);
       }
       if (!mounted) return;
@@ -314,14 +315,34 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   }
 
   Future<PurchaseBillingModel> _togglePurchaseDisplayField(
+    String metal,
     PurchaseBillingFieldKey key,
     bool value,
   ) async {
-    final current = _activePurchaseBillingSettings();
+    final current = _purchaseBillingSettings[metal] ??
+        PurchaseBillingModel.defaultFor(metal);
     final updated = PurchaseBillingMetalProfiles.setValue(current, key, value);
     setState(() => _purchaseBillingSettings[updated.metal] = updated);
     _schedulePurchaseBillingSave(updated.metal);
-    _schedulePdfRebuild();
+    if (updated.metal == _activeMetalKey()) {
+      _schedulePdfRebuild();
+    }
+    return updated;
+  }
+
+  Future<PurchaseBillingModel> _togglePurchasePolicyPrintOption(
+    String metal,
+    _PurchasePolicyPrintKey key,
+    bool value,
+  ) async {
+    final current = _purchaseBillingSettings[metal] ??
+        PurchaseBillingModel.defaultFor(metal);
+    final updated = _setPurchasePolicyPrintValue(current, key, value);
+    setState(() => _purchaseBillingSettings[updated.metal] = updated);
+    _schedulePurchaseBillingSave(updated.metal);
+    if (updated.metal == _activeMetalKey()) {
+      _schedulePdfRebuild();
+    }
     return updated;
   }
 
@@ -339,16 +360,37 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   }
 
   Future<void> _restoreActivePurchaseBillingSetup() async {
-    final metal = _activeMetalKey();
+    await _restorePurchaseBillingSetup(_activeMetalKey());
+  }
+
+  Future<PurchaseBillingModel> _restorePurchaseBillingSetup(
+      String metal) async {
     final restored = await _billingRepo.fetchForMetal(metal);
-    if (!mounted) return;
+    if (!mounted) return restored;
     setState(() {
       _purchaseBillingSettings[metal] = restored;
-      _selectedTemplateId = restored.selectedTemplate.trim().isEmpty
-          ? PrintTemplateRegistry.defaultTemplateId
-          : restored.selectedTemplate;
+      if (metal == _activeMetalKey()) {
+        _selectedTemplateId = restored.selectedTemplate.trim().isEmpty
+            ? PrintTemplateRegistry.defaultTemplateId
+            : restored.selectedTemplate;
+      }
     });
-    await _buildPdf();
+    if (metal == _activeMetalKey()) {
+      await _buildPdf();
+    }
+    return restored;
+  }
+
+  Future<void> _savePurchaseBillingSetup(String metal) async {
+    _purchaseBillingSaveDebounces.remove(metal)?.cancel();
+    final latest = _purchaseBillingSettings[metal] ??
+        PurchaseBillingModel.defaultFor(metal);
+    await _billingRepo.saveForMetal(latest);
+    if (!mounted) return;
+    AppFeedback.success(
+      context,
+      message: '${_metalLabel(metal)} invoice display profile saved.',
+    );
   }
 
   Future<void> _selectFormat(PrintFormat format) async {
@@ -1099,6 +1141,9 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
               model: model,
               accentColor: _metalAccent(model.metal),
               onFieldChanged: _togglePurchaseDisplayField,
+              onPolicyPrintChanged: _togglePurchasePolicyPrintOption,
+              onReload: _restorePurchaseBillingSetup,
+              onSave: _savePurchaseBillingSetup,
               onClose: () => Navigator.of(dialogContext).pop(),
             ),
           ),
@@ -1905,11 +1950,24 @@ class _PurchaseBusinessPrintProfileCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: 'Reload saved business setup',
+                    OutlinedButton.icon(
                       onPressed: () => onReload(),
-                      icon: const Icon(Icons.refresh_rounded),
-                      color: PurchaseEntryColors.shellMuted,
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('RELOAD'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: PurchaseEntryColors.shellMuted,
+                        side: const BorderSide(
+                          color: PurchaseEntryColors.shellBorder,
+                        ),
+                        minimumSize: const Size(104, 40),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -2890,19 +2948,115 @@ class _PurchaseDisplayProfileCard extends StatelessWidget {
   }
 }
 
+enum _PurchasePolicyPrintKey {
+  sellerDeclaration,
+  termsAndConditions,
+  payoutPolicy,
+  reclaimPolicy,
+  footerMessage,
+}
+
+class _PurchasePolicyPrintDefinition {
+  final _PurchasePolicyPrintKey key;
+  final String label;
+  final String description;
+
+  const _PurchasePolicyPrintDefinition({
+    required this.key,
+    required this.label,
+    required this.description,
+  });
+}
+
+const List<_PurchasePolicyPrintDefinition> _purchasePolicyPrintDefinitions = [
+  _PurchasePolicyPrintDefinition(
+    key: _PurchasePolicyPrintKey.sellerDeclaration,
+    label: 'Seller Declaration',
+    description: 'Print seller ownership and responsibility declaration.',
+  ),
+  _PurchasePolicyPrintDefinition(
+    key: _PurchasePolicyPrintKey.termsAndConditions,
+    label: 'Terms & Conditions',
+    description: 'Print purchase terms saved in Billing Setup.',
+  ),
+  _PurchasePolicyPrintDefinition(
+    key: _PurchasePolicyPrintKey.payoutPolicy,
+    label: 'Payout Policy',
+    description: 'Print valuation, deduction and payout policy.',
+  ),
+  _PurchasePolicyPrintDefinition(
+    key: _PurchasePolicyPrintKey.reclaimPolicy,
+    label: 'Seller Reclaim Policy',
+    description: 'Print reclaim window and penalty policy.',
+  ),
+  _PurchasePolicyPrintDefinition(
+    key: _PurchasePolicyPrintKey.footerMessage,
+    label: 'Footer Message',
+    description: 'Print footer acknowledgement at the end of the invoice.',
+  ),
+];
+
+bool _purchasePolicyPrintValue(
+  PurchaseBillingModel model,
+  _PurchasePolicyPrintKey key,
+) {
+  switch (key) {
+    case _PurchasePolicyPrintKey.sellerDeclaration:
+      return model.printSellerDeclaration;
+    case _PurchasePolicyPrintKey.termsAndConditions:
+      return model.printTermsAndConditions;
+    case _PurchasePolicyPrintKey.payoutPolicy:
+      return model.printBuybackPolicy;
+    case _PurchasePolicyPrintKey.reclaimPolicy:
+      return model.printReturnPolicy;
+    case _PurchasePolicyPrintKey.footerMessage:
+      return model.printFooterMessage;
+  }
+}
+
+PurchaseBillingModel _setPurchasePolicyPrintValue(
+  PurchaseBillingModel model,
+  _PurchasePolicyPrintKey key,
+  bool value,
+) {
+  switch (key) {
+    case _PurchasePolicyPrintKey.sellerDeclaration:
+      return model.copyWith(printSellerDeclaration: value);
+    case _PurchasePolicyPrintKey.termsAndConditions:
+      return model.copyWith(printTermsAndConditions: value);
+    case _PurchasePolicyPrintKey.payoutPolicy:
+      return model.copyWith(printBuybackPolicy: value);
+    case _PurchasePolicyPrintKey.reclaimPolicy:
+      return model.copyWith(printReturnPolicy: value);
+    case _PurchasePolicyPrintKey.footerMessage:
+      return model.copyWith(printFooterMessage: value);
+  }
+}
+
 class _PurchaseDisplayProfileDrawer extends StatefulWidget {
   final PurchaseBillingModel model;
   final Color accentColor;
   final Future<PurchaseBillingModel> Function(
+    String metal,
     PurchaseBillingFieldKey key,
     bool value,
   ) onFieldChanged;
+  final Future<PurchaseBillingModel> Function(
+    String metal,
+    _PurchasePolicyPrintKey key,
+    bool value,
+  ) onPolicyPrintChanged;
+  final Future<PurchaseBillingModel> Function(String metal) onReload;
+  final Future<void> Function(String metal) onSave;
   final VoidCallback onClose;
 
   const _PurchaseDisplayProfileDrawer({
     required this.model,
     required this.accentColor,
     required this.onFieldChanged,
+    required this.onPolicyPrintChanged,
+    required this.onReload,
+    required this.onSave,
     required this.onClose,
   });
 
@@ -2915,7 +3069,11 @@ class _PurchaseDisplayProfileDrawerState
     extends State<_PurchaseDisplayProfileDrawer> {
   late PurchaseBillingModel _model = widget.model;
   final Set<PurchaseBillingFieldKey> _updatingFields = {};
+  final Set<_PurchasePolicyPrintKey> _updatingPolicyFields = {};
   final Map<PurchaseBillingFieldKey, int> _fieldUpdateSerials = {};
+  final Map<_PurchasePolicyPrintKey, int> _policyUpdateSerials = {};
+  bool _isReloading = false;
+  bool _isSaving = false;
 
   @override
   void didUpdateWidget(covariant _PurchaseDisplayProfileDrawer oldWidget) {
@@ -2937,7 +3095,7 @@ class _PurchaseDisplayProfileDrawerState
     });
 
     try {
-      final saved = await widget.onFieldChanged(key, value);
+      final saved = await widget.onFieldChanged(_model.metal, key, value);
       if (!mounted || _fieldUpdateSerials[key] != requestSerial) return;
       setState(() => _model = saved);
     } catch (_) {
@@ -2948,6 +3106,52 @@ class _PurchaseDisplayProfileDrawerState
         setState(() => _updatingFields.remove(key));
       }
     }
+  }
+
+  Future<void> _setPolicyPrintField(
+    _PurchasePolicyPrintKey key,
+    bool value,
+  ) async {
+    final previous = _model;
+    final requestSerial = (_policyUpdateSerials[key] ?? 0) + 1;
+    _policyUpdateSerials[key] = requestSerial;
+    final optimistic = _setPurchasePolicyPrintValue(previous, key, value);
+    setState(() {
+      _model = optimistic;
+      _updatingPolicyFields.add(key);
+    });
+
+    try {
+      final saved = await widget.onPolicyPrintChanged(_model.metal, key, value);
+      if (!mounted || _policyUpdateSerials[key] != requestSerial) return;
+      setState(() => _model = saved);
+    } catch (_) {
+      if (!mounted || _policyUpdateSerials[key] != requestSerial) return;
+      setState(() => _model = previous);
+    } finally {
+      if (mounted && _policyUpdateSerials[key] == requestSerial) {
+        setState(() => _updatingPolicyFields.remove(key));
+      }
+    }
+  }
+
+  Future<void> _reload() async {
+    setState(() => _isReloading = true);
+    final restored = await widget.onReload(_model.metal);
+    if (!mounted) return;
+    setState(() {
+      _model = restored;
+      _isReloading = false;
+      _updatingFields.clear();
+      _updatingPolicyFields.clear();
+    });
+  }
+
+  Future<void> _save() async {
+    setState(() => _isSaving = true);
+    await widget.onSave(_model.metal);
+    if (!mounted) return;
+    setState(() => _isSaving = false);
   }
 
   @override
@@ -3007,7 +3211,7 @@ class _PurchaseDisplayProfileDrawerState
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Purchase Billing Setup fields',
+                          'Purchase Billing Setup controls',
                           style: TextStyle(
                             color: PurchaseEntryColors.shellMuted,
                             fontSize: 11,
@@ -3028,27 +3232,280 @@ class _PurchaseDisplayProfileDrawerState
             ),
             const Divider(color: PurchaseEntryColors.shellBorder, height: 1),
             Expanded(
-              child: ListView.separated(
+              child: ListView(
                 padding: const EdgeInsets.all(14),
-                itemBuilder: (context, index) {
-                  final field = fields[index];
-                  final value =
-                      PurchaseBillingMetalProfiles.valueFor(_model, field.key);
-                  return _PurchaseDisplayToggleTile(
-                    field: field,
-                    value: value,
-                    accentColor: widget.accentColor,
-                    isUpdating: _updatingFields.contains(field.key),
-                    onChanged: (value) => _setField(field.key, value),
-                  );
-                },
-                separatorBuilder: (context, index) =>
+                children: [
+                  const _PurchaseDisplayDrawerSectionTitle(
+                    title: 'ITEM DISPLAY',
+                    subtitle:
+                        'Metal-wise item and seller fields from Purchase Billing Setup',
+                  ),
+                  const SizedBox(height: 10),
+                  for (final field in fields) ...[
+                    _PurchaseDisplayToggleTile(
+                      field: field,
+                      value: PurchaseBillingMetalProfiles.valueFor(
+                        _model,
+                        field.key,
+                      ),
+                      accentColor: widget.accentColor,
+                      isUpdating: _updatingFields.contains(field.key),
+                      onChanged: (value) => _setField(field.key, value),
+                    ),
                     const SizedBox(height: 10),
-                itemCount: fields.length,
+                  ],
+                  const SizedBox(height: 6),
+                  const _PurchaseDisplayDrawerSectionTitle(
+                    title: 'POLICY & FOOTER',
+                    subtitle:
+                        'Control declaration, terms, policies and footer printed on PDF',
+                  ),
+                  const SizedBox(height: 10),
+                  for (final policy in _purchasePolicyPrintDefinitions) ...[
+                    _PurchasePolicyPrintToggleTile(
+                      definition: policy,
+                      value: _purchasePolicyPrintValue(_model, policy.key),
+                      accentColor: widget.accentColor,
+                      isUpdating: _updatingPolicyFields.contains(policy.key),
+                      onChanged: (value) =>
+                          _setPolicyPrintField(policy.key, value),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ],
               ),
+            ),
+            _PurchaseDisplayDrawerFooter(
+              accentColor: widget.accentColor,
+              isSaving: _isSaving,
+              isReloading: _isReloading,
+              onReload: _reload,
+              onSave: _save,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PurchaseDisplayDrawerFooter extends StatelessWidget {
+  final Color accentColor;
+  final bool isSaving;
+  final bool isReloading;
+  final VoidCallback onReload;
+  final VoidCallback onSave;
+
+  const _PurchaseDisplayDrawerFooter({
+    required this.accentColor,
+    required this.isSaving,
+    required this.isReloading,
+    required this.onReload,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: const BoxDecoration(
+        color: PurchaseEntryColors.shellBg,
+        border: Border(top: BorderSide(color: PurchaseEntryColors.shellBorder)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: isSaving || isReloading ? null : onReload,
+              icon: isReloading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: accentColor,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.settings_backup_restore_rounded, size: 17),
+              label: Text(isReloading ? 'RELOADING...' : 'RELOAD SAVED'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: PurchaseEntryColors.shellMuted,
+                side: const BorderSide(color: PurchaseEntryColors.shellBorder),
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton.icon(
+              onPressed: isSaving || isReloading ? null : onSave,
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.save_rounded, size: 17),
+              label: Text(isSaving ? 'SAVING...' : 'SAVE DISPLAY PROFILE'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PurchaseDisplayDrawerSectionTitle extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _PurchaseDisplayDrawerSectionTitle({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: PurchaseEntryColors.shellTitle,
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: PurchaseEntryColors.shellMuted,
+            fontSize: 10.5,
+            height: 1.25,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PurchasePolicyPrintToggleTile extends StatelessWidget {
+  final _PurchasePolicyPrintDefinition definition;
+  final bool value;
+  final Color accentColor;
+  final bool isUpdating;
+  final ValueChanged<bool> onChanged;
+
+  const _PurchasePolicyPrintToggleTile({
+    required this.definition,
+    required this.value,
+    required this.accentColor,
+    this.isUpdating = false,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: value
+            ? accentColor.withValues(alpha: 0.10)
+            : PurchaseEntryColors.shellBg.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: value
+              ? accentColor.withValues(alpha: 0.42)
+              : PurchaseEntryColors.shellBorder,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            value ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+            color: value ? accentColor : PurchaseEntryColors.shellMuted,
+            size: 18,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  definition.label,
+                  style: const TextStyle(
+                    color: PurchaseEntryColors.shellTitle,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  definition.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: PurchaseEntryColors.shellMuted,
+                    fontSize: 10.5,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          AnimatedOpacity(
+            opacity: isUpdating ? 1 : 0,
+            duration: const Duration(milliseconds: 140),
+            child: SizedBox(
+              width: 14,
+              height: 14,
+              child: isUpdating
+                  ? CircularProgressIndicator(
+                      color: accentColor,
+                      strokeWidth: 1.7,
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            value: value,
+            activeThumbColor: accentColor,
+            activeTrackColor: accentColor.withValues(alpha: 0.32),
+            inactiveThumbColor: PurchaseEntryColors.shellMuted,
+            inactiveTrackColor: PurchaseEntryColors.shellBg,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

@@ -103,4 +103,15 @@ class PurchaseBillingSettings extends Table with BaseTable {
 
   TextColumn get selectedTemplate =>
       text().withDefault(const Constant('default'))();
+
+  BoolColumn get printTermsAndConditions =>
+      boolean().withDefault(const Constant(true))();
+  BoolColumn get printSellerDeclaration =>
+      boolean().withDefault(const Constant(true))();
+  BoolColumn get printReturnPolicy =>
+      boolean().withDefault(const Constant(true))();
+  BoolColumn get printBuybackPolicy =>
+      boolean().withDefault(const Constant(true))();
+  BoolColumn get printFooterMessage =>
+      boolean().withDefault(const Constant(true))();
 }

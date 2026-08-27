@@ -31,6 +31,11 @@ class PurchaseBillingModel {
   final String buybackPolicyText;
   final String footerMessage;
   final String selectedTemplate;
+  final bool printTermsAndConditions;
+  final bool printSellerDeclaration;
+  final bool printReturnPolicy;
+  final bool printBuybackPolicy;
+  final bool printFooterMessage;
 
   const PurchaseBillingModel({
     required this.metal,
@@ -63,6 +68,11 @@ class PurchaseBillingModel {
     this.buybackPolicyText = _defaultPayoutNote,
     this.footerMessage = _defaultFooter,
     this.selectedTemplate = 'default',
+    this.printTermsAndConditions = true,
+    this.printSellerDeclaration = true,
+    this.printReturnPolicy = true,
+    this.printBuybackPolicy = true,
+    this.printFooterMessage = true,
   });
 
   factory PurchaseBillingModel.defaultFor(String metal) {
@@ -211,6 +221,11 @@ class PurchaseBillingModel {
     String? buybackPolicyText,
     String? footerMessage,
     String? selectedTemplate,
+    bool? printTermsAndConditions,
+    bool? printSellerDeclaration,
+    bool? printReturnPolicy,
+    bool? printBuybackPolicy,
+    bool? printFooterMessage,
   }) {
     return PurchaseBillingModel(
       metal: metal,
@@ -247,6 +262,13 @@ class PurchaseBillingModel {
       buybackPolicyText: buybackPolicyText ?? this.buybackPolicyText,
       footerMessage: footerMessage ?? this.footerMessage,
       selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      printTermsAndConditions:
+          printTermsAndConditions ?? this.printTermsAndConditions,
+      printSellerDeclaration:
+          printSellerDeclaration ?? this.printSellerDeclaration,
+      printReturnPolicy: printReturnPolicy ?? this.printReturnPolicy,
+      printBuybackPolicy: printBuybackPolicy ?? this.printBuybackPolicy,
+      printFooterMessage: printFooterMessage ?? this.printFooterMessage,
     );
   }
 }

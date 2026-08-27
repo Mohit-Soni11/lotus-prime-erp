@@ -787,7 +787,7 @@ class PrintTemplatePreviewPdfService {
   }
 
   String _shopName(ShopPrintDocumentProfile? profile) {
-    final name = profile?.primaryName.trim() ?? '';
+    final name = profile?.invoiceHeaderName.trim() ?? '';
     return name.isEmpty ? 'SHOP NAME NOT CONFIGURED' : name.toUpperCase();
   }
 
@@ -804,7 +804,7 @@ class PrintTemplatePreviewPdfService {
   }
 
   String _brandInitials(ShopPrintDocumentProfile? profile) {
-    final name = profile?.primaryName.trim() ?? '';
+    final name = profile?.invoiceHeaderName.trim() ?? '';
     if (name.isEmpty) return 'LS';
 
     final parts = name

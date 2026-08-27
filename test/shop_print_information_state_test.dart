@@ -199,9 +199,36 @@ void main() {
     final profile = ShopPrintDocumentProfile.fromState(state, payload);
 
     expect(profile.primaryName, 'ANJALI JEWELLERS');
+    expect(profile.invoiceHeaderName, 'ANJALI JEWELLERS');
     expect(
       profile.headerLines.any((line) => line == 'Legal Name: ANJALI JEWELLERS'),
       isFalse,
+    );
+  });
+
+  test('shop print profile hides invoice header name when shop name is off',
+      () {
+    const payload = {
+      'basic_info': {
+        'brand_display_name': 'ANJALI',
+        'display_name': 'ANJALI JEWELLERS',
+        'legal_name': 'ANJALI JEWELLERS',
+      },
+    };
+    final fields = ShopPrintInformationCatalog.fromPayload(payload);
+    final state = ShopPrintInformationState(
+      tenantId: 'tenant_hidden_shop_name',
+      fields: fields,
+      enabledFieldIds: {'legal_name'},
+    );
+
+    final profile = ShopPrintDocumentProfile.fromState(state, payload);
+
+    expect(profile.primaryName, 'ANJALI JEWELLERS');
+    expect(profile.invoiceHeaderName, isEmpty);
+    expect(
+      profile.headerLines,
+      contains('Legal Name: ANJALI JEWELLERS'),
     );
   });
 }

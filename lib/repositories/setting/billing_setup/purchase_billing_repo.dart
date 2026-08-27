@@ -93,6 +93,11 @@ class PurchaseBillingRepo {
       buybackPolicyText: Value(model.buybackPolicyText),
       footerMessage: Value(model.footerMessage),
       selectedTemplate: Value(model.selectedTemplate),
+      printTermsAndConditions: Value(model.printTermsAndConditions),
+      printSellerDeclaration: Value(model.printSellerDeclaration),
+      printReturnPolicy: Value(model.printReturnPolicy),
+      printBuybackPolicy: Value(model.printBuybackPolicy),
+      printFooterMessage: Value(model.printFooterMessage),
     );
   }
 
@@ -128,6 +133,11 @@ class PurchaseBillingRepo {
       buybackPolicyText: row.buybackPolicyText,
       footerMessage: row.footerMessage,
       selectedTemplate: row.selectedTemplate,
+      printTermsAndConditions: row.printTermsAndConditions,
+      printSellerDeclaration: row.printSellerDeclaration,
+      printReturnPolicy: row.printReturnPolicy,
+      printBuybackPolicy: row.printBuybackPolicy,
+      printFooterMessage: row.printFooterMessage,
     );
   }
 }

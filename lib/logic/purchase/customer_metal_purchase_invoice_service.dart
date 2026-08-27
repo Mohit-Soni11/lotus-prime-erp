@@ -512,22 +512,25 @@ class CustomerMetalPurchaseInvoiceService {
   ) {
     final sellerDeclaration = _sellerDeclarationText(settings);
     return [
-      if (sellerDeclaration.isNotEmpty)
+      if (settings.printSellerDeclaration && sellerDeclaration.isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Seller Declaration',
           body: sellerDeclaration,
         ),
-      if (settings.termsAndConditions.trim().isNotEmpty)
+      if (settings.printTermsAndConditions &&
+          settings.termsAndConditions.trim().isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Terms & Conditions',
           body: settings.termsAndConditions.trim(),
         ),
-      if (settings.buybackPolicyText.trim().isNotEmpty)
+      if (settings.printBuybackPolicy &&
+          settings.buybackPolicyText.trim().isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Payout Policy',
           body: settings.buybackPolicyText.trim(),
         ),
-      if (settings.returnPolicyText.trim().isNotEmpty)
+      if (settings.printReturnPolicy &&
+          settings.returnPolicyText.trim().isNotEmpty)
         LotusPrintablePolicySection(
           title: 'Seller Reclaim Policy',
           body: settings.returnPolicyText.trim(),
@@ -1087,7 +1090,7 @@ class CustomerMetalPurchaseInvoiceService {
   }
 
   static String _shopName(ShopPrintDocumentProfile profile) {
-    return profile.primaryName.trim();
+    return profile.invoiceHeaderName.trim();
   }
 
   static String _fileName(CustomerMetalPurchaseInvoiceData invoice) {
@@ -1159,6 +1162,7 @@ class CustomerMetalPurchaseInvoiceService {
   }
 
   static String _purchaseFooterMessage(PurchaseBillingModel settings) {
+    if (!settings.printFooterMessage) return '';
     final text = settings.footerMessage.trim();
     if (text.isEmpty || text.contains('Thank you for trusting us')) {
       return _legalPurchaseFooterMessage;
