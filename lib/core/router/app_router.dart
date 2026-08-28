@@ -657,9 +657,8 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.reportPurchase,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.purchaseReportRoute),
-            ),
+            builder: (context, state) =>
+                const CustomerMetalPurchaseLedgerScreen(),
           ),
           GoRoute(
             path: RoutePaths.reportPnl,

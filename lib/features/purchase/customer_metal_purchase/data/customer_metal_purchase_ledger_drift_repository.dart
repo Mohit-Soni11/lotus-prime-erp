@@ -18,6 +18,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
   }) async {
     await _ensureReturnTable();
     await _ensureMeltingTables();
+    await _ensurePurchaseVoucherReportColumns();
     await _db.ensureSalesCustomerMetalSettlementSchema();
     final entries = <CustomerMetalPurchaseEntry>[];
     final normalizedStart = startDate == null ? null : _startOfDay(startDate);
@@ -200,6 +201,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
           customer?.name ?? bill.customerName ?? 'Walk-in Customer';
       final customerId =
           customer?.id ?? await _findCustomerIdByName(customerName);
+      final amount = item.lineAmount;
 
       entries.add(
         CustomerMetalPurchaseEntry(
@@ -217,7 +219,11 @@ class DriftCustomerMetalPurchaseLedgerRepository
           purity: item.purity,
           fineWeight: item.fineWeight,
           rate: item.rate,
-          amount: item.lineAmount,
+          amount: amount,
+          paidAmount: amount,
+          pendingAmount: 0,
+          paymentStatus: 'PAID',
+          mobile: customer?.mobile,
         ),
       );
     }
@@ -244,6 +250,17 @@ class DriftCustomerMetalPurchaseLedgerRepository
         pv.customer_id,
         pv.created_at,
         pv.voucher_no,
+        pv.mobile,
+        pv.cash_paid,
+        pv.upi_paid,
+        pv.bank_paid,
+        pv.card_paid,
+        pv.total_paid,
+        pv.balance_due,
+        pv.promise_date,
+        pv.payment_status,
+        pv.seller_photo_path,
+        pv.grand_total,
         COALESCE(c.name, pv.party_name, 'Walk-in Customer') AS customer_name,
         pvi.metal_type,
         pvi.item_description,
@@ -272,6 +289,16 @@ class DriftCustomerMetalPurchaseLedgerRepository
       final customerName = row.read<String>('customer_name');
       final customerId = row.readNullable<int>('customer_id') ??
           await _findCustomerIdByName(customerName);
+      final lineAmount = _readDouble(row, 'line_amount');
+      final grandTotal = _readDouble(row, 'grand_total');
+      final totalPaid = _readDouble(row, 'total_paid');
+      final balanceDue = _readDouble(row, 'balance_due');
+      final ratio = grandTotal <= 0 ? 1.0 : lineAmount / grandTotal;
+      final allocatedPaid = _roundMoney(totalPaid * ratio).clamp(0, lineAmount);
+      final allocatedPending = _roundMoney(
+        (balanceDue > 0 ? balanceDue : 0) * ratio,
+      );
+      final commitmentMs = row.readNullable<int>('promise_date');
 
       entries.add(
         CustomerMetalPurchaseEntry(
@@ -290,8 +317,63 @@ class DriftCustomerMetalPurchaseLedgerRepository
           purity: row.read<double>('purity'),
           fineWeight: row.read<double>('fine_weight'),
           rate: row.read<double>('rate'),
-          amount: row.read<double>('line_amount'),
+          amount: lineAmount,
+          paidAmount: allocatedPaid.toDouble(),
+          pendingAmount: allocatedPending,
+          cashPaid: _roundMoney(_readDouble(row, 'cash_paid') * ratio),
+          upiPaid: _roundMoney(_readDouble(row, 'upi_paid') * ratio),
+          bankPaid: _roundMoney(_readDouble(row, 'bank_paid') * ratio),
+          cardPaid: _roundMoney(_readDouble(row, 'card_paid') * ratio),
+          paymentStatus: row.readNullable<String>('payment_status') ?? 'PAID',
+          mobile: row.readNullable<String>('mobile'),
+          commitmentDate: commitmentMs == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(commitmentMs),
+          sellerPhotoPath: row.readNullable<String>('seller_photo_path'),
         ),
+      );
+    }
+  }
+
+  double _readDouble(QueryRow row, String column) {
+    final value = row.readNullable<double>(column);
+    return value ?? 0.0;
+  }
+
+  double _roundMoney(double value) {
+    return double.parse(value.toStringAsFixed(2));
+  }
+
+  Future<void> _ensurePurchaseVoucherReportColumns() async {
+    await _ensureTableColumns('purchase_vouchers', const {
+      'upi_paid': 'REAL NOT NULL DEFAULT 0.0',
+      'bank_paid': 'REAL NOT NULL DEFAULT 0.0',
+      'card_paid': 'REAL NOT NULL DEFAULT 0.0',
+      'promise_date': 'INTEGER',
+      'payment_meta': 'TEXT',
+      'seller_photo_path': 'TEXT',
+      'payment_status': "TEXT NOT NULL DEFAULT 'PAID'",
+      'stock_entry_count': 'INTEGER NOT NULL DEFAULT 0',
+    });
+  }
+
+  Future<void> _ensureTableColumns(
+    String tableName,
+    Map<String, String> columns,
+  ) async {
+    final rows =
+        await _db.customSelect('PRAGMA table_info("$tableName")').get();
+    if (rows.isEmpty) {
+      return;
+    }
+
+    final existingColumns = rows.map((row) => row.read<String>('name')).toSet();
+    for (final entry in columns.entries) {
+      if (existingColumns.contains(entry.key)) {
+        continue;
+      }
+      await _db.customStatement(
+        'ALTER TABLE "$tableName" ADD COLUMN "${entry.key}" ${entry.value}',
       );
     }
   }
