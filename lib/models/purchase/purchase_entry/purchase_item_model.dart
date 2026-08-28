@@ -70,6 +70,21 @@ class PurchaseItemModel extends ChangeNotifier {
 
   bool get isValidEntry => netWt > 0 && rate > 0;
 
+  bool get hasGrossInput => grossCtrl.text.trim().isNotEmpty;
+  bool get hasLessInput => lessCtrl.text.trim().isNotEmpty;
+  bool get hasRateInput => rateCtrl.text.trim().isNotEmpty;
+
+  bool get hasInlineValidationError {
+    if (!hasContent) {
+      return false;
+    }
+
+    final impossibleWeight = hasLessInput && grossWt > 0 && lessWt >= grossWt;
+    final impossibleRate = hasRateInput && rate <= 0;
+
+    return impossibleWeight || impossibleRate;
+  }
+
   bool applyMasterRate({
     required double rate,
     required String sourceLabel,

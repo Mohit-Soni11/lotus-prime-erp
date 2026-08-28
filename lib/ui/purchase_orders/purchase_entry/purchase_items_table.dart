@@ -59,23 +59,26 @@ class PurchaseItemsTable extends StatelessWidget {
   }
 
   Widget _buildRows(double tableWidth, bool needsHorizontalScroll) {
-    final table = Column(
-      key: const ValueKey('purchase-metal-table'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildColumnHeaders(),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: ctrl.items.length,
-          itemBuilder: (context, index) => PurchaseItemRow(
-            key: ObjectKey(ctrl.items[index]),
-            index: index,
-            item: ctrl.items[index],
-            ctrl: ctrl,
+    final table = FocusTraversalGroup(
+      policy: OrderedTraversalPolicy(),
+      child: Column(
+        key: const ValueKey('purchase-metal-table'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildColumnHeaders(),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: ctrl.items.length,
+            itemBuilder: (context, index) => PurchaseItemRow(
+              key: ObjectKey(ctrl.items[index]),
+              index: index,
+              item: ctrl.items[index],
+              ctrl: ctrl,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
 
     if (!needsHorizontalScroll) {

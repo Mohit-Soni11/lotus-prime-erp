@@ -151,6 +151,7 @@ class PurchaseVoucherDraft {
   final String? excessMode;
   final DateTime? promiseDate;
   final String? paymentMeta;
+  final String? sellerPhotoPath;
   final PurchaseVoucherPartyDraft party;
   final List<PurchaseVoucherItemDraft> items;
 
@@ -184,6 +185,7 @@ class PurchaseVoucherDraft {
     this.excessMode,
     this.promiseDate,
     this.paymentMeta,
+    this.sellerPhotoPath,
     required this.party,
     required this.items,
   });
@@ -319,12 +321,13 @@ class PurchaseEntryRepository {
             excess_mode,
             promise_date,
             payment_meta,
+            seller_photo_path,
             payment_status,
             stock_entry_count,
             status,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ''',
           [
             draft.voucherNo,
@@ -368,6 +371,9 @@ class PurchaseEntryRepository {
             draft.excessMode,
             draft.promiseDate?.millisecondsSinceEpoch,
             draft.paymentMeta,
+            draft.sellerPhotoPath?.trim().isEmpty ?? true
+                ? null
+                : draft.sellerPhotoPath!.trim(),
             paymentStatus,
             draft.items.length,
             'SAVED',
@@ -737,6 +743,7 @@ class PurchaseEntryRepository {
         'excess_mode': 'TEXT',
         'promise_date': 'INTEGER',
         'payment_meta': 'TEXT',
+        'seller_photo_path': 'TEXT',
         'payment_status': "TEXT NOT NULL DEFAULT 'UNPAID'",
         'stock_entry_count': 'INTEGER NOT NULL DEFAULT 0',
         'status': "TEXT NOT NULL DEFAULT 'SAVED'",

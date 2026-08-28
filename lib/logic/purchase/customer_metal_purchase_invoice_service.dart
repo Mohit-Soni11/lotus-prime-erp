@@ -67,6 +67,7 @@ class CustomerMetalPurchaseInvoiceData {
   final String sellerMobile;
   final String sellerAddress;
   final String sellerPanOrAadhaar;
+  final String sellerPhotoPath;
   final DateTime? payoutCommitmentDate;
   final List<CustomerMetalPurchaseInvoiceLine> lineItems;
   final double grossPurchaseAmount;
@@ -85,6 +86,7 @@ class CustomerMetalPurchaseInvoiceData {
     required this.sellerMobile,
     required this.sellerAddress,
     required this.sellerPanOrAadhaar,
+    this.sellerPhotoPath = '',
     required this.payoutCommitmentDate,
     required this.lineItems,
     required this.grossPurchaseAmount,
@@ -107,6 +109,7 @@ class CustomerMetalPurchaseInvoiceData {
       sellerMobile: controller.mobileCtrl.text,
       sellerAddress: controller.cityCtrl.text,
       sellerPanOrAadhaar: controller.panCtrl.text,
+      sellerPhotoPath: controller.sellerPhotoPath ?? '',
       payoutCommitmentDate: controller.payoutCommitmentDate,
       lineItems: controller.items
           .where((item) => item.hasContent)
@@ -158,6 +161,7 @@ class CustomerMetalPurchaseInvoiceData {
       sellerMobile: sellerMobile,
       sellerAddress: sellerAddress,
       sellerPanOrAadhaar: sellerPanOrAadhaar,
+      sellerPhotoPath: sellerPhotoPath,
       payoutCommitmentDate: payoutCommitmentDate,
       lineItems: scopedItems,
       grossPurchaseAmount: _roundCurrency(scopedGross),
@@ -438,6 +442,8 @@ class CustomerMetalPurchaseInvoiceService {
     final settings = _settingsForInvoice(invoice, displaySettings);
     return LotusPrintablePanel(
       title: 'SELLER DETAILS',
+      photoPath: invoice.sellerPhotoPath,
+      photoLabel: 'Seller Photo',
       details: [
         if (settings.showSupplierDetails)
           LotusPrintableDetail(

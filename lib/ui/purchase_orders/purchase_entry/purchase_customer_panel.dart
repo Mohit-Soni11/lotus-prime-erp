@@ -6,6 +6,7 @@ import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import '../../customer/add_customer/add_customer_screen.dart';
+import 'purchase_seller_photo_card.dart';
 
 class PurchaseCustomerPanel extends StatefulWidget {
   final PurchaseEntryController ctrl;
@@ -209,20 +210,7 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildHeader(),
-              const SizedBox(height: 16),
-              Container(
-                height: 1.5,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.5),
-                      PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.1),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final singleColumn = constraints.maxWidth < 760;
@@ -325,11 +313,11 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Expanded(flex: 2, child: mobileField),
+                      Expanded(flex: 3, child: mobileField),
                       const SizedBox(width: 12),
                       Expanded(flex: 3, child: nameField),
                       const SizedBox(width: 12),
-                      Expanded(flex: 5, child: addressField),
+                      Expanded(flex: 6, child: addressField),
                       const SizedBox(width: 12),
                       Expanded(flex: 3, child: identityField),
                       const SizedBox(width: 16),
@@ -346,6 +334,8 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                   );
                 },
               ),
+              const SizedBox(height: 14),
+              PurchaseSellerPhotoCard(ctrl: widget.ctrl),
               if (widget.ctrl.hasSelectedCounterparty ||
                   widget.ctrl.counterpartNotFound) ...[
                 const SizedBox(height: 16),
@@ -608,10 +598,14 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
     bool isNumber = false,
     bool isCaps = false,
     int? maxLength,
+    int maxLines = 1,
+    double height = 46,
+    double? inputFontSize,
     List<TextInputFormatter>? inputFormatters,
     TextCapitalization textCapitalization = TextCapitalization.none,
     IconData? icon,
   }) {
+    final isMultiline = maxLines > 1;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -641,15 +635,23 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 46,
+          height: height,
           child: TextField(
             controller: controller,
-            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            keyboardType: isMultiline
+                ? TextInputType.multiline
+                : (isNumber ? TextInputType.number : TextInputType.text),
             textCapitalization:
                 isCaps ? TextCapitalization.characters : textCapitalization,
             inputFormatters: inputFormatters,
             maxLength: maxLength,
-            style: PurchaseEntryStyles.inputText,
+            maxLines: maxLines,
+            textAlignVertical:
+                isMultiline ? TextAlignVertical.top : TextAlignVertical.center,
+            style: PurchaseEntryStyles.inputText.copyWith(
+              fontSize: inputFontSize,
+              height: isMultiline ? 1.22 : 1.0,
+            ),
             decoration: InputDecoration(
               counterText: '',
               hintText: hint,
@@ -659,12 +661,31 @@ class _PurchaseCustomerPanelState extends State<PurchaseCustomerPanel>
                 fontWeight: FontWeight.w500,
               ),
               prefixIcon: icon != null
-                  ? Icon(icon, size: 18, color: PurchaseEntryColors.textMuted)
+                  ? Padding(
+                      padding: EdgeInsets.only(
+                        top: isMultiline ? 10 : 0,
+                        left: 10,
+                        right: 8,
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 18,
+                        color: PurchaseEntryColors.textMuted,
+                      ),
+                    )
                   : null,
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 38,
+                minHeight: 36,
+              ),
               filled: true,
               fillColor: PurchaseEntryColors.formInputBg,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              contentPadding: EdgeInsets.fromLTRB(
+                icon == null ? 10 : 0,
+                isMultiline ? 9 : 0,
+                10,
+                isMultiline ? 8 : 0,
+              ),
               border: OutlineInputBorder(
                 borderSide:
                     const BorderSide(color: PurchaseEntryColors.bodyBorder),

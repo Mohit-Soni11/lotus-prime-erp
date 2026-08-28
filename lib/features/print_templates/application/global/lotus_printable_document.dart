@@ -55,10 +55,14 @@ class LotusPrintableDocument {
 class LotusPrintablePanel {
   final String title;
   final List<LotusPrintableDetail> details;
+  final String photoPath;
+  final String photoLabel;
 
   const LotusPrintablePanel({
     required this.title,
     required this.details,
+    this.photoPath = '',
+    this.photoLabel = '',
   });
 }
 

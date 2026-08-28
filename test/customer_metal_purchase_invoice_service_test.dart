@@ -144,6 +144,18 @@ void main() {
     expect(document.subtitle, isEmpty);
   });
 
+  test('printable purchase seller panel carries seller photo for print', () {
+    final document =
+        CustomerMetalPurchaseInvoiceService.buildPrintableDocumentForTesting(
+      _invoiceWithSellerPhoto,
+      shopProfile: _profile,
+      invoiceDate: DateTime(2026, 8, 23),
+    );
+
+    expect(document.primaryPanel.photoPath, 'C:\\seller-proof.jpg');
+    expect(document.primaryPanel.photoLabel, 'Seller Photo');
+  });
+
   test('printable purchase shop header obeys business profile shop name toggle',
       () {
     final document =
@@ -331,6 +343,39 @@ const _invoice = CustomerMetalPurchaseInvoiceData(
   upiPaid: 8350.5,
   cardPaid: 0,
   totalPaid: 58350.5,
+  balanceDue: 0,
+  hasPendingSellerPayout: false,
+  hasSellerPayoutExcess: false,
+);
+
+const _invoiceWithSellerPhoto = CustomerMetalPurchaseInvoiceData(
+  purchaseNo: 'AJ-PUR-2026-0006',
+  sellerName: 'Reyansh Soni',
+  sellerMobile: '9304479436',
+  sellerAddress: 'Patna',
+  sellerPanOrAadhaar: 'ABCDE1234F',
+  sellerPhotoPath: 'C:\\seller-proof.jpg',
+  payoutCommitmentDate: null,
+  lineItems: [
+    CustomerMetalPurchaseInvoiceLine(
+      metalKey: 'gold',
+      metalName: 'GOLD',
+      description: 'Old Gold Ring',
+      grossWeight: 1,
+      lessWeight: 0,
+      netWeight: 1,
+      purity: 100,
+      fineWeight: 1,
+      rate: 15000,
+      totalValue: 15000,
+    ),
+  ],
+  grossPurchaseAmount: 15000,
+  sellerPayable: 15000,
+  cashPaid: 15000,
+  upiPaid: 0,
+  cardPaid: 0,
+  totalPaid: 15000,
   balanceDue: 0,
   hasPendingSellerPayout: false,
   hasSellerPayoutExcess: false,

@@ -51,6 +51,7 @@ class PurchaseEntryController extends ChangeNotifier {
   CustomerListItemModel? selectedCustomer;
   bool counterpartNotFound = false;
   DateTime? payoutCommitmentDate;
+  String? sellerPhotoPath;
 
   bool _isSaving = false;
   bool _disposed = false;
@@ -66,6 +67,7 @@ class PurchaseEntryController extends ChangeNotifier {
   PurchaseSource get purchaseSource => PurchaseSource.fromCustomer;
 
   bool get hasSelectedCounterparty => selectedCustomer != null;
+  bool get hasSellerPhoto => sellerPhotoPath?.trim().isNotEmpty ?? false;
 
   bool get canQuickCreateSeller {
     if (selectedCustomer != null) return false;
@@ -267,7 +269,7 @@ class PurchaseEntryController extends ChangeNotifier {
               id: row.id,
               name: row.name,
               mobile: CustomerContactValue.displayMobile(row.mobile),
-              city: _formatCustomerAddress(row),
+              city: _formatSellerEntryAddress(row),
               panNumber: row.panNumber ?? '',
               type: CustomerType.fromString(row.type),
               billCount: 0,
@@ -298,7 +300,7 @@ class PurchaseEntryController extends ChangeNotifier {
     nameCtrl.text = customer.name;
     mobileCtrl.text = customer.mobile;
     cityCtrl.text =
-        fullRow == null ? customer.city : _formatCustomerAddress(fullRow);
+        fullRow == null ? customer.city : _formatSellerEntryAddress(fullRow);
     panCtrl.text = _primaryIdentityNumber(fullRow);
     notifyListeners();
   }
@@ -368,7 +370,7 @@ class PurchaseEntryController extends ChangeNotifier {
       id: row.id,
       name: row.name,
       mobile: CustomerContactValue.displayMobile(row.mobile),
-      city: _formatCustomerAddress(row),
+      city: _formatSellerEntryAddress(row),
       panNumber: row.panNumber ?? '',
       type: CustomerType.fromString(row.type),
       billCount: 0,
@@ -395,14 +397,10 @@ class PurchaseEntryController extends ChangeNotifier {
     return _SellerIdentityValues(idProofNumber: value);
   }
 
-  String _formatCustomerAddress(Customer customer) {
+  String _formatSellerEntryAddress(Customer customer) {
     return [
       customer.addressLine1,
       customer.addressLine2,
-      customer.city,
-      customer.state,
-      customer.pincode,
-      customer.country,
     ]
         .map((value) => value?.trim() ?? '')
         .where((value) => value.isNotEmpty)
@@ -508,6 +506,17 @@ class PurchaseEntryController extends ChangeNotifier {
 
   void clearPayoutCommitmentDate() => setPayoutCommitmentDate(null);
 
+  void setSellerPhoto(String path) {
+    final normalized = path.trim();
+    sellerPhotoPath = normalized.isEmpty ? null : normalized;
+    notifyListeners();
+  }
+
+  void clearSellerPhoto() {
+    sellerPhotoPath = null;
+    notifyListeners();
+  }
+
   static String formatDisplayDate(DateTime date) {
     const months = [
       'Jan',
@@ -596,6 +605,7 @@ class PurchaseEntryController extends ChangeNotifier {
           paymentMeta: pendingSellerPayout
               ? 'Remaining seller payout scheduled by commitment date.'
               : null,
+          sellerPhotoPath: sellerPhotoPath,
           party: PurchaseVoucherPartyDraft(
             customerId: selectedCustomer?.id,
             supplierId: null,
@@ -662,6 +672,7 @@ class PurchaseEntryController extends ChangeNotifier {
     payoutCommitmentDateCtrl.clear();
 
     payoutCommitmentDate = null;
+    sellerPhotoPath = null;
     customerSuggestions = [];
     selectedCustomer = null;
     counterpartNotFound = false;

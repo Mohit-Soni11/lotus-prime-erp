@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/feedback/app_feedback.dart';
 import '../../../core/pdf/lotus_pdf_page_counter.dart';
+import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../features/settings/billing_setup/purchase/domain/purchase_billing_metal_profile.dart';
 import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
@@ -64,6 +63,8 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   final PurchaseBillingRepo _billingRepo = PurchaseBillingRepo();
   final ShopPrintInformationRepository _shopPrintRepo =
       ShopPrintInformationRepository();
+  final LotusPdfPrintDispatcher _printDispatcher =
+      const LotusPdfPrintDispatcher();
 
   Uint8List? _pdfBytes;
   final Map<String, PurchaseBillingModel> _purchaseBillingSettings = {};
@@ -425,23 +426,23 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
 
     setState(() => _isPrinting = true);
     try {
-      final printer = await Printing.pickPrinter(
+      final result = await _printDispatcher.dispatch(
         context: context,
-        title: 'Select Purchase Invoice Printer',
+        bytes: bytes,
+        documentName:
+            fileName.replaceAll(RegExp(r'\.pdf$', caseSensitive: false), ''),
+        outputFileName: fileName,
+        printerPickerTitle: 'Select Purchase Invoice Printer',
+        virtualSaveDialogTitle: 'Save Purchase Invoice Print Output As',
+        usePrinterSettings: _usePrinterDriverSettings,
       );
-      if (printer == null) {
-        return false;
-      }
-
-      final printed = _isVirtualPdfPrinter(printer)
-          ? await _saveVirtualPrintOutput(bytes, fileName: fileName)
-          : await Printing.directPrintPdf(
-              printer: printer,
-              name: fileName,
-              usePrinterSettings: _usePrinterDriverSettings,
-              onLayout: (_) async => bytes,
-            );
-      if (!printed) {
+      if (!result.completed) {
+        if (result == LotusPdfPrintResult.failed && mounted) {
+          AppFeedback.error(
+            context,
+            message: 'Unable to print invoice. Please try again.',
+          );
+        }
         return false;
       }
 
@@ -452,53 +453,10 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
       }
       return true;
     } catch (_) {
-      if (!mounted) return false;
-      AppFeedback.error(
-        context,
-        message: 'Unable to print invoice. Please try again.',
-      );
       return false;
     } finally {
       if (mounted) setState(() => _isPrinting = false);
     }
-  }
-
-  bool _isVirtualPdfPrinter(Printer printer) {
-    final signature = [
-      printer.name,
-      printer.model,
-      printer.url,
-      printer.comment,
-    ].whereType<String>().join(' ').toLowerCase();
-
-    return signature.contains('pdf') ||
-        signature.contains('xps') ||
-        signature.contains('onenote');
-  }
-
-  Future<bool> _saveVirtualPrintOutput(
-    Uint8List bytes, {
-    required String fileName,
-  }) async {
-    final selectedPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Purchase Invoice Print Output As',
-      fileName: fileName,
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      lockParentWindow: true,
-    );
-    if (selectedPath == null) return false;
-
-    final exportPath = selectedPath.toLowerCase().endsWith('.pdf')
-        ? selectedPath
-        : '$selectedPath.pdf';
-    final file = File(exportPath);
-    final parent = file.parent;
-    if (!await parent.exists()) {
-      await parent.create(recursive: true);
-    }
-    await file.writeAsBytes(bytes, flush: true);
-    return true;
   }
 
   Future<bool> _finalizePurchaseForCompletion() async {

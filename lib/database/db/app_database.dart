@@ -2462,6 +2462,7 @@ const String _createPurchaseVouchersTableSql = '''
     "excess_mode" TEXT,
     "promise_date" INTEGER,
     "payment_meta" TEXT,
+    "seller_photo_path" TEXT,
     "payment_status" TEXT NOT NULL DEFAULT 'UNPAID',
     "stock_entry_count" INTEGER NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'SAVED',

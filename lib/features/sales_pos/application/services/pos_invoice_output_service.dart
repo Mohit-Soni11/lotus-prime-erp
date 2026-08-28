@@ -7,12 +7,17 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../domain/services/pos_invoice_file_naming.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 
 class PosInvoiceOutputService {
-  const PosInvoiceOutputService();
+  final LotusPdfPrintDispatcher _printDispatcher;
+
+  const PosInvoiceOutputService({
+    LotusPdfPrintDispatcher printDispatcher = const LotusPdfPrintDispatcher(),
+  }) : _printDispatcher = printDispatcher;
 
   Future<bool> printPdf({
     required BuildContext context,
@@ -34,63 +39,16 @@ class PosInvoiceOutputService {
     required PosInvoiceModel invoice,
     required bool usePrinterSettings,
   }) async {
-    final printer = await Printing.pickPrinter(
+    final result = await _printDispatcher.dispatch(
       context: context,
-      title: 'Select Invoice Printer',
-    );
-    if (printer == null) return false;
-
-    if (_isVirtualPdfPrinter(printer)) {
-      return _saveVirtualPrintOutput(bytes: bytes, invoice: invoice);
-    }
-
-    return Printing.directPrintPdf(
-      printer: printer,
-      name: PosInvoiceFileNaming.pdfBaseName(invoice),
+      bytes: bytes,
+      documentName: PosInvoiceFileNaming.pdfBaseName(invoice),
+      outputFileName: buildExportFileName(invoice),
+      printerPickerTitle: 'Select Invoice Printer',
+      virtualSaveDialogTitle: 'Save Print Output As',
       usePrinterSettings: usePrinterSettings,
-      onLayout: (_) async => bytes,
     );
-  }
-
-  bool _isVirtualPdfPrinter(Printer printer) {
-    final signature = [
-      printer.name,
-      printer.model,
-      printer.url,
-      printer.comment,
-    ].whereType<String>().join(' ').toLowerCase();
-
-    return signature.contains('pdf') ||
-        signature.contains('xps') ||
-        signature.contains('onenote');
-  }
-
-  Future<bool> _saveVirtualPrintOutput({
-    required Uint8List bytes,
-    required PosInvoiceModel invoice,
-  }) async {
-    final selectedPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Print Output As',
-      fileName: buildExportFileName(invoice),
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      lockParentWindow: true,
-    );
-
-    if (selectedPath == null) return false;
-
-    final exportPath = selectedPath.toLowerCase().endsWith('.pdf')
-        ? selectedPath
-        : '$selectedPath.pdf';
-    final file = File(exportPath);
-    final parentDir = file.parent;
-    if (!await parentDir.exists()) {
-      await parentDir.create(recursive: true);
-    }
-
-    await file.writeAsBytes(bytes, flush: true);
-    AppLogger.debug('Virtual print PDF saved at: ${file.path}');
-    return true;
+    return result.completed;
   }
 
   Future<void> openWhatsAppInvoice(PosInvoiceModel invoice) async {

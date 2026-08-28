@@ -69,7 +69,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
       listenable: widget.item,
       builder: (context, _) {
         final isEven = widget.index.isEven;
-        final isInvalid = widget.item.hasContent && !widget.item.isValidEntry;
+        final isInvalid = widget.item.hasInlineValidationError;
         final background = isInvalid
             ? PurchaseEntryColors.danger.withValues(alpha: 0.04)
             : _isHovered
@@ -173,7 +173,7 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
                 Expanded(
                   flex: PurchaseItemGridSpec.valueFlex,
                   child: _autoCell(
-                    'Rs. ${widget.item.totalValue.toStringAsFixed(2)}',
+                    'Rs ${widget.item.totalValue.toStringAsFixed(2)}',
                     PurchaseEntryColors.textMain,
                     align: TextAlign.right,
                     isBold: true,
@@ -268,11 +268,14 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
       child: TextFormField(
         controller: widget.item.purityCtrl,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
         ],
         onChanged: (_) =>
             unawaited(widget.ctrl.applyPurchaseMasterBuyRate(widget.item)),
+        onEditingComplete: () {},
+        onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
         textAlign: TextAlign.left,
         style: PurchaseEntryStyles.inputText.copyWith(
           color: _metalColor,
@@ -301,8 +304,17 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
   }) {
     final action = textInputAction ??
         (onSubmitted != null ? TextInputAction.done : TextInputAction.next);
+    void submit(String value) {
+      if (onSubmitted != null) {
+        onSubmitted(value);
+        return;
+      }
+      FocusScope.of(context).nextFocus();
+    }
 
     return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
       child: Builder(
         builder: (context) {
           final hasFocus = Focus.of(context).hasFocus;
@@ -334,13 +346,14 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
                   : null,
               textAlign: isNumber ? TextAlign.right : TextAlign.left,
               textInputAction: action,
+              onEditingComplete: () {},
+              onSubmitted: submit,
               style: PurchaseEntryStyles.inputText.copyWith(
                 fontSize: isNumber ? 14 : 15,
                 fontWeight: isNumber ? FontWeight.w900 : FontWeight.w800,
                 fontFeatures:
                     isNumber ? const [FontFeature.tabularFigures()] : null,
               ),
-              onSubmitted: onSubmitted,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isCollapsed: true,
@@ -375,13 +388,20 @@ class _PurchaseItemRowState extends State<PurchaseItemRow> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        value,
-        textAlign: align,
-        style: PurchaseEntryStyles.inputText.copyWith(
-          color: color,
-          fontSize: isBold ? 15 : 14,
-          fontFeatures: const [FontFeature.tabularFigures()],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: alignment,
+        child: Text(
+          value,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+          textAlign: align,
+          style: PurchaseEntryStyles.inputText.copyWith(
+            color: color,
+            fontSize: isBold ? 15 : 14,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );

@@ -189,8 +189,14 @@ class _LotusDocumentLayoutEngine {
   }) {
     final document = context.document;
     final profile = document.profile;
-    final hasPrimaryPanel = _hasPanelDetails(document.primaryPanel);
-    final hasSecondaryPanel = _hasPanelDetails(document.secondaryPanel);
+    final proofPhotoPanel = _signatureProofPhotoPanel(document);
+    final proofPhotoCard = proofPhotoPanel == null
+        ? null
+        : _signatureProofPhotoCard(proofPhotoPanel, profile);
+    final primaryPanel = _panelWithoutPhoto(document.primaryPanel);
+    final secondaryPanel = _panelWithoutPhoto(document.secondaryPanel);
+    final hasPrimaryPanel = _hasPanelDetails(primaryPanel);
+    final hasSecondaryPanel = _hasPanelDetails(secondaryPanel);
     final settlementPanels = document.settlementPanels
         .where(_hasPanelDetails)
         .take(2)
@@ -213,12 +219,14 @@ class _LotusDocumentLayoutEngine {
               children: [
                 if (hasPrimaryPanel)
                   pw.Expanded(
-                      child: _signaturePanel(document.primaryPanel, profile)),
+                    child: _signaturePanel(primaryPanel, profile),
+                  ),
                 if (hasPrimaryPanel && hasSecondaryPanel)
                   pw.SizedBox(width: 14),
                 if (hasSecondaryPanel)
                   pw.Expanded(
-                      child: _signaturePanel(document.secondaryPanel, profile)),
+                    child: _signaturePanel(secondaryPanel, profile),
+                  ),
               ],
             ),
             pw.SizedBox(height: 14),
@@ -226,22 +234,11 @@ class _LotusDocumentLayoutEngine {
             pw.SizedBox(height: 8),
             _itemTable(document.itemTable, profile),
             pw.SizedBox(height: 14),
-            if (settlementPanels.isNotEmpty)
-              pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  for (var index = 0;
-                      index < settlementPanels.length;
-                      index++) ...[
-                    if (index > 0) pw.SizedBox(width: 14),
-                    pw.Expanded(
-                      child: _signaturePanel(
-                        settlementPanels[index],
-                        profile,
-                      ),
-                    ),
-                  ],
-                ],
+            if (settlementPanels.isNotEmpty || proofPhotoCard != null)
+              _signatureSettlementAndProofRow(
+                settlementPanels,
+                proofPhotoCard,
+                profile,
               ),
           ],
         ),
@@ -510,9 +507,7 @@ class _LotusDocumentLayoutEngine {
             ),
           ),
           pw.SizedBox(height: 7),
-          for (final detail in panel.details)
-            if (detail.value.trim().isNotEmpty)
-              _standardDetail(detail, profile),
+          _standardPanelBody(panel, profile),
         ],
       ),
     );
@@ -533,13 +528,224 @@ class _LotusDocumentLayoutEngine {
         children: [
           _sectionTitle(panel.title, profile),
           pw.SizedBox(height: 10),
-          for (var index = 0; index < panel.details.length; index++)
-            if (panel.details[index].value.trim().isNotEmpty)
-              _signatureDetail(
-                panel.details[index],
-                profile,
-                showDivider: index < panel.details.length - 1,
+          _signaturePanelBody(panel, profile),
+        ],
+      ),
+    );
+  }
+
+  static LotusPrintablePanel? _signatureProofPhotoPanel(
+    LotusPrintableDocument document,
+  ) {
+    final panels = [
+      document.primaryPanel,
+      document.secondaryPanel,
+      ...document.settlementPanels,
+    ];
+    for (final panel in panels) {
+      if (panel.photoPath.trim().isNotEmpty) return panel;
+    }
+    return null;
+  }
+
+  static LotusPrintablePanel _panelWithoutPhoto(LotusPrintablePanel panel) {
+    return LotusPrintablePanel(
+      title: panel.title,
+      details: panel.details,
+    );
+  }
+
+  static pw.Widget? _signatureProofPhotoCard(
+    LotusPrintablePanel panel,
+    dynamic profile,
+  ) {
+    final photo = _panelPhoto(
+      panel,
+      profile,
+      compact: false,
+      fit: pw.BoxFit.contain,
+      width: 92,
+      height: 72,
+      showLabel: false,
+    );
+    if (photo == null) return null;
+
+    final title = panel.photoLabel.trim().isNotEmpty
+        ? panel.photoLabel.trim().toUpperCase()
+        : 'PHOTO PROOF';
+
+    return pw.Container(
+      width: 116,
+      padding: const pw.EdgeInsets.all(8),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: profile.borderColor, width: 0.8),
+        borderRadius: pw.BorderRadius.circular(4),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Text(
+            title,
+            textAlign: pw.TextAlign.center,
+            maxLines: 1,
+            style: pw.TextStyle(
+              color: profile.accentColor,
+              fontSize: 7.2,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 7),
+          pw.Center(child: photo),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            'Captured for invoice proof',
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              color: profile.bodyTextColor,
+              fontSize: 5.8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _signatureSettlementAndProofRow(
+    List<LotusPrintablePanel> settlementPanels,
+    pw.Widget? proofPhotoCard,
+    dynamic profile,
+  ) {
+    if (settlementPanels.isEmpty) {
+      return pw.Align(
+        alignment: pw.Alignment.centerRight,
+        child: proofPhotoCard!,
+      );
+    }
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        for (var index = 0; index < settlementPanels.length; index++) ...[
+          if (index > 0) pw.SizedBox(width: 14),
+          pw.Expanded(
+            child: _signaturePanel(
+              settlementPanels[index],
+              profile,
+            ),
+          ),
+        ],
+        if (proofPhotoCard != null) ...[
+          pw.SizedBox(width: 14),
+          proofPhotoCard,
+        ],
+      ],
+    );
+  }
+
+  static pw.Widget _standardPanelBody(
+    LotusPrintablePanel panel,
+    dynamic profile,
+  ) {
+    final details = panel.details
+        .where((detail) => detail.value.trim().isNotEmpty)
+        .toList();
+    final photo = _panelPhoto(panel, profile, compact: true);
+    if (photo == null) {
+      return pw.Column(
+        children: details
+            .map((detail) => _standardDetail(detail, profile))
+            .toList(growable: false),
+      );
+    }
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(
+          child: pw.Column(
+            children: details
+                .map((detail) => _standardDetail(detail, profile))
+                .toList(growable: false),
+          ),
+        ),
+        pw.SizedBox(width: 10),
+        photo,
+      ],
+    );
+  }
+
+  static pw.Widget _signaturePanelBody(
+    LotusPrintablePanel panel,
+    dynamic profile,
+  ) {
+    final details = panel.details
+        .where((detail) => detail.value.trim().isNotEmpty)
+        .toList();
+    final detailWidgets = [
+      for (var index = 0; index < details.length; index++)
+        _signatureDetail(
+          details[index],
+          profile,
+          showDivider: index < details.length - 1,
+        ),
+    ];
+    final photo = _panelPhoto(panel, profile, compact: false);
+    if (photo == null) {
+      return pw.Column(children: detailWidgets);
+    }
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(child: pw.Column(children: detailWidgets)),
+        pw.SizedBox(width: 10),
+        photo,
+      ],
+    );
+  }
+
+  static pw.Widget? _panelPhoto(
+    LotusPrintablePanel panel,
+    dynamic profile, {
+    required bool compact,
+    pw.BoxFit fit = pw.BoxFit.cover,
+    double? width,
+    double? height,
+    bool showLabel = true,
+  }) {
+    final image = _loadLogoImage(panel.photoPath);
+    if (image == null) return null;
+    final photoWidth = width ?? (compact ? 54.0 : 64.0);
+    final photoHeight = height ?? (compact ? 62.0 : 74.0);
+    final label = panel.photoLabel.trim();
+    return pw.Container(
+      width: photoWidth,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Container(
+            width: photoWidth,
+            height: photoHeight,
+            padding: const pw.EdgeInsets.all(2),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: profile.borderColor, width: 0.7),
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Image(image, fit: fit),
+          ),
+          if (showLabel && label.isNotEmpty) ...[
+            pw.SizedBox(height: 3),
+            pw.Text(
+              label,
+              textAlign: pw.TextAlign.center,
+              maxLines: 1,
+              style: pw.TextStyle(
+                color: profile.bodyTextColor,
+                fontSize: compact ? 5.8 : 6.2,
+                fontWeight: pw.FontWeight.bold,
               ),
+            ),
+          ],
         ],
       ),
     );
@@ -1423,7 +1629,8 @@ class _LotusDocumentLayoutEngine {
   }
 
   static bool _hasPanelDetails(LotusPrintablePanel panel) {
-    return panel.details.any((detail) => detail.value.trim().isNotEmpty);
+    return panel.photoPath.trim().isNotEmpty ||
+        panel.details.any((detail) => detail.value.trim().isNotEmpty);
   }
 
   static String _shopPhoneLine(LotusPrintableDocument document) {
