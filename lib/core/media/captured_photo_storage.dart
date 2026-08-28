@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -28,6 +29,30 @@ class CapturedPhotoStorage {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final target = File(p.join(directory.path, '${safeStem}_$timestamp.jpg'));
     await source.copy(target.path);
+    return target.path;
+  }
+
+  static Future<String> persistJpegBytes({
+    required Uint8List bytes,
+    required String module,
+    required String fileStem,
+  }) async {
+    if (bytes.isEmpty) {
+      throw StateError('Photo data was empty.');
+    }
+
+    final root = await getApplicationDocumentsDirectory();
+    final directory = Directory(
+      p.join(root.path, 'Lotus ERP', 'media', module),
+    );
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
+
+    final safeStem = _safeFileStem(fileStem);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final target = File(p.join(directory.path, '${safeStem}_$timestamp.jpg'));
+    await target.writeAsBytes(bytes, flush: true);
     return target.path;
   }
 

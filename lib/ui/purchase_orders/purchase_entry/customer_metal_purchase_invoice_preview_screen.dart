@@ -81,6 +81,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   bool _isCompletingPurchase = false;
   bool _hasFinalizedPurchaseInvoice = false;
   bool _hasPrintedPurchaseInvoice = false;
+  bool _hasWorkspaceTemplateSelection = false;
   bool _isLoadingDisplaySettings = true;
   bool _isLoadingShopPrintProfile = true;
   String? _errorMessage;
@@ -119,12 +120,13 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
         ..clear()
         ..addAll(settings);
       _activeDisplayMetal = _activeMetalKey();
-      _selectedTemplateId =
-          _activePurchaseBillingSettings().selectedTemplate.trim().isEmpty
-              ? PrintTemplateRegistry.defaultTemplateId
-              : _activePurchaseBillingSettings().selectedTemplate;
+      if (!_hasWorkspaceTemplateSelection) {
+        _selectedTemplateId = _configuredTemplateForActiveMetal();
+      }
     } catch (_) {
-      _selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
+      if (!_hasWorkspaceTemplateSelection) {
+        _selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoadingDisplaySettings = false);
@@ -203,12 +205,14 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   }
 
   Future<void> _selectTemplate(String templateId) async {
-    if (_selectedTemplateId == templateId) return;
-    setState(() => _selectedTemplateId = templateId);
+    final resolvedTemplateId = PrintTemplateRegistry.byId(templateId).id;
+    _hasWorkspaceTemplateSelection = true;
+    if (_selectedTemplateId == resolvedTemplateId) return;
+    setState(() => _selectedTemplateId = resolvedTemplateId);
 
     try {
       final current = _activePurchaseBillingSettings();
-      final updated = current.copyWith(selectedTemplate: templateId);
+      final updated = current.copyWith(selectedTemplate: resolvedTemplateId);
       _purchaseBillingSettings[current.metal] = updated;
       await _billingRepo.saveForMetal(updated);
     } catch (_) {}
@@ -305,13 +309,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
 
   Future<void> _selectDisplayMetal(String metal) async {
     if (_activeDisplayMetal == metal) return;
-    setState(() {
-      _activeDisplayMetal = metal;
-      _selectedTemplateId =
-          _activePurchaseBillingSettings().selectedTemplate.trim().isEmpty
-              ? PrintTemplateRegistry.defaultTemplateId
-              : _activePurchaseBillingSettings().selectedTemplate;
-    });
+    setState(() => _activeDisplayMetal = metal);
     await _buildPdf();
   }
 
@@ -370,10 +368,8 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     if (!mounted) return restored;
     setState(() {
       _purchaseBillingSettings[metal] = restored;
-      if (metal == _activeMetalKey()) {
-        _selectedTemplateId = restored.selectedTemplate.trim().isEmpty
-            ? PrintTemplateRegistry.defaultTemplateId
-            : restored.selectedTemplate;
+      if (metal == _activeMetalKey() && !_hasWorkspaceTemplateSelection) {
+        _selectedTemplateId = _configuredTemplateForActiveMetal();
       }
     });
     if (metal == _activeMetalKey()) {
@@ -558,6 +554,15 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     final metal = _activeMetalKey();
     return _purchaseBillingSettings[metal] ??
         PurchaseBillingModel.defaultFor(metal);
+  }
+
+  String _configuredTemplateForActiveMetal() {
+    final configuredTemplate =
+        _activePurchaseBillingSettings().selectedTemplate.trim();
+    if (configuredTemplate.isEmpty) {
+      return PrintTemplateRegistry.defaultTemplateId;
+    }
+    return PrintTemplateRegistry.byId(configuredTemplate).id;
   }
 
   String _fileName() {

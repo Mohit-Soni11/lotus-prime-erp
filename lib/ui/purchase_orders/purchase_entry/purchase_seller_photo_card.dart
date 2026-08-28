@@ -7,6 +7,8 @@ import '../../../core/media/captured_photo_storage.dart';
 import '../../../logic/purchase/purchase_entry_controller.dart';
 import '../../../theme/purchase/purchase_entry/purchase_entry_theme.dart';
 import 'purchase_seller_camera_dialog.dart';
+import 'purchase_seller_photo_editor_dialog.dart';
+import 'purchase_seller_photo_preview_dialog.dart';
 
 class PurchaseSellerPhotoCard extends StatelessWidget {
   final PurchaseEntryController ctrl;
@@ -33,9 +35,10 @@ class PurchaseSellerPhotoCard extends StatelessWidget {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _PhotoPreview(path: path, hasPhoto: hasPhoto),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,22 +60,53 @@ class PurchaseSellerPhotoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          _PhotoActionButton(
-            title: hasPhoto ? 'Retake' : 'Capture',
-            icon: Icons.photo_camera_outlined,
-            onTap: () => _capturePhoto(context),
-          ),
-          if (hasPhoto) ...[
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: 'Remove Photo',
-              onPressed: ctrl.clearSellerPhoto,
-              icon: const Icon(Icons.delete_outline_rounded),
-              color: PurchaseEntryColors.danger,
-            ),
-          ],
+          hasPhoto
+              ? _buildAttachedActions(context, path)
+              : _buildCaptureAction(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildCaptureAction(BuildContext context) {
+    return _PhotoActionButton(
+      title: 'Capture',
+      icon: Icons.photo_camera_outlined,
+      onTap: () => _capturePhoto(context),
+    );
+  }
+
+  Widget _buildAttachedActions(BuildContext context, String path) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.end,
+      children: [
+        _PhotoActionButton(
+          title: 'Preview',
+          icon: Icons.visibility_outlined,
+          compact: true,
+          onTap: () => PurchaseSellerPhotoPreviewDialog.show(context, path),
+        ),
+        _PhotoActionButton(
+          title: 'Edit',
+          icon: Icons.crop_rounded,
+          compact: true,
+          onTap: () => _editPhoto(context, path),
+        ),
+        _PhotoActionButton(
+          title: 'Retake',
+          icon: Icons.photo_camera_outlined,
+          compact: true,
+          onTap: () => _capturePhoto(context),
+        ),
+        _PhotoIconButton(
+          tooltip: 'Remove Photo',
+          icon: Icons.delete_outline_rounded,
+          color: PurchaseEntryColors.danger,
+          onTap: ctrl.clearSellerPhoto,
+        ),
+      ],
     );
   }
 
@@ -111,6 +145,48 @@ class PurchaseSellerPhotoCard extends StatelessWidget {
       );
     }
   }
+
+  Future<void> _editPhoto(BuildContext context, String path) async {
+    FocusScope.of(context).unfocus();
+    if (!File(path).existsSync()) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: 'Seller photo file was not found. Please retake the photo.',
+      );
+      return;
+    }
+
+    final croppedBytes = await PurchaseSellerPhotoEditorDialog.show(
+      context,
+      path,
+    );
+    if (croppedBytes == null || croppedBytes.isEmpty || !context.mounted) {
+      return;
+    }
+
+    try {
+      final savedPath = await CapturedPhotoStorage.persistJpegBytes(
+        bytes: croppedBytes,
+        module: 'customer_metal_purchase',
+        fileStem: '${ctrl.formattedPurchaseNo}_seller_photo_edit',
+      );
+      if (!context.mounted) return;
+      ctrl.setSellerPhoto(savedPath);
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.success,
+        message: 'Seller photo updated for this invoice.',
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: 'Edited photo could not be saved. Please try again.',
+      );
+    }
+  }
 }
 
 class _PhotoPreview extends StatelessWidget {
@@ -127,8 +203,8 @@ class _PhotoPreview extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: 62,
-        height: 68,
+        width: 92,
+        height: 76,
         decoration: BoxDecoration(
           color: PurchaseEntryColors.formInputBg,
           border: Border.all(color: PurchaseEntryColors.bodyBorder),
@@ -149,21 +225,26 @@ class _PhotoActionButton extends StatelessWidget {
   final String title;
   final IconData icon;
   final VoidCallback onTap;
+  final bool compact;
 
   const _PhotoActionButton({
     required this.title,
     required this.icon,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 42,
+      height: compact ? 36 : 42,
       child: OutlinedButton.icon(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: PurchaseEntryColors.purchaseAccent,
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 14,
+          ),
           side: BorderSide(
             color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.45),
           ),
@@ -174,7 +255,46 @@ class _PhotoActionButton extends StatelessWidget {
         icon: Icon(icon, size: 18),
         label: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: compact ? 12 : 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PhotoIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _PhotoIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 38,
+          height: 36,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.28)),
+          ),
+          child: Icon(icon, color: color, size: 19),
         ),
       ),
     );
