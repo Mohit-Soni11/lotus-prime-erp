@@ -10,6 +10,9 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entit
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/exports/customer_metal_purchase_report_print_service.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/utils/customer_metal_purchase_formatters.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_empty_state.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_filters/customer_metal_purchase_report_filter_bar.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_metal_cards/customer_metal_purchase_metal_card_grid.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_summary/customer_metal_purchase_summary_band.dart';
 import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dart';
 
 class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
@@ -35,7 +38,7 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
         children: [
           CustomerMetalPurchaseReportFilterBar(controller: controller),
           const SizedBox(height: 16),
-          CustomerMetalPurchaseSmartCardGrid(
+          CustomerMetalPurchaseMetalCardGrid(
             periodLabel: controller.periodLabel,
             summaries: controller.visibleMetalSummaries,
             selectedMetal: controller.selectedMetal,
@@ -43,7 +46,10 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
             onMetalSelected: controller.selectMetal,
           ),
           const SizedBox(height: 16),
-          CustomerMetalPurchaseReportSummaryBand(summary: dashboard),
+          CustomerMetalPurchaseReportSummaryBand(
+            summary: dashboard,
+            metalSummaries: controller.visibleMetalSummaries,
+          ),
           const SizedBox(height: 16),
           CustomerMetalPurchaseReportCommandStrip(controller: controller),
           const SizedBox(height: 14),
@@ -52,259 +58,6 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
             onOpenVoucher: onOpenVoucher,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class CustomerMetalPurchaseReportFilterBar extends StatelessWidget {
-  final CustomerMetalPurchaseLedgerController controller;
-
-  const CustomerMetalPurchaseReportFilterBar({
-    super.key,
-    required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final currentYear = DateTime.now().year;
-    final selectedMonth = controller.startDate?.month ?? DateTime.now().month;
-    final selectedYear = controller.startDate?.year ?? currentYear;
-
-    return _ReportSurface(
-      padding: const EdgeInsets.all(10),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          _DropdownShell<CustomerMetalPurchaseQuickPeriod>(
-            width: 172,
-            value: controller.selectedPeriod,
-            items: CustomerMetalPurchaseQuickPeriod.values,
-            label: 'Period',
-            icon: Icons.calendar_view_month_rounded,
-            labelFor: (period) => period.label,
-            onChanged: (period) {
-              if (period != null) {
-                controller.setQuickPeriod(period);
-              }
-            },
-          ),
-          _DropdownShell<int>(
-            width: 134,
-            value: selectedMonth,
-            items: List.generate(12, (index) => index + 1),
-            label: 'Month',
-            icon: Icons.event_rounded,
-            labelFor: _monthName,
-            onChanged: (month) {
-              if (month != null) {
-                controller.setMonthYear(month: month, year: selectedYear);
-              }
-            },
-          ),
-          _DropdownShell<int>(
-            width: 118,
-            value: selectedYear,
-            items: List.generate(12, (index) => currentYear - index),
-            label: 'Year',
-            icon: Icons.date_range_rounded,
-            labelFor: (year) => year.toString(),
-            onChanged: (year) {
-              if (year != null) {
-                controller.setMonthYear(month: selectedMonth, year: year);
-              }
-            },
-          ),
-          _DropdownShell<String>(
-            width: 156,
-            value: controller.paymentStatusFilter,
-            items: const ['ALL', 'PAID', 'PARTIAL', 'PENDING'],
-            label: 'Status',
-            icon: Icons.account_balance_wallet_rounded,
-            labelFor: _statusLabel,
-            onChanged: (status) {
-              if (status != null) {
-                controller.setPaymentStatusFilter(status);
-              }
-            },
-          ),
-          SizedBox(
-            width: 300,
-            height: 42,
-            child: TextField(
-              controller: controller.searchCtrl,
-              textInputAction: TextInputAction.search,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0B1220),
-              ),
-              decoration: _searchDecoration(),
-            ),
-          ),
-          _FilterButton(
-            icon: Icons.calendar_today_rounded,
-            label: 'Custom Range',
-            onPressed: () => _pickCustomRange(context),
-          ),
-          if (controller.selectedMetal != null)
-            _FilterButton(
-              icon: Icons.close_rounded,
-              label: '${controller.selectedMetal!.label} Filter',
-              onPressed: () => controller.selectMetal(null),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _pickCustomRange(BuildContext context) async {
-    final now = DateTime.now();
-    final initial = DateTimeRange(
-      start: controller.startDate ?? DateTime(now.year, now.month, 1),
-      end: controller.endDate ?? now,
-    );
-    final range = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year - 15),
-      lastDate: DateTime(now.year + 1, 12, 31),
-      initialDateRange: initial,
-    );
-    if (range == null) {
-      return;
-    }
-    controller.setDateRange(range.start, range.end);
-  }
-}
-
-class CustomerMetalPurchaseSmartCardGrid extends StatelessWidget {
-  final String periodLabel;
-  final Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
-      summaries;
-  final CustomerMetalPurchaseMetal? selectedMetal;
-  final AnimationController animationController;
-  final ValueChanged<CustomerMetalPurchaseMetal?> onMetalSelected;
-
-  const CustomerMetalPurchaseSmartCardGrid({
-    super.key,
-    required this.periodLabel,
-    required this.summaries,
-    required this.selectedMetal,
-    required this.animationController,
-    required this.onMetalSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 1280
-            ? 4
-            : constraints.maxWidth >= 960
-                ? 2
-                : 1;
-        const spacing = 14.0;
-        final width =
-            (constraints.maxWidth - spacing * (columns - 1)) / columns;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final entry in summaries.entries)
-              SizedBox(
-                width: width,
-                child: _SmartMetalCard(
-                  periodLabel: periodLabel,
-                  summary: entry.value,
-                  selected: selectedMetal == entry.key,
-                  accent: _accentFor(entry.key),
-                  onTap: () => onMetalSelected(
-                    selectedMetal == entry.key ? null : entry.key,
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class CustomerMetalPurchaseReportSummaryBand extends StatelessWidget {
-  final CustomerMetalPurchaseDashboardSummary summary;
-
-  const CustomerMetalPurchaseReportSummaryBand({
-    super.key,
-    required this.summary,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _ReportSurface(
-      padding: const EdgeInsets.all(14),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final columns = constraints.maxWidth >= 1100
-              ? 6
-              : constraints.maxWidth >= 760
-                  ? 3
-                  : 2;
-          const spacing = 10.0;
-          final width =
-              (constraints.maxWidth - spacing * (columns - 1)) / columns;
-
-          return Wrap(
-            spacing: spacing,
-            runSpacing: spacing,
-            children: [
-              _MetricCard(
-                width: width,
-                label: 'Purchase Value',
-                value: CustomerMetalPurchaseFormatters.amount(summary.amount),
-                icon: Icons.currency_rupee_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Paid',
-                value:
-                    CustomerMetalPurchaseFormatters.amount(summary.paidAmount),
-                icon: Icons.payments_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Pending',
-                value: CustomerMetalPurchaseFormatters.amount(
-                  summary.pendingAmount,
-                ),
-                icon: Icons.pending_actions_rounded,
-                warning: summary.pendingAmount > 0.005,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Fine Weight',
-                value: CustomerMetalPurchaseFormatters.weight(
-                  summary.fineWeight,
-                ),
-                icon: Icons.scale_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Vouchers',
-                value: summary.voucherCount.toString(),
-                icon: Icons.receipt_long_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Sellers',
-                value: summary.customerCount.toString(),
-                icon: Icons.group_rounded,
-              ),
-            ],
-          );
-        },
       ),
     );
   }
@@ -735,157 +488,6 @@ class _PaymentSummaryPanel extends StatelessWidget {
   }
 }
 
-class _SmartMetalCard extends StatefulWidget {
-  final String periodLabel;
-  final CustomerMetalPurchaseMetalSummary summary;
-  final bool selected;
-  final Color accent;
-  final VoidCallback onTap;
-
-  const _SmartMetalCard({
-    required this.periodLabel,
-    required this.summary,
-    required this.selected,
-    required this.accent,
-    required this.onTap,
-  });
-
-  @override
-  State<_SmartMetalCard> createState() => _SmartMetalCardState();
-}
-
-class _SmartMetalCardState extends State<_SmartMetalCard> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: widget.selected
-                  ? widget.accent
-                  : widget.accent.withValues(alpha: _hovered ? 0.44 : 0.24),
-              width: widget.selected ? 1.6 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: _hovered ? 0.10 : 0.05),
-                blurRadius: _hovered ? 18 : 10,
-                offset: Offset(0, _hovered ? 7 : 3),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: widget.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: widget.accent.withValues(alpha: 0.26),
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.diamond_rounded,
-                      color: widget.accent,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.summary.metal.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.manrope(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Text(
-                          widget.periodLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0B1220),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _CardLine(
-                label: 'Net Weight',
-                value: CustomerMetalPurchaseFormatters.weight(
-                  widget.summary.netWeight,
-                ),
-              ),
-              _CardLine(
-                label: 'Fine Weight',
-                value: CustomerMetalPurchaseFormatters.weight(
-                  widget.summary.fineWeight,
-                ),
-              ),
-              _CardLine(
-                label: 'Value',
-                value: CustomerMetalPurchaseFormatters.amount(
-                  widget.summary.amount,
-                ),
-              ),
-              _CardLine(
-                label: 'Paid',
-                value: CustomerMetalPurchaseFormatters.amount(
-                  widget.summary.paidAmount,
-                ),
-              ),
-              _CardLine(
-                label: 'Pending',
-                value: CustomerMetalPurchaseFormatters.amount(
-                  widget.summary.pendingAmount,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${widget.summary.entryCount} lines | ${widget.summary.customerCount} sellers',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ReportSurface extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -919,69 +521,29 @@ class _ReportSurface extends StatelessWidget {
   }
 }
 
-InputDecoration _searchDecoration() {
-  return InputDecoration(
-    hintText: 'Invoice, seller, mobile',
-    isDense: true,
-    prefixIcon: const Icon(Icons.search_rounded, size: 18),
-    prefixIconColor: WidgetStateColor.resolveWith((states) {
-      if (states.contains(WidgetState.focused)) {
-        return PurchaseEntryColors.purchaseAccent;
-      }
-      return const Color(0xFF0B1220);
-    }),
-    hintStyle: GoogleFonts.inter(
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
-      color: const Color(0xFF0B1220),
-    ),
-    filled: true,
-    fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFE5E0D8)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: Color(0xFFE5E0D8)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(
-        color: PurchaseEntryColors.purchaseAccent,
-        width: 1.4,
-      ),
-    ),
-  );
-}
-
 class _MetricCard extends StatelessWidget {
   final double width;
   final String label;
   final String value;
   final IconData icon;
-  final bool warning;
 
   const _MetricCard({
     required this.width,
     required this.label,
     required this.value,
     required this.icon,
-    this.warning = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final accent =
-        warning ? const Color(0xFFB45309) : PurchaseEntryColors.purchaseAccent;
+    const accent = PurchaseEntryColors.purchaseAccent;
 
     return SizedBox(
       width: width,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: warning ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
+          color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: accent.withValues(alpha: 0.18)),
         ),
@@ -1018,124 +580,6 @@ class _MetricCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DropdownShell<T> extends StatelessWidget {
-  final double width;
-  final T value;
-  final List<T> items;
-  final String label;
-  final IconData icon;
-  final String Function(T value) labelFor;
-  final ValueChanged<T?> onChanged;
-
-  const _DropdownShell({
-    required this.width,
-    required this.value,
-    required this.items,
-    required this.label,
-    required this.icon,
-    required this.labelFor,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: label,
-      child: SizedBox(
-        width: width,
-        height: 42,
-        child: Container(
-          padding: const EdgeInsets.only(left: 12, right: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E0D8)),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: PurchaseEntryColors.purchaseAccent),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<T>(
-                    value: value,
-                    borderRadius: BorderRadius.circular(12),
-                    dropdownColor: Colors.white,
-                    isExpanded: true,
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 20,
-                      color: Color(0xFF0B1220),
-                    ),
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0B1220),
-                    ),
-                    items: [
-                      for (final item in items)
-                        DropdownMenuItem<T>(
-                          value: item,
-                          child: Text(
-                            labelFor(item),
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF0B1220),
-                            ),
-                          ),
-                        ),
-                    ],
-                    onChanged: onChanged,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback? onPressed;
-
-  const _FilterButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 17),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 42),
-        foregroundColor: PurchaseEntryColors.purchaseAccent,
-        disabledForegroundColor: const Color(0xFF0B1220),
-        backgroundColor:
-            PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.08),
-        disabledBackgroundColor: const Color(0xFFF3F4F6),
-        side: BorderSide(
-          color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.42),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.inter(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -1228,45 +672,6 @@ class _TabButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CardLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _CardLine({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0B1220),
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1641,52 +1046,6 @@ Future<void> _downloadPhoto(BuildContext context, File source) async {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text('Photo saved to ${target.path}')),
   );
-}
-
-String _monthName(int month) {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  return months[(month - 1).clamp(0, 11)];
-}
-
-String _statusLabel(String status) {
-  switch (status) {
-    case 'ALL':
-      return 'All Status';
-    case 'PAID':
-      return 'Paid';
-    case 'PARTIAL':
-      return 'Partial';
-    case 'PENDING':
-      return 'Pending';
-    default:
-      return status;
-  }
-}
-
-Color _accentFor(CustomerMetalPurchaseMetal metal) {
-  switch (metal) {
-    case CustomerMetalPurchaseMetal.gold:
-      return PurchaseEntryColors.metalGold;
-    case CustomerMetalPurchaseMetal.silver:
-      return PurchaseEntryColors.metalSilver;
-    case CustomerMetalPurchaseMetal.diamond:
-      return PurchaseEntryColors.metalDiamond;
-    case CustomerMetalPurchaseMetal.platinum:
-      return PurchaseEntryColors.metalPlatinum;
-  }
 }
 
 final TextStyle _tableHeadingStyle = GoogleFonts.inter(

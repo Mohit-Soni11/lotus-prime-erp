@@ -142,6 +142,51 @@ void main() {
     expect(summary.tradeInCount, 0);
   });
 
+  test('loads read-only voucher detail for direct customer purchases',
+      () async {
+    final saved = await purchaseRepository.savePurchase(
+      _purchaseDraft(
+        sequenceNo: 1,
+        voucherNo: 'CMP-VIEW-2026-0001',
+        source: PurchaseSource.fromCustomer,
+        partyName: 'Tara Soni',
+        metal: PurchaseMetalType.gold,
+        mobile: '9876543210',
+        city: 'Jaipur',
+        panNumber: 'ABCDE1234F',
+        cashPaid: 6000,
+        upiPaid: 2500,
+        bankPaid: 0,
+        totalPaid: 8500,
+        balanceDue: 1500,
+        promiseDate: DateTime(2026, 9, 3),
+        sellerPhotoPath: r'D:\seller-photo.jpg',
+      ),
+    );
+
+    expect(saved, isNotNull);
+
+    final detail = await ledgerRepository.fetchVoucherDetail(saved!.voucherId);
+
+    expect(detail, isNotNull);
+    expect(detail!.voucherNo, 'CMP-VIEW-2026-0001');
+    expect(detail.partyName, 'Tara Soni');
+    expect(detail.mobile, '9876543210');
+    expect(detail.city, 'Jaipur');
+    expect(detail.panNumber, 'ABCDE1234F');
+    expect(detail.totalPaid, 8500);
+    expect(detail.balanceDue, 1500);
+    expect(detail.resolvedPaymentStatus, 'PARTIAL');
+    expect(detail.promiseDate, DateTime(2026, 9, 3));
+    expect(detail.sellerPhotoPath, r'D:\seller-photo.jpg');
+    expect(detail.lines, hasLength(1));
+    expect(detail.lines.single.metalType, 'GOLD');
+    expect(detail.lines.single.itemDescription, 'GOLD Customer Purchase');
+    expect(detail.lines.single.grossWeight, 10);
+    expect(detail.lines.single.lessWeight, 0);
+    expect(detail.fineWeight, closeTo(9.16, 0.001));
+  });
+
   test('marks customer metal entry returned without deleting original record',
       () async {
     await purchaseRepository.savePurchase(
@@ -265,6 +310,17 @@ PurchaseVoucherDraft _purchaseDraft({
   required PurchaseSource source,
   required String partyName,
   required PurchaseMetalType metal,
+  String? mobile,
+  String? city,
+  String? panNumber,
+  double cashPaid = 10000,
+  double upiPaid = 0,
+  double bankPaid = 0,
+  double cardPaid = 0,
+  double totalPaid = 10000,
+  double balanceDue = 0,
+  DateTime? promiseDate,
+  String? sellerPhotoPath,
 }) {
   return PurchaseVoucherDraft(
     sequenceNo: sequenceNo,
@@ -280,13 +336,20 @@ PurchaseVoucherDraft _purchaseDraft({
     cgstAmount: 0,
     sgstAmount: 0,
     grandTotal: 10000,
-    cashPaid: 10000,
-    upiPaid: 0,
-    bankPaid: 0,
-    cardPaid: 0,
-    totalPaid: 10000,
-    balanceDue: 0,
-    party: PurchaseVoucherPartyDraft(name: partyName),
+    cashPaid: cashPaid,
+    upiPaid: upiPaid,
+    bankPaid: bankPaid,
+    cardPaid: cardPaid,
+    totalPaid: totalPaid,
+    balanceDue: balanceDue,
+    promiseDate: promiseDate,
+    sellerPhotoPath: sellerPhotoPath,
+    party: PurchaseVoucherPartyDraft(
+      name: partyName,
+      mobile: mobile,
+      city: city,
+      panNumber: panNumber,
+    ),
     items: [
       PurchaseVoucherItemDraft(
         metal: metal,

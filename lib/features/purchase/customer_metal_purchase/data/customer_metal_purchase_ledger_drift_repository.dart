@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_voucher_detail.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/repositories/customer_metal_purchase_ledger_repository.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
@@ -38,6 +39,126 @@ class DriftCustomerMetalPurchaseLedgerRepository
     entries.sort((a, b) => b.date.compareTo(a.date));
     final returnedApplied = await _applyReturnStatus(entries);
     return _applyMeltingStatus(returnedApplied);
+  }
+
+  @override
+  Future<CustomerMetalPurchaseVoucherDetail?> fetchVoucherDetail(
+    int voucherId,
+  ) async {
+    await _ensurePurchaseVoucherReportColumns();
+
+    final voucherRow = await _db.customSelect(
+      '''
+      SELECT
+        id,
+        voucher_no,
+        sequence_no,
+        customer_id,
+        party_name,
+        mobile,
+        city,
+        pan_number,
+        created_at,
+        tax_type,
+        gross_amount,
+        discount_amount,
+        taxable_amount,
+        gst_amount,
+        grand_total,
+        cash_paid,
+        upi_paid,
+        bank_paid,
+        card_paid,
+        total_paid,
+        balance_due,
+        payment_status,
+        promise_date,
+        seller_photo_path
+      FROM purchase_vouchers
+      WHERE id = ?
+        AND source_type = 'CUSTOMER'
+        AND status <> 'CANCELLED'
+      LIMIT 1
+      ''',
+      variables: [Variable.withInt(voucherId)],
+    ).getSingleOrNull();
+
+    if (voucherRow == null) {
+      return null;
+    }
+
+    final lineRows = await _db.customSelect(
+      '''
+      SELECT
+        id,
+        line_no,
+        metal_type,
+        item_description,
+        gross_weight,
+        less_weight,
+        net_weight,
+        purity,
+        fine_weight,
+        rate,
+        quantity,
+        line_amount
+      FROM purchase_voucher_items
+      WHERE purchase_voucher_id = ?
+      ORDER BY line_no ASC, id ASC
+      ''',
+      variables: [Variable.withInt(voucherId)],
+    ).get();
+
+    final promiseDateMs = voucherRow.readNullable<int>('promise_date');
+
+    return CustomerMetalPurchaseVoucherDetail(
+      id: voucherRow.read<int>('id'),
+      voucherNo: voucherRow.read<String>('voucher_no'),
+      sequenceNo: voucherRow.read<int>('sequence_no'),
+      customerId: voucherRow.readNullable<int>('customer_id'),
+      partyName: voucherRow.read<String>('party_name'),
+      mobile: voucherRow.readNullable<String>('mobile'),
+      city: voucherRow.readNullable<String>('city'),
+      panNumber: voucherRow.readNullable<String>('pan_number'),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        voucherRow.read<int>('created_at'),
+      ),
+      taxType: voucherRow.read<String>('tax_type'),
+      grossAmount: _readDouble(voucherRow, 'gross_amount'),
+      discountAmount: _readDouble(voucherRow, 'discount_amount'),
+      taxableAmount: _readDouble(voucherRow, 'taxable_amount'),
+      gstAmount: _readDouble(voucherRow, 'gst_amount'),
+      grandTotal: _readDouble(voucherRow, 'grand_total'),
+      cashPaid: _readDouble(voucherRow, 'cash_paid'),
+      upiPaid: _readDouble(voucherRow, 'upi_paid'),
+      bankPaid: _readDouble(voucherRow, 'bank_paid'),
+      cardPaid: _readDouble(voucherRow, 'card_paid'),
+      totalPaid: _readDouble(voucherRow, 'total_paid'),
+      balanceDue: _readDouble(voucherRow, 'balance_due'),
+      paymentStatus: voucherRow.readNullable<String>('payment_status') ?? '',
+      promiseDate: promiseDateMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(promiseDateMs),
+      sellerPhotoPath: voucherRow.readNullable<String>('seller_photo_path'),
+      lines: [
+        for (final row in lineRows)
+          CustomerMetalPurchaseVoucherLine(
+            id: row.read<int>('id'),
+            lineNo: row.read<int>('line_no'),
+            metalType: row.read<String>('metal_type'),
+            itemDescription:
+                row.readNullable<String>('item_description') ?? 'Old Metal',
+            grossWeight: _readDouble(row, 'gross_weight'),
+            lessWeight: _readDouble(row, 'less_weight'),
+            netWeight: _readDouble(row, 'net_weight'),
+            purity: _readDouble(row, 'purity'),
+            fineWeight: _readDouble(row, 'fine_weight'),
+            rate: _readDouble(row, 'rate'),
+            quantity: row.read<int>('quantity'),
+            lineAmount: _readDouble(row, 'line_amount'),
+          ),
+      ],
+    );
   }
 
   @override

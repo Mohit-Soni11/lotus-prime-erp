@@ -75,6 +75,7 @@ import '../../features/reports/gst_report/presentation/screens/gst_report_hub_sc
 
 import '../../ui/layout/app_shell.dart';
 import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_ledger_screen.dart';
+import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_voucher_detail_screen.dart';
 
 final _authNotifier = ValueNotifier<bool>(false);
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -498,6 +499,24 @@ GoRouter createAppRouter() {
             path: RoutePaths.customerMetalPurchaseLedger,
             builder: (context, state) =>
                 const CustomerMetalPurchaseLedgerScreen(),
+          ),
+          GoRoute(
+            path: RoutePaths.customerMetalPurchaseVoucher,
+            builder: (context, state) {
+              final voucherId = int.tryParse(
+                state.pathParameters['voucherId'] ?? '',
+              );
+              if (voucherId == null) {
+                return const CustomerMetalPurchaseLedgerScreen();
+              }
+              return CustomerMetalPurchaseVoucherDetailScreen(
+                voucherId: voucherId,
+                onBack: () => _goBackOr(
+                  context,
+                  RoutePaths.customerMetalPurchaseLedger,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: RoutePaths.purchaseReturn,

@@ -188,6 +188,10 @@ class RoutePaths {
   static const String purchaseReturn = '/app/purchase/return';
   static const String customerMetalPurchaseLedger =
       '/app/purchase/customer-metal-purchases';
+  static const String customerMetalPurchaseVoucherBase =
+      '/app/purchase/customer-metal-purchases/voucher';
+  static const String customerMetalPurchaseVoucher =
+      '$customerMetalPurchaseVoucherBase/:voucherId';
 
   // Stock
   static const String stockInventory = '/app/stock/inventory';
@@ -245,6 +249,10 @@ class RoutePaths {
 
   static String girviAccountFor(int loanId) {
     return '$girviAccountBase/$loanId';
+  }
+
+  static String customerMetalPurchaseVoucherFor(int voucherId) {
+    return '$customerMetalPurchaseVoucherBase/$voucherId';
   }
 }
 

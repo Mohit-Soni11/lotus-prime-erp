@@ -101,10 +101,7 @@ class _CustomerMetalPurchaseLedgerScreenState
     }
 
     context.push(
-      Uri(
-        path: RoutePaths.purchaseEntry,
-        queryParameters: {'voucherId': '${entry.sourceDocumentId}'},
-      ).toString(),
+      RoutePaths.customerMetalPurchaseVoucherFor(entry.sourceDocumentId),
     );
   }
 
