@@ -102,7 +102,7 @@ class AppRoutes {
     supplierListRoute: 'Supplier List',
     addSupplierRoute: 'Add New Supplier',
     newSaleRoute: 'New Sale (POS)',
-    salesReturnExchangeRoute: 'Returns & Exchanges',
+    salesReturnExchangeRoute: 'Return & Reversal Desk',
     bookingAdvanceRoute: 'Booking & Advance',
     deliveryManagementRoute: 'Delivery Management',
     purchaseEntryRoute: 'Customer Metal Purchase',
