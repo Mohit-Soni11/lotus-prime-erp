@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_controller.dart';
-import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_empty_state.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_ledger_app_bar.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_report_workspace.dart';
@@ -80,28 +79,10 @@ class _CustomerMetalPurchaseLedgerScreenState
             return CustomerMetalPurchaseReportWorkspace(
               controller: _ledgerController,
               animationController: _cardAnimationController,
-              onOpenVoucher: _openSourceDocument,
             );
           },
         ),
       ),
-    );
-  }
-
-  void _openSourceDocument(CustomerMetalPurchaseEntry entry) {
-    final source = entry.source.toLowerCase();
-    if (source.contains('trade') || source.contains('exchange')) {
-      context.push(
-        Uri(
-          path: RoutePaths.salesPos,
-          queryParameters: {'editBillId': '${entry.sourceDocumentId}'},
-        ).toString(),
-      );
-      return;
-    }
-
-    context.push(
-      RoutePaths.customerMetalPurchaseVoucherFor(entry.sourceDocumentId),
     );
   }
 

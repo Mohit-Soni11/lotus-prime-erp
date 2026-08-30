@@ -1,30 +1,28 @@
-import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_controller.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
-import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/exports/customer_metal_purchase_report_print_service.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/utils/customer_metal_purchase_formatters.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_empty_state.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_actions/customer_metal_purchase_ledger_actions.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_filters/customer_metal_purchase_report_filter_bar.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_metal_cards/customer_metal_purchase_metal_card_grid.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_navigation/customer_metal_purchase_report_command_strip.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_summary/customer_metal_purchase_summary_band.dart';
 import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dart';
 
 class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
   final CustomerMetalPurchaseLedgerController controller;
   final AnimationController animationController;
-  final ValueChanged<CustomerMetalPurchaseEntry> onOpenVoucher;
 
   const CustomerMetalPurchaseReportWorkspace({
     super.key,
     required this.controller,
     required this.animationController,
-    required this.onOpenVoucher,
   });
 
   @override
@@ -55,7 +53,6 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
           const SizedBox(height: 14),
           CustomerMetalPurchaseReportBody(
             controller: controller,
-            onOpenVoucher: onOpenVoucher,
           ),
         ],
       ),
@@ -63,113 +60,19 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
   }
 }
 
-class CustomerMetalPurchaseReportTabs extends StatelessWidget {
-  final CustomerMetalPurchaseLedgerController controller;
-
-  const CustomerMetalPurchaseReportTabs({
-    super.key,
-    required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final tab in CustomerMetalPurchaseReportTab.values)
-          _TabButton(
-            label: tab.label,
-            selected: controller.selectedTab == tab,
-            onTap: () => controller.selectTab(tab),
-          ),
-      ],
-    );
-  }
-}
-
-class CustomerMetalPurchaseReportCommandStrip extends StatelessWidget {
-  final CustomerMetalPurchaseLedgerController controller;
-
-  const CustomerMetalPurchaseReportCommandStrip({
-    super.key,
-    required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final printButton = _ReportActionButton(
-          icon: Icons.print_rounded,
-          label: 'Print Report',
-          onPressed: controller.filteredEntries.isEmpty
-              ? null
-              : () => _printReport(context),
-        );
-
-        if (constraints.maxWidth < 760) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CustomerMetalPurchaseReportTabs(controller: controller),
-              const SizedBox(height: 12),
-              printButton,
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: CustomerMetalPurchaseReportTabs(controller: controller),
-            ),
-            const SizedBox(width: 12),
-            printButton,
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _printReport(BuildContext context) async {
-    try {
-      await CustomerMetalPurchaseReportPrintService.printReport(
-        periodLabel: controller.periodLabel,
-        dashboard: controller.dashboardSummary,
-        metalSummaries: controller.visibleMetalSummaries,
-        entries: controller.filteredEntries,
-      );
-    } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Report print failed: $error')),
-      );
-    }
-  }
-}
-
 class CustomerMetalPurchaseReportBody extends StatelessWidget {
   final CustomerMetalPurchaseLedgerController controller;
-  final ValueChanged<CustomerMetalPurchaseEntry> onOpenVoucher;
 
   const CustomerMetalPurchaseReportBody({
     super.key,
     required this.controller,
-    required this.onOpenVoucher,
   });
 
   @override
   Widget build(BuildContext context) {
     switch (controller.selectedTab) {
       case CustomerMetalPurchaseReportTab.ledger:
-        return _LedgerTable(
-          entries: controller.filteredEntries,
-          onOpenVoucher: onOpenVoucher,
-        );
+        return _LedgerTable(entries: controller.filteredEntries);
       case CustomerMetalPurchaseReportTab.metalSummary:
         return _MetalSummaryTable(summaries: controller.visibleMetalSummaries);
       case CustomerMetalPurchaseReportTab.sellerSummary:
@@ -177,7 +80,6 @@ class CustomerMetalPurchaseReportBody extends StatelessWidget {
       case CustomerMetalPurchaseReportTab.pendingPayout:
         return _LedgerTable(
           entries: controller.pendingEntries,
-          onOpenVoucher: onOpenVoucher,
           emptyMessage: 'No pending seller payout found for this period.',
         );
       case CustomerMetalPurchaseReportTab.paymentSummary:
@@ -188,12 +90,25 @@ class CustomerMetalPurchaseReportBody extends StatelessWidget {
 
 class _LedgerTable extends StatelessWidget {
   final List<CustomerMetalPurchaseEntry> entries;
-  final ValueChanged<CustomerMetalPurchaseEntry> onOpenVoucher;
   final String emptyMessage;
+
+  static const List<_LedgerColumn> _columns = [
+    _LedgerColumn('S. No.', 66),
+    _LedgerColumn('Seller', 220, flexGrow: 0.30),
+    _LedgerColumn('Invoice No', 172, flexGrow: 0.20),
+    _LedgerColumn('Date', 132),
+    _LedgerColumn('Metal', 96),
+    _LedgerColumn('Net Wt', 116),
+    _LedgerColumn('Value', 118, flexGrow: 0.10),
+    _LedgerColumn('Paid', 118, flexGrow: 0.10),
+    _LedgerColumn('Pending', 124, flexGrow: 0.10),
+    _LedgerColumn('Status', 112),
+    _LedgerColumn('Photo', 82),
+    _LedgerColumn('Actions', 128, flexGrow: 0.20),
+  ];
 
   const _LedgerTable({
     required this.entries,
-    required this.onOpenVoucher,
     this.emptyMessage = 'No customer metal purchase records found.',
   });
 
@@ -205,104 +120,323 @@ class _LedgerTable extends StatelessWidget {
 
     return _ReportSurface(
       padding: EdgeInsets.zero,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 48,
-          dataRowMinHeight: 56,
-          dataRowMaxHeight: 68,
-          columnSpacing: 24,
-          headingTextStyle: _tableHeadingStyle,
-          dataTextStyle: _tableBodyStyle,
-          columns: const [
-            DataColumn(label: Text('S. No.')),
-            DataColumn(label: Text('Seller')),
-            DataColumn(label: Text('Invoice No')),
-            DataColumn(label: Text('Date')),
-            DataColumn(label: Text('Metal')),
-            DataColumn(label: Text('Net Wt')),
-            DataColumn(label: Text('Fine Wt')),
-            DataColumn(label: Text('Value')),
-            DataColumn(label: Text('Paid')),
-            DataColumn(label: Text('Pending')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Photo')),
-            DataColumn(label: Text('Actions')),
-          ],
-          rows: [
-            for (var index = 0; index < entries.length; index++)
-              _ledgerRow(context, entries[index], index + 1),
-          ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tableWidth = math.max(constraints.maxWidth, _baseWidth + 2);
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: Column(
+                children: [
+                  _LedgerHeader(columns: _columns, tableWidth: tableWidth),
+                  for (var index = 0; index < entries.length; index++)
+                    _LedgerInteractiveRow(
+                      key: ValueKey(
+                        'customer-metal-purchase-ledger-row-${index + 1}',
+                      ),
+                      columns: _columns,
+                      tableWidth: tableWidth,
+                      entry: entries[index],
+                      serialNo: index + 1,
+                      onShowDetails: () =>
+                          CustomerMetalPurchaseLedgerActions.showOptions(
+                        context,
+                        entries[index],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  static double get _baseWidth =>
+      _columns.fold(0, (total, column) => total + column.baseWidth);
+}
+
+class _LedgerColumn {
+  final String label;
+  final double baseWidth;
+  final double flexGrow;
+
+  const _LedgerColumn(
+    this.label,
+    this.baseWidth, {
+    this.flexGrow = 0,
+  });
+}
+
+class _LedgerHeader extends StatelessWidget {
+  final List<_LedgerColumn> columns;
+  final double tableWidth;
+
+  const _LedgerHeader({
+    required this.columns,
+    required this.tableWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+      ),
+      child: Row(
+        children: [
+          for (final column in columns)
+            _LedgerCell(
+              width: _columnWidth(column),
+              alignment: column.label == 'S. No.' || column.label == 'Photo'
+                  ? Alignment.center
+                  : Alignment.centerLeft,
+              child: Text(column.label, style: _tableHeadingStyle),
+            ),
+        ],
+      ),
+    );
+  }
+
+  double _columnWidth(_LedgerColumn column) {
+    final baseWidth =
+        columns.fold<double>(0, (total, item) => total + item.baseWidth);
+    final extraWidth = math.max(0, tableWidth - baseWidth);
+    return column.baseWidth + extraWidth * column.flexGrow;
+  }
+}
+
+class _LedgerInteractiveRow extends StatefulWidget {
+  final List<_LedgerColumn> columns;
+  final double tableWidth;
+  final CustomerMetalPurchaseEntry entry;
+  final int serialNo;
+  final VoidCallback onShowDetails;
+
+  const _LedgerInteractiveRow({
+    super.key,
+    required this.columns,
+    required this.tableWidth,
+    required this.entry,
+    required this.serialNo,
+    required this.onShowDetails,
+  });
+
+  @override
+  State<_LedgerInteractiveRow> createState() => _LedgerInteractiveRowState();
+}
+
+class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = PurchaseEntryColors.purchaseAccent;
+    final background =
+        widget.serialNo.isEven ? const Color(0xFFFCFCFD) : Colors.white;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onShowDetails,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          width: widget.tableWidth,
+          height: 68,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          transform: Matrix4.translationValues(0, _hovered ? -1 : 0, 0),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _hovered
+                  ? accent.withValues(alpha: 0.70)
+                  : const Color(0xFFE5E7EB),
+              width: 1.5,
+            ),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.20),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              _LedgerCell(
+                width: _columnWidth(widget.columns[0]),
+                alignment: Alignment.center,
+                child: Text(
+                  widget.serialNo.toString(),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[1]),
+                child: _TwoLineCell(
+                  title: widget.entry.customerName,
+                  subtitle: widget.entry.mobile ?? 'Mobile not recorded',
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[2]),
+                child: Text(widget.entry.referenceNo, style: _tableBodyStyle),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[3]),
+                child: Text(
+                  CustomerMetalPurchaseFormatters.date(widget.entry.date),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[4]),
+                child: Text(
+                  widget.entry.metalType.toUpperCase(),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[5]),
+                child: Text(
+                  CustomerMetalPurchaseFormatters.weight(
+                    widget.entry.netWeight,
+                  ),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[6]),
+                child: Text(
+                  CustomerMetalPurchaseFormatters.amount(widget.entry.amount),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[7]),
+                child: Text(
+                  CustomerMetalPurchaseFormatters.amount(
+                    widget.entry.paidAmount,
+                  ),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[8]),
+                child: Text(
+                  CustomerMetalPurchaseFormatters.amount(
+                    widget.entry.pendingAmount,
+                  ),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[9]),
+                child: _PaymentStatusBadge(entry: widget.entry),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[10]),
+                alignment: Alignment.center,
+                child: Icon(
+                  widget.entry.hasSellerPhoto
+                      ? Icons.image_rounded
+                      : Icons.image_not_supported_rounded,
+                  size: 18,
+                  color: widget.entry.hasSellerPhoto
+                      ? PurchaseEntryColors.purchaseAccent
+                      : const Color(0xFF9CA3AF),
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[11]),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _LedgerActionIconButton(
+                      tooltip: 'View PDF',
+                      onPressed: () =>
+                          CustomerMetalPurchaseLedgerActions.viewPdf(
+                        context,
+                        widget.entry,
+                      ),
+                      icon: const Icon(
+                        Icons.picture_as_pdf_rounded,
+                        size: 18,
+                      ),
+                    ),
+                    _LedgerActionIconButton(
+                      tooltip: 'View photo',
+                      onPressed: widget.entry.hasSellerPhoto
+                          ? () => CustomerMetalPurchaseLedgerActions.viewPhoto(
+                                context,
+                                widget.entry,
+                              )
+                          : null,
+                      icon: const Icon(
+                        Icons.image_rounded,
+                        size: 18,
+                      ),
+                    ),
+                    _LedgerActionIconButton(
+                      tooltip: 'Print PDF',
+                      onPressed: () =>
+                          CustomerMetalPurchaseLedgerActions.printPdf(
+                        context,
+                        widget.entry,
+                      ),
+                      icon: const Icon(Icons.print_rounded, size: 18),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  DataRow _ledgerRow(
-    BuildContext context,
-    CustomerMetalPurchaseEntry entry,
-    int serialNo,
-  ) {
-    return DataRow(
-      onSelectChanged: (_) => _showEntryDetails(context, entry),
-      cells: [
-        DataCell(Text(serialNo.toString())),
-        DataCell(
-          _TwoLineCell(
-            title: entry.customerName,
-            subtitle: entry.mobile ?? 'Mobile not recorded',
-          ),
-        ),
-        DataCell(Text(entry.referenceNo)),
-        DataCell(Text(CustomerMetalPurchaseFormatters.date(entry.date))),
-        DataCell(Text(entry.metalType.toUpperCase())),
-        DataCell(Text(CustomerMetalPurchaseFormatters.weight(entry.netWeight))),
-        DataCell(
-            Text(CustomerMetalPurchaseFormatters.weight(entry.fineWeight))),
-        DataCell(Text(CustomerMetalPurchaseFormatters.amount(entry.amount))),
-        DataCell(
-          Text(CustomerMetalPurchaseFormatters.amount(entry.paidAmount)),
-        ),
-        DataCell(
-          Text(CustomerMetalPurchaseFormatters.amount(entry.pendingAmount)),
-        ),
-        DataCell(_PaymentStatusBadge(entry: entry)),
-        DataCell(
-          Icon(
-            entry.hasSellerPhoto
-                ? Icons.image_rounded
-                : Icons.image_not_supported_rounded,
-            size: 18,
-            color: entry.hasSellerPhoto
-                ? PurchaseEntryColors.purchaseAccent
-                : const Color(0xFF9CA3AF),
-          ),
-        ),
-        DataCell(
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: 'Open voucher',
-                onPressed: () => onOpenVoucher(entry),
-                icon: const Icon(Icons.open_in_new_rounded, size: 18),
-              ),
-              IconButton(
-                tooltip: 'View details',
-                onPressed: () => _showEntryDetails(context, entry),
-                icon: const Icon(Icons.visibility_rounded, size: 18),
-              ),
-              IconButton(
-                tooltip: entry.hasSellerPhoto ? 'View photo' : 'No photo',
-                onPressed: entry.hasSellerPhoto
-                    ? () => _showPhotoPreview(context, entry)
-                    : null,
-                icon: const Icon(Icons.photo_camera_back_rounded, size: 18),
-              ),
-            ],
-          ),
-        ),
-      ],
+  double _columnWidth(_LedgerColumn column) {
+    final baseWidth = widget.columns.fold<double>(
+      0,
+      (total, item) => total + item.baseWidth,
+    );
+    final contentWidth = math.max(0, widget.tableWidth - 3);
+    final extraWidth = math.max(0, contentWidth - baseWidth);
+    return column.baseWidth + extraWidth * column.flexGrow;
+  }
+}
+
+class _LedgerCell extends StatelessWidget {
+  final double width;
+  final Widget child;
+  final AlignmentGeometry alignment;
+
+  const _LedgerCell({
+    required this.width,
+    required this.child,
+    this.alignment = Alignment.centerLeft,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Align(alignment: alignment, child: child),
+      ),
     );
   }
 }
@@ -364,6 +498,41 @@ class _MetalSummaryTable extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _LedgerActionIconButton extends StatelessWidget {
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final Widget icon;
+
+  const _LedgerActionIconButton({
+    required this.tooltip,
+    required this.onPressed,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: IconTheme(
+        data: const IconThemeData(color: Colors.black, size: 18),
+        child: icon,
+      ),
+      style: IconButton.styleFrom(
+        fixedSize: const Size(32, 32),
+        minimumSize: const Size(32, 32),
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: Colors.black,
+        disabledForegroundColor: Colors.black,
+        hoverColor: Colors.black.withValues(alpha: 0.06),
+        highlightColor: Colors.black.withValues(alpha: 0.06),
+      ),
+      visualDensity: VisualDensity.compact,
     );
   }
 }
@@ -586,97 +755,6 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-class _ReportActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback? onPressed;
-
-  const _ReportActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(168, 42),
-        backgroundColor: PurchaseEntryColors.purchaseAccent,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFFE5E7EB),
-        disabledForegroundColor: const Color(0xFF0B1220),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _TabButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected
-                ? PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.12)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: selected
-                  ? PurchaseEntryColors.purchaseAccent
-                  : const Color(0xFFE5E0D8),
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: PurchaseEntryColors.purchaseAccent
-                          .withValues(alpha: 0.12),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: selected
-                  ? PurchaseEntryColors.purchaseAccent
-                  : const Color(0xFF111827),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _TwoLineCell extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -749,303 +827,6 @@ class _PaymentStatusBadge extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _showEntryDetails(
-  BuildContext context,
-  CustomerMetalPurchaseEntry entry,
-) {
-  return showDialog<void>(
-    context: context,
-    builder: (context) {
-      return Dialog(
-        insetPadding: const EdgeInsets.all(28),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 920),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry.referenceNo,
-                        style: GoogleFonts.manrope(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final columns = constraints.maxWidth >= 760 ? 3 : 2;
-                    const spacing = 12.0;
-                    final width =
-                        (constraints.maxWidth - spacing * (columns - 1)) /
-                            columns;
-                    return Wrap(
-                      spacing: spacing,
-                      runSpacing: spacing,
-                      children: [
-                        _DetailTile(
-                          width: width,
-                          label: 'Seller',
-                          value: entry.customerName,
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Mobile',
-                          value: entry.mobile ?? 'Not recorded',
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Date',
-                          value:
-                              CustomerMetalPurchaseFormatters.date(entry.date),
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Metal',
-                          value: entry.metalType,
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Item',
-                          value: entry.itemDescription.isEmpty
-                              ? entry.metalType
-                              : entry.itemDescription,
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Payment Mode',
-                          value: entry.paymentModeLabel,
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Net Weight',
-                          value: CustomerMetalPurchaseFormatters.weight(
-                            entry.netWeight,
-                          ),
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Fine Weight',
-                          value: CustomerMetalPurchaseFormatters.weight(
-                            entry.fineWeight,
-                          ),
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Value',
-                          value: CustomerMetalPurchaseFormatters.amount(
-                            entry.amount,
-                          ),
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Paid',
-                          value: CustomerMetalPurchaseFormatters.amount(
-                            entry.paidAmount,
-                          ),
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Pending',
-                          value: CustomerMetalPurchaseFormatters.amount(
-                            entry.pendingAmount,
-                          ),
-                        ),
-                        _DetailTile(
-                          width: width,
-                          label: 'Commitment Date',
-                          value: entry.commitmentDate == null
-                              ? 'Not required'
-                              : CustomerMetalPurchaseFormatters.date(
-                                  entry.commitmentDate!,
-                                ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                if (entry.hasSellerPhoto) ...[
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showPhotoPreview(context, entry),
-                      icon: const Icon(Icons.photo_library_rounded, size: 18),
-                      label: const Text('View Seller Photo'),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      );
-    },
-  );
-}
-
-class _DetailTile extends StatelessWidget {
-  final double width;
-  final String label;
-  final String value;
-
-  const _DetailTile({
-    required this.width,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E0D8)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0B1220),
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              value,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-Future<void> _showPhotoPreview(
-  BuildContext context,
-  CustomerMetalPurchaseEntry entry,
-) {
-  final path = entry.sellerPhotoPath?.trim();
-  if (path == null || path.isEmpty) {
-    return Future.value();
-  }
-  final file = File(path);
-
-  return showDialog<void>(
-    context: context,
-    builder: (context) {
-      return Dialog(
-        insetPadding: const EdgeInsets.all(26),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760, maxHeight: 720),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${entry.customerName} Photo Proof',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.manrope(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => _downloadPhoto(context, file),
-                      icon: const Icon(Icons.download_rounded, size: 18),
-                      label: const Text('Download'),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: file.existsSync()
-                        ? InteractiveViewer(
-                            child: Image.file(file, fit: BoxFit.contain),
-                          )
-                        : const CustomerMetalPurchaseEmptyState(
-                            message: 'Seller photo file is missing.',
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    },
-  );
-}
-
-Future<void> _downloadPhoto(BuildContext context, File source) async {
-  if (!source.existsSync()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo file is missing.')),
-    );
-    return;
-  }
-  final downloads = await getDownloadsDirectory();
-  if (!context.mounted) {
-    return;
-  }
-  if (downloads == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Downloads folder was not found.')),
-    );
-    return;
-  }
-  final timestamp = DateTime.now().millisecondsSinceEpoch;
-  final target = File('${downloads.path}\\seller-photo-$timestamp.jpg');
-  await source.copy(target.path);
-  if (!context.mounted) {
-    return;
-  }
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Photo saved to ${target.path}')),
-  );
 }
 
 final TextStyle _tableHeadingStyle = GoogleFonts.inter(
