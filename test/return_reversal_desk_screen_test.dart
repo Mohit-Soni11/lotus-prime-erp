@@ -162,14 +162,25 @@ void main() {
     expect(controller.customerMobileCtrl.text, '9304479436');
     expect(controller.customerNameCtrl.text, 'REYANSH SONI');
     expect(find.text('LOADED : AJ-PUR-2026-0006'), findsOneWidget);
-    expect(find.text('Gold Ring'), findsOneWidget);
+    expect(find.text('Silver Payal'), findsOneWidget);
     expect(find.text('RETURN : 1'), findsOneWidget);
-    expect(find.text('HUID NO.'), findsOneWidget);
+    expect(find.text('METAL'), findsOneWidget);
+    expect(find.text('ITEM DESCRIPTION'), findsOneWidget);
+    expect(find.text('UNIT'), findsNothing);
+    expect(find.text('HUID / SET'), findsOneWidget);
+    expect(find.text('PURITY'), findsOneWidget);
+    expect(find.text('GR. WT'), findsNothing);
+    expect(find.text('LESS'), findsNothing);
     expect(find.text('MAKING'), findsOneWidget);
-    expect(find.text('DISCOUNT'), findsOneWidget);
+    expect(find.text('TOTAL'), findsWidgets);
+    expect(find.text('PAIR'), findsOneWidget);
+    expect(find.text('12%'), findsOneWidget);
+    expect(find.text('DISCOUNT'), findsNothing);
+    expect(find.text('ACT'), findsNothing);
     expect(find.text('HUID123456'), findsOneWidget);
-    expect(find.text('Rs 500'), findsWidgets);
-    expect(find.text('Rs 15,000'), findsWidgets);
+    expect(find.text('PUR-SILVER-001'), findsNothing);
+    expect(find.text('Rs 1,587'), findsWidgets);
+    expect(find.text('Rs 19,590'), findsWidgets);
     expect(find.text('DUE 2.0K'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
@@ -227,16 +238,26 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
     lineItems: const [
       ReturnReversalSourceLineItem(
         lineNo: 1,
-        metalType: 'GOLD',
-        description: 'Gold Ring',
+        metalType: 'SILVER',
+        description: 'Silver Payal',
+        hsnCode: '71131120',
+        purity: '60',
         quantity: 1,
-        grossWeight: 1,
-        netWeight: 1,
-        rate: 15000,
-        makingAmount: 500,
+        grossWeight: 79.361,
+        lessWeight: 0,
+        netWeight: 79.361,
+        fineWeight: 47.617,
+        rate: 220,
+        makingChargeType: 'PERCENTAGE',
+        makingChargeInput: 12,
+        makingAmount: 1587,
         discountAmount: 250,
-        value: 15000,
+        taxableAmount: 19019,
+        gstAmount: 571,
+        invoiceValue: 19590,
+        value: 19590,
         huidNumber: 'HUID123456',
+        linkedStockSku: 'PUR-SILVER-001',
         status: 'ACTIVE',
       ),
     ],

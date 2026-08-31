@@ -71,6 +71,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         COALESCE(c.city, '') AS city,
         b.bill_date,
         b.total_amount,
+        b.discount,
         b.final_amount,
         b.paid_amount,
         b.due_amount,
@@ -107,6 +108,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         COALESCE(c.city, '') AS city,
         b.bill_date,
         b.total_amount,
+        b.discount,
         b.final_amount,
         b.paid_amount,
         b.due_amount,
@@ -131,19 +133,37 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
           ..where((table) => table.billId.equals(billId))
           ..orderBy([(table) => drift.OrderingTerm.asc(table.lineNo)]))
         .get();
+    final billTotal = _readDouble(row, 'total_amount');
+    final billDiscount = _readDouble(row, 'discount');
     final lines = <ReturnReversalSourceLineItem>[
       for (final item in items)
         ReturnReversalSourceLineItem(
           lineNo: item.lineNo,
           metalType: item.metalType,
           description: item.itemName,
+          hsnCode: item.hsnCode ?? '',
+          purity: item.purity,
           quantity: item.quantity,
           grossWeight: item.grossWeight,
+          lessWeight: item.lessWeight,
+          lessWeightPerPiece: item.lessWeightPerPiece,
           netWeight: item.netWeight,
+          fineWeight: item.fineWeight,
           rate: item.rate,
+          makingChargeType: item.makingChargeType,
+          makingChargeInput: item.makingChargeInput,
           makingAmount: item.makingCharge,
+          discountAmount: _allocatedDiscount(
+            lineValue: item.itemTotal,
+            billTotal: billTotal,
+            billDiscount: billDiscount,
+          ),
+          taxableAmount: item.taxableAmountSnapshot,
+          gstAmount: item.gstAmountSnapshot,
+          invoiceValue: item.invoiceValueSnapshot,
           value: item.itemTotal,
           huidNumber: item.huid ?? '',
+          linkedStockSku: item.linkedStockSku ?? '',
           status: row.readNullable<String>('status') ?? 'ACTIVE',
         ),
     ];
@@ -431,4 +451,14 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     }
   }
 
+  double _allocatedDiscount({
+    required double lineValue,
+    required double billTotal,
+    required double billDiscount,
+  }) {
+    if (lineValue <= 0 || billTotal <= 0 || billDiscount <= 0) {
+      return 0;
+    }
+    return billDiscount * (lineValue / billTotal);
+  }
 }

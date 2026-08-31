@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
+import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
-const double _sourceItemsTableWidth = 1240;
+const double _sourceItemsTableWidth = 1280;
 
 class ReturnReversalInvoiceItemsCard extends StatelessWidget {
   final ReturnReversalController controller;
@@ -206,23 +208,23 @@ class _ColumnHeaderRow extends StatelessWidget {
               children: [
                 _header('S.NO', flex: 1, center: true),
                 const SizedBox(width: 6),
-                _header('ITEM DETAILS', flex: 5),
+                _header('METAL', flex: 3),
                 const SizedBox(width: 6),
-                _header('PCS', flex: 1, center: true),
+                _header('ITEM DESCRIPTION', flex: 4),
                 const SizedBox(width: 6),
-                _header('GROSS WT', flex: 2, center: true),
+                _header('PCS', flex: 2, center: true),
+                const SizedBox(width: 6),
+                _header('HUID / SET', flex: 3, center: true),
+                const SizedBox(width: 6),
+                _header('PURITY', flex: 2, center: true),
                 const SizedBox(width: 6),
                 _header('NET WT', flex: 2, center: true),
                 const SizedBox(width: 6),
-                _header('RATE', flex: 2, right: true),
+                _header('RATE', flex: 3, right: true),
                 const SizedBox(width: 6),
-                _header('MAKING', flex: 2, right: true),
+                _header('MAKING', flex: 3, right: true),
                 const SizedBox(width: 6),
-                _header('HUID NO.', flex: 3, center: true),
-                const SizedBox(width: 6),
-                _header('VALUE', flex: 2, right: true),
-                const SizedBox(width: 6),
-                _header('STATUS', flex: 2, center: true),
+                _header('TOTAL', flex: 3, right: true),
               ],
             ),
           ),
@@ -352,59 +354,69 @@ class _SourceItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _cell(lineItem.lineNo.toString(), flex: 1, center: true),
-          const SizedBox(width: 6),
-          _ItemDetailsCell(lineItem: lineItem),
-          const SizedBox(width: 6),
-          _cell(lineItem.quantity.toString(), flex: 1, center: true),
-          const SizedBox(width: 6),
-          _cell(
-            '${_formatWeight(lineItem.grossWeight)} g',
-            flex: 2,
-            center: true,
-          ),
-          const SizedBox(width: 6),
-          _cell('${_formatWeight(lineItem.netWeight)} g',
-              flex: 2, center: true),
-          const SizedBox(width: 6),
-          _cell(_formatCurrency(lineItem.rate), flex: 2, right: true),
-          const SizedBox(width: 6),
-          _cell(_formatMoneyOrDash(lineItem.makingAmount),
-              flex: 2, right: true),
-          const SizedBox(width: 6),
-          _HuidChip(value: lineItem.huidNumber),
-          const SizedBox(width: 6),
-          _cell(_formatCurrency(lineItem.value), flex: 2, right: true),
-          const SizedBox(width: 6),
-          _StatusChip(label: lineItem.status),
-        ],
-      ),
-    );
-  }
+    final metalColor = _metalColor(lineItem.metalType);
 
-  Widget _cell(
-    String value, {
-    required int flex,
-    bool center = false,
-    bool right = false,
-  }) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        value,
-        textAlign: right
-            ? TextAlign.right
-            : center
-                ? TextAlign.center
-                : TextAlign.left,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: SalesPosStyles.bodyStrong,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: const BoxDecoration(color: SalesPosColors.bodyPanelBg),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              flex: 1,
+              child: _SourceLineNumber(
+                number: lineItem.lineNo,
+                color: metalColor,
+              ),
+            ),
+            const SizedBox(width: 6),
+            _MetalSnapshotCell(lineItem: lineItem, color: metalColor),
+            const SizedBox(width: 6),
+            _ItemDetailsCell(lineItem: lineItem),
+            const SizedBox(width: 6),
+            _QuantitySnapshotCell(lineItem: lineItem),
+            const SizedBox(width: 6),
+            _HuidChip(value: lineItem.huidNumber),
+            const SizedBox(width: 6),
+            _ReadOnlyPosCell(
+              value: lineItem.purity,
+              flex: 2,
+              center: true,
+              color: metalColor,
+              tooltip: 'Purity snapshot',
+            ),
+            const SizedBox(width: 6),
+            _ReadOnlyPosCell(
+              value: _formatWeight(lineItem.netWeight),
+              flex: 2,
+              center: true,
+              color: metalColor,
+              tooltip: 'Net weight',
+              strong: true,
+            ),
+            const SizedBox(width: 6),
+            _ReadOnlyPosCell(
+              value: _formatCurrency(lineItem.rate),
+              flex: 3,
+              right: true,
+              tooltip: 'Rate snapshot',
+            ),
+            const SizedBox(width: 6),
+            _MakingSnapshotCell(lineItem: lineItem),
+            const SizedBox(width: 6),
+            _ReadOnlyPosCell(
+              value: _formatCurrency(lineItem.displayInvoiceValue),
+              flex: 3,
+              right: true,
+              tooltip: 'Invoice line total',
+              strong: true,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -417,56 +429,373 @@ class _ItemDetailsCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isGold = lineItem.metalType.toUpperCase().contains('GOLD');
-    final color =
-        isGold ? SalesPosColors.brandGold : SalesPosColors.brandSilver;
-
     return Expanded(
-      flex: 5,
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.28)),
-            ),
-            child: Icon(
-              isGold ? Icons.diamond_rounded : Icons.auto_awesome_rounded,
-              color: color,
-              size: 17,
-            ),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+      flex: 4,
+      child: SizedBox(
+        height: 38,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                lineItem.description,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.bodyStrong.copyWith(height: 1),
+              ),
+              if (lineItem.hsnCode.trim().isNotEmpty) ...[
+                const SizedBox(height: 2),
                 Text(
-                  lineItem.description,
+                  'HSN ${lineItem.hsnCode.trim()}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: SalesPosStyles.bodyStrong,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  lineItem.metalType.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.6,
+                  style: SalesPosStyles.caption.copyWith(
+                    color: SalesPosColors.bodyTextMuted,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceLineNumber extends StatelessWidget {
+  final int number;
+  final Color color;
+
+  const _SourceLineNumber({
+    required this.number,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
+        child: Text(
+          '$number',
+          style: TextStyle(
+            color: color,
+            fontSize: SalesPosStyles.fontBody,
+            fontWeight: FontWeight.w900,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetalSnapshotCell extends StatelessWidget {
+  final ReturnReversalSourceLineItem lineItem;
+  final Color color;
+
+  const _MetalSnapshotCell({
+    required this.lineItem,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: 3,
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          border: Border.all(color: color.withValues(alpha: 0.40)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _metalLabel(lineItem.metalType),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.inputText.copyWith(
+                  color: color,
+                  fontSize: SalesPosStyles.fontBody,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuantitySnapshotCell extends StatelessWidget {
+  final ReturnReversalSourceLineItem lineItem;
+
+  const _QuantitySnapshotCell({required this.lineItem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: 2,
+      child: Tooltip(
+        message: 'Sold quantity',
+        waitDuration: const Duration(milliseconds: 300),
+        child: Container(
+          height: 38,
+          padding: const EdgeInsets.only(left: 8, right: 4),
+          decoration: BoxDecoration(
+            color: SalesPosColors.bodyBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: SalesPosColors.bodyBorder, width: 1.5),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  lineItem.quantity.toString(),
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: SalesPosStyles.inputText.copyWith(
+                    color: SalesPosColors.bodyTextMain,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              _UnitSuffixBadge(lineItem: lineItem),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnitSuffixBadge extends StatelessWidget {
+  final ReturnReversalSourceLineItem lineItem;
+
+  const _UnitSuffixBadge({required this.lineItem});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _metalColor(lineItem.metalType);
+
+    return Container(
+      height: 26,
+      constraints: const BoxConstraints(minWidth: 42),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        _unitShortName(lineItem),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: SalesPosStyles.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadOnlyPosCell extends StatelessWidget {
+  final String value;
+  final int flex;
+  final bool center;
+  final bool right;
+  final bool strong;
+  final String tooltip;
+  final Color color;
+
+  const _ReadOnlyPosCell({
+    required this.value,
+    required this.flex,
+    required this.tooltip,
+    this.center = false,
+    this.right = false,
+    this.strong = false,
+    this.color = SalesPosColors.bodyTextMain,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = center
+        ? Alignment.center
+        : right
+            ? Alignment.centerRight
+            : Alignment.centerLeft;
+
+    return Expanded(
+      flex: flex,
+      child: Tooltip(
+        message: tooltip,
+        waitDuration: const Duration(milliseconds: 300),
+        child: Container(
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          alignment: alignment,
+          decoration: BoxDecoration(
+            color:
+                strong ? color.withValues(alpha: 0.08) : SalesPosColors.bodyBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: strong
+                  ? color.withValues(alpha: 0.25)
+                  : SalesPosColors.bodyBorder,
+              width: 1.5,
+            ),
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: alignment,
+            child: Text(
+              value,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              textAlign: right
+                  ? TextAlign.right
+                  : center
+                      ? TextAlign.center
+                      : TextAlign.left,
+              style: SalesPosStyles.inputText.copyWith(
+                color: color,
+                fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MakingSnapshotCell extends StatelessWidget {
+  final ReturnReversalSourceLineItem lineItem;
+
+  const _MakingSnapshotCell({required this.lineItem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: 3,
+      child: Row(
+        children: [
+          _MakingInputBadge(lineItem: lineItem),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _ReadOnlyBox(
+              value: _formatMoneyOrDash(lineItem.makingAmount),
+              tooltip: 'Making amount snapshot',
+              right: true,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MakingInputBadge extends StatelessWidget {
+  final ReturnReversalSourceLineItem lineItem;
+
+  const _MakingInputBadge({required this.lineItem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Original making input',
+      waitDuration: const Duration(milliseconds: 300),
+      child: Container(
+        width: 54,
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: SalesPosColors.brandGold.withValues(alpha: 0.12),
+          border: Border.all(
+            color: SalesPosColors.brandGold.withValues(alpha: 0.40),
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            _formatMakingInput(lineItem),
+            maxLines: 1,
+            softWrap: false,
+            style: const TextStyle(
+              color: SalesPosColors.brandGold,
+              fontSize: SalesPosStyles.fontLabel,
+              fontWeight: FontWeight.w900,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReadOnlyBox extends StatelessWidget {
+  final String value;
+  final String tooltip;
+  final bool right;
+
+  const _ReadOnlyBox({
+    required this.value,
+    required this.tooltip,
+    this.right = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 300),
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        alignment: right ? Alignment.centerRight : Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: SalesPosColors.bodyBg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: SalesPosColors.bodyBorder, width: 1.5),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: right ? Alignment.centerRight : Alignment.centerLeft,
+          child: Text(
+            value,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.visible,
+            textAlign: right ? TextAlign.right : TextAlign.left,
+            style: SalesPosStyles.inputText.copyWith(
+              color: SalesPosColors.bodyTextMain,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -487,17 +816,13 @@ class _SourceItemsTotalRow extends StatelessWidget {
       0,
       (total, item) => total + item.netWeight,
     );
-    final grossWeight = lineItems.fold<double>(
-      0,
-      (total, item) => total + item.grossWeight,
-    );
     final making = lineItems.fold<double>(
       0,
       (total, item) => total + item.makingAmount,
     );
     final value = lineItems.fold<double>(
       0,
-      (total, item) => total + item.value,
+      (total, item) => total + item.displayInvoiceValue,
     );
 
     return Container(
@@ -507,24 +832,23 @@ class _SourceItemsTotalRow extends StatelessWidget {
         children: [
           _totalCell('TOTAL', flex: 1, center: true),
           const SizedBox(width: 6),
-          _totalCell('${lineItems.length} lines', flex: 5),
+          _totalCell('${lineItems.length} lines', flex: 3),
           const SizedBox(width: 6),
-          _totalCell(quantity.toString(), flex: 1, center: true),
+          _totalCell('SOURCE SNAPSHOT', flex: 4),
           const SizedBox(width: 6),
-          _totalCell('${_formatWeight(grossWeight)} g',
-              flex: 2, center: true),
-          const SizedBox(width: 6),
-          _totalCell('${_formatWeight(netWeight)} g', flex: 2, center: true),
-          const SizedBox(width: 6),
-          _totalCell('-', flex: 2, right: true),
-          const SizedBox(width: 6),
-          _totalCell(_formatMoneyOrDash(making), flex: 2, right: true),
+          _totalCell(quantity.toString(), flex: 2, center: true),
           const SizedBox(width: 6),
           _totalCell('-', flex: 3, center: true),
           const SizedBox(width: 6),
-          _totalCell(_formatCurrency(value), flex: 2, right: true),
+          _totalCell('-', flex: 2, center: true),
           const SizedBox(width: 6),
-          _totalCell('READY', flex: 2, center: true),
+          _totalCell('${_formatWeight(netWeight)} g', flex: 2, center: true),
+          const SizedBox(width: 6),
+          _totalCell('-', flex: 3, right: true),
+          const SizedBox(width: 6),
+          _totalCell(_formatMoneyOrDash(making), flex: 3, right: true),
+          const SizedBox(width: 6),
+          _totalCell(_formatCurrency(value), flex: 3, right: true),
         ],
       ),
     );
@@ -552,45 +876,6 @@ class _SourceItemsTotalRow extends StatelessWidget {
           fontSize: SalesPosStyles.fontLabel,
           fontWeight: FontWeight.w900,
           letterSpacing: 0,
-        ),
-      ),
-    );
-  }
-}
-
-class _MetalBadge extends StatelessWidget {
-  final String metalType;
-
-  const _MetalBadge({required this.metalType});
-
-  @override
-  Widget build(BuildContext context) {
-    final isGold = metalType.toUpperCase().contains('GOLD');
-    final color =
-        isGold ? SalesPosColors.brandGold : SalesPosColors.brandSilver;
-
-    return Expanded(
-      flex: 2,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withValues(alpha: 0.28)),
-          ),
-          child: Text(
-            metalType.toUpperCase(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: color,
-              fontSize: SalesPosStyles.fontCaption,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
-            ),
-          ),
         ),
       ),
     );
@@ -636,40 +921,6 @@ class _HuidChip extends StatelessWidget {
               fontSize: SalesPosStyles.fontCaption,
               fontWeight: FontWeight.w900,
               letterSpacing: 0,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-
-  const _StatusChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      flex: 2,
-      child: Align(
-        alignment: Alignment.center,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: SalesPosColors.bodyBg,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: SalesPosColors.bodyBorder),
-          ),
-          child: Text(
-            label.toUpperCase(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: SalesPosColors.bodyTextMain,
-              fontSize: SalesPosStyles.fontCaption,
-              fontWeight: FontWeight.w900,
             ),
           ),
         ),
@@ -754,6 +1005,29 @@ class _ItemsFooter extends StatelessWidget {
 
 String _formatWeight(double value) => value.toStringAsFixed(3);
 
+String _formatCompactNumber(double value) {
+  if (value.abs() < 0.01) {
+    return '0';
+  }
+  if (value == value.roundToDouble()) {
+    return value.round().toString();
+  }
+  return value.toStringAsFixed(2);
+}
+
+String _formatMakingInput(ReturnReversalSourceLineItem lineItem) {
+  if (lineItem.makingChargeInput.abs() < 0.01) {
+    return '-';
+  }
+  final value = _formatCompactNumber(lineItem.makingChargeInput);
+  return switch (lineItem.makingChargeType.trim().toUpperCase()) {
+    'PERCENTAGE' => '$value%',
+    'PER_KG' => '$value/kg',
+    'PER_PIECE' => '$value/pc',
+    _ => '$value${lineItem.makingChargeSymbol}',
+  };
+}
+
 String _formatMoneyOrDash(double value) {
   if (value.abs() < 0.01) {
     return '-';
@@ -774,4 +1048,48 @@ String _formatCurrency(double value) {
     (_) => ',',
   );
   return 'Rs $sign$groupedLeading,$lastThree';
+}
+
+Color _metalColor(String metalType) {
+  final normalized = metalType.trim().toUpperCase();
+  if (normalized.contains('SILVER')) {
+    return SalesPosColors.brandSilver;
+  }
+  if (normalized.contains('PLATINUM')) {
+    return SalesPosColors.brandPlatinum;
+  }
+  if (normalized.contains('DIAMOND')) {
+    return SalesPosColors.brandDiamond;
+  }
+  return SalesPosColors.brandGold;
+}
+
+String _metalLabel(String metalType) {
+  final normalized = metalType.trim().toUpperCase();
+  return normalized.isEmpty ? 'GOLD' : normalized;
+}
+
+String _unitShortName(ReturnReversalSourceLineItem lineItem) {
+  return _unitProfileFor(lineItem).shortName;
+}
+
+PosItemUnitProfile _unitProfileFor(ReturnReversalSourceLineItem lineItem) {
+  return PosItemUnitProfile.infer(
+    metal: _metalTypeFromLabel(lineItem.metalType),
+    itemName: lineItem.description,
+  );
+}
+
+MetalType _metalTypeFromLabel(String metalType) {
+  final normalized = metalType.trim().toUpperCase();
+  if (normalized.contains('SILVER')) {
+    return MetalType.silver;
+  }
+  if (normalized.contains('PLATINUM')) {
+    return MetalType.platinum;
+  }
+  if (normalized.contains('DIAMOND')) {
+    return MetalType.diamond;
+  }
+  return MetalType.gold;
 }
