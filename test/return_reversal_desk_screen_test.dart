@@ -45,16 +45,16 @@ void main() {
     expect(find.text('MOBILE'), findsOneWidget);
     expect(find.text('CUSTOMER NAME'), findsOneWidget);
     expect(find.text('ADDRESS'), findsOneWidget);
-    expect(find.text('INVOICE ITEMS'), findsOneWidget);
-    expect(find.text('NO INVOICE SELECTED'), findsOneWidget);
-    expect(find.text('LOAD INVOICE ITEMS'), findsOneWidget);
+    expect(find.text('INVOICE ITEMS'), findsNothing);
+    expect(find.text('NO INVOICE SELECTED'), findsNothing);
+    expect(find.text('LOAD INVOICE ITEMS'), findsNothing);
     expect(find.text('RETURN WORKFLOW'), findsOneWidget);
     expect(find.text('Invoice Items'), findsWidgets);
     expect(find.text('Verification'), findsOneWidget);
     expect(find.text('Weight Check'), findsOneWidget);
     expect(find.text('Stock Routing'), findsOneWidget);
     expect(find.text('HUID matched'), findsNothing);
-    expect(find.text('INVOICE SUMMARY'), findsOneWidget);
+    expect(find.text('RETURN SETTLEMENT'), findsOneWidget);
     expect(find.text('Return Value'), findsOneWidget);
     expect(find.text('Process Return'), findsOneWidget);
     expect(find.text('RETURN NO.'), findsNothing);
@@ -98,8 +98,9 @@ void main() {
     expect(find.text('NOT SELECTED'), findsOneWidget);
     expect(find.text('CUSTOMER DETAILS'), findsOneWidget);
     expect(find.text('INVOICE NUMBER'), findsOneWidget);
-    expect(find.text('INVOICE ITEMS'), findsOneWidget);
-    expect(find.text('INVOICE SUMMARY'), findsOneWidget);
+    expect(find.text('RETURN WORKFLOW'), findsOneWidget);
+    expect(find.text('INVOICE ITEMS'), findsNothing);
+    expect(find.text('RETURN SETTLEMENT'), findsOneWidget);
     expect(find.text('Find Transaction'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -136,9 +137,9 @@ void main() {
     expect(find.text('BOOKING NO.'), findsOneWidget);
     expect(find.text('ADVANCE VOUCHER'), findsNothing);
     expect(find.text('BOOKING NUMBER'), findsOneWidget);
-    expect(find.text('BOOKING ITEMS'), findsOneWidget);
-    expect(find.text('NO BOOKING SELECTED'), findsOneWidget);
-    expect(find.text('LOAD BOOKING ITEMS'), findsOneWidget);
+    expect(find.text('BOOKING ITEMS'), findsNothing);
+    expect(find.text('NO BOOKING SELECTED'), findsNothing);
+    expect(find.text('LOAD BOOKING ITEMS'), findsNothing);
     expect(find.text('Return Value'), findsOneWidget);
     expect(find.text('Process Cancellation'), findsOneWidget);
     expect(find.text('INVOICE NUMBER'), findsNothing);
@@ -169,19 +170,19 @@ void main() {
 
     expect(controller.customerMobileCtrl.text, '9304479436');
     expect(controller.customerNameCtrl.text, 'REYANSH SONI');
-    expect(find.text('LOADED : AJ-PUR-2026-0006'), findsOneWidget);
+    expect(find.text('LOADED : AJ-PUR-2026-0006'), findsNothing);
     expect(find.text('Silver Payal'), findsWidgets);
-    expect(find.text('RETURN : 1'), findsOneWidget);
-    expect(find.text('METAL'), findsOneWidget);
-    expect(find.text('ITEM DESCRIPTION'), findsOneWidget);
+    expect(find.text('RETURN : 1'), findsNothing);
+    expect(find.text('METAL'), findsNothing);
+    expect(find.text('ITEM DESCRIPTION'), findsNothing);
     expect(find.text('UNIT'), findsNothing);
-    expect(find.text('HUID / SET'), findsOneWidget);
-    expect(find.text('PURITY'), findsOneWidget);
+    expect(find.text('HUID / SET'), findsNothing);
+    expect(find.text('PURITY'), findsNothing);
     expect(find.text('GR. WT'), findsNothing);
     expect(find.text('LESS'), findsNothing);
-    expect(find.text('MAKING'), findsOneWidget);
-    expect(find.text('TOTAL'), findsWidgets);
-    expect(find.text('PAIR'), findsOneWidget);
+    expect(find.text('MAKING'), findsNothing);
+    expect(find.text('TOTAL'), findsNothing);
+    expect(find.text('1 PAIR'), findsWidgets);
     expect(find.text('12%'), findsOneWidget);
     expect(find.text('DISCOUNT'), findsNothing);
     expect(find.text('ACT'), findsNothing);
@@ -189,12 +190,12 @@ void main() {
     expect(find.text('PUR-SILVER-001'), findsNothing);
     expect(find.text('Rs 1,587'), findsWidgets);
     expect(find.text('Rs 19,590'), findsWidgets);
-    expect(find.text('Rs 20,178'), findsOneWidget);
-    expect(find.text('ORIGINAL INVOICE'), findsOneWidget);
-    expect(find.text('SILVER'), findsWidgets);
+    expect(find.text('Rs 20,178'), findsWidgets);
+    expect(find.text('ORIGINAL INVOICE PRICING'), findsOneWidget);
+    expect(find.text('Silver Pricing'), findsOneWidget);
     expect(find.text('Silver Value'), findsOneWidget);
-    expect(find.text('Discount'), findsOneWidget);
-    expect(find.text('Taxable Value'), findsOneWidget);
+    expect(find.text('Discount'), findsWidgets);
+    expect(find.text('Taxable Value'), findsWidgets);
     expect(find.text('GST (3%)'), findsOneWidget);
     expect(find.text('Silver Total'), findsOneWidget);
     expect(find.text('PAYMENT METHOD'), findsOneWidget);
@@ -202,36 +203,55 @@ void main() {
     expect(find.text('UPI Rs 10,000'), findsOneWidget);
     expect(find.text('Collected'), findsOneWidget);
     expect(find.text('Balance Due'), findsOneWidget);
-    expect(find.text('SELECTED RETURN'), findsOneWidget);
+    expect(find.text('RETURN CART'), findsOneWidget);
     expect(find.text('Metal Amount'), findsOneWidget);
     expect(find.text('Making Available'), findsOneWidget);
     expect(find.text('Making Returned'), findsOneWidget);
     expect(find.text('Return Value'), findsOneWidget);
-    expect(find.text('Rs 18,003'), findsWidgets);
+    expect(find.text('Cart Items'), findsOneWidget);
     expect(find.text('HUID matched'), findsOneWidget);
     expect(find.text('Unit matched'), findsOneWidget);
+    expect(find.text('ITEM IDENTITY'), findsOneWidget);
+    expect(find.text('ORIGINAL SALE'), findsOneWidget);
+    expect(find.text('TAX SNAPSHOT'), findsOneWidget);
     expect(find.text('Received Net Weight'), findsOneWidget);
+    expect(find.text('Rate'), findsOneWidget);
+    expect(find.text('Making Input'), findsOneWidget);
+    expect(find.text('Making Amount'), findsOneWidget);
+    expect(find.text('Taxable Value'), findsWidgets);
+    expect(find.text('GST'), findsWidgets);
     expect(find.text('Metal Value Only'), findsOneWidget);
     expect(find.text('Metal + Making'), findsOneWidget);
     expect(find.text('This Item Return'), findsOneWidget);
+    expect(find.text('Add To Return Cart'), findsOneWidget);
     expect(find.text('Add Stock'), findsOneWidget);
     expect(find.text('Melting'), findsOneWidget);
     expect(find.text('Selected Discount'), findsNothing);
     expect(find.text('Selected GST'), findsNothing);
-    expect(find.text('1 / 1 selected'), findsOneWidget);
     expect(find.text('DUE 2.0K'), findsOneWidget);
     expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+
+    expect(controller.state.returnCartLineItems, isEmpty);
+
+    controller.addLineToReturnCart(1);
+    await tester.pump();
+
+    expect(controller.state.returnCartLineItems, hasLength(1));
+    expect(find.text('ADDED'), findsOneWidget);
+    expect(find.text('Update Cart'), findsOneWidget);
+    expect(find.text('Rs 18,003'), findsWidgets);
 
     controller.setLineMakingReturn(1, true);
     await tester.pump();
 
     expect(controller.state.activeInspectionDraft?.includeMakingCharge, isTrue);
+    expect(find.text('Rs 19,590'), findsWidgets);
 
-    controller.toggleSourceLineSelection(1);
+    controller.removeLineFromReturnCart(1);
     await tester.pump();
 
-    expect(find.text('0 / 1 selected'), findsOneWidget);
+    expect(controller.state.returnCartLineItems, isEmpty);
     expect(find.text('Rs 0'), findsWidgets);
   });
 
@@ -270,7 +290,7 @@ void main() {
     expect(controller.sourceDocumentNumberCtrl.text, 'AJ-PUR-2026-0006');
   });
 
-  testWidgets('invoice summary scrolls inside a bounded desktop rail',
+  testWidgets('return settlement scrolls inside a bounded desktop rail',
       (tester) async {
     final controller = ReturnReversalController(
       repository: _TestReturnReversalRepository(),
@@ -298,9 +318,45 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('INVOICE SUMMARY'), findsOneWidget);
-    expect(find.text('ORIGINAL INVOICE'), findsOneWidget);
-    expect(find.text('SELECTED RETURN'), findsOneWidget);
+    expect(find.text('RETURN SETTLEMENT'), findsOneWidget);
+    expect(find.text('ORIGINAL INVOICE PRICING'), findsOneWidget);
+    expect(find.text('RETURN CART'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('return settlement separates original pricing by metal',
+      (tester) async {
+    final controller = ReturnReversalController(
+      repository: _MixedMetalReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-MIX-2026-0001';
+    await controller.searchRecords();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 560,
+            child: ReturnReversalInvoiceSummaryPanel(
+              controller: controller,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('ORIGINAL INVOICE PRICING'), findsOneWidget);
+    expect(find.text('Gold Pricing'), findsOneWidget);
+    expect(find.text('Gold Value'), findsOneWidget);
+    expect(find.text('Gold Total'), findsOneWidget);
+    expect(find.text('Silver Pricing'), findsOneWidget);
+    expect(find.text('Silver Value'), findsOneWidget);
+    expect(find.text('Silver Total'), findsOneWidget);
+    expect(find.text('GST (3%)'), findsNWidgets(2));
+    expect(find.text('Original Invoice Total'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -370,7 +426,7 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
         hsnCode: '71131120',
         purity: '60',
         quantity: 1,
-        quantityUnitCode: 'PAIR',
+        quantityUnitCode: 'PCS',
         grossWeight: 79.361,
         lessWeight: 0,
         netWeight: 79.361,
@@ -430,6 +486,100 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
     return ReturnReversalLookupResult(
       salesInvoices:
           mobile == '9304479436' ? [_invoice, _secondInvoice] : const [],
+      advanceBookings: const [],
+      customerPurchases: const [],
+    );
+  }
+
+  @override
+  Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
+    String documentNumber,
+  ) async {
+    return documentNumber == _invoice.documentNo ? _invoice : null;
+  }
+}
+
+class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
+  static final _invoice = ReturnReversalSourceDocument(
+    id: 3,
+    type: ReturnReversalSourceDocumentType.salesInvoice,
+    documentNo: 'AJ-MIX-2026-0001',
+    customerName: 'REYANSH SONI',
+    mobile: '9304479436',
+    address: 'Patna',
+    documentDate: DateTime(2026, 8, 31),
+    grossValue: 25000,
+    discountAmount: 250,
+    taxableAmount: 24750,
+    cgstAmount: 371.25,
+    sgstAmount: 371.25,
+    gstAmount: 742.5,
+    makingTotal: 2500,
+    finalAmount: 25493,
+    paidAmount: 25493,
+    cashPaid: 20000,
+    upiPaid: 5493,
+    dueAmount: 0,
+    netWeight: 51.5,
+    lineItems: const [
+      ReturnReversalSourceLineItem(
+        lineNo: 1,
+        metalType: 'GOLD',
+        description: 'Nose Pin',
+        hsnCode: '71131910',
+        purity: '18KT',
+        quantity: 1,
+        quantityUnitCode: 'PCS',
+        grossWeight: 1.5,
+        lessWeight: 0,
+        netWeight: 1.5,
+        rate: 12700,
+        makingChargeType: 'PERCENTAGE',
+        makingChargeInput: 12,
+        makingAmount: 1500,
+        discountAmount: 100,
+        taxableAmount: 9900,
+        gstAmount: 297,
+        invoiceValue: 10197,
+        value: 10000,
+        status: 'ACTIVE',
+      ),
+      ReturnReversalSourceLineItem(
+        lineNo: 2,
+        metalType: 'SILVER',
+        description: 'Payal',
+        hsnCode: '71131120',
+        purity: '60',
+        quantity: 1,
+        quantityUnitCode: 'PAIR',
+        grossWeight: 50,
+        lessWeight: 0,
+        netWeight: 50,
+        rate: 220,
+        makingChargeType: 'PER_GRAM',
+        makingChargeInput: 20,
+        makingAmount: 1000,
+        discountAmount: 150,
+        taxableAmount: 14850,
+        gstAmount: 445.5,
+        invoiceValue: 15296,
+        value: 15000,
+        status: 'ACTIVE',
+      ),
+    ],
+  );
+
+  @override
+  Future<ReturnReversalTransactionSummary> fetchTransactionSummary() async {
+    return const ReturnReversalTransactionSummary.empty();
+  }
+
+  @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByMobile(
+    String mobile,
+  ) async {
+    return ReturnReversalLookupResult(
+      salesInvoices: mobile == '9304479436' ? [_invoice] : const [],
       advanceBookings: const [],
       customerPurchases: const [],
     );

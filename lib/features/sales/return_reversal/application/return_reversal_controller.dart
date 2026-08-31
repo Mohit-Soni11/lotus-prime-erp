@@ -62,7 +62,7 @@ class ReturnReversalController extends ChangeNotifier {
         activeWorkflowStep: ReturnReversalWorkflowStep.invoiceItems,
         lookupResult: const ReturnReversalLookupResult.empty(),
         clearSelectedSourceDocument: true,
-        clearSelectedLineNumbers: true,
+        clearReturnCartLineNumbers: true,
         clearActiveInspectionLineNo: true,
         clearLineInspectionDrafts: true,
         clearLookupMessage: true,
@@ -108,7 +108,7 @@ class ReturnReversalController extends ChangeNotifier {
         _state.copyWith(
           lookupResult: result,
           selectedSourceDocument: preferredDocument,
-          selectedLineNumbers: _lineNumbersFor(preferredDocument),
+          clearReturnCartLineNumbers: true,
           activeInspectionLineNo: _firstLineNoFor(preferredDocument),
           lineInspectionDrafts: _inspectionDraftsFor(preferredDocument),
           isSearching: false,
@@ -133,66 +133,12 @@ class ReturnReversalController extends ChangeNotifier {
     _setState(
       _state.copyWith(
         selectedSourceDocument: document,
-        selectedLineNumbers: _lineNumbersFor(document),
+        clearReturnCartLineNumbers: true,
         activeInspectionLineNo: _firstLineNoFor(document),
         lineInspectionDrafts: _inspectionDraftsFor(document),
         clearLookupMessage: true,
       ),
     );
-  }
-
-  void toggleSourceLineSelection(int lineNo) {
-    final selected = Set<int>.from(_state.selectedLineNumbers);
-    final drafts = Map<int, ReturnReversalLineInspectionDraft>.from(
-      _state.lineInspectionDrafts,
-    );
-    if (selected.contains(lineNo)) {
-      selected.remove(lineNo);
-    } else {
-      selected.add(lineNo);
-      final lineItem = _lineItemByNo(lineNo);
-      if (lineItem != null) {
-        drafts.putIfAbsent(
-          lineNo,
-          () => ReturnReversalLineInspectionDraft.fromLine(lineItem),
-        );
-      }
-    }
-    final activeLineNo = selected.contains(_state.activeInspectionLineNo)
-        ? _state.activeInspectionLineNo
-        : _firstSelectedLineNo(selected);
-    _setState(
-      _state.copyWith(
-        selectedLineNumbers: selected,
-        activeInspectionLineNo: activeLineNo,
-        clearActiveInspectionLineNo: activeLineNo == null,
-        lineInspectionDrafts: drafts,
-      ),
-    );
-  }
-
-  void selectAllSourceLines() {
-    final document = _state.selectedSourceDocument;
-    _setState(
-      _state.copyWith(
-        selectedLineNumbers: _lineNumbersFor(document),
-        activeInspectionLineNo: _firstLineNoFor(document),
-        lineInspectionDrafts: _inspectionDraftsFor(document),
-      ),
-    );
-  }
-
-  void clearSourceLineSelection() {
-    _setState(
-      _state.copyWith(
-        clearSelectedLineNumbers: true,
-        clearActiveInspectionLineNo: true,
-      ),
-    );
-  }
-
-  bool isSourceLineSelected(int lineNo) {
-    return _state.selectedLineNumbers.contains(lineNo);
   }
 
   void selectWorkflowStep(ReturnReversalWorkflowStep step) {
@@ -203,7 +149,7 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void selectInspectionLine(int lineNo) {
-    if (!_state.selectedLineNumbers.contains(lineNo) ||
+    if (_lineItemByNo(lineNo) == null ||
         _state.activeInspectionLineNo == lineNo) {
       return;
     }
@@ -259,6 +205,32 @@ class ReturnReversalController extends ChangeNotifier {
     _updateInspectionDraft(lineNo, draft.copyWith(stockRoute: route));
   }
 
+  void addLineToReturnCart(int lineNo) {
+    if (_draftForLine(lineNo) == null) {
+      return;
+    }
+    final cartLineNumbers = Set<int>.from(_state.returnCartLineNumbers)
+      ..add(lineNo);
+    _setState(_state.copyWith(returnCartLineNumbers: cartLineNumbers));
+  }
+
+  void removeLineFromReturnCart(int lineNo) {
+    if (!_state.returnCartLineNumbers.contains(lineNo)) {
+      return;
+    }
+    final cartLineNumbers = Set<int>.from(_state.returnCartLineNumbers)
+      ..remove(lineNo);
+    _setState(
+      _state.copyWith(
+        returnCartLineNumbers: cartLineNumbers,
+      ),
+    );
+  }
+
+  bool isLineInReturnCart(int lineNo) {
+    return _state.returnCartLineNumbers.contains(lineNo);
+  }
+
   Future<void> _loadSourceDocument(String sourceNumber) async {
     final document = await _repository.findSourceDocumentByNumber(sourceNumber);
     if (document == null) {
@@ -266,7 +238,7 @@ class ReturnReversalController extends ChangeNotifier {
         _state.copyWith(
           isSearching: false,
           clearSelectedSourceDocument: true,
-          clearSelectedLineNumbers: true,
+          clearReturnCartLineNumbers: true,
           clearActiveInspectionLineNo: true,
           clearLineInspectionDrafts: true,
           lookupMessage: 'No document found for $sourceNumber.',
@@ -293,7 +265,7 @@ class ReturnReversalController extends ChangeNotifier {
                   : const [],
         ),
         selectedSourceDocument: document,
-        selectedLineNumbers: _lineNumbersFor(document),
+        clearReturnCartLineNumbers: true,
         activeInspectionLineNo: _firstLineNoFor(document),
         lineInspectionDrafts: _inspectionDraftsFor(document),
         isSearching: false,
@@ -302,26 +274,11 @@ class ReturnReversalController extends ChangeNotifier {
     );
   }
 
-  Set<int> _lineNumbersFor(ReturnReversalSourceDocument? document) {
-    if (document == null) {
-      return const {};
-    }
-    return document.lineItems.map((line) => line.lineNo).toSet();
-  }
-
   int? _firstLineNoFor(ReturnReversalSourceDocument? document) {
     if (document == null || document.lineItems.isEmpty) {
       return null;
     }
     return document.lineItems.first.lineNo;
-  }
-
-  int? _firstSelectedLineNo(Set<int> selectedLineNumbers) {
-    if (selectedLineNumbers.isEmpty) {
-      return null;
-    }
-    final sorted = selectedLineNumbers.toList()..sort();
-    return sorted.first;
   }
 
   Map<int, ReturnReversalLineInspectionDraft> _inspectionDraftsFor(
@@ -351,7 +308,7 @@ class ReturnReversalController extends ChangeNotifier {
 
   ReturnReversalLineInspectionDraft? _draftForLine(int lineNo) {
     final lineItem = _lineItemByNo(lineNo);
-    if (lineItem == null || !_state.selectedLineNumbers.contains(lineNo)) {
+    if (lineItem == null) {
       return null;
     }
     return _state.lineInspectionDrafts[lineNo] ??

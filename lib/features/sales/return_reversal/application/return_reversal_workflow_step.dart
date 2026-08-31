@@ -5,7 +5,6 @@ enum ReturnReversalWorkflowStep {
     label: 'Invoice Items',
     subtitle: 'Select return lines',
     icon: Icons.receipt_long_rounded,
-    enabled: true,
   ),
   verification(
     label: 'Verification',
@@ -41,12 +40,10 @@ enum ReturnReversalWorkflowStep {
   final String label;
   final String subtitle;
   final IconData icon;
-  final bool enabled;
 
   const ReturnReversalWorkflowStep({
     required this.label,
     required this.subtitle,
     required this.icon,
-    this.enabled = false,
   });
 }

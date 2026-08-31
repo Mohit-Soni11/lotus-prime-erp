@@ -20,7 +20,7 @@ class ReturnReversalInvoiceSummaryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final operationType = controller.state.operationType;
     final sourceDocument = controller.state.selectedSourceDocument;
-    final selectedLineItems = controller.state.selectedLineItems;
+    final returnCartLineItems = controller.state.returnCartLineItems;
     final inspectionDrafts = controller.state.lineInspectionDrafts;
 
     return LayoutBuilder(
@@ -29,7 +29,7 @@ class ReturnReversalInvoiceSummaryPanel extends StatelessWidget {
         final summaryBoard = _SummaryBoard(
           operationType: operationType,
           sourceDocument: sourceDocument,
-          selectedLineItems: selectedLineItems,
+          returnCartLineItems: returnCartLineItems,
           inspectionDrafts: inspectionDrafts,
         );
 
@@ -94,19 +94,19 @@ class ReturnReversalInvoiceSummaryPanel extends StatelessWidget {
 class _SummaryBoard extends StatelessWidget {
   final ReturnReversalOperationType operationType;
   final ReturnReversalSourceDocument? sourceDocument;
-  final List<ReturnReversalSourceLineItem> selectedLineItems;
+  final List<ReturnReversalSourceLineItem> returnCartLineItems;
   final Map<int, ReturnReversalLineInspectionDraft> inspectionDrafts;
 
   const _SummaryBoard({
     required this.operationType,
     required this.sourceDocument,
-    required this.selectedLineItems,
+    required this.returnCartLineItems,
     required this.inspectionDrafts,
   });
 
   String get _subtitle {
     return operationType == ReturnReversalOperationType.salesReturn
-        ? 'Metal-wise invoice and return value'
+        ? 'Original invoice, return cart, and settlement'
         : 'Advance refund and booking closure';
   }
 
@@ -114,15 +114,15 @@ class _SummaryBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final document = sourceDocument;
     final metalBreakdowns = _buildMetalBreakdowns(document);
-    final selectedMetalAmount = selectedLineItems.fold<double>(
+    final selectedMetalAmount = returnCartLineItems.fold<double>(
       0,
       (total, item) => total + _metalReturnAmount(item, inspectionDrafts),
     );
-    final availableMaking = selectedLineItems.fold<double>(
+    final availableMaking = returnCartLineItems.fold<double>(
       0,
       (total, item) => total + _adjustedMakingAmount(item, inspectionDrafts),
     );
-    final returnedMaking = selectedLineItems.fold<double>(
+    final returnedMaking = returnCartLineItems.fold<double>(
       0,
       (total, item) {
         final draft = _draftFor(item, inspectionDrafts);
@@ -133,21 +133,31 @@ class _SummaryBoard extends StatelessWidget {
       },
     );
     final returnValue = selectedMetalAmount + returnedMaking;
-    final netWeight = selectedLineItems.fold<double>(
+    final netWeight = returnCartLineItems.fold<double>(
       0,
-      (total, item) => total + item.netWeight,
+      (total, item) =>
+          total +
+          (inspectionDrafts[item.lineNo]?.receivedNetWeight ?? item.netWeight),
     );
+    final originalInvoiceTotal = document == null
+        ? 0.0
+        : document.finalAmount > 0
+            ? document.finalAmount
+            : metalBreakdowns.fold<double>(
+                0,
+                (total, breakdown) => total + breakdown.displayInvoiceTotal,
+              );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHead(
           icon: SalesPosIcons.invoiceOutline,
-          title: 'INVOICE SUMMARY',
+          title: 'RETURN SETTLEMENT',
           subtitle: _subtitle,
         ),
         const SizedBox(height: 18),
-        const _MiniSectionLabel('Original Invoice'),
+        const _MiniSectionLabel('Original Invoice Pricing'),
         const SizedBox(height: 8),
         if (metalBreakdowns.isEmpty)
           const _EmptySummaryText('Select an invoice to view metal totals.')
@@ -156,7 +166,7 @@ class _SummaryBoard extends StatelessWidget {
         const SizedBox(height: 14),
         _InvoiceTotalBox(
           label: 'Original Invoice Total',
-          value: _formatCurrency(document?.finalAmount ?? 0),
+          value: _formatCurrency(originalInvoiceTotal),
         ),
         const SizedBox(height: 14),
         const _MiniSectionLabel('Payment Method'),
@@ -165,10 +175,10 @@ class _SummaryBoard extends StatelessWidget {
         const SizedBox(height: 12),
         _PaymentStatusBox(sourceDocument: document),
         const SizedBox(height: 16),
-        const _MiniSectionLabel('Selected Return'),
+        const _MiniSectionLabel('Return Cart'),
         const SizedBox(height: 8),
         _SelectedReturnCard(
-          selectedCount: selectedLineItems.length,
+          selectedCount: returnCartLineItems.length,
           netWeight: netWeight,
           metalAmount: selectedMetalAmount,
           availableMaking: availableMaking,
@@ -222,6 +232,8 @@ class _SummaryBoard extends StatelessWidget {
 
 class _MetalInvoiceBreakdown {
   final String metal;
+  var itemCount = 0;
+  var netWeight = 0.0;
   var itemValue = 0.0;
   var makingAmount = 0.0;
   var discountAmount = 0.0;
@@ -232,10 +244,11 @@ class _MetalInvoiceBreakdown {
   _MetalInvoiceBreakdown(this.metal);
 
   double get gstPercent {
-    if (taxableAmount <= 0 || gstAmount <= 0) {
+    final taxable = displayTaxableValue;
+    if (taxable <= 0 || gstAmount <= 0) {
       return 0;
     }
-    return gstAmount / taxableAmount * 100;
+    return gstAmount / taxable * 100;
   }
 
   double get displayTaxableValue {
@@ -245,8 +258,17 @@ class _MetalInvoiceBreakdown {
     return math.max(0.0, itemValue - discountAmount);
   }
 
+  double get displayInvoiceTotal {
+    if (invoiceTotal > 0) {
+      return invoiceTotal;
+    }
+    return math.max(0.0, displayTaxableValue + gstAmount);
+  }
+
   void add(ReturnReversalSourceLineItem item) {
     final lineValue = item.displayLineTotal;
+    itemCount += 1;
+    netWeight += item.netWeight;
     itemValue += lineValue;
     makingAmount += item.makingAmount;
     discountAmount += item.discountAmount;
@@ -299,46 +321,91 @@ class _MetalSummaryTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  metalTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: SalesPosStyles.bodyStrong.copyWith(
-                    color: _accentColor,
-                    fontWeight: FontWeight.w900,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$metalTitle Pricing',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SalesPosStyles.bodyStrong.copyWith(
+                        color: _accentColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$itemCountLabel | ${breakdown.netWeight.toStringAsFixed(3)} g',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SalesPosStyles.caption.copyWith(
+                        color: SalesPosColors.bodyTextMuted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatCurrency(breakdown.displayInvoiceTotal),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.bodyStrong.copyWith(
+                  color: SalesPosColors.bodyTextMain,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          _SubtleRow(
-            label: '$metalTitle Value',
-            value: _formatCurrency(breakdown.itemValue),
-          ),
-          const SizedBox(height: 7),
-          _SubtleRow(
-            label: 'Discount',
-            value: _formatCurrency(breakdown.discountAmount),
-          ),
-          const SizedBox(height: 7),
-          _SubtleRow(
-            label: 'Taxable Value',
-            value: _formatCurrency(breakdown.displayTaxableValue),
-          ),
-          const SizedBox(height: 7),
-          _SubtleRow(
-            label: gstLabel,
-            value: _formatCurrency(breakdown.gstAmount),
-          ),
-          const SizedBox(height: 10),
-          _TotalRow(
-            label: '$metalTitle Total',
-            value: _formatCurrency(breakdown.invoiceTotal),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.54),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: SalesPosColors.bodyBorder.withValues(alpha: 0.72),
+              ),
+            ),
+            child: Column(
+              children: [
+                _SubtleRow(
+                  label: '$metalTitle Value',
+                  value: _formatCurrency(breakdown.itemValue),
+                ),
+                const SizedBox(height: 7),
+                _SubtleRow(
+                  label: 'Discount',
+                  value: _formatCurrency(breakdown.discountAmount),
+                ),
+                const SizedBox(height: 7),
+                _SubtleRow(
+                  label: 'Taxable Value',
+                  value: _formatCurrency(breakdown.displayTaxableValue),
+                ),
+                const SizedBox(height: 7),
+                _SubtleRow(
+                  label: gstLabel,
+                  value: _formatCurrency(breakdown.gstAmount),
+                ),
+                const SizedBox(height: 9),
+                _TotalRow(
+                  label: '$metalTitle Total',
+                  value: _formatCurrency(breakdown.displayInvoiceTotal),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  String get itemCountLabel {
+    final suffix = breakdown.itemCount == 1 ? 'item' : 'items';
+    return '${breakdown.itemCount} $suffix';
   }
 }
 
@@ -370,7 +437,7 @@ class _SelectedReturnCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _SubtleRow(label: 'Selected Items', value: selectedCount.toString()),
+          _SubtleRow(label: 'Cart Items', value: selectedCount.toString()),
           const SizedBox(height: 9),
           _SubtleRow(
             label: 'Restored Net Weight',

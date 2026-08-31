@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_workflow_step.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
+import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
 class ReturnReversalWorkflowTabs extends StatelessWidget {
@@ -18,7 +20,7 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedItems = controller.state.selectedLineItems;
+    final invoiceItems = controller.state.invoiceLineItems;
     final activeLineItem = controller.state.activeInspectionLineItem;
     final activeDraft = controller.state.activeInspectionDraft;
 
@@ -41,12 +43,13 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _WorkflowHeader(
-              selectedCount: selectedItems.length,
+              itemCount: invoiceItems.length,
+              cartCount: controller.state.returnCartLineNumbers.length,
               activeStep: controller.state.activeWorkflowStep,
               onStepSelected: controller.selectWorkflowStep,
             ),
             const SizedBox(height: 12),
-            if (selectedItems.isEmpty)
+            if (invoiceItems.isEmpty)
               const _EmptyWorkflowState()
             else
               LayoutBuilder(
@@ -58,7 +61,7 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
                       children: [
                         _SelectedItemQueue(
                           controller: controller,
-                          selectedItems: selectedItems,
+                          invoiceItems: invoiceItems,
                         ),
                         const SizedBox(height: 12),
                         _ActiveReturnInspectionPanel(
@@ -77,7 +80,7 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
                         width: 300,
                         child: _SelectedItemQueue(
                           controller: controller,
-                          selectedItems: selectedItems,
+                          invoiceItems: invoiceItems,
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -100,12 +103,14 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
 }
 
 class _WorkflowHeader extends StatelessWidget {
-  final int selectedCount;
+  final int itemCount;
+  final int cartCount;
   final ReturnReversalWorkflowStep activeStep;
   final ValueChanged<ReturnReversalWorkflowStep> onStepSelected;
 
   const _WorkflowHeader({
-    required this.selectedCount,
+    required this.itemCount,
+    required this.cartCount,
     required this.activeStep,
     required this.onStepSelected,
   });
@@ -146,7 +151,7 @@ class _WorkflowHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '$selectedCount selected item${selectedCount == 1 ? '' : 's'} in physical verification',
+                    '$itemCount invoice item${itemCount == 1 ? '' : 's'} loaded | $cartCount in return cart',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: SalesPosStyles.subTitleMuted,
@@ -236,11 +241,11 @@ class _StageChip extends StatelessWidget {
 
 class _SelectedItemQueue extends StatelessWidget {
   final ReturnReversalController controller;
-  final List<ReturnReversalSourceLineItem> selectedItems;
+  final List<ReturnReversalSourceLineItem> invoiceItems;
 
   const _SelectedItemQueue({
     required this.controller,
-    required this.selectedItems,
+    required this.invoiceItems,
   });
 
   @override
@@ -256,21 +261,22 @@ class _SelectedItemQueue extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Selected Return Items'.toUpperCase(),
+            'Invoice Return Items'.toUpperCase(),
             style: SalesPosStyles.caption.copyWith(
               color: SalesPosColors.brandGold,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
-          for (final lineItem in selectedItems) ...[
+          for (final lineItem in invoiceItems) ...[
             _QueueItemTile(
               lineItem: lineItem,
               active:
                   controller.state.activeInspectionLineNo == lineItem.lineNo,
+              inCart: controller.isLineInReturnCart(lineItem.lineNo),
               onTap: () => controller.selectInspectionLine(lineItem.lineNo),
             ),
-            if (lineItem != selectedItems.last) const SizedBox(height: 8),
+            if (lineItem != invoiceItems.last) const SizedBox(height: 8),
           ],
         ],
       ),
@@ -281,11 +287,13 @@ class _SelectedItemQueue extends StatelessWidget {
 class _QueueItemTile extends StatelessWidget {
   final ReturnReversalSourceLineItem lineItem;
   final bool active;
+  final bool inCart;
   final VoidCallback onTap;
 
   const _QueueItemTile({
     required this.lineItem,
     required this.active,
+    required this.inCart,
     required this.onTap,
   });
 
@@ -342,19 +350,82 @@ class _QueueItemTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Text(
-                    '${_metalLabel(lineItem.metalType)} | ${_formatWeight(lineItem.netWeight)} g | ${_formatCurrency(lineItem.displayLineTotal)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: SalesPosStyles.caption.copyWith(
-                      color: SalesPosColors.bodyTextMuted,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 4,
+                    children: [
+                      _QueueMetaChip(label: _metalLabel(lineItem.metalType)),
+                      _QueueMetaChip(
+                        label:
+                            '${lineItem.quantity} ${_unitShortName(lineItem)}',
+                      ),
+                      _QueueMetaChip(
+                        label: '${_formatWeight(lineItem.netWeight)} g',
+                      ),
+                      _QueueMetaChip(
+                        label: _formatCurrency(lineItem.displayLineTotal),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
+            _QueueStatusBadge(inCart: inCart),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QueueMetaChip extends StatelessWidget {
+  final String label;
+
+  const _QueueMetaChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: SalesPosColors.bodyBorder),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: SalesPosStyles.caption.copyWith(
+          color: SalesPosColors.bodyTextMuted,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _QueueStatusBadge extends StatelessWidget {
+  final bool inCart;
+
+  const _QueueStatusBadge({required this.inCart});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = inCart ? SalesPosColors.success : SalesPosColors.warning;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Text(
+        inCart ? 'ADDED' : 'PENDING',
+        style: SalesPosStyles.caption.copyWith(
+          color: color,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -473,6 +544,14 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
                   controller.setStockRoute(item.lineNo, route),
             ),
           ),
+          const SizedBox(height: 12),
+          _ReturnCartActionBar(
+            inCart: controller.isLineInReturnCart(item.lineNo),
+            returnAmount: returnAmount,
+            route: inspectionDraft.stockRoute,
+            onAdd: () => controller.addLineToReturnCart(item.lineNo),
+            onRemove: () => controller.removeLineFromReturnCart(item.lineNo),
+          ),
         ],
       ),
     );
@@ -582,31 +661,114 @@ class _SnapshotGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SnapshotChip(label: 'HUID', value: _emptyAsDash(lineItem.huidNumber)),
-        _SnapshotChip(
-          label: 'Unit',
-          value:
-              '${lineItem.quantity} ${lineItem.quantityUnitCode.isEmpty ? 'PCS' : lineItem.quantityUnitCode}',
+        _SnapshotBand(
+          label: 'Item Identity',
+          children: [
+            _SnapshotChip(
+                label: 'Metal', value: _metalLabel(lineItem.metalType)),
+            _SnapshotChip(label: 'Item', value: lineItem.description),
+            _SnapshotChip(
+                label: 'HUID', value: _emptyAsDash(lineItem.huidNumber)),
+            _SnapshotChip(
+                label: 'Unit',
+                value: '${lineItem.quantity} ${_unitShortName(lineItem)}'),
+            _SnapshotChip(label: 'Purity', value: lineItem.purity),
+            _SnapshotChip(label: 'HSN', value: _emptyAsDash(lineItem.hsnCode)),
+          ],
         ),
-        _SnapshotChip(label: 'Purity', value: lineItem.purity),
-        _SnapshotChip(label: 'HSN', value: _emptyAsDash(lineItem.hsnCode)),
-        _SnapshotChip(
-          label: 'Sold Net',
-          value: '${_formatWeight(lineItem.netWeight)} g',
+        const SizedBox(height: 10),
+        _SnapshotBand(
+          label: 'Original Sale',
+          children: [
+            _SnapshotChip(
+              label: 'Sold Net Weight',
+              value: '${_formatWeight(lineItem.netWeight)} g',
+            ),
+            _SnapshotChip(label: 'Rate', value: _formatCurrency(lineItem.rate)),
+            _SnapshotChip(
+              label: 'Making Input',
+              value: _formatMakingInput(lineItem),
+            ),
+            _SnapshotChip(
+              label: 'Making Amount',
+              value: _formatCurrency(lineItem.makingAmount),
+            ),
+            _SnapshotChip(
+              label: 'Item Value',
+              value: _formatCurrency(lineItem.displayLineTotal),
+            ),
+          ],
         ),
-        _SnapshotChip(
-          label: 'Sold Item Value',
-          value: _formatCurrency(lineItem.displayLineTotal),
-        ),
-        _SnapshotChip(
-          label: 'Sold Making',
-          value: _formatCurrency(lineItem.makingAmount),
+        const SizedBox(height: 10),
+        _SnapshotBand(
+          label: 'Tax Snapshot',
+          children: [
+            _SnapshotChip(
+              label: 'Discount',
+              value: _formatCurrency(lineItem.discountAmount),
+            ),
+            _SnapshotChip(
+              label: 'Taxable Value',
+              value: _formatCurrency(lineItem.taxableAmount),
+            ),
+            _SnapshotChip(
+                label: 'GST', value: _formatCurrency(lineItem.gstAmount)),
+            _SnapshotChip(
+              label: 'Invoice Line Total',
+              value: _formatCurrency(
+                lineItem.invoiceValue > 0
+                    ? lineItem.invoiceValue
+                    : lineItem.displayLineTotal,
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+class _SnapshotBand extends StatelessWidget {
+  final String label;
+  final List<Widget> children;
+
+  const _SnapshotBand({
+    required this.label,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SalesPosColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: SalesPosStyles.caption.copyWith(
+              color: SalesPosColors.brandGold,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: children,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1167,6 +1329,184 @@ class _RouteTile extends StatelessWidget {
   }
 }
 
+class _ReturnCartActionBar extends StatelessWidget {
+  final bool inCart;
+  final double returnAmount;
+  final ReturnReversalStockRoute route;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+
+  const _ReturnCartActionBar({
+    required this.inCart,
+    required this.returnAmount,
+    required this.route,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: inCart
+            ? SalesPosColors.success.withValues(alpha: 0.08)
+            : SalesPosColors.brandGold.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: inCart
+              ? SalesPosColors.success.withValues(alpha: 0.36)
+              : SalesPosColors.brandGold.withValues(alpha: 0.34),
+          width: 1.5,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 620;
+          final status = _CartAmountSummary(
+            inCart: inCart,
+            returnAmount: returnAmount,
+            route: route,
+          );
+          final actions = _CartActions(
+            inCart: inCart,
+            onAdd: onAdd,
+            onRemove: onRemove,
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                status,
+                const SizedBox(height: 10),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: status),
+              const SizedBox(width: 12),
+              actions,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CartAmountSummary extends StatelessWidget {
+  final bool inCart;
+  final double returnAmount;
+  final ReturnReversalStockRoute route;
+
+  const _CartAmountSummary({
+    required this.inCart,
+    required this.returnAmount,
+    required this.route,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          inCart ? Icons.check_circle_rounded : Icons.shopping_cart_checkout,
+          color: inCart ? SalesPosColors.success : SalesPosColors.brandGold,
+          size: 22,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                inCart ? 'Added to Return Cart' : 'Ready for Return Cart',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.bodyStrong.copyWith(
+                  color: inCart
+                      ? SalesPosColors.success
+                      : SalesPosColors.brandGold,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${_formatCurrency(returnAmount)} | Route: ${route.label}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.caption.copyWith(
+                  color: SalesPosColors.bodyTextMuted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CartActions extends StatelessWidget {
+  final bool inCart;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+
+  const _CartActions({
+    required this.inCart,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (inCart) ...[
+          OutlinedButton.icon(
+            onPressed: onRemove,
+            icon: const Icon(Icons.remove_shopping_cart_rounded, size: 18),
+            label: const Text('Remove'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: SalesPosColors.danger,
+              textStyle: SalesPosStyles.buttonText,
+              side: BorderSide(
+                color: SalesPosColors.danger.withValues(alpha: 0.35),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        FilledButton.icon(
+          onPressed: onAdd,
+          icon: Icon(
+            inCart ? Icons.sync_rounded : Icons.add_shopping_cart_rounded,
+            size: 18,
+          ),
+          label: Text(inCart ? 'Update Cart' : 'Add To Return Cart'),
+          style: FilledButton.styleFrom(
+            backgroundColor: SalesPosColors.success,
+            foregroundColor: Colors.white,
+            textStyle: SalesPosStyles.buttonText,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _EmptyWorkflowState extends StatelessWidget {
   const _EmptyWorkflowState();
 
@@ -1236,6 +1576,63 @@ String _emptyAsDash(String value) {
 }
 
 String _formatWeight(double value) => value.toStringAsFixed(3);
+
+String _unitShortName(ReturnReversalSourceLineItem lineItem) {
+  return _unitProfileFor(lineItem).shortName;
+}
+
+PosItemUnitProfile _unitProfileFor(ReturnReversalSourceLineItem lineItem) {
+  final storedUnit = PosItemUnitProfile.fromStorageValue(
+    lineItem.quantityUnitCode,
+  );
+  final inferredUnit = PosItemUnitProfile.infer(
+    metal: _metalTypeFromLabel(lineItem.metalType),
+    itemName: lineItem.description,
+  );
+  if (storedUnit != null &&
+      (storedUnit.code != PosItemUnitCode.pieces ||
+          inferredUnit.code == PosItemUnitCode.pieces)) {
+    return storedUnit;
+  }
+  return inferredUnit;
+}
+
+MetalType _metalTypeFromLabel(String metalType) {
+  final normalized = metalType.trim().toUpperCase();
+  if (normalized.contains('SILVER')) {
+    return MetalType.silver;
+  }
+  if (normalized.contains('PLATINUM')) {
+    return MetalType.platinum;
+  }
+  if (normalized.contains('DIAMOND')) {
+    return MetalType.diamond;
+  }
+  return MetalType.gold;
+}
+
+String _formatCompactNumber(double value) {
+  if (value.abs() < 0.01) {
+    return '0';
+  }
+  if (value == value.roundToDouble()) {
+    return value.round().toString();
+  }
+  return value.toStringAsFixed(2);
+}
+
+String _formatMakingInput(ReturnReversalSourceLineItem lineItem) {
+  if (lineItem.makingChargeInput.abs() < 0.01) {
+    return '-';
+  }
+  final value = _formatCompactNumber(lineItem.makingChargeInput);
+  return switch (lineItem.makingChargeType.trim().toUpperCase()) {
+    'PERCENTAGE' => '$value%',
+    'PER_KG' => '$value/kg',
+    'PER_PIECE' => '$value/pc',
+    _ => '$value${lineItem.makingChargeSymbol}',
+  };
+}
 
 String _formatCurrency(double value) {
   final sign = value < 0 ? '-' : '';

@@ -9,7 +9,7 @@ class ReturnReversalState {
   final ReturnReversalTransactionSummary summary;
   final ReturnReversalLookupResult lookupResult;
   final ReturnReversalSourceDocument? selectedSourceDocument;
-  final Set<int> selectedLineNumbers;
+  final Set<int> returnCartLineNumbers;
   final ReturnReversalWorkflowStep activeWorkflowStep;
   final int? activeInspectionLineNo;
   final Map<int, ReturnReversalLineInspectionDraft> lineInspectionDrafts;
@@ -23,7 +23,7 @@ class ReturnReversalState {
     required this.summary,
     required this.lookupResult,
     required this.selectedSourceDocument,
-    required this.selectedLineNumbers,
+    required this.returnCartLineNumbers,
     required this.activeWorkflowStep,
     required this.activeInspectionLineNo,
     required this.lineInspectionDrafts,
@@ -38,7 +38,7 @@ class ReturnReversalState {
         summary = const ReturnReversalTransactionSummary.empty(),
         lookupResult = const ReturnReversalLookupResult.empty(),
         selectedSourceDocument = null,
-        selectedLineNumbers = const {},
+        returnCartLineNumbers = const {},
         activeWorkflowStep = ReturnReversalWorkflowStep.invoiceItems,
         activeInspectionLineNo = null,
         lineInspectionDrafts = const {},
@@ -52,7 +52,7 @@ class ReturnReversalState {
     ReturnReversalTransactionSummary? summary,
     ReturnReversalLookupResult? lookupResult,
     ReturnReversalSourceDocument? selectedSourceDocument,
-    Set<int>? selectedLineNumbers,
+    Set<int>? returnCartLineNumbers,
     ReturnReversalWorkflowStep? activeWorkflowStep,
     int? activeInspectionLineNo,
     Map<int, ReturnReversalLineInspectionDraft>? lineInspectionDrafts,
@@ -63,7 +63,7 @@ class ReturnReversalState {
     bool clearError = false,
     bool clearLookupMessage = false,
     bool clearSelectedSourceDocument = false,
-    bool clearSelectedLineNumbers = false,
+    bool clearReturnCartLineNumbers = false,
     bool clearActiveInspectionLineNo = false,
     bool clearLineInspectionDrafts = false,
   }) {
@@ -74,9 +74,9 @@ class ReturnReversalState {
       selectedSourceDocument: clearSelectedSourceDocument
           ? null
           : selectedSourceDocument ?? this.selectedSourceDocument,
-      selectedLineNumbers: clearSelectedLineNumbers
+      returnCartLineNumbers: clearReturnCartLineNumbers
           ? const {}
-          : selectedLineNumbers ?? this.selectedLineNumbers,
+          : returnCartLineNumbers ?? this.returnCartLineNumbers,
       activeWorkflowStep: activeWorkflowStep ?? this.activeWorkflowStep,
       activeInspectionLineNo: clearActiveInspectionLineNo
           ? null
@@ -92,30 +92,34 @@ class ReturnReversalState {
     );
   }
 
-  List<ReturnReversalSourceLineItem> get selectedLineItems {
+  List<ReturnReversalSourceLineItem> get invoiceLineItems {
+    return selectedSourceDocument?.lineItems ?? const [];
+  }
+
+  List<ReturnReversalSourceLineItem> get returnCartLineItems {
     final document = selectedSourceDocument;
-    if (document == null || selectedLineNumbers.isEmpty) {
+    if (document == null || returnCartLineNumbers.isEmpty) {
       return const [];
     }
     return document.lineItems
-        .where((line) => selectedLineNumbers.contains(line.lineNo))
+        .where((line) => returnCartLineNumbers.contains(line.lineNo))
         .toList(growable: false);
   }
 
-  bool get hasSelectedLineItems => selectedLineItems.isNotEmpty;
+  bool get hasReturnCartLineItems => returnCartLineItems.isNotEmpty;
 
   ReturnReversalSourceLineItem? get activeInspectionLineItem {
     final document = selectedSourceDocument;
     final lineNo = activeInspectionLineNo;
     if (document == null || lineNo == null) {
-      return selectedLineItems.isEmpty ? null : selectedLineItems.first;
+      return invoiceLineItems.isEmpty ? null : invoiceLineItems.first;
     }
     for (final line in document.lineItems) {
-      if (line.lineNo == lineNo && selectedLineNumbers.contains(line.lineNo)) {
+      if (line.lineNo == lineNo) {
         return line;
       }
     }
-    return selectedLineItems.isEmpty ? null : selectedLineItems.first;
+    return invoiceLineItems.isEmpty ? null : invoiceLineItems.first;
   }
 
   ReturnReversalLineInspectionDraft? get activeInspectionDraft {

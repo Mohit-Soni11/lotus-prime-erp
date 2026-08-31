@@ -4,7 +4,6 @@ import 'package:lotus_erp/features/sales/return_reversal/application/return_reve
 import 'package:lotus_erp/features/sales/return_reversal/presentation/theme/return_reversal_design_tokens.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/customer/return_reversal_customer_details_card.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/document/return_reversal_document_status_card.dart';
-import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/items/return_reversal_invoice_items_card.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/setup/return_reversal_operation_setup_card.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/summary/return_reversal_invoice_summary_panel.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/workflow/return_reversal_workflow_tabs.dart';
@@ -124,8 +123,6 @@ class _ReturnReversalPrimaryWorkspace extends StatelessWidget {
         const SizedBox(height: 14),
         ReturnReversalCustomerDetailsCard(controller: controller),
         const SizedBox(height: 16),
-        ReturnReversalInvoiceItemsCard(controller: controller),
-        const SizedBox(height: 14),
         ReturnReversalWorkflowTabs(controller: controller),
       ],
     );
