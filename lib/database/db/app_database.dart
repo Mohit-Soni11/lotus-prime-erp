@@ -1565,6 +1565,51 @@ class AppDatabase extends _$AppDatabase {
               'v46 compact financial-year sales invoice series applied.',
             );
           }
+
+          if (from < 49) {
+            if (await _tableExists('bill_items')) {
+              await _addColumnIfMissing(
+                tableName: 'bill_items',
+                columnName: 'quantity_unit_code',
+                declaration: "TEXT NOT NULL DEFAULT 'PCS'",
+              );
+              await customStatement('''
+                UPDATE bill_items
+                SET quantity_unit_code = CASE
+                  WHEN LOWER(COALESCE(item_name, '')) LIKE '%payal%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%anklet%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%jhumka%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%jumka%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%jhumki%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%earring%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%ear ring%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%tops%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%bali%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%kundal%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%bichhiya%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%bichia%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%toe ring%'
+                    THEN 'PAIR'
+                  WHEN LOWER(COALESCE(item_name, '')) LIKE '%packet%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%pkt%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%pack%'
+                    OR LOWER(COALESCE(item_name, '')) LIKE '%pouch%'
+                    THEN 'PACK'
+                  WHEN LOWER(COALESCE(item_name, '')) LIKE '%set%'
+                    THEN 'SET'
+                  ELSE quantity_unit_code
+                END
+                WHERE quantity_unit_code = 'PCS'
+              ''');
+              AppLogger.info(
+                'v49 sales bill item quantity unit snapshot applied.',
+              );
+            } else {
+              AppLogger.warning(
+                'v49 sales bill item quantity unit skipped because bill_items table is missing.',
+              );
+            }
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

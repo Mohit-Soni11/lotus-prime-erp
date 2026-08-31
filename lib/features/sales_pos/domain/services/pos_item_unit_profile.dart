@@ -72,6 +72,20 @@ class PosItemUnitProfile {
 
   static const values = [pieces, pair, set, packet, lot];
 
+  static PosItemUnitProfile? fromStorageValue(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    for (final unit in values) {
+      if (unit.shortName == normalized ||
+          unit.code.name.toUpperCase() == normalized) {
+        return unit;
+      }
+    }
+    return null;
+  }
+
   static List<PosItemUnitProfile> invoiceOptionsForMetal(MetalType metal) {
     return switch (metal) {
       MetalType.silver => const [pieces, packet, pair, set],

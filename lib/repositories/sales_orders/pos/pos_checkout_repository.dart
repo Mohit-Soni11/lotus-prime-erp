@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_money_math.dart';
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
@@ -185,6 +186,7 @@ class PosCheckoutRepository {
                       : '-',
                 ),
                 quantity: Value(item.pcs),
+                quantityUnitCode: Value(item.unitShortName),
                 grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
                 lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
                 lessWeightPerPiece: Value(item.isLessPerPiece),
@@ -414,6 +416,7 @@ class PosCheckoutRepository {
                       : '-',
                 ),
                 quantity: Value(item.pcs),
+                quantityUnitCode: Value(item.unitShortName),
                 grossWeight: Value(_parseSafeNumber(item.grossCtrl.text)),
                 lessWeight: Value(_parseSafeNumber(item.lessCtrl.text)),
                 lessWeightPerPiece: Value(item.isLessPerPiece),
@@ -2595,6 +2598,12 @@ class PosCheckoutRepository {
       makingChargeType: _makingChargeTypeFromDb(row.makingChargeType),
       isLessPerPiece: row.lessWeightPerPiece,
     );
+    final unitProfile = PosItemUnitProfile.fromStorageValue(
+      row.quantityUnitCode,
+    );
+    if (unitProfile != null) {
+      item.setUnitProfile(unitProfile);
+    }
     item.descCtrl.text = row.itemName;
     item.setInvoiceHsnCode(row.hsnCode);
     item.pcsCtrl.text = row.quantity.toString();

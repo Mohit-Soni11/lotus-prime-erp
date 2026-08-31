@@ -47,7 +47,10 @@ class ReturnReversalInvoiceItemsCard extends StatelessWidget {
           if (lineItems.isEmpty)
             _EmptyItemsState(operationType: operationType)
           else
-            _LoadedItemsList(lineItems: lineItems),
+            _LoadedItemsList(
+              controller: controller,
+              lineItems: lineItems,
+            ),
           _ItemsFooter(
             controller: controller,
             document: selectedDocument,
@@ -323,9 +326,13 @@ class _EmptyItemsState extends StatelessWidget {
 }
 
 class _LoadedItemsList extends StatelessWidget {
+  final ReturnReversalController controller;
   final List<ReturnReversalSourceLineItem> lineItems;
 
-  const _LoadedItemsList({required this.lineItems});
+  const _LoadedItemsList({
+    required this.controller,
+    required this.lineItems,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -336,10 +343,15 @@ class _LoadedItemsList extends StatelessWidget {
         child: Column(
           children: [
             for (final lineItem in lineItems) ...[
-              _SourceItemRow(lineItem: lineItem),
+              _SourceItemRow(
+                lineItem: lineItem,
+                selected: controller.isSourceLineSelected(lineItem.lineNo),
+                onTap: () =>
+                    controller.toggleSourceLineSelection(lineItem.lineNo),
+              ),
               const Divider(height: 1, color: SalesPosColors.bodyBorder),
             ],
-            _SourceItemsTotalRow(lineItems: lineItems),
+            _SourceItemsTotalRow(lineItems: controller.state.selectedLineItems),
           ],
         ),
       ),
@@ -349,73 +361,87 @@ class _LoadedItemsList extends StatelessWidget {
 
 class _SourceItemRow extends StatelessWidget {
   final ReturnReversalSourceLineItem lineItem;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _SourceItemRow({required this.lineItem});
+  const _SourceItemRow({
+    required this.lineItem,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final metalColor = _metalColor(lineItem.metalType);
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: const BoxDecoration(color: SalesPosColors.bodyPanelBg),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              flex: 1,
-              child: _SourceLineNumber(
-                number: lineItem.lineNo,
-                color: metalColor,
+    return InkWell(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? SalesPosColors.success.withValues(alpha: 0.06)
+                : SalesPosColors.bodyPanelBg,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 1,
+                child: _SourceLineNumber(
+                  number: lineItem.lineNo,
+                  color: metalColor,
+                  selected: selected,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            _MetalSnapshotCell(lineItem: lineItem, color: metalColor),
-            const SizedBox(width: 6),
-            _ItemDetailsCell(lineItem: lineItem),
-            const SizedBox(width: 6),
-            _QuantitySnapshotCell(lineItem: lineItem),
-            const SizedBox(width: 6),
-            _HuidChip(value: lineItem.huidNumber),
-            const SizedBox(width: 6),
-            _ReadOnlyPosCell(
-              value: lineItem.purity,
-              flex: 2,
-              center: true,
-              color: metalColor,
-              tooltip: 'Purity snapshot',
-            ),
-            const SizedBox(width: 6),
-            _ReadOnlyPosCell(
-              value: _formatWeight(lineItem.netWeight),
-              flex: 2,
-              center: true,
-              color: metalColor,
-              tooltip: 'Net weight',
-              strong: true,
-            ),
-            const SizedBox(width: 6),
-            _ReadOnlyPosCell(
-              value: _formatCurrency(lineItem.rate),
-              flex: 3,
-              right: true,
-              tooltip: 'Rate snapshot',
-            ),
-            const SizedBox(width: 6),
-            _MakingSnapshotCell(lineItem: lineItem),
-            const SizedBox(width: 6),
-            _ReadOnlyPosCell(
-              value: _formatCurrency(lineItem.displayInvoiceValue),
-              flex: 3,
-              right: true,
-              tooltip: 'Invoice line total',
-              strong: true,
-            ),
-          ],
+              const SizedBox(width: 6),
+              _MetalSnapshotCell(lineItem: lineItem, color: metalColor),
+              const SizedBox(width: 6),
+              _ItemDetailsCell(lineItem: lineItem),
+              const SizedBox(width: 6),
+              _QuantitySnapshotCell(lineItem: lineItem),
+              const SizedBox(width: 6),
+              _HuidChip(value: lineItem.huidNumber),
+              const SizedBox(width: 6),
+              _ReadOnlyPosCell(
+                value: lineItem.purity,
+                flex: 2,
+                center: true,
+                color: metalColor,
+                tooltip: 'Purity snapshot',
+              ),
+              const SizedBox(width: 6),
+              _ReadOnlyPosCell(
+                value: _formatWeight(lineItem.netWeight),
+                flex: 2,
+                center: true,
+                color: metalColor,
+                tooltip: 'Net weight',
+                strong: true,
+              ),
+              const SizedBox(width: 6),
+              _ReadOnlyPosCell(
+                value: _formatCurrency(lineItem.rate),
+                flex: 3,
+                right: true,
+                tooltip: 'Rate snapshot',
+              ),
+              const SizedBox(width: 6),
+              _MakingSnapshotCell(lineItem: lineItem),
+              const SizedBox(width: 6),
+              _ReadOnlyPosCell(
+                value: _formatCurrency(lineItem.displayLineTotal),
+                flex: 3,
+                right: true,
+                tooltip: 'Invoice line total',
+                strong: true,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -469,10 +495,12 @@ class _ItemDetailsCell extends StatelessWidget {
 class _SourceLineNumber extends StatelessWidget {
   final int number;
   final Color color;
+  final bool selected;
 
   const _SourceLineNumber({
     required this.number,
     required this.color,
+    required this.selected,
   });
 
   @override
@@ -483,19 +511,31 @@ class _SourceLineNumber extends StatelessWidget {
         height: 32,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
+          color: selected
+              ? SalesPosColors.success.withValues(alpha: 0.14)
+              : color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: color.withValues(alpha: 0.35)),
-        ),
-        child: Text(
-          '$number',
-          style: TextStyle(
-            color: color,
-            fontSize: SalesPosStyles.fontBody,
-            fontWeight: FontWeight.w900,
-            fontFeatures: const [FontFeature.tabularFigures()],
+          border: Border.all(
+            color: selected
+                ? SalesPosColors.success.withValues(alpha: 0.55)
+                : color.withValues(alpha: 0.35),
           ),
         ),
+        child: selected
+            ? const Icon(
+                Icons.check_rounded,
+                color: SalesPosColors.success,
+                size: 18,
+              )
+            : Text(
+                '$number',
+                style: TextStyle(
+                  color: color,
+                  fontSize: SalesPosStyles.fontBody,
+                  fontWeight: FontWeight.w900,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
       ),
     );
   }
@@ -822,7 +862,7 @@ class _SourceItemsTotalRow extends StatelessWidget {
     );
     final value = lineItems.fold<double>(
       0,
-      (total, item) => total + item.displayInvoiceValue,
+      (total, item) => total + item.displayLineTotal,
     );
 
     return Container(
@@ -952,6 +992,9 @@ class _ItemsFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCount = controller.state.selectedLineNumbers.length;
+    final totalCount = document?.lineItems.length ?? 0;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: const BoxDecoration(
@@ -961,41 +1004,92 @@ class _ItemsFooter extends StatelessWidget {
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: InkWell(
-          onTap: document == null ? () => controller.searchRecords() : null,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: SalesPosColors.success.withValues(alpha: 0.08),
-              border: Border.all(
-                color: SalesPosColors.success.withValues(alpha: 0.35),
-                width: 1.5,
+      child: Row(
+        children: [
+          InkWell(
+            onTap: document == null ? () => controller.searchRecords() : null,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: SalesPosColors.success.withValues(alpha: 0.08),
+                border: Border.all(
+                  color: SalesPosColors.success.withValues(alpha: 0.35),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.playlist_add_check_rounded,
-                  color: SalesPosColors.success,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _loadedLabel,
-                  style: const TextStyle(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.playlist_add_check_rounded,
                     color: SalesPosColors.success,
-                    fontSize: SalesPosStyles.fontBody,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
+                    size: 20,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    _loadedLabel,
+                    style: const TextStyle(
+                      color: SalesPosColors.success,
+                      fontSize: SalesPosStyles.fontBody,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          if (document != null) ...[
+            const Spacer(),
+            _SelectionFooterChip(
+              label: '$selectedCount / $totalCount selected',
+              onTap: controller.selectAllSourceLines,
+            ),
+            const SizedBox(width: 10),
+            _SelectionFooterChip(
+              label: 'CLEAR',
+              onTap: controller.clearSourceLineSelection,
+              danger: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectionFooterChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final bool danger;
+
+  const _SelectionFooterChip({
+    required this.label,
+    required this.onTap,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = danger ? SalesPosColors.danger : SalesPosColors.brandGold;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.30)),
+        ),
+        child: Text(
+          label,
+          style: SalesPosStyles.caption.copyWith(
+            color: color,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ),
@@ -1074,10 +1168,19 @@ String _unitShortName(ReturnReversalSourceLineItem lineItem) {
 }
 
 PosItemUnitProfile _unitProfileFor(ReturnReversalSourceLineItem lineItem) {
-  return PosItemUnitProfile.infer(
+  final storedUnit = PosItemUnitProfile.fromStorageValue(
+    lineItem.quantityUnitCode,
+  );
+  final inferredUnit = PosItemUnitProfile.infer(
     metal: _metalTypeFromLabel(lineItem.metalType),
     itemName: lineItem.description,
   );
+  if (storedUnit != null &&
+      (storedUnit.code != PosItemUnitCode.pieces ||
+          inferredUnit.code == PosItemUnitCode.pieces)) {
+    return storedUnit;
+  }
+  return inferredUnit;
 }
 
 MetalType _metalTypeFromLabel(String metalType) {

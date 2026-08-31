@@ -7024,6 +7024,14 @@ class $BillItemsTable extends BillItems
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
+  static const VerificationMeta _quantityUnitCodeMeta =
+      const VerificationMeta('quantityUnitCode');
+  @override
+  late final GeneratedColumn<String> quantityUnitCode = GeneratedColumn<String>(
+      'quantity_unit_code', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('PCS'));
   static const VerificationMeta _grossWeightMeta =
       const VerificationMeta('grossWeight');
   @override
@@ -7224,6 +7232,7 @@ class $BillItemsTable extends BillItems
         huid,
         purity,
         quantity,
+        quantityUnitCode,
         grossWeight,
         lessWeight,
         lessWeightPerPiece,
@@ -7305,6 +7314,12 @@ class $BillItemsTable extends BillItems
     if (data.containsKey('quantity')) {
       context.handle(_quantityMeta,
           quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    }
+    if (data.containsKey('quantity_unit_code')) {
+      context.handle(
+          _quantityUnitCodeMeta,
+          quantityUnitCode.isAcceptableOrUnknown(
+              data['quantity_unit_code']!, _quantityUnitCodeMeta));
     }
     if (data.containsKey('gross_weight')) {
       context.handle(
@@ -7475,6 +7490,8 @@ class $BillItemsTable extends BillItems
           .read(DriftSqlType.string, data['${effectivePrefix}purity'])!,
       quantity: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
+      quantityUnitCode: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}quantity_unit_code'])!,
       grossWeight: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}gross_weight'])!,
       lessWeight: attachedDatabase.typeMapping
@@ -7548,6 +7565,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
   final String? huid;
   final String purity;
   final int quantity;
+  final String quantityUnitCode;
   final double grossWeight;
   final double lessWeight;
   final bool lessWeightPerPiece;
@@ -7584,6 +7602,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       this.huid,
       required this.purity,
       required this.quantity,
+      required this.quantityUnitCode,
       required this.grossWeight,
       required this.lessWeight,
       required this.lessWeightPerPiece,
@@ -7628,6 +7647,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
     }
     map['purity'] = Variable<String>(purity);
     map['quantity'] = Variable<int>(quantity);
+    map['quantity_unit_code'] = Variable<String>(quantityUnitCode);
     map['gross_weight'] = Variable<double>(grossWeight);
     map['less_weight'] = Variable<double>(lessWeight);
     map['less_weight_per_piece'] = Variable<bool>(lessWeightPerPiece);
@@ -7678,6 +7698,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       huid: huid == null && nullToAbsent ? const Value.absent() : Value(huid),
       purity: Value(purity),
       quantity: Value(quantity),
+      quantityUnitCode: Value(quantityUnitCode),
       grossWeight: Value(grossWeight),
       lessWeight: Value(lessWeight),
       lessWeightPerPiece: Value(lessWeightPerPiece),
@@ -7726,6 +7747,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       huid: serializer.fromJson<String?>(json['huid']),
       purity: serializer.fromJson<String>(json['purity']),
       quantity: serializer.fromJson<int>(json['quantity']),
+      quantityUnitCode: serializer.fromJson<String>(json['quantityUnitCode']),
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
       lessWeight: serializer.fromJson<double>(json['lessWeight']),
       lessWeightPerPiece: serializer.fromJson<bool>(json['lessWeightPerPiece']),
@@ -7774,6 +7796,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       'huid': serializer.toJson<String?>(huid),
       'purity': serializer.toJson<String>(purity),
       'quantity': serializer.toJson<int>(quantity),
+      'quantityUnitCode': serializer.toJson<String>(quantityUnitCode),
       'grossWeight': serializer.toJson<double>(grossWeight),
       'lessWeight': serializer.toJson<double>(lessWeight),
       'lessWeightPerPiece': serializer.toJson<bool>(lessWeightPerPiece),
@@ -7814,6 +7837,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           Value<String?> huid = const Value.absent(),
           String? purity,
           int? quantity,
+          String? quantityUnitCode,
           double? grossWeight,
           double? lessWeight,
           bool? lessWeightPerPiece,
@@ -7850,6 +7874,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         huid: huid.present ? huid.value : this.huid,
         purity: purity ?? this.purity,
         quantity: quantity ?? this.quantity,
+        quantityUnitCode: quantityUnitCode ?? this.quantityUnitCode,
         grossWeight: grossWeight ?? this.grossWeight,
         lessWeight: lessWeight ?? this.lessWeight,
         lessWeightPerPiece: lessWeightPerPiece ?? this.lessWeightPerPiece,
@@ -7895,6 +7920,9 @@ class BillItem extends DataClass implements Insertable<BillItem> {
       huid: data.huid.present ? data.huid.value : this.huid,
       purity: data.purity.present ? data.purity.value : this.purity,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      quantityUnitCode: data.quantityUnitCode.present
+          ? data.quantityUnitCode.value
+          : this.quantityUnitCode,
       grossWeight:
           data.grossWeight.present ? data.grossWeight.value : this.grossWeight,
       lessWeight:
@@ -7975,6 +8003,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           ..write('huid: $huid, ')
           ..write('purity: $purity, ')
           ..write('quantity: $quantity, ')
+          ..write('quantityUnitCode: $quantityUnitCode, ')
           ..write('grossWeight: $grossWeight, ')
           ..write('lessWeight: $lessWeight, ')
           ..write('lessWeightPerPiece: $lessWeightPerPiece, ')
@@ -8016,6 +8045,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
         huid,
         purity,
         quantity,
+        quantityUnitCode,
         grossWeight,
         lessWeight,
         lessWeightPerPiece,
@@ -8056,6 +8086,7 @@ class BillItem extends DataClass implements Insertable<BillItem> {
           other.huid == this.huid &&
           other.purity == this.purity &&
           other.quantity == this.quantity &&
+          other.quantityUnitCode == this.quantityUnitCode &&
           other.grossWeight == this.grossWeight &&
           other.lessWeight == this.lessWeight &&
           other.lessWeightPerPiece == this.lessWeightPerPiece &&
@@ -8094,6 +8125,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
   final Value<String?> huid;
   final Value<String> purity;
   final Value<int> quantity;
+  final Value<String> quantityUnitCode;
   final Value<double> grossWeight;
   final Value<double> lessWeight;
   final Value<bool> lessWeightPerPiece;
@@ -8130,6 +8162,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.huid = const Value.absent(),
     this.purity = const Value.absent(),
     this.quantity = const Value.absent(),
+    this.quantityUnitCode = const Value.absent(),
     this.grossWeight = const Value.absent(),
     this.lessWeight = const Value.absent(),
     this.lessWeightPerPiece = const Value.absent(),
@@ -8167,6 +8200,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     this.huid = const Value.absent(),
     this.purity = const Value.absent(),
     this.quantity = const Value.absent(),
+    this.quantityUnitCode = const Value.absent(),
     this.grossWeight = const Value.absent(),
     this.lessWeight = const Value.absent(),
     this.lessWeightPerPiece = const Value.absent(),
@@ -8205,6 +8239,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     Expression<String>? huid,
     Expression<String>? purity,
     Expression<int>? quantity,
+    Expression<String>? quantityUnitCode,
     Expression<double>? grossWeight,
     Expression<double>? lessWeight,
     Expression<bool>? lessWeightPerPiece,
@@ -8242,6 +8277,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       if (huid != null) 'huid': huid,
       if (purity != null) 'purity': purity,
       if (quantity != null) 'quantity': quantity,
+      if (quantityUnitCode != null) 'quantity_unit_code': quantityUnitCode,
       if (grossWeight != null) 'gross_weight': grossWeight,
       if (lessWeight != null) 'less_weight': lessWeight,
       if (lessWeightPerPiece != null)
@@ -8289,6 +8325,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       Value<String?>? huid,
       Value<String>? purity,
       Value<int>? quantity,
+      Value<String>? quantityUnitCode,
       Value<double>? grossWeight,
       Value<double>? lessWeight,
       Value<bool>? lessWeightPerPiece,
@@ -8325,6 +8362,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
       huid: huid ?? this.huid,
       purity: purity ?? this.purity,
       quantity: quantity ?? this.quantity,
+      quantityUnitCode: quantityUnitCode ?? this.quantityUnitCode,
       grossWeight: grossWeight ?? this.grossWeight,
       lessWeight: lessWeight ?? this.lessWeight,
       lessWeightPerPiece: lessWeightPerPiece ?? this.lessWeightPerPiece,
@@ -8389,6 +8427,9 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
     }
     if (quantity.present) {
       map['quantity'] = Variable<int>(quantity.value);
+    }
+    if (quantityUnitCode.present) {
+      map['quantity_unit_code'] = Variable<String>(quantityUnitCode.value);
     }
     if (grossWeight.present) {
       map['gross_weight'] = Variable<double>(grossWeight.value);
@@ -8483,6 +8524,7 @@ class BillItemsCompanion extends UpdateCompanion<BillItem> {
           ..write('huid: $huid, ')
           ..write('purity: $purity, ')
           ..write('quantity: $quantity, ')
+          ..write('quantityUnitCode: $quantityUnitCode, ')
           ..write('grossWeight: $grossWeight, ')
           ..write('lessWeight: $lessWeight, ')
           ..write('lessWeightPerPiece: $lessWeightPerPiece, ')
@@ -41929,6 +41971,7 @@ typedef $$BillItemsTableCreateCompanionBuilder = BillItemsCompanion Function({
   Value<String?> huid,
   Value<String> purity,
   Value<int> quantity,
+  Value<String> quantityUnitCode,
   Value<double> grossWeight,
   Value<double> lessWeight,
   Value<bool> lessWeightPerPiece,
@@ -41966,6 +42009,7 @@ typedef $$BillItemsTableUpdateCompanionBuilder = BillItemsCompanion Function({
   Value<String?> huid,
   Value<String> purity,
   Value<int> quantity,
+  Value<String> quantityUnitCode,
   Value<double> grossWeight,
   Value<double> lessWeight,
   Value<bool> lessWeightPerPiece,
@@ -42048,6 +42092,10 @@ class $$BillItemsTableFilterComposer
 
   ColumnFilters<int> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get quantityUnitCode => $composableBuilder(
+      column: $table.quantityUnitCode,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get grossWeight => $composableBuilder(
       column: $table.grossWeight, builder: (column) => ColumnFilters(column));
@@ -42196,6 +42244,10 @@ class $$BillItemsTableOrderingComposer
 
   ColumnOrderings<int> get quantity => $composableBuilder(
       column: $table.quantity, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get quantityUnitCode => $composableBuilder(
+      column: $table.quantityUnitCode,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get grossWeight => $composableBuilder(
       column: $table.grossWeight, builder: (column) => ColumnOrderings(column));
@@ -42347,6 +42399,9 @@ class $$BillItemsTableAnnotationComposer
   GeneratedColumn<int> get quantity =>
       $composableBuilder(column: $table.quantity, builder: (column) => column);
 
+  GeneratedColumn<String> get quantityUnitCode => $composableBuilder(
+      column: $table.quantityUnitCode, builder: (column) => column);
+
   GeneratedColumn<double> get grossWeight => $composableBuilder(
       column: $table.grossWeight, builder: (column) => column);
 
@@ -42474,6 +42529,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<String?> huid = const Value.absent(),
             Value<String> purity = const Value.absent(),
             Value<int> quantity = const Value.absent(),
+            Value<String> quantityUnitCode = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
             Value<double> lessWeight = const Value.absent(),
             Value<bool> lessWeightPerPiece = const Value.absent(),
@@ -42511,6 +42567,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             huid: huid,
             purity: purity,
             quantity: quantity,
+            quantityUnitCode: quantityUnitCode,
             grossWeight: grossWeight,
             lessWeight: lessWeight,
             lessWeightPerPiece: lessWeightPerPiece,
@@ -42548,6 +42605,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             Value<String?> huid = const Value.absent(),
             Value<String> purity = const Value.absent(),
             Value<int> quantity = const Value.absent(),
+            Value<String> quantityUnitCode = const Value.absent(),
             Value<double> grossWeight = const Value.absent(),
             Value<double> lessWeight = const Value.absent(),
             Value<bool> lessWeightPerPiece = const Value.absent(),
@@ -42585,6 +42643,7 @@ class $$BillItemsTableTableManager extends RootTableManager<
             huid: huid,
             purity: purity,
             quantity: quantity,
+            quantityUnitCode: quantityUnitCode,
             grossWeight: grossWeight,
             lessWeight: lessWeight,
             lessWeightPerPiece: lessWeightPerPiece,

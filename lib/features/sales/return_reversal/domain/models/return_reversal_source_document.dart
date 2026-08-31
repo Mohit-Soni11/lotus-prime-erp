@@ -15,6 +15,7 @@ class ReturnReversalSourceLineItem {
   final String hsnCode;
   final String purity;
   final int quantity;
+  final String quantityUnitCode;
   final double grossWeight;
   final double lessWeight;
   final bool lessWeightPerPiece;
@@ -40,6 +41,7 @@ class ReturnReversalSourceLineItem {
     this.hsnCode = '',
     this.purity = '-',
     required this.quantity,
+    this.quantityUnitCode = '',
     required this.grossWeight,
     this.lessWeight = 0,
     this.lessWeightPerPiece = false,
@@ -70,7 +72,7 @@ class ReturnReversalSourceLineItem {
 
   double get displayFineWeight => fineWeight > 0 ? fineWeight : netWeight;
 
-  double get displayInvoiceValue => invoiceValue > 0 ? invoiceValue : value;
+  double get displayLineTotal => value;
 }
 
 class ReturnReversalSourceDocument {
@@ -82,8 +84,25 @@ class ReturnReversalSourceDocument {
   final String address;
   final DateTime documentDate;
   final double grossValue;
+  final double discountAmount;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double makingTotal;
+  final double roundOffAmount;
+  final double finalAmount;
   final double paidAmount;
+  final double cashPaid;
+  final double upiPaid;
+  final double cardPaid;
+  final double advancePaid;
   final double dueAmount;
+  final double tradeInDeduction;
+  final String paymentStatus;
+  final String billingMode;
+  final String gstPricingMode;
   final double netWeight;
   final List<ReturnReversalSourceLineItem> lineItems;
 
@@ -96,11 +115,28 @@ class ReturnReversalSourceDocument {
     required this.address,
     required this.documentDate,
     required this.grossValue,
+    this.discountAmount = 0,
+    this.taxableAmount = 0,
+    this.cgstAmount = 0,
+    this.sgstAmount = 0,
+    this.igstAmount = 0,
+    this.gstAmount = 0,
+    this.makingTotal = 0,
+    this.roundOffAmount = 0,
+    double? finalAmount,
     required this.paidAmount,
+    this.cashPaid = 0,
+    this.upiPaid = 0,
+    this.cardPaid = 0,
+    this.advancePaid = 0,
     required this.dueAmount,
+    this.tradeInDeduction = 0,
+    this.paymentStatus = '',
+    this.billingMode = '',
+    this.gstPricingMode = '',
     required this.netWeight,
     required this.lineItems,
-  });
+  }) : finalAmount = finalAmount ?? grossValue;
 
   int get itemCount => lineItems.length;
 
