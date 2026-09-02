@@ -10,7 +10,7 @@ class ReturnReversalDesignTokens {
   static const Color border = PurchaseEntryColors.bodyBorder;
   static const Color accent = PurchaseEntryColors.purchaseAccent;
   static const Color textPrimary = PurchaseEntryColors.textMain;
-  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textSecondary = PurchaseEntryColors.textMain;
 
   static const double pagePadding = 20;
   static const double panelRadius = 8;

@@ -66,7 +66,7 @@ class ReturnReversalInvoiceSummaryPanel extends StatelessWidget {
                       const _PanelDivider(),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                        child: _SummaryActions(operationType: operationType),
+                        child: _SummaryActions(controller: controller),
                       ),
                     ],
                   )
@@ -80,7 +80,7 @@ class ReturnReversalInvoiceSummaryPanel extends StatelessWidget {
                       const _PanelDivider(),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                        child: _SummaryActions(operationType: operationType),
+                        child: _SummaryActions(controller: controller),
                       ),
                     ],
                   ),
@@ -114,30 +114,9 @@ class _SummaryBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final document = sourceDocument;
     final metalBreakdowns = _buildMetalBreakdowns(document);
-    final selectedMetalAmount = returnCartLineItems.fold<double>(
-      0,
-      (total, item) => total + _metalReturnAmount(item, inspectionDrafts),
-    );
-    final availableMaking = returnCartLineItems.fold<double>(
-      0,
-      (total, item) => total + _adjustedMakingAmount(item, inspectionDrafts),
-    );
-    final returnedMaking = returnCartLineItems.fold<double>(
-      0,
-      (total, item) {
-        final draft = _draftFor(item, inspectionDrafts);
-        if (!draft.includeMakingCharge) {
-          return total;
-        }
-        return total + _adjustedMakingAmount(item, inspectionDrafts);
-      },
-    );
-    final returnValue = selectedMetalAmount + returnedMaking;
-    final netWeight = returnCartLineItems.fold<double>(
-      0,
-      (total, item) =>
-          total +
-          (inspectionDrafts[item.lineNo]?.receivedNetWeight ?? item.netWeight),
+    final returnCartBreakdowns = _buildReturnCartBreakdowns(
+      returnCartLineItems,
+      inspectionDrafts,
     );
     final originalInvoiceTotal = document == null
         ? 0.0
@@ -179,11 +158,7 @@ class _SummaryBoard extends StatelessWidget {
         const SizedBox(height: 8),
         _SelectedReturnCard(
           selectedCount: returnCartLineItems.length,
-          netWeight: netWeight,
-          metalAmount: selectedMetalAmount,
-          availableMaking: availableMaking,
-          returnedMaking: returnedMaking,
-          returnValue: returnValue,
+          breakdowns: returnCartBreakdowns,
         ),
       ],
     );
@@ -216,6 +191,36 @@ class _SummaryBoard extends StatelessWidget {
     return values;
   }
 
+  List<_ReturnCartMetalBreakdown> _buildReturnCartBreakdowns(
+    List<ReturnReversalSourceLineItem> lineItems,
+    Map<int, ReturnReversalLineInspectionDraft> inspectionDrafts,
+  ) {
+    if (lineItems.isEmpty) {
+      return const [];
+    }
+
+    final grouped = <String, _ReturnCartMetalBreakdown>{};
+    for (final item in lineItems) {
+      final metal = item.metalType.trim().isEmpty
+          ? 'OTHER'
+          : item.metalType.trim().toUpperCase();
+      grouped
+          .putIfAbsent(metal, () => _ReturnCartMetalBreakdown(metal))
+          .add(item, inspectionDrafts);
+    }
+
+    final values = grouped.values.toList(growable: false)
+      ..sort((a, b) {
+        final aRank = _metalRank(a.metal);
+        final bRank = _metalRank(b.metal);
+        if (aRank != bRank) {
+          return aRank.compareTo(bRank);
+        }
+        return a.metal.compareTo(b.metal);
+      });
+    return values;
+  }
+
   int _metalRank(String metal) {
     if (metal.contains('GOLD')) {
       return 0;
@@ -227,6 +232,35 @@ class _SummaryBoard extends StatelessWidget {
       return 2;
     }
     return 3;
+  }
+}
+
+class _ReturnCartMetalBreakdown {
+  final String metal;
+  var itemCount = 0;
+  var netWeight = 0.0;
+  var metalAmount = 0.0;
+  var availableMaking = 0.0;
+  var returnedMaking = 0.0;
+
+  _ReturnCartMetalBreakdown(this.metal);
+
+  double get returnValue => metalAmount + returnedMaking;
+
+  void add(
+    ReturnReversalSourceLineItem item,
+    Map<int, ReturnReversalLineInspectionDraft> inspectionDrafts,
+  ) {
+    final draft = _draftFor(item, inspectionDrafts);
+    final adjustedMaking = _adjustedMakingAmount(item, inspectionDrafts);
+
+    itemCount += 1;
+    netWeight += draft.receivedNetWeight;
+    metalAmount += _metalReturnAmount(item, inspectionDrafts);
+    availableMaking += adjustedMaking;
+    if (draft.includeMakingCharge) {
+      returnedMaking += adjustedMaking;
+    }
   }
 }
 
@@ -340,8 +374,8 @@ class _MetalSummaryTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: SalesPosStyles.caption.copyWith(
-                        color: SalesPosColors.bodyTextMuted,
-                        fontWeight: FontWeight.w800,
+                        color: SalesPosColors.textDark,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ],
@@ -353,7 +387,7 @@ class _MetalSummaryTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: SalesPosStyles.bodyStrong.copyWith(
-                  color: SalesPosColors.bodyTextMain,
+                  color: SalesPosColors.textDark,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -411,23 +445,20 @@ class _MetalSummaryTile extends StatelessWidget {
 
 class _SelectedReturnCard extends StatelessWidget {
   final int selectedCount;
-  final double netWeight;
-  final double metalAmount;
-  final double availableMaking;
-  final double returnedMaking;
-  final double returnValue;
+  final List<_ReturnCartMetalBreakdown> breakdowns;
 
   const _SelectedReturnCard({
     required this.selectedCount,
-    required this.netWeight,
-    required this.metalAmount,
-    required this.availableMaking,
-    required this.returnedMaking,
-    required this.returnValue,
+    required this.breakdowns,
   });
 
   @override
   Widget build(BuildContext context) {
+    final totalReturnValue = breakdowns.fold<double>(
+      0,
+      (total, breakdown) => total + breakdown.returnValue,
+    );
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -438,30 +469,108 @@ class _SelectedReturnCard extends StatelessWidget {
       child: Column(
         children: [
           _SubtleRow(label: 'Cart Items', value: selectedCount.toString()),
-          const SizedBox(height: 9),
-          _SubtleRow(
-            label: 'Restored Net Weight',
-            value: '${netWeight.toStringAsFixed(3)} g',
-          ),
-          const SizedBox(height: 9),
-          _SubtleRow(
-            label: 'Metal Amount',
-            value: _formatCurrency(metalAmount),
-          ),
-          const SizedBox(height: 9),
-          _SubtleRow(
-            label: 'Making Available',
-            value: _formatCurrency(availableMaking),
-          ),
-          const SizedBox(height: 9),
-          _SubtleRow(
-            label: 'Making Returned',
-            value: _formatCurrency(returnedMaking),
-          ),
+          if (breakdowns.isEmpty) ...[
+            const SizedBox(height: 10),
+            const _EmptySummaryText('No return items added to cart.'),
+          ] else ...[
+            const SizedBox(height: 12),
+            ...breakdowns.map(_ReturnCartMetalTile.new),
+          ],
           const SizedBox(height: 12),
           _PillarRow(
             label: 'Return Value',
-            value: _formatCurrency(returnValue),
+            value: _formatCurrency(totalReturnValue),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReturnCartMetalTile extends StatelessWidget {
+  final _ReturnCartMetalBreakdown breakdown;
+
+  const _ReturnCartMetalTile(this.breakdown);
+
+  Color get _accentColor {
+    return breakdown.metal.contains('GOLD')
+        ? SalesPosColors.brandGold
+        : SalesPosColors.brandSilver;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final metalTitle = _formatMetalName(breakdown.metal);
+    final suffix = breakdown.itemCount == 1 ? 'item' : 'items';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyPanelBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _accentColor.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _accentColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$metalTitle Return',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SalesPosStyles.bodyStrong.copyWith(
+                    color: _accentColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${breakdown.itemCount} $suffix',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.caption.copyWith(
+                  color: SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          _SubtleRow(
+            label: '$metalTitle Net Weight',
+            value: '${breakdown.netWeight.toStringAsFixed(3)} g',
+          ),
+          const SizedBox(height: 7),
+          _SubtleRow(
+            label: '$metalTitle Metal Amount',
+            value: _formatCurrency(breakdown.metalAmount),
+          ),
+          const SizedBox(height: 7),
+          _SubtleRow(
+            label: '$metalTitle Making Available',
+            value: _formatCurrency(breakdown.availableMaking),
+          ),
+          const SizedBox(height: 7),
+          _SubtleRow(
+            label: '$metalTitle Making Returned',
+            value: _formatCurrency(breakdown.returnedMaking),
+          ),
+          const SizedBox(height: 9),
+          _TotalRow(
+            label: '$metalTitle Return Total',
+            value: _formatCurrency(breakdown.returnValue),
           ),
         ],
       ),
@@ -532,7 +641,10 @@ class _SectionHead extends StatelessWidget {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: SalesPosStyles.subTitleMuted,
+                style: SalesPosStyles.bodyText.copyWith(
+                  color: SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -626,7 +738,7 @@ class _PaymentChip extends StatelessWidget {
       child: Text(
         '$label ${_formatCurrency(value)}',
         style: SalesPosStyles.caption.copyWith(
-          color: SalesPosColors.bodyTextMain,
+          color: SalesPosColors.textDark,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -666,9 +778,9 @@ class _EmptySummaryText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: SalesPosStyles.caption.copyWith(
-        color: SalesPosColors.bodyTextMuted,
-        fontWeight: FontWeight.w800,
+      style: SalesPosStyles.bodyText.copyWith(
+        color: SalesPosColors.textDark,
+        fontWeight: FontWeight.w900,
       ),
     );
   }
@@ -693,11 +805,20 @@ class _SubtleRow extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: SalesPosStyles.label,
+            style: SalesPosStyles.bodyText.copyWith(
+              color: SalesPosColors.textDark,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
         const SizedBox(width: 12),
-        Text(value, style: SalesPosStyles.bodyStrong),
+        Text(
+          value,
+          style: SalesPosStyles.bodyStrong.copyWith(
+            color: SalesPosColors.textDark,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
       ],
     );
   }
@@ -736,7 +857,7 @@ class _TotalRow extends StatelessWidget {
           Text(
             value,
             style: SalesPosStyles.bodyStrong.copyWith(
-              color: SalesPosColors.bodyTextMain,
+              color: SalesPosColors.textDark,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -804,22 +925,44 @@ class _PanelDivider extends StatelessWidget {
 }
 
 class _SummaryActions extends StatelessWidget {
-  final ReturnReversalOperationType operationType;
+  final ReturnReversalController controller;
 
-  const _SummaryActions({required this.operationType});
+  const _SummaryActions({required this.controller});
 
   String get _buttonLabel {
-    return operationType == ReturnReversalOperationType.salesReturn
+    return controller.state.operationType ==
+            ReturnReversalOperationType.salesReturn
         ? 'Process Return'
         : 'Process Cancellation';
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = controller.state;
+    final canProcess = state.hasReturnCartLineItems && !state.isProcessing;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PrimarySummaryButton(label: _buttonLabel),
+        if (state.processMessage != null) ...[
+          _ProcessMessageBar(
+            message: state.processMessage!,
+            success: true,
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (state.errorMessage != null) ...[
+          _ProcessMessageBar(
+            message: state.errorMessage!,
+            success: false,
+          ),
+          const SizedBox(height: 10),
+        ],
+        _PrimarySummaryButton(
+          label: _buttonLabel,
+          enabled: canProcess,
+          isProcessing: state.isProcessing,
+          onPressed: controller.processReturn,
+        ),
         const SizedBox(height: 10),
         const _SecondarySummaryButton(label: 'Preview Document'),
       ],
@@ -829,26 +972,139 @@ class _SummaryActions extends StatelessWidget {
 
 class _PrimarySummaryButton extends StatelessWidget {
   final String label;
+  final bool enabled;
+  final bool isProcessing;
+  final VoidCallback onPressed;
 
-  const _PrimarySummaryButton({required this.label});
+  const _PrimarySummaryButton({
+    required this.label,
+    required this.enabled,
+    required this.isProcessing,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final active = enabled || isProcessing;
     return SizedBox(
-      height: 46,
-      child: FilledButton.icon(
-        onPressed: null,
-        icon: const Icon(Icons.assignment_turned_in_rounded, size: 18),
-        label: Text(label),
-        style: FilledButton.styleFrom(
-          disabledBackgroundColor: SalesPosColors.brandGold.withValues(
-            alpha: 0.35,
+      height: 48,
+      child: Semantics(
+        button: true,
+        enabled: enabled,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onPressed : null,
+            borderRadius: BorderRadius.circular(10),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: active
+                    ? const LinearGradient(
+                        colors: [
+                          SalesPosColors.goldGradientStart,
+                          SalesPosColors.brandGold,
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      )
+                    : null,
+                color: active
+                    ? null
+                    : SalesPosColors.brandGold.withValues(alpha: 0.36),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: SalesPosColors.brandGold.withValues(alpha: 0.82),
+                ),
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                          color:
+                              SalesPosColors.brandGold.withValues(alpha: 0.34),
+                          blurRadius: 16,
+                          offset: const Offset(0, 5),
+                        ),
+                      ]
+                    : const [],
+              ),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isProcessing)
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    else
+                      const Icon(
+                        Icons.assignment_turned_in_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isProcessing ? 'Posting' : label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SalesPosStyles.buttonText.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-          disabledForegroundColor: Colors.white,
-          textStyle: SalesPosStyles.buttonText,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
+      ),
+    );
+  }
+}
+
+class _ProcessMessageBar extends StatelessWidget {
+  final String message;
+  final bool success;
+
+  const _ProcessMessageBar({
+    required this.message,
+    required this.success,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = success ? SalesPosColors.success : SalesPosColors.danger;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            success ? Icons.check_circle_rounded : Icons.error_rounded,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: SalesPosStyles.caption.copyWith(
+                color: SalesPosColors.textDark,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -868,7 +1124,7 @@ class _SecondarySummaryButton extends StatelessWidget {
         icon: const Icon(Icons.visibility_rounded, size: 18),
         label: Text(label),
         style: OutlinedButton.styleFrom(
-          disabledForegroundColor: SalesPosColors.bodyTextMuted,
+          disabledForegroundColor: SalesPosColors.textDark,
           textStyle: SalesPosStyles.buttonText,
           side: const BorderSide(color: SalesPosColors.bodyBorder, width: 1.5),
           shape:

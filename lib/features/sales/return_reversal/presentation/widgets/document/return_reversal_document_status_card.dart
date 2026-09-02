@@ -82,13 +82,13 @@ class _DocumentCard extends StatelessWidget {
 
   String get _primaryLabel {
     return operationType == ReturnReversalOperationType.salesReturn
-        ? 'INVOICE NO.'
+        ? 'SOURCE NO.'
         : 'BOOKING NO.';
   }
 
   String get _subtitle {
     return operationType == ReturnReversalOperationType.salesReturn
-        ? 'Sales invoice reversal'
+        ? 'Sales and purchase return source'
         : 'Advance booking reversal';
   }
 
@@ -182,8 +182,8 @@ class _DocumentHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
                       color: ReturnReversalDesignTokens.textPrimary,
                     ),
                   ),
@@ -258,7 +258,7 @@ class _DocumentBadge extends StatelessWidget {
           Text(
             loaded ? 'LOADED' : 'PENDING',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.8,
               color: loaded
@@ -304,7 +304,7 @@ class _DocumentContentState extends State<_DocumentContent> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 560;
+        final compact = constraints.maxWidth < 780;
         final sourceDocumentBlock = _SourceDocumentBlock(
           sourceDocument: widget.sourceDocument,
           primaryLabel: widget.primaryLabel,
@@ -445,7 +445,7 @@ class _DocumentNumberBlock extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.4,
             color: ReturnReversalDesignTokens.textPrimary,
@@ -515,7 +515,7 @@ class _DateTimeChipGroup extends StatelessWidget {
           label: 'DATE',
           value: data.date.toUpperCase(),
           valueColor: ReturnReversalDesignTokens.textPrimary,
-          fontSize: 13,
+          fontSize: 14,
           background: ReturnReversalDesignTokens.background,
           border: ReturnReversalDesignTokens.border,
         ),
@@ -584,9 +584,9 @@ class _DocumentChip extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  color: iconColor.withValues(alpha: 0.8),
-                  fontSize: 9,
+                style: const TextStyle(
+                  color: ReturnReversalDesignTokens.textPrimary,
+                  fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1,
                 ),

@@ -24,7 +24,10 @@ class ReturnReversalOperationSetupCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _SetupHeader(compact: compact),
+            _SetupHeader(
+              compact: compact,
+              selectedType: selectedType,
+            ),
             Container(
               height: 1,
               width: double.infinity,
@@ -71,8 +74,24 @@ class ReturnReversalOperationSetupCard extends StatelessWidget {
 
 class _SetupHeader extends StatelessWidget {
   final bool compact;
+  final ReturnReversalOperationType selectedType;
 
-  const _SetupHeader({required this.compact});
+  const _SetupHeader({
+    required this.compact,
+    required this.selectedType,
+  });
+
+  String get _title {
+    return selectedType == ReturnReversalOperationType.salesReturn
+        ? 'RETURN SETUP'
+        : 'CANCELLATION SETUP';
+  }
+
+  String get _subtitle {
+    return selectedType == ReturnReversalOperationType.salesReturn
+        ? 'Sales return and purchase return'
+        : 'Booking cancellation only';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,25 +110,25 @@ class _SetupHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(width: 12),
-        const Flexible(
+        Flexible(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'RETURN SETUP',
+                _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: PurchaseEntryStyles.highVisHeader,
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'Sales return and advance cancellation',
+                _subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
                   color: ReturnReversalDesignTokens.textPrimary,
                 ),
               ),
@@ -179,7 +198,7 @@ class _ReadinessBadge extends StatelessWidget {
           Text(
             'DESK READY',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.8,
               color: ReturnReversalDesignTokens.accent,
@@ -205,7 +224,7 @@ class _OperationTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? null : 52,
+      height: compact ? null : 66,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: ReturnReversalDesignTokens.background,
@@ -235,6 +254,7 @@ class _OperationTabs extends StatelessWidget {
     final returnTab = _OperationTab(
       type: ReturnReversalOperationType.salesReturn,
       title: 'RETURN',
+      subtitle: 'Sales + Purchase',
       selected: selectedType == ReturnReversalOperationType.salesReturn,
       expanded: expanded,
       onTap: () => onChanged(ReturnReversalOperationType.salesReturn),
@@ -242,6 +262,7 @@ class _OperationTabs extends StatelessWidget {
     final cancellationTab = _OperationTab(
       type: ReturnReversalOperationType.bookingCancellation,
       title: 'CANCELLATION',
+      subtitle: 'Booking only',
       selected: selectedType == ReturnReversalOperationType.bookingCancellation,
       expanded: expanded,
       onTap: () => onChanged(ReturnReversalOperationType.bookingCancellation),
@@ -264,6 +285,7 @@ class _OperationTabs extends StatelessWidget {
 class _OperationTab extends StatefulWidget {
   final ReturnReversalOperationType type;
   final String title;
+  final String subtitle;
   final bool selected;
   final bool expanded;
   final VoidCallback onTap;
@@ -271,6 +293,7 @@ class _OperationTab extends StatefulWidget {
   const _OperationTab({
     required this.type,
     required this.title,
+    required this.subtitle,
     required this.selected,
     required this.expanded,
     required this.onTap,
@@ -301,9 +324,9 @@ class _OperationTabState extends State<_OperationTab> {
           width: widget.expanded
               ? double.infinity
               : widget.type == ReturnReversalOperationType.salesReturn
-                  ? 150
-                  : 190,
-          height: 44,
+                  ? 170
+                  : 200,
+          height: 58,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active
@@ -348,18 +371,38 @@ class _OperationTabState extends State<_OperationTab> {
               ),
               const SizedBox(width: 7),
               Flexible(
-                child: Text(
-                  widget.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: active
-                        ? Colors.white
-                        : ReturnReversalDesignTokens.textPrimary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 0.8,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: active
+                            ? Colors.white
+                            : ReturnReversalDesignTokens.textPrimary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: active
+                            ? Colors.white.withValues(alpha: 0.86)
+                            : ReturnReversalDesignTokens.textPrimary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

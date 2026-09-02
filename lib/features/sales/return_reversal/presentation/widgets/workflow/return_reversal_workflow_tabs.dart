@@ -154,7 +154,10 @@ class _WorkflowHeader extends StatelessWidget {
                     '$itemCount invoice item${itemCount == 1 ? '' : 's'} loaded | $cartCount in return cart',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: SalesPosStyles.subTitleMuted,
+                    style: SalesPosStyles.bodyText.copyWith(
+                      color: SalesPosColors.textDark,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ],
               ),
@@ -192,8 +195,7 @@ class _StageChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        active ? SalesPosColors.success : SalesPosColors.bodyTextMuted;
+    final color = active ? SalesPosColors.success : SalesPosColors.textDark;
     return Tooltip(
       message: step.subtitle,
       waitDuration: const Duration(milliseconds: 300),
@@ -300,6 +302,7 @@ class _QueueItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _metalColor(lineItem.metalType);
+    final processed = lineItem.isReversed;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -309,12 +312,16 @@ class _QueueItemTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: active
               ? SalesPosColors.success.withValues(alpha: 0.08)
-              : SalesPosColors.bodyPanelBg,
+              : processed
+                  ? SalesPosColors.bodyBg
+                  : SalesPosColors.bodyPanelBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: active
                 ? SalesPosColors.success.withValues(alpha: 0.42)
-                : SalesPosColors.bodyBorder,
+                : processed
+                    ? SalesPosColors.success.withValues(alpha: 0.26)
+                    : SalesPosColors.bodyBorder,
             width: active ? 1.5 : 1,
           ),
         ),
@@ -371,7 +378,10 @@ class _QueueItemTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _QueueStatusBadge(inCart: inCart),
+            _QueueStatusBadge(
+              inCart: inCart,
+              processed: processed,
+            ),
           ],
         ),
       ),
@@ -398,8 +408,8 @@ class _QueueMetaChip extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: SalesPosStyles.caption.copyWith(
-          color: SalesPosColors.bodyTextMuted,
-          fontWeight: FontWeight.w800,
+          color: SalesPosColors.textDark,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -408,12 +418,20 @@ class _QueueMetaChip extends StatelessWidget {
 
 class _QueueStatusBadge extends StatelessWidget {
   final bool inCart;
+  final bool processed;
 
-  const _QueueStatusBadge({required this.inCart});
+  const _QueueStatusBadge({
+    required this.inCart,
+    required this.processed,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = inCart ? SalesPosColors.success : SalesPosColors.warning;
+    final color = processed
+        ? SalesPosColors.success
+        : inCart
+            ? SalesPosColors.success
+            : SalesPosColors.warning;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
@@ -422,7 +440,11 @@ class _QueueStatusBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.30)),
       ),
       child: Text(
-        inCart ? 'ADDED' : 'PENDING',
+        processed
+            ? 'POSTED'
+            : inCart
+                ? 'ADDED'
+                : 'PENDING',
         style: SalesPosStyles.caption.copyWith(
           color: color,
           fontWeight: FontWeight.w900,
@@ -547,6 +569,8 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
           const SizedBox(height: 12),
           _ReturnCartActionBar(
             inCart: controller.isLineInReturnCart(item.lineNo),
+            processed: item.isReversed,
+            voucherNo: item.reversalVoucherNo,
             returnAmount: returnAmount,
             route: inspectionDraft.stockRoute,
             onAdd: () => controller.addLineToReturnCart(item.lineNo),
@@ -601,7 +625,10 @@ class _ActiveItemHeader extends StatelessWidget {
                 '${_metalLabel(lineItem.metalType)} invoice item verification',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: SalesPosStyles.subTitleMuted,
+                style: SalesPosStyles.bodyText.copyWith(
+                  color: SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -800,8 +827,8 @@ class _SnapshotChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: SalesPosStyles.caption.copyWith(
-              color: SalesPosColors.bodyTextMuted,
-              fontWeight: FontWeight.w800,
+              color: SalesPosColors.textDark,
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 3),
@@ -1028,8 +1055,7 @@ class _ValuationChoiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? SalesPosColors.success : SalesPosColors.bodyTextMain;
+    final color = selected ? SalesPosColors.success : SalesPosColors.textDark;
 
     return InkWell(
       onTap: onTap,
@@ -1076,7 +1102,7 @@ class _ValuationChoiceTile extends StatelessWidget {
                     style: SalesPosStyles.caption.copyWith(
                       color: selected
                           ? SalesPosColors.success
-                          : SalesPosColors.bodyTextMuted,
+                          : SalesPosColors.textDark,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1119,8 +1145,8 @@ class _ReceivedWeightInput extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: SalesPosStyles.caption.copyWith(
-              color: SalesPosColors.bodyTextMuted,
-              fontWeight: FontWeight.w800,
+              color: SalesPosColors.textDark,
+              fontWeight: FontWeight.w900,
             ),
           ),
           SizedBox(
@@ -1173,7 +1199,7 @@ class _MetricBox extends StatelessWidget {
         ? SalesPosColors.danger
         : highlight
             ? SalesPosColors.brandGold
-            : SalesPosColors.bodyTextMain;
+            : SalesPosColors.textDark;
     return Container(
       height: 68,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
@@ -1195,8 +1221,8 @@ class _MetricBox extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: SalesPosStyles.caption.copyWith(
-              color: SalesPosColors.bodyTextMuted,
-              fontWeight: FontWeight.w800,
+              color: SalesPosColors.textDark,
+              fontWeight: FontWeight.w900,
             ),
           ),
           Align(
@@ -1270,8 +1296,7 @@ class _RouteTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? SalesPosColors.success : SalesPosColors.bodyTextMain;
+    final color = selected ? SalesPosColors.success : SalesPosColors.textDark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(9),
@@ -1315,8 +1340,8 @@ class _RouteTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: SalesPosStyles.caption.copyWith(
-                      color: SalesPosColors.bodyTextMuted,
-                      fontWeight: FontWeight.w800,
+                      color: SalesPosColors.textDark,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ],
@@ -1331,6 +1356,8 @@ class _RouteTile extends StatelessWidget {
 
 class _ReturnCartActionBar extends StatelessWidget {
   final bool inCart;
+  final bool processed;
+  final String voucherNo;
   final double returnAmount;
   final ReturnReversalStockRoute route;
   final VoidCallback onAdd;
@@ -1338,6 +1365,8 @@ class _ReturnCartActionBar extends StatelessWidget {
 
   const _ReturnCartActionBar({
     required this.inCart,
+    required this.processed,
+    required this.voucherNo,
     required this.returnAmount,
     required this.route,
     required this.onAdd,
@@ -1349,14 +1378,18 @@ class _ReturnCartActionBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: inCart
-            ? SalesPosColors.success.withValues(alpha: 0.08)
-            : SalesPosColors.brandGold.withValues(alpha: 0.08),
+        color: processed
+            ? SalesPosColors.bodyBg
+            : inCart
+                ? SalesPosColors.success.withValues(alpha: 0.08)
+                : SalesPosColors.brandGold.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: inCart
-              ? SalesPosColors.success.withValues(alpha: 0.36)
-              : SalesPosColors.brandGold.withValues(alpha: 0.34),
+          color: processed
+              ? SalesPosColors.success.withValues(alpha: 0.30)
+              : inCart
+                  ? SalesPosColors.success.withValues(alpha: 0.36)
+                  : SalesPosColors.brandGold.withValues(alpha: 0.34),
           width: 1.5,
         ),
       ),
@@ -1365,11 +1398,14 @@ class _ReturnCartActionBar extends StatelessWidget {
           final compact = constraints.maxWidth < 620;
           final status = _CartAmountSummary(
             inCart: inCart,
+            processed: processed,
+            voucherNo: voucherNo,
             returnAmount: returnAmount,
             route: route,
           );
           final actions = _CartActions(
             inCart: inCart,
+            processed: processed,
             onAdd: onAdd,
             onRemove: onRemove,
           );
@@ -1400,11 +1436,15 @@ class _ReturnCartActionBar extends StatelessWidget {
 
 class _CartAmountSummary extends StatelessWidget {
   final bool inCart;
+  final bool processed;
+  final String voucherNo;
   final double returnAmount;
   final ReturnReversalStockRoute route;
 
   const _CartAmountSummary({
     required this.inCart,
+    required this.processed,
+    required this.voucherNo,
     required this.returnAmount,
     required this.route,
   });
@@ -1414,8 +1454,14 @@ class _CartAmountSummary extends StatelessWidget {
     return Row(
       children: [
         Icon(
-          inCart ? Icons.check_circle_rounded : Icons.shopping_cart_checkout,
-          color: inCart ? SalesPosColors.success : SalesPosColors.brandGold,
+          processed
+              ? Icons.verified_rounded
+              : inCart
+                  ? Icons.check_circle_rounded
+                  : Icons.shopping_cart_checkout,
+          color: processed || inCart
+              ? SalesPosColors.success
+              : SalesPosColors.brandGold,
           size: 22,
         ),
         const SizedBox(width: 10),
@@ -1424,11 +1470,15 @@ class _CartAmountSummary extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                inCart ? 'Added to Return Cart' : 'Ready for Return Cart',
+                processed
+                    ? 'Already Posted'
+                    : inCart
+                        ? 'Added to Return Cart'
+                        : 'Ready for Return Cart',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: SalesPosStyles.bodyStrong.copyWith(
-                  color: inCart
+                  color: processed || inCart
                       ? SalesPosColors.success
                       : SalesPosColors.brandGold,
                   fontWeight: FontWeight.w900,
@@ -1436,12 +1486,14 @@ class _CartAmountSummary extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '${_formatCurrency(returnAmount)} | Route: ${route.label}',
+                processed
+                    ? '${_formatCurrency(returnAmount)} | Voucher: ${voucherNo.trim().isEmpty ? 'Posted' : voucherNo}'
+                    : '${_formatCurrency(returnAmount)} | Route: ${route.label}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: SalesPosStyles.caption.copyWith(
-                  color: SalesPosColors.bodyTextMuted,
-                  fontWeight: FontWeight.w800,
+                  color: SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ],
@@ -1454,11 +1506,13 @@ class _CartAmountSummary extends StatelessWidget {
 
 class _CartActions extends StatelessWidget {
   final bool inCart;
+  final bool processed;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
 
   const _CartActions({
     required this.inCart,
+    required this.processed,
     required this.onAdd,
     required this.onRemove,
   });
@@ -1468,40 +1522,57 @@ class _CartActions extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (inCart) ...[
-          OutlinedButton.icon(
-            onPressed: onRemove,
-            icon: const Icon(Icons.remove_shopping_cart_rounded, size: 18),
-            label: const Text('Remove'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: SalesPosColors.danger,
+        if (processed)
+          FilledButton.icon(
+            onPressed: null,
+            icon: const Icon(Icons.verified_rounded, size: 18),
+            label: const Text('Posted'),
+            style: FilledButton.styleFrom(
+              disabledBackgroundColor:
+                  SalesPosColors.success.withValues(alpha: 0.18),
+              disabledForegroundColor: SalesPosColors.success,
               textStyle: SalesPosStyles.buttonText,
-              side: BorderSide(
-                color: SalesPosColors.danger.withValues(alpha: 0.35),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(9),
               ),
+            ),
+          )
+        else ...[
+          if (inCart) ...[
+            OutlinedButton.icon(
+              onPressed: onRemove,
+              icon: const Icon(Icons.remove_shopping_cart_rounded, size: 18),
+              label: const Text('Remove'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: SalesPosColors.danger,
+                textStyle: SalesPosStyles.buttonText,
+                side: BorderSide(
+                  color: SalesPosColors.danger.withValues(alpha: 0.35),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          FilledButton.icon(
+            onPressed: onAdd,
+            icon: Icon(
+              inCart ? Icons.sync_rounded : Icons.add_shopping_cart_rounded,
+              size: 18,
+            ),
+            label: Text(inCart ? 'Update Cart' : 'Add To Return Cart'),
+            style: FilledButton.styleFrom(
+              backgroundColor: SalesPosColors.success,
+              foregroundColor: Colors.white,
+              textStyle: SalesPosStyles.buttonText,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(9),
               ),
             ),
           ),
-          const SizedBox(width: 8),
         ],
-        FilledButton.icon(
-          onPressed: onAdd,
-          icon: Icon(
-            inCart ? Icons.sync_rounded : Icons.add_shopping_cart_rounded,
-            size: 18,
-          ),
-          label: Text(inCart ? 'Update Cart' : 'Add To Return Cart'),
-          style: FilledButton.styleFrom(
-            backgroundColor: SalesPosColors.success,
-            foregroundColor: Colors.white,
-            textStyle: SalesPosStyles.buttonText,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(9),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -1532,7 +1603,10 @@ class _EmptyWorkflowState extends StatelessWidget {
               'Select invoice items above to start HUID, unit, weight, and stock-route verification.',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: SalesPosStyles.subTitleMuted,
+              style: SalesPosStyles.bodyText.copyWith(
+                color: SalesPosColors.textDark,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

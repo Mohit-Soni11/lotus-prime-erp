@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_transaction_summary.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/repositories/return_reversal_repository.dart';
@@ -33,15 +34,18 @@ void main() {
     expect(find.text('SYSTEM ONLINE'), findsOneWidget);
     expect(find.byIcon(Icons.assignment_return_rounded), findsOneWidget);
     expect(find.text('RETURN SETUP'), findsOneWidget);
+    expect(find.text('Sales return and purchase return'), findsOneWidget);
     expect(find.text('DESK READY'), findsOneWidget);
     expect(find.text('RETURN'), findsOneWidget);
     expect(find.text('CANCELLATION'), findsOneWidget);
+    expect(find.text('Sales + Purchase'), findsOneWidget);
+    expect(find.text('Booking only'), findsOneWidget);
     expect(find.text('DOCUMENT NUMBER'), findsOneWidget);
-    expect(find.text('INVOICE NO.'), findsOneWidget);
+    expect(find.text('SOURCE NO.'), findsOneWidget);
     expect(find.text('VOUCHER NO.'), findsNothing);
     expect(find.text('NOT SELECTED'), findsOneWidget);
     expect(find.text('CUSTOMER DETAILS'), findsOneWidget);
-    expect(find.text('INVOICE NUMBER'), findsOneWidget);
+    expect(find.text('SOURCE NUMBER'), findsOneWidget);
     expect(find.text('MOBILE'), findsOneWidget);
     expect(find.text('CUSTOMER NAME'), findsOneWidget);
     expect(find.text('ADDRESS'), findsOneWidget);
@@ -93,11 +97,11 @@ void main() {
     expect(find.text('RETURN'), findsOneWidget);
     expect(find.text('CANCELLATION'), findsOneWidget);
     expect(find.text('DOCUMENT NUMBER'), findsOneWidget);
-    expect(find.text('INVOICE NO.'), findsOneWidget);
+    expect(find.text('SOURCE NO.'), findsOneWidget);
     expect(find.text('VOUCHER NO.'), findsNothing);
     expect(find.text('NOT SELECTED'), findsOneWidget);
     expect(find.text('CUSTOMER DETAILS'), findsOneWidget);
-    expect(find.text('INVOICE NUMBER'), findsOneWidget);
+    expect(find.text('SOURCE NUMBER'), findsOneWidget);
     expect(find.text('RETURN WORKFLOW'), findsOneWidget);
     expect(find.text('INVOICE ITEMS'), findsNothing);
     expect(find.text('RETURN SETTLEMENT'), findsOneWidget);
@@ -134,6 +138,7 @@ void main() {
       controller.state.operationType,
       ReturnReversalOperationType.bookingCancellation,
     );
+    expect(find.text('CANCELLATION SETUP'), findsOneWidget);
     expect(find.text('BOOKING NO.'), findsOneWidget);
     expect(find.text('ADVANCE VOUCHER'), findsNothing);
     expect(find.text('BOOKING NUMBER'), findsOneWidget);
@@ -142,9 +147,51 @@ void main() {
     expect(find.text('LOAD BOOKING ITEMS'), findsNothing);
     expect(find.text('Return Value'), findsOneWidget);
     expect(find.text('Process Cancellation'), findsOneWidget);
-    expect(find.text('INVOICE NUMBER'), findsNothing);
+    expect(find.text('SOURCE NUMBER'), findsNothing);
     expect(find.text('RETURN NO.'), findsNothing);
     expect(find.text('CANCELLATION NO.'), findsNothing);
+  });
+
+  testWidgets('source history follows return and cancellation setup rules',
+      (tester) async {
+    final controller = ReturnReversalController(
+      repository: _AllSourceTypesReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    controller.customerMobileCtrl.text = '9304479436';
+    await controller.searchRecords();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('SALES  1'), findsOneWidget);
+    expect(find.text('PURCHASE  1'), findsOneWidget);
+    expect(find.text('BOOKING  1'), findsNothing);
+    expect(controller.state.selectedSourceDocument?.type,
+        ReturnReversalSourceDocumentType.salesInvoice);
+
+    await tester.tap(find.text('CANCELLATION'));
+    await tester.pump(const Duration(milliseconds: 220));
+    await controller.searchRecords();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('CANCELLATION SETUP'), findsOneWidget);
+    expect(find.text('BOOKING  1'), findsOneWidget);
+    expect(find.text('SALES  1'), findsNothing);
+    expect(find.text('PURCHASE  1'), findsNothing);
+    expect(controller.state.selectedSourceDocument?.type,
+        ReturnReversalSourceDocumentType.advanceBooking);
   });
 
   testWidgets('source number search loads customer and invoice items',
@@ -204,9 +251,7 @@ void main() {
     expect(find.text('Collected'), findsOneWidget);
     expect(find.text('Balance Due'), findsOneWidget);
     expect(find.text('RETURN CART'), findsOneWidget);
-    expect(find.text('Metal Amount'), findsOneWidget);
-    expect(find.text('Making Available'), findsOneWidget);
-    expect(find.text('Making Returned'), findsOneWidget);
+    expect(find.text('No return items added to cart.'), findsOneWidget);
     expect(find.text('Return Value'), findsOneWidget);
     expect(find.text('Cart Items'), findsOneWidget);
     expect(find.text('HUID matched'), findsOneWidget);
@@ -240,6 +285,12 @@ void main() {
     expect(controller.state.returnCartLineItems, hasLength(1));
     expect(find.text('ADDED'), findsOneWidget);
     expect(find.text('Update Cart'), findsOneWidget);
+    expect(find.text('Silver Return'), findsOneWidget);
+    expect(find.text('Silver Net Weight'), findsOneWidget);
+    expect(find.text('Silver Metal Amount'), findsOneWidget);
+    expect(find.text('Silver Making Available'), findsOneWidget);
+    expect(find.text('Silver Making Returned'), findsOneWidget);
+    expect(find.text('Silver Return Total'), findsOneWidget);
     expect(find.text('Rs 18,003'), findsWidgets);
 
     controller.setLineMakingReturn(1, true);
@@ -324,6 +375,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('process return posts selected cart through repository',
+      (tester) async {
+    final repository = _ProcessTrackingReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-PUR-2026-0006';
+    await controller.searchRecords();
+    controller.addLineToReturnCart(1);
+    await controller.processReturn();
+
+    expect(repository.lastRequest, isNotNull);
+    expect(repository.lastRequest!.operationType,
+        ReturnReversalOperationType.salesReturn);
+    expect(
+        repository.lastRequest!.sourceDocument.documentNo, 'AJ-PUR-2026-0006');
+    expect(repository.lastRequest!.lines, hasLength(1));
+    expect(repository.lastRequest!.lines.single.sourceLineNo, 1);
+    expect(controller.state.returnCartLineItems, isEmpty);
+    expect(controller.state.lastProcessResult?.voucherNo, 'SR-26-00099');
+    expect(controller.state.processMessage, contains('SR-26-00099 posted'));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('return settlement separates original pricing by metal',
       (tester) async {
     final controller = ReturnReversalController(
@@ -357,6 +432,52 @@ void main() {
     expect(find.text('Silver Total'), findsOneWidget);
     expect(find.text('GST (3%)'), findsNWidgets(2));
     expect(find.text('Original Invoice Total'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('return cart separates selected totals by metal', (tester) async {
+    final controller = ReturnReversalController(
+      repository: _MixedMetalReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-MIX-2026-0001';
+    await controller.searchRecords();
+    controller.addLineToReturnCart(1);
+    controller.setLineMakingReturn(2, true);
+    controller.addLineToReturnCart(2);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 560,
+            child: ReturnReversalInvoiceSummaryPanel(
+              controller: controller,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('RETURN CART'), findsOneWidget);
+    expect(find.text('Cart Items'), findsOneWidget);
+    expect(find.text('Gold Return'), findsOneWidget);
+    expect(find.text('Gold Net Weight'), findsOneWidget);
+    expect(find.text('Gold Metal Amount'), findsOneWidget);
+    expect(find.text('Gold Making Available'), findsOneWidget);
+    expect(find.text('Gold Making Returned'), findsOneWidget);
+    expect(find.text('Gold Return Total'), findsOneWidget);
+    expect(find.text('Silver Return'), findsOneWidget);
+    expect(find.text('Silver Net Weight'), findsOneWidget);
+    expect(find.text('Silver Metal Amount'), findsOneWidget);
+    expect(find.text('Silver Making Available'), findsOneWidget);
+    expect(find.text('Silver Making Returned'), findsOneWidget);
+    expect(find.text('Silver Return Total'), findsOneWidget);
+    expect(find.text('Rs 8,500'), findsWidgets);
+    expect(find.text('Rs 15,000'), findsWidgets);
+    expect(find.text('Rs 23,500'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -497,6 +618,42 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
   ) async {
     return documentNumber == _invoice.documentNo ? _invoice : null;
   }
+
+  @override
+  Future<ReturnReversalProcessResult> processReturn(
+    ReturnReversalProcessRequest request,
+  ) async {
+    return const ReturnReversalProcessResult(
+      voucherId: 1,
+      voucherNo: 'SR-26-00001',
+      processedLineCount: 1,
+      returnValue: 17500,
+      dueAdjustedAmount: 2000,
+      customerCreditAmount: 15500,
+      status: 'POSTED',
+    );
+  }
+}
+
+class _ProcessTrackingReturnReversalRepository
+    extends _TestReturnReversalRepository {
+  ReturnReversalProcessRequest? lastRequest;
+
+  @override
+  Future<ReturnReversalProcessResult> processReturn(
+    ReturnReversalProcessRequest request,
+  ) async {
+    lastRequest = request;
+    return const ReturnReversalProcessResult(
+      voucherId: 99,
+      voucherNo: 'SR-26-00099',
+      processedLineCount: 1,
+      returnValue: 17500,
+      dueAdjustedAmount: 2000,
+      customerCreditAmount: 15500,
+      status: 'POSTED',
+    );
+  }
 }
 
 class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
@@ -590,5 +747,143 @@ class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
     String documentNumber,
   ) async {
     return documentNumber == _invoice.documentNo ? _invoice : null;
+  }
+
+  @override
+  Future<ReturnReversalProcessResult> processReturn(
+    ReturnReversalProcessRequest request,
+  ) async {
+    return const ReturnReversalProcessResult(
+      voucherId: 2,
+      voucherNo: 'SR-26-00002',
+      processedLineCount: 2,
+      returnValue: 23500,
+      dueAdjustedAmount: 0,
+      customerCreditAmount: 23500,
+      status: 'POSTED',
+    );
+  }
+}
+
+class _AllSourceTypesReturnReversalRepository
+    implements ReturnReversalRepository {
+  static final _salesInvoice = ReturnReversalSourceDocument(
+    id: 10,
+    type: ReturnReversalSourceDocumentType.salesInvoice,
+    documentNo: 'AJ-SALE-2026-0001',
+    customerName: 'REYANSH SONI',
+    mobile: '9304479436',
+    address: 'Patna',
+    documentDate: DateTime(2026, 8),
+    grossValue: 12000,
+    finalAmount: 12360,
+    paidAmount: 12360,
+    dueAmount: 0,
+    netWeight: 1,
+    lineItems: const [
+      ReturnReversalSourceLineItem(
+        lineNo: 1,
+        metalType: 'GOLD',
+        description: 'Ring',
+        quantity: 1,
+        grossWeight: 1,
+        netWeight: 1,
+        rate: 12000,
+        gstAmount: 360,
+        invoiceValue: 12360,
+        value: 12000,
+        status: 'ACTIVE',
+      ),
+    ],
+  );
+
+  static final _purchaseReturnSource = ReturnReversalSourceDocument(
+    id: 11,
+    type: ReturnReversalSourceDocumentType.customerPurchase,
+    documentNo: 'AJ-PURCHASE-2026-0001',
+    customerName: 'REYANSH SONI',
+    mobile: '9304479436',
+    address: 'Patna',
+    documentDate: DateTime(2026, 8, 2),
+    grossValue: 5000,
+    finalAmount: 5000,
+    paidAmount: 5000,
+    dueAmount: 0,
+    netWeight: 25,
+    lineItems: const [
+      ReturnReversalSourceLineItem(
+        lineNo: 1,
+        metalType: 'SILVER',
+        description: 'Old Silver',
+        quantity: 1,
+        grossWeight: 25,
+        netWeight: 25,
+        rate: 200,
+        value: 5000,
+        status: 'ACTIVE',
+      ),
+    ],
+  );
+
+  static final _booking = ReturnReversalSourceDocument(
+    id: 12,
+    type: ReturnReversalSourceDocumentType.advanceBooking,
+    documentNo: 'AJ-BOOK-2026-0001',
+    customerName: 'REYANSH SONI',
+    mobile: '9304479436',
+    address: 'Patna',
+    documentDate: DateTime(2026, 8, 3),
+    grossValue: 3000,
+    finalAmount: 3000,
+    paidAmount: 3000,
+    dueAmount: 0,
+    netWeight: 0,
+    lineItems: const [],
+  );
+
+  @override
+  Future<ReturnReversalTransactionSummary> fetchTransactionSummary() async {
+    return const ReturnReversalTransactionSummary.empty();
+  }
+
+  @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByMobile(
+    String mobile,
+  ) async {
+    return ReturnReversalLookupResult(
+      salesInvoices: mobile == '9304479436' ? [_salesInvoice] : const [],
+      advanceBookings: mobile == '9304479436' ? [_booking] : const [],
+      customerPurchases:
+          mobile == '9304479436' ? [_purchaseReturnSource] : const [],
+    );
+  }
+
+  @override
+  Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
+    String documentNumber,
+  ) async {
+    return [
+      _salesInvoice,
+      _purchaseReturnSource,
+      _booking,
+    ].cast<ReturnReversalSourceDocument?>().firstWhere(
+          (document) => document?.documentNo == documentNumber,
+          orElse: () => null,
+        );
+  }
+
+  @override
+  Future<ReturnReversalProcessResult> processReturn(
+    ReturnReversalProcessRequest request,
+  ) async {
+    return const ReturnReversalProcessResult(
+      voucherId: 3,
+      voucherNo: 'SR-26-00003',
+      processedLineCount: 1,
+      returnValue: 12000,
+      dueAdjustedAmount: 0,
+      customerCreditAmount: 12000,
+      status: 'POSTED',
+    );
   }
 }

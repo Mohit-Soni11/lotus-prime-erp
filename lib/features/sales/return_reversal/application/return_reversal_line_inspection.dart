@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 
 enum ReturnReversalStockRoute {
@@ -28,6 +29,17 @@ enum ReturnReversalStockRoute {
     required this.subtitle,
     required this.icon,
   });
+
+  ReturnReversalStockDisposition get disposition {
+    return switch (this) {
+      ReturnReversalStockRoute.addToStock =>
+        ReturnReversalStockDisposition.addToStock,
+      ReturnReversalStockRoute.melting =>
+        ReturnReversalStockDisposition.melting,
+      ReturnReversalStockRoute.managerHold =>
+        ReturnReversalStockDisposition.managerHold,
+    };
+  }
 }
 
 class ReturnReversalLineInspectionDraft {

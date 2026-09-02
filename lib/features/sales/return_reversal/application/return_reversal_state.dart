@@ -1,6 +1,7 @@
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_workflow_step.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_transaction_summary.dart';
 
@@ -13,10 +14,13 @@ class ReturnReversalState {
   final ReturnReversalWorkflowStep activeWorkflowStep;
   final int? activeInspectionLineNo;
   final Map<int, ReturnReversalLineInspectionDraft> lineInspectionDrafts;
+  final bool isProcessing;
+  final ReturnReversalProcessResult? lastProcessResult;
   final bool isLoading;
   final bool isSearching;
   final String? errorMessage;
   final String? lookupMessage;
+  final String? processMessage;
 
   const ReturnReversalState({
     required this.operationType,
@@ -27,10 +31,13 @@ class ReturnReversalState {
     required this.activeWorkflowStep,
     required this.activeInspectionLineNo,
     required this.lineInspectionDrafts,
+    required this.isProcessing,
+    required this.lastProcessResult,
     required this.isLoading,
     required this.isSearching,
     required this.errorMessage,
     required this.lookupMessage,
+    required this.processMessage,
   });
 
   const ReturnReversalState.initial()
@@ -42,10 +49,13 @@ class ReturnReversalState {
         activeWorkflowStep = ReturnReversalWorkflowStep.invoiceItems,
         activeInspectionLineNo = null,
         lineInspectionDrafts = const {},
+        isProcessing = false,
+        lastProcessResult = null,
         isLoading = false,
         isSearching = false,
         errorMessage = null,
-        lookupMessage = null;
+        lookupMessage = null,
+        processMessage = null;
 
   ReturnReversalState copyWith({
     ReturnReversalOperationType? operationType,
@@ -56,12 +66,17 @@ class ReturnReversalState {
     ReturnReversalWorkflowStep? activeWorkflowStep,
     int? activeInspectionLineNo,
     Map<int, ReturnReversalLineInspectionDraft>? lineInspectionDrafts,
+    bool? isProcessing,
+    ReturnReversalProcessResult? lastProcessResult,
     bool? isLoading,
     bool? isSearching,
     String? errorMessage,
     String? lookupMessage,
+    String? processMessage,
     bool clearError = false,
     bool clearLookupMessage = false,
+    bool clearProcessMessage = false,
+    bool clearLastProcessResult = false,
     bool clearSelectedSourceDocument = false,
     bool clearReturnCartLineNumbers = false,
     bool clearActiveInspectionLineNo = false,
@@ -84,11 +99,17 @@ class ReturnReversalState {
       lineInspectionDrafts: clearLineInspectionDrafts
           ? const {}
           : lineInspectionDrafts ?? this.lineInspectionDrafts,
+      isProcessing: isProcessing ?? this.isProcessing,
+      lastProcessResult: clearLastProcessResult
+          ? null
+          : lastProcessResult ?? this.lastProcessResult,
       isLoading: isLoading ?? this.isLoading,
       isSearching: isSearching ?? this.isSearching,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       lookupMessage:
           clearLookupMessage ? null : lookupMessage ?? this.lookupMessage,
+      processMessage:
+          clearProcessMessage ? null : processMessage ?? this.processMessage,
     );
   }
 

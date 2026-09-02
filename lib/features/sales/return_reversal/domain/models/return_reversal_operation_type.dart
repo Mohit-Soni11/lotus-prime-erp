@@ -1,13 +1,15 @@
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
+
 enum ReturnReversalOperationType {
   salesReturn(
-    title: 'Sales Return',
+    title: 'Return',
     ledgerLabel: 'RETURN',
-    description: 'Reverse completed sales invoices and restore stock movement.',
+    description: 'Process sales returns and purchase returns.',
   ),
   bookingCancellation(
-    title: 'Booking Cancellation',
+    title: 'Cancellation',
     ledgerLabel: 'CANCELLATION',
-    description: 'Cancel advance bookings and settle customer refunds.',
+    description: 'Cancel advance bookings and settle refunds.',
   );
 
   final String title;
@@ -19,4 +21,16 @@ enum ReturnReversalOperationType {
     required this.ledgerLabel,
     required this.description,
   });
+
+  bool get isReturn => this == ReturnReversalOperationType.salesReturn;
+
+  bool acceptsSourceType(ReturnReversalSourceDocumentType sourceType) {
+    return switch (this) {
+      ReturnReversalOperationType.salesReturn =>
+        sourceType == ReturnReversalSourceDocumentType.salesInvoice ||
+            sourceType == ReturnReversalSourceDocumentType.customerPurchase,
+      ReturnReversalOperationType.bookingCancellation =>
+        sourceType == ReturnReversalSourceDocumentType.advanceBooking,
+    };
+  }
 }

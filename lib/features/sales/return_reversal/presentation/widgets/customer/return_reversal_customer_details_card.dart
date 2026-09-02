@@ -135,7 +135,7 @@ class _CustomerCardHeader extends StatelessWidget {
 
   String get _subtitle {
     return operationType == ReturnReversalOperationType.salesReturn
-        ? 'Find customer by mobile, name, or invoice number'
+        ? 'Find customer by mobile, name, invoice, or purchase number'
         : 'Find customer by mobile, name, or booking number';
   }
 
@@ -193,7 +193,10 @@ class _CustomerCardHeader extends StatelessWidget {
                 _subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: SalesPosStyles.subTitleMuted,
+                style: SalesPosStyles.bodyText.copyWith(
+                  color: SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -232,8 +235,8 @@ class _SearchRecordsButton extends StatelessWidget {
           backgroundColor: SalesPosColors.textDark,
           foregroundColor: Colors.white,
           disabledBackgroundColor:
-              SalesPosColors.bodyTextMuted.withValues(alpha: 0.25),
-          disabledForegroundColor: SalesPosColors.bodyTextMuted,
+              SalesPosColors.textDark.withValues(alpha: 0.84),
+          disabledForegroundColor: Colors.white,
           textStyle: const TextStyle(
             fontSize: SalesPosStyles.fontCaption,
             fontWeight: FontWeight.w900,
@@ -338,9 +341,9 @@ class _LookupMessageBar extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: SalesPosColors.bodyTextMain,
+                color: SalesPosColors.textDark,
                 fontSize: SalesPosStyles.fontLabel,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -395,8 +398,10 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
   @override
   Widget build(BuildContext context) {
     final result = widget.controller.state.lookupResult;
-    final documents = _documentsFor(result);
-    final activeColor = _colorFor(_activeCategory);
+    final visibleCategories = _visibleCategories;
+    final activeCategory = _activeCategoryFor(visibleCategories, result);
+    final documents = _documentsFor(result, activeCategory);
+    final activeColor = _colorFor(activeCategory);
     final canNavigate = documents.isNotEmpty;
 
     return Focus(
@@ -417,30 +422,16 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _HistoryCategoryPill(
-                    category: _SourceHistoryCategory.sales,
-                    count: result.salesInvoices.length,
-                    selected: _activeCategory == _SourceHistoryCategory.sales,
-                    color: _colorFor(_SourceHistoryCategory.sales),
-                    onTap: _selectCategory,
-                  ),
-                  const SizedBox(width: 8),
-                  _HistoryCategoryPill(
-                    category: _SourceHistoryCategory.booking,
-                    count: result.advanceBookings.length,
-                    selected: _activeCategory == _SourceHistoryCategory.booking,
-                    color: _colorFor(_SourceHistoryCategory.booking),
-                    onTap: _selectCategory,
-                  ),
-                  const SizedBox(width: 8),
-                  _HistoryCategoryPill(
-                    category: _SourceHistoryCategory.purchase,
-                    count: result.customerPurchases.length,
-                    selected:
-                        _activeCategory == _SourceHistoryCategory.purchase,
-                    color: _colorFor(_SourceHistoryCategory.purchase),
-                    onTap: _selectCategory,
-                  ),
+                  for (final category in visibleCategories) ...[
+                    _HistoryCategoryPill(
+                      category: category,
+                      count: _countFor(result, category),
+                      selected: activeCategory == category,
+                      color: _colorFor(category),
+                      onTap: _selectCategory,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                 ],
               ),
             ),
@@ -451,12 +442,12 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
               switchOutCurve: Curves.easeInCubic,
               child: documents.isEmpty
                   ? _EmptyHistoryLine(
-                      key: ValueKey(_activeCategory.emptyText),
+                      key: ValueKey(activeCategory.emptyText),
                       color: activeColor,
-                      message: _activeCategory.emptyText,
+                      message: activeCategory.emptyText,
                     )
                   : Row(
-                      key: ValueKey(_activeCategory),
+                      key: ValueKey(activeCategory),
                       children: [
                         _HistoryArrowButton(
                           enabled: canNavigate,
@@ -506,7 +497,7 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
 
   void _selectCategory(_SourceHistoryCategory category) {
     _historyFocusNode.requestFocus();
-    if (_activeCategory == category) {
+    if (_activeCategory == category || !_visibleCategories.contains(category)) {
       return;
     }
     setState(() => _activeCategory = category);
@@ -539,7 +530,13 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
       return KeyEventResult.ignored;
     }
 
-    final documents = _documentsFor(widget.controller.state.lookupResult);
+    final documents = _documentsFor(
+      widget.controller.state.lookupResult,
+      _activeCategoryFor(
+        _visibleCategories,
+        widget.controller.state.lookupResult,
+      ),
+    );
     if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
       _moveSelection(documents, -1);
       return KeyEventResult.handled;
@@ -575,11 +572,67 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
 
   List<ReturnReversalSourceDocument> _documentsFor(
     ReturnReversalLookupResult result,
+    _SourceHistoryCategory category,
   ) {
-    return switch (_activeCategory) {
+    return switch (category) {
       _SourceHistoryCategory.sales => result.salesInvoices,
       _SourceHistoryCategory.booking => result.advanceBookings,
       _SourceHistoryCategory.purchase => result.customerPurchases,
+    };
+  }
+
+  List<_SourceHistoryCategory> get _visibleCategories {
+    return widget.controller.state.operationType ==
+            ReturnReversalOperationType.salesReturn
+        ? const [
+            _SourceHistoryCategory.sales,
+            _SourceHistoryCategory.purchase,
+          ]
+        : const [_SourceHistoryCategory.booking];
+  }
+
+  _SourceHistoryCategory _activeCategoryFor(
+    List<_SourceHistoryCategory> visibleCategories,
+    ReturnReversalLookupResult result,
+  ) {
+    if (visibleCategories.contains(_activeCategory) &&
+        _documentsFor(result, _activeCategory).isNotEmpty) {
+      return _activeCategory;
+    }
+    final selectedCategory =
+        _categoryForSource(widget.controller.state.selectedSourceDocument);
+    if (selectedCategory != null &&
+        visibleCategories.contains(selectedCategory)) {
+      return selectedCategory;
+    }
+    if (visibleCategories.contains(_activeCategory)) {
+      return _activeCategory;
+    }
+    return visibleCategories.first;
+  }
+
+  _SourceHistoryCategory? _categoryForSource(
+    ReturnReversalSourceDocument? document,
+  ) {
+    return switch (document?.type) {
+      ReturnReversalSourceDocumentType.salesInvoice =>
+        _SourceHistoryCategory.sales,
+      ReturnReversalSourceDocumentType.advanceBooking =>
+        _SourceHistoryCategory.booking,
+      ReturnReversalSourceDocumentType.customerPurchase =>
+        _SourceHistoryCategory.purchase,
+      null => null,
+    };
+  }
+
+  int _countFor(
+    ReturnReversalLookupResult result,
+    _SourceHistoryCategory category,
+  ) {
+    return switch (category) {
+      _SourceHistoryCategory.sales => result.salesInvoices.length,
+      _SourceHistoryCategory.booking => result.advanceBookings.length,
+      _SourceHistoryCategory.purchase => result.customerPurchases.length,
     };
   }
 
@@ -685,7 +738,7 @@ class _HistoryArrowButton extends StatelessWidget {
             size: 24,
             color: enabled
                 ? color
-                : SalesPosColors.bodyTextMuted.withValues(alpha: 0.35),
+                : SalesPosColors.textDark.withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -717,10 +770,10 @@ class _EmptyHistoryLine extends StatelessWidget {
         message,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: color,
-          fontSize: SalesPosStyles.fontCaption,
-          fontWeight: FontWeight.w800,
+        style: const TextStyle(
+          color: SalesPosColors.textDark,
+          fontSize: SalesPosStyles.fontLabel,
+          fontWeight: FontWeight.w900,
           letterSpacing: 0,
         ),
       ),
@@ -749,6 +802,7 @@ class _SourceDocumentPill extends StatelessWidget {
         SalesPosColors.brandSilver,
     };
     final hasDue = document.dueAmount > 0.009;
+    final hasReversalStatus = document.reversalStatus.trim().isNotEmpty;
 
     return Material(
       color: Colors.transparent,
@@ -807,7 +861,7 @@ class _SourceDocumentPill extends StatelessWidget {
                         document.type.label.toUpperCase(),
                         style: TextStyle(
                           color: color,
-                          fontSize: 10,
+                          fontSize: SalesPosStyles.fontCaption,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.6,
                         ),
@@ -815,6 +869,13 @@ class _SourceDocumentPill extends StatelessWidget {
                       if (hasDue) ...[
                         const SizedBox(width: 7),
                         _DueAmountChip(amount: document.dueAmount),
+                      ],
+                      if (hasReversalStatus) ...[
+                        const SizedBox(width: 7),
+                        _DocumentStatusChip(
+                          label: document.reversalStatus,
+                          full: document.isFullyReversed,
+                        ),
                       ],
                     ],
                   ),
@@ -835,6 +896,39 @@ class _SourceDocumentPill extends StatelessWidget {
         Icons.bookmark_added_rounded,
       ReturnReversalSourceDocumentType.customerPurchase => Icons.scale_rounded,
     };
+  }
+}
+
+class _DocumentStatusChip extends StatelessWidget {
+  final String label;
+  final bool full;
+
+  const _DocumentStatusChip({
+    required this.label,
+    required this.full,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = label.trim().toUpperCase();
+    final color = full ? SalesPosColors.success : SalesPosColors.warning;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        normalized,
+        style: const TextStyle(
+          color: SalesPosColors.textDark,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+    );
   }
 }
 
@@ -881,7 +975,7 @@ class _DueAmountChip extends StatelessWidget {
         'DUE ${_formatCompactCurrency(amount)}',
         style: const TextStyle(
           color: SalesPosColors.danger,
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: FontWeight.w900,
           letterSpacing: 0,
         ),
@@ -912,13 +1006,13 @@ class _CustomerInputGrid extends StatelessWidget {
 
   String get _sourceNumberLabel {
     return operationType == ReturnReversalOperationType.salesReturn
-        ? 'INVOICE NUMBER'
+        ? 'SOURCE NUMBER'
         : 'BOOKING NUMBER';
   }
 
   String get _sourceNumberHint {
     return operationType == ReturnReversalOperationType.salesReturn
-        ? 'Enter invoice no.'
+        ? 'Invoice or purchase no.'
         : 'Enter booking no.';
   }
 
@@ -1075,14 +1169,14 @@ class _CustomerDetailInput extends StatelessWidget {
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.60),
+                color: SalesPosColors.textDark.withValues(alpha: 0.82),
                 fontSize: SalesPosStyles.fontLabel,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w800,
               ),
               prefixIcon: Icon(
                 icon,
                 size: 18,
-                color: SalesPosColors.bodyTextMuted,
+                color: SalesPosColors.textDark,
               ),
               filled: true,
               fillColor: SalesPosColors.formInputBg,

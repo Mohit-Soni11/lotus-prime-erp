@@ -79,6 +79,12 @@ class CustomerBillModel {
   final DateTime billDate;
   final int? sourceAdvanceOrderId;
   final String? sourceAdvanceOrderNo;
+  final int lineCount;
+  final int returnedLineCount;
+  final double returnedAmount;
+  final String returnVoucherNo;
+  final bool isModified;
+  final List<CustomerLinkedDocumentModel> linkedDocuments;
 
   const CustomerBillModel({
     required this.id,
@@ -89,10 +95,18 @@ class CustomerBillModel {
     this.sourceAdvanceOrderId,
     this.sourceAdvanceOrderNo,
     this.paidAmount = 0.0,
+    this.lineCount = 0,
+    this.returnedLineCount = 0,
+    this.returnedAmount = 0.0,
+    this.returnVoucherNo = '',
+    this.isModified = false,
+    this.linkedDocuments = const [],
   });
 
+  String get normalizedStatus => status.trim().toUpperCase();
+
   bool get isPaid {
-    final normalized = status.trim().toUpperCase();
+    final normalized = normalizedStatus;
     if (normalized == 'PAID' ||
         normalized == 'COMPLETE' ||
         normalized == 'COMPLETED') {
@@ -103,7 +117,19 @@ class CustomerBillModel {
 
   bool get isPartial => !isPaid && paidAmount > _kPaymentTolerance;
   bool get isUnpaid => !isPaid && !isPartial;
-  bool get isActive => status.toUpperCase() == 'ACTIVE';
+  bool get isActive => normalizedStatus == 'ACTIVE';
+  bool get isCancelled =>
+      normalizedStatus == 'CANCELLED' ||
+      normalizedStatus == 'CANCELED' ||
+      normalizedStatus == 'VOID';
+  bool get isFullyReturned =>
+      normalizedStatus == 'RETURNED' ||
+      (lineCount > 0 && returnedLineCount >= lineCount);
+  bool get isPartiallyReturned =>
+      normalizedStatus == 'PARTIALLY_RETURNED' ||
+      (returnedLineCount > 0 && !isFullyReturned);
+  bool get hasReturnActivity => isFullyReturned || isPartiallyReturned;
+  bool get hasLinkedDocuments => linkedDocuments.isNotEmpty;
   bool get isFromAdvanceOrder =>
       sourceAdvanceOrderId != null ||
       (sourceAdvanceOrderNo != null && sourceAdvanceOrderNo!.trim().isNotEmpty);
@@ -124,9 +150,32 @@ class CustomerBillModel {
           ? "PARTIAL"
           : "UNPAID";
 
+  String get lifecycleLabel {
+    if (isCancelled) return 'CANCELLED';
+    if (isFullyReturned) return 'RETURNED';
+    if (isPartiallyReturned) return 'PARTIAL RETURN';
+    if (isModified) return 'MODIFIED';
+    return '';
+  }
+
+  String get returnProgressLabel {
+    if (!hasReturnActivity) return '';
+    final total = lineCount <= 0 ? returnedLineCount : lineCount;
+    return '$returnedLineCount/$total ITEMS';
+  }
+
+  String get linkedDocumentSummary {
+    if (linkedDocuments.isEmpty) return '';
+    final first = linkedDocuments.first.documentNo;
+    final remaining = linkedDocuments.length - 1;
+    return remaining <= 0 ? 'Linked $first' : 'Linked $first +$remaining';
+  }
+
   String get formattedAmount => "\u20B9 ${totalAmount.toStringAsFixed(2)}";
   String get formattedPaidAmount => "\u20B9 ${paidAmount.toStringAsFixed(2)}";
   String get formattedDueAmount => "\u20B9 ${dueAmount.toStringAsFixed(2)}";
+  String get formattedReturnedAmount =>
+      "\u20B9 ${returnedAmount.toStringAsFixed(2)}";
 
   String get formattedDate {
     const months = [
@@ -146,6 +195,88 @@ class CustomerBillModel {
     ];
     return "${billDate.day.toString().padLeft(2, '0')} "
         "${months[billDate.month]} ${billDate.year}";
+  }
+}
+
+@immutable
+class CustomerLinkedDocumentModel {
+  final int id;
+  final String documentNo;
+  final String operationType;
+  final String sourceType;
+  final String status;
+  final DateTime createdAt;
+  final int lineCount;
+  final double netWeight;
+  final double returnValue;
+  final double makingReturnedAmount;
+  final double dueAdjustedAmount;
+  final double customerCreditAmount;
+
+  const CustomerLinkedDocumentModel({
+    required this.id,
+    required this.documentNo,
+    required this.operationType,
+    required this.sourceType,
+    required this.status,
+    required this.createdAt,
+    this.lineCount = 0,
+    this.netWeight = 0,
+    this.returnValue = 0,
+    this.makingReturnedAmount = 0,
+    this.dueAdjustedAmount = 0,
+    this.customerCreditAmount = 0,
+  });
+
+  String get normalizedOperation => operationType.trim().toUpperCase();
+  String get normalizedStatus => status.trim().toUpperCase();
+
+  String get documentTitle {
+    return switch (normalizedOperation) {
+      'SALES_RETURN' => 'Sales Return Voucher',
+      'RETURN' => 'Sales Return Voucher',
+      'BOOKING_CANCELLATION' => 'Booking Cancellation Note',
+      _ => 'Linked Return Document',
+    };
+  }
+
+  String get statusLabel {
+    if (normalizedStatus == 'POSTED') return 'POSTED';
+    if (normalizedStatus == 'VOIDED') return 'VOIDED';
+    return normalizedStatus.isEmpty ? 'SAVED' : normalizedStatus;
+  }
+
+  String get lineCountLabel {
+    final suffix = lineCount == 1 ? 'item' : 'items';
+    return '$lineCount $suffix';
+  }
+
+  String get formattedReturnValue => "\u20B9 ${returnValue.toStringAsFixed(2)}";
+  String get formattedMakingReturned =>
+      "\u20B9 ${makingReturnedAmount.toStringAsFixed(2)}";
+  String get formattedDueAdjusted =>
+      "\u20B9 ${dueAdjustedAmount.toStringAsFixed(2)}";
+  String get formattedCustomerCredit =>
+      "\u20B9 ${customerCreditAmount.toStringAsFixed(2)}";
+
+  String get formattedDate {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    return "${createdAt.day.toString().padLeft(2, '0')} "
+        "${months[createdAt.month]} ${createdAt.year}";
   }
 }
 

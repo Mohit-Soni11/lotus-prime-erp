@@ -9,6 +9,7 @@ enum ReturnReversalSourceDocumentType {
 }
 
 class ReturnReversalSourceLineItem {
+  final int? sourceLineId;
   final int lineNo;
   final String metalType;
   final String description;
@@ -31,10 +32,15 @@ class ReturnReversalSourceLineItem {
   final double invoiceValue;
   final double value;
   final String huidNumber;
+  final int? linkedStockItemId;
+  final int? linkedStockUnitId;
   final String linkedStockSku;
   final String status;
+  final String reversalStatus;
+  final String reversalVoucherNo;
 
   const ReturnReversalSourceLineItem({
+    this.sourceLineId,
     required this.lineNo,
     required this.metalType,
     required this.description,
@@ -57,8 +63,12 @@ class ReturnReversalSourceLineItem {
     this.invoiceValue = 0,
     required this.value,
     this.huidNumber = '',
+    this.linkedStockItemId,
+    this.linkedStockUnitId,
     this.linkedStockSku = '',
     required this.status,
+    this.reversalStatus = '',
+    this.reversalVoucherNo = '',
   });
 
   String get makingChargeSymbol {
@@ -73,12 +83,15 @@ class ReturnReversalSourceLineItem {
   double get displayFineWeight => fineWeight > 0 ? fineWeight : netWeight;
 
   double get displayLineTotal => value;
+
+  bool get isReversed => reversalStatus.trim().isNotEmpty;
 }
 
 class ReturnReversalSourceDocument {
   final int id;
   final ReturnReversalSourceDocumentType type;
   final String documentNo;
+  final int? customerId;
   final String customerName;
   final String mobile;
   final String address;
@@ -105,11 +118,15 @@ class ReturnReversalSourceDocument {
   final String gstPricingMode;
   final double netWeight;
   final List<ReturnReversalSourceLineItem> lineItems;
+  final String reversalStatus;
+  final String reversalVoucherNo;
+  final int reversedLineCount;
 
   const ReturnReversalSourceDocument({
     required this.id,
     required this.type,
     required this.documentNo,
+    this.customerId,
     required this.customerName,
     required this.mobile,
     required this.address,
@@ -136,11 +153,28 @@ class ReturnReversalSourceDocument {
     this.gstPricingMode = '',
     required this.netWeight,
     required this.lineItems,
+    this.reversalStatus = '',
+    this.reversalVoucherNo = '',
+    this.reversedLineCount = 0,
   }) : finalAmount = finalAmount ?? grossValue;
 
   int get itemCount => lineItems.length;
 
   bool get hasLineItems => lineItems.isNotEmpty;
+
+  bool get isFullyReversed =>
+      lineItems.isNotEmpty && reversedLineCount >= lineItems.length;
+
+  bool get isPartiallyReversed => reversedLineCount > 0 && !isFullyReversed;
+
+  ReturnReversalSourceLineItem? lineByNo(int lineNo) {
+    for (final line in lineItems) {
+      if (line.lineNo == lineNo) {
+        return line;
+      }
+    }
+    return null;
+  }
 }
 
 class ReturnReversalLookupResult {

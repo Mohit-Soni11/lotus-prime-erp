@@ -1032,35 +1032,36 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                       const SizedBox(height: 5),
                       _advanceSourceChip(bill.advanceSourceLabel),
                     ],
+                    if (bill.hasLinkedDocuments) ...[
+                      const SizedBox(height: 6),
+                      _billLinkedDocumentStrip(bill),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    bill.formattedAmount,
-                    style: CustomerProfileStyles.billAmount,
-                  ),
-                  const SizedBox(height: 3),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: statusBg,
-                      borderRadius: BorderRadius.circular(10),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 260),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      bill.formattedAmount,
+                      style: CustomerProfileStyles.billAmount,
                     ),
-                    child: Text(
-                      bill.paymentLabel,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: statusText,
+                    const SizedBox(height: 6),
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _billStatusChips(
+                        bill,
+                        paymentBg: statusBg,
+                        paymentText: statusText,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(width: 6),
               const Icon(
@@ -1072,6 +1073,88 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           ),
         ),
       ),
+    );
+  }
+
+  List<Widget> _billStatusChips(
+    CustomerBillModel bill, {
+    required Color paymentBg,
+    required Color paymentText,
+  }) {
+    final chips = <Widget>[
+      _BillStatusChip(
+        label: bill.paymentLabel,
+        backgroundColor: paymentBg,
+        textColor: paymentText,
+      ),
+    ];
+
+    if (bill.lifecycleLabel.isNotEmpty) {
+      chips.add(
+        _BillStatusChip(
+          label: bill.lifecycleLabel,
+          backgroundColor: _billLifecycleBg(bill),
+          textColor: _billLifecycleText(bill),
+        ),
+      );
+    }
+    if (bill.returnProgressLabel.isNotEmpty) {
+      chips.add(
+        _BillStatusChip(
+          label: bill.returnProgressLabel,
+          backgroundColor: CustomerProfileColors.brandGoldLight,
+          textColor: CustomerProfileColors.bodyTextMain,
+        ),
+      );
+    }
+    if (bill.returnedAmount > 0.009) {
+      chips.add(
+        _BillStatusChip(
+          label: 'RETURN ${bill.formattedReturnedAmount}',
+          backgroundColor: CustomerProfileColors.advanceBg,
+          textColor: CustomerProfileColors.advanceAccent,
+        ),
+      );
+    }
+    return chips;
+  }
+
+  Color _billLifecycleBg(CustomerBillModel bill) {
+    if (bill.isCancelled) return CustomerProfileColors.deleteBg;
+    if (bill.hasReturnActivity) return CustomerProfileColors.dueBg;
+    return CustomerProfileColors.editBg;
+  }
+
+  Color _billLifecycleText(CustomerBillModel bill) {
+    if (bill.isCancelled) return CustomerProfileColors.deleteText;
+    if (bill.hasReturnActivity) return CustomerProfileColors.dueText;
+    return CustomerProfileColors.editText;
+  }
+
+  Widget _billLinkedDocumentStrip(CustomerBillModel bill) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.account_tree_rounded,
+          size: 13,
+          color: CustomerProfileColors.historyText,
+        ),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            bill.linkedDocumentSummary,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: CustomerProfileColors.bodyTextMain,
+              letterSpacing: 0,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1997,9 +2080,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   void _showBillActions(CustomerBillModel bill) {
     _showRecordActionSheet(
       title: 'Sales Bill ${bill.billNo}',
-      subtitle: bill.isFromAdvanceOrder
-          ? 'Converted from ${bill.advanceSourceLabel}. Edit, preview, or print.'
-          : 'Edit the sale, preview the invoice, or print a clean copy.',
+      subtitle: bill.hasLinkedDocuments
+          ? 'Original invoice is locked. Linked return documents are tracked below.'
+          : bill.isFromAdvanceOrder
+              ? 'Converted from ${bill.advanceSourceLabel}. Edit, preview, or print.'
+              : 'Edit the sale, preview the invoice, or print a clean copy.',
+      linkedDocuments: bill.linkedDocuments,
       actions: [
         _ProfileRecordAction(
           icon: Icons.edit_note_rounded,
@@ -2146,6 +2232,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     required String title,
     required String subtitle,
     required List<_ProfileRecordAction> actions,
+    List<CustomerLinkedDocumentModel> linkedDocuments = const [],
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -2218,6 +2305,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 ],
               ),
               const SizedBox(height: 16),
+              if (linkedDocuments.isNotEmpty) ...[
+                _linkedDocumentsPanel(linkedDocuments),
+                const SizedBox(height: 14),
+              ],
               ...actions.map(
                 (action) => _recordActionTile(action, sheetContext),
               ),
@@ -2225,6 +2316,127 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _linkedDocumentsPanel(
+    List<CustomerLinkedDocumentModel> linkedDocuments,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: CustomerProfileColors.historyBg.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CustomerProfileColors.historyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.account_tree_rounded,
+                size: 17,
+                color: CustomerProfileColors.historyText,
+              ),
+              SizedBox(width: 7),
+              Text(
+                'Linked Documents',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: CustomerProfileColors.bodyTextMain,
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...linkedDocuments.map(_linkedDocumentTile),
+        ],
+      ),
+    );
+  }
+
+  Widget _linkedDocumentTile(CustomerLinkedDocumentModel document) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CustomerProfileColors.bodyBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: CustomerProfileColors.clearBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.assignment_return_rounded,
+              size: 18,
+              color: CustomerProfileColors.clearText,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${document.documentNo}  |  ${document.documentTitle}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: CustomerProfileColors.bodyTextMain,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${document.formattedDate}  |  ${document.lineCountLabel}  |  Making ${document.formattedMakingReturned}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: CustomerProfileColors.bodyTextMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                document.formattedReturnValue,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  color: CustomerProfileColors.bodyTextMain,
+                ),
+              ),
+              const SizedBox(height: 4),
+              _BillStatusChip(
+                label: document.statusLabel,
+                backgroundColor: CustomerProfileColors.clearBg,
+                textColor: CustomerProfileColors.clearText,
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -3370,6 +3582,41 @@ class _StatBox extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _BillStatusChip extends StatelessWidget {
+  const _BillStatusChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.textColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: textColor.withValues(alpha: 0.18)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w900,
+          color: textColor,
+          letterSpacing: 0,
+        ),
       ),
     );
   }

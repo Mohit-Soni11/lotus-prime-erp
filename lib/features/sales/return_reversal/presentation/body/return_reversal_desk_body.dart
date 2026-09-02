@@ -71,7 +71,7 @@ class ReturnReversalDeskBody extends StatelessWidget {
                 children: [
                   _ReturnReversalPrimaryWorkspace(
                     controller: controller,
-                    sideBySideHeader: constraints.maxWidth > 760,
+                    sideBySideHeader: constraints.maxWidth > 980,
                   ),
                   const SizedBox(height: 18),
                   ReturnReversalInvoiceSummaryPanel(controller: controller),

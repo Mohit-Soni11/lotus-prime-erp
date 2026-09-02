@@ -4,6 +4,7 @@ import 'package:lotus_erp/features/sales/return_reversal/application/return_reve
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_state.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_workflow_step.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/repositories/return_reversal_repository.dart';
 
@@ -66,6 +67,8 @@ class ReturnReversalController extends ChangeNotifier {
         clearActiveInspectionLineNo: true,
         clearLineInspectionDrafts: true,
         clearLookupMessage: true,
+        clearProcessMessage: true,
+        clearLastProcessResult: true,
       ),
     );
   }
@@ -112,9 +115,9 @@ class ReturnReversalController extends ChangeNotifier {
           activeInspectionLineNo: _firstLineNoFor(preferredDocument),
           lineInspectionDrafts: _inspectionDraftsFor(preferredDocument),
           isSearching: false,
-          lookupMessage: result.hasDocuments
-              ? null
-              : 'No sales, purchase, or booking records found.',
+          lookupMessage:
+              _hasAllowedDocuments(result) ? null : _emptyLookupMessage,
+          clearProcessMessage: true,
         ),
       );
     } catch (exception) {
@@ -137,6 +140,7 @@ class ReturnReversalController extends ChangeNotifier {
         activeInspectionLineNo: _firstLineNoFor(document),
         lineInspectionDrafts: _inspectionDraftsFor(document),
         clearLookupMessage: true,
+        clearProcessMessage: true,
       ),
     );
   }
@@ -206,12 +210,30 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void addLineToReturnCart(int lineNo) {
-    if (_draftForLine(lineNo) == null) {
+    final lineItem = _lineItemByNo(lineNo);
+    if (lineItem == null ||
+        lineItem.isReversed ||
+        _draftForLine(lineNo) == null) {
+      if (lineItem?.isReversed ?? false) {
+        _setState(
+          _state.copyWith(
+            lookupMessage:
+                'Line $lineNo is already processed in ${lineItem!.reversalVoucherNo}.',
+            clearError: true,
+          ),
+        );
+      }
       return;
     }
     final cartLineNumbers = Set<int>.from(_state.returnCartLineNumbers)
       ..add(lineNo);
-    _setState(_state.copyWith(returnCartLineNumbers: cartLineNumbers));
+    _setState(
+      _state.copyWith(
+        returnCartLineNumbers: cartLineNumbers,
+        clearLookupMessage: true,
+        clearProcessMessage: true,
+      ),
+    );
   }
 
   void removeLineFromReturnCart(int lineNo) {
@@ -231,6 +253,91 @@ class ReturnReversalController extends ChangeNotifier {
     return _state.returnCartLineNumbers.contains(lineNo);
   }
 
+  Future<void> processReturn() async {
+    final document = _state.selectedSourceDocument;
+    if (document == null) {
+      _setState(
+        _state.copyWith(
+          lookupMessage: 'Select a source document before processing.',
+          clearError: true,
+        ),
+      );
+      return;
+    }
+
+    final cartLines = _state.returnCartLineItems
+        .where((line) => !line.isReversed)
+        .toList(growable: false);
+    if (cartLines.isEmpty) {
+      _setState(
+        _state.copyWith(
+          lookupMessage: 'Add at least one pending item to the return cart.',
+          clearError: true,
+        ),
+      );
+      return;
+    }
+
+    final lineInputs = [
+      for (final line in cartLines) _processInputForLine(line),
+    ];
+
+    _setState(
+      _state.copyWith(
+        isProcessing: true,
+        clearError: true,
+        clearLookupMessage: true,
+        clearProcessMessage: true,
+        clearLastProcessResult: true,
+      ),
+    );
+
+    try {
+      final result = await _repository.processReturn(
+        ReturnReversalProcessRequest(
+          operationType: _state.operationType,
+          sourceDocument: document,
+          lines: lineInputs,
+        ),
+      );
+      final summary = await _repository.fetchTransactionSummary();
+      final refreshedDocument =
+          await _repository.findSourceDocumentByNumber(document.documentNo);
+      final effectiveDocument = refreshedDocument ?? document;
+      _hydrateCustomerFields(effectiveDocument);
+      if (sourceDocumentNumberCtrl.text != effectiveDocument.documentNo) {
+        sourceDocumentNumberCtrl.text = effectiveDocument.documentNo;
+      }
+
+      _setState(
+        _state.copyWith(
+          summary: summary,
+          lookupResult: _replaceLookupDocument(
+            _state.lookupResult,
+            effectiveDocument,
+          ),
+          selectedSourceDocument: effectiveDocument,
+          clearReturnCartLineNumbers: true,
+          activeInspectionLineNo: _firstLineNoFor(effectiveDocument),
+          lineInspectionDrafts: _inspectionDraftsFor(effectiveDocument),
+          isProcessing: false,
+          lastProcessResult: result,
+          processMessage:
+              '${result.voucherNo} posted for ${result.processedLineCount} item(s). Return value Rs ${result.returnValue.round()}.',
+          clearError: true,
+          clearLookupMessage: true,
+        ),
+      );
+    } catch (exception) {
+      _setState(
+        _state.copyWith(
+          isProcessing: false,
+          errorMessage: exception.toString(),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadSourceDocument(String sourceNumber) async {
     final document = await _repository.findSourceDocumentByNumber(sourceNumber);
     if (document == null) {
@@ -247,29 +354,32 @@ class ReturnReversalController extends ChangeNotifier {
       return;
     }
 
+    if (!_state.operationType.acceptsSourceType(document.type)) {
+      _setState(
+        _state.copyWith(
+          isSearching: false,
+          lookupResult: _lookupResultFor(document),
+          clearSelectedSourceDocument: true,
+          clearReturnCartLineNumbers: true,
+          clearActiveInspectionLineNo: true,
+          clearLineInspectionDrafts: true,
+          lookupMessage: _sourceMismatchMessage(document),
+        ),
+      );
+      return;
+    }
+
     _hydrateCustomerFields(document);
     _setState(
       _state.copyWith(
-        lookupResult: ReturnReversalLookupResult(
-          salesInvoices:
-              document.type == ReturnReversalSourceDocumentType.salesInvoice
-                  ? [document]
-                  : const [],
-          advanceBookings:
-              document.type == ReturnReversalSourceDocumentType.advanceBooking
-                  ? [document]
-                  : const [],
-          customerPurchases:
-              document.type == ReturnReversalSourceDocumentType.customerPurchase
-                  ? [document]
-                  : const [],
-        ),
+        lookupResult: _lookupResultFor(document),
         selectedSourceDocument: document,
         clearReturnCartLineNumbers: true,
         activeInspectionLineNo: _firstLineNoFor(document),
         lineInspectionDrafts: _inspectionDraftsFor(document),
         isSearching: false,
         clearLookupMessage: true,
+        clearProcessMessage: true,
       ),
     );
   }
@@ -277,6 +387,11 @@ class ReturnReversalController extends ChangeNotifier {
   int? _firstLineNoFor(ReturnReversalSourceDocument? document) {
     if (document == null || document.lineItems.isEmpty) {
       return null;
+    }
+    for (final line in document.lineItems) {
+      if (!line.isReversed) {
+        return line.lineNo;
+      }
     }
     return document.lineItems.first.lineNo;
   }
@@ -315,6 +430,21 @@ class ReturnReversalController extends ChangeNotifier {
         ReturnReversalLineInspectionDraft.fromLine(lineItem);
   }
 
+  ReturnReversalProcessLineInput _processInputForLine(
+    ReturnReversalSourceLineItem line,
+  ) {
+    final draft = _draftForLine(line.lineNo) ??
+        ReturnReversalLineInspectionDraft.fromLine(line);
+    return ReturnReversalProcessLineInput(
+      sourceLineNo: line.lineNo,
+      receivedNetWeight: draft.receivedNetWeight,
+      huidMatched: draft.huidMatched,
+      unitMatched: draft.unitMatched,
+      includeMakingCharge: draft.includeMakingCharge,
+      stockDisposition: draft.stockRoute.disposition,
+    );
+  }
+
   void _updateInspectionDraft(
     int lineNo,
     ReturnReversalLineInspectionDraft draft,
@@ -329,10 +459,103 @@ class ReturnReversalController extends ChangeNotifier {
     ReturnReversalLookupResult result,
   ) {
     return switch (_state.operationType) {
-      ReturnReversalOperationType.salesReturn =>
-        result.salesInvoices.isNotEmpty ? result.salesInvoices.first : null,
+      ReturnReversalOperationType.salesReturn => result.salesInvoices.isNotEmpty
+          ? result.salesInvoices.first
+          : result.customerPurchases.isNotEmpty
+              ? result.customerPurchases.first
+              : null,
       ReturnReversalOperationType.bookingCancellation =>
         result.advanceBookings.isNotEmpty ? result.advanceBookings.first : null,
+    };
+  }
+
+  bool _hasAllowedDocuments(ReturnReversalLookupResult result) {
+    return switch (_state.operationType) {
+      ReturnReversalOperationType.salesReturn =>
+        result.salesInvoices.isNotEmpty || result.customerPurchases.isNotEmpty,
+      ReturnReversalOperationType.bookingCancellation =>
+        result.advanceBookings.isNotEmpty,
+    };
+  }
+
+  String get _emptyLookupMessage {
+    return switch (_state.operationType) {
+      ReturnReversalOperationType.salesReturn =>
+        'No sales or purchase return records found.',
+      ReturnReversalOperationType.bookingCancellation =>
+        'No booking cancellation records found.',
+    };
+  }
+
+  ReturnReversalLookupResult _lookupResultFor(
+    ReturnReversalSourceDocument document,
+  ) {
+    return ReturnReversalLookupResult(
+      salesInvoices:
+          document.type == ReturnReversalSourceDocumentType.salesInvoice
+              ? [document]
+              : const [],
+      advanceBookings:
+          document.type == ReturnReversalSourceDocumentType.advanceBooking
+              ? [document]
+              : const [],
+      customerPurchases:
+          document.type == ReturnReversalSourceDocumentType.customerPurchase
+              ? [document]
+              : const [],
+    );
+  }
+
+  ReturnReversalLookupResult _replaceLookupDocument(
+    ReturnReversalLookupResult result,
+    ReturnReversalSourceDocument document,
+  ) {
+    List<ReturnReversalSourceDocument> replaceIn(
+      List<ReturnReversalSourceDocument> documents,
+    ) {
+      var replaced = false;
+      final updated = [
+        for (final current in documents)
+          if (current.type == document.type && current.id == document.id) ...[
+            document,
+          ] else
+            current,
+      ];
+      replaced = documents.any(
+        (current) => current.type == document.type && current.id == document.id,
+      );
+      return replaced ? updated : [document, ...documents];
+    }
+
+    return switch (document.type) {
+      ReturnReversalSourceDocumentType.salesInvoice =>
+        ReturnReversalLookupResult(
+          salesInvoices: replaceIn(result.salesInvoices),
+          advanceBookings: result.advanceBookings,
+          customerPurchases: result.customerPurchases,
+        ),
+      ReturnReversalSourceDocumentType.advanceBooking =>
+        ReturnReversalLookupResult(
+          salesInvoices: result.salesInvoices,
+          advanceBookings: replaceIn(result.advanceBookings),
+          customerPurchases: result.customerPurchases,
+        ),
+      ReturnReversalSourceDocumentType.customerPurchase =>
+        ReturnReversalLookupResult(
+          salesInvoices: result.salesInvoices,
+          advanceBookings: result.advanceBookings,
+          customerPurchases: replaceIn(result.customerPurchases),
+        ),
+    };
+  }
+
+  String _sourceMismatchMessage(ReturnReversalSourceDocument document) {
+    final sourceLabel = document.type.label.toLowerCase();
+    return switch (_state.operationType) {
+      ReturnReversalOperationType.salesReturn =>
+        '$sourceLabel is not available in Return setup. Use Cancellation setup for bookings.',
+      ReturnReversalOperationType.bookingCancellation =>
+        '$sourceLabel is not available in Cancellation setup. Use Return setup for sales or purchase returns.',
     };
   }
 

@@ -1,27 +1,54 @@
 import 'package:drift/drift.dart' as drift;
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_transaction_summary.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/repositories/return_reversal_repository.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/services/return_reversal_valuation_service.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
+import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
 class ReturnReversalDriftRepository implements ReturnReversalRepository {
   final AppDatabase _database;
+  static const _valuationService = ReturnReversalValuationService();
 
   const ReturnReversalDriftRepository(this._database);
 
   @override
   Future<ReturnReversalTransactionSummary> fetchTransactionSummary() async {
-    // Keeps the screen stable while the workflow tables and posting rules are
-    // wired in the next implementation step.
-    await _database.customSelect('SELECT 1').getSingle();
-    return const ReturnReversalTransactionSummary.empty();
+    await _database.ensureReturnReversalSchema();
+    final row = await _database.customSelect(
+      '''
+      SELECT
+        COALESCE(SUM(CASE WHEN operation_type = 'SALES_RETURN' THEN 1 ELSE 0 END), 0) AS posted_returns,
+        COALESCE(SUM(CASE WHEN operation_type = 'BOOKING_CANCELLATION' THEN 1 ELSE 0 END), 0) AS posted_cancellations,
+        COALESCE(SUM(return_value), 0.0) AS return_value,
+        COALESCE((
+          SELECT SUM(received_net_weight)
+          FROM return_voucher_lines
+          WHERE status <> 'VOIDED'
+        ), 0.0) AS restored_weight
+      FROM return_vouchers
+      WHERE status <> 'VOIDED'
+      ''',
+    ).getSingle();
+    return ReturnReversalTransactionSummary(
+      eligibleSalesInvoices: 0,
+      eligibleAdvanceBookings: 0,
+      postedReturns: row.read<int>('posted_returns'),
+      postedCancellations: row.read<int>('posted_cancellations'),
+      refundableAmount: _readDouble(row, 'return_value'),
+      restoredNetWeight: _readDouble(row, 'restored_weight'),
+    );
   }
 
   @override
   Future<ReturnReversalLookupResult> findCustomerHistoryByMobile(
     String mobile,
   ) async {
+    await _database.ensureReturnReversalSchema();
     final normalizedMobile = _normalizePhone(mobile);
     if (normalizedMobile.isEmpty) {
       return const ReturnReversalLookupResult.empty();
@@ -46,6 +73,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
   Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
     String documentNumber,
   ) async {
+    await _database.ensureReturnReversalSchema();
     final sourceNumber = documentNumber.trim();
     if (sourceNumber.isEmpty) {
       return null;
@@ -64,6 +92,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         b.id,
         b.bill_no,
+        b.customer_id,
         COALESCE(NULLIF(b.customer_name, ''), c.name, '') AS customer_name,
         COALESCE(NULLIF(b.mobile, ''), c.mobile, '') AS mobile,
         COALESCE(c.address_line1, '') AS address_line1,
@@ -116,6 +145,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         b.id,
         b.bill_no,
+        b.customer_id,
         COALESCE(NULLIF(b.customer_name, ''), c.name, '') AS customer_name,
         COALESCE(NULLIF(b.mobile, ''), c.mobile, '') AS mobile,
         COALESCE(c.address_line1, '') AS address_line1,
@@ -163,18 +193,27 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
           ..where((table) => table.billId.equals(billId))
           ..orderBy([(table) => drift.OrderingTerm.asc(table.lineNo)]))
         .get();
+    final reversalLines = await _reversalLinesFor(
+      sourceType: 'SALES_INVOICE',
+      sourceId: billId,
+    );
     final billTotal = _readDouble(row, 'total_amount');
     final billDiscount = _readDouble(row, 'discount');
     final lines = <ReturnReversalSourceLineItem>[
       for (final item in items)
         ReturnReversalSourceLineItem(
+          sourceLineId: item.id,
           lineNo: item.lineNo,
           metalType: item.metalType,
           description: item.itemName,
           hsnCode: item.hsnCode ?? '',
           purity: item.purity,
           quantity: item.quantity,
-          quantityUnitCode: item.quantityUnitCode,
+          quantityUnitCode: _normalizedUnitCode(
+            storedUnit: item.quantityUnitCode,
+            metalType: item.metalType,
+            itemName: item.itemName,
+          ),
           grossWeight: item.grossWeight,
           lessWeight: item.lessWeight,
           lessWeightPerPiece: item.lessWeightPerPiece,
@@ -194,15 +233,22 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
           invoiceValue: item.invoiceValueSnapshot,
           value: item.itemTotal,
           huidNumber: item.huid ?? '',
+          linkedStockItemId: item.linkedStockItemId,
+          linkedStockUnitId: item.linkedStockUnitId,
           linkedStockSku: item.linkedStockSku ?? '',
           status: row.readNullable<String>('status') ?? 'ACTIVE',
+          reversalStatus: reversalLines[item.lineNo]?.status ?? '',
+          reversalVoucherNo: reversalLines[item.lineNo]?.voucherNo ?? '',
         ),
     ];
+    final reversedLineCount =
+        lines.where((line) => line.reversalStatus.isNotEmpty).length;
 
     return ReturnReversalSourceDocument(
       id: billId,
       type: ReturnReversalSourceDocumentType.salesInvoice,
       documentNo: row.read<String>('bill_no'),
+      customerId: row.readNullable<int>('customer_id'),
       customerName: row.readNullable<String>('customer_name') ?? '',
       mobile: row.readNullable<String>('mobile') ?? '',
       address: _joinAddress(
@@ -236,6 +282,12 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         (total, line) => total + line.netWeight,
       ),
       lineItems: lines,
+      reversalStatus: _documentReversalStatus(
+        reversedLineCount: reversedLineCount,
+        totalLineCount: lines.length,
+      ),
+      reversalVoucherNo: _firstReversalVoucherNo(reversalLines),
+      reversedLineCount: reversedLineCount,
     );
   }
 
@@ -247,6 +299,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         o.id,
         o.order_no,
+        o.customer_id,
         c.name AS customer_name,
         c.mobile,
         COALESCE(c.address_line1, '') AS address_line1,
@@ -281,6 +334,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         o.id,
         o.order_no,
+        o.customer_id,
         c.name AS customer_name,
         c.mobile,
         COALESCE(c.address_line1, '') AS address_line1,
@@ -310,7 +364,9 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     final weight = _readDouble(row, 'approx_weight');
     final rate = _readDouble(row, 'locked_rate');
     final paidAmount = _readDouble(row, 'paid_amount');
-    final lineValue = rate > 0 && weight > 0 ? weight * rate : paidAmount;
+    final estimatedOrderValue = rate > 0 && weight > 0 ? weight * rate : 0.0;
+    final lineValue = paidAmount > 0 ? paidAmount : estimatedOrderValue;
+    final status = row.readNullable<String>('status') ?? 'PENDING';
     final line = ReturnReversalSourceLineItem(
       lineNo: 1,
       metalType: row.readNullable<String>('metal_type') ?? 'GOLD',
@@ -320,13 +376,15 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       netWeight: weight,
       rate: rate,
       value: lineValue,
-      status: row.readNullable<String>('status') ?? 'PENDING',
+      status: status,
+      reversalStatus: status.toUpperCase() == 'CANCELLED' ? 'CANCELLED' : '',
     );
 
     return ReturnReversalSourceDocument(
       id: row.read<int>('id'),
       type: ReturnReversalSourceDocumentType.advanceBooking,
       documentNo: row.read<String>('order_no'),
+      customerId: row.readNullable<int>('customer_id'),
       customerName: row.readNullable<String>('customer_name') ?? '',
       mobile: row.readNullable<String>('mobile') ?? '',
       address: _joinAddress(
@@ -340,6 +398,8 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       dueAmount: 0,
       netWeight: weight,
       lineItems: [line],
+      reversalStatus: status.toUpperCase() == 'CANCELLED' ? 'CANCELLED' : '',
+      reversedLineCount: status.toUpperCase() == 'CANCELLED' ? 1 : 0,
     );
   }
 
@@ -351,6 +411,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         id,
         voucher_no,
+        customer_id,
         party_name,
         mobile,
         COALESCE(city, '') AS city,
@@ -385,6 +446,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         id,
         voucher_no,
+        customer_id,
         party_name,
         mobile,
         COALESCE(city, '') AS city,
@@ -404,6 +466,149 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     ).getSingleOrNull();
 
     return row == null ? null : _mapCustomerPurchase(row);
+  }
+
+  @override
+  Future<ReturnReversalProcessResult> processReturn(
+    ReturnReversalProcessRequest request,
+  ) async {
+    await _database.ensureReturnReversalSchema();
+    _validateProcessRequest(request);
+
+    final sourceType = _sourceTypeStorage(request.sourceDocument.type);
+    final voucherNo = await _nextReturnVoucherNo(request.operationType);
+    final now = DateTime.now();
+    final nowMs = now.millisecondsSinceEpoch;
+    var voucherId = 0;
+    var returnValue = 0.0;
+    var dueAdjustedAmount = 0.0;
+    var customerCreditAmount = 0.0;
+    var makingReturnedAmount = 0.0;
+
+    await _database.transaction(() async {
+      await _assertProcessLinesAvailable(request, sourceType);
+
+      for (final returnLine in request.lines) {
+        final sourceLine =
+            request.sourceDocument.lineByNo(returnLine.sourceLineNo)!;
+        final valuation = _valuationService.valueLine(
+          sourceLine: sourceLine,
+          returnLine: returnLine,
+        );
+        returnValue += valuation.returnValue;
+        makingReturnedAmount += valuation.makingReturnedAmount;
+      }
+      returnValue = _roundMoney(returnValue);
+      makingReturnedAmount = _roundMoney(makingReturnedAmount);
+      dueAdjustedAmount = _roundMoney(
+        request.sourceDocument.type ==
+                ReturnReversalSourceDocumentType.salesInvoice
+            ? request.sourceDocument.dueAmount
+                .clamp(0.0, returnValue)
+                .toDouble()
+            : 0.0,
+      );
+      customerCreditAmount = _roundMoney(returnValue - dueAdjustedAmount);
+
+      await _database.customStatement(
+        '''
+        INSERT INTO return_vouchers (
+          voucher_no,
+          operation_type,
+          source_type,
+          source_id,
+          source_number,
+          customer_id,
+          customer_name,
+          mobile,
+          settlement_mode,
+          original_total_amount,
+          return_value,
+          due_adjusted_amount,
+          customer_credit_amount,
+          making_returned_amount,
+          status,
+          operator_note,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          voucherNo,
+          _operationTypeStorage(request.operationType),
+          sourceType,
+          request.sourceDocument.id,
+          request.sourceDocument.documentNo,
+          request.sourceDocument.customerId,
+          request.sourceDocument.customerName,
+          request.sourceDocument.mobile,
+          request.settlementMode.storageValue,
+          request.sourceDocument.finalAmount,
+          returnValue,
+          dueAdjustedAmount,
+          customerCreditAmount,
+          makingReturnedAmount,
+          'POSTED',
+          request.operatorNote.trim().isEmpty
+              ? null
+              : request.operatorNote.trim(),
+          nowMs,
+          nowMs,
+        ],
+      );
+      voucherId = await _lastInsertRowId();
+
+      for (final returnLine in request.lines) {
+        final sourceLine =
+            request.sourceDocument.lineByNo(returnLine.sourceLineNo)!;
+        final valuation = _valuationService.valueLine(
+          sourceLine: sourceLine,
+          returnLine: returnLine,
+        );
+        await _insertReturnLine(
+          voucherId: voucherId,
+          voucherNo: voucherNo,
+          sourceType: sourceType,
+          sourceDocument: request.sourceDocument,
+          sourceLine: sourceLine,
+          returnLine: returnLine,
+          valuation: valuation,
+          nowMs: nowMs,
+        );
+        await _applyStockDisposition(
+          voucherId: voucherId,
+          voucherNo: voucherNo,
+          sourceDocument: request.sourceDocument,
+          sourceLine: sourceLine,
+          returnLine: returnLine,
+          valuation: valuation,
+          now: now,
+          nowMs: nowMs,
+        );
+      }
+
+      await _applySourceStatus(
+        request: request,
+        sourceType: sourceType,
+        now: now,
+      );
+      await _postCustomerCreditLedger(
+        request: request,
+        voucherNo: voucherNo,
+        creditAmount: customerCreditAmount,
+        now: now,
+      );
+    });
+
+    return ReturnReversalProcessResult(
+      voucherId: voucherId,
+      voucherNo: voucherNo,
+      processedLineCount: request.lines.length,
+      returnValue: returnValue,
+      dueAdjustedAmount: dueAdjustedAmount,
+      customerCreditAmount: customerCreditAmount,
+      status: 'POSTED',
+    );
   }
 
   Future<ReturnReversalSourceDocument> _mapCustomerPurchase(
@@ -447,6 +652,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       id: voucherId,
       type: ReturnReversalSourceDocumentType.customerPurchase,
       documentNo: row.read<String>('voucher_no'),
+      customerId: row.readNullable<int>('customer_id'),
       customerName: row.readNullable<String>('party_name') ?? '',
       mobile: row.readNullable<String>('mobile') ?? '',
       address: row.readNullable<String>('city') ?? '',
@@ -461,6 +667,857 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       lineItems: lines,
     );
   }
+
+  void _validateProcessRequest(ReturnReversalProcessRequest request) {
+    if (!request.operationType.acceptsSourceType(request.sourceDocument.type)) {
+      throw StateError('Selected document is not valid for this operation.');
+    }
+    if (request.lines.isEmpty) {
+      throw StateError('Add at least one item to the return cart.');
+    }
+    final seen = <int>{};
+    for (final line in request.lines) {
+      if (!seen.add(line.sourceLineNo)) {
+        throw StateError('Duplicate return line ${line.sourceLineNo}.');
+      }
+      final sourceLine = request.sourceDocument.lineByNo(line.sourceLineNo);
+      if (sourceLine == null) {
+        throw StateError('Invoice line ${line.sourceLineNo} no longer exists.');
+      }
+      if (sourceLine.isReversed) {
+        throw StateError('Line ${line.sourceLineNo} is already reversed.');
+      }
+      if (line.receivedNetWeight <= 0) {
+        throw StateError(
+            'Received net weight is required for line ${line.sourceLineNo}.');
+      }
+      if ((!line.huidMatched || !line.unitMatched) &&
+          line.stockDisposition != ReturnReversalStockDisposition.managerHold) {
+        throw StateError(
+          'Line ${line.sourceLineNo} has a verification mismatch. Move it to manager hold before processing.',
+        );
+      }
+    }
+  }
+
+  Future<void> _assertProcessLinesAvailable(
+    ReturnReversalProcessRequest request,
+    String sourceType,
+  ) async {
+    for (final line in request.lines) {
+      final row = await _database.customSelect(
+        '''
+        SELECT COUNT(*) AS line_count
+        FROM return_voucher_lines
+        WHERE source_type = ?
+          AND source_id = ?
+          AND source_line_no = ?
+          AND status <> 'VOIDED'
+        ''',
+        variables: [
+          drift.Variable.withString(sourceType),
+          drift.Variable.withInt(request.sourceDocument.id),
+          drift.Variable.withInt(line.sourceLineNo),
+        ],
+      ).getSingle();
+      if (row.read<int>('line_count') > 0) {
+        throw StateError(
+            'Line ${line.sourceLineNo} has already been processed.');
+      }
+    }
+  }
+
+  Future<void> _insertReturnLine({
+    required int voucherId,
+    required String voucherNo,
+    required String sourceType,
+    required ReturnReversalSourceDocument sourceDocument,
+    required ReturnReversalSourceLineItem sourceLine,
+    required ReturnReversalProcessLineInput returnLine,
+    required ReturnReversalLineValuation valuation,
+    required int nowMs,
+  }) async {
+    await _database.customStatement(
+      '''
+      INSERT INTO return_voucher_lines (
+        return_voucher_id,
+        source_type,
+        source_id,
+        source_number,
+        source_line_no,
+        source_bill_item_id,
+        stock_item_id,
+        stock_unit_id,
+        stock_disposition,
+        metal_type,
+        item_description,
+        huid,
+        quantity,
+        quantity_unit_code,
+        purity,
+        sold_net_weight,
+        received_net_weight,
+        short_weight,
+        rate,
+        sold_item_value,
+        adjusted_item_value,
+        available_making_amount,
+        making_returned_amount,
+        metal_return_amount,
+        line_return_value,
+        huid_matched,
+        unit_matched,
+        status,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        voucherId,
+        sourceType,
+        sourceDocument.id,
+        sourceDocument.documentNo,
+        sourceLine.lineNo,
+        sourceLine.sourceLineId,
+        sourceLine.linkedStockItemId,
+        sourceLine.linkedStockUnitId,
+        returnLine.stockDisposition.storageValue,
+        sourceLine.metalType,
+        sourceLine.description,
+        sourceLine.huidNumber.trim().isEmpty
+            ? null
+            : sourceLine.huidNumber.trim(),
+        sourceLine.quantity,
+        sourceLine.quantityUnitCode,
+        sourceLine.purity,
+        sourceLine.netWeight,
+        returnLine.receivedNetWeight,
+        (sourceLine.netWeight - returnLine.receivedNetWeight)
+            .clamp(0.0, double.infinity),
+        sourceLine.rate,
+        sourceLine.displayLineTotal,
+        valuation.adjustedLineAmount,
+        valuation.adjustedMakingAmount,
+        valuation.makingReturnedAmount,
+        valuation.metalAmount,
+        valuation.returnValue,
+        returnLine.huidMatched ? 1 : 0,
+        returnLine.unitMatched ? 1 : 0,
+        'POSTED',
+        nowMs,
+      ],
+    );
+  }
+
+  Future<void> _applyStockDisposition({
+    required int voucherId,
+    required String voucherNo,
+    required ReturnReversalSourceDocument sourceDocument,
+    required ReturnReversalSourceLineItem sourceLine,
+    required ReturnReversalProcessLineInput returnLine,
+    required ReturnReversalLineValuation valuation,
+    required DateTime now,
+    required int nowMs,
+  }) async {
+    if (sourceDocument.type != ReturnReversalSourceDocumentType.salesInvoice) {
+      return;
+    }
+
+    if (returnLine.stockDisposition == ReturnReversalStockDisposition.melting) {
+      await _postMeltingPurchaseLine(
+        voucherNo: voucherNo,
+        sourceDocument: sourceDocument,
+        sourceLine: sourceLine,
+        returnLine: returnLine,
+        valuation: valuation,
+        nowMs: nowMs,
+      );
+      await _moveLinkedUnitToStatus(
+        sourceLine: sourceLine,
+        voucherNo: voucherNo,
+        newStatus: 'Melting',
+        reason: 'Sales return routed to melting',
+        now: now,
+        nowMs: nowMs,
+      );
+      return;
+    }
+
+    final targetStatus = returnLine.stockDisposition ==
+            ReturnReversalStockDisposition.managerHold
+        ? 'On Hold'
+        : 'Available';
+    final movementType = returnLine.stockDisposition ==
+            ReturnReversalStockDisposition.managerHold
+        ? 'RETURN_HOLD'
+        : 'SALE_RESTORE';
+
+    final stockItemId = sourceLine.linkedStockItemId ??
+        await _createReturnedStockItem(
+          voucherNo: voucherNo,
+          sourceDocument: sourceDocument,
+          sourceLine: sourceLine,
+          returnLine: returnLine,
+          valuation: valuation,
+          status: targetStatus,
+          nowMs: nowMs,
+        );
+
+    if (sourceLine.linkedStockUnitId != null) {
+      await _moveLinkedUnitToStatus(
+        sourceLine: sourceLine,
+        voucherNo: voucherNo,
+        newStatus: targetStatus,
+        reason: returnLine.stockDisposition ==
+                ReturnReversalStockDisposition.managerHold
+            ? 'Sales return held for manager review'
+            : 'Sales return restored to sellable stock',
+        now: now,
+        nowMs: nowMs,
+      );
+      await _database.customStatement(
+        '''
+        UPDATE stock_items
+        SET quantity = quantity + 1,
+            is_active = 1,
+            status = ?,
+            updated_at = ?
+        WHERE id = ?
+        ''',
+        [targetStatus, now, stockItemId],
+      );
+    }
+
+    await _insertReturnStockMovement(
+      stockItemId: stockItemId,
+      movementType: movementType,
+      voucherNo: voucherNo,
+      sourceLine: sourceLine,
+      returnLine: returnLine,
+      now: now,
+      reason: targetStatus == 'Available'
+          ? 'Sales return stock restore'
+          : 'Sales return manager hold',
+    );
+  }
+
+  Future<void> _moveLinkedUnitToStatus({
+    required ReturnReversalSourceLineItem sourceLine,
+    required String voucherNo,
+    required String newStatus,
+    required String reason,
+    required DateTime now,
+    required int nowMs,
+  }) async {
+    final stockUnitId = sourceLine.linkedStockUnitId;
+    if (stockUnitId == null) {
+      return;
+    }
+    final row = await _database.customSelect(
+      '''
+      SELECT
+        id,
+        stock_item_id,
+        unit_code,
+        huid,
+        batch_code,
+        status
+      FROM stock_item_units
+      WHERE id = ?
+      LIMIT 1
+      ''',
+      variables: [drift.Variable.withInt(stockUnitId)],
+    ).getSingleOrNull();
+    if (row == null) {
+      throw StateError(
+          'Linked stock unit for line ${sourceLine.lineNo} no longer exists.');
+    }
+    final previousStatus = row.readNullable<String>('status') ?? '';
+    await _database.customStatement(
+      '''
+      UPDATE stock_item_units
+      SET status = ?, sold_at = NULL, updated_at = ?
+      WHERE id = ?
+      ''',
+      [newStatus, nowMs, stockUnitId],
+    );
+    await _database.customStatement(
+      '''
+      INSERT INTO stock_unit_status_events (
+        stock_unit_id,
+        stock_item_id,
+        unit_code,
+        huid,
+        batch_code,
+        previous_status,
+        new_status,
+        reason,
+        source_type,
+        source_number,
+        created_at
+      ) VALUES (?, NULLIF(?, 0), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        stockUnitId,
+        row.readNullable<int>('stock_item_id') ??
+            sourceLine.linkedStockItemId ??
+            0,
+        row.readNullable<String>('unit_code') ?? sourceLine.linkedStockSku,
+        row.readNullable<String>('huid') ?? sourceLine.huidNumber,
+        row.readNullable<String>('batch_code') ?? voucherNo,
+        previousStatus,
+        newStatus,
+        reason,
+        'SALES_RETURN',
+        voucherNo,
+        nowMs,
+      ],
+    );
+  }
+
+  Future<int> _createReturnedStockItem({
+    required String voucherNo,
+    required ReturnReversalSourceDocument sourceDocument,
+    required ReturnReversalSourceLineItem sourceLine,
+    required ReturnReversalProcessLineInput returnLine,
+    required ReturnReversalLineValuation valuation,
+    required String status,
+    required int nowMs,
+  }) async {
+    final sku = '$voucherNo-L${sourceLine.lineNo.toString().padLeft(3, '0')}';
+    final stockItemId = await _database.into(_database.stockItems).insert(
+          StockItemsCompanion(
+            sku: drift.Value(sku),
+            itemName: drift.Value(sourceLine.description),
+            description: drift.Value(
+              'Returned from ${sourceDocument.documentNo}; original line ${sourceLine.lineNo}',
+            ),
+            category: drift.Value(_categoryForMetal(sourceLine.metalType)),
+            subCategory: const drift.Value('Sales Return'),
+            metalType: drift.Value(_metalDisplayName(sourceLine.metalType)),
+            purity: drift.Value(sourceLine.purity),
+            grossWeight: drift.Value(returnLine.receivedNetWeight),
+            stoneWeight: const drift.Value(0),
+            netWeight: drift.Value(returnLine.receivedNetWeight),
+            purchaseRate: drift.Value(sourceLine.rate),
+            makingCharge: drift.Value(valuation.makingReturnedAmount),
+            makingChargeType: drift.Value(sourceLine.makingChargeType),
+            purchasePrice: drift.Value(valuation.returnValue),
+            mrp: drift.Value(sourceLine.displayLineTotal),
+            hsnCode: drift.Value(sourceLine.hsnCode.trim().isEmpty
+                ? null
+                : sourceLine.hsnCode.trim()),
+            huid: drift.Value(sourceLine.huidNumber.trim().isEmpty
+                ? null
+                : sourceLine.huidNumber.trim()),
+            quantity: const drift.Value(1),
+            status: drift.Value(status),
+            isActive: drift.Value(status == 'Available'),
+          ),
+        );
+    await _database.customStatement(
+      '''
+      INSERT INTO stock_item_units (
+        stock_item_id,
+        batch_code,
+        unit_code,
+        piece_no,
+        metal_type,
+        item_type,
+        item_name,
+        huid,
+        gross_weight,
+        less_weight,
+        net_weight,
+        purity_percent,
+        actual_fine_weight,
+        rate_per_gram,
+        making_amount,
+        unit_cost,
+        status,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        stockItemId,
+        voucherNo,
+        '$sku-U001',
+        1,
+        _metalDisplayName(sourceLine.metalType),
+        'Sales Return',
+        sourceLine.description,
+        sourceLine.huidNumber.trim().isEmpty
+            ? null
+            : sourceLine.huidNumber.trim(),
+        returnLine.receivedNetWeight,
+        0.0,
+        returnLine.receivedNetWeight,
+        _purityPercent(sourceLine.purity),
+        sourceLine.displayFineWeight * valuation.receivedRatio,
+        sourceLine.rate,
+        valuation.makingReturnedAmount,
+        valuation.returnValue,
+        status,
+        nowMs,
+        nowMs,
+      ],
+    );
+    return stockItemId;
+  }
+
+  Future<void> _postMeltingPurchaseLine({
+    required String voucherNo,
+    required ReturnReversalSourceDocument sourceDocument,
+    required ReturnReversalSourceLineItem sourceLine,
+    required ReturnReversalProcessLineInput returnLine,
+    required ReturnReversalLineValuation valuation,
+    required int nowMs,
+  }) async {
+    final meltingVoucherNo = 'MELT-$voucherNo';
+    var row = await _database.customSelect(
+      'SELECT id FROM purchase_vouchers WHERE voucher_no = ? LIMIT 1',
+      variables: [drift.Variable.withString(meltingVoucherNo)],
+    ).getSingleOrNull();
+
+    if (row == null) {
+      final sequence = await _nextPurchaseSequence();
+      await _database.customStatement(
+        '''
+        INSERT INTO purchase_vouchers (
+          voucher_no,
+          sequence_no,
+          source_type,
+          customer_id,
+          party_name,
+          mobile,
+          tax_type,
+          gross_amount,
+          taxable_amount,
+          grand_total,
+          total_paid,
+          balance_due,
+          payment_status,
+          stock_entry_count,
+          status,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          meltingVoucherNo,
+          sequence,
+          'CUSTOMER',
+          sourceDocument.customerId,
+          sourceDocument.customerName,
+          sourceDocument.mobile,
+          'NORMAL',
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          'RETURN_MELTING',
+          0,
+          'MELTING',
+          nowMs,
+          nowMs,
+        ],
+      );
+      row = await _database.customSelect(
+        'SELECT id FROM purchase_vouchers WHERE voucher_no = ? LIMIT 1',
+        variables: [drift.Variable.withString(meltingVoucherNo)],
+      ).getSingle();
+    }
+
+    final purchaseVoucherId = row.read<int>('id');
+    await _database.customStatement(
+      '''
+      INSERT INTO purchase_voucher_items (
+        purchase_voucher_id,
+        line_no,
+        sku,
+        metal_type,
+        item_description,
+        gross_weight,
+        less_weight,
+        net_weight,
+        purity,
+        fine_weight,
+        rate,
+        quantity,
+        quantity_mode,
+        line_amount,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        purchaseVoucherId,
+        sourceLine.lineNo,
+        '$meltingVoucherNo-L${sourceLine.lineNo.toString().padLeft(3, '0')}',
+        _metalDisplayName(sourceLine.metalType),
+        '${sourceLine.description} | Return melting ${sourceDocument.documentNo}',
+        returnLine.receivedNetWeight,
+        0.0,
+        returnLine.receivedNetWeight,
+        _purityPercent(sourceLine.purity),
+        sourceLine.displayFineWeight * valuation.receivedRatio,
+        sourceLine.rate,
+        sourceLine.quantity,
+        sourceLine.quantityUnitCode,
+        valuation.metalAmount,
+        nowMs,
+      ],
+    );
+    await _database.customStatement(
+      '''
+      UPDATE purchase_vouchers
+      SET gross_amount = gross_amount + ?,
+          taxable_amount = taxable_amount + ?,
+          grand_total = grand_total + ?,
+          updated_at = ?
+      WHERE id = ?
+      ''',
+      [
+        valuation.metalAmount,
+        valuation.metalAmount,
+        valuation.metalAmount,
+        nowMs,
+        purchaseVoucherId,
+      ],
+    );
+  }
+
+  Future<void> _insertReturnStockMovement({
+    required int stockItemId,
+    required String movementType,
+    required String voucherNo,
+    required ReturnReversalSourceLineItem sourceLine,
+    required ReturnReversalProcessLineInput returnLine,
+    required DateTime now,
+    required String reason,
+  }) async {
+    await _database.customStatement(
+      '''
+      INSERT INTO stock_movements (
+        stock_item_id,
+        movement_type,
+        source_type,
+        source_id,
+        source_line_no,
+        source_number,
+        sku_snapshot,
+        metal_type_snapshot,
+        item_name_snapshot,
+        quantity_delta,
+        gross_weight_delta,
+        net_weight_delta,
+        fine_weight_delta,
+        reason,
+        occurred_at,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        stockItemId,
+        movementType,
+        'SALES_RETURN',
+        voucherNo,
+        sourceLine.lineNo,
+        voucherNo,
+        sourceLine.linkedStockSku.trim().isEmpty
+            ? '$voucherNo-L${sourceLine.lineNo.toString().padLeft(3, '0')}'
+            : sourceLine.linkedStockSku.trim(),
+        _metalDisplayName(sourceLine.metalType),
+        sourceLine.description,
+        1,
+        returnLine.receivedNetWeight,
+        returnLine.receivedNetWeight,
+        sourceLine.displayFineWeight *
+            _valuationService
+                .valueLine(sourceLine: sourceLine, returnLine: returnLine)
+                .receivedRatio,
+        reason,
+        now,
+        now,
+        now,
+      ],
+    );
+  }
+
+  Future<void> _applySourceStatus({
+    required ReturnReversalProcessRequest request,
+    required String sourceType,
+    required DateTime now,
+  }) async {
+    final postedLineCount = await _postedLineCount(
+      sourceType: sourceType,
+      sourceId: request.sourceDocument.id,
+    );
+    final fullyProcessed =
+        postedLineCount >= request.sourceDocument.lineItems.length;
+
+    switch (request.sourceDocument.type) {
+      case ReturnReversalSourceDocumentType.salesInvoice:
+        final newDue = (request.sourceDocument.dueAmount -
+                _valuationService.totalReturnValue(
+                  sourceDocument: request.sourceDocument,
+                  returnLines: request.lines,
+                ))
+            .clamp(0.0, double.infinity)
+            .toDouble();
+        await (_database.update(_database.bills)
+              ..where((bill) => bill.id.equals(request.sourceDocument.id)))
+            .write(
+          BillsCompanion(
+            dueAmount: drift.Value(_roundMoney(newDue)),
+            paymentStatus: drift.Value(newDue <= 0.5 ? 'PAID' : 'PARTIAL'),
+            status:
+                drift.Value(fullyProcessed ? 'RETURNED' : 'PARTIALLY_RETURNED'),
+            updatedAt: drift.Value(now),
+          ),
+        );
+      case ReturnReversalSourceDocumentType.advanceBooking:
+        await (_database.update(_database.salesOrders)
+              ..where((order) => order.id.equals(request.sourceDocument.id)))
+            .write(
+          SalesOrdersCompanion(
+            status: const drift.Value('CANCELLED'),
+            notes: const drift.Value('Cancelled via return desk'),
+            updatedAt: drift.Value(now),
+          ),
+        );
+      case ReturnReversalSourceDocumentType.customerPurchase:
+        await _database.customStatement(
+          '''
+          UPDATE purchase_vouchers
+          SET status = ?, updated_at = ?
+          WHERE id = ?
+          ''',
+          [
+            fullyProcessed ? 'RETURNED' : 'PARTIALLY_RETURNED',
+            now.millisecondsSinceEpoch,
+            request.sourceDocument.id
+          ],
+        );
+    }
+  }
+
+  Future<void> _postCustomerCreditLedger({
+    required ReturnReversalProcessRequest request,
+    required String voucherNo,
+    required double creditAmount,
+    required DateTime now,
+  }) async {
+    final customerId = request.sourceDocument.customerId;
+    if (creditAmount <= 0.005 || customerId == null) {
+      return;
+    }
+    await _database.into(_database.customerAccountLedger).insert(
+          CustomerAccountLedgerCompanion.insert(
+            customerId: customerId,
+            entryType: 'CREDIT',
+            sourceType: _operationTypeStorage(request.operationType),
+            sourceReference: drift.Value(voucherNo),
+            amount: drift.Value(creditAmount),
+            paymentMode: const drift.Value('CUSTOMER_CREDIT'),
+            notes: drift.Value(
+              '${request.operationType.title} credit against ${request.sourceDocument.documentNo}',
+            ),
+            entryDate: drift.Value(now),
+            isVoided: const drift.Value(false),
+          ),
+        );
+  }
+
+  Future<int> _postedLineCount({
+    required String sourceType,
+    required int sourceId,
+  }) async {
+    final row = await _database.customSelect(
+      '''
+      SELECT COUNT(*) AS line_count
+      FROM return_voucher_lines
+      WHERE source_type = ?
+        AND source_id = ?
+        AND status <> 'VOIDED'
+      ''',
+      variables: [
+        drift.Variable.withString(sourceType),
+        drift.Variable.withInt(sourceId),
+      ],
+    ).getSingle();
+    return row.read<int>('line_count');
+  }
+
+  Future<int> _lastInsertRowId() async {
+    final row = await _database
+        .customSelect('SELECT last_insert_rowid() AS id')
+        .getSingle();
+    return row.read<int>('id');
+  }
+
+  Future<int> _nextPurchaseSequence() async {
+    final row = await _database
+        .customSelect(
+          'SELECT COALESCE(MAX(sequence_no), 0) AS max_no FROM purchase_vouchers',
+        )
+        .getSingle();
+    return row.read<int>('max_no') + 1;
+  }
+
+  Future<String> _nextReturnVoucherNo(
+    ReturnReversalOperationType operationType,
+  ) async {
+    final prefix =
+        operationType == ReturnReversalOperationType.salesReturn ? 'SR' : 'BC';
+    final year = DateTime.now().year.toString().substring(2);
+    final row = await _database
+        .customSelect(
+          'SELECT COALESCE(MAX(id), 0) AS max_id FROM return_vouchers',
+        )
+        .getSingle();
+    final next = row.read<int>('max_id') + 1;
+    return '$prefix-$year-${next.toString().padLeft(5, '0')}';
+  }
+
+  Future<Map<int, _PostedReturnLine>> _reversalLinesFor({
+    required String sourceType,
+    required int sourceId,
+  }) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        l.source_line_no,
+        l.status,
+        v.voucher_no
+      FROM return_voucher_lines l
+      INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
+      WHERE l.source_type = ?
+        AND l.source_id = ?
+        AND l.status <> 'VOIDED'
+      ''',
+      variables: [
+        drift.Variable.withString(sourceType),
+        drift.Variable.withInt(sourceId),
+      ],
+    ).get();
+    return {
+      for (final row in rows)
+        row.read<int>('source_line_no'): _PostedReturnLine(
+          status: row.readNullable<String>('status') ?? 'POSTED',
+          voucherNo: row.readNullable<String>('voucher_no') ?? '',
+        ),
+    };
+  }
+
+  String _documentReversalStatus({
+    required int reversedLineCount,
+    required int totalLineCount,
+  }) {
+    if (reversedLineCount <= 0) {
+      return '';
+    }
+    return reversedLineCount >= totalLineCount ? 'RETURNED' : 'PARTIAL RETURN';
+  }
+
+  String _firstReversalVoucherNo(Map<int, _PostedReturnLine> lines) {
+    for (final line in lines.values) {
+      if (line.voucherNo.trim().isNotEmpty) {
+        return line.voucherNo;
+      }
+    }
+    return '';
+  }
+
+  String _sourceTypeStorage(ReturnReversalSourceDocumentType type) {
+    return switch (type) {
+      ReturnReversalSourceDocumentType.salesInvoice => 'SALES_INVOICE',
+      ReturnReversalSourceDocumentType.advanceBooking => 'ADVANCE_BOOKING',
+      ReturnReversalSourceDocumentType.customerPurchase => 'CUSTOMER_PURCHASE',
+    };
+  }
+
+  String _operationTypeStorage(ReturnReversalOperationType type) {
+    return switch (type) {
+      ReturnReversalOperationType.salesReturn => 'SALES_RETURN',
+      ReturnReversalOperationType.bookingCancellation => 'BOOKING_CANCELLATION',
+    };
+  }
+
+  String _categoryForMetal(String metalType) {
+    final metal = _metalDisplayName(metalType).toLowerCase();
+    if (metal.contains('silver')) {
+      return 'Silver Jewellery';
+    }
+    if (metal.contains('diamond')) {
+      return 'Diamond Jewellery';
+    }
+    if (metal.contains('platinum')) {
+      return 'Platinum Jewellery';
+    }
+    return 'Gold Jewellery';
+  }
+
+  String _metalDisplayName(String metalType) {
+    final clean = metalType.trim();
+    if (clean.isEmpty) {
+      return 'Gold';
+    }
+    return clean
+        .split(RegExp(r'\s+'))
+        .map((word) => word.isEmpty
+            ? word
+            : '${word.substring(0, 1).toUpperCase()}${word.substring(1).toLowerCase()}')
+        .join(' ');
+  }
+
+  String _normalizedUnitCode({
+    required String storedUnit,
+    required String metalType,
+    required String itemName,
+  }) {
+    final stored = PosItemUnitProfile.fromStorageValue(storedUnit);
+    final inferred = PosItemUnitProfile.infer(
+      metal: _metalTypeFromLabel(metalType),
+      itemName: itemName,
+    );
+    if (stored != null &&
+        (stored.code != PosItemUnitCode.pieces ||
+            inferred.code == PosItemUnitCode.pieces)) {
+      return stored.shortName;
+    }
+    return inferred.shortName;
+  }
+
+  MetalType _metalTypeFromLabel(String metalType) {
+    final normalized = metalType.trim().toUpperCase();
+    if (normalized.contains('SILVER')) {
+      return MetalType.silver;
+    }
+    if (normalized.contains('PLATINUM')) {
+      return MetalType.platinum;
+    }
+    if (normalized.contains('DIAMOND')) {
+      return MetalType.diamond;
+    }
+    return MetalType.gold;
+  }
+
+  double _purityPercent(String purity) {
+    final normalized = purity.trim().toUpperCase();
+    if (normalized.endsWith('KT') || normalized.endsWith('K')) {
+      final karat = double.tryParse(
+        normalized.replaceAll('KT', '').replaceAll('K', ''),
+      );
+      if (karat != null && karat > 0) {
+        return karat / 24 * 100;
+      }
+    }
+    return double.tryParse(normalized) ?? 0.0;
+  }
+
+  double _roundMoney(double value) => (value * 100).roundToDouble() / 100;
 
   String _normalizePhone(String value) {
     return value.replaceAll(RegExp(r'[\s\-]'), '').trim();
@@ -509,4 +1566,14 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     }
     return billDiscount * (lineValue / billTotal);
   }
+}
+
+class _PostedReturnLine {
+  final String status;
+  final String voucherNo;
+
+  const _PostedReturnLine({
+    required this.status,
+    required this.voucherNo,
+  });
 }
