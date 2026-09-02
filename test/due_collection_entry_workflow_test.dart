@@ -154,6 +154,90 @@ void main() {
       await db.close();
     }
   });
+
+  test('paid bill with return-adjusted due is hidden across due ledgers',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final customerId = await _insertCustomer(db, mobile: '9304479438');
+    await _insertDueBill(
+      db,
+      customerId: customerId,
+      billNo: 'AJ-26-RETURN-CLEAR',
+      finalAmount: 49385.07,
+      paidAmount: 45000,
+      dueAmount: 0,
+      paymentStatus: 'PAID',
+    );
+
+    try {
+      final collectionRepo = DueCollectionEntryRepository(db: db);
+      final dueReportRepo = DueReportRepository(db: db);
+      final profileRepo = CustomerProfileRepository(db: db);
+      final customerListRepo = CustomerListRepository(db: db);
+
+      expect(
+        (await collectionRepo.fetchDueBills()).map((bill) => bill.billNo),
+        isNot(contains('AJ-26-RETURN-CLEAR')),
+      );
+      expect(
+        (await dueReportRepo.fetchDueBills()).map((bill) => bill.billNo),
+        isNot(contains('AJ-26-RETURN-CLEAR')),
+      );
+
+      final profile = await profileRepo.fetchProfile(customerId);
+      expect(profile, isNotNull);
+      expect(profile!.outstanding, 0);
+      expect(profile.dues, isEmpty);
+      expect(profile.bills.single.dueAmount, 0);
+      expect(profile.bills.single.paymentLabel, 'SETTLED');
+
+      final customers = await customerListRepo.getAllCustomers();
+      expect(customers.single.dueAmount, 0);
+    } finally {
+      await db.close();
+    }
+  });
+
+  test('partially returned bill with remaining due stays in due ledgers',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final customerId = await _insertCustomer(db, mobile: '9304479439');
+    await _insertDueBill(
+      db,
+      customerId: customerId,
+      billNo: 'AJ-26-RETURN-DUE',
+      finalAmount: 49385.07,
+      paidAmount: 30000,
+      dueAmount: 2500,
+      paymentStatus: 'PARTIAL',
+      status: 'PARTIALLY_RETURNED',
+    );
+
+    try {
+      final collectionRepo = DueCollectionEntryRepository(db: db);
+      final dueReportRepo = DueReportRepository(db: db);
+      final profileRepo = CustomerProfileRepository(db: db);
+      final customerListRepo = CustomerListRepository(db: db);
+
+      final collectionBills = await collectionRepo.fetchDueBills();
+      expect(collectionBills.single.billNo, 'AJ-26-RETURN-DUE');
+      expect(collectionBills.single.dueAmount, 2500);
+
+      final dueReportBills = await dueReportRepo.fetchDueBills();
+      expect(dueReportBills.single.billNo, 'AJ-26-RETURN-DUE');
+      expect(dueReportBills.single.dueAmount, 2500);
+
+      final profile = await profileRepo.fetchProfile(customerId);
+      expect(profile, isNotNull);
+      expect(profile!.outstanding, 2500);
+      expect(profile.dues.single.dueAmount, 2500);
+
+      final customers = await customerListRepo.getAllCustomers();
+      expect(customers.single.dueAmount, 2500);
+    } finally {
+      await db.close();
+    }
+  });
 }
 
 Future<int> _insertCustomer(
@@ -179,6 +263,8 @@ Future<int> _insertDueBill(
   required double finalAmount,
   required double paidAmount,
   required double dueAmount,
+  String paymentStatus = 'PARTIAL',
+  String status = 'ACTIVE',
 }) {
   return db.into(db.bills).insert(
         BillsCompanion.insert(
@@ -187,14 +273,14 @@ Future<int> _insertDueBill(
           customerName: const drift.Value('REYANSH SONI'),
           mobile: const drift.Value('9304479436'),
           billType: const drift.Value('GST'),
-          paymentStatus: const drift.Value('PARTIAL'),
+          paymentStatus: drift.Value(paymentStatus),
           totalAmount: drift.Value(finalAmount),
           finalAmount: drift.Value(finalAmount),
           paidAmount: drift.Value(paidAmount),
           cashPaid: drift.Value(paidAmount),
           dueAmount: drift.Value(dueAmount),
           billDate: drift.Value(DateTime(2026, 8, 23, 10)),
-          status: const drift.Value('ACTIVE'),
+          status: drift.Value(status),
         ),
       );
 }

@@ -219,9 +219,22 @@ class DueReceiptHistoryRepository {
 
   double _currentDue(Bill? bill) {
     if (bill == null) return 0;
-    final computed = bill.finalAmount - bill.paidAmount;
-    final due = bill.dueAmount > 0.5 ? bill.dueAmount : computed;
-    return due < 0 ? 0 : due;
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED') {
+      return 0;
+    }
+    if (bill.dueAmount > 0.5 ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
+    }
+    return (bill.finalAmount - bill.paidAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
   String _addressFor(Customer? customer) {

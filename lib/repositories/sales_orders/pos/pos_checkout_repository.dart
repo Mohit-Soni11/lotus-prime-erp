@@ -280,7 +280,75 @@ class PosCheckoutRepository {
           ..orderBy([(tbl) => OrderingTerm.asc(tbl.lineNo)]))
         .get();
 
-    return rows.map(_saleItemFromBillItem).toList(growable: false);
+    final byLine = <int, SaleItemModel>{
+      for (final row in rows) row.lineNo: _saleItemFromBillItem(row),
+    };
+    final recovered = await _recoverReturnedPrintableSaleItems(
+      billId: billId,
+      existingLineNumbers: byLine.keys.toSet(),
+    );
+    byLine.addAll(recovered);
+    final lineNumbers = byLine.keys.toList()..sort();
+    return [
+      for (final lineNo in lineNumbers) byLine[lineNo]!,
+    ];
+  }
+
+  Future<bool> _hasPostedReturnReversal(int billId) async {
+    await _db.ensureReturnReversalSchema();
+    final row = await _db.customSelect(
+      '''
+      SELECT 1
+      FROM return_vouchers
+      WHERE source_type = 'SALES_INVOICE'
+        AND source_id = ?
+        AND status <> 'VOIDED'
+      LIMIT 1
+      ''',
+      variables: [Variable.withInt(billId)],
+    ).getSingleOrNull();
+    return row != null;
+  }
+
+  Future<Map<int, SaleItemModel>> _recoverReturnedPrintableSaleItems({
+    required int billId,
+    required Set<int> existingLineNumbers,
+  }) async {
+    await _db.ensureReturnReversalSchema();
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        source_line_no,
+        metal_type,
+        item_description,
+        huid,
+        quantity,
+        quantity_unit_code,
+        purity,
+        sold_net_weight,
+        rate,
+        available_making_amount,
+        making_returned_amount,
+        sold_item_value
+      FROM return_voucher_lines
+      WHERE source_type = 'SALES_INVOICE'
+        AND source_id = ?
+        AND status <> 'VOIDED'
+      ORDER BY source_line_no ASC
+      ''',
+      variables: [Variable.withInt(billId)],
+    ).get();
+
+    final recovered = <int, SaleItemModel>{};
+    for (final row in rows) {
+      final lineNo = row.read<int>('source_line_no');
+      if (existingLineNumbers.contains(lineNo) ||
+          recovered.containsKey(lineNo)) {
+        continue;
+      }
+      recovered[lineNo] = _saleItemFromReturnVoucherLine(row);
+    }
+    return recovered;
   }
 
   Future<void> updateSale({
@@ -295,6 +363,11 @@ class PosCheckoutRepository {
           .getSingleOrNull();
       if (existingBill == null) {
         throw StateError('Sales bill #$billId no longer exists.');
+      }
+      if (await _hasPostedReturnReversal(existingBill.id)) {
+        throw StateError(
+          'Sales bill ${existingBill.billNo} has linked return/reversal documents and is locked. Create a linked adjustment document instead of editing the original invoice.',
+        );
       }
 
       final existingItems = await (_db.select(_db.billItems)
@@ -2622,6 +2695,35 @@ class PosCheckoutRepository {
         sku: row.linkedStockSku!,
       );
     }
+    return item;
+  }
+
+  SaleItemModel _saleItemFromReturnVoucherLine(QueryRow row) {
+    final netWeight = row.readNullable<double>('sold_net_weight') ?? 0.0;
+    final rate = row.readNullable<double>('rate') ?? 0.0;
+    final makingAmount = row.readNullable<double>('available_making_amount') ??
+        row.readNullable<double>('making_returned_amount') ??
+        0.0;
+    final makingPerGram = netWeight <= 0.005 ? 0.0 : makingAmount / netWeight;
+    final item = SaleItemModel(
+      metal: _metalFromDb(row.readNullable<String>('metal_type') ?? ''),
+      makingChargeType: MakingChargeType.perGram,
+    );
+    final unitProfile = PosItemUnitProfile.fromStorageValue(
+      row.readNullable<String>('quantity_unit_code') ?? '',
+    );
+    if (unitProfile != null) {
+      item.setUnitProfile(unitProfile);
+    }
+    item.descCtrl.text =
+        row.readNullable<String>('item_description') ?? 'Recovered item';
+    item.pcsCtrl.text = (row.readNullable<int>('quantity') ?? 1).toString();
+    item.setHuidText(row.readNullable<String>('huid') ?? '');
+    item.purityCtrl.text = row.readNullable<String>('purity') ?? '-';
+    item.grossCtrl.text = _formatPersistedWeight(netWeight);
+    item.lessCtrl.text = '0';
+    item.rateCtrl.text = _formatPersistedNumber(rate);
+    item.makingCtrl.text = _formatPersistedNumber(makingPerGram);
     return item;
   }
 

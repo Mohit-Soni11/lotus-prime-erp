@@ -75,7 +75,9 @@ class CustomerBillModel {
   final String billNo;
   final double totalAmount;
   final double paidAmount;
+  final double? recordedDueAmount;
   final String status;
+  final String paymentStatus;
   final DateTime billDate;
   final int? sourceAdvanceOrderId;
   final String? sourceAdvanceOrderNo;
@@ -92,9 +94,11 @@ class CustomerBillModel {
     required this.totalAmount,
     required this.status,
     required this.billDate,
+    this.paymentStatus = '',
     this.sourceAdvanceOrderId,
     this.sourceAdvanceOrderNo,
     this.paidAmount = 0.0,
+    this.recordedDueAmount,
     this.lineCount = 0,
     this.returnedLineCount = 0,
     this.returnedAmount = 0.0,
@@ -104,8 +108,20 @@ class CustomerBillModel {
   });
 
   String get normalizedStatus => status.trim().toUpperCase();
+  String get normalizedPaymentStatus => paymentStatus.trim().toUpperCase();
 
   bool get isPaid {
+    if (normalizedPaymentStatus == 'PAID' ||
+        normalizedPaymentStatus == 'SETTLED' ||
+        normalizedPaymentStatus == 'COMPLETE' ||
+        normalizedPaymentStatus == 'COMPLETED') {
+      return true;
+    }
+    if (normalizedPaymentStatus == 'DUE' ||
+        normalizedPaymentStatus == 'UNPAID' ||
+        normalizedPaymentStatus == 'PARTIAL') {
+      return false;
+    }
     final normalized = normalizedStatus;
     if (normalized == 'PAID' ||
         normalized == 'COMPLETE' ||
@@ -141,8 +157,13 @@ class CustomerBillModel {
         : 'Advance Order $orderNo';
   }
 
-  double get dueAmount =>
-      (totalAmount - paidAmount).clamp(0.0, double.infinity);
+  double get dueAmount {
+    final recorded = recordedDueAmount;
+    if (recorded != null) {
+      return recorded.clamp(0.0, double.infinity).toDouble();
+    }
+    return (totalAmount - paidAmount).clamp(0.0, double.infinity).toDouble();
+  }
 
   String get paymentLabel => isPaid
       ? "SETTLED"
@@ -204,6 +225,7 @@ class CustomerLinkedDocumentModel {
   final String documentNo;
   final String operationType;
   final String sourceType;
+  final String sourceNumber;
   final String status;
   final DateTime createdAt;
   final int lineCount;
@@ -218,6 +240,7 @@ class CustomerLinkedDocumentModel {
     required this.documentNo,
     required this.operationType,
     required this.sourceType,
+    this.sourceNumber = '',
     required this.status,
     required this.createdAt,
     this.lineCount = 0,
@@ -468,6 +491,7 @@ class CustomerDueModel {
   final String billNo;
   final double totalAmount;
   final double paidAmount;
+  final double? recordedDueAmount;
   final DateTime billDate;
   final int? sourceAdvanceOrderId;
   final String? sourceAdvanceOrderNo;
@@ -478,6 +502,7 @@ class CustomerDueModel {
     required this.totalAmount,
     required this.paidAmount,
     required this.billDate,
+    this.recordedDueAmount,
     this.sourceAdvanceOrderId,
     this.sourceAdvanceOrderNo,
   });
@@ -486,8 +511,13 @@ class CustomerDueModel {
       sourceAdvanceOrderId != null ||
       (sourceAdvanceOrderNo != null && sourceAdvanceOrderNo!.trim().isNotEmpty);
 
-  double get dueAmount =>
-      (totalAmount - paidAmount).clamp(0.0, double.infinity);
+  double get dueAmount {
+    final recorded = recordedDueAmount;
+    if (recorded != null) {
+      return recorded.clamp(0.0, double.infinity).toDouble();
+    }
+    return (totalAmount - paidAmount).clamp(0.0, double.infinity).toDouble();
+  }
 
   String get formattedDue => "\u20B9 ${dueAmount.toStringAsFixed(0)}";
 

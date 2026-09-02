@@ -1214,6 +1214,12 @@ class PosBillingController extends ChangeNotifier {
           isLessPerPiece: row.lessWeightPerPiece,
         );
         item.addListener(_onChildItemChanged);
+        final unitProfile = PosItemUnitProfile.fromStorageValue(
+          row.quantityUnitCode,
+        );
+        if (unitProfile != null) {
+          item.setUnitProfile(unitProfile);
+        }
         item.descCtrl.text = row.itemName;
         item.pcsCtrl.text = row.quantity.toString();
         item.setHuidText(row.huid ?? '');

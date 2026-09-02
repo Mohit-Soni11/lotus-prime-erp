@@ -844,6 +844,251 @@ void main() {
   );
 
   test(
+    'updateSale blocks returned bills and preserves original invoice items',
+    () async {
+      final firstStockId = await _insertStockItem(db, sku: 'GOLD-LOCK-001');
+      final secondStockId = await _insertStockItem(db, sku: 'GOLD-LOCK-002');
+      final firstItem = _saleItem(
+        stockItemId: firstStockId,
+        sku: 'GOLD-LOCK-001',
+        grossWeight: 8,
+        rate: 100,
+      );
+      final secondItem = _saleItem(
+        stockItemId: secondStockId,
+        sku: 'GOLD-LOCK-002',
+        grossWeight: 12,
+        rate: 100,
+      );
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [firstItem, secondItem],
+        cashPaid: 2000,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+      await db.ensureReturnReversalSchema();
+      await db.customStatement(
+        '''
+        INSERT INTO return_vouchers (
+          voucher_no,
+          operation_type,
+          source_type,
+          source_id,
+          source_number,
+          settlement_mode,
+          original_total_amount,
+          return_value,
+          status,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          'SR-LOCK-0001',
+          'RETURN',
+          'SALES_INVOICE',
+          result.billId,
+          result.invoiceNumber,
+          'CASH_REFUND',
+          2000,
+          800,
+          'POSTED',
+          DateTime(2026, 9, 2).millisecondsSinceEpoch,
+        ],
+      );
+
+      final replacementStockId =
+          await _insertStockItem(db, sku: 'GOLD-LOCK-REPLACEMENT');
+      final replacementItem = _saleItem(
+        stockItemId: replacementStockId,
+        sku: 'GOLD-LOCK-REPLACEMENT',
+        grossWeight: 5,
+        rate: 100,
+      );
+      final editedInvoice = _invoice(
+        invoiceNumber: result.invoiceNumber,
+        saleItems: [replacementItem],
+        cashPaid: 500,
+      );
+
+      await expectLater(
+        repository.updateSale(
+          billId: result.billId,
+          invoice: editedInvoice,
+          customerId: null,
+        ),
+        throwsStateError,
+      );
+
+      final persistedItems = await (db.select(db.billItems)
+            ..where((tbl) => tbl.billId.equals(result.billId))
+            ..orderBy([(tbl) => drift.OrderingTerm.asc(tbl.lineNo)]))
+          .get();
+      expect(persistedItems, hasLength(2));
+      expect(persistedItems.map((row) => row.linkedStockSku), [
+        'GOLD-LOCK-001',
+        'GOLD-LOCK-002',
+      ]);
+
+      final printableItems =
+          await repository.fetchPrintableSaleItems(result.billId);
+      expect(printableItems, hasLength(2));
+      expect(printableItems.map((item) => item.linkedStockSku), [
+        'GOLD-LOCK-001',
+        'GOLD-LOCK-002',
+      ]);
+
+      _disposeItems(
+        saleItems: [firstItem, secondItem, replacementItem, ...printableItems],
+      );
+    },
+  );
+
+  test(
+    'fetchPrintableSaleItems recovers returned lines missing from bill items',
+    () async {
+      final firstStockId = await _insertStockItem(db, sku: 'GOLD-RECOVER-001');
+      final secondStockId = await _insertStockItem(db, sku: 'GOLD-RECOVER-002');
+      final firstItem = _saleItem(
+        stockItemId: firstStockId,
+        sku: 'GOLD-RECOVER-001',
+        grossWeight: 8,
+        rate: 100,
+      );
+      final secondItem = _saleItem(
+        stockItemId: secondStockId,
+        sku: 'GOLD-RECOVER-002',
+        grossWeight: 12,
+        rate: 100,
+      );
+      final invoice = _invoice(
+        invoiceNumber: 'INV-LJ-2026-0001',
+        saleItems: [firstItem, secondItem],
+        cashPaid: 2000,
+      );
+
+      final result = await repository.finalizeSale(
+        invoice: invoice,
+        customerId: null,
+      );
+      await db.ensureReturnReversalSchema();
+      await db.customStatement(
+        '''
+        INSERT INTO return_vouchers (
+          voucher_no,
+          operation_type,
+          source_type,
+          source_id,
+          source_number,
+          settlement_mode,
+          original_total_amount,
+          return_value,
+          status,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          'SR-RECOVER-0001',
+          'RETURN',
+          'SALES_INVOICE',
+          result.billId,
+          result.invoiceNumber,
+          'CASH_REFUND',
+          2000,
+          800,
+          'POSTED',
+          DateTime(2026, 9, 2).millisecondsSinceEpoch,
+        ],
+      );
+      final voucherId = (await db
+              .customSelect('SELECT last_insert_rowid() AS id')
+              .getSingle())
+          .read<int>('id');
+      await db.customStatement(
+        '''
+        INSERT INTO return_voucher_lines (
+          return_voucher_id,
+          source_type,
+          source_id,
+          source_number,
+          source_line_no,
+          stock_disposition,
+          metal_type,
+          item_description,
+          huid,
+          quantity,
+          quantity_unit_code,
+          purity,
+          sold_net_weight,
+          received_net_weight,
+          rate,
+          sold_item_value,
+          available_making_amount,
+          making_returned_amount,
+          metal_return_amount,
+          line_return_value,
+          status,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        [
+          voucherId,
+          'SALES_INVOICE',
+          result.billId,
+          result.invoiceNumber,
+          1,
+          'ADD_STOCK',
+          'GOLD',
+          'Gold Ring',
+          'GOLD-RECOVER-001',
+          1,
+          'PCS',
+          '22KT',
+          8,
+          8,
+          100,
+          800,
+          0,
+          0,
+          800,
+          800,
+          'POSTED',
+          DateTime(2026, 9, 2).millisecondsSinceEpoch,
+        ],
+      );
+
+      await (db.delete(db.billItems)
+            ..where(
+              (tbl) => tbl.billId.equals(result.billId) & tbl.lineNo.equals(1),
+            ))
+          .go();
+
+      final persistedItems = await (db.select(db.billItems)
+            ..where((tbl) => tbl.billId.equals(result.billId)))
+          .get();
+      expect(persistedItems, hasLength(1));
+
+      final printableItems =
+          await repository.fetchPrintableSaleItems(result.billId);
+      expect(printableItems, hasLength(2));
+      expect(printableItems.map((item) => item.linkedStockSku), [
+        null,
+        'GOLD-RECOVER-002',
+      ]);
+      expect(printableItems.first.descCtrl.text, 'Gold Ring');
+      expect(printableItems.first.unitShortName, 'PCS');
+      expect(printableItems.first.totalValue, 800);
+
+      _disposeItems(
+        saleItems: [firstItem, secondItem, ...printableItems],
+      );
+    },
+  );
+
+  test(
     'updateSale restores partial lot cost, wastage and making before re-deducting updated stock',
     () async {
       final lotStockId = await _insertValuedSilverLotStock(db);

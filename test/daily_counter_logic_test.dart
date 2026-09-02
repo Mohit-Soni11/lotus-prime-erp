@@ -155,6 +155,35 @@ void main() {
     expect(data.financeDue.dueCount, '1 Customer');
     expect(data.financeDue.dueAmountRaw, closeTo(0.01, 0.001));
   });
+
+  test('dashboard due counts partially returned bills with remaining due',
+      () async {
+    final now = DateTime.now();
+
+    await _insertBill(
+      database,
+      billNo: 'INV-AJ-2026-RETURN-DUE',
+      billDate: now,
+      customerName: 'Reyansh Soni',
+      mobile: '9304479436',
+      finalAmount: 5000,
+      paidAmount: 3000,
+      dueAmount: 750,
+      paymentStatus: 'PARTIAL',
+      status: 'PARTIALLY_RETURNED',
+    );
+
+    final logic = DailyCounterLogic(db: database);
+    addTearDown(logic.dispose);
+    logic.init();
+
+    final data = await logic.dataStream.first.timeout(
+      const Duration(seconds: 2),
+    );
+
+    expect(data.financeDue.dueCount, '1 Customer');
+    expect(data.financeDue.dueAmountRaw, 750);
+  });
 }
 
 Future<int> _insertBill(
@@ -166,6 +195,8 @@ Future<int> _insertBill(
   String customerName = 'Walk-in Customer',
   String mobile = '9999999999',
   double dueAmount = 0,
+  String? paymentStatus,
+  String status = 'ACTIVE',
 }) {
   return database.into(database.bills).insert(
         BillsCompanion.insert(
@@ -177,8 +208,11 @@ Future<int> _insertBill(
           paidAmount: drift.Value(paidAmount),
           cashPaid: drift.Value(paidAmount),
           dueAmount: drift.Value(dueAmount),
+          paymentStatus: drift.Value(
+            paymentStatus ?? (dueAmount > 0 ? 'PARTIAL' : 'PAID'),
+          ),
           billDate: drift.Value(billDate),
-          status: const drift.Value('ACTIVE'),
+          status: drift.Value(status),
         ),
       );
 }

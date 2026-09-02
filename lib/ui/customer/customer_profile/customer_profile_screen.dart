@@ -19,6 +19,7 @@ import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
+import '../../../repositories/sales_orders/pos/pos_checkout_repository.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -2087,19 +2088,34 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               : 'Edit the sale, preview the invoice, or print a clean copy.',
       linkedDocuments: bill.linkedDocuments,
       actions: [
-        _ProfileRecordAction(
-          icon: Icons.edit_note_rounded,
-          title: 'Edit Sales Bill',
-          subtitle: 'Continue in the sales workspace with this bill selected.',
-          color: CustomerProfileColors.editText,
-          onTap: () {
-            if (widget.onEditBill != null) {
-              widget.onEditBill!(bill.id);
-            } else {
-              _showInfoFeedback('Sales editing is not configured yet.');
-            }
-          },
-        ),
+        if (!bill.hasLinkedDocuments)
+          _ProfileRecordAction(
+            icon: Icons.edit_note_rounded,
+            title: 'Edit Sales Bill',
+            subtitle:
+                'Continue in the sales workspace with this bill selected.',
+            color: CustomerProfileColors.editText,
+            onTap: () {
+              if (widget.onEditBill != null) {
+                widget.onEditBill!(bill.id);
+              } else {
+                _showInfoFeedback('Sales editing is not configured yet.');
+              }
+            },
+          )
+        else
+          _ProfileRecordAction(
+            icon: Icons.lock_rounded,
+            title: 'Original Invoice Locked',
+            subtitle:
+                'Use linked return/reversal documents for changes after posting.',
+            color: CustomerProfileColors.historyText,
+            onTap: () {
+              _showInfoFeedback(
+                'This invoice is locked because a linked return/reversal exists.',
+              );
+            },
+          ),
         _ProfileRecordAction(
           icon: Icons.visibility_rounded,
           title: 'View Invoice',
@@ -2306,7 +2322,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               ),
               const SizedBox(height: 16),
               if (linkedDocuments.isNotEmpty) ...[
-                _linkedDocumentsPanel(linkedDocuments),
+                _linkedDocumentsPanel(linkedDocuments, sheetContext),
                 const SizedBox(height: 14),
               ],
               ...actions.map(
@@ -2321,6 +2337,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   Widget _linkedDocumentsPanel(
     List<CustomerLinkedDocumentModel> linkedDocuments,
+    BuildContext sheetContext,
   ) {
     return Container(
       width: double.infinity,
@@ -2354,88 +2371,129 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             ],
           ),
           const SizedBox(height: 10),
-          ...linkedDocuments.map(_linkedDocumentTile),
+          ...linkedDocuments.map(
+            (document) => _linkedDocumentTile(document, sheetContext),
+          ),
         ],
       ),
     );
   }
 
-  Widget _linkedDocumentTile(CustomerLinkedDocumentModel document) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
+  Widget _linkedDocumentTile(
+    CustomerLinkedDocumentModel document,
+    BuildContext sheetContext,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CustomerProfileColors.bodyBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
+        child: InkWell(
+          onTap: () async {
+            await Navigator.of(sheetContext).maybePop();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              _previewLinkedDocumentPdf(document);
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: BoxDecoration(
-              color: CustomerProfileColors.clearBg,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: CustomerProfileColors.bodyBorder),
             ),
-            child: const Icon(
-              Icons.assignment_return_rounded,
-              size: 18,
-              color: CustomerProfileColors.clearText,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
-                Text(
-                  '${document.documentNo}  |  ${document.documentTitle}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: CustomerProfileColors.bodyTextMain,
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: CustomerProfileColors.clearBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.assignment_return_rounded,
+                    size: 18,
+                    color: CustomerProfileColors.clearText,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  '${document.formattedDate}  |  ${document.lineCountLabel}  |  Making ${document.formattedMakingReturned}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: CustomerProfileColors.bodyTextMuted,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${document.documentNo}  |  ${document.documentTitle}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: CustomerProfileColors.bodyTextMain,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${document.formattedDate}  |  ${document.lineCountLabel}  |  Making ${document.formattedMakingReturned}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: CustomerProfileColors.bodyTextMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      document.formattedReturnValue,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: CustomerProfileColors.bodyTextMain,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    _BillStatusChip(
+                      label: document.statusLabel,
+                      backgroundColor: CustomerProfileColors.clearBg,
+                      textColor: CustomerProfileColors.clearText,
+                    ),
+                  ],
+                ),
+                IconButton(
+                  tooltip: 'Print linked document',
+                  onPressed: () async {
+                    await Navigator.of(sheetContext).maybePop();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      _printLinkedDocumentPdf(document);
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.print_rounded,
+                    size: 17,
+                    color: CustomerProfileColors.historyText,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 30,
+                    minHeight: 30,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                document.formattedReturnValue,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: CustomerProfileColors.bodyTextMain,
-                ),
-              ),
-              const SizedBox(height: 4),
-              _BillStatusChip(
-                label: document.statusLabel,
-                backgroundColor: CustomerProfileColors.clearBg,
-                textColor: CustomerProfileColors.clearText,
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -2516,7 +2574,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       _showInfoFeedback('Sales invoice details could not be loaded.');
       return;
     }
-    final bytes = await _buildSalesInvoicePdfFromWorkspace(billId);
+    final bytes = await _buildSalesInvoicePdfFromWorkspace(
+      billId,
+      detail: detail,
+    );
     if (!mounted) return;
     if (bytes == null) {
       _showInfoFeedback('Sales invoice PDF could not be generated.');
@@ -2532,7 +2593,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       _showInfoFeedback('Sales invoice details could not be loaded.');
       return;
     }
-    final bytes = await _buildSalesInvoicePdfFromWorkspace(billId);
+    final bytes = await _buildSalesInvoicePdfFromWorkspace(
+      billId,
+      detail: detail,
+    );
     if (!mounted) return;
     if (bytes == null) {
       _showInfoFeedback('Sales invoice PDF could not be generated.');
@@ -2544,20 +2608,109 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  Future<Uint8List?> _buildSalesInvoicePdfFromWorkspace(int billId) async {
+  Future<Uint8List?> _buildSalesInvoicePdfFromWorkspace(
+    int billId, {
+    required CustomerBillDetailModel detail,
+  }) async {
     final billingController = PosBillingController();
     final invoiceController = PosInvoiceController(billing: billingController);
     try {
       final loaded = await billingController.initializeForEdit(billId);
       if (!loaded) return null;
+      final printableItems =
+          await PosCheckoutRepository().fetchPrintableSaleItems(billId);
+      if (printableItems.length > billingController.saleItems.length) {
+        for (final item in billingController.saleItems) {
+          item.dispose();
+        }
+        billingController.saleItems
+          ..clear()
+          ..addAll(printableItems);
+      } else {
+        for (final item in printableItems) {
+          item.dispose();
+        }
+      }
       final bytes = await invoiceController.generatePreviewPdfBytes(
         includeAllMetals: true,
+        balanceDueOverride: detail.bill.dueAmount,
       );
       return bytes;
     } finally {
       invoiceController.dispose();
       billingController.dispose();
     }
+  }
+
+  Future<void> _previewLinkedDocumentPdf(
+    CustomerLinkedDocumentModel document,
+  ) async {
+    final bytes = await _buildLinkedDocumentPdf(document);
+    if (!mounted) return;
+    await _showDocumentPreview(pdfBytes: bytes);
+  }
+
+  Future<void> _printLinkedDocumentPdf(
+    CustomerLinkedDocumentModel document,
+  ) {
+    return Printing.layoutPdf(
+      name: '${document.documentNo}_return_settlement.pdf',
+      onLayout: (_) => _buildLinkedDocumentPdf(document),
+    );
+  }
+
+  Future<Uint8List> _buildLinkedDocumentPdf(
+    CustomerLinkedDocumentModel document,
+  ) async {
+    final doc = pw.Document();
+    doc.addPage(
+      pw.MultiPage(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(32),
+        ),
+        build: (context) => [
+          _pdfHeader(document.documentTitle.toUpperCase(), document.documentNo),
+          pw.SizedBox(height: 18),
+          _pdfSectionTitle('Document Link'),
+          pw.SizedBox(height: 8),
+          _pdfInfoGrid([
+            ['Source Invoice', document.sourceNumber],
+            ['Document Status', document.statusLabel],
+            ['Document Date', document.formattedDate],
+            ['Returned Items', document.lineCountLabel],
+            [
+              'Received Net Weight',
+              '${document.netWeight.toStringAsFixed(3)} g'
+            ],
+            ['Return Value', document.formattedReturnValue],
+            ['Making Returned', document.formattedMakingReturned],
+            ['Due Adjusted', document.formattedDueAdjusted],
+            ['Customer Credit', document.formattedCustomerCredit],
+          ]),
+          pw.SizedBox(height: 18),
+          _pdfSectionTitle('Audit Note'),
+          pw.SizedBox(height: 8),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFFF7F3EA),
+              border: pw.Border.all(color: const PdfColor.fromInt(0xFFE1E7F0)),
+              borderRadius: pw.BorderRadius.circular(10),
+            ),
+            child: pw.Text(
+              'Original sales invoice remains locked. This linked document records the return settlement, inventory routing, due adjustment, and customer credit impact.',
+              style: const pw.TextStyle(
+                color: PdfColor.fromInt(0xFF111827),
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return doc.save();
   }
 
   Future<void> _previewGirviInvoice(int loanId) async {

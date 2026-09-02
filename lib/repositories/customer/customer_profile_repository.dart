@@ -65,7 +65,9 @@ class CustomerProfileRepository {
             billNo: bill.billNo,
             totalAmount: bill.finalAmount,
             paidAmount: bill.paidAmount,
+            recordedDueAmount: _authoritativeBillDueAmount(bill),
             status: bill.status,
+            paymentStatus: bill.paymentStatus,
             billDate: bill.billDate,
             sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
             sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,
@@ -167,7 +169,7 @@ class CustomerProfileRepository {
 
       final itemRows = await (_db.select(_db.billItems)
             ..where((t) => t.billId.equals(billId))
-            ..orderBy([(t) => OrderingTerm(expression: t.id)]))
+            ..orderBy([(t) => OrderingTerm(expression: t.lineNo)]))
           .get();
 
       final returnMarkers = await _fetchBillReturnMarkers([bill.id]);
@@ -178,7 +180,9 @@ class CustomerProfileRepository {
         billNo: bill.billNo,
         totalAmount: bill.finalAmount,
         paidAmount: bill.paidAmount,
+        recordedDueAmount: _authoritativeBillDueAmount(bill),
         status: bill.status,
+        paymentStatus: bill.paymentStatus,
         billDate: bill.billDate,
         sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
         sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,
@@ -502,6 +506,7 @@ class CustomerProfileRepository {
           v.voucher_no,
           v.operation_type,
           v.source_type,
+          v.source_number,
           v.status,
           v.created_at,
           v.return_value,
@@ -523,6 +528,7 @@ class CustomerProfileRepository {
           v.voucher_no,
           v.operation_type,
           v.source_type,
+          v.source_number,
           v.status,
           v.created_at,
           v.return_value,
@@ -544,6 +550,7 @@ class CustomerProfileRepository {
           documentNo: row.readNullable<String>('voucher_no') ?? '',
           operationType: row.readNullable<String>('operation_type') ?? '',
           sourceType: row.readNullable<String>('source_type') ?? '',
+          sourceNumber: row.readNullable<String>('source_number') ?? '',
           status: row.readNullable<String>('status') ?? '',
           createdAt: _readEpochDateTime(row, 'created_at'),
           lineCount: row.read<int>('line_count'),
@@ -578,6 +585,21 @@ class CustomerProfileRepository {
     return DateTime.fromMillisecondsSinceEpoch(value);
   }
 
+  double? _authoritativeBillDueAmount(Bill bill) {
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (bill.dueAmount > 0.005 ||
+        paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED' ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return bill.dueAmount;
+    }
+    return null;
+  }
+
   List<CustomerDueModel> _buildDues(List<CustomerBillModel> bills) {
     return bills
         .where((bill) => !bill.isPaid && bill.dueAmount > 0)
@@ -587,6 +609,7 @@ class CustomerProfileRepository {
             billNo: bill.billNo,
             totalAmount: bill.totalAmount,
             paidAmount: bill.paidAmount,
+            recordedDueAmount: bill.dueAmount,
             billDate: bill.billDate,
             sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
             sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,

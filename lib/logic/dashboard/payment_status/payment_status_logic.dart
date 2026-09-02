@@ -56,6 +56,11 @@ class PaymentStatusLogic extends ChangeNotifier {
   static const int _kVisibleLimit = 3; // Collapsed mein
   static const int _kExpandedLimit = 10; // Expanded mein
   static const int _kFetchLimit = 10; // DB se kitne lao
+  static const List<String> _billLifecycleStatuses = [
+    'ACTIVE',
+    'PARTIALLY_RETURNED',
+    'RETURNED',
+  ];
 
   // Kitne bills dikhenge currently
   int get visibleCount => _isExpanded ? _kExpandedLimit : _kVisibleLimit;
@@ -69,7 +74,7 @@ class PaymentStatusLogic extends ChangeNotifier {
   void _startLiveWatch() {
     // Recent bills watch — latest pehle, limit se zyada mat lao
     final query = _db.select(_db.bills)
-      ..where((t) => t.status.equals('ACTIVE'))
+      ..where((t) => t.status.isIn(_billLifecycleStatuses))
       ..orderBy([
         (t) => OrderingTerm.desc(t.updatedAt),
         (t) => OrderingTerm.desc(t.billDate),
@@ -180,9 +185,22 @@ class PaymentStatusLogic extends ChangeNotifier {
   }
 
   double _currentDue(Bill bill) {
-    final computed = bill.finalAmount - bill.paidAmount;
-    final due = bill.dueAmount > 0.5 ? bill.dueAmount : computed;
-    return due.clamp(0.0, double.infinity).toDouble();
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED') {
+      return 0;
+    }
+    if (bill.dueAmount > 0.5 ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
+    }
+    return (bill.finalAmount - bill.paidAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
   PaymentStatus _statusFromDue({

@@ -38,6 +38,11 @@ class DailyCounterLogic {
   DailyCounterLogic({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   static const double _amountTolerance = 0.005;
+  static const List<String> _billLifecycleStatuses = [
+    'ACTIVE',
+    'PARTIALLY_RETURNED',
+    'RETURNED',
+  ];
 
   // Stream controller
   final _controller = StreamController<DailyCounterModel>.broadcast();
@@ -135,7 +140,7 @@ class DailyCounterLogic {
     final todayBills = await (_db.select(_db.bills)
           ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
           ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
-          ..where((t) => t.status.equals('ACTIVE')))
+          ..where((t) => t.status.isIn(_billLifecycleStatuses)))
         .get();
 
     final todayBillIds = todayBills.map((b) => b.id).toList();
@@ -200,17 +205,14 @@ class DailyCounterLogic {
     final todayBills = await (_db.select(_db.bills)
           ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
           ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
-          ..where((t) => t.status.equals('ACTIVE')))
+          ..where((t) => t.status.isIn(_billLifecycleStatuses)))
         .get();
 
     final dueCustomers = <String>{};
     double dueTotal = 0;
 
     for (final bill in todayBills) {
-      final computedDue = bill.finalAmount - bill.paidAmount;
-      final due = bill.dueAmount > _amountTolerance
-          ? bill.dueAmount
-          : computedDue.clamp(0.0, double.infinity).toDouble();
+      final due = _currentDue(bill);
       if (due > _amountTolerance) {
         dueCustomers.add(_dueCustomerKey(bill));
         dueTotal += due;
@@ -271,6 +273,25 @@ class DailyCounterLogic {
     final name = bill.customerName?.trim();
     if (name != null && name.isNotEmpty) return 'N:$name';
     return 'B:${bill.id}';
+  }
+
+  double _currentDue(Bill bill) {
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED') {
+      return 0;
+    }
+    if (bill.dueAmount > _amountTolerance ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
+    }
+    return (bill.finalAmount - bill.paidAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
   // ==========================================

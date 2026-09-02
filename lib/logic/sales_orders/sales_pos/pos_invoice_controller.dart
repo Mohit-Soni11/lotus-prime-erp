@@ -955,12 +955,18 @@ class PosInvoiceController extends ChangeNotifier {
   Future<Uint8List?> generatePreviewPdfBytes({
     PrintFormat format = PrintFormat.a4,
     bool includeAllMetals = true,
+    double? balanceDueOverride,
   }) async {
     selectedFormat = format;
     await generateInvoice();
-    final currentInvoice = invoice;
+    var currentInvoice = invoice;
     if (currentInvoice == null || genState == InvoiceGenState.error) {
       return null;
+    }
+    if (balanceDueOverride != null) {
+      currentInvoice = currentInvoice.copyWith(
+        balanceDue: balanceDueOverride.clamp(0.0, double.infinity).toDouble(),
+      );
     }
     return _buildPdf(
       currentInvoice,

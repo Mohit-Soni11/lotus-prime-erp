@@ -70,7 +70,9 @@ void main() {
             customerName: const Value('Reyansh Soni'),
             mobile: const Value('9304479436'),
             finalAmount: const Value(49385.07),
-            paidAmount: const Value(49385.07),
+            paidAmount: const Value(45000),
+            dueAmount: const Value(0),
+            paymentStatus: const Value('PAID'),
             billDate: Value(DateTime(2026, 8, 22)),
             status: const Value('ACTIVE'),
           ),
@@ -191,6 +193,7 @@ void main() {
 
     expect(profile == null, isFalse);
     final bill = profile!.bills.single;
+    expect(bill.dueAmount, 0);
     expect(bill.paymentLabel, 'SETTLED');
     expect(bill.lifecycleLabel, 'PARTIAL RETURN');
     expect(bill.lineCount, 2);
@@ -201,6 +204,7 @@ void main() {
     expect(bill.linkedDocumentSummary, 'Linked SR-26-00001');
     expect(bill.linkedDocuments, hasLength(1));
     expect(bill.linkedDocuments.single.documentTitle, 'Sales Return Voucher');
+    expect(bill.linkedDocuments.single.sourceNumber, 'AJ-26-008');
     expect(bill.linkedDocuments.single.lineCount, 1);
     expect(bill.linkedDocuments.single.returnValue, 18050);
     expect(bill.linkedDocuments.single.statusLabel, 'POSTED');

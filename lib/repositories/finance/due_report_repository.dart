@@ -4,6 +4,12 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/finance/due_report/due_report_model.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
+const List<String> _dueEligibleBillStatuses = [
+  'ACTIVE',
+  'PARTIALLY_RETURNED',
+  'RETURNED',
+];
+
 class DueReportRepository {
   final AppDatabase _db;
 
@@ -32,7 +38,7 @@ class DueReportRepository {
         _db.customers.id.equalsExp(_db.bills.customerId),
       ),
     ])
-      ..where(_db.bills.status.equals('ACTIVE'))
+      ..where(_db.bills.status.isIn(_dueEligibleBillStatuses))
       ..orderBy([
         OrderingTerm.desc(_db.bills.billDate),
         OrderingTerm.desc(_db.bills.id),
@@ -47,8 +53,7 @@ class DueReportRepository {
       final bill = row.readTable(_db.bills);
       final customer = row.readTableOrNull(_db.customers);
 
-      final computedDue = _positive(bill.finalAmount - bill.paidAmount);
-      final dueAmount = bill.dueAmount > 0.5 ? bill.dueAmount : computedDue;
+      final dueAmount = _currentDue(bill);
       if (dueAmount <= 0.5) continue;
 
       final customerName = _firstText([
@@ -90,6 +95,23 @@ class DueReportRepository {
   }
 
   double _positive(double amount) => amount < 0 ? 0 : amount;
+
+  double _currentDue(Bill bill) {
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED') {
+      return 0;
+    }
+    if (bill.dueAmount > 0.5 ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return _positive(bill.dueAmount);
+    }
+    return _positive(bill.finalAmount - bill.paidAmount);
+  }
 
   String _addressFor(Customer? customer, String city) {
     if (customer == null) return city;

@@ -82,20 +82,19 @@ class CustomerListRepository {
       final aggregate = aggregates[customerId]!;
       final status = bill.status.trim().toUpperCase();
       final isCancelled = status == 'CANCELLED' || status == 'VOID';
-      final dueAmount =
-          (bill.finalAmount - bill.paidAmount).clamp(0.0, double.infinity);
+      final dueAmount = _billDueAmount(bill);
 
       if (!isCancelled) {
         aggregate.billCount += 1;
         aggregate.invoiceValue += bill.finalAmount;
-        aggregate.dueAmount += dueAmount.toDouble();
+        aggregate.dueAmount += dueAmount;
       }
 
       final billLabel = bill.sourceAdvanceOrderNo?.trim().isNotEmpty == true
           ? "Advance invoice ${bill.billNo}"
           : "Invoice ${bill.billNo}";
       final detail = dueAmount > 0.01
-          ? "Due ${_formatMoney(dueAmount.toDouble())}"
+          ? "Due ${_formatMoney(dueAmount)}"
           : "Sales bill settled";
 
       aggregate.touch(
@@ -228,6 +227,25 @@ class CustomerListRepository {
     if (dates.isEmpty) return DateTime.now();
     dates.sort((a, b) => b.compareTo(a));
     return dates.first;
+  }
+
+  double _billDueAmount(Bill bill) {
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED') {
+      return 0;
+    }
+    if (bill.dueAmount > 0.005 ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
+    }
+    return (bill.finalAmount - bill.paidAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
   static String _formatMoney(double value) {

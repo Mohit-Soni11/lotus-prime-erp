@@ -7,6 +7,12 @@ import '../../models/finance/due_collection_entry/due_collection_entry_model.dar
 import '../setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
+const List<String> _dueEligibleBillStatuses = [
+  'ACTIVE',
+  'PARTIALLY_RETURNED',
+  'RETURNED',
+];
+
 class DueCollectionEntryRepository {
   final AppDatabase _db;
   final ShopDatabaseHelper _shopDbHelper = ShopDatabaseHelper();
@@ -55,7 +61,8 @@ class DueCollectionEntryRepository {
           )
           .toList();
     } catch (e) {
-      AppLogger.debug('DueCollectionEntryRepository.fetchBankAccounts error: $e');
+      AppLogger.debug(
+          'DueCollectionEntryRepository.fetchBankAccounts error: $e');
       return [];
     }
   }
@@ -127,7 +134,8 @@ class DueCollectionEntryRepository {
       );
       return accountId;
     } catch (e) {
-      AppLogger.debug('DueCollectionEntryRepository.createPaymentAccount error: $e');
+      AppLogger.debug(
+          'DueCollectionEntryRepository.createPaymentAccount error: $e');
       return null;
     }
   }
@@ -305,7 +313,7 @@ class DueCollectionEntryRepository {
         _db.customers.id.equalsExp(_db.bills.customerId),
       ),
     ])
-      ..where(_db.bills.status.equals('ACTIVE'))
+      ..where(_db.bills.status.isIn(_dueEligibleBillStatuses))
       ..orderBy([
         OrderingTerm.desc(_db.bills.billDate),
         OrderingTerm.desc(_db.bills.id),
@@ -655,9 +663,22 @@ class DueCollectionEntryRepository {
   }
 
   double _currentDue(Bill bill) {
-    final computed = bill.finalAmount - bill.paidAmount;
-    final due = bill.dueAmount > 0.5 ? bill.dueAmount : computed;
-    return due < 0 ? 0 : due;
+    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
+    if (paymentStatus == 'PAID' ||
+        paymentStatus == 'SETTLED' ||
+        paymentStatus == 'COMPLETE' ||
+        paymentStatus == 'COMPLETED') {
+      return 0;
+    }
+    if (bill.dueAmount > 0.5 ||
+        paymentStatus == 'PARTIAL' ||
+        paymentStatus == 'DUE' ||
+        paymentStatus == 'UNPAID') {
+      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
+    }
+    return (bill.finalAmount - bill.paidAmount)
+        .clamp(0.0, double.infinity)
+        .toDouble();
   }
 
   String _addressFor(Customer? customer, String city) {
