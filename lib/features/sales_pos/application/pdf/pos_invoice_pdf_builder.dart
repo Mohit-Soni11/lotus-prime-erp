@@ -26,6 +26,8 @@ class PosInvoicePdfBuildOptions {
   final bool includeAllMetals;
   final String templateId;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final String watermarkText;
+  final PdfColor watermarkColor;
 
   const PosInvoicePdfBuildOptions({
     required this.format,
@@ -35,6 +37,8 @@ class PosInvoicePdfBuildOptions {
     this.templateId = PrintTemplateRegistry.defaultTemplateId,
     this.activeMetal,
     this.includeAllMetals = false,
+    this.watermarkText = '',
+    this.watermarkColor = PdfColors.red,
   });
 }
 
@@ -426,8 +430,12 @@ class _PosInvoicePdfDocumentBuilder {
         pageTheme: pw.PageTheme(
           pageFormat: pageFormat,
           margin: const pw.EdgeInsets.all(6),
-          buildBackground: includeDuplicateStamp
-              ? (_) => pw.Center(child: _duplicateWatermark(fontSize: 25))
+          buildBackground: _hasPageWatermark(includeDuplicateStamp)
+              ? (_) => pw.Center(
+                    child: options.watermarkText.trim().isNotEmpty
+                        ? _statusWatermark(fontSize: 25)
+                        : _duplicateWatermark(fontSize: 25),
+                  )
               : null,
         ),
         build: (_) => [_buildThermalLayout(invoice, format)],
@@ -447,11 +455,13 @@ class _PosInvoicePdfDocumentBuilder {
             invoice,
             includePolicyBlock: false,
           );
-          if (includeDuplicateStamp) {
+          if (_hasPageWatermark(includeDuplicateStamp)) {
             return pw.Stack(
               alignment: pw.Alignment.center,
               children: [
-                _duplicateWatermark(fontSize: 60),
+                if (options.watermarkText.trim().isNotEmpty)
+                  _statusWatermark(fontSize: 64),
+                if (includeDuplicateStamp) _duplicateWatermark(fontSize: 60),
                 layout,
               ],
             );
@@ -492,9 +502,11 @@ class _PosInvoicePdfDocumentBuilder {
         pageTheme: pw.PageTheme(
           pageFormat: pageFormat,
           margin: const pw.EdgeInsets.all(28),
-          buildBackground: includeDuplicateStamp
+          buildBackground: _hasPageWatermark(includeDuplicateStamp)
               ? (_) => pw.Center(
-                    child: _duplicateWatermark(fontSize: 60),
+                    child: options.watermarkText.trim().isNotEmpty
+                        ? _statusWatermark(fontSize: 64)
+                        : _duplicateWatermark(fontSize: 60),
                   )
               : null,
         ),
@@ -504,6 +516,27 @@ class _PosInvoicePdfDocumentBuilder {
           invoice,
           entries,
           bodyWidth: _fallbackPolicyBodyWidth(pageFormat),
+        ),
+      ),
+    );
+  }
+
+  bool _hasPageWatermark(bool includeDuplicateStamp) {
+    return includeDuplicateStamp || options.watermarkText.trim().isNotEmpty;
+  }
+
+  pw.Widget _statusWatermark({required double fontSize}) {
+    return pw.Opacity(
+      opacity: 0.10,
+      child: pw.Transform.rotate(
+        angle: -0.45,
+        child: pw.Text(
+          options.watermarkText.trim().toUpperCase(),
+          style: pw.TextStyle(
+            color: options.watermarkColor,
+            fontSize: fontSize,
+            fontWeight: pw.FontWeight.bold,
+          ),
         ),
       ),
     );

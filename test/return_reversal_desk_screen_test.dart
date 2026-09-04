@@ -196,6 +196,56 @@ void main() {
         ReturnReversalSourceDocumentType.advanceBooking);
   });
 
+  test('return workspace can post once and reset for a fresh workflow',
+      () async {
+    final repository = _ProcessTrackingReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-PUR-2026-0006';
+    await controller.searchRecords();
+    controller.addLineToReturnCart(1);
+
+    expect(await controller.postCurrentWorkspaceIfNeeded(), isTrue);
+    expect(controller.isCurrentWorkspacePosted, isTrue);
+    expect(repository.processCount, 1);
+
+    expect(await controller.postCurrentWorkspaceIfNeeded(), isTrue);
+    expect(repository.processCount, 1);
+
+    controller.startNewWorkspace();
+
+    expect(controller.isCurrentWorkspacePosted, isFalse);
+    expect(controller.customerMobileCtrl.text, isEmpty);
+    expect(controller.customerNameCtrl.text, isEmpty);
+    expect(controller.sourceDocumentNumberCtrl.text, isEmpty);
+    expect(controller.customerAddressCtrl.text, isEmpty);
+    expect(controller.state.selectedSourceDocument, isNull);
+    expect(controller.state.returnCartLineNumbers, isEmpty);
+    expect(controller.state.processMessage, isNull);
+  });
+
+  test('new workspace reset preserves cancellation setup mode', () {
+    final controller = ReturnReversalController(
+      repository: _TestReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    controller.selectOperationType(
+      ReturnReversalOperationType.bookingCancellation,
+    );
+    controller.customerMobileCtrl.text = '9304479436';
+
+    controller.startNewWorkspace();
+
+    expect(
+      controller.state.operationType,
+      ReturnReversalOperationType.bookingCancellation,
+    );
+    expect(controller.customerMobileCtrl.text, isEmpty);
+    expect(controller.state.selectedSourceDocument, isNull);
+  });
+
   testWidgets('booking cancellation skips stock routing and prepares refund',
       (tester) async {
     final repository = _AllSourceTypesReturnReversalRepository();
@@ -843,11 +893,13 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
 class _ProcessTrackingReturnReversalRepository
     extends _TestReturnReversalRepository {
   ReturnReversalProcessRequest? lastRequest;
+  int processCount = 0;
 
   @override
   Future<ReturnReversalProcessResult> processReturn(
     ReturnReversalProcessRequest request,
   ) async {
+    processCount++;
     lastRequest = request;
     return const ReturnReversalProcessResult(
       voucherId: 99,

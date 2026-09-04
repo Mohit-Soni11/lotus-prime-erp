@@ -29,6 +29,39 @@ class ReturnReversalController extends ChangeNotifier {
 
   ReturnReversalState get state => _state;
 
+  bool get isCurrentWorkspacePosted => _state.lastProcessResult != null;
+
+  Future<bool> postCurrentWorkspaceIfNeeded() async {
+    if (isCurrentWorkspacePosted) {
+      return true;
+    }
+    await processReturn();
+    return isCurrentWorkspacePosted;
+  }
+
+  void startNewWorkspace() {
+    customerMobileCtrl.clear();
+    customerNameCtrl.clear();
+    sourceDocumentNumberCtrl.clear();
+    customerAddressCtrl.clear();
+    _setState(
+      _state.copyWith(
+        lookupResult: const ReturnReversalLookupResult.empty(),
+        activeWorkflowStep: ReturnReversalWorkflowStep.invoiceItems,
+        isProcessing: false,
+        isSearching: false,
+        clearSelectedSourceDocument: true,
+        clearReturnCartLineNumbers: true,
+        clearActiveInspectionLineNo: true,
+        clearLineInspectionDrafts: true,
+        clearLastProcessResult: true,
+        clearError: true,
+        clearLookupMessage: true,
+        clearProcessMessage: true,
+      ),
+    );
+  }
+
   Future<void> load() async {
     _setState(_state.copyWith(isLoading: true, clearError: true));
 

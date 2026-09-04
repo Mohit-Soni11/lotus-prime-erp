@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
+import 'package:lotus_erp/features/sales/return_reversal/presentation/screens/return_reversal_voucher_preview_screen.dart';
 import 'package:lotus_erp/theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
 class ReturnReversalInvoiceSummaryPanel extends StatelessWidget {
@@ -1139,6 +1141,13 @@ class _SummaryActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = controller.state;
     final canProcess = state.hasReturnCartLineItems && !state.isProcessing;
+    final hasReturnedLines =
+        state.invoiceLineItems.any((lineItem) => lineItem.isReversed);
+    final canGenerateVoucher = state.selectedSourceDocument != null &&
+        !state.isProcessing &&
+        (state.hasReturnCartLineItems ||
+            hasReturnedLines ||
+            state.lastProcessResult != null);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1163,7 +1172,24 @@ class _SummaryActions extends StatelessWidget {
           onPressed: controller.processReturn,
         ),
         const SizedBox(height: 10),
-        const _SecondarySummaryButton(label: 'Preview Document'),
+        _SecondarySummaryButton(
+          label: 'Generate Voucher',
+          enabled: canGenerateVoucher,
+          onPressed: () {
+            if (state.selectedSourceDocument == null) {
+              AppFeedback.show(
+                context,
+                type: AppFeedbackType.error,
+                message: 'Select a return or cancellation source first.',
+              );
+              return;
+            }
+            ReturnReversalVoucherPreviewScreen.push(
+              context,
+              controller: controller,
+            );
+          },
+        ),
       ],
     );
   }
@@ -1311,16 +1337,22 @@ class _ProcessMessageBar extends StatelessWidget {
 
 class _SecondarySummaryButton extends StatelessWidget {
   final String label;
+  final bool enabled;
+  final VoidCallback onPressed;
 
-  const _SecondarySummaryButton({required this.label});
+  const _SecondarySummaryButton({
+    required this.label,
+    required this.enabled,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 42,
       child: OutlinedButton.icon(
-        onPressed: null,
-        icon: const Icon(Icons.visibility_rounded, size: 18),
+        onPressed: enabled ? onPressed : null,
+        icon: const Icon(Icons.receipt_long_rounded, size: 18),
         label: Text(label),
         style: OutlinedButton.styleFrom(
           disabledForegroundColor: SalesPosColors.textDark,

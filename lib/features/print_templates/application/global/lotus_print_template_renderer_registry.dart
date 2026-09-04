@@ -1109,6 +1109,9 @@ class _LotusDocumentLayoutEngine {
     if (document.showLegalSignatureFooter) {
       return pw.Inseparable(child: _legalSignatureFooter(context));
     }
+    if (document.footerMessage.trim().isEmpty) {
+      return pw.SizedBox();
+    }
     return pw.Column(
       children: [
         pw.SizedBox(height: 12),
