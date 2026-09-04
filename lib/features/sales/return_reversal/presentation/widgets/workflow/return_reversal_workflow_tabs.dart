@@ -6,9 +6,36 @@ import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profi
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_workflow_step.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/theme/sales/sales_pos_theme/sales_pos_theme.dart';
+
+extension _ReturnReversalWorkflowStepIcon on ReturnReversalWorkflowStep {
+  IconData get icon {
+    return switch (this) {
+      ReturnReversalWorkflowStep.invoiceItems => Icons.receipt_long_rounded,
+      ReturnReversalWorkflowStep.verification => Icons.verified_rounded,
+      ReturnReversalWorkflowStep.weightCheck => Icons.scale_rounded,
+      ReturnReversalWorkflowStep.valuation => Icons.currency_rupee_rounded,
+      ReturnReversalWorkflowStep.stockRouting => Icons.account_tree_rounded,
+      ReturnReversalWorkflowStep.settlement =>
+        Icons.account_balance_wallet_rounded,
+      ReturnReversalWorkflowStep.finish => Icons.task_alt_rounded,
+    };
+  }
+}
+
+extension _ReturnReversalStockRouteIcon on ReturnReversalStockRoute {
+  IconData get icon {
+    return switch (this) {
+      ReturnReversalStockRoute.addToStock => Icons.inventory_2_rounded,
+      ReturnReversalStockRoute.melting => Icons.local_fire_department_rounded,
+      ReturnReversalStockRoute.managerHold =>
+        Icons.admin_panel_settings_rounded,
+    };
+  }
+}
 
 class ReturnReversalWorkflowTabs extends StatelessWidget {
   final ReturnReversalController controller;
@@ -20,9 +47,12 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final invoiceItems = controller.state.invoiceLineItems;
-    final activeLineItem = controller.state.activeInspectionLineItem;
-    final activeDraft = controller.state.activeInspectionDraft;
+    final state = controller.state;
+    final sourceDocument = state.selectedSourceDocument;
+    final invoiceItems = state.invoiceLineItems;
+    final activeLineItem = state.activeInspectionLineItem;
+    final activeDraft = state.activeInspectionDraft;
+    final isBookingCancellation = state.operationType.isBookingCancellation;
 
     return Container(
       decoration: BoxDecoration(
@@ -43,14 +73,17 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _WorkflowHeader(
+              operationType: state.operationType,
               itemCount: invoiceItems.length,
-              cartCount: controller.state.returnCartLineNumbers.length,
-              activeStep: controller.state.activeWorkflowStep,
+              cartCount: state.returnCartLineNumbers.length,
+              activeStep: state.activeWorkflowStep,
               onStepSelected: controller.selectWorkflowStep,
             ),
             const SizedBox(height: 12),
             if (invoiceItems.isEmpty)
-              const _EmptyWorkflowState()
+              _EmptyWorkflowState(isBookingCancellation: isBookingCancellation)
+            else if (isBookingCancellation)
+              _BookingCancellationPanel(controller: controller)
             else
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -64,11 +97,14 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
                           invoiceItems: invoiceItems,
                         ),
                         const SizedBox(height: 12),
-                        _ActiveReturnInspectionPanel(
-                          controller: controller,
-                          lineItem: activeLineItem,
-                          draft: activeDraft,
-                        ),
+                        activeLineItem == null
+                            ? const _CompletedWorkflowState()
+                            : _ActiveReturnInspectionPanel(
+                                controller: controller,
+                                sourceDocument: sourceDocument,
+                                lineItem: activeLineItem,
+                                draft: activeDraft,
+                              ),
                       ],
                     );
                   }
@@ -85,11 +121,14 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
                       ),
                       const SizedBox(width: 14),
                       Expanded(
-                        child: _ActiveReturnInspectionPanel(
-                          controller: controller,
-                          lineItem: activeLineItem,
-                          draft: activeDraft,
-                        ),
+                        child: activeLineItem == null
+                            ? const _CompletedWorkflowState()
+                            : _ActiveReturnInspectionPanel(
+                                controller: controller,
+                                sourceDocument: sourceDocument,
+                                lineItem: activeLineItem,
+                                draft: activeDraft,
+                              ),
                       ),
                     ],
                   );
@@ -103,12 +142,14 @@ class ReturnReversalWorkflowTabs extends StatelessWidget {
 }
 
 class _WorkflowHeader extends StatelessWidget {
+  final ReturnReversalOperationType operationType;
   final int itemCount;
   final int cartCount;
   final ReturnReversalWorkflowStep activeStep;
   final ValueChanged<ReturnReversalWorkflowStep> onStepSelected;
 
   const _WorkflowHeader({
+    required this.operationType,
     required this.itemCount,
     required this.cartCount,
     required this.activeStep,
@@ -117,6 +158,20 @@ class _WorkflowHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isBookingCancellation = operationType.isBookingCancellation;
+    final title =
+        isBookingCancellation ? 'CANCELLATION WORKFLOW' : 'RETURN WORKFLOW';
+    final subtitle = isBookingCancellation
+        ? '$itemCount booking line${itemCount == 1 ? '' : 's'} loaded | advance settlement'
+        : '$itemCount invoice item${itemCount == 1 ? '' : 's'} loaded | $cartCount in return cart';
+    final steps = isBookingCancellation
+        ? const [
+            ReturnReversalWorkflowStep.invoiceItems,
+            ReturnReversalWorkflowStep.settlement,
+            ReturnReversalWorkflowStep.finish,
+          ]
+        : ReturnReversalWorkflowStep.values;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -143,15 +198,15 @@ class _WorkflowHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'RETURN WORKFLOW',
+                  Text(
+                    title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: SalesPosStyles.highVisHeader,
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '$itemCount invoice item${itemCount == 1 ? '' : 's'} loaded | $cartCount in return cart',
+                    subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: SalesPosStyles.bodyText.copyWith(
@@ -169,9 +224,17 @@ class _WorkflowHeader extends StatelessWidget {
           spacing: 7,
           runSpacing: 7,
           children: [
-            for (final step in ReturnReversalWorkflowStep.values)
+            for (final step in steps)
               _StageChip(
                 step: step,
+                label: isBookingCancellation &&
+                        step == ReturnReversalWorkflowStep.invoiceItems
+                    ? 'Booking'
+                    : step.label,
+                subtitle: isBookingCancellation &&
+                        step == ReturnReversalWorkflowStep.invoiceItems
+                    ? 'Advance source'
+                    : step.subtitle,
                 active: step == activeStep,
                 onTap: () => onStepSelected(step),
               ),
@@ -184,11 +247,15 @@ class _WorkflowHeader extends StatelessWidget {
 
 class _StageChip extends StatelessWidget {
   final ReturnReversalWorkflowStep step;
+  final String label;
+  final String subtitle;
   final bool active;
   final VoidCallback onTap;
 
   const _StageChip({
     required this.step,
+    required this.label,
+    required this.subtitle,
     required this.active,
     required this.onTap,
   });
@@ -197,7 +264,7 @@ class _StageChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active ? SalesPosColors.success : SalesPosColors.textDark;
     return Tooltip(
-      message: step.subtitle,
+      message: subtitle,
       waitDuration: const Duration(milliseconds: 300),
       child: InkWell(
         onTap: onTap,
@@ -225,7 +292,7 @@ class _StageChip extends StatelessWidget {
               Icon(step.icon, color: color, size: 16),
               const SizedBox(width: 6),
               Text(
-                step.label,
+                label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: SalesPosStyles.caption.copyWith(
@@ -286,11 +353,120 @@ class _SelectedItemQueue extends StatelessWidget {
   }
 }
 
+class _BookingCancellationPanel extends StatelessWidget {
+  final ReturnReversalController controller;
+
+  const _BookingCancellationPanel({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final document = controller.state.selectedSourceDocument;
+    final lineItem =
+        document?.lineItems.isEmpty ?? true ? null : document!.lineItems.first;
+    if (document == null || lineItem == null) {
+      return const _EmptyWorkflowState(isBookingCancellation: true);
+    }
+
+    final refundValue = document.paidAmount > 0
+        ? document.paidAmount
+        : lineItem.displayLineTotal;
+    final status =
+        lineItem.isReversed ? _processedLineLabel(lineItem) : 'READY';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SalesPosColors.bodyBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _WorkflowSection(
+            title: 'Booking',
+            icon: Icons.event_note_rounded,
+            child: _SnapshotBand(
+              label: 'Booking Identity',
+              children: [
+                _SnapshotChip(
+                  label: 'Booking No.',
+                  value: document.documentNo,
+                  width: 220,
+                ),
+                _SnapshotChip(label: 'Customer', value: document.customerName),
+                _SnapshotChip(
+                  label: 'Metal',
+                  value: _metalLabel(lineItem.metalType),
+                ),
+                _SnapshotChip(label: 'Item', value: lineItem.description),
+                _SnapshotChip(
+                  label: 'Order Status',
+                  value: _emptyAsDash(lineItem.status),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          _WorkflowSection(
+            title: 'Advance Settlement',
+            icon: Icons.account_balance_wallet_rounded,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 620;
+                final width = compact
+                    ? constraints.maxWidth
+                    : math.max(180.0, (constraints.maxWidth - 24) / 4);
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    SizedBox(
+                      width: width,
+                      child: _MetricBox(
+                        label: 'Booking Amount',
+                        value: _formatCurrency(document.finalAmount),
+                      ),
+                    ),
+                    SizedBox(
+                      width: width,
+                      child: _MetricBox(
+                        label: 'Advance Paid',
+                        value: _formatCurrency(document.paidAmount),
+                      ),
+                    ),
+                    SizedBox(
+                      width: width,
+                      child: _MetricBox(
+                        label: 'Refund Value',
+                        value: _formatCurrency(refundValue),
+                        highlight: true,
+                      ),
+                    ),
+                    SizedBox(
+                      width: width,
+                      child: _MetricBox(
+                        label: 'Cancellation',
+                        value: status,
+                        highlight: !lineItem.isReversed,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _QueueItemTile extends StatelessWidget {
   final ReturnReversalSourceLineItem lineItem;
   final bool active;
   final bool inCart;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _QueueItemTile({
     required this.lineItem,
@@ -311,16 +487,20 @@ class _QueueItemTile extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: active
-              ? SalesPosColors.success.withValues(alpha: 0.08)
+              ? (processed
+                  ? SalesPosColors.danger.withValues(alpha: 0.06)
+                  : SalesPosColors.success.withValues(alpha: 0.08))
               : processed
-                  ? SalesPosColors.bodyBg
+                  ? SalesPosColors.danger.withValues(alpha: 0.04)
                   : SalesPosColors.bodyPanelBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: active
-                ? SalesPosColors.success.withValues(alpha: 0.42)
+                ? (processed
+                    ? SalesPosColors.danger.withValues(alpha: 0.42)
+                    : SalesPosColors.success.withValues(alpha: 0.42))
                 : processed
-                    ? SalesPosColors.success.withValues(alpha: 0.26)
+                    ? SalesPosColors.danger.withValues(alpha: 0.30)
                     : SalesPosColors.bodyBorder,
             width: active ? 1.5 : 1,
           ),
@@ -379,6 +559,7 @@ class _QueueItemTile extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             _QueueStatusBadge(
+              label: _processedLineLabel(lineItem),
               inCart: inCart,
               processed: processed,
             ),
@@ -417,10 +598,12 @@ class _QueueMetaChip extends StatelessWidget {
 }
 
 class _QueueStatusBadge extends StatelessWidget {
+  final String label;
   final bool inCart;
   final bool processed;
 
   const _QueueStatusBadge({
+    required this.label,
     required this.inCart,
     required this.processed,
   });
@@ -428,7 +611,7 @@ class _QueueStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = processed
-        ? SalesPosColors.success
+        ? SalesPosColors.danger
         : inCart
             ? SalesPosColors.success
             : SalesPosColors.warning;
@@ -441,7 +624,7 @@ class _QueueStatusBadge extends StatelessWidget {
       ),
       child: Text(
         processed
-            ? 'POSTED'
+            ? label
             : inCart
                 ? 'ADDED'
                 : 'PENDING',
@@ -456,11 +639,13 @@ class _QueueStatusBadge extends StatelessWidget {
 
 class _ActiveReturnInspectionPanel extends StatelessWidget {
   final ReturnReversalController controller;
+  final ReturnReversalSourceDocument? sourceDocument;
   final ReturnReversalSourceLineItem? lineItem;
   final ReturnReversalLineInspectionDraft? draft;
 
   const _ActiveReturnInspectionPanel({
     required this.controller,
+    required this.sourceDocument,
     required this.lineItem,
     required this.draft,
   });
@@ -469,16 +654,31 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final item = lineItem;
     final inspectionDraft = draft;
+    final document = sourceDocument;
     if (item == null || inspectionDraft == null) {
-      return const _EmptyWorkflowState();
+      return const _EmptyWorkflowState(isBookingCancellation: false);
     }
 
+    final readOnly = item.isReversed;
     final ratio = _receivedWeightRatio(item, inspectionDraft);
     final adjustedLineValue = item.displayLineTotal * ratio;
     final adjustedMaking = item.makingAmount * ratio;
-    final metalReturnValue = math.max(0.0, adjustedLineValue - adjustedMaking);
-    final returnAmount = metalReturnValue +
-        (inspectionDraft.includeMakingCharge ? adjustedMaking : 0);
+    final metalReturnValue = (readOnly
+            ? item.reversalMetalReturnAmount ??
+                math.max(0.0, adjustedLineValue - adjustedMaking)
+            : math.max(0.0, adjustedLineValue - adjustedMaking))
+        .toDouble();
+    final makingReturnValue = (readOnly
+            ? item.reversalMakingReturnedAmount ?? 0
+            : inspectionDraft.includeMakingCharge
+                ? adjustedMaking
+                : 0)
+        .toDouble();
+    final returnAmount = (readOnly
+            ? item.reversalLineReturnValue ??
+                metalReturnValue + makingReturnValue
+            : metalReturnValue + makingReturnValue)
+        .toDouble();
     final shortageWeight =
         math.max(0.0, item.netWeight - inspectionDraft.receivedNetWeight);
     final shortageValue =
@@ -494,7 +694,15 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ActiveItemHeader(lineItem: item),
+          _ActiveItemHeader(
+            lineItem: item,
+            documentDate: document?.documentDate,
+            readOnly: readOnly,
+          ),
+          if (readOnly) ...[
+            const SizedBox(height: 10),
+            _ReturnAuditBanner(lineItem: item),
+          ],
           const SizedBox(height: 12),
           _WorkflowSection(
             title: 'Verification',
@@ -509,6 +717,7 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
                       child: _VerificationToggle(
                         label: 'HUID matched',
                         value: inspectionDraft.huidMatched,
+                        readOnly: readOnly,
                         onChanged: (value) =>
                             controller.setHuidMatched(item.lineNo, value),
                       ),
@@ -518,6 +727,7 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
                       child: _VerificationToggle(
                         label: 'Unit matched',
                         value: inspectionDraft.unitMatched,
+                        readOnly: readOnly,
                         onChanged: (value) =>
                             controller.setUnitMatched(item.lineNo, value),
                       ),
@@ -537,6 +747,7 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
               shortageWeight: shortageWeight,
               shortageValue: shortageValue,
               metalValue: metalReturnValue,
+              readOnly: readOnly,
               onReceivedWeightChanged: (weight) =>
                   controller.updateReceivedNetWeight(item.lineNo, weight),
             ),
@@ -548,8 +759,11 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
             child: _MakingReturnDecision(
               includeMaking: inspectionDraft.includeMakingCharge,
               metalValue: metalReturnValue,
-              makingValue: adjustedMaking,
+              makingValue: readOnly && makingReturnValue > 0
+                  ? makingReturnValue
+                  : adjustedMaking,
               returnAmount: returnAmount,
+              readOnly: readOnly,
               onChanged: (includeMaking) => controller.setLineMakingReturn(
                 item.lineNo,
                 includeMaking,
@@ -562,6 +776,7 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
             icon: Icons.account_tree_rounded,
             child: _StockRouteSelector(
               selectedRoute: inspectionDraft.stockRoute,
+              readOnly: readOnly,
               onRouteSelected: (route) =>
                   controller.setStockRoute(item.lineNo, route),
             ),
@@ -584,8 +799,14 @@ class _ActiveReturnInspectionPanel extends StatelessWidget {
 
 class _ActiveItemHeader extends StatelessWidget {
   final ReturnReversalSourceLineItem lineItem;
+  final DateTime? documentDate;
+  final bool readOnly;
 
-  const _ActiveItemHeader({required this.lineItem});
+  const _ActiveItemHeader({
+    required this.lineItem,
+    required this.documentDate,
+    required this.readOnly,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -622,7 +843,7 @@ class _ActiveItemHeader extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '${_metalLabel(lineItem.metalType)} invoice item verification',
+                '${readOnly ? 'Read-only return audit' : '${_metalLabel(lineItem.metalType)} invoice item verification'} | Invoice Date ${_formatDate(documentDate)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: SalesPosStyles.bodyText.copyWith(
@@ -634,6 +855,48 @@ class _ActiveItemHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ReturnAuditBanner extends StatelessWidget {
+  final ReturnReversalSourceLineItem lineItem;
+
+  const _ReturnAuditBanner({required this.lineItem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: SalesPosColors.danger.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: SalesPosColors.danger.withValues(alpha: 0.26),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.lock_rounded,
+            color: SalesPosColors.danger,
+            size: 19,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              '${_processedLineLabel(lineItem)} | Voucher ${_emptyAsDash(lineItem.reversalVoucherNo)} | Returned ${_formatDate(lineItem.reversalDate)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SalesPosStyles.caption.copyWith(
+                color: SalesPosColors.textDark,
+                fontWeight: FontWeight.w900,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -803,16 +1066,18 @@ class _SnapshotBand extends StatelessWidget {
 class _SnapshotChip extends StatelessWidget {
   final String label;
   final String value;
+  final double width;
 
   const _SnapshotChip({
     required this.label,
     required this.value,
+    this.width = 132,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 132,
+      width: width,
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
       decoration: BoxDecoration(
         color: SalesPosColors.bodyBg,
@@ -849,11 +1114,13 @@ class _SnapshotChip extends StatelessWidget {
 class _VerificationToggle extends StatelessWidget {
   final String label;
   final bool value;
+  final bool readOnly;
   final ValueChanged<bool> onChanged;
 
   const _VerificationToggle({
     required this.label,
     required this.value,
+    required this.readOnly,
     required this.onChanged,
   });
 
@@ -861,7 +1128,7 @@ class _VerificationToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = value ? SalesPosColors.success : SalesPosColors.danger;
     return InkWell(
-      onTap: () => onChanged(!value),
+      onTap: readOnly ? null : () => onChanged(!value),
       borderRadius: BorderRadius.circular(9),
       child: Container(
         height: 42,
@@ -903,6 +1170,7 @@ class _WeightCheckGrid extends StatelessWidget {
   final double shortageWeight;
   final double shortageValue;
   final double metalValue;
+  final bool readOnly;
   final ValueChanged<double> onReceivedWeightChanged;
 
   const _WeightCheckGrid({
@@ -911,6 +1179,7 @@ class _WeightCheckGrid extends StatelessWidget {
     required this.shortageWeight,
     required this.shortageValue,
     required this.metalValue,
+    required this.readOnly,
     required this.onReceivedWeightChanged,
   });
 
@@ -938,6 +1207,7 @@ class _WeightCheckGrid extends StatelessWidget {
               child: _ReceivedWeightInput(
                 key: ValueKey('received-weight-${lineItem.lineNo}'),
                 value: draft.receivedNetWeight,
+                readOnly: readOnly,
                 onChanged: onReceivedWeightChanged,
               ),
             ),
@@ -978,6 +1248,7 @@ class _MakingReturnDecision extends StatelessWidget {
   final double metalValue;
   final double makingValue;
   final double returnAmount;
+  final bool readOnly;
   final ValueChanged<bool> onChanged;
 
   const _MakingReturnDecision({
@@ -985,6 +1256,7 @@ class _MakingReturnDecision extends StatelessWidget {
     required this.metalValue,
     required this.makingValue,
     required this.returnAmount,
+    required this.readOnly,
     required this.onChanged,
   });
 
@@ -1010,7 +1282,7 @@ class _MakingReturnDecision extends StatelessWidget {
                 subtitle: _formatCurrency(metalValue),
                 icon: Icons.workspace_premium_rounded,
                 selected: !includeMaking,
-                onTap: () => onChanged(false),
+                onTap: readOnly ? null : () => onChanged(false),
               ),
             ),
             SizedBox(
@@ -1020,7 +1292,7 @@ class _MakingReturnDecision extends StatelessWidget {
                 subtitle: '+ ${_formatCurrency(makingValue)}',
                 icon: Icons.add_circle_rounded,
                 selected: includeMaking,
-                onTap: () => onChanged(true),
+                onTap: readOnly ? null : () => onChanged(true),
               ),
             ),
             SizedBox(
@@ -1043,7 +1315,7 @@ class _ValuationChoiceTile extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _ValuationChoiceTile({
     required this.title,
@@ -1116,15 +1388,51 @@ class _ValuationChoiceTile extends StatelessWidget {
   }
 }
 
-class _ReceivedWeightInput extends StatelessWidget {
+class _ReceivedWeightInput extends StatefulWidget {
   final double value;
+  final bool readOnly;
   final ValueChanged<double> onChanged;
 
   const _ReceivedWeightInput({
     super.key,
     required this.value,
+    required this.readOnly,
     required this.onChanged,
   });
+
+  @override
+  State<_ReceivedWeightInput> createState() => _ReceivedWeightInputState();
+}
+
+class _ReceivedWeightInputState extends State<_ReceivedWeightInput> {
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _formatWeight(widget.value));
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReceivedWeightInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_focusNode.hasFocus || oldWidget.value == widget.value) {
+      return;
+    }
+    final nextText = _formatWeight(widget.value);
+    if (_controller.text != nextText) {
+      _controller.text = nextText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1152,14 +1460,19 @@ class _ReceivedWeightInput extends StatelessWidget {
           SizedBox(
             height: 26,
             child: TextFormField(
-              initialValue: _formatWeight(value),
+              controller: _controller,
+              focusNode: _focusNode,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
+              readOnly: widget.readOnly,
               onChanged: (text) {
+                if (widget.readOnly) {
+                  return;
+                }
                 final parsed = double.tryParse(text.trim());
                 if (parsed != null) {
-                  onChanged(parsed);
+                  widget.onChanged(parsed);
                 }
               },
               style: SalesPosStyles.bodyStrong.copyWith(
@@ -1251,10 +1564,12 @@ class _MetricBox extends StatelessWidget {
 
 class _StockRouteSelector extends StatelessWidget {
   final ReturnReversalStockRoute selectedRoute;
+  final bool readOnly;
   final ValueChanged<ReturnReversalStockRoute> onRouteSelected;
 
   const _StockRouteSelector({
     required this.selectedRoute,
+    required this.readOnly,
     required this.onRouteSelected,
   });
 
@@ -1273,7 +1588,7 @@ class _StockRouteSelector extends StatelessWidget {
                 child: _RouteTile(
                   route: route,
                   selected: route == selectedRoute,
-                  onTap: () => onRouteSelected(route),
+                  onTap: readOnly ? null : () => onRouteSelected(route),
                 ),
               ),
           ],
@@ -1286,7 +1601,7 @@ class _StockRouteSelector extends StatelessWidget {
 class _RouteTile extends StatelessWidget {
   final ReturnReversalStockRoute route;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _RouteTile({
     required this.route,
@@ -1471,7 +1786,7 @@ class _CartAmountSummary extends StatelessWidget {
             children: [
               Text(
                 processed
-                    ? 'Already Posted'
+                    ? 'Already Returned'
                     : inCart
                         ? 'Added to Return Cart'
                         : 'Ready for Return Cart',
@@ -1487,7 +1802,7 @@ class _CartAmountSummary extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 processed
-                    ? '${_formatCurrency(returnAmount)} | Voucher: ${voucherNo.trim().isEmpty ? 'Posted' : voucherNo}'
+                    ? '${_formatCurrency(returnAmount)} | Voucher: ${voucherNo.trim().isEmpty ? 'Returned' : voucherNo}'
                     : '${_formatCurrency(returnAmount)} | Route: ${route.label}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1526,7 +1841,7 @@ class _CartActions extends StatelessWidget {
           FilledButton.icon(
             onPressed: null,
             icon: const Icon(Icons.verified_rounded, size: 18),
-            label: const Text('Posted'),
+            label: const Text('Returned'),
             style: FilledButton.styleFrom(
               disabledBackgroundColor:
                   SalesPosColors.success.withValues(alpha: 0.18),
@@ -1579,10 +1894,15 @@ class _CartActions extends StatelessWidget {
 }
 
 class _EmptyWorkflowState extends StatelessWidget {
-  const _EmptyWorkflowState();
+  final bool isBookingCancellation;
+
+  const _EmptyWorkflowState({required this.isBookingCancellation});
 
   @override
   Widget build(BuildContext context) {
+    final message = isBookingCancellation
+        ? 'Select an advance booking above to prepare cancellation settlement.'
+        : 'Select invoice items above to start HUID, unit, weight, and stock-route verification.';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
       decoration: BoxDecoration(
@@ -1600,7 +1920,45 @@ class _EmptyWorkflowState extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Select invoice items above to start HUID, unit, weight, and stock-route verification.',
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: SalesPosStyles.bodyText.copyWith(
+                color: SalesPosColors.textDark,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompletedWorkflowState extends StatelessWidget {
+  const _CompletedWorkflowState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+      decoration: BoxDecoration(
+        color: SalesPosColors.danger.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: SalesPosColors.danger.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.lock_rounded,
+            color: SalesPosColors.danger,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'All invoice lines are already returned. No editable return item is available.',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: SalesPosStyles.bodyText.copyWith(
@@ -1647,6 +2005,36 @@ String _metalLabel(String metalType) {
 String _emptyAsDash(String value) {
   final cleanValue = value.trim();
   return cleanValue.isEmpty ? '-' : cleanValue;
+}
+
+String _formatDate(DateTime? value) {
+  if (value == null) {
+    return '-';
+  }
+  const months = [
+    'JAN',
+    'FEB',
+    'MAR',
+    'APR',
+    'MAY',
+    'JUN',
+    'JUL',
+    'AUG',
+    'SEP',
+    'OCT',
+    'NOV',
+    'DEC',
+  ];
+  final day = value.day.toString().padLeft(2, '0');
+  return '$day ${months[value.month - 1]} ${value.year}';
+}
+
+String _processedLineLabel(ReturnReversalSourceLineItem lineItem) {
+  final status = lineItem.reversalStatus.trim().toUpperCase();
+  if (status.contains('CANCEL')) {
+    return 'CANCELLED';
+  }
+  return 'RETURNED';
 }
 
 String _formatWeight(double value) => value.toStringAsFixed(3);

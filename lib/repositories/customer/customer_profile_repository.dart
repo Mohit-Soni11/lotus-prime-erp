@@ -76,6 +76,25 @@ class CustomerProfileRepository {
             returnedAmount: returnMarker?.amount ?? 0,
             returnVoucherNo: returnMarker?.voucherNo ?? '',
             isModified: bill.updatedAt != null,
+            grossAmount: bill.totalAmount,
+            discountAmount: bill.discount,
+            taxableAmount: bill.taxableAmount,
+            cgstAmount: bill.cgstAmount,
+            sgstAmount: bill.sgstAmount,
+            igstAmount: bill.igstAmount,
+            gstAmount: bill.gstAmount,
+            makingTotal: bill.makingTotal,
+            roundOffAmount: bill.roundOffAmount,
+            tradeInDeduction: bill.tradeInDeduction,
+            cashPaid: bill.cashPaid,
+            upiPaid: bill.upiPaid,
+            cardPaid: bill.cardPaid,
+            advancePaid: bill.advancePaid,
+            billingMode: bill.billingMode,
+            documentType: bill.documentType,
+            gstPricingMode: bill.gstPricingMode,
+            taxTreatment: bill.taxTreatment,
+            placeOfSupply: bill.placeOfSupplySnapshot ?? '',
             linkedDocuments: linkedDocuments[bill.id] ?? const [],
           );
         },
@@ -191,23 +210,70 @@ class CustomerProfileRepository {
         returnedAmount: returnMarker?.amount ?? 0,
         returnVoucherNo: returnMarker?.voucherNo ?? '',
         isModified: bill.updatedAt != null,
+        grossAmount: bill.totalAmount,
+        discountAmount: bill.discount,
+        taxableAmount: bill.taxableAmount,
+        cgstAmount: bill.cgstAmount,
+        sgstAmount: bill.sgstAmount,
+        igstAmount: bill.igstAmount,
+        gstAmount: bill.gstAmount,
+        makingTotal: bill.makingTotal,
+        roundOffAmount: bill.roundOffAmount,
+        tradeInDeduction: bill.tradeInDeduction,
+        cashPaid: bill.cashPaid,
+        upiPaid: bill.upiPaid,
+        cardPaid: bill.cardPaid,
+        advancePaid: bill.advancePaid,
+        billingMode: bill.billingMode,
+        documentType: bill.documentType,
+        gstPricingMode: bill.gstPricingMode,
+        taxTreatment: bill.taxTreatment,
+        placeOfSupply: bill.placeOfSupplySnapshot ?? '',
         linkedDocuments: linkedDocuments[bill.id] ?? const [],
       );
 
-      final items = itemRows
-          .map(
-            (item) => CustomerBillLineItemModel(
-              itemName: item.itemName,
-              huid: item.huid,
-              purity: item.purity,
-              grossWeight: item.grossWeight,
-              netWeight: item.netWeight,
-              rate: item.rate,
-              makingCharge: item.makingCharge,
-              itemTotal: item.itemTotal,
-            ),
-          )
-          .toList();
+      final returnLineMarkers = await _fetchBillReturnLineMarkers(bill.id);
+      final items = itemRows.map(
+        (item) {
+          final marker = returnLineMarkers[item.lineNo];
+          return CustomerBillLineItemModel(
+            lineNo: item.lineNo,
+            metalType: item.metalType,
+            itemName: item.itemName,
+            hsnCode: item.hsnCode ?? '',
+            huid: item.huid,
+            purity: item.purity,
+            quantity: item.quantity,
+            quantityUnitCode: item.quantityUnitCode,
+            grossWeight: item.grossWeight,
+            lessWeight: item.lessWeight,
+            netWeight: item.netWeight,
+            rate: item.rate,
+            makingChargeType: item.makingChargeType,
+            makingChargeInput: item.makingChargeInput,
+            makingCharge: item.makingCharge,
+            itemTotal: item.itemTotal,
+            taxableAmount: item.taxableAmountSnapshot,
+            gstRate: item.gstRateSnapshot,
+            cgstAmount: item.cgstAmountSnapshot,
+            sgstAmount: item.sgstAmountSnapshot,
+            igstAmount: item.igstAmountSnapshot,
+            gstAmount: item.gstAmountSnapshot,
+            invoiceValue: item.invoiceValueSnapshot,
+            isReturned: marker != null,
+            returnVoucherNo: marker?.voucherNo ?? '',
+            returnedValue: marker?.amount ?? 0,
+          );
+        },
+      ).toList();
+      final existingLineNumbers = itemRows.map((item) => item.lineNo).toSet();
+      items.addAll(
+        await _fetchRecoveredBillItemsFromReturnLines(
+          billId: bill.id,
+          existingLineNumbers: existingLineNumbers,
+        ),
+      );
+      items.sort((a, b) => a.lineNo.compareTo(b.lineNo));
 
       return CustomerBillDetailModel(
         bill: billModel,
@@ -569,6 +635,111 @@ class CustomerProfileRepository {
     }
   }
 
+  Future<Map<int, _BillReturnLineMarker>> _fetchBillReturnLineMarkers(
+    int billId,
+  ) async {
+    try {
+      final rows = await _db.customSelect(
+        '''
+        SELECT
+          l.source_line_no,
+          COALESCE(MIN(v.voucher_no), '') AS voucher_no,
+          COALESCE(SUM(l.line_return_value), 0.0) AS returned_amount
+        FROM return_voucher_lines l
+        INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
+        WHERE l.source_type = 'SALES_INVOICE'
+          AND l.source_id = ?
+          AND l.status <> 'VOIDED'
+          AND v.status <> 'VOIDED'
+        GROUP BY l.source_line_no
+        ''',
+        variables: [Variable.withInt(billId)],
+      ).get();
+
+      return {
+        for (final row in rows)
+          row.read<int>('source_line_no'): _BillReturnLineMarker(
+            voucherNo: row.readNullable<String>('voucher_no') ?? '',
+            amount: _readDouble(row, 'returned_amount'),
+          ),
+      };
+    } catch (e) {
+      AppLogger.error("Customer bill return line marker fetch error: $e");
+      return const {};
+    }
+  }
+
+  Future<List<CustomerBillLineItemModel>>
+      _fetchRecoveredBillItemsFromReturnLines({
+    required int billId,
+    required Set<int> existingLineNumbers,
+  }) async {
+    try {
+      final rows = await _db.customSelect(
+        '''
+        SELECT
+          l.source_line_no,
+          COALESCE(MIN(v.voucher_no), '') AS voucher_no,
+          COALESCE(MAX(l.metal_type), '') AS metal_type,
+          COALESCE(MAX(l.item_description), '') AS item_description,
+          COALESCE(MAX(l.huid), '') AS huid,
+          COALESCE(MAX(l.quantity), 1) AS quantity,
+          COALESCE(MAX(l.quantity_unit_code), 'PCS') AS quantity_unit_code,
+          COALESCE(MAX(l.purity), '') AS purity,
+          COALESCE(MAX(l.sold_net_weight), 0.0) AS sold_net_weight,
+          COALESCE(MAX(l.rate), 0.0) AS rate,
+          COALESCE(MAX(l.sold_item_value), 0.0) AS sold_item_value,
+          COALESCE(MAX(l.available_making_amount), 0.0) AS making_amount,
+          COALESCE(SUM(l.line_return_value), 0.0) AS returned_amount
+        FROM return_voucher_lines l
+        INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
+        WHERE l.source_type = 'SALES_INVOICE'
+          AND l.source_id = ?
+          AND l.status <> 'VOIDED'
+          AND v.status <> 'VOIDED'
+        GROUP BY l.source_line_no
+        ORDER BY l.source_line_no ASC
+        ''',
+        variables: [Variable.withInt(billId)],
+      ).get();
+
+      final recovered = <CustomerBillLineItemModel>[];
+      for (final row in rows) {
+        final lineNo = row.read<int>('source_line_no');
+        if (existingLineNumbers.contains(lineNo)) continue;
+        final itemTotal = _readDouble(row, 'sold_item_value');
+        final netWeight = _readDouble(row, 'sold_net_weight');
+        recovered.add(
+          CustomerBillLineItemModel(
+            lineNo: lineNo,
+            metalType: row.readNullable<String>('metal_type') ?? 'GOLD',
+            itemName:
+                row.readNullable<String>('item_description') ?? 'Invoice Item',
+            hsnCode: '',
+            huid: row.readNullable<String>('huid'),
+            purity: row.readNullable<String>('purity'),
+            quantity: row.readNullable<int>('quantity') ?? 1,
+            quantityUnitCode:
+                row.readNullable<String>('quantity_unit_code') ?? 'PCS',
+            grossWeight: netWeight,
+            netWeight: netWeight,
+            rate: _readDouble(row, 'rate'),
+            makingCharge: _readDouble(row, 'making_amount'),
+            itemTotal: itemTotal,
+            invoiceValue: itemTotal,
+            isReturned: true,
+            returnVoucherNo: row.readNullable<String>('voucher_no') ?? '',
+            returnedValue: _readDouble(row, 'returned_amount'),
+          ),
+        );
+      }
+      return recovered;
+    } catch (e) {
+      AppLogger.error("Recovered returned bill item fetch error: $e");
+      return const [];
+    }
+  }
+
   double _readDouble(QueryRow row, String column) {
     try {
       return row.readNullable<double>(column) ?? 0;
@@ -782,5 +953,15 @@ class _BillReturnMarker {
     required this.lineCount,
     required this.amount,
     required this.voucherNo,
+  });
+}
+
+class _BillReturnLineMarker {
+  final String voucherNo;
+  final double amount;
+
+  const _BillReturnLineMarker({
+    required this.voucherNo,
+    required this.amount,
   });
 }

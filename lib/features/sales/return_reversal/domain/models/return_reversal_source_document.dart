@@ -38,6 +38,15 @@ class ReturnReversalSourceLineItem {
   final String status;
   final String reversalStatus;
   final String reversalVoucherNo;
+  final DateTime? reversalDate;
+  final double? reversalReceivedNetWeight;
+  final bool? reversalHuidMatched;
+  final bool? reversalUnitMatched;
+  final bool? reversalIncludeMakingCharge;
+  final String reversalStockDisposition;
+  final double? reversalMetalReturnAmount;
+  final double? reversalMakingReturnedAmount;
+  final double? reversalLineReturnValue;
 
   const ReturnReversalSourceLineItem({
     this.sourceLineId,
@@ -69,6 +78,15 @@ class ReturnReversalSourceLineItem {
     required this.status,
     this.reversalStatus = '',
     this.reversalVoucherNo = '',
+    this.reversalDate,
+    this.reversalReceivedNetWeight,
+    this.reversalHuidMatched,
+    this.reversalUnitMatched,
+    this.reversalIncludeMakingCharge,
+    this.reversalStockDisposition = '',
+    this.reversalMetalReturnAmount,
+    this.reversalMakingReturnedAmount,
+    this.reversalLineReturnValue,
   });
 
   String get makingChargeSymbol {

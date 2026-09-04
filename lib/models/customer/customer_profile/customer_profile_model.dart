@@ -86,6 +86,25 @@ class CustomerBillModel {
   final double returnedAmount;
   final String returnVoucherNo;
   final bool isModified;
+  final double grossAmount;
+  final double discountAmount;
+  final double taxableAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double makingTotal;
+  final double roundOffAmount;
+  final double tradeInDeduction;
+  final double cashPaid;
+  final double upiPaid;
+  final double cardPaid;
+  final double advancePaid;
+  final String billingMode;
+  final String documentType;
+  final String gstPricingMode;
+  final String taxTreatment;
+  final String placeOfSupply;
   final List<CustomerLinkedDocumentModel> linkedDocuments;
 
   const CustomerBillModel({
@@ -104,6 +123,25 @@ class CustomerBillModel {
     this.returnedAmount = 0.0,
     this.returnVoucherNo = '',
     this.isModified = false,
+    this.grossAmount = 0.0,
+    this.discountAmount = 0.0,
+    this.taxableAmount = 0.0,
+    this.cgstAmount = 0.0,
+    this.sgstAmount = 0.0,
+    this.igstAmount = 0.0,
+    this.gstAmount = 0.0,
+    this.makingTotal = 0.0,
+    this.roundOffAmount = 0.0,
+    this.tradeInDeduction = 0.0,
+    this.cashPaid = 0.0,
+    this.upiPaid = 0.0,
+    this.cardPaid = 0.0,
+    this.advancePaid = 0.0,
+    this.billingMode = '',
+    this.documentType = '',
+    this.gstPricingMode = '',
+    this.taxTreatment = '',
+    this.placeOfSupply = '',
     this.linkedDocuments = const [],
   });
 
@@ -197,6 +235,11 @@ class CustomerBillModel {
   String get formattedDueAmount => "\u20B9 ${dueAmount.toStringAsFixed(2)}";
   String get formattedReturnedAmount =>
       "\u20B9 ${returnedAmount.toStringAsFixed(2)}";
+
+  double get linkedReturnValue =>
+      linkedDocuments.fold(0.0, (total, doc) => total + doc.returnValue);
+  double get currentInvoiceValue =>
+      (totalAmount - linkedReturnValue).clamp(0.0, double.infinity).toDouble();
 
   String get formattedDate {
     const months = [
@@ -305,25 +348,69 @@ class CustomerLinkedDocumentModel {
 
 @immutable
 class CustomerBillLineItemModel {
+  final int lineNo;
+  final String metalType;
   final String itemName;
+  final String hsnCode;
   final String? huid;
   final String? purity;
+  final int quantity;
+  final String quantityUnitCode;
   final double grossWeight;
+  final double lessWeight;
   final double netWeight;
   final double rate;
+  final String makingChargeType;
+  final double makingChargeInput;
   final double makingCharge;
   final double itemTotal;
+  final double taxableAmount;
+  final double gstRate;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double gstAmount;
+  final double invoiceValue;
+  final bool isReturned;
+  final String returnVoucherNo;
+  final double returnedValue;
 
   const CustomerBillLineItemModel({
+    this.lineNo = 1,
+    this.metalType = 'GOLD',
     required this.itemName,
+    this.hsnCode = '',
     required this.grossWeight,
+    this.lessWeight = 0,
     required this.netWeight,
     required this.rate,
+    this.quantity = 1,
+    this.quantityUnitCode = 'PCS',
+    this.makingChargeType = '',
+    this.makingChargeInput = 0,
     required this.makingCharge,
     required this.itemTotal,
+    this.taxableAmount = 0,
+    this.gstRate = 0,
+    this.cgstAmount = 0,
+    this.sgstAmount = 0,
+    this.igstAmount = 0,
+    this.gstAmount = 0,
+    this.invoiceValue = 0,
+    this.isReturned = false,
+    this.returnVoucherNo = '',
+    this.returnedValue = 0,
     this.huid,
     this.purity,
   });
+
+  String get unitLabel {
+    final unit = quantityUnitCode.trim().toUpperCase();
+    if (unit.isEmpty) return quantity.toString();
+    return '$quantity $unit';
+  }
+
+  double get displayInvoiceValue => invoiceValue > 0 ? invoiceValue : itemTotal;
 }
 
 @immutable

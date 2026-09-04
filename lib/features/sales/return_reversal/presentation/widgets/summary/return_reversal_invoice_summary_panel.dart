@@ -110,6 +110,9 @@ class _SummaryBoard extends StatelessWidget {
         : 'Advance refund and booking closure';
   }
 
+  bool get _isBookingCancellation =>
+      operationType == ReturnReversalOperationType.bookingCancellation;
+
   @override
   Widget build(BuildContext context) {
     final document = sourceDocument;
@@ -132,31 +135,53 @@ class _SummaryBoard extends StatelessWidget {
       children: [
         _SectionHead(
           icon: SalesPosIcons.invoiceOutline,
-          title: 'RETURN SETTLEMENT',
+          title: _isBookingCancellation
+              ? 'CANCELLATION SETTLEMENT'
+              : 'RETURN SETTLEMENT',
           subtitle: _subtitle,
         ),
         const SizedBox(height: 18),
-        const _MiniSectionLabel('Original Invoice Pricing'),
+        _MiniSectionLabel(
+          _isBookingCancellation
+              ? 'Booking Advance'
+              : 'Original Invoice Pricing',
+        ),
         const SizedBox(height: 8),
         if (metalBreakdowns.isEmpty)
-          const _EmptySummaryText('Select an invoice to view metal totals.')
+          _EmptySummaryText(
+            _isBookingCancellation
+                ? 'Select a booking to view advance total.'
+                : 'Select an invoice to view metal totals.',
+          )
+        else if (_isBookingCancellation)
+          ...metalBreakdowns.map(_BookingAdvanceSummaryTile.new)
         else
           ...metalBreakdowns.map(_MetalSummaryTile.new),
         const SizedBox(height: 14),
         _InvoiceTotalBox(
-          label: 'Original Invoice Total',
+          label: _isBookingCancellation
+              ? 'Refundable Advance Total'
+              : 'Original Invoice Total',
           value: _formatCurrency(originalInvoiceTotal),
         ),
         const SizedBox(height: 14),
-        const _MiniSectionLabel('Payment Method'),
+        _MiniSectionLabel(
+          _isBookingCancellation ? 'Advance Method' : 'Payment Method',
+        ),
         const SizedBox(height: 8),
-        _PaymentBreakupRow(sourceDocument: document),
+        _PaymentBreakupRow(
+          sourceDocument: document,
+          isBookingCancellation: _isBookingCancellation,
+        ),
         const SizedBox(height: 12),
         _PaymentStatusBox(sourceDocument: document),
         const SizedBox(height: 16),
-        const _MiniSectionLabel('Return Cart'),
+        _MiniSectionLabel(
+          _isBookingCancellation ? 'Cancellation Settlement' : 'Return Cart',
+        ),
         const SizedBox(height: 8),
         _SelectedReturnCard(
+          isBookingCancellation: _isBookingCancellation,
           selectedCount: returnCartLineItems.length,
           breakdowns: returnCartBreakdowns,
         ),
@@ -443,11 +468,84 @@ class _MetalSummaryTile extends StatelessWidget {
   }
 }
 
+class _BookingAdvanceSummaryTile extends StatelessWidget {
+  final _MetalInvoiceBreakdown breakdown;
+
+  const _BookingAdvanceSummaryTile(this.breakdown);
+
+  Color get _accentColor {
+    return breakdown.metal.contains('GOLD')
+        ? SalesPosColors.brandGold
+        : SalesPosColors.brandSilver;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final metalTitle = _formatMetalName(breakdown.metal);
+    final suffix = breakdown.itemCount == 1 ? 'line' : 'lines';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SalesPosColors.bodyBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _accentColor.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: _accentColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '$metalTitle Booking',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SalesPosStyles.bodyStrong.copyWith(
+                    color: _accentColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${breakdown.itemCount} $suffix',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: SalesPosStyles.caption.copyWith(
+                  color: SalesPosColors.textDark,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _TotalRow(
+            label: 'Advance Received',
+            value: _formatCurrency(breakdown.displayInvoiceTotal),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SelectedReturnCard extends StatelessWidget {
+  final bool isBookingCancellation;
   final int selectedCount;
   final List<_ReturnCartMetalBreakdown> breakdowns;
 
   const _SelectedReturnCard({
+    required this.isBookingCancellation,
     required this.selectedCount,
     required this.breakdowns,
   });
@@ -468,17 +566,29 @@ class _SelectedReturnCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _SubtleRow(label: 'Cart Items', value: selectedCount.toString()),
+          _SubtleRow(
+            label: isBookingCancellation ? 'Cancellation Lines' : 'Cart Items',
+            value: selectedCount.toString(),
+          ),
           if (breakdowns.isEmpty) ...[
             const SizedBox(height: 10),
-            const _EmptySummaryText('No return items added to cart.'),
+            _EmptySummaryText(
+              isBookingCancellation
+                  ? 'No booking selected for cancellation.'
+                  : 'No return items added to cart.',
+            ),
           ] else ...[
             const SizedBox(height: 12),
-            ...breakdowns.map(_ReturnCartMetalTile.new),
+            ...breakdowns.map(
+              (breakdown) => _ReturnCartMetalTile(
+                breakdown,
+                isBookingCancellation: isBookingCancellation,
+              ),
+            ),
           ],
           const SizedBox(height: 12),
           _PillarRow(
-            label: 'Return Value',
+            label: isBookingCancellation ? 'Refund Value' : 'Return Value',
             value: _formatCurrency(totalReturnValue),
           ),
         ],
@@ -489,8 +599,12 @@ class _SelectedReturnCard extends StatelessWidget {
 
 class _ReturnCartMetalTile extends StatelessWidget {
   final _ReturnCartMetalBreakdown breakdown;
+  final bool isBookingCancellation;
 
-  const _ReturnCartMetalTile(this.breakdown);
+  const _ReturnCartMetalTile(
+    this.breakdown, {
+    required this.isBookingCancellation,
+  });
 
   Color get _accentColor {
     return breakdown.metal.contains('GOLD')
@@ -502,6 +616,66 @@ class _ReturnCartMetalTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final metalTitle = _formatMetalName(breakdown.metal);
     final suffix = breakdown.itemCount == 1 ? 'item' : 'items';
+
+    if (isBookingCancellation) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: SalesPosColors.bodyPanelBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _accentColor.withValues(alpha: 0.28)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _accentColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '$metalTitle Advance',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: SalesPosStyles.bodyStrong.copyWith(
+                      color: _accentColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${breakdown.itemCount} $suffix',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SalesPosStyles.caption.copyWith(
+                    color: SalesPosColors.textDark,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            _SubtleRow(
+              label: 'Advance Received',
+              value: _formatCurrency(breakdown.returnValue),
+            ),
+            const SizedBox(height: 9),
+            _TotalRow(
+              label: 'Refund Total',
+              value: _formatCurrency(breakdown.returnValue),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -656,14 +830,31 @@ class _SectionHead extends StatelessWidget {
 
 class _PaymentBreakupRow extends StatelessWidget {
   final ReturnReversalSourceDocument? sourceDocument;
+  final bool isBookingCancellation;
 
-  const _PaymentBreakupRow({required this.sourceDocument});
+  const _PaymentBreakupRow({
+    required this.sourceDocument,
+    required this.isBookingCancellation,
+  });
 
   @override
   Widget build(BuildContext context) {
     final document = sourceDocument;
     if (document == null) {
-      return const _EmptySummaryText('Select an invoice to view payments.');
+      return _EmptySummaryText(
+        isBookingCancellation
+            ? 'Select a booking to view advance payment.'
+            : 'Select an invoice to view payments.',
+      );
+    }
+    if (document.type == ReturnReversalSourceDocumentType.advanceBooking) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _PaymentChip(label: 'Advance', value: document.paidAmount),
+        ],
+      );
     }
 
     return Wrap(
@@ -698,6 +889,8 @@ class _PaymentStatusBox extends StatelessWidget {
     final document = sourceDocument;
     final paidAmount = document?.paidAmount ?? 0;
     final dueAmount = document?.dueAmount ?? 0;
+    final isBooking =
+        document?.type == ReturnReversalSourceDocumentType.advanceBooking;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -708,9 +901,15 @@ class _PaymentStatusBox extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _SubtleRow(label: 'Collected', value: _formatCurrency(paidAmount)),
+          _SubtleRow(
+            label: isBooking ? 'Advance Collected' : 'Collected',
+            value: _formatCurrency(paidAmount),
+          ),
           const SizedBox(height: 8),
-          _SubtleRow(label: 'Balance Due', value: _formatCurrency(dueAmount)),
+          _SubtleRow(
+            label: isBooking ? 'Refund Balance' : 'Balance Due',
+            value: _formatCurrency(dueAmount),
+          ),
         ],
       ),
     );

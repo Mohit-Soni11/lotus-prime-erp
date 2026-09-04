@@ -12,6 +12,8 @@ import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.da
 
 class ReturnReversalDriftRepository implements ReturnReversalRepository {
   final AppDatabase _database;
+  static const _maxVoucherPostAttempts = 3;
+  static const _weightTolerance = 0.0001;
   static const _valuationService = ReturnReversalValuationService();
 
   const ReturnReversalDriftRepository(this._database);
@@ -19,7 +21,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
   @override
   Future<ReturnReversalTransactionSummary> fetchTransactionSummary() async {
     await _database.ensureReturnReversalSchema();
-    final row = await _database.customSelect(
+    final postedRow = await _database.customSelect(
       '''
       SELECT
         COALESCE(SUM(CASE WHEN operation_type = 'SALES_RETURN' THEN 1 ELSE 0 END), 0) AS posted_returns,
@@ -34,13 +36,47 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       WHERE status <> 'VOIDED'
       ''',
     ).getSingle();
+    final eligibleSalesRow = await _database.customSelect(
+      '''
+      SELECT COUNT(DISTINCT b.id) AS invoice_count
+      FROM bills b
+      WHERE b.status NOT IN ('CANCELLED', 'RETURNED')
+        AND EXISTS (
+          SELECT 1
+          FROM bill_items i
+          WHERE i.bill_id = b.id
+            AND NOT EXISTS (
+              SELECT 1
+              FROM return_voucher_lines l
+              WHERE l.source_type = 'SALES_INVOICE'
+                AND l.source_id = b.id
+                AND l.source_line_no = i.line_no
+                AND l.status <> 'VOIDED'
+            )
+        )
+      ''',
+    ).getSingle();
+    final eligibleBookingRow = await _database.customSelect(
+      '''
+      SELECT COUNT(*) AS booking_count
+      FROM sales_orders o
+      WHERE o.status NOT IN ('CANCELLED', 'DELIVERED')
+        AND NOT EXISTS (
+          SELECT 1
+          FROM return_vouchers v
+          WHERE v.source_type = 'ADVANCE_BOOKING'
+            AND v.source_id = o.id
+            AND v.status <> 'VOIDED'
+        )
+      ''',
+    ).getSingle();
     return ReturnReversalTransactionSummary(
-      eligibleSalesInvoices: 0,
-      eligibleAdvanceBookings: 0,
-      postedReturns: row.read<int>('posted_returns'),
-      postedCancellations: row.read<int>('posted_cancellations'),
-      refundableAmount: _readDouble(row, 'return_value'),
-      restoredNetWeight: _readDouble(row, 'restored_weight'),
+      eligibleSalesInvoices: eligibleSalesRow.read<int>('invoice_count'),
+      eligibleAdvanceBookings: eligibleBookingRow.read<int>('booking_count'),
+      postedReturns: postedRow.read<int>('posted_returns'),
+      postedCancellations: postedRow.read<int>('posted_cancellations'),
+      refundableAmount: _readDouble(postedRow, 'return_value'),
+      restoredNetWeight: _readDouble(postedRow, 'restored_weight'),
     );
   }
 
@@ -239,6 +275,20 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
           status: row.readNullable<String>('status') ?? 'ACTIVE',
           reversalStatus: reversalLines[item.lineNo]?.status ?? '',
           reversalVoucherNo: reversalLines[item.lineNo]?.voucherNo ?? '',
+          reversalDate: reversalLines[item.lineNo]?.createdAt,
+          reversalReceivedNetWeight:
+              reversalLines[item.lineNo]?.receivedNetWeight,
+          reversalHuidMatched: reversalLines[item.lineNo]?.huidMatched,
+          reversalUnitMatched: reversalLines[item.lineNo]?.unitMatched,
+          reversalIncludeMakingCharge:
+              reversalLines[item.lineNo]?.includeMakingCharge,
+          reversalStockDisposition:
+              reversalLines[item.lineNo]?.stockDisposition ?? '',
+          reversalMetalReturnAmount:
+              reversalLines[item.lineNo]?.metalReturnAmount,
+          reversalMakingReturnedAmount:
+              reversalLines[item.lineNo]?.makingReturnedAmount,
+          reversalLineReturnValue: reversalLines[item.lineNo]?.lineReturnValue,
         ),
     ];
     final reversedLineCount =
@@ -475,11 +525,28 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     await _database.ensureReturnReversalSchema();
     _validateProcessRequest(request);
 
+    for (var attempt = 1; attempt <= _maxVoucherPostAttempts; attempt++) {
+      try {
+        return await _processReturnOnce(request);
+      } catch (error) {
+        final canRetry =
+            attempt < _maxVoucherPostAttempts && _isVoucherNoConflict(error);
+        if (!canRetry) {
+          rethrow;
+        }
+      }
+    }
+    throw StateError('Unable to post return voucher. Please try again.');
+  }
+
+  Future<ReturnReversalProcessResult> _processReturnOnce(
+    ReturnReversalProcessRequest request,
+  ) async {
     final sourceType = _sourceTypeStorage(request.sourceDocument.type);
-    final voucherNo = await _nextReturnVoucherNo(request.operationType);
     final now = DateTime.now();
     final nowMs = now.millisecondsSinceEpoch;
     var voucherId = 0;
+    var voucherNo = '';
     var returnValue = 0.0;
     var dueAdjustedAmount = 0.0;
     var customerCreditAmount = 0.0;
@@ -487,6 +554,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
 
     await _database.transaction(() async {
       await _assertProcessLinesAvailable(request, sourceType);
+      voucherNo = await _nextReturnVoucherNo(request.operationType);
 
       for (final returnLine in request.lines) {
         final sourceLine =
@@ -615,6 +683,10 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     drift.QueryRow row,
   ) async {
     final voucherId = row.read<int>('id');
+    final reversalLines = await _reversalLinesFor(
+      sourceType: 'CUSTOMER_PURCHASE',
+      sourceId: voucherId,
+    );
     final itemRows = await _database.customSelect(
       '''
       SELECT
@@ -645,8 +717,14 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
           rate: _readDouble(item, 'rate'),
           value: _readDouble(item, 'line_amount'),
           status: row.readNullable<String>('payment_status') ?? 'SAVED',
+          reversalStatus:
+              reversalLines[item.read<int>('line_no')]?.status ?? '',
+          reversalVoucherNo:
+              reversalLines[item.read<int>('line_no')]?.voucherNo ?? '',
         ),
     ];
+    final reversedLineCount =
+        lines.where((line) => line.reversalStatus.isNotEmpty).length;
 
     return ReturnReversalSourceDocument(
       id: voucherId,
@@ -665,6 +743,12 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         (total, line) => total + line.netWeight,
       ),
       lineItems: lines,
+      reversalStatus: _documentReversalStatus(
+        reversedLineCount: reversedLineCount,
+        totalLineCount: lines.length,
+      ),
+      reversalVoucherNo: _firstReversalVoucherNo(reversalLines),
+      reversedLineCount: reversedLineCount,
     );
   }
 
@@ -675,6 +759,10 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     if (request.lines.isEmpty) {
       throw StateError('Add at least one item to the return cart.');
     }
+    final isAdvanceBookingCancellation =
+        request.operationType.isBookingCancellation &&
+            request.sourceDocument.type ==
+                ReturnReversalSourceDocumentType.advanceBooking;
     final seen = <int>{};
     for (final line in request.lines) {
       if (!seen.add(line.sourceLineNo)) {
@@ -687,9 +775,23 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       if (sourceLine.isReversed) {
         throw StateError('Line ${line.sourceLineNo} is already reversed.');
       }
+      if (isAdvanceBookingCancellation) {
+        if (line.stockDisposition !=
+            ReturnReversalStockDisposition.notApplicable) {
+          throw StateError(
+            'Booking cancellation does not use stock routing.',
+          );
+        }
+        continue;
+      }
       if (line.receivedNetWeight <= 0) {
         throw StateError(
             'Received net weight is required for line ${line.sourceLineNo}.');
+      }
+      if (line.receivedNetWeight - sourceLine.netWeight > _weightTolerance) {
+        throw StateError(
+          'Received net weight for line ${line.sourceLineNo} cannot exceed the original sold net weight.',
+        );
       }
       if ((!line.huidMatched || !line.unitMatched) &&
           line.stockDisposition != ReturnReversalStockDisposition.managerHold) {
@@ -851,6 +953,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         ? 'RETURN_HOLD'
         : 'SALE_RESTORE';
 
+    final createdStockItem = sourceLine.linkedStockItemId == null;
     final stockItemId = sourceLine.linkedStockItemId ??
         await _createReturnedStockItem(
           voucherNo: voucherNo,
@@ -883,7 +986,31 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
             updated_at = ?
         WHERE id = ?
         ''',
-        [targetStatus, now, stockItemId],
+        [targetStatus, nowMs, stockItemId],
+      );
+    } else if (!createdStockItem) {
+      await _createReturnedStockUnit(
+        stockItemId: stockItemId,
+        sku: sourceLine.linkedStockSku.trim().isEmpty
+            ? '$voucherNo-L${sourceLine.lineNo.toString().padLeft(3, '0')}'
+            : sourceLine.linkedStockSku.trim(),
+        batchCode: voucherNo,
+        sourceLine: sourceLine,
+        returnLine: returnLine,
+        valuation: valuation,
+        status: targetStatus,
+        nowMs: nowMs,
+      );
+      await _database.customStatement(
+        '''
+        UPDATE stock_items
+        SET quantity = quantity + 1,
+            is_active = 1,
+            status = ?,
+            updated_at = ?
+        WHERE id = ?
+        ''',
+        [targetStatus, nowMs, stockItemId],
       );
     }
 
@@ -893,7 +1020,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       voucherNo: voucherNo,
       sourceLine: sourceLine,
       returnLine: returnLine,
-      now: now,
+      nowMs: nowMs,
       reason: targetStatus == 'Available'
           ? 'Sales return stock restore'
           : 'Sales return manager hold',
@@ -1014,6 +1141,32 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
             isActive: drift.Value(status == 'Available'),
           ),
         );
+    await _createReturnedStockUnit(
+      stockItemId: stockItemId,
+      sku: sku,
+      batchCode: voucherNo,
+      sourceLine: sourceLine,
+      returnLine: returnLine,
+      valuation: valuation,
+      status: status,
+      nowMs: nowMs,
+      pieceNo: 1,
+    );
+    return stockItemId;
+  }
+
+  Future<void> _createReturnedStockUnit({
+    required int stockItemId,
+    required String sku,
+    required String batchCode,
+    required ReturnReversalSourceLineItem sourceLine,
+    required ReturnReversalProcessLineInput returnLine,
+    required ReturnReversalLineValuation valuation,
+    required String status,
+    required int nowMs,
+    int? pieceNo,
+  }) async {
+    final resolvedPieceNo = pieceNo ?? await _nextStockUnitPieceNo(stockItemId);
     await _database.customStatement(
       '''
       INSERT INTO stock_item_units (
@@ -1040,9 +1193,9 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       ''',
       [
         stockItemId,
-        voucherNo,
-        '$sku-U001',
-        1,
+        batchCode,
+        '$sku-U${resolvedPieceNo.toString().padLeft(3, '0')}',
+        resolvedPieceNo,
         _metalDisplayName(sourceLine.metalType),
         'Sales Return',
         sourceLine.description,
@@ -1062,7 +1215,18 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         nowMs,
       ],
     );
-    return stockItemId;
+  }
+
+  Future<int> _nextStockUnitPieceNo(int stockItemId) async {
+    final row = await _database.customSelect(
+      '''
+      SELECT COALESCE(MAX(piece_no), 0) + 1 AS next_piece_no
+      FROM stock_item_units
+      WHERE stock_item_id = ?
+      ''',
+      variables: [drift.Variable.withInt(stockItemId)],
+    ).getSingle();
+    return row.read<int>('next_piece_no');
   }
 
   Future<void> _postMeltingPurchaseLine({
@@ -1193,7 +1357,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     required String voucherNo,
     required ReturnReversalSourceLineItem sourceLine,
     required ReturnReversalProcessLineInput returnLine,
-    required DateTime now,
+    required int nowMs,
     required String reason,
   }) async {
     await _database.customStatement(
@@ -1238,9 +1402,9 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
                 .valueLine(sourceLine: sourceLine, returnLine: returnLine)
                 .receivedRatio,
         reason,
-        now,
-        now,
-        now,
+        nowMs,
+        nowMs,
+        nowMs,
       ],
     );
   }
@@ -1381,6 +1545,13 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     return '$prefix-$year-${next.toString().padLeft(5, '0')}';
   }
 
+  bool _isVoucherNoConflict(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('unique') &&
+        message.contains('return_vouchers') &&
+        message.contains('voucher_no');
+  }
+
   Future<Map<int, _PostedReturnLine>> _reversalLinesFor({
     required String sourceType,
     required int sourceId,
@@ -1390,7 +1561,15 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       SELECT
         l.source_line_no,
         l.status,
-        v.voucher_no
+        v.voucher_no,
+        l.stock_disposition,
+        l.received_net_weight,
+        l.metal_return_amount,
+        l.making_returned_amount,
+        l.line_return_value,
+        l.huid_matched,
+        l.unit_matched,
+        l.created_at
       FROM return_voucher_lines l
       INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
       WHERE l.source_type = ?
@@ -1407,6 +1586,14 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         row.read<int>('source_line_no'): _PostedReturnLine(
           status: row.readNullable<String>('status') ?? 'POSTED',
           voucherNo: row.readNullable<String>('voucher_no') ?? '',
+          stockDisposition: row.readNullable<String>('stock_disposition') ?? '',
+          receivedNetWeight: _readDouble(row, 'received_net_weight'),
+          metalReturnAmount: _readDouble(row, 'metal_return_amount'),
+          makingReturnedAmount: _readDouble(row, 'making_returned_amount'),
+          lineReturnValue: _readDouble(row, 'line_return_value'),
+          huidMatched: (row.readNullable<int>('huid_matched') ?? 1) == 1,
+          unitMatched: (row.readNullable<int>('unit_matched') ?? 1) == 1,
+          createdAt: _readDateTime(row, 'created_at'),
         ),
     };
   }
@@ -1571,9 +1758,27 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
 class _PostedReturnLine {
   final String status;
   final String voucherNo;
+  final String stockDisposition;
+  final double receivedNetWeight;
+  final double metalReturnAmount;
+  final double makingReturnedAmount;
+  final double lineReturnValue;
+  final bool huidMatched;
+  final bool unitMatched;
+  final DateTime createdAt;
 
   const _PostedReturnLine({
     required this.status,
     required this.voucherNo,
+    required this.stockDisposition,
+    required this.receivedNetWeight,
+    required this.metalReturnAmount,
+    required this.makingReturnedAmount,
+    required this.lineReturnValue,
+    required this.huidMatched,
+    required this.unitMatched,
+    required this.createdAt,
   });
+
+  bool get includeMakingCharge => makingReturnedAmount > 0.005;
 }

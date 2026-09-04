@@ -24,6 +24,9 @@ enum ReturnReversalOperationType {
 
   bool get isReturn => this == ReturnReversalOperationType.salesReturn;
 
+  bool get isBookingCancellation =>
+      this == ReturnReversalOperationType.bookingCancellation;
+
   bool acceptsSourceType(ReturnReversalSourceDocumentType sourceType) {
     return switch (this) {
       ReturnReversalOperationType.salesReturn =>

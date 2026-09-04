@@ -4,7 +4,8 @@ import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_re
 enum ReturnReversalStockDisposition {
   addToStock('ADD_STOCK'),
   melting('MELTING'),
-  managerHold('MANAGER_HOLD');
+  managerHold('MANAGER_HOLD'),
+  notApplicable('NOT_APPLICABLE');
 
   final String storageValue;
 

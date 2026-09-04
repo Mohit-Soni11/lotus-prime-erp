@@ -375,13 +375,19 @@ class _SourceHistoryStrip extends StatefulWidget {
 }
 
 class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
+  static const double _compactDocumentPillWidth = 192;
+  static const double _statusDocumentPillWidth = 276;
+  static const double _documentPillGap = 8;
+
   late final FocusNode _historyFocusNode;
+  late final ScrollController _documentScrollController;
   _SourceHistoryCategory _activeCategory = _SourceHistoryCategory.sales;
 
   @override
   void initState() {
     super.initState();
     _historyFocusNode = FocusNode(debugLabel: 'ReturnReversalSourceHistory');
+    _documentScrollController = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _historyFocusNode.requestFocus();
@@ -392,6 +398,7 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
   @override
   void dispose() {
     _historyFocusNode.dispose();
+    _documentScrollController.dispose();
     super.dispose();
   }
 
@@ -458,6 +465,7 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: SingleChildScrollView(
+                            controller: _documentScrollController,
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
@@ -470,8 +478,16 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
                                             .selectedSourceDocument
                                             ?.documentNo ==
                                         document.documentNo,
-                                    onTap: () => widget.controller
-                                        .selectSourceDocument(document),
+                                    width: _pillWidthFor(document),
+                                    onTap: () {
+                                      _historyFocusNode.requestFocus();
+                                      widget.controller
+                                          .selectSourceDocument(document);
+                                      _ensureDocumentVisible(
+                                        documents,
+                                        document,
+                                      );
+                                    },
                                   ),
                                   const SizedBox(width: 8),
                                 ],
@@ -523,6 +539,54 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
 
     _historyFocusNode.requestFocus();
     widget.controller.selectSourceDocument(documents[nextIndex]);
+    _ensureDocumentVisible(documents, documents[nextIndex]);
+  }
+
+  void _ensureDocumentVisible(
+    List<ReturnReversalSourceDocument> documents,
+    ReturnReversalSourceDocument document,
+  ) {
+    if (!_documentScrollController.hasClients) {
+      return;
+    }
+    final index = documents.indexWhere(
+      (entry) =>
+          entry.type == document.type &&
+          entry.documentNo == document.documentNo,
+    );
+    if (index == -1) {
+      return;
+    }
+
+    var leadingOffset = 0.0;
+    for (var i = 0; i < index; i += 1) {
+      leadingOffset += _pillWidthFor(documents[i]) + _documentPillGap;
+    }
+    final trailingOffset = leadingOffset + _pillWidthFor(document);
+    final position = _documentScrollController.position;
+    final visibleStart = position.pixels;
+    final visibleEnd = visibleStart + position.viewportDimension;
+    var targetOffset = visibleStart;
+
+    if (leadingOffset < visibleStart) {
+      targetOffset = leadingOffset;
+    } else if (trailingOffset > visibleEnd) {
+      targetOffset = trailingOffset - position.viewportDimension;
+    } else {
+      return;
+    }
+
+    _documentScrollController.animateTo(
+      targetOffset.clamp(position.minScrollExtent, position.maxScrollExtent),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  double _pillWidthFor(ReturnReversalSourceDocument document) {
+    return document.reversalStatus.trim().isEmpty
+        ? _compactDocumentPillWidth
+        : _statusDocumentPillWidth;
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -784,11 +848,13 @@ class _EmptyHistoryLine extends StatelessWidget {
 class _SourceDocumentPill extends StatelessWidget {
   final ReturnReversalSourceDocument document;
   final bool selected;
+  final double width;
   final VoidCallback onTap;
 
   const _SourceDocumentPill({
     required this.document,
     required this.selected,
+    required this.width,
     required this.onTap,
   });
 
@@ -811,6 +877,7 @@ class _SourceDocumentPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
+          width: width,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             color: selected ? color.withValues(alpha: 0.13) : Colors.white,
@@ -829,57 +896,63 @@ class _SourceDocumentPill extends StatelessWidget {
             children: [
               Icon(_iconFor(document.type), size: 16, color: color),
               const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        document.documentNo,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: SalesPosColors.textDark,
-                          fontSize: SalesPosStyles.fontLabel,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            document.documentNo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: SalesPosColors.textDark,
+                              fontSize: SalesPosStyles.fontLabel,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0,
+                            ),
+                          ),
                         ),
-                      ),
-                      if (hasDue) ...[
-                        const SizedBox(width: 6),
-                        const _DueDot(),
+                        if (hasDue) ...[
+                          const SizedBox(width: 6),
+                          const _DueDot(),
+                        ],
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        document.type.label.toUpperCase(),
-                        style: TextStyle(
-                          color: color,
-                          fontSize: SalesPosStyles.fontCaption,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.6,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            document.type.label.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: SalesPosStyles.fontCaption,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
                         ),
-                      ),
-                      if (hasDue) ...[
-                        const SizedBox(width: 7),
-                        _DueAmountChip(amount: document.dueAmount),
+                        if (hasDue) ...[
+                          const SizedBox(width: 7),
+                          _DueAmountChip(amount: document.dueAmount),
+                        ],
+                        if (hasReversalStatus) ...[
+                          const SizedBox(width: 7),
+                          _DocumentStatusChip(
+                            label: document.reversalStatus,
+                            full: document.isFullyReversed,
+                          ),
+                        ],
                       ],
-                      if (hasReversalStatus) ...[
-                        const SizedBox(width: 7),
-                        _DocumentStatusChip(
-                          label: document.reversalStatus,
-                          full: document.isFullyReversed,
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

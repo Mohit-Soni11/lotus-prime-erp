@@ -132,15 +132,28 @@ class ReturnReversalState {
   ReturnReversalSourceLineItem? get activeInspectionLineItem {
     final document = selectedSourceDocument;
     final lineNo = activeInspectionLineNo;
-    if (document == null || lineNo == null) {
-      return invoiceLineItems.isEmpty ? null : invoiceLineItems.first;
+    if (document == null) {
+      return null;
+    }
+    if (lineNo == null) {
+      for (final line in document.lineItems) {
+        if (!line.isReversed) {
+          return line;
+        }
+      }
+      return document.lineItems.isEmpty ? null : document.lineItems.first;
     }
     for (final line in document.lineItems) {
       if (line.lineNo == lineNo) {
         return line;
       }
     }
-    return invoiceLineItems.isEmpty ? null : invoiceLineItems.first;
+    for (final line in document.lineItems) {
+      if (!line.isReversed) {
+        return line;
+      }
+    }
+    return document.lineItems.isEmpty ? null : document.lineItems.first;
   }
 
   ReturnReversalLineInspectionDraft? get activeInspectionDraft {

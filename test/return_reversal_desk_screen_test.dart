@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
+import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_transaction_summary.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/repositories/return_reversal_repository.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/screens/return_reversal_desk_screen.dart';
+import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/customer/return_reversal_customer_details_card.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/summary/return_reversal_invoice_summary_panel.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/workflow/return_reversal_workflow_tabs.dart';
 
@@ -145,7 +147,7 @@ void main() {
     expect(find.text('BOOKING ITEMS'), findsNothing);
     expect(find.text('NO BOOKING SELECTED'), findsNothing);
     expect(find.text('LOAD BOOKING ITEMS'), findsNothing);
-    expect(find.text('Return Value'), findsOneWidget);
+    expect(find.text('Refund Value'), findsOneWidget);
     expect(find.text('Process Cancellation'), findsOneWidget);
     expect(find.text('SOURCE NUMBER'), findsNothing);
     expect(find.text('RETURN NO.'), findsNothing);
@@ -192,6 +194,54 @@ void main() {
     expect(find.text('PURCHASE  1'), findsNothing);
     expect(controller.state.selectedSourceDocument?.type,
         ReturnReversalSourceDocumentType.advanceBooking);
+  });
+
+  testWidgets('booking cancellation skips stock routing and prepares refund',
+      (tester) async {
+    final repository = _AllSourceTypesReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    await tester.tap(find.text('CANCELLATION'));
+    await tester.pump(const Duration(milliseconds: 220));
+    controller.customerMobileCtrl.text = '9304479436';
+    await controller.searchRecords();
+    await tester.pump();
+    await tester.pump();
+
+    expect(controller.state.selectedSourceDocument?.type,
+        ReturnReversalSourceDocumentType.advanceBooking);
+    expect(controller.state.returnCartLineNumbers, {1});
+    expect(find.text('CANCELLATION WORKFLOW'), findsOneWidget);
+    expect(find.text('Booking'), findsWidgets);
+    expect(find.text('Advance Settlement'), findsOneWidget);
+    expect(find.text('Stock Routing'), findsNothing);
+    expect(find.text('Add Stock'), findsNothing);
+    expect(find.text('Melting'), findsNothing);
+    expect(find.text('Hold'), findsNothing);
+    expect(find.text('HUID matched'), findsNothing);
+    expect(find.text('Received Net Weight'), findsNothing);
+    expect(find.text('CANCELLATION SETTLEMENT'), findsWidgets);
+    expect(find.text('Refund Value'), findsWidgets);
+
+    await controller.processReturn();
+
+    expect(repository.lastRequest, isNotNull);
+    expect(repository.lastRequest!.operationType,
+        ReturnReversalOperationType.bookingCancellation);
+    expect(repository.lastRequest!.lines.single.stockDisposition,
+        ReturnReversalStockDisposition.notApplicable);
+    expect(repository.lastRequest!.lines.single.receivedNetWeight, 0);
   });
 
   testWidgets('source number search loads customer and invoice items',
@@ -306,6 +356,64 @@ void main() {
     expect(find.text('Rs 0'), findsWidgets);
   });
 
+  testWidgets('returned invoice lines open readonly audit and stay locked',
+      (tester) async {
+    final controller = ReturnReversalController(
+      repository: _PartiallyReturnedReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-LOCK-2026-0001';
+    await controller.searchRecords();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: 1180,
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  return ReturnReversalWorkflowTabs(controller: controller);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.state.activeInspectionLineNo, 2);
+    expect(find.text('RETURNED'), findsOneWidget);
+    expect(find.text('POSTED'), findsNothing);
+    expect(find.text('Gold Ring'), findsOneWidget);
+    expect(find.text('Gold Chain'), findsWidgets);
+
+    await tester.tap(find.text('Gold Ring'));
+    await tester.pump();
+
+    expect(controller.state.activeInspectionLineNo, 1);
+    expect(find.text('Read-only return audit | Invoice Date 01 SEP 2026'),
+        findsOneWidget);
+    expect(find.text('RETURNED | Voucher SR-26-00011 | Returned 03 SEP 2026'),
+        findsOneWidget);
+    expect(find.text('Rs 7,650'), findsWidgets);
+    expect(find.text('Melting'), findsOneWidget);
+
+    controller.setLineMakingReturn(1, true);
+    controller.setStockRoute(1, ReturnReversalStockRoute.addToStock);
+    controller.updateReceivedNetWeight(1, 0.25);
+    await tester.pump();
+
+    final lockedDraft = controller.state.activeInspectionDraft!;
+    expect(lockedDraft.includeMakingCharge, isFalse);
+    expect(lockedDraft.stockRoute, ReturnReversalStockRoute.melting);
+    expect(lockedDraft.receivedNetWeight, 0.85);
+  });
+
   testWidgets('keyboard arrow keys move between visible source documents',
       (tester) async {
     final controller = ReturnReversalController(
@@ -339,6 +447,56 @@ void main() {
     await tester.pump();
 
     expect(controller.sourceDocumentNumberCtrl.text, 'AJ-PUR-2026-0006');
+  });
+
+  testWidgets('source navigation scrolls the selected card into view',
+      (tester) async {
+    tester.view.physicalSize = const Size(700, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final controller = ReturnReversalController(
+      repository: _ScrollableHistoryReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 620,
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  return ReturnReversalCustomerDetailsCard(
+                    controller: controller,
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    controller.customerMobileCtrl.text = '9304479436';
+    await controller.searchRecords();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 650));
+
+    for (var i = 0; i < 5; i += 1) {
+      await tester.tap(find.byIcon(Icons.chevron_right_rounded).last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 220));
+    }
+
+    expect(controller.sourceDocumentNumberCtrl.text, 'AJ-PUR-2026-0011');
+    final selectedNumberRect =
+        tester.getRect(find.text('AJ-PUR-2026-0011').last);
+    expect(selectedNumberRect.left, greaterThanOrEqualTo(0));
+    expect(selectedNumberRect.right, lessThanOrEqualTo(700));
   });
 
   testWidgets('return settlement scrolls inside a bounded desktop rail',
@@ -479,6 +637,53 @@ void main() {
     expect(find.text('Rs 15,000'), findsWidgets);
     expect(find.text('Rs 23,500'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('partial received weight recalculates workflow and return cart',
+      (tester) async {
+    tester.view.physicalSize = const Size(1480, 920);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final controller = ReturnReversalController(
+      repository: _MixedMetalReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-MIX-2026-0001';
+    await controller.searchRecords();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 220));
+
+    await tester.enterText(
+      find.byKey(const ValueKey('received-weight-1')),
+      '0.75',
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 220));
+
+    expect(controller.state.activeInspectionDraft?.receivedNetWeight, 0.75);
+    expect(find.text('0.750 g'), findsWidgets);
+    expect(find.text('Rs 4,250'), findsWidgets);
+
+    controller.addLineToReturnCart(1);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 220));
+
+    expect(find.text('Gold Net Weight'), findsOneWidget);
+    expect(find.text('Gold Metal Amount'), findsOneWidget);
+    expect(find.text('Gold Return Total'), findsOneWidget);
+    expect(find.text('Rs 4,250'), findsWidgets);
   });
 
   testWidgets('return workflow fits weight metrics and wraps stage chips',
@@ -656,6 +861,112 @@ class _ProcessTrackingReturnReversalRepository
   }
 }
 
+class _PartiallyReturnedReturnReversalRepository
+    extends _TestReturnReversalRepository {
+  static final _invoice = ReturnReversalSourceDocument(
+    id: 90,
+    type: ReturnReversalSourceDocumentType.salesInvoice,
+    documentNo: 'AJ-LOCK-2026-0001',
+    customerName: 'REYANSH SONI',
+    mobile: '9304479436',
+    address: 'Patna',
+    documentDate: DateTime(2026, 9, 1),
+    grossValue: 18000,
+    paidAmount: 18000,
+    dueAmount: 0,
+    netWeight: 2,
+    lineItems: [
+      ReturnReversalSourceLineItem(
+        lineNo: 1,
+        metalType: 'GOLD',
+        description: 'Gold Ring',
+        quantity: 1,
+        grossWeight: 1,
+        netWeight: 1,
+        rate: 9000,
+        value: 9000,
+        status: 'ACTIVE',
+        reversalStatus: 'POSTED',
+        reversalVoucherNo: 'SR-26-00011',
+        reversalDate: DateTime(2026, 9, 3),
+        reversalReceivedNetWeight: 0.85,
+        reversalHuidMatched: true,
+        reversalUnitMatched: true,
+        reversalIncludeMakingCharge: false,
+        reversalStockDisposition: 'MELTING',
+        reversalMetalReturnAmount: 7650,
+        reversalMakingReturnedAmount: 0,
+        reversalLineReturnValue: 7650,
+      ),
+      const ReturnReversalSourceLineItem(
+        lineNo: 2,
+        metalType: 'GOLD',
+        description: 'Gold Chain',
+        quantity: 1,
+        grossWeight: 1,
+        netWeight: 1,
+        rate: 9000,
+        value: 9000,
+        status: 'ACTIVE',
+      ),
+    ],
+  );
+
+  @override
+  Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
+    String documentNumber,
+  ) async {
+    return documentNumber == _invoice.documentNo ? _invoice : null;
+  }
+}
+
+class _ScrollableHistoryReturnReversalRepository
+    extends _TestReturnReversalRepository {
+  static final _invoices = List<ReturnReversalSourceDocument>.generate(
+    6,
+    (index) {
+      final serial = (index + 6).toString().padLeft(4, '0');
+      return ReturnReversalSourceDocument(
+        id: 100 + index,
+        type: ReturnReversalSourceDocumentType.salesInvoice,
+        documentNo: 'AJ-PUR-2026-$serial',
+        customerName: 'REYANSH SONI',
+        mobile: '9304479436',
+        address: 'Patna',
+        documentDate: DateTime(2026, 8, 20 + index),
+        grossValue: 10000 + (index * 1000),
+        paidAmount: 10000 + (index * 1000),
+        dueAmount: 0,
+        netWeight: 1,
+        lineItems: [
+          ReturnReversalSourceLineItem(
+            lineNo: 1,
+            metalType: 'GOLD',
+            description: 'Gold Chain $serial',
+            quantity: 1,
+            grossWeight: 1,
+            netWeight: 1,
+            rate: 10000 + (index * 1000),
+            value: 10000 + (index * 1000),
+            status: 'ACTIVE',
+          ),
+        ],
+      );
+    },
+  );
+
+  @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByMobile(
+    String mobile,
+  ) async {
+    return ReturnReversalLookupResult(
+      salesInvoices: mobile == '9304479436' ? _invoices : const [],
+      advanceBookings: const [],
+      customerPurchases: const [],
+    );
+  }
+}
+
 class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
   static final _invoice = ReturnReversalSourceDocument(
     id: 3,
@@ -767,6 +1078,8 @@ class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
 
 class _AllSourceTypesReturnReversalRepository
     implements ReturnReversalRepository {
+  ReturnReversalProcessRequest? lastRequest;
+
   static final _salesInvoice = ReturnReversalSourceDocument(
     id: 10,
     type: ReturnReversalSourceDocumentType.salesInvoice,
@@ -838,7 +1151,19 @@ class _AllSourceTypesReturnReversalRepository
     paidAmount: 3000,
     dueAmount: 0,
     netWeight: 0,
-    lineItems: const [],
+    lineItems: const [
+      ReturnReversalSourceLineItem(
+        lineNo: 1,
+        metalType: 'GOLD',
+        description: 'Advance Booking',
+        quantity: 1,
+        grossWeight: 0,
+        netWeight: 0,
+        rate: 0,
+        value: 3000,
+        status: 'PENDING',
+      ),
+    ],
   );
 
   @override
@@ -876,6 +1201,7 @@ class _AllSourceTypesReturnReversalRepository
   Future<ReturnReversalProcessResult> processReturn(
     ReturnReversalProcessRequest request,
   ) async {
+    lastRequest = request;
     return const ReturnReversalProcessResult(
       voucherId: 3,
       voucherNo: 'SR-26-00003',

@@ -16,13 +16,12 @@ import 'package:printing/printing.dart';
 import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
-import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
-import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
-import '../../../repositories/sales_orders/pos/pos_checkout_repository.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
+
+enum _SalesInvoicePdfMode { postedOriginal, currentStatement }
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
@@ -2088,7 +2087,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
               : 'Edit the sale, preview the invoice, or print a clean copy.',
       linkedDocuments: bill.linkedDocuments,
       actions: [
-        if (!bill.hasLinkedDocuments)
+        if (bill.hasLinkedDocuments)
+          _ProfileRecordAction(
+            icon: Icons.lock_open_rounded,
+            title: 'View Original Invoice',
+            subtitle:
+                'Open the locked posted bill with every original item line.',
+            color: CustomerProfileColors.historyText,
+            onTap: () {
+              _previewBillPdf(
+                bill.id,
+                mode: _SalesInvoicePdfMode.postedOriginal,
+              );
+            },
+          )
+        else
           _ProfileRecordAction(
             icon: Icons.edit_note_rounded,
             title: 'Edit Sales Bill',
@@ -2102,36 +2115,38 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                 _showInfoFeedback('Sales editing is not configured yet.');
               }
             },
-          )
-        else
-          _ProfileRecordAction(
-            icon: Icons.lock_rounded,
-            title: 'Original Invoice Locked',
-            subtitle:
-                'Use linked return/reversal documents for changes after posting.',
-            color: CustomerProfileColors.historyText,
-            onTap: () {
-              _showInfoFeedback(
-                'This invoice is locked because a linked return/reversal exists.',
-              );
-            },
           ),
         _ProfileRecordAction(
           icon: Icons.visibility_rounded,
-          title: 'View Invoice',
-          subtitle: 'Open the complete printable invoice preview.',
+          title: bill.hasLinkedDocuments ? 'View Updated PDF' : 'View Invoice',
+          subtitle: bill.hasLinkedDocuments
+              ? 'Open the latest statement after posted returns.'
+              : 'Open the complete printable invoice preview.',
           color: CustomerProfileColors.brandGold,
           onTap: () {
-            _previewBillPdf(bill.id);
+            _previewBillPdf(
+              bill.id,
+              mode: bill.hasLinkedDocuments
+                  ? _SalesInvoicePdfMode.currentStatement
+                  : _SalesInvoicePdfMode.postedOriginal,
+            );
           },
         ),
         _ProfileRecordAction(
           icon: Icons.print_rounded,
-          title: 'Print Invoice',
-          subtitle: 'Send the finished invoice directly to the printer.',
+          title:
+              bill.hasLinkedDocuments ? 'Print Updated PDF' : 'Print Invoice',
+          subtitle: bill.hasLinkedDocuments
+              ? 'Print the current return-adjusted statement.'
+              : 'Send the finished invoice directly to the printer.',
           color: CustomerProfileColors.clearIcon,
           onTap: () {
-            _printBillPdf(bill.id);
+            _printBillPdf(
+              bill.id,
+              mode: bill.hasLinkedDocuments
+                  ? _SalesInvoicePdfMode.currentStatement
+                  : _SalesInvoicePdfMode.postedOriginal,
+            );
           },
         ),
         if (bill.dueAmount > 0.5)
@@ -2567,17 +2582,17 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     );
   }
 
-  Future<void> _previewBillPdf(int billId) async {
+  Future<void> _previewBillPdf(
+    int billId, {
+    _SalesInvoicePdfMode mode = _SalesInvoicePdfMode.postedOriginal,
+  }) async {
     final detail = await _logic.fetchBillDetails(billId);
     if (!mounted) return;
     if (detail == null) {
       _showInfoFeedback('Sales invoice details could not be loaded.');
       return;
     }
-    final bytes = await _buildSalesInvoicePdfFromWorkspace(
-      billId,
-      detail: detail,
-    );
+    final bytes = await _buildSalesInvoicePdf(detail: detail, mode: mode);
     if (!mounted) return;
     if (bytes == null) {
       _showInfoFeedback('Sales invoice PDF could not be generated.');
@@ -2586,60 +2601,479 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     await _showDocumentPreview(pdfBytes: bytes);
   }
 
-  Future<void> _printBillPdf(int billId) async {
+  Future<void> _printBillPdf(
+    int billId, {
+    _SalesInvoicePdfMode mode = _SalesInvoicePdfMode.postedOriginal,
+  }) async {
     final detail = await _logic.fetchBillDetails(billId);
     if (!mounted) return;
     if (detail == null) {
       _showInfoFeedback('Sales invoice details could not be loaded.');
       return;
     }
-    final bytes = await _buildSalesInvoicePdfFromWorkspace(
-      billId,
-      detail: detail,
-    );
+    final bytes = await _buildSalesInvoicePdf(detail: detail, mode: mode);
     if (!mounted) return;
     if (bytes == null) {
       _showInfoFeedback('Sales invoice PDF could not be generated.');
       return;
     }
     await Printing.layoutPdf(
-      name: 'sales_invoice_${detail.bill.billNo}.pdf',
+      name: mode == _SalesInvoicePdfMode.currentStatement
+          ? 'sales_invoice_${detail.bill.billNo}_updated_statement.pdf'
+          : 'sales_invoice_${detail.bill.billNo}_original.pdf',
       onLayout: (_) async => bytes,
     );
   }
 
-  Future<Uint8List?> _buildSalesInvoicePdfFromWorkspace(
-    int billId, {
+  Future<Uint8List?> _buildSalesInvoicePdf({
     required CustomerBillDetailModel detail,
+    required _SalesInvoicePdfMode mode,
   }) async {
-    final billingController = PosBillingController();
-    final invoiceController = PosInvoiceController(billing: billingController);
-    try {
-      final loaded = await billingController.initializeForEdit(billId);
-      if (!loaded) return null;
-      final printableItems =
-          await PosCheckoutRepository().fetchPrintableSaleItems(billId);
-      if (printableItems.length > billingController.saleItems.length) {
-        for (final item in billingController.saleItems) {
-          item.dispose();
-        }
-        billingController.saleItems
-          ..clear()
-          ..addAll(printableItems);
-      } else {
-        for (final item in printableItems) {
-          item.dispose();
-        }
-      }
-      final bytes = await invoiceController.generatePreviewPdfBytes(
-        includeAllMetals: true,
-        balanceDueOverride: detail.bill.dueAmount,
+    final doc = pw.Document();
+    final isCurrent = mode == _SalesInvoicePdfMode.currentStatement;
+    final activeItems =
+        detail.items.where((item) => !item.isReturned).toList(growable: false);
+    final returnedItems =
+        detail.items.where((item) => item.isReturned).toList(growable: false);
+    final printableItems = isCurrent ? activeItems : detail.items;
+    final grossSource = detail.bill.grossAmount > 0
+        ? detail.bill.grossAmount
+        : detail.items.fold<double>(0, (sum, item) => sum + item.itemTotal);
+    final paidTotal = detail.bill.cashPaid +
+        detail.bill.upiPaid +
+        detail.bill.cardPaid +
+        detail.bill.advancePaid;
+    final returnValue = detail.bill.linkedReturnValue;
+    final currentInvoiceValue = detail.bill.currentInvoiceValue;
+
+    doc.addPage(
+      pw.MultiPage(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(28),
+        ),
+        build: (context) => [
+          _pdfHeader(
+            isCurrent ? 'UPDATED SALES STATEMENT' : 'ORIGINAL TAX INVOICE',
+            detail.bill.billNo,
+          ),
+          pw.SizedBox(height: 14),
+          _pdfStatusStrip(
+            isCurrent
+                ? 'Return adjusted view. Original invoice remains locked.'
+                : 'Immutable posted invoice snapshot. Return documents are linked separately.',
+            detail.bill.hasLinkedDocuments
+                ? detail.bill.lifecycleLabel
+                : detail.bill.paymentLabel,
+          ),
+          pw.SizedBox(height: 14),
+          _pdfInfoGrid([
+            ['Customer', detail.customerName],
+            ['Mobile', detail.customerMobile],
+            ['Invoice Date', detail.bill.formattedDate],
+            ['Payment Status', detail.bill.paymentLabel],
+            [
+              'Place of Supply',
+              detail.bill.placeOfSupply.isEmpty
+                  ? '-'
+                  : detail.bill.placeOfSupply
+            ],
+            [
+              'Document Type',
+              detail.bill.documentType.isEmpty
+                  ? 'TAX INVOICE'
+                  : detail.bill.documentType
+            ],
+          ]),
+          pw.SizedBox(height: 16),
+          _pdfSectionTitle(
+            isCurrent ? 'Active Item Details' : 'Original Item Details',
+          ),
+          pw.SizedBox(height: 8),
+          _pdfSalesItemsTable(printableItems, showReturnStatus: !isCurrent),
+          if (isCurrent && returnedItems.isNotEmpty) ...[
+            pw.SizedBox(height: 14),
+            _pdfSectionTitle('Returned Item Adjustments'),
+            pw.SizedBox(height: 8),
+            _pdfSalesItemsTable(returnedItems, showReturnStatus: true),
+          ],
+          pw.SizedBox(height: 16),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(child: _pdfPaymentPanel(detail.bill, paidTotal)),
+              pw.SizedBox(width: 14),
+              pw.Expanded(
+                child: isCurrent
+                    ? _pdfCurrentAmountPanel(
+                        bill: detail.bill,
+                        grossSource: grossSource,
+                        returnValue: returnValue,
+                        currentInvoiceValue: currentInvoiceValue,
+                      )
+                    : _pdfOriginalAmountPanel(
+                        bill: detail.bill,
+                        grossSource: grossSource,
+                      ),
+              ),
+            ],
+          ),
+          if (detail.bill.linkedDocuments.isNotEmpty) ...[
+            pw.SizedBox(height: 14),
+            _pdfLinkedDocumentsSummary(detail.bill.linkedDocuments),
+          ],
+        ],
+      ),
+    );
+    return doc.save();
+  }
+
+  pw.Widget _pdfStatusStrip(String note, String status) {
+    final cleanStatus = status.trim().isEmpty ? 'POSTED' : status.trim();
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor.fromInt(0xFFFFFAEC),
+        border: pw.Border.all(color: const PdfColor.fromInt(0xFFE5B04C)),
+        borderRadius: pw.BorderRadius.circular(10),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Expanded(
+            child: pw.Text(
+              note,
+              style: const pw.TextStyle(
+                color: PdfColor.fromInt(0xFF111827),
+                fontSize: 9,
+              ),
+            ),
+          ),
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFFFFFFFF),
+              border: pw.Border.all(color: const PdfColor.fromInt(0xFFE5B04C)),
+              borderRadius: pw.BorderRadius.circular(20),
+            ),
+            child: pw.Text(
+              cleanStatus.toUpperCase(),
+              style: pw.TextStyle(
+                color: const PdfColor.fromInt(0xFF8A5D0A),
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfSalesItemsTable(
+    List<CustomerBillLineItemModel> items, {
+    required bool showReturnStatus,
+  }) {
+    if (items.isEmpty) {
+      return pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.all(12),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: const PdfColor.fromInt(0xFFE1E7F0)),
+          borderRadius: pw.BorderRadius.circular(8),
+        ),
+        child: pw.Text(
+          'No active invoice items in this view.',
+          style: const pw.TextStyle(
+            color: PdfColor.fromInt(0xFF111827),
+            fontSize: 10,
+          ),
+        ),
       );
-      return bytes;
-    } finally {
-      invoiceController.dispose();
-      billingController.dispose();
     }
+
+    final headers = [
+      'No',
+      'Metal',
+      'Item Detail',
+      'Unit',
+      'Purity',
+      'Net Wt',
+      'Rate',
+      'Making',
+      'Amount',
+      if (showReturnStatus) 'Status',
+    ];
+    final data = items.map((item) {
+      return [
+        item.lineNo.toString(),
+        item.metalType.toUpperCase(),
+        _pdfItemDescription(item),
+        item.unitLabel,
+        item.purity?.trim().isEmpty ?? true ? '-' : item.purity!,
+        '${item.netWeight.toStringAsFixed(3)} g',
+        _rs(item.rate),
+        _makingDisplay(item),
+        _rs(item.displayInvoiceValue),
+        if (showReturnStatus)
+          item.isReturned
+              ? 'RETURNED ${item.returnVoucherNo}'.trim()
+              : 'ACTIVE',
+      ];
+    }).toList(growable: false);
+
+    return pw.TableHelper.fromTextArray(
+      headers: headers,
+      data: data,
+      border: pw.TableBorder.all(
+        color: const PdfColor.fromInt(0xFFE2E8F0),
+        width: 0.6,
+      ),
+      headerDecoration: const pw.BoxDecoration(
+        color: PdfColor.fromInt(0xFFF7F3EA),
+      ),
+      headerStyle: pw.TextStyle(
+        color: const PdfColor.fromInt(0xFF111827),
+        fontSize: 7,
+        fontWeight: pw.FontWeight.bold,
+      ),
+      cellStyle: const pw.TextStyle(
+        color: PdfColor.fromInt(0xFF111827),
+        fontSize: 7,
+      ),
+      cellAlignment: pw.Alignment.centerLeft,
+      headerAlignment: pw.Alignment.centerLeft,
+      cellPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+      columnWidths: {
+        0: const pw.FixedColumnWidth(22),
+        1: const pw.FixedColumnWidth(44),
+        2: const pw.FlexColumnWidth(2.3),
+        3: const pw.FixedColumnWidth(40),
+        4: const pw.FixedColumnWidth(38),
+        5: const pw.FixedColumnWidth(52),
+        6: const pw.FixedColumnWidth(54),
+        7: const pw.FixedColumnWidth(58),
+        8: const pw.FixedColumnWidth(58),
+        if (showReturnStatus) 9: const pw.FixedColumnWidth(62),
+      },
+    );
+  }
+
+  String _pdfItemDescription(CustomerBillLineItemModel item) {
+    final lines = <String>[item.itemName];
+    final hsn = item.hsnCode.trim();
+    final huid = item.huid?.trim() ?? '';
+    if (hsn.isNotEmpty) lines.add('HSN $hsn');
+    if (huid.isNotEmpty) lines.add('HUID $huid');
+    return lines.join('\n');
+  }
+
+  String _makingDisplay(CustomerBillLineItemModel item) {
+    final input = item.makingChargeInput;
+    final type = item.makingChargeType.trim().toUpperCase();
+    final prefix = switch (type) {
+      'PERCENTAGE' => '${_fmt(input)}%',
+      'PER_PIECE' => '${_fmt(input)}/pc',
+      'PER_KG' => '${_fmt(input)}/kg',
+      _ => input > 0 ? '${_fmt(input)}/g' : '',
+    };
+    if (prefix.isEmpty) return _rs(item.makingCharge);
+    return '$prefix\n${_rs(item.makingCharge)}';
+  }
+
+  pw.Widget _pdfPaymentPanel(CustomerBillModel bill, double paidTotal) {
+    final rows = <List<String>>[
+      if (bill.cashPaid > 0.005) ['Cash', _rs(bill.cashPaid)],
+      if (bill.upiPaid > 0.005) ['UPI / Bank', _rs(bill.upiPaid)],
+      if (bill.cardPaid > 0.005) ['Card', _rs(bill.cardPaid)],
+      if (bill.advancePaid > 0.005) ['Advance', _rs(bill.advancePaid)],
+      ['Total Received', _rs(paidTotal > 0 ? paidTotal : bill.paidAmount)],
+      ['Current Due', _rs(bill.dueAmount)],
+    ];
+    return _pdfSummaryPanel(
+      title: 'Payment Received',
+      rows: rows,
+      footerLabel: 'Payment Status',
+      footerValue: bill.paymentLabel,
+    );
+  }
+
+  pw.Widget _pdfOriginalAmountPanel({
+    required CustomerBillModel bill,
+    required double grossSource,
+  }) {
+    return _pdfSummaryPanel(
+      title: 'Original Amount Summary',
+      rows: [
+        ['Gross Sale Value', _rs(grossSource)],
+        ['Making Charges', _rs(bill.makingTotal)],
+        ['Invoice Discount', '- ${_rs(bill.discountAmount)}'],
+        ['Taxable Value', _rs(bill.taxableAmount)],
+        if (bill.igstAmount > 0.005)
+          ['IGST', _rs(bill.igstAmount)]
+        else ...[
+          ['CGST', _rs(bill.cgstAmount)],
+          ['SGST', _rs(bill.sgstAmount)],
+        ],
+        if (bill.tradeInDeduction > 0.005)
+          ['Customer Metal Settlement', '- ${_rs(bill.tradeInDeduction)}'],
+        if (bill.roundOffAmount.abs() > 0.005)
+          ['Round Off', _rs(bill.roundOffAmount)],
+      ],
+      footerLabel: 'Original Invoice Total',
+      footerValue: _rs(bill.totalAmount),
+    );
+  }
+
+  pw.Widget _pdfCurrentAmountPanel({
+    required CustomerBillModel bill,
+    required double grossSource,
+    required double returnValue,
+    required double currentInvoiceValue,
+  }) {
+    return _pdfSummaryPanel(
+      title: 'Updated Statement Summary',
+      rows: [
+        ['Original Invoice Total', _rs(bill.totalAmount)],
+        ['Linked Return Value', '- ${_rs(returnValue)}'],
+        ['Current Sale Value', _rs(currentInvoiceValue)],
+        ['Amount Received', _rs(bill.paidAmount)],
+        ['Current Due', _rs(bill.dueAmount)],
+      ],
+      footerLabel: 'Current Customer Position',
+      footerValue: bill.dueAmount <= 0.5 ? 'SETTLED' : _rs(bill.dueAmount),
+    );
+  }
+
+  pw.Widget _pdfSummaryPanel({
+    required String title,
+    required List<List<String>> rows,
+    required String footerLabel,
+    required String footerValue,
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: const PdfColor.fromInt(0xFFE1E7F0)),
+        borderRadius: pw.BorderRadius.circular(10),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title.toUpperCase(),
+            style: pw.TextStyle(
+              color: const PdfColor.fromInt(0xFF8A5D0A),
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          ...rows.map(
+            (row) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 5),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    row[0],
+                    style: const pw.TextStyle(
+                      color: PdfColor.fromInt(0xFF344256),
+                      fontSize: 8.5,
+                    ),
+                  ),
+                  pw.Text(
+                    row[1],
+                    style: pw.TextStyle(
+                      color: const PdfColor.fromInt(0xFF111827),
+                      fontSize: 8.5,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          pw.Divider(color: const PdfColor.fromInt(0xFFE5B04C)),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                footerLabel,
+                style: pw.TextStyle(
+                  color: const PdfColor.fromInt(0xFF111827),
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.Text(
+                footerValue,
+                style: pw.TextStyle(
+                  color: const PdfColor.fromInt(0xFF8A5D0A),
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfLinkedDocumentsSummary(
+    List<CustomerLinkedDocumentModel> documents,
+  ) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: const PdfColor.fromInt(0xFFF6F0FF),
+        border: pw.Border.all(color: const PdfColor.fromInt(0xFFC4B5FD)),
+        borderRadius: pw.BorderRadius.circular(10),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'LINKED RETURN / REVERSAL DOCUMENTS',
+            style: pw.TextStyle(
+              color: const PdfColor.fromInt(0xFF4C1D95),
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 7),
+          ...documents.map(
+            (document) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 4),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Expanded(
+                    child: pw.Text(
+                      '${document.documentNo} | ${document.documentTitle} | ${document.lineCountLabel}',
+                      style: const pw.TextStyle(
+                        color: PdfColor.fromInt(0xFF111827),
+                        fontSize: 8,
+                      ),
+                    ),
+                  ),
+                  pw.Text(
+                    document.formattedReturnValue.replaceFirst('\u20B9', 'Rs'),
+                    style: pw.TextStyle(
+                      color: const PdfColor.fromInt(0xFF111827),
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _previewLinkedDocumentPdf(

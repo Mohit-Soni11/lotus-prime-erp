@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 
@@ -7,27 +5,22 @@ enum ReturnReversalStockRoute {
   addToStock(
     label: 'Add Stock',
     subtitle: 'Return to sellable stock',
-    icon: Icons.inventory_2_rounded,
   ),
   melting(
     label: 'Melting',
     subtitle: 'Send to metal purchase flow',
-    icon: Icons.local_fire_department_rounded,
   ),
   managerHold(
     label: 'Hold',
     subtitle: 'Manager review required',
-    icon: Icons.admin_panel_settings_rounded,
   );
 
   final String label;
   final String subtitle;
-  final IconData icon;
 
   const ReturnReversalStockRoute({
     required this.label,
     required this.subtitle,
-    required this.icon,
   });
 
   ReturnReversalStockDisposition get disposition {
@@ -62,13 +55,17 @@ class ReturnReversalLineInspectionDraft {
   factory ReturnReversalLineInspectionDraft.fromLine(
     ReturnReversalSourceLineItem lineItem,
   ) {
+    final stockRoute = _stockRouteFromDisposition(
+      lineItem.reversalStockDisposition,
+    );
     return ReturnReversalLineInspectionDraft(
       lineNo: lineItem.lineNo,
-      receivedNetWeight: lineItem.netWeight,
-      huidMatched: true,
-      unitMatched: true,
-      includeMakingCharge: false,
-      stockRoute: ReturnReversalStockRoute.addToStock,
+      receivedNetWeight:
+          lineItem.reversalReceivedNetWeight ?? lineItem.netWeight,
+      huidMatched: lineItem.reversalHuidMatched ?? true,
+      unitMatched: lineItem.reversalUnitMatched ?? true,
+      includeMakingCharge: lineItem.reversalIncludeMakingCharge ?? false,
+      stockRoute: stockRoute,
     );
   }
 
@@ -88,4 +85,13 @@ class ReturnReversalLineInspectionDraft {
       stockRoute: stockRoute ?? this.stockRoute,
     );
   }
+}
+
+ReturnReversalStockRoute _stockRouteFromDisposition(String disposition) {
+  final normalized = disposition.trim().toUpperCase();
+  return switch (normalized) {
+    'MELTING' => ReturnReversalStockRoute.melting,
+    'MANAGER_HOLD' => ReturnReversalStockRoute.managerHold,
+    _ => ReturnReversalStockRoute.addToStock,
+  };
 }

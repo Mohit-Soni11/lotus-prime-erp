@@ -107,12 +107,17 @@ class ReturnReversalController extends ChangeNotifier {
         _hydrateCustomerFields(preferredDocument);
         sourceDocumentNumberCtrl.text = preferredDocument.documentNo;
       }
+      final returnCartLineNumbers = _defaultCartLineNumbersFor(
+        preferredDocument,
+      );
       _setState(
         _state.copyWith(
           lookupResult: result,
           selectedSourceDocument: preferredDocument,
-          clearReturnCartLineNumbers: true,
+          clearSelectedSourceDocument: preferredDocument == null,
+          returnCartLineNumbers: returnCartLineNumbers,
           activeInspectionLineNo: _firstLineNoFor(preferredDocument),
+          clearActiveInspectionLineNo: preferredDocument == null,
           lineInspectionDrafts: _inspectionDraftsFor(preferredDocument),
           isSearching: false,
           lookupMessage:
@@ -136,7 +141,7 @@ class ReturnReversalController extends ChangeNotifier {
     _setState(
       _state.copyWith(
         selectedSourceDocument: document,
-        clearReturnCartLineNumbers: true,
+        returnCartLineNumbers: _defaultCartLineNumbersFor(document),
         activeInspectionLineNo: _firstLineNoFor(document),
         lineInspectionDrafts: _inspectionDraftsFor(document),
         clearLookupMessage: true,
@@ -153,14 +158,17 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void selectInspectionLine(int lineNo) {
-    if (_lineItemByNo(lineNo) == null ||
-        _state.activeInspectionLineNo == lineNo) {
+    final lineItem = _lineItemByNo(lineNo);
+    if (lineItem == null || _state.activeInspectionLineNo == lineNo) {
       return;
     }
     _setState(_state.copyWith(activeInspectionLineNo: lineNo));
   }
 
   void updateReceivedNetWeight(int lineNo, double receivedNetWeight) {
+    if (_lineItemByNo(lineNo)?.isReversed ?? false) {
+      return;
+    }
     final draft = _draftForLine(lineNo);
     if (draft == null) {
       return;
@@ -175,6 +183,9 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void setHuidMatched(int lineNo, bool matched) {
+    if (_lineItemByNo(lineNo)?.isReversed ?? false) {
+      return;
+    }
     final draft = _draftForLine(lineNo);
     if (draft == null) {
       return;
@@ -183,6 +194,9 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void setUnitMatched(int lineNo, bool matched) {
+    if (_lineItemByNo(lineNo)?.isReversed ?? false) {
+      return;
+    }
     final draft = _draftForLine(lineNo);
     if (draft == null) {
       return;
@@ -191,6 +205,9 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void setLineMakingReturn(int lineNo, bool includeMakingCharge) {
+    if (_lineItemByNo(lineNo)?.isReversed ?? false) {
+      return;
+    }
     final draft = _draftForLine(lineNo);
     if (draft == null) {
       return;
@@ -202,6 +219,9 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void setStockRoute(int lineNo, ReturnReversalStockRoute route) {
+    if (_lineItemByNo(lineNo)?.isReversed ?? false) {
+      return;
+    }
     final draft = _draftForLine(lineNo);
     if (draft == null) {
       return;
@@ -271,7 +291,9 @@ class ReturnReversalController extends ChangeNotifier {
     if (cartLines.isEmpty) {
       _setState(
         _state.copyWith(
-          lookupMessage: 'Add at least one pending item to the return cart.',
+          lookupMessage: _state.operationType.isBookingCancellation
+              ? 'Select a pending advance booking before cancellation.'
+              : 'Add at least one pending item to the return cart.',
           clearError: true,
         ),
       );
@@ -374,7 +396,7 @@ class ReturnReversalController extends ChangeNotifier {
       _state.copyWith(
         lookupResult: _lookupResultFor(document),
         selectedSourceDocument: document,
-        clearReturnCartLineNumbers: true,
+        returnCartLineNumbers: _defaultCartLineNumbersFor(document),
         activeInspectionLineNo: _firstLineNoFor(document),
         lineInspectionDrafts: _inspectionDraftsFor(document),
         isSearching: false,
@@ -408,6 +430,23 @@ class ReturnReversalController extends ChangeNotifier {
     };
   }
 
+  Set<int> _defaultCartLineNumbersFor(
+    ReturnReversalSourceDocument? document,
+  ) {
+    if (!_isBookingCancellationSource(document)) {
+      return const {};
+    }
+    return {
+      for (final lineItem in document!.lineItems)
+        if (!lineItem.isReversed) lineItem.lineNo,
+    };
+  }
+
+  bool _isBookingCancellationSource(ReturnReversalSourceDocument? document) {
+    return _state.operationType.isBookingCancellation &&
+        document?.type == ReturnReversalSourceDocumentType.advanceBooking;
+  }
+
   ReturnReversalSourceLineItem? _lineItemByNo(int lineNo) {
     final document = _state.selectedSourceDocument;
     if (document == null) {
@@ -433,6 +472,17 @@ class ReturnReversalController extends ChangeNotifier {
   ReturnReversalProcessLineInput _processInputForLine(
     ReturnReversalSourceLineItem line,
   ) {
+    if (_isBookingCancellationSource(_state.selectedSourceDocument)) {
+      return ReturnReversalProcessLineInput(
+        sourceLineNo: line.lineNo,
+        receivedNetWeight: line.netWeight > 0 ? line.netWeight : 0,
+        huidMatched: true,
+        unitMatched: true,
+        includeMakingCharge: false,
+        stockDisposition: ReturnReversalStockDisposition.notApplicable,
+      );
+    }
+
     final draft = _draftForLine(line.lineNo) ??
         ReturnReversalLineInspectionDraft.fromLine(line);
     return ReturnReversalProcessLineInput(
