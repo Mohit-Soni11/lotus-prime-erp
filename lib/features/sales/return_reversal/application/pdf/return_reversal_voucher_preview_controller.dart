@@ -138,7 +138,43 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
     return !kind.requiresSalesInvoice || canUseSalesInvoiceDocuments;
   }
 
-  String get selectedOutputDocumentLabel => selectedOutputDocument.label;
+  List<ReturnReversalOutputDocumentKind> get availableOutputDocuments {
+    if (!canUseSalesInvoiceDocuments) {
+      return const [ReturnReversalOutputDocumentKind.returnVoucher];
+    }
+    return ReturnReversalOutputDocumentKind.values;
+  }
+
+  String get selectedOutputDocumentLabel {
+    if (selectedOutputDocument ==
+        ReturnReversalOutputDocumentKind.returnVoucher) {
+      return documentKind.title;
+    }
+    return selectedOutputDocument.label;
+  }
+
+  String get selectedOutputDocumentShortLabel {
+    if (selectedOutputDocument ==
+        ReturnReversalOutputDocumentKind.returnVoucher) {
+      return documentKind.shortTitle;
+    }
+    return selectedOutputDocument.shortLabel;
+  }
+
+  String get selectedOutputDocumentSubtitle {
+    if (selectedOutputDocument ==
+        ReturnReversalOutputDocumentKind.returnVoucher) {
+      return switch (documentKind) {
+        ReturnReversalVoucherDocumentKind.salesReturn =>
+          'Sales return refund voucher',
+        ReturnReversalVoucherDocumentKind.bookingCancellation =>
+          'Advance booking cancellation voucher',
+        ReturnReversalVoucherDocumentKind.customerPurchaseReversal =>
+          'Customer purchase reversal voucher',
+      };
+    }
+    return selectedOutputDocument.subtitle;
+  }
 
   bool get showsInvoiceMetalScope {
     return selectedOutputDocument.requiresSalesInvoice &&
@@ -281,7 +317,7 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
 
     final result = await SharePlus.instance.share(
       ShareParams(
-        title: 'Share ${selectedOutputDocument.label} PDF',
+        title: 'Share $selectedOutputDocumentLabel PDF',
         subject: _pdfBaseName,
         files: [
           XFile(
@@ -307,7 +343,7 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
     if (bytes == null) return null;
 
     final selectedPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Export ${selectedOutputDocument.label} PDF',
+      dialogTitle: 'Export $selectedOutputDocumentLabel PDF',
       fileName: _pdfFileName,
       type: FileType.custom,
       allowedExtensions: const ['pdf'],
@@ -355,6 +391,9 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
 
   void _normalizeSelectedOutputDocument() {
     if (!isOutputDocumentEnabled(selectedOutputDocument)) {
+      selectedOutputDocument = ReturnReversalOutputDocumentKind.returnVoucher;
+    }
+    if (!availableOutputDocuments.contains(selectedOutputDocument)) {
       selectedOutputDocument = ReturnReversalOutputDocumentKind.returnVoucher;
     }
   }
@@ -407,10 +446,7 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
         deskController.state.selectedSourceDocument?.reversalVoucherNo;
     final documentNo =
         (voucherNo?.trim().isNotEmpty ?? false) ? voucherNo!.trim() : sourceNo;
-    final title =
-        selectedOutputDocument == ReturnReversalOutputDocumentKind.returnVoucher
-            ? documentKind.shortTitle
-            : selectedOutputDocument.shortLabel;
+    final title = selectedOutputDocumentShortLabel;
     return '${title}_$documentNo'.replaceAll(' ', '_');
   }
 

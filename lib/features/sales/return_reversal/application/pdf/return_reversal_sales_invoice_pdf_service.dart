@@ -175,6 +175,7 @@ class ReturnReversalSalesInvoicePdfService {
       activeMetal: activeMetal,
       includeAllMetals: includeAllMetals,
       watermarkText: _hasPostedReturn(state, sourceDocument) ? 'RETURNED' : '',
+      suppressPaymentSettlement: false,
     );
   }
 
@@ -227,6 +228,7 @@ class ReturnReversalSalesInvoicePdfService {
       activeMetal: activeMetal,
       includeAllMetals: includeAllMetals,
       watermarkText: 'UPDATED AFTER RETURN',
+      suppressPaymentSettlement: true,
     );
   }
 
@@ -239,6 +241,7 @@ class ReturnReversalSalesInvoicePdfService {
     required MetalType? activeMetal,
     required bool includeAllMetals,
     required String watermarkText,
+    required bool suppressPaymentSettlement,
   }) async {
     final settings = await _loadSalesBillingSettings(
       invoice,
@@ -267,6 +270,7 @@ class ReturnReversalSalesInvoicePdfService {
         templateId: templateId,
         metalPrintSettings: settings,
         watermarkText: watermarkText,
+        suppressPaymentSettlement: suppressPaymentSettlement,
       ),
     );
   }
@@ -336,7 +340,7 @@ class ReturnReversalSalesInvoicePdfService {
       totalGst: totalGst,
       totalTradeInDeduction: adjusted ? 0 : bill.tradeInDeduction,
       grandTotal: adjusted
-          ? finalAmount
+          ? finalAmount - bill.roundOffAmount
           : bill.finalAmount + bill.tradeInDeduction - bill.roundOffAmount,
       roundOffAmount: bill.roundOffAmount,
       cashPaid:

@@ -25,7 +25,7 @@ extension _ReturnReversalVoucherHubHeader
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _voucherCtrl.selectedOutputDocument.label.toUpperCase(),
+                  _voucherCtrl.selectedOutputDocumentLabel.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

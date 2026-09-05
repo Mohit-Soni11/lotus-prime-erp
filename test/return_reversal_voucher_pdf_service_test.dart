@@ -92,6 +92,34 @@ void main() {
     );
   });
 
+  test('builds booking cancellation voucher through every Lotus template',
+      () async {
+    final state = _stateFor(
+      operationType: ReturnReversalOperationType.bookingCancellation,
+      sourceType: ReturnReversalSourceDocumentType.advanceBooking,
+      documentNo: 'BK-LJ-2627-0002',
+    );
+
+    final templates = PrintTemplateRegistry.forDocument(
+      ReturnReversalVoucherDocumentKind
+          .bookingCancellation.printTemplateDocumentType,
+    );
+    expect(templates, hasLength(3));
+
+    for (final template in templates) {
+      final bytes = await ReturnReversalVoucherPdfService.buildVoucherBytes(
+        state: state,
+        options: _options.copyWith(
+          templateId: template.id,
+          includeStockRouting: false,
+        ),
+      );
+
+      expect(_pdfHeader(bytes), '%PDF', reason: template.id);
+      expect(bytes.length, greaterThan(1000), reason: template.id);
+    }
+  });
+
   test('builds PDF bytes for customer purchase reversal voucher', () async {
     final state = _stateFor(
       operationType: ReturnReversalOperationType.salesReturn,

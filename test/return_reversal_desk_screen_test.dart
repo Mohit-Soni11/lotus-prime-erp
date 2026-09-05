@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
+import 'package:lotus_erp/features/sales/return_reversal/application/pdf/return_reversal_voucher_preview_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
@@ -72,6 +75,43 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     expect(backPressed, isTrue);
+  });
+
+  testWidgets('empty workspace keeps voucher action disabled with clear copy',
+      (tester) async {
+    final controller = ReturnReversalController(
+      repository: _TestReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    expect(find.text('Select Source First'), findsOneWidget);
+    expect(find.text('Generate Return Voucher'), findsNothing);
+    final returnButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Select Source First'),
+    );
+    expect(returnButton.onPressed, isNull);
+
+    await tester.tap(find.text('CANCELLATION'));
+    await tester.pump(const Duration(milliseconds: 220));
+
+    expect(find.text('Select Booking First'), findsOneWidget);
+    expect(find.text('Generate Cancellation Voucher'), findsNothing);
+    final cancellationButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Select Booking First'),
+    );
+    expect(cancellationButton.onPressed, isNull);
+    expect(find.text('Action Failed'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Return Reversal Desk shell stays usable in a narrow window',
@@ -246,6 +286,60 @@ void main() {
     expect(controller.state.selectedSourceDocument, isNull);
   });
 
+  test('voucher hub exposes cancellation-specific document choices and designs',
+      () async {
+    final controller = ReturnReversalController(
+      repository: _AllSourceTypesReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    controller.selectOperationType(
+      ReturnReversalOperationType.bookingCancellation,
+    );
+    controller.customerMobileCtrl.text = '9304479436';
+    await controller.searchRecords();
+
+    final previewController = ReturnReversalVoucherPreviewController(
+      deskController: controller,
+    );
+    addTearDown(previewController.dispose);
+
+    expect(
+      previewController.selectedOutputDocumentLabel,
+      'Booking Cancellation Voucher',
+    );
+    expect(
+      previewController.availableOutputDocuments,
+      const [ReturnReversalOutputDocumentKind.returnVoucher],
+    );
+    expect(previewController.supportedTemplates, hasLength(3));
+  });
+
+  test('voucher hub keeps original and updated invoices only for sales source',
+      () async {
+    final controller = ReturnReversalController(
+      repository: _AllSourceTypesReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    controller.customerMobileCtrl.text = '9304479436';
+    await controller.searchRecords();
+
+    final previewController = ReturnReversalVoucherPreviewController(
+      deskController: controller,
+    );
+    addTearDown(previewController.dispose);
+
+    expect(
+      previewController.availableOutputDocuments,
+      ReturnReversalOutputDocumentKind.values,
+    );
+    expect(
+      previewController.selectedOutputDocumentLabel,
+      'Sales Return Voucher',
+    );
+  });
+
   testWidgets('booking cancellation skips stock routing and prepares refund',
       (tester) async {
     final repository = _AllSourceTypesReturnReversalRepository();
@@ -292,6 +386,39 @@ void main() {
     expect(repository.lastRequest!.lines.single.stockDisposition,
         ReturnReversalStockDisposition.notApplicable);
     expect(repository.lastRequest!.lines.single.receivedNetWeight, 0);
+  });
+
+  testWidgets('successful booking cancellation shows success feedback',
+      (tester) async {
+    final repository = _AllSourceTypesReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    await tester.tap(find.text('CANCELLATION'));
+    await tester.pump(const Duration(milliseconds: 220));
+    controller.customerMobileCtrl.text = '9304479436';
+    await controller.searchRecords();
+    await controller.processReturn();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Cancellation Posted'), findsOneWidget);
+    expect(find.textContaining('booking line'), findsWidgets);
+    expect(repository.lastRequest?.operationType,
+        ReturnReversalOperationType.bookingCancellation);
+    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('source number search loads customer and invoice items',
@@ -607,6 +734,87 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('successful return posting shows success feedback',
+      (tester) async {
+    final repository = _ProcessTrackingReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-PUR-2026-0006';
+    await controller.searchRecords();
+    controller.addLineToReturnCart(1);
+    await controller.processReturn();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Return Posted'), findsOneWidget);
+    expect(find.textContaining('SR-26-00099 posted'), findsWidgets);
+    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('covered desk does not show intermediate post feedback',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 980);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repository = _ProcessTrackingReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    controller.sourceDocumentNumberCtrl.text = 'AJ-PUR-2026-0006';
+    await controller.searchRecords();
+    controller.addLineToReturnCart(1);
+
+    final navigator = Navigator.of(
+      tester.element(find.byType(ReturnReversalDeskScreen)),
+    );
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('Voucher Route')),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 360));
+
+    await controller.processReturn();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Voucher Route'), findsOneWidget);
+    expect(find.text('Return Posted'), findsNothing);
+    expect(find.textContaining('SR-26-00099 posted'), findsNothing);
+    navigator.pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 360));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('return settlement separates original pricing by metal',
       (tester) async {
     final controller = ReturnReversalController(
@@ -896,6 +1104,21 @@ class _ProcessTrackingReturnReversalRepository
   int processCount = 0;
 
   @override
+  Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
+    String documentNumber,
+  ) async {
+    final source = await super.findSourceDocumentByNumber(documentNumber);
+    if (source == null || lastRequest == null) {
+      return source;
+    }
+    return _markDocumentLinesPosted(
+      source,
+      request: lastRequest!,
+      voucherNo: 'SR-26-00099',
+    );
+  }
+
+  @override
   Future<ReturnReversalProcessResult> processReturn(
     ReturnReversalProcessRequest request,
   ) async {
@@ -911,6 +1134,112 @@ class _ProcessTrackingReturnReversalRepository
       status: 'POSTED',
     );
   }
+}
+
+ReturnReversalSourceDocument _markDocumentLinesPosted(
+  ReturnReversalSourceDocument source, {
+  required ReturnReversalProcessRequest request,
+  required String voucherNo,
+}) {
+  final postedLineNos = request.lines.map((line) => line.sourceLineNo).toSet();
+  final lineInputs = {
+    for (final line in request.lines) line.sourceLineNo: line,
+  };
+  return ReturnReversalSourceDocument(
+    id: source.id,
+    type: source.type,
+    documentNo: source.documentNo,
+    customerId: source.customerId,
+    customerName: source.customerName,
+    mobile: source.mobile,
+    address: source.address,
+    documentDate: source.documentDate,
+    grossValue: source.grossValue,
+    discountAmount: source.discountAmount,
+    taxableAmount: source.taxableAmount,
+    cgstAmount: source.cgstAmount,
+    sgstAmount: source.sgstAmount,
+    igstAmount: source.igstAmount,
+    gstAmount: source.gstAmount,
+    makingTotal: source.makingTotal,
+    roundOffAmount: source.roundOffAmount,
+    finalAmount: source.finalAmount,
+    paidAmount: source.paidAmount,
+    cashPaid: source.cashPaid,
+    upiPaid: source.upiPaid,
+    cardPaid: source.cardPaid,
+    advancePaid: source.advancePaid,
+    dueAmount: source.dueAmount,
+    tradeInDeduction: source.tradeInDeduction,
+    paymentStatus: source.paymentStatus,
+    billingMode: source.billingMode,
+    gstPricingMode: source.gstPricingMode,
+    netWeight: source.netWeight,
+    lineItems: [
+      for (final line in source.lineItems)
+        postedLineNos.contains(line.lineNo)
+            ? _markLinePosted(
+                line,
+                lineInputs[line.lineNo]!,
+                voucherNo: voucherNo,
+              )
+            : line,
+    ],
+    reversalStatus: postedLineNos.length >= source.lineItems.length
+        ? 'RETURNED'
+        : 'PARTIAL RETURN',
+    reversalVoucherNo: voucherNo,
+    reversedLineCount: postedLineNos.length,
+  );
+}
+
+ReturnReversalSourceLineItem _markLinePosted(
+  ReturnReversalSourceLineItem line,
+  ReturnReversalProcessLineInput input, {
+  required String voucherNo,
+}) {
+  return ReturnReversalSourceLineItem(
+    sourceLineId: line.sourceLineId,
+    lineNo: line.lineNo,
+    metalType: line.metalType,
+    description: line.description,
+    hsnCode: line.hsnCode,
+    purity: line.purity,
+    quantity: line.quantity,
+    quantityUnitCode: line.quantityUnitCode,
+    grossWeight: line.grossWeight,
+    lessWeight: line.lessWeight,
+    lessWeightPerPiece: line.lessWeightPerPiece,
+    netWeight: line.netWeight,
+    fineWeight: line.fineWeight,
+    rate: line.rate,
+    makingChargeType: line.makingChargeType,
+    makingChargeInput: line.makingChargeInput,
+    makingAmount: line.makingAmount,
+    discountAmount: line.discountAmount,
+    taxableAmount: line.taxableAmount,
+    gstAmount: line.gstAmount,
+    invoiceValue: line.invoiceValue,
+    value: line.value,
+    huidNumber: line.huidNumber,
+    linkedStockItemId: line.linkedStockItemId,
+    linkedStockUnitId: line.linkedStockUnitId,
+    linkedStockSku: line.linkedStockSku,
+    status: line.status,
+    reversalStatus: 'POSTED',
+    reversalVoucherNo: voucherNo,
+    reversalDate: DateTime(2026, 9, 5),
+    reversalReceivedNetWeight: input.receivedNetWeight,
+    reversalHuidMatched: input.huidMatched,
+    reversalUnitMatched: input.unitMatched,
+    reversalIncludeMakingCharge: input.includeMakingCharge,
+    reversalStockDisposition: input.stockDisposition.storageValue,
+    reversalMetalReturnAmount: line.value,
+    reversalMakingReturnedAmount:
+        input.includeMakingCharge ? line.makingAmount : 0,
+    reversalLineReturnValue:
+        line.value + (input.includeMakingCharge ? line.makingAmount : 0),
+  );
 }
 
 class _PartiallyReturnedReturnReversalRepository

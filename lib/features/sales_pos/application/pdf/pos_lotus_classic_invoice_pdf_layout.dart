@@ -31,11 +31,13 @@ class PosLotusClassicInvoicePdfLayout {
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final bool suppressPaymentSettlement;
   final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosLotusClassicInvoicePdfLayout({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.suppressPaymentSettlement = false,
     this.textRenderer,
   });
 
@@ -68,7 +70,9 @@ class PosLotusClassicInvoicePdfLayout {
           _tradeInTable(invoice),
         ],
         pw.SizedBox(height: 10),
-        _totalsAndPayment(invoice),
+        suppressPaymentSettlement
+            ? _totalsBlock(invoice)
+            : _totalsAndPayment(invoice),
         pw.SizedBox(height: 10),
         if (includePolicyBlock) ...[
           _policyBlock(invoice),
@@ -399,41 +403,44 @@ class PosLotusClassicInvoicePdfLayout {
                   ),
                 ),
                 pw.Spacer(),
-                pw.Container(
-                  width: double.infinity,
-                  padding:
-                      const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
-                    borderRadius:
-                        const pw.BorderRadius.all(pw.Radius.circular(4)),
-                    border: pw.Border.all(
-                      color: const PdfColor.fromInt(0xFFEAD6A0),
+                if (!suppressPaymentSettlement)
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 6,
+                    ),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.white,
+                      borderRadius:
+                          const pw.BorderRadius.all(pw.Radius.circular(4)),
+                      border: pw.Border.all(
+                        color: const PdfColor.fromInt(0xFFEAD6A0),
+                      ),
+                    ),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                          'PAYMENT STATUS',
+                          style: pw.TextStyle(
+                            color: _ink,
+                            fontSize: 6.5,
+                            fontWeight: pw.FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        pw.Text(
+                          _paymentStatusLabel(invoice),
+                          style: pw.TextStyle(
+                            color: _statusColor(invoice),
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(
-                        'PAYMENT STATUS',
-                        style: pw.TextStyle(
-                          color: _ink,
-                          fontSize: 6.5,
-                          fontWeight: pw.FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      pw.Text(
-                        _paymentStatusLabel(invoice),
-                        style: pw.TextStyle(
-                          color: _statusColor(invoice),
-                          fontSize: 8,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -1327,8 +1334,9 @@ class PosLotusClassicInvoicePdfLayout {
     return _amount(value);
   }
 
-  String _amountPanelLabel(PosInvoiceModel invoice) =>
-      _isScopedSectionExcess(invoice)
+  String _amountPanelLabel(PosInvoiceModel invoice) => suppressPaymentSettlement
+      ? 'UPDATED INVOICE TOTAL'
+      : _isScopedSectionExcess(invoice)
           ? 'SECTION EXCESS'
           : invoice.netPayable < -0.5
               ? 'CUSTOMER CREDIT'

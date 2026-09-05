@@ -44,5 +44,21 @@ void main() {
         isTrue,
       );
     });
+
+    test('return and cancellation voucher families expose all Lotus A4 designs',
+        () {
+      for (final type in [
+        PrintTemplateDocumentType.salesReturn,
+        PrintTemplateDocumentType.purchaseReturn,
+        PrintTemplateDocumentType.bookingAdvance,
+      ]) {
+        final templates = PrintTemplateRegistry.forDocument(type);
+
+        expect(templates, hasLength(3), reason: type.label);
+        expect(templates, contains(PrintTemplateRegistry.lotusClassic));
+        expect(templates, contains(PrintTemplateRegistry.lotusEconomy));
+        expect(templates, contains(PrintTemplateRegistry.lotusSignature));
+      }
+    });
   });
 }

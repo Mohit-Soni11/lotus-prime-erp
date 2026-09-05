@@ -666,6 +666,7 @@ class AppDatabase extends _$AppDatabase {
         "updated_at" INTEGER
       )
     ''');
+    await _ensureReturnVoucherColumns();
     await customStatement('''
       CREATE TABLE IF NOT EXISTS "return_voucher_lines" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -701,6 +702,7 @@ class AppDatabase extends _$AppDatabase {
         FOREIGN KEY ("return_voucher_id") REFERENCES "return_vouchers" ("id") ON DELETE CASCADE
       )
     ''');
+    await _ensureReturnVoucherLineColumns();
     await customStatement(
       'CREATE INDEX IF NOT EXISTS "idx_return_vouchers_source" ON "return_vouchers" ("source_type", "source_id")',
     );
@@ -713,6 +715,77 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE UNIQUE INDEX IF NOT EXISTS "uq_return_lines_posted_source" ON "return_voucher_lines" ("source_type", "source_id", "source_line_no") WHERE "status" <> \'VOIDED\'',
     );
+  }
+
+  Future<void> _ensureReturnVoucherColumns() async {
+    final columns = <String, String>{
+      'voucher_no': 'TEXT NOT NULL DEFAULT ""',
+      'operation_type': 'TEXT NOT NULL DEFAULT "SALES_RETURN"',
+      'source_type': 'TEXT NOT NULL DEFAULT ""',
+      'source_id': 'INTEGER NOT NULL DEFAULT 0',
+      'source_number': 'TEXT NOT NULL DEFAULT ""',
+      'customer_id': 'INTEGER',
+      'customer_name': 'TEXT',
+      'mobile': 'TEXT',
+      'settlement_mode': 'TEXT NOT NULL DEFAULT "CUSTOMER_CREDIT"',
+      'original_total_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'return_value': 'REAL NOT NULL DEFAULT 0.0',
+      'due_adjusted_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'customer_credit_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'making_returned_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'status': 'TEXT NOT NULL DEFAULT "POSTED"',
+      'operator_note': 'TEXT',
+      'created_at': 'INTEGER NOT NULL DEFAULT 0',
+      'updated_at': 'INTEGER',
+    };
+    for (final entry in columns.entries) {
+      await _addColumnIfMissing(
+        tableName: 'return_vouchers',
+        columnName: entry.key,
+        declaration: entry.value,
+      );
+    }
+  }
+
+  Future<void> _ensureReturnVoucherLineColumns() async {
+    final columns = <String, String>{
+      'return_voucher_id': 'INTEGER NOT NULL DEFAULT 0',
+      'source_type': 'TEXT NOT NULL DEFAULT ""',
+      'source_id': 'INTEGER NOT NULL DEFAULT 0',
+      'source_number': 'TEXT NOT NULL DEFAULT ""',
+      'source_line_no': 'INTEGER NOT NULL DEFAULT 0',
+      'source_bill_item_id': 'INTEGER',
+      'stock_item_id': 'INTEGER',
+      'stock_unit_id': 'INTEGER',
+      'stock_disposition': 'TEXT NOT NULL DEFAULT "NOT_APPLICABLE"',
+      'metal_type': 'TEXT NOT NULL DEFAULT ""',
+      'item_description': 'TEXT NOT NULL DEFAULT ""',
+      'huid': 'TEXT',
+      'quantity': 'INTEGER NOT NULL DEFAULT 1',
+      'quantity_unit_code': 'TEXT',
+      'purity': 'TEXT',
+      'sold_net_weight': 'REAL NOT NULL DEFAULT 0.0',
+      'received_net_weight': 'REAL NOT NULL DEFAULT 0.0',
+      'short_weight': 'REAL NOT NULL DEFAULT 0.0',
+      'rate': 'REAL NOT NULL DEFAULT 0.0',
+      'sold_item_value': 'REAL NOT NULL DEFAULT 0.0',
+      'adjusted_item_value': 'REAL NOT NULL DEFAULT 0.0',
+      'available_making_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'making_returned_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'metal_return_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'line_return_value': 'REAL NOT NULL DEFAULT 0.0',
+      'huid_matched': 'INTEGER NOT NULL DEFAULT 1',
+      'unit_matched': 'INTEGER NOT NULL DEFAULT 1',
+      'status': 'TEXT NOT NULL DEFAULT "POSTED"',
+      'created_at': 'INTEGER NOT NULL DEFAULT 0',
+    };
+    for (final entry in columns.entries) {
+      await _addColumnIfMissing(
+        tableName: 'return_voucher_lines',
+        columnName: entry.key,
+        declaration: entry.value,
+      );
+    }
   }
 
   Future<void> ensureLowStockAlertSchema() async {

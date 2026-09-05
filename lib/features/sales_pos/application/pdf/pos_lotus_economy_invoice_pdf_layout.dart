@@ -26,11 +26,13 @@ class PosLotusEconomyInvoicePdfLayout {
 
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
+  final bool suppressPaymentSettlement;
   final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosLotusEconomyInvoicePdfLayout({
     required this.scopeService,
     required this.metalPrintSettings,
+    this.suppressPaymentSettlement = false,
     this.textRenderer,
   });
 
@@ -333,6 +335,10 @@ class PosLotusEconomyInvoicePdfLayout {
     );
     final statusColor = status.isDue ? _danger : _success;
 
+    if (suppressPaymentSettlement) {
+      return _invoiceTotalsBox(summaryRows);
+    }
+
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -384,20 +390,35 @@ class PosLotusEconomyInvoicePdfLayout {
         pw.Expanded(
           child: _box(
             title: 'INVOICE TOTALS',
-            children: [
-              for (final row in summaryRows) ...[
-                if (row.isEmphasized) _divider(),
-                _keyLine(
-                  row.label,
-                  _summaryAmount(row),
-                  strong: row.isEmphasized,
-                ),
-              ],
-            ],
+            children: _invoiceTotalRows(summaryRows),
           ),
         ),
       ],
     );
+  }
+
+  pw.Widget _invoiceTotalsBox(
+    List<PosInvoiceAmountSummaryEntry> summaryRows,
+  ) {
+    return _box(
+      title: 'INVOICE TOTALS',
+      children: _invoiceTotalRows(summaryRows),
+    );
+  }
+
+  List<pw.Widget> _invoiceTotalRows(
+    List<PosInvoiceAmountSummaryEntry> summaryRows,
+  ) {
+    return [
+      for (final row in summaryRows) ...[
+        if (row.isEmphasized) _divider(),
+        _keyLine(
+          row.label,
+          _summaryAmount(row),
+          strong: row.isEmphasized,
+        ),
+      ],
+    ];
   }
 
   pw.Widget _compactPolicyBlock(PosInvoiceModel invoice) {

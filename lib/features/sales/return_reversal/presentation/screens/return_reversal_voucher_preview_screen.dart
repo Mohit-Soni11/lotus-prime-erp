@@ -60,6 +60,7 @@ class _ReturnReversalVoucherPreviewScreenState
   bool _isPrintingVoucher = false;
   bool _hasPrintedVoucher = false;
   bool _isCompletingWorkspace = false;
+  bool _isStartingFreshWorkspace = false;
 
   @override
   void initState() {
@@ -118,12 +119,16 @@ class _ReturnReversalVoucherPreviewScreenState
   Widget build(BuildContext context) {
     final sourceDocument = widget.controller.state.selectedSourceDocument;
     if (sourceDocument == null) {
+      if (_isStartingFreshWorkspace) {
+        return const SizedBox.shrink();
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         Navigator.of(context).maybePop();
-        AppFeedback.error(
+        AppFeedback.warning(
           context,
-          message: 'Select a return or cancellation source first.',
+          title: 'Source Required',
+          message: 'Select an invoice, purchase voucher, or booking first.',
         );
       });
       return const SizedBox.shrink();

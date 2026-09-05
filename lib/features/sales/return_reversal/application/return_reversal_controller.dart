@@ -377,8 +377,7 @@ class ReturnReversalController extends ChangeNotifier {
           lineInspectionDrafts: _inspectionDraftsFor(effectiveDocument),
           isProcessing: false,
           lastProcessResult: result,
-          processMessage:
-              '${result.voucherNo} posted for ${result.processedLineCount} item(s). Return value Rs ${result.returnValue.round()}.',
+          processMessage: _processSuccessMessage(result),
           clearError: true,
           clearLookupMessage: true,
         ),
@@ -526,6 +525,14 @@ class ReturnReversalController extends ChangeNotifier {
       includeMakingCharge: draft.includeMakingCharge,
       stockDisposition: draft.stockRoute.disposition,
     );
+  }
+
+  String _processSuccessMessage(ReturnReversalProcessResult result) {
+    final amount = result.returnValue.round();
+    if (_state.operationType.isBookingCancellation) {
+      return '${result.voucherNo} posted for ${result.processedLineCount} booking line(s). Refund value Rs $amount.';
+    }
+    return '${result.voucherNo} posted for ${result.processedLineCount} item(s). Return value Rs $amount.';
   }
 
   void _updateInspectionDraft(

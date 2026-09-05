@@ -349,7 +349,6 @@ class ReturnReversalVoucherPdfService {
       returnValue: returnValue,
       dueAdjustedAmount: dueAdjusted,
       customerCreditAmount: customerCredit,
-      status: result?.status ?? _voucherStatusLabel(state, document, rows),
     );
   }
 
@@ -490,7 +489,7 @@ class ReturnReversalVoucherPdfService {
     ReturnReversalVoucherPrintOptions options,
   ) {
     final headers = <String>[
-      'Serial No.',
+      'S. No.',
       'Item',
       'Metal',
       'Sold Wt',
@@ -560,11 +559,6 @@ class ReturnReversalVoucherPdfService {
                       : 'Customer Credit',
               value: _formatMoney(settlement.customerCreditAmount),
               highlight: true,
-            ),
-            LotusPrintableDetail(
-              iconKey: 'status',
-              label: 'Status',
-              value: settlement.status,
             ),
           ],
         ),
@@ -776,7 +770,7 @@ class ReturnReversalVoucherPdfService {
     bool thermal,
   ) {
     final headers = <String>[
-      'Serial No.',
+      'S. No.',
       'Item',
       'Metal',
       'Sold Wt',
@@ -913,7 +907,6 @@ class ReturnReversalVoucherPdfService {
           _amountRow('Due Adjusted', settlement.dueAdjustedAmount, thermal),
           _amountRow(
               'Customer Credit', settlement.customerCreditAmount, thermal),
-          _amountRow('Status', null, thermal, valueText: settlement.status),
         ],
       ),
     );
@@ -1175,13 +1168,11 @@ class _VoucherSettlement {
   final double returnValue;
   final double dueAdjustedAmount;
   final double customerCreditAmount;
-  final String status;
 
   const _VoucherSettlement({
     required this.returnValue,
     required this.dueAdjustedAmount,
     required this.customerCreditAmount,
-    required this.status,
   });
 }
 

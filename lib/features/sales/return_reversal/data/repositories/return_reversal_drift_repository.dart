@@ -578,51 +578,15 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       );
       customerCreditAmount = _roundMoney(returnValue - dueAdjustedAmount);
 
-      await _database.customStatement(
-        '''
-        INSERT INTO return_vouchers (
-          voucher_no,
-          operation_type,
-          source_type,
-          source_id,
-          source_number,
-          customer_id,
-          customer_name,
-          mobile,
-          settlement_mode,
-          original_total_amount,
-          return_value,
-          due_adjusted_amount,
-          customer_credit_amount,
-          making_returned_amount,
-          status,
-          operator_note,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
-        [
-          voucherNo,
-          _operationTypeStorage(request.operationType),
-          sourceType,
-          request.sourceDocument.id,
-          request.sourceDocument.documentNo,
-          request.sourceDocument.customerId,
-          request.sourceDocument.customerName,
-          request.sourceDocument.mobile,
-          request.settlementMode.storageValue,
-          request.sourceDocument.finalAmount,
-          returnValue,
-          dueAdjustedAmount,
-          customerCreditAmount,
-          makingReturnedAmount,
-          'POSTED',
-          request.operatorNote.trim().isEmpty
-              ? null
-              : request.operatorNote.trim(),
-          nowMs,
-          nowMs,
-        ],
+      await _insertReturnVoucher(
+        request: request,
+        voucherNo: voucherNo,
+        sourceType: sourceType,
+        returnValue: returnValue,
+        dueAdjustedAmount: dueAdjustedAmount,
+        customerCreditAmount: customerCreditAmount,
+        makingReturnedAmount: makingReturnedAmount,
+        nowMs: nowMs,
       );
       voucherId = await _lastInsertRowId();
 
@@ -839,75 +803,109 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     required ReturnReversalLineValuation valuation,
     required int nowMs,
   }) async {
-    await _database.customStatement(
-      '''
-      INSERT INTO return_voucher_lines (
-        return_voucher_id,
-        source_type,
-        source_id,
-        source_number,
-        source_line_no,
-        source_bill_item_id,
-        stock_item_id,
-        stock_unit_id,
-        stock_disposition,
-        metal_type,
-        item_description,
-        huid,
-        quantity,
-        quantity_unit_code,
-        purity,
-        sold_net_weight,
-        received_net_weight,
-        short_weight,
-        rate,
-        sold_item_value,
-        adjusted_item_value,
-        available_making_amount,
-        making_returned_amount,
-        metal_return_amount,
-        line_return_value,
-        huid_matched,
-        unit_matched,
-        status,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      [
-        voucherId,
-        sourceType,
-        sourceDocument.id,
-        sourceDocument.documentNo,
-        sourceLine.lineNo,
-        sourceLine.sourceLineId,
-        sourceLine.linkedStockItemId,
-        sourceLine.linkedStockUnitId,
-        returnLine.stockDisposition.storageValue,
-        sourceLine.metalType,
-        sourceLine.description,
-        sourceLine.huidNumber.trim().isEmpty
-            ? null
-            : sourceLine.huidNumber.trim(),
-        sourceLine.quantity,
-        sourceLine.quantityUnitCode,
-        sourceLine.purity,
-        sourceLine.netWeight,
-        returnLine.receivedNetWeight,
-        (sourceLine.netWeight - returnLine.receivedNetWeight)
-            .clamp(0.0, double.infinity),
-        sourceLine.rate,
-        sourceLine.displayLineTotal,
-        valuation.adjustedLineAmount,
-        valuation.adjustedMakingAmount,
-        valuation.makingReturnedAmount,
-        valuation.metalAmount,
-        valuation.returnValue,
-        returnLine.huidMatched ? 1 : 0,
-        returnLine.unitMatched ? 1 : 0,
-        'POSTED',
-        nowMs,
-      ],
+    final values = <String, Object?>{
+      'return_voucher_id': voucherId,
+      'source_type': sourceType,
+      'source_id': sourceDocument.id,
+      'source_number': sourceDocument.documentNo,
+      'source_line_no': sourceLine.lineNo,
+      'source_bill_item_id': sourceLine.sourceLineId,
+      'stock_item_id': sourceLine.linkedStockItemId,
+      'stock_unit_id': sourceLine.linkedStockUnitId,
+      'stock_disposition': returnLine.stockDisposition.storageValue,
+      'metal_type': sourceLine.metalType,
+      'item_description': sourceLine.description,
+      'huid': sourceLine.huidNumber.trim().isEmpty
+          ? null
+          : sourceLine.huidNumber.trim(),
+      'quantity': sourceLine.quantity,
+      'quantity_unit_code': sourceLine.quantityUnitCode,
+      'purity': sourceLine.purity,
+      'sold_net_weight': sourceLine.netWeight,
+      'received_net_weight': returnLine.receivedNetWeight,
+      'short_weight': (sourceLine.netWeight - returnLine.receivedNetWeight)
+          .clamp(0.0, double.infinity),
+      'rate': sourceLine.rate,
+      'sold_item_value': sourceLine.displayLineTotal,
+      'adjusted_item_value': valuation.adjustedLineAmount,
+      'available_making_amount': valuation.adjustedMakingAmount,
+      'making_returned_amount': valuation.makingReturnedAmount,
+      'metal_return_amount': valuation.metalAmount,
+      'line_return_value': valuation.returnValue,
+      'huid_matched': returnLine.huidMatched ? 1 : 0,
+      'unit_matched': returnLine.unitMatched ? 1 : 0,
+      'status': 'POSTED',
+      'created_at': nowMs,
+      'action': returnLine.stockDisposition.storageValue,
+    };
+    await _insertFilteringExistingColumns(
+      tableName: 'return_voucher_lines',
+      values: values,
     );
+  }
+
+  Future<void> _insertReturnVoucher({
+    required ReturnReversalProcessRequest request,
+    required String voucherNo,
+    required String sourceType,
+    required double returnValue,
+    required double dueAdjustedAmount,
+    required double customerCreditAmount,
+    required double makingReturnedAmount,
+    required int nowMs,
+  }) {
+    final operatorNote = request.operatorNote.trim();
+    final values = <String, Object?>{
+      'voucher_no': voucherNo,
+      'operation_type': _operationTypeStorage(request.operationType),
+      'source_type': sourceType,
+      'source_id': request.sourceDocument.id,
+      'source_number': request.sourceDocument.documentNo,
+      'customer_id': request.sourceDocument.customerId,
+      'customer_name': request.sourceDocument.customerName,
+      'mobile': request.sourceDocument.mobile,
+      'settlement_mode': request.settlementMode.storageValue,
+      'original_total_amount': request.sourceDocument.finalAmount,
+      'return_value': returnValue,
+      'due_adjusted_amount': dueAdjustedAmount,
+      'customer_credit_amount': customerCreditAmount,
+      'making_returned_amount': makingReturnedAmount,
+      'status': 'POSTED',
+      'operator_note': operatorNote.isEmpty ? null : operatorNote,
+      'created_at': nowMs,
+      'updated_at': nowMs,
+      'action': _operationTypeStorage(request.operationType),
+    };
+    return _insertFilteringExistingColumns(
+      tableName: 'return_vouchers',
+      values: values,
+    );
+  }
+
+  Future<void> _insertFilteringExistingColumns({
+    required String tableName,
+    required Map<String, Object?> values,
+  }) async {
+    final existingColumns = await _columnNamesFor(tableName);
+    final filtered = Map.fromEntries(
+      values.entries.where((entry) => existingColumns.contains(entry.key)),
+    );
+    final columns = filtered.keys.map((column) => '"$column"').join(', ');
+    final placeholders = List.filled(filtered.length, '?').join(', ');
+    await _database.customStatement(
+      'INSERT INTO "$tableName" ($columns) VALUES ($placeholders)',
+      filtered.values.toList(growable: false),
+    );
+  }
+
+  Future<Set<String>> _columnNamesFor(String tableName) async {
+    final rows =
+        await _database.customSelect('PRAGMA table_info("$tableName")').get();
+    return rows
+        .map((row) => row.data['name'])
+        .whereType<String>()
+        .map((name) => name.toLowerCase())
+        .toSet();
   }
 
   Future<void> _applyStockDisposition({

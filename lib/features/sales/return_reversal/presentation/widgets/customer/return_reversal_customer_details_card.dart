@@ -743,7 +743,7 @@ class _HistoryCategoryPill extends StatelessWidget {
             ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
               Icon(category.icon, size: 14, color: color),
               const SizedBox(width: 6),
@@ -923,32 +923,28 @@ class _SourceDocumentPill extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 2),
-                    Row(
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Flexible(
-                          child: Text(
-                            document.type.label.toUpperCase(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: SalesPosStyles.fontCaption,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.6,
-                            ),
+                        Text(
+                          document.type.label.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: SalesPosStyles.fontCaption,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.6,
                           ),
                         ),
-                        if (hasDue) ...[
-                          const SizedBox(width: 7),
-                          _DueAmountChip(amount: document.dueAmount),
-                        ],
-                        if (hasReversalStatus) ...[
-                          const SizedBox(width: 7),
+                        if (hasDue) _DueAmountChip(amount: document.dueAmount),
+                        if (hasReversalStatus)
                           _DocumentStatusChip(
                             label: document.reversalStatus,
                             full: document.isFullyReversed,
                           ),
-                        ],
                       ],
                     ),
                   ],

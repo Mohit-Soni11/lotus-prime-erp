@@ -68,6 +68,8 @@ class PrintTemplateRegistry {
       PrintTemplateDocumentType.salesInvoice,
       PrintTemplateDocumentType.salesReturn,
       PrintTemplateDocumentType.purchaseVoucher,
+      PrintTemplateDocumentType.purchaseReturn,
+      PrintTemplateDocumentType.bookingAdvance,
     ],
   );
 
@@ -84,6 +86,8 @@ class PrintTemplateRegistry {
       PrintTemplateDocumentType.salesInvoice,
       PrintTemplateDocumentType.salesReturn,
       PrintTemplateDocumentType.purchaseVoucher,
+      PrintTemplateDocumentType.purchaseReturn,
+      PrintTemplateDocumentType.bookingAdvance,
     ],
   );
 

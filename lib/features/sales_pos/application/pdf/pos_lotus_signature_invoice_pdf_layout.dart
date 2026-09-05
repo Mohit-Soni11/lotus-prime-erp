@@ -34,12 +34,14 @@ class PosLotusSignatureInvoicePdfLayout {
   final PosInvoiceScopeService scopeService;
   final Map<MetalType, BillSettings> metalPrintSettings;
   final Map<String, pw.MemoryImage> policyIconImages;
+  final bool suppressPaymentSettlement;
   final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosLotusSignatureInvoicePdfLayout({
     required this.scopeService,
     required this.metalPrintSettings,
     this.policyIconImages = const {},
+    this.suppressPaymentSettlement = false,
     this.textRenderer,
   });
 
@@ -66,7 +68,9 @@ class PosLotusSignatureInvoicePdfLayout {
             _tradeInSection(invoice),
           ],
           pw.SizedBox(height: 14),
-          _paymentAndTotals(invoice),
+          suppressPaymentSettlement
+              ? _amountSummary(invoice)
+              : _paymentAndTotals(invoice),
           if (includePolicyBlock) ...[
             if (_policyLines(invoice).isNotEmpty) ...[
               pw.SizedBox(height: 10),
@@ -329,13 +333,16 @@ class PosLotusSignatureInvoicePdfLayout {
                 'Place of Supply',
                 _stateText(invoice),
               ),
-              _detailLine(
-                'status',
-                'Payment Status',
-                status.label,
-                valueColor: statusColor,
-              ),
-              if (status.isDue && invoice.promiseDate != null)
+              if (!suppressPaymentSettlement)
+                _detailLine(
+                  'status',
+                  'Payment Status',
+                  status.label,
+                  valueColor: statusColor,
+                ),
+              if (!suppressPaymentSettlement &&
+                  status.isDue &&
+                  invoice.promiseDate != null)
                 _detailLine(
                   'calendar',
                   'Due Date',

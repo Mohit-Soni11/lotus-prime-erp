@@ -264,6 +264,7 @@ extension _ReturnReversalVoucherHubControls
   }
 
   Widget _buildDocumentSelector() {
+    final documents = _voucherCtrl.availableOutputDocuments;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -280,18 +281,16 @@ extension _ReturnReversalVoucherHubControls
           ),
           child: Column(
             children: [
-              for (final entry
-                  in ReturnReversalOutputDocumentKind.values.indexed) ...[
+              for (final entry in documents.indexed) ...[
                 _DocumentChoiceSurface(
                   icon: _documentChoiceIcon(entry.$2),
-                  title: entry.$2.label,
+                  title: _documentChoiceTitle(entry.$2),
                   subtitle: _documentChoiceSubtitle(entry.$2),
                   selected: _voucherCtrl.selectedOutputDocument == entry.$2,
                   enabled: _voucherCtrl.isOutputDocumentEnabled(entry.$2),
                   onTap: () => _voucherCtrl.selectOutputDocument(entry.$2),
                 ),
-                if (entry.$1 !=
-                    ReturnReversalOutputDocumentKind.values.length - 1)
+                if (entry.$1 != documents.length - 1)
                   const SizedBox(height: 10),
               ],
             ],
@@ -356,9 +355,19 @@ extension _ReturnReversalVoucherHubControls
     };
   }
 
+  String _documentChoiceTitle(ReturnReversalOutputDocumentKind kind) {
+    if (kind == ReturnReversalOutputDocumentKind.returnVoucher) {
+      return _voucherCtrl.selectedOutputDocumentLabel;
+    }
+    return kind.label;
+  }
+
   String _documentChoiceSubtitle(ReturnReversalOutputDocumentKind kind) {
     if (!_voucherCtrl.isOutputDocumentEnabled(kind)) {
       return 'Available only when source is a sales invoice';
+    }
+    if (kind == ReturnReversalOutputDocumentKind.returnVoucher) {
+      return _voucherCtrl.selectedOutputDocumentSubtitle;
     }
     return kind.subtitle;
   }

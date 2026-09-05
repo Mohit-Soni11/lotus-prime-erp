@@ -50,6 +50,63 @@ void main() {
     );
   });
 
+  test('processReturn remains compatible with legacy action columns', () async {
+    final database = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = ReturnReversalDriftRepository(database);
+
+    await database.customStatement('DROP TABLE IF EXISTS return_voucher_lines');
+    await database.customStatement('DROP TABLE IF EXISTS return_vouchers');
+    await database.customStatement('''
+      CREATE TABLE return_vouchers (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        voucher_no TEXT NOT NULL UNIQUE,
+        action TEXT NOT NULL
+      )
+    ''');
+    await database.customStatement('''
+      CREATE TABLE return_voucher_lines (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        action TEXT NOT NULL
+      )
+    ''');
+    await database.ensureReturnReversalSchema();
+
+    final customerId = await _insertCustomer(database);
+    await _insertAdvanceBooking(database, customerId: customerId);
+    final sourceDocument =
+        await repository.findSourceDocumentByNumber('BK-RET-0001');
+
+    final result = await repository.processReturn(
+      ReturnReversalProcessRequest(
+        operationType: ReturnReversalOperationType.bookingCancellation,
+        sourceDocument: sourceDocument!,
+        lines: const [
+          ReturnReversalProcessLineInput(
+            sourceLineNo: 1,
+            receivedNetWeight: 0,
+            huidMatched: true,
+            unitMatched: true,
+            includeMakingCharge: false,
+            stockDisposition: ReturnReversalStockDisposition.notApplicable,
+          ),
+        ],
+      ),
+    );
+
+    final voucherRow = await database.customSelect(
+      'SELECT action FROM return_vouchers WHERE voucher_no = ?',
+      variables: [drift.Variable.withString(result.voucherNo)],
+    ).getSingle();
+    final lineRow = await database.customSelect(
+      'SELECT action FROM return_voucher_lines WHERE return_voucher_id = ?',
+      variables: [drift.Variable.withInt(result.voucherId)],
+    ).getSingle();
+
+    expect(voucherRow.read<String>('action'), 'BOOKING_CANCELLATION');
+    expect(lineRow.read<String>('action'), 'NOT_APPLICABLE');
+  });
+
   test('transaction summary counts eligible sales invoices and bookings',
       () async {
     final database = AppDatabase.forTesting(NativeDatabase.memory());

@@ -2,9 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_line_inspection.dart';
+import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_state.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/screens/return_reversal_voucher_preview_screen.dart';
@@ -1137,6 +1137,24 @@ class _SummaryActions extends StatelessWidget {
         : 'Process Cancellation';
   }
 
+  String _voucherButtonLabel(ReturnReversalState state) {
+    if (state.selectedSourceDocument == null) {
+      return state.operationType.isBookingCancellation
+          ? 'Select Booking First'
+          : 'Select Source First';
+    }
+    if (!state.hasReturnCartLineItems &&
+        !state.invoiceLineItems.any((lineItem) => lineItem.isReversed) &&
+        state.lastProcessResult == null) {
+      return state.operationType.isBookingCancellation
+          ? 'Prepare Cancellation First'
+          : 'Add Return Item First';
+    }
+    return state.operationType.isBookingCancellation
+        ? 'Generate Cancellation Voucher'
+        : 'Generate Return Voucher';
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = controller.state;
@@ -1173,17 +1191,9 @@ class _SummaryActions extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _SecondarySummaryButton(
-          label: 'Generate Voucher',
+          label: _voucherButtonLabel(state),
           enabled: canGenerateVoucher,
           onPressed: () {
-            if (state.selectedSourceDocument == null) {
-              AppFeedback.show(
-                context,
-                type: AppFeedbackType.error,
-                message: 'Select a return or cancellation source first.',
-              );
-              return;
-            }
             ReturnReversalVoucherPreviewScreen.push(
               context,
               controller: controller,

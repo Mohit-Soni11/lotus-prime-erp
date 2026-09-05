@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:lotus_erp/constants/app_routes.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
 import 'package:lotus_erp/features/sales/return_reversal/data/repositories/return_reversal_drift_repository.dart';
@@ -26,6 +27,7 @@ class ReturnReversalDeskScreen extends StatefulWidget {
 class _ReturnReversalDeskScreenState extends State<ReturnReversalDeskScreen> {
   late final ReturnReversalController _controller;
   late final bool _ownsController;
+  String? _announcedVoucherNo;
 
   @override
   void initState() {
@@ -44,7 +46,33 @@ class _ReturnReversalDeskScreenState extends State<ReturnReversalDeskScreen> {
   void _rebuild() {
     if (mounted) {
       setState(() {});
+      _announcePostedVoucherIfNeeded();
     }
+  }
+
+  void _announcePostedVoucherIfNeeded() {
+    if (ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    final result = _controller.state.lastProcessResult;
+    if (result == null || result.voucherNo == _announcedVoucherNo) {
+      return;
+    }
+    _announcedVoucherNo = result.voucherNo;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ModalRoute.of(context)?.isCurrent != true) {
+        return;
+      }
+      final isCancellation =
+          _controller.state.operationType.isBookingCancellation;
+      AppFeedback.success(
+        context,
+        title: isCancellation ? 'Cancellation Posted' : 'Return Posted',
+        message: _controller.state.processMessage ??
+            '${result.voucherNo} posted successfully.',
+      );
+    });
   }
 
   @override

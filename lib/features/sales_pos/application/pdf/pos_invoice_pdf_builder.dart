@@ -28,6 +28,7 @@ class PosInvoicePdfBuildOptions {
   final Map<MetalType, BillSettings> metalPrintSettings;
   final String watermarkText;
   final PdfColor watermarkColor;
+  final bool suppressPaymentSettlement;
 
   const PosInvoicePdfBuildOptions({
     required this.format,
@@ -39,6 +40,7 @@ class PosInvoicePdfBuildOptions {
     this.includeAllMetals = false,
     this.watermarkText = '',
     this.watermarkColor = PdfColors.red,
+    this.suppressPaymentSettlement = false,
   });
 }
 
@@ -572,6 +574,7 @@ class _PosInvoicePdfDocumentBuilder {
         metalPrintSettings: options.metalPrintSettings,
         policyIconImages: policyIconImages,
         includePolicyBlock: includePolicyBlock,
+        suppressPaymentSettlement: options.suppressPaymentSettlement,
         textRenderer: textRenderer,
       ),
     );
@@ -589,8 +592,10 @@ class _PosInvoicePdfDocumentBuilder {
         _pdfItemsTable(invoice),
         pw.SizedBox(height: 14),
         _pdfTotalsBlock(invoice),
-        pw.SizedBox(height: 14),
-        _pdfPaymentBlock(invoice),
+        if (!options.suppressPaymentSettlement) ...[
+          pw.SizedBox(height: 14),
+          _pdfPaymentBlock(invoice),
+        ],
         if (includePolicyBlock) ...[
           _pdfPolicyBlock(invoice),
           ..._pdfShopPrintSocialSection(invoice),

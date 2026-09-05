@@ -157,13 +157,18 @@ extension _ReturnReversalVoucherHubActions
   }
 
   void _startFreshWorkspace(String message) {
+    _isStartingFreshWorkspace = true;
+    final navigator = Navigator.of(context);
+    final feedbackContext = navigator.context;
+    navigator.pop();
     widget.controller.startNewWorkspace();
-    Navigator.of(context).pop();
-    AppFeedback.success(
-      context,
-      message: message,
-      duration: const Duration(seconds: 3),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppFeedback.success(
+        feedbackContext,
+        message: message,
+        duration: const Duration(seconds: 3),
+      );
+    });
   }
 
   Future<void> _printDocumentAndStartNew() async {

@@ -16,6 +16,7 @@ class PosInvoiceTemplateRenderContext {
   final Map<MetalType, BillSettings> metalPrintSettings;
   final Map<String, pw.MemoryImage> policyIconImages;
   final bool includePolicyBlock;
+  final bool suppressPaymentSettlement;
   final PosInvoicePdfTextRenderer? textRenderer;
 
   const PosInvoiceTemplateRenderContext({
@@ -23,6 +24,7 @@ class PosInvoiceTemplateRenderContext {
     required this.metalPrintSettings,
     this.policyIconImages = const {},
     this.includePolicyBlock = true,
+    this.suppressPaymentSettlement = false,
     this.textRenderer,
   });
 }
@@ -48,6 +50,7 @@ class PosInvoiceTemplateRendererRegistry {
       return PosLotusClassicInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
+        suppressPaymentSettlement: context.suppressPaymentSettlement,
         textRenderer: context.textRenderer,
       ).build(
         invoice,
@@ -58,6 +61,7 @@ class PosInvoiceTemplateRendererRegistry {
       return PosLotusEconomyInvoicePdfLayout(
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
+        suppressPaymentSettlement: context.suppressPaymentSettlement,
         textRenderer: context.textRenderer,
       ).build(
         invoice,
@@ -69,6 +73,7 @@ class PosInvoiceTemplateRendererRegistry {
         scopeService: context.scopeService,
         metalPrintSettings: context.metalPrintSettings,
         policyIconImages: context.policyIconImages,
+        suppressPaymentSettlement: context.suppressPaymentSettlement,
         textRenderer: context.textRenderer,
       ).build(
         invoice,
