@@ -207,8 +207,8 @@ class _DocumentHeader extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            titleBlock,
-            const SizedBox(width: 40),
+            Expanded(child: titleBlock),
+            const SizedBox(width: 12),
             _DocumentBadge(loaded: loaded),
           ],
         );

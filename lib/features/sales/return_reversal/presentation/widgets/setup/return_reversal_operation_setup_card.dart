@@ -4,6 +4,7 @@ import 'package:lotus_erp/features/sales/return_reversal/application/return_reve
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/theme/return_reversal_design_tokens.dart';
 import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dart';
+import 'package:lotus_erp/theme/sales/sales_pos_theme/sales_pos_theme.dart';
 
 class ReturnReversalOperationSetupCard extends StatelessWidget {
   final ReturnReversalController controller;
@@ -45,7 +46,7 @@ class ReturnReversalOperationSetupCard extends StatelessWidget {
         return Align(
           alignment: Alignment.centerLeft,
           child: Container(
-            width: compact ? double.infinity : null,
+            width: compact ? double.infinity : 460,
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
             decoration: BoxDecoration(
               color: ReturnReversalDesignTokens.panel,
@@ -64,7 +65,7 @@ class ReturnReversalOperationSetupCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: compact ? content : IntrinsicWidth(child: content),
+            child: content,
           ),
         );
       },
@@ -153,8 +154,8 @@ class _SetupHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        titleBlock,
-        const SizedBox(width: 40),
+        Expanded(child: titleBlock),
+        const SizedBox(width: 12),
         const _ReadinessBadge(),
       ],
     );
@@ -223,40 +224,12 @@ class _OperationTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: compact ? null : 66,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: ReturnReversalDesignTokens.background,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ReturnReversalDesignTokens.border),
-        boxShadow: const [
-          BoxShadow(
-            color: PurchaseEntryColors.shadowLight,
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: compact
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: _tabChildren(expanded: true),
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: _tabChildren(expanded: false),
-            ),
-    );
-  }
-
-  List<Widget> _tabChildren({required bool expanded}) {
     final returnTab = _OperationTab(
       type: ReturnReversalOperationType.salesReturn,
       title: 'RETURN',
       subtitle: 'Sales + Purchase',
       selected: selectedType == ReturnReversalOperationType.salesReturn,
-      expanded: expanded,
+      expanded: compact,
       onTap: () => onChanged(ReturnReversalOperationType.salesReturn),
     );
     final cancellationTab = _OperationTab(
@@ -264,21 +237,45 @@ class _OperationTabs extends StatelessWidget {
       title: 'CANCELLATION',
       subtitle: 'Booking only',
       selected: selectedType == ReturnReversalOperationType.bookingCancellation,
-      expanded: expanded,
+      expanded: compact,
       onTap: () => onChanged(ReturnReversalOperationType.bookingCancellation),
     );
 
-    return expanded
-        ? [
-            returnTab,
-            const SizedBox(height: 4),
-            cancellationTab,
-          ]
-        : [
-            returnTab,
-            const SizedBox(width: 4),
-            cancellationTab,
-          ];
+    return Container(
+      height: compact ? null : 70,
+      width: double.infinity,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: ReturnReversalDesignTokens.background.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: ReturnReversalDesignTokens.border.withValues(alpha: 0.92),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: PurchaseEntryColors.shadowLight.withValues(alpha: 0.75),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: compact
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                returnTab,
+                const SizedBox(height: 6),
+                cancellationTab,
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(child: returnTab),
+                const SizedBox(width: 6),
+                Expanded(child: cancellationTab),
+              ],
+            ),
+    );
   }
 }
 
@@ -305,110 +302,146 @@ class _OperationTab extends StatefulWidget {
 
 class _OperationTabState extends State<_OperationTab> {
   bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final active = widget.selected;
     final emphasized = active || _hovered;
+    final accent = _accentColor;
+    final foreground = active
+        ? widget.type == ReturnReversalOperationType.bookingCancellation
+            ? ReturnReversalDesignTokens.textPrimary
+            : Colors.white
+        : ReturnReversalDesignTokens.textPrimary;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: ReturnReversalDesignTokens.motionFast,
-          curve: Curves.easeOutCubic,
-          width: widget.expanded
-              ? double.infinity
-              : widget.type == ReturnReversalOperationType.salesReturn
-                  ? 170
-                  : 200,
-          height: 58,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active
-                ? ReturnReversalDesignTokens.accent
-                : ReturnReversalDesignTokens.panel,
-            borderRadius: BorderRadius.circular(7),
-            border: active
-                ? null
-                : Border.all(
-                    color: emphasized
-                        ? ReturnReversalDesignTokens.accent.withValues(
-                            alpha: 0.45,
-                          )
-                        : Colors.transparent,
-                  ),
-            boxShadow: emphasized
-                ? [
-                    BoxShadow(
-                      color: ReturnReversalDesignTokens.accent.withValues(
-                        alpha: active ? 0.28 : 0.12,
-                      ),
-                      blurRadius: active ? 8 : 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
+      child: Listener(
+        onPointerDown: (_) => setState(() => _pressed = true),
+        onPointerUp: (_) => setState(() => _pressed = false),
+        onPointerCancel: (_) => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.985 : 1,
+          duration: const Duration(milliseconds: 90),
+          curve: Curves.easeOut,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: ReturnReversalDesignTokens.motionFast,
+              curve: Curves.easeOutCubic,
+              width: widget.expanded ? double.infinity : null,
+              height: 60,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                gradient: active
+                    ? LinearGradient(
+                        colors: [
+                          accent.withValues(alpha: 0.92),
+                          accent,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: active
+                    ? null
+                    : _hovered
+                        ? accent.withValues(alpha: 0.08)
+                        : ReturnReversalDesignTokens.panel,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
                   color: active
-                      ? Colors.white
-                      : ReturnReversalDesignTokens.accent.withValues(
-                          alpha: 0.16,
+                      ? accent
+                      : emphasized
+                          ? accent.withValues(alpha: 0.38)
+                          : ReturnReversalDesignTokens.border
+                              .withValues(alpha: 0.18),
+                ),
+                boxShadow: emphasized
+                    ? [
+                        BoxShadow(
+                          color: accent.withValues(
+                            alpha: active ? 0.28 : 0.12,
+                          ),
+                          blurRadius: active ? 10 : 12,
+                          offset: const Offset(0, 4),
                         ),
-                  shape: BoxShape.circle,
-                ),
-                child: const SizedBox(width: 6, height: 6),
+                      ]
+                    : null,
               ),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: active
-                            ? Colors.white
-                            : ReturnReversalDesignTokens.textPrimary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        letterSpacing: 0.8,
-                      ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: ReturnReversalDesignTokens.motionFast,
+                    width: active ? 8 : 6,
+                    height: active ? 8 : 6,
+                    decoration: BoxDecoration(
+                      color:
+                          active ? foreground : accent.withValues(alpha: 0.28),
+                      shape: BoxShape.circle,
+                      boxShadow: active
+                          ? [
+                              BoxShadow(
+                                color: foreground.withValues(alpha: 0.42),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : null,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: active
-                            ? Colors.white.withValues(alpha: 0.86)
-                            : ReturnReversalDesignTokens.textPrimary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        letterSpacing: 0,
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: foreground,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: active
+                                ? foreground.withValues(alpha: 0.86)
+                                : ReturnReversalDesignTokens.textPrimary
+                                    .withValues(alpha: 0.78),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Color get _accentColor {
+    return widget.type == ReturnReversalOperationType.bookingCancellation
+        ? SalesPosColors.brandGold
+        : ReturnReversalDesignTokens.accent;
   }
 }
