@@ -11,8 +11,9 @@
 //                 → sum grossWeight, count items
 //
 //               METAL BOUGHT (Stock added today):
-//                 → StockItems (createdAt = today, status = Available)
-//                 → group by metalType
+//                 → Customer old metal entered in today's bills
+//                 → Sales return vouchers posted today (physical metal received)
+//                 → group by metalType using net received weight
 //
 //               NEW DUE:
 //                 → Bills (aaj ki date, paidAmount < finalAmount)
@@ -186,12 +187,92 @@ class DailyCounterLogic {
       }
     }
 
+    final customerPurchaseReceipts = await _fetchCustomerPurchaseMetalReceipts(
+      todayStart,
+      todayEnd,
+    );
+    boughtGoldWt += customerPurchaseReceipts.goldWeight;
+    boughtGoldPcs += customerPurchaseReceipts.goldPieces;
+    boughtSilverWt += customerPurchaseReceipts.silverWeight;
+    boughtSilverPcs += customerPurchaseReceipts.silverPieces;
+
+    final returnedReceipts = await _fetchSalesReturnMetalReceipts(
+      todayStart,
+      todayEnd,
+    );
+    boughtGoldWt += returnedReceipts.goldWeight;
+    boughtGoldPcs += returnedReceipts.goldPieces;
+    boughtSilverWt += returnedReceipts.silverWeight;
+    boughtSilverPcs += returnedReceipts.silverPieces;
+
     return MetalMovementData(
       soldGold: _makeEntry(soldGoldWt, soldGoldPcs),
       soldSilver: _makeEntry(soldSilverWt, soldSilverPcs),
       boughtGold: _makeEntry(boughtGoldWt, boughtGoldPcs),
       boughtSilver: _makeEntry(boughtSilverWt, boughtSilverPcs),
     );
+  }
+
+  Future<_MetalReceiptTotals> _fetchCustomerPurchaseMetalReceipts(
+    DateTime todayStart,
+    DateTime todayEnd,
+  ) async {
+    await _db.ensureReturnReversalSchema();
+    final startMs = todayStart.millisecondsSinceEpoch;
+    final endMs = todayEnd.millisecondsSinceEpoch;
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        pvi.metal_type,
+        COALESCE(SUM(pvi.net_weight), 0.0) AS received_net_weight,
+        COALESCE(SUM(pvi.quantity), 0) AS received_quantity
+      FROM purchase_voucher_items pvi
+      INNER JOIN purchase_vouchers pv ON pv.id = pvi.purchase_voucher_id
+      WHERE pv.source_type = 'CUSTOMER'
+        AND pv.status <> 'CANCELLED'
+        AND pv.payment_status <> 'RETURN_MELTING'
+        AND pv.voucher_no NOT LIKE 'MELT-%'
+        AND pv.created_at BETWEEN ? AND ?
+      GROUP BY UPPER(TRIM(pvi.metal_type))
+      ''',
+      variables: [
+        Variable.withInt(startMs),
+        Variable.withInt(endMs),
+      ],
+    ).get();
+
+    return _receiptTotalsFromRows(rows);
+  }
+
+  Future<_MetalReceiptTotals> _fetchSalesReturnMetalReceipts(
+    DateTime todayStart,
+    DateTime todayEnd,
+  ) async {
+    await _db.ensureReturnReversalSchema();
+    final startMs = todayStart.millisecondsSinceEpoch;
+    final endMs = todayEnd.millisecondsSinceEpoch;
+    final rows = await _db.customSelect(
+      '''
+      SELECT
+        l.metal_type,
+        COALESCE(SUM(l.received_net_weight), 0.0) AS received_net_weight,
+        COALESCE(SUM(l.quantity), 0) AS received_quantity
+      FROM return_voucher_lines l
+      INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
+      WHERE v.operation_type = 'SALES_RETURN'
+        AND v.source_type = 'SALES_INVOICE'
+        AND v.status <> 'VOIDED'
+        AND l.status <> 'VOIDED'
+        AND l.created_at BETWEEN ? AND ?
+      GROUP BY UPPER(TRIM(l.metal_type))
+      ''',
+      variables: [
+        Variable.withInt(startMs),
+        Variable.withInt(endMs),
+      ],
+    ).get();
+
+    return _receiptTotalsFromRows(rows);
   }
 
   // ==========================================
@@ -266,6 +347,40 @@ class DailyCounterLogic {
     ).format(amount);
   }
 
+  double _readDouble(QueryRow row, String column) {
+    final value = row.data[column];
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return 0;
+  }
+
+  _MetalReceiptTotals _receiptTotalsFromRows(List<QueryRow> rows) {
+    var goldWeight = 0.0;
+    var silverWeight = 0.0;
+    var goldPieces = 0;
+    var silverPieces = 0;
+
+    for (final row in rows) {
+      final metal = row.readNullable<String>('metal_type')?.toUpperCase() ?? '';
+      final weight = _readDouble(row, 'received_net_weight');
+      final pieces = row.readNullable<int>('received_quantity') ?? 0;
+      if (metal.contains('SILVER')) {
+        silverWeight += weight;
+        silverPieces += pieces;
+      } else if (metal.contains('GOLD')) {
+        goldWeight += weight;
+        goldPieces += pieces;
+      }
+    }
+
+    return _MetalReceiptTotals(
+      goldWeight: goldWeight,
+      goldPieces: goldPieces,
+      silverWeight: silverWeight,
+      silverPieces: silverPieces,
+    );
+  }
+
   String _dueCustomerKey(Bill bill) {
     if (bill.customerId != null) return 'ID:${bill.customerId}';
     final mobile = bill.mobile?.trim();
@@ -305,4 +420,18 @@ class DailyCounterLogic {
   }
 
   DailyCounterModel get initialData => DailyCounterModel.loading();
+}
+
+class _MetalReceiptTotals {
+  final double goldWeight;
+  final int goldPieces;
+  final double silverWeight;
+  final int silverPieces;
+
+  const _MetalReceiptTotals({
+    required this.goldWeight,
+    required this.goldPieces,
+    required this.silverWeight,
+    required this.silverPieces,
+  });
 }

@@ -375,8 +375,8 @@ class _SourceHistoryStrip extends StatefulWidget {
 }
 
 class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
-  static const double _compactDocumentPillWidth = 192;
-  static const double _statusDocumentPillWidth = 276;
+  static const double _documentPillWidth = 252;
+  static const double _documentPillHeight = 74;
   static const double _documentPillGap = 8;
 
   late final FocusNode _historyFocusNode;
@@ -584,9 +584,7 @@ class _SourceHistoryStripState extends State<_SourceHistoryStrip> {
   }
 
   double _pillWidthFor(ReturnReversalSourceDocument document) {
-    return document.reversalStatus.trim().isEmpty
-        ? _compactDocumentPillWidth
-        : _statusDocumentPillWidth;
+    return _documentPillWidth;
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -860,7 +858,7 @@ class _SourceDocumentPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (document.type) {
+    final baseColor = switch (document.type) {
       ReturnReversalSourceDocumentType.salesInvoice => SalesPosColors.success,
       ReturnReversalSourceDocumentType.advanceBooking =>
         SalesPosColors.brandGold,
@@ -869,6 +867,13 @@ class _SourceDocumentPill extends StatelessWidget {
     };
     final hasDue = document.dueAmount > 0.009;
     final hasReversalStatus = document.reversalStatus.trim().isNotEmpty;
+    final statusColor = _statusColorFor(document);
+    final color = statusColor ?? baseColor;
+    final fillColor = selected
+        ? color.withValues(alpha: statusColor == null ? 0.13 : 0.11)
+        : statusColor == null
+            ? Colors.white
+            : color.withValues(alpha: 0.06);
 
     return Material(
       color: Colors.transparent,
@@ -878,21 +883,23 @@ class _SourceDocumentPill extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: width,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          height: _SourceHistoryStripState._documentPillHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.13) : Colors.white,
+            color: fillColor,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: selected
                   ? color
-                  : hasDue
-                      ? SalesPosColors.danger.withValues(alpha: 0.55)
-                      : SalesPosColors.bodyBorder,
+                  : statusColor != null
+                      ? color.withValues(alpha: 0.50)
+                      : hasDue
+                          ? SalesPosColors.danger.withValues(alpha: 0.55)
+                          : SalesPosColors.bodyBorder,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(_iconFor(document.type), size: 16, color: color),
               const SizedBox(width: 8),
@@ -922,28 +929,35 @@ class _SourceDocumentPill extends StatelessWidget {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    const SizedBox(height: 3),
+                    Row(
                       children: [
-                        Text(
-                          document.type.label.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: color,
-                            fontSize: SalesPosStyles.fontCaption,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.6,
+                        Expanded(
+                          child: Text(
+                            document.type.label.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: color,
+                              fontSize: SalesPosStyles.fontCaption,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.6,
+                            ),
                           ),
                         ),
-                        if (hasDue) _DueAmountChip(amount: document.dueAmount),
+                        if (hasDue) ...[
+                          const SizedBox(width: 6),
+                          _DueAmountChip(amount: document.dueAmount),
+                        ],
                         if (hasReversalStatus)
-                          _DocumentStatusChip(
-                            label: document.reversalStatus,
-                            full: document.isFullyReversed,
+                          Flexible(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: hasDue ? 5 : 6),
+                              child: _DocumentStatusChip(
+                                label: document.reversalStatus,
+                                color: statusColor ?? SalesPosColors.warning,
+                              ),
+                            ),
                           ),
                       ],
                     ),
@@ -966,22 +980,32 @@ class _SourceDocumentPill extends StatelessWidget {
       ReturnReversalSourceDocumentType.customerPurchase => Icons.scale_rounded,
     };
   }
+
+  Color? _statusColorFor(ReturnReversalSourceDocument document) {
+    if (document.reversalStatus.trim().isEmpty) {
+      return null;
+    }
+    if (document.isFullyReversed) {
+      return SalesPosColors.danger;
+    }
+    return SalesPosColors.warning;
+  }
 }
 
 class _DocumentStatusChip extends StatelessWidget {
   final String label;
-  final bool full;
+  final Color color;
 
   const _DocumentStatusChip({
     required this.label,
-    required this.full,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final normalized = label.trim().toUpperCase();
-    final color = full ? SalesPosColors.success : SalesPosColors.warning;
     return Container(
+      constraints: const BoxConstraints(maxHeight: 22),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.11),
@@ -990,8 +1014,10 @@ class _DocumentStatusChip extends StatelessWidget {
       ),
       child: Text(
         normalized,
-        style: const TextStyle(
-          color: SalesPosColors.textDark,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: color,
           fontSize: 12,
           fontWeight: FontWeight.w900,
           letterSpacing: 0,
@@ -1132,6 +1158,8 @@ class _CustomerInputGrid extends StatelessWidget {
       label: 'MOBILE',
       hint: '10-digit',
       controller: controller.customerMobileCtrl,
+      fieldKey: const ValueKey('return_reversal_customer_mobile_field'),
+      onSubmitted: _submitSearch,
       keyboardType: TextInputType.number,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
@@ -1146,6 +1174,8 @@ class _CustomerInputGrid extends StatelessWidget {
       label: 'CUSTOMER NAME',
       hint: 'Enter full name',
       controller: controller.customerNameCtrl,
+      fieldKey: const ValueKey('return_reversal_customer_name_field'),
+      onSubmitted: _submitSearch,
       textCapitalization: TextCapitalization.words,
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
@@ -1159,6 +1189,8 @@ class _CustomerInputGrid extends StatelessWidget {
       label: _sourceNumberLabel,
       hint: _sourceNumberHint,
       controller: controller.sourceDocumentNumberCtrl,
+      fieldKey: const ValueKey('return_reversal_source_number_field'),
+      onSubmitted: _submitSearch,
       textCapitalization: TextCapitalization.characters,
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\-\/]')),
@@ -1173,8 +1205,15 @@ class _CustomerInputGrid extends StatelessWidget {
       label: 'ADDRESS',
       hint: 'Customer address',
       controller: controller.customerAddressCtrl,
+      fieldKey: const ValueKey('return_reversal_customer_address_field'),
       icon: SalesPosIcons.cityLocation,
     );
+  }
+
+  void _submitSearch() {
+    if (!controller.state.isSearching) {
+      controller.searchRecords();
+    }
   }
 }
 
@@ -1186,15 +1225,19 @@ class _CustomerDetailInput extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
   final IconData icon;
+  final Key? fieldKey;
+  final VoidCallback? onSubmitted;
 
   const _CustomerDetailInput({
     required this.label,
     required this.hint,
     required this.controller,
     required this.icon,
+    this.fieldKey,
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
+    this.onSubmitted,
   });
 
   @override
@@ -1230,8 +1273,13 @@ class _CustomerDetailInput extends StatelessWidget {
         SizedBox(
           height: 44,
           child: TextField(
+            key: fieldKey,
             controller: controller,
             keyboardType: keyboardType,
+            textInputAction: onSubmitted == null
+                ? TextInputAction.next
+                : TextInputAction.search,
+            onSubmitted: (_) => onSubmitted?.call(),
             inputFormatters: inputFormatters,
             textCapitalization: textCapitalization,
             style: SalesPosStyles.inputText,

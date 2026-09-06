@@ -132,6 +132,33 @@ void main() {
     expect(summary.postedReturns, 0);
   });
 
+  test('customer name lookup loads return and cancellation sources', () async {
+    final database = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = ReturnReversalDriftRepository(database);
+
+    await database.ensureReturnReversalSchema();
+    final customerId = await _insertCustomer(database);
+    await _insertSalesInvoice(database, customerId: customerId);
+    await _insertAdvanceBooking(database, customerId: customerId);
+    await _insertCustomerPurchaseVoucher(database, customerId: customerId);
+
+    final result = await repository.findCustomerHistoryByName('test cust');
+
+    expect(
+      result.salesInvoices.map((document) => document.documentNo),
+      contains('INV-RET-0001'),
+    );
+    expect(
+      result.advanceBookings.map((document) => document.documentNo),
+      contains('BK-RET-0001'),
+    );
+    expect(
+      result.customerPurchases.map((document) => document.documentNo),
+      contains('CMP-RET-0001'),
+    );
+  });
+
   test('processReturn posts voucher, restores linked unit, and credits ledger',
       () async {
     final database = AppDatabase.forTesting(NativeDatabase.memory());

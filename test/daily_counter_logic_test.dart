@@ -80,6 +80,74 @@ void main() {
     },
   );
 
+  test('dashboard bought metals include customer purchases and sales returns',
+      () async {
+    final now = DateTime.now();
+    await database.ensureReturnReversalSchema();
+
+    await _insertCustomerPurchaseVoucherLine(
+      database,
+      voucherNo: 'CP-DASH-GOLD',
+      metalType: 'GOLD',
+      quantity: 2,
+      netWeight: 1.250,
+      createdAt: now,
+    );
+    await _insertCustomerPurchaseVoucherLine(
+      database,
+      voucherNo: 'MELT-SR-DASH-IGNORE',
+      metalType: 'SILVER',
+      quantity: 5,
+      netWeight: 88,
+      paymentStatus: 'RETURN_MELTING',
+      status: 'MELTING',
+      createdAt: now,
+    );
+    await _insertReturnVoucherLine(
+      database,
+      voucherNo: 'SR-DASH-GOLD',
+      operationType: 'SALES_RETURN',
+      sourceType: 'SALES_INVOICE',
+      metalType: 'GOLD',
+      quantity: 1,
+      receivedNetWeight: 0.365,
+      createdAt: now,
+    );
+    await _insertReturnVoucherLine(
+      database,
+      voucherNo: 'SR-DASH-SILVER',
+      operationType: 'SALES_RETURN',
+      sourceType: 'SALES_INVOICE',
+      metalType: 'SILVER',
+      quantity: 2,
+      receivedNetWeight: 20.320,
+      createdAt: now,
+    );
+    await _insertReturnVoucherLine(
+      database,
+      voucherNo: 'BC-DASH-IGNORE',
+      operationType: 'BOOKING_CANCELLATION',
+      sourceType: 'ADVANCE_BOOKING',
+      metalType: 'GOLD',
+      quantity: 1,
+      receivedNetWeight: 99,
+      createdAt: now,
+    );
+
+    final logic = DailyCounterLogic(db: database);
+    addTearDown(logic.dispose);
+    logic.init();
+
+    final data = await logic.dataStream.first.timeout(
+      const Duration(seconds: 2),
+    );
+
+    expect(data.metalMovement.boughtGold.weightRaw, closeTo(1.615, 0.001));
+    expect(data.metalMovement.boughtGold.piecesStr, '3 Pcs');
+    expect(data.metalMovement.boughtSilver.weightRaw, closeTo(20.320, 0.001));
+    expect(data.metalMovement.boughtSilver.piecesStr, '2 Pcs');
+  });
+
   test('dashboard due ignores tiny floating point payment residue', () async {
     final now = DateTime.now();
 
@@ -264,4 +332,184 @@ Future<int> _insertPurchaseStock(
           isActive: const drift.Value(true),
         ),
       );
+}
+
+Future<void> _insertReturnVoucherLine(
+  AppDatabase database, {
+  required String voucherNo,
+  required String operationType,
+  required String sourceType,
+  required String metalType,
+  required int quantity,
+  required double receivedNetWeight,
+  required DateTime createdAt,
+}) async {
+  final createdAtMs = createdAt.millisecondsSinceEpoch;
+  await database.customStatement(
+    '''
+    INSERT INTO return_vouchers (
+      voucher_no,
+      operation_type,
+      source_type,
+      source_id,
+      source_number,
+      settlement_mode,
+      original_total_amount,
+      return_value,
+      due_adjusted_amount,
+      customer_credit_amount,
+      making_returned_amount,
+      status,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    [
+      voucherNo,
+      operationType,
+      sourceType,
+      voucherNo.hashCode.abs(),
+      'SRC-$voucherNo',
+      'CUSTOMER_CREDIT',
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      'POSTED',
+      createdAtMs,
+      createdAtMs,
+    ],
+  );
+  final voucherId = (await database
+          .customSelect('SELECT last_insert_rowid() AS id')
+          .getSingle())
+      .read<int>('id');
+  await database.customStatement(
+    '''
+    INSERT INTO return_voucher_lines (
+      return_voucher_id,
+      source_type,
+      source_id,
+      source_number,
+      source_line_no,
+      stock_disposition,
+      metal_type,
+      item_description,
+      quantity,
+      sold_net_weight,
+      received_net_weight,
+      line_return_value,
+      status,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    [
+      voucherId,
+      sourceType,
+      voucherId,
+      'SRC-$voucherNo',
+      1,
+      sourceType == 'ADVANCE_BOOKING' ? 'NOT_APPLICABLE' : 'ADD_STOCK',
+      metalType,
+      metalType == 'SILVER' ? 'PAYAL' : 'NOSE PIN',
+      quantity,
+      receivedNetWeight,
+      receivedNetWeight,
+      0.0,
+      'POSTED',
+      createdAtMs,
+    ],
+  );
+}
+
+Future<void> _insertCustomerPurchaseVoucherLine(
+  AppDatabase database, {
+  required String voucherNo,
+  required String metalType,
+  required int quantity,
+  required double netWeight,
+  required DateTime createdAt,
+  String paymentStatus = 'PAID',
+  String status = 'SAVED',
+}) async {
+  final createdAtMs = createdAt.millisecondsSinceEpoch;
+  await database.customStatement(
+    '''
+    INSERT INTO purchase_vouchers (
+      voucher_no,
+      sequence_no,
+      source_type,
+      party_name,
+      tax_type,
+      gross_amount,
+      taxable_amount,
+      grand_total,
+      total_paid,
+      balance_due,
+      payment_status,
+      stock_entry_count,
+      status,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    [
+      voucherNo,
+      voucherNo.hashCode.abs(),
+      'CUSTOMER',
+      'Dashboard Customer',
+      'NORMAL',
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      paymentStatus,
+      1,
+      status,
+      createdAtMs,
+      createdAtMs,
+    ],
+  );
+  final voucherId = (await database
+          .customSelect('SELECT last_insert_rowid() AS id')
+          .getSingle())
+      .read<int>('id');
+  await database.customStatement(
+    '''
+    INSERT INTO purchase_voucher_items (
+      purchase_voucher_id,
+      line_no,
+      sku,
+      metal_type,
+      item_description,
+      gross_weight,
+      less_weight,
+      net_weight,
+      purity,
+      fine_weight,
+      rate,
+      quantity,
+      line_amount,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+    [
+      voucherId,
+      1,
+      '$voucherNo-L001',
+      metalType,
+      metalType == 'SILVER' ? 'PAYAL' : 'NOSE PIN',
+      netWeight,
+      0.0,
+      netWeight,
+      metalType == 'SILVER' ? 60.0 : 18.0,
+      netWeight,
+      0.0,
+      quantity,
+      0.0,
+      createdAtMs,
+    ],
+  );
 }

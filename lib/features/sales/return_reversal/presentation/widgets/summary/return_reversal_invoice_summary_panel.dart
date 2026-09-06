@@ -1469,7 +1469,7 @@ class _SummaryActions extends StatelessWidget {
   }
 }
 
-class _PrimarySummaryButton extends StatelessWidget {
+class _PrimarySummaryButton extends StatefulWidget {
   final String label;
   final bool enabled;
   final bool isProcessing;
@@ -1483,78 +1483,134 @@ class _PrimarySummaryButton extends StatelessWidget {
   });
 
   @override
+  State<_PrimarySummaryButton> createState() => _PrimarySummaryButtonState();
+}
+
+class _PrimarySummaryButtonState extends State<_PrimarySummaryButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final active = enabled || isProcessing;
+    final active = widget.enabled || widget.isProcessing;
+    final foreground = active
+        ? SalesPosColors.textDark
+        : SalesPosColors.textDark.withValues(alpha: 0.74);
     return SizedBox(
-      height: 48,
+      height: 50,
       child: Semantics(
         button: true,
-        enabled: enabled,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(10),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: active
-                    ? const LinearGradient(
-                        colors: [
-                          SalesPosColors.goldGradientStart,
-                          SalesPosColors.brandGold,
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      )
-                    : null,
-                color: active
-                    ? null
-                    : SalesPosColors.brandGold.withValues(alpha: 0.36),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: SalesPosColors.brandGold.withValues(alpha: 0.82),
-                ),
-                boxShadow: active
-                    ? [
-                        BoxShadow(
-                          color:
-                              SalesPosColors.brandGold.withValues(alpha: 0.34),
-                          blurRadius: 16,
-                          offset: const Offset(0, 5),
+        enabled: widget.enabled,
+        child: MouseRegion(
+          cursor: widget.enabled
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.basic,
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() {
+            _hovered = false;
+            _pressed = false;
+          }),
+          child: Listener(
+            onPointerDown:
+                widget.enabled ? (_) => setState(() => _pressed = true) : null,
+            onPointerUp:
+                widget.enabled ? (_) => setState(() => _pressed = false) : null,
+            onPointerCancel:
+                widget.enabled ? (_) => setState(() => _pressed = false) : null,
+            child: AnimatedScale(
+              scale: _pressed ? 0.985 : 1,
+              duration: const Duration(milliseconds: 90),
+              curve: Curves.easeOut,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.enabled ? widget.onPressed : null,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: active
+                          ? LinearGradient(
+                              colors: [
+                                SalesPosColors.goldGradientStart,
+                                _hovered
+                                    ? SalesPosColors.goldHoverDark
+                                    : SalesPosColors.brandGold,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: active
+                          ? null
+                          : SalesPosColors.brandGold.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: SalesPosColors.brandGold.withValues(
+                          alpha: active ? 0.92 : 0.54,
                         ),
-                      ]
-                    : const [],
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isProcessing)
-                      const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.2,
-                          color: Colors.white,
-                        ),
-                      )
-                    else
-                      const Icon(
-                        Icons.assignment_turned_in_rounded,
-                        color: Colors.white,
-                        size: 18,
                       ),
-                    const SizedBox(width: 8),
-                    Text(
-                      isProcessing ? 'Posting' : label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: SalesPosStyles.buttonText.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
+                      boxShadow: active
+                          ? [
+                              BoxShadow(
+                                color: SalesPosColors.brandGold.withValues(
+                                  alpha: _hovered ? 0.42 : 0.30,
+                                ),
+                                blurRadius: _hovered ? 20 : 15,
+                                offset: const Offset(0, 6),
+                              ),
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.36),
+                                blurRadius: 5,
+                                offset: const Offset(0, -1),
+                              ),
+                            ]
+                          : [
+                              BoxShadow(
+                                color: SalesPosColors.brandGold.withValues(
+                                  alpha: 0.10,
+                                ),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.isProcessing)
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: foreground,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.assignment_turned_in_rounded,
+                              color: active
+                                  ? foreground
+                                  : SalesPosColors.brandGold,
+                              size: 18,
+                            ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              widget.isProcessing ? 'Posting' : widget.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: SalesPosStyles.buttonText.copyWith(
+                                color: foreground,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1623,17 +1679,66 @@ class _SecondarySummaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 42,
+      height: 44,
       child: OutlinedButton.icon(
         onPressed: enabled ? onPressed : null,
         icon: const Icon(Icons.receipt_long_rounded, size: 18),
-        label: Text(label),
-        style: OutlinedButton.styleFrom(
-          disabledForegroundColor: SalesPosColors.textDark,
-          textStyle: SalesPosStyles.buttonText,
-          side: const BorderSide(color: SalesPosColors.bodyBorder, width: 1.5),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: ButtonStyle(
+          elevation: const WidgetStatePropertyAll(0),
+          animationDuration: const Duration(milliseconds: 140),
+          textStyle: WidgetStatePropertyAll(
+            SalesPosStyles.buttonText.copyWith(fontWeight: FontWeight.w900),
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return SalesPosColors.textDark.withValues(alpha: 0.72);
+            }
+            return SalesPosColors.textDark;
+          }),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return SalesPosColors.bodyPanelBg.withValues(alpha: 0.76);
+            }
+            if (states.contains(WidgetState.pressed)) {
+              return SalesPosColors.brandGold.withValues(alpha: 0.18);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return SalesPosColors.brandGold.withValues(alpha: 0.10);
+            }
+            return SalesPosColors.bodyPanelBg;
+          }),
+          overlayColor: WidgetStatePropertyAll(
+            SalesPosColors.brandGold.withValues(alpha: 0.08),
+          ),
+          iconColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return SalesPosColors.textDark.withValues(alpha: 0.56);
+            }
+            return SalesPosColors.brandGold;
+          }),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return BorderSide(
+                color: SalesPosColors.bodyBorder.withValues(alpha: 0.92),
+                width: 1.5,
+              );
+            }
+            return BorderSide(
+              color: SalesPosColors.brandGold.withValues(alpha: 0.70),
+              width: 1.5,
+            );
+          }),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          shadowColor: WidgetStatePropertyAll(
+            SalesPosColors.brandGold.withValues(alpha: 0.16),
+          ),
         ),
       ),
     );

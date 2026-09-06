@@ -6,7 +6,7 @@
 //
 //               4 SECTIONS:
 //               1. Metal Sold   — BillItems se aaj ke gold/silver gross weight
-//               2. Metal Bought — StockItems se aaj add kiye items (purchased)
+//               2. Metal Bought — customer-received metal and sales returns
 //               3. New Due      — Bills jinka paidAmount < finalAmount (aaj)
 //               4. New Girvi    — Loans aaj create kiye
 // =============================================================================

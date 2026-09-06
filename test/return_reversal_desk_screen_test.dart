@@ -114,6 +114,126 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('mobile field submits search with Enter', (tester) async {
+    tester.view.physicalSize = const Size(1600, 980);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = ReturnReversalController(
+      repository: _TestReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    await tester.showKeyboard(
+      find.byKey(const ValueKey('return_reversal_customer_mobile_field')),
+    );
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const ValueKey('return_reversal_customer_mobile_field')),
+      '9304479436',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(controller.customerNameCtrl.text, 'REYANSH SONI');
+    expect(
+      controller.state.selectedSourceDocument?.documentNo,
+      'AJ-PUR-2026-0006',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('customer name field submits search with Enter', (tester) async {
+    tester.view.physicalSize = const Size(1600, 980);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = ReturnReversalController(
+      repository: _TestReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    await tester.showKeyboard(
+      find.byKey(const ValueKey('return_reversal_customer_name_field')),
+    );
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const ValueKey('return_reversal_customer_name_field')),
+      'Reyansh',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(controller.customerMobileCtrl.text, '9304479436');
+    expect(
+      controller.state.selectedSourceDocument?.documentNo,
+      'AJ-PUR-2026-0006',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('source number field submits search with Enter', (tester) async {
+    tester.view.physicalSize = const Size(1600, 980);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = ReturnReversalController(
+      repository: _TestReturnReversalRepository(),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ReturnReversalDeskScreen(
+          onBack: () {},
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+
+    await tester.showKeyboard(
+      find.byKey(const ValueKey('return_reversal_source_number_field')),
+    );
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const ValueKey('return_reversal_source_number_field')),
+      'AJ-PUR-2026-0006',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(controller.customerNameCtrl.text, 'REYANSH SONI');
+    expect(
+      controller.state.selectedSourceDocument?.documentNo,
+      'AJ-PUR-2026-0006',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Return Reversal Desk shell stays usable in a narrow window',
       (tester) async {
     tester.view.physicalSize = const Size(430, 860);
@@ -1076,6 +1196,19 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
   }
 
   @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByName(
+    String name,
+  ) async {
+    return ReturnReversalLookupResult(
+      salesInvoices: name.toUpperCase().contains('REYANSH')
+          ? [_invoice, _secondInvoice]
+          : const [],
+      advanceBookings: const [],
+      customerPurchases: const [],
+    );
+  }
+
+  @override
   Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
     String documentNumber,
   ) async {
@@ -1435,6 +1568,18 @@ class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
   }
 
   @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByName(
+    String name,
+  ) async {
+    return ReturnReversalLookupResult(
+      salesInvoices:
+          name.toUpperCase().contains('REYANSH') ? [_invoice] : const [],
+      advanceBookings: const [],
+      customerPurchases: const [],
+    );
+  }
+
+  @override
   Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
     String documentNumber,
   ) async {
@@ -1561,6 +1706,18 @@ class _AllSourceTypesReturnReversalRepository
       advanceBookings: mobile == '9304479436' ? [_booking] : const [],
       customerPurchases:
           mobile == '9304479436' ? [_purchaseReturnSource] : const [],
+    );
+  }
+
+  @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByName(
+    String name,
+  ) async {
+    final matches = name.toUpperCase().contains('REYANSH');
+    return ReturnReversalLookupResult(
+      salesInvoices: matches ? [_salesInvoice] : const [],
+      advanceBookings: matches ? [_booking] : const [],
+      customerPurchases: matches ? [_purchaseReturnSource] : const [],
     );
   }
 

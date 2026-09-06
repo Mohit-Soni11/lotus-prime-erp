@@ -106,6 +106,32 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
   }
 
   @override
+  Future<ReturnReversalLookupResult> findCustomerHistoryByName(
+    String name,
+  ) async {
+    await _database.ensureReturnReversalSchema();
+    final customerName = name.trim();
+    if (customerName.isEmpty) {
+      return const ReturnReversalLookupResult.empty();
+    }
+
+    final namePattern = _containsPattern(customerName);
+    final salesInvoices = await _findSalesInvoicesByCustomerName(namePattern);
+    final advanceBookings = await _findAdvanceBookingsByCustomerName(
+      namePattern,
+    );
+    final customerPurchases = await _findCustomerPurchasesByCustomerName(
+      namePattern,
+    );
+
+    return ReturnReversalLookupResult(
+      salesInvoices: salesInvoices,
+      advanceBookings: advanceBookings,
+      customerPurchases: customerPurchases,
+    );
+  }
+
+  @override
   Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
     String documentNumber,
   ) async {
@@ -164,6 +190,59 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       LIMIT 100
       ''',
       variables: [drift.Variable.withString(normalizedMobile)],
+    ).get();
+
+    final documents = <ReturnReversalSourceDocument>[];
+    for (final row in rows) {
+      documents.add(await _mapSalesInvoice(row));
+    }
+    return documents;
+  }
+
+  Future<List<ReturnReversalSourceDocument>> _findSalesInvoicesByCustomerName(
+    String namePattern,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        b.id,
+        b.bill_no,
+        b.customer_id,
+        COALESCE(NULLIF(b.customer_name, ''), c.name, '') AS customer_name,
+        COALESCE(NULLIF(b.mobile, ''), c.mobile, '') AS mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        b.bill_date,
+        b.total_amount,
+        b.discount,
+        b.taxable_amount,
+        b.cgst_amount,
+        b.sgst_amount,
+        b.igst_amount,
+        b.gst_amount,
+        b.making_total,
+        b.round_off_amount,
+        b.final_amount,
+        b.paid_amount,
+        b.cash_paid,
+        b.upi_paid,
+        b.card_paid,
+        b.advance_paid,
+        b.due_amount,
+        b.old_gold_deduction,
+        b.payment_status,
+        b.billing_mode,
+        b.gst_pricing_mode,
+        b.status
+      FROM bills b
+      LEFT JOIN customers c ON c.id = b.customer_id
+      WHERE UPPER(TRIM(COALESCE(NULLIF(b.customer_name, ''), c.name, ''))) LIKE UPPER(?) ESCAPE '\\'
+        AND b.status <> 'CANCELLED'
+      ORDER BY b.bill_date DESC, b.id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(namePattern)],
     ).get();
 
     final documents = <ReturnReversalSourceDocument>[];
@@ -376,6 +455,41 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     return rows.map(_mapAdvanceBooking).toList(growable: false);
   }
 
+  Future<List<ReturnReversalSourceDocument>> _findAdvanceBookingsByCustomerName(
+    String namePattern,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        o.id,
+        o.order_no,
+        o.customer_id,
+        c.name AS customer_name,
+        c.mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        COALESCE(o.created_at, 0) AS created_at,
+        o.item_name,
+        o.metal_type,
+        o.approx_weight,
+        o.locked_rate,
+        o.status,
+        COALESCE(SUM(a.amount_paid), 0.0) AS paid_amount
+      FROM sales_orders o
+      INNER JOIN customers c ON c.id = o.customer_id
+      LEFT JOIN order_advances a ON a.order_id = o.id
+      WHERE UPPER(TRIM(COALESCE(c.name, ''))) LIKE UPPER(?) ESCAPE '\\'
+      GROUP BY o.id
+      ORDER BY o.id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(namePattern)],
+    ).get();
+
+    return rows.map(_mapAdvanceBooking).toList(growable: false);
+  }
+
   Future<ReturnReversalSourceDocument?> _findAdvanceBookingByNumber(
     String documentNumber,
   ) async {
@@ -479,6 +593,42 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       LIMIT 100
       ''',
       variables: [drift.Variable.withString(normalizedMobile)],
+    ).get();
+
+    final documents = <ReturnReversalSourceDocument>[];
+    for (final row in rows) {
+      documents.add(await _mapCustomerPurchase(row));
+    }
+    return documents;
+  }
+
+  Future<List<ReturnReversalSourceDocument>>
+      _findCustomerPurchasesByCustomerName(
+    String namePattern,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        id,
+        voucher_no,
+        customer_id,
+        party_name,
+        mobile,
+        COALESCE(city, '') AS city,
+        created_at,
+        grand_total,
+        total_paid,
+        balance_due,
+        payment_status,
+        status
+      FROM purchase_vouchers
+      WHERE source_type = 'CUSTOMER'
+        AND UPPER(TRIM(COALESCE(party_name, ''))) LIKE UPPER(?) ESCAPE '\\'
+        AND status <> 'CANCELLED'
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(namePattern)],
     ).get();
 
     final documents = <ReturnReversalSourceDocument>[];
@@ -1706,6 +1856,15 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
 
   String _normalizePhone(String value) {
     return value.replaceAll(RegExp(r'[\s\-]'), '').trim();
+  }
+
+  String _containsPattern(String value) {
+    final escaped = value
+        .trim()
+        .replaceAll(r'\', r'\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
+    return '%$escaped%';
   }
 
   String _joinAddress(String? line1, String? line2, String? city) {

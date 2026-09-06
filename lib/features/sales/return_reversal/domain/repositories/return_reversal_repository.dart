@@ -7,6 +7,8 @@ abstract interface class ReturnReversalRepository {
 
   Future<ReturnReversalLookupResult> findCustomerHistoryByMobile(String mobile);
 
+  Future<ReturnReversalLookupResult> findCustomerHistoryByName(String name);
+
   Future<ReturnReversalSourceDocument?> findSourceDocumentByNumber(
     String documentNumber,
   );

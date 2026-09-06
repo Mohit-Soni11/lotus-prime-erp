@@ -109,11 +109,13 @@ class ReturnReversalController extends ChangeNotifier {
   Future<void> searchRecords() async {
     final sourceNumber = sourceDocumentNumberCtrl.text.trim();
     final mobile = customerMobileCtrl.text.trim();
+    final customerName = customerNameCtrl.text.trim();
 
-    if (sourceNumber.isEmpty && mobile.isEmpty) {
+    if (sourceNumber.isEmpty && mobile.isEmpty && customerName.isEmpty) {
       _setState(
         _state.copyWith(
-          lookupMessage: 'Enter a mobile number or source document number.',
+          lookupMessage:
+              'Enter a mobile number, customer name, or source document number.',
           clearError: true,
         ),
       );
@@ -134,7 +136,9 @@ class ReturnReversalController extends ChangeNotifier {
         return;
       }
 
-      final result = await _repository.findCustomerHistoryByMobile(mobile);
+      final result = mobile.isNotEmpty
+          ? await _repository.findCustomerHistoryByMobile(mobile)
+          : await _repository.findCustomerHistoryByName(customerName);
       final preferredDocument = _preferredDocument(result);
       if (preferredDocument != null) {
         _hydrateCustomerFields(preferredDocument);
