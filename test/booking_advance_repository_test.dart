@@ -209,6 +209,28 @@ void main() {
     expect(customers, hasLength(1));
     expect(customers.single.name, 'Existing Customer');
   });
+
+  test('manual customer edits clear the selected customer identity', () async {
+    final existingCustomerId = await _insertCustomer(
+      database,
+      name: 'Existing Customer',
+      mobile: '9000011111',
+    );
+    final controller = BookingAdvanceController(repo: repository);
+    await _waitForBookingNumber(controller);
+
+    controller.selectCustomerFromSearch({
+      'id': existingCustomerId,
+      'name': 'Existing Customer',
+      'mobile': '9000011111',
+      'city': 'Jaipur',
+    });
+    controller.nameCtrl.text = 'Changed Customer';
+    controller.handleCustomerLookupInput('C');
+
+    expect(controller.selectedCustomerId, isNull);
+    controller.dispose();
+  });
 }
 
 Future<void> _waitForBookingNumber(BookingAdvanceController controller) async {

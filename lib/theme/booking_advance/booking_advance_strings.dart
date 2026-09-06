@@ -32,20 +32,15 @@ class BookingAdvanceStrings {
   static const String timeLabel = 'TIME';
 
   static const String sectionCustomer = 'CUSTOMER DETAILS';
-  static const String customerSubtitle = 'Search or enter customer details';
+  static const String customerSubtitle = 'Search or add a new customer';
   static const String bookingSession = 'Booking Session';
   static const String lblMobile = 'MOBILE';
   static const String hintMobile = '10-digit';
   static const String lblName = 'CUSTOMER NAME';
   static const String hintName = 'Enter full name';
-  static const String lblCity = 'CITY / AREA';
-  static const String hintCity = 'Enter city';
-  static const String lblPan = 'PAN / AADHAR';
-  static const String hintPan = 'Document ID';
-  static const String lblGst = 'GST NUMBER';
-  static const String hintGst = '15-digit GSTIN';
-  static const String btnSearch = 'Search';
-  static const String btnClear = 'Clear';
+  static const String lblCity = 'ADDRESS';
+  static const String hintCity = 'Customer address';
+  static const String btnCreateCustomer = 'Create Customer';
 
   static const String sectionItem = 'ITEM DETAILS';
   static const String itemSubtitle = 'Enter booking item details';

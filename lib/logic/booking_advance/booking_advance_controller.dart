@@ -89,9 +89,9 @@ class BookingAdvanceController extends ChangeNotifier {
   final TextEditingController mobileCtrl = TextEditingController();
   final TextEditingController nameCtrl = TextEditingController();
   final TextEditingController cityCtrl = TextEditingController();
-  final TextEditingController panCtrl = TextEditingController();
-  final TextEditingController gstCtrl = TextEditingController();
   int? selectedCustomerId;
+  String _selectedCustomerMobile = '';
+  String _selectedCustomerName = '';
 
   final List<BookingItemModel> bookingItems = [];
   final ScrollController tableScrollCtrl = ScrollController();
@@ -233,13 +233,40 @@ class BookingAdvanceController extends ChangeNotifier {
     });
   }
 
+  void handleCustomerLookupInput(String query) {
+    if (selectedCustomerId != null && !_selectedCustomerMatchesCurrentInput()) {
+      selectedCustomerId = null;
+      _selectedCustomerMobile = '';
+      _selectedCustomerName = '';
+    }
+    searchCustomer(query);
+  }
+
+  void clearCustomerDetails() {
+    mobileCtrl.clear();
+    nameCtrl.clear();
+    cityCtrl.clear();
+    selectedCustomerId = null;
+    _selectedCustomerMobile = '';
+    _selectedCustomerName = '';
+    customerResults = [];
+    notifyListeners();
+  }
+
   void selectCustomerFromSearch(Map<String, dynamic> c) {
     selectedCustomerId = c['id'];
     mobileCtrl.text = c['mobile'] ?? '';
     nameCtrl.text = c['name'] ?? '';
     cityCtrl.text = c['city'] ?? '';
+    _selectedCustomerMobile = mobileCtrl.text.trim();
+    _selectedCustomerName = nameCtrl.text.trim();
     customerResults = [];
     notifyListeners();
+  }
+
+  bool _selectedCustomerMatchesCurrentInput() {
+    return mobileCtrl.text.trim() == _selectedCustomerMobile &&
+        nameCtrl.text.trim() == _selectedCustomerName;
   }
 
   Future<bool> initializeForEdit(int orderId) async {
@@ -265,6 +292,8 @@ class BookingAdvanceController extends ChangeNotifier {
         mobileCtrl.text = customer.mobile;
         nameCtrl.text = customer.name;
         cityCtrl.text = customer.city ?? '';
+        _selectedCustomerMobile = mobileCtrl.text.trim();
+        _selectedCustomerName = nameCtrl.text.trim();
       }
 
       bookingType = order.bookingType.toUpperCase() == 'LOCKED'
@@ -349,8 +378,8 @@ class BookingAdvanceController extends ChangeNotifier {
         customerName: nameCtrl.text,
         customerMobile: mobileCtrl.text,
         city: cityCtrl.text,
-        panNumber: panCtrl.text,
-        gstNumber: gstCtrl.text,
+        panNumber: '',
+        gstNumber: '',
       );
       selectedCustomerId = customerId;
 
@@ -444,8 +473,6 @@ class BookingAdvanceController extends ChangeNotifier {
     mobileCtrl.clear();
     nameCtrl.clear();
     cityCtrl.clear();
-    panCtrl.clear();
-    gstCtrl.clear();
     lockedRateCtrl.clear();
     cashCtrl.clear();
     upiCtrl.clear();
@@ -454,6 +481,8 @@ class BookingAdvanceController extends ChangeNotifier {
     _upiInput = 0;
     _cardInput = 0;
     selectedCustomerId = null;
+    _selectedCustomerMobile = '';
+    _selectedCustomerName = '';
     editingOrderId = null;
     _editingOrderNo = null;
     editLoadError = null;
@@ -504,8 +533,6 @@ class BookingAdvanceController extends ChangeNotifier {
     mobileCtrl.dispose();
     nameCtrl.dispose();
     cityCtrl.dispose();
-    panCtrl.dispose();
-    gstCtrl.dispose();
     lockedRateCtrl.dispose();
     cashCtrl.dispose();
     upiCtrl.dispose();

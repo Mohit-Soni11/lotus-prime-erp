@@ -2,12 +2,13 @@
 // FILE        : booking_customer_panel.dart
 // MODULE      : Sales / Booking & Advance
 // DESCRIPTION : Customer lookup and booking identity capture.
-//               Mobile, Name, City, PAN, GST fields + Search/Clear buttons.
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
+import '../customer/add_customer/add_customer_screen.dart';
 
 class BookingCustomerPanel extends StatefulWidget {
   final BookingAdvanceController ctrl;
@@ -22,7 +23,10 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
-  bool _showDropdown = false;
+  bool _isMobileActive = true;
+  final LayerLink _mobileSuggestionLink = LayerLink();
+  final LayerLink _nameSuggestionLink = LayerLink();
+  OverlayEntry? _suggestionOverlay;
 
   @override
   void initState() {
@@ -43,15 +47,47 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
   @override
   void dispose() {
     widget.ctrl.removeListener(_handleControllerChanged);
+    _removeSuggestionOverlay();
     _animCtrl.dispose();
     super.dispose();
   }
 
   void _handleControllerChanged() {
     if (!mounted) return;
-    setState(() {
-      _showDropdown = widget.ctrl.customerResults.isNotEmpty;
-    });
+    setState(() {});
+    if (widget.ctrl.customerResults.isEmpty) {
+      _removeSuggestionOverlay();
+      return;
+    }
+    _showSuggestionOverlay();
+  }
+
+  void _removeSuggestionOverlay() {
+    _suggestionOverlay?.remove();
+    _suggestionOverlay = null;
+  }
+
+  void _showSuggestionOverlay() {
+    if (!mounted) return;
+    _removeSuggestionOverlay();
+
+    final activeLink =
+        _isMobileActive ? _mobileSuggestionLink : _nameSuggestionLink;
+    _suggestionOverlay = OverlayEntry(
+      builder: (_) => Positioned(
+        width: 320,
+        child: CompositedTransformFollower(
+          link: activeLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 52),
+          child: Material(
+            color: Colors.transparent,
+            child: _buildDropdown(),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_suggestionOverlay!);
   }
 
   @override
@@ -60,10 +96,7 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
       opacity: _fadeAnim,
       child: SlideTransition(
         position: _slideAnim,
-        child: Column(children: [
-          _buildPanel(),
-          if (_showDropdown) _buildDropdown(),
-        ]),
+        child: _buildPanel(),
       ),
     );
   }
@@ -153,57 +186,54 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
             children: [
               Expanded(
                   flex: 2,
-                  child: _field(BookingAdvanceStrings.lblMobile,
-                      BookingAdvanceStrings.hintMobile, widget.ctrl.mobileCtrl,
+                  child: CompositedTransformTarget(
+                    link: _mobileSuggestionLink,
+                    child: _field(
+                      BookingAdvanceStrings.lblMobile,
+                      BookingAdvanceStrings.hintMobile,
+                      widget.ctrl.mobileCtrl,
                       isNumber: true,
                       icon: BookingAdvanceIcons.mobilePhone,
-                      onChanged: widget.ctrl.searchCustomer)),
+                      onChanged: (value) {
+                        _isMobileActive = true;
+                        widget.ctrl.handleCustomerLookupInput(value);
+                      },
+                    ),
+                  )),
               const SizedBox(width: 12),
               Expanded(
                   flex: 3,
-                  child: _field(BookingAdvanceStrings.lblName,
-                      BookingAdvanceStrings.hintName, widget.ctrl.nameCtrl,
-                      icon: BookingAdvanceIcons.customerName)),
+                  child: CompositedTransformTarget(
+                    link: _nameSuggestionLink,
+                    child: _field(
+                      BookingAdvanceStrings.lblName,
+                      BookingAdvanceStrings.hintName,
+                      widget.ctrl.nameCtrl,
+                      icon: BookingAdvanceIcons.customerName,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z ]")),
+                      ],
+                      textCapitalization: TextCapitalization.words,
+                      onChanged: (value) {
+                        _isMobileActive = false;
+                        widget.ctrl.handleCustomerLookupInput(value);
+                      },
+                    ),
+                  )),
               const SizedBox(width: 12),
               Expanded(
-                  flex: 2,
+                  flex: 4,
                   child: _field(BookingAdvanceStrings.lblCity,
                       BookingAdvanceStrings.hintCity, widget.ctrl.cityCtrl,
                       icon: BookingAdvanceIcons.cityLocation)),
-              const SizedBox(width: 12),
-              Expanded(
-                  flex: 2,
-                  child: _field(BookingAdvanceStrings.lblPan,
-                      BookingAdvanceStrings.hintPan, widget.ctrl.panCtrl,
-                      isCaps: true, icon: BookingAdvanceIcons.panCard)),
-              const SizedBox(width: 12),
-              Expanded(
-                  flex: 2,
-                  child: _field(BookingAdvanceStrings.lblGst,
-                      BookingAdvanceStrings.hintGst, widget.ctrl.gstCtrl,
-                      isCaps: true, icon: BookingAdvanceIcons.gstNumber)),
               const SizedBox(width: 16),
-              // Buttons
               Column(mainAxisSize: MainAxisSize.min, children: [
                 _HoverBtn(
-                    title: BookingAdvanceStrings.btnSearch,
-                    icon: BookingAdvanceIcons.searchItem,
-                    isPrimary: false,
-                    onTap: () => widget.ctrl
-                        .searchCustomer(widget.ctrl.mobileCtrl.text)),
-                const SizedBox(height: 8),
-                _HoverBtn(
-                    title: BookingAdvanceStrings.btnClear,
-                    icon: BookingAdvanceIcons.clearAll,
-                    isPrimary: false,
-                    onTap: () {
-                      widget.ctrl.mobileCtrl.clear();
-                      widget.ctrl.nameCtrl.clear();
-                      widget.ctrl.cityCtrl.clear();
-                      widget.ctrl.panCtrl.clear();
-                      widget.ctrl.gstCtrl.clear();
-                      widget.ctrl.selectedCustomerId = null;
-                    }),
+                  title: BookingAdvanceStrings.btnCreateCustomer,
+                  icon: BookingAdvanceIcons.newCustomerAdd,
+                  isPrimary: true,
+                  onTap: _openCreateCustomerFlow,
+                ),
               ]),
             ],
           ),
@@ -218,7 +248,7 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
       builder: (_, __) {
         if (widget.ctrl.customerResults.isEmpty) return const SizedBox.shrink();
         return Container(
-          margin: const EdgeInsets.only(top: 4),
+          constraints: const BoxConstraints(maxHeight: 280),
           decoration: BoxDecoration(
             color: BookingAdvanceColors.bodyPanelBg,
             borderRadius: BorderRadius.circular(12),
@@ -232,13 +262,15 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
                   offset: Offset(0, 6))
             ],
           ),
-          child: Column(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            shrinkWrap: true,
             children: widget.ctrl.customerResults
                 .map((c) => _SearchTile(
                       customer: c,
                       onTap: () {
                         widget.ctrl.selectCustomerFromSearch(c);
-                        setState(() => _showDropdown = false);
+                        _removeSuggestionOverlay();
                       },
                     ))
                 .toList(),
@@ -252,6 +284,8 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
       {bool isNumber = false,
       bool isCaps = false,
       IconData? icon,
+      List<TextInputFormatter>? inputFormatters,
+      TextCapitalization? textCapitalization,
       ValueChanged<String>? onChanged}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
@@ -276,8 +310,17 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
           controller: ctrl,
           onChanged: onChanged,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-          textCapitalization:
-              isCaps ? TextCapitalization.characters : TextCapitalization.none,
+          inputFormatters: inputFormatters ??
+              (isNumber
+                  ? [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ]
+                  : null),
+          textCapitalization: textCapitalization ??
+              (isCaps
+                  ? TextCapitalization.characters
+                  : TextCapitalization.none),
           style: BookingAdvanceStyles.inputText,
           decoration: InputDecoration(
             hintText: hint,
@@ -310,6 +353,31 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
         ),
       ),
     ]);
+  }
+
+  Future<void> _openCreateCustomerFlow() async {
+    FocusScope.of(context).unfocus();
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddCustomerScreen(
+          initialName: widget.ctrl.nameCtrl.text.trim(),
+          initialMobile: widget.ctrl.mobileCtrl.text.trim(),
+          initialAddress: widget.ctrl.cityCtrl.text.trim(),
+          onBack: () => Navigator.pop(context),
+          onSaved: () => Navigator.pop(context),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    final query = widget.ctrl.mobileCtrl.text.trim().isNotEmpty
+        ? widget.ctrl.mobileCtrl.text
+        : widget.ctrl.nameCtrl.text;
+    if (query.trim().isNotEmpty) {
+      widget.ctrl.searchCustomer(query);
+    }
   }
 }
 
