@@ -5,6 +5,7 @@ import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 enum PurchaseStockTrackingMode { unit, lot }
@@ -248,8 +249,40 @@ class PurchaseEntryRepository {
     return detail;
   }
 
-  Future<int> getNextSequence() async {
+  Future<int> getNextSequence({
+    String? voucherPrefix,
+    String documentCode = 'PUR',
+    String? yearToken,
+  }) async {
     try {
+      if (voucherPrefix != null && yearToken != null) {
+        final rows = await _db
+            .customSelect(
+              'SELECT voucher_no FROM purchase_vouchers',
+            )
+            .get();
+        final normalizedPrefix =
+            PosInvoiceSeriesFormatter.normalizeBusinessCode(voucherPrefix);
+        final normalizedYear =
+            PosInvoiceSeriesFormatter.normalizeFinancialYearToken(yearToken);
+        final normalizedDocumentCode = documentCode.trim().toUpperCase();
+
+        var maxSeriesSequence = 0;
+        for (final row in rows) {
+          final sequence = _purchaseDocumentSequence(
+            row.read<String>('voucher_no'),
+            voucherPrefix: normalizedPrefix,
+            documentCode: normalizedDocumentCode,
+            yearToken: normalizedYear,
+          );
+          if (sequence > maxSeriesSequence) {
+            maxSeriesSequence = sequence;
+          }
+        }
+
+        return maxSeriesSequence + 1;
+      }
+
       final row = await _db
           .customSelect(
             'SELECT COALESCE(MAX(sequence_no), 0) AS max_no FROM purchase_vouchers',
@@ -261,6 +294,36 @@ class PurchaseEntryRepository {
       AppLogger.debug('PurchaseEntryRepository.getNextSequence: $error');
       return 1;
     }
+  }
+
+  int _purchaseDocumentSequence(
+    String voucherNo, {
+    required String voucherPrefix,
+    required String documentCode,
+    required String yearToken,
+  }) {
+    final normalized = voucherNo.trim().toUpperCase();
+    final current = RegExp(
+      '^${RegExp.escape(voucherPrefix)}-${RegExp.escape(documentCode)}-'
+      '${RegExp.escape(yearToken)}-(\\d+)\$',
+    ).firstMatch(normalized);
+    if (current != null) {
+      return int.tryParse(current.group(1) ?? '') ?? 0;
+    }
+
+    final legacy = RegExp(
+      '^${RegExp.escape(voucherPrefix)}-${RegExp.escape(documentCode)}-'
+      '(\\d{4})-(\\d+)\$',
+    ).firstMatch(normalized);
+    if (legacy != null &&
+        PosInvoiceSeriesFormatter.normalizeFinancialYearToken(
+              legacy.group(1) ?? '',
+            ) ==
+            yearToken) {
+      return int.tryParse(legacy.group(2) ?? '') ?? 0;
+    }
+
+    return 0;
   }
 
   Future<PurchaseSaveResult?> savePurchase(PurchaseVoucherDraft draft) async {

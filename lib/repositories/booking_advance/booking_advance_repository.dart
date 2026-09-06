@@ -1,16 +1,17 @@
 // =============================================================================
 // FILE        : booking_advance_repository.dart
-// MODULE      : Sales → Booking & Advance
+// MODULE      : Sales / Booking & Advance
 // LAYER       : Repository / Database
 // DESCRIPTION : All database operations for the Booking & Advance module.
-//               ✅ v2: Added getNextBookingSequence() and
-//                      getCurrentFinancialYear() for proper DB-synced
-//                      booking numbers. No more reset on app restart.
 // =============================================================================
 
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import 'package:lotus_erp/features/customer/domain/services/customer_contact_value.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
+import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
+import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
 
 class EditableBookingAdvance {
   const EditableBookingAdvance({
@@ -26,17 +27,19 @@ class EditableBookingAdvance {
 
 class BookingAdvanceRepository {
   final AppDatabase _db;
+  ShopSetupRepository? _shopRepository;
 
-  BookingAdvanceRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+  BookingAdvanceRepository({
+    AppDatabase? db,
+    ShopSetupRepository? shopRepository,
+  })  : _db = db ?? AppDatabase(),
+        _shopRepository = shopRepository;
 
-  // ===========================================================================
-  // BOOKING NUMBER UTILITIES
-  // ✅ v2: Controller calls these on init to sync booking number with DB.
-  // ===========================================================================
+  ShopSetupRepository get _effectiveShopRepository =>
+      _shopRepository ??= ShopSetupRepository();
 
   /// Returns the current Indian financial year string.
-  /// Example: April 2025 → March 2026 = "2526"
-  /// Indian FY starts in April, so months Jan/Feb/Mar belong to previous FY.
+  /// Example: April 2025 to March 2026 is represented as "2526".
   String getCurrentFinancialYear() {
     final now = DateTime.now();
     final startYear = now.month < 4 ? now.year - 1 : now.year;
@@ -45,11 +48,117 @@ class BookingAdvanceRepository {
         '${(endYear % 100).toString().padLeft(2, '0')}';
   }
 
-  /// Returns the next sequence number based on total existing bookings in DB.
-  /// Guarantees booking numbers never reset on app restart.
-  Future<int> getNextBookingSequence() async {
-    final count = await _db.salesOrders.count().getSingle();
-    return count + 1;
+  String getCurrentDocumentYearToken([DateTime? date]) {
+    return PosInvoiceSeriesFormatter.financialYearToken(date ?? DateTime.now());
+  }
+
+  String formatBookingNumber({
+    required String shopCode,
+    required String yearToken,
+    required int sequence,
+  }) {
+    return '${PosInvoiceSeriesFormatter.normalizeBusinessCode(shopCode)}-'
+        'BK-'
+        '${PosInvoiceSeriesFormatter.normalizeFinancialYearToken(yearToken)}-'
+        '${sequence < 1 ? '0001' : sequence.toString().padLeft(4, '0')}';
+  }
+
+  Future<String> resolveShopDocumentCode() async {
+    try {
+      final tenantId = await ShopSessionManager.getPermanentTenantId();
+      final shopData =
+          await _effectiveShopRepository.fetchExistingSetup(tenantId);
+      final shopName = _shopNameFromSetup(shopData);
+      return PosInvoiceSeriesFormatter.businessCode(shopName);
+    } catch (error) {
+      AppLogger.debug('Booking shop code sync failed: $error');
+      return PosInvoiceSeriesFormatter.businessCode('');
+    }
+  }
+
+  /// Returns the next available sequence for the active financial year.
+  Future<int> getNextBookingSequence({
+    String? shopCode,
+    String? yearToken,
+  }) async {
+    final normalizedYearToken =
+        PosInvoiceSeriesFormatter.normalizeFinancialYearToken(
+      yearToken ?? getCurrentDocumentYearToken(),
+    );
+    final legacyFinancialYear = _legacyFinancialYearSpan(normalizedYearToken);
+    final legacyCalendarYear = _legacyCalendarYear(normalizedYearToken);
+    final rows = await _db.customSelect(
+      '''
+      SELECT order_no
+      FROM sales_orders
+      WHERE order_no LIKE ?
+         OR order_no LIKE ?
+         OR order_no LIKE ?
+      ''',
+      variables: [
+        Variable.withString('%-BK-$normalizedYearToken-%'),
+        Variable.withString('BK-%-$legacyFinancialYear-%'),
+        Variable.withString('BK-%-$legacyCalendarYear-%'),
+      ],
+      readsFrom: {_db.salesOrders},
+    ).get();
+
+    var maxSequence = 0;
+    for (final row in rows) {
+      final sequence = _bookingDocumentSequence(
+        row.read<String>('order_no'),
+        yearToken: normalizedYearToken,
+      );
+      if (sequence > maxSequence) maxSequence = sequence;
+    }
+
+    return maxSequence + 1;
+  }
+
+  Future<int> resolveCustomerForBooking({
+    int? selectedCustomerId,
+    required String customerName,
+    required String customerMobile,
+    required String city,
+    required String panNumber,
+    required String gstNumber,
+  }) async {
+    if (selectedCustomerId != null && selectedCustomerId > 0) {
+      final existing = await (_db.select(_db.customers)
+            ..where((tbl) => tbl.id.equals(selectedCustomerId)))
+          .getSingleOrNull();
+      if (existing != null) return existing.id;
+    }
+
+    final cleanMobile = customerMobile.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanMobile.isNotEmpty) {
+      final existing = await (_db.select(_db.customers)
+            ..where((tbl) => tbl.mobile.equals(cleanMobile)))
+          .getSingleOrNull();
+      if (existing != null) return existing.id;
+    }
+
+    final displayName = customerName.trim().isEmpty
+        ? cleanMobile.isEmpty
+            ? 'Walk-in Customer'
+            : 'Customer ${cleanMobile.substring(cleanMobile.length - 4)}'
+        : customerName.trim();
+
+    return _db.into(_db.customers).insert(
+          CustomersCompanion(
+            name: Value(displayName),
+            firstName: Value(displayName),
+            mobile: Value(CustomerContactValue.storageMobile(cleanMobile)),
+            city: Value(_nullable(city)),
+            panNumber: Value(_nullableUpper(panNumber)),
+            gstNumber: Value(_nullableUpper(gstNumber)),
+            type: const Value('Regular'),
+            customerTier: const Value('Regular'),
+            notes: cleanMobile.isEmpty
+                ? const Value('Created from Booking & Advance quick entry.')
+                : const Value.absent(),
+          ),
+        );
   }
 
   // ===========================================================================
@@ -73,11 +182,8 @@ class BookingAdvanceRepository {
     required double goldRate,
     required bool isGst,
   }) async {
-    final fy = getCurrentFinancialYear();
-    final seq = await getNextBookingSequence();
-    final orderNo = 'BK-LJ-$fy-${seq.toString().padLeft(4, '0')}';
-
     return _db.transaction(() async {
+      final orderNo = await _nextOrderNumber();
       final orderId = await _db.into(_db.salesOrders).insert(
             SalesOrdersCompanion.insert(
               orderNo: orderNo,
@@ -104,7 +210,7 @@ class BookingAdvanceRepository {
             );
       }
 
-      AppLogger.debug('✅ Booking saved: $orderNo | Advance: ₹$totalAdvance');
+      AppLogger.debug('Booking saved: $orderNo | Advance: $totalAdvance');
       return orderId;
     });
   }
@@ -208,9 +314,95 @@ class BookingAdvanceRepository {
         .map((c) => {
               'id': c.id,
               'name': c.name,
-              'mobile': c.mobile,
+              'mobile': CustomerContactValue.displayMobile(c.mobile),
               'city': c.city ?? '',
             })
         .toList();
+  }
+
+  Future<String> _nextOrderNumber() async {
+    final shopCode = await resolveShopDocumentCode();
+    final yearToken = getCurrentDocumentYearToken();
+    final sequence = await getNextBookingSequence(
+      shopCode: shopCode,
+      yearToken: yearToken,
+    );
+    return formatBookingNumber(
+      shopCode: shopCode,
+      yearToken: yearToken,
+      sequence: sequence,
+    );
+  }
+
+  int _bookingDocumentSequence(
+    String orderNo, {
+    required String yearToken,
+  }) {
+    final normalized = orderNo.trim().toUpperCase();
+    final current = RegExp(
+      '^[A-Z0-9]{2,6}-BK-${RegExp.escape(yearToken)}-(\\d+)\$',
+    ).firstMatch(normalized);
+    if (current != null) {
+      return int.tryParse(current.group(1) ?? '') ?? 0;
+    }
+
+    final legacy = RegExp(
+      '^BK-[A-Z0-9]{1,8}-(\\d{4})-(\\d+)\$',
+    ).firstMatch(normalized);
+    if (legacy != null &&
+        _legacyFinancialYearStartToken(legacy.group(1) ?? '') == yearToken) {
+      return int.tryParse(legacy.group(2) ?? '') ?? 0;
+    }
+
+    return 0;
+  }
+
+  String _legacyFinancialYearStartToken(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 4) {
+      final first = int.tryParse(digits.substring(0, 2));
+      final second = int.tryParse(digits.substring(2, 4));
+      if (first != null && second != null) {
+        return (second - first + 100) % 100 == 1
+            ? digits.substring(0, 2)
+            : digits.substring(2, 4);
+      }
+    }
+    if (digits.length >= 2) {
+      return digits.substring(0, 2);
+    }
+    return PosInvoiceSeriesFormatter.normalizeFinancialYearToken(value);
+  }
+
+  String _legacyFinancialYearSpan(String yearToken) {
+    final start = int.tryParse(yearToken) ?? 0;
+    final end = (start + 1) % 100;
+    return '${start.toString().padLeft(2, '0')}'
+        '${end.toString().padLeft(2, '0')}';
+  }
+
+  String _legacyCalendarYear(String yearToken) {
+    return '20${yearToken.padLeft(2, '0')}';
+  }
+
+  String _shopNameFromSetup(Map<String, dynamic>? shopData) {
+    final basicInfo = shopData?['basic_info'] as Map<String, dynamic>?;
+    return [
+      basicInfo?['brand_display_name'],
+      basicInfo?['display_name'],
+      basicInfo?['legal_name'],
+    ]
+        .map((value) => value?.toString().trim() ?? '')
+        .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+  }
+
+  String? _nullable(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  String? _nullableUpper(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed.toUpperCase();
   }
 }

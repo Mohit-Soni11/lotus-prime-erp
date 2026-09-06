@@ -1,13 +1,8 @@
 // =============================================================================
 // FILE        : booking_advance_controller.dart
-// MODULE      : Sales → Booking & Advance
-// LAYER       : Logic / Controller
-// DESCRIPTION : Master controller for the Booking & Advance create screen.
-//               ✅ v2 FIX 1: Booking number now syncs with DB on init.
-//                            No more reset to BK-LJ-2526-0001 on app restart.
-//               ✅ v2 FIX 2: Financial year auto-calculated via repository.
-//               ✅ v2 FIX 3: saveBooking() now returns bookingNo in result
-//                            for future use in receipt/print generation.
+// MODULE      : Sales / Booking & Advance
+// LAYER       : Application Controller
+// DESCRIPTION : Coordinates booking entry state, validation, and persistence.
 // =============================================================================
 
 import 'dart:async';
@@ -24,7 +19,6 @@ class BookingAdvanceController extends ChangeNotifier {
 
   BookingAdvanceController({BookingAdvanceRepository? repo})
       : _repo = repo ?? BookingAdvanceRepository() {
-    // Payment field listeners — granular rebuild triggers
     cashCtrl.addListener(() {
       _cashInput = _p(cashCtrl.text);
       notifyListeners();
@@ -39,17 +33,16 @@ class BookingAdvanceController extends ChangeNotifier {
     });
     lockedRateCtrl.addListener(notifyListeners);
 
-    // ✅ v2 FIX: Sync booking number with DB on controller startup
     _initBookingNumber();
   }
 
-  // ── BOOKING NUMBER (DB-SYNCED) ────────────────────────────────────────────
-  String _currentFinancialYear = '';
+  String _shopDocumentCode = 'SH';
+  String _currentYearToken = '';
   int _nextSequence = 0;
   bool _isNumberLoading = true;
 
   bool get isNumberLoading => _isNumberLoading;
-  String get currentFinancialYear => _currentFinancialYear;
+  String get currentFinancialYear => _currentYearToken;
   int get nextSequence => _nextSequence;
   int? editingOrderId;
   String? _editingOrderNo;
@@ -60,33 +53,39 @@ class BookingAdvanceController extends ChangeNotifier {
   String get formattedBookingNo {
     if (_editingOrderNo != null) return _editingOrderNo!;
     if (_isNumberLoading) return 'Loading...';
-    return 'BK-LJ-$_currentFinancialYear-${_nextSequence.toString().padLeft(4, '0')}';
+    return _repo.formatBookingNumber(
+      shopCode: _shopDocumentCode,
+      yearToken: _currentYearToken,
+      sequence: _nextSequence,
+    );
   }
 
-  /// Fetches the correct sequence from DB so booking number
-  /// never resets on app restart.
   Future<void> _initBookingNumber() async {
     try {
-      final fy = _repo.getCurrentFinancialYear();
-      final seq = await _repo.getNextBookingSequence();
-      _currentFinancialYear = fy;
+      final shopCode = await _repo.resolveShopDocumentCode();
+      final yearToken = _repo.getCurrentDocumentYearToken();
+      final seq = await _repo.getNextBookingSequence(
+        shopCode: shopCode,
+        yearToken: yearToken,
+      );
+      _shopDocumentCode = shopCode;
+      _currentYearToken = yearToken;
       _nextSequence = seq;
       _isNumberLoading = false;
       notifyListeners();
     } catch (e) {
-      AppLogger.debug('🔴 Booking number init error: $e');
-      _currentFinancialYear = _repo.getCurrentFinancialYear();
+      AppLogger.debug('Booking number init error: $e');
+      _shopDocumentCode = 'SH';
+      _currentYearToken = _repo.getCurrentDocumentYearToken();
       _nextSequence = 1;
       _isNumberLoading = false;
       notifyListeners();
     }
   }
 
-  // ── BOOKING PREFERENCES ───────────────────────────────────────────────────
   BookingType bookingType = BookingType.open;
   DateTime? deliveryDate;
 
-  // ── CUSTOMER FIELDS ───────────────────────────────────────────────────────
   final TextEditingController mobileCtrl = TextEditingController();
   final TextEditingController nameCtrl = TextEditingController();
   final TextEditingController cityCtrl = TextEditingController();
@@ -94,19 +93,15 @@ class BookingAdvanceController extends ChangeNotifier {
   final TextEditingController gstCtrl = TextEditingController();
   int? selectedCustomerId;
 
-  // ── BOOKING ITEMS ─────────────────────────────────────────────────────────
   final List<BookingItemModel> bookingItems = [];
   final ScrollController tableScrollCtrl = ScrollController();
   int activeItemIndex = -1;
 
-  // ── SCRAP / EXCHANGE ITEMS ────────────────────────────────────────────────
   final List<BookingScrapModel> scrapItems = [];
 
-  // ── LOCKED RATE ───────────────────────────────────────────────────────────
   final TextEditingController lockedRateCtrl = TextEditingController();
   double get lockedRate => _p(lockedRateCtrl.text);
 
-  // ── ADVANCE PAYMENT ───────────────────────────────────────────────────────
   final TextEditingController cashCtrl = TextEditingController();
   final TextEditingController upiCtrl = TextEditingController();
   final TextEditingController cardCtrl = TextEditingController();
@@ -114,22 +109,18 @@ class BookingAdvanceController extends ChangeNotifier {
   double _upiInput = 0.0;
   double _cardInput = 0.0;
 
-  // ── STATE ─────────────────────────────────────────────────────────────────
   bool isSaving = false;
 
-  // ── CUSTOMER SEARCH ───────────────────────────────────────────────────────
   List<Map<String, dynamic>> customerResults = [];
   bool isSearching = false;
   Timer? _searchTimer;
 
-  // ── COMPUTED PROPERTIES ───────────────────────────────────────────────────
   bool get showLockedRate => bookingType == BookingType.locked;
   double get cashAdvance => _cashInput;
   double get upiAdvance => _upiInput;
   double get cardAdvance => _cardInput;
   double get totalCashAdv => _cashInput + _upiInput + _cardInput;
 
-  /// Uses fineWt × rate — fix applied in BookingScrapModel (v2)
   double get totalScrapVal => scrapItems.fold(0.0, (s, i) => s + i.totalValue);
 
   double get totalAdvance => totalCashAdv + totalScrapVal;
@@ -151,7 +142,6 @@ class BookingAdvanceController extends ChangeNotifier {
       .where((i) => i.metal == MetalType.silver)
       .fold(0.0, (s, i) => s + i.netWt);
 
-  // ── BOOKING TYPE TOGGLE ───────────────────────────────────────────────────
   void toggleBookingType(BookingType t) {
     bookingType = t;
     if (t == BookingType.open) lockedRateCtrl.clear();
@@ -163,7 +153,6 @@ class BookingAdvanceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── BOOKING ITEMS ─────────────────────────────────────────────────────────
   void _onChildChanged() => notifyListeners();
 
   void addBookingItem() {
@@ -209,7 +198,6 @@ class BookingAdvanceController extends ChangeNotifier {
     }
   }
 
-  // ── SCRAP ITEMS ───────────────────────────────────────────────────────────
   void addScrapItem() {
     final item = BookingScrapModel();
     item.addListener(_onChildChanged);
@@ -225,7 +213,6 @@ class BookingAdvanceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── CUSTOMER SEARCH ───────────────────────────────────────────────────────
   void searchCustomer(String query) {
     _searchTimer?.cancel();
     if (query.length < 2) {
@@ -315,9 +302,6 @@ class BookingAdvanceController extends ChangeNotifier {
     }
   }
 
-  // ── SAVE BOOKING ──────────────────────────────────────────────────────────
-  /// Returns a named record with success flag, message, and saved booking number.
-  /// bookingNo is used by the UI layer for receipt generation (Step 3).
   Future<({bool success, String message, String bookingNo})>
       saveBooking() async {
     if (nameCtrl.text.trim().isEmpty) {
@@ -334,11 +318,42 @@ class BookingAdvanceController extends ChangeNotifier {
         bookingNo: '',
       );
     }
+    if (bookingType == BookingType.locked && lockedRate <= 0) {
+      return (
+        success: false,
+        message: 'Please enter a valid locked rate.',
+        bookingNo: '',
+      );
+    }
+    for (var index = 0; index < bookingItems.length; index++) {
+      final item = bookingItems[index];
+      if (item.netWt <= 0) {
+        return (
+          success: false,
+          message: 'Please enter valid net weight for item ${index + 1}.',
+          bookingNo: '',
+        );
+      }
+    }
 
     isSaving = true;
     notifyListeners();
 
     try {
+      if (_isNumberLoading) {
+        await _initBookingNumber();
+      }
+
+      final customerId = await _repo.resolveCustomerForBooking(
+        selectedCustomerId: selectedCustomerId,
+        customerName: nameCtrl.text,
+        customerMobile: mobileCtrl.text,
+        city: cityCtrl.text,
+        panNumber: panCtrl.text,
+        gstNumber: gstCtrl.text,
+      );
+      selectedCustomerId = customerId;
+
       final savedBookingNo = formattedBookingNo;
       final perItemAdv = bookingItems.isEmpty
           ? totalAdvance
@@ -348,7 +363,7 @@ class BookingAdvanceController extends ChangeNotifier {
         final item = bookingItems.first;
         await _repo.updateBooking(
           orderId: editingOrderId!,
-          customerId: selectedCustomerId ?? 0,
+          customerId: customerId,
           itemName: item.descCtrl.text.trim().isEmpty
               ? '${item.metal.displayName} Item'
               : item.descCtrl.text.trim(),
@@ -376,7 +391,7 @@ class BookingAdvanceController extends ChangeNotifier {
 
       for (final item in bookingItems) {
         await _repo.saveNewBooking(
-          customerId: selectedCustomerId ?? 0,
+          customerId: customerId,
           customerName: nameCtrl.text.trim(),
           customerMobile: mobileCtrl.text.trim(),
           itemName: item.descCtrl.text.trim().isEmpty
@@ -411,7 +426,7 @@ class BookingAdvanceController extends ChangeNotifier {
     } catch (e) {
       isSaving = false;
       notifyListeners();
-      AppLogger.debug('🔴 Booking save error: $e');
+      AppLogger.debug('Booking save error: $e');
       return (
         success: false,
         message: 'Failed to save. Please try again.',
@@ -420,7 +435,6 @@ class BookingAdvanceController extends ChangeNotifier {
     }
   }
 
-  // ── CLEAR ─────────────────────────────────────────────────────────────────
   void clearAll() {
     _clearAll();
     notifyListeners();
@@ -459,7 +473,6 @@ class BookingAdvanceController extends ChangeNotifier {
     activeItemIndex = -1;
   }
 
-  // ── HELPERS ───────────────────────────────────────────────────────────────
   double _p(String t) =>
       double.tryParse(t.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 

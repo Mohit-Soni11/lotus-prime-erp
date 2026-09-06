@@ -15,6 +15,7 @@ import '../../repositories/purchase/purchase_entry_repository.dart';
 import '../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
 import '../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../repositories/setting/shop_setup/shop_setup_repository.dart';
+import '../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class PurchaseEntryController extends ChangeNotifier {
@@ -57,12 +58,14 @@ class PurchaseEntryController extends ChangeNotifier {
   bool _disposed = false;
   String? _saveErrorMessage;
   int _purchaseNo = 1;
-  String _voucherPrefix = 'AJ';
+  String _voucherPrefix = 'SH';
 
   bool get isSaving => _isSaving;
   String? get saveErrorMessage => _saveErrorMessage;
+  String get _voucherYearToken =>
+      PosInvoiceSeriesFormatter.financialYearToken(DateTime.now());
   String get formattedPurchaseNo =>
-      '$_voucherPrefix-PUR-${DateTime.now().year}-${_purchaseNo.toString().padLeft(4, '0')}';
+      '$_voucherPrefix-PUR-$_voucherYearToken-${_purchaseNo.toString().padLeft(4, '0')}';
 
   PurchaseSource get purchaseSource => PurchaseSource.fromCustomer;
 
@@ -85,10 +88,8 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    await Future.wait([
-      _syncVoucherPrefix(),
-      _syncNextPurchaseSequence(),
-    ]);
+    await _syncVoucherPrefix();
+    await _syncNextPurchaseSequence();
   }
 
   Future<void> _syncVoucherPrefix() async {
@@ -118,23 +119,15 @@ class PurchaseEntryController extends ChangeNotifier {
   }
 
   String _voucherPrefixFromShopName(String value) {
-    final words = RegExp(r'[A-Za-z0-9]+')
-        .allMatches(value.toUpperCase())
-        .map((match) => match.group(0) ?? '')
-        .where((word) => word.isNotEmpty)
-        .toList(growable: false);
-
-    if (words.length >= 2) {
-      return words.take(4).map((word) => word[0]).join();
-    }
-    if (words.length == 1) {
-      return words.single.substring(0, words.single.length.clamp(1, 3));
-    }
-    return _voucherPrefix;
+    return PosInvoiceSeriesFormatter.businessCode(value);
   }
 
   Future<void> _syncNextPurchaseSequence() async {
-    _purchaseNo = await _purchaseRepository.getNextSequence();
+    _purchaseNo = await _purchaseRepository.getNextSequence(
+      voucherPrefix: _voucherPrefix,
+      documentCode: 'PUR',
+      yearToken: _voucherYearToken,
+    );
     notifyListeners();
   }
 

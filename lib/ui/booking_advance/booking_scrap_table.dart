@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : booking_scrap_table.dart
-// MODULE      : Sales â†’ Booking & Advance
-// DESCRIPTION : Metal Trade-In table â€” same as PosTradeInTable.
+// MODULE      : Sales / Booking & Advance
+// DESCRIPTION : Metal trade-in table for advance settlements.
 //               Customer gives old/scrap metal as part of advance.
 //               Columns: S.NO | METAL | DESCRIPTION | GR.WT | LESS |
 //                        NET WT | PURITY | FINE WT | RATE | VALUE | ACT
@@ -12,6 +12,7 @@ import '../../../theme/booking_advance/booking_advance_theme.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../../models/booking_advance/booking_advance/booking_advance_model.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import 'widgets/booking_money_text.dart';
 
 class BookingScrapTable extends StatelessWidget {
   final BookingAdvanceController ctrl;
@@ -248,7 +249,7 @@ class BookingScrapTable extends StatelessWidget {
                       color: BookingAdvanceColors.danger,
                       letterSpacing: 1.0)),
               const SizedBox(height: 4),
-              Text('â‚¹ ${ctrl.totalScrapVal.toStringAsFixed(2)}',
+              Text(BookingMoneyText.decimal(ctrl.totalScrapVal),
                   style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
@@ -449,7 +450,7 @@ class _BookingScrapRowState extends State<BookingScrapRow> {
               Expanded(
                   flex: 3,
                   child: _autoCell(
-                      'â‚¹${widget.item.totalValue.toStringAsFixed(2)}',
+                      BookingMoneyText.decimal(widget.item.totalValue),
                       BookingAdvanceColors.danger,
                       right: true,
                       bold: true)),

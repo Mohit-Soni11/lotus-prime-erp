@@ -10,7 +10,7 @@ class SalesPosStrings {
 
   // --- SYSTEM & SHELL ---
   static const String systemOnline = "SYSTEM ONLINE";
-  static const String defaultShopName = "Lotus Jewellers";
+  static const String defaultShopName = "Shop Name Not Set";
   static const String defaultCity = "Patna";
 
   // --- LOGIN BADGE ---

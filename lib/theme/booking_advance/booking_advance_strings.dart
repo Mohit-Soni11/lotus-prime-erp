@@ -1,17 +1,14 @@
 // =============================================================================
 // FILE        : booking_advance_strings.dart
-// MODULE      : Sales → Booking & Advance
 // LAYER       : Theme / Strings
 // =============================================================================
 
 class BookingAdvanceStrings {
   BookingAdvanceStrings._();
 
-  // ── APP BAR ───────────────────────────────────────────────────────────────
   static const String appBarTitle = 'BOOKING & ADVANCE';
   static const String systemOnline = 'System Online';
 
-  // ── TOP CONTROL BAR ───────────────────────────────────────────────────────
   static const String sectionPreferences = 'BOOKING PREFERENCES';
   static const String openRate = 'OPEN RATE';
   static const String lockedRate = 'LOCKED RATE';
@@ -25,7 +22,6 @@ class BookingAdvanceStrings {
   static const String normalBillSub = 'Normal Bill';
   static const String gstBillSub = 'GST Invoice';
 
-  // ── STATUS BAR ────────────────────────────────────────────────────────────
   static const String sectionBookingNo = 'BOOKING NUMBER';
   static const String bookingNoLabel = 'BOOKING NO.';
   static const String standardBooking = 'Standard Booking';
@@ -35,7 +31,6 @@ class BookingAdvanceStrings {
   static const String dateLabel = 'DATE';
   static const String timeLabel = 'TIME';
 
-  // ── CUSTOMER PANEL ────────────────────────────────────────────────────────
   static const String sectionCustomer = 'CUSTOMER DETAILS';
   static const String customerSubtitle = 'Search or enter customer details';
   static const String bookingSession = 'Booking Session';
@@ -52,7 +47,6 @@ class BookingAdvanceStrings {
   static const String btnSearch = 'Search';
   static const String btnClear = 'Clear';
 
-  // ── ITEM PANEL ────────────────────────────────────────────────────────────
   static const String sectionItem = 'ITEM DETAILS';
   static const String itemSubtitle = 'Enter booking item details';
   static const String lblItemName = 'ITEM NAME *';
@@ -66,14 +60,13 @@ class BookingAdvanceStrings {
   static const String hintWeight = '0.000';
   static const String weightUnit = 'g';
   static const String lblGoldRate = "TODAY'S GOLD RATE";
-  static const String goldRateUnit = '/10g';
+  static const String goldRateUnit = '/g';
   static const String lblLockedRate = 'LOCKED RATE';
   static const String lblDeliveryDate = 'EXPECTED DELIVERY DATE';
   static const String hintDeliveryDate = 'Select delivery date';
   static const String lblNotes = 'NOTES / REMARKS';
   static const String hintNotes = 'Any special instructions...';
 
-  // ── METAL TYPES & PURITIES ────────────────────────────────────────────────
   static const List<String> metalTypes = [
     'GOLD',
     'SILVER',
@@ -85,19 +78,18 @@ class BookingAdvanceStrings {
   static const List<String> platinumPurities = ['950', '900', '850'];
   static const List<String> diamondPurities = ['18K', '14K'];
 
-  // ── RIGHT PANEL ───────────────────────────────────────────────────────────
   static const String sectionSummary = 'BOOKING SUMMARY';
   static const String summarySubtitle = 'Order overview';
   static const String sectionPayment = 'ADVANCE PAYMENT';
   static const String paymentSubtitle = 'Enter amount received';
   static const String lblTotalAdvance = 'TOTAL ADVANCE';
   static const String lblAdvanceTotal = 'ADVANCE TOTAL';
-  static const String advanceReceived = '✓  Advance received';
+  static const String advanceReceived = 'Advance received';
   static const String lblCash = 'CASH';
   static const String lblUpi = 'UPI / ONLINE';
   static const String lblCard = 'CARD';
   static const String btnSaveBooking = 'SAVE BOOKING';
   static const String btnClearAll = 'CLEAR ALL';
-  static const String lockedBadge = '🔒 Locked Rate';
-  static const String openBadge = '🔓 Open Rate';
+  static const String lockedBadge = 'Locked Rate';
+  static const String openBadge = 'Open Rate';
 }

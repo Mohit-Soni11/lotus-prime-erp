@@ -16,7 +16,7 @@ import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 class AuthProfileController extends ChangeNotifier {
   // --- DYNAMIC DATABASE MOCK VALUES ---
   // These variables will be updated from the Settings/Auth API in the future
-  String displayShopName = "Lotus Jewellers";
+  String displayShopName = "Shop Name Not Set";
   String shopCity = "Patna";
 
   String loggedInUserName = "System Admin";

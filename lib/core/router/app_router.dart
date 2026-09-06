@@ -302,11 +302,7 @@ GoRouter createAppRouter() {
                 context.go(RoutePaths.customerProfileFor(returnCustomerId));
                 return;
               }
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-              context.go(RoutePaths.salesPos);
+              context.go(RoutePaths.dashboard);
             },
           );
         },

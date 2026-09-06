@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : booking_top_control_bar.dart
-// MODULE      : Sales â†’ Booking & Advance
-// DESCRIPTION : BOOKING PREFERENCES â€” same layout as PosTopControlBar.
+// MODULE      : Sales / Booking & Advance
+// DESCRIPTION : Booking rate preference controls.
 //               Only OPEN RATE / LOCKED RATE toggle (NO GST).
 //               Advance pe GST nahi lagta isliye GST toggle nahi hai.
 // =============================================================================
@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
+import 'widgets/booking_money_text.dart';
 
 class BookingTopControlBar extends StatelessWidget {
   final BookingAdvanceController ctrl;
@@ -45,7 +46,6 @@ class BookingTopControlBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // â”€â”€ HEADING â”€â”€
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -117,23 +117,20 @@ class BookingTopControlBar extends StatelessWidget {
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8,
                                 color: isLocked
                                     ? BookingAdvanceColors.lockedRateColor
                                     : BookingAdvanceColors.openRateColor),
-                            child: Text(isLocked ? 'ðŸ”’ LOCKED' : 'ðŸ”“ OPEN'),
+                            child: Text(isLocked ? 'LOCKED' : 'OPEN'),
                           ),
                         ]),
                       ),
                     ],
                   ),
-                  // â”€â”€ DIVIDER â”€â”€
                   Container(
                       height: 1,
                       width: double.infinity,
                       margin: const EdgeInsets.symmetric(vertical: 16),
                       color: BookingAdvanceColors.bodyBorder),
-                  // â”€â”€ TOGGLE â”€â”€
                   Container(
                     height: 52,
                     padding: const EdgeInsets.all(4),
@@ -161,7 +158,6 @@ class BookingTopControlBar extends StatelessWidget {
                           () => ctrl.toggleBookingType(BookingType.locked)),
                     ]),
                   ),
-                  // â”€â”€ LOCKED RATE FIELD â”€â”€
                   AnimatedSize(
                     duration: const Duration(milliseconds: 280),
                     curve: Curves.easeInOut,
@@ -184,7 +180,8 @@ class BookingTopControlBar extends StatelessWidget {
                                           decimal: true),
                                   style: BookingAdvanceStyles.inputText,
                                   decoration: InputDecoration(
-                                    hintText: 'â‚¹ Rate / 10g',
+                                    hintText:
+                                        '${BookingMoneyText.symbol} Rate / g',
                                     hintStyle: TextStyle(
                                         color: BookingAdvanceColors
                                             .bodyTextMuted
@@ -233,7 +230,7 @@ class BookingTopControlBar extends StatelessWidget {
   Widget _tab(
       String title, bool isActive, Color activeColor, VoidCallback onTap) {
     return SizedBox(
-      width: 130,
+      width: 152,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(7),
@@ -271,8 +268,7 @@ class BookingTopControlBar extends StatelessWidget {
                             : BookingAdvanceColors.bodyTextMuted,
                         fontWeight:
                             isActive ? FontWeight.w900 : FontWeight.w700,
-                        fontSize: 13,
-                        letterSpacing: 0.8)),
+                        fontSize: 13)),
               ]),
         ),
       ),

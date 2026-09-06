@@ -87,7 +87,7 @@ class PosInvoiceController extends ChangeNotifier {
 
   DateTime? dueDate;
 
-  String _realShopName = "Lotus Jewellers";
+  String _realShopName = "Shop Name Not Set";
   String _realShopAddress = "Address not set";
   String _realShopPhone = "Phone not set";
   String _realShopGstin = "Not Registered";
@@ -597,7 +597,7 @@ class PosInvoiceController extends ChangeNotifier {
               ? brandName
               : displayName.isNotEmpty
                   ? displayName
-                  : "Lotus Jewellers";
+                  : "Shop Name Not Set";
 
           final shopPhone = basicInfo['shop_phone']?.toString() ?? '';
           final ownerPhone = basicInfo['owner_phone']?.toString() ?? '';
@@ -651,7 +651,7 @@ class PosInvoiceController extends ChangeNotifier {
     } catch (e) {
       AppLogger.error(" [INVOICE] Error fetching shop data: $e");
       _realShopName =
-          billing.shopName.isNotEmpty ? billing.shopName : "Lotus Jewellers";
+          billing.shopName.isNotEmpty ? billing.shopName : "Shop Name Not Set";
       _realShopLogoPath = "";
       _realShopLogoShape = "square";
       _shopPrintProfile = ShopPrintDocumentProfile.empty;

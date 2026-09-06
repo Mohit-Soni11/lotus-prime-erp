@@ -1,7 +1,5 @@
 // =============================================================================
 // FILE        : booking_advance_app_bar.dart
-// MODULE      : Sales â†’ Booking & Advance
-// DESCRIPTION : Dark shell AppBar â€” premium layout with improved spacing.
 // =============================================================================
 
 import 'package:flutter/material.dart';

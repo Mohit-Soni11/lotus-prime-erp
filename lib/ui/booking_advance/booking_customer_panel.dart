@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : booking_customer_panel.dart
-// MODULE      : Sales â†’ Booking & Advance
-// DESCRIPTION : EXACT same as PosCustomerDetailsPanel.
+// MODULE      : Sales / Booking & Advance
+// DESCRIPTION : Customer lookup and booking identity capture.
 //               Mobile, Name, City, PAN, GST fields + Search/Clear buttons.
 // =============================================================================
 
@@ -37,19 +37,21 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
       if (mounted) _animCtrl.forward();
     });
 
-    widget.ctrl.addListener(() {
-      if (mounted) {
-        setState(() {
-          _showDropdown = widget.ctrl.customerResults.isNotEmpty;
-        });
-      }
-    });
+    widget.ctrl.addListener(_handleControllerChanged);
   }
 
   @override
   void dispose() {
+    widget.ctrl.removeListener(_handleControllerChanged);
     _animCtrl.dispose();
     super.dispose();
+  }
+
+  void _handleControllerChanged() {
+    if (!mounted) return;
+    setState(() {
+      _showDropdown = widget.ctrl.customerResults.isNotEmpty;
+    });
   }
 
   @override
@@ -74,7 +76,6 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // â”€â”€ HEADER â”€â”€
           Row(
             children: [
               Container(
@@ -137,10 +138,7 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          // â”€â”€ GOLD DIVIDER â”€â”€
           Container(
               height: 1.5,
               decoration: BoxDecoration(
@@ -149,10 +147,7 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
                 BookingAdvanceColors.brandGold.withValues(alpha: 0.1),
                 Colors.transparent,
               ]))),
-
           const SizedBox(height: 16),
-
-          // â”€â”€ FIELDS ROW â”€â”€
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -318,7 +313,6 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SearchTile extends StatefulWidget {
   final Map<String, dynamic> customer;
   final VoidCallback onTap;
@@ -354,7 +348,7 @@ class _SearchTileState extends State<_SearchTile> {
                             fontSize: 14,
                             fontWeight: FontWeight.w800)),
                     Text(
-                        '${widget.customer['mobile'] ?? ''}${(widget.customer['city'] ?? '').isNotEmpty ? "  â€¢  ${widget.customer['city']}" : ""}',
+                        '${widget.customer['mobile'] ?? ''}${(widget.customer['city'] ?? '').isNotEmpty ? "  |  ${widget.customer['city']}" : ""}',
                         style: const TextStyle(
                             color: BookingAdvanceColors.bodyTextMuted,
                             fontSize: 12)),
@@ -365,7 +359,6 @@ class _SearchTileState extends State<_SearchTile> {
   }
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HoverBtn extends StatefulWidget {
   final String title;
   final IconData icon;

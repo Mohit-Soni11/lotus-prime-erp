@@ -1,7 +1,5 @@
 // =============================================================================
 // FILE        : booking_status_bar.dart
-// MODULE      : Sales â†’ Booking & Advance
-// DESCRIPTION : Booking Number bar â€” same layout as PosInvoiceStatusBar.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -86,7 +84,6 @@ class _BookingStatusBarState extends State<BookingStatusBar>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // â”€â”€ HEADING â”€â”€
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -150,13 +147,11 @@ class _BookingStatusBarState extends State<BookingStatusBar>
                 ),
               ],
             ),
-            // â”€â”€ DIVIDER â”€â”€
             Container(
                 height: 1,
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(vertical: 16),
                 color: BookingAdvanceColors.bodyBorder),
-            // â”€â”€ CONTENT â”€â”€
             SizedBox(
               height: 52,
               child: Row(

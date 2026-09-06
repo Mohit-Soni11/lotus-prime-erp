@@ -28,6 +28,24 @@ void main() {
     await db.close();
   });
 
+  test('sales invoice sequence resets when the financial-year token changes',
+      () async {
+    await db.into(db.bills).insert(
+          BillsCompanion(
+            billNo: const drift.Value('AJ-26-099'),
+            billDate: drift.Value(DateTime(2026, 9, 6)),
+          ),
+        );
+
+    final nextSequence = await repository.fetchNextInvoiceSequence(
+      invoicePrefix: '',
+      shopInitials: 'AJ',
+      financialYear: '27',
+    );
+
+    expect(nextSequence, 1);
+  });
+
   test('wholesale percentage making is calculated from metal value', () {
     final item = SaleItemModel(
       metal: pos.MetalType.gold,

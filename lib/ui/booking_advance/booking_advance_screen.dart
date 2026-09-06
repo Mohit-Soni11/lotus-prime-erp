@@ -9,13 +9,7 @@ import 'package:flutter/material.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
 import 'booking_advance_app_bar.dart';
-import 'booking_customer_panel.dart';
-import 'booking_items_table.dart';
-import 'booking_right_panel.dart';
-import 'booking_scrap_table.dart';
-import 'booking_status_bar.dart';
-import 'booking_top_control_bar.dart';
-import 'package:lotus_erp/core/feedback/app_feedback.dart';
+import 'widgets/booking_workspace_layout.dart';
 
 class BookingAdvanceScreen extends StatefulWidget {
   const BookingAdvanceScreen({
@@ -78,19 +72,37 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        backgroundColor: BookingAdvanceColors.bodyBg,
-        appBar: BookingAdvanceAppBar(
-          onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
-          title: widget.editOrderId != null
-              ? 'EDIT ADVANCE ORDER'
-              : BookingAdvanceStrings.appBarTitle,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _handleBack();
+      },
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          backgroundColor: BookingAdvanceColors.bodyBg,
+          appBar: BookingAdvanceAppBar(
+            onBack: _handleBack,
+            title: widget.editOrderId != null
+                ? 'EDIT ADVANCE ORDER'
+                : BookingAdvanceStrings.appBarTitle,
+          ),
+          body: _buildBody(),
         ),
-        body: _buildBody(),
       ),
     );
+  }
+
+  void _handleBack() {
+    final onBack = widget.onBack;
+    if (onBack != null) {
+      onBack();
+      return;
+    }
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    }
   }
 
   Widget _buildBody() {
@@ -121,8 +133,7 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed:
-                  widget.onBack ?? () => Navigator.of(context).maybePop(),
+              onPressed: _handleBack,
               child: const Text('Back'),
             ),
           ],
@@ -130,76 +141,9 @@ class _BookingAdvanceScreenState extends State<BookingAdvanceScreen> {
       );
     }
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 70,
-              child: SingleChildScrollView(
-                controller: _scrollCtrl,
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    LayoutBuilder(
-                      builder: (_, constraints) {
-                        final sideBySide = constraints.maxWidth > 720;
-                        if (sideBySide) {
-                          return IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                BookingTopControlBar(ctrl: _ctrl),
-                                const SizedBox(width: 16),
-                                Expanded(child: BookingStatusBar(ctrl: _ctrl)),
-                              ],
-                            ),
-                          );
-                        }
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            BookingTopControlBar(ctrl: _ctrl),
-                            const SizedBox(height: 12),
-                            BookingStatusBar(ctrl: _ctrl),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    BookingCustomerPanel(ctrl: _ctrl),
-                    const SizedBox(height: 16),
-                    BookingItemsTable(ctrl: _ctrl),
-                    const SizedBox(height: 16),
-                    BookingScrapTable(ctrl: _ctrl),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              flex: 30,
-              child: BookingRightPanel(
-                ctrl: _ctrl,
-                onSaved: (message, isSuccess) {
-                  AppFeedback.show(
-                    context,
-                    type: isSuccess
-                        ? AppFeedbackType.success
-                        : AppFeedbackType.error,
-                    message: message,
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+    return BookingWorkspaceLayout(
+      controller: _ctrl,
+      scrollController: _scrollCtrl,
     );
   }
 }

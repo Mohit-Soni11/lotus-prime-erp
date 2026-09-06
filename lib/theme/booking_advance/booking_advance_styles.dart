@@ -1,8 +1,6 @@
 // =============================================================================
 // FILE        : booking_advance_styles.dart
-// MODULE      : Sales â†’ Booking & Advance
 // LAYER       : Theme / Styles
-// DESCRIPTION : TextStyles & BoxDecorations â€” exact same as SalesPosStyles.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -11,7 +9,6 @@ import 'booking_advance_colors.dart';
 class BookingAdvanceStyles {
   BookingAdvanceStyles._();
 
-  // â”€â”€ APP BAR TITLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle headerTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w700,
@@ -19,7 +16,6 @@ class BookingAdvanceStyles {
     letterSpacing: 1.2,
   );
 
-  // â”€â”€ SECTION HEADER (same as SalesPosStyles.highVisHeader) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle highVisHeader = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w900,
@@ -27,21 +23,18 @@ class BookingAdvanceStyles {
     color: BookingAdvanceColors.textDark,
   );
 
-  // â”€â”€ SUBTITLE MUTED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle subTitleMuted = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w800,
     color: BookingAdvanceColors.bodyTextMuted.withValues(alpha: 0.70),
   );
 
-  // â”€â”€ INPUT TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle inputText = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w900,
     color: BookingAdvanceColors.textDark,
   );
 
-  // â”€â”€ GRAND TOTAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle grandTotalText = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w900,
@@ -49,7 +42,6 @@ class BookingAdvanceStyles {
     height: 1.0,
   );
 
-  // â”€â”€ SUMMARY ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const TextStyle summaryLabel = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w600,
@@ -75,7 +67,6 @@ class BookingAdvanceStyles {
     color: BookingAdvanceColors.brandGold,
   );
 
-  // â”€â”€ SHELL PANEL (AppBar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const BoxDecoration shellPanel = BoxDecoration(
     color: BookingAdvanceColors.shellPanelBg,
     border: Border(
@@ -86,7 +77,6 @@ class BookingAdvanceStyles {
     ],
   );
 
-  // â”€â”€ WHITE CARD (body panels) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get whiteCard => BoxDecoration(
         color: BookingAdvanceColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(16),
@@ -103,7 +93,6 @@ class BookingAdvanceStyles {
         ],
       );
 
-  // â”€â”€ GOLD BORDER CARD (customer panel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration goldBorderCard = BoxDecoration(
     color: BookingAdvanceColors.bodyPanelBg,
     borderRadius: BorderRadius.circular(16),
@@ -126,7 +115,6 @@ class BookingAdvanceStyles {
     ),
   );
 
-  // â”€â”€ RIGHT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get rightPanel => BoxDecoration(
         color: BookingAdvanceColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(18),
@@ -143,7 +131,6 @@ class BookingAdvanceStyles {
         ],
       );
 
-  // â”€â”€ PANEL DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get panelDivider => BoxDecoration(
         gradient: LinearGradient(colors: [
           BookingAdvanceColors.brandGold.withValues(alpha: 0.05),
@@ -152,7 +139,6 @@ class BookingAdvanceStyles {
         ]),
       );
 
-  // â”€â”€ SAVE BUTTON (gold gradient) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get saveButton => BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -170,7 +156,6 @@ class BookingAdvanceStyles {
         ],
       );
 
-  // â”€â”€ INPUT DECORATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static InputDecoration inputDecoration({
     String? hint,
     Widget? prefixIcon,

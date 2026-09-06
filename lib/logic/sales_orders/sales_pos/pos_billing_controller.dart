@@ -68,7 +68,7 @@ class PosBillingController extends ChangeNotifier {
 
   // --- GLOBAL CONFIG ---
   //  Shop name is loaded from the active shop setup.
-  String shopName = "Lotus Jewellers";
+  String shopName = "";
   String _shopStateCode = '';
   String _shopStateName = '';
   String _placeOfSupplyStateCode = '';
