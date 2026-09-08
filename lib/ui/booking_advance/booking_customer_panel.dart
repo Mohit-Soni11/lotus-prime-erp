@@ -55,7 +55,7 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
   void _handleControllerChanged() {
     if (!mounted) return;
     setState(() {});
-    if (widget.ctrl.customerResults.isEmpty) {
+    if (widget.ctrl.customerResults.isEmpty && !widget.ctrl.customerNotFound) {
       _removeSuggestionOverlay();
       return;
     }
@@ -222,7 +222,7 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
                   )),
               const SizedBox(width: 12),
               Expanded(
-                  flex: 4,
+                  flex: 3,
                   child: _field(BookingAdvanceStrings.lblCity,
                       BookingAdvanceStrings.hintCity, widget.ctrl.cityCtrl,
                       icon: BookingAdvanceIcons.cityLocation)),
@@ -246,7 +246,10 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
     return ListenableBuilder(
       listenable: widget.ctrl,
       builder: (_, __) {
-        if (widget.ctrl.customerResults.isEmpty) return const SizedBox.shrink();
+        if (widget.ctrl.customerResults.isEmpty &&
+            !widget.ctrl.customerNotFound) {
+          return const SizedBox.shrink();
+        }
         return Container(
           constraints: const BoxConstraints(maxHeight: 280),
           decoration: BoxDecoration(
@@ -262,19 +265,21 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
                   offset: Offset(0, 6))
             ],
           ),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            shrinkWrap: true,
-            children: widget.ctrl.customerResults
-                .map((c) => _SearchTile(
-                      customer: c,
-                      onTap: () {
-                        widget.ctrl.selectCustomerFromSearch(c);
-                        _removeSuggestionOverlay();
-                      },
-                    ))
-                .toList(),
-          ),
+          child: widget.ctrl.customerResults.isEmpty
+              ? _NoCustomerMatch(ctrl: widget.ctrl)
+              : ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  shrinkWrap: true,
+                  children: widget.ctrl.customerResults
+                      .map((c) => _SearchTile(
+                            customer: c,
+                            onTap: () {
+                              widget.ctrl.selectCustomerFromSearch(c);
+                              _removeSuggestionOverlay();
+                            },
+                          ))
+                      .toList(),
+                ),
         );
       },
     );
@@ -381,6 +386,97 @@ class _BookingCustomerPanelState extends State<BookingCustomerPanel>
   }
 }
 
+class _NoCustomerMatch extends StatelessWidget {
+  final BookingAdvanceController ctrl;
+
+  const _NoCustomerMatch({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = ctrl.mobileCtrl.text.trim();
+    final name = ctrl.nameCtrl.text.trim();
+    final lookupText = mobile.isNotEmpty ? 'Mobile: $mobile' : 'Name: $name';
+
+    return Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: BookingAdvanceColors.brandGold.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.person_search_rounded,
+                  color: BookingAdvanceColors.goldHoverDark,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'No Customer Match',
+                      style: TextStyle(
+                        color: BookingAdvanceColors.textDark,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Use Create Customer to register this buyer.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: BookingAdvanceColors.bodyTextMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: BookingAdvanceColors.formInputBg.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: BookingAdvanceColors.bodyBorder.withValues(alpha: 0.8),
+              ),
+            ),
+            child: Text(
+              lookupText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: BookingAdvanceColors.textDark,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SearchTile extends StatefulWidget {
   final Map<String, dynamic> customer;
   final VoidCallback onTap;
@@ -393,6 +489,10 @@ class _SearchTileState extends State<_SearchTile> {
   bool _h = false;
   @override
   Widget build(BuildContext context) {
+    final address =
+        (widget.customer['address'] ?? widget.customer['city'] ?? '')
+            .toString()
+            .trim();
     return MouseRegion(
       onEnter: (_) => setState(() => _h = true),
       onExit: (_) => setState(() => _h = false),
@@ -416,7 +516,7 @@ class _SearchTileState extends State<_SearchTile> {
                             fontSize: 14,
                             fontWeight: FontWeight.w800)),
                     Text(
-                        '${widget.customer['mobile'] ?? ''}${(widget.customer['city'] ?? '').isNotEmpty ? "  |  ${widget.customer['city']}" : ""}',
+                        '${widget.customer['mobile'] ?? ''}${address.isNotEmpty ? "  |  $address" : ""}',
                         style: const TextStyle(
                             color: BookingAdvanceColors.bodyTextMuted,
                             fontSize: 12)),
@@ -458,7 +558,7 @@ class _HoverBtnState extends State<_HoverBtn> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             height: 42,
-            width: 140,
+            width: 184,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               gradient: widget.isPrimary
@@ -498,25 +598,33 @@ class _HoverBtnState extends State<_HoverBtn> {
                       offset: const Offset(0, 3)),
               ],
             ),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(widget.icon,
-                  size: 16,
-                  color: widget.isPrimary
-                      ? Colors.white
-                      : (_h
-                          ? BookingAdvanceColors.goldHoverDark
-                          : BookingAdvanceColors.textDark)),
-              const SizedBox(width: 8),
-              Text(widget.title,
-                  style: TextStyle(
-                      color: widget.isPrimary
-                          ? Colors.white
-                          : (_h
-                              ? BookingAdvanceColors.goldHoverDark
-                              : BookingAdvanceColors.textDark),
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold)),
-            ]),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(widget.icon,
+                    size: 16,
+                    color: widget.isPrimary
+                        ? Colors.white
+                        : (_h
+                            ? BookingAdvanceColors.goldHoverDark
+                            : BookingAdvanceColors.textDark)),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: widget.isPrimary
+                              ? Colors.white
+                              : (_h
+                                  ? BookingAdvanceColors.goldHoverDark
+                                  : BookingAdvanceColors.textDark),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ]),
+            ),
           ),
         ),
       ),

@@ -28,6 +28,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
   bool _hovered = false;
   late MetalType _currentMetal;
   late String _selectedPurity;
+  static const double _controlHeight = 44;
 
   static List<String> _puritiesFor(MetalType metal) {
     switch (metal) {
@@ -105,7 +106,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
             onExit: (_) => setState(() => _hovered = false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 140),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: _hovered
                     ? BookingAdvanceColors.cardHoverBg
@@ -127,7 +128,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
                   _metalSelector(metalColor),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 4,
+                    flex: 5,
                     child: _textField(
                       widget.item.descCtrl,
                       'Description',
@@ -136,7 +137,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 1,
+                    flex: 2,
                     child: _textField(
                       widget.item.pcsCtrl,
                       '1',
@@ -145,16 +146,16 @@ class _BookingItemRowState extends State<BookingItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 2, child: _purityField(metalColor)),
+                  Expanded(flex: 3, child: _purityField(metalColor)),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: _textField(widget.item.grossCtrl, '0.000',
                         isNumber: true),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: _textField(widget.item.lessCtrl, '0.000',
                         isNumber: true),
                   ),
@@ -170,17 +171,21 @@ class _BookingItemRowState extends State<BookingItemRow> {
                   const SizedBox(width: 6),
                   Expanded(
                     flex: 3,
-                    child: _textField(widget.item.rateCtrl, 'Rate',
-                        isNumber: true),
+                    child: _textField(
+                      widget.item.rateCtrl,
+                      'Rate',
+                      isNumber: true,
+                      right: true,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: _makingField(metalColor, makingSuffix),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: _autoCell(
                       BookingMoneyText.decimal(widget.item.totalValue),
                       BookingAdvanceColors.bodyTextMain,
@@ -189,7 +194,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 3, child: _dateCell(context)),
+                  Expanded(flex: 4, child: _dateCell(context)),
                   const SizedBox(width: 6),
                   _deleteButton(),
                 ],
@@ -232,7 +237,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
     return Expanded(
       flex: 3,
       child: Container(
-        height: 38,
+        height: _controlHeight,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
@@ -246,7 +251,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
             icon: Icon(Icons.keyboard_arrow_down_rounded, color: color),
             style: TextStyle(
               color: color,
-              fontSize: 14,
+              fontSize: 13.5,
               fontWeight: FontWeight.w900,
             ),
             dropdownColor: BookingAdvanceColors.bodyPanelBg,
@@ -272,8 +277,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
     return GestureDetector(
       onTap: () => _pickDate(context),
       child: Container(
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        height: _controlHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: date != null
               ? BookingAdvanceColors.brandGold.withValues(alpha: 0.06)
@@ -294,19 +299,20 @@ class _BookingItemRowState extends State<BookingItemRow> {
                   ? BookingAdvanceColors.brandGold
                   : BookingAdvanceColors.bodyTextMuted,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 date != null
-                    ? DateFormat('dd/MM/yy').format(date)
-                    : 'Pick date',
+                    ? DateFormat('dd MMM yy').format(date).toUpperCase()
+                    : 'Del. date',
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
                   color: date != null
                       ? BookingAdvanceColors.brandGold
                       : BookingAdvanceColors.bodyTextMuted,
                 ),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -344,7 +350,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
   Widget _purityField(Color color) {
     final purities = _puritiesFor(widget.item.metal);
     return Container(
-      height: 38,
+      height: _controlHeight,
       decoration: BoxDecoration(
         color: BookingAdvanceColors.bodyBg,
         borderRadius: BorderRadius.circular(8),
@@ -356,26 +362,28 @@ class _BookingItemRowState extends State<BookingItemRow> {
             child: TextFormField(
               controller: widget.item.purityCtrl,
               textAlign: TextAlign.center,
+              textAlignVertical: TextAlignVertical.center,
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w900,
-                fontSize: 15,
+                fontSize: 14.5,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
               decoration: const InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 2),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8),
               ),
               onChanged: (value) => setState(() => _selectedPurity = value),
             ),
           ),
           PopupMenuButton<String>(
             icon:
-                Icon(Icons.keyboard_arrow_down_rounded, color: color, size: 20),
+                Icon(Icons.keyboard_arrow_down_rounded, color: color, size: 19),
             color: BookingAdvanceColors.bodyPanelBg,
             position: PopupMenuPosition.under,
             padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 34, height: 34),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
               side: const BorderSide(color: BookingAdvanceColors.bodyBorder),
@@ -425,8 +433,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
             borderRadius: BorderRadius.circular(8),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 38,
-              height: 38,
+              width: _controlHeight,
+              height: _controlHeight,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: BookingAdvanceColors.brandGold.withValues(alpha: 0.12),
@@ -487,9 +495,10 @@ class _BookingItemRowState extends State<BookingItemRow> {
     bool isNumber = false,
     FocusNode? focusNode,
     bool center = false,
+    bool right = false,
   }) {
     return SizedBox(
-      height: 36,
+      height: _controlHeight,
       child: TextField(
         controller: controller,
         focusNode: focusNode,
@@ -499,7 +508,12 @@ class _BookingItemRowState extends State<BookingItemRow> {
         inputFormatters: isNumber
             ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))]
             : null,
-        textAlign: center ? TextAlign.center : TextAlign.start,
+        textAlign: center
+            ? TextAlign.center
+            : right
+                ? TextAlign.right
+                : TextAlign.start,
+        textAlignVertical: TextAlignVertical.center,
         style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w800,
@@ -513,7 +527,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
           filled: true,
           fillColor: BookingAdvanceColors.bodyPanelBg,
           border: OutlineInputBorder(
@@ -546,8 +561,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
     bool bold = false,
   }) {
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: _controlHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       alignment: center
           ? Alignment.center
           : right
@@ -558,18 +573,28 @@ class _BookingItemRowState extends State<BookingItemRow> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        value,
-        textAlign: right
-            ? TextAlign.right
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: right
+            ? Alignment.centerRight
             : center
-                ? TextAlign.center
-                : TextAlign.left,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w900,
-          fontSize: bold ? 16 : 15,
-          fontFeatures: const [FontFeature.tabularFigures()],
+                ? Alignment.center
+                : Alignment.centerLeft,
+        child: Text(
+          value,
+          textAlign: right
+              ? TextAlign.right
+              : center
+                  ? TextAlign.center
+                  : TextAlign.left,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w900,
+            fontSize: bold ? 15 : 14.5,
+            height: 1.0,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+          maxLines: 1,
         ),
       ),
     );

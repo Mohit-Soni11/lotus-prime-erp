@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/booking_advance/booking_advance_controller.dart';
 import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
+import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
 void main() {
   late AppDatabase database;
@@ -47,7 +48,8 @@ void main() {
     expect(customers, hasLength(1));
     expect(customers.single.name, 'Aarav Mehta');
     expect(customers.single.mobile, '9876543210');
-    expect(customers.single.city, 'Mumbai');
+    expect(customers.single.city, isNull);
+    expect(customers.single.addressLine1, 'Mumbai');
     expect(orders, hasLength(1));
     expect(orders.single.customerId, customers.single.id);
     expect(orders.single.orderNo, matches(RegExp(r'^SH-BK-\d{2}-0001$')));
@@ -55,6 +57,60 @@ void main() {
     expect(orders.single.approxWeight, 12);
     expect(advances, hasLength(1));
     expect(advances.single.amountPaid, 2500);
+  });
+
+  test('metal rate automatically switches booking preference to locked',
+      () async {
+    for (final metal in MetalType.values) {
+      final controller = BookingAdvanceController(repo: repository);
+      addTearDown(controller.dispose);
+
+      await _waitForBookingNumber(controller);
+
+      controller.addBookingItem();
+      final item = controller.bookingItems.single;
+      item.updateMetal(metal);
+      item.rateCtrl.text = '6500';
+
+      expect(
+        controller.bookingType,
+        BookingType.locked,
+        reason: '${metal.displayName} rate should lock the booking.',
+      );
+      expect(controller.lockedRateCtrl.text, '6500');
+    }
+  });
+
+  test('advance-only entry keeps booking preference open', () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.addBookingItem();
+    controller.toggleBookingType(BookingType.locked);
+    controller.cashCtrl.text = '5000';
+
+    expect(controller.bookingType, BookingType.open);
+    expect(controller.lockedRateCtrl.text, isEmpty);
+  });
+
+  test('clearing all metal rates restores open booking preference', () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.addBookingItem();
+    final item = controller.bookingItems.single;
+    item.rateCtrl.text = '6500';
+
+    expect(controller.bookingType, BookingType.locked);
+
+    item.rateCtrl.clear();
+
+    expect(controller.bookingType, BookingType.open);
+    expect(controller.lockedRateCtrl.text, isEmpty);
   });
 
   test('booking sequence uses the highest financial-year booking number',
@@ -198,7 +254,7 @@ void main() {
     final resolvedCustomerId = await repository.resolveCustomerForBooking(
       customerName: 'Updated Name',
       customerMobile: '9000011111',
-      city: 'Jaipur',
+      address: 'Jaipur',
       panNumber: 'ABCDE1234F',
       gstNumber: '',
     );
@@ -208,6 +264,39 @@ void main() {
     expect(resolvedCustomerId, existingCustomerId);
     expect(customers, hasLength(1));
     expect(customers.single.name, 'Existing Customer');
+  });
+
+  test('customer search returns booking address without city or state',
+      () async {
+    await _insertCustomer(
+      database,
+      name: 'Ravi Kumar',
+      mobile: '9000011111',
+      addressLine1: 'Main Road',
+      addressLine2: 'Near Clock Tower',
+      city: 'Patna',
+      state: 'Bihar',
+      pincode: '800001',
+    );
+
+    final results = await repository.searchCustomers('9000011111');
+
+    expect(results, hasLength(1));
+    expect(results.single['address'], 'Main Road, Near Clock Tower');
+    expect(results.single['city'], 'Main Road, Near Clock Tower');
+  });
+
+  test('customer lookup exposes not found state for unknown customers',
+      () async {
+    final controller = BookingAdvanceController(repo: repository);
+    await _waitForBookingNumber(controller);
+
+    controller.searchCustomer('9999999999');
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+
+    expect(controller.customerResults, isEmpty);
+    expect(controller.customerNotFound, isTrue);
+    controller.dispose();
   });
 
   test('manual customer edits clear the selected customer identity', () async {
@@ -223,7 +312,7 @@ void main() {
       'id': existingCustomerId,
       'name': 'Existing Customer',
       'mobile': '9000011111',
-      'city': 'Jaipur',
+      'address': 'Main Road',
     });
     controller.nameCtrl.text = 'Changed Customer';
     controller.handleCustomerLookupInput('C');
@@ -245,11 +334,21 @@ Future<int> _insertCustomer(
   AppDatabase database, {
   String name = 'Test Customer',
   String mobile = '9000000000',
+  String? addressLine1,
+  String? addressLine2,
+  String? city,
+  String? state,
+  String? pincode,
 }) {
   return database.into(database.customers).insert(
         CustomersCompanion(
           name: drift.Value(name),
           mobile: drift.Value(mobile),
+          addressLine1: drift.Value(addressLine1),
+          addressLine2: drift.Value(addressLine2),
+          city: drift.Value(city),
+          state: drift.Value(state),
+          pincode: drift.Value(pincode),
         ),
       );
 }

@@ -15,7 +15,7 @@ import 'widgets/booking_money_text.dart';
 class BookingItemsTable extends StatelessWidget {
   const BookingItemsTable({super.key, required this.ctrl});
 
-  static const double _minimumGridWidth = 1180;
+  static const double _minimumGridWidth = 1300;
 
   final BookingAdvanceController ctrl;
 
@@ -207,7 +207,7 @@ class _BookingItemsColumnRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: const BoxDecoration(
         color: BookingAdvanceColors.bodyBg,
         border: Border(
@@ -223,25 +223,25 @@ class _BookingItemsColumnRow extends StatelessWidget {
           SizedBox(width: 6),
           _HeaderCell('METAL', 3),
           SizedBox(width: 6),
-          _HeaderCell('DESCRIPTION', 4),
+          _HeaderCell('DESCRIPTION', 5),
           SizedBox(width: 6),
-          _HeaderCell('PCS', 1, center: true),
+          _HeaderCell('PCS', 2, center: true),
           SizedBox(width: 6),
-          _HeaderCell('PURITY', 2, center: true),
+          _HeaderCell('PURITY', 3, center: true),
           SizedBox(width: 6),
-          _HeaderCell('GR. WT', 2),
+          _HeaderCell('GR. WT', 3, center: true),
           SizedBox(width: 6),
-          _HeaderCell('LESS', 2),
+          _HeaderCell('LESS', 3, center: true),
           SizedBox(width: 6),
           _HeaderCell('NET WT', 2, center: true),
           SizedBox(width: 6),
-          _HeaderCell('RATE', 3),
+          _HeaderCell('RATE', 3, right: true),
           SizedBox(width: 6),
-          _HeaderCell('MAKING', 3),
+          _HeaderCell('MAKING', 4, center: true),
           SizedBox(width: 6),
-          _HeaderCell('TOTAL', 3, right: true),
+          _HeaderCell('TOTAL', 4, right: true),
           SizedBox(width: 6),
-          _HeaderCell('DEL. DATE', 3),
+          _HeaderCell('DEL. DATE', 4, center: true),
           SizedBox(width: 6),
           _HeaderCell('ACT', 1, center: true),
         ],
@@ -278,8 +278,11 @@ class _HeaderCell extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w900,
           color: BookingAdvanceColors.textDark,
-          letterSpacing: 0.8,
+          letterSpacing: 0.4,
+          height: 1.0,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

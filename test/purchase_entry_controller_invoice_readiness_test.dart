@@ -1,8 +1,26 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/purchase/purchase_entry_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (call) async {
+        if (call.method == 'getApplicationDocumentsDirectory') {
+          return Directory.systemTemp.path;
+        }
+        return null;
+      },
+    );
+  });
 
   test('customer metal purchase invoice requires payout and commitment date',
       () {

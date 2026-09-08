@@ -11,24 +11,30 @@ import '../../models/booking_advance/booking_advance/booking_advance_model.dart'
 import '../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import 'booking_rate_preference_policy.dart';
 
 enum BookingType { open, locked }
 
 class BookingAdvanceController extends ChangeNotifier {
   final BookingAdvanceRepository _repo;
+  final BookingRatePreferencePolicy _ratePreferencePolicy =
+      const BookingRatePreferencePolicy();
 
   BookingAdvanceController({BookingAdvanceRepository? repo})
       : _repo = repo ?? BookingAdvanceRepository() {
     cashCtrl.addListener(() {
       _cashInput = _p(cashCtrl.text);
+      _syncSmartRatePreference();
       notifyListeners();
     });
     upiCtrl.addListener(() {
       _upiInput = _p(upiCtrl.text);
+      _syncSmartRatePreference();
       notifyListeners();
     });
     cardCtrl.addListener(() {
       _cardInput = _p(cardCtrl.text);
+      _syncSmartRatePreference();
       notifyListeners();
     });
     lockedRateCtrl.addListener(notifyListeners);
@@ -112,6 +118,7 @@ class BookingAdvanceController extends ChangeNotifier {
   bool isSaving = false;
 
   List<Map<String, dynamic>> customerResults = [];
+  bool customerNotFound = false;
   bool isSearching = false;
   Timer? _searchTimer;
 
@@ -153,13 +160,37 @@ class BookingAdvanceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onChildChanged() => notifyListeners();
+  void _onChildChanged() {
+    _syncSmartRatePreference();
+    notifyListeners();
+  }
+
+  void _syncSmartRatePreference() {
+    final metalRateText = _ratePreferencePolicy.firstMetalRateText(
+      bookingItems,
+    );
+    if (metalRateText != null) {
+      bookingType = BookingType.locked;
+      if (lockedRateCtrl.text.trim() != metalRateText) {
+        lockedRateCtrl.text = metalRateText;
+      }
+      return;
+    }
+
+    if (bookingType == BookingType.locked) {
+      bookingType = BookingType.open;
+    }
+    if (lockedRateCtrl.text.isNotEmpty) {
+      lockedRateCtrl.clear();
+    }
+  }
 
   void addBookingItem() {
     final item = BookingItemModel();
     item.addListener(_onChildChanged);
     bookingItems.add(item);
     activeItemIndex = bookingItems.length - 1;
+    _syncSmartRatePreference();
     notifyListeners();
     Future.delayed(const Duration(milliseconds: 100), () {
       if (tableScrollCtrl.hasClients) {
@@ -181,6 +212,7 @@ class BookingAdvanceController extends ChangeNotifier {
     if (activeItemIndex >= bookingItems.length) {
       activeItemIndex = bookingItems.length - 1;
     }
+    _syncSmartRatePreference();
     notifyListeners();
   }
 
@@ -202,6 +234,7 @@ class BookingAdvanceController extends ChangeNotifier {
     final item = BookingScrapModel();
     item.addListener(_onChildChanged);
     scrapItems.add(item);
+    _syncSmartRatePreference();
     notifyListeners();
   }
 
@@ -210,13 +243,15 @@ class BookingAdvanceController extends ChangeNotifier {
     scrapItems[index].removeListener(_onChildChanged);
     scrapItems[index].dispose();
     scrapItems.removeAt(index);
+    _syncSmartRatePreference();
     notifyListeners();
   }
 
   void searchCustomer(String query) {
     _searchTimer?.cancel();
-    if (query.length < 2) {
+    if (query.trim().length < 2) {
       customerResults = [];
+      customerNotFound = false;
       notifyListeners();
       return;
     }
@@ -225,8 +260,10 @@ class BookingAdvanceController extends ChangeNotifier {
       notifyListeners();
       try {
         customerResults = await _repo.searchCustomers(query);
+        customerNotFound = customerResults.isEmpty;
       } catch (_) {
         customerResults = [];
+        customerNotFound = false;
       }
       isSearching = false;
       notifyListeners();
@@ -250,6 +287,7 @@ class BookingAdvanceController extends ChangeNotifier {
     _selectedCustomerMobile = '';
     _selectedCustomerName = '';
     customerResults = [];
+    customerNotFound = false;
     notifyListeners();
   }
 
@@ -257,10 +295,11 @@ class BookingAdvanceController extends ChangeNotifier {
     selectedCustomerId = c['id'];
     mobileCtrl.text = c['mobile'] ?? '';
     nameCtrl.text = c['name'] ?? '';
-    cityCtrl.text = c['city'] ?? '';
+    cityCtrl.text = c['address'] ?? c['city'] ?? '';
     _selectedCustomerMobile = mobileCtrl.text.trim();
     _selectedCustomerName = nameCtrl.text.trim();
     customerResults = [];
+    customerNotFound = false;
     notifyListeners();
   }
 
@@ -291,7 +330,7 @@ class BookingAdvanceController extends ChangeNotifier {
       if (customer != null) {
         mobileCtrl.text = customer.mobile;
         nameCtrl.text = customer.name;
-        cityCtrl.text = customer.city ?? '';
+        cityCtrl.text = _repo.customerAddressForBooking(customer);
         _selectedCustomerMobile = mobileCtrl.text.trim();
         _selectedCustomerName = nameCtrl.text.trim();
       }
@@ -303,12 +342,12 @@ class BookingAdvanceController extends ChangeNotifier {
       deliveryDate = order.deliveryDate;
 
       final item = BookingItemModel(metal: _metalFromLabel(order.metalType));
-      item.addListener(_onChildChanged);
       item.descCtrl.text = order.itemName;
       item.purityCtrl.text = order.purity;
       item.grossCtrl.text = _formatNumber(order.approxWeight);
       item.lessCtrl.text = '';
       item.rateCtrl.text = _formatNumber(order.lockedRate);
+      item.addListener(_onChildChanged);
       bookingItems.add(item);
       activeItemIndex = 0;
 
@@ -320,6 +359,7 @@ class BookingAdvanceController extends ChangeNotifier {
         lockedRateCtrl.text = _formatNumber(details.advances.first.rateOnDate);
       }
 
+      _syncSmartRatePreference();
       notifyListeners();
       return true;
     } catch (error) {
@@ -347,6 +387,8 @@ class BookingAdvanceController extends ChangeNotifier {
         bookingNo: '',
       );
     }
+    _syncSmartRatePreference();
+
     if (bookingType == BookingType.locked && lockedRate <= 0) {
       return (
         success: false,
@@ -377,7 +419,7 @@ class BookingAdvanceController extends ChangeNotifier {
         selectedCustomerId: selectedCustomerId,
         customerName: nameCtrl.text,
         customerMobile: mobileCtrl.text,
-        city: cityCtrl.text,
+        address: cityCtrl.text,
         panNumber: '',
         gstNumber: '',
       );
@@ -400,7 +442,8 @@ class BookingAdvanceController extends ChangeNotifier {
           purity: item.purityCtrl.text.isEmpty ? '22K' : item.purityCtrl.text,
           approxWeight: item.netWt,
           bookingType: bookingType == BookingType.locked ? 'LOCKED' : 'OPEN',
-          lockedRate: bookingType == BookingType.locked ? lockedRate : 0.0,
+          lockedRate:
+              bookingType == BookingType.locked ? _lockedRateForItem(item) : 0,
           deliveryDate: deliveryDate,
           notes: null,
           totalAdvance: totalAdvance,
@@ -431,7 +474,8 @@ class BookingAdvanceController extends ChangeNotifier {
           purity: item.purityCtrl.text.isEmpty ? '22K' : item.purityCtrl.text,
           approxWeight: item.netWt,
           bookingType: bookingType == BookingType.locked ? 'LOCKED' : 'OPEN',
-          lockedRate: bookingType == BookingType.locked ? lockedRate : 0.0,
+          lockedRate:
+              bookingType == BookingType.locked ? _lockedRateForItem(item) : 0,
           deliveryDate: deliveryDate,
           notes: null,
           totalAdvance: perItemAdv,
@@ -489,6 +533,7 @@ class BookingAdvanceController extends ChangeNotifier {
     bookingType = BookingType.open;
     deliveryDate = null;
     customerResults = [];
+    customerNotFound = false;
     for (final i in bookingItems) {
       i.removeListener(_onChildChanged);
       i.dispose();
@@ -504,6 +549,10 @@ class BookingAdvanceController extends ChangeNotifier {
 
   double _p(String t) =>
       double.tryParse(t.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+
+  double _lockedRateForItem(BookingItemModel item) {
+    return item.rate > 0 ? item.rate : lockedRate;
+  }
 
   String _formatNumber(double value) {
     if (value.abs() < 0.0001) return '';

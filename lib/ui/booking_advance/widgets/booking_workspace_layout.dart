@@ -126,15 +126,13 @@ class _BookingHeaderBand extends StatelessWidget {
       builder: (_, constraints) {
         final sideBySide = constraints.maxWidth > 720;
         if (sideBySide) {
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                BookingTopControlBar(ctrl: controller),
-                const SizedBox(width: 16),
-                Expanded(child: BookingStatusBar(ctrl: controller)),
-              ],
-            ),
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              BookingTopControlBar(ctrl: controller),
+              const SizedBox(width: 16),
+              Expanded(child: BookingStatusBar(ctrl: controller)),
+            ],
           );
         }
 

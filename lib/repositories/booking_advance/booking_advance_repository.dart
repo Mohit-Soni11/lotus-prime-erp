@@ -10,6 +10,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/features/customer/domain/services/customer_contact_value.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
+import 'package:lotus_erp/helpers/search/fuzzy_search_helper.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
 
@@ -119,7 +120,7 @@ class BookingAdvanceRepository {
     int? selectedCustomerId,
     required String customerName,
     required String customerMobile,
-    required String city,
+    required String address,
     required String panNumber,
     required String gstNumber,
   }) async {
@@ -149,7 +150,7 @@ class BookingAdvanceRepository {
             name: Value(displayName),
             firstName: Value(displayName),
             mobile: Value(CustomerContactValue.storageMobile(cleanMobile)),
-            city: Value(_nullable(city)),
+            addressLine1: Value(_nullable(address)),
             panNumber: Value(_nullableUpper(panNumber)),
             gstNumber: Value(_nullableUpper(gstNumber)),
             type: const Value('Regular'),
@@ -305,17 +306,34 @@ class BookingAdvanceRepository {
   // ===========================================================================
 
   Future<List<Map<String, dynamic>>> searchCustomers(String query) async {
-    if (query.trim().length < 2) return [];
-    final results = await (_db.select(_db.customers)
-          ..where((t) => t.name.contains(query) | t.mobile.contains(query))
-          ..limit(8))
-        .get();
+    final term = query.trim();
+    if (term.length < 2) return [];
+
+    final rows = await _db.select(_db.customers).get();
+    final isNumeric = RegExp(r'^\d+$').hasMatch(term);
+    final normalizedTerm = term.toLowerCase();
+    final results = isNumeric
+        ? rows
+            .where((row) => CustomerContactValue.displayMobile(row.mobile)
+                .contains(normalizedTerm))
+            .take(8)
+            .toList(growable: false)
+        : FuzzySearchHelper.searchObjects(
+            items: rows,
+            query: normalizedTerm,
+            getSearchText: (row) =>
+                '${row.name} ${CustomerContactValue.displayMobile(row.mobile)}',
+            maxResults: 8,
+            threshold: 0.30,
+          );
+
     return results
         .map((c) => {
               'id': c.id,
               'name': c.name,
               'mobile': CustomerContactValue.displayMobile(c.mobile),
-              'city': c.city ?? '',
+              'address': customerAddressForBooking(c),
+              'city': customerAddressForBooking(c),
             })
         .toList();
   }
@@ -404,5 +422,20 @@ class BookingAdvanceRepository {
   String? _nullableUpper(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed.toUpperCase();
+  }
+
+  String customerAddressForBooking(Customer row) {
+    final parts = <String>[
+      row.addressLine1 ?? '',
+      row.addressLine2 ?? '',
+    ];
+    final uniqueParts = <String>[];
+    for (final part in parts) {
+      final clean = part.trim();
+      if (clean.isNotEmpty && !uniqueParts.contains(clean)) {
+        uniqueParts.add(clean);
+      }
+    }
+    return uniqueParts.join(', ');
   }
 }
