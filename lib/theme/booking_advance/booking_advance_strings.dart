@@ -85,6 +85,7 @@ class BookingAdvanceStrings {
   static const String lblCard = 'CARD';
   static const String btnSaveBooking = 'SAVE BOOKING';
   static const String btnClearAll = 'CLEAR ALL';
+  static const String btnGenerateInvoice = 'GENERATE INVOICE';
   static const String lockedBadge = 'Locked Rate';
   static const String openBadge = 'Open Rate';
 }

@@ -6,6 +6,8 @@ import 'package:lotus_erp/ui/booking_advance/booking_advance_screen.dart';
 import 'package:lotus_erp/ui/booking_advance/booking_customer_panel.dart';
 import 'package:lotus_erp/ui/booking_advance/booking_items_table.dart';
 import 'package:lotus_erp/ui/booking_advance/booking_top_control_bar.dart';
+import 'package:lotus_erp/ui/booking_advance/widgets/booking_action_buttons.dart';
+import 'package:lotus_erp/ui/booking_advance/widgets/booking_payment_hub.dart';
 
 void main() {
   testWidgets('booking app bar back uses the provided module back handler',
@@ -119,10 +121,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(find.text('TOTAL'), findsOneWidget);
-    expect(find.text('DEL. DATE'), findsOneWidget);
+    expect(find.text('DELIVERY'), findsOneWidget);
     expect(find.text('ACT'), findsOneWidget);
     expect(find.text('18KT'), findsOneWidget);
-    expect(find.text('08 SEP 26'), findsOneWidget);
+    expect(find.text('08 SEP'), findsOneWidget);
+    final tableRect = tester.getRect(find.byType(BookingItemsTable));
+    final actionRect =
+        tester.getRect(find.byIcon(Icons.delete_outline_rounded));
+    expect(actionRect.right, lessThanOrEqualTo(tableRect.right));
     expect(tester.takeException(), isNull);
   });
 
@@ -151,5 +157,62 @@ void main() {
     expect(find.text(BookingAdvanceStrings.openRate), findsWidgets);
     expect(find.text(BookingAdvanceStrings.lockedRate), findsWidgets);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'booking side panel replaces clear action with invoice generation',
+      (tester) async {
+    final controller = BookingAdvanceController();
+    addTearDown(controller.dispose);
+    await tester.binding.setSurfaceSize(const Size(420, 520));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: BookingActionButtons(
+              controller: controller,
+              onSaved: (_, __) {},
+              onGenerateInvoice: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(BookingAdvanceStrings.btnSaveBooking), findsOneWidget);
+    expect(
+      find.text(BookingAdvanceStrings.btnGenerateInvoice),
+      findsOneWidget,
+    );
+    expect(find.text(BookingAdvanceStrings.btnClearAll), findsNothing);
+  });
+
+  testWidgets('booking payment hub does not render balance due',
+      (tester) async {
+    final controller = BookingAdvanceController();
+    addTearDown(controller.dispose);
+    controller.addBookingItem();
+    controller.bookingItems.single.grossCtrl.text = '5';
+    controller.bookingItems.single.rateCtrl.text = '12000';
+    await tester.binding.setSurfaceSize(const Size(420, 520));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: BookingPaymentHub(controller: controller),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(find.text('BALANCE DUE'), findsNothing);
+    expect(find.text(BookingAdvanceStrings.lblAdvanceTotal), findsOneWidget);
   });
 }

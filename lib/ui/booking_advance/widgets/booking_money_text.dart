@@ -12,4 +12,11 @@ class BookingMoneyText {
   static String decimal(num value) {
     return '$symbol${NumberFormat('#,##,##0.00', 'en_IN').format(value)}';
   }
+
+  static String compact(num value) {
+    final rounded = value.roundToDouble();
+    final hasDecimal = (value - rounded).abs() >= 0.005;
+    final format = hasDecimal ? '#,##,##0.##' : '#,##,###';
+    return '$symbol${NumberFormat(format, 'en_IN').format(value)}';
+  }
 }

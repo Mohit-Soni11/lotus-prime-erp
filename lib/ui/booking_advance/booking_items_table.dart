@@ -9,13 +9,14 @@ import 'package:flutter/services.dart';
 
 import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
+import 'widgets/booking_item_grid_metrics.dart';
 import 'widgets/booking_item_row.dart';
 import 'widgets/booking_money_text.dart';
 
 class BookingItemsTable extends StatelessWidget {
   const BookingItemsTable({super.key, required this.ctrl});
 
-  static const double _minimumGridWidth = 1300;
+  static const double _minimumGridWidth = BookingItemGridMetrics.gridWidth;
 
   final BookingAdvanceController ctrl;
 
@@ -207,7 +208,10 @@ class _BookingItemsColumnRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BookingItemGridMetrics.horizontalPadding,
+        vertical: 14,
+      ),
       decoration: const BoxDecoration(
         color: BookingAdvanceColors.bodyBg,
         border: Border(
@@ -219,31 +223,39 @@ class _BookingItemsColumnRow extends StatelessWidget {
       ),
       child: const Row(
         children: [
-          _HeaderCell('S.NO', 1, center: true),
+          _HeaderCell('S.NO', BookingItemGridMetrics.serial, center: true),
           SizedBox(width: 6),
-          _HeaderCell('METAL', 3),
+          _HeaderCell('METAL', BookingItemGridMetrics.metal),
           SizedBox(width: 6),
-          _HeaderCell('DESCRIPTION', 5),
+          _HeaderCell('DESCRIPTION', BookingItemGridMetrics.description),
           SizedBox(width: 6),
-          _HeaderCell('PCS', 2, center: true),
+          _HeaderCell('PCS', BookingItemGridMetrics.pieces, center: true),
           SizedBox(width: 6),
-          _HeaderCell('PURITY', 3, center: true),
+          _HeaderCell('PURITY', BookingItemGridMetrics.purity, center: true),
           SizedBox(width: 6),
-          _HeaderCell('GR. WT', 3, center: true),
+          _HeaderCell(
+            'GR. WT',
+            BookingItemGridMetrics.grossWeight,
+            center: true,
+          ),
           SizedBox(width: 6),
-          _HeaderCell('LESS', 3, center: true),
+          _HeaderCell('LESS', BookingItemGridMetrics.lessWeight, center: true),
           SizedBox(width: 6),
-          _HeaderCell('NET WT', 2, center: true),
+          _HeaderCell('NET WT', BookingItemGridMetrics.netWeight, center: true),
           SizedBox(width: 6),
-          _HeaderCell('RATE', 3, right: true),
+          _HeaderCell('RATE', BookingItemGridMetrics.rate, right: true),
           SizedBox(width: 6),
-          _HeaderCell('MAKING', 4, center: true),
+          _HeaderCell('MAKING', BookingItemGridMetrics.making, center: true),
           SizedBox(width: 6),
-          _HeaderCell('TOTAL', 4, right: true),
+          _HeaderCell('TOTAL', BookingItemGridMetrics.total, right: true),
           SizedBox(width: 6),
-          _HeaderCell('DEL. DATE', 4, center: true),
+          _HeaderCell(
+            'DELIVERY',
+            BookingItemGridMetrics.deliveryDate,
+            center: true,
+          ),
           SizedBox(width: 6),
-          _HeaderCell('ACT', 1, center: true),
+          _HeaderCell('ACT', BookingItemGridMetrics.action, center: true),
         ],
       ),
     );
@@ -253,20 +265,20 @@ class _BookingItemsColumnRow extends StatelessWidget {
 class _HeaderCell extends StatelessWidget {
   const _HeaderCell(
     this.text,
-    this.flex, {
+    this.width, {
     this.right = false,
     this.center = false,
   });
 
   final String text;
-  final int flex;
+  final double width;
   final bool right;
   final bool center;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: flex,
+    return SizedBox(
+      width: width,
       child: Text(
         text,
         textAlign: right

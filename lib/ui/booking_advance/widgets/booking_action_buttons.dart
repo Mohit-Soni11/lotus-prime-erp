@@ -8,10 +8,12 @@ class BookingActionButtons extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onSaved,
+    required this.onGenerateInvoice,
   });
 
   final BookingAdvanceController controller;
   final void Function(String message, bool isSuccess) onSaved;
+  final void Function(List<int> orderIds) onGenerateInvoice;
 
   @override
   Widget build(BuildContext context) {
@@ -67,14 +69,13 @@ class BookingActionButtons extends StatelessWidget {
               ),
             ),
           ),
-          if (!controller.isEditMode) ...[
-            const SizedBox(height: 10),
-            _HoverOutlineButton(
-              label: BookingAdvanceStrings.btnClearAll,
-              icon: BookingAdvanceIcons.clearAll,
-              onTap: controller.clearAll,
-            ),
-          ],
+          const SizedBox(height: 10),
+          _SecondaryBookingActionButton(
+            label: BookingAdvanceStrings.btnGenerateInvoice,
+            icon: BookingAdvanceIcons.generateInvoice,
+            enabled: !controller.isSaving,
+            onTap: _handleGenerateInvoice,
+          ),
         ],
       ),
     );
@@ -84,34 +85,64 @@ class BookingActionButtons extends StatelessWidget {
     final result = await controller.saveBooking();
     onSaved(result.message, result.success);
   }
+
+  Future<void> _handleGenerateInvoice() async {
+    final result = await controller.saveBooking();
+    onSaved(result.message, result.success);
+    if (result.success && result.orderIds.isNotEmpty) {
+      onGenerateInvoice(result.orderIds);
+    }
+  }
 }
 
-class _HoverOutlineButton extends StatefulWidget {
-  const _HoverOutlineButton({
+class _SecondaryBookingActionButton extends StatefulWidget {
+  const _SecondaryBookingActionButton({
     required this.label,
     required this.icon,
+    required this.enabled,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
-  final VoidCallback onTap;
+  final bool enabled;
+  final Future<void> Function() onTap;
 
   @override
-  State<_HoverOutlineButton> createState() => _HoverOutlineButtonState();
+  State<_SecondaryBookingActionButton> createState() =>
+      _SecondaryBookingActionButtonState();
 }
 
-class _HoverOutlineButtonState extends State<_HoverOutlineButton> {
+class _SecondaryBookingActionButtonState
+    extends State<_SecondaryBookingActionButton> {
   bool _hovered = false;
+  bool _isWorking = false;
+
+  Future<void> _handleTap() async {
+    if (!widget.enabled || _isWorking) return;
+    setState(() => _isWorking = true);
+    try {
+      await widget.onTap();
+    } finally {
+      if (mounted) {
+        setState(() => _isWorking = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final active = widget.enabled && !_isWorking;
+    final color = active
+        ? BookingAdvanceColors.brandGold
+        : BookingAdvanceColors.bodyTextMuted;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      cursor: SystemMouseCursors.click,
+      cursor: active ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: active ? _handleTap : null,
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
@@ -122,37 +153,42 @@ class _HoverOutlineButtonState extends State<_HoverOutlineButton> {
                 : BookingAdvanceColors.bodyBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _hovered
-                  ? BookingAdvanceColors.danger.withValues(alpha: 0.5)
+              color: active
+                  ? color.withValues(alpha: _hovered ? 0.70 : 0.42)
                   : BookingAdvanceColors.bodyBorder,
-              width: _hovered ? 1.5 : 1.0,
+              width: active ? 1.5 : 1.0,
             ),
           ),
           child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  widget.icon,
-                  size: 18,
-                  color: _hovered
-                      ? BookingAdvanceColors.danger
-                      : BookingAdvanceColors.bodyTextMuted,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: _hovered
-                        ? BookingAdvanceColors.danger
-                        : BookingAdvanceColors.bodyTextMuted,
+            child: _isWorking
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: color,
+                      strokeWidth: 2.3,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        size: 18,
+                        color: color,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          color: color,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

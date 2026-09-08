@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
+import 'booking_item_grid_metrics.dart';
 import '../widgets/booking_money_text.dart';
 import '../../../models/booking_advance/booking_advance/booking_advance_model.dart';
 
@@ -28,7 +29,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
   bool _hovered = false;
   late MetalType _currentMetal;
   late String _selectedPurity;
-  static const double _controlHeight = 44;
+  DateTime? _lastPurityPointerDown;
 
   static List<String> _puritiesFor(MetalType metal) {
     switch (metal) {
@@ -59,8 +60,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
     widget.item.updateMetal(metal);
     setState(() {
       _currentMetal = metal;
-      _selectedPurity = _puritiesFor(metal).first;
-      widget.item.purityCtrl.text = _selectedPurity;
+      _selectedPurity = widget.item.purityCtrl.text.trim();
     });
   }
 
@@ -106,7 +106,10 @@ class _BookingItemRowState extends State<BookingItemRow> {
             onExit: (_) => setState(() => _hovered = false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 140),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              padding: const EdgeInsets.symmetric(
+                horizontal: BookingItemGridMetrics.horizontalPadding,
+                vertical: 9,
+              ),
               decoration: BoxDecoration(
                 color: _hovered
                     ? BookingAdvanceColors.cardHoverBg
@@ -127,8 +130,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
                   const SizedBox(width: 6),
                   _metalSelector(metalColor),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 5,
+                  SizedBox(
+                    width: BookingItemGridMetrics.description,
                     child: _textField(
                       widget.item.descCtrl,
                       'Description',
@@ -136,8 +139,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 2,
+                  SizedBox(
+                    width: BookingItemGridMetrics.pieces,
                     child: _textField(
                       widget.item.pcsCtrl,
                       '1',
@@ -146,22 +149,25 @@ class _BookingItemRowState extends State<BookingItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 3, child: _purityField(metalColor)),
+                  SizedBox(
+                    width: BookingItemGridMetrics.purity,
+                    child: _purityField(metalColor),
+                  ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 3,
+                  SizedBox(
+                    width: BookingItemGridMetrics.grossWeight,
                     child: _textField(widget.item.grossCtrl, '0.000',
                         isNumber: true),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 3,
+                  SizedBox(
+                    width: BookingItemGridMetrics.lessWeight,
                     child: _textField(widget.item.lessCtrl, '0.000',
                         isNumber: true),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 2,
+                  SizedBox(
+                    width: BookingItemGridMetrics.netWeight,
                     child: _autoCell(
                       widget.item.netWt.toStringAsFixed(3),
                       metalColor,
@@ -169,8 +175,8 @@ class _BookingItemRowState extends State<BookingItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 3,
+                  SizedBox(
+                    width: BookingItemGridMetrics.rate,
                     child: _textField(
                       widget.item.rateCtrl,
                       'Rate',
@@ -179,22 +185,25 @@ class _BookingItemRowState extends State<BookingItemRow> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 4,
+                  SizedBox(
+                    width: BookingItemGridMetrics.making,
                     child: _makingField(metalColor, makingSuffix),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(
-                    flex: 4,
+                  SizedBox(
+                    width: BookingItemGridMetrics.total,
                     child: _autoCell(
-                      BookingMoneyText.decimal(widget.item.totalValue),
+                      BookingMoneyText.compact(widget.item.totalValue),
                       BookingAdvanceColors.bodyTextMain,
                       right: true,
                       bold: true,
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Expanded(flex: 4, child: _dateCell(context)),
+                  SizedBox(
+                    width: BookingItemGridMetrics.deliveryDate,
+                    child: _dateCell(context),
+                  ),
                   const SizedBox(width: 6),
                   _deleteButton(),
                 ],
@@ -207,16 +216,18 @@ class _BookingItemRowState extends State<BookingItemRow> {
   }
 
   Widget _serialNumber(Color color) {
-    return Expanded(
-      flex: 1,
+    return SizedBox(
+      width: BookingItemGridMetrics.serial,
       child: Center(
         child: Container(
-          width: 32,
-          height: 32,
+          width: BookingItemGridMetrics.controlHeight,
+          height: BookingItemGridMetrics.controlHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(7),
+            borderRadius: BorderRadius.circular(
+              BookingItemGridMetrics.cellRadius,
+            ),
             border: Border.all(color: color.withValues(alpha: 0.35)),
           ),
           child: Text(
@@ -234,42 +245,94 @@ class _BookingItemRowState extends State<BookingItemRow> {
   }
 
   Widget _metalSelector(Color color) {
-    return Expanded(
-      flex: 3,
-      child: Container(
-        height: _controlHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          border: Border.all(color: color.withValues(alpha: 0.40)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<MetalType>(
-            value: widget.item.metal,
-            isExpanded: true,
-            icon: Icon(Icons.keyboard_arrow_down_rounded, color: color),
-            style: TextStyle(
-              color: color,
-              fontSize: 13.5,
-              fontWeight: FontWeight.w900,
-            ),
-            dropdownColor: BookingAdvanceColors.bodyPanelBg,
-            items: MetalType.values
-                .map(
-                  (type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type.displayName),
+    return Builder(
+      builder: (fieldContext) => SizedBox(
+        width: BookingItemGridMetrics.metal,
+        child: Tooltip(
+          message: 'Select metal',
+          child: InkWell(
+            onTap: () => _showMetalMenu(fieldContext),
+            borderRadius:
+                BorderRadius.circular(BookingItemGridMetrics.cellRadius),
+            child: Container(
+              height: BookingItemGridMetrics.controlHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                border: Border.all(color: color.withValues(alpha: 0.40)),
+                borderRadius:
+                    BorderRadius.circular(BookingItemGridMetrics.cellRadius),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.item.metal.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w900,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
                   ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value != null) _onMetalChanged(value);
-            },
+                  Icon(
+                    Icons.expand_more_rounded,
+                    color: color,
+                    size: 18,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _showMetalMenu(BuildContext context) async {
+    FocusScope.of(context).unfocus();
+    final box = context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final offset = box.localToGlobal(Offset.zero);
+    final selected = await showMenu<MetalType>(
+      context: context,
+      color: BookingAdvanceColors.bodyPanelBg,
+      constraints: const BoxConstraints.tightFor(
+        width: BookingItemGridMetrics.metal + 36,
+      ),
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(
+          offset.dx,
+          offset.dy + BookingItemGridMetrics.controlHeight + 4,
+          box.size.width,
+          BookingItemGridMetrics.controlHeight,
+        ),
+        Offset.zero & overlay.size,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(BookingItemGridMetrics.cellRadius),
+        side: const BorderSide(color: BookingAdvanceColors.bodyBorder),
+      ),
+      items: MetalType.values
+          .map(
+            (metal) => PopupMenuItem<MetalType>(
+              value: metal,
+              height: 42,
+              padding: EdgeInsets.zero,
+              child: _MetalMenuItem(
+                metal: metal,
+                color: _metalColor(metal),
+                selected: metal == widget.item.metal,
+              ),
+            ),
+          )
+          .toList(),
+    );
+    if (!mounted || selected == null || selected == widget.item.metal) return;
+    _onMetalChanged(selected);
   }
 
   Widget _dateCell(BuildContext context) {
@@ -277,13 +340,14 @@ class _BookingItemRowState extends State<BookingItemRow> {
     return GestureDetector(
       onTap: () => _pickDate(context),
       child: Container(
-        height: _controlHeight,
+        height: BookingItemGridMetrics.controlHeight,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: date != null
               ? BookingAdvanceColors.brandGold.withValues(alpha: 0.06)
               : BookingAdvanceColors.bodyPanelBg,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius:
+              BorderRadius.circular(BookingItemGridMetrics.cellRadius),
           border: Border.all(
             color: date != null
                 ? BookingAdvanceColors.brandGold.withValues(alpha: 0.4)
@@ -292,26 +356,19 @@ class _BookingItemRowState extends State<BookingItemRow> {
         ),
         child: Row(
           children: [
-            Icon(
-              BookingAdvanceIcons.deliveryDate,
-              size: 13,
-              color: date != null
-                  ? BookingAdvanceColors.brandGold
-                  : BookingAdvanceColors.bodyTextMuted,
-            ),
-            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 date != null
-                    ? DateFormat('dd MMM yy').format(date).toUpperCase()
-                    : 'Del. date',
+                    ? DateFormat('dd MMM').format(date).toUpperCase()
+                    : 'Delivery',
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
                   color: date != null
                       ? BookingAdvanceColors.brandGold
                       : BookingAdvanceColors.bodyTextMuted,
                 ),
+                textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -349,73 +406,120 @@ class _BookingItemRowState extends State<BookingItemRow> {
 
   Widget _purityField(Color color) {
     final purities = _puritiesFor(widget.item.metal);
-    return Container(
-      height: _controlHeight,
-      decoration: BoxDecoration(
-        color: BookingAdvanceColors.bodyBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
+    return Builder(
+      builder: (fieldContext) => Listener(
+        onPointerDown: (_) {
+          final now = DateTime.now();
+          final previous = _lastPurityPointerDown;
+          _lastPurityPointerDown = now;
+          if (previous != null &&
+              now.difference(previous) <= const Duration(milliseconds: 350)) {
+            _showPurityMenu(fieldContext, color, purities);
+          }
+        },
+        child: Container(
+          height: BookingItemGridMetrics.controlHeight,
+          decoration: BoxDecoration(
+            color: BookingAdvanceColors.bodyBg,
+            borderRadius:
+                BorderRadius.circular(BookingItemGridMetrics.cellRadius),
+            border: Border.all(color: color.withValues(alpha: 0.35)),
+          ),
+          child: TextFormField(
+            controller: widget.item.purityCtrl,
+            textAlign: TextAlign.center,
+            textAlignVertical: TextAlignVertical.center,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 14.5,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 12,
+              ),
+            ),
+            onChanged: (value) => setState(() => _selectedPurity = value),
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: widget.item.purityCtrl,
-              textAlign: TextAlign.center,
-              textAlignVertical: TextAlignVertical.center,
+    );
+  }
+
+  Future<void> _showPurityMenu(
+    BuildContext context,
+    Color color,
+    List<String> purities,
+  ) async {
+    FocusScope.of(context).unfocus();
+    final box = context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final offset = box.localToGlobal(Offset.zero);
+    final selected = await showMenu<String>(
+      context: context,
+      color: BookingAdvanceColors.bodyPanelBg,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(
+          offset.dx,
+          offset.dy + BookingItemGridMetrics.controlHeight + 4,
+          box.size.width,
+          BookingItemGridMetrics.controlHeight,
+        ),
+        Offset.zero & overlay.size,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(BookingItemGridMetrics.cellRadius),
+        side: const BorderSide(color: BookingAdvanceColors.bodyBorder),
+      ),
+      items: [
+        ...purities.map(
+          (purity) => PopupMenuItem<String>(
+            value: purity,
+            height: 38,
+            child: Center(
+              child: Text(
+                purity,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: '__custom__',
+          height: 38,
+          child: Center(
+            child: Text(
+              'CUSTOM',
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w900,
-                fontSize: 14.5,
-                fontFeatures: const [FontFeature.tabularFigures()],
+                fontSize: 14,
               ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8),
-              ),
-              onChanged: (value) => setState(() => _selectedPurity = value),
             ),
           ),
-          PopupMenuButton<String>(
-            icon:
-                Icon(Icons.keyboard_arrow_down_rounded, color: color, size: 19),
-            color: BookingAdvanceColors.bodyPanelBg,
-            position: PopupMenuPosition.under,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints.tightFor(width: 34, height: 34),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: const BorderSide(color: BookingAdvanceColors.bodyBorder),
-            ),
-            onSelected: (value) {
-              setState(() {
-                _selectedPurity = value;
-                widget.item.purityCtrl.text = value;
-              });
-            },
-            itemBuilder: (_) => purities
-                .map(
-                  (purity) => PopupMenuItem(
-                    value: purity,
-                    height: 38,
-                    child: Center(
-                      child: Text(
-                        purity,
-                        style: TextStyle(
-                          color: color,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+
+    if (!mounted || selected == null) return;
+    setState(() {
+      if (selected == '__custom__') {
+        widget.item.purityCtrl.clear();
+        _selectedPurity = '';
+      } else {
+        widget.item.purityCtrl.text = selected;
+        _selectedPurity = selected;
+      }
+    });
   }
 
   Widget _makingField(Color color, String suffix) {
@@ -433,15 +537,16 @@ class _BookingItemRowState extends State<BookingItemRow> {
             borderRadius: BorderRadius.circular(8),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: _controlHeight,
-              height: _controlHeight,
+              width: 42,
+              height: BookingItemGridMetrics.controlHeight,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: BookingAdvanceColors.brandGold.withValues(alpha: 0.12),
                 border: Border.all(
                   color: BookingAdvanceColors.brandGold.withValues(alpha: 0.40),
                 ),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius:
+                    BorderRadius.circular(BookingItemGridMetrics.cellRadius),
               ),
               child: Text(
                 suffix,
@@ -459,20 +564,22 @@ class _BookingItemRowState extends State<BookingItemRow> {
   }
 
   Widget _deleteButton() {
-    return Expanded(
-      flex: 1,
+    return SizedBox(
+      width: BookingItemGridMetrics.action,
       child: Center(
         child: Tooltip(
           message: 'Remove item',
           child: InkWell(
             onTap: () => widget.controller.removeBookingItem(widget.index),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius:
+                BorderRadius.circular(BookingItemGridMetrics.cellRadius),
             child: Container(
-              width: 32,
-              height: 32,
+              width: BookingItemGridMetrics.controlHeight,
+              height: BookingItemGridMetrics.controlHeight,
               decoration: BoxDecoration(
                 color: BookingAdvanceColors.danger.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius:
+                    BorderRadius.circular(BookingItemGridMetrics.cellRadius),
                 border: Border.all(
                   color: BookingAdvanceColors.danger.withValues(alpha: 0.35),
                 ),
@@ -498,7 +605,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
     bool right = false,
   }) {
     return SizedBox(
-      height: _controlHeight,
+      height: BookingItemGridMetrics.controlHeight,
       child: TextField(
         controller: controller,
         focusNode: focusNode,
@@ -528,21 +635,25 @@ class _BookingItemRowState extends State<BookingItemRow> {
             fontWeight: FontWeight.w500,
           ),
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           filled: true,
           fillColor: BookingAdvanceColors.bodyPanelBg,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius:
+                BorderRadius.circular(BookingItemGridMetrics.cellRadius),
             borderSide:
                 const BorderSide(color: BookingAdvanceColors.bodyBorder),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius:
+                BorderRadius.circular(BookingItemGridMetrics.cellRadius),
             borderSide:
                 const BorderSide(color: BookingAdvanceColors.bodyBorder),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius:
+                BorderRadius.circular(BookingItemGridMetrics.cellRadius),
             borderSide: const BorderSide(
               color: BookingAdvanceColors.brandGold,
               width: 1.5,
@@ -561,7 +672,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
     bool bold = false,
   }) {
     return Container(
-      height: _controlHeight,
+      height: BookingItemGridMetrics.controlHeight,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       alignment: center
           ? Alignment.center
@@ -570,7 +681,7 @@ class _BookingItemRowState extends State<BookingItemRow> {
               : Alignment.centerLeft,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(BookingItemGridMetrics.cellRadius),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: FittedBox(
@@ -590,12 +701,66 @@ class _BookingItemRowState extends State<BookingItemRow> {
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w900,
-            fontSize: bold ? 15 : 14.5,
+            fontSize: bold ? 16 : 14.5,
             height: 1.0,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
           maxLines: 1,
         ),
+      ),
+    );
+  }
+}
+
+class _MetalMenuItem extends StatelessWidget {
+  const _MetalMenuItem({
+    required this.metal,
+    required this.color,
+    required this.selected,
+  });
+
+  final MetalType metal;
+  final Color color;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: selected ? color.withValues(alpha: 0.10) : Colors.transparent,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              metal.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected ? color : BookingAdvanceColors.textDark,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          if (selected)
+            Icon(
+              Icons.check_rounded,
+              color: color,
+              size: 16,
+            ),
+        ],
       ),
     );
   }

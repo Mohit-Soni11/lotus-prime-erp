@@ -118,8 +118,36 @@ class BookingItemModel extends ChangeNotifier {
 
   // ── ACTIONS ───────────────────────────────────────────────────────────────
   void updateMetal(MetalType m) {
+    if (_metal == m) return;
     _metal = m;
+    _makingChargeType = MakingChargeType.perGram;
+    descCtrl.clear();
+    pcsCtrl.text = '1';
+    purityCtrl.text = _defaultPurityFor(m);
+    grossCtrl.clear();
+    lessCtrl.clear();
+    rateCtrl.clear();
+    makingCtrl.clear();
+    _pcs = 1;
+    _grossWt = 0.0;
+    _lessWt = 0.0;
+    _rate = 0.0;
+    _making = 0.0;
+    _tunch = _parse(purityCtrl.text);
     notifyListeners();
+  }
+
+  String _defaultPurityFor(MetalType metal) {
+    switch (metal) {
+      case MetalType.gold:
+        return '24KT';
+      case MetalType.silver:
+        return '999';
+      case MetalType.platinum:
+        return '950PT';
+      case MetalType.diamond:
+        return 'VVS1';
+    }
   }
 
   void toggleMakingChargeType() {

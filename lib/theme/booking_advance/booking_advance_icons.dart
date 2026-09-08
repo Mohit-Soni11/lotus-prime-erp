@@ -45,6 +45,7 @@ class BookingAdvanceIcons {
   static const IconData card = Icons.credit_card_rounded;
   static const IconData saveBooking = Icons.bookmark_added_rounded;
   static const IconData clearAll = Icons.refresh_rounded;
+  static const IconData generateInvoice = Icons.receipt_long_rounded;
   static const IconData arrowUp = Icons.keyboard_arrow_up_rounded;
   static const IconData arrowDown = Icons.keyboard_arrow_down_rounded;
 }

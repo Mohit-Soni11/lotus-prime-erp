@@ -17,10 +17,12 @@ class BookingRightPanel extends StatelessWidget {
     super.key,
     required this.ctrl,
     required this.onSaved,
+    required this.onGenerateInvoice,
   });
 
   final BookingAdvanceController ctrl;
   final void Function(String message, bool isSuccess) onSaved;
+  final void Function(List<int> orderIds) onGenerateInvoice;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +50,7 @@ class BookingRightPanel extends StatelessWidget {
               BookingActionButtons(
                 controller: ctrl,
                 onSaved: onSaved,
+                onGenerateInvoice: onGenerateInvoice,
               ),
             ],
           ),

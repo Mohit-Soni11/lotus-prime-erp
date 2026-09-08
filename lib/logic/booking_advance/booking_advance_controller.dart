@@ -133,7 +133,6 @@ class BookingAdvanceController extends ChangeNotifier {
   double get totalAdvance => totalCashAdv + totalScrapVal;
   double get totalBookingVal =>
       bookingItems.fold(0.0, (s, i) => s + i.totalValue);
-  double get balanceDue => totalBookingVal - totalAdvance;
 
   double get totalBookingGoldWt => bookingItems
       .where((i) => i.metal == MetalType.gold)
@@ -371,13 +370,19 @@ class BookingAdvanceController extends ChangeNotifier {
     }
   }
 
-  Future<({bool success, String message, String bookingNo})>
-      saveBooking() async {
+  Future<
+      ({
+        bool success,
+        String message,
+        String bookingNo,
+        List<int> orderIds,
+      })> saveBooking() async {
     if (nameCtrl.text.trim().isEmpty) {
       return (
         success: false,
         message: 'Please enter customer name.',
         bookingNo: '',
+        orderIds: const <int>[],
       );
     }
     if (bookingItems.isEmpty) {
@@ -385,6 +390,7 @@ class BookingAdvanceController extends ChangeNotifier {
         success: false,
         message: 'Please add at least one booking item.',
         bookingNo: '',
+        orderIds: const <int>[],
       );
     }
     _syncSmartRatePreference();
@@ -394,6 +400,7 @@ class BookingAdvanceController extends ChangeNotifier {
         success: false,
         message: 'Please enter a valid locked rate.',
         bookingNo: '',
+        orderIds: const <int>[],
       );
     }
     for (var index = 0; index < bookingItems.length; index++) {
@@ -403,6 +410,7 @@ class BookingAdvanceController extends ChangeNotifier {
           success: false,
           message: 'Please enter valid net weight for item ${index + 1}.',
           bookingNo: '',
+          orderIds: const <int>[],
         );
       }
     }
@@ -430,10 +438,11 @@ class BookingAdvanceController extends ChangeNotifier {
           ? totalAdvance
           : totalAdvance / bookingItems.length;
 
-      if (editingOrderId != null) {
+      final activeEditOrderId = editingOrderId;
+      if (activeEditOrderId != null) {
         final item = bookingItems.first;
         await _repo.updateBooking(
-          orderId: editingOrderId!,
+          orderId: activeEditOrderId,
           customerId: customerId,
           itemName: item.descCtrl.text.trim().isEmpty
               ? '${item.metal.displayName} Item'
@@ -458,11 +467,13 @@ class BookingAdvanceController extends ChangeNotifier {
           success: true,
           message: 'Booking $savedBookingNo updated successfully!',
           bookingNo: savedBookingNo,
+          orderIds: <int>[activeEditOrderId],
         );
       }
 
+      final savedOrderIds = <int>[];
       for (final item in bookingItems) {
-        await _repo.saveNewBooking(
+        final orderId = await _repo.saveNewBooking(
           customerId: customerId,
           customerName: nameCtrl.text.trim(),
           customerMobile: mobileCtrl.text.trim(),
@@ -482,6 +493,7 @@ class BookingAdvanceController extends ChangeNotifier {
           goldRate: _p(item.rateCtrl.text),
           isGst: false,
         );
+        savedOrderIds.add(orderId);
       }
 
       // Re-sync booking number from DB after successful save
@@ -495,6 +507,7 @@ class BookingAdvanceController extends ChangeNotifier {
         success: true,
         message: 'Booking $savedBookingNo saved successfully!',
         bookingNo: savedBookingNo,
+        orderIds: List<int>.unmodifiable(savedOrderIds),
       );
     } catch (e) {
       isSaving = false;
@@ -504,6 +517,7 @@ class BookingAdvanceController extends ChangeNotifier {
         success: false,
         message: 'Failed to save. Please try again.',
         bookingNo: '',
+        orderIds: const <int>[],
       );
     }
   }

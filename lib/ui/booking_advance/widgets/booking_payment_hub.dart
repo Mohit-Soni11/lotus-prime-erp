@@ -46,10 +46,6 @@ class BookingPaymentHub extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _AdvanceTotalTile(totalAdvance: controller.totalAdvance),
-          if (controller.totalBookingVal > 0) ...[
-            const SizedBox(height: 10),
-            _BalanceDueTile(balanceDue: controller.balanceDue),
-          ],
         ],
       ),
     );
@@ -209,49 +205,6 @@ class _AdvanceTotalTile extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _BalanceDueTile extends StatelessWidget {
-  const _BalanceDueTile({required this.balanceDue});
-
-  final double balanceDue;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDue = balanceDue > 0;
-    final color =
-        isDue ? BookingAdvanceColors.warning : BookingAdvanceColors.success;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'BALANCE DUE',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: color,
-            ),
-          ),
-          Text(
-            BookingMoneyText.whole(balanceDue.abs()),
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: color,
-            ),
-          ),
         ],
       ),
     );

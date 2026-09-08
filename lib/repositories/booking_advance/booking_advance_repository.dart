@@ -237,6 +237,32 @@ class BookingAdvanceRepository {
     );
   }
 
+  Future<List<EditableBookingAdvance>> fetchPrintableBookings(
+    List<int> orderIds,
+  ) async {
+    final printableBookings = <EditableBookingAdvance>[];
+    for (final orderId in orderIds) {
+      final booking = await fetchEditableBooking(orderId);
+      if (booking != null) {
+        printableBookings.add(booking);
+      }
+    }
+    return List.unmodifiable(printableBookings);
+  }
+
+  Future<String> resolveShopDisplayName() async {
+    try {
+      final tenantId = await ShopSessionManager.getPermanentTenantId();
+      final shopData =
+          await _effectiveShopRepository.fetchExistingSetup(tenantId);
+      final shopName = _shopNameFromSetup(shopData);
+      return shopName.isEmpty ? 'Shop Name Not Set' : shopName;
+    } catch (error) {
+      AppLogger.debug('Booking shop profile sync failed: $error');
+      return 'Shop Name Not Set';
+    }
+  }
+
   Future<void> updateBooking({
     required int orderId,
     required int customerId,

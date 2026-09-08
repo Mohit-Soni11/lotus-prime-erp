@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../booking_customer_panel.dart';
+import '../booking_invoice_preview_screen.dart';
 import '../booking_items_table.dart';
 import '../booking_right_panel.dart';
 import '../booking_scrap_table.dart';
@@ -37,6 +38,10 @@ class BookingWorkspaceLayout extends StatelessWidget {
               context,
               type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
               message: message,
+            ),
+            onGenerateInvoice: (orderIds) => BookingInvoicePreviewScreen.push(
+              context,
+              orderIds: orderIds,
             ),
           );
 

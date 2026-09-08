@@ -2,9 +2,13 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/logic/booking_advance/booking_advance_controller.dart';
-import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
+import 'package:lotus_erp/logic/booking_advance/booking_invoice_pdf_service.dart';
+import 'package:lotus_erp/models/booking_advance/booking_advance/booking_advance_model.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
 
 void main() {
   late AppDatabase database;
@@ -40,6 +44,7 @@ void main() {
     final result = await controller.saveBooking();
 
     expect(result.success, isTrue);
+    expect(result.orderIds, hasLength(1));
 
     final customers = await database.select(database.customers).get();
     final orders = await database.select(database.salesOrders).get();
@@ -57,6 +62,85 @@ void main() {
     expect(orders.single.approxWeight, 12);
     expect(advances, hasLength(1));
     expect(advances.single.amountPaid, 2500);
+  });
+
+  test('printable booking fetch returns saved order and advance details',
+      () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.nameCtrl.text = 'Nisha Verma';
+    controller.mobileCtrl.text = '9123456780';
+    controller.cityCtrl.text = 'Ashok Nagar';
+    controller.cashCtrl.text = '5000';
+    controller.addBookingItem();
+
+    final item = controller.bookingItems.single;
+    item.descCtrl.text = 'Diamond Ring';
+    item.grossCtrl.text = '3.500';
+    item.rateCtrl.text = '42000';
+
+    final result = await controller.saveBooking();
+    final printable = await repository.fetchPrintableBookings(result.orderIds);
+
+    expect(result.success, isTrue);
+    expect(printable, hasLength(1));
+    expect(printable.single.order.itemName, 'Diamond Ring');
+    expect(printable.single.customer?.name, 'Nisha Verma');
+    expect(printable.single.advances.single.amountPaid, 5000);
+
+    const pdfService = BookingInvoicePdfService();
+    final pdfBytes = await pdfService.buildInvoice(
+      shopName: 'Anjali Jewellers',
+      bookings: printable,
+      generatedAt: DateTime(2026, 9, 8, 12),
+    );
+
+    expect(pdfBytes, isNotEmpty);
+    expect(String.fromCharCodes(pdfBytes.take(4)), '%PDF');
+  });
+
+  test('booking invoice builds every supported invoice design', () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.nameCtrl.text = 'Reyansh Soni';
+    controller.mobileCtrl.text = '9304479436';
+    controller.cityCtrl.text = 'East Lakshmi Nagar Khemnichak';
+    controller.cashCtrl.text = '50000';
+    controller.addBookingItem();
+
+    final item = controller.bookingItems.single;
+    item.descCtrl.text = 'Gold Ring';
+    item.grossCtrl.text = '15';
+    item.rateCtrl.text = '12200';
+
+    final result = await controller.saveBooking();
+    final printable = await repository.fetchPrintableBookings(result.orderIds);
+    const pdfService = BookingInvoicePdfService();
+
+    for (final template in PrintTemplateRegistry.forDocument(
+      PrintTemplateDocumentType.bookingAdvance,
+    )) {
+      final pdfBytes = await pdfService.buildInvoice(
+        shopName: 'Anjali Jewellers',
+        bookings: printable,
+        options: BookingInvoicePrintOptions(
+          format: PrintFormat.a4,
+          templateId: template.id,
+          includeDuplicateStamp: true,
+          copies: 2,
+        ),
+        generatedAt: DateTime(2026, 9, 8, 12),
+      );
+
+      expect(pdfBytes.length, greaterThan(1000), reason: template.id);
+      expect(String.fromCharCodes(pdfBytes.take(5)), '%PDF-');
+    }
   });
 
   test('metal rate automatically switches booking preference to locked',
@@ -111,6 +195,35 @@ void main() {
 
     expect(controller.bookingType, BookingType.open);
     expect(controller.lockedRateCtrl.text, isEmpty);
+  });
+
+  test('metal change refreshes booking item data for the selected metal', () {
+    final item = BookingItemModel();
+    addTearDown(item.dispose);
+
+    item.descCtrl.text = 'Gold Ring';
+    item.pcsCtrl.text = '2';
+    item.purityCtrl.text = '22KT';
+    item.grossCtrl.text = '5.325';
+    item.lessCtrl.text = '0.100';
+    item.rateCtrl.text = '12000';
+    item.makingCtrl.text = '12';
+
+    expect(item.totalValue, greaterThan(0));
+
+    item.updateMetal(MetalType.silver);
+
+    expect(item.metal, MetalType.silver);
+    expect(item.descCtrl.text, isEmpty);
+    expect(item.pcsCtrl.text, '1');
+    expect(item.purityCtrl.text, '999');
+    expect(item.grossCtrl.text, isEmpty);
+    expect(item.lessCtrl.text, isEmpty);
+    expect(item.rateCtrl.text, isEmpty);
+    expect(item.makingCtrl.text, isEmpty);
+    expect(item.netWt, 0);
+    expect(item.rate, 0);
+    expect(item.totalValue, 0);
   });
 
   test('booking sequence uses the highest financial-year booking number',
