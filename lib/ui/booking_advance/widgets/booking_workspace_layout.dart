@@ -39,9 +39,10 @@ class BookingWorkspaceLayout extends StatelessWidget {
               type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
               message: message,
             ),
-            onGenerateInvoice: (orderIds) => BookingInvoicePreviewScreen.push(
+            onGenerateInvoice: (bookings) => BookingInvoicePreviewScreen.push(
               context,
-              orderIds: orderIds,
+              initialBookings: bookings,
+              sourceController: controller,
             ),
           );
 

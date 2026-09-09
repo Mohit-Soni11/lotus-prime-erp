@@ -7,13 +7,30 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../database/db/app_database.dart';
 import '../../models/booking_advance/booking_advance/booking_advance_model.dart';
 import '../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'booking_rate_preference_policy.dart';
 
+part 'booking_advance_controller_entry_operations.dart';
+part 'booking_advance_controller_customer_operations.dart';
+part 'booking_advance_controller_persistence.dart';
+
 enum BookingType { open, locked }
+
+class BookingInvoiceDraftResult {
+  const BookingInvoiceDraftResult({
+    required this.success,
+    required this.message,
+    required this.bookings,
+  });
+
+  final bool success;
+  final String message;
+  final List<EditableBookingAdvance> bookings;
+}
 
 class BookingAdvanceController extends ChangeNotifier {
   final BookingAdvanceRepository _repo;
@@ -148,14 +165,46 @@ class BookingAdvanceController extends ChangeNotifier {
       .where((i) => i.metal == MetalType.silver)
       .fold(0.0, (s, i) => s + i.netWt);
 
-  void toggleBookingType(BookingType t) {
-    bookingType = t;
-    if (t == BookingType.open) lockedRateCtrl.clear();
-    notifyListeners();
-  }
+  void toggleBookingType(BookingType type) => _toggleBookingType(type);
 
-  void setDeliveryDate(DateTime? d) {
-    deliveryDate = d;
+  void setDeliveryDate(DateTime? date) => _setDeliveryDate(date);
+
+  void addBookingItem() => _addBookingItem();
+
+  void removeBookingItem(int index) => _removeBookingItem(index);
+
+  void removeActiveItem() => _removeActiveItem();
+
+  void addScrapItem() => _addScrapItem();
+
+  void removeScrapItem(int index) => _removeScrapItem(index);
+
+  void searchCustomer(String query) => _searchCustomer(query);
+
+  void handleCustomerLookupInput(String query) =>
+      _handleCustomerLookupInput(query);
+
+  void clearCustomerDetails() => _clearCustomerDetails();
+
+  void selectCustomerFromSearch(Map<String, dynamic> customer) =>
+      _selectCustomerFromSearch(customer);
+
+  Future<bool> initializeForEdit(int orderId) => _initializeForEdit(orderId);
+
+  Future<
+      ({
+        bool success,
+        String message,
+        String bookingNo,
+        List<int> orderIds,
+      })> saveBooking() => _saveBooking();
+
+  Future<BookingInvoiceDraftResult> buildInvoicePreviewDraft() =>
+      _buildInvoicePreviewDraft();
+
+  void clearAll() => _clearAllAndNotify();
+
+  void _emitChanged() {
     notifyListeners();
   }
 
@@ -182,383 +231,6 @@ class BookingAdvanceController extends ChangeNotifier {
     if (lockedRateCtrl.text.isNotEmpty) {
       lockedRateCtrl.clear();
     }
-  }
-
-  void addBookingItem() {
-    final item = BookingItemModel();
-    item.addListener(_onChildChanged);
-    bookingItems.add(item);
-    activeItemIndex = bookingItems.length - 1;
-    _syncSmartRatePreference();
-    notifyListeners();
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (tableScrollCtrl.hasClients) {
-        tableScrollCtrl.animateTo(
-          tableScrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-      item.firstFieldFocus.requestFocus();
-    });
-  }
-
-  void removeBookingItem(int index) {
-    if (index < 0 || index >= bookingItems.length) return;
-    bookingItems[index].removeListener(_onChildChanged);
-    bookingItems[index].dispose();
-    bookingItems.removeAt(index);
-    if (activeItemIndex >= bookingItems.length) {
-      activeItemIndex = bookingItems.length - 1;
-    }
-    _syncSmartRatePreference();
-    notifyListeners();
-  }
-
-  void removeActiveItem() {
-    if (activeItemIndex != -1 && bookingItems.isNotEmpty) {
-      final idx = activeItemIndex;
-      removeBookingItem(idx);
-      Future.delayed(const Duration(milliseconds: 50), () {
-        if (bookingItems.isNotEmpty) {
-          final fi = idx > 0 ? idx - 1 : 0;
-          bookingItems[fi].firstFieldFocus.requestFocus();
-          activeItemIndex = fi;
-        }
-      });
-    }
-  }
-
-  void addScrapItem() {
-    final item = BookingScrapModel();
-    item.addListener(_onChildChanged);
-    scrapItems.add(item);
-    _syncSmartRatePreference();
-    notifyListeners();
-  }
-
-  void removeScrapItem(int index) {
-    if (index < 0 || index >= scrapItems.length) return;
-    scrapItems[index].removeListener(_onChildChanged);
-    scrapItems[index].dispose();
-    scrapItems.removeAt(index);
-    _syncSmartRatePreference();
-    notifyListeners();
-  }
-
-  void searchCustomer(String query) {
-    _searchTimer?.cancel();
-    if (query.trim().length < 2) {
-      customerResults = [];
-      customerNotFound = false;
-      notifyListeners();
-      return;
-    }
-    _searchTimer = Timer(const Duration(milliseconds: 300), () async {
-      isSearching = true;
-      notifyListeners();
-      try {
-        customerResults = await _repo.searchCustomers(query);
-        customerNotFound = customerResults.isEmpty;
-      } catch (_) {
-        customerResults = [];
-        customerNotFound = false;
-      }
-      isSearching = false;
-      notifyListeners();
-    });
-  }
-
-  void handleCustomerLookupInput(String query) {
-    if (selectedCustomerId != null && !_selectedCustomerMatchesCurrentInput()) {
-      selectedCustomerId = null;
-      _selectedCustomerMobile = '';
-      _selectedCustomerName = '';
-    }
-    searchCustomer(query);
-  }
-
-  void clearCustomerDetails() {
-    mobileCtrl.clear();
-    nameCtrl.clear();
-    cityCtrl.clear();
-    selectedCustomerId = null;
-    _selectedCustomerMobile = '';
-    _selectedCustomerName = '';
-    customerResults = [];
-    customerNotFound = false;
-    notifyListeners();
-  }
-
-  void selectCustomerFromSearch(Map<String, dynamic> c) {
-    selectedCustomerId = c['id'];
-    mobileCtrl.text = c['mobile'] ?? '';
-    nameCtrl.text = c['name'] ?? '';
-    cityCtrl.text = c['address'] ?? c['city'] ?? '';
-    _selectedCustomerMobile = mobileCtrl.text.trim();
-    _selectedCustomerName = nameCtrl.text.trim();
-    customerResults = [];
-    customerNotFound = false;
-    notifyListeners();
-  }
-
-  bool _selectedCustomerMatchesCurrentInput() {
-    return mobileCtrl.text.trim() == _selectedCustomerMobile &&
-        nameCtrl.text.trim() == _selectedCustomerName;
-  }
-
-  Future<bool> initializeForEdit(int orderId) async {
-    isLoadingEditOrder = true;
-    editLoadError = null;
-    notifyListeners();
-
-    try {
-      final details = await _repo.fetchEditableBooking(orderId);
-      if (details == null) {
-        editLoadError = 'Advance order could not be loaded for editing.';
-        return false;
-      }
-
-      _clearAll();
-      final order = details.order;
-      editingOrderId = order.id;
-      _editingOrderNo = order.orderNo;
-      selectedCustomerId = order.customerId;
-
-      final customer = details.customer;
-      if (customer != null) {
-        mobileCtrl.text = customer.mobile;
-        nameCtrl.text = customer.name;
-        cityCtrl.text = _repo.customerAddressForBooking(customer);
-        _selectedCustomerMobile = mobileCtrl.text.trim();
-        _selectedCustomerName = nameCtrl.text.trim();
-      }
-
-      bookingType = order.bookingType.toUpperCase() == 'LOCKED'
-          ? BookingType.locked
-          : BookingType.open;
-      lockedRateCtrl.text = _formatNumber(order.lockedRate);
-      deliveryDate = order.deliveryDate;
-
-      final item = BookingItemModel(metal: _metalFromLabel(order.metalType));
-      item.descCtrl.text = order.itemName;
-      item.purityCtrl.text = order.purity;
-      item.grossCtrl.text = _formatNumber(order.approxWeight);
-      item.lessCtrl.text = '';
-      item.rateCtrl.text = _formatNumber(order.lockedRate);
-      item.addListener(_onChildChanged);
-      bookingItems.add(item);
-      activeItemIndex = 0;
-
-      final totalAdvance =
-          details.advances.fold<double>(0, (sum, row) => sum + row.amountPaid);
-      cashCtrl.text = _formatNumber(totalAdvance);
-      _cashInput = totalAdvance;
-      if (details.advances.isNotEmpty && lockedRateCtrl.text.isEmpty) {
-        lockedRateCtrl.text = _formatNumber(details.advances.first.rateOnDate);
-      }
-
-      _syncSmartRatePreference();
-      notifyListeners();
-      return true;
-    } catch (error) {
-      editLoadError = 'Advance order could not be loaded for editing.';
-      return false;
-    } finally {
-      isLoadingEditOrder = false;
-      notifyListeners();
-    }
-  }
-
-  Future<
-      ({
-        bool success,
-        String message,
-        String bookingNo,
-        List<int> orderIds,
-      })> saveBooking() async {
-    if (nameCtrl.text.trim().isEmpty) {
-      return (
-        success: false,
-        message: 'Please enter customer name.',
-        bookingNo: '',
-        orderIds: const <int>[],
-      );
-    }
-    if (bookingItems.isEmpty) {
-      return (
-        success: false,
-        message: 'Please add at least one booking item.',
-        bookingNo: '',
-        orderIds: const <int>[],
-      );
-    }
-    _syncSmartRatePreference();
-
-    if (bookingType == BookingType.locked && lockedRate <= 0) {
-      return (
-        success: false,
-        message: 'Please enter a valid locked rate.',
-        bookingNo: '',
-        orderIds: const <int>[],
-      );
-    }
-    for (var index = 0; index < bookingItems.length; index++) {
-      final item = bookingItems[index];
-      if (item.netWt <= 0) {
-        return (
-          success: false,
-          message: 'Please enter valid net weight for item ${index + 1}.',
-          bookingNo: '',
-          orderIds: const <int>[],
-        );
-      }
-    }
-
-    isSaving = true;
-    notifyListeners();
-
-    try {
-      if (_isNumberLoading) {
-        await _initBookingNumber();
-      }
-
-      final customerId = await _repo.resolveCustomerForBooking(
-        selectedCustomerId: selectedCustomerId,
-        customerName: nameCtrl.text,
-        customerMobile: mobileCtrl.text,
-        address: cityCtrl.text,
-        panNumber: '',
-        gstNumber: '',
-      );
-      selectedCustomerId = customerId;
-
-      final savedBookingNo = formattedBookingNo;
-      final perItemAdv = bookingItems.isEmpty
-          ? totalAdvance
-          : totalAdvance / bookingItems.length;
-
-      final activeEditOrderId = editingOrderId;
-      if (activeEditOrderId != null) {
-        final item = bookingItems.first;
-        await _repo.updateBooking(
-          orderId: activeEditOrderId,
-          customerId: customerId,
-          itemName: item.descCtrl.text.trim().isEmpty
-              ? '${item.metal.displayName} Item'
-              : item.descCtrl.text.trim(),
-          metalType: item.metal.displayName,
-          purity: item.purityCtrl.text.isEmpty ? '22K' : item.purityCtrl.text,
-          approxWeight: item.netWt,
-          bookingType: bookingType == BookingType.locked ? 'LOCKED' : 'OPEN',
-          lockedRate:
-              bookingType == BookingType.locked ? _lockedRateForItem(item) : 0,
-          deliveryDate: deliveryDate,
-          notes: null,
-          totalAdvance: totalAdvance,
-          rateOnDate: _p(item.rateCtrl.text),
-        );
-
-        _clearAll();
-        isSaving = false;
-        notifyListeners();
-
-        return (
-          success: true,
-          message: 'Booking $savedBookingNo updated successfully!',
-          bookingNo: savedBookingNo,
-          orderIds: <int>[activeEditOrderId],
-        );
-      }
-
-      final savedOrderIds = <int>[];
-      for (final item in bookingItems) {
-        final orderId = await _repo.saveNewBooking(
-          customerId: customerId,
-          customerName: nameCtrl.text.trim(),
-          customerMobile: mobileCtrl.text.trim(),
-          itemName: item.descCtrl.text.trim().isEmpty
-              ? '${item.metal.displayName} Item'
-              : item.descCtrl.text.trim(),
-          itemDesc: '',
-          metalType: item.metal.displayName,
-          purity: item.purityCtrl.text.isEmpty ? '22K' : item.purityCtrl.text,
-          approxWeight: item.netWt,
-          bookingType: bookingType == BookingType.locked ? 'LOCKED' : 'OPEN',
-          lockedRate:
-              bookingType == BookingType.locked ? _lockedRateForItem(item) : 0,
-          deliveryDate: deliveryDate,
-          notes: null,
-          totalAdvance: perItemAdv,
-          goldRate: _p(item.rateCtrl.text),
-          isGst: false,
-        );
-        savedOrderIds.add(orderId);
-      }
-
-      // Re-sync booking number from DB after successful save
-      await _initBookingNumber();
-
-      _clearAll();
-      isSaving = false;
-      notifyListeners();
-
-      return (
-        success: true,
-        message: 'Booking $savedBookingNo saved successfully!',
-        bookingNo: savedBookingNo,
-        orderIds: List<int>.unmodifiable(savedOrderIds),
-      );
-    } catch (e) {
-      isSaving = false;
-      notifyListeners();
-      AppLogger.debug('Booking save error: $e');
-      return (
-        success: false,
-        message: 'Failed to save. Please try again.',
-        bookingNo: '',
-        orderIds: const <int>[],
-      );
-    }
-  }
-
-  void clearAll() {
-    _clearAll();
-    notifyListeners();
-  }
-
-  void _clearAll() {
-    mobileCtrl.clear();
-    nameCtrl.clear();
-    cityCtrl.clear();
-    lockedRateCtrl.clear();
-    cashCtrl.clear();
-    upiCtrl.clear();
-    cardCtrl.clear();
-    _cashInput = 0;
-    _upiInput = 0;
-    _cardInput = 0;
-    selectedCustomerId = null;
-    _selectedCustomerMobile = '';
-    _selectedCustomerName = '';
-    editingOrderId = null;
-    _editingOrderNo = null;
-    editLoadError = null;
-    bookingType = BookingType.open;
-    deliveryDate = null;
-    customerResults = [];
-    customerNotFound = false;
-    for (final i in bookingItems) {
-      i.removeListener(_onChildChanged);
-      i.dispose();
-    }
-    for (final i in scrapItems) {
-      i.removeListener(_onChildChanged);
-      i.dispose();
-    }
-    bookingItems.clear();
-    scrapItems.clear();
-    activeItemIndex = -1;
   }
 
   double _p(String t) =>

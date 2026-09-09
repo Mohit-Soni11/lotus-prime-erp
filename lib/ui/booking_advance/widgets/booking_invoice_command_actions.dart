@@ -6,22 +6,26 @@ class _ActionFooter extends StatelessWidget {
     required this.isSharing,
     required this.isExporting,
     required this.isPrinting,
+    required this.isCompleting,
     required this.isExported,
     required this.isPrinted,
     required this.onShare,
     required this.onExport,
     required this.onPrint,
+    required this.onSaveAndNew,
   });
 
   final BookingInvoicePreviewController controller;
   final bool isSharing;
   final bool isExporting;
   final bool isPrinting;
+  final bool isCompleting;
   final bool isExported;
   final bool isPrinted;
   final Future<void> Function() onShare;
   final Future<void> Function() onExport;
   final Future<void> Function() onPrint;
+  final Future<void> Function() onSaveAndNew;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +66,8 @@ class _ActionFooter extends StatelessWidget {
                   child: _ActionButton(
                     label: isSharing ? 'Sharing' : 'Share PDF',
                     icon: Icons.chat_bubble_rounded,
-                    onPressed: ready && !isSharing ? onShare : null,
+                    onPressed:
+                        ready && !isSharing && !isCompleting ? onShare : null,
                     isBusy: isSharing,
                     accentColor: const Color(0xFF25D366),
                     filled: true,
@@ -79,7 +84,9 @@ class _ActionFooter extends StatelessWidget {
                     icon: isExported
                         ? Icons.check_circle_rounded
                         : Icons.download_rounded,
-                    onPressed: ready && !isExporting ? onExport : null,
+                    onPressed: ready && !isExporting && !isCompleting
+                        ? onExport
+                        : null,
                     isBusy: isExporting,
                     accentColor: isExported
                         ? BookingAdvanceColors.success
@@ -90,13 +97,22 @@ class _ActionFooter extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _ActionButton(
-              label: isPrinting ? 'Printing' : 'Print Booking Invoice',
+              label: isPrinting ? 'Printing' : 'Print Booking Invoice & New',
               icon: Icons.print_rounded,
-              onPressed: ready && !isPrinting ? onPrint : null,
+              onPressed: ready && !isPrinting && !isCompleting ? onPrint : null,
               isBusy: isPrinting,
               isPrimary: true,
               filled: true,
               accentColor: BookingAdvanceColors.brandGold,
+            ),
+            const SizedBox(height: 8),
+            _ActionButton(
+              label: isCompleting ? 'Saving' : 'Save & New',
+              icon: Icons.done_all_rounded,
+              onPressed: ready && !isCompleting ? onSaveAndNew : null,
+              isPrimary: true,
+              isBusy: isCompleting,
+              accentColor: BookingAdvanceColors.success,
             ),
           ],
         ),

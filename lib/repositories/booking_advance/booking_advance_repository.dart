@@ -14,6 +14,8 @@ import 'package:lotus_erp/helpers/search/fuzzy_search_helper.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
 
+part 'booking_advance_repository_helpers.dart';
+
 class EditableBookingAdvance {
   const EditableBookingAdvance({
     required this.order,
@@ -24,6 +26,42 @@ class EditableBookingAdvance {
   final SalesOrder order;
   final Customer? customer;
   final List<OrderAdvance> advances;
+}
+
+class BookingAdvanceLineDraft {
+  const BookingAdvanceLineDraft({
+    required this.itemName,
+    required this.metalType,
+    required this.purity,
+    required this.approxWeight,
+    required this.bookingType,
+    required this.lockedRate,
+    required this.deliveryDate,
+    required this.notes,
+    required this.advanceAmount,
+    required this.rateOnDate,
+  });
+
+  final String itemName;
+  final String metalType;
+  final String purity;
+  final double approxWeight;
+  final String bookingType;
+  final double lockedRate;
+  final DateTime? deliveryDate;
+  final String? notes;
+  final double advanceAmount;
+  final double rateOnDate;
+}
+
+class SavedBookingAdvanceDocument {
+  const SavedBookingAdvanceDocument({
+    required this.bookingNo,
+    required this.orderIds,
+  });
+
+  final String bookingNo;
+  final List<int> orderIds;
 }
 
 class BookingAdvanceRepository {
@@ -183,36 +221,92 @@ class BookingAdvanceRepository {
     required double goldRate,
     required bool isGst,
   }) async {
-    return _db.transaction(() async {
-      final orderNo = await _nextOrderNumber();
-      final orderId = await _db.into(_db.salesOrders).insert(
-            SalesOrdersCompanion.insert(
-              orderNo: orderNo,
-              customerId: customerId,
-              itemName: itemName,
-              metalType: Value(metalType),
-              purity: Value(purity),
-              approxWeight: Value(approxWeight),
-              bookingType: Value(bookingType),
-              lockedRate: Value(lockedRate),
-              status: const Value('PENDING'),
-              deliveryDate: Value(deliveryDate),
-              notes: Value(notes),
-            ),
-          );
+    final document = await saveBookingDocument(
+      customerId: customerId,
+      lines: [
+        BookingAdvanceLineDraft(
+          itemName: itemName,
+          metalType: metalType,
+          purity: purity,
+          approxWeight: approxWeight,
+          bookingType: bookingType,
+          lockedRate: lockedRate,
+          deliveryDate: deliveryDate,
+          notes: notes,
+          advanceAmount: totalAdvance,
+          rateOnDate: goldRate,
+        ),
+      ],
+    );
+    return document.orderIds.single;
+  }
 
-      if (totalAdvance > 0) {
-        await _db.into(_db.orderAdvances).insert(
-              OrderAdvancesCompanion.insert(
-                orderId: orderId,
-                amountPaid: Value(totalAdvance),
-                rateOnDate: Value(goldRate),
+  Future<SavedBookingAdvanceDocument> saveBookingDocument({
+    required int customerId,
+    required List<BookingAdvanceLineDraft> lines,
+  }) async {
+    if (lines.isEmpty) {
+      throw ArgumentError.value(lines, 'lines', 'No booking lines to save.');
+    }
+
+    final shopCode = await resolveShopDocumentCode();
+    final yearToken = getCurrentDocumentYearToken();
+
+    return _db.transaction(() async {
+      final firstSequence = await getNextBookingSequence(
+        shopCode: shopCode,
+        yearToken: yearToken,
+      );
+      final orderIds = <int>[];
+      final orderNos = <String>[];
+
+      for (var index = 0; index < lines.length; index++) {
+        final line = lines[index];
+        final orderNo = formatBookingNumber(
+          shopCode: shopCode,
+          yearToken: yearToken,
+          sequence: firstSequence + index,
+        );
+        final orderId = await _db.into(_db.salesOrders).insert(
+              SalesOrdersCompanion.insert(
+                orderNo: orderNo,
+                customerId: customerId,
+                itemName: line.itemName,
+                metalType: Value(line.metalType),
+                purity: Value(line.purity),
+                approxWeight: Value(line.approxWeight),
+                bookingType: Value(line.bookingType),
+                lockedRate: Value(line.lockedRate),
+                status: const Value('PENDING'),
+                deliveryDate: Value(line.deliveryDate),
+                notes: Value(line.notes),
               ),
             );
+
+        if (line.advanceAmount > 0) {
+          await _db.into(_db.orderAdvances).insert(
+                OrderAdvancesCompanion.insert(
+                  orderId: orderId,
+                  amountPaid: Value(line.advanceAmount),
+                  rateOnDate: Value(line.rateOnDate),
+                ),
+              );
+        }
+
+        orderIds.add(orderId);
+        orderNos.add(orderNo);
       }
 
-      AppLogger.debug('Booking saved: $orderNo | Advance: $totalAdvance');
-      return orderId;
+      final bookingNo = orderNos.length == 1
+          ? orderNos.single
+          : '${orderNos.first} +${orderNos.length - 1}';
+      AppLogger.debug(
+        'Booking saved: $bookingNo | Lines: ${orderIds.length}',
+      );
+      return SavedBookingAdvanceDocument(
+        bookingNo: bookingNo,
+        orderIds: List<int>.unmodifiable(orderIds),
+      );
     });
   }
 
@@ -362,92 +456,6 @@ class BookingAdvanceRepository {
               'city': customerAddressForBooking(c),
             })
         .toList();
-  }
-
-  Future<String> _nextOrderNumber() async {
-    final shopCode = await resolveShopDocumentCode();
-    final yearToken = getCurrentDocumentYearToken();
-    final sequence = await getNextBookingSequence(
-      shopCode: shopCode,
-      yearToken: yearToken,
-    );
-    return formatBookingNumber(
-      shopCode: shopCode,
-      yearToken: yearToken,
-      sequence: sequence,
-    );
-  }
-
-  int _bookingDocumentSequence(
-    String orderNo, {
-    required String yearToken,
-  }) {
-    final normalized = orderNo.trim().toUpperCase();
-    final current = RegExp(
-      '^[A-Z0-9]{2,6}-BK-${RegExp.escape(yearToken)}-(\\d+)\$',
-    ).firstMatch(normalized);
-    if (current != null) {
-      return int.tryParse(current.group(1) ?? '') ?? 0;
-    }
-
-    final legacy = RegExp(
-      '^BK-[A-Z0-9]{1,8}-(\\d{4})-(\\d+)\$',
-    ).firstMatch(normalized);
-    if (legacy != null &&
-        _legacyFinancialYearStartToken(legacy.group(1) ?? '') == yearToken) {
-      return int.tryParse(legacy.group(2) ?? '') ?? 0;
-    }
-
-    return 0;
-  }
-
-  String _legacyFinancialYearStartToken(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.length == 4) {
-      final first = int.tryParse(digits.substring(0, 2));
-      final second = int.tryParse(digits.substring(2, 4));
-      if (first != null && second != null) {
-        return (second - first + 100) % 100 == 1
-            ? digits.substring(0, 2)
-            : digits.substring(2, 4);
-      }
-    }
-    if (digits.length >= 2) {
-      return digits.substring(0, 2);
-    }
-    return PosInvoiceSeriesFormatter.normalizeFinancialYearToken(value);
-  }
-
-  String _legacyFinancialYearSpan(String yearToken) {
-    final start = int.tryParse(yearToken) ?? 0;
-    final end = (start + 1) % 100;
-    return '${start.toString().padLeft(2, '0')}'
-        '${end.toString().padLeft(2, '0')}';
-  }
-
-  String _legacyCalendarYear(String yearToken) {
-    return '20${yearToken.padLeft(2, '0')}';
-  }
-
-  String _shopNameFromSetup(Map<String, dynamic>? shopData) {
-    final basicInfo = shopData?['basic_info'] as Map<String, dynamic>?;
-    return [
-      basicInfo?['brand_display_name'],
-      basicInfo?['display_name'],
-      basicInfo?['legal_name'],
-    ]
-        .map((value) => value?.toString().trim() ?? '')
-        .firstWhere((value) => value.isNotEmpty, orElse: () => '');
-  }
-
-  String? _nullable(String value) {
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
-
-  String? _nullableUpper(String value) {
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed.toUpperCase();
   }
 
   String customerAddressForBooking(Customer row) {

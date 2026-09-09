@@ -22,7 +22,8 @@ enum BookingInvoiceGenerationState {
 
 class BookingInvoicePreviewController extends ChangeNotifier {
   BookingInvoicePreviewController({
-    required this.orderIds,
+    this.orderIds = const [],
+    this.initialBookings = const [],
     BookingAdvanceRepository? repository,
     BookingInvoicePdfService pdfService = const BookingInvoicePdfService(),
     LotusPdfPrintDispatcher printDispatcher = const LotusPdfPrintDispatcher(),
@@ -31,6 +32,7 @@ class BookingInvoicePreviewController extends ChangeNotifier {
         _printDispatcher = printDispatcher;
 
   final List<int> orderIds;
+  final List<EditableBookingAdvance> initialBookings;
   final BookingAdvanceRepository _repository;
   final BookingInvoicePdfService _pdfService;
   final LotusPdfPrintDispatcher _printDispatcher;
@@ -107,7 +109,9 @@ class BookingInvoicePreviewController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      bookings = await _repository.fetchPrintableBookings(orderIds);
+      bookings = initialBookings.isNotEmpty
+          ? List.unmodifiable(initialBookings)
+          : await _repository.fetchPrintableBookings(orderIds);
       if (bookings.isEmpty) {
         throw StateError('Booking invoice data could not be loaded.');
       }
@@ -193,6 +197,41 @@ class BookingInvoicePreviewController extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> loadSavedBookings(List<int> savedOrderIds) async {
+    if (savedOrderIds.isEmpty) {
+      throw ArgumentError.value(
+        savedOrderIds,
+        'savedOrderIds',
+        'No saved booking lines to load.',
+      );
+    }
+
+    genState = BookingInvoiceGenerationState.generating;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      bookings = await _repository.fetchPrintableBookings(savedOrderIds);
+      if (bookings.isEmpty) {
+        throw StateError('Saved booking invoice data could not be loaded.');
+      }
+      await _generatePdf();
+      genState = BookingInvoiceGenerationState.ready;
+    } catch (error, stackTrace) {
+      pdfBytes = null;
+      errorMessage = error.toString();
+      genState = BookingInvoiceGenerationState.error;
+      AppLogger.error(
+        'Saved booking invoice refresh failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<bool> printInvoice(BuildContext context) async {

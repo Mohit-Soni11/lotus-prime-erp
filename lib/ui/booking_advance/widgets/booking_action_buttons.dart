@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../logic/booking_advance/booking_advance_controller.dart';
+import '../../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
 
 class BookingActionButtons extends StatelessWidget {
@@ -13,7 +14,7 @@ class BookingActionButtons extends StatelessWidget {
 
   final BookingAdvanceController controller;
   final void Function(String message, bool isSuccess) onSaved;
-  final void Function(List<int> orderIds) onGenerateInvoice;
+  final void Function(List<EditableBookingAdvance> bookings) onGenerateInvoice;
 
   @override
   Widget build(BuildContext context) {
@@ -87,10 +88,13 @@ class BookingActionButtons extends StatelessWidget {
   }
 
   Future<void> _handleGenerateInvoice() async {
-    final result = await controller.saveBooking();
-    onSaved(result.message, result.success);
-    if (result.success && result.orderIds.isNotEmpty) {
-      onGenerateInvoice(result.orderIds);
+    final result = await controller.buildInvoicePreviewDraft();
+    if (!result.success) {
+      onSaved(result.message, false);
+      return;
+    }
+    if (result.bookings.isNotEmpty) {
+      onGenerateInvoice(result.bookings);
     }
   }
 }

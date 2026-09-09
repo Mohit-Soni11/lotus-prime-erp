@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
+import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import 'package:lotus_erp/logic/booking_advance/booking_advance_controller.dart';
 import 'package:lotus_erp/logic/booking_advance/booking_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/booking_advance/booking_advance/booking_advance_model.dart';
@@ -95,11 +96,95 @@ void main() {
     final pdfBytes = await pdfService.buildInvoice(
       shopName: 'Anjali Jewellers',
       bookings: printable,
+      shopProfileOverride: _testShopProfile,
       generatedAt: DateTime(2026, 9, 8, 12),
     );
 
     expect(pdfBytes, isNotEmpty);
     expect(String.fromCharCodes(pdfBytes.take(4)), '%PDF');
+  });
+
+  test('invoice preview draft does not save or clear booking entry', () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.nameCtrl.text = 'Reyansh Soni';
+    controller.mobileCtrl.text = '9304479436';
+    controller.cityCtrl.text = 'East Lakshmi Nagar Khemnichak';
+    controller.cashCtrl.text = '12000';
+    controller.addBookingItem();
+
+    final item = controller.bookingItems.single;
+    item.descCtrl.text = 'Gold Ring';
+    item.grossCtrl.text = '5.325';
+    item.rateCtrl.text = '12000';
+    item.makingCtrl.text = '12';
+
+    final result = await controller.buildInvoicePreviewDraft();
+
+    expect(result.success, isTrue);
+    expect(result.bookings, hasLength(1));
+    expect(result.bookings.single.order.status, 'PREVIEW');
+    expect(result.bookings.single.order.orderNo, controller.formattedBookingNo);
+    expect(result.bookings.single.customer?.name, 'Reyansh Soni');
+    expect(result.bookings.single.advances.single.amountPaid, 12000);
+
+    expect(controller.nameCtrl.text, 'Reyansh Soni');
+    expect(controller.mobileCtrl.text, '9304479436');
+    expect(controller.cityCtrl.text, 'East Lakshmi Nagar Khemnichak');
+    expect(controller.cashCtrl.text, '12000');
+    expect(controller.bookingItems, hasLength(1));
+    expect(controller.bookingItems.single.descCtrl.text, 'Gold Ring');
+
+    expect(await database.select(database.customers).get(), isEmpty);
+    expect(await database.select(database.salesOrders).get(), isEmpty);
+    expect(await database.select(database.orderAdvances).get(), isEmpty);
+  });
+
+  test('controller saves multi-item booking as one numbered batch', () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.nameCtrl.text = 'Batch Customer';
+    controller.mobileCtrl.text = '9304479436';
+    controller.cityCtrl.text = 'Main Road';
+    controller.cashCtrl.text = '10000';
+
+    controller.addBookingItem();
+    final first = controller.bookingItems[0];
+    first.descCtrl.text = 'Gold Ring';
+    first.grossCtrl.text = '5';
+    first.rateCtrl.text = '6000';
+
+    controller.addBookingItem();
+    final second = controller.bookingItems[1];
+    second.updateMetal(MetalType.silver);
+    second.descCtrl.text = 'Silver Chain';
+    second.grossCtrl.text = '20';
+    second.rateCtrl.text = '80';
+
+    final result = await controller.saveBooking();
+    final yearToken = repository.getCurrentDocumentYearToken();
+    final orders = await (database.select(database.salesOrders)
+          ..orderBy([(table) => drift.OrderingTerm.asc(table.id)]))
+        .get();
+    final advances = await (database.select(database.orderAdvances)
+          ..orderBy([(table) => drift.OrderingTerm.asc(table.orderId)]))
+        .get();
+
+    expect(result.success, isTrue);
+    expect(result.bookingNo, 'SH-BK-$yearToken-0001 +1');
+    expect(result.orderIds, hasLength(2));
+    expect(orders.map((row) => row.orderNo), [
+      'SH-BK-$yearToken-0001',
+      'SH-BK-$yearToken-0002',
+    ]);
+    expect(orders.map((row) => row.itemName), ['Gold Ring', 'Silver Chain']);
+    expect(advances.map((row) => row.amountPaid), [5000, 5000]);
   });
 
   test('booking invoice builds every supported invoice design', () async {
@@ -135,6 +220,7 @@ void main() {
           includeDuplicateStamp: true,
           copies: 2,
         ),
+        shopProfileOverride: _testShopProfile,
         generatedAt: DateTime(2026, 9, 8, 12),
       );
 
@@ -434,6 +520,30 @@ void main() {
     controller.dispose();
   });
 }
+
+const _testShopProfile = ShopPrintDocumentProfile(
+  tenantId: 'test',
+  fields: [
+    ShopPrintDocumentField(
+      id: 'shop_name',
+      label: 'Shop Name',
+      value: 'Anjali Jewellers',
+      group: ShopPrintFieldGroup.identity,
+    ),
+    ShopPrintDocumentField(
+      id: 'business_address',
+      label: 'Business Address',
+      value: 'Patna, Bihar',
+      group: ShopPrintFieldGroup.address,
+    ),
+    ShopPrintDocumentField(
+      id: 'mobile_number',
+      label: 'Mobile',
+      value: '9000000000',
+      group: ShopPrintFieldGroup.contact,
+    ),
+  ],
+);
 
 Future<void> _waitForBookingNumber(BookingAdvanceController controller) async {
   for (var attempt = 0; attempt < 20; attempt++) {

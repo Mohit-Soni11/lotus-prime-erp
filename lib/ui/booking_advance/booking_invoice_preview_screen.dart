@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
 import '../../../core/feedback/app_feedback.dart';
+import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../../../logic/booking_advance/booking_invoice_pdf_service.dart';
 import '../../../logic/booking_advance/booking_invoice_preview_controller.dart';
 import '../../../repositories/booking_advance/booking_advance_repository.dart';
@@ -11,21 +12,31 @@ import 'widgets/booking_invoice_command_panel.dart';
 class BookingInvoicePreviewScreen extends StatefulWidget {
   const BookingInvoicePreviewScreen({
     super.key,
-    required this.orderIds,
+    this.orderIds = const [],
+    this.initialBookings = const [],
+    this.sourceController,
     BookingAdvanceRepository? repository,
   }) : _repository = repository;
 
   final List<int> orderIds;
+  final List<EditableBookingAdvance> initialBookings;
+  final BookingAdvanceController? sourceController;
   final BookingAdvanceRepository? _repository;
 
   static Future<void> push(
     BuildContext context, {
-    required List<int> orderIds,
+    List<int> orderIds = const [],
+    List<EditableBookingAdvance> initialBookings = const [],
+    BookingAdvanceController? sourceController,
   }) {
     return Navigator.of(context).push(
       PageRouteBuilder<void>(
         pageBuilder: (ctx, anim, _) {
-          return BookingInvoicePreviewScreen(orderIds: orderIds);
+          return BookingInvoicePreviewScreen(
+            orderIds: orderIds,
+            initialBookings: initialBookings,
+            sourceController: sourceController,
+          );
         },
         transitionsBuilder: (ctx, anim, _, child) {
           return FadeTransition(
@@ -51,12 +62,16 @@ class _BookingInvoicePreviewScreenState
   bool _isPrinting = false;
   bool _isExported = false;
   bool _isPrinted = false;
+  bool _isCompleting = false;
+  bool _isBookingSaved = false;
+  List<int> _savedOrderIds = const [];
 
   @override
   void initState() {
     super.initState();
     _controller = BookingInvoicePreviewController(
       orderIds: widget.orderIds,
+      initialBookings: widget.initialBookings,
       repository: widget._repository,
     );
     _controller.addListener(_handleControllerChanged);
@@ -93,12 +108,14 @@ class _BookingInvoicePreviewScreenState
               isSharing: _isSharing,
               isExporting: _isExporting,
               isPrinting: _isPrinting,
+              isCompleting: _isCompleting,
               isExported: _isExported,
               isPrinted: _isPrinted,
               onBack: () => Navigator.of(context).maybePop(),
               onShare: _sharePdf,
               onExport: _exportPdf,
               onPrint: _printPdf,
+              onSaveAndNew: _saveAndStartNew,
             ),
             Expanded(
               child: Container(
@@ -135,9 +152,6 @@ class _BookingInvoicePreviewScreenState
       '${_controller.selectedFormat.name}-'
       '${_controller.printCopies}-'
       '${_controller.includeDuplicateStamp}-'
-      '${_controller.includeCustomerAddress}-'
-      '${_controller.includeRateColumn}-'
-      '${_controller.includeTerms}-'
       '${_controller.pdfBytes?.length ?? 0}',
     );
 
@@ -208,6 +222,16 @@ class _BookingInvoicePreviewScreenState
   Future<void> _printPdf() async {
     setState(() => _isPrinting = true);
     try {
+      final saveResult = await _finalizeBookingIfNeeded();
+      if (!mounted) return;
+      if (!saveResult.success) {
+        setState(() => _isPrinting = false);
+        AppFeedback.error(context, message: saveResult.message);
+        return;
+      }
+
+      await _controller.loadSavedBookings(saveResult.orderIds);
+      if (!mounted) return;
       final printed = await _controller.printInvoice(context);
       if (!mounted) return;
       setState(() {
@@ -215,9 +239,18 @@ class _BookingInvoicePreviewScreenState
         _isPrinted = printed || _isPrinted;
       });
       if (printed) {
+        Navigator.of(context).pop();
+        if (!mounted) return;
         AppFeedback.success(
           context,
-          message: 'Booking invoice printed successfully.',
+          message:
+              'Booking invoice saved and printed successfully. New booking is ready.',
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        AppFeedback.success(
+          context,
+          message: 'Booking saved successfully. Print was cancelled.',
         );
       }
     } catch (_) {
@@ -228,5 +261,66 @@ class _BookingInvoicePreviewScreenState
         message: 'Booking invoice print failed. Please try again.',
       );
     }
+  }
+
+  Future<void> _saveAndStartNew() {
+    return _completeBookingAndReturn(
+      successMessage: 'Booking saved successfully. New booking is ready.',
+    );
+  }
+
+  Future<void> _completeBookingAndReturn({
+    required String successMessage,
+  }) async {
+    setState(() => _isCompleting = true);
+    final result = await _finalizeBookingIfNeeded();
+    if (!mounted) return;
+    setState(() => _isCompleting = false);
+
+    if (!result.success) {
+      AppFeedback.error(context, message: result.message);
+      return;
+    }
+
+    Navigator.of(context).pop();
+    if (!mounted) return;
+    AppFeedback.success(
+      context,
+      message: successMessage,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  Future<
+      ({
+        bool success,
+        String message,
+        String bookingNo,
+        List<int> orderIds,
+      })> _finalizeBookingIfNeeded() async {
+    if (_isBookingSaved) {
+      return (
+        success: true,
+        message: 'Booking already saved.',
+        bookingNo: _controller.bookingNumber,
+        orderIds: _savedOrderIds,
+      );
+    }
+
+    final sourceController = widget.sourceController;
+    if (sourceController == null) {
+      return (
+        success: false,
+        message: 'Booking source is not available for saving.',
+        bookingNo: '',
+        orderIds: const <int>[],
+      );
+    }
+    final result = await sourceController.saveBooking();
+    if (result.success) {
+      _isBookingSaved = true;
+      _savedOrderIds = result.orderIds;
+    }
+    return result;
   }
 }

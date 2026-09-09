@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../logic/booking_advance/booking_advance_controller.dart';
+import '../../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
 import 'widgets/booking_action_buttons.dart';
 import 'widgets/booking_payment_hub.dart';
@@ -22,7 +23,7 @@ class BookingRightPanel extends StatelessWidget {
 
   final BookingAdvanceController ctrl;
   final void Function(String message, bool isSuccess) onSaved;
-  final void Function(List<int> orderIds) onGenerateInvoice;
+  final void Function(List<EditableBookingAdvance> bookings) onGenerateInvoice;
 
   @override
   Widget build(BuildContext context) {

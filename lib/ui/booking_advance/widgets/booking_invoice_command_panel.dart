@@ -4,13 +4,11 @@ import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../logic/booking_advance/booking_invoice_preview_controller.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../theme/booking_advance/booking_advance_theme.dart';
-import 'booking_money_text.dart';
 
 part 'booking_invoice_command_actions.dart';
 part 'booking_invoice_command_design.dart';
 part 'booking_invoice_command_format.dart';
-part 'booking_invoice_command_overview.dart';
-part 'booking_invoice_command_options.dart';
+part 'booking_invoice_command_header.dart';
 part 'booking_invoice_command_printing.dart';
 part 'booking_invoice_command_shared.dart';
 
@@ -21,24 +19,28 @@ class BookingInvoiceCommandPanel extends StatelessWidget {
     required this.isSharing,
     required this.isExporting,
     required this.isPrinting,
+    required this.isCompleting,
     required this.isExported,
     required this.isPrinted,
     required this.onBack,
     required this.onShare,
     required this.onExport,
     required this.onPrint,
+    required this.onSaveAndNew,
   });
 
   final BookingInvoicePreviewController controller;
   final bool isSharing;
   final bool isExporting;
   final bool isPrinting;
+  final bool isCompleting;
   final bool isExported;
   final bool isPrinted;
   final VoidCallback onBack;
   final Future<void> Function() onShare;
   final Future<void> Function() onExport;
   final Future<void> Function() onPrint;
+  final Future<void> Function() onSaveAndNew;
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +70,6 @@ class BookingInvoiceCommandPanel extends StatelessWidget {
                   const SizedBox(height: 24),
                   _DesignSection(controller: controller),
                   const SizedBox(height: 24),
-                  _BookingContextSection(controller: controller),
-                  const SizedBox(height: 24),
-                  _DisplayOptionsSection(controller: controller),
-                  const SizedBox(height: 24),
                   _PrintControlsSection(controller: controller),
                 ],
               ),
@@ -82,11 +80,13 @@ class BookingInvoiceCommandPanel extends StatelessWidget {
             isSharing: isSharing,
             isExporting: isExporting,
             isPrinting: isPrinting,
+            isCompleting: isCompleting,
             isExported: isExported,
             isPrinted: isPrinted,
             onShare: onShare,
             onExport: onExport,
             onPrint: onPrint,
+            onSaveAndNew: onSaveAndNew,
           ),
         ],
       ),

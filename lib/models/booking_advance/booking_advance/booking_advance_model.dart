@@ -1,12 +1,3 @@
-// =============================================================================
-// FILE        : booking_advance_model.dart
-// MODULE      : Sales → Booking & Advance
-// LAYER       : Models
-// DESCRIPTION : Data models for booking items and scrap/exchange metal.
-//               ✅ v2 FIX: BookingScrapModel.totalValue now uses fineWt × rate
-//                          instead of netWt × rate. Critical business logic fix.
-// =============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
@@ -15,11 +6,6 @@ double _parse(String text) {
   return double.tryParse(text.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 }
 
-// =============================================================================
-// 1. BOOKING ITEM MODEL
-//    Represents a single item being booked/ordered by the customer.
-//    Pattern mirrors SaleItemModel from the Sales POS module.
-// =============================================================================
 class BookingItemModel extends ChangeNotifier {
   MetalType _metal;
   MakingChargeType _makingChargeType;
@@ -90,7 +76,6 @@ class BookingItemModel extends ChangeNotifier {
     });
   }
 
-  // ── GETTERS ───────────────────────────────────────────────────────────────
   MetalType get metal => _metal;
   MakingChargeType get makingChargeType => _makingChargeType;
 
@@ -116,7 +101,6 @@ class BookingItemModel extends ChangeNotifier {
   double get metalValue => netWt * _rate;
   double get totalValue => metalValue + makingAmt;
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
   void updateMetal(MetalType m) {
     if (_metal == m) return;
     _metal = m;
@@ -182,20 +166,6 @@ class BookingItemModel extends ChangeNotifier {
   }
 }
 
-// =============================================================================
-// 2. BOOKING SCRAP MODEL
-//    Represents old/scrap metal given by the customer as part of advance.
-//    Pattern mirrors OldGoldItemModel from the Sales POS module.
-//
-//    ✅ v2 BUG FIX:
-//    WRONG (v1): totalValue = netWt × rate
-//    CORRECT:    totalValue = fineWt × rate
-//
-//    Reason: Customer gives old gold of 5.260g with 55% purity.
-//    Fine (pure) weight = 5.260 × 55% = 2.893g.
-//    Credit is given only for pure metal — not gross weight.
-//    Previous calculation was over-crediting the customer significantly.
-// =============================================================================
 class BookingScrapModel extends ChangeNotifier {
   MetalType _metal;
 
@@ -245,21 +215,17 @@ class BookingScrapModel extends ChangeNotifier {
     });
   }
 
-  // ── GETTERS ───────────────────────────────────────────────────────────────
   MetalType get metal => _metal;
   double get netWt => _grossWt - _lessWt;
   double get rate => _rate;
 
   double get fineWt {
-    // Silver without purity entry → treated as 100% fine
     if (_metal == MetalType.silver && purityCtrl.text.isEmpty) return netWt;
     return netWt * (_purity / 100);
   }
 
-  // ✅ v2 FIX: fineWt × rate (was netWt × rate — incorrect business logic)
   double get totalValue => fineWt * _rate;
 
-  // ── ACTIONS ───────────────────────────────────────────────────────────────
   void updateMetal(MetalType m) {
     _metal = m;
     notifyListeners();
