@@ -14,6 +14,27 @@ enum LotusPdfPrintResult {
   failed,
 }
 
+enum LotusPrintColorMode {
+  color,
+  blackAndWhite,
+}
+
+extension LotusPrintColorModeX on LotusPrintColorMode {
+  String get label {
+    return switch (this) {
+      LotusPrintColorMode.color => 'Colour',
+      LotusPrintColorMode.blackAndWhite => 'Black & White',
+    };
+  }
+
+  OutputType get outputType {
+    return switch (this) {
+      LotusPrintColorMode.color => OutputType.generic,
+      LotusPrintColorMode.blackAndWhite => OutputType.grayscale,
+    };
+  }
+}
+
 extension LotusPdfPrintResultX on LotusPdfPrintResult {
   bool get completed =>
       this == LotusPdfPrintResult.printed ||
@@ -31,6 +52,7 @@ class LotusPdfPrintDispatcher {
     required String printerPickerTitle,
     required String virtualSaveDialogTitle,
     bool usePrinterSettings = true,
+    LotusPrintColorMode colorMode = LotusPrintColorMode.color,
   }) async {
     if (bytes.isEmpty) return LotusPdfPrintResult.failed;
 
@@ -56,6 +78,7 @@ class LotusPdfPrintDispatcher {
         printer: printer,
         name: documentName,
         usePrinterSettings: usePrinterSettings,
+        outputType: colorMode.outputType,
         onLayout: (_) async => bytes,
       );
 

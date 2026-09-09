@@ -48,6 +48,7 @@ class BookingInvoicePreviewController extends ChangeNotifier {
   int printCopies = 1;
   bool includeDuplicateStamp = false;
   bool usePrinterDriverSettings = true;
+  LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   bool includeCustomerAddress = true;
   bool includeTerms = true;
   bool includeRateColumn = true;
@@ -152,10 +153,12 @@ class BookingInvoicePreviewController extends ChangeNotifier {
     int? copies,
     bool? duplicate,
     bool? useDriverSettings,
+    LotusPrintColorMode? colorMode,
   }) async {
     printCopies = (copies ?? printCopies).clamp(1, 5).toInt();
     includeDuplicateStamp = duplicate ?? includeDuplicateStamp;
     usePrinterDriverSettings = useDriverSettings ?? usePrinterDriverSettings;
+    printColorMode = colorMode ?? printColorMode;
     if (printCopies <= 1) {
       includeDuplicateStamp = false;
     }
@@ -246,6 +249,7 @@ class BookingInvoicePreviewController extends ChangeNotifier {
       printerPickerTitle: 'Select Booking Invoice Printer',
       virtualSaveDialogTitle: 'Save Booking Invoice As',
       usePrinterSettings: usePrinterDriverSettings,
+      colorMode: printColorMode,
     );
     return result.completed;
   }

@@ -10,6 +10,7 @@ class _PrintControlsSection extends StatelessWidget {
     final copies = controller.printCopies;
     final duplicateEnabled = controller.includeDuplicateStamp;
     final useDriverSettings = controller.usePrinterDriverSettings;
+    final colorMode = controller.printColorMode;
     final canDecrease = copies > 1;
     final canIncrease = copies < 5;
     final canMarkDuplicate = copies > 1;
@@ -110,6 +111,18 @@ class _PrintControlsSection extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               _PrintControlSurface(
+                icon: Icons.invert_colors_rounded,
+                title: 'Print Mode',
+                subtitle: 'Choose colour or grayscale output',
+                trailing: _PrintModeSelector(
+                  value: colorMode,
+                  onChanged: (value) => controller.updatePrintOptions(
+                    colorMode: value,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _PrintControlSurface(
                 icon: Icons.settings_applications_rounded,
                 title: 'Printer Driver Settings',
                 subtitle: 'Use saved paper, tray and printer defaults',
@@ -144,6 +157,17 @@ class _PrintControlsSection extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _MetaPill(
+                      icon: colorMode == LotusPrintColorMode.color
+                          ? Icons.palette_rounded
+                          : Icons.contrast_rounded,
+                      label: colorMode == LotusPrintColorMode.color
+                          ? 'Colour'
+                          : 'B&W',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MetaPill(
                       icon: duplicateEnabled
                           ? Icons.verified_rounded
                           : Icons.lock_open_rounded,
@@ -156,6 +180,98 @@ class _PrintControlsSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PrintModeSelector extends StatelessWidget {
+  const _PrintModeSelector({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final LotusPrintColorMode value;
+  final ValueChanged<LotusPrintColorMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: BookingAdvanceColors.shellBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: BookingAdvanceColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PrintModeOption(
+            label: 'Colour',
+            icon: Icons.palette_rounded,
+            selected: value == LotusPrintColorMode.color,
+            onTap: () => onChanged(LotusPrintColorMode.color),
+          ),
+          _PrintModeOption(
+            label: 'B&W',
+            icon: Icons.contrast_rounded,
+            selected: value == LotusPrintColorMode.blackAndWhite,
+            onTap: () => onChanged(LotusPrintColorMode.blackAndWhite),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrintModeOption extends StatelessWidget {
+  const _PrintModeOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: selected ? BookingAdvanceColors.brandGold : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color:
+                  selected ? Colors.black : BookingAdvanceColors.shellTextMuted,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected
+                    ? Colors.black
+                    : BookingAdvanceColors.shellTextMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

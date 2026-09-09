@@ -78,6 +78,7 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
   int printCopies = 1;
   bool includeDuplicateStamp = false;
   bool usePrinterDriverSettings = true;
+  LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   bool includeOriginalPricing = true;
   bool includeVerificationAudit = true;
   bool includeStockRouting = true;
@@ -278,10 +279,12 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
     int? copies,
     bool? duplicate,
     bool? useDriverSettings,
+    LotusPrintColorMode? colorMode,
   }) async {
     printCopies = (copies ?? printCopies).clamp(1, 5).toInt();
     includeDuplicateStamp = duplicate ?? includeDuplicateStamp;
     usePrinterDriverSettings = useDriverSettings ?? usePrinterDriverSettings;
+    printColorMode = colorMode ?? printColorMode;
     if (printCopies <= 1) {
       includeDuplicateStamp = false;
     }
@@ -300,6 +303,7 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
       printerPickerTitle: 'Select Document Printer',
       virtualSaveDialogTitle: 'Save Document Print Output As',
       usePrinterSettings: usePrinterDriverSettings,
+      colorMode: printColorMode,
     );
     return result.completed;
   }

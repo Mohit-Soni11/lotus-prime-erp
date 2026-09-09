@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import '../../../core/pdf/lotus_pdf_page_counter.dart';
+import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
@@ -54,6 +55,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
   int _copies = 1;
   bool _duplicateStamp = false;
   bool _useDriverSettings = true;
+  LotusPrintColorMode _printColorMode = LotusPrintColorMode.color;
 
   @override
   void initState() {
@@ -63,6 +65,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
     _copies = widget.invoiceCtrl.printCopies;
     _duplicateStamp = _copies > 1 && widget.invoiceCtrl.includeDuplicateStamp;
     _useDriverSettings = widget.invoiceCtrl.usePrinterDriverSettings;
+    _printColorMode = widget.invoiceCtrl.printColorMode;
 
     _animCtrl = AnimationController(
       vsync: this,
@@ -332,6 +335,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                     copies: _copies,
                     duplicate: _duplicateStamp,
                     useDriverSettings: _useDriverSettings,
+                    colorMode: _printColorMode,
                   );
                 },
               ),
@@ -378,12 +382,56 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                           copies: _copies,
                           duplicate: _duplicateStamp,
                           useDriverSettings: _useDriverSettings,
+                          colorMode: _printColorMode,
                         );
                       }
                     : null,
                 activeThumbColor: SalesPosColors.brandGold,
                 inactiveThumbColor: SalesPosColors.shellTextMuted,
                 inactiveTrackColor: SalesPosColors.bodyBorder,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: SalesPosColors.bodyPanelBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SalesPosColors.bodyBorder),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.invert_colors_rounded,
+                  color: SalesPosColors.bodyTextMain, size: 18),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Print Mode",
+                          style: TextStyle(
+                              color: SalesPosColors.bodyTextMain,
+                              fontSize: SalesPosStyles.fontLabel,
+                              fontWeight: FontWeight.w700)),
+                      Text("Choose colour or black & white output",
+                          style: TextStyle(
+                              color: SalesPosColors.shellTextMuted,
+                              fontSize: SalesPosStyles.fontCaption)),
+                    ]),
+              ),
+              _PrintModeSelector(
+                value: _printColorMode,
+                onChanged: (value) {
+                  setState(() => _printColorMode = value);
+                  widget.invoiceCtrl.updatePrintOptions(
+                    copies: _copies,
+                    duplicate: _duplicateStamp,
+                    useDriverSettings: _useDriverSettings,
+                    colorMode: value,
+                  );
+                },
               ),
             ],
           ),
@@ -424,6 +472,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                     copies: _copies,
                     duplicate: _duplicateStamp,
                     useDriverSettings: _useDriverSettings,
+                    colorMode: _printColorMode,
                   );
                 },
                 activeThumbColor: SalesPosColors.brandGold,
@@ -476,6 +525,7 @@ class _PosPrintSelectorSheetState extends State<PosPrintSelectorSheet>
                       _copies > 1 && _duplicateStamp;
                   widget.invoiceCtrl.usePrinterDriverSettings =
                       _useDriverSettings;
+                  widget.invoiceCtrl.printColorMode = _printColorMode;
                   Navigator.pop(context);
                   widget.onPrint();
                 },
@@ -657,6 +707,95 @@ class _PaperSizeThumbnail extends StatelessWidget {
               fontSize: SalesPosStyles.fontCaption),
         ),
       ],
+    );
+  }
+}
+
+class _PrintModeSelector extends StatelessWidget {
+  const _PrintModeSelector({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final LotusPrintColorMode value;
+  final ValueChanged<LotusPrintColorMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PrintModeOption(
+            label: 'Colour',
+            icon: Icons.palette_rounded,
+            selected: value == LotusPrintColorMode.color,
+            onTap: () => onChanged(LotusPrintColorMode.color),
+          ),
+          _PrintModeOption(
+            label: 'B&W',
+            icon: Icons.contrast_rounded,
+            selected: value == LotusPrintColorMode.blackAndWhite,
+            onTap: () => onChanged(LotusPrintColorMode.blackAndWhite),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrintModeOption extends StatelessWidget {
+  const _PrintModeOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: selected ? SalesPosColors.brandGold : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? Colors.black : SalesPosColors.shellTextMuted,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.black : SalesPosColors.shellTextMuted,
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

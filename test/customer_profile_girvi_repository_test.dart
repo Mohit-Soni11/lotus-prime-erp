@@ -55,6 +55,89 @@ void main() {
     expect(profile.activeLoans, 2);
   });
 
+  test('customer profile includes active booking advance orders', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Reyansh Soni',
+            mobile: '9304479436',
+          ),
+        );
+
+    final pendingOrderId = await db.into(db.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'AJ-BK-26-0001',
+            customerId: customerId,
+            itemName: 'Gold Ring',
+            metalType: const Value('GOLD'),
+            purity: const Value('22KT'),
+            approxWeight: const Value(10),
+            bookingType: const Value('LOCKED'),
+            lockedRate: const Value(6500),
+            status: const Value('PENDING'),
+            deliveryDate: Value(DateTime(2026, 9, 30)),
+            createdAt: Value(DateTime(2026, 9, 8, 10)),
+          ),
+        );
+    final readyOrderId = await db.into(db.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'AJ-BK-26-0002',
+            customerId: customerId,
+            itemName: 'Silver Chain',
+            metalType: const Value('SILVER'),
+            purity: const Value('925'),
+            approxWeight: const Value(50),
+            bookingType: const Value('OPEN'),
+            lockedRate: const Value(0),
+            status: const Value('READY'),
+            createdAt: Value(DateTime(2026, 9, 9, 10)),
+          ),
+        );
+    final deliveredOrderId = await db.into(db.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'AJ-BK-26-0003',
+            customerId: customerId,
+            itemName: 'Delivered Ring',
+            status: const Value('DELIVERED'),
+          ),
+        );
+
+    await db.into(db.orderAdvances).insert(
+          OrderAdvancesCompanion.insert(
+            orderId: pendingOrderId,
+            amountPaid: const Value(12000),
+            rateOnDate: const Value(6500),
+          ),
+        );
+    await db.into(db.orderAdvances).insert(
+          OrderAdvancesCompanion.insert(
+            orderId: readyOrderId,
+            amountPaid: const Value(5000),
+            rateOnDate: const Value(0),
+          ),
+        );
+    await db.into(db.orderAdvances).insert(
+          OrderAdvancesCompanion.insert(
+            orderId: deliveredOrderId,
+            amountPaid: const Value(3000),
+            rateOnDate: const Value(6500),
+          ),
+        );
+
+    final profile =
+        await CustomerProfileRepository(db: db).fetchProfile(customerId);
+
+    expect(profile == null, isFalse);
+    expect(profile!.advanceOrders.map((order) => order.orderNo), [
+      'AJ-BK-26-0002',
+      'AJ-BK-26-0001',
+    ]);
+    expect(profile.activeAdvanceCount, 2);
+    expect(profile.totalAdvancePaid, 17000);
+    expect(profile.advanceOrders.first.totalAdvancePaid, 5000);
+    expect(profile.advanceOrders.last.estimatedTotal, 65000);
+    expect(profile.advanceOrders.last.remainingBalance, 53000);
+  });
+
   test('customer profile marks bills with posted return vouchers', () async {
     final customerId = await db.into(db.customers).insert(
           CustomersCompanion.insert(

@@ -152,4 +152,19 @@ void main() {
 
     controller.dispose();
   });
+
+  test('advance conversion guard ignores customer-only lookup fields', () {
+    final controller = PosBillingController();
+
+    controller.nameCtrl.text = 'Reyansh Soni';
+    controller.mobileCtrl.text = '9304479436';
+    controller.cityCtrl.text = 'East Lakshmi Nagar';
+
+    expect(controller.hasDraftSaleInput, isFalse);
+
+    controller.cashCtrl.text = '100';
+    expect(controller.hasDraftSaleInput, isTrue);
+
+    controller.dispose();
+  });
 }

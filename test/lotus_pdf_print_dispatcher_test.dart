@@ -55,5 +55,15 @@ void main() {
       expect(LotusPdfPrintResult.cancelled.completed, isFalse);
       expect(LotusPdfPrintResult.failed.completed, isFalse);
     });
+
+    test('maps print colour modes to printer output intents', () {
+      expect(LotusPrintColorMode.color.label, 'Colour');
+      expect(LotusPrintColorMode.color.outputType, OutputType.generic);
+      expect(LotusPrintColorMode.blackAndWhite.label, 'Black & White');
+      expect(
+        LotusPrintColorMode.blackAndWhite.outputType,
+        OutputType.grayscale,
+      );
+    });
   });
 }

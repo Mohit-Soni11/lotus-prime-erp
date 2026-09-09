@@ -21,6 +21,7 @@ import '../../../repositories/setting/billing_setup/sales_billing_repo.dart';
 import '../../../repositories/setting/shop_setup/shop_setup_repository.dart';
 import '../../../repositories/setting/shop_setup/shop_session_manager.dart';
 import '../../../core/logging/app_logger.dart';
+import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -78,6 +79,7 @@ class PosInvoiceController extends ChangeNotifier {
   int printCopies = 1;
   bool includeDuplicateStamp = false;
   bool usePrinterDriverSettings = true;
+  LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   MetalType? activePrintMetal;
   int _previewBuildSerial = 0;
   int _shopPrintProfileSerial = 0;
@@ -507,11 +509,13 @@ class PosInvoiceController extends ChangeNotifier {
     required int copies,
     required bool duplicate,
     bool? useDriverSettings,
+    LotusPrintColorMode? colorMode,
   }) async {
     final normalizedCopies = copies.clamp(1, 5).toInt();
     printCopies = normalizedCopies;
     includeDuplicateStamp = normalizedCopies > 1 && duplicate;
     usePrinterDriverSettings = useDriverSettings ?? usePrinterDriverSettings;
+    printColorMode = colorMode ?? printColorMode;
     notifyListeners();
     if (invoice != null) {
       _scheduleActivePreviewPdfRefresh();
@@ -1071,6 +1075,7 @@ class PosInvoiceController extends ChangeNotifier {
       bytes: printBytes,
       invoice: invoice!,
       usePrinterSettings: usePrinterDriverSettings,
+      colorMode: printColorMode,
     );
   }
 

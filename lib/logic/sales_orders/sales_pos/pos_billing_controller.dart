@@ -2006,6 +2006,17 @@ class PosBillingController extends ChangeNotifier {
       !isCurrentSaleCommitted &&
       (saleItems.isNotEmpty || tradeInItems.isNotEmpty);
 
+  bool get hasDraftSaleInput {
+    if (isCurrentSaleCommitted) return false;
+    if (saleItems.isNotEmpty || tradeInItems.isNotEmpty) return true;
+    return promiseDate != null ||
+        discountCtrl.text.trim().isNotEmpty ||
+        cashCtrl.text.trim().isNotEmpty ||
+        upiCtrl.text.trim().isNotEmpty ||
+        cardCtrl.text.trim().isNotEmpty ||
+        advCtrl.text.trim().isNotEmpty;
+  }
+
   //  Promise date is carried from the billing panel to the invoice.
   DateTime? promiseDate;
 

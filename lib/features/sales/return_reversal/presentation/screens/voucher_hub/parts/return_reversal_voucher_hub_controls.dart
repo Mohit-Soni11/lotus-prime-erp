@@ -376,6 +376,7 @@ extension _ReturnReversalVoucherHubControls
     final copies = _voucherCtrl.printCopies;
     final duplicateEnabled = _voucherCtrl.includeDuplicateStamp;
     final useDriverSettings = _voucherCtrl.usePrinterDriverSettings;
+    final colorMode = _voucherCtrl.printColorMode;
     final totalPages = LotusPdfPageCounter.tryCountPages(_voucherCtrl.pdfBytes);
     final pagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
       totalPages: totalPages,
@@ -459,6 +460,7 @@ extension _ReturnReversalVoucherHubControls
                       copies: copies - 1,
                       duplicate: duplicateEnabled,
                       useDriverSettings: useDriverSettings,
+                      colorMode: colorMode,
                     );
                   },
                   onIncrease: () {
@@ -467,6 +469,7 @@ extension _ReturnReversalVoucherHubControls
                       copies: copies + 1,
                       duplicate: duplicateEnabled,
                       useDriverSettings: useDriverSettings,
+                      colorMode: colorMode,
                     );
                   },
                 ),
@@ -485,6 +488,7 @@ extension _ReturnReversalVoucherHubControls
                             copies: copies,
                             duplicate: value,
                             useDriverSettings: useDriverSettings,
+                            colorMode: colorMode,
                           )
                       : null,
                   activeThumbColor: SalesPosColors.brandGold,
@@ -492,6 +496,21 @@ extension _ReturnReversalVoucherHubControls
                       SalesPosColors.brandGold.withValues(alpha: 0.32),
                   inactiveThumbColor: SalesPosColors.shellTextMuted,
                   inactiveTrackColor: SalesPosColors.shellBg,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _PrintControlSurface(
+                icon: Icons.invert_colors_rounded,
+                title: 'Print Mode',
+                subtitle: 'Choose colour or grayscale output',
+                trailing: _PrintModeSelector(
+                  value: colorMode,
+                  onChanged: (value) => _voucherCtrl.updatePrintOptions(
+                    copies: copies,
+                    duplicate: duplicateEnabled,
+                    useDriverSettings: useDriverSettings,
+                    colorMode: value,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -505,6 +524,7 @@ extension _ReturnReversalVoucherHubControls
                     copies: copies,
                     duplicate: duplicateEnabled,
                     useDriverSettings: value,
+                    colorMode: colorMode,
                   ),
                   activeThumbColor: SalesPosColors.brandGold,
                   activeTrackColor:
@@ -529,6 +549,17 @@ extension _ReturnReversalVoucherHubControls
                       label: pagesPerCopy == null
                           ? LotusPdfPageCounter.copyLabel(copies)
                           : '${LotusPdfPageCounter.pageLabel(pagesPerCopy)}/copy',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PrintMetaPill(
+                      icon: colorMode == LotusPrintColorMode.color
+                          ? Icons.palette_rounded
+                          : Icons.contrast_rounded,
+                      label: colorMode == LotusPrintColorMode.color
+                          ? 'Colour'
+                          : 'B&W',
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -942,6 +973,95 @@ class _PrintIconTile extends StatelessWidget {
         Icons.print_rounded,
         color: SalesPosColors.brandGold,
         size: 20,
+      ),
+    );
+  }
+}
+
+class _PrintModeSelector extends StatelessWidget {
+  const _PrintModeSelector({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final LotusPrintColorMode value;
+  final ValueChanged<LotusPrintColorMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: SalesPosColors.shellBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: SalesPosColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PrintModeOption(
+            label: 'Colour',
+            icon: Icons.palette_rounded,
+            selected: value == LotusPrintColorMode.color,
+            onTap: () => onChanged(LotusPrintColorMode.color),
+          ),
+          _PrintModeOption(
+            label: 'B&W',
+            icon: Icons.contrast_rounded,
+            selected: value == LotusPrintColorMode.blackAndWhite,
+            onTap: () => onChanged(LotusPrintColorMode.blackAndWhite),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrintModeOption extends StatelessWidget {
+  const _PrintModeOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: selected ? SalesPosColors.brandGold : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? Colors.black : SalesPosColors.shellTextMuted,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.black : SalesPosColors.shellTextMuted,
+                fontSize: SalesPosStyles.fontCaption,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
+import '../../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import '../../../finance/due_collection_entry/due_collection_entry_screen.dart';
 import 'pos_customer_history_formatters.dart';
 
@@ -62,9 +65,11 @@ class PosCustomerHistoryCard extends StatelessWidget {
     final totalBills = history.bills.length;
     final dueBills = history.dues;
     final outstanding = history.outstanding;
-    final accountCredit = history.accountCreditBalance;
     final hasDue = outstanding > 0.005;
-    final hasCredit = accountCredit > 0.005;
+    final activeAdvanceOrders = history.advanceOrders
+        .where((order) => order.isPending || order.isReady)
+        .toList(growable: false);
+    final hasAdvance = activeAdvanceOrders.isNotEmpty;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -91,46 +96,55 @@ class PosCustomerHistoryCard extends StatelessWidget {
         children: [
           _HistoryHeader(customerType: history.type),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.receipt_long_rounded,
-                  label: 'Total Bills',
-                  value: '$totalBills',
-                ),
+          _MetricGrid(
+            tiles: [
+              _MetricTile(
+                icon: Icons.receipt_long_rounded,
+                label: 'Total Bills',
+                value: '$totalBills',
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricTile(
-                  icon: Icons.access_time_rounded,
-                  label: 'Last Visit',
-                  value: PosCustomerHistoryFormatters.lastVisit(history.bills),
-                ),
+              _MetricTile(
+                icon: Icons.access_time_rounded,
+                label: 'Last Visit',
+                value: PosCustomerHistoryFormatters.lastVisit(history.bills),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _MetricTile(
-                  icon: hasDue
-                      ? Icons.error_outline_rounded
-                      : Icons.verified_rounded,
-                  label: hasDue ? 'Outstanding' : 'Account',
-                  value: hasDue
-                      ? PosCustomerHistoryFormatters.amount(outstanding)
-                      : 'Settled',
-                  valueColor:
-                      hasDue ? SalesPosColors.danger : SalesPosColors.success,
-                ),
+              _MetricTile(
+                icon: hasDue
+                    ? Icons.error_outline_rounded
+                    : Icons.verified_rounded,
+                label: 'Account',
+                value: hasDue
+                    ? PosCustomerHistoryFormatters.amount(outstanding)
+                    : 'Settled',
+                valueColor:
+                    hasDue ? SalesPosColors.danger : SalesPosColors.success,
+              ),
+              _MetricTile(
+                icon: hasDue
+                    ? Icons.pending_actions_rounded
+                    : Icons.check_circle_outline_rounded,
+                label: 'Due',
+                value: _invoiceCountLabel(dueBills.length),
+                valueColor:
+                    hasDue ? SalesPosColors.danger : SalesPosColors.success,
+              ),
+              _MetricTile(
+                icon: Icons.event_note_rounded,
+                label: 'Advance',
+                value: hasAdvance
+                    ? _invoiceCountLabel(activeAdvanceOrders.length)
+                    : '0 invoices',
+                valueColor: hasAdvance
+                    ? SalesPosColors.brandGold
+                    : SalesPosColors.textDark,
               ),
             ],
           ),
-          if (hasCredit) ...[
+          if (hasAdvance) ...[
             const SizedBox(height: 10),
-            _StatusStrip(
-              icon: Icons.account_balance_wallet_outlined,
-              label: 'Customer credit available',
-              value: PosCustomerHistoryFormatters.amount(accountCredit),
-              color: SalesPosColors.success,
+            _AdvanceSummary(
+              ctrl: ctrl,
+              orders: activeAdvanceOrders,
             ),
           ],
           if (hasDue) ...[
@@ -147,6 +161,10 @@ class PosCustomerHistoryCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static String _invoiceCountLabel(int count) {
+    return count == 1 ? '1 invoice' : '$count invoices';
   }
 }
 
@@ -208,7 +226,7 @@ class _HistoryHeader extends StatelessWidget {
               ),
               SizedBox(height: 2),
               Text(
-                'Purchase history, visits and due status',
+                'Invoices, advance bookings, visits and due status',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -283,6 +301,40 @@ class _EmptyHistoryNotice extends StatelessWidget {
   }
 }
 
+class _MetricGrid extends StatelessWidget {
+  final List<_MetricTile> tiles;
+
+  const _MetricGrid({required this.tiles});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 10.0;
+        final maxWidth = constraints.maxWidth;
+        final columns = maxWidth >= 1100
+            ? 5
+            : maxWidth >= 860
+                ? 3
+                : 2;
+        final tileWidth = (maxWidth - gap * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final tile in tiles)
+              SizedBox(
+                width: tileWidth,
+                child: tile,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _MetricTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -345,53 +397,526 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-class _StatusStrip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
+class _AdvanceSummary extends StatefulWidget {
+  final PosBillingController ctrl;
+  final List<CustomerAdvanceOrderModel> orders;
 
-  const _StatusStrip({
+  const _AdvanceSummary({
+    required this.ctrl,
+    required this.orders,
+  });
+
+  @override
+  State<_AdvanceSummary> createState() => _AdvanceSummaryState();
+}
+
+class _AdvanceSummaryState extends State<_AdvanceSummary> {
+  static const double _cardWidth = 274;
+  static const double _cardHeight = 148;
+  static const double _cardGap = 8;
+
+  late final FocusNode _focusNode;
+  late final ScrollController _scrollController;
+  var _activeIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(debugLabel: 'PosAdvanceBookingHistory');
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AdvanceSummary oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_activeIndex >= widget.orders.length) {
+      _activeIndex = widget.orders.isEmpty ? 0 : widget.orders.length - 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canMoveBackward = widget.orders.length > 1 && _activeIndex > 0;
+    final canMoveForward =
+        widget.orders.length > 1 && _activeIndex < widget.orders.length - 1;
+
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: _handleKeyEvent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: SalesPosColors.brandGold.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: SalesPosColors.brandGold.withValues(alpha: 0.30),
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 11, 12, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.bookmark_added_rounded,
+                      size: 18,
+                      color: SalesPosColors.brandGold,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Booking Advance Invoices',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: SalesPosColors.goldHoverDark,
+                            fontSize: SalesPosStyles.fontBody,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.orders.length == 1
+                              ? '1 booking invoice ready for sales conversion'
+                              : '${widget.orders.length} booking invoices ready for sales conversion',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: SalesPosColors.textDark,
+                            fontSize: SalesPosStyles.fontLabel,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: SalesPosColors.bodyBorder),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+              child: Row(
+                children: [
+                  _AdvanceNavigationButton(
+                    enabled: canMoveBackward,
+                    icon: Icons.chevron_left_rounded,
+                    height: _cardHeight,
+                    onTap: () => _moveSelection(-1),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: Row(
+                        children: [
+                          for (var index = 0;
+                              index < widget.orders.length;
+                              index += 1) ...[
+                            _AdvanceInvoiceCard(
+                              order: widget.orders[index],
+                              selected: index == _activeIndex,
+                              width: _cardWidth,
+                              height: _cardHeight,
+                              onTap: () {
+                                _focusNode.requestFocus();
+                                setState(() => _activeIndex = index);
+                                _ensureVisible(index);
+                                _convertAdvance(context, widget.orders[index]);
+                              },
+                            ),
+                            if (index != widget.orders.length - 1)
+                              const SizedBox(width: _cardGap),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _AdvanceNavigationButton(
+                    enabled: canMoveForward,
+                    icon: Icons.chevron_right_rounded,
+                    height: _cardHeight,
+                    onTap: () => _moveSelection(1),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) {
+      return KeyEventResult.ignored;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      _moveSelection(-1);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      _moveSelection(1);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      if (widget.orders.isNotEmpty) {
+        _convertAdvance(context, widget.orders[_activeIndex]);
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _moveSelection(int direction) {
+    if (widget.orders.isEmpty) {
+      return;
+    }
+    final nextIndex = (_activeIndex + direction).clamp(
+      0,
+      widget.orders.length - 1,
+    );
+    if (nextIndex == _activeIndex) {
+      return;
+    }
+    _focusNode.requestFocus();
+    setState(() => _activeIndex = nextIndex);
+    _ensureVisible(nextIndex);
+  }
+
+  void _ensureVisible(int index) {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final cardStart = index * (_cardWidth + _cardGap);
+    final cardEnd = cardStart + _cardWidth;
+    final position = _scrollController.position;
+    final visibleStart = position.pixels;
+    final visibleEnd = visibleStart + position.viewportDimension;
+    var targetOffset = visibleStart;
+
+    if (cardStart < visibleStart) {
+      targetOffset = cardStart;
+    } else if (cardEnd > visibleEnd) {
+      targetOffset = cardEnd - position.viewportDimension;
+    } else {
+      return;
+    }
+
+    _scrollController.animateTo(
+      targetOffset.clamp(position.minScrollExtent, position.maxScrollExtent),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Future<void> _convertAdvance(
+    BuildContext context,
+    CustomerAdvanceOrderModel order,
+  ) async {
+    if (widget.ctrl.hasDraftSaleInput) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Convert Advance Booking?'),
+          content: const Text(
+            'Current POS entry will be replaced with the selected advance booking.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Convert'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+
+    final loaded = await widget.ctrl.initializeFromAdvanceOrder(order.id);
+    if (!context.mounted) return;
+    if (loaded) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.success,
+        message: '${order.orderNo} loaded for sales conversion.',
+      );
+      return;
+    }
+
+    AppFeedback.show(
+      context,
+      type: AppFeedbackType.error,
+      message: widget.ctrl.advanceConversionError ??
+          'Advance booking could not be loaded for conversion.',
+    );
+  }
+}
+
+class _AdvanceNavigationButton extends StatelessWidget {
+  final bool enabled;
+  final IconData icon;
+  final double height;
+  final VoidCallback onTap;
+
+  const _AdvanceNavigationButton({
+    required this.enabled,
     required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
+    required this.height,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(9),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          width: 34,
+          height: height,
+          decoration: BoxDecoration(
+            color: enabled ? Colors.white : SalesPosColors.bodyBg,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+              color: enabled
+                  ? SalesPosColors.brandGold.withValues(alpha: 0.36)
+                  : SalesPosColors.bodyBorder,
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 24,
+            color: enabled
+                ? SalesPosColors.brandGold
+                : SalesPosColors.textDark.withValues(alpha: 0.52),
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: SalesPosStyles.fontLabel,
-                fontWeight: FontWeight.w800,
+    );
+  }
+}
+
+class _AdvanceInvoiceCard extends StatelessWidget {
+  final CustomerAdvanceOrderModel order;
+  final bool selected;
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+
+  const _AdvanceInvoiceCard({
+    required this.order,
+    required this.selected,
+    required this.width,
+    required this.height,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rateLabel = order.lockedRate > 0
+        ? 'Locked ${PosCustomerHistoryFormatters.amount(order.lockedRate)}/g'
+        : 'Open rate';
+    final statusLabel = order.status.name.toUpperCase();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: width,
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: selected
+                ? SalesPosColors.brandGold.withValues(alpha: 0.13)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? SalesPosColors.brandGold
+                  : SalesPosColors.brandGold.withValues(alpha: 0.28),
+              width: selected ? 1.5 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: SalesPosColors.brandGold.withValues(alpha: 0.16),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.receipt_long_rounded,
+                    size: 16,
+                    color: SalesPosColors.goldHoverDark,
+                  ),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      order.orderNo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: SalesPosColors.textDark,
+                        fontSize: SalesPosStyles.fontLabel,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  _AdvanceStatusChip(label: statusLabel),
+                ],
               ),
-            ),
+              const SizedBox(height: 7),
+              _AdvanceCardMetaLine(
+                text: '${order.metalType} ${order.purity} | ${order.itemName}',
+                isPrimary: true,
+              ),
+              const SizedBox(height: 6),
+              _AdvanceCardMetaLine(
+                text: 'Weight ${_formatWeight(order.approxWeight)} g',
+              ),
+              const SizedBox(height: 6),
+              _AdvanceCardMetaLine(
+                text: rateLabel,
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Advance ${PosCustomerHistoryFormatters.amount(order.totalAdvancePaid)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: SalesPosColors.goldHoverDark,
+                        fontSize: SalesPosStyles.fontLabel,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: SalesPosColors.goldHoverDark,
+                  ),
+                ],
+              ),
+            ],
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: SalesPosStyles.fontLabel,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  String _formatWeight(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.0005) {
+      return rounded.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(3);
+  }
+}
+
+class _AdvanceCardMetaLine extends StatelessWidget {
+  final String text;
+  final bool isPrimary;
+
+  const _AdvanceCardMetaLine({
+    required this.text,
+    this.isPrimary = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: isPrimary
+              ? SalesPosColors.textDark
+              : SalesPosColors.goldHoverDark,
+          fontSize:
+              isPrimary ? SalesPosStyles.fontBody : SalesPosStyles.fontLabel,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+          height: 1.1,
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvanceStatusChip extends StatelessWidget {
+  final String label;
+
+  const _AdvanceStatusChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 72),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: SalesPosColors.brandGold.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: SalesPosColors.brandGold.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: SalesPosColors.goldHoverDark,
+          fontSize: SalesPosStyles.fontCaption,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
       ),
     );
   }

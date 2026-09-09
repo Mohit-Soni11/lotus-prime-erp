@@ -25,6 +25,7 @@ extension _ReturnReversalVoucherHubPreview
       '${_voucherCtrl.selectedTemplateId}-'
       '${_voucherCtrl.printCopies}-'
       '${_voucherCtrl.includeDuplicateStamp}-'
+      '${_voucherCtrl.printColorMode.name}-'
       '${_voucherCtrl.pdfBytes?.length ?? 0}',
     );
 

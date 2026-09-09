@@ -152,6 +152,7 @@ class _BookingInvoicePreviewScreenState
       '${_controller.selectedFormat.name}-'
       '${_controller.printCopies}-'
       '${_controller.includeDuplicateStamp}-'
+      '${_controller.printColorMode.name}-'
       '${_controller.pdfBytes?.length ?? 0}',
     );
 

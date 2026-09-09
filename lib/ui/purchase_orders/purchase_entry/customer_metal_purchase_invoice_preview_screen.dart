@@ -76,6 +76,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
   int _printCopies = 1;
   bool _includeDuplicateStamp = false;
   bool _usePrinterDriverSettings = true;
+  LotusPrintColorMode _printColorMode = LotusPrintColorMode.color;
   bool _isBuilding = true;
   bool _isPrinting = false;
   bool _isCompletingPurchase = false;
@@ -400,6 +401,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     required int copies,
     required bool duplicate,
     bool? useDriverSettings,
+    LotusPrintColorMode? colorMode,
   }) {
     final normalizedCopies = copies.clamp(1, 5).toInt();
     setState(() {
@@ -407,6 +409,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
       _includeDuplicateStamp = normalizedCopies > 1 && duplicate;
       _usePrinterDriverSettings =
           useDriverSettings ?? _usePrinterDriverSettings;
+      _printColorMode = colorMode ?? _printColorMode;
     });
     _schedulePdfRebuild();
   }
@@ -431,6 +434,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
         printerPickerTitle: 'Select Purchase Invoice Printer',
         virtualSaveDialogTitle: 'Save Purchase Invoice Print Output As',
         usePrinterSettings: _usePrinterDriverSettings,
+        colorMode: _printColorMode,
       );
       if (!result.completed) {
         if (result == LotusPdfPrintResult.failed && mounted) {
@@ -1182,6 +1186,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
     final copies = _printCopies;
     final duplicateEnabled = _includeDuplicateStamp;
     final useDriverSettings = _usePrinterDriverSettings;
+    final colorMode = _printColorMode;
     final totalPages = LotusPdfPageCounter.tryCountPages(_pdfBytes);
     final pagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
       totalPages: totalPages,
@@ -1292,6 +1297,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                       copies: copies - 1,
                       duplicate: duplicateEnabled,
                       useDriverSettings: useDriverSettings,
+                      colorMode: colorMode,
                     );
                   },
                   onIncrease: () {
@@ -1300,6 +1306,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                       copies: copies + 1,
                       duplicate: duplicateEnabled,
                       useDriverSettings: useDriverSettings,
+                      colorMode: colorMode,
                     );
                   },
                 ),
@@ -1318,6 +1325,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                             copies: copies,
                             duplicate: value,
                             useDriverSettings: useDriverSettings,
+                            colorMode: colorMode,
                           )
                       : null,
                   activeThumbColor: PurchaseEntryColors.purchaseAccent,
@@ -1325,6 +1333,21 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                       .withValues(alpha: 0.32),
                   inactiveThumbColor: PurchaseEntryColors.shellMuted,
                   inactiveTrackColor: PurchaseEntryColors.shellBg,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _PrintControlSurface(
+                icon: Icons.invert_colors_rounded,
+                title: 'Print Mode',
+                subtitle: 'Choose colour or grayscale output',
+                trailing: _PrintModeSelector(
+                  value: colorMode,
+                  onChanged: (value) => _updatePrintOptions(
+                    copies: copies,
+                    duplicate: duplicateEnabled,
+                    useDriverSettings: useDriverSettings,
+                    colorMode: value,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -1338,6 +1361,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
                     copies: copies,
                     duplicate: duplicateEnabled,
                     useDriverSettings: value,
+                    colorMode: colorMode,
                   ),
                   activeThumbColor: PurchaseEntryColors.purchaseAccent,
                   activeTrackColor: PurchaseEntryColors.purchaseAccent
@@ -1349,6 +1373,17 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
               const SizedBox(height: 10),
               Row(
                 children: [
+                  Expanded(
+                    child: _PrintMetaPill(
+                      icon: colorMode == LotusPrintColorMode.color
+                          ? Icons.palette_rounded
+                          : Icons.contrast_rounded,
+                      label: colorMode == LotusPrintColorMode.color
+                          ? 'Colour'
+                          : 'B&W',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _PrintMetaPill(
                       icon: Icons.description_rounded,
@@ -1495,7 +1530,7 @@ class _CustomerMetalPurchaseInvoicePreviewScreenState
       duration: const Duration(milliseconds: 220),
       child: Padding(
         key: ValueKey(
-            '$_selectedTemplateId-${_selectedFormat.name}-${_activeMetalKey()}-$_pdfRevision'),
+            '$_selectedTemplateId-${_selectedFormat.name}-${_activeMetalKey()}-${_printColorMode.name}-$_pdfRevision'),
         padding: const EdgeInsets.all(30),
         child: PdfPreview(
           build: (_) async => bytes,
@@ -2475,6 +2510,97 @@ class _DocumentFormatPickerPanel extends StatelessWidget {
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 10),
                 itemCount: PrintFormat.values.length,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrintModeSelector extends StatelessWidget {
+  const _PrintModeSelector({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final LotusPrintColorMode value;
+  final ValueChanged<LotusPrintColorMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: PurchaseEntryColors.shellBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: PurchaseEntryColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PrintModeOption(
+            label: 'Colour',
+            icon: Icons.palette_rounded,
+            selected: value == LotusPrintColorMode.color,
+            onTap: () => onChanged(LotusPrintColorMode.color),
+          ),
+          _PrintModeOption(
+            label: 'B&W',
+            icon: Icons.contrast_rounded,
+            selected: value == LotusPrintColorMode.blackAndWhite,
+            onTap: () => onChanged(LotusPrintColorMode.blackAndWhite),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrintModeOption extends StatelessWidget {
+  const _PrintModeOption({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? PurchaseEntryColors.purchaseAccent
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? Colors.black : PurchaseEntryColors.shellMuted,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.black : PurchaseEntryColors.shellMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
               ),
             ),
           ],

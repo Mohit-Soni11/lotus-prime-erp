@@ -24,12 +24,14 @@ class PosInvoiceOutputService {
     required Uint8List bytes,
     required PosInvoiceModel invoice,
     bool usePrinterSettings = true,
+    LotusPrintColorMode colorMode = LotusPrintColorMode.color,
   }) {
     return _printPdfWithNamedOutput(
       context: context,
       bytes: bytes,
       invoice: invoice,
       usePrinterSettings: usePrinterSettings,
+      colorMode: colorMode,
     );
   }
 
@@ -38,6 +40,7 @@ class PosInvoiceOutputService {
     required Uint8List bytes,
     required PosInvoiceModel invoice,
     required bool usePrinterSettings,
+    required LotusPrintColorMode colorMode,
   }) async {
     final result = await _printDispatcher.dispatch(
       context: context,
@@ -47,6 +50,7 @@ class PosInvoiceOutputService {
       printerPickerTitle: 'Select Invoice Printer',
       virtualSaveDialogTitle: 'Save Print Output As',
       usePrinterSettings: usePrinterSettings,
+      colorMode: colorMode,
     );
     return result.completed;
   }
