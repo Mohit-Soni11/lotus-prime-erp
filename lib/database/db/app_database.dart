@@ -2534,7 +2534,12 @@ const List<String> _billingSetupSchemaSafetySql = [
     "return_policy_text" TEXT NOT NULL DEFAULT '',
     "buyback_policy_text" TEXT NOT NULL DEFAULT '',
     "footer_message" TEXT NOT NULL DEFAULT '',
-    "selected_template" TEXT NOT NULL DEFAULT 'default'
+    "selected_template" TEXT NOT NULL DEFAULT 'default',
+    "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 1,
+    "print_seller_declaration" INTEGER NOT NULL DEFAULT 1,
+    "print_return_policy" INTEGER NOT NULL DEFAULT 1,
+    "print_buyback_policy" INTEGER NOT NULL DEFAULT 1,
+    "print_footer_message" INTEGER NOT NULL DEFAULT 1
   )
   ''',
   '''
@@ -2632,6 +2637,11 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "buyback_policy_text" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "purchase_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "print_seller_declaration" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "print_return_policy" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "print_buyback_policy" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "purchase_billing_settings" ADD COLUMN "print_footer_message" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "updated_at" INTEGER',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "girvi_prefix" TEXT NOT NULL DEFAULT "GRV-"',

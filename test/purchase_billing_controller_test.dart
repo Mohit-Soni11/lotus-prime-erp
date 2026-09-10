@@ -157,4 +157,75 @@ void main() {
       PurchaseBillingModel.defaultFor(BillingMetal.gold).returnWindowDays,
     );
   });
+
+  test('legacy purchase billing table is upgraded with print visibility flags',
+      () async {
+    controller.dispose();
+    await db.close();
+
+    db = AppDatabase.forTesting(
+      NativeDatabase.memory(
+        setup: (rawDb) {
+          rawDb
+            ..execute('PRAGMA user_version = 50')
+            ..execute('''
+              CREATE TABLE purchase_billing_settings (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                created_at INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER,
+                metal TEXT NOT NULL,
+                show_gross_weight INTEGER NOT NULL DEFAULT 1,
+                show_less_weight INTEGER NOT NULL DEFAULT 1,
+                show_net_weight INTEGER NOT NULL DEFAULT 1,
+                show_purity INTEGER NOT NULL DEFAULT 1,
+                show_rate INTEGER NOT NULL DEFAULT 1,
+                show_fine_weight INTEGER NOT NULL DEFAULT 1,
+                show_total_value INTEGER NOT NULL DEFAULT 1,
+                show_stone_details INTEGER NOT NULL DEFAULT 0,
+                show_stone_value INTEGER NOT NULL DEFAULT 0,
+                show_huid INTEGER NOT NULL DEFAULT 0,
+                show_supplier_details INTEGER NOT NULL DEFAULT 1,
+                show_pan_number INTEGER NOT NULL DEFAULT 1,
+                show_diamond_carats INTEGER NOT NULL DEFAULT 1,
+                show_diamond_clarity INTEGER NOT NULL DEFAULT 1,
+                show_certification_no INTEGER NOT NULL DEFAULT 0,
+                show_gst_breakup INTEGER NOT NULL DEFAULT 0,
+                show_hsn_code INTEGER NOT NULL DEFAULT 0,
+                return_window_days INTEGER NOT NULL DEFAULT 1,
+                return_mode TEXT NOT NULL DEFAULT 'Cash Refund',
+                purity_deduct_percent REAL NOT NULL DEFAULT 2.0,
+                late_reclaim_penalty_amount REAL NOT NULL DEFAULT 2000.0,
+                high_value_reclaim_threshold REAL NOT NULL DEFAULT 50000.0,
+                high_value_reclaim_penalty_percent REAL NOT NULL DEFAULT 12.0,
+                terms_and_conditions TEXT NOT NULL DEFAULT '',
+                seller_declaration_text TEXT NOT NULL DEFAULT '',
+                return_policy_text TEXT NOT NULL DEFAULT '',
+                buyback_policy_text TEXT NOT NULL DEFAULT '',
+                footer_message TEXT NOT NULL DEFAULT '',
+                selected_template TEXT NOT NULL DEFAULT 'default'
+              )
+            ''')
+            ..execute(
+              '''
+              INSERT INTO purchase_billing_settings (metal, selected_template)
+              VALUES ('gold', 'lotus_signature')
+              ''',
+            );
+        },
+      ),
+    );
+
+    final legacyRepo = PurchaseBillingRepo(db: db);
+    controller = PurchaseBillingController(
+      repository: PurchaseBillingSettingsRepository(repo: legacyRepo),
+    );
+    final gold = await legacyRepo.fetchForMetal(BillingMetal.gold);
+
+    expect(gold.selectedTemplate, 'lotus_signature');
+    expect(gold.printTermsAndConditions, isTrue);
+    expect(gold.printSellerDeclaration, isTrue);
+    expect(gold.printReturnPolicy, isTrue);
+    expect(gold.printBuybackPolicy, isTrue);
+    expect(gold.printFooterMessage, isTrue);
+  });
 }
