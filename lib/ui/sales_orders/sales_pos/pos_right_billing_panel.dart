@@ -14,6 +14,8 @@ import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'pos_hold_list_dialog.dart';
 import 'gst_summary/pos_gst_classification_card.dart';
 import 'payment_summary/pos_payment_summary_cards.dart';
+import 'advance_stock/pos_advance_stock_resolution_dialog.dart';
+import 'advance_stock/pos_advance_quick_stock_dialog.dart';
 
 //  Invoice preview dependency
 import 'pos_invoice_preview_screen.dart';
@@ -78,12 +80,37 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
     }
     if (stockIssue != null) {
       widget.ctrl.focusSaleItemDescription(stockIssue.rowIndex);
-      AppFeedback.show(
-        context,
-        type: AppFeedbackType.error,
-        message: stockIssue.message,
+      final action = await PosAdvanceStockResolutionDialog.show(
+        context: context,
+        controller: widget.ctrl,
+        issue: stockIssue,
       );
-      return;
+      if (!mounted || action == null) {
+        return;
+      }
+      if (action == PosAdvanceStockResolutionAction.selectExistingStock) {
+        widget.ctrl.focusSaleItemDescription(stockIssue.rowIndex);
+        return;
+      }
+      if (action == PosAdvanceStockResolutionAction.quickAddStock) {
+        final linked = await PosAdvanceQuickStockDialog.show(
+          context: context,
+          controller: widget.ctrl,
+          rowIndex: stockIssue.rowIndex,
+        );
+        if (!mounted) {
+          return;
+        }
+        if (linked) {
+          AppFeedback.show(
+            context,
+            type: AppFeedbackType.success,
+            message: 'Stock added and linked with the sale row.',
+          );
+          await _handleGenerateInvoicePressed();
+        }
+        return;
+      }
     }
 
     final validationMessage = widget.ctrl.validateInvoiceReadiness();

@@ -17,6 +17,7 @@ import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readin
 import '../../../core/tax/gst_jurisdiction.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../../models/sales_orders/sales_pos_models/pos_quick_stock_intake_model.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_hold_bill_model.dart';
 import '../../../models/sales_orders/sales_pos_models/pos_stock_lookup_model.dart';
@@ -28,6 +29,7 @@ import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../../helpers/search/fuzzy_search_helper.dart';
 import '../../../repositories/sales_orders/pos/pos_hold_repository.dart';
 import '../../../repositories/sales_orders/pos/pos_checkout_repository.dart';
+import '../../../repositories/sales_orders/pos/pos_quick_stock_repository.dart';
 import '../../../repositories/sales_orders/pos/pos_stock_lookup_repository.dart';
 import '../../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../../repositories/setting/metal_rate/metal_rate_quote_service.dart';
@@ -47,11 +49,18 @@ import '../../../models/customer/customer_profile/customer_profile_model.dart';
 class PosStockLinkIssue {
   final int rowIndex;
   final String message;
+  final PosStockLinkIssueType type;
 
   const PosStockLinkIssue({
     required this.rowIndex,
     required this.message,
+    this.type = PosStockLinkIssueType.availableButUnlinked,
   });
+}
+
+enum PosStockLinkIssueType {
+  availableButUnlinked,
+  missingStock,
 }
 
 class PosBillingController extends ChangeNotifier {
@@ -127,6 +136,7 @@ class PosBillingController extends ChangeNotifier {
   final AppDatabase _db = AppDatabase();
   final PosHoldRepository _holdRepo = PosHoldRepository();
   final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
+  final PosQuickStockRepository _quickStockRepo = PosQuickStockRepository();
   final BookingAdvanceRepository _bookingAdvanceRepo =
       BookingAdvanceRepository();
   final ShopSetupRepository _shopRepo = ShopSetupRepository();
@@ -1690,6 +1700,14 @@ class PosBillingController extends ChangeNotifier {
         return null;
       }
       if (match == null) {
+        if (convertedAdvanceOrderId != null) {
+          return PosStockLinkIssue(
+            rowIndex: index,
+            type: PosStockLinkIssueType.missingStock,
+            message:
+                'Add stock for item row ${index + 1} before generating the sales invoice. Advance booking conversion must be linked to inventory.',
+          );
+        }
         continue;
       }
 
@@ -1703,6 +1721,50 @@ class PosBillingController extends ChangeNotifier {
       );
     }
     return null;
+  }
+
+  PosQuickStockIntakeModel quickStockDraftForRow({
+    required int rowIndex,
+    required double wastagePercent,
+    required double purchaseRate,
+    required String huid,
+    required int? supplierId,
+    required String supplierName,
+    String? purityLabel,
+  }) {
+    if (rowIndex < 0 || rowIndex >= saleItems.length) {
+      throw RangeError.index(rowIndex, saleItems, 'rowIndex');
+    }
+    final item = saleItems[rowIndex];
+    return PosQuickStockIntakeModel(
+      rowIndex: rowIndex,
+      itemName: item.descCtrl.text,
+      metal: item.metal,
+      purityLabel: (purityLabel ?? item.purityCtrl.text).trim(),
+      grossWeight: _parseSafeNumber(item.grossCtrl.text),
+      lessWeight: item.totalLessWt,
+      netWeight: item.netWt,
+      wastagePercent: wastagePercent,
+      purchaseRate: purchaseRate,
+      huid: huid,
+      supplierId: supplierId,
+      supplierName: supplierName,
+    );
+  }
+
+  Future<void> quickAddStockForSaleRow(PosQuickStockIntakeModel intake) async {
+    if (intake.rowIndex < 0 || intake.rowIndex >= saleItems.length) {
+      throw RangeError.index(intake.rowIndex, saleItems, 'rowIndex');
+    }
+    final stock = await _quickStockRepo.createSaleReadyStock(intake);
+    if (_isDisposed) return;
+    final item = saleItems[intake.rowIndex];
+    _attachStockReferenceToExistingRow(
+      rowIndex: intake.rowIndex,
+      item: item,
+      suggestion: stock,
+    );
+    notifyListeners();
   }
 
   Future<bool> _autoLinkUniqueExactStockForUnlinkedItem({

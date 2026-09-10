@@ -637,24 +637,9 @@ class _AdvanceSummaryState extends State<_AdvanceSummary> {
     CustomerAdvanceOrderModel order,
   ) async {
     if (widget.ctrl.hasDraftSaleInput) {
-      final confirmed = await showDialog<bool>(
+      final confirmed = await _showAdvanceConversionDialog(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Convert Advance Booking?'),
-          content: const Text(
-            'Current POS entry will be replaced with the selected advance booking.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Convert'),
-            ),
-          ],
-        ),
+        order: order,
       );
       if (confirmed != true || !context.mounted) return;
     }
@@ -675,6 +660,147 @@ class _AdvanceSummaryState extends State<_AdvanceSummary> {
       type: AppFeedbackType.error,
       message: widget.ctrl.advanceConversionError ??
           'Advance booking could not be loaded for conversion.',
+    );
+  }
+
+  Future<bool?> _showAdvanceConversionDialog({
+    required BuildContext context,
+    required CustomerAdvanceOrderModel order,
+  }) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => _AdvanceConversionDialog(order: order),
+    );
+  }
+}
+
+class _AdvanceConversionDialog extends StatelessWidget {
+  final CustomerAdvanceOrderModel order;
+
+  const _AdvanceConversionDialog({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: SalesPosColors.brandGold.withValues(alpha: 0.42),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 17),
+                decoration: const BoxDecoration(
+                  color: SalesPosColors.shellBg,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: SalesPosColors.brandGold,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.swap_horiz_rounded,
+                        color: Colors.white,
+                        size: 23,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Convert Advance Booking',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            order.orderNo,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.72),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 20, 22, 12),
+                child: Text(
+                  'Current POS entry will be replaced with this selected advance booking.',
+                  style: TextStyle(
+                    color: SalesPosColors.textDark.withValues(alpha: 0.86),
+                    fontSize: 14,
+                    height: 1.45,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: SalesPosColors.brandGold,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 15,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.check_circle_rounded, size: 18),
+                      label: const Text(
+                        'Convert Booking',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
