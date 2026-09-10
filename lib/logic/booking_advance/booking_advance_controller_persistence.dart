@@ -108,6 +108,15 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
         );
       }
     }
+    final minimumAdvanceMessage = _minimumAdvanceValidationMessage();
+    if (minimumAdvanceMessage != null) {
+      return (
+        success: false,
+        message: minimumAdvanceMessage,
+        bookingNo: '',
+        orderIds: const <int>[],
+      );
+    }
 
     isSaving = true;
     _emitChanged();
@@ -291,8 +300,7 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
     editingOrderId = null;
     _editingOrderNo = null;
     editLoadError = null;
-    bookingType = BookingType.open;
-    deliveryDate = null;
+    _applyBillingDefaults();
     customerResults = [];
     customerNotFound = false;
     for (final i in bookingItems) {
@@ -345,6 +353,8 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
         return 'Please enter valid net weight for item ${index + 1}.';
       }
     }
+    final minimumAdvanceMessage = _minimumAdvanceValidationMessage();
+    if (minimumAdvanceMessage != null) return minimumAdvanceMessage;
     return null;
   }
 

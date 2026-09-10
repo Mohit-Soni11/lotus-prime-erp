@@ -3,7 +3,9 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/reports/sales_report/sales_report_models.dart';
+import 'package:lotus_erp/models/setting/tax_gst/hsn_code_model.dart';
 import 'package:lotus_erp/repositories/reports/sales_report_repository.dart';
+import 'package:lotus_erp/theme/settings/tax_gst/tax_gst_strings.dart';
 
 void main() {
   late AppDatabase db;
@@ -264,6 +266,96 @@ void main() {
     expect(invoice.metalMix, 'GOLD');
     expect(snapshot.summary.finalAmount, 4120);
   });
+
+  test('fetchReport prefers invoice tax snapshots over mutable customer data',
+      () async {
+    final customerId = await _insertCustomer(
+      db,
+      name: 'Snapshot Customer',
+      mobile: '9000000000',
+      gstNumber: '27LIVE1234F1Z9',
+      state: 'Maharashtra',
+    );
+    final billId = await _insertBill(
+      db,
+      billNo: 'TAX-AJ-2026-0006',
+      billDate: DateTime(2026, 8, 10, 12),
+      billType: 'GST',
+      customerId: customerId,
+      customerGstinSnapshot: '10SNAP1234F1Z5',
+      placeOfSupplySnapshot: 'Bihar',
+      taxableAmount: 1000,
+      gstAmount: 30,
+      finalAmount: 1030,
+      paidAmount: 1030,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      lineNo: 1,
+      metalType: 'GOLD',
+      itemName: 'RING',
+      itemTotal: 1000,
+    );
+
+    final snapshot = await repository.fetchReport(
+      SalesReportFilter(
+        startDate: DateTime(2026, 8, 10),
+        endDate: DateTime(2026, 8, 10),
+      ),
+    );
+
+    expect(snapshot.invoices.single.customerGstin, '10SNAP1234F1Z5');
+    expect(snapshot.invoices.single.placeOfSupply, 'Bihar');
+  });
+
+  test('fetchReport uses configured product HSN rate for projected GST',
+      () async {
+    await db.into(db.taxGstConfigs).insert(
+          TaxGstConfigsCompanion.insert(
+            id: const drift.Value(1),
+            hsnCodesJson: drift.Value(
+              hsnListToJson(
+                const [
+                  HsnCodeModel(
+                    category: 'Jewellery Custom',
+                    hsnCode: '71131910',
+                    gstRate: '5%',
+                    appliesTo: TaxGstStrings.hsnAppliesProductSale,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+    final billId = await _insertBill(
+      db,
+      billNo: 'INV-AJ-2026-0007',
+      billDate: DateTime(2026, 8, 11, 12),
+      billType: 'NORMAL',
+      taxableAmount: 1000,
+      finalAmount: 1000,
+      paidAmount: 1000,
+    );
+    await _insertItem(
+      db,
+      billId: billId,
+      lineNo: 1,
+      metalType: 'GOLD',
+      itemName: 'CHAIN',
+      itemTotal: 1000,
+    );
+
+    final snapshot = await repository.fetchReport(
+      SalesReportFilter(
+        startDate: DateTime(2026, 8, 11),
+        endDate: DateTime(2026, 8, 11),
+      ),
+    );
+
+    expect(snapshot.gstLiability.projectedGstRatePercent, 5);
+    expect(snapshot.gstLiability.projectedGstAmount, 50);
+  });
 }
 
 Future<int> _insertBill(
@@ -284,6 +376,8 @@ Future<int> _insertBill(
   double upiPaid = 0,
   double cardPaid = 0,
   double makingTotal = 0,
+  String? customerGstinSnapshot,
+  String? placeOfSupplySnapshot,
 }) {
   return db.into(db.bills).insert(
         BillsCompanion.insert(
@@ -291,6 +385,8 @@ Future<int> _insertBill(
           customerId: drift.Value<int?>(customerId),
           customerName: const drift.Value('REYANSH SONI'),
           mobile: const drift.Value('9304479436'),
+          customerGstinSnapshot: drift.Value(customerGstinSnapshot),
+          placeOfSupplySnapshot: drift.Value(placeOfSupplySnapshot),
           billType: drift.Value(billType),
           paymentStatus: drift.Value(dueAmount > 0 ? 'PARTIAL' : 'PAID'),
           totalAmount:

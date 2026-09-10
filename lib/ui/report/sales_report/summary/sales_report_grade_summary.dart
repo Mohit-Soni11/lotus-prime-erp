@@ -5,7 +5,7 @@ import '../../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../../theme/reports/sales_report/sales_report_theme.dart';
 import '../sales_report_formatters.dart';
 
-const double _jewelleryGstRate = 0.03;
+const double _fallbackJewelleryGstRatePercent = 3.0;
 const String allSalesReportGrades = 'ALL';
 
 class SalesReportGradeSummaryPanel extends StatelessWidget {
@@ -135,7 +135,8 @@ List<SalesReportGradeSummary> buildSalesReportGradeSummaries({
     acc.netWeight += item.netWeight;
     acc.saleAmount += item.itemTotal;
     if (!item.isGst) {
-      acc.projectedGstAmount += item.itemTotal * _jewelleryGstRate;
+      acc.projectedGstAmount +=
+          item.itemTotal * (_projectedGstRatePercent(item) / 100);
     }
   }
 
@@ -180,8 +181,15 @@ double salesReportRecordedGstForItems({
 double salesReportProjectedGstForItems(List<SalesReportItemRow> items) {
   return items.where((item) => !item.isGst).fold<double>(
         0,
-        (total, item) => total + item.itemTotal * _jewelleryGstRate,
+        (total, item) =>
+            total + item.itemTotal * (_projectedGstRatePercent(item) / 100),
       );
+}
+
+double _projectedGstRatePercent(SalesReportItemRow item) {
+  return item.gstRatePercent > 0.005
+      ? item.gstRatePercent
+      : _fallbackJewelleryGstRatePercent;
 }
 
 String _gradeLabel(String value) {
@@ -323,7 +331,7 @@ class _GradeSummaryCard extends StatelessWidget {
                 value: salesReportMoney(summary.recordedGstAmount),
               ),
               _MiniMetric(
-                label: 'Projected GST @3%',
+                label: 'Projected GST',
                 value: salesReportMoney(summary.projectedGstAmount),
               ),
               _MiniMetric(

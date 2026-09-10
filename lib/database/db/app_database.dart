@@ -41,6 +41,7 @@ import '../tables/setting/billing/sales_billing_settings.dart';
 import '../tables/setting/billing/purchase_billing_settings.dart';
 import '../tables/setting/billing/girvi_billing_settings.dart';
 import '../tables/setting/billing/shop_print_information_settings.dart';
+import '../tables/setting/billing/booking_advance_billing_settings.dart';
 
 // ✅ v16: Tax & GST
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
@@ -82,6 +83,7 @@ part 'app_database.g.dart';
     PurchaseBillingSettings,
     GirviBillingSettings,
     ShopPrintInformationSettings,
+    BookingAdvanceBillingSettings,
     GoldStockReceipts,
     GoldStockReceiptLines,
     GoldReceiptSettlements,
@@ -1812,6 +1814,12 @@ class AppDatabase extends _$AppDatabase {
               );
             }
           }
+          if (from < 51) {
+            await m.createTable(bookingAdvanceBillingSettings);
+            AppLogger.info(
+              'v51 booking advance billing settings applied.',
+            );
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -2226,6 +2234,7 @@ class AppDatabase extends _$AppDatabase {
     await runIfNeeded(() => m.createTable(purchaseBillingSettings));
     await runIfNeeded(() => m.createTable(girviBillingSettings));
     await runIfNeeded(() => m.createTable(shopPrintInformationSettings));
+    await runIfNeeded(() => m.createTable(bookingAdvanceBillingSettings));
 
     await runIfNeeded(
         () => customStatement('DROP TABLE IF EXISTS "billing_settings"'));
@@ -2566,6 +2575,28 @@ const List<String> _billingSetupSchemaSafetySql = [
     "selected_template" TEXT NOT NULL DEFAULT 'default'
   )
   ''',
+  '''
+  CREATE TABLE IF NOT EXISTS "booking_advance_billing_settings" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "created_at" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" INTEGER,
+    "document_prefix" TEXT NOT NULL DEFAULT 'BK',
+    "default_booking_type" TEXT NOT NULL DEFAULT 'OPEN',
+    "default_delivery_days" INTEGER NOT NULL DEFAULT 15,
+    "minimum_advance_percent" REAL NOT NULL DEFAULT 0.0,
+    "minimum_advance_amount" REAL NOT NULL DEFAULT 0.0,
+    "allow_zero_advance" INTEGER NOT NULL DEFAULT 1,
+    "default_print_format" TEXT NOT NULL DEFAULT 'a4',
+    "selected_template" TEXT NOT NULL DEFAULT 'default',
+    "print_copies" INTEGER NOT NULL DEFAULT 1,
+    "include_customer_address" INTEGER NOT NULL DEFAULT 1,
+    "include_rate_column" INTEGER NOT NULL DEFAULT 1,
+    "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 1,
+    "print_footer_message" INTEGER NOT NULL DEFAULT 1,
+    "terms_and_conditions" TEXT NOT NULL DEFAULT '',
+    "footer_message" TEXT NOT NULL DEFAULT ''
+  )
+  ''',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "updated_at" INTEGER',
   'ALTER TABLE "sales_billing_settings" ADD COLUMN "metal" TEXT NOT NULL DEFAULT ""',
@@ -2659,6 +2690,23 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT "Please keep this Girvi receipt safely."',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "auto_print" INTEGER NOT NULL DEFAULT 1',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "created_at" INTEGER NOT NULL DEFAULT 0',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "updated_at" INTEGER',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "document_prefix" TEXT NOT NULL DEFAULT "BK"',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "default_booking_type" TEXT NOT NULL DEFAULT "OPEN"',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "default_delivery_days" INTEGER NOT NULL DEFAULT 15',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "minimum_advance_percent" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "minimum_advance_amount" REAL NOT NULL DEFAULT 0.0',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "allow_zero_advance" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "default_print_format" TEXT NOT NULL DEFAULT "a4"',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "selected_template" TEXT NOT NULL DEFAULT "default"',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "print_copies" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "include_customer_address" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "include_rate_column" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "print_terms_and_conditions" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "print_footer_message" INTEGER NOT NULL DEFAULT 1',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
+  'ALTER TABLE "booking_advance_billing_settings" ADD COLUMN "footer_message" TEXT NOT NULL DEFAULT ""',
   'CREATE UNIQUE INDEX IF NOT EXISTS "idx_sales_billing_metal" ON "sales_billing_settings" ("metal")',
   'CREATE UNIQUE INDEX IF NOT EXISTS "idx_purchase_billing_metal" ON "purchase_billing_settings" ("metal")',
 ];

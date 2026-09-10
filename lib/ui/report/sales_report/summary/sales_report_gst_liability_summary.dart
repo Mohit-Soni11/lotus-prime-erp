@@ -111,7 +111,8 @@ class SalesReportGstLiabilityPanel extends StatelessWidget {
                 _GstMetric(
                   label: 'Projected GST on Non-GST',
                   value: salesReportMoney(summary.projectedGstAmount),
-                  helper: '3% planning value',
+                  helper:
+                      '${summary.projectedGstRatePercent.toStringAsFixed(2)}% planning value',
                   icon: Icons.calculate_rounded,
                   accent: SalesReportColors.warning,
                 ),

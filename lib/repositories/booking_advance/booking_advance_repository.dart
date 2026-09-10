@@ -11,6 +11,8 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/features/customer/domain/services/customer_contact_value.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/helpers/search/fuzzy_search_helper.dart';
+import 'package:lotus_erp/models/setting/billing_setup/booking_advance_billing_model.dart';
+import 'package:lotus_erp/repositories/setting/billing_setup/booking_advance_billing_repo.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
 
@@ -67,15 +69,25 @@ class SavedBookingAdvanceDocument {
 class BookingAdvanceRepository {
   final AppDatabase _db;
   ShopSetupRepository? _shopRepository;
+  BookingAdvanceBillingRepo? _billingSettingsRepository;
 
   BookingAdvanceRepository({
     AppDatabase? db,
     ShopSetupRepository? shopRepository,
+    BookingAdvanceBillingRepo? billingSettingsRepository,
   })  : _db = db ?? AppDatabase(),
-        _shopRepository = shopRepository;
+        _shopRepository = shopRepository,
+        _billingSettingsRepository = billingSettingsRepository;
 
   ShopSetupRepository get _effectiveShopRepository =>
       _shopRepository ??= ShopSetupRepository();
+
+  BookingAdvanceBillingRepo get _effectiveBillingSettingsRepository =>
+      _billingSettingsRepository ??= BookingAdvanceBillingRepo(db: _db);
+
+  Future<BookingAdvanceBillingModel> fetchBillingSettings() {
+    return _effectiveBillingSettingsRepository.fetch();
+  }
 
   /// Returns the current Indian financial year string.
   /// Example: April 2025 to March 2026 is represented as "2526".
@@ -95,9 +107,14 @@ class BookingAdvanceRepository {
     required String shopCode,
     required String yearToken,
     required int sequence,
+    String documentPrefix = BookingAdvanceBillingModel.defaultDocumentPrefix,
   }) {
+    final normalizedPrefix = documentPrefix
+        .trim()
+        .toUpperCase()
+        .replaceAll(RegExp(r'[^A-Z0-9]'), '');
     return '${PosInvoiceSeriesFormatter.normalizeBusinessCode(shopCode)}-'
-        'BK-'
+        '${normalizedPrefix.isEmpty ? BookingAdvanceBillingModel.defaultDocumentPrefix : normalizedPrefix}-'
         '${PosInvoiceSeriesFormatter.normalizeFinancialYearToken(yearToken)}-'
         '${sequence < 1 ? '0001' : sequence.toString().padLeft(4, '0')}';
   }
@@ -119,11 +136,19 @@ class BookingAdvanceRepository {
   Future<int> getNextBookingSequence({
     String? shopCode,
     String? yearToken,
+    String documentPrefix = BookingAdvanceBillingModel.defaultDocumentPrefix,
   }) async {
     final normalizedYearToken =
         PosInvoiceSeriesFormatter.normalizeFinancialYearToken(
       yearToken ?? getCurrentDocumentYearToken(),
     );
+    final normalizedPrefix = documentPrefix
+        .trim()
+        .toUpperCase()
+        .replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    final prefix = normalizedPrefix.isEmpty
+        ? BookingAdvanceBillingModel.defaultDocumentPrefix
+        : normalizedPrefix;
     final legacyFinancialYear = _legacyFinancialYearSpan(normalizedYearToken);
     final legacyCalendarYear = _legacyCalendarYear(normalizedYearToken);
     final rows = await _db.customSelect(
@@ -135,9 +160,9 @@ class BookingAdvanceRepository {
          OR order_no LIKE ?
       ''',
       variables: [
-        Variable.withString('%-BK-$normalizedYearToken-%'),
-        Variable.withString('BK-%-$legacyFinancialYear-%'),
-        Variable.withString('BK-%-$legacyCalendarYear-%'),
+        Variable.withString('%-$prefix-$normalizedYearToken-%'),
+        Variable.withString('$prefix-%-$legacyFinancialYear-%'),
+        Variable.withString('$prefix-%-$legacyCalendarYear-%'),
       ],
       readsFrom: {_db.salesOrders},
     ).get();
@@ -147,6 +172,7 @@ class BookingAdvanceRepository {
       final sequence = _bookingDocumentSequence(
         row.read<String>('order_no'),
         yearToken: normalizedYearToken,
+        documentPrefix: prefix,
       );
       if (sequence > maxSequence) maxSequence = sequence;
     }
@@ -251,11 +277,13 @@ class BookingAdvanceRepository {
 
     final shopCode = await resolveShopDocumentCode();
     final yearToken = getCurrentDocumentYearToken();
+    final settings = await fetchBillingSettings();
 
     return _db.transaction(() async {
       final firstSequence = await getNextBookingSequence(
         shopCode: shopCode,
         yearToken: yearToken,
+        documentPrefix: settings.documentPrefix,
       );
       final orderIds = <int>[];
       final orderNos = <String>[];
@@ -266,6 +294,7 @@ class BookingAdvanceRepository {
           shopCode: shopCode,
           yearToken: yearToken,
           sequence: firstSequence + index,
+          documentPrefix: settings.documentPrefix,
         );
         final orderId = await _db.into(_db.salesOrders).insert(
               SalesOrdersCompanion.insert(

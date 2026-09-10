@@ -13,6 +13,7 @@ import '../../features/print_templates/domain/print_template_registry.dart';
 import '../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
 import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../models/setting/billing_setup/booking_advance_billing_model.dart';
 import '../../repositories/booking_advance/booking_advance_repository.dart';
 
 part 'booking_invoice_pdf_builders.dart';
@@ -25,7 +26,11 @@ class BookingInvoicePrintOptions {
     this.includeDuplicateStamp = false,
     this.includeCustomerAddress = true,
     this.includeTerms = true,
+    this.includeFooterMessage = true,
     this.includeRateColumn = true,
+    this.termsAndConditions =
+        BookingAdvanceBillingModel.defaultTermsAndConditions,
+    this.footerMessage = BookingAdvanceBillingModel.defaultFooterMessage,
   });
 
   final PrintFormat format;
@@ -34,14 +39,18 @@ class BookingInvoicePrintOptions {
   final bool includeDuplicateStamp;
   final bool includeCustomerAddress;
   final bool includeTerms;
+  final bool includeFooterMessage;
   final bool includeRateColumn;
+  final String termsAndConditions;
+  final String footerMessage;
 }
 
 class BookingInvoicePdfService {
-  const BookingInvoicePdfService();
+  const BookingInvoicePdfService({
+    ShopPrintInformationRepository? shopProfileRepository,
+  }) : _shopProfileRepository = shopProfileRepository;
 
-  static final ShopPrintInformationRepository _shopProfileRepository =
-      ShopPrintInformationRepository();
+  final ShopPrintInformationRepository? _shopProfileRepository;
 
   static PdfPageFormat pageFormatFor(PrintFormat format) {
     return switch (format) {
@@ -159,9 +168,10 @@ class BookingInvoicePdfService {
     return document.save();
   }
 
-  static Future<ShopPrintDocumentProfile> _loadShopProfile() async {
+  Future<ShopPrintDocumentProfile> _loadShopProfile() async {
     try {
-      return await _shopProfileRepository.loadDocumentProfile();
+      return await (_shopProfileRepository ?? ShopPrintInformationRepository())
+          .loadDocumentProfile();
     } catch (_) {
       return ShopPrintDocumentProfile.empty;
     }

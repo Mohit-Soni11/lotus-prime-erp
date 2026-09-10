@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/logging/app_logger.dart';
@@ -21,6 +23,9 @@ class SalesReportController extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
   int _selectedTab = 0;
+  int _loadGeneration = 0;
+  Timer? _searchDebounce;
+  bool _disposed = false;
 
   SalesReportFilter get filter => _filter;
   SalesReportSnapshot? get snapshot => _snapshot;
@@ -29,30 +34,36 @@ class SalesReportController extends ChangeNotifier {
   int get selectedTab => _selectedTab;
 
   Future<void> load({bool silent = false}) async {
+    final generation = ++_loadGeneration;
     if (!silent) {
       _isLoading = true;
       _errorMessage = null;
-      notifyListeners();
+      _notify();
     }
 
     try {
-      _snapshot = await _repository.fetchReport(_filter);
+      final snapshot = await _repository.fetchReport(_filter);
+      if (_isStale(generation)) return;
+      _snapshot = snapshot;
       _errorMessage = null;
     } catch (error, stackTrace) {
+      if (_isStale(generation)) return;
       AppLogger.error('SalesReportController.load failed: $error');
       AppLogger.debug(stackTrace.toString());
       _errorMessage = 'Unable to load sales report.';
       _snapshot ??= SalesReportSnapshot.empty(_filter);
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!_isStale(generation)) {
+        _isLoading = false;
+        _notify();
+      }
     }
   }
 
   void selectTab(int index) {
     if (_selectedTab == index) return;
     _selectedTab = index;
-    notifyListeners();
+    _notify();
   }
 
   void applyPreset(SalesReportDatePreset preset) {
@@ -170,13 +181,22 @@ class SalesReportController extends ChangeNotifier {
   }
 
   void applySearch() {
+    _searchDebounce?.cancel();
     final query = searchController.text.trim();
     if (_filter.query == query) return;
     _filter = _filter.copyWith(query: query);
     load();
   }
 
+  void scheduleSearch({
+    Duration delay = const Duration(milliseconds: 320),
+  }) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(delay, applySearch);
+  }
+
   void clearSearch() {
+    _searchDebounce?.cancel();
     if (searchController.text.isEmpty && _filter.query.isEmpty) return;
     searchController.clear();
     _filter = _filter.copyWith(query: '');
@@ -187,8 +207,18 @@ class SalesReportController extends ChangeNotifier {
     return DateTime(date.year, date.month, date.day, 23, 59, 59);
   }
 
+  bool _isStale(int generation) {
+    return _disposed || generation != _loadGeneration;
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
+    _searchDebounce?.cancel();
     searchController.dispose();
     super.dispose();
   }

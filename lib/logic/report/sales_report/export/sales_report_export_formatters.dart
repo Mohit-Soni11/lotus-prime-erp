@@ -110,7 +110,7 @@ class SalesReportExportFormatters {
       ['GST Recorded on Issued Invoices', money(summary.recordedGstAmount)],
       ['Non-GST Sales Base', money(summary.nonGstSalesAmount)],
       [
-        'Projected GST on Non-GST Sales (3%)',
+        'Projected GST on Non-GST Sales (${rate(summary.projectedGstRatePercent)})',
         money(summary.projectedGstAmount),
       ],
       ['Combined GST Exposure', money(summary.combinedGstExposure)],
@@ -196,4 +196,6 @@ class SalesReportExportFormatters {
         ],
     ];
   }
+
+  static String rate(double value) => '${value.toStringAsFixed(2)}%';
 }

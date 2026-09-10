@@ -1,14 +1,20 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../core/logging/app_logger.dart';
 import '../../database/db/app_database.dart';
+import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
 import '../../logic/report/sales_report/sales_report_invoice_scope.dart';
 import '../../models/reports/sales_report/sales_report_models.dart';
+import '../../models/setting/tax_gst/hsn_code_model.dart';
+import '../../theme/settings/tax_gst/tax_gst_strings.dart';
 
 class SalesReportRepository {
   SalesReportRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
   final AppDatabase _db;
+  static const double _fallbackProductGstRatePercent = 3.0;
 
   Future<SalesReportSnapshot> fetchReport(SalesReportFilter filter) async {
     try {
@@ -74,7 +80,9 @@ class SalesReportRepository {
       query: '',
     );
     final invoices = await _fetchInvoices(monthlyFilter);
-    return _buildGstLiabilitySummary(invoices);
+    final items = await _fetchItems(monthlyFilter);
+    final fallbackRate = await _fetchDefaultProductGstRatePercent();
+    return _buildGstLiabilitySummary(invoices, items, fallbackRate);
   }
 
   Future<List<SalesReportInvoiceRow>> _fetchInvoices(
@@ -90,8 +98,16 @@ class SalesReportRepository {
         COALESCE(NULLIF(TRIM(b.customer_name), ''), 'Walk-in Customer')
           AS customer_name,
         COALESCE(b.mobile, '') AS mobile,
-        COALESCE(c.gst_number, '') AS customer_gstin,
-        COALESCE(c.state, '') AS place_of_supply,
+        COALESCE(
+          NULLIF(TRIM(b.customer_gstin_snapshot), ''),
+          NULLIF(TRIM(c.gst_number), ''),
+          ''
+        ) AS customer_gstin,
+        COALESCE(
+          NULLIF(TRIM(b.place_of_supply_snapshot), ''),
+          NULLIF(TRIM(c.state), ''),
+          ''
+        ) AS place_of_supply,
         COALESCE(b.bill_type, '') AS bill_type,
         COALESCE(b.payment_status, '') AS payment_status,
         COALESCE(b.total_amount, 0.0) AS total_amount,
@@ -200,6 +216,7 @@ class SalesReportRepository {
         COALESCE(i.making_charge_type, '') AS making_charge_type,
         COALESCE(i.making_charge, 0.0) AS making_charge,
         COALESCE(i.item_total, 0.0) AS item_total,
+        COALESCE(i.gst_rate_snapshot, 0.0) AS gst_rate_snapshot,
         COALESCE(i.linked_stock_sku, '') AS stock_sku,
         COALESCE(i.stock_unit_cost, 0.0) AS stock_cost,
         COALESCE(i.stock_profit_amount, 0.0) AS stock_profit
@@ -235,6 +252,7 @@ class SalesReportRepository {
         makingChargeType: row.read<String>('making_charge_type'),
         makingCharge: _readDouble(row, 'making_charge'),
         itemTotal: _readDouble(row, 'item_total'),
+        gstRatePercent: _readDouble(row, 'gst_rate_snapshot'),
         stockSku: row.read<String>('stock_sku'),
         stockCostAmount: _readDouble(row, 'stock_cost'),
         profitAmount: _readDouble(row, 'stock_profit'),
@@ -439,6 +457,8 @@ class SalesReportRepository {
 
   SalesReportGstLiabilitySummary _buildGstLiabilitySummary(
     List<SalesReportInvoiceRow> invoices,
+    List<SalesReportItemRow> items,
+    double fallbackRatePercent,
   ) {
     var gstCount = 0;
     var nonGstCount = 0;
@@ -446,6 +466,7 @@ class SalesReportRepository {
     double gstFinal = 0;
     double recordedGst = 0;
     double nonGstSales = 0;
+    double projectedGst = 0;
 
     for (final invoice in invoices) {
       if (invoice.isGst) {
@@ -459,6 +480,18 @@ class SalesReportRepository {
       }
     }
 
+    for (final item in items) {
+      if (item.isGst) continue;
+      final ratePercent = item.gstRatePercent > 0.005
+          ? item.gstRatePercent
+          : fallbackRatePercent;
+      projectedGst += item.itemTotal * (ratePercent / 100);
+    }
+
+    if (projectedGst <= 0.005 && nonGstSales > 0.005) {
+      projectedGst = nonGstSales * (fallbackRatePercent / 100);
+    }
+
     return SalesReportGstLiabilitySummary(
       invoiceCount: invoices.length,
       gstInvoiceCount: gstCount,
@@ -467,8 +500,60 @@ class SalesReportRepository {
       gstFinalAmount: gstFinal,
       recordedGstAmount: recordedGst,
       nonGstSalesAmount: nonGstSales,
-      projectedGstAmount: nonGstSales * 0.03,
+      projectedGstRatePercent: fallbackRatePercent,
+      projectedGstAmount: projectedGst,
     );
+  }
+
+  Future<double> _fetchDefaultProductGstRatePercent() async {
+    try {
+      final data = await TaxGstConfigDao(_db).fetchConfig();
+      final configuredRates = _activeProductSaleRates(data?.hsnCodesJson);
+      if (configuredRates.isNotEmpty) return configuredRates.first;
+
+      final defaultRates = hsnListFromJson(null)
+          .where(
+            (entry) =>
+                entry.isActive &&
+                entry.appliesTo == TaxGstStrings.hsnAppliesProductSale,
+          )
+          .map((entry) => entry.ratePercent)
+          .whereType<double>()
+          .where((rate) => rate > 0 && rate <= 100)
+          .toList(growable: false);
+      if (defaultRates.isEmpty) return _fallbackProductGstRatePercent;
+
+      defaultRates.sort();
+      return defaultRates.first;
+    } catch (_) {
+      return _fallbackProductGstRatePercent;
+    }
+  }
+
+  List<double> _activeProductSaleRates(String? hsnCodesJson) {
+    if (hsnCodesJson == null || hsnCodesJson.trim().isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(hsnCodesJson);
+      if (decoded is! List) return const [];
+
+      final rates = decoded
+          .whereType<Map>()
+          .map(
+              (entry) => HsnCodeModel.fromMap(Map<String, dynamic>.from(entry)))
+          .where(
+            (entry) =>
+                entry.isActive &&
+                entry.appliesTo == TaxGstStrings.hsnAppliesProductSale,
+          )
+          .map((entry) => entry.ratePercent)
+          .whereType<double>()
+          .where((rate) => rate > 0 && rate <= 100)
+          .toList();
+      rates.sort();
+      return rates;
+    } catch (_) {
+      return const [];
+    }
   }
 
   double _taxableBaseFor(SalesReportInvoiceRow invoice) {

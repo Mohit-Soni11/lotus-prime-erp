@@ -10,6 +10,7 @@ import '../../core/logging/app_logger.dart';
 import '../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../features/print_templates/domain/print_template_registry.dart';
 import '../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../models/setting/billing_setup/booking_advance_billing_model.dart';
 import '../../repositories/booking_advance/booking_advance_repository.dart';
 import 'booking_invoice_pdf_service.dart';
 
@@ -51,7 +52,11 @@ class BookingInvoicePreviewController extends ChangeNotifier {
   LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   bool includeCustomerAddress = true;
   bool includeTerms = true;
+  bool includeFooterMessage = true;
   bool includeRateColumn = true;
+  String termsAndConditions =
+      BookingAdvanceBillingModel.defaultTermsAndConditions;
+  String footerMessage = BookingAdvanceBillingModel.defaultFooterMessage;
 
   bool _isDisposed = false;
 
@@ -100,7 +105,10 @@ class BookingInvoicePreviewController extends ChangeNotifier {
       includeDuplicateStamp: includeDuplicateStamp,
       includeCustomerAddress: includeCustomerAddress,
       includeTerms: includeTerms,
+      includeFooterMessage: includeFooterMessage,
       includeRateColumn: includeRateColumn,
+      termsAndConditions: termsAndConditions,
+      footerMessage: footerMessage,
     );
   }
 
@@ -110,6 +118,7 @@ class BookingInvoicePreviewController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _applyBillingSettings(await _repository.fetchBillingSettings());
       bookings = initialBookings.isNotEmpty
           ? List.unmodifiable(initialBookings)
           : await _repository.fetchPrintableBookings(orderIds);
@@ -168,12 +177,32 @@ class BookingInvoicePreviewController extends ChangeNotifier {
   Future<void> updateDocumentOptions({
     bool? customerAddress,
     bool? terms,
+    bool? footer,
     bool? rateColumn,
   }) async {
     includeCustomerAddress = customerAddress ?? includeCustomerAddress;
     includeTerms = terms ?? includeTerms;
+    includeFooterMessage = footer ?? includeFooterMessage;
     includeRateColumn = rateColumn ?? includeRateColumn;
     await refreshPreview();
+  }
+
+  void _applyBillingSettings(BookingAdvanceBillingModel settings) {
+    selectedFormat = _printFormatFromName(settings.defaultPrintFormat);
+    printCopies = settings.printCopies.clamp(1, 5).toInt();
+    includeCustomerAddress = settings.includeCustomerAddress;
+    includeRateColumn = settings.includeRateColumn;
+    includeTerms = settings.printTermsAndConditions;
+    includeFooterMessage = settings.printFooterMessage;
+    termsAndConditions = settings.termsAndConditions;
+    footerMessage = settings.footerMessage;
+  }
+
+  PrintFormat _printFormatFromName(String value) {
+    for (final format in PrintFormat.values) {
+      if (format.name == value) return format;
+    }
+    return PrintFormat.a4;
   }
 
   Future<void> refreshPreview() async {

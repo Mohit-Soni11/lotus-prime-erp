@@ -156,6 +156,7 @@ class SalesReportGstLiabilitySummary {
   final double gstFinalAmount;
   final double recordedGstAmount;
   final double nonGstSalesAmount;
+  final double projectedGstRatePercent;
   final double projectedGstAmount;
 
   const SalesReportGstLiabilitySummary({
@@ -166,6 +167,7 @@ class SalesReportGstLiabilitySummary {
     this.gstFinalAmount = 0,
     this.recordedGstAmount = 0,
     this.nonGstSalesAmount = 0,
+    this.projectedGstRatePercent = 3.0,
     this.projectedGstAmount = 0,
   });
 
@@ -294,6 +296,7 @@ class SalesReportItemRow {
   final String makingChargeType;
   final double makingCharge;
   final double itemTotal;
+  final double gstRatePercent;
   final String stockSku;
   final double stockCostAmount;
   final double profitAmount;
@@ -319,6 +322,7 @@ class SalesReportItemRow {
     required this.makingChargeType,
     required this.makingCharge,
     required this.itemTotal,
+    this.gstRatePercent = 0,
     required this.stockSku,
     required this.stockCostAmount,
     required this.profitAmount,

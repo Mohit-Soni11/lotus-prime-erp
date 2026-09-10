@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../database/db/app_database.dart';
 import '../../models/booking_advance/booking_advance/booking_advance_model.dart';
+import '../../models/setting/billing_setup/booking_advance_billing_model.dart';
 import '../../repositories/booking_advance/booking_advance_repository.dart';
 import '../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -63,10 +64,13 @@ class BookingAdvanceController extends ChangeNotifier {
   String _currentYearToken = '';
   int _nextSequence = 0;
   bool _isNumberLoading = true;
+  BookingAdvanceBillingModel _billingSettings =
+      BookingAdvanceBillingModel.defaults();
 
   bool get isNumberLoading => _isNumberLoading;
   String get currentFinancialYear => _currentYearToken;
   int get nextSequence => _nextSequence;
+  BookingAdvanceBillingModel get billingSettings => _billingSettings;
   int? editingOrderId;
   String? _editingOrderNo;
   bool isLoadingEditOrder = false;
@@ -80,21 +84,26 @@ class BookingAdvanceController extends ChangeNotifier {
       shopCode: _shopDocumentCode,
       yearToken: _currentYearToken,
       sequence: _nextSequence,
+      documentPrefix: _billingSettings.documentPrefix,
     );
   }
 
   Future<void> _initBookingNumber() async {
     try {
+      final settings = await _repo.fetchBillingSettings();
       final shopCode = await _repo.resolveShopDocumentCode();
       final yearToken = _repo.getCurrentDocumentYearToken();
       final seq = await _repo.getNextBookingSequence(
         shopCode: shopCode,
         yearToken: yearToken,
+        documentPrefix: settings.documentPrefix,
       );
+      _billingSettings = settings;
       _shopDocumentCode = shopCode;
       _currentYearToken = yearToken;
       _nextSequence = seq;
       _isNumberLoading = false;
+      _applyBillingDefaults();
       notifyListeners();
     } catch (e) {
       AppLogger.debug('Booking number init error: $e');
@@ -102,6 +111,7 @@ class BookingAdvanceController extends ChangeNotifier {
       _currentYearToken = _repo.getCurrentDocumentYearToken();
       _nextSequence = 1;
       _isNumberLoading = false;
+      _applyBillingDefaults();
       notifyListeners();
     }
   }
@@ -231,6 +241,34 @@ class BookingAdvanceController extends ChangeNotifier {
     if (lockedRateCtrl.text.isNotEmpty) {
       lockedRateCtrl.clear();
     }
+  }
+
+  void _applyBillingDefaults() {
+    if (isEditMode) return;
+    bookingType = _billingSettings.defaultBookingType ==
+            BookingAdvanceBillingModel.bookingTypeLocked
+        ? BookingType.locked
+        : BookingType.open;
+    final days = _billingSettings.defaultDeliveryDays;
+    deliveryDate = days <= 0 ? null : DateTime.now().add(Duration(days: days));
+  }
+
+  String? _minimumAdvanceValidationMessage() {
+    final settings = _billingSettings;
+    if (settings.allowZeroAdvance) return null;
+    final requiredByPercent =
+        totalBookingVal * (settings.minimumAdvancePercent / 100);
+    final requiredAdvance = requiredByPercent > settings.minimumAdvanceAmount
+        ? requiredByPercent
+        : settings.minimumAdvanceAmount;
+    if (requiredAdvance <= 0 && totalAdvance > 0) return null;
+    if (requiredAdvance <= 0 && totalAdvance <= 0) {
+      return 'Please enter an advance amount for this booking.';
+    }
+    if (totalAdvance + 0.005 < requiredAdvance) {
+      return 'Minimum advance required is Rs. ${_formatNumber(requiredAdvance)}.';
+    }
+    return null;
   }
 
   double _p(String t) =>

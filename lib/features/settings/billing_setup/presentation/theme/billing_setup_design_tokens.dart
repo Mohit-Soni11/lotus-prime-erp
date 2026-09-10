@@ -16,6 +16,7 @@ class BillingSetupDesignTokens {
   static const Color gold = Color(0xFFD4AF37);
   static const Color sales = Color(0xFF0EA5E9);
   static const Color purchase = Color(0xFF2563EB);
+  static const Color bookingAdvance = Color(0xFF0F766E);
   static const Color girvi = Color(0xFFD97706);
   static const Color shopPrint = Color(0xFF059669);
 
@@ -25,6 +26,8 @@ class BillingSetupDesignTokens {
         return sales;
       case BillingSetupModuleId.purchase:
         return purchase;
+      case BillingSetupModuleId.bookingAdvance:
+        return bookingAdvance;
       case BillingSetupModuleId.girvi:
         return girvi;
       case BillingSetupModuleId.shopPrintInformation:
@@ -38,6 +41,8 @@ class BillingSetupDesignTokens {
         return Icons.point_of_sale_rounded;
       case BillingSetupModuleId.purchase:
         return Icons.shopping_bag_outlined;
+      case BillingSetupModuleId.bookingAdvance:
+        return Icons.event_available_rounded;
       case BillingSetupModuleId.girvi:
         return Icons.lock_outline_rounded;
       case BillingSetupModuleId.shopPrintInformation:

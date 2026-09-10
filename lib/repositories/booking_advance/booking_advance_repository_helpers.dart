@@ -3,14 +3,18 @@ part of 'booking_advance_repository.dart';
 int _bookingDocumentSequence(
   String orderNo, {
   required String yearToken,
+  required String documentPrefix,
 }) {
   final normalized = orderNo.trim().toUpperCase();
+  final prefix = documentPrefix.trim().toUpperCase();
   final current = RegExp(
-    '^[A-Z0-9]{2,6}-BK-${RegExp.escape(yearToken)}-(\\d+)\$',
+    '^[A-Z0-9]{2,8}-${RegExp.escape(prefix)}-${RegExp.escape(yearToken)}-(\\d+)\$',
   ).firstMatch(normalized);
   if (current != null) {
     return int.tryParse(current.group(1) ?? '') ?? 0;
   }
+
+  if (prefix != 'BK') return 0;
 
   final legacy = RegExp(
     '^BK-[A-Z0-9]{1,8}-(\\d{4})-(\\d+)\$',

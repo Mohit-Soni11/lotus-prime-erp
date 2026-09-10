@@ -33,17 +33,14 @@ LotusPrintableDocument _printableDocument({
       totalAdvance: totalAdvance,
     ),
     policySections: options.includeTerms
-        ? const [
+        ? [
             LotusPrintablePolicySection(
               title: 'Booking Terms',
-              body:
-                  'This document confirms advance received against the listed booking. Final billing will be prepared at delivery according to the applicable sale invoice policy.',
+              body: options.termsAndConditions,
             ),
           ]
         : const [],
-    footerMessage: options.includeTerms
-        ? 'Final billing will be prepared at delivery.'
-        : '',
+    footerMessage: options.includeFooterMessage ? options.footerMessage : '',
     showHeaderDocumentMeta: true,
     showHeaderBadge: true,
     useFallbackShopName: true,
@@ -216,11 +213,20 @@ List<pw.Widget> _thermalContent({
     if (options.includeTerms) ...[
       pw.Divider(),
       pw.Text(
-        'Final billing will be prepared at delivery.',
+        options.termsAndConditions,
         textAlign: pw.TextAlign.center,
         style: const pw.TextStyle(fontSize: 6),
       ),
     ],
+    if (options.includeFooterMessage && options.footerMessage.trim().isNotEmpty)
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(top: 3),
+        child: pw.Text(
+          options.footerMessage,
+          textAlign: pw.TextAlign.center,
+          style: const pw.TextStyle(fontSize: 6),
+        ),
+      ),
   ];
 }
 

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../constants/app_routes.dart';
+import '../../booking_advance/presentation/screens/booking_advance_billing_workspace_screen.dart';
 import '../../girvi/presentation/screens/girvi_billing_workspace_screen.dart';
 import '../../domain/entities/billing_setup_module.dart';
 import '../../purchase/presentation/screens/purchase_billing_workspace_screen.dart';
@@ -23,6 +24,12 @@ class BillingSetupWorkspaceScreen extends StatelessWidget {
         return;
       case BillingSetupModuleId.purchase:
         _pushLegacyModule(context, const PurchaseBillingWorkspaceScreen());
+        return;
+      case BillingSetupModuleId.bookingAdvance:
+        _pushLegacyModule(
+          context,
+          const BookingAdvanceBillingWorkspaceScreen(),
+        );
         return;
       case BillingSetupModuleId.girvi:
         _pushLegacyModule(context, const GirviBillingWorkspaceScreen());
@@ -105,7 +112,7 @@ class BillingSetupWorkspaceScreen extends StatelessWidget {
 
 class _ModuleGrid extends StatelessWidget {
   static const double _gap = 20;
-  static const double _cardHeight = 218;
+  static const double _cardHeight = 224;
 
   final List<BillingSetupModule> modules;
   final ValueChanged<BillingSetupModule> onOpen;

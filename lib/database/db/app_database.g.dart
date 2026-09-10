@@ -32110,6 +32110,917 @@ class ShopPrintInformationSettingsCompanion
   }
 }
 
+class $BookingAdvanceBillingSettingsTable extends BookingAdvanceBillingSettings
+    with
+        TableInfo<$BookingAdvanceBillingSettingsTable,
+            BookingAdvanceBillingSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BookingAdvanceBillingSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _documentPrefixMeta =
+      const VerificationMeta('documentPrefix');
+  @override
+  late final GeneratedColumn<String> documentPrefix = GeneratedColumn<String>(
+      'document_prefix', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('BK'));
+  static const VerificationMeta _defaultBookingTypeMeta =
+      const VerificationMeta('defaultBookingType');
+  @override
+  late final GeneratedColumn<String> defaultBookingType =
+      GeneratedColumn<String>('default_booking_type', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant('OPEN'));
+  static const VerificationMeta _defaultDeliveryDaysMeta =
+      const VerificationMeta('defaultDeliveryDays');
+  @override
+  late final GeneratedColumn<int> defaultDeliveryDays = GeneratedColumn<int>(
+      'default_delivery_days', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(15));
+  static const VerificationMeta _minimumAdvancePercentMeta =
+      const VerificationMeta('minimumAdvancePercent');
+  @override
+  late final GeneratedColumn<double> minimumAdvancePercent =
+      GeneratedColumn<double>('minimum_advance_percent', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _minimumAdvanceAmountMeta =
+      const VerificationMeta('minimumAdvanceAmount');
+  @override
+  late final GeneratedColumn<double> minimumAdvanceAmount =
+      GeneratedColumn<double>('minimum_advance_amount', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(0.0));
+  static const VerificationMeta _allowZeroAdvanceMeta =
+      const VerificationMeta('allowZeroAdvance');
+  @override
+  late final GeneratedColumn<bool> allowZeroAdvance = GeneratedColumn<bool>(
+      'allow_zero_advance', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("allow_zero_advance" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _defaultPrintFormatMeta =
+      const VerificationMeta('defaultPrintFormat');
+  @override
+  late final GeneratedColumn<String> defaultPrintFormat =
+      GeneratedColumn<String>('default_print_format', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant('a4'));
+  static const VerificationMeta _selectedTemplateMeta =
+      const VerificationMeta('selectedTemplate');
+  @override
+  late final GeneratedColumn<String> selectedTemplate = GeneratedColumn<String>(
+      'selected_template', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('default'));
+  static const VerificationMeta _printCopiesMeta =
+      const VerificationMeta('printCopies');
+  @override
+  late final GeneratedColumn<int> printCopies = GeneratedColumn<int>(
+      'print_copies', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _includeCustomerAddressMeta =
+      const VerificationMeta('includeCustomerAddress');
+  @override
+  late final GeneratedColumn<bool> includeCustomerAddress =
+      GeneratedColumn<bool>('include_customer_address', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("include_customer_address" IN (0, 1))'),
+          defaultValue: const Constant(true));
+  static const VerificationMeta _includeRateColumnMeta =
+      const VerificationMeta('includeRateColumn');
+  @override
+  late final GeneratedColumn<bool> includeRateColumn = GeneratedColumn<bool>(
+      'include_rate_column', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("include_rate_column" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _printTermsAndConditionsMeta =
+      const VerificationMeta('printTermsAndConditions');
+  @override
+  late final GeneratedColumn<bool> printTermsAndConditions =
+      GeneratedColumn<bool>('print_terms_and_conditions', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("print_terms_and_conditions" IN (0, 1))'),
+          defaultValue: const Constant(true));
+  static const VerificationMeta _printFooterMessageMeta =
+      const VerificationMeta('printFooterMessage');
+  @override
+  late final GeneratedColumn<bool> printFooterMessage = GeneratedColumn<bool>(
+      'print_footer_message', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("print_footer_message" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _termsAndConditionsMeta =
+      const VerificationMeta('termsAndConditions');
+  @override
+  late final GeneratedColumn<String> termsAndConditions =
+      GeneratedColumn<String>('terms_and_conditions', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(''));
+  static const VerificationMeta _footerMessageMeta =
+      const VerificationMeta('footerMessage');
+  @override
+  late final GeneratedColumn<String> footerMessage = GeneratedColumn<String>(
+      'footer_message', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        documentPrefix,
+        defaultBookingType,
+        defaultDeliveryDays,
+        minimumAdvancePercent,
+        minimumAdvanceAmount,
+        allowZeroAdvance,
+        defaultPrintFormat,
+        selectedTemplate,
+        printCopies,
+        includeCustomerAddress,
+        includeRateColumn,
+        printTermsAndConditions,
+        printFooterMessage,
+        termsAndConditions,
+        footerMessage
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'booking_advance_billing_settings';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<BookingAdvanceBillingSetting> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('document_prefix')) {
+      context.handle(
+          _documentPrefixMeta,
+          documentPrefix.isAcceptableOrUnknown(
+              data['document_prefix']!, _documentPrefixMeta));
+    }
+    if (data.containsKey('default_booking_type')) {
+      context.handle(
+          _defaultBookingTypeMeta,
+          defaultBookingType.isAcceptableOrUnknown(
+              data['default_booking_type']!, _defaultBookingTypeMeta));
+    }
+    if (data.containsKey('default_delivery_days')) {
+      context.handle(
+          _defaultDeliveryDaysMeta,
+          defaultDeliveryDays.isAcceptableOrUnknown(
+              data['default_delivery_days']!, _defaultDeliveryDaysMeta));
+    }
+    if (data.containsKey('minimum_advance_percent')) {
+      context.handle(
+          _minimumAdvancePercentMeta,
+          minimumAdvancePercent.isAcceptableOrUnknown(
+              data['minimum_advance_percent']!, _minimumAdvancePercentMeta));
+    }
+    if (data.containsKey('minimum_advance_amount')) {
+      context.handle(
+          _minimumAdvanceAmountMeta,
+          minimumAdvanceAmount.isAcceptableOrUnknown(
+              data['minimum_advance_amount']!, _minimumAdvanceAmountMeta));
+    }
+    if (data.containsKey('allow_zero_advance')) {
+      context.handle(
+          _allowZeroAdvanceMeta,
+          allowZeroAdvance.isAcceptableOrUnknown(
+              data['allow_zero_advance']!, _allowZeroAdvanceMeta));
+    }
+    if (data.containsKey('default_print_format')) {
+      context.handle(
+          _defaultPrintFormatMeta,
+          defaultPrintFormat.isAcceptableOrUnknown(
+              data['default_print_format']!, _defaultPrintFormatMeta));
+    }
+    if (data.containsKey('selected_template')) {
+      context.handle(
+          _selectedTemplateMeta,
+          selectedTemplate.isAcceptableOrUnknown(
+              data['selected_template']!, _selectedTemplateMeta));
+    }
+    if (data.containsKey('print_copies')) {
+      context.handle(
+          _printCopiesMeta,
+          printCopies.isAcceptableOrUnknown(
+              data['print_copies']!, _printCopiesMeta));
+    }
+    if (data.containsKey('include_customer_address')) {
+      context.handle(
+          _includeCustomerAddressMeta,
+          includeCustomerAddress.isAcceptableOrUnknown(
+              data['include_customer_address']!, _includeCustomerAddressMeta));
+    }
+    if (data.containsKey('include_rate_column')) {
+      context.handle(
+          _includeRateColumnMeta,
+          includeRateColumn.isAcceptableOrUnknown(
+              data['include_rate_column']!, _includeRateColumnMeta));
+    }
+    if (data.containsKey('print_terms_and_conditions')) {
+      context.handle(
+          _printTermsAndConditionsMeta,
+          printTermsAndConditions.isAcceptableOrUnknown(
+              data['print_terms_and_conditions']!,
+              _printTermsAndConditionsMeta));
+    }
+    if (data.containsKey('print_footer_message')) {
+      context.handle(
+          _printFooterMessageMeta,
+          printFooterMessage.isAcceptableOrUnknown(
+              data['print_footer_message']!, _printFooterMessageMeta));
+    }
+    if (data.containsKey('terms_and_conditions')) {
+      context.handle(
+          _termsAndConditionsMeta,
+          termsAndConditions.isAcceptableOrUnknown(
+              data['terms_and_conditions']!, _termsAndConditionsMeta));
+    }
+    if (data.containsKey('footer_message')) {
+      context.handle(
+          _footerMessageMeta,
+          footerMessage.isAcceptableOrUnknown(
+              data['footer_message']!, _footerMessageMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BookingAdvanceBillingSetting map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BookingAdvanceBillingSetting(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      documentPrefix: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}document_prefix'])!,
+      defaultBookingType: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}default_booking_type'])!,
+      defaultDeliveryDays: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}default_delivery_days'])!,
+      minimumAdvancePercent: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}minimum_advance_percent'])!,
+      minimumAdvanceAmount: attachedDatabase.typeMapping.read(
+          DriftSqlType.double,
+          data['${effectivePrefix}minimum_advance_amount'])!,
+      allowZeroAdvance: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}allow_zero_advance'])!,
+      defaultPrintFormat: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}default_print_format'])!,
+      selectedTemplate: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}selected_template'])!,
+      printCopies: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}print_copies'])!,
+      includeCustomerAddress: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}include_customer_address'])!,
+      includeRateColumn: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}include_rate_column'])!,
+      printTermsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}print_terms_and_conditions'])!,
+      printFooterMessage: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}print_footer_message'])!,
+      termsAndConditions: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}terms_and_conditions'])!,
+      footerMessage: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}footer_message'])!,
+    );
+  }
+
+  @override
+  $BookingAdvanceBillingSettingsTable createAlias(String alias) {
+    return $BookingAdvanceBillingSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class BookingAdvanceBillingSetting extends DataClass
+    implements Insertable<BookingAdvanceBillingSetting> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String documentPrefix;
+  final String defaultBookingType;
+  final int defaultDeliveryDays;
+  final double minimumAdvancePercent;
+  final double minimumAdvanceAmount;
+  final bool allowZeroAdvance;
+  final String defaultPrintFormat;
+  final String selectedTemplate;
+  final int printCopies;
+  final bool includeCustomerAddress;
+  final bool includeRateColumn;
+  final bool printTermsAndConditions;
+  final bool printFooterMessage;
+  final String termsAndConditions;
+  final String footerMessage;
+  const BookingAdvanceBillingSetting(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.documentPrefix,
+      required this.defaultBookingType,
+      required this.defaultDeliveryDays,
+      required this.minimumAdvancePercent,
+      required this.minimumAdvanceAmount,
+      required this.allowZeroAdvance,
+      required this.defaultPrintFormat,
+      required this.selectedTemplate,
+      required this.printCopies,
+      required this.includeCustomerAddress,
+      required this.includeRateColumn,
+      required this.printTermsAndConditions,
+      required this.printFooterMessage,
+      required this.termsAndConditions,
+      required this.footerMessage});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['document_prefix'] = Variable<String>(documentPrefix);
+    map['default_booking_type'] = Variable<String>(defaultBookingType);
+    map['default_delivery_days'] = Variable<int>(defaultDeliveryDays);
+    map['minimum_advance_percent'] = Variable<double>(minimumAdvancePercent);
+    map['minimum_advance_amount'] = Variable<double>(minimumAdvanceAmount);
+    map['allow_zero_advance'] = Variable<bool>(allowZeroAdvance);
+    map['default_print_format'] = Variable<String>(defaultPrintFormat);
+    map['selected_template'] = Variable<String>(selectedTemplate);
+    map['print_copies'] = Variable<int>(printCopies);
+    map['include_customer_address'] = Variable<bool>(includeCustomerAddress);
+    map['include_rate_column'] = Variable<bool>(includeRateColumn);
+    map['print_terms_and_conditions'] = Variable<bool>(printTermsAndConditions);
+    map['print_footer_message'] = Variable<bool>(printFooterMessage);
+    map['terms_and_conditions'] = Variable<String>(termsAndConditions);
+    map['footer_message'] = Variable<String>(footerMessage);
+    return map;
+  }
+
+  BookingAdvanceBillingSettingsCompanion toCompanion(bool nullToAbsent) {
+    return BookingAdvanceBillingSettingsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      documentPrefix: Value(documentPrefix),
+      defaultBookingType: Value(defaultBookingType),
+      defaultDeliveryDays: Value(defaultDeliveryDays),
+      minimumAdvancePercent: Value(minimumAdvancePercent),
+      minimumAdvanceAmount: Value(minimumAdvanceAmount),
+      allowZeroAdvance: Value(allowZeroAdvance),
+      defaultPrintFormat: Value(defaultPrintFormat),
+      selectedTemplate: Value(selectedTemplate),
+      printCopies: Value(printCopies),
+      includeCustomerAddress: Value(includeCustomerAddress),
+      includeRateColumn: Value(includeRateColumn),
+      printTermsAndConditions: Value(printTermsAndConditions),
+      printFooterMessage: Value(printFooterMessage),
+      termsAndConditions: Value(termsAndConditions),
+      footerMessage: Value(footerMessage),
+    );
+  }
+
+  factory BookingAdvanceBillingSetting.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BookingAdvanceBillingSetting(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      documentPrefix: serializer.fromJson<String>(json['documentPrefix']),
+      defaultBookingType:
+          serializer.fromJson<String>(json['defaultBookingType']),
+      defaultDeliveryDays:
+          serializer.fromJson<int>(json['defaultDeliveryDays']),
+      minimumAdvancePercent:
+          serializer.fromJson<double>(json['minimumAdvancePercent']),
+      minimumAdvanceAmount:
+          serializer.fromJson<double>(json['minimumAdvanceAmount']),
+      allowZeroAdvance: serializer.fromJson<bool>(json['allowZeroAdvance']),
+      defaultPrintFormat:
+          serializer.fromJson<String>(json['defaultPrintFormat']),
+      selectedTemplate: serializer.fromJson<String>(json['selectedTemplate']),
+      printCopies: serializer.fromJson<int>(json['printCopies']),
+      includeCustomerAddress:
+          serializer.fromJson<bool>(json['includeCustomerAddress']),
+      includeRateColumn: serializer.fromJson<bool>(json['includeRateColumn']),
+      printTermsAndConditions:
+          serializer.fromJson<bool>(json['printTermsAndConditions']),
+      printFooterMessage: serializer.fromJson<bool>(json['printFooterMessage']),
+      termsAndConditions:
+          serializer.fromJson<String>(json['termsAndConditions']),
+      footerMessage: serializer.fromJson<String>(json['footerMessage']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'documentPrefix': serializer.toJson<String>(documentPrefix),
+      'defaultBookingType': serializer.toJson<String>(defaultBookingType),
+      'defaultDeliveryDays': serializer.toJson<int>(defaultDeliveryDays),
+      'minimumAdvancePercent': serializer.toJson<double>(minimumAdvancePercent),
+      'minimumAdvanceAmount': serializer.toJson<double>(minimumAdvanceAmount),
+      'allowZeroAdvance': serializer.toJson<bool>(allowZeroAdvance),
+      'defaultPrintFormat': serializer.toJson<String>(defaultPrintFormat),
+      'selectedTemplate': serializer.toJson<String>(selectedTemplate),
+      'printCopies': serializer.toJson<int>(printCopies),
+      'includeCustomerAddress': serializer.toJson<bool>(includeCustomerAddress),
+      'includeRateColumn': serializer.toJson<bool>(includeRateColumn),
+      'printTermsAndConditions':
+          serializer.toJson<bool>(printTermsAndConditions),
+      'printFooterMessage': serializer.toJson<bool>(printFooterMessage),
+      'termsAndConditions': serializer.toJson<String>(termsAndConditions),
+      'footerMessage': serializer.toJson<String>(footerMessage),
+    };
+  }
+
+  BookingAdvanceBillingSetting copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? documentPrefix,
+          String? defaultBookingType,
+          int? defaultDeliveryDays,
+          double? minimumAdvancePercent,
+          double? minimumAdvanceAmount,
+          bool? allowZeroAdvance,
+          String? defaultPrintFormat,
+          String? selectedTemplate,
+          int? printCopies,
+          bool? includeCustomerAddress,
+          bool? includeRateColumn,
+          bool? printTermsAndConditions,
+          bool? printFooterMessage,
+          String? termsAndConditions,
+          String? footerMessage}) =>
+      BookingAdvanceBillingSetting(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        documentPrefix: documentPrefix ?? this.documentPrefix,
+        defaultBookingType: defaultBookingType ?? this.defaultBookingType,
+        defaultDeliveryDays: defaultDeliveryDays ?? this.defaultDeliveryDays,
+        minimumAdvancePercent:
+            minimumAdvancePercent ?? this.minimumAdvancePercent,
+        minimumAdvanceAmount: minimumAdvanceAmount ?? this.minimumAdvanceAmount,
+        allowZeroAdvance: allowZeroAdvance ?? this.allowZeroAdvance,
+        defaultPrintFormat: defaultPrintFormat ?? this.defaultPrintFormat,
+        selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+        printCopies: printCopies ?? this.printCopies,
+        includeCustomerAddress:
+            includeCustomerAddress ?? this.includeCustomerAddress,
+        includeRateColumn: includeRateColumn ?? this.includeRateColumn,
+        printTermsAndConditions:
+            printTermsAndConditions ?? this.printTermsAndConditions,
+        printFooterMessage: printFooterMessage ?? this.printFooterMessage,
+        termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+        footerMessage: footerMessage ?? this.footerMessage,
+      );
+  BookingAdvanceBillingSetting copyWithCompanion(
+      BookingAdvanceBillingSettingsCompanion data) {
+    return BookingAdvanceBillingSetting(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      documentPrefix: data.documentPrefix.present
+          ? data.documentPrefix.value
+          : this.documentPrefix,
+      defaultBookingType: data.defaultBookingType.present
+          ? data.defaultBookingType.value
+          : this.defaultBookingType,
+      defaultDeliveryDays: data.defaultDeliveryDays.present
+          ? data.defaultDeliveryDays.value
+          : this.defaultDeliveryDays,
+      minimumAdvancePercent: data.minimumAdvancePercent.present
+          ? data.minimumAdvancePercent.value
+          : this.minimumAdvancePercent,
+      minimumAdvanceAmount: data.minimumAdvanceAmount.present
+          ? data.minimumAdvanceAmount.value
+          : this.minimumAdvanceAmount,
+      allowZeroAdvance: data.allowZeroAdvance.present
+          ? data.allowZeroAdvance.value
+          : this.allowZeroAdvance,
+      defaultPrintFormat: data.defaultPrintFormat.present
+          ? data.defaultPrintFormat.value
+          : this.defaultPrintFormat,
+      selectedTemplate: data.selectedTemplate.present
+          ? data.selectedTemplate.value
+          : this.selectedTemplate,
+      printCopies:
+          data.printCopies.present ? data.printCopies.value : this.printCopies,
+      includeCustomerAddress: data.includeCustomerAddress.present
+          ? data.includeCustomerAddress.value
+          : this.includeCustomerAddress,
+      includeRateColumn: data.includeRateColumn.present
+          ? data.includeRateColumn.value
+          : this.includeRateColumn,
+      printTermsAndConditions: data.printTermsAndConditions.present
+          ? data.printTermsAndConditions.value
+          : this.printTermsAndConditions,
+      printFooterMessage: data.printFooterMessage.present
+          ? data.printFooterMessage.value
+          : this.printFooterMessage,
+      termsAndConditions: data.termsAndConditions.present
+          ? data.termsAndConditions.value
+          : this.termsAndConditions,
+      footerMessage: data.footerMessage.present
+          ? data.footerMessage.value
+          : this.footerMessage,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookingAdvanceBillingSetting(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('documentPrefix: $documentPrefix, ')
+          ..write('defaultBookingType: $defaultBookingType, ')
+          ..write('defaultDeliveryDays: $defaultDeliveryDays, ')
+          ..write('minimumAdvancePercent: $minimumAdvancePercent, ')
+          ..write('minimumAdvanceAmount: $minimumAdvanceAmount, ')
+          ..write('allowZeroAdvance: $allowZeroAdvance, ')
+          ..write('defaultPrintFormat: $defaultPrintFormat, ')
+          ..write('selectedTemplate: $selectedTemplate, ')
+          ..write('printCopies: $printCopies, ')
+          ..write('includeCustomerAddress: $includeCustomerAddress, ')
+          ..write('includeRateColumn: $includeRateColumn, ')
+          ..write('printTermsAndConditions: $printTermsAndConditions, ')
+          ..write('printFooterMessage: $printFooterMessage, ')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      documentPrefix,
+      defaultBookingType,
+      defaultDeliveryDays,
+      minimumAdvancePercent,
+      minimumAdvanceAmount,
+      allowZeroAdvance,
+      defaultPrintFormat,
+      selectedTemplate,
+      printCopies,
+      includeCustomerAddress,
+      includeRateColumn,
+      printTermsAndConditions,
+      printFooterMessage,
+      termsAndConditions,
+      footerMessage);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BookingAdvanceBillingSetting &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.documentPrefix == this.documentPrefix &&
+          other.defaultBookingType == this.defaultBookingType &&
+          other.defaultDeliveryDays == this.defaultDeliveryDays &&
+          other.minimumAdvancePercent == this.minimumAdvancePercent &&
+          other.minimumAdvanceAmount == this.minimumAdvanceAmount &&
+          other.allowZeroAdvance == this.allowZeroAdvance &&
+          other.defaultPrintFormat == this.defaultPrintFormat &&
+          other.selectedTemplate == this.selectedTemplate &&
+          other.printCopies == this.printCopies &&
+          other.includeCustomerAddress == this.includeCustomerAddress &&
+          other.includeRateColumn == this.includeRateColumn &&
+          other.printTermsAndConditions == this.printTermsAndConditions &&
+          other.printFooterMessage == this.printFooterMessage &&
+          other.termsAndConditions == this.termsAndConditions &&
+          other.footerMessage == this.footerMessage);
+}
+
+class BookingAdvanceBillingSettingsCompanion
+    extends UpdateCompanion<BookingAdvanceBillingSetting> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> documentPrefix;
+  final Value<String> defaultBookingType;
+  final Value<int> defaultDeliveryDays;
+  final Value<double> minimumAdvancePercent;
+  final Value<double> minimumAdvanceAmount;
+  final Value<bool> allowZeroAdvance;
+  final Value<String> defaultPrintFormat;
+  final Value<String> selectedTemplate;
+  final Value<int> printCopies;
+  final Value<bool> includeCustomerAddress;
+  final Value<bool> includeRateColumn;
+  final Value<bool> printTermsAndConditions;
+  final Value<bool> printFooterMessage;
+  final Value<String> termsAndConditions;
+  final Value<String> footerMessage;
+  const BookingAdvanceBillingSettingsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.documentPrefix = const Value.absent(),
+    this.defaultBookingType = const Value.absent(),
+    this.defaultDeliveryDays = const Value.absent(),
+    this.minimumAdvancePercent = const Value.absent(),
+    this.minimumAdvanceAmount = const Value.absent(),
+    this.allowZeroAdvance = const Value.absent(),
+    this.defaultPrintFormat = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+    this.printCopies = const Value.absent(),
+    this.includeCustomerAddress = const Value.absent(),
+    this.includeRateColumn = const Value.absent(),
+    this.printTermsAndConditions = const Value.absent(),
+    this.printFooterMessage = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+  });
+  BookingAdvanceBillingSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.documentPrefix = const Value.absent(),
+    this.defaultBookingType = const Value.absent(),
+    this.defaultDeliveryDays = const Value.absent(),
+    this.minimumAdvancePercent = const Value.absent(),
+    this.minimumAdvanceAmount = const Value.absent(),
+    this.allowZeroAdvance = const Value.absent(),
+    this.defaultPrintFormat = const Value.absent(),
+    this.selectedTemplate = const Value.absent(),
+    this.printCopies = const Value.absent(),
+    this.includeCustomerAddress = const Value.absent(),
+    this.includeRateColumn = const Value.absent(),
+    this.printTermsAndConditions = const Value.absent(),
+    this.printFooterMessage = const Value.absent(),
+    this.termsAndConditions = const Value.absent(),
+    this.footerMessage = const Value.absent(),
+  });
+  static Insertable<BookingAdvanceBillingSetting> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? documentPrefix,
+    Expression<String>? defaultBookingType,
+    Expression<int>? defaultDeliveryDays,
+    Expression<double>? minimumAdvancePercent,
+    Expression<double>? minimumAdvanceAmount,
+    Expression<bool>? allowZeroAdvance,
+    Expression<String>? defaultPrintFormat,
+    Expression<String>? selectedTemplate,
+    Expression<int>? printCopies,
+    Expression<bool>? includeCustomerAddress,
+    Expression<bool>? includeRateColumn,
+    Expression<bool>? printTermsAndConditions,
+    Expression<bool>? printFooterMessage,
+    Expression<String>? termsAndConditions,
+    Expression<String>? footerMessage,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (documentPrefix != null) 'document_prefix': documentPrefix,
+      if (defaultBookingType != null)
+        'default_booking_type': defaultBookingType,
+      if (defaultDeliveryDays != null)
+        'default_delivery_days': defaultDeliveryDays,
+      if (minimumAdvancePercent != null)
+        'minimum_advance_percent': minimumAdvancePercent,
+      if (minimumAdvanceAmount != null)
+        'minimum_advance_amount': minimumAdvanceAmount,
+      if (allowZeroAdvance != null) 'allow_zero_advance': allowZeroAdvance,
+      if (defaultPrintFormat != null)
+        'default_print_format': defaultPrintFormat,
+      if (selectedTemplate != null) 'selected_template': selectedTemplate,
+      if (printCopies != null) 'print_copies': printCopies,
+      if (includeCustomerAddress != null)
+        'include_customer_address': includeCustomerAddress,
+      if (includeRateColumn != null) 'include_rate_column': includeRateColumn,
+      if (printTermsAndConditions != null)
+        'print_terms_and_conditions': printTermsAndConditions,
+      if (printFooterMessage != null)
+        'print_footer_message': printFooterMessage,
+      if (termsAndConditions != null)
+        'terms_and_conditions': termsAndConditions,
+      if (footerMessage != null) 'footer_message': footerMessage,
+    });
+  }
+
+  BookingAdvanceBillingSettingsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? documentPrefix,
+      Value<String>? defaultBookingType,
+      Value<int>? defaultDeliveryDays,
+      Value<double>? minimumAdvancePercent,
+      Value<double>? minimumAdvanceAmount,
+      Value<bool>? allowZeroAdvance,
+      Value<String>? defaultPrintFormat,
+      Value<String>? selectedTemplate,
+      Value<int>? printCopies,
+      Value<bool>? includeCustomerAddress,
+      Value<bool>? includeRateColumn,
+      Value<bool>? printTermsAndConditions,
+      Value<bool>? printFooterMessage,
+      Value<String>? termsAndConditions,
+      Value<String>? footerMessage}) {
+    return BookingAdvanceBillingSettingsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      documentPrefix: documentPrefix ?? this.documentPrefix,
+      defaultBookingType: defaultBookingType ?? this.defaultBookingType,
+      defaultDeliveryDays: defaultDeliveryDays ?? this.defaultDeliveryDays,
+      minimumAdvancePercent:
+          minimumAdvancePercent ?? this.minimumAdvancePercent,
+      minimumAdvanceAmount: minimumAdvanceAmount ?? this.minimumAdvanceAmount,
+      allowZeroAdvance: allowZeroAdvance ?? this.allowZeroAdvance,
+      defaultPrintFormat: defaultPrintFormat ?? this.defaultPrintFormat,
+      selectedTemplate: selectedTemplate ?? this.selectedTemplate,
+      printCopies: printCopies ?? this.printCopies,
+      includeCustomerAddress:
+          includeCustomerAddress ?? this.includeCustomerAddress,
+      includeRateColumn: includeRateColumn ?? this.includeRateColumn,
+      printTermsAndConditions:
+          printTermsAndConditions ?? this.printTermsAndConditions,
+      printFooterMessage: printFooterMessage ?? this.printFooterMessage,
+      termsAndConditions: termsAndConditions ?? this.termsAndConditions,
+      footerMessage: footerMessage ?? this.footerMessage,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (documentPrefix.present) {
+      map['document_prefix'] = Variable<String>(documentPrefix.value);
+    }
+    if (defaultBookingType.present) {
+      map['default_booking_type'] = Variable<String>(defaultBookingType.value);
+    }
+    if (defaultDeliveryDays.present) {
+      map['default_delivery_days'] = Variable<int>(defaultDeliveryDays.value);
+    }
+    if (minimumAdvancePercent.present) {
+      map['minimum_advance_percent'] =
+          Variable<double>(minimumAdvancePercent.value);
+    }
+    if (minimumAdvanceAmount.present) {
+      map['minimum_advance_amount'] =
+          Variable<double>(minimumAdvanceAmount.value);
+    }
+    if (allowZeroAdvance.present) {
+      map['allow_zero_advance'] = Variable<bool>(allowZeroAdvance.value);
+    }
+    if (defaultPrintFormat.present) {
+      map['default_print_format'] = Variable<String>(defaultPrintFormat.value);
+    }
+    if (selectedTemplate.present) {
+      map['selected_template'] = Variable<String>(selectedTemplate.value);
+    }
+    if (printCopies.present) {
+      map['print_copies'] = Variable<int>(printCopies.value);
+    }
+    if (includeCustomerAddress.present) {
+      map['include_customer_address'] =
+          Variable<bool>(includeCustomerAddress.value);
+    }
+    if (includeRateColumn.present) {
+      map['include_rate_column'] = Variable<bool>(includeRateColumn.value);
+    }
+    if (printTermsAndConditions.present) {
+      map['print_terms_and_conditions'] =
+          Variable<bool>(printTermsAndConditions.value);
+    }
+    if (printFooterMessage.present) {
+      map['print_footer_message'] = Variable<bool>(printFooterMessage.value);
+    }
+    if (termsAndConditions.present) {
+      map['terms_and_conditions'] = Variable<String>(termsAndConditions.value);
+    }
+    if (footerMessage.present) {
+      map['footer_message'] = Variable<String>(footerMessage.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BookingAdvanceBillingSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('documentPrefix: $documentPrefix, ')
+          ..write('defaultBookingType: $defaultBookingType, ')
+          ..write('defaultDeliveryDays: $defaultDeliveryDays, ')
+          ..write('minimumAdvancePercent: $minimumAdvancePercent, ')
+          ..write('minimumAdvanceAmount: $minimumAdvanceAmount, ')
+          ..write('allowZeroAdvance: $allowZeroAdvance, ')
+          ..write('defaultPrintFormat: $defaultPrintFormat, ')
+          ..write('selectedTemplate: $selectedTemplate, ')
+          ..write('printCopies: $printCopies, ')
+          ..write('includeCustomerAddress: $includeCustomerAddress, ')
+          ..write('includeRateColumn: $includeRateColumn, ')
+          ..write('printTermsAndConditions: $printTermsAndConditions, ')
+          ..write('printFooterMessage: $printFooterMessage, ')
+          ..write('termsAndConditions: $termsAndConditions, ')
+          ..write('footerMessage: $footerMessage')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $GoldStockReceiptsTable extends GoldStockReceipts
     with TableInfo<$GoldStockReceiptsTable, GoldStockReceiptRecord> {
   @override
@@ -37418,6 +38329,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $GirviBillingSettingsTable(this);
   late final $ShopPrintInformationSettingsTable shopPrintInformationSettings =
       $ShopPrintInformationSettingsTable(this);
+  late final $BookingAdvanceBillingSettingsTable bookingAdvanceBillingSettings =
+      $BookingAdvanceBillingSettingsTable(this);
   late final $GoldStockReceiptsTable goldStockReceipts =
       $GoldStockReceiptsTable(this);
   late final $GoldStockReceiptLinesTable goldStockReceiptLines =
@@ -37640,6 +38553,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         purchaseBillingSettings,
         girviBillingSettings,
         shopPrintInformationSettings,
+        bookingAdvanceBillingSettings,
         goldStockReceipts,
         goldStockReceiptLines,
         goldReceiptSettlements,
@@ -55532,6 +56446,402 @@ typedef $$ShopPrintInformationSettingsTableProcessedTableManager
         ),
         ShopPrintInformationSetting,
         PrefetchHooks Function()>;
+typedef $$BookingAdvanceBillingSettingsTableCreateCompanionBuilder
+    = BookingAdvanceBillingSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> documentPrefix,
+  Value<String> defaultBookingType,
+  Value<int> defaultDeliveryDays,
+  Value<double> minimumAdvancePercent,
+  Value<double> minimumAdvanceAmount,
+  Value<bool> allowZeroAdvance,
+  Value<String> defaultPrintFormat,
+  Value<String> selectedTemplate,
+  Value<int> printCopies,
+  Value<bool> includeCustomerAddress,
+  Value<bool> includeRateColumn,
+  Value<bool> printTermsAndConditions,
+  Value<bool> printFooterMessage,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+});
+typedef $$BookingAdvanceBillingSettingsTableUpdateCompanionBuilder
+    = BookingAdvanceBillingSettingsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> documentPrefix,
+  Value<String> defaultBookingType,
+  Value<int> defaultDeliveryDays,
+  Value<double> minimumAdvancePercent,
+  Value<double> minimumAdvanceAmount,
+  Value<bool> allowZeroAdvance,
+  Value<String> defaultPrintFormat,
+  Value<String> selectedTemplate,
+  Value<int> printCopies,
+  Value<bool> includeCustomerAddress,
+  Value<bool> includeRateColumn,
+  Value<bool> printTermsAndConditions,
+  Value<bool> printFooterMessage,
+  Value<String> termsAndConditions,
+  Value<String> footerMessage,
+});
+
+class $$BookingAdvanceBillingSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $BookingAdvanceBillingSettingsTable> {
+  $$BookingAdvanceBillingSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get documentPrefix => $composableBuilder(
+      column: $table.documentPrefix,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get defaultBookingType => $composableBuilder(
+      column: $table.defaultBookingType,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get defaultDeliveryDays => $composableBuilder(
+      column: $table.defaultDeliveryDays,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get minimumAdvancePercent => $composableBuilder(
+      column: $table.minimumAdvancePercent,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get minimumAdvanceAmount => $composableBuilder(
+      column: $table.minimumAdvanceAmount,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get allowZeroAdvance => $composableBuilder(
+      column: $table.allowZeroAdvance,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get defaultPrintFormat => $composableBuilder(
+      column: $table.defaultPrintFormat,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get printCopies => $composableBuilder(
+      column: $table.printCopies, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get includeCustomerAddress => $composableBuilder(
+      column: $table.includeCustomerAddress,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get includeRateColumn => $composableBuilder(
+      column: $table.includeRateColumn,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => ColumnFilters(column));
+}
+
+class $$BookingAdvanceBillingSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BookingAdvanceBillingSettingsTable> {
+  $$BookingAdvanceBillingSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get documentPrefix => $composableBuilder(
+      column: $table.documentPrefix,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get defaultBookingType => $composableBuilder(
+      column: $table.defaultBookingType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get defaultDeliveryDays => $composableBuilder(
+      column: $table.defaultDeliveryDays,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get minimumAdvancePercent => $composableBuilder(
+      column: $table.minimumAdvancePercent,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get minimumAdvanceAmount => $composableBuilder(
+      column: $table.minimumAdvanceAmount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get allowZeroAdvance => $composableBuilder(
+      column: $table.allowZeroAdvance,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get defaultPrintFormat => $composableBuilder(
+      column: $table.defaultPrintFormat,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get printCopies => $composableBuilder(
+      column: $table.printCopies, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get includeCustomerAddress => $composableBuilder(
+      column: $table.includeCustomerAddress,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get includeRateColumn => $composableBuilder(
+      column: $table.includeRateColumn,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$BookingAdvanceBillingSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BookingAdvanceBillingSettingsTable> {
+  $$BookingAdvanceBillingSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get documentPrefix => $composableBuilder(
+      column: $table.documentPrefix, builder: (column) => column);
+
+  GeneratedColumn<String> get defaultBookingType => $composableBuilder(
+      column: $table.defaultBookingType, builder: (column) => column);
+
+  GeneratedColumn<int> get defaultDeliveryDays => $composableBuilder(
+      column: $table.defaultDeliveryDays, builder: (column) => column);
+
+  GeneratedColumn<double> get minimumAdvancePercent => $composableBuilder(
+      column: $table.minimumAdvancePercent, builder: (column) => column);
+
+  GeneratedColumn<double> get minimumAdvanceAmount => $composableBuilder(
+      column: $table.minimumAdvanceAmount, builder: (column) => column);
+
+  GeneratedColumn<bool> get allowZeroAdvance => $composableBuilder(
+      column: $table.allowZeroAdvance, builder: (column) => column);
+
+  GeneratedColumn<String> get defaultPrintFormat => $composableBuilder(
+      column: $table.defaultPrintFormat, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedTemplate => $composableBuilder(
+      column: $table.selectedTemplate, builder: (column) => column);
+
+  GeneratedColumn<int> get printCopies => $composableBuilder(
+      column: $table.printCopies, builder: (column) => column);
+
+  GeneratedColumn<bool> get includeCustomerAddress => $composableBuilder(
+      column: $table.includeCustomerAddress, builder: (column) => column);
+
+  GeneratedColumn<bool> get includeRateColumn => $composableBuilder(
+      column: $table.includeRateColumn, builder: (column) => column);
+
+  GeneratedColumn<bool> get printTermsAndConditions => $composableBuilder(
+      column: $table.printTermsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<bool> get printFooterMessage => $composableBuilder(
+      column: $table.printFooterMessage, builder: (column) => column);
+
+  GeneratedColumn<String> get termsAndConditions => $composableBuilder(
+      column: $table.termsAndConditions, builder: (column) => column);
+
+  GeneratedColumn<String> get footerMessage => $composableBuilder(
+      column: $table.footerMessage, builder: (column) => column);
+}
+
+class $$BookingAdvanceBillingSettingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $BookingAdvanceBillingSettingsTable,
+    BookingAdvanceBillingSetting,
+    $$BookingAdvanceBillingSettingsTableFilterComposer,
+    $$BookingAdvanceBillingSettingsTableOrderingComposer,
+    $$BookingAdvanceBillingSettingsTableAnnotationComposer,
+    $$BookingAdvanceBillingSettingsTableCreateCompanionBuilder,
+    $$BookingAdvanceBillingSettingsTableUpdateCompanionBuilder,
+    (
+      BookingAdvanceBillingSetting,
+      BaseReferences<_$AppDatabase, $BookingAdvanceBillingSettingsTable,
+          BookingAdvanceBillingSetting>
+    ),
+    BookingAdvanceBillingSetting,
+    PrefetchHooks Function()> {
+  $$BookingAdvanceBillingSettingsTableTableManager(
+      _$AppDatabase db, $BookingAdvanceBillingSettingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BookingAdvanceBillingSettingsTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BookingAdvanceBillingSettingsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BookingAdvanceBillingSettingsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> documentPrefix = const Value.absent(),
+            Value<String> defaultBookingType = const Value.absent(),
+            Value<int> defaultDeliveryDays = const Value.absent(),
+            Value<double> minimumAdvancePercent = const Value.absent(),
+            Value<double> minimumAdvanceAmount = const Value.absent(),
+            Value<bool> allowZeroAdvance = const Value.absent(),
+            Value<String> defaultPrintFormat = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
+            Value<int> printCopies = const Value.absent(),
+            Value<bool> includeCustomerAddress = const Value.absent(),
+            Value<bool> includeRateColumn = const Value.absent(),
+            Value<bool> printTermsAndConditions = const Value.absent(),
+            Value<bool> printFooterMessage = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+          }) =>
+              BookingAdvanceBillingSettingsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            documentPrefix: documentPrefix,
+            defaultBookingType: defaultBookingType,
+            defaultDeliveryDays: defaultDeliveryDays,
+            minimumAdvancePercent: minimumAdvancePercent,
+            minimumAdvanceAmount: minimumAdvanceAmount,
+            allowZeroAdvance: allowZeroAdvance,
+            defaultPrintFormat: defaultPrintFormat,
+            selectedTemplate: selectedTemplate,
+            printCopies: printCopies,
+            includeCustomerAddress: includeCustomerAddress,
+            includeRateColumn: includeRateColumn,
+            printTermsAndConditions: printTermsAndConditions,
+            printFooterMessage: printFooterMessage,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> documentPrefix = const Value.absent(),
+            Value<String> defaultBookingType = const Value.absent(),
+            Value<int> defaultDeliveryDays = const Value.absent(),
+            Value<double> minimumAdvancePercent = const Value.absent(),
+            Value<double> minimumAdvanceAmount = const Value.absent(),
+            Value<bool> allowZeroAdvance = const Value.absent(),
+            Value<String> defaultPrintFormat = const Value.absent(),
+            Value<String> selectedTemplate = const Value.absent(),
+            Value<int> printCopies = const Value.absent(),
+            Value<bool> includeCustomerAddress = const Value.absent(),
+            Value<bool> includeRateColumn = const Value.absent(),
+            Value<bool> printTermsAndConditions = const Value.absent(),
+            Value<bool> printFooterMessage = const Value.absent(),
+            Value<String> termsAndConditions = const Value.absent(),
+            Value<String> footerMessage = const Value.absent(),
+          }) =>
+              BookingAdvanceBillingSettingsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            documentPrefix: documentPrefix,
+            defaultBookingType: defaultBookingType,
+            defaultDeliveryDays: defaultDeliveryDays,
+            minimumAdvancePercent: minimumAdvancePercent,
+            minimumAdvanceAmount: minimumAdvanceAmount,
+            allowZeroAdvance: allowZeroAdvance,
+            defaultPrintFormat: defaultPrintFormat,
+            selectedTemplate: selectedTemplate,
+            printCopies: printCopies,
+            includeCustomerAddress: includeCustomerAddress,
+            includeRateColumn: includeRateColumn,
+            printTermsAndConditions: printTermsAndConditions,
+            printFooterMessage: printFooterMessage,
+            termsAndConditions: termsAndConditions,
+            footerMessage: footerMessage,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$BookingAdvanceBillingSettingsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $BookingAdvanceBillingSettingsTable,
+        BookingAdvanceBillingSetting,
+        $$BookingAdvanceBillingSettingsTableFilterComposer,
+        $$BookingAdvanceBillingSettingsTableOrderingComposer,
+        $$BookingAdvanceBillingSettingsTableAnnotationComposer,
+        $$BookingAdvanceBillingSettingsTableCreateCompanionBuilder,
+        $$BookingAdvanceBillingSettingsTableUpdateCompanionBuilder,
+        (
+          BookingAdvanceBillingSetting,
+          BaseReferences<_$AppDatabase, $BookingAdvanceBillingSettingsTable,
+              BookingAdvanceBillingSetting>
+        ),
+        BookingAdvanceBillingSetting,
+        PrefetchHooks Function()>;
 typedef $$GoldStockReceiptsTableCreateCompanionBuilder
     = GoldStockReceiptsCompanion Function({
   Value<int> id,
@@ -58719,6 +60029,10 @@ class $AppDatabaseManager {
       get shopPrintInformationSettings =>
           $$ShopPrintInformationSettingsTableTableManager(
               _db, _db.shopPrintInformationSettings);
+  $$BookingAdvanceBillingSettingsTableTableManager
+      get bookingAdvanceBillingSettings =>
+          $$BookingAdvanceBillingSettingsTableTableManager(
+              _db, _db.bookingAdvanceBillingSettings);
   $$GoldStockReceiptsTableTableManager get goldStockReceipts =>
       $$GoldStockReceiptsTableTableManager(_db, _db.goldStockReceipts);
   $$GoldStockReceiptLinesTableTableManager get goldStockReceiptLines =>

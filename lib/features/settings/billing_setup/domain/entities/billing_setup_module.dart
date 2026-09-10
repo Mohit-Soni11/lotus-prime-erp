@@ -1,6 +1,7 @@
 enum BillingSetupModuleId {
   sales,
   purchase,
+  bookingAdvance,
   girvi,
   shopPrintInformation,
 }
@@ -38,6 +39,13 @@ class BillingSetupModules {
       subtitle: 'Seller KYC, valuation, payout policy and terms per metal.',
       tag: 'Gold, Silver, Diamond, Platinum',
       actionLabel: 'Configure Purchase',
+    ),
+    BillingSetupModule(
+      id: BillingSetupModuleId.bookingAdvance,
+      title: 'Booking & Advance',
+      subtitle: 'Booking receipt terms and footer copy.',
+      tag: 'Terms, Footer',
+      actionLabel: 'Configure Booking',
     ),
     BillingSetupModule(
       id: BillingSetupModuleId.girvi,
