@@ -12,6 +12,7 @@ import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_shop_header_details.dart';
+import 'pos_invoice_tax_display_policy.dart';
 
 class PosLotusEconomyInvoicePdfLayout {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
@@ -139,6 +140,7 @@ class PosLotusEconomyInvoicePdfLayout {
 
   pw.Widget _partyAndTaxPanel(PosInvoiceModel invoice) {
     final showGstBreakup = _showGstBreakup(invoice);
+    final isGstInvoice = invoice.billType == BillType.gst;
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -160,9 +162,9 @@ class PosLotusEconomyInvoicePdfLayout {
                 _keyLine('Mobile', invoice.customerMobile),
               if (invoice.customerCity.trim().isNotEmpty)
                 _keyLine('Address', invoice.customerCity),
-              if (invoice.customerGstin.trim().isNotEmpty)
+              if (isGstInvoice && invoice.customerGstin.trim().isNotEmpty)
                 _keyLine('GSTIN', invoice.customerGstin),
-              if (invoice.customerStateCode.trim().isNotEmpty)
+              if (isGstInvoice && invoice.customerStateCode.trim().isNotEmpty)
                 _keyLine('State Code', invoice.customerStateCode),
             ],
           ),
@@ -170,26 +172,34 @@ class PosLotusEconomyInvoicePdfLayout {
         pw.SizedBox(width: 8),
         pw.Expanded(
           child: _box(
-            title: 'TAX SNAPSHOT',
+            title: isGstInvoice ? 'TAX SNAPSHOT' : 'BILL SNAPSHOT',
             children: [
-              _keyLine('Taxable Value', _amount(invoice.taxableAmount)),
-              if (showGstBreakup) ...[
-                if (invoice.hasIgstBreakup)
-                  _keyLine('IGST', _amount(invoice.igst))
-                else ...[
-                  if (invoice.cgst > posInvoiceMoneyEpsilon)
-                    _keyLine('CGST', _amount(invoice.cgst)),
-                  if (invoice.sgst > posInvoiceMoneyEpsilon)
-                    _keyLine('SGST', _amount(invoice.sgst)),
-                ],
-                _keyLine('Total GST', _amount(invoice.totalGst)),
-              ] else if (invoice.totalGst > posInvoiceMoneyEpsilon)
+              _keyLine(
+                isGstInvoice ? 'Taxable Value' : 'Net Payable',
+                _amount(
+                    isGstInvoice ? invoice.taxableAmount : invoice.netPayable),
+              ),
+              if (isGstInvoice) ...[
+                if (showGstBreakup) ...[
+                  if (invoice.hasIgstBreakup)
+                    _keyLine('IGST', _amount(invoice.igst))
+                  else ...[
+                    if (invoice.cgst > posInvoiceMoneyEpsilon)
+                      _keyLine('CGST', _amount(invoice.cgst)),
+                    if (invoice.sgst > posInvoiceMoneyEpsilon)
+                      _keyLine('SGST', _amount(invoice.sgst)),
+                  ],
+                  _keyLine('Total GST', _amount(invoice.totalGst)),
+                ] else if (invoice.totalGst > posInvoiceMoneyEpsilon)
+                  _keyLine(
+                    PosInvoiceFinancialBreakdown.combinedGstLabel(invoice),
+                    _amount(invoice.totalGst),
+                  ),
                 _keyLine(
-                  PosInvoiceFinancialBreakdown.combinedGstLabel(invoice),
-                  _amount(invoice.totalGst),
+                  'Place of Supply',
+                  _fallback(invoice.placeOfSupply, invoice.customerStateCode),
                 ),
-              _keyLine('Place of Supply',
-                  _fallback(invoice.placeOfSupply, invoice.customerStateCode)),
+              ],
             ],
           ),
         ),
@@ -251,7 +261,7 @@ class PosLotusEconomyInvoicePdfLayout {
     final headers = <String>[
       '#',
       'Description',
-      if (config.showHsnCode) 'HSN',
+      if (_showHsnCode(invoice, config)) 'HSN',
       if (config.showPurity) 'Purity',
       if (config.showPcs) 'Pcs',
       if (config.showGrossWt) 'Gross',
@@ -268,7 +278,7 @@ class PosLotusEconomyInvoicePdfLayout {
       return <String>[
         '${entry.key + 1}',
         _description(item, config),
-        if (config.showHsnCode) _hsn(item),
+        if (_showHsnCode(invoice, config)) _hsn(item),
         if (config.showPurity) _clean(item.purityCtrl.text),
         if (config.showPcs) item.pcs.toString(),
         if (config.showGrossWt) _weight(item.grossCtrl.text),
@@ -748,7 +758,14 @@ class PosLotusEconomyInvoicePdfLayout {
   bool _showGstBreakup(PosInvoiceModel invoice) {
     return scopeService
         .collectMetals(invoice)
-        .any((metal) => _configFor(metal).showGstBreakup);
+        .any((metal) => PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(
+              invoice,
+              _configFor(metal),
+            ));
+  }
+
+  bool _showHsnCode(PosInvoiceModel invoice, BillSettings config) {
+    return PosInvoiceTaxDisplayPolicy.shouldShowHsnCode(invoice, config);
   }
 
   List<String> _splitFooterLines(String value) {

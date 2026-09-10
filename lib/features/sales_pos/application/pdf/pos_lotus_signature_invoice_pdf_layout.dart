@@ -14,6 +14,7 @@ import 'pos_invoice_policy_copy.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_shop_print_blocks.dart';
+import 'pos_invoice_tax_display_policy.dart';
 
 class PosLotusSignatureInvoicePdfLayout {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
@@ -313,7 +314,8 @@ class PosLotusSignatureInvoicePdfLayout {
               if (invoice.customerCity.trim().isNotEmpty)
                 _addressDetailLine(
                     _formatCustomerAddress(invoice.customerCity)),
-              if (invoice.customerGstin.trim().isNotEmpty)
+              if (invoice.shouldPrintTaxRegistrationDetails &&
+                  invoice.customerGstin.trim().isNotEmpty)
                 _detailLine(
                   'gst',
                   'Customer GSTIN (if applicable)',
@@ -444,7 +446,7 @@ class PosLotusSignatureInvoicePdfLayout {
     final headers = <String>[
       'S.No.',
       'Item Description',
-      if (config.showHsnCode) 'HSN',
+      if (_showHsnCode(invoice, config)) 'HSN',
       if (config.showPurity) 'Purity',
       if (config.showGrossWt) 'Gross Wt.',
       if (config.showLessWt) 'Less Wt.',
@@ -460,7 +462,7 @@ class PosLotusSignatureInvoicePdfLayout {
       return <String>[
         '${entry.key + 1}',
         _description(item, config),
-        if (config.showHsnCode) _hsn(item),
+        if (_showHsnCode(invoice, config)) _hsn(item),
         if (config.showPurity) _clean(item.purityCtrl.text),
         if (config.showGrossWt) _weight(item.grossCtrl.text),
         if (config.showLessWt) _weight(item.totalLessWt.toStringAsFixed(3)),
@@ -556,13 +558,12 @@ class PosLotusSignatureInvoicePdfLayout {
                 status.label,
                 valueColor: statusColor,
               ),
-              _pair(
-                'Balance Outstanding',
-                invoice.balanceDue > 0.005
-                    ? _amount(invoice.balanceDue)
-                    : 'Nil',
-                valueColor: status.isDue ? _danger : _success,
-              ),
+              if (invoice.balanceDue > 0.005)
+                _pair(
+                  'Balance Outstanding',
+                  _amount(invoice.balanceDue),
+                  valueColor: _danger,
+                ),
               if (status.isDue && invoice.promiseDate != null)
                 _pair(
                   'Due Date',
@@ -588,7 +589,10 @@ class PosLotusSignatureInvoicePdfLayout {
   pw.Widget _amountSummary(PosInvoiceModel invoice) {
     final showGstBreakup = scopeService
         .collectMetals(invoice)
-        .any((metal) => _configFor(metal).showGstBreakup);
+        .any((metal) => PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(
+              invoice,
+              _configFor(metal),
+            ));
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: showGstBreakup,
@@ -1673,6 +1677,10 @@ class PosLotusSignatureInvoicePdfLayout {
         BillSettings(showHsnCode: true, showMakingType: true);
   }
 
+  bool _showHsnCode(PosInvoiceModel invoice, BillSettings config) {
+    return PosInvoiceTaxDisplayPolicy.shouldShowHsnCode(invoice, config);
+  }
+
   List<TradeInItemModel> _visibleTradeInItems(PosInvoiceModel invoice) {
     return invoice.tradeInItems
         .where((item) => _configFor(item.metal).showExchangeBreakdown)
@@ -1740,9 +1748,10 @@ class PosLotusSignatureInvoicePdfLayout {
   }
 
   String _shopGstinLine(PosInvoiceModel invoice) {
+    if (!invoice.shouldPrintTaxRegistrationDetails) return '';
     final gstin = _fallback(
-      invoice.shopPrintValue('gstin'),
       invoice.printShopGstin,
+      invoice.shopGstin,
     );
     if (gstin.trim().isEmpty ||
         gstin.trim().toLowerCase() == 'not registered') {

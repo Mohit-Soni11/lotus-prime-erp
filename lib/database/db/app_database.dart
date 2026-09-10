@@ -371,18 +371,23 @@ class AppDatabase extends _$AppDatabase {
           UPDATE "bills"
           SET
             "bill_no" = ?,
-            "bill_type" = 'GST',
+            "bill_type" = CASE WHEN ? = 1 THEN 'NORMAL' ELSE 'GST' END,
             "document_type" = 'TAX_INVOICE',
             "gst_pricing_mode" = CASE
-              WHEN ? = 1 THEN 'GST_INCLUSIVE'
+              WHEN ? = 1 THEN 'GST_EXCLUSIVE'
               ELSE COALESCE(NULLIF("gst_pricing_mode", ''), 'GST_EXCLUSIVE')
             END,
-            "tax_treatment" = 'TAXABLE_SUPPLY',
+            "tax_treatment" = CASE
+              WHEN ? = 1 THEN 'NON_GST_SALE'
+              ELSE 'TAXABLE_SUPPLY'
+            END,
             "updated_at" = ?
           WHERE "id" = ?
           ''',
           variables: [
             Variable.withString(mapping.newBillNo),
+            Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
+            Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
             Variable.withInt(mapping.legacyWasNonGst ? 1 : 0),
             Variable.withDateTime(DateTime.now()),
             Variable.withInt(mapping.billId),

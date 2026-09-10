@@ -16,6 +16,7 @@ import 'pos_invoice_print_config.dart';
 import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_shop_header_details.dart';
+import 'pos_invoice_tax_display_policy.dart';
 import 'pos_invoice_template_renderer_registry.dart';
 
 class PosInvoicePdfBuildOptions {
@@ -790,7 +791,7 @@ class _PosInvoicePdfDocumentBuilder {
                     children: [
                       _th('#'),
                       _th('Item Description'),
-                      if (activeConfig.showHsnCode) _th('HSN'),
+                      if (_showHsnCode(invoice, activeConfig)) _th('HSN'),
                       if (activeConfig.showPurity) _th('Purity'),
                       if (activeConfig.showGrossWt) _th('Gross(g)'),
                       if (activeConfig.showLessWt) _th('Less(g)'),
@@ -821,7 +822,8 @@ class _PosInvoicePdfDocumentBuilder {
                       children: [
                         _cell('${entry.key + 1}'),
                         _cell(desc),
-                        if (activeConfig.showHsnCode) _cell(_hsnCode(item)),
+                        if (_showHsnCode(invoice, activeConfig))
+                          _cell(_hsnCode(item)),
                         if (activeConfig.showPurity) _cell(_formatPurity(item)),
                         if (activeConfig.showGrossWt)
                           _cell(_formatWeightText(
@@ -1020,7 +1022,10 @@ class _PosInvoicePdfDocumentBuilder {
   pw.Widget _pdfTotalsBlock(PosInvoiceModel invoice) {
     final showGstBreakup = scopeService
         .collectMetals(invoice)
-        .any((metal) => _getMetalConfig(metal).showGstBreakup);
+        .any((metal) => PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(
+              invoice,
+              _getMetalConfig(metal),
+            ));
 
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.end,
@@ -1271,27 +1276,6 @@ class _PosInvoicePdfDocumentBuilder {
                     fontSize: _pdfGrandValueSize,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.red700,
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  'Balance Outstanding',
-                  style: const pw.TextStyle(
-                    fontSize: _pdfBodySize,
-                    color: _pdfTextColor,
-                  ),
-                ),
-                pw.Text(
-                  'Nil',
-                  style: pw.TextStyle(
-                    fontSize: _pdfBodySize,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.green700,
                   ),
                 ),
               ],
@@ -1753,7 +1737,8 @@ class _PosInvoicePdfDocumentBuilder {
           _thermalKeyValue('Mobile', invoice.customerMobile.trim(), fontSize),
         if (invoice.customerCity.trim().isNotEmpty)
           _thermalKeyValue('Address', invoice.customerCity.trim(), fontSize),
-        if (invoice.customerGstin.trim().isNotEmpty)
+        if (invoice.shouldPrintTaxRegistrationDetails &&
+            invoice.customerGstin.trim().isNotEmpty)
           _thermalKeyValue('GSTIN', invoice.customerGstin.trim(), fontSize),
         _thermalSaleItems(invoice, fontSize),
         if (_showCustomerMetalSettlement(invoice))
@@ -1851,7 +1836,7 @@ class _PosInvoicePdfDocumentBuilder {
         ),
         if (config.showHuid && item.huidText.trim().isNotEmpty)
           _thermalKeyValue('HUID', item.huidText.trim(), fontSize),
-        if (config.showHsnCode)
+        if (_showHsnCode(invoice, config))
           _thermalKeyValue('HSN', _hsnCode(item), fontSize),
         if (config.showPcs) _thermalKeyValue('Pcs', '${item.pcs}', fontSize),
         if (config.showPurity)
@@ -1981,7 +1966,10 @@ class _PosInvoicePdfDocumentBuilder {
   pw.Widget _thermalTotals(PosInvoiceModel invoice, double fontSize) {
     final showGstBreakup = scopeService
         .collectMetals(invoice)
-        .any((metal) => _getMetalConfig(metal).showGstBreakup);
+        .any((metal) => PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(
+              invoice,
+              _getMetalConfig(metal),
+            ));
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -2213,5 +2201,9 @@ class _PosInvoicePdfDocumentBuilder {
 
   BillSettings _getMetalConfig(MetalType metal) {
     return options.metalPrintSettings[metal] ?? BillSettings();
+  }
+
+  bool _showHsnCode(PosInvoiceModel invoice, BillSettings config) {
+    return PosInvoiceTaxDisplayPolicy.shouldShowHsnCode(invoice, config);
   }
 }

@@ -201,15 +201,18 @@ class PosInvoiceModel {
   }
 
   String get printShopGstin {
+    if (!shouldPrintTaxRegistrationDetails) return '';
     final value = shopPrintValue('gstin');
     if (value.isNotEmpty) return value;
     return shopPrintProfileApplied ? '' : shopGstin;
   }
 
+  bool get shouldPrintTaxRegistrationDetails => billType == BillType.gst;
+
   List<String> get shopPrintHeaderLines {
     if (shopPrintProfileApplied) {
       return shopPrintFields
-          .where((field) => field.id != 'shop_name')
+          .where(_shouldPrintShopHeaderField)
           .map((field) => field.displayText)
           .where((value) => value.trim().isNotEmpty)
           .toList(growable: false);
@@ -219,16 +222,24 @@ class PosInvoiceModel {
       return [
         if (shopAddress.trim().isNotEmpty) shopAddress.trim(),
         if (shopPhone.trim().isNotEmpty) 'Mobile: ${shopPhone.trim()}',
-        if (shopGstin.trim().isNotEmpty && shopGstin != 'Not Registered')
+        if (shouldPrintTaxRegistrationDetails &&
+            shopGstin.trim().isNotEmpty &&
+            shopGstin != 'Not Registered')
           'GSTIN: ${shopGstin.trim()}',
       ];
     }
 
     return shopPrintFields
-        .where((field) => field.id != 'shop_name')
+        .where(_shouldPrintShopHeaderField)
         .map((field) => field.displayText)
         .where((value) => value.trim().isNotEmpty)
         .toList(growable: false);
+  }
+
+  bool _shouldPrintShopHeaderField(ShopPrintDocumentField field) {
+    if (field.id == 'shop_name') return false;
+    if (shouldPrintTaxRegistrationDetails) return true;
+    return field.id != 'gstin';
   }
 
   bool get shouldPrintBrandMark =>

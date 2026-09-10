@@ -33,19 +33,39 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('TAX INVOICE'), findsOneWidget);
-    expect(find.text('GST shown separately'), findsOneWidget);
+    expect(find.text('NORMAL'), findsWidgets);
+    expect(find.text('No GST'), findsOneWidget);
+    expect(controller.billType, BillType.normal);
     expect(find.text('EXCLUSIVE'), findsNothing);
     expect(find.text('INCLUSIVE'), findsNothing);
   });
 
-  test('billing controller keeps new sales on transparent GST pricing', () {
+  testWidgets('invoice preferences switch between normal and GST billing',
+      (tester) async {
     final controller = PosBillingController();
     addTearDown(controller.dispose);
 
-    controller.toggleGstPricingMode(GstPricingMode.inclusive);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PosTopControlBar(ctrl: controller),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.billType, BillType.normal);
+
+    await tester.tap(find.text('GST'));
+    await tester.pumpAndSettle();
 
     expect(controller.billType, BillType.gst);
+    expect(controller.gstPricingMode, GstPricingMode.exclusive);
+
+    await tester.tap(find.text('NORMAL').last);
+    await tester.pumpAndSettle();
+
+    expect(controller.billType, BillType.normal);
     expect(controller.gstPricingMode, GstPricingMode.exclusive);
   });
 }

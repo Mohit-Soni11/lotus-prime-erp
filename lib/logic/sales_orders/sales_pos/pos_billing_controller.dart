@@ -12,6 +12,7 @@ import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_number_parser.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_metal_payment_allocator.dart';
+import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../features/sales_pos/domain/use_cases/calculate_pos_totals.dart';
 import '../../../features/sales_pos/domain/use_cases/validate_pos_invoice_readiness.dart';
 import '../../../core/tax/gst_jurisdiction.dart';
@@ -85,6 +86,8 @@ class PosBillingController extends ChangeNotifier {
   String get shopStateCode => _shopStateCode;
   String get shopStateName => _shopStateName;
   bool get isB2BBilling => billingMode == BillingMode.wholesale;
+  bool get isGstInvoice => SalesInvoiceTaxPolicy.appliesGst(billType);
+  bool get isB2BTaxInvoice => isB2BBilling && isGstInvoice;
   String get placeOfSupplyStateCode {
     final resolved = GstJurisdictionResolver.firstStateCode([
       _placeOfSupplyStateCode,
@@ -1053,8 +1056,8 @@ class PosBillingController extends ChangeNotifier {
 
   // --- CORE STATES ---
   BillingMode billingMode = BillingMode.retail;
-  BillType billType = BillType.gst;
-  GstPricingMode gstPricingMode = GstPricingMode.exclusive;
+  BillType billType = SalesInvoiceTaxPolicy.defaultBillType;
+  GstPricingMode gstPricingMode = SalesInvoiceTaxPolicy.defaultGstPricingMode;
   TradeInAdjustMode tradeInMode = TradeInAdjustMode.cashAdjust;
   CustomerMetalSettlementType customerMetalSettlementType =
       CustomerMetalSettlementType.exchangeAdjustment;
@@ -1294,8 +1297,8 @@ class PosBillingController extends ChangeNotifier {
       convertedAdvanceOrderNo = order.orderNo;
       await _restoreSelectedCustomer(order.customerId);
       billingMode = BillingMode.retail;
-      billType = BillType.gst;
-      gstPricingMode = GstPricingMode.exclusive;
+      billType = SalesInvoiceTaxPolicy.defaultBillType;
+      gstPricingMode = SalesInvoiceTaxPolicy.gstPricingModeFor(billType);
 
       final item = SaleItemModel(metal: _metalFromDb(order.metalType));
       item.addListener(_onChildItemChanged);
@@ -1387,7 +1390,7 @@ class PosBillingController extends ChangeNotifier {
   }
 
   BillType _billTypeFromDb(String value) {
-    return BillType.gst;
+    return SalesInvoiceTaxPolicy.billTypeFromStorage(value);
   }
 
   GstPricingMode _gstPricingModeFromDb(String value) {
@@ -1874,7 +1877,7 @@ class PosBillingController extends ChangeNotifier {
     );
     if (baseError != null) return baseError;
 
-    if (isB2BBilling) {
+    if (isB2BTaxInvoice) {
       if (selectedCustomer == null) {
         return 'Select or create a B2B customer before generating the tax invoice.';
       }
@@ -2038,8 +2041,9 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void toggleBillType(BillType type) {
-    if (billType == BillType.gst) return;
-    billType = BillType.gst;
+    if (billType == type) return;
+    billType = type;
+    gstPricingMode = SalesInvoiceTaxPolicy.gstPricingModeFor(type);
     _clearChangeReturnMethod();
     notifyListeners();
     unawaited(refreshInvoiceSequencePreview());
@@ -2047,8 +2051,9 @@ class PosBillingController extends ChangeNotifier {
 
   void toggleGstPricingMode(GstPricingMode mode) {
     final changed =
-        gstPricingMode != GstPricingMode.exclusive || billType != BillType.gst;
-    gstPricingMode = GstPricingMode.exclusive;
+        gstPricingMode != SalesInvoiceTaxPolicy.defaultGstPricingMode ||
+            billType != BillType.gst;
+    gstPricingMode = SalesInvoiceTaxPolicy.defaultGstPricingMode;
     billType = BillType.gst;
     if (!changed) return;
     _clearChangeReturnMethod();
@@ -2155,8 +2160,8 @@ class PosBillingController extends ChangeNotifier {
       placeOfSupplyStateCode: placeOfSupplyStateCode,
       placeOfSupply: placeOfSupplyName,
       billingMode: billingMode,
-      billType: BillType.gst,
-      gstPricingMode: GstPricingMode.exclusive,
+      billType: billType,
+      gstPricingMode: gstPricingMode,
       tradeInMode: tradeInMode,
       customerMetalSettlementType: customerMetalSettlementType,
       discountType: discountType,
@@ -2182,8 +2187,8 @@ class PosBillingController extends ChangeNotifier {
 
   void _restoreHoldSnapshot(PosHoldBillModel holdBill) {
     billingMode = holdBill.billingMode;
-    billType = BillType.gst;
-    gstPricingMode = GstPricingMode.exclusive;
+    billType = holdBill.billType;
+    gstPricingMode = holdBill.gstPricingMode;
     tradeInMode = holdBill.tradeInMode;
     customerMetalSettlementType = holdBill.customerMetalSettlementType;
     discountType = holdBill.discountType;
@@ -2286,8 +2291,8 @@ class PosBillingController extends ChangeNotifier {
     isLoadingHistory = false;
     clearAllStockSuggestions();
     promiseDate = null; //  Reset the promise date.
-    billType = BillType.gst;
-    gstPricingMode = GstPricingMode.exclusive;
+    billType = SalesInvoiceTaxPolicy.defaultBillType;
+    gstPricingMode = SalesInvoiceTaxPolicy.defaultGstPricingMode;
     nameCtrl.clear();
     mobileCtrl.clear();
     cityCtrl.clear();

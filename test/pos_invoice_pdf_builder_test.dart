@@ -7,6 +7,7 @@ import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_pdf_bui
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_shop_header_details.dart';
 import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_shop_print_blocks.dart';
+import 'package:lotus_erp/features/sales_pos/application/pdf/pos_invoice_tax_display_policy.dart';
 import 'package:lotus_erp/features/sales_pos/application/services/pos_invoice_scope_service.dart';
 import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_number_formatter.dart';
@@ -53,6 +54,54 @@ void main() {
       expect(renumbered.crossMetalAdjustmentDeduction, 12.5);
       expect(renumbered.promiseDate, promiseDate);
       expect(renumbered.copyWith(promiseDate: null).promiseDate, isNull);
+
+      item.dispose();
+    });
+
+    test('hides shop GSTIN from normal invoices and shows it for GST invoices',
+        () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      const printFields = [
+        ShopPrintDocumentField(
+          id: 'shop_name',
+          label: 'Shop Name',
+          value: 'ANJALI JEWELLERS',
+          group: ShopPrintFieldGroup.identity,
+        ),
+        ShopPrintDocumentField(
+          id: 'gstin',
+          label: 'GSTIN',
+          value: '10ABCDE1234F1Z5',
+          group: ShopPrintFieldGroup.statutory,
+        ),
+      ];
+      final normalInvoice = _invoice(
+        saleItems: [item],
+        shopPrintFields: printFields,
+      );
+      final gstInvoice = normalInvoice.copyWith(billType: BillType.gst);
+
+      expect(normalInvoice.printShopGstin, isEmpty);
+      expect(normalInvoice.shopPrintHeaderLines, isNot(contains('GSTIN')));
+      expect(
+        PosInvoiceShopHeaderDetails.fromInvoice(normalInvoice)
+            .lines
+            .map((line) => line.label),
+        isNot(contains('GSTIN')),
+      );
+      expect(gstInvoice.printShopGstin, '10ABCDE1234F1Z5');
+      expect(
+        PosInvoiceShopHeaderDetails.fromInvoice(gstInvoice)
+            .lines
+            .map((line) => '${line.label}: ${line.value}'),
+        contains('GSTIN: 10ABCDE1234F1Z5'),
+      );
 
       item.dispose();
     });
@@ -933,6 +982,71 @@ void main() {
       expect(labels, isNot(contains('Invoice Discount')));
       expect(labels, isNot(contains('Customer Metal Settlement')));
       expect(labels, isNot(contains('IGST')));
+
+      item.dispose();
+    });
+
+    test('hides tax-only amount rows for normal invoice summaries', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final invoice = _invoice(
+        saleItems: [item],
+        billType: BillType.normal,
+      );
+
+      final labels = PosInvoiceFinancialBreakdown.summaryRows(
+        invoice,
+        showGstBreakup: true,
+      ).map((row) => row.label);
+
+      expect(labels, contains('Gross Sale Value'));
+      expect(labels, contains('Net Payable'));
+      expect(labels, isNot(contains('Sale Value')));
+      expect(labels, isNot(contains('Taxable Value')));
+      expect(labels, isNot(contains('GST')));
+
+      item.dispose();
+    });
+
+    test('prints HSN only for GST invoice display policy', () {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 8,
+        rate: 12000,
+      );
+      final normalInvoice = _invoice(saleItems: [item]);
+      final gstInvoice = normalInvoice.copyWith(billType: BillType.gst);
+      final settings = BillSettings(showHsnCode: true, showGstBreakup: true);
+
+      expect(
+        PosInvoiceTaxDisplayPolicy.shouldShowHsnCode(
+          normalInvoice,
+          settings,
+        ),
+        isFalse,
+      );
+      expect(
+        PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(
+          normalInvoice,
+          settings,
+        ),
+        isFalse,
+      );
+      expect(
+        PosInvoiceTaxDisplayPolicy.shouldShowHsnCode(gstInvoice, settings),
+        isTrue,
+      );
+      expect(
+        PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(gstInvoice, settings),
+        isTrue,
+      );
 
       item.dispose();
     });

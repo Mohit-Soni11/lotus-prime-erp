@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
+import 'package:lotus_erp/features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import '../../../features/sales_pos/domain/services/pos_money_math.dart';
 import '../../../features/sales_pos/domain/services/pos_number_formatter.dart';
@@ -118,10 +119,10 @@ class PosCheckoutRepository {
               shopGstinSnapshot: Value(_nullable(invoice.shopGstin)),
               shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
               billingMode: Value(_dbBillingMode(invoice.billingMode)),
-              billType: const Value('GST'),
+              billType: Value(_dbBillType(invoice.billType)),
               documentType: Value(invoice.documentType.storageValue),
               gstPricingMode: Value(invoice.gstPricingMode.storageValue),
-              taxTreatment: const Value('TAXABLE_SUPPLY'),
+              taxTreatment: Value(_dbTaxTreatment(invoice.billType)),
               paymentStatus: Value(_resolvePaymentStatus(money)),
               totalAmount: Value(money.grossAmount),
               discount: Value(money.discountAmount),
@@ -131,12 +132,14 @@ class PosCheckoutRepository {
               igstAmount: Value(money.igst),
               gstAmount: Value(money.totalGst),
               gstExclusiveSalesAmount: Value(
-                invoice.gstPricingMode == GstPricingMode.exclusive
+                invoice.billType == BillType.gst &&
+                        invoice.gstPricingMode == GstPricingMode.exclusive
                     ? money.taxableAmount
                     : 0.0,
               ),
               gstInclusiveSalesAmount: Value(
-                invoice.gstPricingMode == GstPricingMode.inclusive
+                invoice.billType == BillType.gst &&
+                        invoice.gstPricingMode == GstPricingMode.inclusive
                     ? money.taxableAmount
                     : 0.0,
               ),
@@ -203,7 +206,7 @@ class PosCheckoutRepository {
                 itemTotal: Value(item.totalValue),
                 gstPricingModeSnapshot:
                     Value(invoice.gstPricingMode.storageValue),
-                taxTreatmentSnapshot: const Value('TAXABLE_SUPPLY'),
+                taxTreatmentSnapshot: Value(_dbTaxTreatment(invoice.billType)),
                 taxableAmountSnapshot: Value(lineTax.taxableAmount),
                 gstRateSnapshot: Value(lineTax.gstRate),
                 cgstAmountSnapshot: Value(lineTax.cgst),
@@ -415,10 +418,10 @@ class PosCheckoutRepository {
           shopGstinSnapshot: Value(_nullable(invoice.shopGstin)),
           shopStateCodeSnapshot: Value(_nullable(invoice.shopStateCode)),
           billingMode: Value(_dbBillingMode(invoice.billingMode)),
-          billType: const Value('GST'),
+          billType: Value(_dbBillType(invoice.billType)),
           documentType: Value(invoice.documentType.storageValue),
           gstPricingMode: Value(invoice.gstPricingMode.storageValue),
-          taxTreatment: const Value('TAXABLE_SUPPLY'),
+          taxTreatment: Value(_dbTaxTreatment(invoice.billType)),
           paymentStatus: Value(_resolvePaymentStatus(money)),
           totalAmount: Value(money.grossAmount),
           discount: Value(money.discountAmount),
@@ -428,12 +431,14 @@ class PosCheckoutRepository {
           igstAmount: Value(money.igst),
           gstAmount: Value(money.totalGst),
           gstExclusiveSalesAmount: Value(
-            invoice.gstPricingMode == GstPricingMode.exclusive
+            invoice.billType == BillType.gst &&
+                    invoice.gstPricingMode == GstPricingMode.exclusive
                 ? money.taxableAmount
                 : 0.0,
           ),
           gstInclusiveSalesAmount: Value(
-            invoice.gstPricingMode == GstPricingMode.inclusive
+            invoice.billType == BillType.gst &&
+                    invoice.gstPricingMode == GstPricingMode.inclusive
                 ? money.taxableAmount
                 : 0.0,
           ),
@@ -506,7 +511,7 @@ class PosCheckoutRepository {
                 itemTotal: Value(item.totalValue),
                 gstPricingModeSnapshot:
                     Value(invoice.gstPricingMode.storageValue),
-                taxTreatmentSnapshot: const Value('TAXABLE_SUPPLY'),
+                taxTreatmentSnapshot: Value(_dbTaxTreatment(invoice.billType)),
                 taxableAmountSnapshot: Value(lineTax.taxableAmount),
                 gstRateSnapshot: Value(lineTax.gstRate),
                 cgstAmountSnapshot: Value(lineTax.cgst),
@@ -2644,6 +2649,14 @@ class PosCheckoutRepository {
 
   String _dbBillingMode(BillingMode mode) {
     return mode == BillingMode.retail ? 'RETAIL' : 'WHOLESALE';
+  }
+
+  String _dbBillType(BillType type) {
+    return SalesInvoiceTaxPolicy.billTypeStorage(type);
+  }
+
+  String _dbTaxTreatment(BillType type) {
+    return SalesInvoiceTaxPolicy.taxTreatmentStorage(type);
   }
 
   String _dbTradeInMode(TradeInAdjustMode mode) {

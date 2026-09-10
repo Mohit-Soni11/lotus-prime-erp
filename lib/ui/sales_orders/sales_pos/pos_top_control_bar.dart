@@ -9,9 +9,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
 import '../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
+import 'invoice_preferences/pos_invoice_tax_mode_segment.dart';
 
 class PosTopControlBar extends StatelessWidget {
   final PosBillingController ctrl;
@@ -27,6 +29,9 @@ class PosTopControlBar extends StatelessWidget {
       listenable: ctrl,
       builder: (context, _) {
         final bool isRetail = ctrl.billingMode == BillingMode.retail;
+        final bool isGstOn = SalesInvoiceTaxPolicy.appliesGst(ctrl.billType);
+        final Color statusColor =
+            isGstOn ? SalesPosColors.success : SalesPosColors.textDark;
 
         return Align(
           alignment: Alignment.centerLeft,
@@ -90,13 +95,13 @@ class PosTopControlBar extends StatelessWidget {
                                   const SizedBox(height: 4),
                                   AnimatedDefaultTextStyle(
                                     duration: const Duration(milliseconds: 260),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: SalesPosStyles.fontCaption,
                                       fontWeight: FontWeight.bold,
-                                      color: SalesPosColors.success,
+                                      color: statusColor,
                                     ),
                                     child: Text(
-                                      "${isRetail ? 'B2C Retail' : 'B2B Registered'}    Tax Invoice",
+                                      "${isRetail ? 'B2C Retail' : 'B2B Registered'}    ${SalesInvoiceTaxPolicy.title(ctrl.billType)}",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -116,11 +121,10 @@ class PosTopControlBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: SalesPosColors.success.withValues(alpha: 0.07),
+                          color: statusColor.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color:
-                                SalesPosColors.success.withValues(alpha: 0.35),
+                            color: statusColor.withValues(alpha: 0.35),
                           ),
                         ),
                         child: Row(
@@ -130,22 +134,23 @@ class PosTopControlBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 260),
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: SalesPosColors.success,
+                                color: statusColor,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const AnimatedDefaultTextStyle(
-                              duration: Duration(milliseconds: 260),
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 260),
                               style: TextStyle(
                                 fontSize: SalesPosStyles.fontCaption,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 0,
-                                color: SalesPosColors.success,
+                                color: statusColor,
                               ),
                               child: Text(
-                                "GST ACTIVE",
+                                SalesInvoiceTaxPolicy.statusLabel(
+                                    ctrl.billType),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -206,7 +211,7 @@ class PosTopControlBar extends StatelessWidget {
                       ),
 
                       const SizedBox(width: 16),
-                      _buildTaxInvoicePolicyCard(),
+                      PosInvoiceTaxModeSegment(controller: ctrl),
                     ],
                   ),
                 ],
@@ -289,80 +294,6 @@ class PosTopControlBar extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTaxInvoicePolicyCard() {
-    return Container(
-      width: 252,
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: SalesPosColors.success.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: SalesPosColors.success.withValues(alpha: 0.28),
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: SalesPosColors.shadowLight,
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: SalesPosColors.success.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.receipt_long_rounded,
-              size: 18,
-              color: SalesPosColors.success,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'TAX INVOICE',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: SalesPosColors.success,
-                    fontWeight: FontWeight.w900,
-                    fontSize: SalesPosStyles.fontCaption,
-                    height: 1,
-                    letterSpacing: 0,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'GST shown separately',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: SalesPosColors.bodyTextMuted,
-                    fontWeight: FontWeight.w800,
-                    fontSize: SalesPosStyles.fontCaption,
-                    height: 1,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

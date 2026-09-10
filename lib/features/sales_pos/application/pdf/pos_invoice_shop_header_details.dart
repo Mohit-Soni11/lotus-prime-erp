@@ -24,11 +24,12 @@ class PosInvoiceShopHeaderDetails {
     final email = _firstPresent([
       invoice.shopPrintValue('business_email'),
     ]);
-    final gstin = _firstPresent([
-      invoice.shopPrintValue('gstin'),
-      invoice.printShopGstin,
-      invoice.shopGstin,
-    ]);
+    final gstin = invoice.shouldPrintTaxRegistrationDetails
+        ? _firstPresent([
+            invoice.printShopGstin,
+            invoice.shopGstin,
+          ])
+        : '';
     final bisLicense = PosInvoiceShopPrintBlocks.bisRegistrationNumber(invoice);
 
     return PosInvoiceShopHeaderDetails(

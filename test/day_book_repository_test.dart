@@ -154,6 +154,41 @@ void main() {
       expect(summary.paymentBreakup.total, 500);
     },
   );
+
+  test(
+    'fetchDayBook classifies short invoice numbers by stored bill type',
+    () async {
+      final date = DateTime(2026, 9, 10, 13);
+
+      await _insertBill(
+        db,
+        billNo: 'AJ-26-009',
+        billDate: date,
+        billType: 'GST',
+        finalAmount: 1030,
+        paidAmount: 1030,
+        taxableAmount: 1000,
+        cgstAmount: 15,
+        sgstAmount: 15,
+        gstAmount: 30,
+      );
+      await _insertBill(
+        db,
+        billNo: 'AJ-26-010',
+        billDate: date,
+        billType: 'NORMAL',
+        finalAmount: 1000,
+        paidAmount: 1000,
+      );
+
+      final summary = await repository.fetchDayBook(date);
+
+      expect(summary.cashIn.gstSales.billCount, 1);
+      expect(summary.cashIn.gstSales.gstCollected, 30);
+      expect(summary.cashIn.nonGstSales.billCount, 1);
+      expect(summary.cashIn.nonGstSales.totalAmount, 1000);
+    },
+  );
 }
 
 Future<int> _insertBankAccount(AppDatabase db) {

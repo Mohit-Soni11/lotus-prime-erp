@@ -6,6 +6,7 @@
 //              invoice snapshot across screen exits and app restarts.
 // ==========================================
 
+import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import '../../../models/sales_orders/sales_pos_models/sales_pos_models.dart';
 
@@ -167,7 +168,10 @@ class PosHoldBillModel {
   }
 
   static BillType _billTypeFromName(String name) {
-    return BillType.gst;
+    return BillType.values.firstWhere(
+      (type) => type.name == name,
+      orElse: () => SalesInvoiceTaxPolicy.billTypeFromStorage(name),
+    );
   }
 
   static GstPricingMode _gstPricingModeFromName(String name) {

@@ -8,8 +8,7 @@
 //               GirviPayments, KarigarIssues, KarigarReceipts,
 //               SalesOrders, OrderAdvances, StockItems.
 //
-//               GST Bill (billNo starts 'TAX-') tracked SEPARATELY from
-//               Normal Bill (billNo starts 'EST-') as required.
+//               GST and Normal sales are tracked separately from bill_type.
 // =============================================================================
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,7 +43,7 @@ class PaymentBreakup {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GST Bill Summary
-// Source: Bills WHERE billNo LIKE 'TAX-%' AND status = 'ACTIVE'
+// Source: Bills WHERE bill_type = 'GST' AND status = 'ACTIVE'
 // GST on jewellery = 3% (1.5% CGST + 1.5% SGST)
 // Bills.finalAmount already INCLUDES GST.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,7 +69,7 @@ class GstBillSummary {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Non-GST Bill Summary
-// Source: Bills WHERE billNo LIKE 'EST-%' AND status = 'ACTIVE'
+// Source: Bills WHERE bill_type = 'NORMAL' AND status = 'ACTIVE'
 // ─────────────────────────────────────────────────────────────────────────────
 class NonGstBillSummary {
   final int billCount;

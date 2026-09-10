@@ -216,7 +216,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
 
   @override
   Widget build(BuildContext context) {
-    final isB2B = widget.ctrl.isB2BBilling;
+    final requiresGstDetails = widget.ctrl.isB2BTaxInvoice;
 
     return FadeTransition(
       opacity: _fadeAnim,
@@ -294,7 +294,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            isB2B
+                            requiresGstDetails
                                 ? "Select a registered customer for GSTIN billing"
                                 : "Search or add a new customer",
                             style: SalesPosStyles.subTitleMuted,
@@ -376,7 +376,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ),
                       const SizedBox(width: 12),
 
-                      if (isB2B) ...[
+                      if (requiresGstDetails) ...[
                         Expanded(
                           flex: 3,
                           child: _buildInput(
@@ -397,7 +397,7 @@ class _PosCustomerDetailsPanelState extends State<PosCustomerDetailsPanel>
                       ],
 
                       Expanded(
-                        flex: isB2B ? 4 : 5,
+                        flex: requiresGstDetails ? 4 : 5,
                         child: _buildInput(
                           label: "ADDRESS",
                           hint: "Customer address",

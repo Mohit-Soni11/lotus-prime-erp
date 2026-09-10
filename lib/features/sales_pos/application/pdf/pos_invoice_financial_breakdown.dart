@@ -98,6 +98,7 @@ class PosInvoiceFinancialBreakdown {
     PosInvoiceModel invoice, {
     required bool showGstBreakup,
   }) {
+    final isTaxInvoice = invoice.billType == BillType.gst;
     return [
       PosInvoiceAmountSummaryEntry(
         label: 'Gross Sale Value',
@@ -109,11 +110,12 @@ class PosInvoiceFinancialBreakdown {
           amount: invoice.discountAmount,
           isDeduction: true,
         ),
-      PosInvoiceAmountSummaryEntry(
-        label: 'Taxable Value',
-        amount: invoice.taxableAmount,
-      ),
-      if (invoice.billType == BillType.gst &&
+      if (isTaxInvoice)
+        PosInvoiceAmountSummaryEntry(
+          label: 'Taxable Value',
+          amount: invoice.taxableAmount,
+        ),
+      if (isTaxInvoice &&
           showGstBreakup &&
           invoice.totalGst > posInvoiceMoneyEpsilon) ...[
         if (invoice.hasIgstBreakup)
@@ -134,7 +136,7 @@ class PosInvoiceFinancialBreakdown {
             ),
         ],
       ],
-      if (invoice.billType == BillType.gst &&
+      if (isTaxInvoice &&
           !showGstBreakup &&
           invoice.totalGst > posInvoiceMoneyEpsilon)
         PosInvoiceAmountSummaryEntry(

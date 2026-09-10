@@ -12,7 +12,7 @@
 //
 //               DB Tables used:
 //               ┌─────────────────────────────────────────────────────────┐
-//               │ Bills            → GST (TAX-) & Non-GST (EST-) sales    │
+//               │ Bills            → GST & Normal sales by bill_type       │
 //               │ BillItems        → Metal weight dispatched in sales      │
 //               │ CashTransactions → All income & expense flows            │
 //               │ GirviLoans       → Girvi disbursed + metal pledged       │
@@ -156,14 +156,13 @@ class DayBookRepository {
     }
   }
 
-  // ==========================================================================
-  // 1. GST BILLS — billNo LIKE 'TAX-%' AND status='ACTIVE'
-  // ==========================================================================
   Future<GstBillSummary> _fetchGstBills(DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.bills)
             ..where((b) =>
-                b.billNo.like('TAX-%') &
+                (b.billType.equals('GST') |
+                    b.billNo.like('TAX-%') |
+                    b.gstAmount.isBiggerThanValue(0.005)) &
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerOrEqualValue(end)))
@@ -213,15 +212,15 @@ class DayBookRepository {
     }
   }
 
-  // ==========================================================================
-  // 2. NON-GST BILLS — billNo LIKE 'EST-%' AND status='ACTIVE'
-  // ==========================================================================
   Future<NonGstBillSummary> _fetchNonGstBills(
       DateTime start, DateTime end) async {
     try {
       final rows = await (_db.select(_db.bills)
             ..where((b) =>
-                (b.billNo.like('INV-%') | b.billNo.like('EST-%')) &
+                (b.billType.equals('NORMAL') |
+                    b.billNo.like('INV-%') |
+                    b.billNo.like('EST-%')) &
+                b.gstAmount.isSmallerThanValue(0.006) &
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerOrEqualValue(end)))
@@ -500,9 +499,6 @@ class DayBookRepository {
     try {
       final saleBills = await (_db.select(_db.bills)
             ..where((b) =>
-                (b.billNo.like('TAX-%') |
-                    b.billNo.like('INV-%') |
-                    b.billNo.like('EST-%')) &
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerOrEqualValue(end)))

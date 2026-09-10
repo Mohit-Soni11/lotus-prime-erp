@@ -35,7 +35,7 @@ void main() {
             status: const drift.Value('ACTIVE'),
           ),
         );
-    final legacyInclusiveBillId = await db.into(db.bills).insert(
+    final legacyNormalBillId = await db.into(db.bills).insert(
           BillsCompanion.insert(
             billNo: 'INV-AJ-2026-0001',
             customerId: drift.Value(customerId),
@@ -73,8 +73,8 @@ void main() {
     final taxBill = await (db.select(db.bills)
           ..where((tbl) => tbl.id.equals(taxBillId)))
         .getSingle();
-    final inclusiveBill = await (db.select(db.bills)
-          ..where((tbl) => tbl.id.equals(legacyInclusiveBillId)))
+    final normalBill = await (db.select(db.bills)
+          ..where((tbl) => tbl.id.equals(legacyNormalBillId)))
         .getSingle();
     final cashRow = await db.select(db.cashTransactions).getSingle();
     final accountRow = await db.select(db.customerAccountLedger).getSingle();
@@ -82,9 +82,11 @@ void main() {
     expect(taxBill.billNo, 'AJ-26-001');
     expect(taxBill.billType, 'GST');
     expect(taxBill.gstPricingMode, 'GST_EXCLUSIVE');
-    expect(inclusiveBill.billNo, 'AJ-26-002');
-    expect(inclusiveBill.billType, 'GST');
-    expect(inclusiveBill.gstPricingMode, 'GST_INCLUSIVE');
+    expect(taxBill.taxTreatment, 'TAXABLE_SUPPLY');
+    expect(normalBill.billNo, 'AJ-26-002');
+    expect(normalBill.billType, 'NORMAL');
+    expect(normalBill.gstPricingMode, 'GST_EXCLUSIVE');
+    expect(normalBill.taxTreatment, 'NON_GST_SALE');
     expect(cashRow.referenceId, 'AJ-26-002#CASH');
     expect(accountRow.sourceReference, 'AJ-26-002#ACCOUNT_CREDIT');
 

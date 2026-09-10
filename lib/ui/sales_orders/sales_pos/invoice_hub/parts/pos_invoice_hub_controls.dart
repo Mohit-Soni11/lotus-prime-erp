@@ -43,7 +43,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            selectedFormat.label,
+                            _formatLabel(selectedFormat),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -113,6 +113,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
             color: Colors.transparent,
             child: _DocumentFormatPickerPanel(
               selectedFormat: selectedFormat,
+              formatLabel: _formatLabel,
               formatShortName: _formatShortName,
               formatPaperSpec: _formatPaperSpec,
               formatUseCase: _formatUseCase,
@@ -142,6 +143,13 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
     );
   }
 
+  String _formatLabel(PrintFormat format) {
+    if (format != PrintFormat.a4) return format.label;
+    return widget.billingCtrl.billType == BillType.gst
+        ? 'A4 Tax Invoice'
+        : 'A4 Sales Invoice';
+  }
+
   String _formatShortName(PrintFormat format) {
     switch (format) {
       case PrintFormat.a4:
@@ -167,7 +175,9 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
   String _formatUseCase(PrintFormat format) {
     switch (format) {
       case PrintFormat.a4:
-        return 'GST ready';
+        return widget.billingCtrl.billType == BillType.gst
+            ? 'GST ready'
+            : 'Sales ready';
       case PrintFormat.thermal3inch:
         return 'Counter print';
       case PrintFormat.thermal2inch:
@@ -1085,6 +1095,7 @@ class _PrintMetaPill extends StatelessWidget {
 
 class _DocumentFormatPickerPanel extends StatelessWidget {
   final PrintFormat selectedFormat;
+  final String Function(PrintFormat) formatLabel;
   final String Function(PrintFormat) formatShortName;
   final String Function(PrintFormat) formatPaperSpec;
   final String Function(PrintFormat) formatUseCase;
@@ -1093,6 +1104,7 @@ class _DocumentFormatPickerPanel extends StatelessWidget {
 
   const _DocumentFormatPickerPanel({
     required this.selectedFormat,
+    required this.formatLabel,
     required this.formatShortName,
     required this.formatPaperSpec,
     required this.formatUseCase,
@@ -1184,6 +1196,7 @@ class _DocumentFormatPickerPanel extends StatelessWidget {
                   final format = PrintFormat.values[index];
                   return _DocumentFormatOptionTile(
                     format: format,
+                    label: formatLabel(format),
                     selected: format == selectedFormat,
                     shortName: formatShortName(format),
                     paperSpec: formatPaperSpec(format),
@@ -1204,6 +1217,7 @@ class _DocumentFormatPickerPanel extends StatelessWidget {
 
 class _DocumentFormatOptionTile extends StatelessWidget {
   final PrintFormat format;
+  final String label;
   final bool selected;
   final String shortName;
   final String paperSpec;
@@ -1212,6 +1226,7 @@ class _DocumentFormatOptionTile extends StatelessWidget {
 
   const _DocumentFormatOptionTile({
     required this.format,
+    required this.label,
     required this.selected,
     required this.shortName,
     required this.paperSpec,
@@ -1248,7 +1263,7 @@ class _DocumentFormatOptionTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    format.label,
+                    label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

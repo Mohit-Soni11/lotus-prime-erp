@@ -15,6 +15,7 @@ import 'pos_invoice_pdf_text_renderer.dart';
 import 'pos_invoice_shop_print_blocks.dart';
 import 'pos_invoice_print_config.dart';
 import 'pos_invoice_shop_header_details.dart';
+import 'pos_invoice_tax_display_policy.dart';
 
 class PosLotusClassicInvoicePdfLayout {
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
@@ -585,7 +586,7 @@ class PosLotusClassicInvoicePdfLayout {
     final headers = <String>[
       'S/N',
       'Item Description',
-      if (config.showHsnCode) 'HSN',
+      if (_showHsnCode(invoice, config)) 'HSN',
       if (config.showPurity) 'Purity',
       if (config.showGrossWt) 'Gross',
       if (config.showLessWt) 'Less',
@@ -602,7 +603,7 @@ class PosLotusClassicInvoicePdfLayout {
       final row = <String>[
         '${entry.key + 1}',
         _itemDescription(item, config),
-        if (config.showHsnCode) _hsnCode(item),
+        if (_showHsnCode(invoice, config)) _hsnCode(item),
         if (config.showPurity) _formatPurity(item),
         if (config.showGrossWt) _weightText(item.grossCtrl.text),
         if (config.showLessWt) _weightText(item.totalLessWt.toStringAsFixed(3)),
@@ -702,7 +703,10 @@ class PosLotusClassicInvoicePdfLayout {
   pw.Widget _totalsBlock(PosInvoiceModel invoice) {
     final showGstBreakup = scopeService
         .collectMetals(invoice)
-        .any((metal) => _getMetalConfig(metal).showGstBreakup);
+        .any((metal) => PosInvoiceTaxDisplayPolicy.shouldShowGstBreakup(
+              invoice,
+              _getMetalConfig(metal),
+            ));
     final totalLines = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
       showGstBreakup: showGstBreakup,
@@ -1297,6 +1301,10 @@ class PosLotusClassicInvoicePdfLayout {
 
   BillSettings _getMetalConfig(MetalType metal) {
     return metalPrintSettings[metal] ?? BillSettings();
+  }
+
+  bool _showHsnCode(PosInvoiceModel invoice, BillSettings config) {
+    return PosInvoiceTaxDisplayPolicy.shouldShowHsnCode(invoice, config);
   }
 
   List<TradeInItemModel> _visibleTradeInItems(PosInvoiceModel invoice) {

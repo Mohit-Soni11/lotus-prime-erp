@@ -128,6 +128,12 @@ void main() {
       expect(tradeInRows, hasLength(1));
       expect(tradeInRows.single.fineWeight, 1.8);
       expect(tradeInRows.single.lineAmount, 90);
+      expect(bill.billType, 'NORMAL');
+      expect(bill.taxTreatment, 'NON_GST_SALE');
+      expect(bill.gstAmount, 0);
+      expect(bill.gstExclusiveSalesAmount, 0);
+      expect(bill.gstInclusiveSalesAmount, 0);
+      expect(billItems.single.taxTreatmentSnapshot, 'NON_GST_SALE');
       expect(stockRow.quantity, 0);
       expect(stockRow.status, stock.StockStatus.sold.label);
       expect(stockMovements, hasLength(1));
@@ -193,6 +199,8 @@ void main() {
       final cashRows = await db.select(db.cashTransactions).get();
 
       expect(bill.totalAmount, 9690.91);
+      expect(bill.billType, 'GST');
+      expect(bill.taxTreatment, 'TAXABLE_SUPPLY');
       expect(bill.discount, 0.62);
       expect(bill.taxableAmount, 9690.29);
       expect(bill.cgstAmount, 145.36);

@@ -8,6 +8,7 @@ import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dar
 import '../../../features/sales_pos/application/services/pos_invoice_output_service.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_scope_service.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_file_naming.dart';
+import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
 import '../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 
@@ -674,16 +675,18 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   PosInvoiceModel _buildInvoiceSnapshot() {
-    final gstPricingMode = billing.isEditingExistingBill &&
+    final billType = billing.billType;
+    final gstPricingMode = SalesInvoiceTaxPolicy.appliesGst(billType) &&
+            billing.isEditingExistingBill &&
             billing.gstPricingMode == GstPricingMode.inclusive
         ? GstPricingMode.inclusive
-        : GstPricingMode.exclusive;
+        : SalesInvoiceTaxPolicy.gstPricingModeFor(billType);
     return PosInvoiceModel(
       invoiceNumber: billing.formattedInvoice,
       invoiceDate: billing.editingBillDate ?? DateTime.now(),
-      billType: BillType.gst,
+      billType: billType,
       gstPricingMode: gstPricingMode,
-      documentType: SalesDocumentType.taxInvoice,
+      documentType: SalesInvoiceTaxPolicy.documentTypeFor(billType),
       billingMode: billing.billingMode,
       shopName: _realShopName,
       shopAddress: _realShopAddress,
