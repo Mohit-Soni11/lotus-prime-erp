@@ -173,17 +173,17 @@ class _TaxModeSegment extends StatelessWidget {
       segments: const [
         ButtonSegment(
           value: SalesReportTaxMode.all,
-          label: Text('All Invoices'),
+          label: Text('All Bills'),
           icon: Icon(Icons.layers_rounded, size: 16),
         ),
         ButtonSegment(
           value: SalesReportTaxMode.gst,
-          label: Text('GST Invoice'),
+          label: Text('GST Bill'),
           icon: Icon(Icons.verified_rounded, size: 16),
         ),
         ButtonSegment(
           value: SalesReportTaxMode.nonGst,
-          label: Text('Non-GST Invoice'),
+          label: Text('Normal Bill'),
           icon: Icon(Icons.receipt_rounded, size: 16),
         ),
       ],

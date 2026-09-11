@@ -5,7 +5,7 @@ import '../../../logic/report/sales_report/sales_report_controller.dart';
 import '../../../theme/reports/sales_report/sales_report_theme.dart';
 import 'bill_ledger/sales_report_invoice_ledger.dart';
 import 'item_ledger/sales_report_item_ledger.dart';
-import 'summary/sales_report_gst_liability_summary.dart';
+import 'summary/sales_report_sales_overview.dart';
 import 'summary/sales_report_metal_cards.dart';
 
 class SalesReportCombinedWorkspace extends StatelessWidget {
@@ -28,7 +28,7 @@ class SalesReportCombinedWorkspace extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SalesReportGstLiabilityPanel(
+        SalesReportSalesOverview(
           summary: snapshot.gstLiability,
           periodLabel: periodLabel,
         ),

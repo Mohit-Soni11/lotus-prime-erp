@@ -21,7 +21,7 @@ class SalesReportCsvBuilder {
         snapshot,
       ),
       [],
-      ['GST LIABILITY'],
+      ['SALES OVERVIEW'],
       ...SalesReportExportFormatters.gstLiabilityRows(snapshot.gstLiability),
       [],
       ['METAL SALES SUMMARY'],
@@ -69,8 +69,8 @@ class SalesReportCsvBuilder {
       ['METAL SALES LEDGER'],
       ['Metric', 'Value'],
       ['Invoices', '${snapshot.summary.invoiceCount}'],
-      ['GST Invoices', '${snapshot.summary.gstInvoiceCount}'],
-      ['Non-GST Invoices', '${snapshot.summary.nonGstInvoiceCount}'],
+      ['GST Bills', '${snapshot.summary.gstInvoiceCount}'],
+      ['Normal Bills', '${snapshot.summary.nonGstInvoiceCount}'],
       [
         'Pieces',
         '${snapshot.metals.fold(0, (sum, metal) => sum + metal.pieces)}'
@@ -314,7 +314,7 @@ class SalesReportCsvBuilder {
       item.billNo,
       SalesReportExportFormatters.dateTime(item.billDate),
       item.customerName,
-      item.isGst ? 'GST' : 'NON-GST',
+      item.isGst ? 'GST BILL' : 'NORMAL',
       item.metalType,
       item.itemName,
       item.huid.isEmpty ? 'Not linked' : item.huid,

@@ -54,7 +54,7 @@ class SalesReportPdfBuilder {
   }) async {
     final document = pw.Document(
       title:
-          'GST Liability Report - ${SalesReportExportFormatters.periodLabel(snapshot.filter)}',
+          'Sales Overview - ${SalesReportExportFormatters.periodLabel(snapshot.filter)}',
       author: identity.shopName,
     );
 
@@ -65,10 +65,10 @@ class SalesReportPdfBuilder {
         theme: await LotusPdfTheme.reportTheme(),
         footer: _pdfFooter,
         build: (_) => [
-          _pdfHeader('GST Liability Report', snapshot.filter, identity),
+          _pdfHeader('Sales Overview', snapshot.filter, identity),
           pw.SizedBox(height: 16),
           _pdfSection(
-            'GST Liability Summary',
+            'Sales Overview',
             const ['Metric', 'Value'],
             SalesReportExportFormatters.gstLiabilityRows(snapshot.gstLiability),
           ),
@@ -90,7 +90,7 @@ class SalesReportPdfBuilder {
                     invoice.billNo,
                     SalesReportExportFormatters.date(invoice.billDate),
                     invoice.customerName,
-                    invoice.isGst ? 'GST' : 'NON-GST',
+                    invoice.isGst ? 'GST BILL' : 'NORMAL',
                     SalesReportExportFormatters.money(invoice.taxableAmount),
                     SalesReportExportFormatters.money(invoice.gstAmount),
                     SalesReportExportFormatters.money(invoice.finalAmount),
@@ -447,7 +447,7 @@ class SalesReportPdfBuilder {
 
     _addPdfSection(
       widgets,
-      'GST Liability Summary',
+      'Sales Overview',
       const ['Metric', 'Value'],
       SalesReportExportFormatters.gstLiabilityRows(snapshot.gstLiability),
     );
@@ -648,13 +648,13 @@ class SalesReportPdfBuilder {
     if (nonGstInvoices.isNotEmpty) {
       _addPdfSection(
         widgets,
-        'Non-GST Sales Estimate',
+        'Normal Bill GST Estimate',
         [
           'S.No',
           'Invoice',
           'Date',
           'Customer',
-          'Non-GST Sales',
+          'Normal Bill Sales',
           'Estimated GST ${SalesReportExportFormatters.rate(snapshot.gstLiability.projectedGstRatePercent)}',
           'Estimated Total',
         ],
@@ -984,8 +984,8 @@ class SalesReportPdfBuilder {
     return [
       ['Metal', metalTitle],
       ['Invoices', '${summary.invoiceCount}'],
-      ['GST Invoices', '${summary.gstInvoiceCount}'],
-      ['Non-GST Invoices', '${summary.nonGstInvoiceCount}'],
+      ['GST Bills', '${summary.gstInvoiceCount}'],
+      ['Normal Bills', '${summary.nonGstInvoiceCount}'],
       ['Pieces', '$pieces'],
       ['Gross Weight', SalesReportExportFormatters.weight(grossWeight)],
       [
@@ -1014,7 +1014,7 @@ class SalesReportPdfBuilder {
           invoices[index].paymentStatus,
           invoices[index].customerName,
           invoices[index].mobile,
-          invoices[index].isGst ? 'GST' : 'NON-GST',
+          invoices[index].isGst ? 'GST BILL' : 'NORMAL',
           weights[invoices[index].billId] ?? '',
           SalesReportExportFormatters.money(invoices[index].grossAmount),
           SalesReportExportFormatters.money(invoices[index].discountAmount),
@@ -1054,7 +1054,7 @@ class SalesReportPdfBuilder {
           items[index].billNo,
           SalesReportExportFormatters.date(items[index].billDate),
           items[index].customerName,
-          items[index].isGst ? 'GST' : 'NON-GST',
+          items[index].isGst ? 'GST BILL' : 'NORMAL',
           items[index].itemName,
           items[index].huid.isEmpty ? 'Not linked' : items[index].huid,
           items[index].purity,
@@ -1588,7 +1588,7 @@ class SalesReportPdfBuilder {
           items[index].billNo,
           SalesReportExportFormatters.date(items[index].billDate),
           items[index].customerName,
-          items[index].isGst ? 'GST' : 'NON-GST',
+          items[index].isGst ? 'GST BILL' : 'NORMAL',
           items[index].metalType,
           items[index].itemName,
           items[index].huid.isEmpty ? 'Not linked' : items[index].huid,

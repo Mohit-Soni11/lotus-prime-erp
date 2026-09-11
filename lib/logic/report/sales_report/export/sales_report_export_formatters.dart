@@ -39,11 +39,11 @@ class SalesReportExportFormatters {
   static String taxModeLabel(SalesReportTaxMode mode) {
     switch (mode) {
       case SalesReportTaxMode.all:
-        return 'All Invoices';
+        return 'All Bills';
       case SalesReportTaxMode.gst:
-        return 'GST Invoices';
+        return 'GST Bills';
       case SalesReportTaxMode.nonGst:
-        return 'Non-GST Invoices';
+        return 'Normal Bills';
     }
   }
 
@@ -72,8 +72,8 @@ class SalesReportExportFormatters {
   static List<List<String>> salesSummaryRows(SalesReportSummary summary) {
     return [
       ['Invoices', '${summary.invoiceCount}'],
-      ['GST Invoices', '${summary.gstInvoiceCount}'],
-      ['Non-GST Invoices', '${summary.nonGstInvoiceCount}'],
+      ['GST Bills', '${summary.gstInvoiceCount}'],
+      ['Normal Bills', '${summary.nonGstInvoiceCount}'],
       ['Gross Amount', money(summary.grossAmount)],
       ['Discount', money(summary.discountAmount)],
       ['Taxable Amount', money(summary.taxableAmount)],
@@ -101,20 +101,30 @@ class SalesReportExportFormatters {
   static List<List<String>> gstLiabilityRows(
     SalesReportGstLiabilitySummary summary,
   ) {
-    return [
+    final rows = <List<String>>[
       ['Invoices in Period', '${summary.invoiceCount}'],
-      ['Recorded GST Invoices', '${summary.gstInvoiceCount}'],
-      ['Non-GST Invoices', '${summary.nonGstInvoiceCount}'],
-      ['Recorded GST Taxable Amount', money(summary.gstTaxableAmount)],
-      ['Recorded GST Invoice Value', money(summary.gstFinalAmount)],
-      ['GST Recorded on Issued Invoices', money(summary.recordedGstAmount)],
-      ['Non-GST Sales Base', money(summary.nonGstSalesAmount)],
+      ['GST Bills', '${summary.gstInvoiceCount}'],
+      ['Normal Bills', '${summary.nonGstInvoiceCount}'],
+      ['Normal Bill Sales', money(summary.nonGstSalesAmount)],
+      ['GST Bill Sales', money(summary.gstFinalAmount)],
+      ['Due Amount', money(summary.dueAmount)],
+      ['GST Collected', money(summary.recordedGstAmount)],
       [
-        'Projected GST on Non-GST Sales (${rate(summary.projectedGstRatePercent)})',
+        'Normal Bill GST Estimate (${rate(summary.projectedGstRatePercent)})',
         money(summary.projectedGstAmount),
       ],
-      ['Combined GST Exposure', money(summary.combinedGstExposure)],
     ];
+    return rows.where((row) {
+      if (row.length < 2) return true;
+      if (row[0] == 'Due Amount') return summary.dueAmount.abs() > 0.005;
+      if (row[0] == 'GST Collected') {
+        return summary.recordedGstAmount.abs() > 0.005;
+      }
+      if (row[0].startsWith('Normal Bill GST Estimate')) {
+        return summary.projectedGstAmount.abs() > 0.005;
+      }
+      return true;
+    }).toList(growable: false);
   }
 
   static List<List<String>> metalRows(List<SalesReportMetalSummary> metals) {

@@ -63,7 +63,7 @@ void main() {
               ),
               SalesReportExportMenuItem(
                 action: SalesReportExportAction.gstLiabilityPdf,
-                label: 'GST Liability Report PDF',
+                label: 'Sales Overview PDF',
                 icon: Icons.account_balance_outlined,
               ),
             ],
@@ -77,7 +77,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Complete Sales Report'), findsOneWidget);
-    expect(find.text('GST Liability Report'), findsOneWidget);
+    expect(find.text('Sales Overview'), findsOneWidget);
     expect(find.text('PDF Preview'), findsNWidgets(2));
     expect(find.text('PDF Download'), findsNWidgets(2));
     expect(find.text('CSV Download'), findsOneWidget);

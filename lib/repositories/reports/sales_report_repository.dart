@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import '../../core/logging/app_logger.dart';
 import '../../database/db/app_database.dart';
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
+import '../../logic/report/sales_report/sales_report_bill_tax_classifier.dart';
 import '../../logic/report/sales_report/sales_report_invoice_scope.dart';
 import '../../models/reports/sales_report/sales_report_models.dart';
 import '../../models/setting/tax_gst/hsn_code_model.dart';
@@ -109,6 +110,8 @@ class SalesReportRepository {
           ''
         ) AS place_of_supply,
         COALESCE(b.bill_type, '') AS bill_type,
+        COALESCE(b.document_type, '') AS document_type,
+        COALESCE(b.tax_treatment, '') AS tax_treatment,
         COALESCE(b.payment_status, '') AS payment_status,
         COALESCE(b.total_amount, 0.0) AS total_amount,
         COALESCE(b.discount, 0.0) AS discount_amount,
@@ -116,7 +119,9 @@ class SalesReportRepository {
         COALESCE(b.gst_amount, 0.0) AS gst_amount,
         COALESCE(b.cgst_amount, 0.0) AS cgst_amount,
         COALESCE(b.sgst_amount, 0.0) AS sgst_amount,
-        0.0 AS igst_amount,
+        COALESCE(b.igst_amount, 0.0) AS igst_amount,
+        COALESCE(b.output_gst_liability_snapshot, 0.0)
+          AS output_gst_liability_amount,
         COALESCE(b.round_off_amount, 0.0) AS round_off_amount,
         COALESCE(b.final_amount, 0.0) AS final_amount,
         COALESCE(b.paid_amount, 0.0) AS paid_amount,
@@ -151,6 +156,11 @@ class SalesReportRepository {
     return rows.map((row) {
       final billNo = row.read<String>('bill_no');
       final gstAmount = _readDouble(row, 'gst_amount');
+      final cgstAmount = _readDouble(row, 'cgst_amount');
+      final sgstAmount = _readDouble(row, 'sgst_amount');
+      final igstAmount = _readDouble(row, 'igst_amount');
+      final billType = row.read<String>('bill_type');
+      final taxTreatment = row.read<String>('tax_treatment');
       return SalesReportInvoiceRow(
         billId: row.read<int>('id'),
         billNo: billNo,
@@ -160,16 +170,30 @@ class SalesReportRepository {
         customerGstin: row.read<String>('customer_gstin'),
         businessType: _businessType(row.read<String>('customer_gstin')),
         placeOfSupply: row.read<String>('place_of_supply'),
-        billType: row.read<String>('bill_type'),
+        billType: billType,
+        documentType: row.read<String>('document_type'),
+        taxTreatment: taxTreatment,
         paymentStatus: row.read<String>('payment_status'),
-        isGst: _isGstBill(billNo, gstAmount, row.read<String>('bill_type')),
+        isGst: _isGstBill(
+          billNo: billNo,
+          billType: billType,
+          taxTreatment: taxTreatment,
+          gstAmount: gstAmount,
+          cgstAmount: cgstAmount,
+          sgstAmount: sgstAmount,
+          igstAmount: igstAmount,
+          outputGstLiabilityAmount:
+              _readDouble(row, 'output_gst_liability_amount'),
+        ),
         grossAmount: _readDouble(row, 'total_amount'),
         discountAmount: _readDouble(row, 'discount_amount'),
         taxableAmount: _readDouble(row, 'taxable_amount'),
         gstAmount: gstAmount,
-        cgstAmount: _readDouble(row, 'cgst_amount'),
-        sgstAmount: _readDouble(row, 'sgst_amount'),
-        igstAmount: _readDouble(row, 'igst_amount'),
+        cgstAmount: cgstAmount,
+        sgstAmount: sgstAmount,
+        igstAmount: igstAmount,
+        outputGstLiabilityAmount:
+            _readDouble(row, 'output_gst_liability_amount'),
         roundOffAmount: _readDouble(row, 'round_off_amount'),
         finalAmount: _readDouble(row, 'final_amount'),
         paidAmount: _readDouble(row, 'paid_amount'),
@@ -200,7 +224,13 @@ class SalesReportRepository {
         COALESCE(NULLIF(TRIM(b.customer_name), ''), 'Walk-in Customer')
           AS customer_name,
         COALESCE(b.bill_type, '') AS bill_type,
+        COALESCE(b.tax_treatment, '') AS tax_treatment,
         COALESCE(b.gst_amount, 0.0) AS gst_amount,
+        COALESCE(b.cgst_amount, 0.0) AS cgst_amount,
+        COALESCE(b.sgst_amount, 0.0) AS sgst_amount,
+        COALESCE(b.igst_amount, 0.0) AS igst_amount,
+        COALESCE(b.output_gst_liability_snapshot, 0.0)
+          AS output_gst_liability_amount,
         i.line_no,
         COALESCE(i.metal_type, '') AS metal_type,
         COALESCE(i.item_name, '') AS item_name,
@@ -231,12 +261,25 @@ class SalesReportRepository {
     return rows.map((row) {
       final billNo = row.read<String>('bill_no');
       final gstAmount = _readDouble(row, 'gst_amount');
+      final cgstAmount = _readDouble(row, 'cgst_amount');
+      final sgstAmount = _readDouble(row, 'sgst_amount');
+      final igstAmount = _readDouble(row, 'igst_amount');
       return SalesReportItemRow(
         billId: row.read<int>('bill_id'),
         billNo: billNo,
         billDate: row.read<DateTime>('bill_date'),
         customerName: row.read<String>('customer_name'),
-        isGst: _isGstBill(billNo, gstAmount, row.read<String>('bill_type')),
+        isGst: _isGstBill(
+          billNo: billNo,
+          billType: row.read<String>('bill_type'),
+          taxTreatment: row.read<String>('tax_treatment'),
+          gstAmount: gstAmount,
+          cgstAmount: cgstAmount,
+          sgstAmount: sgstAmount,
+          igstAmount: igstAmount,
+          outputGstLiabilityAmount:
+              _readDouble(row, 'output_gst_liability_amount'),
+        ),
         lineNo: row.read<int>('line_no'),
         metalType: _displayMetal(row.read<String>('metal_type')),
         itemName: row.read<String>('item_name'),
@@ -375,9 +418,35 @@ class SalesReportRepository {
   String _gstPredicate() {
     return '''
       (
-        b.bill_no LIKE 'TAX-%'
-        OR COALESCE(b.gst_amount, 0.0) > 0.005
-        OR UPPER(COALESCE(b.bill_type, '')) IN ('GST', 'TAX', 'TAX_INVOICE')
+        UPPER(TRIM(COALESCE(b.bill_type, ''))) IN ('GST', 'TAX', 'TAX_INVOICE')
+        OR (
+          UPPER(TRIM(COALESCE(b.bill_type, ''))) NOT IN (
+            'NORMAL',
+            'NON_GST',
+            'NON_GST_BILL',
+            'NON_GST_INVOICE',
+            'SALES_INVOICE',
+            'ESTIMATE'
+          )
+          AND UPPER(TRIM(COALESCE(b.tax_treatment, ''))) NOT IN (
+            'NON_GST',
+            'NON_GST_SALE',
+            'NO_GST',
+            'EXEMPT'
+          )
+          AND (
+            COALESCE(b.gst_amount, 0.0) > 0.005
+            OR COALESCE(b.cgst_amount, 0.0) > 0.005
+            OR COALESCE(b.sgst_amount, 0.0) > 0.005
+            OR COALESCE(b.igst_amount, 0.0) > 0.005
+            OR COALESCE(b.output_gst_liability_snapshot, 0.0) > 0.005
+          )
+        )
+        OR (
+          TRIM(COALESCE(b.bill_type, '')) = ''
+          AND TRIM(COALESCE(b.tax_treatment, '')) = ''
+          AND b.bill_no LIKE 'TAX-%'
+        )
       )
     ''';
   }
@@ -466,9 +535,11 @@ class SalesReportRepository {
     double gstFinal = 0;
     double recordedGst = 0;
     double nonGstSales = 0;
+    double due = 0;
     double projectedGst = 0;
 
     for (final invoice in invoices) {
+      due += invoice.dueAmount;
       if (invoice.isGst) {
         gstCount++;
         gstTaxable += _taxableBaseFor(invoice);
@@ -500,6 +571,7 @@ class SalesReportRepository {
       gstFinalAmount: gstFinal,
       recordedGstAmount: recordedGst,
       nonGstSalesAmount: nonGstSales,
+      dueAmount: due,
       projectedGstRatePercent: fallbackRatePercent,
       projectedGstAmount: projectedGst,
     );
@@ -605,14 +677,26 @@ class SalesReportRepository {
     return summaries;
   }
 
-  bool _isGstBill(String billNo, double gstAmount, String billType) {
-    final upperNo = billNo.toUpperCase();
-    final upperType = billType.toUpperCase();
-    return upperNo.startsWith('TAX-') ||
-        gstAmount > 0.005 ||
-        upperType == 'GST' ||
-        upperType == 'TAX' ||
-        upperType == 'TAX_INVOICE';
+  bool _isGstBill({
+    required String billNo,
+    required String billType,
+    required String taxTreatment,
+    required double gstAmount,
+    required double cgstAmount,
+    required double sgstAmount,
+    required double igstAmount,
+    required double outputGstLiabilityAmount,
+  }) {
+    return SalesReportBillTaxClassifier.isGstInvoice(
+      billNo: billNo,
+      billType: billType,
+      taxTreatment: taxTreatment,
+      gstAmount: gstAmount,
+      cgstAmount: cgstAmount,
+      sgstAmount: sgstAmount,
+      igstAmount: igstAmount,
+      outputGstLiabilityAmount: outputGstLiabilityAmount,
+    );
   }
 
   String _displayMetal(String value) {

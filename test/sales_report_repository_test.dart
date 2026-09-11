@@ -211,6 +211,59 @@ void main() {
     expect(snapshot.gstLiability.projectedGstAmount, 18);
   });
 
+  test('fetchReport keeps normal bills out of the GST bucket', () async {
+    final date = DateTime(2026, 8, 9, 13, 15);
+    final normalBillId = await _insertBill(
+      db,
+      billNo: 'TAX-AJ-2026-0099',
+      billDate: date,
+      billType: 'NORMAL',
+      taxTreatment: 'NON_GST_SALE',
+      totalAmount: 2400,
+      taxableAmount: 0,
+      gstAmount: 0,
+      finalAmount: 2400,
+      paidAmount: 2400,
+    );
+    await _insertItem(
+      db,
+      billId: normalBillId,
+      lineNo: 1,
+      metalType: 'SILVER',
+      itemName: 'ANKLET',
+      netWeight: 14,
+      itemTotal: 2400,
+    );
+
+    final allSnapshot = await repository.fetchReport(
+      SalesReportFilter(
+        startDate: DateTime(2026, 8, 9),
+        endDate: DateTime(2026, 8, 9, 23, 59, 59),
+      ),
+    );
+    final nonGstSnapshot = await repository.fetchReport(
+      SalesReportFilter(
+        startDate: DateTime(2026, 8, 9),
+        endDate: DateTime(2026, 8, 9, 23, 59, 59),
+        taxMode: SalesReportTaxMode.nonGst,
+      ),
+    );
+    final gstSnapshot = await repository.fetchReport(
+      SalesReportFilter(
+        startDate: DateTime(2026, 8, 9),
+        endDate: DateTime(2026, 8, 9, 23, 59, 59),
+        taxMode: SalesReportTaxMode.gst,
+      ),
+    );
+
+    expect(allSnapshot.summary.invoiceCount, 1);
+    expect(allSnapshot.summary.nonGstInvoiceCount, 1);
+    expect(allSnapshot.invoices.single.isGst, isFalse);
+    expect(nonGstSnapshot.invoices.single.billNo, 'TAX-AJ-2026-0099');
+    expect(nonGstSnapshot.items.single.isGst, isFalse);
+    expect(gstSnapshot.invoices, isEmpty);
+  });
+
   test('fetchReport allocates mixed invoice totals to selected metal',
       () async {
     final date = DateTime(2026, 8, 9, 12, 30);
@@ -363,6 +416,7 @@ Future<int> _insertBill(
   required String billNo,
   required DateTime billDate,
   required String billType,
+  String? taxTreatment,
   int? customerId,
   double totalAmount = 0,
   double discount = 0,
@@ -388,6 +442,10 @@ Future<int> _insertBill(
           customerGstinSnapshot: drift.Value(customerGstinSnapshot),
           placeOfSupplySnapshot: drift.Value(placeOfSupplySnapshot),
           billType: drift.Value(billType),
+          taxTreatment: drift.Value(
+            taxTreatment ??
+                (billType == 'GST' ? 'TAXABLE_SUPPLY' : 'NON_GST_SALE'),
+          ),
           paymentStatus: drift.Value(dueAmount > 0 ? 'PARTIAL' : 'PAID'),
           totalAmount:
               drift.Value(totalAmount == 0 ? finalAmount : totalAmount),

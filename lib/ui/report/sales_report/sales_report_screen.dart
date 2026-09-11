@@ -139,9 +139,9 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         successMessage = 'Complete sales report CSV downloaded.';
       case SalesReportExportAction.gstLiabilityPreview:
         await _showPdfPreview(
-          title: 'GST Liability Preview',
-          subtitle: 'Recorded GST and non-GST planning summary',
-          fileName: 'gst-liability-report-preview.pdf',
+          title: 'Sales Overview',
+          subtitle: 'Normal bill sales, GST bill sales and due amount',
+          fileName: 'sales-overview-preview.pdf',
           buildBytes: () =>
               SalesReportExportService.buildGstLiabilityPreviewPdfBytes(
                   snapshot),
@@ -149,7 +149,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         return;
       case SalesReportExportAction.gstLiabilityPdf:
         export = SalesReportExportService.exportGstLiabilityPdf(snapshot);
-        successMessage = 'GST liability report PDF downloaded.';
+        successMessage = 'Sales overview PDF downloaded.';
       case SalesReportExportAction.invoiceLedgerPreview:
         await _showPdfPreview(
           title: 'Invoice Ledger Preview',
@@ -235,7 +235,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.gstLiabilityPdf,
-      label: 'GST Liability Report PDF',
+      label: 'Sales Overview PDF',
       icon: Icons.account_balance_outlined,
     ),
     SalesReportExportMenuItem(

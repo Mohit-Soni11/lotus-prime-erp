@@ -156,6 +156,7 @@ class SalesReportGstLiabilitySummary {
   final double gstFinalAmount;
   final double recordedGstAmount;
   final double nonGstSalesAmount;
+  final double dueAmount;
   final double projectedGstRatePercent;
   final double projectedGstAmount;
 
@@ -167,6 +168,7 @@ class SalesReportGstLiabilitySummary {
     this.gstFinalAmount = 0,
     this.recordedGstAmount = 0,
     this.nonGstSalesAmount = 0,
+    this.dueAmount = 0,
     this.projectedGstRatePercent = 3.0,
     this.projectedGstAmount = 0,
   });
@@ -213,6 +215,8 @@ class SalesReportInvoiceRow {
   final String businessType;
   final String placeOfSupply;
   final String billType;
+  final String documentType;
+  final String taxTreatment;
   final String paymentStatus;
   final bool isGst;
   final double grossAmount;
@@ -222,6 +226,7 @@ class SalesReportInvoiceRow {
   final double cgstAmount;
   final double sgstAmount;
   final double igstAmount;
+  final double outputGstLiabilityAmount;
   final double roundOffAmount;
   final double finalAmount;
   final double paidAmount;
@@ -248,6 +253,8 @@ class SalesReportInvoiceRow {
     this.businessType = 'B2C',
     this.placeOfSupply = '',
     required this.billType,
+    this.documentType = '',
+    this.taxTreatment = '',
     required this.paymentStatus,
     required this.isGst,
     required this.grossAmount,
@@ -257,6 +264,7 @@ class SalesReportInvoiceRow {
     this.cgstAmount = 0,
     this.sgstAmount = 0,
     this.igstAmount = 0,
+    this.outputGstLiabilityAmount = 0,
     required this.roundOffAmount,
     required this.finalAmount,
     required this.paidAmount,

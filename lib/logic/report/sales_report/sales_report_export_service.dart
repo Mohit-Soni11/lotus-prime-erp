@@ -342,8 +342,8 @@ class SalesReportExportService {
       identity: identity,
     );
     return _savePdf(
-      dialogTitle: 'Download GST Liability Report',
-      fileName: _fileName(snapshot.filter, 'gst-liability-report', 'pdf'),
+      dialogTitle: 'Download Sales Overview',
+      fileName: _fileName(snapshot.filter, 'sales-overview', 'pdf'),
       bytes: bytes,
     );
   }

@@ -393,7 +393,7 @@ class SalesReportExcelBuilder {
     sheet.addRow([
       _ExcelCell.text('Total Bills', _ExcelStyle.tableHeader),
       _ExcelCell.text('GST Bills', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Non-GST Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Normal Bills', _ExcelStyle.tableHeader),
       _ExcelCell.text('Gross Sales', _ExcelStyle.tableHeader),
       _ExcelCell.text('Discount', _ExcelStyle.tableHeader),
       _ExcelCell.text('Taxable Sales', _ExcelStyle.tableHeader),
@@ -423,25 +423,25 @@ class SalesReportExcelBuilder {
   ) {
     final gst = snapshot.gstLiability;
     sheet.addSection(
-      'GST Summary',
-      'Recorded GST is payable from GST invoices; non-GST estimate is shown separately',
+      'Sales Overview',
+      'Normal bill sales, GST bill sales, due amount and tax collection snapshot',
     );
     sheet.addRow([
-      _ExcelCell.text('Recorded GST Bills', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Recorded Taxable', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Recorded GST', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Recorded Invoice Total', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Non-GST Bills', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Non-GST Sales', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Optional GST Estimate', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Normal Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Normal Bill Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('GST Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('GST Bill Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Due Amount', _ExcelStyle.tableHeader),
+      _ExcelCell.text('GST Collected', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Normal Bill GST Estimate', _ExcelStyle.tableHeader),
     ]);
     sheet.addRow([
-      _ExcelCell.number(gst.gstInvoiceCount, _ExcelStyle.integerStrong),
-      _ExcelCell.number(gst.gstTaxableAmount, _ExcelStyle.moneyStrong),
-      _ExcelCell.number(gst.recordedGstAmount, _ExcelStyle.totalMoney),
-      _ExcelCell.number(gst.gstFinalAmount, _ExcelStyle.moneyStrong),
       _ExcelCell.number(gst.nonGstInvoiceCount, _ExcelStyle.integerStrong),
       _ExcelCell.number(gst.nonGstSalesAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(gst.gstInvoiceCount, _ExcelStyle.integerStrong),
+      _ExcelCell.number(gst.gstFinalAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(gst.dueAmount, _ExcelStyle.moneyStrong),
+      _ExcelCell.number(gst.recordedGstAmount, _ExcelStyle.totalMoney),
       _ExcelCell.number(gst.projectedGstAmount, _ExcelStyle.moneyStrong),
     ]);
     sheet.addBlankRow();
@@ -696,7 +696,7 @@ class SalesReportExcelBuilder {
         _ExcelCell.text(item.billNo, _ExcelStyle.strong),
         _ExcelCell.text(SalesReportExportFormatters.dateTime(item.billDate)),
         _ExcelCell.text(item.customerName),
-        _ExcelCell.text(item.isGst ? 'GST' : 'NON-GST'),
+        _ExcelCell.text(item.isGst ? 'GST BILL' : 'NORMAL'),
         _ExcelCell.text(item.metalType),
         _ExcelCell.text(item.itemName),
         _ExcelCell.text(item.huid.isEmpty ? 'Not linked' : item.huid),
@@ -825,7 +825,7 @@ class SalesReportExcelBuilder {
     final nonGstInvoices =
         snapshot.invoices.where((invoice) => !invoice.isGst).toList();
     sheet.addSection(
-      'Non-GST Sales Estimate',
+      'Normal Bill GST Estimate',
       'Reference only - not recorded as GST payable unless you decide to declare it',
     );
     sheet.addRow([
@@ -833,7 +833,7 @@ class SalesReportExcelBuilder {
       _ExcelCell.text('Invoice No', _ExcelStyle.tableHeader),
       _ExcelCell.text('Date', _ExcelStyle.tableHeader),
       _ExcelCell.text('Customer', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Non-GST Sales', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Normal Bill Sales', _ExcelStyle.tableHeader),
       _ExcelCell.text(
         'Estimated GST ${SalesReportExportFormatters.rate(snapshot.gstLiability.projectedGstRatePercent)}',
         _ExcelStyle.tableHeader,

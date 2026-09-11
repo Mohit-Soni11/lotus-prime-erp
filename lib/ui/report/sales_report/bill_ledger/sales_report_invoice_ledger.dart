@@ -365,7 +365,7 @@ class _TypeBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Text(
-        isGst ? 'GST' : 'NON-GST',
+        isGst ? 'GST BILL' : 'NORMAL',
         style: TextStyle(
           color: color,
           fontSize: 11,

@@ -9,8 +9,8 @@ void main() {
   test('complete CSV includes GST liability and metal weight audit', () {
     final csv = SalesReportExportService.buildCompleteCsvForTest(snapshot);
 
-    expect(csv, contains('GST LIABILITY'));
-    expect(csv, contains('Combined GST Exposure'));
+    expect(csv, contains('SALES OVERVIEW'));
+    expect(csv, contains('Normal Bill Sales'));
     expect(csv, contains('GSTIN'));
     expect(csv, contains('B2B/B2C'));
     expect(csv, contains('Place of Supply'));
