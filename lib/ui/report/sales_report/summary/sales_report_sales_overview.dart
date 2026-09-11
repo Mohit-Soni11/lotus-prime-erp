@@ -143,20 +143,19 @@ class SalesReportSalesOverview extends StatelessWidget {
       );
     }
 
-    if (_hasValue(summary.gstFinalAmount) || summary.gstInvoiceCount > 0) {
+    if (_hasValue(summary.gstTaxableAmount) || summary.gstInvoiceCount > 0) {
       cards.add(
         _SalesOverviewMetric(
           title: 'GST Bill Sales',
-          amount: salesReportMoney(summary.gstFinalAmount),
-          detail: '${summary.gstInvoiceCount} GST bills',
+          amount: salesReportMoney(summary.gstTaxableAmount),
+          detail: '${summary.gstInvoiceCount} GST bills before GST',
           supportingTitle:
               _hasValue(summary.recordedGstAmount) ? 'GST Collected' : null,
           supportingAmount: _hasValue(summary.recordedGstAmount)
               ? salesReportMoney(summary.recordedGstAmount)
               : null,
-          supportingDetail: _hasValue(summary.gstTaxableAmount)
-              ? 'Taxable sales ${salesReportMoney(summary.gstTaxableAmount)}'
-              : null,
+          supportingDetail:
+              _hasValue(summary.recordedGstAmount) ? 'Actual GST amount' : null,
           icon: Icons.verified_rounded,
           accent: SalesReportColors.onlineGreen,
         ),

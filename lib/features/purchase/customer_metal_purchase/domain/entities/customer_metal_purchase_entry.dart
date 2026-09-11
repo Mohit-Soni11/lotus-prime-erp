@@ -70,6 +70,53 @@ class CustomerMetalPurchaseEntry {
 
   bool get hasSellerPhoto => sellerPhotoPath?.trim().isNotEmpty ?? false;
 
+  String get displaySourceLabel => _humanizeLabel(source);
+
+  String get metalFlowStatusCode {
+    if (isReturned) {
+      return 'RETURNED';
+    }
+    if (isTransferredToMelting) {
+      return 'MELTING';
+    }
+    return 'AVAILABLE';
+  }
+
+  String get metalFlowStatusLabel {
+    switch (metalFlowStatusCode) {
+      case 'RETURNED':
+        return 'Returned to Seller';
+      case 'MELTING':
+        return 'Melted & Closed';
+      default:
+        return 'Ready to Melt';
+    }
+  }
+
+  String get payoutStatusCode {
+    if (pendingAmount > 0.005 && paidAmount > 0.005) {
+      return 'PARTIAL';
+    }
+    if (pendingAmount > 0.005) {
+      return 'PENDING';
+    }
+    final normalized = paymentStatus.trim().toUpperCase();
+    return normalized.isEmpty ? 'PAID' : normalized;
+  }
+
+  String get payoutStatusLabel {
+    switch (payoutStatusCode) {
+      case 'PAID':
+        return 'Paid';
+      case 'PARTIAL':
+        return 'Part Paid';
+      case 'PENDING':
+        return 'Payout Pending';
+      default:
+        return _humanizeLabel(payoutStatusCode);
+    }
+  }
+
   String get paymentModeLabel {
     final modes = <String>[
       if (cashPaid > 0.005) 'Cash',
@@ -141,4 +188,19 @@ class CustomerMetalPurchaseEntry {
       meltingBatchNo: meltingBatchNo ?? this.meltingBatchNo,
     );
   }
+}
+
+String _humanizeLabel(String value) {
+  final words = value
+      .trim()
+      .replaceAll(RegExp(r'[_-]+'), ' ')
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty);
+  if (words.isEmpty) {
+    return 'Not Recorded';
+  }
+  return words.map((word) {
+    final lower = word.toLowerCase();
+    return '${lower[0].toUpperCase()}${lower.substring(1)}';
+  }).join(' ');
 }

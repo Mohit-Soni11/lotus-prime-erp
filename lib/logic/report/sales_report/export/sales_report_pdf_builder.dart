@@ -433,32 +433,30 @@ class SalesReportPdfBuilder {
     required SalesReportSnapshot snapshot,
     required SalesReportExportIdentity identity,
   }) {
+    final normalInvoices = snapshot.invoices
+        .where((invoice) => !invoice.isGst)
+        .toList(growable: false);
+    final gstInvoices = snapshot.invoices
+        .where((invoice) => invoice.isGst)
+        .toList(growable: false);
+
     final widgets = <pw.Widget>[
       _pdfHeader(reportTitle, snapshot.filter, identity),
       pw.SizedBox(height: 14),
       _pdfSection(
-        'Sales Summary',
+        'Sales Overview',
         const ['Metric', 'Value'],
-        SalesReportExportFormatters.salesSummaryRowsWithMetalBreakdown(
-          snapshot,
-        ),
+        _executiveSalesOverviewRows(snapshot),
       ),
     ];
-
-    _addPdfSection(
-      widgets,
-      'Sales Overview',
-      const ['Metric', 'Value'],
-      SalesReportExportFormatters.gstLiabilityRows(snapshot.gstLiability),
-    );
 
     if (snapshot.metals.isNotEmpty) {
       _addPdfSection(
         widgets,
-        'Metal Sales Summary',
+        'Metal Sales',
         [
           'Metal',
-          'Invoices',
+          'Bills With Metal',
           'Items',
           'Pcs',
           'Gross Wt',
@@ -470,204 +468,87 @@ class SalesReportPdfBuilder {
       );
     }
 
-    if (snapshot.invoices.isNotEmpty) {
+    if (normalInvoices.isNotEmpty) {
       _addPdfSection(
         widgets,
-        'Invoice Register',
+        'Normal Sales Invoice Ledger',
         const [
           'S.No',
-          'Invoice',
-          'Date/Time',
-          'Status',
+          'Bill No',
+          'Date',
           'Customer',
           'Mobile',
-          'GSTIN',
-          'B2B/B2C',
-          'Place',
-          'Bill Status',
-        ],
-        _invoiceIdentityRegisterRows(snapshot.invoices),
-      );
-      _addPdfSection(
-        widgets,
-        'Invoice Tax Register',
-        const [
-          'S.No',
-          'Invoice',
-          'Gross',
+          'Metal',
+          'Sale Amount',
           'Discount',
-          'Taxable',
-          'CGST',
-          'SGST',
-          'IGST',
-          'Round',
-          'Invoice Total',
-        ],
-        _invoiceTaxRegisterRows(snapshot.invoices),
-      );
-      _addPdfSection(
-        widgets,
-        'Payment Collection Register',
-        const [
-          'S.No',
-          'Invoice',
-          'Date/Time',
-          'Customer',
-          'Mobile',
-          'Invoice Total',
-          'Cash',
-          'UPI',
-          'Card',
-          'Bank',
-          'Paid',
+          'Net Total',
           'Due',
-          'Payment Status',
+          'Status',
         ],
-        _paymentCollectionRows(snapshot.invoices),
+        _normalSalesInvoiceLedgerRows(normalInvoices),
       );
+    }
+
+    if (gstInvoices.isNotEmpty) {
       _addPdfSection(
         widgets,
-        'Payment Adjustment Register',
+        'GST Sales Invoice Ledger',
         const [
           'S.No',
-          'Invoice',
-          'Advance',
-          'Old Gold Adj.',
-          'Return/Credit',
-          'Bill Status',
-        ],
-        _paymentAdjustmentRows(snapshot.invoices),
-      );
-      _addPdfSection(
-        widgets,
-        'Customer Sales Register',
-        const [
-          'S.No',
+          'Bill No',
+          'Date',
           'Customer',
-          'Mobile',
           'GSTIN',
-          'B2B/B2C',
-          'Invoices',
-          'Gross',
-          'Discount',
-          'Taxable',
+          'Taxable Sales',
           'GST',
           'Invoice Total',
-          'Paid',
           'Due',
-          'Advance',
-          'Old Gold Adj.',
+          'Status',
         ],
-        _customerSalesRows(snapshot.invoices),
+        _gstSalesInvoiceLedgerRows(gstInvoices),
       );
     }
 
     if (snapshot.items.isNotEmpty) {
       _addPdfSection(
         widgets,
-        'Item Register',
+        'Sales Item Ledger',
         [
           'S.No',
-          'Invoice',
+          'Bill No',
           'Date',
           'Customer',
-          'Type',
           'Metal',
           'Item',
-          'HUID',
           'Purity',
           'Pcs',
+          'Gross Wt',
+          'Net Wt',
+          'Line Total',
         ],
-        _itemIdentityRows(snapshot.items),
+        _salesItemLedgerRows(snapshot.items),
       );
       _addPdfSection(
         widgets,
-        'Item Weight & Amount Register',
+        'Metal-wise Sales Ledger',
         const [
           'S.No',
-          'Invoice',
           'Metal',
-          'Item',
-          'Gross',
-          'Less',
-          'Net',
-          'Rate',
+          'Bills With Metal',
+          'Items',
+          'Pcs',
+          'Gross Wt',
+          'Net Wt',
           'Making',
-          'Total',
+          'Sales',
         ],
-        _itemAmountRows(snapshot.items),
-      );
-    }
-
-    final gstInvoices =
-        snapshot.invoices.where((invoice) => invoice.isGst).toList();
-    if (gstInvoices.isNotEmpty) {
-      _addPdfSection(
-        widgets,
-        'GST Register',
-        const [
-          'S.No',
-          'Invoice',
-          'Date',
-          'Customer',
-          'Taxable',
-          'CGST',
-          'SGST',
-          'IGST',
-          'Total GST',
-          'Invoice Total',
-        ],
-        _recordedGstRows(gstInvoices),
-      );
-      final hsnRows = _hsnGstRows(snapshot);
-      if (hsnRows.isNotEmpty) {
-        _addPdfSection(
-          widgets,
-          'HSN GST Register',
-          const [
-            'S.No',
-            'HSN/SAC',
-            'GST Rate',
-            'Invoices',
-            'Lines',
-            'Pcs',
-            'Taxable',
-            'CGST',
-            'SGST',
-            'IGST',
-            'Total GST',
-            'Invoice Value',
-          ],
-          hsnRows,
-        );
-      }
-    }
-
-    final nonGstInvoices =
-        snapshot.invoices.where((invoice) => !invoice.isGst).toList();
-    if (nonGstInvoices.isNotEmpty) {
-      _addPdfSection(
-        widgets,
-        'Normal Bill GST Estimate',
-        [
-          'S.No',
-          'Invoice',
-          'Date',
-          'Customer',
-          'Normal Bill Sales',
-          'Estimated GST ${SalesReportExportFormatters.rate(snapshot.gstLiability.projectedGstRatePercent)}',
-          'Estimated Total',
-        ],
-        _nonGstEstimateRows(
-          nonGstInvoices,
-          gstRatePercent: snapshot.gstLiability.projectedGstRatePercent,
-        ),
+        _metalWiseLedgerRows(snapshot.metals),
       );
     }
 
     _addOptionalInvoiceSection(
       widgets,
-      title: 'Advance Register',
+      title: 'Sales Advance Ledger',
       invoices: snapshot.invoices
           .where((invoice) => invoice.advanceAmount.abs() > 0.005)
           .toList(growable: false),
@@ -692,7 +573,7 @@ class SalesReportPdfBuilder {
     );
     _addOptionalInvoiceSection(
       widgets,
-      title: 'Due Register',
+      title: 'Due Sales Ledger',
       invoices: snapshot.invoices
           .where((invoice) => invoice.dueAmount.abs() > 0.005)
           .toList(growable: false),
@@ -717,7 +598,7 @@ class SalesReportPdfBuilder {
     );
     _addOptionalInvoiceSection(
       widgets,
-      title: 'Old Gold Adjustment Register',
+      title: 'Old Gold Adjustment Ledger',
       invoices: snapshot.invoices
           .where((invoice) => invoice.tradeInDeduction.abs() > 0.005)
           .toList(growable: false),
@@ -741,7 +622,7 @@ class SalesReportPdfBuilder {
     );
     _addOptionalInvoiceSection(
       widgets,
-      title: 'Return Credit Register',
+      title: 'Return and Reversal Ledger',
       invoices: snapshot.invoices
           .where((invoice) => invoice.returnCreditNoteAmount.abs() > 0.005)
           .toList(growable: false),
@@ -761,23 +642,23 @@ class SalesReportPdfBuilder {
       rows: _returnCreditRegisterRows,
     );
 
-    if (snapshot.items.isNotEmpty) {
+    final goldPurityRows = _goldPurityLedgerRows(snapshot.items);
+    if (goldPurityRows.isNotEmpty) {
       _addPdfSection(
         widgets,
-        'Metal Grade Register',
+        'Gold Purity Ledger',
         const [
           'S.No',
-          'Metal',
-          'Grade/Purity',
-          'Invoices',
+          'Purity',
+          'Bills With Purity',
           'Lines',
           'Pcs',
           'Gross Wt',
           'Net Wt',
-          'Item Amount',
           'Making',
+          'Sales',
         ],
-        _metalGradeRows(snapshot.items),
+        goldPurityRows,
       );
     }
 
@@ -966,6 +847,289 @@ class SalesReportPdfBuilder {
     final visibleRows = rowCount > 10 ? 10 : rowCount;
     final rowHeight = columnCount <= 2 ? 18.0 : 16.0;
     return 56 + (visibleRows + 1) * rowHeight;
+  }
+
+  static List<List<String>> _executiveSalesOverviewRows(
+    SalesReportSnapshot snapshot,
+  ) {
+    final summary = snapshot.summary;
+    final liability = snapshot.gstLiability;
+    final returnCredit = snapshot.invoices.fold<double>(
+      0,
+      (sum, invoice) => sum + invoice.returnCreditNoteAmount,
+    );
+    final rows = <List<String>>[
+      [
+        'Report Period',
+        SalesReportExportFormatters.periodLabel(snapshot.filter),
+      ],
+      ['Total Invoices', '${summary.invoiceCount} bills'],
+      ['Total Sales', SalesReportExportFormatters.money(summary.finalAmount)],
+      [
+        'Net Weight Sold',
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(snapshot.items),
+      ],
+    ];
+
+    if (liability.nonGstInvoiceCount > 0) {
+      rows.add([
+        'Normal Bill Sales',
+        '${SalesReportExportFormatters.money(liability.nonGstSalesAmount)} '
+            '(${liability.nonGstInvoiceCount} bills)',
+      ]);
+    }
+    if (liability.gstInvoiceCount > 0) {
+      rows.add([
+        'GST Bill Sales',
+        '${SalesReportExportFormatters.money(liability.gstTaxableAmount)} '
+            'before GST (${liability.gstInvoiceCount} bills)',
+      ]);
+    }
+    if (liability.recordedGstAmount.abs() > 0.005) {
+      rows.add([
+        'GST Collected',
+        SalesReportExportFormatters.money(liability.recordedGstAmount),
+      ]);
+    }
+    if (liability.projectedGstAmount.abs() > 0.005) {
+      rows.add([
+        'Normal Bill GST Estimate',
+        SalesReportExportFormatters.money(liability.projectedGstAmount),
+      ]);
+    }
+    if (summary.dueAmount.abs() > 0.005) {
+      rows.add([
+        'Due Amount',
+        SalesReportExportFormatters.money(summary.dueAmount),
+      ]);
+    }
+    if (summary.advanceAmount.abs() > 0.005) {
+      rows.add([
+        'Advance Adjusted',
+        SalesReportExportFormatters.money(summary.advanceAmount),
+      ]);
+    }
+    if (returnCredit.abs() > 0.005) {
+      rows.add([
+        'Return/Reversal Credit',
+        SalesReportExportFormatters.money(returnCredit),
+      ]);
+    }
+    return rows;
+  }
+
+  static List<List<String>> _normalSalesInvoiceLedgerRows(
+    List<SalesReportInvoiceRow> invoices,
+  ) {
+    return [
+      for (var index = 0; index < invoices.length; index++)
+        [
+          '${index + 1}',
+          invoices[index].billNo,
+          SalesReportExportFormatters.date(invoices[index].billDate),
+          invoices[index].customerName,
+          invoices[index].mobile,
+          invoices[index].metalMix,
+          SalesReportExportFormatters.money(invoices[index].taxableAmount),
+          SalesReportExportFormatters.money(invoices[index].discountAmount),
+          SalesReportExportFormatters.money(invoices[index].finalAmount),
+          SalesReportExportFormatters.money(invoices[index].dueAmount),
+          invoices[index].billStatus,
+        ],
+      [
+        'TOTAL',
+        '${invoices.length} normal bills',
+        '',
+        '',
+        '',
+        '',
+        _moneyTotal(invoices, (row) => row.taxableAmount),
+        _moneyTotal(invoices, (row) => row.discountAmount),
+        _moneyTotal(invoices, (row) => row.finalAmount),
+        _moneyTotal(invoices, (row) => row.dueAmount),
+        '',
+      ],
+    ];
+  }
+
+  static List<List<String>> _gstSalesInvoiceLedgerRows(
+    List<SalesReportInvoiceRow> invoices,
+  ) {
+    return [
+      for (var index = 0; index < invoices.length; index++)
+        [
+          '${index + 1}',
+          invoices[index].billNo,
+          SalesReportExportFormatters.date(invoices[index].billDate),
+          invoices[index].customerName,
+          invoices[index].customerGstin.trim().isEmpty
+              ? 'Unregistered'
+              : invoices[index].customerGstin,
+          SalesReportExportFormatters.money(invoices[index].taxableAmount),
+          SalesReportExportFormatters.money(invoices[index].gstAmount),
+          SalesReportExportFormatters.money(invoices[index].finalAmount),
+          SalesReportExportFormatters.money(invoices[index].dueAmount),
+          invoices[index].billStatus,
+        ],
+      [
+        'TOTAL',
+        '${invoices.length} GST bills',
+        '',
+        '',
+        '',
+        _moneyTotal(invoices, (row) => row.taxableAmount),
+        _moneyTotal(invoices, (row) => row.gstAmount),
+        _moneyTotal(invoices, (row) => row.finalAmount),
+        _moneyTotal(invoices, (row) => row.dueAmount),
+        '',
+      ],
+    ];
+  }
+
+  static List<List<String>> _salesItemLedgerRows(
+    List<SalesReportItemRow> items,
+  ) {
+    return [
+      for (var index = 0; index < items.length; index++)
+        [
+          '${index + 1}',
+          items[index].billNo,
+          SalesReportExportFormatters.date(items[index].billDate),
+          items[index].customerName,
+          items[index].metalType,
+          items[index].itemName,
+          items[index].purity,
+          '${items[index].quantity}',
+          SalesReportExportFormatters.weight(items[index].grossWeight),
+          SalesReportExportFormatters.weight(items[index].netWeight),
+          SalesReportExportFormatters.money(items[index].itemTotal),
+        ],
+      [
+        'TOTAL',
+        '${items.length} items',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '${items.fold(0, (sum, item) => sum + item.quantity)}',
+        SalesReportExportFormatters.weight(
+          items.fold(0, (sum, item) => sum + item.grossWeight),
+        ),
+        SalesReportExportFormatters.totalNetWeightWithBreakdown(items),
+        SalesReportExportFormatters.money(
+          items.fold(0, (sum, item) => sum + item.itemTotal),
+        ),
+      ],
+    ];
+  }
+
+  static List<List<String>> _metalWiseLedgerRows(
+    List<SalesReportMetalSummary> metals,
+  ) {
+    return [
+      for (var index = 0; index < metals.length; index++)
+        [
+          '${index + 1}',
+          metals[index].metalType,
+          '${metals[index].invoiceCount}',
+          '${metals[index].itemCount}',
+          '${metals[index].pieces}',
+          SalesReportExportFormatters.weight(metals[index].grossWeight),
+          SalesReportExportFormatters.weight(metals[index].netWeight),
+          SalesReportExportFormatters.money(metals[index].makingAmount),
+          SalesReportExportFormatters.money(metals[index].salesAmount),
+        ],
+      [
+        'TOTAL',
+        '${metals.length} metals',
+        'Unique bills in overview',
+        '${metals.fold(0, (sum, metal) => sum + metal.itemCount)}',
+        '${metals.fold(0, (sum, metal) => sum + metal.pieces)}',
+        SalesReportExportFormatters.weight(
+          metals.fold(0, (sum, metal) => sum + metal.grossWeight),
+        ),
+        SalesReportExportFormatters.weight(
+          metals.fold(0, (sum, metal) => sum + metal.netWeight),
+        ),
+        SalesReportExportFormatters.money(
+          metals.fold(0, (sum, metal) => sum + metal.makingAmount),
+        ),
+        SalesReportExportFormatters.money(
+          metals.fold(0, (sum, metal) => sum + metal.salesAmount),
+        ),
+      ],
+    ];
+  }
+
+  static List<List<String>> _goldPurityLedgerRows(
+    List<SalesReportItemRow> items,
+  ) {
+    final goldItems = items.where(_isGoldItem).toList(growable: false);
+    if (goldItems.isEmpty) return const [];
+
+    final grouped = <String, List<SalesReportItemRow>>{};
+    for (final item in goldItems) {
+      final purity = item.purity.trim().isEmpty ? 'Unspecified' : item.purity;
+      grouped.putIfAbsent(purity, () => []).add(item);
+    }
+
+    final purities = grouped.keys.toList()..sort();
+    final rows = <List<String>>[
+      for (var index = 0; index < purities.length; index++)
+        _goldPurityRow(index + 1, purities[index], grouped[purities[index]]!),
+    ];
+    rows.add([
+      'TOTAL',
+      '${purities.length} purities',
+      '${goldItems.map((item) => item.billId).toSet().length}',
+      '${goldItems.length}',
+      '${goldItems.fold(0, (sum, item) => sum + item.quantity)}',
+      SalesReportExportFormatters.weight(
+        goldItems.fold(0, (sum, item) => sum + item.grossWeight),
+      ),
+      SalesReportExportFormatters.weight(
+        goldItems.fold(0, (sum, item) => sum + item.netWeight),
+      ),
+      SalesReportExportFormatters.money(
+        goldItems.fold(0, (sum, item) => sum + item.makingCharge),
+      ),
+      SalesReportExportFormatters.money(
+        goldItems.fold(0, (sum, item) => sum + item.itemTotal),
+      ),
+    ]);
+    return rows;
+  }
+
+  static List<String> _goldPurityRow(
+    int serial,
+    String purity,
+    List<SalesReportItemRow> items,
+  ) {
+    return [
+      '$serial',
+      purity,
+      '${items.map((item) => item.billId).toSet().length}',
+      '${items.length}',
+      '${items.fold(0, (sum, item) => sum + item.quantity)}',
+      SalesReportExportFormatters.weight(
+        items.fold(0, (sum, item) => sum + item.grossWeight),
+      ),
+      SalesReportExportFormatters.weight(
+        items.fold(0, (sum, item) => sum + item.netWeight),
+      ),
+      SalesReportExportFormatters.money(
+        items.fold(0, (sum, item) => sum + item.makingCharge),
+      ),
+      SalesReportExportFormatters.money(
+        items.fold(0, (sum, item) => sum + item.itemTotal),
+      ),
+    ];
+  }
+
+  static bool _isGoldItem(SalesReportItemRow item) {
+    final metal = item.metalType.trim().toUpperCase();
+    return metal == 'GOLD' || metal.contains('GOLD');
   }
 
   static List<List<String>> _metalSalesLedgerRows(
@@ -1255,162 +1419,6 @@ class SalesReportPdfBuilder {
     ];
   }
 
-  static List<List<String>> _customerSalesRows(
-    List<SalesReportInvoiceRow> invoices,
-  ) {
-    final accumulators = <String, _PdfCustomerSalesAccumulator>{};
-    for (final invoice in invoices) {
-      final name = invoice.customerName.trim().isEmpty
-          ? 'Walk-in Customer'
-          : invoice.customerName.trim();
-      final key = '${name.toUpperCase()}|${invoice.mobile.trim()}';
-      final acc = accumulators.putIfAbsent(
-        key,
-        () => _PdfCustomerSalesAccumulator(
-          customerName: name,
-          mobile: invoice.mobile,
-        ),
-      );
-      acc.invoiceIds.add(invoice.billId);
-      acc.businessTypes.add(invoice.businessType);
-      acc.gstins.add(invoice.customerGstin);
-      acc.grossAmount += invoice.grossAmount;
-      acc.discountAmount += invoice.discountAmount;
-      acc.taxableAmount += invoice.taxableAmount;
-      acc.gstAmount += invoice.gstAmount;
-      acc.finalAmount += invoice.finalAmount;
-      acc.paidAmount += invoice.paidAmount;
-      acc.dueAmount += invoice.dueAmount;
-      acc.advanceAmount += invoice.advanceAmount;
-      acc.tradeInDeduction += invoice.tradeInDeduction;
-    }
-    final rows = accumulators.values.map((acc) => acc.toRow()).toList()
-      ..sort((a, b) {
-        final amountCompare = b.finalAmount.compareTo(a.finalAmount);
-        if (amountCompare != 0) return amountCompare;
-        return a.customerName.compareTo(b.customerName);
-      });
-    return [
-      for (var index = 0; index < rows.length; index++)
-        [
-          '${index + 1}',
-          rows[index].customerName,
-          rows[index].mobile,
-          rows[index].gstin,
-          rows[index].businessType,
-          '${rows[index].invoiceCount}',
-          SalesReportExportFormatters.money(rows[index].grossAmount),
-          SalesReportExportFormatters.money(rows[index].discountAmount),
-          SalesReportExportFormatters.money(rows[index].taxableAmount),
-          SalesReportExportFormatters.money(rows[index].gstAmount),
-          SalesReportExportFormatters.money(rows[index].finalAmount),
-          SalesReportExportFormatters.money(rows[index].paidAmount),
-          SalesReportExportFormatters.money(rows[index].dueAmount),
-          SalesReportExportFormatters.money(rows[index].advanceAmount),
-          SalesReportExportFormatters.money(rows[index].tradeInDeduction),
-        ],
-      [
-        'TOTAL',
-        '',
-        '',
-        '',
-        '',
-        '${rows.fold(0, (sum, row) => sum + row.invoiceCount)}',
-        _customerMoneyTotal(rows, (row) => row.grossAmount),
-        _customerMoneyTotal(rows, (row) => row.discountAmount),
-        _customerMoneyTotal(rows, (row) => row.taxableAmount),
-        _customerMoneyTotal(rows, (row) => row.gstAmount),
-        _customerMoneyTotal(rows, (row) => row.finalAmount),
-        _customerMoneyTotal(rows, (row) => row.paidAmount),
-        _customerMoneyTotal(rows, (row) => row.dueAmount),
-        _customerMoneyTotal(rows, (row) => row.advanceAmount),
-        _customerMoneyTotal(rows, (row) => row.tradeInDeduction),
-      ],
-    ];
-  }
-
-  static List<List<String>> _recordedGstRows(
-    List<SalesReportInvoiceRow> invoices,
-  ) {
-    return [
-      for (var index = 0; index < invoices.length; index++)
-        [
-          '${index + 1}',
-          invoices[index].billNo,
-          SalesReportExportFormatters.dateTime(invoices[index].billDate),
-          invoices[index].customerName,
-          SalesReportExportFormatters.money(invoices[index].taxableAmount),
-          SalesReportExportFormatters.money(_gstBreakup(invoices[index]).cgst),
-          SalesReportExportFormatters.money(_gstBreakup(invoices[index]).sgst),
-          SalesReportExportFormatters.money(_gstBreakup(invoices[index]).igst),
-          SalesReportExportFormatters.money(invoices[index].gstAmount),
-          SalesReportExportFormatters.money(invoices[index].finalAmount),
-        ],
-      [
-        'TOTAL',
-        '',
-        '',
-        '',
-        _moneyTotal(invoices, (row) => row.taxableAmount),
-        SalesReportExportFormatters.money(
-          invoices.fold(0, (sum, row) => sum + _gstBreakup(row).cgst),
-        ),
-        SalesReportExportFormatters.money(
-          invoices.fold(0, (sum, row) => sum + _gstBreakup(row).sgst),
-        ),
-        SalesReportExportFormatters.money(
-          invoices.fold(0, (sum, row) => sum + _gstBreakup(row).igst),
-        ),
-        _moneyTotal(invoices, (row) => row.gstAmount),
-        _moneyTotal(invoices, (row) => row.finalAmount),
-      ],
-    ];
-  }
-
-  static List<List<String>> _nonGstEstimateRows(
-    List<SalesReportInvoiceRow> invoices, {
-    required double gstRatePercent,
-  }) {
-    final rate = gstRatePercent / 100;
-    return [
-      for (var index = 0; index < invoices.length; index++)
-        [
-          '${index + 1}',
-          invoices[index].billNo,
-          SalesReportExportFormatters.dateTime(invoices[index].billDate),
-          invoices[index].customerName,
-          SalesReportExportFormatters.money(invoices[index].taxableAmount),
-          SalesReportExportFormatters.money(
-            _roundMoney(invoices[index].taxableAmount * rate),
-          ),
-          SalesReportExportFormatters.money(
-            invoices[index].taxableAmount +
-                _roundMoney(invoices[index].taxableAmount * rate),
-          ),
-        ],
-      [
-        'TOTAL',
-        '',
-        '',
-        '',
-        _moneyTotal(invoices, (row) => row.taxableAmount),
-        SalesReportExportFormatters.money(
-          invoices.fold(
-            0,
-            (sum, row) => sum + _roundMoney(row.taxableAmount * rate),
-          ),
-        ),
-        SalesReportExportFormatters.money(
-          invoices.fold(
-            0,
-            (sum, row) =>
-                sum + row.taxableAmount + _roundMoney(row.taxableAmount * rate),
-          ),
-        ),
-      ],
-    ];
-  }
-
   static List<List<String>> _advanceRegisterRows(
     List<SalesReportInvoiceRow> invoices,
   ) {
@@ -1686,139 +1694,6 @@ class SalesReportPdfBuilder {
     ];
   }
 
-  static List<List<String>> _hsnGstRows(SalesReportSnapshot snapshot) {
-    final invoicesById = {
-      for (final invoice in snapshot.invoices) invoice.billId: invoice,
-    };
-    final accumulators = <String, _PdfHsnGstAccumulator>{};
-    for (final item in snapshot.items) {
-      final invoice = invoicesById[item.billId];
-      if (invoice == null || !invoice.isGst) continue;
-      final hsn =
-          item.hsnCode.trim().isEmpty ? 'UNMAPPED' : item.hsnCode.trim();
-      final taxableBase = _taxableBaseFor(invoice);
-      final ratio = _allocationRatio(
-        scopedGross: item.itemTotal,
-        invoiceGross: invoice.grossAmount,
-      );
-      final taxable = taxableBase * ratio;
-      final split = _gstBreakup(invoice);
-      final cgst = split.cgst * ratio;
-      final sgst = split.sgst * ratio;
-      final igst = split.igst * ratio;
-      final gst = cgst + sgst + igst;
-      final rate = taxable.abs() <= 0.005 ? 0.0 : (gst / taxable) * 100;
-      final key = '$hsn|${rate.toStringAsFixed(2)}';
-      final acc = accumulators.putIfAbsent(
-        key,
-        () => _PdfHsnGstAccumulator(hsnCode: hsn, gstRate: rate),
-      );
-      acc.invoiceIds.add(invoice.billId);
-      acc.lineItemCount++;
-      acc.pieces += item.quantity;
-      acc.taxableAmount += taxable;
-      acc.cgstAmount += cgst;
-      acc.sgstAmount += sgst;
-      acc.igstAmount += igst;
-      acc.gstAmount += gst;
-      acc.invoiceAmount += taxable + gst + (invoice.roundOffAmount * ratio);
-    }
-    final rows = accumulators.values.toList()
-      ..sort((a, b) {
-        final hsnCompare = a.hsnCode.compareTo(b.hsnCode);
-        if (hsnCompare != 0) return hsnCompare;
-        return a.gstRate.compareTo(b.gstRate);
-      });
-    return [
-      for (var index = 0; index < rows.length; index++)
-        [
-          '${index + 1}',
-          rows[index].hsnCode,
-          '${rows[index].gstRate.toStringAsFixed(2)}%',
-          '${rows[index].invoiceIds.length}',
-          '${rows[index].lineItemCount}',
-          '${rows[index].pieces}',
-          SalesReportExportFormatters.money(rows[index].taxableAmount),
-          SalesReportExportFormatters.money(rows[index].cgstAmount),
-          SalesReportExportFormatters.money(rows[index].sgstAmount),
-          SalesReportExportFormatters.money(rows[index].igstAmount),
-          SalesReportExportFormatters.money(rows[index].gstAmount),
-          SalesReportExportFormatters.money(rows[index].invoiceAmount),
-        ],
-      [
-        'TOTAL',
-        '',
-        '',
-        '${rows.fold(0, (sum, row) => sum + row.invoiceIds.length)}',
-        '${rows.fold(0, (sum, row) => sum + row.lineItemCount)}',
-        '${rows.fold(0, (sum, row) => sum + row.pieces)}',
-        _hsnMoneyTotal(rows, (row) => row.taxableAmount),
-        _hsnMoneyTotal(rows, (row) => row.cgstAmount),
-        _hsnMoneyTotal(rows, (row) => row.sgstAmount),
-        _hsnMoneyTotal(rows, (row) => row.igstAmount),
-        _hsnMoneyTotal(rows, (row) => row.gstAmount),
-        _hsnMoneyTotal(rows, (row) => row.invoiceAmount),
-      ],
-    ];
-  }
-
-  static List<List<String>> _metalGradeRows(List<SalesReportItemRow> items) {
-    final accumulators = <String, _PdfMetalGradeAccumulator>{};
-    for (final item in items) {
-      final metal = item.metalType.trim().isEmpty ? 'Unmapped' : item.metalType;
-      final purity = item.purity.trim().isEmpty ? 'Unmapped' : item.purity;
-      final key = '${metal.toUpperCase()}|${purity.toUpperCase()}';
-      final acc = accumulators.putIfAbsent(
-        key,
-        () => _PdfMetalGradeAccumulator(metalType: metal, purity: purity),
-      );
-      acc.invoiceIds.add(item.billId);
-      acc.lineItemCount++;
-      acc.pieces += item.quantity;
-      acc.grossWeight += item.grossWeight;
-      acc.netWeight += item.netWeight;
-      acc.itemAmount += item.itemTotal;
-      acc.makingAmount += item.makingCharge;
-    }
-    final rows = accumulators.values.toList()
-      ..sort((a, b) {
-        final metalCompare = a.metalType.compareTo(b.metalType);
-        if (metalCompare != 0) return metalCompare;
-        return a.purity.compareTo(b.purity);
-      });
-    return [
-      for (var index = 0; index < rows.length; index++)
-        [
-          '${index + 1}',
-          rows[index].metalType,
-          rows[index].purity,
-          '${rows[index].invoiceIds.length}',
-          '${rows[index].lineItemCount}',
-          '${rows[index].pieces}',
-          SalesReportExportFormatters.weight(rows[index].grossWeight),
-          SalesReportExportFormatters.weight(rows[index].netWeight),
-          SalesReportExportFormatters.money(rows[index].itemAmount),
-          SalesReportExportFormatters.money(rows[index].makingAmount),
-        ],
-      [
-        'TOTAL',
-        '',
-        '',
-        '${rows.fold(0, (sum, row) => sum + row.invoiceIds.length)}',
-        '${rows.fold(0, (sum, row) => sum + row.lineItemCount)}',
-        '${rows.fold(0, (sum, row) => sum + row.pieces)}',
-        SalesReportExportFormatters.weight(
-          rows.fold(0, (sum, row) => sum + row.grossWeight),
-        ),
-        SalesReportExportFormatters.weight(
-          rows.fold(0, (sum, row) => sum + row.netWeight),
-        ),
-        _metalGradeMoneyTotal(rows, (row) => row.itemAmount),
-        _metalGradeMoneyTotal(rows, (row) => row.makingAmount),
-      ],
-    ];
-  }
-
   static String _moneyTotal(
     List<SalesReportInvoiceRow> rows,
     double Function(SalesReportInvoiceRow row) selector,
@@ -1826,50 +1701,6 @@ class SalesReportPdfBuilder {
     return SalesReportExportFormatters.money(
       rows.fold<double>(0, (sum, row) => sum + selector(row)),
     );
-  }
-
-  static String _customerMoneyTotal(
-    List<_PdfCustomerSalesRow> rows,
-    double Function(_PdfCustomerSalesRow row) selector,
-  ) {
-    return SalesReportExportFormatters.money(
-      rows.fold<double>(0, (sum, row) => sum + selector(row)),
-    );
-  }
-
-  static String _hsnMoneyTotal(
-    List<_PdfHsnGstAccumulator> rows,
-    double Function(_PdfHsnGstAccumulator row) selector,
-  ) {
-    return SalesReportExportFormatters.money(
-      rows.fold<double>(0, (sum, row) => sum + selector(row)),
-    );
-  }
-
-  static String _metalGradeMoneyTotal(
-    List<_PdfMetalGradeAccumulator> rows,
-    double Function(_PdfMetalGradeAccumulator row) selector,
-  ) {
-    return SalesReportExportFormatters.money(
-      rows.fold<double>(0, (sum, row) => sum + selector(row)),
-    );
-  }
-
-  static double _taxableBaseFor(SalesReportInvoiceRow invoice) {
-    if (invoice.taxableAmount > 0.005) return invoice.taxableAmount;
-    final discountedGross = invoice.grossAmount - invoice.discountAmount;
-    if (discountedGross > 0.005) return discountedGross;
-    if (invoice.gstAmount <= 0.005) return invoice.finalAmount;
-    return invoice.grossAmount;
-  }
-
-  static double _allocationRatio({
-    required double scopedGross,
-    required double invoiceGross,
-  }) {
-    if (scopedGross <= 0.005) return 0;
-    if (invoiceGross.abs() <= 0.005) return 1;
-    return scopedGross / invoiceGross;
   }
 
   static _PdfGstBreakup _gstBreakup(SalesReportInvoiceRow invoice) {

@@ -491,29 +491,6 @@ GoRouter createAppRouter() {
             ),
           ),
           GoRoute(
-            path: RoutePaths.customerMetalPurchaseLedger,
-            builder: (context, state) =>
-                const CustomerMetalPurchaseLedgerScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.customerMetalPurchaseVoucher,
-            builder: (context, state) {
-              final voucherId = int.tryParse(
-                state.pathParameters['voucherId'] ?? '',
-              );
-              if (voucherId == null) {
-                return const CustomerMetalPurchaseLedgerScreen();
-              }
-              return CustomerMetalPurchaseVoucherDetailScreen(
-                voucherId: voucherId,
-                onBack: () => _goBackOr(
-                  context,
-                  RoutePaths.customerMetalPurchaseLedger,
-                ),
-              );
-            },
-          ),
-          GoRoute(
             path: RoutePaths.purchaseReturn,
             builder: (context, state) => _ComingSoonScreen(
               pageTitle: AppRoutes.getTitle(AppRoutes.purchaseReturnRoute),
@@ -672,7 +649,27 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.reportPurchase,
             builder: (context, state) =>
-                const CustomerMetalPurchaseLedgerScreen(),
+                const CustomerMetalPurchaseLedgerScreen(
+              title: 'Customer Metal Purchase Report',
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.customerMetalPurchaseVoucher,
+            builder: (context, state) {
+              final voucherId = int.tryParse(
+                state.pathParameters['voucherId'] ?? '',
+              );
+              if (voucherId == null) {
+                return const CustomerMetalPurchaseLedgerScreen();
+              }
+              return CustomerMetalPurchaseVoucherDetailScreen(
+                voucherId: voucherId,
+                onBack: () => _goBackOr(
+                  context,
+                  RoutePaths.reportPurchase,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: RoutePaths.reportPnl,

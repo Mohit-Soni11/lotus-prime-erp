@@ -35,8 +35,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('S. No.'), findsOneWidget);
+    expect(find.text('Voucher No'), findsOneWidget);
+    expect(find.text('Source'), findsOneWidget);
+    expect(find.text('Metal Status'), findsOneWidget);
+    expect(find.text('Payout'), findsOneWidget);
     expect(find.text('Net Wt'), findsOneWidget);
     expect(find.text('Fine Wt'), findsNothing);
+    expect(find.text('Direct'), findsOneWidget);
+    expect(find.text('Ready to Melt'), findsOneWidget);
+    expect(find.text('Paid'), findsWidgets);
     expect(find.text('1.000 g'), findsOneWidget);
     expect(find.byType(Checkbox), findsNothing);
     expect(find.byType(DataTable), findsNothing);

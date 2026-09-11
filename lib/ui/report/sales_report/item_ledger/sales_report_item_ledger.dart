@@ -18,8 +18,8 @@ class SalesReportItemLedger extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _LedgerHeader(
-            title: 'Item Ledger',
-            subtitle: 'HUID, purity, weight, rate, making and item total',
+            title: 'Sales Item Ledger',
+            subtitle: 'Item-wise HUID, purity, weight, rate and value audit',
             icon: Icons.inventory_2_rounded,
           ),
           if (items.isEmpty)
@@ -32,26 +32,41 @@ class SalesReportItemLedger extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: constraints.maxWidth),
                     child: DataTable(
-                      headingRowHeight: 42,
-                      dataRowMinHeight: 52,
-                      dataRowMaxHeight: 58,
-                      columnSpacing: 26,
+                      headingRowHeight: 46,
+                      dataRowMinHeight: 56,
+                      dataRowMaxHeight: 68,
+                      columnSpacing: 24,
                       horizontalMargin: 24,
+                      headingTextStyle: SalesReportStyles.body.copyWith(
+                        color: SalesReportColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      dataTextStyle: SalesReportStyles.body.copyWith(
+                        color: SalesReportColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                       columns: const [
-                        DataColumn(label: Text('S.No')),
-                        DataColumn(label: Text('Invoice')),
-                        DataColumn(label: Text('Customer')),
-                        DataColumn(label: Text('Metal')),
-                        DataColumn(label: Text('Item')),
-                        DataColumn(label: Text('HUID')),
-                        DataColumn(label: Text('Purity')),
-                        DataColumn(label: Text('Pcs'), numeric: true),
-                        DataColumn(label: Text('Gross'), numeric: true),
-                        DataColumn(label: Text('Less'), numeric: true),
-                        DataColumn(label: Text('Net'), numeric: true),
-                        DataColumn(label: Text('Rate'), numeric: true),
-                        DataColumn(label: Text('Making'), numeric: true),
-                        DataColumn(label: Text('Total'), numeric: true),
+                        DataColumn(label: _ColumnLabel('S. No.')),
+                        DataColumn(label: _ColumnLabel('Bill No')),
+                        DataColumn(label: _ColumnLabel('Customer')),
+                        DataColumn(label: _ColumnLabel('Metal')),
+                        DataColumn(label: _ColumnLabel('Item Name')),
+                        DataColumn(label: _ColumnLabel('HUID')),
+                        DataColumn(label: _ColumnLabel('Purity')),
+                        DataColumn(label: _ColumnLabel('Qty'), numeric: true),
+                        DataColumn(
+                            label: _ColumnLabel('Gross Wt'), numeric: true),
+                        DataColumn(
+                            label: _ColumnLabel('Less Wt'), numeric: true),
+                        DataColumn(
+                            label: _ColumnLabel('Net Wt'), numeric: true),
+                        DataColumn(label: _ColumnLabel('Rate'), numeric: true),
+                        DataColumn(
+                            label: _ColumnLabel('Making'), numeric: true),
+                        DataColumn(
+                            label: _ColumnLabel('Line Total'), numeric: true),
                       ],
                       rows: _buildRows(),
                     ),
@@ -76,20 +91,40 @@ class SalesReportItemLedger extends StatelessWidget {
   DataRow _buildRow(SalesReportItemRow item, int index) {
     return DataRow(
       cells: [
-        DataCell(Text('${index + 1}')),
-        DataCell(_StrongText(item.billNo)),
-        DataCell(Text(item.customerName)),
-        DataCell(Text(item.metalType)),
-        DataCell(Text(item.itemName)),
+        DataCell(_LedgerText('${index + 1}')),
+        DataCell(_LedgerText(item.billNo, fontWeight: FontWeight.w900)),
+        DataCell(_LedgerText(item.customerName)),
+        DataCell(_LedgerText(item.metalType)),
+        DataCell(_LedgerText(item.itemName)),
         DataCell(_HuidCell(item.huid)),
-        DataCell(Text(item.purity)),
-        DataCell(Text('${item.quantity}')),
-        DataCell(Text(salesReportWeight(item.grossWeight))),
-        DataCell(Text(salesReportWeight(item.lessWeight))),
-        DataCell(_StrongText(salesReportWeight(item.netWeight))),
-        DataCell(Text(salesReportMoney(item.rate))),
-        DataCell(Text(salesReportMoney(item.makingCharge))),
-        DataCell(_StrongText(salesReportMoney(item.itemTotal))),
+        DataCell(_LedgerText(item.purity)),
+        DataCell(_LedgerText('${item.quantity}', alignRight: true)),
+        DataCell(_LedgerText(
+          salesReportWeight(item.grossWeight),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
+          salesReportWeight(item.lessWeight),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
+          salesReportWeight(item.netWeight),
+          alignRight: true,
+          fontWeight: FontWeight.w900,
+        )),
+        DataCell(_LedgerText(
+          salesReportMoney(item.rate),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
+          salesReportMoney(item.makingCharge),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
+          salesReportMoney(item.itemTotal),
+          alignRight: true,
+          fontWeight: FontWeight.w900,
+        )),
       ],
     );
   }
@@ -110,13 +145,13 @@ class _ItemTotalsBar extends StatelessWidget {
 
     return _TotalsStrip(
       children: [
-        _TotalTile(label: 'Items', value: '${items.length}'),
-        _TotalTile(label: 'Pieces', value: '$pieces'),
-        _TotalTile(label: 'Gross Weight', value: salesReportWeight(gross)),
-        _TotalTile(label: 'Net Weight', value: salesReportWeight(net)),
-        _TotalTile(label: 'Making', value: salesReportMoney(making)),
+        _TotalTile(label: 'Item Lines', value: '${items.length}'),
+        _TotalTile(label: 'Total Qty', value: '$pieces'),
+        _TotalTile(label: 'Gross Wt', value: salesReportWeight(gross)),
+        _TotalTile(label: 'Net Wt', value: salesReportWeight(net)),
+        _TotalTile(label: 'Making Value', value: salesReportMoney(making)),
         _TotalTile(
-          label: 'Item Total',
+          label: 'Line Total',
           value: salesReportMoney(total),
           emphasized: true,
         ),
@@ -154,10 +189,21 @@ class _LedgerHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: SalesReportStyles.pageTitle.copyWith(fontSize: 18),
+                  style: SalesReportStyles.pageTitle.copyWith(
+                    color: SalesReportColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: SalesReportStyles.body),
+                Text(
+                  subtitle,
+                  style: SalesReportStyles.body.copyWith(
+                    color: SalesReportColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
@@ -181,22 +227,53 @@ class _HuidCell extends StatelessWidget {
         value,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
+        style: SalesReportStyles.body.copyWith(
+          color: SalesReportColors.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
 }
 
-class _StrongText extends StatelessWidget {
+class _ColumnLabel extends StatelessWidget {
   final String value;
 
-  const _StrongText(this.value);
+  const _ColumnLabel(this.value);
 
   @override
   Widget build(BuildContext context) {
     return Text(
       value,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
+      style: SalesReportStyles.body.copyWith(
+        color: SalesReportColors.textPrimary,
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _LedgerText extends StatelessWidget {
+  final String value;
+  final bool alignRight;
+  final FontWeight fontWeight;
+
+  const _LedgerText(
+    this.value, {
+    this.alignRight = false,
+    this.fontWeight = FontWeight.w800,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      value,
+      textAlign: alignRight ? TextAlign.right : TextAlign.left,
+      style: SalesReportStyles.body.copyWith(
+        fontSize: 14,
+        fontWeight: fontWeight,
         color: SalesReportColors.textPrimary,
       ),
     );
@@ -239,8 +316,9 @@ class _TotalTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent =
-        emphasized ? SalesReportColors.brandGold : SalesReportColors.textMuted;
+    final accent = emphasized
+        ? SalesReportColors.brandGold
+        : SalesReportColors.textPrimary;
     return Container(
       constraints: const BoxConstraints(minWidth: 148, minHeight: 58),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -262,8 +340,8 @@ class _TotalTile extends StatelessWidget {
           Text(
             label,
             style: SalesReportStyles.body.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w900,
               color: accent,
             ),
           ),
@@ -273,7 +351,11 @@ class _TotalTile extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: SalesReportStyles.pageTitle.copyWith(fontSize: 17),
+              style: SalesReportStyles.pageTitle.copyWith(
+                color: accent,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

@@ -68,7 +68,7 @@ class _SalesReportMetalDetailScreenState
         backgroundColor: SalesReportColors.bodyBg,
         appBar: SalesReportAppBar(
           title: '$metalTitle Sales Report',
-          subtitle: 'Invoice ledger, item ledger and tax audit',
+          subtitle: 'Metal sales ledger, grade audit and invoice movement',
           onBack: () => Navigator.of(context).pop(),
           onExportSelected: _handleExportSelected,
           exportItems: _metalExportItems,
@@ -210,14 +210,14 @@ class _SalesReportMetalDetailScreenState
           metalTitle: metalTitle,
           filePrefix: filePrefix,
         );
-        successMessage = '$metalTitle sales ledger PDF downloaded.';
+        successMessage = '$metalTitle PDF report downloaded.';
       case SalesReportExportAction.completeCsv:
         export = SalesReportExportService.exportMetalCompleteCsv(
           snapshot,
           metalTitle: metalTitle,
           filePrefix: filePrefix,
         );
-        successMessage = '$metalTitle sales ledger CSV downloaded.';
+        successMessage = '$metalTitle CSV data export downloaded.';
       case SalesReportExportAction.gradeWisePreview:
         await _showPdfPreview(
           title: '$metalTitle Grade-wise Preview',
@@ -301,7 +301,7 @@ class _SalesReportMetalDetailScreenState
           metalTitle: metalTitle,
           filePrefix: filePrefix,
         );
-        successMessage = '$metalTitle sales ledger Excel downloaded.';
+        successMessage = '$metalTitle Excel workbook downloaded.';
       case SalesReportExportAction.gstLiabilityPreview:
       case SalesReportExportAction.gstLiabilityPdf:
         return;
@@ -343,43 +343,18 @@ class _SalesReportMetalDetailScreenState
   static const _metalExportItems = [
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completePdf,
-      label: 'Metal Sales Ledger PDF',
+      label: 'Metal PDF Report',
       icon: Icons.picture_as_pdf_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.completeCsv,
-      label: 'Metal Sales Ledger CSV',
-      icon: Icons.table_chart_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.gradeWisePdf,
-      label: 'Grade-wise Sales Report PDF',
-      icon: Icons.workspace_premium_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.invoiceLedgerPdf,
-      label: 'Metal Invoice Ledger PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.itemLedgerPdf,
-      label: 'Metal Item Ledger PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.invoiceLedgerCsv,
-      label: 'Metal Invoice Ledger CSV',
-      icon: Icons.receipt_long_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.itemLedgerCsv,
-      label: 'Metal Item Ledger CSV',
-      icon: Icons.inventory_2_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completeExcel,
-      label: 'Metal Sales Ledger Excel',
+      label: 'Metal Excel Workbook',
       icon: Icons.grid_on_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completeCsv,
+      label: 'Metal CSV Data Export',
+      icon: Icons.table_chart_outlined,
     ),
   ];
 
@@ -460,12 +435,20 @@ class _MetalLedgerHeader extends StatelessWidget {
       children: [
         Text(
           '$metalTitle Sales Ledger',
-          style: SalesReportStyles.pageTitle,
+          style: SalesReportStyles.pageTitle.copyWith(
+            color: SalesReportColors.textPrimary,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
-          'Monthly invoice, tax, making and item movement',
-          style: SalesReportStyles.body,
+          'Monthly invoice, GST, making and item movement',
+          style: SalesReportStyles.body.copyWith(
+            color: SalesReportColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -498,7 +481,8 @@ class _NoMetalSalesState extends StatelessWidget {
             child: Text(
               '$monthLabel mein $metalTitle sales record available nahi hai.',
               style: SalesReportStyles.body.copyWith(
-                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
                 color: SalesReportColors.textPrimary,
               ),
             ),
@@ -533,7 +517,14 @@ class _DetailErrorState extends StatelessWidget {
               size: 32,
             ),
             const SizedBox(height: 10),
-            Text(message, style: SalesReportStyles.body),
+            Text(
+              message,
+              style: SalesReportStyles.body.copyWith(
+                color: SalesReportColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 14),
             FilledButton.icon(
               onPressed: onRetry,

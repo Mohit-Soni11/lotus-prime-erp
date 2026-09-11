@@ -11,6 +11,7 @@ class CustomerMetalPurchaseReportMetalCard extends StatefulWidget {
   final CustomerMetalPurchaseMetalSummary summary;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback onOpenCheckout;
 
   const CustomerMetalPurchaseReportMetalCard({
     super.key,
@@ -18,6 +19,7 @@ class CustomerMetalPurchaseReportMetalCard extends StatefulWidget {
     required this.summary,
     required this.selected,
     required this.onTap,
+    required this.onOpenCheckout,
   });
 
   @override
@@ -140,6 +142,7 @@ class _CustomerMetalPurchaseReportMetalCardState
                     customerCount: widget.summary.customerCount,
                     accent: visuals.accent,
                     tint: visuals.softTint,
+                    onOpenCheckout: widget.onOpenCheckout,
                   ),
                 ],
               ),
@@ -359,12 +362,14 @@ class _MetalCardFooter extends StatelessWidget {
   final int customerCount;
   final Color accent;
   final Color tint;
+  final VoidCallback onOpenCheckout;
 
   const _MetalCardFooter({
     required this.entryCount,
     required this.customerCount,
     required this.accent,
     required this.tint,
+    required this.onOpenCheckout,
   });
 
   @override
@@ -375,28 +380,89 @@ class _MetalCardFooter extends StatelessWidget {
         color: tint.withValues(alpha: 0.16),
         border: const Border(top: BorderSide(color: Color(0xFFE5E7EB))),
       ),
-      child: Row(
-        children: [
-          _FooterMetric(
-            icon: Icons.receipt_long_rounded,
-            label: _countLabel(entryCount, 'line'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final metrics = Wrap(
+            spacing: 18,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _FooterMetric(
+                icon: Icons.receipt_long_rounded,
+                label: _countLabel(entryCount, 'line'),
+                accent: accent,
+              ),
+              _FooterMetric(
+                icon: Icons.groups_2_rounded,
+                label: _countLabel(customerCount, 'seller'),
+                accent: accent,
+              ),
+            ],
+          );
+          final checkoutButton = _CheckoutButton(
             accent: accent,
-          ),
-          const SizedBox(width: 18),
-          Container(width: 1, height: 19, color: const Color(0xFFE5E7EB)),
-          const SizedBox(width: 18),
-          _FooterMetric(
-            icon: Icons.groups_2_rounded,
-            label: _countLabel(customerCount, 'seller'),
-            accent: accent,
-          ),
-        ],
+            onPressed: onOpenCheckout,
+          );
+
+          if (constraints.maxWidth < 520) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                metrics,
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: checkoutButton,
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: metrics),
+              const SizedBox(width: 12),
+              checkoutButton,
+            ],
+          );
+        },
       ),
     );
   }
 
   String _countLabel(int count, String noun) {
     return '$count ${count == 1 ? noun : '${noun}s'}';
+  }
+}
+
+class _CheckoutButton extends StatelessWidget {
+  final Color accent;
+  final VoidCallback onPressed;
+
+  const _CheckoutButton({
+    required this.accent,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.local_fire_department_rounded, size: 17),
+      label: const Text('Checkout to Melting'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(180, 38),
+        foregroundColor: Colors.black,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: accent.withValues(alpha: 0.38)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: GoogleFonts.inter(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+    );
   }
 }
 

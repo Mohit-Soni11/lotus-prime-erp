@@ -9,7 +9,12 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation
 import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dart';
 
 class CustomerMetalPurchaseLedgerScreen extends StatefulWidget {
-  const CustomerMetalPurchaseLedgerScreen({super.key});
+  final String title;
+
+  const CustomerMetalPurchaseLedgerScreen({
+    super.key,
+    this.title = 'Customer Metal Purchase Report',
+  });
 
   @override
   State<CustomerMetalPurchaseLedgerScreen> createState() =>
@@ -50,7 +55,7 @@ class _CustomerMetalPurchaseLedgerScreenState
     return Scaffold(
       backgroundColor: PurchaseEntryColors.bodyBg,
       appBar: CustomerMetalPurchaseLedgerAppBar(
-        title: 'Customer Metal Purchase Report',
+        title: widget.title,
         onBack: () => _handleBack(context),
       ),
       body: SafeArea(

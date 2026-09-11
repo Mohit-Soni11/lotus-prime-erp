@@ -9,6 +9,8 @@ import 'package:lotus_erp/logic/booking_advance/booking_invoice_pdf_service.dart
 import 'package:lotus_erp/models/booking_advance/booking_advance/booking_advance_model.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/data/customer_metal_purchase_ledger_drift_repository.dart';
 import 'package:lotus_erp/repositories/booking_advance/booking_advance_repository.dart';
 
 void main() {
@@ -63,6 +65,61 @@ void main() {
     expect(orders.single.approxWeight, 12);
     expect(advances, hasLength(1));
     expect(advances.single.amountPaid, 2500);
+  });
+
+  test('booking scrap metal posts into customer metal purchase report',
+      () async {
+    final controller = BookingAdvanceController(repo: repository);
+    addTearDown(controller.dispose);
+
+    await _waitForBookingNumber(controller);
+
+    controller.nameCtrl.text = 'Vihaan Soni';
+    controller.mobileCtrl.text = '9012345678';
+    controller.cityCtrl.text = 'Patna';
+    controller.addBookingItem();
+
+    final item = controller.bookingItems.single;
+    item.descCtrl.text = 'Gold Kada Booking';
+    item.grossCtrl.text = '20.000';
+    item.lessCtrl.text = '0.000';
+    item.rateCtrl.text = '6000';
+
+    controller.addScrapItem();
+    final scrap = controller.scrapItems.single;
+    scrap.descCtrl.text = 'Old Gold Advance';
+    scrap.grossCtrl.text = '5.000';
+    scrap.lessCtrl.text = '0.000';
+    scrap.purityCtrl.text = '91.6';
+    scrap.rateCtrl.text = '6000';
+
+    final result = await controller.saveBooking();
+    final ledgerRepository =
+        DriftCustomerMetalPurchaseLedgerRepository(database);
+    final rows = await ledgerRepository.fetchLedger(
+      startDate: DateTime(2020),
+      endDate: DateTime(2100, 12, 31),
+    );
+
+    expect(result.success, isTrue);
+    final bookingMetal = rows.singleWhere(
+      (row) => row.source == 'Booking Advance Metal',
+    );
+    final summary = buildCustomerMetalPurchaseSummary(
+      metal: CustomerMetalPurchaseMetal.gold,
+      entries: rows,
+    );
+
+    expect(bookingMetal.referenceNo, startsWith('SH-BKM-'));
+    expect(bookingMetal.customerName, 'Vihaan Soni');
+    expect(bookingMetal.itemDescription, 'Old Gold Advance');
+    expect(bookingMetal.metalType, 'GOLD');
+    expect(bookingMetal.grossWeight, closeTo(5, 0.001));
+    expect(bookingMetal.fineWeight, closeTo(4.58, 0.001));
+    expect(bookingMetal.amount, closeTo(27480, 0.001));
+    expect(bookingMetal.resolvedPaymentStatus, 'PAID');
+    expect(summary.entryCount, 1);
+    expect(summary.directPurchaseCount, 1);
   });
 
   test('printable booking fetch returns saved order and advance details',

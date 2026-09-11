@@ -25,6 +25,7 @@ void main() {
               selectedMetal: null,
               animationController: animationController,
               onMetalSelected: (_) {},
+              onOpenMetalCheckout: (_) {},
             ),
           ),
         ),
@@ -33,6 +34,7 @@ void main() {
 
     expect(find.text('Gold'), findsOneWidget);
     expect(find.text('August 2026'), findsOneWidget);
+    expect(find.text('Checkout to Melting'), findsOneWidget);
     expect(find.text('Pending'), findsNothing);
   });
 
@@ -57,6 +59,7 @@ void main() {
               selectedMetal: CustomerMetalPurchaseMetal.silver,
               animationController: animationController,
               onMetalSelected: (_) {},
+              onOpenMetalCheckout: (_) {},
             ),
           ),
         ),
@@ -64,6 +67,7 @@ void main() {
     );
 
     expect(find.text('Silver'), findsOneWidget);
+    expect(find.text('Checkout to Melting'), findsOneWidget);
     expect(find.text('Pending'), findsOneWidget);
     expect(find.text('₹2,460'), findsOneWidget);
   });

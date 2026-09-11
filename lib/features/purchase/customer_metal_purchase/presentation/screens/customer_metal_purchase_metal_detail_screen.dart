@@ -39,7 +39,7 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     return Scaffold(
       backgroundColor: PurchaseEntryColors.bodyBg,
       appBar: CustomerMetalPurchaseLedgerAppBar(
-        title: '${widget.metal.label} Customer Metal Settlement',
+        title: '${widget.metal.label} Melting Checkout',
         onBack: () => Navigator.maybePop(context),
       ),
       body: SafeArea(
@@ -92,7 +92,7 @@ class _CustomerMetalPurchaseMetalDetailScreenState
                   if (entries.isEmpty)
                     CustomerMetalPurchaseEmptyState(
                       message:
-                          'No ${widget.metal.label.toLowerCase()} ${_view.label.toLowerCase()} records found.',
+                          'No ${widget.metal.label.toLowerCase()} ${_view.label.toLowerCase()} found.',
                     )
                   else
                     ListView.separated(
@@ -177,9 +177,9 @@ class _CustomerMetalPurchaseMetalDetailScreenState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Create Melting Batch'),
+          title: const Text('Checkout to Melting'),
           content: Text(
-            'Transfer ${selectedEntries.length} selected ${widget.metal.label.toLowerCase()} item(s) to melting?',
+            'Move ${selectedEntries.length} selected ${widget.metal.label.toLowerCase()} item(s) into melting checkout. These items will be marked as melted and closed, removed from available shop metal, and will not be treated as returnable customer metal.',
           ),
           actions: [
             TextButton(
@@ -188,7 +188,7 @@ class _CustomerMetalPurchaseMetalDetailScreenState
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Create Batch'),
+              child: const Text('Confirm Checkout'),
             ),
           ],
         );
@@ -209,7 +209,7 @@ class _CustomerMetalPurchaseMetalDetailScreenState
 
     setState(_selectedEntryKeys.clear);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Melting batch $batchNo created.')),
+      SnackBar(content: Text('Melting checkout $batchNo completed.')),
     );
   }
 
@@ -225,7 +225,7 @@ class _CustomerMetalPurchaseMetalDetailScreenState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Return Customer Metal'),
+          title: const Text('Return Metal to Seller'),
           content: Text(
             'Mark ${entry.referenceNo} as returned to ${entry.customerName}?',
           ),
@@ -325,8 +325,8 @@ class _DetailActionBar extends StatelessWidget {
             icon: const Icon(Icons.local_fire_department_rounded, size: 18),
             label: Text(
               selectedCount == 0
-                  ? 'Create Melting Batch'
-                  : 'Create Melting Batch ($selectedCount)',
+                  ? 'Checkout to Melting'
+                  : 'Checkout to Melting ($selectedCount)',
             ),
             style: FilledButton.styleFrom(
               backgroundColor: Colors.black,

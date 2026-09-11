@@ -39,8 +39,6 @@ class AppRoutes {
   // Purchase
   static const String purchaseEntryRoute = '/purchase/entry';
   static const String purchaseReturnRoute = '/purchase/return';
-  static const String customerMetalPurchaseLedgerRoute =
-      '/purchase/customer-metal-purchases';
 
   // Stock
   static const String inventoryRoute = '/stock/inventory';
@@ -107,7 +105,6 @@ class AppRoutes {
     deliveryManagementRoute: 'Delivery Management',
     purchaseEntryRoute: 'Customer Metal Purchase',
     purchaseReturnRoute: 'Purchase Return',
-    customerMetalPurchaseLedgerRoute: 'Customer Metal Purchase Report',
     inventoryRoute: 'Inventory Ledger',
     stockActivityRoute: 'Stock Activity Ledger',
     stockSearchRoute: 'Stock Search Center',
@@ -184,14 +181,7 @@ class RoutePaths {
 
   // Purchase
   static const String purchaseEntry = '/app/purchase/entry';
-  // Old-metal purchase is handled through Customer Metal Purchase.
   static const String purchaseReturn = '/app/purchase/return';
-  static const String customerMetalPurchaseLedger =
-      '/app/purchase/customer-metal-purchases';
-  static const String customerMetalPurchaseVoucherBase =
-      '/app/purchase/customer-metal-purchases/voucher';
-  static const String customerMetalPurchaseVoucher =
-      '$customerMetalPurchaseVoucherBase/:voucherId';
 
   // Stock
   static const String stockInventory = '/app/stock/inventory';
@@ -232,6 +222,10 @@ class RoutePaths {
   static const String reportDayBook = '/app/reports/daybook';
   static const String reportSales = '/app/reports/sales';
   static const String reportPurchase = '/app/reports/purchase';
+  static const String customerMetalPurchaseVoucherBase =
+      '$reportPurchase/voucher';
+  static const String customerMetalPurchaseVoucher =
+      '$customerMetalPurchaseVoucherBase/:voucherId';
   static const String reportPnl = '/app/reports/pnl';
   static const String reportGst = '/app/reports/gst';
 
@@ -277,10 +271,7 @@ class RouteMapper {
     AppRoutes.bookingAdvanceRoute: RoutePaths.salesBooking,
     AppRoutes.deliveryManagementRoute: RoutePaths.salesDelivery,
     AppRoutes.purchaseEntryRoute: RoutePaths.purchaseEntry,
-    // Old-metal purchase is handled through Customer Metal Purchase.
     AppRoutes.purchaseReturnRoute: RoutePaths.purchaseReturn,
-    AppRoutes.customerMetalPurchaseLedgerRoute:
-        RoutePaths.customerMetalPurchaseLedger,
     AppRoutes.inventoryRoute: RoutePaths.stockInventory,
     AppRoutes.stockSummaryRoute: RoutePaths.stockSummary,
     AppRoutes.stockActivityRoute: RoutePaths.stockActivity,

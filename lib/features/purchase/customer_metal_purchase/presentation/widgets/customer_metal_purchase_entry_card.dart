@@ -295,8 +295,13 @@ class _HeaderDetails extends StatelessWidget {
               onPressed: onCustomerPressed,
             ),
             _StatusBadge(
-              label: _statusLabel(entry),
-              accent: entry.isAvailable ? accent : const Color(0xFF6B7280),
+              label: entry.displaySourceLabel,
+              accent: accent,
+              filled: false,
+            ),
+            _StatusBadge(
+              label: entry.metalFlowStatusLabel,
+              accent: _flowAccent(entry),
               filled: !entry.isAvailable,
             ),
           ],
@@ -333,14 +338,14 @@ class _HeaderDetails extends StatelessWidget {
     );
   }
 
-  String _statusLabel(CustomerMetalPurchaseEntry entry) {
+  Color _flowAccent(CustomerMetalPurchaseEntry entry) {
     if (entry.isReturned) {
-      return 'Returned';
+      return const Color(0xFF475569);
     }
     if (entry.isTransferredToMelting) {
-      return 'Transferred to Melting';
+      return const Color(0xFF7C2D12);
     }
-    return entry.source;
+    return const Color(0xFF047857);
   }
 }
 
@@ -359,15 +364,15 @@ class _ReturnAction extends StatelessWidget {
   Widget build(BuildContext context) {
     if (entry.isReturned) {
       return const _StatusBadge(
-        label: 'Return Completed',
-        accent: Color(0xFF6B7280),
+        label: 'Returned to Seller',
+        accent: Color(0xFF475569),
         filled: true,
       );
     }
     if (entry.isTransferredToMelting) {
       return const _StatusBadge(
-        label: 'In Melting Batch',
-        accent: Color(0xFF6B7280),
+        label: 'Melted & Closed',
+        accent: Color(0xFF7C2D12),
         filled: true,
       );
     }

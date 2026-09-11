@@ -13,10 +13,10 @@ enum CustomerMetalPurchaseMetal {
 }
 
 enum CustomerMetalPurchaseEntryView {
-  available('Available'),
-  transferred('Transferred'),
-  returned('Returned'),
-  all('All');
+  available('Ready to Melt'),
+  transferred('Melted & Closed'),
+  returned('Returned to Seller'),
+  all('All Records');
 
   final String label;
 

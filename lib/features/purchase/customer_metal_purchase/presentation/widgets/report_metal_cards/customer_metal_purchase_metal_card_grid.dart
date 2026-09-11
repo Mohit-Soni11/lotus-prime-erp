@@ -10,6 +10,7 @@ class CustomerMetalPurchaseMetalCardGrid extends StatelessWidget {
   final CustomerMetalPurchaseMetal? selectedMetal;
   final AnimationController animationController;
   final ValueChanged<CustomerMetalPurchaseMetal?> onMetalSelected;
+  final ValueChanged<CustomerMetalPurchaseMetal> onOpenMetalCheckout;
 
   const CustomerMetalPurchaseMetalCardGrid({
     super.key,
@@ -18,6 +19,7 @@ class CustomerMetalPurchaseMetalCardGrid extends StatelessWidget {
     required this.selectedMetal,
     required this.animationController,
     required this.onMetalSelected,
+    required this.onOpenMetalCheckout,
   });
 
   @override
@@ -46,6 +48,7 @@ class CustomerMetalPurchaseMetalCardGrid extends StatelessWidget {
                   onTap: () => onMetalSelected(
                     selectedMetal == entry.key ? null : entry.key,
                   ),
+                  onOpenCheckout: () => onOpenMetalCheckout(entry.key),
                 ),
               ),
           ],

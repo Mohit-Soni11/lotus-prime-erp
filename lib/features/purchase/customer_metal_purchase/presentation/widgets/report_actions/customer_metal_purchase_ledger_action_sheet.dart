@@ -109,9 +109,9 @@ class _LedgerActionSheetState extends State<_LedgerActionSheet> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF475569),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
                           ),
                         ),
                       ],

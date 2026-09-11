@@ -247,7 +247,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
           grossWeight,
           fineWeight,
           amount,
-          'CREATED',
+          'MELTED_CLOSED',
           nowMs,
         ],
       );
@@ -380,6 +380,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
         pv.balance_due,
         pv.promise_date,
         pv.payment_status,
+        pv.payment_meta,
         pv.seller_photo_path,
         pv.grand_total,
         COALESCE(c.name, pv.party_name, 'Walk-in Customer') AS customer_name,
@@ -428,7 +429,9 @@ class DriftCustomerMetalPurchaseLedgerRepository
           sourceDocumentId: row.read<int>('voucher_id'),
           date:
               DateTime.fromMillisecondsSinceEpoch(row.read<int>('created_at')),
-          source: 'Direct Purchase',
+          source: _directPurchaseSource(
+            row.readNullable<String>('payment_meta'),
+          ),
           referenceNo: row.read<String>('voucher_no'),
           customerName: customerName,
           metalType: row.read<String>('metal_type'),
@@ -454,6 +457,14 @@ class DriftCustomerMetalPurchaseLedgerRepository
         ),
       );
     }
+  }
+
+  String _directPurchaseSource(String? paymentMeta) {
+    final normalized = paymentMeta?.trim().toUpperCase() ?? '';
+    if (normalized.startsWith('BOOKING_ADVANCE_METAL|')) {
+      return 'Booking Advance Metal';
+    }
+    return 'Direct Purchase';
   }
 
   double _readDouble(QueryRow row, String column) {

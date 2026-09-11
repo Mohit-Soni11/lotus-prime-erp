@@ -53,18 +53,18 @@ void main() {
             exportItems: const [
               SalesReportExportMenuItem(
                 action: SalesReportExportAction.completePdf,
-                label: 'Complete Sales Report PDF',
+                label: 'Complete PDF Report',
                 icon: Icons.picture_as_pdf_outlined,
               ),
               SalesReportExportMenuItem(
-                action: SalesReportExportAction.completeCsv,
-                label: 'Complete Sales Report CSV',
-                icon: Icons.table_chart_outlined,
+                action: SalesReportExportAction.completeExcel,
+                label: 'Excel Audit Workbook',
+                icon: Icons.grid_on_outlined,
               ),
               SalesReportExportMenuItem(
-                action: SalesReportExportAction.gstLiabilityPdf,
-                label: 'Sales Overview PDF',
-                icon: Icons.account_balance_outlined,
+                action: SalesReportExportAction.completeCsv,
+                label: 'CSV Data Export',
+                icon: Icons.table_chart_outlined,
               ),
             ],
           ),
@@ -76,21 +76,21 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Complete Sales Report'), findsOneWidget);
-    expect(find.text('Sales Overview'), findsOneWidget);
-    expect(find.text('PDF Preview'), findsNWidgets(2));
-    expect(find.text('PDF Download'), findsNWidgets(2));
-    expect(find.text('CSV Download'), findsOneWidget);
+    expect(find.text('Complete PDF Report'), findsOneWidget);
+    expect(find.text('Excel Audit Workbook'), findsOneWidget);
+    expect(find.text('CSV Data Export'), findsOneWidget);
+    expect(find.text('PDF Preview'), findsNothing);
+    expect(find.text('PDF Download'), findsNothing);
 
     await tester.tap(
       find.byKey(
-        const ValueKey('sales-report-export-gstLiabilityPdf'),
+        const ValueKey('sales-report-export-completeExcel'),
       ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(selectedAction, SalesReportExportAction.gstLiabilityPdf);
+    expect(selectedAction, SalesReportExportAction.completeExcel);
     expect(tester.takeException(), isNull);
   });
 }

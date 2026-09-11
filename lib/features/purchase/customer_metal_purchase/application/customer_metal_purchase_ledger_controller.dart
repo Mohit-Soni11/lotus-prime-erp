@@ -294,6 +294,24 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
     return '${_shortDate(startDate!)} - ${_shortDate(endDate!)}';
   }
 
+  String get periodDateRangeLabel {
+    if (startDate == null || endDate == null) {
+      return 'Complete ledger history';
+    }
+    return '${_longDate(startDate!)} - ${_longDate(endDate!)}';
+  }
+
+  String get filteredRecordRangeLabel {
+    final lineCount = filteredEntries.length;
+    final voucherCount = dashboardSummary.voucherCount;
+    final voucherLabel = voucherCount == 1 ? 'voucher' : 'vouchers';
+    if (lineCount == 0) {
+      return 'No purchase lines | $periodLabel';
+    }
+    return 'Showing records 1-$lineCount of $lineCount | '
+        '$voucherCount $voucherLabel | $periodLabel';
+  }
+
   double get totalGoldGrossWeight => entries
       .where((entry) => entry.metalType.toUpperCase() == 'GOLD')
       .fold(0.0, (sum, entry) => sum + entry.grossWeight);
@@ -378,6 +396,24 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
       'Oct',
       'Nov',
       'Dec',
+    ];
+    return '${value.day.toString().padLeft(2, '0')} ${months[value.month - 1]} ${value.year}';
+  }
+
+  String _longDate(DateTime value) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${value.day.toString().padLeft(2, '0')} ${months[value.month - 1]} ${value.year}';
   }

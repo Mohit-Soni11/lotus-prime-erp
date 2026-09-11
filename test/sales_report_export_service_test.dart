@@ -6,6 +6,32 @@ import 'package:lotus_erp/models/reports/sales_report/sales_report_models.dart';
 void main() {
   final snapshot = _snapshot();
 
+  test('sales report export filename includes full month and year', () {
+    final fileName = SalesReportExportService.buildFileNameForTest(
+      SalesReportFilter(
+        startDate: DateTime(2026, 9),
+        endDate: DateTime(2026, 9, 30, 23, 59, 59),
+      ),
+      'sales-report',
+      'pdf',
+    );
+
+    expect(fileName, 'sales-report-september-2026.pdf');
+  });
+
+  test('sales report export filename includes custom date range', () {
+    final fileName = SalesReportExportService.buildFileNameForTest(
+      SalesReportFilter(
+        startDate: DateTime(2026, 9, 5),
+        endDate: DateTime(2026, 9, 18, 23, 59, 59),
+      ),
+      'sales-report',
+      'xlsx',
+    );
+
+    expect(fileName, 'sales-report-05-sep-2026-to-18-sep-2026.xlsx');
+  });
+
   test('complete CSV includes GST liability and metal weight audit', () {
     final csv = SalesReportExportService.buildCompleteCsvForTest(snapshot);
 
@@ -82,6 +108,8 @@ void main() {
         String.fromCharCodes(metalGradeSheet!.content as List<int>);
     expect(summaryXml, contains('Sales Register Summary'));
     expect(summaryXml, contains('Metal Wise Sales'));
+    expect(summaryXml, contains('Bills With Metal'));
+    expect(summaryXml, contains('UNIQUE TOTAL'));
     expect(invoiceXml, contains('GSTIN'));
     expect(invoiceXml, contains('B2B/B2C'));
     expect(invoiceXml, contains('Place of Supply'));

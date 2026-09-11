@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:lotus_erp/features/stock/shared/domain/models/stock_item/stock_enums.dart';
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/stock_metal_ui.dart';
-import 'package:lotus_erp/features/stock/shared/presentation/inventory/metal_hub/inventory_metal_summary_card.dart';
 import '../../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../../theme/reports/sales_report/sales_report_theme.dart';
 import '../sales_report_formatters.dart';
+import 'sales_report_metal_performance_card.dart';
 
 class SalesReportMetalCards extends StatelessWidget {
   final List<SalesReportMetalSummary> metals;
@@ -39,7 +39,8 @@ class SalesReportMetalCards extends StatelessWidget {
               child: Text(
                 'Metal sales cards will appear once sales are available for the selected filter.',
                 style: SalesReportStyles.body.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
                   color: SalesReportColors.textPrimary,
                 ),
               ),
@@ -63,7 +64,7 @@ class SalesReportMetalCards extends StatelessWidget {
             for (final metal in metals)
               SizedBox(
                 width: width,
-                child: _SalesMetalInventoryCard(
+                child: SalesReportMetalPerformanceCard(
                   metal: metal,
                   periodLabel: periodLabel,
                   selected: selectedMetal.toUpperCase() ==
@@ -75,75 +76,6 @@ class SalesReportMetalCards extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-class _SalesMetalInventoryCard extends StatelessWidget {
-  final SalesReportMetalSummary metal;
-  final String periodLabel;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SalesMetalInventoryCard({
-    required this.metal,
-    required this.periodLabel,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final ui = stockMetalUiFor(_categoryFor(metal.metalType));
-    return InventoryMetalSummaryCard(
-      title: '${ui.title} Sales Report',
-      subtitle: '$periodLabel - ${_subtitleFor(ui.category)}',
-      primaryLabel: 'Sales Value',
-      primaryValue: salesReportMoney(metal.salesAmount),
-      weightLabel: 'Net Weight Sold',
-      weightValue: salesReportWeight(metal.netWeight),
-      actionLabel:
-          selected ? '${ui.title} Sales Open' : 'Open ${ui.title} Sales',
-      icon: ui.icon,
-      logoAsset: ui.logoAsset,
-      accent: ui.accent,
-      surface: ui.softSurface,
-      tint: ui.softTint,
-      gradient: ui.gradient,
-      textOnGradient: ui.textOnGradient,
-      selected: selected,
-      onTap: onTap,
-    );
-  }
-
-  StockCategory _categoryFor(String metal) {
-    switch (metal.toLowerCase()) {
-      case 'gold':
-        return StockCategory.gold;
-      case 'silver':
-        return StockCategory.silver;
-      case 'platinum':
-        return StockCategory.platinum;
-      case 'diamond':
-        return StockCategory.diamond;
-      default:
-        return StockCategory.other;
-    }
-  }
-
-  String _subtitleFor(StockCategory category) {
-    switch (category) {
-      case StockCategory.gold:
-        return 'Gold invoices, HUID movement, making and sales tracking';
-      case StockCategory.silver:
-        return 'Silver item sales, weight flow, pieces and counter movement';
-      case StockCategory.diamond:
-        return 'Diamond sales value, item ledger and premium stock audit';
-      case StockCategory.platinum:
-        return 'Platinum sales value, purity and high-value item audit';
-      case StockCategory.antique:
-      case StockCategory.other:
-        return 'Metal-wise sales value, quantity and item movement audit';
-    }
   }
 }
 
@@ -171,7 +103,7 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: ui.softSurface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: ui.accent.withValues(alpha: 0.24)),
         boxShadow: [
           BoxShadow(
@@ -191,7 +123,7 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   gradient: ui.gradient,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: ui.logoAsset == null
@@ -213,12 +145,20 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
                   children: [
                     Text(
                       '${ui.title} Sales Ledger',
-                      style: SalesReportStyles.pageTitle.copyWith(fontSize: 20),
+                      style: SalesReportStyles.pageTitle.copyWith(
+                        color: SalesReportColors.textPrimary,
+                        fontSize: 21,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       '$periodLabel sales detail filtered for ${ui.title}.',
-                      style: SalesReportStyles.body,
+                      style: SalesReportStyles.body.copyWith(
+                        color: SalesReportColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ],
                 ),
@@ -227,6 +167,19 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
                 onPressed: onBackToCards,
                 icon: const Icon(Icons.dashboard_customize_rounded, size: 17),
                 label: const Text('All Metal Cards'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: SalesReportColors.textPrimary,
+                  textStyle: SalesReportStyles.body.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  side: BorderSide(
+                    color: SalesReportColors.textPrimary.withValues(alpha: 0.3),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
             ],
           ),
@@ -242,18 +195,22 @@ class SalesReportMetalDetailPanel extends StatelessWidget {
               final width =
                   (constraints.maxWidth - spacing * (columns - 1)) / columns;
               final metrics = [
-                _MetalMetric('Invoices', '${metal.invoiceCount}',
+                _MetalMetric('Bills With ${ui.title}', '${metal.invoiceCount}',
                     Icons.receipt_long_rounded),
-                _MetalMetric('Pieces', '${metal.pieces}',
+                _MetalMetric('Total Qty', '${metal.pieces}',
                     Icons.confirmation_number_rounded),
-                _MetalMetric('Net Weight', salesReportWeight(metal.netWeight),
+                _MetalMetric(
+                    'Net Weight Sold',
+                    salesReportWeight(metal.netWeight),
                     Icons.monitor_weight_rounded),
                 _MetalMetric('Sale Amount', salesReportMoney(metal.salesAmount),
                     Icons.point_of_sale_rounded),
-                _MetalMetric('GST Total', salesReportMoney(recordedGstAmount),
+                _MetalMetric(
+                    'GST Collected',
+                    salesReportMoney(recordedGstAmount),
                     Icons.verified_rounded),
                 _MetalMetric(
-                    'Projected GST',
+                    'Normal GST Estimate',
                     salesReportMoney(projectedGstAmount),
                     Icons.calculate_rounded),
               ];
@@ -313,7 +270,7 @@ class _MetricBlock extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
       child: Row(
@@ -330,9 +287,9 @@ class _MetricBlock extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: SalesReportStyles.body.copyWith(
-                    fontSize: 11,
-                    color: SalesReportColors.textMuted,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
+                    color: SalesReportColors.textPrimary,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -341,7 +298,11 @@ class _MetricBlock extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     metric.value,
-                    style: SalesReportStyles.pageTitle.copyWith(fontSize: 17),
+                    style: SalesReportStyles.pageTitle.copyWith(
+                      color: SalesReportColors.textPrimary,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ],

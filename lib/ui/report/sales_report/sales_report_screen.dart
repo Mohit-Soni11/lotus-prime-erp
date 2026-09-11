@@ -133,10 +133,10 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         return;
       case SalesReportExportAction.completePdf:
         export = SalesReportExportService.exportCompletePdf(snapshot);
-        successMessage = 'Complete sales report PDF downloaded.';
+        successMessage = 'Complete PDF report downloaded.';
       case SalesReportExportAction.completeCsv:
         export = SalesReportExportService.exportCompleteCsv(snapshot);
-        successMessage = 'Complete sales report CSV downloaded.';
+        successMessage = 'CSV data export downloaded.';
       case SalesReportExportAction.gstLiabilityPreview:
         await _showPdfPreview(
           title: 'Sales Overview',
@@ -183,7 +183,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         successMessage = 'Item ledger CSV downloaded.';
       case SalesReportExportAction.completeExcel:
         export = SalesReportExportService.exportCompleteExcel(snapshot);
-        successMessage = 'Complete sales report Excel downloaded.';
+        successMessage = 'Excel audit workbook downloaded.';
       case SalesReportExportAction.gradeWisePreview:
       case SalesReportExportAction.gradeWisePdf:
         return;
@@ -225,43 +225,18 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   static const _mainExportItems = [
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completePdf,
-      label: 'Complete Sales Report PDF',
+      label: 'Complete PDF Report',
       icon: Icons.picture_as_pdf_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.completeCsv,
-      label: 'Complete Sales Report CSV',
-      icon: Icons.table_chart_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.gstLiabilityPdf,
-      label: 'Sales Overview PDF',
-      icon: Icons.account_balance_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.invoiceLedgerPdf,
-      label: 'Invoice Ledger PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.itemLedgerPdf,
-      label: 'Item Ledger PDF',
-      icon: Icons.picture_as_pdf_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.invoiceLedgerCsv,
-      label: 'Invoice Ledger CSV',
-      icon: Icons.receipt_long_outlined,
-    ),
-    SalesReportExportMenuItem(
-      action: SalesReportExportAction.itemLedgerCsv,
-      label: 'Item Ledger CSV',
-      icon: Icons.inventory_2_outlined,
     ),
     SalesReportExportMenuItem(
       action: SalesReportExportAction.completeExcel,
-      label: 'Complete Sales Report Excel',
+      label: 'Excel Audit Workbook',
       icon: Icons.grid_on_outlined,
+    ),
+    SalesReportExportMenuItem(
+      action: SalesReportExportAction.completeCsv,
+      label: 'CSV Data Export',
+      icon: Icons.table_chart_outlined,
     ),
   ];
 

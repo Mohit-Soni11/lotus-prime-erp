@@ -19,7 +19,7 @@ class CustomerMetalPurchaseReportPrintService {
     required List<CustomerMetalPurchaseEntry> entries,
   }) async {
     await Printing.layoutPdf(
-      name: 'customer-metal-purchase-report-$periodLabel.pdf',
+      name: 'customer-metal-purchase-report-${_periodSlug(periodLabel)}.pdf',
       format: PdfPageFormat.a4.landscape,
       onLayout: (format) => buildReportBytes(
         pageFormat: format,
@@ -210,15 +210,17 @@ class CustomerMetalPurchaseReportPrintService {
           headers: const [
             'S.No',
             'Seller',
-            'Invoice',
+            'Voucher',
             'Date',
+            'Source',
             'Metal',
             'Net',
             'Fine',
             'Value',
             'Paid',
             'Pending',
-            'Status',
+            'Metal Status',
+            'Payout',
             'Photo',
           ],
           data: [
@@ -228,13 +230,15 @@ class CustomerMetalPurchaseReportPrintService {
                 entries[index].customerName,
                 entries[index].referenceNo,
                 DateFormat('dd MMM yyyy').format(entries[index].date),
+                entries[index].displaySourceLabel,
                 entries[index].metalType,
                 _weight(entries[index].netWeight),
                 _weight(entries[index].fineWeight),
                 _amount(entries[index].amount),
                 _amount(entries[index].paidAmount),
                 _amount(entries[index].pendingAmount),
-                entries[index].resolvedPaymentStatus,
+                entries[index].metalFlowStatusLabel,
+                entries[index].payoutStatusLabel,
                 entries[index].hasSellerPhoto ? 'Yes' : 'No',
               ],
           ],
@@ -259,5 +263,13 @@ class CustomerMetalPurchaseReportPrintService {
 
   static String _weight(double value) {
     return '${value.toStringAsFixed(3)} g';
+  }
+
+  static String _periodSlug(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
   }
 }

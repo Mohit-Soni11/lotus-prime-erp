@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
 import '../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
@@ -487,6 +488,15 @@ class SalesReportExportService {
     );
   }
 
+  @visibleForTesting
+  static String buildFileNameForTest(
+    SalesReportFilter filter,
+    String prefix,
+    String extension,
+  ) {
+    return _fileName(filter, prefix, extension);
+  }
+
   static Future<String?> _saveCsv({
     required String dialogTitle,
     required String fileName,
@@ -594,6 +604,34 @@ class SalesReportExportService {
     String prefix,
     String extension,
   ) {
-    return '${SalesReportExportFormatters.filePart(prefix)}.$extension';
+    final name = SalesReportExportFormatters.filePart(prefix);
+    final period = _periodFilePart(filter);
+    return '$name-$period.$extension';
+  }
+
+  static String _periodFilePart(SalesReportFilter filter) {
+    final start = filter.startDate;
+    final end = filter.endDate;
+    if (_isFullCalendarMonth(filter)) {
+      return SalesReportExportFormatters.filePart(
+        DateFormat('MMMM yyyy').format(start),
+      );
+    }
+    final startPart = DateFormat('dd MMM yyyy').format(start);
+    final endPart = DateFormat('dd MMM yyyy').format(end);
+    if (startPart == endPart) {
+      return SalesReportExportFormatters.filePart(startPart);
+    }
+    return SalesReportExportFormatters.filePart('$startPart to $endPart');
+  }
+
+  static bool _isFullCalendarMonth(SalesReportFilter filter) {
+    final start = filter.startDate;
+    final end = filter.endDate;
+    final lastDay = DateTime(start.year, start.month + 1, 0).day;
+    return start.day == 1 &&
+        start.month == end.month &&
+        start.year == end.year &&
+        end.day == lastDay;
   }
 }

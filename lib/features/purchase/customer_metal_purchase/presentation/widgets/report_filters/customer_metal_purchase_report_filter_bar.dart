@@ -47,12 +47,10 @@ class CustomerMetalPurchaseReportFilterBar extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  SizedBox(
-                    width: 300,
-                    child: _FilterHeader(controller: controller),
-                  ),
+                  Expanded(child: _FilterHeader(controller: controller)),
                   const SizedBox(width: 24),
-                  Expanded(
+                  SizedBox(
+                    width: constraints.maxWidth >= 1180 ? 520 : 390,
                     child: CustomerMetalPurchaseSearchField(
                       controller: controller.searchCtrl,
                     ),
@@ -102,6 +100,11 @@ class _FilterHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final entryCount = controller.filteredEntries.length;
     final voucherCount = controller.dashboardSummary.voucherCount;
+    final lineLabel = entryCount == 1 ? 'line' : 'lines';
+    final voucherLabel = voucherCount == 1 ? 'voucher' : 'vouchers';
+    final countLabel = entryCount == 0
+        ? 'No purchase lines'
+        : 'Records 1-$entryCount | $entryCount $lineLabel';
 
     return Row(
       children: [
@@ -136,14 +139,14 @@ class _FilterHeader extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                '$entryCount lines | $voucherCount vouchers',
+                '$countLabel | $voucherCount $voucherLabel | ${controller.periodDateRangeLabel}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
                   letterSpacing: 0,
-                  color: PurchaseEntryColors.textMain.withValues(alpha: 0.68),
+                  color: Colors.black,
                 ),
               ),
             ],

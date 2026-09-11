@@ -12,9 +12,11 @@ import 'package:lotus_erp/features/customer/domain/services/customer_contact_val
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
 import 'package:lotus_erp/helpers/search/fuzzy_search_helper.dart';
 import 'package:lotus_erp/models/setting/billing_setup/booking_advance_billing_model.dart';
+import 'package:lotus_erp/models/purchase/purchase_enums/purchase_enums.dart';
 import 'package:lotus_erp/repositories/setting/billing_setup/booking_advance_billing_repo.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/repositories/setting/shop_setup/shop_setup_repository.dart';
+import 'package:lotus_erp/repositories/purchase/purchase_entry_repository.dart';
 
 part 'booking_advance_repository_helpers.dart';
 
@@ -54,6 +56,30 @@ class BookingAdvanceLineDraft {
   final String? notes;
   final double advanceAmount;
   final double rateOnDate;
+}
+
+class BookingAdvanceScrapMetalDraft {
+  const BookingAdvanceScrapMetalDraft({
+    required this.itemName,
+    required this.metalType,
+    required this.grossWeight,
+    required this.lessWeight,
+    required this.netWeight,
+    required this.purity,
+    required this.fineWeight,
+    required this.rate,
+    required this.amount,
+  });
+
+  final String itemName;
+  final String metalType;
+  final double grossWeight;
+  final double lessWeight;
+  final double netWeight;
+  final double purity;
+  final double fineWeight;
+  final double rate;
+  final double amount;
 }
 
 class SavedBookingAdvanceDocument {
@@ -270,6 +296,7 @@ class BookingAdvanceRepository {
   Future<SavedBookingAdvanceDocument> saveBookingDocument({
     required int customerId,
     required List<BookingAdvanceLineDraft> lines,
+    List<BookingAdvanceScrapMetalDraft> scrapLines = const [],
   }) async {
     if (lines.isEmpty) {
       throw ArgumentError.value(lines, 'lines', 'No booking lines to save.');
@@ -329,6 +356,15 @@ class BookingAdvanceRepository {
       final bookingNo = orderNos.length == 1
           ? orderNos.single
           : '${orderNos.first} +${orderNos.length - 1}';
+      if (scrapLines.isNotEmpty) {
+        await _postBookingScrapMetalPurchase(
+          customerId: customerId,
+          bookingNo: orderNos.first,
+          scrapLines: scrapLines,
+          shopCode: shopCode,
+          yearToken: yearToken,
+        );
+      }
       AppLogger.debug(
         'Booking saved: $bookingNo | Lines: ${orderIds.length}',
       );
@@ -337,6 +373,98 @@ class BookingAdvanceRepository {
         orderIds: List<int>.unmodifiable(orderIds),
       );
     });
+  }
+
+  Future<void> _postBookingScrapMetalPurchase({
+    required int customerId,
+    required String bookingNo,
+    required List<BookingAdvanceScrapMetalDraft> scrapLines,
+    required String shopCode,
+    required String yearToken,
+  }) async {
+    final validLines = scrapLines
+        .where((line) => line.netWeight > 0.005 && line.amount > 0.005)
+        .toList(growable: false);
+    if (validLines.isEmpty) return;
+
+    final customer = await (_db.select(_db.customers)
+          ..where((table) => table.id.equals(customerId)))
+        .getSingleOrNull();
+    final total = validLines.fold<double>(0, (sum, line) => sum + line.amount);
+    final purchaseRepository = PurchaseEntryRepository(db: _db);
+    final sequence = await purchaseRepository.getNextSequence(
+      voucherPrefix: shopCode,
+      documentCode: 'BKM',
+      yearToken: yearToken,
+    );
+    final voucherNo =
+        '$shopCode-BKM-$yearToken-${sequence.toString().padLeft(4, '0')}';
+
+    final result = await purchaseRepository.savePurchase(
+      PurchaseVoucherDraft(
+        sequenceNo: sequence,
+        voucherNo: voucherNo,
+        supplierInvoiceNo: bookingNo,
+        source: PurchaseSource.fromCustomer,
+        taxType: PurchaseTaxType.normal,
+        discountType: PurchaseDiscountType.flatAmount,
+        discountValue: 0,
+        discountAmount: 0,
+        grossAmount: total,
+        taxableAmount: total,
+        gstAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        grandTotal: total,
+        cashPaid: 0,
+        upiPaid: 0,
+        bankPaid: 0,
+        cardPaid: 0,
+        totalPaid: total,
+        balanceDue: 0,
+        paymentMeta: 'BOOKING_ADVANCE_METAL|$bookingNo',
+        party: PurchaseVoucherPartyDraft(
+          customerId: customerId,
+          name: customer?.name ?? 'Walk-in Customer',
+          mobile: customer?.mobile,
+          city: customer == null ? null : customerAddressForBooking(customer),
+          panNumber: customer?.panNumber,
+          gstNumber: customer?.gstNumber,
+        ),
+        items: [
+          for (final line in validLines)
+            PurchaseVoucherItemDraft(
+              metal: _purchaseMetalTypeFor(line.metalType),
+              description: line.itemName.trim().isEmpty
+                  ? '${line.metalType} Booking Advance Metal'
+                  : line.itemName.trim(),
+              grossWeight: line.grossWeight,
+              lessWeight: line.lessWeight,
+              netWeight: line.netWeight,
+              purity: line.purity,
+              fineWeight: line.fineWeight,
+              rate: line.rate,
+              lineAmount: line.amount,
+              subCategory: 'Booking Advance Metal',
+            ),
+        ],
+      ),
+    );
+
+    if (result == null) {
+      throw StateError(
+        purchaseRepository.lastErrorMessage ??
+            'Booking scrap metal purchase could not be posted.',
+      );
+    }
+  }
+
+  PurchaseMetalType _purchaseMetalTypeFor(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (normalized.contains('SILVER')) return PurchaseMetalType.silver;
+    if (normalized.contains('PLATINUM')) return PurchaseMetalType.platinum;
+    if (normalized.contains('DIAMOND')) return PurchaseMetalType.diamond;
+    return PurchaseMetalType.gold;
   }
 
   Future<EditableBookingAdvance?> fetchEditableBooking(int orderId) async {

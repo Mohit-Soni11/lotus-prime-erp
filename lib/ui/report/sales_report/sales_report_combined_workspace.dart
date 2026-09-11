@@ -61,17 +61,47 @@ class _MetalDrilldownHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
-          Icons.dashboard_customize_rounded,
-          size: 20,
-          color: SalesReportColors.brandGold,
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: SalesReportColors.goldGradientStart.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: SalesReportColors.brandGold.withValues(alpha: 0.28),
+            ),
+          ),
+          child: const Icon(
+            Icons.dashboard_customize_rounded,
+            size: 22,
+            color: SalesReportColors.brandGold,
+          ),
         ),
-        const SizedBox(width: 9),
+        const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            'Metal Drill-Down - $periodLabel',
-            style: SalesReportStyles.pageTitle.copyWith(fontSize: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Metal Drilldown - $periodLabel',
+                style: SalesReportStyles.pageTitle.copyWith(
+                  color: SalesReportColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Monthly metal-wise sales, invoice count and net weight performance',
+                style: SalesReportStyles.body.copyWith(
+                  color: SalesReportColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ),
       ],

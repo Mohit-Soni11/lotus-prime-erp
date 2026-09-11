@@ -458,7 +458,7 @@ class SalesReportExcelBuilder {
     );
     sheet.addRow([
       _ExcelCell.text('Metal', _ExcelStyle.tableHeader),
-      _ExcelCell.text('Bills', _ExcelStyle.tableHeader),
+      _ExcelCell.text('Bills With Metal', _ExcelStyle.tableHeader),
       _ExcelCell.text('Line Items', _ExcelStyle.tableHeader),
       _ExcelCell.text('Pcs', _ExcelStyle.tableHeader),
       _ExcelCell.text('Gross Wt (g)', _ExcelStyle.tableHeader),
@@ -477,9 +477,9 @@ class SalesReportExcelBuilder {
       ]);
     }
     sheet.addRow([
-      _ExcelCell.text('TOTAL', _ExcelStyle.totalText),
+      _ExcelCell.text('UNIQUE TOTAL', _ExcelStyle.totalText),
       _ExcelCell.number(
-        snapshot.metals.fold(0, (sum, metal) => sum + metal.invoiceCount),
+        snapshot.summary.invoiceCount,
         _ExcelStyle.integerStrong,
       ),
       _ExcelCell.number(

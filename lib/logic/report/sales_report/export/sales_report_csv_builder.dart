@@ -27,7 +27,7 @@ class SalesReportCsvBuilder {
       ['METAL SALES SUMMARY'],
       [
         'Metal',
-        'Invoices',
+        'Bills With Metal',
         'Items',
         'Pcs',
         'Gross Weight',

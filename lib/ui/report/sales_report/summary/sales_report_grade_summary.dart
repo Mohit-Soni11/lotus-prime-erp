@@ -45,25 +45,47 @@ class SalesReportGradeSummaryPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.auto_graph_rounded,
-                  color: SalesReportColors.brandGold,
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: SalesReportColors.goldGradientStart
+                        .withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color:
+                          SalesReportColors.brandGold.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.auto_graph_rounded,
+                    color: SalesReportColors.brandGold,
+                    size: 22,
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Grade Wise Sales',
-                        style:
-                            SalesReportStyles.pageTitle.copyWith(fontSize: 18),
+                        'Grade-wise Sales',
+                        style: SalesReportStyles.pageTitle.copyWith(
+                          color: SalesReportColors.textPrimary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Invoice count, pieces, net weight, sale value and GST view',
-                        style: SalesReportStyles.body,
+                        'Purity-wise bill presence, quantity, net weight, sale value and GST audit',
+                        style: SalesReportStyles.body.copyWith(
+                          color: SalesReportColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ],
                   ),
@@ -251,14 +273,13 @@ class _GradeChip extends StatelessWidget {
       selected: selected,
       showCheckmark: false,
       labelStyle: SalesReportStyles.body.copyWith(
-        fontSize: 12.5,
-        fontWeight: FontWeight.w800,
-        color: selected
-            ? SalesReportColors.textPrimary
-            : SalesReportColors.textSecondary,
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+        color: SalesReportColors.textPrimary,
       ),
       selectedColor: SalesReportColors.brandGold.withValues(alpha: 0.18),
       backgroundColor: SalesReportColors.bodyPanel,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       side: BorderSide(
         color: selected
             ? SalesReportColors.brandGold.withValues(alpha: 0.45)
@@ -277,10 +298,10 @@ class _GradeSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: SalesReportColors.bodySubtle,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: SalesReportColors.bodyBorder),
       ),
       child: Column(
@@ -289,37 +310,47 @@ class _GradeSummaryCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 34,
-                height: 34,
+                width: 42,
+                height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: SalesReportColors.brandGold.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: SalesReportColors.brandGold.withValues(alpha: 0.24),
+                  ),
                 ),
                 child: const Icon(
                   Icons.workspace_premium_rounded,
-                  size: 18,
+                  size: 21,
                   color: SalesReportColors.brandGold,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   '${summary.grade} Grade',
-                  style: SalesReportStyles.pageTitle.copyWith(fontSize: 17),
+                  style: SalesReportStyles.pageTitle.copyWith(
+                    color: SalesReportColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _MiniMetric(label: 'Invoices', value: '${summary.invoiceCount}'),
-              _MiniMetric(label: 'Pieces', value: '${summary.pieces}'),
               _MiniMetric(
-                label: 'Net Weight',
+                label: 'Bills With Grade',
+                value: '${summary.invoiceCount}',
+              ),
+              _MiniMetric(label: 'Total Qty', value: '${summary.pieces}'),
+              _MiniMetric(
+                label: 'Net Weight Sold',
                 value: salesReportWeight(summary.netWeight),
               ),
               _MiniMetric(
@@ -327,15 +358,15 @@ class _GradeSummaryCard extends StatelessWidget {
                 value: salesReportMoney(summary.saleAmount),
               ),
               _MiniMetric(
-                label: 'GST Total',
+                label: 'GST Collected',
                 value: salesReportMoney(summary.recordedGstAmount),
               ),
               _MiniMetric(
-                label: 'Projected GST',
+                label: 'Normal GST Estimate',
                 value: salesReportMoney(summary.projectedGstAmount),
               ),
               _MiniMetric(
-                label: 'Sale + GST View',
+                label: 'Sales + GST View',
                 value: salesReportMoney(summary.saleWithGstView),
                 emphasized: true,
               ),
@@ -361,13 +392,13 @@ class _MiniMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 118, minHeight: 56),
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      constraints: const BoxConstraints(minWidth: 148, minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: emphasized
             ? SalesReportColors.goldGradientStart.withValues(alpha: 0.13)
             : SalesReportColors.bodyPanel,
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: emphasized
               ? SalesReportColors.brandGold.withValues(alpha: 0.35)
@@ -383,9 +414,9 @@ class _MiniMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: SalesReportStyles.body.copyWith(
-              fontSize: 10.5,
-              color: SalesReportColors.textMuted,
-              fontWeight: FontWeight.w800,
+              fontSize: 13.5,
+              color: SalesReportColors.textPrimary,
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 4),
@@ -394,7 +425,11 @@ class _MiniMetric extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: SalesReportStyles.pageTitle.copyWith(fontSize: 15),
+              style: SalesReportStyles.pageTitle.copyWith(
+                color: SalesReportColors.textPrimary,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

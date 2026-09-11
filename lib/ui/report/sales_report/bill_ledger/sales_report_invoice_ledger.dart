@@ -4,6 +4,8 @@ import '../../../../models/reports/sales_report/sales_report_models.dart';
 import '../../../../theme/reports/sales_report/sales_report_theme.dart';
 import '../sales_report_formatters.dart';
 
+const Color _invoiceLedgerDueColor = Color(0xFFB91C1C);
+
 class SalesReportInvoiceLedger extends StatelessWidget {
   final List<SalesReportInvoiceRow> invoices;
   final List<SalesReportItemRow> items;
@@ -17,6 +19,7 @@ class SalesReportInvoiceLedger extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final weightIndex = _MetalWeightIndex(items);
+    final hasDue = invoices.any((invoice) => invoice.dueAmount.abs() > 0.005);
 
     return Container(
       decoration: SalesReportStyles.panel(),
@@ -25,8 +28,9 @@ class SalesReportInvoiceLedger extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _LedgerHeader(
-            title: 'Invoice Ledger',
-            subtitle: 'Bill-wise taxable, GST, discount and final amount audit',
+            title: 'Sales Invoice Ledger',
+            subtitle:
+                'Invoice-wise customer, metal, sale value, GST and due audit',
             icon: Icons.receipt_long_rounded,
           ),
           if (invoices.isEmpty)
@@ -39,70 +43,114 @@ class SalesReportInvoiceLedger extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: constraints.maxWidth),
                     child: DataTable(
-                      headingRowHeight: 42,
-                      dataRowMinHeight: 52,
-                      dataRowMaxHeight: 74,
-                      columnSpacing: 26,
+                      headingRowHeight: 46,
+                      dataRowMinHeight: 56,
+                      dataRowMaxHeight: 78,
+                      columnSpacing: 24,
                       horizontalMargin: 24,
-                      columns: const [
-                        DataColumn(label: Text('S.No')),
-                        DataColumn(label: Text('Invoice')),
-                        DataColumn(label: Text('Date')),
-                        DataColumn(label: Text('Customer')),
-                        DataColumn(label: Text('Type')),
-                        DataColumn(label: Text('Metal')),
-                        DataColumn(label: Text('Metal Weight')),
-                        DataColumn(label: Text('Gross'), numeric: true),
-                        DataColumn(label: Text('Discount'), numeric: true),
-                        DataColumn(label: Text('Taxable'), numeric: true),
-                        DataColumn(label: Text('GST'), numeric: true),
-                        DataColumn(label: Text('Round Off'), numeric: true),
-                        DataColumn(label: Text('Final'), numeric: true),
-                      ],
-                      rows: _buildRows(weightIndex),
+                      headingTextStyle: SalesReportStyles.body.copyWith(
+                        color: SalesReportColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      dataTextStyle: SalesReportStyles.body.copyWith(
+                        color: SalesReportColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      columns: _buildColumns(hasDue: hasDue),
+                      rows: _buildRows(weightIndex, hasDue: hasDue),
                     ),
                   ),
                 );
               },
             ),
-            _InvoiceTotalsBar(invoices: invoices, items: items),
+            _InvoiceTotalsBar(
+              invoices: invoices,
+              items: items,
+              hasDue: hasDue,
+            ),
           ],
         ],
       ),
     );
   }
 
-  List<DataRow> _buildRows(_MetalWeightIndex weightIndex) {
+  List<DataColumn> _buildColumns({required bool hasDue}) {
+    return [
+      const DataColumn(label: _ColumnLabel('S. No.')),
+      const DataColumn(label: _ColumnLabel('Bill No')),
+      const DataColumn(label: _ColumnLabel('Date')),
+      const DataColumn(label: _ColumnLabel('Customer')),
+      const DataColumn(label: _ColumnLabel('Bill Type')),
+      const DataColumn(label: _ColumnLabel('Metal')),
+      const DataColumn(label: _ColumnLabel('Net Weight')),
+      const DataColumn(label: _ColumnLabel('Sale Amount'), numeric: true),
+      const DataColumn(label: _ColumnLabel('Discount'), numeric: true),
+      const DataColumn(label: _ColumnLabel('GST'), numeric: true),
+      const DataColumn(label: _ColumnLabel('Net Total'), numeric: true),
+      if (hasDue)
+        const DataColumn(
+          label: _ColumnLabel('Due Amount', isDue: true),
+          numeric: true,
+        ),
+    ];
+  }
+
+  List<DataRow> _buildRows(
+    _MetalWeightIndex weightIndex, {
+    required bool hasDue,
+  }) {
     return [
       for (var index = 0; index < invoices.length; index++)
-        _buildRow(invoices[index], index, weightIndex),
+        _buildRow(
+          invoices[index],
+          index,
+          weightIndex,
+          hasDue: hasDue,
+        ),
     ];
   }
 
   DataRow _buildRow(
     SalesReportInvoiceRow invoice,
     int index,
-    _MetalWeightIndex weightIndex,
-  ) {
+    _MetalWeightIndex weightIndex, {
+    required bool hasDue,
+  }) {
     return DataRow(
       cells: [
-        DataCell(Text('${index + 1}')),
-        DataCell(_StrongText(invoice.billNo)),
-        DataCell(Text(salesReportDateTime(invoice.billDate))),
+        DataCell(_LedgerText('${index + 1}')),
+        DataCell(_LedgerText(invoice.billNo, fontWeight: FontWeight.w900)),
+        DataCell(_LedgerText(salesReportDateTime(invoice.billDate))),
         DataCell(_CustomerCell(invoice)),
         DataCell(_TypeBadge(isGst: invoice.isGst)),
-        DataCell(Text(invoice.metalMix.replaceAll(',', ' / '))),
+        DataCell(_LedgerText(invoice.metalMix.replaceAll(',', ' / '))),
         DataCell(
             _MetalWeightCell(weights: weightIndex.forBill(invoice.billId))),
-        DataCell(Text(salesReportMoney(invoice.grossAmount))),
-        DataCell(Text(salesReportMoney(invoice.discountAmount))),
-        DataCell(Text(salesReportMoney(invoice.taxableAmount))),
-        DataCell(Text(salesReportMoney(invoice.gstAmount))),
-        DataCell(Text(salesReportMoney(invoice.roundOffAmount))),
-        DataCell(_StrongText(
+        DataCell(_LedgerText(
+          salesReportMoney(invoice.grossAmount),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
+          salesReportMoney(invoice.discountAmount),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
+          salesReportMoney(invoice.gstAmount),
+          alignRight: true,
+        )),
+        DataCell(_LedgerText(
           salesReportMoney(invoice.finalAmount),
           alignRight: true,
         )),
+        if (hasDue)
+          DataCell(_LedgerText(
+            salesReportMoney(invoice.dueAmount),
+            alignRight: true,
+            color: _invoiceLedgerDueColor,
+            fontWeight: FontWeight.w900,
+          )),
       ],
     );
   }
@@ -111,16 +159,21 @@ class SalesReportInvoiceLedger extends StatelessWidget {
 class _InvoiceTotalsBar extends StatelessWidget {
   final List<SalesReportInvoiceRow> invoices;
   final List<SalesReportItemRow> items;
+  final bool hasDue;
 
-  const _InvoiceTotalsBar({required this.invoices, required this.items});
+  const _InvoiceTotalsBar({
+    required this.invoices,
+    required this.items,
+    required this.hasDue,
+  });
 
   @override
   Widget build(BuildContext context) {
     final gross = _sum((invoice) => invoice.grossAmount);
     final discount = _sum((invoice) => invoice.discountAmount);
-    final taxable = _sum((invoice) => invoice.taxableAmount);
     final gst = _sum((invoice) => invoice.gstAmount);
     final finalAmount = _sum((invoice) => invoice.finalAmount);
+    final due = _sum((invoice) => invoice.dueAmount);
     final metalWeights = _MetalWeightIndex(items).totals;
     final totalWeight = metalWeights.values.fold<double>(
       0,
@@ -137,15 +190,21 @@ class _InvoiceTotalsBar extends StatelessWidget {
           ),
         _TotalTile(
             label: 'Total Net Wt', value: salesReportWeight(totalWeight)),
-        _TotalTile(label: 'Gross', value: salesReportMoney(gross)),
+        _TotalTile(label: 'Sale Amount', value: salesReportMoney(gross)),
         _TotalTile(label: 'Discount', value: salesReportMoney(discount)),
-        _TotalTile(label: 'Taxable', value: salesReportMoney(taxable)),
         _TotalTile(label: 'GST', value: salesReportMoney(gst)),
         _TotalTile(
-          label: 'Final Total',
+          label: 'Net Total',
           value: salesReportMoney(finalAmount),
           emphasized: true,
         ),
+        if (hasDue)
+          _TotalTile(
+            label: 'Due Amount',
+            value: salesReportMoney(due),
+            accent: _invoiceLedgerDueColor,
+            emphasized: true,
+          ),
       ],
     );
   }
@@ -168,7 +227,11 @@ class _MetalWeightCell extends StatelessWidget {
     if (weights.isEmpty) {
       return const Text(
         '-',
-        style: TextStyle(color: SalesReportColors.textMuted),
+        style: TextStyle(
+          color: SalesReportColors.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+        ),
       );
     }
 
@@ -193,8 +256,8 @@ class _MetalWeightCell extends StatelessWidget {
               child: Text(
                 '${entry.key} ${salesReportWeight(entry.value)}',
                 style: SalesReportStyles.body.copyWith(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w900,
                   color: SalesReportColors.textPrimary,
                 ),
               ),
@@ -233,7 +296,14 @@ class _LedgerHeader extends StatelessWidget {
                   style: SalesReportStyles.pageTitle.copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: SalesReportStyles.body),
+                Text(
+                  subtitle,
+                  style: SalesReportStyles.body.copyWith(
+                    color: SalesReportColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
@@ -321,7 +391,7 @@ class _CustomerCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 180,
+      width: 220,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,16 +400,21 @@ class _CustomerCell extends StatelessWidget {
             invoice.customerName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: SalesReportStyles.body.copyWith(
+              color: SalesReportColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           if (invoice.mobile.isNotEmpty)
             Text(
-              invoice.mobile,
+              'Mobile: ${invoice.mobile}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                color: SalesReportColors.textMuted,
+              style: SalesReportStyles.body.copyWith(
+                color: SalesReportColors.textPrimary,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
               ),
             ),
         ],
@@ -356,7 +431,7 @@ class _TypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        isGst ? SalesReportColors.onlineGreen : SalesReportColors.textMuted;
+        isGst ? SalesReportColors.onlineGreen : SalesReportColors.textPrimary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
@@ -366,30 +441,57 @@ class _TypeBadge extends StatelessWidget {
       ),
       child: Text(
         isGst ? 'GST BILL' : 'NORMAL',
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
+        style: const TextStyle(
+          color: SalesReportColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 }
 
-class _StrongText extends StatelessWidget {
+class _ColumnLabel extends StatelessWidget {
+  final String value;
+  final bool isDue;
+
+  const _ColumnLabel(this.value, {this.isDue = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      value,
+      style: SalesReportStyles.body.copyWith(
+        color: isDue ? _invoiceLedgerDueColor : SalesReportColors.textPrimary,
+        fontSize: 14,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _LedgerText extends StatelessWidget {
   final String value;
   final bool alignRight;
+  final Color color;
+  final FontWeight fontWeight;
 
-  const _StrongText(this.value, {this.alignRight = false});
+  const _LedgerText(
+    this.value, {
+    this.alignRight = false,
+    this.color = SalesReportColors.textPrimary,
+    this.fontWeight = FontWeight.w800,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Text(
       value,
       textAlign: alignRight ? TextAlign.right : TextAlign.left,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        color: SalesReportColors.textPrimary,
+      style: SalesReportStyles.body.copyWith(
+        fontSize: 14,
+        fontWeight: fontWeight,
+        color: color,
       ),
     );
   }
@@ -421,18 +523,22 @@ class _TotalsStrip extends StatelessWidget {
 class _TotalTile extends StatelessWidget {
   final String label;
   final String value;
+  final Color? accent;
   final bool emphasized;
 
   const _TotalTile({
     required this.label,
     required this.value,
+    this.accent,
     this.emphasized = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final accent =
-        emphasized ? SalesReportColors.brandGold : SalesReportColors.textMuted;
+    final effectiveAccent = accent ??
+        (emphasized
+            ? SalesReportColors.brandGold
+            : SalesReportColors.textPrimary);
     return Container(
       constraints: const BoxConstraints(minWidth: 148, minHeight: 58),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -454,9 +560,9 @@ class _TotalTile extends StatelessWidget {
           Text(
             label,
             style: SalesReportStyles.body.copyWith(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: accent,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w900,
+              color: effectiveAccent,
             ),
           ),
           const SizedBox(height: 4),
@@ -465,7 +571,11 @@ class _TotalTile extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               value,
-              style: SalesReportStyles.pageTitle.copyWith(fontSize: 17),
+              style: SalesReportStyles.pageTitle.copyWith(
+                color: effectiveAccent,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],

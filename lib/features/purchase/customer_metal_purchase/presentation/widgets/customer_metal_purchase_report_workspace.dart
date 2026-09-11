@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_controller.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_metal_detail_screen.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/utils/customer_metal_purchase_formatters.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_empty_state.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_actions/customer_metal_purchase_ledger_actions.dart';
@@ -42,6 +43,10 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
             selectedMetal: controller.selectedMetal,
             animationController: animationController,
             onMetalSelected: controller.selectMetal,
+            onOpenMetalCheckout: (metal) => _openMetalCheckout(
+              context,
+              metal,
+            ),
           ),
           const SizedBox(height: 16),
           CustomerMetalPurchaseReportSummaryBand(
@@ -55,6 +60,20 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
             controller: controller,
           ),
         ],
+      ),
+    );
+  }
+
+  void _openMetalCheckout(
+    BuildContext context,
+    CustomerMetalPurchaseMetal metal,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CustomerMetalPurchaseMetalDetailScreen(
+          metal: metal,
+          controller: controller,
+        ),
       ),
     );
   }
@@ -72,42 +91,63 @@ class CustomerMetalPurchaseReportBody extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (controller.selectedTab) {
       case CustomerMetalPurchaseReportTab.ledger:
-        return _LedgerTable(entries: controller.filteredEntries);
+        return _LedgerTable(
+          title: 'Customer Metal Purchase Ledger',
+          subtitle: controller.filteredRecordRangeLabel,
+          entries: controller.filteredEntries,
+        );
       case CustomerMetalPurchaseReportTab.metalSummary:
-        return _MetalSummaryTable(summaries: controller.visibleMetalSummaries);
+        return _MetalSummaryTable(
+          periodLabel: controller.periodLabel,
+          summaries: controller.visibleMetalSummaries,
+        );
       case CustomerMetalPurchaseReportTab.sellerSummary:
-        return _SellerSummaryTable(summaries: controller.sellerSummaries);
+        return _SellerSummaryTable(
+          periodLabel: controller.periodLabel,
+          summaries: controller.sellerSummaries,
+        );
       case CustomerMetalPurchaseReportTab.pendingPayout:
         return _LedgerTable(
+          title: 'Pending Seller Payout Ledger',
+          subtitle: controller.filteredRecordRangeLabel,
           entries: controller.pendingEntries,
           emptyMessage: 'No pending seller payout found for this period.',
         );
       case CustomerMetalPurchaseReportTab.paymentSummary:
-        return _PaymentSummaryPanel(summary: controller.dashboardSummary);
+        return _PaymentSummaryPanel(
+          periodLabel: controller.periodLabel,
+          summary: controller.dashboardSummary,
+        );
     }
   }
 }
 
 class _LedgerTable extends StatelessWidget {
+  final String title;
+  final String subtitle;
   final List<CustomerMetalPurchaseEntry> entries;
   final String emptyMessage;
 
   static const List<_LedgerColumn> _columns = [
     _LedgerColumn('S. No.', 66),
-    _LedgerColumn('Seller', 220, flexGrow: 0.30),
-    _LedgerColumn('Invoice No', 172, flexGrow: 0.20),
-    _LedgerColumn('Date', 132),
+    _LedgerColumn('Seller', 210, flexGrow: 0.24),
+    _LedgerColumn('Voucher No', 172, flexGrow: 0.16),
+    _LedgerColumn('Date', 128),
+    _LedgerColumn('Source', 154, flexGrow: 0.12),
     _LedgerColumn('Metal', 96),
     _LedgerColumn('Net Wt', 116),
     _LedgerColumn('Value', 118, flexGrow: 0.10),
     _LedgerColumn('Paid', 118, flexGrow: 0.10),
     _LedgerColumn('Pending', 124, flexGrow: 0.10),
-    _LedgerColumn('Status', 112),
-    _LedgerColumn('Photo', 82),
-    _LedgerColumn('Actions', 128, flexGrow: 0.20),
+    _LedgerColumn('Metal Status', 174),
+    _LedgerColumn('Payout', 132),
+    _LedgerColumn('Photo', 80),
+    _LedgerColumn('Actions', 128, flexGrow: 0.18),
   ];
 
   const _LedgerTable({
+    required this.title,
+    required this.subtitle,
     required this.entries,
     this.emptyMessage = 'No customer metal purchase records found.',
   });
@@ -115,47 +155,127 @@ class _LedgerTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return CustomerMetalPurchaseEmptyState(message: emptyMessage);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ReportSectionHeader(title: title, subtitle: subtitle),
+          const SizedBox(height: 10),
+          CustomerMetalPurchaseEmptyState(message: emptyMessage),
+        ],
+      );
     }
 
-    return _ReportSurface(
-      padding: EdgeInsets.zero,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final tableWidth = math.max(constraints.maxWidth, _baseWidth + 2);
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: tableWidth,
-              child: Column(
-                children: [
-                  _LedgerHeader(columns: _columns, tableWidth: tableWidth),
-                  for (var index = 0; index < entries.length; index++)
-                    _LedgerInteractiveRow(
-                      key: ValueKey(
-                        'customer-metal-purchase-ledger-row-${index + 1}',
-                      ),
-                      columns: _columns,
-                      tableWidth: tableWidth,
-                      entry: entries[index],
-                      serialNo: index + 1,
-                      onShowDetails: () =>
-                          CustomerMetalPurchaseLedgerActions.showOptions(
-                        context,
-                        entries[index],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ReportSectionHeader(title: title, subtitle: subtitle),
+        const SizedBox(height: 10),
+        _ReportSurface(
+          padding: EdgeInsets.zero,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tableWidth = math.max(constraints.maxWidth, _baseWidth + 2);
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: tableWidth,
+                  child: Column(
+                    children: [
+                      _LedgerHeader(columns: _columns, tableWidth: tableWidth),
+                      for (var index = 0; index < entries.length; index++)
+                        _LedgerInteractiveRow(
+                          key: ValueKey(
+                            'customer-metal-purchase-ledger-row-${index + 1}',
+                          ),
+                          columns: _columns,
+                          tableWidth: tableWidth,
+                          entry: entries[index],
+                          serialNo: index + 1,
+                          onShowDetails: () =>
+                              CustomerMetalPurchaseLedgerActions.showOptions(
+                            context,
+                            entries[index],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
   static double get _baseWidth =>
       _columns.fold(0, (total, column) => total + column.baseWidth);
+}
+
+class _ReportSectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _ReportSectionHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: PurchaseEntryColors.purchaseAccent.withValues(alpha: 0.18),
+            ),
+          ),
+          child: const Icon(
+            Icons.table_chart_rounded,
+            size: 21,
+            color: PurchaseEntryColors.purchaseAccent,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.manrope(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _LedgerColumn {
@@ -303,12 +423,21 @@ class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
               _LedgerCell(
                 width: _columnWidth(widget.columns[4]),
                 child: Text(
-                  widget.entry.metalType.toUpperCase(),
+                  widget.entry.displaySourceLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: _tableBodyStyle,
                 ),
               ),
               _LedgerCell(
                 width: _columnWidth(widget.columns[5]),
+                child: Text(
+                  widget.entry.metalType.toUpperCase(),
+                  style: _tableBodyStyle,
+                ),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[6]),
                 child: Text(
                   CustomerMetalPurchaseFormatters.weight(
                     widget.entry.netWeight,
@@ -317,14 +446,14 @@ class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
                 ),
               ),
               _LedgerCell(
-                width: _columnWidth(widget.columns[6]),
+                width: _columnWidth(widget.columns[7]),
                 child: Text(
                   CustomerMetalPurchaseFormatters.amount(widget.entry.amount),
                   style: _tableBodyStyle,
                 ),
               ),
               _LedgerCell(
-                width: _columnWidth(widget.columns[7]),
+                width: _columnWidth(widget.columns[8]),
                 child: Text(
                   CustomerMetalPurchaseFormatters.amount(
                     widget.entry.paidAmount,
@@ -333,20 +462,29 @@ class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
                 ),
               ),
               _LedgerCell(
-                width: _columnWidth(widget.columns[8]),
+                width: _columnWidth(widget.columns[9]),
                 child: Text(
                   CustomerMetalPurchaseFormatters.amount(
                     widget.entry.pendingAmount,
                   ),
-                  style: _tableBodyStyle,
+                  style: _tableBodyStyle.copyWith(
+                    color: widget.entry.pendingAmount > 0.005
+                        ? PurchaseEntryColors.danger
+                        : Colors.black,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               _LedgerCell(
-                width: _columnWidth(widget.columns[9]),
-                child: _PaymentStatusBadge(entry: widget.entry),
+                width: _columnWidth(widget.columns[10]),
+                child: _MetalFlowStatusBadge(entry: widget.entry),
               ),
               _LedgerCell(
-                width: _columnWidth(widget.columns[10]),
+                width: _columnWidth(widget.columns[11]),
+                child: _PayoutStatusBadge(entry: widget.entry),
+              ),
+              _LedgerCell(
+                width: _columnWidth(widget.columns[12]),
                 alignment: Alignment.center,
                 child: Icon(
                   widget.entry.hasSellerPhoto
@@ -359,7 +497,7 @@ class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
                 ),
               ),
               _LedgerCell(
-                width: _columnWidth(widget.columns[11]),
+                width: _columnWidth(widget.columns[13]),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -442,62 +580,93 @@ class _LedgerCell extends StatelessWidget {
 }
 
 class _MetalSummaryTable extends StatelessWidget {
+  final String periodLabel;
   final Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
       summaries;
 
-  const _MetalSummaryTable({required this.summaries});
+  const _MetalSummaryTable({
+    required this.periodLabel,
+    required this.summaries,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return _ReportSurface(
-      padding: EdgeInsets.zero,
-      child: DataTable(
-        headingRowHeight: 48,
-        columnSpacing: 30,
-        headingTextStyle: _tableHeadingStyle,
-        dataTextStyle: _tableBodyStyle,
-        columns: const [
-          DataColumn(label: Text('Metal')),
-          DataColumn(label: Text('Fine Weight')),
-          DataColumn(label: Text('Value')),
-          DataColumn(label: Text('Paid')),
-          DataColumn(label: Text('Pending')),
-          DataColumn(label: Text('Entries')),
-          DataColumn(label: Text('Sellers')),
-        ],
-        rows: [
-          for (final entry in summaries.entries)
-            DataRow(
-              cells: [
-                DataCell(Text(entry.key.label)),
-                DataCell(
-                  Text(
-                    CustomerMetalPurchaseFormatters.weight(
-                      entry.value.fineWeight,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ReportSectionHeader(
+          title: 'Metal Purchase Summary',
+          subtitle:
+              'Metal-wise settlement value, payout and weight for $periodLabel',
+        ),
+        const SizedBox(height: 10),
+        _ReportSurface(
+          padding: EdgeInsets.zero,
+          child: DataTable(
+            headingRowHeight: 48,
+            columnSpacing: 30,
+            headingTextStyle: _tableHeadingStyle,
+            dataTextStyle: _tableBodyStyle,
+            columns: const [
+              DataColumn(label: Text('Metal')),
+              DataColumn(label: Text('Net Weight')),
+              DataColumn(label: Text('Fine Weight')),
+              DataColumn(label: Text('Purchase Value')),
+              DataColumn(label: Text('Paid')),
+              DataColumn(label: Text('Pending')),
+              DataColumn(label: Text('Lines')),
+              DataColumn(label: Text('Sellers')),
+            ],
+            rows: [
+              for (final entry in summaries.entries)
+                DataRow(
+                  cells: [
+                    DataCell(Text(entry.key.label)),
+                    DataCell(
+                      Text(
+                        CustomerMetalPurchaseFormatters.weight(
+                          entry.value.netWeight,
+                        ),
+                      ),
                     ),
-                  ),
+                    DataCell(
+                      Text(
+                        CustomerMetalPurchaseFormatters.weight(
+                          entry.value.fineWeight,
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      Text(CustomerMetalPurchaseFormatters.amount(
+                        entry.value.amount,
+                      )),
+                    ),
+                    DataCell(
+                      Text(CustomerMetalPurchaseFormatters.amount(
+                        entry.value.paidAmount,
+                      )),
+                    ),
+                    DataCell(
+                      Text(
+                        CustomerMetalPurchaseFormatters.amount(
+                          entry.value.pendingAmount,
+                        ),
+                        style: entry.value.pendingAmount > 0.005
+                            ? _tableBodyStyle.copyWith(
+                                color: PurchaseEntryColors.danger,
+                                fontWeight: FontWeight.w900,
+                              )
+                            : null,
+                      ),
+                    ),
+                    DataCell(Text(entry.value.entryCount.toString())),
+                    DataCell(Text(entry.value.customerCount.toString())),
+                  ],
                 ),
-                DataCell(
-                  Text(CustomerMetalPurchaseFormatters.amount(
-                    entry.value.amount,
-                  )),
-                ),
-                DataCell(
-                  Text(CustomerMetalPurchaseFormatters.amount(
-                    entry.value.paidAmount,
-                  )),
-                ),
-                DataCell(
-                  Text(CustomerMetalPurchaseFormatters.amount(
-                    entry.value.pendingAmount,
-                  )),
-                ),
-                DataCell(Text(entry.value.entryCount.toString())),
-                DataCell(Text(entry.value.customerCount.toString())),
-              ],
-            ),
-        ],
-      ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -538,121 +707,176 @@ class _LedgerActionIconButton extends StatelessWidget {
 }
 
 class _SellerSummaryTable extends StatelessWidget {
+  final String periodLabel;
   final List<CustomerMetalPurchaseSellerSummary> summaries;
 
-  const _SellerSummaryTable({required this.summaries});
+  const _SellerSummaryTable({
+    required this.periodLabel,
+    required this.summaries,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (summaries.isEmpty) {
-      return const CustomerMetalPurchaseEmptyState(
-        message: 'No seller summary found for this period.',
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ReportSectionHeader(
+            title: 'Seller Purchase Summary',
+            subtitle: 'No seller records found for $periodLabel',
+          ),
+          const SizedBox(height: 10),
+          const CustomerMetalPurchaseEmptyState(
+            message: 'No seller summary found for this period.',
+          ),
+        ],
       );
     }
 
-    return _ReportSurface(
-      padding: EdgeInsets.zero,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 48,
-          columnSpacing: 28,
-          headingTextStyle: _tableHeadingStyle,
-          dataTextStyle: _tableBodyStyle,
-          columns: const [
-            DataColumn(label: Text('Seller')),
-            DataColumn(label: Text('Mobile')),
-            DataColumn(label: Text('Fine Weight')),
-            DataColumn(label: Text('Purchase Value')),
-            DataColumn(label: Text('Paid')),
-            DataColumn(label: Text('Pending')),
-            DataColumn(label: Text('Vouchers')),
-            DataColumn(label: Text('Lines')),
-          ],
-          rows: [
-            for (final summary in summaries)
-              DataRow(
-                cells: [
-                  DataCell(Text(summary.sellerName)),
-                  DataCell(Text(summary.mobile ?? 'Not recorded')),
-                  DataCell(
-                    Text(CustomerMetalPurchaseFormatters.weight(
-                      summary.fineWeight,
-                    )),
-                  ),
-                  DataCell(
-                    Text(CustomerMetalPurchaseFormatters.amount(
-                      summary.amount,
-                    )),
-                  ),
-                  DataCell(
-                    Text(CustomerMetalPurchaseFormatters.amount(
-                      summary.paidAmount,
-                    )),
-                  ),
-                  DataCell(
-                    Text(CustomerMetalPurchaseFormatters.amount(
-                      summary.pendingAmount,
-                    )),
-                  ),
-                  DataCell(Text(summary.voucherCount.toString())),
-                  DataCell(Text(summary.entryCount.toString())),
-                ],
-              ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ReportSectionHeader(
+          title: 'Seller Purchase Summary',
+          subtitle:
+              '${summaries.length} sellers with purchase activity for $periodLabel',
         ),
-      ),
+        const SizedBox(height: 10),
+        _ReportSurface(
+          padding: EdgeInsets.zero,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowHeight: 48,
+              columnSpacing: 28,
+              headingTextStyle: _tableHeadingStyle,
+              dataTextStyle: _tableBodyStyle,
+              columns: const [
+                DataColumn(label: Text('Seller')),
+                DataColumn(label: Text('Mobile')),
+                DataColumn(label: Text('Fine Weight')),
+                DataColumn(label: Text('Purchase Value')),
+                DataColumn(label: Text('Paid')),
+                DataColumn(label: Text('Pending')),
+                DataColumn(label: Text('Vouchers')),
+                DataColumn(label: Text('Lines')),
+              ],
+              rows: [
+                for (final summary in summaries)
+                  DataRow(
+                    cells: [
+                      DataCell(Text(summary.sellerName)),
+                      DataCell(Text(summary.mobile ?? 'Not recorded')),
+                      DataCell(
+                        Text(CustomerMetalPurchaseFormatters.weight(
+                          summary.fineWeight,
+                        )),
+                      ),
+                      DataCell(
+                        Text(CustomerMetalPurchaseFormatters.amount(
+                          summary.amount,
+                        )),
+                      ),
+                      DataCell(
+                        Text(CustomerMetalPurchaseFormatters.amount(
+                          summary.paidAmount,
+                        )),
+                      ),
+                      DataCell(
+                        Text(
+                          CustomerMetalPurchaseFormatters.amount(
+                            summary.pendingAmount,
+                          ),
+                          style: summary.pendingAmount > 0.005
+                              ? _tableBodyStyle.copyWith(
+                                  color: PurchaseEntryColors.danger,
+                                  fontWeight: FontWeight.w900,
+                                )
+                              : null,
+                        ),
+                      ),
+                      DataCell(Text(summary.voucherCount.toString())),
+                      DataCell(Text(summary.entryCount.toString())),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _PaymentSummaryPanel extends StatelessWidget {
+  final String periodLabel;
   final CustomerMetalPurchaseDashboardSummary summary;
 
-  const _PaymentSummaryPanel({required this.summary});
+  const _PaymentSummaryPanel({
+    required this.periodLabel,
+    required this.summary,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return _ReportSurface(
-      padding: const EdgeInsets.all(16),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final columns = constraints.maxWidth >= 900 ? 4 : 2;
-          const spacing = 12.0;
-          final width =
-              (constraints.maxWidth - spacing * (columns - 1)) / columns;
-          return Wrap(
-            spacing: spacing,
-            runSpacing: spacing,
-            children: [
-              _MetricCard(
-                width: width,
-                label: 'Cash Paid',
-                value: CustomerMetalPurchaseFormatters.amount(summary.cashPaid),
-                icon: Icons.payments_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'UPI Paid',
-                value: CustomerMetalPurchaseFormatters.amount(summary.upiPaid),
-                icon: Icons.account_balance_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Bank Paid',
-                value: CustomerMetalPurchaseFormatters.amount(summary.bankPaid),
-                icon: Icons.account_balance_wallet_rounded,
-              ),
-              _MetricCard(
-                width: width,
-                label: 'Card Paid',
-                value: CustomerMetalPurchaseFormatters.amount(summary.cardPaid),
-                icon: Icons.credit_card_rounded,
-              ),
-            ],
-          );
-        },
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ReportSectionHeader(
+          title: 'Payout Mode Summary',
+          subtitle: 'Seller payout collection split for $periodLabel',
+        ),
+        const SizedBox(height: 10),
+        _ReportSurface(
+          padding: const EdgeInsets.all(16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 900 ? 4 : 2;
+              const spacing = 12.0;
+              final width =
+                  (constraints.maxWidth - spacing * (columns - 1)) / columns;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  _MetricCard(
+                    width: width,
+                    label: 'Cash Paid',
+                    value: CustomerMetalPurchaseFormatters.amount(
+                      summary.cashPaid,
+                    ),
+                    icon: Icons.payments_rounded,
+                  ),
+                  _MetricCard(
+                    width: width,
+                    label: 'UPI Paid',
+                    value: CustomerMetalPurchaseFormatters.amount(
+                      summary.upiPaid,
+                    ),
+                    icon: Icons.account_balance_rounded,
+                  ),
+                  _MetricCard(
+                    width: width,
+                    label: 'Bank Paid',
+                    value: CustomerMetalPurchaseFormatters.amount(
+                      summary.bankPaid,
+                    ),
+                    icon: Icons.account_balance_wallet_rounded,
+                  ),
+                  _MetricCard(
+                    width: width,
+                    label: 'Card Paid',
+                    value: CustomerMetalPurchaseFormatters.amount(
+                      summary.cardPaid,
+                    ),
+                    icon: Icons.credit_card_rounded,
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -794,35 +1018,69 @@ class _TwoLineCell extends StatelessWidget {
   }
 }
 
-class _PaymentStatusBadge extends StatelessWidget {
+class _MetalFlowStatusBadge extends StatelessWidget {
   final CustomerMetalPurchaseEntry entry;
 
-  const _PaymentStatusBadge({required this.entry});
+  const _MetalFlowStatusBadge({required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    final status = entry.resolvedPaymentStatus.toUpperCase();
-    final color = status == 'PAID'
-        ? const Color(0xFF047857)
-        : status == 'PARTIAL'
-            ? const Color(0xFFB45309)
-            : status == 'RETURNED'
-                ? const Color(0xFF0B1220)
-                : const Color(0xFFB91C1C);
+    final color = switch (entry.metalFlowStatusCode) {
+      'RETURNED' => const Color(0xFF475569),
+      'MELTING' => const Color(0xFF7C2D12),
+      _ => const Color(0xFF047857),
+    };
 
+    return _LedgerStatusBadge(label: entry.metalFlowStatusLabel, color: color);
+  }
+}
+
+class _PayoutStatusBadge extends StatelessWidget {
+  final CustomerMetalPurchaseEntry entry;
+
+  const _PayoutStatusBadge({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (entry.payoutStatusCode) {
+      'PAID' => const Color(0xFF047857),
+      'PARTIAL' => const Color(0xFFB45309),
+      _ => const Color(0xFFB91C1C),
+    };
+
+    return _LedgerStatusBadge(label: entry.payoutStatusLabel, color: color);
+  }
+}
+
+class _LedgerStatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _LedgerStatusBadge({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
-      child: Text(
-        status,
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-          color: color,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          style: GoogleFonts.inter(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+            color: color,
+          ),
         ),
       ),
     );

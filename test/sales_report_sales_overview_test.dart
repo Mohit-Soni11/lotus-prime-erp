@@ -43,11 +43,15 @@ void main() {
     expect(find.text('September 2026'), findsOneWidget);
     expect(find.text('Normal Bill Sales'), findsOneWidget);
     expect(find.text('GST Bill Sales'), findsOneWidget);
+    expect(find.text('Rs 1,25,000'), findsOneWidget);
     expect(find.text('Due Amount'), findsOneWidget);
     expect(find.text('GST Collected'), findsOneWidget);
+    expect(find.text('Actual GST amount'), findsOneWidget);
     expect(find.text('Normal Bill GST Estimate'), findsOneWidget);
     expect(find.text('Total Taxable Sales'), findsNothing);
     expect(find.text('GST Bill Value'), findsNothing);
+    expect(find.text('GST Bill Total'), findsNothing);
+    expect(find.textContaining('Taxable base'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

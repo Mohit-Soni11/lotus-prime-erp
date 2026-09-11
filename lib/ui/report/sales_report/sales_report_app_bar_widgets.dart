@@ -237,7 +237,6 @@ class _HeaderExportMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = _buildExportGroups(items);
     return Tooltip(
       message: 'Export report',
       child: PopupMenuButton<SalesReportExportAction>(
@@ -245,23 +244,15 @@ class _HeaderExportMenu extends StatelessWidget {
         tooltip: '',
         onSelected: onSelected,
         offset: const Offset(0, 48),
-        constraints: const BoxConstraints(minWidth: 300, maxWidth: 340),
+        constraints: const BoxConstraints(minWidth: 280, maxWidth: 320),
         itemBuilder: (_) => [
-          for (var index = 0; index < groups.length; index++) ...[
+          for (final item in items)
             PopupMenuItem<SalesReportExportAction>(
-              enabled: false,
-              height: 34,
-              child: _ExportGroupHeader(group: groups[index]),
+              key: ValueKey('sales-report-export-${item.action.name}'),
+              value: item.action,
+              height: 44,
+              child: _ExportOptionRow(item: item),
             ),
-            for (final option in groups[index].options)
-              PopupMenuItem<SalesReportExportAction>(
-                key: ValueKey('sales-report-export-${option.action.name}'),
-                value: option.action,
-                height: 36,
-                child: _ExportOptionRow(option: option),
-              ),
-            if (index != groups.length - 1) const PopupMenuDivider(height: 8),
-          ],
         ],
         child: Container(
           width: 104,
@@ -296,195 +287,33 @@ class _HeaderExportMenu extends StatelessWidget {
       ),
     );
   }
-
-  static List<_ExportMenuGroup> _buildExportGroups(
-    List<SalesReportExportMenuItem> items,
-  ) {
-    final groups = <_ExportMenuGroup>[];
-    for (final item in items) {
-      final title = _baseExportTitle(item.label);
-      final existingIndex = groups.indexWhere((group) => group.title == title);
-      final group = existingIndex == -1
-          ? _ExportMenuGroup(title: title, icon: item.icon, options: [])
-          : groups[existingIndex];
-      if (existingIndex == -1) groups.add(group);
-
-      final previewAction = _previewActionFor(item.action);
-      if (previewAction != null &&
-          !group.options.any((option) => option.action == previewAction)) {
-        group.options.add(
-          _ExportMenuOption(
-            action: previewAction,
-            label: 'PDF Preview',
-            icon: Icons.visibility_outlined,
-          ),
-        );
-      }
-
-      group.options.add(
-        _ExportMenuOption(
-          action: item.action,
-          label: _formatLabelFor(item.action),
-          icon: _formatIconFor(item.action),
-        ),
-      );
-    }
-    return groups;
-  }
-
-  static String _baseExportTitle(String label) {
-    return label
-        .replaceFirst(RegExp(r'\s+PDF$', caseSensitive: false), '')
-        .replaceFirst(RegExp(r'\s+CSV$', caseSensitive: false), '')
-        .replaceFirst(RegExp(r'\s+Excel$', caseSensitive: false), '');
-  }
-
-  static SalesReportExportAction? _previewActionFor(
-    SalesReportExportAction action,
-  ) {
-    switch (action) {
-      case SalesReportExportAction.completePdf:
-        return SalesReportExportAction.completePreview;
-      case SalesReportExportAction.gstLiabilityPdf:
-        return SalesReportExportAction.gstLiabilityPreview;
-      case SalesReportExportAction.gradeWisePdf:
-        return SalesReportExportAction.gradeWisePreview;
-      case SalesReportExportAction.invoiceLedgerPdf:
-        return SalesReportExportAction.invoiceLedgerPreview;
-      case SalesReportExportAction.itemLedgerPdf:
-        return SalesReportExportAction.itemLedgerPreview;
-      case SalesReportExportAction.completePreview:
-      case SalesReportExportAction.completeCsv:
-      case SalesReportExportAction.gstLiabilityPreview:
-      case SalesReportExportAction.gradeWisePreview:
-      case SalesReportExportAction.invoiceLedgerPreview:
-      case SalesReportExportAction.itemLedgerPreview:
-      case SalesReportExportAction.invoiceLedgerCsv:
-      case SalesReportExportAction.itemLedgerCsv:
-      case SalesReportExportAction.completeExcel:
-        return null;
-    }
-  }
-
-  static String _formatLabelFor(SalesReportExportAction action) {
-    switch (action) {
-      case SalesReportExportAction.completeCsv:
-      case SalesReportExportAction.invoiceLedgerCsv:
-      case SalesReportExportAction.itemLedgerCsv:
-        return 'CSV Download';
-      case SalesReportExportAction.completeExcel:
-        return 'Excel Download';
-      case SalesReportExportAction.completePdf:
-      case SalesReportExportAction.gstLiabilityPdf:
-      case SalesReportExportAction.gradeWisePdf:
-      case SalesReportExportAction.invoiceLedgerPdf:
-      case SalesReportExportAction.itemLedgerPdf:
-        return 'PDF Download';
-      case SalesReportExportAction.completePreview:
-      case SalesReportExportAction.gstLiabilityPreview:
-      case SalesReportExportAction.gradeWisePreview:
-      case SalesReportExportAction.invoiceLedgerPreview:
-      case SalesReportExportAction.itemLedgerPreview:
-        return 'PDF Preview';
-    }
-  }
-
-  static IconData _formatIconFor(SalesReportExportAction action) {
-    switch (action) {
-      case SalesReportExportAction.completeCsv:
-      case SalesReportExportAction.invoiceLedgerCsv:
-      case SalesReportExportAction.itemLedgerCsv:
-        return Icons.table_chart_outlined;
-      case SalesReportExportAction.completeExcel:
-        return Icons.grid_on_outlined;
-      case SalesReportExportAction.completePdf:
-      case SalesReportExportAction.gstLiabilityPdf:
-      case SalesReportExportAction.gradeWisePdf:
-      case SalesReportExportAction.invoiceLedgerPdf:
-      case SalesReportExportAction.itemLedgerPdf:
-        return Icons.picture_as_pdf_outlined;
-      case SalesReportExportAction.completePreview:
-      case SalesReportExportAction.gstLiabilityPreview:
-      case SalesReportExportAction.gradeWisePreview:
-      case SalesReportExportAction.invoiceLedgerPreview:
-      case SalesReportExportAction.itemLedgerPreview:
-        return Icons.visibility_outlined;
-    }
-  }
 }
 
-class _ExportMenuGroup {
-  final String title;
-  final IconData icon;
-  final List<_ExportMenuOption> options;
+class _ExportOptionRow extends StatelessWidget {
+  final SalesReportExportMenuItem item;
 
-  _ExportMenuGroup({
-    required this.title,
-    required this.icon,
-    required this.options,
-  });
-}
-
-class _ExportMenuOption {
-  final SalesReportExportAction action;
-  final String label;
-  final IconData icon;
-
-  const _ExportMenuOption({
-    required this.action,
-    required this.label,
-    required this.icon,
-  });
-}
-
-class _ExportGroupHeader extends StatelessWidget {
-  final _ExportMenuGroup group;
-
-  const _ExportGroupHeader({required this.group});
+  const _ExportOptionRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(group.icon, size: 17, color: SalesReportColors.brandGold),
-        const SizedBox(width: 10),
+        Icon(item.icon, size: 18, color: SalesReportColors.brandGold),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
-            group.title,
+            item.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: SalesReportStyles.body.copyWith(
               color: SalesReportColors.textPrimary,
               fontWeight: FontWeight.w900,
+              fontSize: 13,
+              letterSpacing: 0,
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ExportOptionRow extends StatelessWidget {
-  final _ExportMenuOption option;
-
-  const _ExportOptionRow({required this.option});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 28),
-      child: Row(
-        children: [
-          Icon(option.icon, size: 16, color: SalesReportColors.textSecondary),
-          const SizedBox(width: 10),
-          Text(
-            option.label,
-            style: SalesReportStyles.body.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

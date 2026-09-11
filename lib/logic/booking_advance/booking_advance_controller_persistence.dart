@@ -108,6 +108,18 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
         );
       }
     }
+    for (var index = 0; index < scrapItems.length; index++) {
+      final item = scrapItems[index];
+      if (item.netWt <= 0 || item.rate <= 0 || item.totalValue <= 0) {
+        return (
+          success: false,
+          message:
+              'Please enter valid scrap metal weight and rate for row ${index + 1}.',
+          bookingNo: '',
+          orderIds: const <int>[],
+        );
+      }
+    }
     final minimumAdvanceMessage = _minimumAdvanceValidationMessage();
     if (minimumAdvanceMessage != null) {
       return (
@@ -139,6 +151,8 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
       final perItemAdv = bookingItems.isEmpty
           ? totalAdvance
           : totalAdvance / bookingItems.length;
+      final scrapDrafts =
+          scrapItems.map(_bookingScrapMetalDraft).toList(growable: false);
 
       final activeEditOrderId = editingOrderId;
       if (activeEditOrderId != null) {
@@ -179,6 +193,7 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
         lines: bookingItems
             .map((item) => _bookingLineDraft(item, perItemAdv))
             .toList(growable: false),
+        scrapLines: scrapDrafts,
       );
 
       await _initBookingNumber();
@@ -337,6 +352,24 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
     );
   }
 
+  BookingAdvanceScrapMetalDraft _bookingScrapMetalDraft(
+    BookingScrapModel item,
+  ) {
+    return BookingAdvanceScrapMetalDraft(
+      itemName: item.descCtrl.text.trim().isEmpty
+          ? '${item.metal.displayName} Booking Advance Metal'
+          : item.descCtrl.text.trim(),
+      metalType: item.metal.displayName,
+      grossWeight: _p(item.grossCtrl.text),
+      lessWeight: _p(item.lessCtrl.text),
+      netWeight: item.netWt,
+      purity: _p(item.purityCtrl.text),
+      fineWeight: item.fineWt,
+      rate: item.rate,
+      amount: item.totalValue,
+    );
+  }
+
   String? _validateBookingDraft() {
     if (nameCtrl.text.trim().isEmpty) {
       return 'Please enter customer name.';
@@ -351,6 +384,12 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
     for (var index = 0; index < bookingItems.length; index++) {
       if (bookingItems[index].netWt <= 0) {
         return 'Please enter valid net weight for item ${index + 1}.';
+      }
+    }
+    for (var index = 0; index < scrapItems.length; index++) {
+      final item = scrapItems[index];
+      if (item.netWt <= 0 || item.rate <= 0 || item.totalValue <= 0) {
+        return 'Please enter valid scrap metal weight and rate for row ${index + 1}.';
       }
     }
     final minimumAdvanceMessage = _minimumAdvanceValidationMessage();
