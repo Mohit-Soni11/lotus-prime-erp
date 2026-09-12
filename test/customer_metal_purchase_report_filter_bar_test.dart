@@ -32,8 +32,9 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Paid'), findsOneWidget);
-    expect(find.text('Partial'), findsOneWidget);
     expect(find.text('Pending'), findsOneWidget);
+    expect(find.text('Checkout Report'), findsOneWidget);
+    expect(find.text('Partial'), findsNothing);
   });
 }
 

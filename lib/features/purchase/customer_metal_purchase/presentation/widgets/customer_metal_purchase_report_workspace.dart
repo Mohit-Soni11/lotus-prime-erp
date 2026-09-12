@@ -29,6 +29,7 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dashboard = controller.dashboardSummary;
+    final reportScopeDashboard = controller.reportScopeDashboardSummary;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 34),
@@ -37,6 +38,17 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
         children: [
           CustomerMetalPurchaseReportFilterBar(controller: controller),
           const SizedBox(height: 16),
+          _ReportSectionHeader(
+            title: 'Metal Drilldown - ${controller.periodLabel}',
+            subtitle:
+                'Metal-wise customer purchase value, payout and melting checkout summary',
+            trailing: _SectionHeaderMetricBadge(
+              label: 'Total Vouchers',
+              value: reportScopeDashboard.voucherCount.toString(),
+              caption: controller.periodLabel,
+            ),
+          ),
+          const SizedBox(height: 10),
           CustomerMetalPurchaseMetalCardGrid(
             periodLabel: controller.periodLabel,
             summaries: controller.visibleMetalSummaries,
@@ -215,17 +227,19 @@ class _LedgerTable extends StatelessWidget {
 class _ReportSectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
+  final Widget? trailing;
 
   const _ReportSectionHeader({
     required this.title,
     required this.subtitle,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final leading = Container(
           width: 40,
           height: 40,
           alignment: Alignment.center,
@@ -241,39 +255,131 @@ class _ReportSectionHeader extends StatelessWidget {
             size: 21,
             color: PurchaseEntryColors.purchaseAccent,
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
+        );
+        final copy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.manrope(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        );
+
+        if (trailing != null && constraints.maxWidth < 620) {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.manrope(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                  color: Colors.black,
-                ),
+              Row(
+                children: [
+                  leading,
+                  const SizedBox(width: 12),
+                  Expanded(child: copy),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
-                  color: Colors.black,
-                ),
-              ),
+              const SizedBox(height: 10),
+              Align(alignment: Alignment.centerLeft, child: trailing!),
             ],
+          );
+        }
+
+        return Row(
+          children: [
+            leading,
+            const SizedBox(width: 12),
+            Expanded(child: copy),
+            if (trailing != null) ...[
+              const SizedBox(width: 12),
+              trailing!,
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SectionHeaderMetricBadge extends StatelessWidget {
+  final String label;
+  final String value;
+  final String caption;
+
+  const _SectionHeaderMetricBadge({
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 132, minHeight: 72),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF2D27A)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              color: Colors.black,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.manrope(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            caption,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -44,7 +44,6 @@ void main() {
               onSelectionToggled: (_) {},
               onCustomerPressed: (_) {},
               onReferencePressed: (_) {},
-              onReturnPressed: (_) {},
             ),
           ),
         ),
@@ -58,12 +57,14 @@ void main() {
     expect(find.text('Metal Status'), findsOneWidget);
     expect(find.text('Status Date'), findsOneWidget);
     expect(find.text('Batch No'), findsOneWidget);
+    expect(find.text('Action'), findsNothing);
     expect(find.text('Ready to Melt'), findsOneWidget);
     expect(find.text('Melted & Closed'), findsOneWidget);
     expect(find.text('05 Sep 2026'), findsOneWidget);
     expect(find.text('CMB-GOLD-20260905-101500'), findsOneWidget);
     expect(find.byType(Checkbox), findsOneWidget);
     expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.assignment_return_rounded), findsNothing);
   });
 }
 

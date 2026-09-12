@@ -154,8 +154,6 @@ class _CustomerMetalPurchaseMetalDetailScreenState
                       },
                       onReferencePressed: (entry) =>
                           _openSourceDocument(context, entry),
-                      onReturnPressed: (entry) =>
-                          _confirmReturn(context, entry),
                     ),
                 ],
               ),
@@ -282,46 +280,6 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Melting checkout $batchNo completed.')),
-    );
-  }
-
-  Future<void> _confirmReturn(
-    BuildContext context,
-    CustomerMetalPurchaseEntry entry,
-  ) async {
-    if (!entry.isAvailable) {
-      return;
-    }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return _LightConfirmationDialog(
-          title: 'Return Metal to Seller',
-          message:
-              'Mark ${entry.referenceNo} as returned to ${entry.customerName}?',
-          confirmLabel: 'Confirm Return',
-          accent: _accentFor(widget.metal),
-        );
-      },
-    );
-
-    if (confirmed != true || !context.mounted) {
-      return;
-    }
-
-    await widget.controller.markReturned(entry);
-    if (!context.mounted) {
-      return;
-    }
-
-    setState(() => _selectedEntryKeys.remove(_entryKey(entry)));
-    await _loadCheckoutEntries(showLoader: false);
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${entry.referenceNo} marked as returned.')),
     );
   }
 

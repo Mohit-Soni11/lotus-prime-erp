@@ -50,7 +50,7 @@ class CustomerMetalPurchaseStatusFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const statuses = ['ALL', 'PAID', 'PARTIAL', 'PENDING'];
+    const statuses = ['ALL', 'PAID', 'PENDING', 'CHECKOUT'];
 
     return Container(
       height: 42,
@@ -284,10 +284,10 @@ String _statusLabel(String status) {
       return 'All';
     case 'PAID':
       return 'Paid';
-    case 'PARTIAL':
-      return 'Partial';
     case 'PENDING':
       return 'Pending';
+    case 'CHECKOUT':
+      return 'Checkout Report';
     default:
       return status;
   }
@@ -297,10 +297,10 @@ Color _statusAccent(String status) {
   switch (status) {
     case 'PAID':
       return PurchaseEntryColors.success;
-    case 'PARTIAL':
-      return PurchaseEntryColors.warning;
     case 'PENDING':
       return PurchaseEntryColors.danger;
+    case 'CHECKOUT':
+      return const Color(0xFF7C2D12);
     default:
       return PurchaseEntryColors.purchaseAccent;
   }

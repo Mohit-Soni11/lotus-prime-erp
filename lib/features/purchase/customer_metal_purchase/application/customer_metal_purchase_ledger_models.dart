@@ -62,6 +62,7 @@ class CustomerMetalPurchaseMetalSummary {
   final double bankPaid;
   final double cardPaid;
   final int entryCount;
+  final int voucherCount;
   final int customerCount;
   final int directPurchaseCount;
   final int tradeInCount;
@@ -80,6 +81,7 @@ class CustomerMetalPurchaseMetalSummary {
     required this.bankPaid,
     required this.cardPaid,
     required this.entryCount,
+    required this.voucherCount,
     required this.customerCount,
     required this.directPurchaseCount,
     required this.tradeInCount,
@@ -163,6 +165,7 @@ CustomerMetalPurchaseMetalSummary buildCustomerMetalPurchaseSummary({
   var tradeInCount = 0;
   var refundCount = 0;
   final customerNames = <String>{};
+  final voucherNos = <String>{};
 
   for (final entry in entries) {
     grossWeight += entry.grossWeight;
@@ -178,6 +181,10 @@ CustomerMetalPurchaseMetalSummary buildCustomerMetalPurchaseSummary({
     final customerName = entry.customerName.trim().toUpperCase();
     if (customerName.isNotEmpty) {
       customerNames.add(customerName);
+    }
+    final voucherNo = entry.referenceNo.trim().toUpperCase();
+    if (voucherNo.isNotEmpty) {
+      voucherNos.add(voucherNo);
     }
 
     final source = entry.source.toLowerCase();
@@ -203,6 +210,7 @@ CustomerMetalPurchaseMetalSummary buildCustomerMetalPurchaseSummary({
     bankPaid: bankPaid,
     cardPaid: cardPaid,
     entryCount: entries.length,
+    voucherCount: voucherNos.length,
     customerCount: customerNames.length,
     directPurchaseCount: directPurchaseCount,
     tradeInCount: tradeInCount,

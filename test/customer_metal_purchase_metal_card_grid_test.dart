@@ -34,6 +34,8 @@ void main() {
 
     expect(find.text('Gold'), findsOneWidget);
     expect(find.text('August 2026'), findsOneWidget);
+    expect(find.text('4 vouchers'), findsNothing);
+    expect(find.text('7 lines'), findsOneWidget);
     expect(find.text('Checkout to Melting'), findsOneWidget);
     expect(find.text('Pending'), findsNothing);
   });
@@ -90,6 +92,7 @@ CustomerMetalPurchaseMetalSummary _summary({
     bankPaid: 0,
     cardPaid: 0,
     entryCount: 7,
+    voucherCount: 4,
     customerCount: 1,
     directPurchaseCount: 7,
     tradeInCount: 0,

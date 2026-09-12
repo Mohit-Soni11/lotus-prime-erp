@@ -13,7 +13,6 @@ class CustomerMetalMeltingCheckoutTable extends StatelessWidget {
   final ValueChanged<CustomerMetalPurchaseEntry> onSelectionToggled;
   final ValueChanged<CustomerMetalPurchaseEntry> onCustomerPressed;
   final ValueChanged<CustomerMetalPurchaseEntry> onReferencePressed;
-  final ValueChanged<CustomerMetalPurchaseEntry> onReturnPressed;
   final String Function(CustomerMetalPurchaseEntry entry) entryKeyBuilder;
 
   const CustomerMetalMeltingCheckoutTable({
@@ -24,7 +23,6 @@ class CustomerMetalMeltingCheckoutTable extends StatelessWidget {
     required this.onSelectionToggled,
     required this.onCustomerPressed,
     required this.onReferencePressed,
-    required this.onReturnPressed,
     required this.entryKeyBuilder,
   });
 
@@ -42,7 +40,6 @@ class CustomerMetalMeltingCheckoutTable extends StatelessWidget {
     _CheckoutColumn('Metal Status', 152),
     _CheckoutColumn('Status Date', 130),
     _CheckoutColumn('Batch No', 162, flexGrow: 0.12),
-    _CheckoutColumn('Action', 102),
   ];
 
   @override
@@ -91,7 +88,6 @@ class CustomerMetalMeltingCheckoutTable extends StatelessWidget {
                           onCustomerPressed(entries[index]),
                       onReferencePressed: () =>
                           onReferencePressed(entries[index]),
-                      onReturnPressed: () => onReturnPressed(entries[index]),
                     ),
                 ],
               ),
@@ -151,7 +147,7 @@ class _CheckoutHeader extends StatelessWidget {
   }
 
   bool _centered(String label) {
-    return label == 'Select' || label == 'S. No.' || label == 'Action';
+    return label == 'Select' || label == 'S. No.';
   }
 
   double _columnWidth(_CheckoutColumn column) {
@@ -172,7 +168,6 @@ class _CheckoutRow extends StatefulWidget {
   final VoidCallback onSelectionToggled;
   final VoidCallback onCustomerPressed;
   final VoidCallback onReferencePressed;
-  final VoidCallback onReturnPressed;
 
   const _CheckoutRow({
     super.key,
@@ -185,7 +180,6 @@ class _CheckoutRow extends StatefulWidget {
     required this.onSelectionToggled,
     required this.onCustomerPressed,
     required this.onReferencePressed,
-    required this.onReturnPressed,
   });
 
   @override
@@ -334,29 +328,6 @@ class _CheckoutRowState extends State<_CheckoutRow> {
                 overflow: TextOverflow.ellipsis,
                 style: _tableBodyStyle,
               ),
-            ),
-            _CheckoutCell(
-              width: _columnWidth(widget.columns[13]),
-              alignment: Alignment.center,
-              child: widget.entry.isAvailable
-                  ? Tooltip(
-                      message: 'Return metal to seller',
-                      child: IconButton(
-                        onPressed: widget.onReturnPressed,
-                        icon: const Icon(
-                          Icons.assignment_return_rounded,
-                          size: 18,
-                        ),
-                        color: Colors.black,
-                        style: IconButton.styleFrom(
-                          fixedSize: const Size(34, 34),
-                          minimumSize: const Size(34, 34),
-                          padding: EdgeInsets.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    )
-                  : Text('-', style: _tableBodyStyle),
             ),
           ],
         ),

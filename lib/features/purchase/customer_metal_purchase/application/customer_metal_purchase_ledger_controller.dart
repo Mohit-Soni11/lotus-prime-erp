@@ -145,10 +145,7 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   ) {
     return buildCustomerMetalPurchaseSummary(
       metal: metal,
-      entries: entriesForMetal(
-        metal,
-        view: CustomerMetalPurchaseEntryView.available,
-      ),
+      entries: _reportEntriesForMetal(metal),
     );
   }
 
@@ -161,9 +158,20 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   }
 
   List<CustomerMetalPurchaseEntry> get filteredEntries {
+    return _filterEntries(respectSelectedMetal: true);
+  }
+
+  List<CustomerMetalPurchaseEntry> get _reportScopeEntries {
+    return _filterEntries(respectSelectedMetal: false);
+  }
+
+  List<CustomerMetalPurchaseEntry> _filterEntries({
+    required bool respectSelectedMetal,
+  }) {
     final search = searchCtrl.text.trim().toLowerCase();
     return entries.where((entry) {
-      if (selectedMetal != null &&
+      if (respectSelectedMetal &&
+          selectedMetal != null &&
           _normalizeMetal(entry.metalType) != selectedMetal!.storageValue) {
         return false;
       }
@@ -186,6 +194,16 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
     }).toList(growable: false);
   }
 
+  List<CustomerMetalPurchaseEntry> _reportEntriesForMetal(
+    CustomerMetalPurchaseMetal metal,
+  ) {
+    return _reportScopeEntries
+        .where(
+          (entry) => _normalizeMetal(entry.metalType) == metal.storageValue,
+        )
+        .toList(growable: false);
+  }
+
   Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
       get visibleMetalSummaries {
     final summaries = metalSummaries;
@@ -193,10 +211,20 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
       for (final entry in summaries.entries)
         if (entry.value.hasBusiness) entry.key: entry.value,
     };
-    return visible.isEmpty ? summaries : visible;
+    return visible;
   }
 
   CustomerMetalPurchaseDashboardSummary get dashboardSummary {
+    return _buildDashboardSummary(filteredEntries);
+  }
+
+  CustomerMetalPurchaseDashboardSummary get reportScopeDashboardSummary {
+    return _buildDashboardSummary(_reportScopeEntries);
+  }
+
+  CustomerMetalPurchaseDashboardSummary _buildDashboardSummary(
+    List<CustomerMetalPurchaseEntry> summaryEntries,
+  ) {
     final customerNames = <String>{};
     final voucherNos = <String>{};
     var grossWeight = 0.0;
@@ -210,7 +238,7 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
     var bankPaid = 0.0;
     var cardPaid = 0.0;
 
-    for (final entry in filteredEntries) {
+    for (final entry in summaryEntries) {
       grossWeight += entry.grossWeight;
       netWeight += entry.netWeight;
       fineWeight += entry.fineWeight;
@@ -242,7 +270,7 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
       upiPaid: upiPaid,
       bankPaid: bankPaid,
       cardPaid: cardPaid,
-      entryCount: filteredEntries.length,
+      entryCount: summaryEntries.length,
       customerCount: customerNames.length,
       voucherCount: voucherNos.length,
     );
@@ -385,10 +413,10 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
     switch (paymentStatusFilter.toUpperCase()) {
       case 'PAID':
         return entry.pendingAmount <= 0.005;
-      case 'PARTIAL':
-        return entry.pendingAmount > 0.005 && entry.paidAmount > 0.005;
       case 'PENDING':
-        return entry.pendingAmount > 0.005 && entry.paidAmount <= 0.005;
+        return entry.pendingAmount > 0.005;
+      case 'CHECKOUT':
+        return entry.isTransferredToMelting;
       default:
         return true;
     }
