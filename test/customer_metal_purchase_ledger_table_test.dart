@@ -47,6 +47,13 @@ void main() {
     expect(find.text('1.000 g'), findsOneWidget);
     expect(find.byType(Checkbox), findsNothing);
     expect(find.byType(DataTable), findsNothing);
+    final photoIcons = tester.widgetList<Icon>(
+      find.byIcon(Icons.image_rounded),
+    );
+    expect(
+      photoIcons.any((icon) => icon.color == const Color(0xFF2563EB)),
+      isTrue,
+    );
 
     final rowFinder = find.byKey(
       const ValueKey('customer-metal-purchase-ledger-row-1'),
@@ -129,6 +136,7 @@ class _FakeCustomerMetalPurchaseLedgerRepository
         paidAmount: 15000,
         pendingAmount: 0,
         mobile: '9304479436',
+        sellerPhotoPath: r'D:\seller-photo.jpg',
       ),
     ];
   }

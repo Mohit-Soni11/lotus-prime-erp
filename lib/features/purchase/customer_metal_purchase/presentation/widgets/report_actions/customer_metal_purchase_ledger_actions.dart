@@ -8,8 +8,11 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/data/customer_metal_purchase_ledger_drift_repository.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_voucher_detail.dart';
 import 'package:lotus_erp/features/settings/billing_setup/purchase/data/purchase_billing_settings_repository.dart';
 import 'package:lotus_erp/logic/purchase/customer_metal_purchase_invoice_service.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_models/pos_invoice_model.dart';
@@ -154,10 +157,11 @@ class CustomerMetalPurchaseLedgerActions {
     final resolvedTemplateId = _resolveTemplateId(
       templateId ?? _configuredTemplateId(entry, settings),
     );
+    final payload = await _invoicePayloadFromEntry(entry);
 
     return CustomerMetalPurchaseInvoiceService.buildInvoiceBytesForData(
-      _invoiceDataFromEntry(entry),
-      invoiceDate: entry.date,
+      payload.invoice,
+      invoiceDate: payload.invoiceDate,
       templateId: resolvedTemplateId,
       format: PrintFormat.a4,
       displaySettings: settings,
@@ -205,6 +209,83 @@ class CustomerMetalPurchaseLedgerActions {
     return PrintTemplateRegistry.forDocument(
       PrintTemplateDocumentType.purchaseVoucher,
     ).first.id;
+  }
+
+  static Future<_InvoiceBuildPayload> _invoicePayloadFromEntry(
+    CustomerMetalPurchaseEntry entry,
+  ) async {
+    final voucher = await _fetchFullVoucherDetail(entry);
+    if (voucher != null) {
+      return _InvoiceBuildPayload(
+        invoice: _invoiceDataFromVoucher(voucher),
+        invoiceDate: voucher.createdAt,
+      );
+    }
+
+    return _InvoiceBuildPayload(
+      invoice: _invoiceDataFromEntry(entry),
+      invoiceDate: entry.date,
+    );
+  }
+
+  static Future<CustomerMetalPurchaseVoucherDetail?> _fetchFullVoucherDetail(
+    CustomerMetalPurchaseEntry entry,
+  ) async {
+    if (!_canResolvePurchaseVoucher(entry)) {
+      return null;
+    }
+
+    try {
+      final repository = DriftCustomerMetalPurchaseLedgerRepository(
+        AppDatabase(),
+      );
+      return await repository.fetchVoucherDetail(entry.sourceDocumentId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static bool _canResolvePurchaseVoucher(CustomerMetalPurchaseEntry entry) {
+    final source = entry.source.trim().toLowerCase();
+    return !source.contains('trade') && !source.contains('exchange');
+  }
+
+  static CustomerMetalPurchaseInvoiceData _invoiceDataFromVoucher(
+    CustomerMetalPurchaseVoucherDetail voucher,
+  ) {
+    return CustomerMetalPurchaseInvoiceData(
+      purchaseNo: voucher.voucherNo,
+      sellerName: voucher.partyName,
+      sellerMobile: voucher.mobile ?? '',
+      sellerAddress: voucher.city ?? '',
+      sellerPanOrAadhaar: voucher.panNumber ?? '',
+      sellerPhotoPath: voucher.sellerPhotoPath ?? '',
+      payoutCommitmentDate: voucher.promiseDate,
+      lineItems: [
+        for (final line in voucher.lines)
+          CustomerMetalPurchaseInvoiceLine(
+            metalKey: line.metalType.toLowerCase(),
+            metalName: line.metalType.toUpperCase(),
+            description: line.itemDescription,
+            grossWeight: line.grossWeight,
+            lessWeight: line.lessWeight,
+            netWeight: line.netWeight,
+            purity: line.purity,
+            fineWeight: line.fineWeight,
+            rate: line.rate,
+            totalValue: line.lineAmount,
+          ),
+      ],
+      grossPurchaseAmount: voucher.grossAmount,
+      sellerPayable: voucher.grandTotal,
+      cashPaid: voucher.cashPaid,
+      upiPaid: voucher.upiPaid + voucher.bankPaid,
+      cardPaid: voucher.cardPaid,
+      totalPaid: voucher.totalPaid,
+      balanceDue: voucher.balanceDue,
+      hasPendingSellerPayout: voucher.balanceDue > 0.005,
+      hasSellerPayoutExcess: voucher.balanceDue < -0.005,
+    );
   }
 
   static CustomerMetalPurchaseInvoiceData _invoiceDataFromEntry(
@@ -338,4 +419,14 @@ class CustomerMetalPurchaseLedgerActions {
       );
     }
   }
+}
+
+class _InvoiceBuildPayload {
+  final CustomerMetalPurchaseInvoiceData invoice;
+  final DateTime invoiceDate;
+
+  const _InvoiceBuildPayload({
+    required this.invoice,
+    required this.invoiceDate,
+  });
 }

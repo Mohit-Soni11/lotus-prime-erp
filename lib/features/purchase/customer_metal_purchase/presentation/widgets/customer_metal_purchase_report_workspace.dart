@@ -492,7 +492,7 @@ class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
                       : Icons.image_not_supported_rounded,
                   size: 18,
                   color: widget.entry.hasSellerPhoto
-                      ? PurchaseEntryColors.purchaseAccent
+                      ? const Color(0xFF2563EB)
                       : const Color(0xFF9CA3AF),
                 ),
               ),
@@ -525,6 +525,9 @@ class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
                         Icons.image_rounded,
                         size: 18,
                       ),
+                      iconColor: widget.entry.hasSellerPhoto
+                          ? const Color(0xFF2563EB)
+                          : null,
                     ),
                     _LedgerActionIconButton(
                       tooltip: 'Print PDF',
@@ -675,11 +678,13 @@ class _LedgerActionIconButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback? onPressed;
   final Widget icon;
+  final Color? iconColor;
 
   const _LedgerActionIconButton({
     required this.tooltip,
     required this.onPressed,
     required this.icon,
+    this.iconColor,
   });
 
   @override
@@ -688,7 +693,7 @@ class _LedgerActionIconButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       icon: IconTheme(
-        data: const IconThemeData(color: Colors.black, size: 18),
+        data: IconThemeData(color: iconColor ?? Colors.black, size: 18),
         child: icon,
       ),
       style: IconButton.styleFrom(
