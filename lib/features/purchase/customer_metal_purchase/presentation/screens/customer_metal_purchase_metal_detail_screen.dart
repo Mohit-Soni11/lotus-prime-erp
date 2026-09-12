@@ -6,9 +6,9 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_empty_state.dart';
-import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_entry_card.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_ledger_app_bar.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_summary_strip.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/melting_checkout/customer_metal_melting_checkout_table.dart';
 import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dart';
 
 class CustomerMetalPurchaseMetalDetailScreen extends StatefulWidget {
@@ -31,6 +31,25 @@ class _CustomerMetalPurchaseMetalDetailScreenState
   CustomerMetalPurchaseEntryView _view =
       CustomerMetalPurchaseEntryView.available;
   final Set<String> _selectedEntryKeys = {};
+  List<CustomerMetalPurchaseEntry> _checkoutEntries = [];
+  bool _isCheckoutLoading = true;
+  String? _checkoutError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCheckoutEntries();
+  }
+
+  @override
+  void didUpdateWidget(CustomerMetalPurchaseMetalDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller ||
+        oldWidget.metal != widget.metal) {
+      _selectedEntryKeys.clear();
+      _loadCheckoutEntries();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,21 +66,24 @@ class _CustomerMetalPurchaseMetalDetailScreenState
         child: ListenableBuilder(
           listenable: widget.controller,
           builder: (context, _) {
-            final summary = widget.controller.summaryForMetal(widget.metal);
-            final entries = widget.controller.entriesForMetal(
-              widget.metal,
-              view: _view,
+            final summary = buildCustomerMetalPurchaseSummary(
+              metal: widget.metal,
+              entries: _checkoutEntries
+                  .where((entry) => entry.isAvailable)
+                  .toList(growable: false),
             );
-            final selectedEntries = widget.controller
-                .entriesForMetal(widget.metal)
-                .where((entry) => _selectedEntryKeys.contains(_entryKey(entry)))
+            final entries = _entriesForCurrentView();
+            final availableEntries = entries
+                .where((entry) => entry.isAvailable)
                 .toList(growable: false);
-
-            _selectedEntryKeys.removeWhere(
-              (key) => !widget.controller
-                  .entriesForMetal(widget.metal)
-                  .any((entry) => _entryKey(entry) == key),
-            );
+            final allVisibleSelected = availableEntries.isNotEmpty &&
+                availableEntries.every(
+                  (entry) => _selectedEntryKeys.contains(_entryKey(entry)),
+                );
+            final selectedEntries = _checkoutEntries
+                .where((entry) => _selectedEntryKeys.contains(_entryKey(entry)))
+                .where((entry) => entry.isAvailable)
+                .toList(growable: false);
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
@@ -72,10 +94,20 @@ class _CustomerMetalPurchaseMetalDetailScreenState
                     accent: accent,
                   ),
                   const SizedBox(height: 14),
+                  if (_isCheckoutLoading) ...[
+                    LinearProgressIndicator(
+                      minHeight: 3,
+                      color: accent,
+                      backgroundColor: accent.withValues(alpha: 0.12),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   _DetailActionBar(
                     accent: accent,
                     view: _view,
                     selectedCount: selectedEntries.length,
+                    availableCount: availableEntries.length,
+                    allVisibleSelected: allVisibleSelected,
                     onViewChanged: (view) {
                       setState(() {
                         _view = view;
@@ -84,58 +116,46 @@ class _CustomerMetalPurchaseMetalDetailScreenState
                         }
                       });
                     },
+                    onSelectAllVisible: availableEntries.isEmpty
+                        ? null
+                        : () => _selectAllVisible(availableEntries),
+                    onClearSelection: _selectedEntryKeys.isEmpty
+                        ? null
+                        : () => setState(_selectedEntryKeys.clear),
                     onCreateMeltingBatch: selectedEntries.isEmpty
                         ? null
                         : () => _confirmMeltingBatch(selectedEntries),
                   ),
                   const SizedBox(height: 16),
-                  if (entries.isEmpty)
+                  if (_checkoutError != null)
+                    CustomerMetalPurchaseEmptyState(
+                      message:
+                          'Unable to load melting checkout records. $_checkoutError',
+                    )
+                  else if (_isCheckoutLoading && _checkoutEntries.isEmpty)
+                    const _CheckoutLoadingState()
+                  else if (entries.isEmpty)
                     CustomerMetalPurchaseEmptyState(
                       message:
                           'No ${widget.metal.label.toLowerCase()} ${_view.label.toLowerCase()} found.',
                     )
                   else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: entries.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final entry = entries[index];
-                        return CustomerMetalPurchaseEntryCard(
-                          entry: entry,
-                          accent: accent,
-                          isSelected: _selectedEntryKeys.contains(
-                            _entryKey(entry),
-                          ),
-                          onSelectionChanged: entry.isAvailable
-                              ? (selected) {
-                                  setState(() {
-                                    if (selected) {
-                                      _selectedEntryKeys.add(_entryKey(entry));
-                                    } else {
-                                      _selectedEntryKeys
-                                          .remove(_entryKey(entry));
-                                    }
-                                  });
-                                }
-                              : null,
-                          onCustomerPressed: entry.customerId == null
-                              ? null
-                              : () => _openCustomerProfile(
-                                    context,
-                                    entry.customerId!,
-                                  ),
-                          onReferencePressed: () => _openSourceDocument(
-                            context,
-                            entry,
-                          ),
-                          onReturnPressed: () => _confirmReturn(
-                            context,
-                            entry,
-                          ),
-                        );
+                    CustomerMetalMeltingCheckoutTable(
+                      entries: entries,
+                      selectedEntryKeys: _selectedEntryKeys,
+                      accent: accent,
+                      entryKeyBuilder: _entryKey,
+                      onSelectionToggled: _toggleSelection,
+                      onCustomerPressed: (entry) {
+                        final customerId = entry.customerId;
+                        if (customerId != null) {
+                          _openCustomerProfile(context, customerId);
+                        }
                       },
+                      onReferencePressed: (entry) =>
+                          _openSourceDocument(context, entry),
+                      onReturnPressed: (entry) =>
+                          _confirmReturn(context, entry),
                     ),
                 ],
               ),
@@ -144,6 +164,63 @@ class _CustomerMetalPurchaseMetalDetailScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _loadCheckoutEntries({bool showLoader = true}) async {
+    if (mounted) {
+      setState(() {
+        if (showLoader) {
+          _isCheckoutLoading = true;
+        }
+        _checkoutError = null;
+      });
+    }
+
+    try {
+      final entries = await widget.controller.fetchMeltingCheckoutEntries(
+        metal: widget.metal,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _checkoutEntries = entries;
+        _isCheckoutLoading = false;
+        _checkoutError = null;
+        _pruneSelection(entries);
+      });
+    } catch (exception) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isCheckoutLoading = false;
+        _checkoutError = exception.toString();
+      });
+    }
+  }
+
+  List<CustomerMetalPurchaseEntry> _entriesForCurrentView() {
+    return _checkoutEntries.where((entry) {
+      switch (_view) {
+        case CustomerMetalPurchaseEntryView.available:
+          return entry.isAvailable;
+        case CustomerMetalPurchaseEntryView.transferred:
+          return entry.isTransferredToMelting;
+        case CustomerMetalPurchaseEntryView.returned:
+          return entry.isReturned;
+        case CustomerMetalPurchaseEntryView.all:
+          return true;
+      }
+    }).toList(growable: false);
+  }
+
+  void _pruneSelection(List<CustomerMetalPurchaseEntry> entries) {
+    final availableKeys = {
+      for (final entry in entries)
+        if (entry.isAvailable) _entryKey(entry),
+    };
+    _selectedEntryKeys.removeWhere((key) => !availableKeys.contains(key));
   }
 
   void _openCustomerProfile(BuildContext context, int customerId) {
@@ -176,21 +253,12 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Checkout to Melting'),
-          content: Text(
-            'Move ${selectedEntries.length} selected ${widget.metal.label.toLowerCase()} item(s) into melting checkout. These items will be marked as melted and closed, removed from available shop metal, and will not be treated as returnable customer metal.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Confirm Checkout'),
-            ),
-          ],
+        return _LightConfirmationDialog(
+          title: 'Checkout to Melting',
+          message:
+              'Move ${selectedEntries.length} selected ${widget.metal.label.toLowerCase()} item(s) into melting checkout. These items will be marked as melted and closed, removed from available shop metal, and will not be treated as returnable customer metal.',
+          confirmLabel: 'Confirm Checkout',
+          accent: _accentFor(widget.metal),
         );
       },
     );
@@ -208,6 +276,10 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     }
 
     setState(_selectedEntryKeys.clear);
+    await _loadCheckoutEntries(showLoader: false);
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Melting checkout $batchNo completed.')),
     );
@@ -224,21 +296,12 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Return Metal to Seller'),
-          content: Text(
-            'Mark ${entry.referenceNo} as returned to ${entry.customerName}?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Confirm Return'),
-            ),
-          ],
+        return _LightConfirmationDialog(
+          title: 'Return Metal to Seller',
+          message:
+              'Mark ${entry.referenceNo} as returned to ${entry.customerName}?',
+          confirmLabel: 'Confirm Return',
+          accent: _accentFor(widget.metal),
         );
       },
     );
@@ -253,9 +316,36 @@ class _CustomerMetalPurchaseMetalDetailScreenState
     }
 
     setState(() => _selectedEntryKeys.remove(_entryKey(entry)));
+    await _loadCheckoutEntries(showLoader: false);
+    if (!context.mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${entry.referenceNo} marked as returned.')),
     );
+  }
+
+  void _toggleSelection(CustomerMetalPurchaseEntry entry) {
+    if (!entry.isAvailable) {
+      return;
+    }
+
+    setState(() {
+      final key = _entryKey(entry);
+      if (_selectedEntryKeys.contains(key)) {
+        _selectedEntryKeys.remove(key);
+      } else {
+        _selectedEntryKeys.add(key);
+      }
+    });
+  }
+
+  void _selectAllVisible(List<CustomerMetalPurchaseEntry> entries) {
+    setState(() {
+      for (final entry in entries) {
+        _selectedEntryKeys.add(_entryKey(entry));
+      }
+    });
   }
 
   String _entryKey(CustomerMetalPurchaseEntry entry) {
@@ -276,18 +366,128 @@ class _CustomerMetalPurchaseMetalDetailScreenState
   }
 }
 
+class _LightConfirmationDialog extends StatelessWidget {
+  final String title;
+  final String message;
+  final String confirmLabel;
+  final Color accent;
+
+  const _LightConfirmationDialog({
+    required this.title,
+    required this.message,
+    required this.confirmLabel,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 18,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: accent.withValues(alpha: 0.30)),
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 10),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 22),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+      content: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          height: 1.45,
+          letterSpacing: 0,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black,
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(150, 40),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(confirmLabel),
+        ),
+      ],
+    );
+  }
+}
+
+class _CheckoutLoadingState extends StatelessWidget {
+  const _CheckoutLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E0D8)),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(strokeWidth: 3),
+        ),
+      ),
+    );
+  }
+}
+
 class _DetailActionBar extends StatelessWidget {
   final Color accent;
   final CustomerMetalPurchaseEntryView view;
   final int selectedCount;
+  final int availableCount;
+  final bool allVisibleSelected;
   final ValueChanged<CustomerMetalPurchaseEntryView> onViewChanged;
+  final VoidCallback? onSelectAllVisible;
+  final VoidCallback? onClearSelection;
   final VoidCallback? onCreateMeltingBatch;
 
   const _DetailActionBar({
     required this.accent,
     required this.view,
     required this.selectedCount,
+    required this.availableCount,
+    required this.allVisibleSelected,
     required this.onViewChanged,
+    required this.onSelectAllVisible,
+    required this.onClearSelection,
     required this.onCreateMeltingBatch,
   });
 
@@ -320,24 +520,63 @@ class _DetailActionBar extends StatelessWidget {
                 ),
             ],
           ),
-          FilledButton.icon(
-            onPressed: onCreateMeltingBatch,
-            icon: const Icon(Icons.local_fire_department_rounded, size: 18),
-            label: Text(
-              selectedCount == 0
-                  ? 'Checkout to Melting'
-                  : 'Checkout to Melting ($selectedCount)',
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: const Color(0xFFF1F1F1),
-              disabledForegroundColor: Colors.black.withValues(alpha: 0.45),
-              minimumSize: const Size(190, 42),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed:
+                    allVisibleSelected ? onClearSelection : onSelectAllVisible,
+                icon: Icon(
+                  allVisibleSelected
+                      ? Icons.check_box_rounded
+                      : Icons.check_box_outline_blank_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  allVisibleSelected
+                      ? 'Clear Selection'
+                      : 'Select All ($availableCount)',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  disabledForegroundColor: Colors.black.withValues(alpha: 0.38),
+                  side: const BorderSide(color: Color(0xFFD8D2C8)),
+                  minimumSize: const Size(150, 42),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
-            ),
+              FilledButton.icon(
+                onPressed: onCreateMeltingBatch,
+                icon: const Icon(Icons.local_fire_department_rounded, size: 18),
+                label: Text(
+                  selectedCount == 0
+                      ? 'Checkout to Melting'
+                      : 'Checkout to Melting ($selectedCount)',
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFF1F1F1),
+                  disabledForegroundColor: Colors.black.withValues(alpha: 0.45),
+                  minimumSize: const Size(190, 42),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

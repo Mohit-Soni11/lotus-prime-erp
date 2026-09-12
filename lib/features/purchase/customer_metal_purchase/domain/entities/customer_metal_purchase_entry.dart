@@ -101,7 +101,7 @@ class CustomerMetalPurchaseEntry {
       return 'PENDING';
     }
     final normalized = paymentStatus.trim().toUpperCase();
-    return normalized.isEmpty ? 'PAID' : normalized;
+    return _normalizePayoutStatus(normalized);
   }
 
   String get payoutStatusLabel {
@@ -187,6 +187,27 @@ class CustomerMetalPurchaseEntry {
           transferredToMeltingAt ?? this.transferredToMeltingAt,
       meltingBatchNo: meltingBatchNo ?? this.meltingBatchNo,
     );
+  }
+}
+
+String _normalizePayoutStatus(String value) {
+  switch (value) {
+    case '':
+    case 'PAID':
+    case 'FULLY_PAID':
+    case 'SETTLED':
+    case 'RETURN_MELTING':
+      return 'PAID';
+    case 'PARTIAL':
+    case 'PART_PAID':
+    case 'PARTIALLY_PAID':
+      return 'PARTIAL';
+    case 'PENDING':
+    case 'UNPAID':
+    case 'DUE':
+      return 'PENDING';
+    default:
+      return value;
   }
 }
 

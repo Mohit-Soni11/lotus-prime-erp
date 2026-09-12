@@ -128,6 +128,18 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
         .toList(growable: false);
   }
 
+  Future<List<CustomerMetalPurchaseEntry>> fetchMeltingCheckoutEntries({
+    required CustomerMetalPurchaseMetal metal,
+  }) async {
+    final ledgerEntries = await _repository.fetchLedger();
+    return ledgerEntries
+        .where(
+          (entry) => _normalizeMetal(entry.metalType) == metal.storageValue,
+        )
+        .toList(growable: false)
+      ..sort(_sortCheckoutEntry);
+  }
+
   CustomerMetalPurchaseMetalSummary summaryForMetal(
     CustomerMetalPurchaseMetal metal,
   ) {
@@ -380,6 +392,23 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
       default:
         return true;
     }
+  }
+
+  int _sortCheckoutEntry(
+    CustomerMetalPurchaseEntry left,
+    CustomerMetalPurchaseEntry right,
+  ) {
+    final dateComparison = left.date.compareTo(right.date);
+    if (dateComparison != 0) {
+      return dateComparison;
+    }
+
+    final referenceComparison = left.referenceNo.compareTo(right.referenceNo);
+    if (referenceComparison != 0) {
+      return referenceComparison;
+    }
+
+    return left.id.compareTo(right.id);
   }
 
   String _shortDate(DateTime value) {
