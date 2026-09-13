@@ -48,7 +48,7 @@ class CustomerMetalPurchaseSummaryStrip extends StatelessWidget {
             children: [
               _SummaryTile(
                 width: width,
-                label: 'Available Gross',
+                label: '${summary.metal.label} Available Gross',
                 value: CustomerMetalPurchaseFormatters.weight(
                   summary.grossWeight,
                 ),
@@ -56,7 +56,7 @@ class CustomerMetalPurchaseSummaryStrip extends StatelessWidget {
               ),
               _SummaryTile(
                 width: width,
-                label: 'Available Fine',
+                label: '${summary.metal.label} Available Fine',
                 value: CustomerMetalPurchaseFormatters.weight(
                   summary.fineWeight,
                 ),
@@ -64,19 +64,19 @@ class CustomerMetalPurchaseSummaryStrip extends StatelessWidget {
               ),
               _SummaryTile(
                 width: width,
-                label: 'Settlement Value',
+                label: '${summary.metal.label} Settlement Value',
                 value: CustomerMetalPurchaseFormatters.amount(summary.amount),
                 accent: accent,
               ),
               _SummaryTile(
                 width: width,
-                label: 'Total Items',
+                label: '${summary.metal.label} Items',
                 value: summary.entryCount.toString(),
                 accent: accent,
               ),
               _SummaryTile(
                 width: width,
-                label: 'Total Customers',
+                label: '${summary.metal.label} Customers',
                 value: summary.customerCount.toString(),
                 accent: accent,
               ),
@@ -108,9 +108,9 @@ class _SummaryTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAFAFA),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E0D8)),
+          border: Border.all(color: const Color(0xFFD8D2C8)),
         ),
         child: Row(
           children: [
@@ -132,8 +132,8 @@ class _SummaryTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
                       color: Colors.black,
                     ),
                   ),
@@ -143,8 +143,8 @@ class _SummaryTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.manrope(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
                       color: Colors.black,
                     ),
                   ),

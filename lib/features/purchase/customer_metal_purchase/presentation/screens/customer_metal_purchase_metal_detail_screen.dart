@@ -105,6 +105,8 @@ class _CustomerMetalPurchaseMetalDetailScreenState
                   _DetailActionBar(
                     accent: accent,
                     view: _view,
+                    periodLabel: widget.controller.periodLabel,
+                    currentDateLabel: widget.controller.currentDateLabel,
                     selectedCount: selectedEntries.length,
                     availableCount: availableEntries.length,
                     allVisibleSelected: allVisibleSelected,
@@ -204,13 +206,27 @@ class _CustomerMetalPurchaseMetalDetailScreenState
         case CustomerMetalPurchaseEntryView.available:
           return entry.isAvailable;
         case CustomerMetalPurchaseEntryView.transferred:
-          return entry.isTransferredToMelting;
+          return entry.isTransferredToMelting &&
+              _isWithinReportPeriod(entry.transferredToMeltingAt);
         case CustomerMetalPurchaseEntryView.returned:
-          return entry.isReturned;
+          return entry.isReturned && _isWithinReportPeriod(entry.returnedAt);
         case CustomerMetalPurchaseEntryView.all:
-          return true;
+          return entry.isTransferredToMelting &&
+              _isWithinReportPeriod(entry.transferredToMeltingAt);
       }
     }).toList(growable: false);
+  }
+
+  bool _isWithinReportPeriod(DateTime? value) {
+    if (value == null) {
+      return false;
+    }
+    final startDate = widget.controller.startDate;
+    final endDate = widget.controller.endDate;
+    if (startDate == null || endDate == null) {
+      return true;
+    }
+    return !value.isBefore(startDate) && !value.isAfter(endDate);
   }
 
   void _pruneSelection(List<CustomerMetalPurchaseEntry> entries) {
@@ -429,6 +445,8 @@ class _CheckoutLoadingState extends StatelessWidget {
 class _DetailActionBar extends StatelessWidget {
   final Color accent;
   final CustomerMetalPurchaseEntryView view;
+  final String periodLabel;
+  final String currentDateLabel;
   final int selectedCount;
   final int availableCount;
   final bool allVisibleSelected;
@@ -440,6 +458,8 @@ class _DetailActionBar extends StatelessWidget {
   const _DetailActionBar({
     required this.accent,
     required this.view,
+    required this.periodLabel,
+    required this.currentDateLabel,
     required this.selectedCount,
     required this.availableCount,
     required this.allVisibleSelected,
@@ -451,6 +471,9 @@ class _DetailActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canSelectForCheckout =
+        view == CustomerMetalPurchaseEntryView.available;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -465,6 +488,11 @@ class _DetailActionBar extends StatelessWidget {
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
+          _CheckoutPeriodBadge(
+            accent: accent,
+            periodLabel: periodLabel,
+            currentDateLabel: currentDateLabel,
+          ),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -478,63 +506,131 @@ class _DetailActionBar extends StatelessWidget {
                 ),
             ],
           ),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed:
-                    allVisibleSelected ? onClearSelection : onSelectAllVisible,
-                icon: Icon(
-                  allVisibleSelected
-                      ? Icons.check_box_rounded
-                      : Icons.check_box_outline_blank_rounded,
-                  size: 18,
+          if (canSelectForCheckout)
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: allVisibleSelected
+                      ? onClearSelection
+                      : onSelectAllVisible,
+                  icon: Icon(
+                    allVisibleSelected
+                        ? Icons.check_box_rounded
+                        : Icons.check_box_outline_blank_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    allVisibleSelected
+                        ? 'Clear Selection'
+                        : 'Select All ($availableCount)',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    disabledForegroundColor:
+                        Colors.black.withValues(alpha: 0.38),
+                    side: const BorderSide(color: Color(0xFFD8D2C8)),
+                    minimumSize: const Size(150, 42),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
-                label: Text(
-                  allVisibleSelected
-                      ? 'Clear Selection'
-                      : 'Select All ($availableCount)',
+                FilledButton.icon(
+                  onPressed: onCreateMeltingBatch,
+                  icon: const Icon(
+                    Icons.local_fire_department_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    selectedCount == 0
+                        ? 'Checkout to Melting'
+                        : 'Checkout to Melting ($selectedCount)',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFF1F1F1),
+                    disabledForegroundColor:
+                        Colors.black.withValues(alpha: 0.45),
+                    minimumSize: const Size(190, 42),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  disabledForegroundColor: Colors.black.withValues(alpha: 0.38),
-                  side: const BorderSide(color: Color(0xFFD8D2C8)),
-                  minimumSize: const Size(150, 42),
-                  textStyle: const TextStyle(
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckoutPeriodBadge extends StatelessWidget {
+  final Color accent;
+  final String periodLabel;
+  final String currentDateLabel;
+
+  const _CheckoutPeriodBadge({
+    required this.accent,
+    required this.periodLabel,
+    required this.currentDateLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 270),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withValues(alpha: 0.26)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.date_range_rounded, color: accent, size: 20),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Checkout Period',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.black,
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
-              ),
-              FilledButton.icon(
-                onPressed: onCreateMeltingBatch,
-                icon: const Icon(Icons.local_fire_department_rounded, size: 18),
-                label: Text(
-                  selectedCount == 0
-                      ? 'Checkout to Melting'
-                      : 'Checkout to Melting ($selectedCount)',
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFF1F1F1),
-                  disabledForegroundColor: Colors.black.withValues(alpha: 0.45),
-                  minimumSize: const Size(190, 42),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
+                const SizedBox(height: 3),
+                Text(
+                  '$periodLabel | Current Date: $currentDateLabel',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -567,8 +663,8 @@ class _EntryViewButton extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOutCubic,
-          height: 34,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: selected ? Colors.black : Colors.white,
             borderRadius: BorderRadius.circular(8),
@@ -596,8 +692,8 @@ class _EntryViewButton extends StatelessWidget {
               DefaultTextStyle.merge(
                 style: TextStyle(
                   color: textColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
                 ),
                 child: label,
               ),

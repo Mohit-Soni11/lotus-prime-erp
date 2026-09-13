@@ -33,6 +33,7 @@ void main() {
                   date: DateTime(2026, 9, 2),
                   customerName: 'MOHIT SONI',
                   amount: 64000,
+                  itemDescription: 'NOSE PIN | Return melting article',
                   isTransferredToMelting: true,
                   transferredToMeltingAt: DateTime(2026, 9, 5, 10, 15),
                   meltingBatchNo: 'CMB-GOLD-20260905-101500',
@@ -61,7 +62,10 @@ void main() {
     expect(find.text('Ready to Melt'), findsOneWidget);
     expect(find.text('Melted & Closed'), findsOneWidget);
     expect(find.text('05 Sep 2026'), findsOneWidget);
-    expect(find.text('CMB-GOLD-20260905-101500'), findsOneWidget);
+    expect(find.text('MT-09-26'), findsOneWidget);
+    expect(find.text('CMB-GOLD-20260905-101500'), findsNothing);
+    expect(find.text('NOSE PIN | Direct Melting'), findsOneWidget);
+    expect(find.textContaining('Return melting'), findsNothing);
     expect(find.byType(Checkbox), findsOneWidget);
     expect(find.byIcon(Icons.lock_rounded), findsOneWidget);
     expect(find.byIcon(Icons.assignment_return_rounded), findsNothing);
@@ -74,6 +78,7 @@ CustomerMetalPurchaseEntry _entry({
   required DateTime date,
   required String customerName,
   required double amount,
+  String itemDescription = 'Old gold jewellery',
   bool isTransferredToMelting = false,
   DateTime? transferredToMeltingAt,
   String? meltingBatchNo,
@@ -87,7 +92,7 @@ CustomerMetalPurchaseEntry _entry({
     referenceNo: referenceNo,
     customerName: customerName,
     metalType: 'GOLD',
-    itemDescription: 'Old gold jewellery',
+    itemDescription: itemDescription,
     grossWeight: 10,
     netWeight: 9.5,
     purity: 91.6,

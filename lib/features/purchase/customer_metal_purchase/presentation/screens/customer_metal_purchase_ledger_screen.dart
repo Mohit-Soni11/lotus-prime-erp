@@ -13,7 +13,7 @@ class CustomerMetalPurchaseLedgerScreen extends StatefulWidget {
 
   const CustomerMetalPurchaseLedgerScreen({
     super.key,
-    this.title = 'Customer Metal Purchase Report',
+    this.title = 'Metal Purchase Report',
   });
 
   @override

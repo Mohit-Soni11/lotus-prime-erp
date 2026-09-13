@@ -5,6 +5,7 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_voucher_detail.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/repositories/customer_metal_purchase_ledger_repository.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/screens/customer_metal_checkout_report_screen.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_metal_detail_screen.dart';
 
 void main() {
@@ -40,6 +41,11 @@ void main() {
     expect(find.text('OLD MONTH SELLER'), findsOneWidget);
     expect(find.text('CURRENT MONTH SELLER'), findsOneWidget);
     expect(find.text('Select All (2)'), findsOneWidget);
+    expect(find.text('Checkout Period'), findsOneWidget);
+    expect(
+      find.text('September 2026 | Current Date: 12 September 2026'),
+      findsOneWidget,
+    );
 
     expect(controller.entries.length, 1);
     expect(controller.entries.single.referenceNo, 'AJ-PUR-SEP-2026-0002');
@@ -86,6 +92,71 @@ void main() {
     expect(title.style?.color, Colors.black);
     expect(title.style?.fontWeight, FontWeight.w900);
   });
+
+  testWidgets('monthly checkout tab shows only current month melted records',
+      (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = CustomerMetalPurchaseLedgerController(
+      repository: _CheckoutRepository(),
+      currentDate: DateTime(2026, 9, 12),
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CustomerMetalPurchaseMetalDetailScreen(
+          metal: CustomerMetalPurchaseMetal.gold,
+          controller: controller,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Monthly Checkout'));
+    await tester.pump(const Duration(milliseconds: 180));
+
+    expect(find.text('AJ-PUR-MELTED-SEP-2026-0004'), findsOneWidget);
+    expect(find.text('CURRENT CLOSED SELLER'), findsOneWidget);
+    expect(find.text('Melted & Closed'), findsWidgets);
+    expect(find.text('AJ-PUR-MELTED-2026-0003'), findsNothing);
+    expect(find.text('OLD CLOSED SELLER'), findsNothing);
+    expect(find.text('AJ-PUR-OLD-2026-0001'), findsNothing);
+    expect(find.text('AJ-PUR-SEP-2026-0002'), findsNothing);
+    expect(find.text('OLD MONTH SELLER'), findsNothing);
+    expect(find.text('CURRENT MONTH SELLER'), findsNothing);
+    expect(find.text('Select All (0)'), findsNothing);
+  });
+
+  testWidgets('checkout report groups records by melting checkout date',
+      (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: CustomerMetalCheckoutReportScreen(
+          repository: _CheckoutRepository(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.text('September 2026 Checkout Ledger'), findsOneWidget);
+    expect(find.text('Checkout Date'), findsOneWidget);
+    expect(find.text('AJ-PUR-MELTED-SEP-2026-0004'), findsOneWidget);
+    expect(find.text('08 Sep 2026'), findsOneWidget);
+    expect(find.text('AJ-PUR-MELTED-2026-0003'), findsNothing);
+    expect(find.text('OLD CLOSED SELLER'), findsNothing);
+  });
 }
 
 class _CheckoutRepository implements CustomerMetalPurchaseLedgerRepository {
@@ -120,10 +191,19 @@ class _CheckoutRepository implements CustomerMetalPurchaseLedgerRepository {
         id: 3,
         referenceNo: 'AJ-PUR-MELTED-2026-0003',
         date: DateTime(2026, 8, 4),
-        customerName: 'CLOSED SELLER',
+        customerName: 'OLD CLOSED SELLER',
         isTransferredToMelting: true,
         transferredToMeltingAt: DateTime(2026, 8, 8),
         meltingBatchNo: 'CMB-GOLD-20260808-101500',
+      ),
+      _entry(
+        id: 4,
+        referenceNo: 'AJ-PUR-MELTED-SEP-2026-0004',
+        date: DateTime(2026, 7, 4),
+        customerName: 'CURRENT CLOSED SELLER',
+        isTransferredToMelting: true,
+        transferredToMeltingAt: DateTime(2026, 9, 8),
+        meltingBatchNo: 'MT-09-26-01',
       ),
     ];
   }

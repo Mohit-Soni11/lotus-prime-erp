@@ -16,7 +16,7 @@ enum CustomerMetalPurchaseEntryView {
   available('Ready to Melt'),
   transferred('Melted & Closed'),
   returned('Returned to Seller'),
-  all('All Records');
+  all('Monthly Checkout');
 
   final String label;
 

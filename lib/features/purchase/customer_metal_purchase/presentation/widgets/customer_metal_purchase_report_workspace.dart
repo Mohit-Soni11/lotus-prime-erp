@@ -1,15 +1,14 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_controller.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/application/customer_metal_purchase_ledger_models.dart';
-import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/entities/customer_metal_purchase_entry.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_metal_detail_screen.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/utils/customer_metal_purchase_formatters.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_empty_state.dart';
-import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_actions/customer_metal_purchase_ledger_actions.dart';
+import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/customer_metal_purchase_ledger_table.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_filters/customer_metal_purchase_report_filter_bar.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_metal_cards/customer_metal_purchase_metal_card_grid.dart';
 import 'package:lotus_erp/features/purchase/customer_metal_purchase/presentation/widgets/report_navigation/customer_metal_purchase_report_command_strip.dart';
@@ -36,7 +35,11 @@ class CustomerMetalPurchaseReportWorkspace extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CustomerMetalPurchaseReportFilterBar(controller: controller),
+          CustomerMetalPurchaseReportFilterBar(
+            controller: controller,
+            onOpenCheckoutReport: () =>
+                context.push(RoutePaths.customerMetalCheckoutReport),
+          ),
           const SizedBox(height: 16),
           _ReportSectionHeader(
             title: 'Metal Drilldown - ${controller.periodLabel}',
@@ -103,7 +106,7 @@ class CustomerMetalPurchaseReportBody extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (controller.selectedTab) {
       case CustomerMetalPurchaseReportTab.ledger:
-        return _LedgerTable(
+        return CustomerMetalPurchaseLedgerTable(
           title: 'Customer Metal Purchase Ledger',
           subtitle: controller.filteredRecordRangeLabel,
           entries: controller.filteredEntries,
@@ -119,7 +122,7 @@ class CustomerMetalPurchaseReportBody extends StatelessWidget {
           summaries: controller.sellerSummaries,
         );
       case CustomerMetalPurchaseReportTab.pendingPayout:
-        return _LedgerTable(
+        return CustomerMetalPurchaseLedgerTable(
           title: 'Pending Seller Payout Ledger',
           subtitle: controller.filteredRecordRangeLabel,
           entries: controller.pendingEntries,
@@ -132,96 +135,6 @@ class CustomerMetalPurchaseReportBody extends StatelessWidget {
         );
     }
   }
-}
-
-class _LedgerTable extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final List<CustomerMetalPurchaseEntry> entries;
-  final String emptyMessage;
-
-  static const List<_LedgerColumn> _columns = [
-    _LedgerColumn('S. No.', 66),
-    _LedgerColumn('Seller', 210, flexGrow: 0.24),
-    _LedgerColumn('Voucher No', 172, flexGrow: 0.16),
-    _LedgerColumn('Date', 128),
-    _LedgerColumn('Source', 154, flexGrow: 0.12),
-    _LedgerColumn('Metal', 96),
-    _LedgerColumn('Net Wt', 116),
-    _LedgerColumn('Value', 118, flexGrow: 0.10),
-    _LedgerColumn('Paid', 118, flexGrow: 0.10),
-    _LedgerColumn('Pending', 124, flexGrow: 0.10),
-    _LedgerColumn('Metal Status', 174),
-    _LedgerColumn('Payout', 132),
-    _LedgerColumn('Photo', 80),
-    _LedgerColumn('Actions', 128, flexGrow: 0.18),
-  ];
-
-  const _LedgerTable({
-    required this.title,
-    required this.subtitle,
-    required this.entries,
-    this.emptyMessage = 'No customer metal purchase records found.',
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (entries.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ReportSectionHeader(title: title, subtitle: subtitle),
-          const SizedBox(height: 10),
-          CustomerMetalPurchaseEmptyState(message: emptyMessage),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _ReportSectionHeader(title: title, subtitle: subtitle),
-        const SizedBox(height: 10),
-        _ReportSurface(
-          padding: EdgeInsets.zero,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, _baseWidth + 2);
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: tableWidth,
-                  child: Column(
-                    children: [
-                      _LedgerHeader(columns: _columns, tableWidth: tableWidth),
-                      for (var index = 0; index < entries.length; index++)
-                        _LedgerInteractiveRow(
-                          key: ValueKey(
-                            'customer-metal-purchase-ledger-row-${index + 1}',
-                          ),
-                          columns: _columns,
-                          tableWidth: tableWidth,
-                          entry: entries[index],
-                          serialNo: index + 1,
-                          onShowDetails: () =>
-                              CustomerMetalPurchaseLedgerActions.showOptions(
-                            context,
-                            entries[index],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  static double get _baseWidth =>
-      _columns.fold(0, (total, column) => total + column.baseWidth);
 }
 
 class _ReportSectionHeader extends StatelessWidget {
@@ -384,310 +297,6 @@ class _SectionHeaderMetricBadge extends StatelessWidget {
   }
 }
 
-class _LedgerColumn {
-  final String label;
-  final double baseWidth;
-  final double flexGrow;
-
-  const _LedgerColumn(
-    this.label,
-    this.baseWidth, {
-    this.flexGrow = 0,
-  });
-}
-
-class _LedgerHeader extends StatelessWidget {
-  final List<_LedgerColumn> columns;
-  final double tableWidth;
-
-  const _LedgerHeader({
-    required this.columns,
-    required this.tableWidth,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFC),
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-      ),
-      child: Row(
-        children: [
-          for (final column in columns)
-            _LedgerCell(
-              width: _columnWidth(column),
-              alignment: column.label == 'S. No.' || column.label == 'Photo'
-                  ? Alignment.center
-                  : Alignment.centerLeft,
-              child: Text(column.label, style: _tableHeadingStyle),
-            ),
-        ],
-      ),
-    );
-  }
-
-  double _columnWidth(_LedgerColumn column) {
-    final baseWidth =
-        columns.fold<double>(0, (total, item) => total + item.baseWidth);
-    final extraWidth = math.max(0, tableWidth - baseWidth);
-    return column.baseWidth + extraWidth * column.flexGrow;
-  }
-}
-
-class _LedgerInteractiveRow extends StatefulWidget {
-  final List<_LedgerColumn> columns;
-  final double tableWidth;
-  final CustomerMetalPurchaseEntry entry;
-  final int serialNo;
-  final VoidCallback onShowDetails;
-
-  const _LedgerInteractiveRow({
-    super.key,
-    required this.columns,
-    required this.tableWidth,
-    required this.entry,
-    required this.serialNo,
-    required this.onShowDetails,
-  });
-
-  @override
-  State<_LedgerInteractiveRow> createState() => _LedgerInteractiveRowState();
-}
-
-class _LedgerInteractiveRowState extends State<_LedgerInteractiveRow> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    const accent = PurchaseEntryColors.purchaseAccent;
-    final background =
-        widget.serialNo.isEven ? const Color(0xFFFCFCFD) : Colors.white;
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onShowDetails,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          width: widget.tableWidth,
-          height: 68,
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          transform: Matrix4.translationValues(0, _hovered ? -1 : 0, 0),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _hovered
-                  ? accent.withValues(alpha: 0.70)
-                  : const Color(0xFFE5E7EB),
-              width: 1.5,
-            ),
-            boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      color: accent.withValues(alpha: 0.20),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              _LedgerCell(
-                width: _columnWidth(widget.columns[0]),
-                alignment: Alignment.center,
-                child: Text(
-                  widget.serialNo.toString(),
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[1]),
-                child: _TwoLineCell(
-                  title: widget.entry.customerName,
-                  subtitle: widget.entry.mobile ?? 'Mobile not recorded',
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[2]),
-                child: Text(widget.entry.referenceNo, style: _tableBodyStyle),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[3]),
-                child: Text(
-                  CustomerMetalPurchaseFormatters.date(widget.entry.date),
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[4]),
-                child: Text(
-                  widget.entry.displaySourceLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[5]),
-                child: Text(
-                  widget.entry.metalType.toUpperCase(),
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[6]),
-                child: Text(
-                  CustomerMetalPurchaseFormatters.weight(
-                    widget.entry.netWeight,
-                  ),
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[7]),
-                child: Text(
-                  CustomerMetalPurchaseFormatters.amount(widget.entry.amount),
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[8]),
-                child: Text(
-                  CustomerMetalPurchaseFormatters.amount(
-                    widget.entry.paidAmount,
-                  ),
-                  style: _tableBodyStyle,
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[9]),
-                child: Text(
-                  CustomerMetalPurchaseFormatters.amount(
-                    widget.entry.pendingAmount,
-                  ),
-                  style: _tableBodyStyle.copyWith(
-                    color: widget.entry.pendingAmount > 0.005
-                        ? PurchaseEntryColors.danger
-                        : Colors.black,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[10]),
-                child: _MetalFlowStatusBadge(entry: widget.entry),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[11]),
-                child: _PayoutStatusBadge(entry: widget.entry),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[12]),
-                alignment: Alignment.center,
-                child: Icon(
-                  widget.entry.hasSellerPhoto
-                      ? Icons.image_rounded
-                      : Icons.image_not_supported_rounded,
-                  size: 18,
-                  color: widget.entry.hasSellerPhoto
-                      ? const Color(0xFF2563EB)
-                      : const Color(0xFF9CA3AF),
-                ),
-              ),
-              _LedgerCell(
-                width: _columnWidth(widget.columns[13]),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _LedgerActionIconButton(
-                      tooltip: 'View PDF',
-                      onPressed: () =>
-                          CustomerMetalPurchaseLedgerActions.viewPdf(
-                        context,
-                        widget.entry,
-                      ),
-                      icon: const Icon(
-                        Icons.picture_as_pdf_rounded,
-                        size: 18,
-                      ),
-                    ),
-                    _LedgerActionIconButton(
-                      tooltip: 'View photo',
-                      onPressed: widget.entry.hasSellerPhoto
-                          ? () => CustomerMetalPurchaseLedgerActions.viewPhoto(
-                                context,
-                                widget.entry,
-                              )
-                          : null,
-                      icon: const Icon(
-                        Icons.image_rounded,
-                        size: 18,
-                      ),
-                      iconColor: widget.entry.hasSellerPhoto
-                          ? const Color(0xFF2563EB)
-                          : null,
-                    ),
-                    _LedgerActionIconButton(
-                      tooltip: 'Print PDF',
-                      onPressed: () =>
-                          CustomerMetalPurchaseLedgerActions.printPdf(
-                        context,
-                        widget.entry,
-                      ),
-                      icon: const Icon(Icons.print_rounded, size: 18),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  double _columnWidth(_LedgerColumn column) {
-    final baseWidth = widget.columns.fold<double>(
-      0,
-      (total, item) => total + item.baseWidth,
-    );
-    final contentWidth = math.max(0, widget.tableWidth - 3);
-    final extraWidth = math.max(0, contentWidth - baseWidth);
-    return column.baseWidth + extraWidth * column.flexGrow;
-  }
-}
-
-class _LedgerCell extends StatelessWidget {
-  final double width;
-  final Widget child;
-  final AlignmentGeometry alignment;
-
-  const _LedgerCell({
-    required this.width,
-    required this.child,
-    this.alignment = Alignment.centerLeft,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Align(alignment: alignment, child: child),
-      ),
-    );
-  }
-}
-
 class _MetalSummaryTable extends StatelessWidget {
   final String periodLabel;
   final Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
@@ -776,43 +385,6 @@ class _MetalSummaryTable extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _LedgerActionIconButton extends StatelessWidget {
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final Widget icon;
-  final Color? iconColor;
-
-  const _LedgerActionIconButton({
-    required this.tooltip,
-    required this.onPressed,
-    required this.icon,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      icon: IconTheme(
-        data: IconThemeData(color: iconColor ?? Colors.black, size: 18),
-        child: icon,
-      ),
-      style: IconButton.styleFrom(
-        fixedSize: const Size(32, 32),
-        minimumSize: const Size(32, 32),
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: Colors.black,
-        disabledForegroundColor: Colors.black,
-        hoverColor: Colors.black.withValues(alpha: 0.06),
-        highlightColor: Colors.black.withValues(alpha: 0.06),
-      ),
-      visualDensity: VisualDensity.compact,
     );
   }
 }
@@ -1084,114 +656,6 @@ class _MetricCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TwoLineCell extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _TwoLineCell({
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 190,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: _tableBodyStyle.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: _tableBodyStyle.copyWith(
-              fontSize: 11,
-              color: const Color(0xFF0B1220),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetalFlowStatusBadge extends StatelessWidget {
-  final CustomerMetalPurchaseEntry entry;
-
-  const _MetalFlowStatusBadge({required this.entry});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (entry.metalFlowStatusCode) {
-      'RETURNED' => const Color(0xFF475569),
-      'MELTING' => const Color(0xFF7C2D12),
-      _ => const Color(0xFF047857),
-    };
-
-    return _LedgerStatusBadge(label: entry.metalFlowStatusLabel, color: color);
-  }
-}
-
-class _PayoutStatusBadge extends StatelessWidget {
-  final CustomerMetalPurchaseEntry entry;
-
-  const _PayoutStatusBadge({required this.entry});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (entry.payoutStatusCode) {
-      'PAID' => const Color(0xFF047857),
-      'PARTIAL' => const Color(0xFFB45309),
-      _ => const Color(0xFFB91C1C),
-    };
-
-    return _LedgerStatusBadge(label: entry.payoutStatusLabel, color: color);
-  }
-}
-
-class _LedgerStatusBadge extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _LedgerStatusBadge({
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.24)),
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          label,
-          maxLines: 1,
-          style: GoogleFonts.inter(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0,
-            color: color,
-          ),
         ),
       ),
     );

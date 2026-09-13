@@ -22,7 +22,7 @@ void main() {
 
     final visibleReportEntries = SidebarMenu.menuItems
         .expand((item) => item.subItems)
-        .where((item) => item.displayTitle == 'Customer Metal Purchase Report')
+        .where((item) => item.displayTitle == 'Metal Purchase Report')
         .length;
     expect(visibleReportEntries, 1);
   });

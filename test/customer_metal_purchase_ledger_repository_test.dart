@@ -257,7 +257,7 @@ void main() {
       entries: afterTransfer.where((entry) => entry.isAvailable).toList(),
     );
 
-    expect(batchNo, startsWith('CMB-GOLD-'));
+    expect(batchNo, matches(RegExp(r'^MT-\d{2}-\d{2}-001$')));
     expect(transferred.isTransferredToMelting, isTrue);
     expect(transferred.meltingBatchNo, batchNo);
     expect(transferred.transferredToMeltingAt, isNotNull);

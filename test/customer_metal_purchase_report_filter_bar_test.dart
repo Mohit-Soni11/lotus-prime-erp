@@ -25,8 +25,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Report Controls'), findsOneWidget);
-    expect(find.text('August 2026'), findsOneWidget);
-    expect(find.text('August'), findsOneWidget);
+    expect(find.text('August'), findsWidgets);
     expect(find.text('2026'), findsOneWidget);
     expect(find.text('Custom Range'), findsNothing);
     expect(find.byType(TextField), findsOneWidget);

@@ -42,10 +42,12 @@ class CustomerMetalPurchaseFilterSurface extends StatelessWidget {
 
 class CustomerMetalPurchaseStatusFilter extends StatelessWidget {
   final CustomerMetalPurchaseLedgerController controller;
+  final VoidCallback? onCheckoutReportTap;
 
   const CustomerMetalPurchaseStatusFilter({
     super.key,
     required this.controller,
+    this.onCheckoutReportTap,
   });
 
   @override
@@ -68,9 +70,14 @@ class CustomerMetalPurchaseStatusFilter extends StatelessWidget {
                 selected: controller.paymentStatusFilter == statuses[index],
                 accent: _statusAccent(statuses[index]),
                 showDivider: index > 0,
-                onTap: () => controller.setPaymentStatusFilter(
-                  statuses[index],
-                ),
+                onTap: () {
+                  final status = statuses[index];
+                  if (status == 'CHECKOUT' && onCheckoutReportTap != null) {
+                    onCheckoutReportTap!();
+                    return;
+                  }
+                  controller.setPaymentStatusFilter(status);
+                },
               ),
             ),
         ],

@@ -30,22 +30,21 @@ class CustomerMetalPurchaseVoucherDetailScreen extends StatefulWidget {
 
 class _CustomerMetalPurchaseVoucherDetailScreenState
     extends State<CustomerMetalPurchaseVoucherDetailScreen> {
-  late final AppDatabase? _ownedDatabase;
   late final CustomerMetalPurchaseLedgerRepository _repository;
   late final Future<CustomerMetalPurchaseVoucherDetail?> _voucherFuture;
 
   @override
   void initState() {
     super.initState();
-    _ownedDatabase = widget.repository == null ? AppDatabase() : null;
     _repository = widget.repository ??
-        DriftCustomerMetalPurchaseLedgerRepository(_ownedDatabase!);
+        DriftCustomerMetalPurchaseLedgerRepository(AppDatabase());
     _voucherFuture = _repository.fetchVoucherDetail(widget.voucherId);
   }
 
   @override
   void dispose() {
-    _ownedDatabase?.close();
+    // AppDatabase is a process-wide singleton. Closing it from a detail screen
+    // would shut down the shared connection for the whole app session.
     super.dispose();
   }
 

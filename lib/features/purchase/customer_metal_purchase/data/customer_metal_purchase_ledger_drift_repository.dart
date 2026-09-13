@@ -212,7 +212,7 @@ class DriftCustomerMetalPurchaseLedgerRepository
 
     final now = DateTime.now();
     final nowMs = now.millisecondsSinceEpoch;
-    final batchNo = _buildMeltingBatchNo(metalType, now);
+    final batchNo = await _buildMeltingBatchNo(now);
     final grossWeight = availableEntries.fold<double>(
       0,
       (sum, entry) => sum + entry.grossWeight,
@@ -676,15 +676,47 @@ class DriftCustomerMetalPurchaseLedgerRepository
     return '${source.trim().toUpperCase()}|$entryId';
   }
 
-  String _buildMeltingBatchNo(String metalType, DateTime now) {
-    final metalCode = metalType.trim().toUpperCase();
-    final dateCode = '${now.year}'
-        '${now.month.toString().padLeft(2, '0')}'
-        '${now.day.toString().padLeft(2, '0')}';
-    final timeCode = '${now.hour.toString().padLeft(2, '0')}'
-        '${now.minute.toString().padLeft(2, '0')}'
-        '${now.second.toString().padLeft(2, '0')}';
-    return 'CMB-$metalCode-$dateCode-$timeCode';
+  Future<String> _buildMeltingBatchNo(DateTime now) async {
+    final periodCode = _batchPeriodCode(now);
+    final yearCode = (now.year % 100).toString().padLeft(2, '0');
+    final startOfYear = DateTime(now.year);
+    final endOfYear = DateTime(now.year, 12, 31, 23, 59, 59, 999);
+    final rows = await _db.customSelect(
+      '''
+      SELECT batch_no
+      FROM customer_metal_melting_batches
+      WHERE created_at BETWEEN ? AND ?
+        AND batch_no LIKE ?
+      ''',
+      variables: [
+        Variable.withInt(startOfYear.millisecondsSinceEpoch),
+        Variable.withInt(endOfYear.millisecondsSinceEpoch),
+        Variable.withString('MT-%-$yearCode-%'),
+      ],
+    ).get();
+
+    var lastSequence = 0;
+    final pattern = RegExp('^MT-\\d{2}-$yearCode-(\\d+)\$');
+    for (final row in rows) {
+      final batchNo = row.read<String>('batch_no');
+      final match = pattern.firstMatch(batchNo);
+      if (match == null) {
+        continue;
+      }
+      final sequence = int.tryParse(match.group(1) ?? '') ?? 0;
+      if (sequence > lastSequence) {
+        lastSequence = sequence;
+      }
+    }
+
+    final nextSequence = (lastSequence + 1).toString().padLeft(3, '0');
+    return 'MT-$periodCode-$nextSequence';
+  }
+
+  String _batchPeriodCode(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final year = (value.year % 100).toString().padLeft(2, '0');
+    return '$month-$year';
   }
 }
 

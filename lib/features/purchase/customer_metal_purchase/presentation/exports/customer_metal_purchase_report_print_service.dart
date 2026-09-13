@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -17,9 +19,12 @@ class CustomerMetalPurchaseReportPrintService {
     required Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
         metalSummaries,
     required List<CustomerMetalPurchaseEntry> entries,
+    String ledgerDateLabel = 'Date',
+    DateTime Function(CustomerMetalPurchaseEntry entry)? ledgerDateSelector,
+    String? fileName,
   }) async {
     await Printing.layoutPdf(
-      name: 'customer-metal-purchase-report-${_periodSlug(periodLabel)}.pdf',
+      name: fileName ?? 'metal-purchase-report-${_periodSlug(periodLabel)}.pdf',
       format: PdfPageFormat.a4.landscape,
       onLayout: (format) => buildReportBytes(
         pageFormat: format,
@@ -27,8 +32,56 @@ class CustomerMetalPurchaseReportPrintService {
         dashboard: dashboard,
         metalSummaries: metalSummaries,
         entries: entries,
+        ledgerDateLabel: ledgerDateLabel,
+        ledgerDateSelector: ledgerDateSelector,
       ),
     );
+  }
+
+  static Future<String?> saveReportPdf({
+    required String periodLabel,
+    required CustomerMetalPurchaseDashboardSummary dashboard,
+    required Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
+        metalSummaries,
+    required List<CustomerMetalPurchaseEntry> entries,
+    String ledgerDateLabel = 'Date',
+    DateTime Function(CustomerMetalPurchaseEntry entry)? ledgerDateSelector,
+    String? fileName,
+    String dialogTitle = 'Download Metal Purchase Report PDF',
+  }) async {
+    final outputFileName = _ensurePdfExtension(
+      fileName ?? 'metal-purchase-report-${_periodSlug(periodLabel)}.pdf',
+    );
+    final bytes = await buildReportBytes(
+      pageFormat: PdfPageFormat.a4.landscape,
+      periodLabel: periodLabel,
+      dashboard: dashboard,
+      metalSummaries: metalSummaries,
+      entries: entries,
+      ledgerDateLabel: ledgerDateLabel,
+      ledgerDateSelector: ledgerDateSelector,
+    );
+
+    final selectedPath = await FilePicker.platform.saveFile(
+      dialogTitle: dialogTitle,
+      fileName: outputFileName,
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+      lockParentWindow: true,
+    );
+    if (selectedPath == null) {
+      return null;
+    }
+
+    final exportPath = _ensurePdfExtension(selectedPath);
+    final file = File(exportPath);
+    final parent = file.parent;
+    if (!await parent.exists()) {
+      await parent.create(recursive: true);
+    }
+
+    await file.writeAsBytes(bytes, flush: true);
+    return file.path;
   }
 
   static Future<Uint8List> buildReportBytes({
@@ -38,9 +91,11 @@ class CustomerMetalPurchaseReportPrintService {
     required Map<CustomerMetalPurchaseMetal, CustomerMetalPurchaseMetalSummary>
         metalSummaries,
     required List<CustomerMetalPurchaseEntry> entries,
+    String ledgerDateLabel = 'Date',
+    DateTime Function(CustomerMetalPurchaseEntry entry)? ledgerDateSelector,
   }) async {
     final document = pw.Document(
-      title: 'Customer Metal Purchase Report',
+      title: 'Metal Purchase Report',
       author: 'Lotus ERP',
     );
 
@@ -55,7 +110,11 @@ class CustomerMetalPurchaseReportPrintService {
           pw.SizedBox(height: 12),
           _metalSummary(metalSummaries),
           pw.SizedBox(height: 14),
-          _ledger(entries),
+          _ledger(
+            entries,
+            dateLabel: ledgerDateLabel,
+            dateSelector: ledgerDateSelector,
+          ),
         ],
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
@@ -79,7 +138,7 @@ class CustomerMetalPurchaseReportPrintService {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              'Customer Metal Purchase Report',
+              'Metal Purchase Report',
               style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 3),
@@ -192,7 +251,11 @@ class CustomerMetalPurchaseReportPrintService {
     );
   }
 
-  static pw.Widget _ledger(List<CustomerMetalPurchaseEntry> entries) {
+  static pw.Widget _ledger(
+    List<CustomerMetalPurchaseEntry> entries, {
+    required String dateLabel,
+    DateTime Function(CustomerMetalPurchaseEntry entry)? dateSelector,
+  }) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -207,14 +270,15 @@ class CustomerMetalPurchaseReportPrintService {
             horizontal: 4,
             vertical: 4,
           ),
-          headers: const [
+          headers: [
             'S.No',
             'Seller',
             'Voucher',
-            'Date',
+            dateLabel,
             'Source',
             'Metal',
             'Net',
+            'Purity',
             'Fine',
             'Value',
             'Paid',
@@ -229,10 +293,13 @@ class CustomerMetalPurchaseReportPrintService {
                 '${index + 1}',
                 entries[index].customerName,
                 entries[index].referenceNo,
-                DateFormat('dd MMM yyyy').format(entries[index].date),
+                DateFormat('dd MMM yyyy').format(
+                  dateSelector?.call(entries[index]) ?? entries[index].date,
+                ),
                 entries[index].displaySourceLabel,
                 entries[index].metalType,
                 _weight(entries[index].netWeight),
+                _purity(entries[index].purity),
                 _weight(entries[index].fineWeight),
                 _amount(entries[index].amount),
                 _amount(entries[index].paidAmount),
@@ -265,11 +332,19 @@ class CustomerMetalPurchaseReportPrintService {
     return '${value.toStringAsFixed(3)} g';
   }
 
+  static String _purity(double value) {
+    return '${value.toStringAsFixed(2)}%';
+  }
+
   static String _periodSlug(String value) {
     return value
         .trim()
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
+  }
+
+  static String _ensurePdfExtension(String value) {
+    return value.toLowerCase().endsWith('.pdf') ? value : '$value.pdf';
   }
 }

@@ -75,6 +75,7 @@ import '../../ui/report/sales_report/sales_report_screen.dart';
 import '../../features/reports/gst_report/presentation/screens/gst_report_hub_screen.dart';
 
 import '../../ui/layout/app_shell.dart';
+import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_checkout_report_screen.dart';
 import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_ledger_screen.dart';
 import '../../features/purchase/customer_metal_purchase/presentation/screens/customer_metal_purchase_voucher_detail_screen.dart';
 
@@ -650,8 +651,13 @@ GoRouter createAppRouter() {
             path: RoutePaths.reportPurchase,
             builder: (context, state) =>
                 const CustomerMetalPurchaseLedgerScreen(
-              title: 'Customer Metal Purchase Report',
+              title: 'Metal Purchase Report',
             ),
+          ),
+          GoRoute(
+            path: RoutePaths.customerMetalCheckoutReport,
+            builder: (context, state) =>
+                const CustomerMetalCheckoutReportScreen(),
           ),
           GoRoute(
             path: RoutePaths.customerMetalPurchaseVoucher,

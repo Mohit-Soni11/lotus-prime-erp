@@ -278,9 +278,9 @@ class _CheckoutRowState extends State<_CheckoutRow> {
             _CheckoutCell(
               width: _columnWidth(widget.columns[6]),
               child: Text(
-                widget.entry.itemDescription.isEmpty
-                    ? widget.entry.metalType
-                    : widget.entry.itemDescription,
+                CustomerMetalPurchaseFormatters.checkoutItemLabel(
+                  widget.entry,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: _tableBodyStyle,
@@ -323,7 +323,11 @@ class _CheckoutRowState extends State<_CheckoutRow> {
             _CheckoutCell(
               width: _columnWidth(widget.columns[12]),
               child: Text(
-                widget.entry.meltingBatchNo ?? '-',
+                widget.entry.meltingBatchNo == null
+                    ? '-'
+                    : CustomerMetalPurchaseFormatters.batchNumber(
+                        widget.entry.meltingBatchNo!,
+                      ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: _tableBodyStyle,
@@ -480,15 +484,15 @@ class _StatusPill extends StatelessWidget {
 }
 
 final TextStyle _tableHeadingStyle = GoogleFonts.inter(
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: FontWeight.w900,
   letterSpacing: 0,
   color: Colors.black,
 );
 
 final TextStyle _tableBodyStyle = GoogleFonts.inter(
-  fontSize: 12,
-  fontWeight: FontWeight.w800,
+  fontSize: 13,
+  fontWeight: FontWeight.w900,
   letterSpacing: 0,
   color: Colors.black,
 );

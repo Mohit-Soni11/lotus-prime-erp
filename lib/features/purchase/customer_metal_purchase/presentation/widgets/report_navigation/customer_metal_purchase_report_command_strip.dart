@@ -20,7 +20,7 @@ class CustomerMetalPurchaseReportCommandStrip extends StatelessWidget {
       builder: (context, constraints) {
         final printButton = _ReportPrintButton(
           enabled: controller.filteredEntries.isNotEmpty,
-          onPressed: () => _printReport(context),
+          onPressed: () => _downloadReport(context),
         );
 
         if (constraints.maxWidth < 760) {
@@ -48,22 +48,43 @@ class CustomerMetalPurchaseReportCommandStrip extends StatelessWidget {
     );
   }
 
-  Future<void> _printReport(BuildContext context) async {
+  Future<void> _downloadReport(BuildContext context) async {
     try {
-      await CustomerMetalPurchaseReportPrintService.printReport(
+      final savedPath =
+          await CustomerMetalPurchaseReportPrintService.saveReportPdf(
         periodLabel: controller.periodLabel,
         dashboard: controller.dashboardSummary,
         metalSummaries: controller.visibleMetalSummaries,
         entries: controller.filteredEntries,
+        fileName: _reportFileName(),
+        dialogTitle: 'Download Metal Purchase Report PDF',
+      );
+      if (!context.mounted || savedPath == null) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Customer metal purchase report saved.')),
       );
     } catch (error) {
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Report print failed: $error')),
+        SnackBar(content: Text('Report download failed: $error')),
       );
     }
+  }
+
+  String _reportFileName() {
+    return '${_slug('metal purchase report ${controller.periodLabel}')}.pdf';
+  }
+
+  String _slug(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
   }
 }
 
@@ -201,8 +222,8 @@ class _ReportPrintButton extends StatelessWidget {
       ),
       child: FilledButton.icon(
         onPressed: enabled ? onPressed : null,
-        icon: const Icon(Icons.print_rounded, size: 18),
-        label: const Text('Print Report'),
+        icon: const Icon(Icons.download_rounded, size: 18),
+        label: const Text('Download Report'),
         style: FilledButton.styleFrom(
           minimumSize: const Size(160, 42),
           padding: const EdgeInsets.symmetric(horizontal: 17),

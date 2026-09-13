@@ -8,10 +8,12 @@ import 'package:lotus_erp/theme/purchase/purchase_entry/purchase_entry_theme.dar
 
 class CustomerMetalPurchaseReportFilterBar extends StatelessWidget {
   final CustomerMetalPurchaseLedgerController controller;
+  final VoidCallback? onOpenCheckoutReport;
 
   const CustomerMetalPurchaseReportFilterBar({
     super.key,
     required this.controller,
+    this.onOpenCheckoutReport,
   });
 
   @override
@@ -33,7 +35,10 @@ class CustomerMetalPurchaseReportFilterBar extends StatelessWidget {
                 const SizedBox(height: 12),
                 CustomerMetalPurchaseMonthSelector(controller: controller),
                 const SizedBox(height: 12),
-                CustomerMetalPurchaseStatusFilter(controller: controller),
+                CustomerMetalPurchaseStatusFilter(
+                  controller: controller,
+                  onCheckoutReportTap: onOpenCheckoutReport,
+                ),
                 const SizedBox(height: 10),
                 CustomerMetalPurchaseActiveMetalChip(
                   metal: controller.selectedMetal,
@@ -68,6 +73,7 @@ class CustomerMetalPurchaseReportFilterBar extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 47),
                       child: CustomerMetalPurchaseStatusFilter(
                         controller: controller,
+                        onCheckoutReportTap: onOpenCheckoutReport,
                       ),
                     ),
                   ),

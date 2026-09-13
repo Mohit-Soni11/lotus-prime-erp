@@ -34,7 +34,7 @@ void main() {
     expect(find.text('Seller Summary'), findsOneWidget);
     expect(find.text('Pending Payout'), findsOneWidget);
     expect(find.text('Payment Summary'), findsOneWidget);
-    expect(find.text('Print Report'), findsOneWidget);
+    expect(find.text('Download Report'), findsOneWidget);
     expect(controller.selectedTab, CustomerMetalPurchaseReportTab.ledger);
 
     await tester.tap(find.text('Seller Summary'));

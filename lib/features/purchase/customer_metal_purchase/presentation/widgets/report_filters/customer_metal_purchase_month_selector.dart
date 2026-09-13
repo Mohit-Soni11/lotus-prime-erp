@@ -36,7 +36,7 @@ class CustomerMetalPurchaseMonthSelector extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _SelectedMonthTile(
-                  label: '${_monthName(selectedMonth)} $selectedYear',
+                  label: _monthName(selectedMonth),
                   isCurrentMonth: isCurrentMonth,
                   onTap: isCurrentMonth
                       ? null

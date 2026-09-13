@@ -8,6 +8,7 @@ import 'package:lotus_erp/features/purchase/customer_metal_purchase/domain/repos
 
 class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   final CustomerMetalPurchaseLedgerRepository _repository;
+  late final DateTime _currentDate;
 
   bool isLoading = false;
   List<CustomerMetalPurchaseEntry> entries = [];
@@ -29,6 +30,7 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
   }) : _repository = repository ??
             DriftCustomerMetalPurchaseLedgerRepository(AppDatabase()) {
     final now = currentDate ?? DateTime.now();
+    _currentDate = now;
     startDate = DateTime(now.year, now.month, 1);
     endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
     searchCtrl.addListener(notifyListeners);
@@ -339,6 +341,10 @@ class CustomerMetalPurchaseLedgerController extends ChangeNotifier {
       return 'Complete ledger history';
     }
     return '${_longDate(startDate!)} - ${_longDate(endDate!)}';
+  }
+
+  String get currentDateLabel {
+    return _longDate(_currentDate);
   }
 
   String get filteredRecordRangeLabel {

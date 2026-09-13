@@ -131,7 +131,7 @@ class AppRoutes {
     dueReceiptHistoryRoute: 'Due Receipt History',
     dayBookRoute: 'Day Book',
     salesReportRoute: 'Sales Report',
-    purchaseReportRoute: 'Customer Metal Purchase Report',
+    purchaseReportRoute: 'Metal Purchase Report',
     stockSummaryRoute: 'Stock Summary',
     profitLossRoute: 'Profit & Loss',
     gstReportRoute: 'GST Report',
@@ -222,6 +222,8 @@ class RoutePaths {
   static const String reportDayBook = '/app/reports/daybook';
   static const String reportSales = '/app/reports/sales';
   static const String reportPurchase = '/app/reports/purchase';
+  static const String customerMetalCheckoutReport =
+      '$reportPurchase/checkout-report';
   static const String customerMetalPurchaseVoucherBase =
       '$reportPurchase/voucher';
   static const String customerMetalPurchaseVoucher =
