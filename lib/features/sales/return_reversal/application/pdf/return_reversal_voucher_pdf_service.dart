@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import 'package:lotus_erp/core/pdf/lotus_pdf_theme.dart';
 import 'package:lotus_erp/core/pdf/lotus_pdf_text_renderer.dart';
 import 'package:lotus_erp/features/print_templates/application/global/lotus_print_template_renderer_registry.dart';
 import 'package:lotus_erp/features/print_templates/application/global/lotus_printable_document.dart';
@@ -1059,48 +1059,7 @@ class ReturnReversalVoucherPdfService {
   }
 
   static Future<pw.ThemeData> _documentTheme() async {
-    final devanagariFont = await _loadFont(
-      'assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf',
-    );
-    final windowsDirectory = Platform.environment['WINDIR'];
-    if (windowsDirectory != null) {
-      final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
-      final boldFile = File('$windowsDirectory\\Fonts\\segoeuib.ttf');
-      if (regularFile.existsSync() && boldFile.existsSync()) {
-        try {
-          return pw.ThemeData.withFont(
-            base: pw.Font.ttf(_asByteData(await regularFile.readAsBytes())),
-            bold: pw.Font.ttf(_asByteData(await boldFile.readAsBytes())),
-            fontFallback:
-                devanagariFont == null ? null : <pw.Font>[devanagariFont],
-          );
-        } catch (_) {}
-      }
-    }
-
-    return pw.ThemeData.withFont(
-      base: pw.Font.helvetica(),
-      bold: pw.Font.helveticaBold(),
-      fontFallback: devanagariFont == null ? null : <pw.Font>[devanagariFont],
-    );
-  }
-
-  static Future<pw.Font?> _loadFont(String assetPath) async {
-    try {
-      return pw.Font.ttf(await rootBundle.load(assetPath));
-    } catch (_) {
-      try {
-        final file = File(assetPath);
-        if (!file.existsSync()) return null;
-        return pw.Font.ttf(_asByteData(await file.readAsBytes()));
-      } catch (_) {
-        return null;
-      }
-    }
-  }
-
-  static ByteData _asByteData(Uint8List bytes) {
-    return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
+    return LotusPdfTheme.reportTheme();
   }
 
   static String _shopName(ShopPrintDocumentProfile profile) {

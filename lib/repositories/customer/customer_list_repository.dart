@@ -8,6 +8,7 @@
 import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../features/customer/domain/services/customer_contact_value.dart';
+import '../../features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -230,22 +231,7 @@ class CustomerListRepository {
   }
 
   double _billDueAmount(Bill bill) {
-    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
-    if (paymentStatus == 'PAID' ||
-        paymentStatus == 'SETTLED' ||
-        paymentStatus == 'COMPLETE' ||
-        paymentStatus == 'COMPLETED') {
-      return 0;
-    }
-    if (bill.dueAmount > 0.005 ||
-        paymentStatus == 'PARTIAL' ||
-        paymentStatus == 'DUE' ||
-        paymentStatus == 'UNPAID') {
-      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
-    }
-    return (bill.finalAmount - bill.paidAmount)
-        .clamp(0.0, double.infinity)
-        .toDouble();
+    return BillDuePolicy.customerDue(bill);
   }
 
   static String _formatMoney(double value) {

@@ -2,12 +2,12 @@
 // FILE        : daily_counter_logic.dart
 // MODULE      : Dashboard / Daily Counter Activity
 // LAYER       : Logic
-// DESCRIPTION : Aaj ke counter activity ka poora data Drift DB se.
+// DESCRIPTION : Builds the daily counter activity snapshot from Drift.
 //
 //               DATA SOURCES:
 //               METAL SOLD:
-//                 → BillItems (aaj ke bills) + Bills (billDate = today)
-//                 → group by purity type → GOLD = 22K/18K/24K, SILVER = 925/Silver
+//                 → BillItems for today's bills.
+//                 → Group by purity type: GOLD = 22K/18K/24K, SILVER = 925/Silver.
 //                 → sum grossWeight, count items
 //
 //               METAL BOUGHT (Stock added today):
@@ -31,6 +31,7 @@ import 'package:drift/drift.dart';
 import 'package:intl/intl.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../../models/dashboard/daily_counter_model.dart';
 import '../../../core/logging/app_logger.dart';
 
@@ -391,22 +392,7 @@ class DailyCounterLogic {
   }
 
   double _currentDue(Bill bill) {
-    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
-    if (paymentStatus == 'PAID' ||
-        paymentStatus == 'SETTLED' ||
-        paymentStatus == 'COMPLETE' ||
-        paymentStatus == 'COMPLETED') {
-      return 0;
-    }
-    if (bill.dueAmount > _amountTolerance ||
-        paymentStatus == 'PARTIAL' ||
-        paymentStatus == 'DUE' ||
-        paymentStatus == 'UNPAID') {
-      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
-    }
-    return (bill.finalAmount - bill.paidAmount)
-        .clamp(0.0, double.infinity)
-        .toDouble();
+    return BillDuePolicy.customerDue(bill);
   }
 
   // ==========================================

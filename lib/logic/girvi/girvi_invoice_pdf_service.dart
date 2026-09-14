@@ -1,10 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../core/pdf/lotus_pdf_text_renderer.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
@@ -57,12 +58,12 @@ class GirviInvoicePdfService {
     int copies = 1,
     bool duplicateStamp = false,
   }) async {
-    final devanagariFont = await _loadDevanagariFont();
+    final devanagariFont = await LotusPdfTheme.loadDevanagariFont();
     final textRenderer = await LotusPdfTextRenderer.create();
     await _warmPolicyText(settings, textRenderer, format);
     final brandLogo = _loadBrandLogo(branding);
     final pdf = pw.Document(
-      theme: await _buildTheme(devanagariFont),
+      theme: await LotusPdfTheme.reportTheme(),
       title: 'Pledge Receipt ${draft.ticketNo}',
       author: branding.shopName,
       creator: branding.shopName,
@@ -155,53 +156,6 @@ class GirviInvoicePdfService {
         ),
       ],
     );
-  }
-
-  Future<pw.Font?> _loadDevanagariFont() async {
-    const assetPath = 'assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf';
-    try {
-      return pw.Font.ttf(await rootBundle.load(assetPath));
-    } catch (_) {
-      try {
-        final fontFile = File(assetPath);
-        if (fontFile.existsSync()) {
-          return pw.Font.ttf(_asByteData(await fontFile.readAsBytes()));
-        }
-      } catch (_) {
-        // The caller can still generate an English-only invoice.
-      }
-    }
-    return null;
-  }
-
-  Future<pw.ThemeData> _buildTheme(pw.Font? devanagariFont) async {
-    final windowsDirectory = Platform.environment['WINDIR'];
-    if (windowsDirectory != null) {
-      final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
-      final boldFile = File('$windowsDirectory\\Fonts\\segoeuib.ttf');
-      if (regularFile.existsSync() && boldFile.existsSync()) {
-        try {
-          final regularBytes = await regularFile.readAsBytes();
-          final boldBytes = await boldFile.readAsBytes();
-          return pw.ThemeData.withFont(
-            base: pw.Font.ttf(_asByteData(regularBytes)),
-            bold: pw.Font.ttf(_asByteData(boldBytes)),
-            fontFallback: devanagariFont == null ? null : [devanagariFont],
-          );
-        } catch (_) {
-          // The built-in fonts remain a reliable fallback.
-        }
-      }
-    }
-    return pw.ThemeData.withFont(
-      base: pw.Font.helvetica(),
-      bold: pw.Font.helveticaBold(),
-      fontFallback: devanagariFont == null ? null : [devanagariFont],
-    );
-  }
-
-  ByteData _asByteData(Uint8List bytes) {
-    return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
   }
 
   pw.MemoryImage? _loadBrandLogo(GirviInvoiceBranding branding) {

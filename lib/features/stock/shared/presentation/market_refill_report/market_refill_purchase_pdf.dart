@@ -18,7 +18,7 @@ Future<Uint8List> _buildMarketPurchasePdfBytes(
   final muted = PdfColor.fromHex('#64748B');
   final border = PdfColor.fromHex('#E8DDC9');
   final panel = PdfColor.fromHex('#FAF7EF');
-  final theme = await _marketPdfTheme();
+  final theme = await LotusPdfTheme.reportTheme();
 
   final goldRows = report.rows
       .where((row) => row.metal.trim().toLowerCase() == 'gold')
@@ -83,37 +83,6 @@ Future<Uint8List> _buildMarketPurchasePdfBytes(
   );
 
   return document.save();
-}
-
-Future<pw.ThemeData> _marketPdfTheme() async {
-  final devanagari = pw.Font.ttf(
-    await rootBundle.load('assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf'),
-  );
-  final windowsDirectory = Platform.environment['WINDIR'];
-  if (windowsDirectory != null) {
-    final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
-    final boldFile = File('$windowsDirectory\\Fonts\\segoeuib.ttf');
-    if (regularFile.existsSync() && boldFile.existsSync()) {
-      try {
-        return pw.ThemeData.withFont(
-          base: pw.Font.ttf(_asByteData(await regularFile.readAsBytes())),
-          bold: pw.Font.ttf(_asByteData(await boldFile.readAsBytes())),
-          fontFallback: [devanagari],
-        );
-      } catch (_) {
-        // Built-in PDF fonts remain the last fallback.
-      }
-    }
-  }
-  return pw.ThemeData.withFont(
-    base: pw.Font.helvetica(),
-    bold: pw.Font.helveticaBold(),
-    fontFallback: [devanagari],
-  );
-}
-
-ByteData _asByteData(Uint8List bytes) {
-  return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
 }
 
 pw.Widget _marketPdfHeader(

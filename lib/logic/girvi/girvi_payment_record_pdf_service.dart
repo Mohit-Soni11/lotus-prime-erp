@@ -1,10 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../models/girvi/girvi_account_lifecycle_summary.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/girvi/girvi_loan_model.dart';
@@ -32,7 +33,6 @@ class GirviPaymentRecordPdfService {
     GirviLoanDetails? details,
     GirviInvoiceBranding branding = GirviInvoiceBranding.fallback,
   }) async {
-    final devanagariFont = await _loadDevanagariFont();
     final brandLogo = _loadBrandLogo(branding);
     final photos = _loadItemPhotos(account, details);
     final sortedPayments = List<GirviPaymentModel>.from(payments)
@@ -43,7 +43,7 @@ class GirviPaymentRecordPdfService {
       });
 
     final pdf = pw.Document(
-      theme: await _buildTheme(devanagariFont),
+      theme: await LotusPdfTheme.reportTheme(),
       title: 'Girvi Payment Record ${account.loan.ticketNo}',
       author: branding.printShopName,
       creator: branding.printShopName,
@@ -111,52 +111,6 @@ class GirviPaymentRecordPdfService {
     );
 
     return pdf.save();
-  }
-
-  Future<pw.Font?> _loadDevanagariFont() async {
-    const assetPath = 'assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf';
-    try {
-      return pw.Font.ttf(await rootBundle.load(assetPath));
-    } catch (_) {
-      try {
-        final fontFile = File(assetPath);
-        if (fontFile.existsSync()) {
-          return pw.Font.ttf(_asByteData(await fontFile.readAsBytes()));
-        }
-      } catch (_) {
-        // English-only records can still be generated.
-      }
-    }
-    return null;
-  }
-
-  Future<pw.ThemeData> _buildTheme(pw.Font? devanagariFont) async {
-    final windowsDirectory = Platform.environment['WINDIR'];
-    if (windowsDirectory != null) {
-      final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
-      final boldFile = File('$windowsDirectory\\Fonts\\segoeuib.ttf');
-      if (regularFile.existsSync() && boldFile.existsSync()) {
-        try {
-          return pw.ThemeData.withFont(
-            base: pw.Font.ttf(_asByteData(await regularFile.readAsBytes())),
-            bold: pw.Font.ttf(_asByteData(await boldFile.readAsBytes())),
-            fontFallback: devanagariFont == null ? null : [devanagariFont],
-          );
-        } catch (_) {
-          // Fall back to bundled PDF fonts.
-        }
-      }
-    }
-
-    return pw.ThemeData.withFont(
-      base: pw.Font.helvetica(),
-      bold: pw.Font.helveticaBold(),
-      fontFallback: devanagariFont == null ? null : [devanagariFont],
-    );
-  }
-
-  ByteData _asByteData(Uint8List bytes) {
-    return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
   }
 
   pw.MemoryImage? _loadBrandLogo(GirviInvoiceBranding branding) {

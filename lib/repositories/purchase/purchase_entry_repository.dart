@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' as drift;
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/transactions/domain/services/finance_transaction_numbering.dart';
 import '../../models/finance/bank_book/bank_book_enums.dart';
 import '../../models/finance/cash_book/cash_book_enums.dart';
 import '../../models/purchase/purchase_enums/purchase_enums.dart';
@@ -229,9 +230,12 @@ class _PostingVerificationResult {
 
 class PurchaseEntryRepository {
   final AppDatabase _db;
+  late final FinanceTransactionNumbering _numbering;
   String? _lastErrorMessage;
 
-  PurchaseEntryRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+  PurchaseEntryRepository({AppDatabase? db}) : _db = db ?? AppDatabase() {
+    _numbering = FinanceTransactionNumbering(_db);
+  }
 
   String? get lastErrorMessage => _lastErrorMessage;
 
@@ -1623,22 +1627,11 @@ class PurchaseEntryRepository {
   }
 
   Future<String> _generateCashTxnId() async {
-    final count = await _countRows('cash_transactions');
-    final year = DateTime.now().year;
-    return 'TXN-$year-${(count + 1).toString().padLeft(4, '0')}';
+    return _numbering.nextCashTransactionId();
   }
 
   Future<String> _generateBankTxnId() async {
-    final count = await _countRows('bank_transactions');
-    final year = DateTime.now().year;
-    return 'BTXN-$year-${(count + 1).toString().padLeft(4, '0')}';
-  }
-
-  Future<int> _countRows(String tableName) async {
-    final row = await _db
-        .customSelect('SELECT COUNT(*) AS total FROM $tableName')
-        .getSingle();
-    return row.read<int>('total');
+    return _numbering.nextBankTransactionId();
   }
 
   String _buildSku(PurchaseMetalType metal, int batchTimestamp, int lineNo) {

@@ -1,14 +1,9 @@
 import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../models/finance/due_report/due_report_model.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
-
-const List<String> _dueEligibleBillStatuses = [
-  'ACTIVE',
-  'PARTIALLY_RETURNED',
-  'RETURNED',
-];
 
 class DueReportRepository {
   final AppDatabase _db;
@@ -38,7 +33,7 @@ class DueReportRepository {
         _db.customers.id.equalsExp(_db.bills.customerId),
       ),
     ])
-      ..where(_db.bills.status.isIn(_dueEligibleBillStatuses))
+      ..where(_db.bills.status.isIn(BillDuePolicy.eligibleBillStatuses))
       ..orderBy([
         OrderingTerm.desc(_db.bills.billDate),
         OrderingTerm.desc(_db.bills.id),
@@ -53,8 +48,8 @@ class DueReportRepository {
       final bill = row.readTable(_db.bills);
       final customer = row.readTableOrNull(_db.customers);
 
-      final dueAmount = _currentDue(bill);
-      if (dueAmount <= 0.5) continue;
+      final dueAmount = BillDuePolicy.financeDue(bill);
+      if (dueAmount <= BillDuePolicy.financeVisibilityTolerance) continue;
 
       final customerName = _firstText([
         customer?.name,
@@ -92,25 +87,6 @@ class DueReportRepository {
     });
 
     return bills;
-  }
-
-  double _positive(double amount) => amount < 0 ? 0 : amount;
-
-  double _currentDue(Bill bill) {
-    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
-    if (paymentStatus == 'PAID' ||
-        paymentStatus == 'SETTLED' ||
-        paymentStatus == 'COMPLETE' ||
-        paymentStatus == 'COMPLETED') {
-      return 0;
-    }
-    if (bill.dueAmount > 0.5 ||
-        paymentStatus == 'PARTIAL' ||
-        paymentStatus == 'DUE' ||
-        paymentStatus == 'UNPAID') {
-      return _positive(bill.dueAmount);
-    }
-    return _positive(bill.finalAmount - bill.paidAmount);
   }
 
   String _addressFor(Customer? customer, String city) {

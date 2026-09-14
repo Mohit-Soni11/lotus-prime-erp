@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/transactions/domain/services/finance_transaction_numbering.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
@@ -58,8 +59,11 @@ class PosEditableBill {
 
 class PosCheckoutRepository {
   final AppDatabase _db;
+  late final FinanceTransactionNumbering _numbering;
 
-  PosCheckoutRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+  PosCheckoutRepository({AppDatabase? db}) : _db = db ?? AppDatabase() {
+    _numbering = FinanceTransactionNumbering(_db);
+  }
 
   Future<int> fetchNextInvoiceSequence({
     required String invoicePrefix,
@@ -2936,22 +2940,11 @@ class PosCheckoutRepository {
   }
 
   Future<String> _generateCashTxnId() async {
-    final count = await _countRows('cash_transactions');
-    final year = DateTime.now().year;
-    return 'TXN-$year-${(count + 1).toString().padLeft(4, '0')}';
+    return _numbering.nextCashTransactionId();
   }
 
   Future<String> _generateBankTxnId() async {
-    final count = await _countRows('bank_transactions');
-    final year = DateTime.now().year;
-    return 'BTXN-$year-${(count + 1).toString().padLeft(4, '0')}';
-  }
-
-  Future<int> _countRows(String tableName) async {
-    final row = await _db
-        .customSelect('SELECT COUNT(*) AS total FROM $tableName')
-        .getSingle();
-    return row.read<int>('total');
+    return _numbering.nextBankTransactionId();
   }
 
   String _buildLedgerReferenceId(String billNumber, String paymentMode) {

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../core/pdf/lotus_pdf_theme.dart';
 import '../../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../../features/sales_pos/domain/services/pos_invoice_file_naming.dart';
 import '../../../../models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
@@ -107,13 +108,12 @@ class _PosInvoicePdfDocumentBuilder {
   });
 
   Future<Uint8List> build(PosInvoiceModel invoice) async {
-    final devanagariFont = await _loadDevanagariFont();
     final doc = pw.Document(
       title: PosInvoiceFileNaming.pdfBaseName(invoice),
       author: invoice.shopName,
       creator: 'Lotus ERP',
       subject: 'Sales invoice ${invoice.invoiceNumber}',
-      theme: await _buildTheme(devanagariFont),
+      theme: await LotusPdfTheme.reportTheme(),
     );
     final pageFormat = _pageFormatFor(options.format);
     final scopedInvoices = options.includeAllMetals
@@ -343,50 +343,6 @@ class _PosInvoicePdfDocumentBuilder {
 
   double _fallbackPolicyBodyWidth(PdfPageFormat pageFormat) {
     return pageFormat.width - 56;
-  }
-
-  Future<pw.Font?> _loadDevanagariFont() async {
-    const assetPath = 'assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf';
-    try {
-      return pw.Font.ttf(await rootBundle.load(assetPath));
-    } catch (_) {
-      try {
-        final fontFile = File(assetPath);
-        if (fontFile.existsSync()) {
-          return pw.Font.ttf(_asByteData(await fontFile.readAsBytes()));
-        }
-      } catch (_) {}
-    }
-    return null;
-  }
-
-  Future<pw.ThemeData> _buildTheme(pw.Font? devanagariFont) async {
-    final windowsDirectory = Platform.environment['WINDIR'];
-    if (windowsDirectory != null) {
-      final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
-      final boldFile = File('$windowsDirectory\\Fonts\\segoeuib.ttf');
-      if (regularFile.existsSync() && boldFile.existsSync()) {
-        try {
-          final regularBytes = await regularFile.readAsBytes();
-          final boldBytes = await boldFile.readAsBytes();
-          return pw.ThemeData.withFont(
-            base: pw.Font.ttf(_asByteData(regularBytes)),
-            bold: pw.Font.ttf(_asByteData(boldBytes)),
-            fontFallback: devanagariFont == null ? null : [devanagariFont],
-          );
-        } catch (_) {}
-      }
-    }
-
-    return pw.ThemeData.withFont(
-      base: pw.Font.helvetica(),
-      bold: pw.Font.helveticaBold(),
-      fontFallback: devanagariFont == null ? null : [devanagariFont],
-    );
-  }
-
-  ByteData _asByteData(Uint8List bytes) {
-    return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
   }
 
   PdfPageFormat _pageFormatFor(PrintFormat format) {

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../core/pdf/lotus_pdf_text_renderer.dart';
 import '../../database/db/app_database.dart';
 import '../../features/print_templates/application/global/lotus_print_template_renderer_registry.dart';
@@ -126,6 +127,7 @@ class BookingInvoicePdfService {
       creator: 'Lotus ERP Booking Advance',
       subject:
           'Booking Advance Invoice (${PrintTemplateRegistry.labelFor(template.id)})',
+      theme: await LotusPdfTheme.reportTheme(),
     );
 
     final copyCount = options.copies.clamp(1, 5);

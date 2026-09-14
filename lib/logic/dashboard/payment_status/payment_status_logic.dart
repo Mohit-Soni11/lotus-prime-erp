@@ -2,15 +2,15 @@
 // FILE        : payment_status_logic.dart
 // MODULE      : Dashboard / Payment Status
 // LAYER       : Logic (Business Logic)
-// DESCRIPTION : Payment Status Card ka poora data management.
+// DESCRIPTION : Manages the dashboard payment status card data.
 //
 //               DB CONNECTIONS:
 //               • Bills table     → payment data (billNo, amounts, date, status)
 //               • Customers table → customer name, mobile, id (for navigation)
 //
 //               LIVE WATCHING:
-//               Bills table watch karta hai — koi bhi change hone par
-//               auto-refresh. ChangeNotifier pattern (ShopCardLogic jaisa).
+//               Watches the bills table and refreshes automatically when
+//               payment data changes.
 //
 //               LOGIC:
 //               • paidAmount = bills.paidAmount (new column from v5)
@@ -18,7 +18,7 @@
 //               • status     = PAID / PARTIAL / UNPAID (computed)
 //               • Summary    = counts + sum of amounts
 //               • Filter     = ALL / DUE / PAID tabs
-//               • Sort       = Latest bills pehle
+//               • Sort       = Latest bills first
 //               • Limit      = 10 bills max (performance)
 //
 //               NAVIGATION:
@@ -31,6 +31,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../../models/dashboard/payment_bill_item.dart';
 import '../../../models/dashboard/payment_status_model.dart';
 import '../../../core/logging/app_logger.dart';
@@ -185,22 +186,7 @@ class PaymentStatusLogic extends ChangeNotifier {
   }
 
   double _currentDue(Bill bill) {
-    final paymentStatus = bill.paymentStatus.trim().toUpperCase();
-    if (paymentStatus == 'PAID' ||
-        paymentStatus == 'SETTLED' ||
-        paymentStatus == 'COMPLETE' ||
-        paymentStatus == 'COMPLETED') {
-      return 0;
-    }
-    if (bill.dueAmount > 0.5 ||
-        paymentStatus == 'PARTIAL' ||
-        paymentStatus == 'DUE' ||
-        paymentStatus == 'UNPAID') {
-      return bill.dueAmount.clamp(0.0, double.infinity).toDouble();
-    }
-    return (bill.finalAmount - bill.paidAmount)
-        .clamp(0.0, double.infinity)
-        .toDouble();
+    return BillDuePolicy.financeDue(bill);
   }
 
   PaymentStatus _statusFromDue({

@@ -1,10 +1,10 @@
-import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/notice_auction_model.dart';
@@ -28,10 +28,10 @@ class GirviNoticePdfService {
     required String noticeText,
   }) async {
     final devanagariFont = noticeLanguage == GirviNoticeLanguage.hindi
-        ? await _loadDevanagariFont()
+        ? await LotusPdfTheme.loadDevanagariFont()
         : null;
     final document = pw.Document(
-      theme: await _buildTheme(devanagariFont),
+      theme: await LotusPdfTheme.reportTheme(),
       title: '${noticeType.label} - ${item.loan.ticketNo}',
       author: 'Lotus ERP',
       creator: 'Lotus ERP',
@@ -672,35 +672,6 @@ class GirviNoticePdfService {
       'Authorised Signatory' => 'दुकान साइन',
       _ => english,
     };
-  }
-
-  Future<pw.Font?> _loadDevanagariFont() async {
-    const assetPath = 'assets/fonts/lohit_devanagari/Lohit-Devanagari.ttf';
-    try {
-      return pw.Font.ttf(await rootBundle.load(assetPath));
-    } catch (_) {
-      try {
-        final fontFile = File(assetPath);
-        if (fontFile.existsSync()) {
-          return pw.Font.ttf(_asByteData(await fontFile.readAsBytes()));
-        }
-      } catch (_) {
-        // English notices can still be generated with built-in fonts.
-      }
-    }
-    return null;
-  }
-
-  Future<pw.ThemeData> _buildTheme(pw.Font? devanagariFont) async {
-    return pw.ThemeData.withFont(
-      base: pw.Font.helvetica(),
-      bold: pw.Font.helveticaBold(),
-      fontFallback: devanagariFont == null ? null : [devanagariFont],
-    );
-  }
-
-  ByteData _asByteData(Uint8List bytes) {
-    return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
   }
 
   String _money(double value) => 'Rs ${_amountFormat.format(value)}';

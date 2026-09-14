@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../core/pdf/lotus_pdf_theme.dart';
 import '../../settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../domain/print_template_registry.dart';
 
@@ -40,7 +39,7 @@ class PrintTemplatePreviewPdfService {
     ShopPrintDocumentProfile? shopProfile,
   }) async {
     final pdf = pw.Document(
-      theme: await _buildTheme(),
+      theme: await LotusPdfTheme.reportTheme(),
       title: '${template.shortName} ${documentType.label}',
       author: 'Lotus ERP',
       creator: 'Lotus ERP',
@@ -83,30 +82,6 @@ class PrintTemplatePreviewPdfService {
     );
 
     return pdf.save();
-  }
-
-  Future<pw.ThemeData> _buildTheme() async {
-    final windowsDirectory = Platform.environment['WINDIR'];
-    if (windowsDirectory != null) {
-      final regularFile = File('$windowsDirectory\\Fonts\\segoeui.ttf');
-      final boldFile = File('$windowsDirectory\\Fonts\\segoeuib.ttf');
-      if (regularFile.existsSync() && boldFile.existsSync()) {
-        try {
-          return pw.ThemeData.withFont(
-            base: pw.Font.ttf(_asByteData(await regularFile.readAsBytes())),
-            bold: pw.Font.ttf(_asByteData(await boldFile.readAsBytes())),
-          );
-        } catch (_) {}
-      }
-    }
-    return pw.ThemeData.withFont(
-      base: pw.Font.helvetica(),
-      bold: pw.Font.helveticaBold(),
-    );
-  }
-
-  ByteData _asByteData(Uint8List bytes) {
-    return bytes.buffer.asByteData(bytes.offsetInBytes, bytes.lengthInBytes);
   }
 
   pw.Widget _heroHeader(

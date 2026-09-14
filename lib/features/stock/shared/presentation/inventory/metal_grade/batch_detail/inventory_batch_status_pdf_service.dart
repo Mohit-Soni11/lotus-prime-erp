@@ -17,10 +17,7 @@ class _InventoryBatchStatusPdfService {
         pageFormat: PdfPageFormat.a4,
         maxPages: 80,
         margin: const pw.EdgeInsets.all(24),
-        theme: pw.ThemeData.withFont(
-          base: await PdfGoogleFonts.notoSansRegular(),
-          bold: await PdfGoogleFonts.notoSansBold(),
-        ),
+        theme: await LotusPdfTheme.reportTheme(),
         build: (context) => [
           _statusHeader(
             batch: batch,
