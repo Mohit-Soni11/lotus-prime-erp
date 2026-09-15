@@ -1490,10 +1490,10 @@ class _SelectCustomerButton extends StatelessWidget {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: GirviColors.inputBg,
+            color: GirviColors.cardBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: GirviColors.brandGold.withValues(alpha: 0.4),
+              color: GirviColors.accentCustomer.withValues(alpha: 0.26),
               style: BorderStyle.solid,
             ),
           ),
@@ -1503,7 +1503,7 @@ class _SelectCustomerButton extends StatelessWidget {
             children: [
               const Icon(
                 GirviIcons.search,
-                color: GirviColors.brandGold,
+                color: GirviColors.textDark,
                 size: 18,
               ),
               const SizedBox(width: 9),
@@ -1514,9 +1514,9 @@ class _SelectCustomerButton extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    color: GirviColors.brandGold,
+                    color: GirviColors.textDark,
                     fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     height: 1.2,
                   ),
                 ),

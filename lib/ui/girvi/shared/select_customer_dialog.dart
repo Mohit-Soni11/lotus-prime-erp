@@ -147,12 +147,13 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
     final q = _searchCtrl.text.toLowerCase().trim();
     return q.isEmpty
         ? customers
-        : customers
-            .where((c) =>
-                c.name.toLowerCase().contains(q) ||
+        : customers.where((c) {
+            final address = _customerAddress(c).toLowerCase();
+            return c.name.toLowerCase().contains(q) ||
                 c.mobile.contains(q) ||
-                (c.city?.toLowerCase().contains(q) ?? false))
-            .toList();
+                (c.city?.toLowerCase().contains(q) ?? false) ||
+                address.contains(q);
+          }).toList();
   }
 
   void _onSearch() {
@@ -175,6 +176,21 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
     final digits = _digitsFromQuery;
     if (digits.length >= 10) return digits.substring(digits.length - 10);
     return digits;
+  }
+
+  String _customerAddress(Customer customer) {
+    final parts = <String>[
+      customer.addressLine1 ?? '',
+      customer.addressLine2 ?? '',
+      customer.city ?? '',
+    ].map((part) => part.trim()).where((part) => part.isNotEmpty).toList();
+    final unique = <String>[];
+    for (final part in parts) {
+      if (!unique.any((value) => value.toLowerCase() == part.toLowerCase())) {
+        unique.add(part);
+      }
+    }
+    return unique.join(', ');
   }
 
   Future<void> _openAddCustomerScreen() async {
@@ -281,7 +297,7 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                   icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
                   label: const Text('Add New Customer'),
                   style: TextButton.styleFrom(
-                    foregroundColor: GirviColors.brandGold,
+                    foregroundColor: GirviColors.textDark,
                     textStyle: GoogleFonts.inter(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w800,
@@ -306,10 +322,10 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                   autofocus: true,
                   style: GirviStyles.fieldInput,
                   decoration: InputDecoration(
-                    hintText: 'Search by name or mobile...',
+                    hintText: 'Search by name, mobile, city or address...',
                     hintStyle: GirviStyles.fieldHint,
                     prefixIcon: const Icon(GirviIcons.search,
-                        color: GirviColors.brandGold, size: 18),
+                        color: GirviColors.textDark, size: 18),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -338,42 +354,239 @@ class _SelectCustomerDialogState extends State<SelectCustomerDialog> {
                           : ListView.separated(
                               controller: scrollCtrl,
                               itemCount: _filtered.length,
-                              separatorBuilder: (_, __) => const Divider(
-                                  height: 1, color: GirviColors.divider),
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 10, 16, 18),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
                               itemBuilder: (_, i) {
                                 final c = _filtered[i];
-                                final initial = c.name.trim().isEmpty
-                                    ? '?'
-                                    : c.name.trim()[0].toUpperCase();
-                                return ListTile(
+                                return _CustomerResultTile(
+                                  customer: c,
+                                  address: _customerAddress(c),
                                   onTap: () => widget.onSelected(c),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 20, vertical: 4),
-                                  leading: CircleAvatar(
-                                    backgroundColor: GirviColors.brandGoldLight,
-                                    child: Text(initial,
-                                        style: GoogleFonts.manrope(
-                                          color: GirviColors.brandDeep,
-                                          fontWeight: FontWeight.w800,
-                                        )),
-                                  ),
-                                  title: Text(c.name,
-                                      style: GoogleFonts.inter(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: GirviColors.textDark)),
-                                  subtitle: Text(c.mobile,
-                                      style: GirviStyles.caption),
-                                  trailing: c.city != null
-                                      ? Text(c.city!,
-                                          style: GirviStyles.caption
-                                              .copyWith(fontSize: 12.5))
-                                      : null,
                                 );
                               },
                             ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerResultTile extends StatefulWidget {
+  final Customer customer;
+  final String address;
+  final VoidCallback onTap;
+
+  const _CustomerResultTile({
+    required this.customer,
+    required this.address,
+    required this.onTap,
+  });
+
+  @override
+  State<_CustomerResultTile> createState() => _CustomerResultTileState();
+}
+
+class _CustomerResultTileState extends State<_CustomerResultTile> {
+  bool _hovered = false;
+
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final customer = widget.customer;
+    final name = customer.name.trim();
+    final initial = name.isEmpty ? '?' : name.substring(0, 1).toUpperCase();
+    final city = (customer.city ?? '').trim();
+    final address = widget.address.trim();
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _hovered ? GirviColors.bodyBg : GirviColors.cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _hovered
+                    ? GirviColors.brandGold.withValues(alpha: 0.34)
+                    : GirviColors.cardBorder,
+              ),
+              boxShadow: _hovered
+                  ? [
+                      BoxShadow(
+                        color: GirviColors.shadowLight.withValues(alpha: 0.9),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: GirviColors.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: GirviColors.cardBorder,
+                    ),
+                  ),
+                  child: Text(
+                    initial,
+                    style: GoogleFonts.manrope(
+                      color: GirviColors.textDark,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              name.isEmpty ? 'Unnamed Customer' : name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.manrope(
+                                color: GirviColors.textDark,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          if (city.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            _CustomerMetaPill(label: city),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 6,
+                        children: [
+                          _CustomerMetaLine(
+                            icon: Icons.call_outlined,
+                            text: customer.mobile.trim().isEmpty
+                                ? 'Mobile not saved'
+                                : customer.mobile.trim(),
+                          ),
+                          _CustomerMetaLine(
+                            icon: Icons.location_on_outlined,
+                            text:
+                                address.isEmpty ? 'Address not saved' : address,
+                            expanded: true,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: GirviColors.textMuted,
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CustomerMetaLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool expanded;
+
+  const _CustomerMetaLine({
+    required this.icon,
+    required this.text,
+    this.expanded = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Row(
+      mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
+      children: [
+        Icon(icon, color: GirviColors.textMuted, size: 15),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: GirviColors.textDark,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              height: 1.25,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    return expanded
+        ? ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: content,
+          )
+        : content;
+  }
+}
+
+class _CustomerMetaPill extends StatelessWidget {
+  final String label;
+
+  const _CustomerMetaPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 160),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: GirviColors.inputBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: GirviColors.cardBorder),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.inter(
+          color: GirviColors.textDark,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
@@ -482,7 +695,7 @@ class _NoCustomerFoundCard extends StatelessWidget {
             Text(
               hasQuery
                   ? 'No registered profile matched "$query". Create the customer profile before starting this Girvi loan.'
-                  : 'Search by name or mobile, or create a new customer profile.',
+                  : 'Search by name, mobile, city or address, or create a new customer profile.',
               textAlign: TextAlign.center,
               style: GirviStyles.caption.copyWith(fontSize: 12.5),
             ),

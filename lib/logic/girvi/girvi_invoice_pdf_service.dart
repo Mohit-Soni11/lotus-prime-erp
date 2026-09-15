@@ -45,7 +45,7 @@ class GirviInvoicePdfService {
   static const _surface = PdfColor.fromInt(0xFFF6F8FB);
 
   static const customerItemHeaders = <String>[
-    'S/N',
+    'S.No',
     'Metal',
     'Item',
     'Pcs',
@@ -446,7 +446,7 @@ class GirviInvoicePdfService {
         ),
       if (itemSettings.showValuationAmount)
         _GirviInvoiceColumn(
-          header: 'Valuation',
+          header: 'Pledged Value',
           width: 1.15,
           alignment: pw.Alignment.centerRight,
           value: (item) => _amount(item.value),
@@ -474,7 +474,7 @@ class GirviInvoicePdfService {
     final hasPaymentBreakdown = draft.payments.isNotEmpty;
     final disbursementSummary = draft.disbursementSummary.trim();
     final hasDisbursementSummary = disbursementSummary.isNotEmpty;
-    final pledgedItemPhotoPath = _firstPledgedItemPhotoPath(draft);
+    final pledgedItemPhotoPath = _firstPledgedItemPhotoPath(draft, settings);
     final panels = <LotusPrintablePanel>[
       LotusPrintablePanel(
         title: 'LOAN DISBURSEMENT SUMMARY',
@@ -781,15 +781,29 @@ class GirviInvoicePdfService {
     return '$trimmed Paid';
   }
 
-  static String _firstPledgedItemPhotoPath(GirviInvoiceDraft draft) {
+  static String _firstPledgedItemPhotoPath(
+    GirviInvoiceDraft draft,
+    GirviBillingModel settings,
+  ) {
     for (final item in draft.items) {
+      if (!settings.settingsForMetal(item.metal).showItemPhotos) continue;
       for (final path in item.photoPaths) {
-        final trimmed = path.trim();
-        if (trimmed.isEmpty) continue;
-        if (File(trimmed).existsSync()) return trimmed;
+        final normalizedPath = _existingLocalImagePath(path);
+        if (normalizedPath.isNotEmpty) return normalizedPath;
       }
     }
     return '';
+  }
+
+  static String _existingLocalImagePath(String rawPath) {
+    final trimmed = rawPath.trim();
+    if (trimmed.isEmpty) return '';
+
+    final uri = Uri.tryParse(trimmed);
+    final normalizedPath = uri != null && uri.scheme == 'file'
+        ? uri.toFilePath(windows: Platform.isWindows)
+        : trimmed;
+    return File(normalizedPath).existsSync() ? normalizedPath : '';
   }
 
   List<pw.Widget> _buildDocument(
@@ -1663,7 +1677,7 @@ class GirviInvoicePdfService {
     final columns = <_GirviInvoiceColumn>[
       if (settings.showSerialNumber)
         _GirviInvoiceColumn(
-          header: 'S/N',
+          header: 'S.No',
           width: 0.45,
           alignment: pw.Alignment.center,
           strong: true,
@@ -1707,7 +1721,7 @@ class GirviInvoicePdfService {
         ),
       if (settings.showValuationAmount)
         _GirviInvoiceColumn(
-          header: 'Valuation',
+          header: 'Pledged Value',
           width: 1.15,
           alignment: pw.Alignment.centerRight,
           strong: true,
@@ -1799,7 +1813,7 @@ class GirviInvoicePdfService {
     final columns = <_GirviInvoiceColumn>[
       if (settings.showSerialNumber)
         _GirviInvoiceColumn(
-          header: 'S/N',
+          header: 'S.No',
           width: 0.46,
           alignment: pw.Alignment.center,
           strong: true,
@@ -1909,7 +1923,9 @@ class GirviInvoicePdfService {
     for (final item in draft.items) {
       if (!settings.settingsForMetal(item.metal).showItemPhotos) continue;
       for (final path in item.photoPaths) {
-        final file = File(path);
+        final normalizedPath = _existingLocalImagePath(path);
+        if (normalizedPath.isEmpty) continue;
+        final file = File(normalizedPath);
         if (!file.existsSync()) continue;
         try {
           photos.add(

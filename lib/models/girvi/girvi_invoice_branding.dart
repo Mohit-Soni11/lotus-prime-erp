@@ -41,6 +41,47 @@ class GirviInvoiceBranding {
   final String? signaturePath;
   final String signatureShape;
 
+  GirviInvoiceBranding copyWith({
+    String? shopName,
+    String? shopAddress,
+    String? shopMobile,
+    String? shopAlternateMobile,
+    String? shopGstin,
+    String? logoPath,
+    String? logoShape,
+    List<ShopPrintDocumentField>? printFields,
+    String? signaturePath,
+    String? signatureShape,
+  }) {
+    return GirviInvoiceBranding(
+      shopName: shopName ?? this.shopName,
+      shopAddress: shopAddress ?? this.shopAddress,
+      shopMobile: shopMobile ?? this.shopMobile,
+      shopAlternateMobile: shopAlternateMobile ?? this.shopAlternateMobile,
+      shopGstin: shopGstin ?? this.shopGstin,
+      logoPath: logoPath ?? this.logoPath,
+      logoShape: logoShape ?? this.logoShape,
+      printFields: printFields ?? this.printFields,
+      signaturePath: signaturePath ?? this.signaturePath,
+      signatureShape: signatureShape ?? this.signatureShape,
+    );
+  }
+
+  GirviInvoiceBranding withPrintProfile(ShopPrintDocumentProfile profile) {
+    return GirviInvoiceBranding(
+      shopName: shopName,
+      shopAddress: shopAddress,
+      shopMobile: shopMobile,
+      shopAlternateMobile: shopAlternateMobile,
+      shopGstin: shopGstin,
+      logoPath: profile.logoPath,
+      logoShape: profile.logoShape,
+      printFields: profile.fields,
+      signaturePath: profile.signaturePath,
+      signatureShape: profile.signatureShape,
+    );
+  }
+
   String get initial {
     final value = printShopName.trim();
     return value.isEmpty ? 'S' : value.substring(0, 1).toUpperCase();

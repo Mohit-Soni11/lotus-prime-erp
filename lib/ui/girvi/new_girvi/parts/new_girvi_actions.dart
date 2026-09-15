@@ -967,18 +967,18 @@ extension NewGirviActions on _NewGirviScreenState {
           sectionTitle('Pledged Item'),
           pw.TableHelper.fromTextArray(
             headers: const [
-              'S/N',
+              'S.No',
               'Metal',
               'Description',
               'Purity',
               'Pieces',
-              'Gross',
-              'Less',
-              'Net',
-              'Purity',
-              'Fine',
+              'Gross Wt.',
+              'Less Wt.',
+              'Net Wt.',
+              'Val. Purity',
+              'Fine Wt.',
               'HUID',
-              'Value',
+              'Pledged Value',
             ],
             data: _pledgedItems.map((item) {
               final description = item.descriptionCtrl.text.trim();

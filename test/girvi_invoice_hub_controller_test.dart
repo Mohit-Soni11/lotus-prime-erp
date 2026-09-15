@@ -57,7 +57,7 @@ void main() {
     expect(
       GirviInvoicePdfService.customerItemHeaders,
       const [
-        'S/N',
+        'S.No',
         'Metal',
         'Item',
         'Pcs',
@@ -155,6 +155,66 @@ void main() {
     expect(await controller.finalizeIfNeeded(), isTrue);
     expect(await controller.finalizeIfNeeded(), isTrue);
     expect(finalizeCalls, 1);
+  });
+
+  test('Girvi invoice display setup is saved for future invoices', () async {
+    var savedSettings = GirviBillingModel.defaults;
+    final controller = GirviInvoiceHubController(
+      draft: _draft,
+      settingsLoader: () async => savedSettings,
+      settingsSaver: (model) async {
+        savedSettings = model;
+        return true;
+      },
+      brandingLoader: () async => const GirviInvoiceBranding(
+        shopName: 'Shree Balaji Jewellers',
+        shopAddress: 'Main Road, Gaya, Bihar 823001',
+        shopMobile: '9876543210',
+      ),
+      onFinalize: () async => true,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.generatePreview();
+    await controller.setCombinedCustomization('photos', false);
+    await controller.setDocumentCustomization('declaration', false);
+    await controller.switchTemplate(PrintTemplateRegistry.lotusSignature.id);
+
+    expect(await controller.saveInvoiceDisplaySetup(), isTrue);
+    expect(
+      savedSettings.settingsForMetal(GirviBillingMetal.gold).showItemPhotos,
+      isFalse,
+    );
+    expect(
+      savedSettings.settingsForMetal(GirviBillingMetal.silver).showItemPhotos,
+      isFalse,
+    );
+    expect(savedSettings.printCustomerDeclaration, isFalse);
+    expect(savedSettings.selectedTemplate,
+        PrintTemplateRegistry.lotusSignature.id);
+
+    final nextController = GirviInvoiceHubController(
+      draft: _draft,
+      settingsLoader: () async => savedSettings,
+      settingsSaver: (model) async => true,
+      brandingLoader: () async => const GirviInvoiceBranding(
+        shopName: 'Shree Balaji Jewellers',
+        shopAddress: 'Main Road, Gaya, Bihar 823001',
+        shopMobile: '9876543210',
+      ),
+      onFinalize: () async => true,
+    );
+    addTearDown(nextController.dispose);
+
+    await nextController.generatePreview();
+
+    expect(nextController.selectedTemplateId,
+        PrintTemplateRegistry.lotusSignature.id);
+    expect(nextController.getCombinedCustomizationValue('photos'), isFalse);
+    expect(
+      nextController.getDocumentCustomizationValue('declaration'),
+      isFalse,
+    );
   });
 }
 

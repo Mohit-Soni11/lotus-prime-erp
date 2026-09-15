@@ -1,7 +1,7 @@
 part of '../new_girvi_screen.dart';
 
 extension NewGirviLayout on _NewGirviScreenState {
-  static const double _headerCardHeight = 156;
+  static const double _headerCardHeight = 176;
 
   // â”€â”€ TICKET BANNER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -51,7 +51,7 @@ extension NewGirviLayout on _NewGirviScreenState {
           final children = [
             _DeskMetric(
               icon: GirviIcons.customer,
-              label: 'Customer',
+              label: 'Borrower',
               value: _ctrl.hasCustomer
                   ? _ctrl.selectedCustomer!.name
                   : 'Not selected',
@@ -60,19 +60,19 @@ extension NewGirviLayout on _NewGirviScreenState {
             _DeskMetric(
               icon: GirviIcons.weight,
               label: 'Net Weight',
-              value: '${_ctrl.netWeight.toStringAsFixed(3)} g',
+              value: _deskNetWeightLabel(),
               color: GirviColors.accentWeight,
             ),
             _DeskMetric(
               icon: GirviIcons.interestRate,
-              label: 'Interest Rate',
-              value: '${_ctrl.interestRate.toStringAsFixed(2)}% / month',
+              label: 'Monthly Interest',
+              value: _deskMonthlyInterestLabel(),
               color: GirviColors.accentInterest,
             ),
             _DeskMetric(
               icon: GirviIcons.loanTerms,
               label: 'Loan Amount',
-              value: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+              value: _deskLoanAmountLabel(),
               color: GirviColors.accentLoan,
             ),
           ];
@@ -97,6 +97,31 @@ extension NewGirviLayout on _NewGirviScreenState {
         },
       ),
     );
+  }
+
+  String _deskNetWeightLabel() {
+    if (_ctrl.netWeight <= 0) return 'Not set';
+    return '${_formatFlexibleNumber(_ctrl.netWeight, maxDecimals: 3)} g';
+  }
+
+  String _deskMonthlyInterestLabel() {
+    final hasLoanContext =
+        _ctrl.loanAmount > 0 || _loanAmtCtrl.text.trim().isNotEmpty;
+    if (!hasLoanContext || _ctrl.interestRate <= 0) return 'Not set';
+    return '${_formatFlexibleNumber(_ctrl.interestRate, maxDecimals: 2)}% monthly';
+  }
+
+  String _deskLoanAmountLabel() {
+    if (_ctrl.loanAmount <= 0) return 'Not set';
+    return 'Rs ${NumberFormat('#,##,##0.##', 'en_IN').format(_ctrl.loanAmount)}';
+  }
+
+  String _formatFlexibleNumber(
+    double value, {
+    required int maxDecimals,
+  }) {
+    final fixed = value.toStringAsFixed(maxDecimals);
+    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
   }
 
   Widget _buildTicketSummaryPanel() {
@@ -514,14 +539,14 @@ extension NewGirviLayout on _NewGirviScreenState {
                 label: _ctrl.hasCustomer ? 'SELECTED' : 'REQUIRED',
                 color: _ctrl.hasCustomer
                     ? GirviColors.success
-                    : GirviColors.warning,
+                    : GirviColors.danger,
               ),
             ],
           ),
           Container(
             height: 1,
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(vertical: 16),
+            margin: const EdgeInsets.symmetric(vertical: 14),
             color: GirviColors.cardBorder,
           ),
           Expanded(
@@ -541,9 +566,10 @@ extension NewGirviLayout on _NewGirviScreenState {
 
   Widget _buildSelectedCustomerHeaderTile() {
     final customer = _ctrl.selectedCustomer!;
+    final subtitle = _selectedCustomerHeaderSubtitle(customer);
     return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
         color: GirviColors.inputBg,
         borderRadius: BorderRadius.circular(12),
@@ -582,17 +608,14 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  [
-                    customer.mobile,
-                    if ((customer.city ?? '').trim().isNotEmpty)
-                      customer.city!.trim(),
-                  ].join('  |  '),
-                  maxLines: 1,
+                  subtitle,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.textMuted,
+                    color: GirviColors.textDark,
                     fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
                   ),
                 ),
               ],
@@ -621,6 +644,30 @@ extension NewGirviLayout on _NewGirviScreenState {
         ],
       ),
     );
+  }
+
+  String _selectedCustomerHeaderSubtitle(Customer customer) {
+    final addressParts = <String>[
+      customer.addressLine1 ?? '',
+      customer.addressLine2 ?? '',
+      customer.city ?? '',
+    ].map((part) => part.trim()).where((part) => part.isNotEmpty).toList();
+    final uniqueAddressParts = <String>[];
+    for (final part in addressParts) {
+      if (!uniqueAddressParts
+          .any((value) => value.toLowerCase() == part.toLowerCase())) {
+        uniqueAddressParts.add(part);
+      }
+    }
+    final address = uniqueAddressParts.join(', ');
+    final mobile = customer.mobile.trim();
+    if (mobile.isEmpty) {
+      return address.isEmpty ? 'Customer profile selected' : address;
+    }
+    if (address.isEmpty) {
+      return mobile;
+    }
+    return '$mobile  |  $address';
   }
 
   Widget _buildTicketBanner() {

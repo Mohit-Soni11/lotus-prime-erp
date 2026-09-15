@@ -5,6 +5,8 @@ import 'package:printing/printing.dart';
 import '../../../core/pdf/lotus_pdf_page_counter.dart';
 import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
+import '../../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
+import '../../../features/settings/billing_setup/shop_info/presentation/widgets/shop_print_information_widgets.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_invoice_pdf_service.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';
@@ -16,7 +18,11 @@ part 'parts/girvi_invoice_hub_actions.dart';
 part 'parts/girvi_invoice_hub_control_widgets.dart';
 part 'parts/girvi_invoice_hub_controls.dart';
 part 'parts/girvi_invoice_hub_header.dart';
+part 'parts/girvi_invoice_display_drawer.dart';
+part 'parts/girvi_invoice_display_options.dart';
 part 'parts/girvi_invoice_setup_card.dart';
+part 'parts/girvi_invoice_template_picker.dart';
+part 'parts/girvi_shop_print_profile_drawer.dart';
 part 'parts/girvi_invoice_hub_preview.dart';
 
 class GirviInvoiceHubScreen extends StatefulWidget {
@@ -155,8 +161,6 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
                   _buildFormatSelector(),
                   const SizedBox(height: 20),
                   _buildTemplateSelector(),
-                  const SizedBox(height: 20),
-                  _buildBillContextCard(),
                   const SizedBox(height: 20),
                   _buildInvoiceSetupCard(),
                   const SizedBox(height: 20),

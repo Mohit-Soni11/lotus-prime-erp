@@ -273,8 +273,8 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
   Widget _buildPledgedItemsSection() {
     return _LedgerSectionCard(
       icon: GirviIcons.itemDetails,
-      title: 'Pledged Item Ledger',
-      subtitle: 'Fast entry for multiple loan items',
+      title: 'Pledged Items Ledger',
+      subtitle: 'Structured item entry for this Girvi ticket',
       accent: GirviColors.accentItem,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -300,8 +300,8 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
   Widget _buildPledgedValuationSection() {
     return _LedgerSectionCard(
       icon: GirviIcons.valuation,
-      title: 'Valuation',
-      subtitle: 'Fine weight based market valuation',
+      title: 'Pledged Valuation',
+      subtitle: 'Fine weight and market-rate estimate',
       accent: GirviColors.accentValuation,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -370,15 +370,15 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
                     _LedgerHeader(
                       scale: columnScale,
                       columns: const [
-                        _LedgerColumn('S/N', 40),
+                        _LedgerColumn('S.No', 46),
                         _LedgerColumn('Metal', 92),
                         _LedgerColumn('Item Description', 210),
                         _LedgerColumn('Pcs', 56),
                         _LedgerColumn('HUID', 110),
                         _LedgerColumn('Purity', 102),
-                        _LedgerColumn('Gross', 94),
-                        _LedgerColumn('Less', 94),
-                        _LedgerColumn('Net', 96),
+                        _LedgerColumn('Gross Wt.', 94),
+                        _LedgerColumn('Less Wt.', 94),
+                        _LedgerColumn('Net Wt.', 96),
                         _LedgerColumn('Photo', 54),
                         _LedgerColumn('Act', 42),
                       ],
@@ -411,7 +411,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _LedgerSerialCell(serialNo: item.serialNo, width: w(40)),
+          _LedgerSerialCell(serialNo: item.serialNo, width: w(46)),
           const SizedBox(width: 6),
           _LedgerDropdownCell<MetalType>(
             width: w(92),
@@ -491,8 +491,10 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
             width: w(96),
-            value: item.netWeight.toStringAsFixed(3),
-            color: GirviColors.brandGold,
+            value: _formatLedgerWeight(item.netWeight),
+            color: item.netWeight > 0
+                ? GirviColors.brandGold
+                : GirviColors.textMuted,
           ),
           const SizedBox(width: 6),
           _LedgerPhotoCell(
@@ -570,9 +572,9 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final tableWidth =
-                constraints.maxWidth < 902 ? 902.0 : constraints.maxWidth;
+                constraints.maxWidth < 916 ? 916.0 : constraints.maxWidth;
             final columnScale =
-                ((tableWidth - 52) / 850).clamp(1.0, 1.35).toDouble();
+                ((tableWidth - 60) / 856).clamp(1.0, 1.35).toDouble();
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: SizedBox(
@@ -583,13 +585,13 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
                     _LedgerHeader(
                       scale: columnScale,
                       columns: const [
-                        _LedgerColumn('S/N', 40),
+                        _LedgerColumn('S.No', 46),
                         _LedgerColumn('Item', 260),
-                        _LedgerColumn('Net', 96),
-                        _LedgerColumn('Purity', 106),
-                        _LedgerColumn('Fine', 96),
+                        _LedgerColumn('Net Wt.', 96),
+                        _LedgerColumn('Val. Purity', 106),
+                        _LedgerColumn('Fine Wt.', 96),
                         _LedgerColumn('Rate / g', 126),
-                        _LedgerColumn('Value', 126),
+                        _LedgerColumn('Pledged Value', 126),
                       ],
                     ),
                     if (_pledgedItems.isEmpty)
@@ -623,7 +625,7 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _LedgerSerialCell(serialNo: item.serialNo, width: w(40)),
+          _LedgerSerialCell(serialNo: item.serialNo, width: w(46)),
           const SizedBox(width: 6),
           _LedgerItemNameCell(
             width: w(260),
@@ -633,8 +635,10 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
             width: w(96),
-            value: item.netWeight.toStringAsFixed(3),
-            color: GirviColors.brandGold,
+            value: _formatLedgerWeight(item.netWeight),
+            color: item.netWeight > 0
+                ? GirviColors.brandGold
+                : GirviColors.textMuted,
           ),
           const SizedBox(width: 6),
           _LedgerTextCell(
@@ -653,8 +657,10 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
             width: w(96),
-            value: item.fineWeight.toStringAsFixed(3),
-            color: GirviColors.success,
+            value: _formatLedgerWeight(item.fineWeight),
+            color: item.fineWeight > 0
+                ? GirviColors.success
+                : GirviColors.textMuted,
           ),
           const SizedBox(width: 6),
           _LedgerTextCell(
@@ -673,12 +679,24 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
           const SizedBox(width: 6),
           _LedgerReadOnlyCell(
             width: w(126),
-            value: 'Rs ${_fmt.format(item.itemValue)}',
-            color: GirviColors.success,
+            value: _formatLedgerAmount(item.itemValue),
+            color: item.itemValue > 0
+                ? GirviColors.success
+                : GirviColors.textMuted,
           ),
         ],
       ),
     );
+  }
+
+  String _formatLedgerWeight(double value) {
+    if (value <= 0) return '-';
+    return value.toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+
+  String _formatLedgerAmount(double value) {
+    if (value <= 0) return '-';
+    return 'Rs ${NumberFormat('#,##,##0.##', 'en_IN').format(value)}';
   }
 
   Widget _buildValuationEmptyState() {
@@ -1002,6 +1020,13 @@ class _LedgerSectionCard extends StatelessWidget {
         color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: GirviColors.cardBorder, width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: GirviColors.shadowLight,
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1009,7 +1034,7 @@ class _LedgerSectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
-              color: GirviColors.brandGold.withValues(alpha: 0.045),
+              color: accent.withValues(alpha: 0.055),
               border: const Border(
                 bottom: BorderSide(color: GirviColors.divider),
               ),
@@ -1076,9 +1101,14 @@ class _LedgerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      color: const Color(0xFFF3EFE7),
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 9),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F4EE),
+        border: Border(
+          bottom: BorderSide(color: GirviColors.cardBorder),
+        ),
+      ),
       child: Row(
         children: [
           for (var i = 0; i < columns.length; i++) ...[
@@ -1091,8 +1121,9 @@ class _LedgerHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.textBody,
-                  fontSize: 13,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
+                  letterSpacing: 0.1,
                 ),
               ),
             ),

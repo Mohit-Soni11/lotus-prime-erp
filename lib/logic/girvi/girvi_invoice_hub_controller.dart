@@ -8,6 +8,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../features/print_templates/domain/print_template_registry.dart';
+import '../../features/settings/billing_setup/shop_info/data/shop_print_information_repository.dart';
+import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
@@ -23,19 +25,29 @@ class GirviInvoiceHubController extends ChangeNotifier {
     required this.draft,
     required Future<bool> Function() onFinalize,
     GirviInvoicePdfService? pdfService,
+    GirviBillingRepo? billingRepo,
     Future<GirviBillingModel> Function()? settingsLoader,
+    Future<bool> Function(GirviBillingModel model)? settingsSaver,
     Future<GirviInvoiceBranding> Function()? brandingLoader,
+    ShopPrintInformationRepository? shopPrintRepository,
   })  : _onFinalize = onFinalize,
         _pdfService = pdfService ?? GirviInvoicePdfService(),
-        _settingsLoader = settingsLoader ?? GirviBillingRepo().fetch,
         _brandingLoader =
-            brandingLoader ?? GirviInvoiceBrandingRepository().fetch;
+            brandingLoader ?? GirviInvoiceBrandingRepository().fetch,
+        _shopPrintRepository =
+            shopPrintRepository ?? ShopPrintInformationRepository() {
+    final resolvedBillingRepo = billingRepo ?? GirviBillingRepo();
+    _settingsLoader = settingsLoader ?? resolvedBillingRepo.fetch;
+    _settingsSaver = settingsSaver ?? resolvedBillingRepo.save;
+  }
 
   final GirviInvoiceDraft draft;
   final Future<bool> Function() _onFinalize;
   final GirviInvoicePdfService _pdfService;
-  final Future<GirviBillingModel> Function() _settingsLoader;
+  late final Future<GirviBillingModel> Function() _settingsLoader;
+  late final Future<bool> Function(GirviBillingModel model) _settingsSaver;
   final Future<GirviInvoiceBranding> Function() _brandingLoader;
+  final ShopPrintInformationRepository _shopPrintRepository;
 
   GirviInvoiceHubState state = GirviInvoiceHubState.idle;
   GirviBillingModel invoiceSettings = GirviBillingModel.defaults;
@@ -55,9 +67,12 @@ class GirviInvoiceHubController extends ChangeNotifier {
   bool isSharing = false;
   bool _settingsLoaded = false;
   bool _brandingLoaded = false;
+  ShopPrintInformationState? _shopPrintState;
   String? activePrintMetal;
 
   bool get isReady => state == GirviInvoiceHubState.ready && pdfBytes != null;
+
+  ShopPrintInformationState? get shopPrintInformationState => _shopPrintState;
 
   GirviInvoiceDraft get printableDraft =>
       draft.copyWith(mode: selectedReceiptMode);
@@ -97,6 +112,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       if (!_settingsLoaded) {
         await _loadSavedSettings();
       }
+      _shopPrintState ??= await _loadShopPrintState();
       if (!_brandingLoaded) {
         await _loadShopBranding();
       }
@@ -122,11 +138,67 @@ class GirviInvoiceHubController extends ChangeNotifier {
   Future<void> _loadShopBranding() async {
     try {
       invoiceBranding = await _brandingLoader();
+      final shopPrintState = _shopPrintState;
+      if (shopPrintState != null) {
+        await _applyShopPrintProfile(shopPrintState);
+      }
     } catch (error) {
       invoiceBranding = GirviInvoiceBranding.fallback;
       AppLogger.debug('Girvi shop profile fallback: $error');
     }
     _brandingLoaded = true;
+  }
+
+  Future<ShopPrintInformationState> _loadShopPrintState() async {
+    try {
+      return await _shopPrintRepository.load();
+    } catch (error) {
+      AppLogger.debug('Girvi shop print setup fallback: $error');
+      return const ShopPrintInformationState(
+        tenantId: '',
+        fields: <ShopPrintField>[],
+        enabledFieldIds: <String>{},
+      );
+    }
+  }
+
+  Future<void> _applyShopPrintProfile(
+    ShopPrintInformationState state,
+  ) async {
+    if (state.tenantId.isEmpty) return;
+    final profile = await _shopPrintRepository.buildDocumentProfile(state);
+    invoiceBranding = invoiceBranding.withPrintProfile(profile);
+  }
+
+  Future<void> setShopPrintFieldEnabled(
+    ShopPrintField field,
+    bool enabled,
+  ) async {
+    final state = _shopPrintState;
+    if (state == null || !field.isConfigured) return;
+
+    final enabledIds = {...state.enabledFieldIds};
+    if (enabled) {
+      enabledIds.add(field.id);
+    } else {
+      enabledIds.remove(field.id);
+    }
+
+    _shopPrintState = state.copyWith(enabledFieldIds: enabledIds);
+    await _applyShopPrintProfile(_shopPrintState!);
+    await generatePreview();
+  }
+
+  Future<void> restoreShopPrintInformationSetup() async {
+    _shopPrintState = await _loadShopPrintState();
+    await _applyShopPrintProfile(_shopPrintState!);
+    await generatePreview();
+  }
+
+  Future<void> saveShopPrintInformationSetup() async {
+    final state = _shopPrintState;
+    if (state == null || state.tenantId.isEmpty) return;
+    await _shopPrintRepository.save(state);
   }
 
   Future<void> _loadSavedSettings() async {
@@ -444,6 +516,32 @@ class GirviInvoiceHubController extends ChangeNotifier {
         'GirviInvoiceHubController.restoreDocumentSavedSetup error: $error',
       );
       notifyListeners();
+    }
+  }
+
+  Future<bool> saveInvoiceDisplaySetup() async {
+    try {
+      final modelToSave = invoiceSettings.copyWith(
+        selectedTemplate: selectedTemplateId,
+      );
+      final saved = await _settingsSaver(modelToSave);
+      if (!saved) {
+        errorMessage = 'Girvi invoice display setup could not be saved.';
+        notifyListeners();
+        return false;
+      }
+      invoiceSettings = modelToSave;
+      _settingsLoaded = true;
+      errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (error) {
+      errorMessage = 'Girvi invoice display setup could not be saved.';
+      AppLogger.debug(
+        'GirviInvoiceHubController.saveInvoiceDisplaySetup error: $error',
+      );
+      notifyListeners();
+      return false;
     }
   }
 
