@@ -20,10 +20,10 @@ enum GirviInvoiceFormat {
   a4,
   compactA5;
 
-  String get label => this == a4 ? 'A4 Size' : 'Compact A5';
+  String get label => this == a4 ? 'A4 Size' : '80 mm Girvi Receipt';
 
   String get subtitle =>
-      this == a4 ? 'Premium full-page invoice' : 'Landscape counter copy';
+      this == a4 ? 'Premium full-page invoice' : '80 mm roll counter copy';
 
   PdfPageFormat get pageFormat =>
       this == a4 ? PdfPageFormat.a4 : PdfPageFormat.a5.landscape;

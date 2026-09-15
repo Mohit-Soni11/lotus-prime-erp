@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
 
+import '../../../core/pdf/lotus_pdf_page_counter.dart';
+import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_invoice_pdf_service.dart';
@@ -11,6 +13,7 @@ import '../../../theme/girvi/girvi_theme.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_invoice_hub_actions.dart';
+part 'parts/girvi_invoice_hub_control_widgets.dart';
 part 'parts/girvi_invoice_hub_controls.dart';
 part 'parts/girvi_invoice_hub_header.dart';
 part 'parts/girvi_invoice_setup_card.dart';
@@ -89,7 +92,7 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
   void _showMessage(String message, {bool error = false}) {
     AppFeedback.show(
       context,
-      type: error ? AppFeedbackType.success : AppFeedbackType.error,
+      type: error ? AppFeedbackType.error : AppFeedbackType.success,
       message: message,
     );
   }
@@ -151,13 +154,13 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
                 children: [
                   _buildFormatSelector(),
                   const SizedBox(height: 20),
-                  _buildReceiptModeSelector(),
-                  const SizedBox(height: 20),
                   _buildTemplateSelector(),
+                  const SizedBox(height: 20),
+                  _buildBillContextCard(),
                   const SizedBox(height: 20),
                   _buildInvoiceSetupCard(),
                   const SizedBox(height: 20),
-                  _buildOutputOptions(),
+                  _buildPrintOptions(),
                   if (_controller.errorMessage != null) ...[
                     const SizedBox(height: 14),
                     _buildErrorNotice(_controller.errorMessage!),

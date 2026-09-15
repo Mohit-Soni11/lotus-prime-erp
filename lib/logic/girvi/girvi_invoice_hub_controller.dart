@@ -1,9 +1,12 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../core/printing/lotus_pdf_print_dispatcher.dart';
 import '../../features/print_templates/domain/print_template_registry.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
@@ -44,9 +47,12 @@ class GirviInvoiceHubController extends ChangeNotifier {
   String? errorMessage;
   int printCopies = 1;
   bool includeDuplicateStamp = false;
+  bool usePrinterDriverSettings = true;
+  LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   bool isFinalized = false;
   bool isFinalizing = false;
   bool isExporting = false;
+  bool isSharing = false;
   bool _settingsLoaded = false;
   bool _brandingLoaded = false;
   String? activePrintMetal;
@@ -457,18 +463,17 @@ class GirviInvoiceHubController extends ChangeNotifier {
     await generatePreview();
   }
 
-  Future<void> switchReceiptMode(GirviReceiptMode mode) async {
-    if (selectedReceiptMode == mode) return;
-    selectedReceiptMode = mode;
-    await generatePreview();
-  }
-
   Future<void> updatePrintOptions({
     required int copies,
     required bool duplicate,
+    bool? useDriverSettings,
+    LotusPrintColorMode? colorMode,
   }) async {
-    printCopies = copies.clamp(1, 5);
-    includeDuplicateStamp = duplicate;
+    final normalizedCopies = copies.clamp(1, 5).toInt();
+    printCopies = normalizedCopies;
+    includeDuplicateStamp = normalizedCopies > 1 && duplicate;
+    usePrinterDriverSettings = useDriverSettings ?? usePrinterDriverSettings;
+    printColorMode = colorMode ?? printColorMode;
     await generatePreview();
   }
 
@@ -496,23 +501,79 @@ class GirviInvoiceHubController extends ChangeNotifier {
     }
   }
 
-  Future<bool> printInvoice() async {
+  Future<bool> printInvoice([BuildContext? context]) async {
     if (!await finalizeIfNeeded()) return false;
     if (!_brandingLoaded) await _loadShopBranding();
-    final bytes = await _pdfService.build(
-      draft: printableDraft,
-      format: selectedFormat,
-      settings: invoiceSettings,
-      branding: invoiceBranding,
-      templateId: selectedTemplateId,
-      copies: printCopies,
-      duplicateStamp: includeDuplicateStamp,
+    final bytes = await buildPrintPdfBytes();
+    if (bytes == null) return false;
+    if (context == null) {
+      return Printing.layoutPdf(
+        name: _fileName,
+        onLayout: (_) async => bytes,
+      );
+    }
+    if (!context.mounted) return false;
+
+    final result = await const LotusPdfPrintDispatcher().dispatch(
+      context: context,
+      bytes: bytes,
+      documentName: _documentName,
+      outputFileName: _fileName,
+      printerPickerTitle: 'Select Girvi Invoice Printer',
+      virtualSaveDialogTitle: 'Save Girvi Print Output As',
+      usePrinterSettings: usePrinterDriverSettings,
+      colorMode: printColorMode,
     );
-    await Printing.layoutPdf(
-      name: _fileName,
-      onLayout: (_) async => bytes,
-    );
-    return true;
+    return result.completed;
+  }
+
+  Future<Uint8List?> buildPrintPdfBytes() async {
+    if (!await finalizeIfNeeded()) return null;
+    if (!_brandingLoaded) await _loadShopBranding();
+    return _buildPdfBytes();
+  }
+
+  Future<bool> shareInvoicePdf() async {
+    if (!await finalizeIfNeeded()) return false;
+    if (!_brandingLoaded) await _loadShopBranding();
+
+    isSharing = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final bytes = await _buildPdfBytes();
+      final shareFile = await _writeTemporaryShareFile(_fileName, bytes);
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          title: 'Share Girvi Invoice PDF',
+          subject: 'Girvi Invoice ${draft.ticketNo}',
+          text: _shareMessage,
+          files: [
+            XFile(
+              shareFile.path,
+              mimeType: 'application/pdf',
+              name: _fileName,
+            ),
+          ],
+          fileNameOverrides: [_fileName],
+        ),
+      );
+      if (result.status != ShareResultStatus.dismissed) return true;
+
+      return Printing.sharePdf(
+        bytes: bytes,
+        filename: _fileName,
+        subject: 'Girvi Invoice ${draft.ticketNo}',
+      );
+    } catch (error) {
+      errorMessage = 'Invoice PDF could not be shared.';
+      AppLogger.debug(
+          'GirviInvoiceHubController.shareInvoicePdf error: $error');
+      return false;
+    } finally {
+      isSharing = false;
+      notifyListeners();
+    }
   }
 
   Future<String?> exportPdf() async {
@@ -533,15 +594,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
       final outputPath = selectedPath.toLowerCase().endsWith('.pdf')
           ? selectedPath
           : '$selectedPath.pdf';
-      final bytes = await _pdfService.build(
-        draft: printableDraft,
-        format: selectedFormat,
-        settings: invoiceSettings,
-        branding: invoiceBranding,
-        templateId: selectedTemplateId,
-        copies: printCopies,
-        duplicateStamp: includeDuplicateStamp,
-      );
+      final bytes = await _buildPdfBytes();
       await File(outputPath).writeAsBytes(bytes, flush: true);
       return outputPath;
     } catch (error) {
@@ -554,9 +607,46 @@ class GirviInvoiceHubController extends ChangeNotifier {
     }
   }
 
+  Future<Uint8List> _buildPdfBytes() {
+    return _pdfService.build(
+      draft: printableDraft,
+      format: selectedFormat,
+      settings: invoiceSettings,
+      branding: invoiceBranding,
+      templateId: selectedTemplateId,
+      copies: printCopies,
+      duplicateStamp: includeDuplicateStamp,
+    );
+  }
+
+  Future<File> _writeTemporaryShareFile(
+      String fileName, Uint8List bytes) async {
+    final directory = await Directory.systemTemp.createTemp(
+      'lotus_erp_girvi_invoice_share_',
+    );
+    final file = File('${directory.path}${Platform.pathSeparator}$fileName');
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
+  }
+
+  String get _documentName => 'Girvi Invoice ${draft.ticketNo}';
+
   String get _fileName {
     final safeTicket = draft.ticketNo.replaceAll(RegExp(r'[^A-Za-z0-9-]'), '_');
     return 'girvi_invoice_$safeTicket.pdf';
+  }
+
+  String get _shareMessage {
+    final customer = draft.customerName.trim().isEmpty
+        ? 'Customer'
+        : draft.customerName.trim();
+    return [
+      'Dear $customer,',
+      '',
+      'Your Girvi invoice is attached.',
+      'Invoice No: ${draft.ticketNo}',
+      'Loan Amount: Rs ${draft.loanAmount.toStringAsFixed(2)}',
+    ].join('\n');
   }
 
   String _resolveTemplateId(String templateId) {

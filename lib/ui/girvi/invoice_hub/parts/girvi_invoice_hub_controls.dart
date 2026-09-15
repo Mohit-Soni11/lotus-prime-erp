@@ -1,194 +1,164 @@
 part of '../girvi_invoice_hub_screen.dart';
 
 extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
-  Widget _buildReceiptModeSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _panelLabel('DOCUMENT MODE'),
-        const SizedBox(height: 10),
-        Column(
-          children: GirviReceiptMode.values.map((mode) {
-            final selected = _controller.selectedReceiptMode == mode;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: InkWell(
-                onTap: () => _controller.switchReceiptMode(mode),
-                borderRadius: BorderRadius.circular(11),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 11,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? GirviColors.brandGoldLight
-                        : GirviColors.shellPanelBg,
-                    borderRadius: BorderRadius.circular(11),
-                    border: Border.all(
-                      color: selected
-                          ? GirviColors.brandGold
-                          : GirviColors.shellBorder,
-                      width: selected ? 1.4 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _receiptModeIcon(mode),
-                        color: selected
-                            ? GirviColors.brandGold
-                            : GirviColors.shellTextMuted,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              mode.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
-                                color: selected
-                                    ? GirviColors.brandGold
-                                    : GirviColors.shellTextTitle,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _receiptModeSubtitle(mode),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
-                                color: GirviColors.shellTextMuted,
-                                fontSize: 11.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (selected)
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: GirviColors.brandGold,
-                          size: 18,
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(growable: false),
-        ),
-      ],
-    );
-  }
-
-  IconData _receiptModeIcon(GirviReceiptMode mode) {
-    switch (mode) {
-      case GirviReceiptMode.pledge:
-        return Icons.assignment_turned_in_outlined;
-      case GirviReceiptMode.interest:
-        return Icons.percent_rounded;
-      case GirviReceiptMode.release:
-        return Icons.lock_open_rounded;
-    }
-  }
-
-  String _receiptModeSubtitle(GirviReceiptMode mode) {
-    switch (mode) {
-      case GirviReceiptMode.pledge:
-        return 'New pledge ticket';
-      case GirviReceiptMode.interest:
-        return 'Interest payment record';
-      case GirviReceiptMode.release:
-        return 'Final settlement and delivery';
-    }
-  }
-
   Widget _buildFormatSelector() {
+    final selectedFormat = _controller.selectedFormat;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _panelLabel('PAPER SIZE'),
+        _panelLabel('DOCUMENT FORMAT'),
         const SizedBox(height: 10),
-        Row(
-          children: GirviInvoiceFormat.values.map((format) {
-            final selected = _controller.selectedFormat == format;
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: format == GirviInvoiceFormat.a4 ? 8 : 0,
-                ),
-                child: InkWell(
-                  onTap: () => _controller.switchFormat(format),
-                  borderRadius: BorderRadius.circular(11),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 13,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? GirviColors.brandGoldLight
-                          : GirviColors.shellPanelBg,
-                      borderRadius: BorderRadius.circular(11),
-                      border: Border.all(
-                        color: selected
-                            ? GirviColors.brandGold
-                            : GirviColors.shellBorder,
-                        width: selected ? 1.5 : 1,
+        InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _showDocumentFormatPicker(selectedFormat),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: GirviColors.shellPanelBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: GirviColors.brandGold.withValues(alpha: 0.45),
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    _GirviFormatIcon(format: selectedFormat),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _formatLabel(selectedFormat),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              color: GirviColors.shellTextTitle,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _formatShortName(selectedFormat),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              color: GirviColors.brandGold,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          format == GirviInvoiceFormat.a4
-                              ? Icons.description_outlined
-                              : Icons.article_outlined,
-                          color: selected
-                              ? GirviColors.brandGold
-                              : GirviColors.shellTextMuted,
-                          size: 23,
-                        ),
-                        const SizedBox(height: 7),
-                        Text(
-                          format.label,
-                          style: GoogleFonts.inter(
-                            color: selected
-                                ? GirviColors.brandGold
-                                : GirviColors.shellTextTitle,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          format.subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            color: GirviColors.shellTextMuted,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 10),
+                    _GirviFormatChangeButton(
+                      onTap: () => _showDocumentFormatPicker(selectedFormat),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            );
-          }).toList(),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _GirviMetaPill(
+                        icon: Icons.straighten_rounded,
+                        label: _formatPaperSpec(selectedFormat),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _GirviMetaPill(
+                        icon: Icons.verified_rounded,
+                        label: _formatUseCase(selectedFormat),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
+  }
+
+  Future<void> _showDocumentFormatPicker(GirviInvoiceFormat selectedFormat) {
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close Girvi document format selector',
+      barrierColor: Colors.black.withValues(alpha: 0.48),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, _, __) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            color: Colors.transparent,
+            child: _GirviDocumentFormatPickerPanel(
+              selectedFormat: selectedFormat,
+              labelFor: _formatLabel,
+              shortNameFor: _formatShortName,
+              paperSpecFor: _formatPaperSpec,
+              useCaseFor: _formatUseCase,
+              onSelect: (format) {
+                _controller.switchFormat(format);
+                Navigator.of(dialogContext).pop();
+              },
+              onClose: () => Navigator.of(dialogContext).pop(),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (_, animation, __, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.12, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: FadeTransition(opacity: curved, child: child),
+        );
+      },
+    );
+  }
+
+  String _formatLabel(GirviInvoiceFormat format) {
+    return switch (format) {
+      GirviInvoiceFormat.a4 => 'A4 Girvi Invoice',
+      GirviInvoiceFormat.compactA5 => '80 mm Girvi Receipt',
+    };
+  }
+
+  String _formatShortName(GirviInvoiceFormat format) {
+    return switch (format) {
+      GirviInvoiceFormat.a4 => 'A4',
+      GirviInvoiceFormat.compactA5 => '80 mm',
+    };
+  }
+
+  String _formatPaperSpec(GirviInvoiceFormat format) {
+    return switch (format) {
+      GirviInvoiceFormat.a4 => '210 x 297 mm',
+      GirviInvoiceFormat.compactA5 => '80 mm roll',
+    };
+  }
+
+  String _formatUseCase(GirviInvoiceFormat format) {
+    return switch (format) {
+      GirviInvoiceFormat.a4 => 'Pledge ready',
+      GirviInvoiceFormat.compactA5 => 'Counter copy',
+    };
   }
 
   Widget _buildTemplateSelector() {
@@ -235,7 +205,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                           Text(
                             isA4
                                 ? selectedTemplate.name
-                                : 'Compact A5 Counter Copy',
+                                : '80 mm Counter Receipt',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
@@ -248,7 +218,7 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
                           Text(
                             isA4
                                 ? selectedTemplate.shortName
-                                : 'A5 uses fixed Girvi counter design',
+                                : 'Counter receipt uses fixed Girvi design',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
@@ -353,95 +323,206 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
     );
   }
 
-  Widget _buildOutputOptions() {
+  Widget _buildBillContextCard() {
+    final metals = _controller.presentMetals;
+    final metalLabel = metals.isEmpty
+        ? 'No Item'
+        : metals.map(GirviBillingMetal.displayName).join(' + ');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _panelLabel('OUTPUT OPTIONS'),
+        _panelLabel('BILL CONTEXT'),
         const SizedBox(height: 10),
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: GirviColors.shellPanelBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: GirviColors.shellBorder),
           ),
-          child: Column(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Copies',
-                      style: GoogleFonts.inter(
-                        color: GirviColors.shellTextTitle,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _controller.printCopies > 1
-                        ? () => _controller.updatePrintOptions(
-                              copies: _controller.printCopies - 1,
-                              duplicate: _controller.includeDuplicateStamp,
-                            )
-                        : null,
-                    icon: const Icon(Icons.remove_circle_outline_rounded),
-                    color: GirviColors.brandGold,
-                  ),
-                  Text(
-                    '${_controller.printCopies}',
-                    style: GoogleFonts.manrope(
-                      color: GirviColors.brandGold,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _controller.printCopies < 5
-                        ? () => _controller.updatePrintOptions(
-                              copies: _controller.printCopies + 1,
-                              duplicate: _controller.includeDuplicateStamp,
-                            )
-                        : null,
-                    icon: const Icon(Icons.add_circle_outline_rounded),
-                    color: GirviColors.brandGold,
-                  ),
-                ],
+              _buildProfileChip(
+                Icons.account_balance_wallet_outlined,
+                _controller.selectedReceiptMode.title,
               ),
-              const Divider(color: GirviColors.shellBorder, height: 22),
+              _buildProfileChip(Icons.receipt_long_outlined, 'Girvi Invoice'),
+              _buildProfileChip(Icons.category_rounded, metalLabel),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: GirviColors.shellBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.shellBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: GirviColors.brandGold),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: GirviColors.shellTextTitle,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrintOptions() {
+    final copies = _controller.printCopies;
+    final duplicateEnabled = _controller.includeDuplicateStamp;
+    final useDriverSettings = _controller.usePrinterDriverSettings;
+    final colorMode = _controller.printColorMode;
+    final totalPages = LotusPdfPageCounter.tryCountPages(_controller.pdfBytes);
+    final pagesPerCopy = LotusPdfPageCounter.pagesPerCopy(
+      totalPages: totalPages,
+      copies: copies,
+    );
+    final canDecrease = copies > 1;
+    final canIncrease = copies < 5;
+    final canMarkDuplicate = copies > 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _panelLabel('PRINT CONTROLS'),
+        const SizedBox(height: 10),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: GirviColors.shellPanelBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: GirviColors.brandGold.withValues(alpha: 0.32),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _GirviPrintControlSurface(
+                icon: Icons.print_rounded,
+                title: 'Print Run',
+                subtitle: _printRunSummary(
+                  copies: copies,
+                  totalPages: totalPages,
+                ),
+                trailing: _GirviPrintStatusBadge(
+                  label: duplicateEnabled ? 'Duplicate' : 'Original',
+                  isActive: duplicateEnabled,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _GirviPrintControlSurface(
+                icon: Icons.copy_all_rounded,
+                title: 'Copies',
+                subtitle: _copyControlSubtitle(
+                  totalPages: totalPages,
+                  pagesPerCopy: pagesPerCopy,
+                ),
+                trailing: _GirviCopyStepper(
+                  value: copies,
+                  canDecrease: canDecrease,
+                  canIncrease: canIncrease,
+                  onDecrease: () => _controller.updatePrintOptions(
+                    copies: copies - 1,
+                    duplicate: duplicateEnabled,
+                  ),
+                  onIncrease: () => _controller.updatePrintOptions(
+                    copies: copies + 1,
+                    duplicate: duplicateEnabled,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _GirviPrintControlSurface(
+                icon: Icons.verified_user_rounded,
+                title: 'Duplicate Mark',
+                subtitle: canMarkDuplicate
+                    ? 'Mark additional copies as duplicate'
+                    : 'Available when copies are 2 or more',
+                trailing: Switch(
+                  value: duplicateEnabled,
+                  onChanged: canMarkDuplicate
+                      ? (value) => _controller.updatePrintOptions(
+                            copies: copies,
+                            duplicate: value,
+                          )
+                      : null,
+                  activeThumbColor: GirviColors.brandGold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _GirviPrintControlSurface(
+                icon: Icons.invert_colors_rounded,
+                title: 'Print Mode',
+                subtitle: 'Choose colour or grayscale output',
+                trailing: _GirviPrintModeSelector(
+                  value: colorMode,
+                  onChanged: (value) => _controller.updatePrintOptions(
+                    copies: copies,
+                    duplicate: duplicateEnabled,
+                    colorMode: value,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              _GirviPrintControlSurface(
+                icon: Icons.settings_applications_rounded,
+                title: 'Printer Driver Settings',
+                subtitle: 'Use saved duplex, paper tray and printer defaults',
+                trailing: Switch(
+                  value: useDriverSettings,
+                  onChanged: (value) => _controller.updatePrintOptions(
+                    copies: copies,
+                    duplicate: duplicateEnabled,
+                    useDriverSettings: value,
+                  ),
+                  activeThumbColor: GirviColors.brandGold,
+                ),
+              ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Reissued Bill',
-                          style: GoogleFonts.inter(
-                            color: GirviColors.shellTextTitle,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          'Use when issuing a replacement receipt',
-                          style: GoogleFonts.inter(
-                            color: GirviColors.shellTextMuted,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ],
+                    child: _GirviPrintMetaPill(
+                      icon: Icons.description_outlined,
+                      label: _formatShortName(_controller.selectedFormat),
                     ),
                   ),
-                  Switch(
-                    value: _controller.includeDuplicateStamp,
-                    onChanged: (value) => _controller.updatePrintOptions(
-                      copies: _controller.printCopies,
-                      duplicate: value,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _GirviPrintMetaPill(
+                      icon: Icons.layers_rounded,
+                      label: totalPages == null
+                          ? 'Counting pages'
+                          : LotusPdfPageCounter.pageLabel(totalPages),
                     ),
-                    activeThumbColor: GirviColors.brandGold,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _GirviPrintMetaPill(
+                      icon: Icons.palette_rounded,
+                      label: colorMode.label,
+                    ),
                   ),
                 ],
               ),
@@ -450,6 +531,25 @@ extension GirviInvoiceHubControls on _GirviInvoiceHubScreenState {
         ),
       ],
     );
+  }
+
+  String _printRunSummary({
+    required int copies,
+    required int? totalPages,
+  }) {
+    final copyLabel = LotusPdfPageCounter.copyLabel(copies);
+    if (totalPages == null) return '$copyLabel selected';
+    return '$copyLabel selected - ${LotusPdfPageCounter.pageLabel(totalPages)} to print';
+  }
+
+  String _copyControlSubtitle({
+    required int? totalPages,
+    required int? pagesPerCopy,
+  }) {
+    if (totalPages == null || pagesPerCopy == null) {
+      return 'Maximum 5 copies per print run';
+    }
+    return '${LotusPdfPageCounter.pageLabel(pagesPerCopy)} per copy - ${LotusPdfPageCounter.pageLabel(totalPages)} total';
   }
 
   Widget _buildErrorNotice(String message) {
