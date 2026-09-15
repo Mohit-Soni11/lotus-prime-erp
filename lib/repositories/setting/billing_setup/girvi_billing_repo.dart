@@ -88,6 +88,9 @@ class GirviBillingRepo {
       autoPrint: row.autoPrint,
       selectedTemplate: row.selectedTemplate,
     );
-    return GirviBillingTemplateOptions.apply(base, row.selectedTemplate);
+    return GirviBillingTemplateOptions.apply(
+      base,
+      row.selectedTemplate,
+    ).withGirviSafePolicyCopy();
   }
 }

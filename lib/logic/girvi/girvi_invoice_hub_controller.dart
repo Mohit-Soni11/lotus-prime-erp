@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
 
+import '../../features/print_templates/domain/print_template_registry.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
@@ -37,6 +38,8 @@ class GirviInvoiceHubController extends ChangeNotifier {
   GirviBillingModel invoiceSettings = GirviBillingModel.defaults;
   GirviInvoiceBranding invoiceBranding = GirviInvoiceBranding.fallback;
   GirviInvoiceFormat selectedFormat = GirviInvoiceFormat.a4;
+  GirviReceiptMode selectedReceiptMode = GirviReceiptMode.pledge;
+  String selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
   Uint8List? pdfBytes;
   String? errorMessage;
   int printCopies = 1;
@@ -49,6 +52,9 @@ class GirviInvoiceHubController extends ChangeNotifier {
   String? activePrintMetal;
 
   bool get isReady => state == GirviInvoiceHubState.ready && pdfBytes != null;
+
+  GirviInvoiceDraft get printableDraft =>
+      draft.copyWith(mode: selectedReceiptMode);
 
   List<String> get presentMetals {
     final detected = draft.items
@@ -89,10 +95,11 @@ class GirviInvoiceHubController extends ChangeNotifier {
         await _loadShopBranding();
       }
       pdfBytes = await _pdfService.build(
-        draft: draft,
+        draft: printableDraft,
         format: selectedFormat,
         settings: invoiceSettings,
         branding: invoiceBranding,
+        templateId: selectedTemplateId,
         copies: printCopies,
         duplicateStamp: includeDuplicateStamp,
       );
@@ -100,7 +107,8 @@ class GirviInvoiceHubController extends ChangeNotifier {
     } catch (error) {
       state = GirviInvoiceHubState.error;
       errorMessage = 'Invoice preview could not be generated.';
-      AppLogger.debug('GirviInvoiceHubController.generatePreview error: $error');
+      AppLogger.debug(
+          'GirviInvoiceHubController.generatePreview error: $error');
     }
     notifyListeners();
   }
@@ -118,11 +126,14 @@ class GirviInvoiceHubController extends ChangeNotifier {
   Future<void> _loadSavedSettings() async {
     try {
       invoiceSettings = await _settingsLoader();
+      selectedTemplateId = _resolveTemplateId(invoiceSettings.selectedTemplate);
     } catch (error) {
       invoiceSettings = GirviBillingModel.defaults;
+      selectedTemplateId = PrintTemplateRegistry.defaultTemplateId;
       AppLogger.debug('Girvi invoice setup fallback: $error');
     }
     activePrintMetal = effectiveActiveMetal;
+    selectedReceiptMode = draft.mode;
     _settingsLoaded = true;
   }
 
@@ -436,6 +447,22 @@ class GirviInvoiceHubController extends ChangeNotifier {
     await generatePreview();
   }
 
+  Future<void> switchTemplate(String templateId) async {
+    final resolvedTemplateId = _resolveTemplateId(templateId);
+    if (selectedTemplateId == resolvedTemplateId) return;
+    selectedTemplateId = resolvedTemplateId;
+    invoiceSettings = invoiceSettings.copyWith(
+      selectedTemplate: resolvedTemplateId,
+    );
+    await generatePreview();
+  }
+
+  Future<void> switchReceiptMode(GirviReceiptMode mode) async {
+    if (selectedReceiptMode == mode) return;
+    selectedReceiptMode = mode;
+    await generatePreview();
+  }
+
   Future<void> updatePrintOptions({
     required int copies,
     required bool duplicate,
@@ -460,7 +487,8 @@ class GirviInvoiceHubController extends ChangeNotifier {
       return isFinalized;
     } catch (error) {
       errorMessage = 'Girvi ticket could not be saved.';
-      AppLogger.debug('GirviInvoiceHubController.finalizeIfNeeded error: $error');
+      AppLogger.debug(
+          'GirviInvoiceHubController.finalizeIfNeeded error: $error');
       return false;
     } finally {
       isFinalizing = false;
@@ -472,10 +500,11 @@ class GirviInvoiceHubController extends ChangeNotifier {
     if (!await finalizeIfNeeded()) return false;
     if (!_brandingLoaded) await _loadShopBranding();
     final bytes = await _pdfService.build(
-      draft: draft,
+      draft: printableDraft,
       format: selectedFormat,
       settings: invoiceSettings,
       branding: invoiceBranding,
+      templateId: selectedTemplateId,
       copies: printCopies,
       duplicateStamp: includeDuplicateStamp,
     );
@@ -505,10 +534,11 @@ class GirviInvoiceHubController extends ChangeNotifier {
           ? selectedPath
           : '$selectedPath.pdf';
       final bytes = await _pdfService.build(
-        draft: draft,
+        draft: printableDraft,
         format: selectedFormat,
         settings: invoiceSettings,
         branding: invoiceBranding,
+        templateId: selectedTemplateId,
         copies: printCopies,
         duplicateStamp: includeDuplicateStamp,
       );
@@ -527,5 +557,13 @@ class GirviInvoiceHubController extends ChangeNotifier {
   String get _fileName {
     final safeTicket = draft.ticketNo.replaceAll(RegExp(r'[^A-Za-z0-9-]'), '_');
     return 'girvi_invoice_$safeTicket.pdf';
+  }
+
+  String _resolveTemplateId(String templateId) {
+    final template = PrintTemplateRegistry.byId(templateId);
+    if (template.supports(PrintTemplateDocumentType.girviReceipt)) {
+      return template.id;
+    }
+    return PrintTemplateRegistry.defaultTemplateId;
   }
 }

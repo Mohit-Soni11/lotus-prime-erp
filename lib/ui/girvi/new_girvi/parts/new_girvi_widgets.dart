@@ -1480,27 +1480,50 @@ class _SelectCustomerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: GirviColors.inputBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: GirviColors.brandGold.withValues(alpha: 0.4),
-            style: BorderStyle.solid,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: GirviColors.inputBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: GirviColors.brandGold.withValues(alpha: 0.4),
+              style: BorderStyle.solid,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                GirviIcons.search,
+                color: GirviColors.brandGold,
+                size: 18,
+              ),
+              const SizedBox(width: 9),
+              Flexible(
+                child: Text(
+                  GirviStrings.selectCustomerHint,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.brandGold,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(GirviIcons.search, color: GirviColors.brandGold, size: 18),
-          const SizedBox(width: 10),
-          Text(GirviStrings.selectCustomerHint,
-              style: GoogleFonts.inter(
-                  color: GirviColors.brandGold,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600)),
-        ]),
       ),
     );
   }

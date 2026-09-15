@@ -7,6 +7,8 @@ import '../../../../core/pdf/lotus_pdf_text_renderer.dart';
 import '../../domain/print_template_registry.dart';
 import 'lotus_printable_document.dart';
 
+const _lotusDetailDangerTextColor = PdfColor.fromInt(0xFFB91C1C);
+
 class LotusPrintTemplateRenderContext {
   final LotusPrintableDocument document;
   final LotusPdfTextRenderer textRenderer;
@@ -408,16 +410,20 @@ class _LotusDocumentLayoutEngine {
         ],
         if (document.showHeaderDocumentMeta) ...[
           pw.SizedBox(height: 8),
-          _metaText(
-            document.documentNumberLabel,
-            document.documentNumber,
-            profile,
-          ),
-          _metaText(
-            document.documentDateLabel,
-            document.documentDate,
-            profile,
-          ),
+          if (document.documentNumberLabel.trim().isNotEmpty ||
+              document.documentNumber.trim().isNotEmpty)
+            _metaText(
+              document.documentNumberLabel,
+              document.documentNumber,
+              profile,
+            ),
+          if (document.documentDateLabel.trim().isNotEmpty ||
+              document.documentDate.trim().isNotEmpty)
+            _metaText(
+              document.documentDateLabel,
+              document.documentDate,
+              profile,
+            ),
         ],
       ],
     );
@@ -428,7 +434,7 @@ class _LotusDocumentLayoutEngine {
     dynamic profile,
   ) {
     return pw.Container(
-      width: 150,
+      width: 132,
       padding: const pw.EdgeInsets.only(top: 3),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -466,16 +472,20 @@ class _LotusDocumentLayoutEngine {
             ),
           if (document.showHeaderDocumentMeta) ...[
             pw.SizedBox(height: 13),
-            _invoiceMeta(
-              document.documentNumberLabel,
-              document.documentNumber,
-              profile,
-            ),
-            _invoiceMeta(
-              document.documentDateLabel,
-              document.documentDate,
-              profile,
-            ),
+            if (document.documentNumberLabel.trim().isNotEmpty ||
+                document.documentNumber.trim().isNotEmpty)
+              _invoiceMeta(
+                document.documentNumberLabel,
+                document.documentNumber,
+                profile,
+              ),
+            if (document.documentDateLabel.trim().isNotEmpty ||
+                document.documentDate.trim().isNotEmpty)
+              _invoiceMeta(
+                document.documentDateLabel,
+                document.documentDate,
+                profile,
+              ),
           ],
         ],
       ),
@@ -517,6 +527,13 @@ class _LotusDocumentLayoutEngine {
     LotusPrintablePanel panel,
     dynamic profile,
   ) {
+    if (!panel.extractPhotoProof && panel.photoPath.trim().isNotEmpty) {
+      final image = _loadLogoImage(panel.photoPath);
+      if (image != null) {
+        return _signaturePanelWithInlinePhoto(panel, profile, image);
+      }
+    }
+
     return pw.Container(
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
@@ -534,6 +551,73 @@ class _LotusDocumentLayoutEngine {
     );
   }
 
+  static pw.Widget _signaturePanelWithInlinePhoto(
+    LotusPrintablePanel panel,
+    dynamic profile,
+    pw.MemoryImage image,
+  ) {
+    final details = panel.details
+        .where((detail) => detail.value.trim().isNotEmpty)
+        .toList();
+    final detailWidgets = [
+      for (var index = 0; index < details.length; index++)
+        _signatureDetail(
+          details[index],
+          profile,
+          showDivider: index < details.length - 1,
+          compactDivider: panel.compactDetailDividers,
+        ),
+    ];
+    final photoTitle = panel.photoLabel.trim().isEmpty
+        ? 'ATTACHED PHOTO'
+        : panel.photoLabel.trim().toUpperCase();
+    const photoColumnWidth = 182.0;
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(color: profile.borderColor, width: 0.8),
+        borderRadius: pw.BorderRadius.circular(4),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(child: _sectionTitle(panel.title, profile)),
+              pw.SizedBox(width: 18),
+              pw.SizedBox(
+                width: photoColumnWidth,
+                child: _inlinePhotoTitle(
+                  photoTitle,
+                  profile,
+                  compact: false,
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 10),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(child: pw.Column(children: detailWidgets)),
+              pw.SizedBox(width: 18),
+              pw.SizedBox(
+                width: photoColumnWidth,
+                child: _inlinePanelPhotoBox(
+                  image,
+                  profile,
+                  compact: false,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   static LotusPrintablePanel? _signatureProofPhotoPanel(
     LotusPrintableDocument document,
   ) {
@@ -543,7 +627,9 @@ class _LotusDocumentLayoutEngine {
       ...document.settlementPanels,
     ];
     for (final panel in panels) {
-      if (panel.photoPath.trim().isNotEmpty) return panel;
+      if (panel.extractPhotoProof && panel.photoPath.trim().isNotEmpty) {
+        return panel;
+      }
     }
     return null;
   }
@@ -552,6 +638,8 @@ class _LotusDocumentLayoutEngine {
     return LotusPrintablePanel(
       title: panel.title,
       details: panel.details,
+      extractPhotoProof: panel.extractPhotoProof,
+      compactDetailDividers: panel.compactDetailDividers,
     );
   }
 
@@ -598,7 +686,7 @@ class _LotusDocumentLayoutEngine {
           pw.Center(child: photo),
           pw.SizedBox(height: 6),
           pw.Text(
-            'Captured for invoice proof',
+            'Captured for document proof',
             textAlign: pw.TextAlign.center,
             style: pw.TextStyle(
               color: profile.bodyTextColor,
@@ -649,7 +737,10 @@ class _LotusDocumentLayoutEngine {
     final details = panel.details
         .where((detail) => detail.value.trim().isNotEmpty)
         .toList();
-    final photo = _panelPhoto(panel, profile, compact: true);
+    final inlinePhoto = !panel.extractPhotoProof;
+    final photo = inlinePhoto
+        ? _inlinePanelPhotoSection(panel, profile, compact: true)
+        : _panelPhoto(panel, profile, compact: true);
     if (photo == null) {
       return pw.Column(
         children: details
@@ -668,7 +759,7 @@ class _LotusDocumentLayoutEngine {
                 .toList(growable: false),
           ),
         ),
-        pw.SizedBox(width: 10),
+        pw.SizedBox(width: inlinePhoto ? 14 : 10),
         photo,
       ],
     );
@@ -687,9 +778,13 @@ class _LotusDocumentLayoutEngine {
           details[index],
           profile,
           showDivider: index < details.length - 1,
+          compactDivider: panel.compactDetailDividers,
         ),
     ];
-    final photo = _panelPhoto(panel, profile, compact: false);
+    final inlinePhoto = !panel.extractPhotoProof;
+    final photo = inlinePhoto
+        ? _inlinePanelPhotoSection(panel, profile, compact: false)
+        : _panelPhoto(panel, profile, compact: false);
     if (photo == null) {
       return pw.Column(children: detailWidgets);
     }
@@ -698,8 +793,107 @@ class _LotusDocumentLayoutEngine {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Expanded(child: pw.Column(children: detailWidgets)),
-        pw.SizedBox(width: 10),
+        pw.SizedBox(width: inlinePhoto ? 18 : 10),
         photo,
+      ],
+    );
+  }
+
+  static pw.Widget? _inlinePanelPhotoSection(
+    LotusPrintablePanel panel,
+    dynamic profile, {
+    required bool compact,
+  }) {
+    final image = _loadLogoImage(panel.photoPath);
+    if (image == null) return null;
+
+    final title = panel.photoLabel.trim().isEmpty
+        ? 'ATTACHED PHOTO'
+        : panel.photoLabel.trim().toUpperCase();
+    final columnWidth = compact ? 118.0 : 182.0;
+
+    return pw.SizedBox(
+      width: columnWidth,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          _inlinePhotoTitle(title, profile, compact: compact),
+          pw.SizedBox(height: compact ? 6 : 8),
+          _inlinePanelPhotoBox(image, profile, compact: compact),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _inlinePanelPhotoBox(
+    pw.MemoryImage image,
+    dynamic profile, {
+    required bool compact,
+  }) {
+    final size = _adaptiveInlinePhotoSize(image, compact: compact);
+    return pw.Align(
+      alignment: pw.Alignment.center,
+      child: pw.Container(
+        width: size.width,
+        height: size.height,
+        padding: const pw.EdgeInsets.all(2),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: profile.borderColor, width: 0.7),
+          borderRadius: pw.BorderRadius.circular(4),
+        ),
+        child: pw.Image(image, fit: pw.BoxFit.contain),
+      ),
+    );
+  }
+
+  static ({double width, double height}) _adaptiveInlinePhotoSize(
+    pw.MemoryImage image, {
+    required bool compact,
+  }) {
+    final sourceWidth = (image.width ?? 1).toDouble();
+    final sourceHeight = (image.height ?? 1).toDouble();
+    final aspectRatio = sourceHeight <= 0 ? 1.0 : sourceWidth / sourceHeight;
+    final maxWidth = compact ? 112.0 : 176.0;
+    final maxHeight = compact ? 104.0 : 126.0;
+
+    var width = maxWidth;
+    var height = width / aspectRatio;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * aspectRatio;
+    }
+
+    return (width: width, height: height);
+  }
+
+  static pw.Widget _inlinePhotoTitle(
+    String title,
+    dynamic profile, {
+    required bool compact,
+  }) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: [
+        _iconBadge(
+          _sectionIconKey(title),
+          profile,
+          size: compact ? 18 : 20,
+          padding: compact ? 2.5 : 3,
+        ),
+        pw.SizedBox(width: compact ? 5 : 7),
+        pw.Expanded(
+          child: pw.Text(
+            title,
+            maxLines: 2,
+            overflow: pw.TextOverflow.clip,
+            style: pw.TextStyle(
+              fontSize: compact ? 7.4 : 8.8,
+              fontWeight: pw.FontWeight.bold,
+              color: profile.accentColor,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -834,6 +1028,10 @@ class _LotusDocumentLayoutEngine {
   static pw.Widget _policyPageHeader(LotusPrintableDocument document) {
     final profile = document.profile;
     final shopName = _shopName(document);
+    final isGirviDocument = _isGirviDocument(document);
+    final headerTitle = isGirviDocument
+        ? 'GIRVI TERMS & CUSTOMER DECLARATION'
+        : 'METAL PURCHASE POLICY';
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -852,7 +1050,7 @@ class _LotusDocumentLayoutEngine {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
-                  'METAL PURCHASE POLICY',
+                  headerTitle,
                   style: pw.TextStyle(
                     fontSize: 15,
                     fontWeight: pw.FontWeight.bold,
@@ -1149,6 +1347,15 @@ class _LotusDocumentLayoutEngine {
     final document = context.document;
     final profile = document.profile;
     final footerMessage = document.footerMessage.trim();
+    final isGirviDocument = _isGirviDocument(document);
+    final customerSignatureTitle =
+        isGirviDocument ? 'Customer Signature' : 'Seller / Customer Signature';
+    final customerSignatureCaption = isGirviDocument
+        ? 'Customer confirms pledged-item details and Girvi terms'
+        : 'Customer confirms all terms and accepts full responsibility';
+    final legalAcknowledgement = isGirviDocument
+        ? 'By signing, the customer confirms that the Girvi terms, pledged item details, valuation, interest policy and release conditions have been read and accepted.'
+        : 'By signing, the seller/customer confirms that all invoice terms, policies, valuation and payout details have been read and accepted, and takes full responsibility for the declaration.';
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -1188,9 +1395,8 @@ class _LotusDocumentLayoutEngine {
             pw.Expanded(
               child: _signatureFooterBlock(
                 profile,
-                title: 'Seller / Customer Signature',
-                caption:
-                    'Customer confirms all terms and accepts full responsibility',
+                title: customerSignatureTitle,
+                caption: customerSignatureCaption,
               ),
             ),
             pw.SizedBox(width: 14),
@@ -1227,7 +1433,7 @@ class _LotusDocumentLayoutEngine {
         ),
         pw.SizedBox(height: 5),
         pw.Text(
-          'By signing, the seller/customer confirms that all invoice terms, policies, valuation and payout details have been read and accepted, and takes full responsibility for the declaration.',
+          legalAcknowledgement,
           style: pw.TextStyle(
             fontSize: 6.8,
             color: profile.bodyTextColor,
@@ -1359,9 +1565,11 @@ class _LotusDocumentLayoutEngine {
           pw.Text(
             detail.value,
             style: pw.TextStyle(
-              color: detail.highlight
-                  ? profile.accentColor
-                  : profile.bodyTextColor,
+              color: detail.danger
+                  ? _lotusDetailDangerTextColor
+                  : detail.highlight
+                      ? profile.accentColor
+                      : profile.bodyTextColor,
               fontSize: profile.bodyFontSize,
               fontWeight:
                   detail.highlight ? pw.FontWeight.bold : pw.FontWeight.normal,
@@ -1376,62 +1584,133 @@ class _LotusDocumentLayoutEngine {
     LotusPrintableDetail detail,
     dynamic profile, {
     required bool showDivider,
+    bool compactDivider = false,
   }) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 7),
-      child: pw.Container(
-        padding: const pw.EdgeInsets.only(bottom: 6),
-        decoration: showDivider
-            ? pw.BoxDecoration(
-                border: pw.Border(
-                  bottom:
-                      pw.BorderSide(color: profile.borderColor, width: 0.45),
+    if (!compactDivider) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 7),
+        child: pw.Container(
+          padding: const pw.EdgeInsets.only(bottom: 6),
+          decoration: showDivider
+              ? pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom:
+                        pw.BorderSide(color: profile.borderColor, width: 0.45),
+                  ),
+                )
+              : null,
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              _iconBadge(detail.iconKey, profile),
+              pw.SizedBox(width: 8),
+              pw.SizedBox(
+                width: 82,
+                child: pw.Text(
+                  detail.label,
+                  maxLines: 2,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 9.8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: profile.bodyTextColor,
+                  ),
                 ),
-              )
-            : null,
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            _iconBadge(detail.iconKey, profile),
-            pw.SizedBox(width: 8),
-            pw.SizedBox(
-              width: 82,
-              child: pw.Text(
-                detail.label,
-                maxLines: 2,
-                overflow: pw.TextOverflow.clip,
+              ),
+              pw.SizedBox(width: 5),
+              pw.Text(
+                ':',
                 style: pw.TextStyle(
-                  fontSize: 9.8,
+                  fontSize: 10.1,
                   fontWeight: pw.FontWeight.bold,
                   color: profile.bodyTextColor,
                 ),
               ),
-            ),
-            pw.SizedBox(width: 5),
-            pw.Text(
-              ':',
-              style: pw.TextStyle(
-                fontSize: 10.1,
-                fontWeight: pw.FontWeight.bold,
-                color: profile.bodyTextColor,
-              ),
-            ),
-            pw.SizedBox(width: 7),
-            pw.Expanded(
-              child: pw.Text(
-                detail.value,
-                maxLines: detail.multiline ? 4 : 2,
-                overflow: pw.TextOverflow.clip,
-                style: pw.TextStyle(
-                  fontSize: 10.4,
-                  fontWeight: pw.FontWeight.bold,
-                  color: detail.highlight
-                      ? profile.accentColor
-                      : profile.bodyTextColor,
+              pw.SizedBox(width: 7),
+              pw.Expanded(
+                child: pw.Text(
+                  detail.value,
+                  maxLines: detail.multiline ? 4 : 2,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 10.4,
+                    fontWeight: pw.FontWeight.bold,
+                    color: detail.danger
+                        ? _lotusDetailDangerTextColor
+                        : detail.highlight
+                            ? profile.accentColor
+                            : profile.bodyTextColor,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 7),
+      child: pw.Align(
+        alignment: pw.Alignment.centerLeft,
+        child: pw.Container(
+          padding: const pw.EdgeInsets.only(bottom: 6),
+          decoration: showDivider
+              ? pw.BoxDecoration(
+                  border: pw.Border(
+                    bottom:
+                        pw.BorderSide(color: profile.borderColor, width: 0.45),
+                  ),
+                )
+              : null,
+          child: pw.Row(
+            mainAxisSize: pw.MainAxisSize.min,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              _iconBadge(detail.iconKey, profile),
+              pw.SizedBox(width: 8),
+              pw.SizedBox(
+                width: 82,
+                child: pw.Text(
+                  detail.label,
+                  maxLines: 2,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 9.8,
+                    fontWeight: pw.FontWeight.bold,
+                    color: profile.bodyTextColor,
+                  ),
+                ),
+              ),
+              pw.SizedBox(width: 5),
+              pw.Text(
+                ':',
+                style: pw.TextStyle(
+                  fontSize: 10.1,
+                  fontWeight: pw.FontWeight.bold,
+                  color: profile.bodyTextColor,
+                ),
+              ),
+              pw.SizedBox(width: 7),
+              pw.ConstrainedBox(
+                constraints: const pw.BoxConstraints(maxWidth: 250),
+                child: pw.Text(
+                  detail.value,
+                  maxLines: detail.multiline ? 4 : 2,
+                  overflow: pw.TextOverflow.clip,
+                  style: pw.TextStyle(
+                    fontSize: 10.4,
+                    fontWeight: pw.FontWeight.bold,
+                    color: detail.danger
+                        ? _lotusDetailDangerTextColor
+                        : detail.highlight
+                            ? profile.accentColor
+                            : profile.bodyTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1505,10 +1784,11 @@ class _LotusDocumentLayoutEngine {
           ),
           pw.SizedBox(width: 6),
           pw.Container(
-            width: 98,
+            width: value.length <= 12 ? 70 : 92,
             child: pw.Text(
               value,
-              maxLines: 2,
+              textAlign: pw.TextAlign.left,
+              maxLines: 1,
               overflow: pw.TextOverflow.clip,
               style: pw.TextStyle(
                 fontSize: 10.7,
@@ -1700,6 +1980,12 @@ class _LotusDocumentLayoutEngine {
     if (normalized.contains('amount')) return 'amount';
     if (normalized.contains('terms')) return 'policy';
     return 'invoice';
+  }
+
+  static bool _isGirviDocument(LotusPrintableDocument document) {
+    return document.title.toLowerCase().contains('girvi') ||
+        document.badgeLabel.toLowerCase().contains('girvi') ||
+        document.itemTable.title.toLowerCase().contains('pledged');
   }
 
   static String _headerIconSvg(String iconKey) {

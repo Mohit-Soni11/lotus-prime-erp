@@ -280,11 +280,60 @@ class GirviBillingModel {
     this.showDisbursementDetails = false,
     this.showNotes = false,
     this.printTermsAndConditions = false,
-    this.printCustomerDeclaration = true,
+    this.printCustomerDeclaration = false,
     this.printFooterMessage = true,
   });
 
   static GirviBillingModel get defaults => const GirviBillingModel();
+
+  GirviBillingModel withGirviSafePolicyCopy() {
+    final defaults = GirviBillingModel.defaults;
+    final hasForeignTerms = looksLikeForeignPolicyCopy(
+      '$termsAndConditions\n$termsAndConditionsHindi',
+    );
+    final hasForeignDeclaration = looksLikeForeignPolicyCopy(
+      '$customerDeclaration\n$customerDeclarationHindi',
+    );
+
+    if (!hasForeignTerms && !hasForeignDeclaration) return this;
+
+    return copyWith(
+      termsAndConditions:
+          hasForeignTerms ? defaults.termsAndConditions : termsAndConditions,
+      termsAndConditionsHindi: hasForeignTerms
+          ? defaults.termsAndConditionsHindi
+          : termsAndConditionsHindi,
+      printTermsAndConditions:
+          hasForeignTerms ? false : printTermsAndConditions,
+      customerDeclaration: hasForeignDeclaration
+          ? defaults.customerDeclaration
+          : customerDeclaration,
+      customerDeclarationHindi: hasForeignDeclaration
+          ? defaults.customerDeclarationHindi
+          : customerDeclarationHindi,
+      printCustomerDeclaration:
+          hasForeignDeclaration ? false : printCustomerDeclaration,
+    );
+  }
+
+  static bool looksLikeForeignPolicyCopy(String value) {
+    final normalized = value.toLowerCase();
+    const blockedTerms = [
+      'metal purchase',
+      'purchase policy',
+      'purchase invoice',
+      'purchase voucher',
+      'seller declaration',
+      'seller reclaim',
+      'seller photo',
+      'seller payable',
+      'buyback',
+      'payout',
+      'customer sold metal',
+      'sold metal',
+    ];
+    return blockedTerms.any(normalized.contains);
+  }
 
   GirviInvoiceFieldSettings settingsForMetal(String metal) {
     final key = GirviBillingMetal.normalize(metal);
@@ -443,7 +492,7 @@ class GirviBillingTemplateOptions {
     }
 
     return jsonEncode({
-      'version': 4,
+      'version': 5,
       'template': model.selectedTemplate,
       'metals': metals,
       'document': {
@@ -501,6 +550,8 @@ class GirviBillingTemplateOptions {
       if (decoded is! Map<String, dynamic>) return base;
       final invoice = decoded['invoice'];
       final document = decoded['document'];
+      final version =
+          decoded['version'] is num ? (decoded['version'] as num).toInt() : 0;
 
       bool readLegacy(String key, bool fallback) {
         if (invoice is! Map<String, dynamic>) return fallback;
@@ -514,7 +565,7 @@ class GirviBillingTemplateOptions {
         return value is bool ? value : fallback;
       }
 
-      final legacyApplied = base.copyWith(
+      var legacyApplied = base.copyWith(
         selectedTemplate:
             decoded['template']?.toString() ?? base.selectedTemplate,
         showMetal: readLegacy('metal', base.showMetal),
@@ -575,6 +626,11 @@ class GirviBillingTemplateOptions {
           readLegacy('printFooter', base.printFooterMessage),
         ),
       );
+      if (version < 5 &&
+          legacyApplied.printCustomerDeclaration &&
+          _usesDefaultDeclarationCopy(legacyApplied)) {
+        legacyApplied = legacyApplied.copyWith(printCustomerDeclaration: false);
+      }
 
       final storedMetals = decoded['metals'];
       if (storedMetals is! Map) {
@@ -612,5 +668,22 @@ class GirviBillingTemplateOptions {
     } catch (_) {
       return base;
     }
+  }
+
+  static bool _usesDefaultDeclarationCopy(GirviBillingModel model) {
+    final defaults = GirviBillingModel.defaults;
+    return _samePolicyCopy(
+          model.customerDeclaration,
+          defaults.customerDeclaration,
+        ) &&
+        _samePolicyCopy(
+          model.customerDeclarationHindi,
+          defaults.customerDeclarationHindi,
+        );
+  }
+
+  static bool _samePolicyCopy(String left, String right) {
+    return left.trim().replaceAll(RegExp(r'\s+'), ' ') ==
+        right.trim().replaceAll(RegExp(r'\s+'), ' ');
   }
 }

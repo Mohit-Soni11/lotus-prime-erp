@@ -1,5 +1,33 @@
 import 'package:flutter/foundation.dart';
 
+enum GirviReceiptMode {
+  pledge,
+  interest,
+  release;
+
+  String get title {
+    switch (this) {
+      case GirviReceiptMode.pledge:
+        return 'Pledge Receipt';
+      case GirviReceiptMode.interest:
+        return 'Interest Receipt';
+      case GirviReceiptMode.release:
+        return 'Release Receipt';
+    }
+  }
+
+  String get badgeLabel {
+    switch (this) {
+      case GirviReceiptMode.pledge:
+        return 'Pledge';
+      case GirviReceiptMode.interest:
+        return 'Interest';
+      case GirviReceiptMode.release:
+        return 'Release';
+    }
+  }
+}
+
 @immutable
 class GirviInvoicePayment {
   const GirviInvoicePayment({
@@ -67,6 +95,22 @@ class GirviInvoiceDraft {
     required this.totalDue,
     required this.payments,
     required this.disbursementSummary,
+    this.mode = GirviReceiptMode.pledge,
+    this.accountStatus = 'Active',
+    this.releaseDate,
+    this.expectedDeliveryDate,
+    this.deliveredAt,
+    this.lastInterestPaidDate,
+    this.releasePrincipal,
+    this.releaseInterest,
+    this.releasePenalty,
+    this.releaseDiscount,
+    this.releaseTotalAmount,
+    this.releasePaymentMode,
+    this.releaseNotes,
+    this.releasedBy,
+    this.principalOutstanding,
+    this.interestOutstanding,
     this.idProofType,
     this.idProofNumber,
     this.idProofImagePath,
@@ -91,10 +135,85 @@ class GirviInvoiceDraft {
   final double totalDue;
   final List<GirviInvoicePayment> payments;
   final String disbursementSummary;
+  final GirviReceiptMode mode;
+  final String accountStatus;
+  final DateTime? releaseDate;
+  final DateTime? expectedDeliveryDate;
+  final DateTime? deliveredAt;
+  final DateTime? lastInterestPaidDate;
+  final double? releasePrincipal;
+  final double? releaseInterest;
+  final double? releasePenalty;
+  final double? releaseDiscount;
+  final double? releaseTotalAmount;
+  final String? releasePaymentMode;
+  final String? releaseNotes;
+  final String? releasedBy;
+  final double? principalOutstanding;
+  final double? interestOutstanding;
   final String? idProofType;
   final String? idProofNumber;
   final String? idProofImagePath;
   final String? notes;
+
+  GirviInvoiceDraft copyWith({
+    GirviReceiptMode? mode,
+  }) {
+    return GirviInvoiceDraft(
+      ticketNo: ticketNo,
+      createdAt: createdAt,
+      customerName: customerName,
+      customerMobile: customerMobile,
+      customerCity: customerCity,
+      customerAddress: customerAddress,
+      items: items,
+      totalValue: totalValue,
+      loanAmount: loanAmount,
+      interestRate: interestRate,
+      durationMonths: durationMonths,
+      startDate: startDate,
+      maturityDate: maturityDate,
+      monthlyInterest: monthlyInterest,
+      totalInterest: totalInterest,
+      totalDue: totalDue,
+      payments: payments,
+      disbursementSummary: disbursementSummary,
+      mode: mode ?? this.mode,
+      accountStatus: accountStatus,
+      releaseDate: releaseDate,
+      expectedDeliveryDate: expectedDeliveryDate,
+      deliveredAt: deliveredAt,
+      lastInterestPaidDate: lastInterestPaidDate,
+      releasePrincipal: releasePrincipal,
+      releaseInterest: releaseInterest,
+      releasePenalty: releasePenalty,
+      releaseDiscount: releaseDiscount,
+      releaseTotalAmount: releaseTotalAmount,
+      releasePaymentMode: releasePaymentMode,
+      releaseNotes: releaseNotes,
+      releasedBy: releasedBy,
+      principalOutstanding: principalOutstanding,
+      interestOutstanding: interestOutstanding,
+      idProofType: idProofType,
+      idProofNumber: idProofNumber,
+      idProofImagePath: idProofImagePath,
+      notes: notes,
+    );
+  }
+
+  bool get isReleaseReceipt => mode == GirviReceiptMode.release;
+
+  bool get isInterestReceipt => mode == GirviReceiptMode.interest;
+
+  double get loanToValuePercent =>
+      totalValue <= 0 ? 0 : (loanAmount / totalValue) * 100;
+
+  double get totalOutstanding {
+    final principal = principalOutstanding ?? loanAmount;
+    final interest = interestOutstanding ?? totalInterest;
+    final value = principal + interest;
+    return value < 0 ? 0 : value;
+  }
 
   String get displayCustomerAddress {
     final fullAddress = customerAddress.trim();

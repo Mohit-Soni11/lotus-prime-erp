@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:printing/printing.dart';
 
+import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_invoice_pdf_service.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';
@@ -149,6 +150,10 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildFormatSelector(),
+                  const SizedBox(height: 20),
+                  _buildReceiptModeSelector(),
+                  const SizedBox(height: 20),
+                  _buildTemplateSelector(),
                   const SizedBox(height: 20),
                   _buildInvoiceSetupCard(),
                   const SizedBox(height: 20),

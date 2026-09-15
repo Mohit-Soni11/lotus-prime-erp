@@ -43,31 +43,6 @@ extension GirviInvoiceHubHeader on _GirviInvoiceHubScreenState {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-            decoration: BoxDecoration(
-              color: _controller.isFinalized
-                  ? GirviColors.successBg
-                  : GirviColors.brandGoldLight,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: _controller.isFinalized
-                    ? GirviColors.successBorder
-                    : GirviColors.brandGold.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              _controller.isFinalized ? 'SAVED' : 'DRAFT',
-              style: GoogleFonts.inter(
-                color: _controller.isFinalized
-                    ? GirviColors.success
-                    : GirviColors.brandGold,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.7,
-              ),
-            ),
-          ),
         ],
       ),
     );

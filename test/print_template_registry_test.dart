@@ -51,6 +51,7 @@ void main() {
         PrintTemplateDocumentType.salesReturn,
         PrintTemplateDocumentType.purchaseReturn,
         PrintTemplateDocumentType.bookingAdvance,
+        PrintTemplateDocumentType.girviReceipt,
       ]) {
         final templates = PrintTemplateRegistry.forDocument(type);
 

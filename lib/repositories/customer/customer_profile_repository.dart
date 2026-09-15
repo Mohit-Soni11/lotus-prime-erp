@@ -9,6 +9,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../models/customer/customer_profile/customer_profile_model.dart';
+import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -357,6 +358,20 @@ class CustomerProfileRepository {
                     '${entry.label} Rs ${entry.amount.toStringAsFixed(2)}',
               )
               .join(' + ');
+      final status = GirviStatus.fromDb(loan.status);
+      final receiptMode = status == GirviStatus.released ||
+              status == GirviStatus.readyForDelivery ||
+              loan.releaseDate != null ||
+              loan.releaseTotalAmount != null
+          ? GirviReceiptMode.release
+          : loan.lastInterestPaidDate != null
+              ? GirviReceiptMode.interest
+              : GirviReceiptMode.pledge;
+      final releaseTotal = loan.releaseTotalAmount ?? 0;
+      final principalOutstanding =
+          receiptMode == GirviReceiptMode.release ? 0.0 : loan.loanAmount;
+      final interestOutstanding =
+          receiptMode == GirviReceiptMode.release ? 0.0 : totalInterest;
 
       return GirviInvoiceDraft(
         ticketNo: loan.ticketNo,
@@ -398,6 +413,22 @@ class CustomerProfileRepository {
         totalDue: loan.loanAmount + totalInterest,
         payments: List.unmodifiable(payments),
         disbursementSummary: disbursementSummary,
+        mode: receiptMode,
+        accountStatus: status.displayName,
+        releaseDate: loan.releaseDate,
+        expectedDeliveryDate: loan.expectedDeliveryDate,
+        deliveredAt: loan.deliveredAt,
+        lastInterestPaidDate: loan.lastInterestPaidDate,
+        releasePrincipal: loan.releasePrincipal,
+        releaseInterest: loan.releaseInterest,
+        releasePenalty: loan.releasePenalty,
+        releaseDiscount: loan.releaseDiscount,
+        releaseTotalAmount: releaseTotal > 0 ? releaseTotal : null,
+        releasePaymentMode: loan.releasePaymentMode,
+        releaseNotes: loan.releaseNotes,
+        releasedBy: loan.releasedBy,
+        principalOutstanding: principalOutstanding,
+        interestOutstanding: interestOutstanding,
         idProofType: loan.idProofType,
         idProofNumber: loan.idProofNumber,
         idProofImagePath: loan.idProofImagePath,

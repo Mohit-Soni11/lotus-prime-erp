@@ -39,6 +39,7 @@ void main() {
     expect(settings.showKycDetails, isFalse);
     expect(settings.showDisbursementDetails, isFalse);
     expect(settings.printTermsAndConditions, isFalse);
+    expect(settings.printCustomerDeclaration, isFalse);
     expect(settings.printFooterMessage, isTrue);
     expect(
       settings.footerMessage,
@@ -119,6 +120,51 @@ void main() {
       'मैंने गिरवी और ऋण का विवरण जांच लिया है।',
     );
     expect(saved.printCustomerDeclaration, isTrue);
+  });
+
+  test('Girvi billing ignores accidental purchase policy copy', () async {
+    final polluted = GirviBillingModel.defaults.copyWith(
+      termsAndConditions:
+          'Metal purchase policy applies to seller payout and buyback.',
+      customerDeclaration:
+          'Seller declaration for customer sold metal and payout settlement.',
+      printTermsAndConditions: true,
+      printCustomerDeclaration: true,
+    );
+
+    expect(await repo.save(polluted), isTrue);
+    final saved = await repo.fetch();
+
+    expect(saved.printTermsAndConditions, isFalse);
+    expect(saved.printCustomerDeclaration, isFalse);
+    expect(saved.termsAndConditions,
+        GirviBillingModel.defaults.termsAndConditions);
+    expect(saved.customerDeclaration,
+        GirviBillingModel.defaults.customerDeclaration);
+  });
+
+  test('legacy default declaration is not auto-printed on Girvi invoice',
+      () async {
+    final legacy = GirviBillingModel.defaults.copyWith(
+      printCustomerDeclaration: true,
+    );
+
+    await db.into(db.girviBillingSettings).insert(
+          GirviBillingSettingsCompanion(
+            selectedTemplate: Value(
+              GirviBillingTemplateOptions.encode(legacy)
+                  .replaceFirst('"version":5', '"version":4'),
+            ),
+          ),
+        );
+
+    final loaded = await repo.fetch();
+
+    expect(loaded.printCustomerDeclaration, isFalse);
+    expect(
+      loaded.customerDeclaration,
+      GirviBillingModel.defaults.customerDeclaration,
+    );
   });
 
   test('blank saved footer remains the source of truth', () async {

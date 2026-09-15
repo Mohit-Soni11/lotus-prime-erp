@@ -57,12 +57,12 @@ class PrintTemplateRegistry {
 
   static const PrintTemplateDefinition lotusEconomy = PrintTemplateDefinition(
     id: 'lotus_economy',
-    name: 'Lotus Economy Tax Invoice',
+    name: 'Lotus Economy Document',
     shortName: 'Lotus Economy',
     description:
-        'Low-ink statutory A4 invoice with compact tables, thin borders and clean GST totals.',
+        'Low-ink A4 document with compact tables, thin borders and clean settlement totals.',
     designReference:
-        'Professional monochrome tax invoice optimized for daily printing and accounting records.',
+        'Professional monochrome document optimized for daily printing and accounting records.',
     isSystemDefault: false,
     supportedDocuments: [
       PrintTemplateDocumentType.salesInvoice,
@@ -70,15 +70,16 @@ class PrintTemplateRegistry {
       PrintTemplateDocumentType.purchaseVoucher,
       PrintTemplateDocumentType.purchaseReturn,
       PrintTemplateDocumentType.bookingAdvance,
+      PrintTemplateDocumentType.girviReceipt,
     ],
   );
 
   static const PrintTemplateDefinition lotusSignature = PrintTemplateDefinition(
     id: 'lotus_signature',
-    name: 'Lotus Signature Tax Invoice',
+    name: 'Lotus Signature Document',
     shortName: 'Lotus Signature',
     description:
-        'Elegant white and gold jewellery tax invoice with refined customer, item and settlement sections.',
+        'Elegant white and gold jewellery document with refined customer, item and settlement sections.',
     designReference:
         'Premium branded A4 invoice inspired by luxury jewellery bill formats.',
     isSystemDefault: false,
@@ -88,6 +89,7 @@ class PrintTemplateRegistry {
       PrintTemplateDocumentType.purchaseVoucher,
       PrintTemplateDocumentType.purchaseReturn,
       PrintTemplateDocumentType.bookingAdvance,
+      PrintTemplateDocumentType.girviReceipt,
     ],
   );
 

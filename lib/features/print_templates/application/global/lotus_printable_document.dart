@@ -57,12 +57,16 @@ class LotusPrintablePanel {
   final List<LotusPrintableDetail> details;
   final String photoPath;
   final String photoLabel;
+  final bool extractPhotoProof;
+  final bool compactDetailDividers;
 
   const LotusPrintablePanel({
     required this.title,
     required this.details,
     this.photoPath = '',
     this.photoLabel = '',
+    this.extractPhotoProof = true,
+    this.compactDetailDividers = false,
   });
 }
 
@@ -72,6 +76,7 @@ class LotusPrintableDetail {
   final String value;
   final bool multiline;
   final bool highlight;
+  final bool danger;
 
   const LotusPrintableDetail({
     required this.iconKey,
@@ -79,6 +84,7 @@ class LotusPrintableDetail {
     required this.value,
     this.multiline = false,
     this.highlight = false,
+    this.danger = false,
   });
 }
 

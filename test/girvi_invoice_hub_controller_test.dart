@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_hub_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
@@ -133,6 +134,16 @@ void main() {
 
     controller.setActivePrintMetal(GirviBillingMetal.silver);
     expect(controller.effectiveActiveMetal, GirviBillingMetal.silver);
+
+    await controller.switchTemplate(PrintTemplateRegistry.lotusSignature.id);
+    expect(
+      controller.selectedTemplateId,
+      PrintTemplateRegistry.lotusSignature.id,
+    );
+    expect(
+      controller.invoiceSettings.selectedTemplate,
+      PrintTemplateRegistry.lotusSignature.id,
+    );
 
     await controller.switchFormat(GirviInvoiceFormat.compactA5);
     await controller.updatePrintOptions(copies: 2, duplicate: true);

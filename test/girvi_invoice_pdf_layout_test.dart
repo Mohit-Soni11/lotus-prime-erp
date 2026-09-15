@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
@@ -228,6 +229,27 @@ void main() {
     }
   });
 
+  test('Girvi A4 receipt builds every Lotus invoice design', () async {
+    final service = GirviInvoicePdfService();
+    for (final template in PrintTemplateRegistry.forDocument(
+      PrintTemplateDocumentType.girviReceipt,
+    )) {
+      final bytes = await service.build(
+        draft: _simpleDraft,
+        format: GirviInvoiceFormat.a4,
+        settings: GirviBillingModel.defaults.copyWith(
+          selectedTemplate: template.id,
+          printTermsAndConditions: true,
+          printCustomerDeclaration: true,
+        ),
+        templateId: template.id,
+      );
+
+      expect(bytes.length, greaterThan(1000), reason: template.id);
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-', reason: template.id);
+    }
+  });
+
   test('Girvi invoice keeps table and photo flow stable across pages',
       () async {
     final photoPath = _previewPhotoPath();
@@ -392,6 +414,45 @@ void main() {
     }
   });
 }
+
+final _simpleDraft = GirviInvoiceDraft(
+  ticketNo: 'GRV-TEMPLATE-001',
+  createdAt: DateTime(2026, 9, 14),
+  customerName: 'Template Test Customer',
+  customerMobile: '9304479436',
+  customerCity: 'Patna, Bihar',
+  customerAddress: 'East Lakshmi Nagar, Khemnichak, Patna, Bihar 800027',
+  items: const [
+    GirviInvoiceItemDraft(
+      serialNo: 1,
+      metal: 'Gold',
+      description: 'Gold ring',
+      purity: '22K',
+      pieces: 1,
+      grossWeight: 10,
+      lessWeight: 0.5,
+      netWeight: 9.5,
+      valuationPurity: '91.60%',
+      fineWeight: 8.7,
+      ratePerGram: 6800,
+      huid: 'HUID123',
+      value: 64600,
+    ),
+  ],
+  totalValue: 64600,
+  loanAmount: 40000,
+  interestRate: 5,
+  durationMonths: 6,
+  startDate: DateTime(2026, 9, 14),
+  maturityDate: DateTime(2027, 3, 14),
+  monthlyInterest: 2000,
+  totalInterest: 12000,
+  totalDue: 52000,
+  payments: const [
+    GirviInvoicePayment(label: 'Cash', amount: 40000),
+  ],
+  disbursementSummary: 'Cash Rs 40,000.00',
+);
 
 String? _previewPhotoPath() {
   final requested = Platform.environment['GIRVI_PREVIEW_PHOTO'];
