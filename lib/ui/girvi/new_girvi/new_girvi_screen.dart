@@ -43,11 +43,19 @@ import '../shared/girvi_shared_widgets.dart';
 import '../shared/select_customer_dialog.dart';
 
 part 'parts/new_girvi_actions.dart';
+part 'parts/new_girvi_photo_actions.dart';
+part 'parts/new_girvi_invoice_print_actions.dart';
 part 'parts/new_girvi_kyc_camera.dart';
 part 'parts/new_girvi_layout.dart';
+part 'parts/new_girvi_header_layout.dart';
 part 'parts/new_girvi_pledged_items.dart';
 part 'parts/new_girvi_sections.dart';
 part 'parts/new_girvi_widgets.dart';
+part 'parts/new_girvi_invoice_summary_widgets.dart';
+part 'parts/new_girvi_input_widgets.dart';
+part 'parts/new_girvi_loan_terms_widgets.dart';
+part 'parts/new_girvi_ledger_cells.dart';
+part 'parts/new_girvi_pledged_media_widgets.dart';
 
 class NewGirviScreen extends StatefulWidget {
   final int? editLoanId;

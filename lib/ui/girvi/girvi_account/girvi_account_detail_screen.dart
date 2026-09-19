@@ -28,6 +28,9 @@ part 'parts/girvi_account_detail_layout.dart';
 part 'parts/girvi_account_detail_panels.dart';
 part 'parts/girvi_account_detail_payment_history.dart';
 part 'parts/girvi_account_detail_shared.dart';
+part 'parts/girvi_account_pledged_summary.dart';
+part 'parts/girvi_account_action_widgets.dart';
+part 'parts/girvi_account_invoice_preview.dart';
 
 class GirviAccountDetailScreen extends StatefulWidget {
   final int loanId;
