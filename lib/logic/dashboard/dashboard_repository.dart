@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/dashboard/user_profile.dart';
-import '../../models/dashboard/shop_profile_model.dart'; // Import for Shop Card
+import '../../models/dashboard/shop_profile_model.dart';
 import '../../models/dashboard/search_result.dart';
 import '../../models/dashboard/notification_item.dart';
 import '../../models/dashboard/customer_stats_model.dart';
@@ -33,7 +33,7 @@ class DashboardRepository {
   // ==========================================
   Future<UserProfile> fetchUserProfile() async {
     try {
-      // ✅ FIX: Map karte waqt koi column null ho to crash na ho
+      // Keep nullable legacy columns from crashing profile mapping.
       final rows = await _db.customSelect(
         'SELECT id, shop_name, owner_name FROM shop_profiles LIMIT 1',
         readsFrom: {_db.shopProfiles},
@@ -55,18 +55,17 @@ class DashboardRepository {
         );
       }
     } catch (e) {
-      AppLogger.error("❌ Error fetching profile: $e");
+      AppLogger.error("Error fetching profile: $e");
       return const UserProfile(name: "Guest", role: "N/A", isOnline: false);
     }
   }
 
   // ==========================================
-  // 🔥 2. FETCH FULL SHOP DETAILS (ADDED & FIXED)
+  // FETCH FULL SHOP DETAILS
   // ==========================================
-  // Ye method tumhare code me missing tha, isliye error aa raha tha.
   Future<ShopProfileModel> fetchFullShopDetails() async {
     try {
-      // ✅ FIX: customSelect use karo taaki openingCashBalance NULL crash na kare
+      // Use a targeted projection to avoid reading nullable legacy columns.
       final rows = await _db.customSelect(
         '''SELECT id, shop_name, legal_name, owner_name, contact_number,
                   email, website, city, state, gstin, bis_license, huid_no,
@@ -106,7 +105,7 @@ class DashboardRepository {
       }
       return ShopProfileModel.empty();
     } catch (e) {
-      AppLogger.error("❌ Error fetching shop details: $e");
+      AppLogger.error("Error fetching shop details: $e");
       throw Exception("Database Error");
     }
   }
@@ -136,7 +135,7 @@ class DashboardRepository {
 
       _notificationController.add(uiList);
     } catch (e) {
-      AppLogger.error("❌ Error loading notifications: $e");
+      AppLogger.error("Error loading notifications: $e");
       _notificationController.add([]);
     }
   }
@@ -168,7 +167,7 @@ class DashboardRepository {
 
       // Logic: High Growth Rule (> 5)
       final bool isHighGrowth = count > 5;
-      final String status = isHighGrowth ? "High Growth 🚀" : "Stable";
+      final String status = isHighGrowth ? "High Growth" : "Stable";
 
       final String formattedTime =
           "${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}";
@@ -180,7 +179,7 @@ class DashboardRepository {
         syncTime: formattedTime,
       );
     } catch (e) {
-      AppLogger.error("❌ Error fetching customer stats: $e");
+      AppLogger.error("Error fetching customer stats: $e");
       return CustomerStatsModel.empty();
     }
   }

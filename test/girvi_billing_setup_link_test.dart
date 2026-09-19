@@ -212,7 +212,7 @@ void main() {
     );
   });
 
-  test('New Girvi loads prefix, interest and duration from billing setup',
+  test('New Girvi loads ticket prefix without pre-filling loan terms',
       () async {
     await repo.save(
       GirviBillingModel.defaults.copyWith(
@@ -228,7 +228,7 @@ void main() {
     await controller.initialize();
 
     expect(controller.ticketNo, 'PLEDGE-0025');
-    expect(controller.interestRate, 2.25);
-    expect(controller.durationMonths, 9);
+    expect(controller.interestRate, 0);
+    expect(controller.durationMonths, 0);
   });
 }

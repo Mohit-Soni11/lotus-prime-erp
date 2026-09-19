@@ -51,7 +51,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      // âœ… FIX 1: Faster Animation (250ms -> 150ms)
+      // Fast expansion keeps navigation responsive.
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOut,
       width: _isCollapsed ? 70 : 260,
@@ -69,8 +69,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
-                // âœ… FIX 2: Overflow Error Fixed
-                // Jab chhota ho, toh padding kam kar do (12 -> 8)
+                // Compact padding prevents overflow in collapsed mode.
                 padding: EdgeInsets.symmetric(
                     horizontal: _isCollapsed ? 8 : 12, vertical: 10),
                 itemCount: SidebarMenu.menuItems.length + 1,
@@ -236,8 +235,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
                 _isCollapsed = false;
                 _expandedIndex = index;
               });
-              // âœ… FIX 3: Reduced Delay drastically (250ms -> 50ms)
-              // Ab ye "lag" nahi karega, almost instant open hoga.
+              // Keep expansion responsive without triggering animation jitter.
               Future.delayed(const Duration(milliseconds: 50), () {
                 final String itemKey = item.title;
                 _controllers[itemKey]?.expand();
@@ -287,9 +285,8 @@ class _CustomSidebarState extends State<CustomSidebar> {
         key: PageStorageKey(itemKey),
         initiallyExpanded: isParentActive,
         onExpansionChanged: (isOpen) {
-          // âœ… FIX: setState during build error â€” addPostFrameCallback use karo
-          // ExpansionTile initiallyExpanded=true hone par initState mein
-          // expand hota hai jo build ke dauran setState trigger karta hai.
+          // Defer updates because initially expanded tiles can trigger changes
+          // during the build phase.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             if (isOpen) {
@@ -387,7 +384,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
   Widget _buildFooter() {
     return Padding(
       padding: EdgeInsets.symmetric(
-          // âœ… FIX 2: Dynamic Padding for Footer too
+          // Match footer padding to the current sidebar width.
           horizontal: _isCollapsed ? 8 : 12,
           vertical: 10),
       child: Column(

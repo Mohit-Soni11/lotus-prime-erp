@@ -2,12 +2,12 @@
 // FILE        : counter_security_model.dart
 // MODULE      : Dashboard / Counter Security Check
 // LAYER       : Models
-// DESCRIPTION : Session-based model — DB nahi, sirf in-memory state.
+// DESCRIPTION : Session-based model — in-memory state only.
 //
 //               3 STATES:
-//               idle    → Kuch nahi hua, input ready
-//               locked  → Step 1 done, items diye gaye, Step 2 ready
-//               result  → Step 2 done, MATCHED ya MISMATCH
+//               idle    → No active session, input ready
+//               locked  → Step 1 complete, issued items captured, Step 2 ready
+//               result  → Step 2 complete, matched or mismatch result available
 //
 //               METALS: GOLD | SILVER | PLATINUM | DIAMOND
 // =============================================================================
@@ -46,16 +46,16 @@ extension SecurityMetalExt on SecurityMetal {
   }
 }
 
-/// Ek session ka complete data
+/// Complete data for one counter security session.
 class CounterSecurityModel {
   final SecuritySessionState state;
   final SecurityMetal selectedMetal;
 
-  // Step 1 — Diya
+  // Step 1 — Issued
   final int issuePcs;
   final double issueWeight;
 
-  // Step 2 — Wapas aaya
+  // Step 2 — Returned
   final int returnPcs;
   final double returnWeight;
 
@@ -105,14 +105,14 @@ class CounterSecurityModel {
   bool get hasResult => state == SecuritySessionState.result;
   bool get isMatched => result == SecurityResult.matched;
 
-  /// Badge text — locked state mein dikhega
+  /// Badge text displayed while the session is locked.
   String get lockedBadgeText =>
       '${selectedMetal.label}  |  $issuePcs Pcs  |  ${issueWeight.toStringAsFixed(3)} gm';
 
   /// Diff weight string — 3 decimal
   String get diffWeightStr => diffWeight.abs().toStringAsFixed(3);
 
-  /// Result message — mismatch ke liye
+  /// Result message for mismatched sessions.
   String get mismatchMessage {
     final parts = <String>[];
     if (diffPcs != 0) {

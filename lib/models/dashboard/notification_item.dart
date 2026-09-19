@@ -6,7 +6,7 @@ class NotificationItem {
   final String title;
   final String desc;
   final String targetRole; // "ALL", "OWNER", "STAFF"
-  bool isRead; // Mutable: Kyunki hum isse update karte hain (Mark Read)
+  bool isRead;
 
   NotificationItem({
     required this.id,
@@ -18,7 +18,7 @@ class NotificationItem {
   });
 
   // ==========================================
-  // ⚡ 1. JSON SERIALIZATION (API READY)
+  // 1. JSON SERIALIZATION
   // ==========================================
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(
@@ -26,13 +26,13 @@ class NotificationItem {
       type: json['type'] ?? "General",
       title: json['title'] ?? "No Title",
       desc: json['desc'] ?? "",
-      // Agar backend se target_role na aaye, toh default "ALL" maan lo
+      // Default to all roles when target_role is omitted.
       targetRole: json['target_role'] ?? "ALL",
       isRead: json['is_read'] ?? false,
     );
   }
 
-  // Data wapas bhejne ke liye
+  // Serializes data for backend updates.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -45,9 +45,9 @@ class NotificationItem {
   }
 
   // ==========================================
-  // ⚡ 2. COPY WITH (Helper for Updates)
+  // 2. COPY WITH
   // ==========================================
-  // Agar hum immutable state use karein future mein, toh ye kaam aayega
+  // Supports immutable state updates.
   NotificationItem copyWith({
     int? id,
     String? type,

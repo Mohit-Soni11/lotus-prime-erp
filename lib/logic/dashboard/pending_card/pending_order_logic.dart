@@ -1,7 +1,5 @@
 import 'dart:async';
-// ✅ FIXED: Removed unused 'drift' import to fix Yellow Warning
 import 'package:lotus_erp/database/db/app_database.dart';
-// ✅ FIXED: Ensure this path matches where you kept the model
 import '../../../models/dashboard/pending_stats_model.dart';
 import '../../../core/logging/app_logger.dart';
 
@@ -25,12 +23,11 @@ class PendingOrderLogic {
     try {
       final now = DateTime.now();
 
-      // ✅ QUERY: Sirf 'PENDING' status wale orders fetch karo
+      // Query pending sales orders.
       final query = _db.select(_db.salesOrders)
         ..where((tbl) => tbl.status.equals('PENDING'));
 
-      // ✅ LIVE WATCHER
-      // Note: Agar 'dynamic' se issue aaye to 'SalesOrder' (generated class) use karna
+      // Live watcher.
       _dbSubscription = query.watch().listen((List<dynamic> orders) {
         if (_controller.isClosed) return;
 

@@ -2,12 +2,12 @@
 // FILE        : cash_register_model.dart
 // MODULE      : Dashboard / Cash Register
 // LAYER       : Models
-// DESCRIPTION : Aaj ke cash register ka complete snapshot.
+// DESCRIPTION : Complete snapshot for today's cash register.
 //
-//               4 KEY FIELDS (Python backend_data jaisa):
+//               4 KEY FIELDS:
 //               • openingBalance  → ShopProfiles.openingCashBalance (v6)
 //               • totalReceived   → Sum of bills.paidAmount (today)
-//               • totalPaidOut    → Future: expenses table se (abhi 0)
+//               • totalPaidOut    → Expense total
 //               • netCashDrawer   → openingBalance + received - paidOut
 // =============================================================================
 
@@ -17,7 +17,7 @@ class CashRegisterModel {
   final double totalPaidOut;
   final double netCashDrawer;
 
-  // Formatted strings — UI ke liye
+  // Formatted strings for the UI.
   final String openingBalanceStr;
   final String totalReceivedStr;
   final String totalPaidOutStr;

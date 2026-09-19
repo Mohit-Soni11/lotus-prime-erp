@@ -15,8 +15,7 @@ class QuickActionItemModel {
   final IconData icon;
   final String routeId;
   final Color accentColor;
-  final bool
-      hasPopup; // ✅ Indicates if the button triggers a popup or direct navigation
+  final bool hasPopup;
 
   const QuickActionItemModel({
     required this.id,

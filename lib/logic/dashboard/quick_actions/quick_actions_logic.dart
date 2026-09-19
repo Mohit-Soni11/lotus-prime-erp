@@ -55,8 +55,7 @@ class QuickActionsLogic extends ChangeNotifier {
 
   // ==========================================
   // ACTION BUTTONS (2x2 grid)
-  // ✅ Button 1: "New Entry"  — popup
-  // ✅ Button 3: "Adjust"     — popup
+  // New Entry and Adjust open contextual popups.
   // ==========================================
   static final List<QuickActionItemModel> actions = [
     const QuickActionItemModel(

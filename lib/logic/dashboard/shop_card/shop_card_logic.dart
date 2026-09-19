@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../../../models/dashboard/shop_profile_model.dart';
-import '../../dashboard/dashboard_repository.dart'; // ✅ Import Repository
+import '../../dashboard/dashboard_repository.dart';
 import '../../../core/logging/app_logger.dart';
 
 class ShopCardLogic extends ChangeNotifier {
   // Dependencies
-  final DashboardRepository _repository; // ✅ Dependency Injection
+  final DashboardRepository _repository;
 
   // State Variables
   ShopProfileModel _data = ShopProfileModel.empty();
@@ -20,7 +20,6 @@ class ShopCardLogic extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get hasError => _errorMessage != null;
 
-  // ✅ Constructor me Repository Inject kiya
   ShopCardLogic(this._repository) {
     _fetchShopData();
   }
@@ -32,12 +31,11 @@ class ShopCardLogic extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // ✅ Ab ye Repository se asli data layega
       final result = await _repository.fetchFullShopDetails();
 
       _data = result;
     } catch (e) {
-      AppLogger.error("🔴 Error in Logic: $e");
+      AppLogger.error("ShopCardLogic error: $e");
       _errorMessage = "Unable to load profile. Please check connection.";
     } finally {
       _isLoading = false;

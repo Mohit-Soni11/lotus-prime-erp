@@ -6,13 +6,13 @@ import '../../../models/dashboard/bill_stats_model.dart';
 import '../../../core/logging/app_logger.dart';
 
 class BillCardLogic {
-  // ❌ Singleton Removed: Har widget ka apna dimag (logic) hona chahiye
+  // Each widget owns its own logic instance.
 
   // Dependency Injection (Testable)
   final AppDatabase _db;
   BillCardLogic({AppDatabase? db}) : _db = db ?? AppDatabase();
 
-  // ✅ Simple Controller (Broadcast nahi chahiye kyunki 1-to-1 connection hai)
+  // Simple one-to-one controller.
   final StreamController<BillStatsModel> _controller =
       StreamController<BillStatsModel>();
 
@@ -30,7 +30,7 @@ class BillCardLogic {
       final todayStart = DateTime(now.year, now.month, now.day);
       final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
-      // ✅ Expressions for faster SQL
+      // Expressions for faster SQL.
       final countExpr = _db.bills.id.count();
       final sumExpr = _db.bills.finalAmount.sum();
 
@@ -39,7 +39,7 @@ class BillCardLogic {
         ..where(_db.bills.billDate.isBetweenValues(todayStart, todayEnd))
         ..where(_db.bills.status.equals('ACTIVE'));
 
-      // ✅ Live Watcher
+      // Live watcher.
       _dbSubscription = query.watch().listen((List<TypedResult> results) {
         if (_controller.isClosed) return;
 
@@ -71,10 +71,9 @@ class BillCardLogic {
     }
   }
 
-  // ✅ 100% Safe Disposal
   void dispose() {
     _dbSubscription?.cancel();
-    _controller.close(); // Ab safe hai kyunki ye instance destroy hone wala hai
+    _controller.close();
   }
 
   BillStatsModel get initialData => BillStatsModel.loading();

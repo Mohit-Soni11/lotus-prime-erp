@@ -1,6 +1,6 @@
 // Location: lib/core/constants/enums.dart
 
-// ⚡ SMART ENUMS: Updated to CamelCase (Dart Standard)
+// Smart enums aligned with Dart naming standards.
 
 // ==========================================
 // 1. USER ROLES
@@ -11,7 +11,7 @@ enum UserRole {
   staff,
   admin;
 
-  // 🔥 SAFETY LOGIC: Case Insensitive Matching
+  // Case-insensitive matching for persisted values.
   static UserRole fromString(String value) {
     try {
       return UserRole.values.firstWhere(

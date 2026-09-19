@@ -54,8 +54,8 @@ class PaymentStatusLogic extends ChangeNotifier {
   bool get isLoading => _data.isLoading;
 
   // Max bills dikhane ki limit
-  static const int _kVisibleLimit = 3; // Collapsed mein
-  static const int _kExpandedLimit = 10; // Expanded mein
+  static const int _kVisibleLimit = 3;
+  static const int _kExpandedLimit = 10;
   static const int _kFetchLimit = 10; // DB se kitne lao
   static const List<String> _billLifecycleStatuses = [
     'ACTIVE',
@@ -93,14 +93,14 @@ class PaymentStatusLogic extends ChangeNotifier {
   }
 
   // ==========================================
-  // PROCESS — Bills se PaymentBillItem list banao
+  // PROCESS — Build PaymentBillItem records from bills.
   // ==========================================
   Future<void> _processBills(List<Bill> bills) async {
     try {
       final List<PaymentBillItem> items = [];
 
       for (final bill in bills) {
-        // Customer data fetch karo (agar customerId available hai)
+        // Fetch customer data when a customer id is available.
         String customerName = bill.customerName ?? 'Walk-in Customer';
         int? customerId = bill.customerId;
 
@@ -113,7 +113,7 @@ class PaymentStatusLogic extends ChangeNotifier {
           }
         }
 
-        // Amounts compute karo
+        // Compute current payment amounts.
         final double total = bill.finalAmount;
         final double paid = bill.paidAmount;
         final double due = _currentDue(bill);
@@ -134,18 +134,18 @@ class PaymentStatusLogic extends ChangeNotifier {
         ));
       }
 
-      // Summary compute karo
+      // Compute dashboard summary.
       final summary = _computeSummary(items);
 
       _data = PaymentStatusModel(
         summary: summary,
         bills: items,
-        activeTab: _data.activeTab, // active tab same rakho
+        activeTab: _data.activeTab, // Preserve the active tab.
       );
       _hasError = false;
       notifyListeners();
     } catch (e) {
-      AppLogger.debug('❌ PaymentStatusLogic error: $e');
+      AppLogger.debug('PaymentStatusLogic error: $e');
       _hasError = true;
       notifyListeners();
     }
@@ -202,7 +202,7 @@ class PaymentStatusLogic extends ChangeNotifier {
   // INTERACTIONS
   // ==========================================
 
-  /// Filter tab change karo
+  /// Changes the active filter tab.
   void setTab(PaymentFilterTab tab) {
     _data = _data.withTab(tab);
     notifyListeners();

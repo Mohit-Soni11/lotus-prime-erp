@@ -5,9 +5,9 @@
 // DESCRIPTION : Cash Register Card — live financial snapshot.
 //
 //               v2 UPGRADE — Fully connected to Cash Book:
-//               ✅ totalReceived  → Bills.paidAmount (POS, real-time)
-//               ✅ totalPaidOut   → CashTransactions EXPENSE sum (real-time)
-//               ✅ netCashDrawer  → openingBalance + received - paidOut
+//               totalReceived  → Bills.paidAmount (POS, real-time)
+//               totalPaidOut   → CashTransactions EXPENSE sum (real-time)
+//               netCashDrawer  → openingBalance + received - paidOut
 //
 //               Both Bills AND CashTransactions are watched simultaneously.
 //               Any change in either table triggers an instant recalculation.
@@ -22,7 +22,6 @@
 import 'dart:async';
 import 'package:intl/intl.dart';
 
-// FIX: Added drift import to access ComparableExpr extension methods
 import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -48,7 +47,7 @@ class CashRegisterLogic {
   // ── Cached values for combined compute ────────────────────────────────────
   double _cachedReceived = 0.0;
   double _cachedExpense = 0.0;
-  bool _isComputing = false; // ✅ BUG FIX: prevent race condition
+  bool _isComputing = false;
 
   // ==========================================
   // INIT
@@ -95,7 +94,7 @@ class CashRegisterLogic {
         _emitComputed();
       },
       onError: (e) {
-        AppLogger.debug('❌ CashRegister Expense watch error: $e');
+        AppLogger.debug('CashRegister expense watch error: $e');
       },
     );
   }
@@ -105,8 +104,7 @@ class CashRegisterLogic {
   // ==========================================
 
   Future<void> _emitComputed() async {
-    // ✅ BUG FIX: If already computing (race condition when both streams fire
-    // simultaneously), skip — the in-flight compute will use latest cached values
+    // Avoid overlapping calculations when both streams fire at the same time.
     if (_isComputing || _controller.isClosed) return;
     _isComputing = true;
 
@@ -133,7 +131,7 @@ class CashRegisterLogic {
         ));
       }
     } catch (e) {
-      AppLogger.debug('❌ CashRegister compute error: $e');
+      AppLogger.debug('CashRegister compute error: $e');
       _emitFallback();
     } finally {
       _isComputing = false;

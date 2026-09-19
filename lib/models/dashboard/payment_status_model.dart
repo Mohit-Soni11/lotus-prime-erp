@@ -2,7 +2,7 @@
 // FILE        : payment_status_model.dart
 // MODULE      : Dashboard / Payment Status
 // LAYER       : Models
-// DESCRIPTION : Poore Payment Status Card ka data snapshot.
+// DESCRIPTION : Complete data snapshot for the Payment Status card.
 //               Summary stats + individual bill list.
 // =============================================================================
 
@@ -11,7 +11,7 @@ import 'payment_bill_item.dart';
 /// Active filter tab
 enum PaymentFilterTab { all, due, paid }
 
-/// Summary stats — header mein dikhega
+/// Summary stats displayed in the header.
 class PaymentSummary {
   final int totalBills;
   final double totalCollected; // Sum of all paidAmount

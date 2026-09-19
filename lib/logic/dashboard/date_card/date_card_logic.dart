@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:intl/intl.dart';
 
-// ✅ DATA MODEL
+// Data model.
 class DateCardModel {
   final String day;
   final String date;
@@ -18,7 +18,7 @@ class DateCardModel {
   }
 }
 
-// ✅ LOGIC CONTROLLER
+// Logic controller.
 class DateCardLogic {
   final StreamController<DateCardModel> _controller =
       StreamController<DateCardModel>.broadcast();
@@ -27,8 +27,8 @@ class DateCardLogic {
   Stream<DateCardModel> get timeStream => _controller.stream;
 
   void init() {
-    _emitTime(); // Turant time dikhao wait mat karo
-    // Periodic timer start
+    _emitTime(); // Show the initial time immediately.
+    // Start periodic updates.
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _emitTime();
     });

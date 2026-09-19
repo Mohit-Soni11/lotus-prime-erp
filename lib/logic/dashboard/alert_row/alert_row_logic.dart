@@ -2,8 +2,8 @@
 // FILE        : alert_row_logic.dart
 // MODULE      : Dashboard / Alert Row
 // LAYER       : Logic (Business Logic)
-// DESCRIPTION : Charon alert cards ka data Drift DB se fetch karta hai.
-//               Live stream watch karta hai — data change hone par auto-update.
+// DESCRIPTION : Fetches the four dashboard alert cards from Drift.
+//               Watches live streams and updates automatically when data changes.
 //
 //               CARD 1 — INVENTORY:
 //                 StockItems → Gold/Silver items count
@@ -27,7 +27,7 @@
 //                 Today → TODAY (WARNING)
 //                 Future → ON SCHEDULE (SAFE)
 //
-//               Pattern: ChangeNotifier (ShopCardLogic / BillCardLogic jaisa)
+//               Pattern: ChangeNotifier aligned with ShopCardLogic and BillCardLogic.
 // =============================================================================
 
 import 'dart:async';
@@ -39,9 +39,9 @@ import '../../../models/dashboard/alert_card_model.dart';
 import '../../../constants/app_routes.dart';
 import '../../../core/logging/app_logger.dart';
 
-// ── Stock Thresholds (Python ke GOLD_MIN, GOLD_HALF jaisa) ────────────────────
-const int _kGoldCriticalQty = 3; // Items <= yeh → CRITICAL
-const int _kGoldWarningQty = 8; // Items <= yeh → WARNING
+// ── Stock Thresholds ─────────────────────────────────────────────────────────
+const int _kGoldCriticalQty = 3; // Items at or below this level are critical.
+const int _kGoldWarningQty = 8; // Items at or below this level show warning.
 const int _kSilverCriticalQty = 5;
 const int _kSilverWarningQty = 12;
 
@@ -104,7 +104,7 @@ class AlertRowLogic extends ChangeNotifier {
   }
 
   // ==========================================
-  // REFRESH — Sab 4 cards ko ek saath update karo
+  // Refresh all four alert cards together.
   // ==========================================
   Future<void> _refresh() async {
     try {
@@ -124,7 +124,7 @@ class AlertRowLogic extends ChangeNotifier {
       _hasError = false;
       notifyListeners();
     } catch (e) {
-      AppLogger.debug('❌ AlertRowLogic Error: $e');
+      AppLogger.debug('AlertRowLogic error: $e');
       _onError();
     }
   }
@@ -136,15 +136,15 @@ class AlertRowLogic extends ChangeNotifier {
 
   // ==========================================
   // CARD 1 — INVENTORY
-  // StockItems table se Gold/Silver ka stock check karo
+  // Check available Gold and Silver stock from StockItems.
   // ==========================================
   Future<AlertCardModel> _buildInventoryCard() async {
-    // All available stock items fetch karo
+    // Fetch all available stock items.
     final allItems = await (_db.select(_db.stockItems)
           ..where((t) => t.status.equals('Available')))
         .get();
 
-    // Gold aur Silver alag karo
+    // Split inventory by primary metal.
     final goldItems =
         allItems.where((i) => i.metalType.toLowerCase() == 'gold').toList();
     final silverItems =
@@ -154,7 +154,7 @@ class AlertRowLogic extends ChangeNotifier {
     final goldQty = goldItems.fold<int>(0, (sum, i) => sum + i.quantity);
     final silverQty = silverItems.fold<int>(0, (sum, i) => sum + i.quantity);
 
-    // Status decide karo — Python jaisa 2-level check
+    // Resolve stock health with a two-level threshold check.
     final gStat = goldQty <= _kGoldCriticalQty
         ? 2
         : goldQty <= _kGoldWarningQty
@@ -167,7 +167,7 @@ class AlertRowLogic extends ChangeNotifier {
             ? 1
             : 0;
 
-    // Combined status + message (Python jaisi exact logic)
+    // Combined status and message.
     String mainValue;
     String subText;
     AlertStatus status;
@@ -175,28 +175,28 @@ class AlertRowLogic extends ChangeNotifier {
     if (gStat == 2 && sStat == 2) {
       status = AlertStatus.critical;
       mainValue = 'ALL CRITICAL';
-      subText = 'Gold & Silver dono low';
+      subText = 'Gold and Silver need restock';
     } else if (gStat == 2) {
       status = AlertStatus.critical;
       mainValue = 'GOLD LOW';
-      subText = 'Turant restock karo';
+      subText = 'Restock immediately';
     } else if (sStat == 2) {
       status = AlertStatus.critical;
       mainValue = 'SILVER LOW';
-      subText = 'Turant restock karo';
+      subText = 'Restock immediately';
     } else if (gStat == 1 || sStat == 1) {
       status = AlertStatus.warning;
       mainValue = 'REFILL SOON';
-      subText = 'Limit ke paas aa raha hai';
+      subText = 'Approaching stock limit';
     } else if (allItems.isEmpty) {
       status = AlertStatus.critical;
       mainValue = 'NO STOCK';
-      subText = 'Koi item available nahi';
+      subText = 'No available items';
     } else {
       status = AlertStatus.safe;
       mainValue = 'STOCK HEALTHY';
       mainValue = '${allItems.length} Items';
-      subText = 'Inventory optimal hai';
+      subText = 'Inventory is optimal';
     }
 
     return AlertCardModel(
@@ -211,8 +211,7 @@ class AlertRowLogic extends ChangeNotifier {
 
   // ==========================================
   // CARD 2 — PENDING ORDERS
-  // SalesOrders → PENDING wale orders check karo
-  // deliveryDate vs today compare karo
+  // Check pending sales orders against today's delivery date.
   // ==========================================
   Future<AlertCardModel> _buildOrdersCard() async {
     final pendingOrders = await (_db.select(_db.salesOrders)
@@ -223,7 +222,7 @@ class AlertRowLogic extends ChangeNotifier {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Overdue orders — delivery date nikal gayi
+    // Overdue orders.
     final overdueOrders = pendingOrders.where((o) {
       if (o.deliveryDate == null) return false;
       final delDate = DateTime(
@@ -245,7 +244,7 @@ class AlertRowLogic extends ChangeNotifier {
       return delDate.isAtSameMomentAs(today);
     }).toList();
 
-    // Status logic (Python ke karigar_delay_days jaisa)
+    // Delivery status based on overdue and due-today counts.
     String mainValue;
     String subText;
     AlertStatus status;
@@ -253,19 +252,19 @@ class AlertRowLogic extends ChangeNotifier {
     if (overdueOrders.isNotEmpty) {
       status = AlertStatus.critical;
       mainValue = 'LATE: ${overdueOrders.length}';
-      subText = '${overdueOrders.length} order overdue hai';
+      subText = '${overdueOrders.length} overdue order';
     } else if (dueTodayOrders.isNotEmpty) {
       status = AlertStatus.warning;
       mainValue = 'DUE TODAY';
-      subText = '${dueTodayOrders.length} order deliver karo';
+      subText = '${dueTodayOrders.length} order due today';
     } else if (total == 0) {
       status = AlertStatus.safe;
       mainValue = 'NO ORDERS';
-      subText = 'Koi pending order nahi';
+      subText = 'No pending orders';
     } else {
       status = AlertStatus.safe;
       mainValue = '$total Pending';
-      subText = 'Sab orders on time';
+      subText = 'All orders are on time';
     }
 
     return AlertCardModel(
@@ -297,7 +296,7 @@ class AlertRowLogic extends ChangeNotifier {
     final int loanCount = activeLoans.length;
     final int total = billCount + loanCount;
 
-    // Total outstanding amount (bills ka)
+    // Total outstanding bill amount.
     final double totalAmt = activeBills.fold<double>(
       0.0,
       (sum, b) => sum + b.finalAmount,
@@ -306,7 +305,7 @@ class AlertRowLogic extends ChangeNotifier {
     // Format amount — Indian style
     final formattedAmt = _formatIndianCurrency(totalAmt);
 
-    // Status logic (Python ke due_bills_count jaisa)
+    // Collection status based on active bills and pledge loans.
     String mainValue;
     String subText;
     AlertStatus status;
@@ -314,7 +313,7 @@ class AlertRowLogic extends ChangeNotifier {
     if (total == 0) {
       status = AlertStatus.safe;
       mainValue = 'ALL CLEAR';
-      subText = 'Koi due nahi hai';
+      subText = 'No active dues';
     } else if (loanCount > 0 && billCount > 0) {
       status = AlertStatus.warning;
       mainValue = formattedAmt;
@@ -326,7 +325,7 @@ class AlertRowLogic extends ChangeNotifier {
     } else {
       status = AlertStatus.warning;
       mainValue = '$loanCount Loans';
-      subText = 'Active girvi/loans';
+      subText = 'Active pledge loans';
     }
 
     return AlertCardModel(
@@ -341,12 +340,10 @@ class AlertRowLogic extends ChangeNotifier {
 
   // ==========================================
   // CARD 4 — DELIVERIES
-  // SalesOrders → next delivery date dhundho
-  // Python ke delivery_pending_days jaisi logic
+  // SalesOrders → next delivery date.
   // ==========================================
   Future<AlertCardModel> _buildDeliveriesCard() async {
-    // ✅ FIX: Drift mein & operator kaam nahi karta ek where mein
-    //    Solution: 2 alag ..where() calls — exactly BillCardLogic jaisa
+    // Drift query builder keeps these predicates as separate where clauses.
     final pendingWithDate = await (_db.select(_db.salesOrders)
           ..where((t) => t.status.equals('PENDING'))
           ..where((t) => t.deliveryDate.isNotNull()))
@@ -362,9 +359,9 @@ class AlertRowLogic extends ChangeNotifier {
     if (pendingWithDate.isEmpty) {
       status = AlertStatus.safe;
       mainValue = 'NO DUE';
-      subText = 'Koi delivery pending nahi';
+      subText = 'No pending deliveries';
     } else {
-      // Minimum delivery date dhundho (next delivery)
+      // Resolve the nearest pending delivery date.
       final sortedDates = pendingWithDate
           .map((o) => DateTime(
                 o.deliveryDate!.year,
@@ -389,7 +386,7 @@ class AlertRowLogic extends ChangeNotifier {
         // Python: delivery_pending_days == 0 → TODAY
         status = AlertStatus.warning;
         mainValue = 'TODAY';
-        subText = '${pendingWithDate.length} deliver karna hai';
+        subText = '${pendingWithDate.length} delivery due today';
       } else {
         // Python: delivery_pending_days < 0 → ON SCHEDULE
         status = AlertStatus.safe;

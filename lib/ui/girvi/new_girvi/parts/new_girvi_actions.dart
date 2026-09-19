@@ -808,7 +808,7 @@ extension NewGirviActions on _NewGirviScreenState {
     _setItemPhotoPath(null);
   }
 
-  // Kept temporarily for backward compatibility with older direct-print flow.
+  // Supports legacy direct-print entry points that bypass the invoice hub.
   // ignore: unused_element
   Future<void> _printGirviInvoice() async {
     _syncPledgedItemsToController();

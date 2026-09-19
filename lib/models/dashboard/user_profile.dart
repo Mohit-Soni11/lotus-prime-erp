@@ -15,13 +15,13 @@ class UserProfile {
     this.isOnline = true,
   });
 
-  // ✅ FIX: Guest User Factory (Ye missing tha)
+  // Guest user fallback.
   factory UserProfile.guest() {
     return const UserProfile(
       id: "guest",
       name: "Guest User",
       role: "VIEWER",
-      isOnline: false, // Guest offline dikhega
+      isOnline: false,
     );
   }
 

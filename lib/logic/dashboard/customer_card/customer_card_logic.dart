@@ -25,14 +25,14 @@ class CustomerCardLogic {
       final now = DateTime.now();
       final todayStart = DateTime(now.year, now.month, now.day);
 
-      // ✅ OPTIMIZED QUERY: Count only rows created today
+      // Count only rows created today.
       final countExpr = _db.customers.id.count();
 
       final query = _db.selectOnly(_db.customers)
         ..addColumns([countExpr])
         ..where(_db.customers.createdAt.isBiggerOrEqualValue(todayStart));
 
-      // ✅ LIVE WATCHER
+      // Live watcher.
       _dbSubscription = query.watch().listen((List<TypedResult> results) {
         if (_controller.isClosed) return;
 
@@ -41,7 +41,7 @@ class CustomerCardLogic {
 
           // Logic: > 5 customers in a day is considered "High Growth"
           final bool isHighGrowth = count > 5;
-          final String status = isHighGrowth ? "High Growth 🚀" : "Stable";
+          final String status = isHighGrowth ? "High Growth" : "Stable";
 
           _controller.add(CustomerStatsModel(
             count: count.toString().padLeft(2, '0'), // 01, 05 format

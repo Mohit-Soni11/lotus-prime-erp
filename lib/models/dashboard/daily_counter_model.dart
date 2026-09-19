@@ -2,20 +2,20 @@
 // FILE        : daily_counter_model.dart
 // MODULE      : Dashboard / Daily Counter Activity
 // LAYER       : Models
-// DESCRIPTION : Aaj ke poore counter activity ka data snapshot.
+// DESCRIPTION : Data snapshot for today's counter activity.
 //
 //               4 SECTIONS:
-//               1. Metal Sold   — BillItems se aaj ke gold/silver gross weight
+//               1. Metal Sold   — Today's gold/silver gross weight from BillItems.
 //               2. Metal Bought — customer-received metal and sales returns
-//               3. New Due      — Bills jinka paidAmount < finalAmount (aaj)
-//               4. New Girvi    — Loans aaj create kiye
+//               3. New Due      — Today's bills where paidAmount is below finalAmount.
+//               4. New Pledge   — Pledge loans created today.
 // =============================================================================
 
-/// Metal ka ek entry — weight + pieces
+/// One metal activity entry containing weight and pieces.
 class MetalEntry {
   final String weightStr; // e.g. "15.200 gm"
   final String piecesStr; // e.g. "3 Pcs"
-  final double weightRaw; // Calculation ke liye
+  final double weightRaw; // Used for calculations.
 
   const MetalEntry({
     required this.weightStr,
@@ -36,7 +36,7 @@ class MetalEntry {
       );
 }
 
-/// Metal Movement section ka data
+/// Metal movement section data.
 class MetalMovementData {
   final MetalEntry soldGold;
   final MetalEntry soldSilver;
@@ -65,7 +65,7 @@ class MetalMovementData {
       );
 }
 
-/// Finance & Due section ka data
+/// Finance and due section data.
 class FinanceDueData {
   final String dueCount; // e.g. "5 Customers"
   final String dueAmount; // e.g. "₹1,20,000"
@@ -102,7 +102,7 @@ class FinanceDueData {
       );
 }
 
-/// Complete Daily Counter Card ka model
+/// Complete daily counter card model.
 class DailyCounterModel {
   final String dateStr;
   final MetalMovementData metalMovement;

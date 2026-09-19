@@ -5,17 +5,17 @@
 // DESCRIPTION : Pure in-memory session logic — no DB needed.
 //
 //               3 ACTIONS:
-//               1. lockAndIssue  → Step 1: Pieces + Weight note karo, LOCK karo
-//               2. verifyReturn  → Step 2: Return pieces + weight verify karo
-//               3. reset         → Session clear karo, fresh start
+//               1. lockAndIssue  → Step 1: Capture pieces and weight, then lock.
+//               2. verifyReturn  → Step 2: Verify returned pieces and weight.
+//               3. reset         → Clear the session and start fresh.
 //
 //               CALCULATION:
 //               diffPcs    = issuePcs - returnPcs
 //               diffWeight = issueWeight - returnWeight (3 decimal precision)
 //               MATCHED    = diffPcs == 0 AND abs(diffWeight) <= 0.0005
-//               MISMATCH   = koi bhi difference
+//               MISMATCH   = any piece or weight difference.
 //
-//               Pattern: ChangeNotifier (ShopCardLogic jaisa)
+//               Pattern: ChangeNotifier aligned with ShopCardLogic.
 // =============================================================================
 
 import 'package:flutter/foundation.dart';
@@ -29,7 +29,7 @@ class CounterSecurityLogic extends ChangeNotifier {
   // METAL SELECT
   // ==========================================
   void selectMetal(SecurityMetal metal) {
-    if (_data.isLocked) return; // Session active hai to change nahi
+    if (_data.isLocked) return; // Keep metal fixed while a session is active.
     _data = _data.copyWith(selectedMetal: metal);
     notifyListeners();
   }
@@ -43,14 +43,14 @@ class CounterSecurityLogic extends ChangeNotifier {
     required String weightStr,
   }) {
     // Validation
-    if (pcsStr.trim().isEmpty) return 'Pieces enter karo';
-    if (weightStr.trim().isEmpty) return 'Weight enter karo';
+    if (pcsStr.trim().isEmpty) return 'Enter pieces';
+    if (weightStr.trim().isEmpty) return 'Enter weight';
 
     final int? pcs = int.tryParse(pcsStr.trim());
-    if (pcs == null || pcs <= 0) return 'Valid pieces number dalo (1+)';
+    if (pcs == null || pcs <= 0) return 'Enter a valid pieces count (1+)';
 
     final double? wt = double.tryParse(weightStr.trim());
-    if (wt == null || wt <= 0) return 'Valid weight dalo (e.g. 15.250)';
+    if (wt == null || wt <= 0) return 'Enter a valid weight (e.g. 15.250)';
 
     _data = _data.copyWith(
       state: SecuritySessionState.locked,
@@ -68,14 +68,14 @@ class CounterSecurityLogic extends ChangeNotifier {
     required String pcsStr,
     required String weightStr,
   }) {
-    if (pcsStr.trim().isEmpty) return 'Return pieces enter karo';
-    if (weightStr.trim().isEmpty) return 'Scale weight enter karo';
+    if (pcsStr.trim().isEmpty) return 'Enter returned pieces';
+    if (weightStr.trim().isEmpty) return 'Enter scale weight';
 
     final int? retPcs = int.tryParse(pcsStr.trim());
-    if (retPcs == null || retPcs < 0) return 'Valid pieces dalo';
+    if (retPcs == null || retPcs < 0) return 'Enter a valid pieces count';
 
     final double? retWt = double.tryParse(weightStr.trim());
-    if (retWt == null || retWt < 0) return 'Valid weight dalo';
+    if (retWt == null || retWt < 0) return 'Enter a valid weight';
 
     final int diffPcs = _data.issuePcs - retPcs;
     final double diffWt = _round3(_data.issueWeight - _round3(retWt));
@@ -99,7 +99,7 @@ class CounterSecurityLogic extends ChangeNotifier {
   // ==========================================
   void reset() {
     _data = CounterSecurityModel(
-      selectedMetal: _data.selectedMetal, // Metal choice yaad rakhte hain
+      selectedMetal: _data.selectedMetal, // Preserve the selected metal.
     );
     notifyListeners();
   }

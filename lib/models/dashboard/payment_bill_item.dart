@@ -41,7 +41,7 @@ class PaymentBillItem {
     required this.status,
   });
 
-  /// Status compute karo amounts se
+  /// Computes payment status from paid and total amounts.
   static PaymentStatus computeStatus(double paid, double total) {
     if (total <= 0) return PaymentStatus.paid;
     if (paid >= total) return PaymentStatus.paid;
@@ -49,7 +49,7 @@ class PaymentBillItem {
     return PaymentStatus.unpaid;
   }
 
-  /// Customer name se initials nikalo
+  /// Extracts display initials from the customer name.
   static String extractInitials(String name) {
     final cleaned = name.trim();
     if (cleaned.isEmpty) return '??';

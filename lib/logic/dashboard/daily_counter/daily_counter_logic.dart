@@ -16,14 +16,14 @@
 //                 → group by metalType using net received weight
 //
 //               NEW DUE:
-//                 → Bills (aaj ki date, paidAmount < finalAmount)
+//                 → Bills dated today where paidAmount is below finalAmount.
 //                 → count customers + sum due amount
 //
 //               NEW GIRVI/LOAN:
 //                 → Loans (startDate = today)
 //                 → count + sum loanAmount
 //
-//               Pattern: StreamController (BillCardLogic jaisa)
+//               Pattern: StreamController aligned with BillCardLogic.
 // =============================================================================
 
 import 'dart:async';
@@ -69,8 +69,7 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.billItems)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) =>
-                AppLogger.debug('❌ DailyCounter BillItems error: $e'),
+            onError: (e) => AppLogger.debug('DailyCounter BillItems error: $e'),
           ),
     );
 
@@ -78,7 +77,7 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.billTradeInItems)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => AppLogger.debug('❌ DailyCounter TradeIn error: $e'),
+            onError: (e) => AppLogger.debug('DailyCounter TradeIn error: $e'),
           ),
     );
 
@@ -86,15 +85,15 @@ class DailyCounterLogic {
     _subs.add(
       (_db.select(_db.bills)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => AppLogger.debug('❌ DailyCounter Bills error: $e'),
+            onError: (e) => AppLogger.debug('DailyCounter Bills error: $e'),
           ),
     );
 
-    // Watch Loans (for new girvi)
+    // Watch Loans (for new pledge tickets)
     _subs.add(
       (_db.select(_db.loans)).watch().listen(
             (_) => _refresh(todayStart, todayEnd),
-            onError: (e) => AppLogger.debug('❌ DailyCounter Loans error: $e'),
+            onError: (e) => AppLogger.debug('DailyCounter loans error: $e'),
           ),
     );
 
@@ -103,7 +102,7 @@ class DailyCounterLogic {
   }
 
   // ==========================================
-  // REFRESH — Sab data ek saath fetch karo
+  // Refresh all daily counter sections together.
   // ==========================================
   Future<void> _refresh(DateTime todayStart, DateTime todayEnd) async {
     try {
@@ -122,7 +121,7 @@ class DailyCounterLogic {
 
       if (!_controller.isClosed) _controller.add(model);
     } catch (e) {
-      AppLogger.debug('❌ DailyCounter refresh error: $e');
+      AppLogger.debug('DailyCounter refresh error: $e');
       if (!_controller.isClosed) {
         _controller.add(DailyCounterModel.empty(
           DateFormat('MMM dd, yyyy').format(DateTime.now()),
@@ -138,7 +137,7 @@ class DailyCounterLogic {
     DateTime todayStart,
     DateTime todayEnd,
   ) async {
-    // Aaj ke active bills fetch karo
+    // Fetch today's active bills.
     final todayBills = await (_db.select(_db.bills)
           ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
           ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
@@ -283,7 +282,7 @@ class DailyCounterLogic {
     DateTime todayStart,
     DateTime todayEnd,
   ) async {
-    // New Due — aaj ke bills jinka payment pending hai
+    // Bills created today that still have pending payment.
     final todayBills = await (_db.select(_db.bills)
           ..where((t) => t.billDate.isBiggerOrEqualValue(todayStart))
           ..where((t) => t.billDate.isSmallerOrEqualValue(todayEnd))
@@ -302,7 +301,7 @@ class DailyCounterLogic {
     }
     final dueCustCount = dueCustomers.length;
 
-    // New Girvi/Loans — aaj create kiye
+    // Pledge loan tickets created today.
     final todayLoans = await (_db.select(_db.loans)
           ..where((t) => t.startDate.isBiggerOrEqualValue(todayStart))
           ..where((t) => t.startDate.isSmallerOrEqualValue(todayEnd)))

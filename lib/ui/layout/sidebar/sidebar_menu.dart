@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../constants/app_routes.dart';
 
-// ✅ Helper Class: Ye ID aur Title dono hold karega
+// Holds the route id and resolved display title for a sidebar item.
 class MenuItemData {
   final String routeId;
   final String displayTitle;
@@ -11,7 +11,7 @@ class MenuItemData {
 class SidebarItem {
   final String title;
   final IconData icon;
-  // ✅ Change: String ki jagah ab structured data hai
+  // Structured sidebar children with route metadata.
   final List<MenuItemData> subItems;
 
   const SidebarItem({
@@ -33,7 +33,7 @@ class SidebarMenu {
       ],
     ),
 
-    // ── Supplier ✅ NEW ─────────────────────────────────────────
+    // ── Supplier ────────────────────────────────────────────────
     SidebarItem(
       title: 'Supplier',
       icon: Icons.store_outlined,
@@ -94,9 +94,9 @@ class SidebarMenu {
       ],
     ),
 
-    // ── Girvi / Loan ────────────────────────────────────────────
+    // ── Pledge Loans ────────────────────────────────────────────
     SidebarItem(
-      title: 'Girvi / Loan',
+      title: 'Pledge Loans',
       icon: Icons.lock_outline_rounded,
       subItems: [
         MenuItemData(AppRoutes.newGirviRoute),

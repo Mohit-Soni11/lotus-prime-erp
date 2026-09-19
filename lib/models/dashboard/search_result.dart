@@ -13,9 +13,9 @@ class SearchResult {
   });
 
   // ==========================================
-  // ⚡ 1. JSON SERIALIZATION (API READY)
+  // 1. JSON SERIALIZATION
   // ==========================================
-  // Python Backend se jo data aayega, usse safely handle karega
+  // Safely handles data returned by the backend.
   factory SearchResult.fromJson(Map<String, dynamic> json) {
     return SearchResult(
       // ID can be int or string from DB, force convert to String safely
@@ -26,7 +26,7 @@ class SearchResult {
     );
   }
 
-  // Data wapas server bhejne ke liye (if needed)
+  // Serializes data for backend updates when needed.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -37,7 +37,7 @@ class SearchResult {
   }
 
   // ==========================================
-  // ⚡ 2. COPY WITH (Immutability Helper)
+  // 2. COPY WITH
   // ==========================================
   SearchResult copyWith({
     String? id,
@@ -54,7 +54,7 @@ class SearchResult {
   }
 
   // ==========================================
-  // ⚡ 3. DEBUGGING HELPER
+  // 3. DEBUGGING HELPER
   // ==========================================
   @override
   String toString() {
