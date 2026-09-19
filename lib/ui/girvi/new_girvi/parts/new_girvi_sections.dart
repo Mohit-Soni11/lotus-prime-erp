@@ -130,9 +130,9 @@ extension NewGirviSections on _NewGirviScreenState {
         // Net weight display
         GirviReadOnlyField(
           label: 'Net Metal Weight',
-          value: '${netWt.toStringAsFixed(3)} grams',
+          value: netWt > 0 ? _formatSmartWeight(netWt) : 'Not set',
           highlighted: true,
-          valueColor: netWt > 0 ? GirviColors.brandGold : GirviColors.textMuted,
+          valueColor: netWt > 0 ? GirviColors.textDark : GirviColors.textMuted,
         ),
         if (_ctrl.grossWeight > 0 && _ctrl.stoneWeight > 0) ...[
           const SizedBox(height: 8),
@@ -148,8 +148,8 @@ extension NewGirviSections on _NewGirviScreenState {
               const Icon(GirviIcons.info, color: GirviColors.info, size: 14),
               const SizedBox(width: 8),
               Text(
-                'Deduction: ${_ctrl.stoneWeight.toStringAsFixed(2)}g '
-                '(${(_ctrl.stoneWeight / _ctrl.grossWeight * 100).toStringAsFixed(1)}% of gross)',
+                'Deduction: ${_formatSmartNumber(_ctrl.stoneWeight)} g '
+                '(${_formatSmartPercent(_ctrl.stoneWeight / _ctrl.grossWeight * 100)} of gross)',
                 style: GoogleFonts.inter(
                     color: GirviColors.info,
                     fontSize: 12.5,
@@ -189,9 +189,14 @@ extension NewGirviSections on _NewGirviScreenState {
         const SizedBox(height: 14),
         // Computed total value
         GirviReadOnlyField(
-          label: 'Total Item Value',
-          value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
+          label: 'Pledged Valuation',
+          value: _ctrl.totalValue > 0
+              ? _formatSmartMoney(_ctrl.totalValue)
+              : 'Not set',
           highlighted: _ctrl.totalValue > 0,
+          valueColor: _ctrl.totalValue > 0
+              ? GirviColors.textDark
+              : GirviColors.textMuted,
         ),
         if (_ctrl.totalValue > 0) ...[
           const SizedBox(height: 8),
@@ -199,7 +204,7 @@ extension NewGirviSections on _NewGirviScreenState {
             totalValue: _ctrl.totalValue,
             onSuggestionTap: (ltv) {
               _ctrl.onLtvChanged(ltv);
-              _loanAmtCtrl.text = _ctrl.loanAmount.toStringAsFixed(2);
+              _loanAmtCtrl.text = _formatSmartNumber(_ctrl.loanAmount);
             },
           ),
         ],
@@ -220,9 +225,9 @@ extension NewGirviSections on _NewGirviScreenState {
         _LoanTermsGroupHeader(
           icon: GirviIcons.loanTerms,
           title: 'Loan Value',
-          subtitle: 'Loan-to-value control based on the pledged item value.',
+          subtitle: 'Principal amount against the pledged valuation.',
           trailing: _ctrl.totalValue > 0
-              ? 'Item value Rs ${_fmt.format(_ctrl.totalValue)}'
+              ? 'Valuation ${_formatSmartMoney(_ctrl.totalValue)}'
               : null,
         ),
         const SizedBox(height: 12),
@@ -249,7 +254,7 @@ extension NewGirviSections on _NewGirviScreenState {
               enabled: _ctrl.totalValue > 0,
               onChanged: (ltv) {
                 _ctrl.onLtvChanged(ltv);
-                _loanAmtCtrl.text = _ctrl.loanAmount.toStringAsFixed(2);
+                _loanAmtCtrl.text = _formatSmartNumber(_ctrl.loanAmount);
               },
             );
             if (!wide) {
@@ -280,8 +285,8 @@ extension NewGirviSections on _NewGirviScreenState {
         const SizedBox(height: 12),
         GirviRowTwo(
           left: GirviInputField(
-            label: 'Interest Rate (% / month)',
-            hint: '5.0',
+            label: 'Monthly Interest Rate (%)',
+            hint: 'Enter monthly rate',
             icon: GirviIcons.interestRate,
             controller: _interestCtrl,
             focusNode: _interestFocus,
@@ -294,15 +299,15 @@ extension NewGirviSections on _NewGirviScreenState {
             validator: _ctrl.validateInterestRate,
           ),
           right: GirviInputField(
-            label: 'Duration (months)',
-            hint: '12',
+            label: 'Loan Tenure (months)',
+            hint: 'Enter tenure',
             icon: GirviIcons.dates,
             controller: _durationCtrl,
             focusNode: _durationFocus,
             nextFocus: _idProofNoFocus,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            suffixText: 'mo',
+            suffixText: 'months',
             validator: _ctrl.validateDuration,
           ),
         ),
@@ -319,9 +324,10 @@ extension NewGirviSections on _NewGirviScreenState {
             date: _ctrl.startDate,
             onTap: _pickStartDate,
           ),
-          right: _DateDisplayField(
+          right: _DatePickerField(
             label: 'Maturity Date',
             date: _ctrl.maturityDate,
+            valueText: _ctrl.durationMonths > 0 ? null : 'Not set',
           ),
         ),
         const SizedBox(height: 18),
@@ -346,10 +352,13 @@ extension NewGirviSections on _NewGirviScreenState {
         _InterestPreviewCard(
           principal: _ctrl.loanAmount,
           monthly: _ctrl.monthlyInterest,
+          monthlyRate: _ctrl.interestRate,
           total: _ctrl.totalInterestAtMaturity,
-          totalDue: _ctrl.totalDueAtMaturity,
           annualRate: _ctrl.interestRate * 12,
           durationMonths: _ctrl.durationMonths,
+          hasLoanTerms: _ctrl.loanAmount > 0 &&
+              _ctrl.interestRate > 0 &&
+              _ctrl.durationMonths > 0,
         ),
       ]),
     );
@@ -392,11 +401,10 @@ extension NewGirviSections on _NewGirviScreenState {
             date: _ctrl.startDate,
             onTap: _pickStartDate,
           ),
-          right: GirviReadOnlyField(
+          right: _DatePickerField(
             label: 'Maturity Date',
-            value: _dateFmt.format(_ctrl.maturityDate),
-            valueColor: GirviColors.info,
-            highlighted: false,
+            date: _ctrl.maturityDate,
+            valueText: _ctrl.durationMonths > 0 ? null : 'Not set',
           ),
         ),
         const SizedBox(height: 12),
@@ -412,8 +420,10 @@ extension NewGirviSections on _NewGirviScreenState {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Loan matures on ${_dateFmt.format(_ctrl.maturityDate)} '
-                '(${_ctrl.durationMonths} months from start date)',
+                _ctrl.durationMonths > 0
+                    ? 'Loan matures on ${_dateFmt.format(_ctrl.maturityDate)} '
+                        '(${_ctrl.durationMonths} months from start date)'
+                    : 'Enter loan tenure to calculate the maturity date.',
                 style: GoogleFonts.inter(
                     color: GirviColors.warning,
                     fontSize: 12.5,
@@ -568,17 +578,25 @@ extension NewGirviSections on _NewGirviScreenState {
     return GirviSectionCard(
       icon: GirviIcons.notes,
       title: 'Notes & Remarks',
-      subtitle: 'Internal staff notes for this loan ticket.',
-      accent: GirviColors.brandGold,
+      subtitle: 'Optional internal notes for audit and handling.',
+      accent: GirviColors.accentNotes,
       showAccentBorder: false,
-      child: GirviInputField(
-        label: 'Staff Remarks',
-        hint: 'Add any internal remark, customer instruction or handling note.',
-        icon: GirviIcons.notes,
-        controller: _notesCtrl,
-        minLines: 1,
-        maxLines: 5,
-        keyboardType: TextInputType.multiline,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: GirviColors.inputBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: GirviColors.cardBorder),
+        ),
+        child: GirviInputField(
+          label: 'Internal Remark',
+          hint: 'Add customer instruction, handling note or staff remark.',
+          icon: GirviIcons.notes,
+          controller: _notesCtrl,
+          minLines: 2,
+          maxLines: 5,
+          keyboardType: TextInputType.multiline,
+        ),
       ),
     );
   }

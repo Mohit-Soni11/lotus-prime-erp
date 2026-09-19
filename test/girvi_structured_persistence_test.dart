@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/new_girvi_controller.dart';
+import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 import 'package:lotus_erp/models/girvi/girvi_persistence_models.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_details_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -21,6 +22,61 @@ void main() {
 
     tearDown(() async {
       await db.close();
+    });
+
+    test('structured valuation feeds controller totals and loan suggestions',
+        () async {
+      final controller = NewGirviController(db);
+      addTearDown(controller.dispose);
+
+      controller.syncStructuredValuation(
+        itemCount: 1,
+        grossWeight: 12,
+        stoneWeight: 0,
+        ratePerGram: 11050,
+        totalValue: 132600,
+        metalType: MetalType.gold,
+        metalPurity: MetalPurity.k22,
+      );
+
+      expect(controller.totalValue, 132600);
+      expect(controller.netWeight, 12);
+      expect(controller.suggestedLoanAt(50), 66300);
+
+      controller.onLoanAmountChanged('66300');
+      expect(controller.computedLtv, 50);
+    });
+
+    test('loan amount is not overwritten by valuation or disbursement changes',
+        () async {
+      final controller = NewGirviController(db);
+      addTearDown(controller.dispose);
+
+      controller.syncStructuredValuation(
+        itemCount: 1,
+        grossWeight: 12,
+        stoneWeight: 0,
+        ratePerGram: 11050,
+        totalValue: 132600,
+        metalType: MetalType.gold,
+        metalPurity: MetalPurity.k22,
+      );
+      controller.onLoanAmountChanged('25000');
+
+      controller.syncStructuredValuation(
+        itemCount: 1,
+        grossWeight: 5,
+        stoneWeight: 0,
+        ratePerGram: 11050,
+        totalValue: 55250,
+        metalType: MetalType.gold,
+        metalPurity: MetalPurity.k22,
+      );
+      controller.setDisbursementMode(GirviPaymentMode.cash);
+
+      expect(controller.totalValue, 55250);
+      expect(controller.loanAmount, 25000);
+      expect(controller.computedLtv, closeTo(45.2488, 0.001));
     });
 
     test('saves every item, photo and mixed disbursement atomically', () async {
@@ -178,6 +234,8 @@ void main() {
       controller.onStoneWeightChanged('0');
       controller.onRatePerGramChanged('5000');
       controller.onLoanAmountChanged('30000');
+      controller.onInterestRateChanged('5');
+      controller.onDurationChanged('8');
 
       final saved = await controller.saveLoan(
         items: _twoItems(),

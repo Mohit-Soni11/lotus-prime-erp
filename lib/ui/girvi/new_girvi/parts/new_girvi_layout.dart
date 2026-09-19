@@ -101,27 +101,19 @@ extension NewGirviLayout on _NewGirviScreenState {
 
   String _deskNetWeightLabel() {
     if (_ctrl.netWeight <= 0) return 'Not set';
-    return '${_formatFlexibleNumber(_ctrl.netWeight, maxDecimals: 3)} g';
+    return _formatSmartWeight(_ctrl.netWeight);
   }
 
   String _deskMonthlyInterestLabel() {
     final hasLoanContext =
         _ctrl.loanAmount > 0 || _loanAmtCtrl.text.trim().isNotEmpty;
     if (!hasLoanContext || _ctrl.interestRate <= 0) return 'Not set';
-    return '${_formatFlexibleNumber(_ctrl.interestRate, maxDecimals: 2)}% monthly';
+    return '${_formatSmartPercent(_ctrl.interestRate)} monthly';
   }
 
   String _deskLoanAmountLabel() {
     if (_ctrl.loanAmount <= 0) return 'Not set';
-    return 'Rs ${NumberFormat('#,##,##0.##', 'en_IN').format(_ctrl.loanAmount)}';
-  }
-
-  String _formatFlexibleNumber(
-    double value, {
-    required int maxDecimals,
-  }) {
-    final fixed = value.toStringAsFixed(maxDecimals);
-    return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+    return _formatSmartMoney(_ctrl.loanAmount);
   }
 
   Widget _buildTicketSummaryPanel() {
@@ -147,7 +139,7 @@ extension NewGirviLayout on _NewGirviScreenState {
         if (_disbursementAmountFor(mode) > 0)
           _InvoicePaymentPart(
             label: _disbursementModeLabel(mode),
-            value: 'Rs ${_fmt.format(_disbursementAmountFor(mode))}',
+            value: _formatSmartMoney(_disbursementAmountFor(mode)),
             icon: _disbursementModeIcon(mode),
             color: _disbursementModeColor(mode),
           ),
@@ -284,9 +276,12 @@ extension NewGirviLayout on _NewGirviScreenState {
                 ),
                 const SizedBox(height: 12),
                 _InvoiceAmountHero(
-                  loanAmount: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
-                  maturityAmount: 'Rs ${_fmt.format(_ctrl.totalDueAtMaturity)}',
-                  duration: '${_ctrl.durationMonths} months',
+                  loanAmount: _ctrl.loanAmount > 0
+                      ? _formatSmartMoney(_ctrl.loanAmount)
+                      : 'Not set',
+                  duration: _ctrl.durationMonths > 0
+                      ? '${_ctrl.durationMonths} months'
+                      : 'Not set',
                 ),
                 const SizedBox(height: 10),
                 LayoutBuilder(
@@ -294,19 +289,23 @@ extension NewGirviLayout on _NewGirviScreenState {
                     final metrics = [
                       _InvoiceMetricTile(
                         label: 'Item Value',
-                        value: 'Rs ${_fmt.format(_ctrl.totalValue)}',
+                        value: _ctrl.totalValue > 0
+                            ? _formatSmartMoney(_ctrl.totalValue)
+                            : 'Not set',
                         icon: GirviIcons.valuation,
                         color: GirviColors.success,
                       ),
                       _InvoiceMetricTile(
                         label: 'Monthly Interest',
-                        value: 'Rs ${_fmt.format(_ctrl.monthlyInterest)}',
+                        value: _ctrl.monthlyInterest > 0
+                            ? _formatSmartMoney(_ctrl.monthlyInterest)
+                            : 'Not set',
                         icon: GirviIcons.interestRate,
-                        color: GirviColors.warning,
+                        color: GirviColors.info,
                       ),
                       _InvoiceMetricTile(
                         label: 'LTV Ratio',
-                        value: '${ltv.toStringAsFixed(1)}%',
+                        value: ltv > 0 ? _formatSmartPercent(ltv) : 'Not set',
                         icon: Icons.pie_chart_outline_rounded,
                         color: GirviColors.purple,
                       ),
@@ -340,24 +339,31 @@ extension NewGirviLayout on _NewGirviScreenState {
                     _InvoiceDetailRow(
                       icon: GirviIcons.interestRate,
                       label: 'Interest Rate',
-                      value:
-                          '${_ctrl.interestRate.toStringAsFixed(2)}% monthly',
+                      value: _ctrl.interestRate > 0
+                          ? '${_formatSmartPercent(_ctrl.interestRate)} monthly'
+                          : 'Not set',
                     ),
                     _InvoiceDetailRow(
                       icon: GirviIcons.dates,
                       label: 'Maturity Date',
-                      value: _dateFmt.format(_ctrl.maturityDate),
+                      value: _ctrl.durationMonths > 0
+                          ? _dateFmt.format(_ctrl.maturityDate)
+                          : 'Not set',
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 _InvoicePaymentBreakdown(
                   parts: paymentParts,
-                  totalPaid: 'Rs ${_fmt.format(_totalDisbursementAmount)}',
-                  loanAmount: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+                  totalPaid: _totalDisbursementAmount > 0
+                      ? _formatSmartMoney(_totalDisbursementAmount)
+                      : 'Not set',
+                  loanAmount: _ctrl.loanAmount > 0
+                      ? _formatSmartMoney(_ctrl.loanAmount)
+                      : 'Not set',
                   differenceLabel: _remainingDisbursementAmount >= 0
-                      ? 'Remaining Rs ${_fmt.format(_remainingDisbursementAmount)}'
-                      : 'Excess Rs ${_fmt.format(_remainingDisbursementAmount.abs())}',
+                      ? 'Remaining ${_formatSmartMoney(_remainingDisbursementAmount)}'
+                      : 'Excess ${_formatSmartMoney(_remainingDisbursementAmount.abs())}',
                   ready: disbursementReady,
                 ),
                 const SizedBox(height: 10),
@@ -369,7 +375,7 @@ extension NewGirviLayout on _NewGirviScreenState {
                       icon: GirviIcons.weight,
                       label: 'Items / Net Weight',
                       value:
-                          '${_ctrl.itemCount == 1 ? '1 piece' : '${_ctrl.itemCount} pieces'}  |  ${_ctrl.netWeight.toStringAsFixed(3)} g',
+                          '${_ctrl.itemCount == 1 ? '1 piece' : '${_ctrl.itemCount} pieces'}  |  ${_formatSmartWeight(_ctrl.netWeight)}',
                     ),
                     _InvoiceDetailRow(
                       icon: GirviIcons.gold,

@@ -240,13 +240,7 @@ Color _pledgedMetalAccent(MetalType metalType) {
 
 String _formatPurityPercent(double value) {
   final normalized = value.clamp(0.0, 100.0).toDouble();
-  if ((normalized - normalized.roundToDouble()).abs() < 0.001) {
-    return normalized.round().toString();
-  }
-  return normalized
-      .toStringAsFixed(2)
-      .replaceFirst(RegExp(r'0+$'), '')
-      .replaceFirst(RegExp(r'\.$'), '');
+  return _formatSmartNumber(normalized);
 }
 
 double _entryPurityFactorFor(_PledgedItemDraft item) {
@@ -308,14 +302,14 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
         children: [
           _buildValuationGrid(),
           const SizedBox(height: 12),
-          _TotalItemValueHighlight(value: _ctrl.totalValue, formatted: _fmt),
+          _TotalItemValueHighlight(value: _ctrl.totalValue),
           if (_ctrl.totalValue > 0) ...[
             const SizedBox(height: 12),
             _LtvSuggestionRow(
               totalValue: _ctrl.totalValue,
               onSuggestionTap: (ltv) {
                 _ctrl.onLtvChanged(ltv);
-                _loanAmtCtrl.text = _ctrl.loanAmount.toStringAsFixed(2);
+                _loanAmtCtrl.text = _formatSmartNumber(_ctrl.loanAmount);
               },
             ),
           ],
@@ -691,12 +685,12 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
 
   String _formatLedgerWeight(double value) {
     if (value <= 0) return '-';
-    return value.toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '');
+    return _formatSmartWeight(value);
   }
 
   String _formatLedgerAmount(double value) {
     if (value <= 0) return '-';
-    return 'Rs ${NumberFormat('#,##,##0.##', 'en_IN').format(value)}';
+    return _formatSmartMoney(value);
   }
 
   Widget _buildValuationEmptyState() {
@@ -896,11 +890,9 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
 class _TotalItemValueHighlight extends StatelessWidget {
   const _TotalItemValueHighlight({
     required this.value,
-    required this.formatted,
   });
 
   final double value;
-  final NumberFormat formatted;
 
   @override
   Widget build(BuildContext context) {
@@ -948,7 +940,7 @@ class _TotalItemValueHighlight extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Total Item Value',
+                  'Total Pledged Valuation',
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textBody,
                     fontSize: 12.5,
@@ -958,7 +950,7 @@ class _TotalItemValueHighlight extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Rs ${formatted.format(value)}',
+                  _formatSmartMoney(value),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
@@ -2079,19 +2071,19 @@ class _MetalWeightSummaryChip extends StatelessWidget {
               Expanded(
                 child: _WeightMiniText(
                   label: 'Gross',
-                  value: '${summary.gross.toStringAsFixed(3)} g',
+                  value: _formatSmartWeight(summary.gross),
                 ),
               ),
               Expanded(
                 child: _WeightMiniText(
                   label: 'Less',
-                  value: '${summary.less.toStringAsFixed(3)} g',
+                  value: _formatSmartWeight(summary.less),
                 ),
               ),
               Expanded(
                 child: _WeightMiniText(
                   label: 'Net',
-                  value: '${summary.net.toStringAsFixed(3)} g',
+                  value: _formatSmartWeight(summary.net),
                   color: GirviColors.brandGold,
                 ),
               ),

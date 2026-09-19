@@ -538,12 +538,10 @@ class GirviInvoicePdfService {
               label: 'Total Interest',
               value: _amount(draft.totalInterest),
             ),
-          if (settings.showTotalDue)
+          if (settings.showTotalDue && draft.isReleaseReceipt)
             LotusPrintableDetail(
               iconKey: 'amount',
-              label: draft.isReleaseReceipt
-                  ? 'Original Maturity Due'
-                  : 'Total Due at Maturity',
+              label: 'Original Maturity Due',
               value: _amount(draft.totalDue),
               highlight: true,
             ),
@@ -2017,13 +2015,11 @@ class GirviInvoicePdfService {
           label: 'Penalty / Charges',
           value: _amount(draft.releasePenalty!),
         ),
-      if (settings.showTotalDue)
+      if (settings.showTotalDue && draft.isReleaseReceipt)
         _GirviDetailEntry(
-          label: draft.isReleaseReceipt ? 'Total Received' : 'Total Amount Due',
+          label: 'Total Received',
           value: _amount(
-            draft.isReleaseReceipt
-                ? (draft.releaseTotalAmount ?? draft.totalDue)
-                : draft.totalDue,
+            draft.releaseTotalAmount ?? draft.totalDue,
           ),
           strong: true,
         ),

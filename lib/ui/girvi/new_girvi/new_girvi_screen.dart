@@ -78,8 +78,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _stoneWtCtrl = TextEditingController();
   final _rateCtrl = TextEditingController();
   final _loanAmtCtrl = TextEditingController();
-  final _interestCtrl = TextEditingController(text: '5.0');
-  final _durationCtrl = TextEditingController(text: '12');
+  final _interestCtrl = TextEditingController();
+  final _durationCtrl = TextEditingController();
   final _cashDisbursementCtrl = TextEditingController();
   final _upiDisbursementCtrl = TextEditingController();
   final _bankDisbursementCtrl = TextEditingController();
@@ -107,7 +107,6 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   late final List<Animation<double>> _sectionFade;
   late final List<Animation<Offset>> _sectionSlide;
 
-  final _fmt = NumberFormat('#,##,##0.00', 'en_IN');
   final _dateFmt = DateFormat('dd MMM yyyy');
 
   @override
@@ -173,16 +172,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     }
     if (!mounted) return;
     _setControllerTextIfChanged(
-      _interestCtrl,
-      _ctrl.interestRate.toStringAsFixed(2),
-    );
-    _setControllerTextIfChanged(
-      _durationCtrl,
-      _ctrl.durationMonths.toString(),
-    );
-    _setControllerTextIfChanged(
       _loanAmtCtrl,
-      _ctrl.loanAmount > 0 ? _ctrl.loanAmount.toStringAsFixed(2) : '',
+      _ctrl.loanAmount > 0 ? _formatSmartNumber(_ctrl.loanAmount) : '',
     );
   }
 
@@ -204,15 +195,15 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _setControllerTextIfChanged(_notesCtrl, loan.notes ?? '');
     _setControllerTextIfChanged(
       _interestCtrl,
-      loan.interestRate.toStringAsFixed(2),
+      loan.interestRate > 0 ? _formatSmartNumber(loan.interestRate) : '',
     );
     _setControllerTextIfChanged(
       _durationCtrl,
-      loan.durationMonths.toString(),
+      loan.durationMonths > 0 ? loan.durationMonths.toString() : '',
     );
     _setControllerTextIfChanged(
       _loanAmtCtrl,
-      loan.loanAmount > 0 ? loan.loanAmount.toStringAsFixed(2) : '',
+      loan.loanAmount > 0 ? _formatSmartNumber(loan.loanAmount) : '',
     );
     _idProofImagePath = loan.idProofImagePath;
 
@@ -223,7 +214,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       final mode = GirviPaymentMode.fromDb(disbursement.mode);
       _setControllerTextIfChanged(
         _disbursementControllerFor(mode),
-        disbursement.amount.toStringAsFixed(2),
+        _formatSmartNumber(disbursement.amount),
       );
     }
 
@@ -256,11 +247,11 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     _setControllerTextIfChanged(draft.huidCtrl, item.huidNumber ?? '');
     _setControllerTextIfChanged(
       draft.grossCtrl,
-      item.grossWeight > 0 ? item.grossWeight.toStringAsFixed(3) : '',
+      item.grossWeight > 0 ? _formatSmartNumber(item.grossWeight) : '',
     );
     _setControllerTextIfChanged(
       draft.lessCtrl,
-      item.lessWeight > 0 ? item.lessWeight.toStringAsFixed(3) : '',
+      item.lessWeight > 0 ? _formatSmartNumber(item.lessWeight) : '',
     );
     _setControllerTextIfChanged(
       draft.valuationPurityCtrl,
@@ -270,7 +261,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     );
     _setControllerTextIfChanged(
       draft.rateCtrl,
-      item.ratePerGram > 0 ? item.ratePerGram.toStringAsFixed(2) : '',
+      item.ratePerGram > 0 ? _formatSmartNumber(item.ratePerGram) : '',
     );
     draft.photoPaths
       ..clear()
@@ -351,9 +342,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _setControllerTextIfChanged(_itemDescCtrl, '');
       _setControllerTextIfChanged(_huidCtrl, '');
       _itemPhotoPath = null;
-      if (_ctrl.itemCount != 1) {
-        _ctrl.setItemCount(1);
-      }
+      _ctrl.clearStructuredValuation();
       return;
     }
 
@@ -372,29 +361,29 @@ class _NewGirviScreenState extends State<NewGirviScreen>
 
     _setControllerTextIfChanged(
       _grossWtCtrl,
-      totalGross > 0 ? totalGross.toStringAsFixed(3) : '',
+      totalGross > 0 ? _formatSmartNumber(totalGross) : '',
     );
     _setControllerTextIfChanged(
       _stoneWtCtrl,
-      totalLess > 0 ? totalLess.toStringAsFixed(3) : '',
+      totalLess > 0 ? _formatSmartNumber(totalLess) : '',
     );
     _setControllerTextIfChanged(
       _rateCtrl,
-      weightedRate > 0 ? weightedRate.toStringAsFixed(2) : '',
+      weightedRate > 0 ? _formatSmartNumber(weightedRate) : '',
     );
     _setControllerTextIfChanged(_itemDescCtrl, _combinedItemDescription());
     _setControllerTextIfChanged(_huidCtrl, _combinedHuidNumbers());
     _itemPhotoPath = _firstAttachedItemPhoto();
 
-    if (_ctrl.itemCount != totalPieces.clamp(1, 99)) {
-      _ctrl.setItemCount(totalPieces);
-    }
-    if (_ctrl.metalType != first.metalType) {
-      _ctrl.setMetalType(first.metalType);
-    }
-    if (_ctrl.metalPurity != first.purity) {
-      _ctrl.setMetalPurity(first.purity);
-    }
+    _ctrl.syncStructuredValuation(
+      itemCount: totalPieces,
+      grossWeight: totalGross,
+      stoneWeight: totalLess,
+      ratePerGram: weightedRate,
+      totalValue: totalValue,
+      metalType: first.metalType,
+      metalPurity: first.purity,
+    );
   }
 
   void _setControllerTextIfChanged(
@@ -415,9 +404,9 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       lines.add(
         'Serial Number ${item.serialNo} - $title | '
         '${item.metalType.displayName} | ${item.purityLabel} | '
-        '$pieceLabel | Net Weight ${item.netWeight.toStringAsFixed(3)} g | '
+        '$pieceLabel | Net Weight ${_formatSmartWeight(item.netWeight)} | '
         'Valuation ${item.valuationPurityLabel} | '
-        'Value Rs ${_fmt.format(item.itemValue)}',
+        'Value ${_formatSmartMoney(item.itemValue)}',
       );
     }
     return lines.join('\n');
@@ -439,10 +428,11 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   }
 
   void _onControllerUpdate() {
-    // Sync loanAmt field when controller recomputes via LTV slider
-    final ctrlVal = _ctrl.loanAmount.toStringAsFixed(2);
-    if (_loanAmtCtrl.text != ctrlVal && !_loanAmtFocus.hasFocus) {
-      _loanAmtCtrl.text = ctrlVal == '0.00' ? '' : ctrlVal;
+    if (_loanAmtFocus.hasFocus || _loanAmtCtrl.text.trim().isNotEmpty) return;
+    final ctrlVal =
+        _ctrl.loanAmount > 0 ? _formatSmartNumber(_ctrl.loanAmount) : '';
+    if (_loanAmtCtrl.text != ctrlVal) {
+      _loanAmtCtrl.text = ctrlVal;
     }
   }
 
@@ -508,7 +498,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     for (final mode in _visibleDisbursementModes) {
       final amount = _disbursementAmountFor(mode);
       if (amount > 0) {
-        parts.add('${_disbursementModeLabel(mode)} Rs ${_fmt.format(amount)}');
+        parts.add(
+            '${_disbursementModeLabel(mode)} ${_formatSmartMoney(amount)}');
       }
     }
     if (parts.isEmpty) return _ctrl.disbursementMode.displayName;
@@ -586,7 +577,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       final fill = remaining > 0
           ? remaining
           : (_totalDisbursementAmount <= 0 ? _ctrl.loanAmount : 0.0);
-      if (fill > 0) controller.text = fill.toStringAsFixed(2);
+      if (fill > 0) controller.text = _formatSmartNumber(fill);
     }
     _ctrl.setDisbursementMode(mode);
     if (mounted) setState(() {});

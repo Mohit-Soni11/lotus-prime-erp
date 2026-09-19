@@ -166,13 +166,6 @@ const _girviInvoiceDocumentOptions = <_GirviInvoiceFieldOption>[
     group: 'Loan & Interest',
   ),
   _GirviInvoiceFieldOption(
-    key: 'totalDue',
-    title: 'Total Amount Due',
-    subtitle: 'Principal plus total interest',
-    icon: Icons.payments_outlined,
-    group: 'Loan & Interest',
-  ),
-  _GirviInvoiceFieldOption(
     key: 'totalValuation',
     title: 'Total Pledged Valuation',
     subtitle: 'Combined value of all pledged items',

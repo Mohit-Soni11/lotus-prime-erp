@@ -100,12 +100,14 @@ class NewGirviController extends ChangeNotifier {
       (_grossWeight - _stoneWeight).clamp(0.0, double.infinity);
 
   void onGrossWeightChanged(String v) {
+    _structuredTotalValue = null;
     _grossWeight = double.tryParse(v) ?? 0.0;
     _recalculate();
     notifyListeners();
   }
 
   void onStoneWeightChanged(String v) {
+    _structuredTotalValue = null;
     _stoneWeight = double.tryParse(v) ?? 0.0;
     _recalculate();
     notifyListeners();
@@ -113,13 +115,47 @@ class NewGirviController extends ChangeNotifier {
 
   // ── VALUATION ─────────────────────────────────────────────────────────────
   double _ratePerGram = 0.0;
+  double? _structuredTotalValue;
   double get ratePerGram => _ratePerGram;
 
   /// Computed: netWeight × ratePerGram
-  double get totalValue => netWeight * _ratePerGram;
+  double get totalValue => _structuredTotalValue ?? (netWeight * _ratePerGram);
 
   void onRatePerGramChanged(String v) {
+    _structuredTotalValue = null;
     _ratePerGram = double.tryParse(v) ?? 0.0;
+    _recalculate();
+    notifyListeners();
+  }
+
+  void syncStructuredValuation({
+    required int itemCount,
+    required double grossWeight,
+    required double stoneWeight,
+    required double ratePerGram,
+    required double totalValue,
+    MetalType? metalType,
+    MetalPurity? metalPurity,
+  }) {
+    _itemCount = itemCount.clamp(1, 99);
+    _grossWeight = grossWeight;
+    _stoneWeight = stoneWeight;
+    _ratePerGram = ratePerGram;
+    _structuredTotalValue = totalValue > 0 ? totalValue : null;
+    if (metalType != null) _metalType = metalType;
+    if (metalPurity != null) _metalPurity = metalPurity;
+    _recalculate();
+    notifyListeners();
+  }
+
+  void clearStructuredValuation() {
+    _structuredTotalValue = null;
+    _grossWeight = 0.0;
+    _stoneWeight = 0.0;
+    _ratePerGram = 0.0;
+    _itemCount = 1;
+    _loanAmount = 0.0;
+    _ltvPercent = 50.0;
     _recalculate();
     notifyListeners();
   }
@@ -151,19 +187,21 @@ class NewGirviController extends ChangeNotifier {
   double suggestedLoanAt(double ltv) => totalValue * (ltv / 100);
 
   // ── INTEREST RATE ─────────────────────────────────────────────────────────
-  double _interestRate = 5.0;
-  int _durationMonths = 12;
+  double _interestRate = 0.0;
+  int _durationMonths = 0;
 
   double get interestRate => _interestRate;
   int get durationMonths => _durationMonths;
 
   void onInterestRateChanged(String v) {
-    _interestRate = double.tryParse(v) ?? 5.0;
+    final value = v.trim();
+    _interestRate = value.isEmpty ? 0.0 : (double.tryParse(value) ?? 0.0);
     notifyListeners();
   }
 
   void onDurationChanged(String v) {
-    _durationMonths = int.tryParse(v) ?? 12;
+    final value = v.trim();
+    _durationMonths = value.isEmpty ? 0 : (int.tryParse(value) ?? 0);
     notifyListeners();
   }
 
@@ -242,19 +280,12 @@ class NewGirviController extends ChangeNotifier {
     _initialized = true;
     try {
       _billingSettings = await _billingRepo.fetch();
-      _interestRate = _billingSettings.defaultInterestRate;
-      _durationMonths = _durationMonthsFromLabel(
-        _billingSettings.defaultDuration,
-      );
       _ticketNo = await _repo.generateNextTicketNo(
         prefix: _billingSettings.girviPrefix,
         startingNumber: _billingSettings.startingNumber,
       );
     } catch (e) {
       _billingSettings = GirviBillingModel.defaults;
-      _interestRate = _billingSettings.defaultInterestRate;
-      _durationMonths =
-          _durationMonthsFromLabel(_billingSettings.defaultDuration);
       _ticketNo = 'GRV-----';
       AppLogger.debug('NewGirviController.initialize error: $e');
     }
@@ -306,6 +337,7 @@ class NewGirviController extends ChangeNotifier {
       _grossWeight = loan.grossWeight;
       _stoneWeight = loan.stoneWeight;
       _ratePerGram = loan.ratePerGram;
+      _structuredTotalValue = loan.totalValue > 0 ? loan.totalValue : null;
       _loanAmount = loan.loanAmount;
       _ltvPercent = loan.ltvPercent;
       _interestRate = loan.interestRate;
@@ -333,18 +365,11 @@ class NewGirviController extends ChangeNotifier {
     }
   }
 
-  int _durationMonthsFromLabel(String value) {
-    final match = RegExp(r'\d+').firstMatch(value);
-    return (int.tryParse(match?.group(0) ?? '') ?? 6).clamp(1, 120);
-  }
-
   // ── RECALCULATE ───────────────────────────────────────────────────────────
 
   void _recalculate() {
-    // Re-apply LTV to update loanAmount if total value changed
-    if (_ltvPercent > 0 && totalValue > 0) {
-      _loanAmount = totalValue * (_ltvPercent / 100);
-    }
+    // Valuation changes must not overwrite user-entered loan terms.
+    // Loan amount is updated only by direct entry or the explicit LTV slider.
   }
 
   // ── VALIDATION ────────────────────────────────────────────────────────────
@@ -378,7 +403,7 @@ class NewGirviController extends ChangeNotifier {
     final d = double.tryParse(v);
     if (d == null || d <= 0) return 'Amount must be > 0';
     if (totalValue > 0 && d > totalValue) {
-      return 'Loan cannot exceed item value (Rs ${totalValue.toStringAsFixed(0)})';
+      return 'Loan cannot exceed item value (Rs ${_formatStoredNumber(totalValue)})';
     }
     return null;
   }
@@ -421,6 +446,11 @@ class NewGirviController extends ChangeNotifier {
     }
     if (_loanAmount <= 0) {
       _errorMessage = 'Loan amount must be greater than zero';
+      notifyListeners();
+      return false;
+    }
+    if (_interestRate < 0 || _durationMonths <= 0) {
+      _errorMessage = 'Please enter valid loan interest and duration.';
       notifyListeners();
       return false;
     }
@@ -469,7 +499,7 @@ class NewGirviController extends ChangeNotifier {
             item.pieces == 1 ? '1 piece' : '${item.pieces} pieces';
         return 'Serial Number ${item.serialNo} - ${item.itemName.trim()} | '
             '${item.metalType} | ${item.purity} | $pieceLabel | '
-            'Net Weight ${item.netWeight.toStringAsFixed(3)} g';
+            'Net Weight ${_formatStoredNumber(item.netWeight)} g';
       }).join('\n');
       final combinedHuid = items
           .map((item) => item.huidNumber?.trim() ?? '')
@@ -483,7 +513,7 @@ class NewGirviController extends ChangeNotifier {
       final disbursementSummary = disbursements
           .map(
             (entry) =>
-                '${entry.displayLabel} Rs ${entry.amount.toStringAsFixed(2)}',
+                '${entry.displayLabel} Rs ${_formatStoredNumber(entry.amount)}',
           )
           .join(' + ');
 
@@ -580,6 +610,7 @@ class NewGirviController extends ChangeNotifier {
     _grossWeight = 0.0;
     _stoneWeight = 0.0;
     _ratePerGram = 0.0;
+    _structuredTotalValue = null;
     _ltvPercent = 50.0;
     _loanAmount = 0.0;
     _editingLoanId = null;
@@ -587,9 +618,8 @@ class NewGirviController extends ChangeNotifier {
     _editingDetails = null;
     _isEditMode = false;
     _isLoadingEdit = false;
-    _interestRate = _billingSettings.defaultInterestRate;
-    _durationMonths =
-        _durationMonthsFromLabel(_billingSettings.defaultDuration);
+    _interestRate = 0.0;
+    _durationMonths = 0;
     _disbursementMode = GirviPaymentMode.cash;
     _startDate = DateTime.now();
     _idProofType = null;
@@ -597,5 +627,13 @@ class NewGirviController extends ChangeNotifier {
     _successMessage = null;
     _initialized = false;
     await initialize(); // regenerates ticket number
+  }
+
+  static String _formatStoredNumber(double value) {
+    if (!value.isFinite) return '0';
+    if ((value - value.roundToDouble()).abs() < 0.000001) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(3);
   }
 }

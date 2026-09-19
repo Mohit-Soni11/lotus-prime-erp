@@ -4,6 +4,38 @@ part of '../new_girvi_screen.dart';
 // HELPER WIDGETS (private to this file)
 // =============================================================================
 
+String _formatSmartNumber(
+  double value, {
+  int decimalPlaces = 3,
+  bool dashWhenZero = false,
+}) {
+  if (!value.isFinite) return dashWhenZero ? '-' : '0';
+  if (value.abs() < 0.000001) return dashWhenZero ? '-' : '0';
+  if ((value - value.roundToDouble()).abs() < 0.000001) {
+    return NumberFormat('#,##,##0', 'en_IN').format(value);
+  }
+  final pattern = '#,##,##0.${'0' * decimalPlaces}';
+  return NumberFormat(pattern, 'en_IN').format(value);
+}
+
+String _formatSmartMoney(double value, {bool dashWhenZero = false}) {
+  final formatted =
+      _formatSmartNumber(value, decimalPlaces: 3, dashWhenZero: dashWhenZero);
+  return formatted == '-' ? '-' : 'Rs $formatted';
+}
+
+String _formatSmartWeight(double value, {bool dashWhenZero = false}) {
+  final formatted =
+      _formatSmartNumber(value, decimalPlaces: 3, dashWhenZero: dashWhenZero);
+  return formatted == '-' ? '-' : '$formatted g';
+}
+
+String _formatSmartPercent(double value, {bool dashWhenZero = false}) {
+  final formatted =
+      _formatSmartNumber(value, decimalPlaces: 3, dashWhenZero: dashWhenZero);
+  return formatted == '-' ? '-' : '$formatted%';
+}
+
 class _KycPhotoCard extends StatelessWidget {
   final bool enabled;
   final String? documentName;
@@ -644,12 +676,10 @@ class _InvoiceCustomerCard extends StatelessWidget {
 
 class _InvoiceAmountHero extends StatelessWidget {
   final String loanAmount;
-  final String maturityAmount;
   final String duration;
 
   const _InvoiceAmountHero({
     required this.loanAmount,
-    required this.maturityAmount,
     required this.duration,
   });
 
@@ -736,40 +766,6 @@ class _InvoiceAmountHero extends StatelessWidget {
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
             ),
-          ),
-          const SizedBox(height: 10),
-          Container(height: 1, color: GirviColors.brandGoldGlow),
-          const SizedBox(height: 9),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'TOTAL AT MATURITY',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: GirviColors.textMuted,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.7,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  maturityAmount,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.manrope(
-                    color: GirviColors.brandDeep,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -1677,7 +1673,6 @@ class _LtvSuggestionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const ltvs = [50.0, 60.0, 70.0, 75.0, 80.0];
-    final fmt = NumberFormat('#,##,##0', 'en_IN');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1709,7 +1704,7 @@ class _LtvSuggestionRow extends StatelessWidget {
                               color: GirviColors.brandDeep,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700)),
-                      Text('Rs ${fmt.format(amt)}',
+                      Text(_formatSmartMoney(amt),
                           style: GoogleFonts.manrope(
                               color: GirviColors.textDark,
                               fontSize: 12.5,
@@ -1795,7 +1790,7 @@ class _LtvIndicator extends StatelessWidget {
             SizedBox(
               width: 62,
               child: Text(
-                '${ltv.toStringAsFixed(1)}%',
+                _formatSmartPercent(ltv),
                 textAlign: TextAlign.right,
                 style: GoogleFonts.manrope(
                   fontSize: 15,
@@ -1814,30 +1809,30 @@ class _LtvIndicator extends StatelessWidget {
 class _InterestPreviewCard extends StatelessWidget {
   final double principal;
   final double monthly;
+  final double monthlyRate;
   final double total;
-  final double totalDue;
   final double annualRate;
   final int durationMonths;
+  final bool hasLoanTerms;
 
   const _InterestPreviewCard({
     required this.principal,
     required this.monthly,
+    required this.monthlyRate,
     required this.total,
-    required this.totalDue,
     required this.annualRate,
     required this.durationMonths,
+    required this.hasLoanTerms,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat('#,##,##0.00', 'en_IN');
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: GirviColors.inputBg,
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: GirviColors.brandGold.withValues(alpha: 0.22)),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
       child: Column(children: [
         Row(children: [
@@ -1846,15 +1841,15 @@ class _InterestPreviewCard extends StatelessWidget {
             height: 34,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: GirviColors.brandGold.withValues(alpha: 0.10),
+              color: GirviColors.info.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(9),
               border: Border.all(
-                color: GirviColors.brandGold.withValues(alpha: 0.22),
+                color: GirviColors.info.withValues(alpha: 0.20),
               ),
             ),
             child: const Icon(
               GirviIcons.interestRate,
-              color: GirviColors.brandGold,
+              color: GirviColors.info,
               size: 17,
             ),
           ),
@@ -1873,7 +1868,9 @@ class _InterestPreviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Simple interest estimate for $durationMonths months.',
+                  hasLoanTerms
+                      ? 'Simple interest estimate for $durationMonths month${durationMonths == 1 ? '' : 's'}.'
+                      : 'Enter loan amount, monthly interest and tenure to preview dues.',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GirviStyles.caption.copyWith(
@@ -1893,7 +1890,10 @@ class _InterestPreviewCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: GirviColors.cardBorder),
             ),
-            child: Text('${annualRate.toStringAsFixed(0)}% p.a.',
+            child: Text(
+                hasLoanTerms
+                    ? '${_formatSmartPercent(annualRate)} p.a.'
+                    : 'Pending',
                 style: GoogleFonts.inter(
                     color: GirviColors.textBody,
                     fontSize: 12.5,
@@ -1907,21 +1907,17 @@ class _InterestPreviewCard extends StatelessWidget {
             final tiles = [
               _PreviewStat(
                 label: 'Monthly Interest',
-                value: 'Rs ${fmt.format(monthly)}',
+                value: hasLoanTerms
+                    ? '${_formatSmartMoney(monthly)} · ${_formatSmartPercent(monthlyRate)} monthly'
+                    : 'Not set',
                 color: GirviColors.info,
                 icon: Icons.calendar_month_outlined,
               ),
               _PreviewStat(
                 label: 'Total Interest',
-                value: 'Rs ${fmt.format(total)}',
-                color: GirviColors.warning,
+                value: hasLoanTerms ? _formatSmartMoney(total) : 'Not set',
+                color: GirviColors.textDark,
                 icon: Icons.trending_up_rounded,
-              ),
-              _PreviewStat(
-                label: 'Total Amount Due',
-                value: 'Rs ${fmt.format(totalDue)}',
-                color: GirviColors.brandGold,
-                icon: Icons.account_balance_wallet_outlined,
               ),
             ];
             if (compact) {
@@ -1978,7 +1974,8 @@ class _PreviewStat extends StatelessWidget {
               height: 32,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.10),
+                color: color.withValues(
+                    alpha: color == GirviColors.textDark ? 0.06 : 0.10),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 16),
@@ -2043,7 +2040,6 @@ class _DisbursementSplitEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat('#,##,##0.00', 'en_IN');
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -2080,7 +2076,6 @@ class _DisbursementSplitEditor extends StatelessWidget {
               loanAmount: loanAmount,
               totalAmount: totalAmount,
               remainingAmount: remainingAmount,
-              formatter: fmt,
             ),
           ],
         );
@@ -2225,7 +2220,7 @@ class _DisbursementAmountTile extends StatelessWidget {
                     ),
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: '0.00',
+                      hintText: 'Amount',
                       hintStyle: GirviStyles.fieldHint.copyWith(fontSize: 13),
                       isDense: true,
                     ),
@@ -2244,13 +2239,11 @@ class _DisbursementTotalStrip extends StatelessWidget {
   final double loanAmount;
   final double totalAmount;
   final double remainingAmount;
-  final NumberFormat formatter;
 
   const _DisbursementTotalStrip({
     required this.loanAmount,
     required this.totalAmount,
     required this.remainingAmount,
-    required this.formatter,
   });
 
   @override
@@ -2263,17 +2256,19 @@ class _DisbursementTotalStrip extends StatelessWidget {
         final tiles = [
           _MiniAmountPanel(
             label: 'Loan Amount',
-            value: 'Rs ${formatter.format(loanAmount)}',
+            value: loanAmount > 0 ? _formatSmartMoney(loanAmount) : 'Not set',
             color: GirviColors.brandGold,
           ),
           _MiniAmountPanel(
             label: 'Disbursed',
-            value: 'Rs ${formatter.format(totalAmount)}',
+            value: totalAmount > 0 ? _formatSmartMoney(totalAmount) : 'Not set',
             color: GirviColors.info,
           ),
           _MiniAmountPanel(
             label: remainingAmount < 0 ? 'Over Limit' : 'Remaining',
-            value: 'Rs ${formatter.format(remainingAmount.abs())}',
+            value: loanAmount > 0
+                ? _formatSmartMoney(remainingAmount.abs())
+                : 'Not set',
             color: remainingColor,
           ),
         ];
@@ -2418,16 +2413,19 @@ class _PaymentModeSelector extends StatelessWidget {
 class _DatePickerField extends StatelessWidget {
   final String label;
   final DateTime date;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final String? valueText;
 
   const _DatePickerField({
     required this.label,
     required this.date,
-    required this.onTap,
+    this.onTap,
+    this.valueText,
   });
 
   @override
   Widget build(BuildContext context) {
+    final interactive = onTap != null;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -2445,52 +2443,26 @@ class _DatePickerField extends StatelessWidget {
               const SizedBox(width: 10),
               Container(width: 1, height: 22, color: GirviColors.cardBorder),
               const SizedBox(width: 10),
-              Text(DateFormat('dd MMM yyyy').format(date),
-                  style: GirviStyles.fieldInput),
+              Text(
+                valueText ?? DateFormat('dd MMM yyyy').format(date),
+                style: GirviStyles.fieldInput.copyWith(
+                  color: valueText == 'Not set'
+                      ? GirviColors.textMuted
+                      : GirviColors.textDark,
+                ),
+              ),
               const Spacer(),
-              const Icon(Icons.edit_calendar_rounded,
-                  color: GirviColors.textHint, size: 16),
+              Icon(
+                interactive
+                    ? Icons.edit_calendar_rounded
+                    : Icons.calendar_month_outlined,
+                color: GirviColors.textHint,
+                size: 16,
+              ),
             ]),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DateDisplayField extends StatelessWidget {
-  final String label;
-  final DateTime date;
-
-  const _DateDisplayField({
-    required this.label,
-    required this.date,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: GirviStyles.fieldLabel),
-        const SizedBox(height: 6),
-        Container(
-          height: GirviStyles.inputHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: GirviStyles.inputNormal,
-          child: Row(children: [
-            const Icon(GirviIcons.dates,
-                color: GirviColors.accentDates, size: 18),
-            const SizedBox(width: 10),
-            Container(width: 1, height: 22, color: GirviColors.cardBorder),
-            const SizedBox(width: 10),
-            Text(
-              DateFormat('dd MMM yyyy').format(date),
-              style: GirviStyles.fieldInput,
-            ),
-          ]),
-        ),
-      ],
     );
   }
 }

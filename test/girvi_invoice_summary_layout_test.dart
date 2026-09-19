@@ -11,6 +11,7 @@ void main() {
     expect(find.text('LOAN INVOICE SUMMARY'), findsOneWidget);
     expect(find.text('Create & Print Invoice'), findsOneWidget);
     expect(find.text('INVOICE CHECKLIST'), findsOneWidget);
+    expect(find.text('Total Amount Due'), findsNothing);
     expect(find.text('CHANGE'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -42,7 +43,7 @@ void main() {
         findsOneWidget);
     expect(find.text('Cash'), findsWidgets);
     expect(find.text('UPI'), findsWidgets);
-    expect(find.text('Rs 500.00'), findsNWidgets(2));
+    expect(find.text('Rs 500'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 

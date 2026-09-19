@@ -42,8 +42,9 @@ extension NewGirviActions on _NewGirviScreenState {
         return false;
       }
       if ((totalDisbursed - _ctrl.loanAmount).abs() > 0.50) {
+        final remaining = _ctrl.loanAmount - totalDisbursed;
         _showError(
-          'Disbursement total must match the loan amount. Remaining Rs ${_fmt.format(_ctrl.loanAmount - totalDisbursed)}.',
+          'Disbursement total must match the loan amount. Remaining ${_formatSmartMoney(remaining)}.',
         );
         return false;
       }
@@ -254,7 +255,7 @@ extension NewGirviActions on _NewGirviScreenState {
                     const SizedBox(height: 10),
                     _SavedTicketSummaryRow(
                       label: 'Loan Amount',
-                      value: 'Rs ${_fmt.format(_ctrl.loanAmount)}',
+                      value: _formatSmartMoney(_ctrl.loanAmount),
                     ),
                   ],
                 ),
@@ -431,8 +432,8 @@ extension NewGirviActions on _NewGirviScreenState {
     _itemPhotoPath = null;
     _idProofImagePath = null;
     await _ctrl.resetForm();
-    _interestCtrl.text = _ctrl.interestRate.toStringAsFixed(2);
-    _durationCtrl.text = _ctrl.durationMonths.toString();
+    _interestCtrl.clear();
+    _durationCtrl.clear();
     _resetPledgedItems();
   }
 
@@ -823,7 +824,7 @@ extension NewGirviActions on _NewGirviScreenState {
         )
         .toList();
 
-    String amount(double value) => 'Rs ${_fmt.format(value)}';
+    String amount(double value) => _formatSmartMoney(value);
     String date(DateTime value) => _dateFmt.format(value);
 
     pw.Widget infoLine(String label, String value, {bool bold = false}) {
@@ -950,13 +951,25 @@ extension NewGirviActions on _NewGirviScreenState {
                       sectionTitle('Loan Summary'),
                       infoLine('Principal', amount(_ctrl.loanAmount),
                           bold: true),
-                      infoLine('Interest Rate',
-                          '${_ctrl.interestRate.toStringAsFixed(2)}% / month'),
-                      infoLine('Duration', '${_ctrl.durationMonths} months'),
+                      infoLine(
+                        'Interest Rate',
+                        _ctrl.interestRate > 0
+                            ? '${_formatSmartPercent(_ctrl.interestRate)} / month'
+                            : '-',
+                      ),
+                      infoLine(
+                        'Loan Tenure',
+                        _ctrl.durationMonths > 0
+                            ? '${_ctrl.durationMonths} months'
+                            : '-',
+                      ),
                       infoLine('Disbursement', _disbursementSummaryLabel),
-                      infoLine('Maturity Date', date(_ctrl.maturityDate)),
-                      infoLine('Maturity Due', amount(_ctrl.totalDueAtMaturity),
-                          bold: true),
+                      infoLine(
+                        'Maturity Date',
+                        _ctrl.durationMonths > 0
+                            ? date(_ctrl.maturityDate)
+                            : '-',
+                      ),
                     ],
                   ),
                 ),
@@ -989,11 +1002,11 @@ extension NewGirviActions on _NewGirviScreenState {
                 description.isEmpty ? '-' : description,
                 item.purityLabel,
                 item.itemCount.toString(),
-                '${item.grossWeight.toStringAsFixed(3)} g',
-                '${item.lessWeight.toStringAsFixed(3)} g',
-                '${item.netWeight.toStringAsFixed(3)} g',
+                _formatSmartWeight(item.grossWeight, dashWhenZero: true),
+                _formatSmartWeight(item.lessWeight, dashWhenZero: true),
+                _formatSmartWeight(item.netWeight, dashWhenZero: true),
                 item.valuationPurityLabel,
-                '${item.fineWeight.toStringAsFixed(3)} g',
+                _formatSmartWeight(item.fineWeight, dashWhenZero: true),
                 huid.isEmpty ? '-' : huid,
                 amount(item.itemValue),
               ];
