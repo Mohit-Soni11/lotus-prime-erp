@@ -4,20 +4,21 @@ extension InterestPaymentSections on _InterestCalcScreenState {
   Widget _buildPaymentForm(GirviLoanWithCustomer data) {
     return GirviSectionCard(
       icon: GirviIcons.cash,
-      title: 'Payment Entry',
-      subtitle: 'Record verified collections against the selected ticket',
+      title: 'Interest Collection Entry',
+      subtitle:
+          'Record verified interest or release collections for this ticket',
       accent: GirviColors.success,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Payment Type', style: GirviStyles.fieldLabel),
+          Text('Collection Type', style: GirviStyles.fieldLabel),
           const SizedBox(height: 8),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: _ctrl.entryPaymentTypes.map((type) {
               return _SelectablePill(
-                label: type.displayName,
+                label: _labelForPaymentType(type),
                 selected: _ctrl.paymentType == type,
                 icon: _iconForPaymentType(type),
                 color: _colorForPaymentType(type),
@@ -60,7 +61,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                   controller: _monthsCtrl,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  suffixText: 'mo',
+                  suffixText: 'months',
                 ),
               )
             else
@@ -68,21 +69,17 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                 children: [
                   GirviRowTwo(
                     left: GirviInputField(
-                      label: 'Principal Amount Received',
+                      label: 'Principal Due',
                       hint: '0',
                       icon: GirviIcons.loanTerms,
                       controller: _releasePrincipalCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                      ],
+                      enabled: false,
                       prefixText: 'Rs ',
                     ),
                     right: GirviInputField(
-                      label: 'Interest Amount Received',
+                      label: 'Interest Received',
                       hint: '0',
-                      icon: GirviIcons.interestRate,
+                      icon: GirviIcons.cash,
                       controller: _releaseInterestCtrl,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
@@ -94,7 +91,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                   ),
                   const SizedBox(height: 12),
                   GirviInputField(
-                    label: 'Settlement Discount / Waiver',
+                    label: 'Interest Discount / Waiver',
                     hint: '0',
                     icon: Icons.local_offer_rounded,
                     controller: _releaseDiscountCtrl,
@@ -137,6 +134,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                 interestPaid: _ctrl.interestCollectedForSelected,
                 netDue: _ctrl.netInterestDueForSelected,
                 equivalentMonths: _ctrl.interestMonthsCoveredByAmount,
+                interestFromDate: _ctrl.interestFromDate,
                 moneyFmt: _moneyFmt,
               ),
             ],
@@ -173,7 +171,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                 ),
               ),
             const SizedBox(height: 18),
-            Text('Payment Mode', style: GirviStyles.fieldLabel),
+            Text('Collection Mode', style: GirviStyles.fieldLabel),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,
@@ -183,14 +181,14 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                   label: mode.displayName,
                   selected: _ctrl.paymentMode == mode,
                   icon: _iconForPaymentMode(mode),
-                  color: GirviColors.brandGold,
+                  color: GirviColors.info,
                   onTap: () => _ctrl.setPaymentMode(mode),
                 );
               }).toList(),
             ),
             const SizedBox(height: 16),
             GirviInputField(
-              label: 'Internal Notes',
+              label: 'Collection Notes',
               hint: 'Optional remarks for audit trail',
               icon: GirviIcons.notes,
               controller: _notesCtrl,
@@ -210,7 +208,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
               moneyFmt: _moneyFmt,
               isSaving: _ctrl.isSaving,
               actionLabel: _ctrl.isInterestEntry
-                  ? 'Record Interest Payment'
+                  ? 'Record Interest Collection'
                   : _ctrl.releaseSettlementValue + 0.01 >=
                           _ctrl.releaseTotalDueForSelected
                       ? 'Mark Ready for Delivery'
@@ -228,15 +226,16 @@ extension InterestPaymentSections on _InterestCalcScreenState {
   Widget _buildPaymentHistory() {
     return GirviSectionCard(
       icon: GirviIcons.list,
-      title: 'Payment History',
+      title: 'Interest Ledger',
       subtitle:
-          '${_ctrl.payments.length} payment entr${_ctrl.payments.length == 1 ? 'y' : 'ies'} recorded for this ticket',
+          '${_ctrl.payments.length} ledger entr${_ctrl.payments.length == 1 ? 'y' : 'ies'} recorded for this ticket',
       accent: GirviColors.info,
       child: _ctrl.payments.isEmpty
           ? const _EmptyState(
               icon: GirviIcons.list,
-              title: 'No Payment Recorded',
-              message: 'The first entry for this ticket will appear here.',
+              title: 'No Ledger Entry Recorded',
+              message:
+                  'The first interest collection for this ticket will appear here.',
             )
           : Column(
               children: _ctrl.payments.map((payment) {
@@ -261,6 +260,21 @@ extension InterestPaymentSections on _InterestCalcScreenState {
         return GirviIcons.warning;
       case GirviPaymentType.fullRelease:
         return GirviIcons.release;
+    }
+  }
+
+  String _labelForPaymentType(GirviPaymentType type) {
+    switch (type) {
+      case GirviPaymentType.interest:
+        return 'Interest Collection';
+      case GirviPaymentType.partialInterest:
+        return 'Partial Interest';
+      case GirviPaymentType.partialPrincipal:
+        return 'Principal Collection';
+      case GirviPaymentType.penalty:
+        return 'Penalty Collection';
+      case GirviPaymentType.fullRelease:
+        return 'Final Release';
     }
   }
 

@@ -3,7 +3,6 @@ part of '../interest_calc_screen.dart';
 class _CollectionFocusStrip extends StatelessWidget {
   final double interestDue;
   final double monthlyInterest;
-  final double totalPayable;
   final int unpaidMonths;
   final double advanceAmount;
   final int advanceMonths;
@@ -14,7 +13,6 @@ class _CollectionFocusStrip extends StatelessWidget {
   const _CollectionFocusStrip({
     required this.interestDue,
     required this.monthlyInterest,
-    required this.totalPayable,
     required this.unpaidMonths,
     required this.advanceAmount,
     required this.advanceMonths,
@@ -33,24 +31,24 @@ class _CollectionFocusStrip extends StatelessWidget {
             : isOverdue
                 ? GirviColors.danger
                 : unpaidMonths > 0
-                    ? GirviColors.warning
+                    ? GirviColors.info
                     : GirviColors.success;
     final statusText = settlementComplete
-        ? 'Settlement complete - item awaiting delivery'
+        ? 'Settlement complete. Item is awaiting delivery.'
         : hasAdvance
-            ? 'Advance credit about $advanceMonths month${advanceMonths == 1 ? '' : 's'}'
+            ? 'Advance interest credit covers about $advanceMonths month${advanceMonths == 1 ? '' : 's'}.'
             : isOverdue
-                ? 'Overdue'
+                ? 'Interest collection is overdue.'
                 : unpaidMonths > 0
-                    ? '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'} due'
-                    : 'No month due';
+                    ? '$unpaidMonths chargeable month${unpaidMonths == 1 ? '' : 's'} pending.'
+                    : 'No chargeable interest pending.';
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.09),
+        color: GirviColors.inputBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.28)),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -65,8 +63,8 @@ class _CollectionFocusStrip extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Collection Focus',
-                      maxLines: 1,
+                      'Interest Collection Status',
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
@@ -77,7 +75,7 @@ class _CollectionFocusStrip extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       statusText,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: GirviColors.textDark,
@@ -97,34 +95,25 @@ class _CollectionFocusStrip extends StatelessWidget {
             children: settlementComplete
                 ? [
                     _FocusMetric(
-                      label: 'Due Now',
+                      label: 'Interest Due',
                       value: 'Rs ${moneyFmt.format(interestDue)}',
                       color: GirviColors.success,
                     ),
-                    _FocusMetric(
-                      label: 'Excess Received',
-                      value: 'Rs ${moneyFmt.format(advanceAmount)}',
-                      color: advanceAmount > 0
-                          ? GirviColors.danger
-                          : GirviColors.success,
-                      wide: true,
+                    const _FocusMetric(
+                      label: 'Account Status',
+                      value: 'Settled',
+                      color: GirviColors.success,
                     ),
                     const _FocusMetric(
-                      label: 'Custody',
+                      label: 'Item Status',
                       value: 'In Shop',
                       color: GirviColors.info,
-                    ),
-                    _FocusMetric(
-                      label: 'Total Payable',
-                      value: 'Rs ${moneyFmt.format(totalPayable)}',
-                      color: GirviColors.success,
-                      wide: true,
                     ),
                   ]
                 : hasAdvance
                     ? [
                         _FocusMetric(
-                          label: 'Due Now',
+                          label: 'Interest Due',
                           value: 'Rs ${moneyFmt.format(interestDue)}',
                           color: GirviColors.success,
                         ),
@@ -132,30 +121,23 @@ class _CollectionFocusStrip extends StatelessWidget {
                           label: 'Advance Credit',
                           value: 'Rs ${moneyFmt.format(advanceAmount)}',
                           color: GirviColors.success,
-                          wide: true,
                         ),
                         _FocusMetric(
-                          label: 'Advance Months',
+                          label: 'Covered Period',
                           value:
                               '$advanceMonths month${advanceMonths == 1 ? '' : 's'}',
                           color: GirviColors.info,
                         ),
-                        _FocusMetric(
-                          label: 'Monthly Interest',
-                          value: 'Rs ${moneyFmt.format(monthlyInterest)}',
-                          color: GirviColors.brandGold,
-                          wide: true,
-                        ),
                       ]
                     : [
                         _FocusMetric(
-                          label: 'Due Now',
+                          label: 'Interest Due',
                           value: 'Rs ${moneyFmt.format(interestDue)}',
                           color: accent,
                           wide: true,
                         ),
                         _FocusMetric(
-                          label: 'Months Due',
+                          label: 'Period Due',
                           value:
                               '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'}',
                           color: accent,
@@ -163,14 +145,7 @@ class _CollectionFocusStrip extends StatelessWidget {
                         _FocusMetric(
                           label: 'Monthly Interest',
                           value: 'Rs ${moneyFmt.format(monthlyInterest)}',
-                          color: GirviColors.info,
-                          wide: true,
-                        ),
-                        _FocusMetric(
-                          label: 'Total Payable',
-                          value: 'Rs ${moneyFmt.format(totalPayable)}',
-                          color: GirviColors.purple,
-                          wide: true,
+                          color: GirviColors.brandGold,
                         ),
                       ],
           );
@@ -188,7 +163,7 @@ class _CollectionFocusStrip extends StatelessWidget {
 
           return Row(
             children: [
-              SizedBox(width: 250, child: leading),
+              SizedBox(width: 300, child: leading),
               const SizedBox(width: 12),
               Expanded(child: metrics),
             ],
@@ -214,13 +189,19 @@ class _FocusMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final danger = color == GirviColors.danger;
+    final textColor = danger ? GirviColors.danger : GirviColors.textDark;
+
     return Container(
-      width: wide ? 198 : 150,
+      width: wide ? 260 : 190,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: GirviColors.cardBg,
+        color: danger ? GirviColors.dangerBg : GirviColors.cardBg,
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
+        border: Border.all(
+          color:
+              danger ? GirviColors.dangerBorder : color.withValues(alpha: 0.20),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +211,7 @@ class _FocusMetric extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: GirviColors.textDark,
+              color: textColor,
               fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
@@ -242,7 +223,7 @@ class _FocusMetric extends StatelessWidget {
             child: Text(
               value,
               style: GoogleFonts.manrope(
-                color: GirviColors.textDark,
+                color: textColor,
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
@@ -276,7 +257,7 @@ class _InterestBreakdownPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: GirviColors.warning.withValues(alpha: 0.24)),
+        border: Border.all(color: GirviColors.info.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -285,7 +266,7 @@ class _InterestBreakdownPanel extends StatelessWidget {
             children: [
               const _IconBox(
                 icon: GirviIcons.interestRate,
-                color: GirviColors.warning,
+                color: GirviColors.info,
                 dark: true,
               ),
               const SizedBox(width: 12),
@@ -294,7 +275,7 @@ class _InterestBreakdownPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Interest Breakdown',
+                      'Interest Calculation',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
@@ -305,7 +286,7 @@ class _InterestBreakdownPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Actual ${elapsedPeriod.displayLabel} | Chargeable $totalMonths month${totalMonths == 1 ? '' : 's'}',
+                      'Actual Period: ${elapsedPeriod.displayLabel} | Chargeable Months: $totalMonths',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
@@ -345,8 +326,8 @@ class _InterestBreakdownPanel extends StatelessWidget {
                 color: GirviColors.warning,
               ),
               _BreakdownPeriodChip(
-                label: 'Chargeable',
-                value: '$totalMonths mo',
+                label: 'Chargeable Months',
+                value: totalMonths.toString(),
                 color: GirviColors.success,
                 wide: true,
               ),
@@ -387,12 +368,12 @@ class _InterestBreakdownRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
       decoration: BoxDecoration(
         color: line.cycleNumber == 1
-            ? GirviColors.warning.withValues(alpha: 0.08)
+            ? GirviColors.info.withValues(alpha: 0.06)
             : GirviColors.info.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(11),
         border: Border.all(
           color: line.cycleNumber == 1
-              ? GirviColors.warning.withValues(alpha: 0.20)
+              ? GirviColors.info.withValues(alpha: 0.16)
               : GirviColors.info.withValues(alpha: 0.18),
         ),
       ),
@@ -468,14 +449,17 @@ class _BreakdownPeriodChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: wide ? 150 : 112,
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      width: wide ? 188 : 118,
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             value,
@@ -487,17 +471,16 @@ class _BreakdownPeriodChip extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: GirviColors.textDark,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w900,
-              ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: GirviColors.textDark,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+              height: 1.08,
             ),
           ),
         ],
@@ -520,9 +503,9 @@ class _BreakdownTotalPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: GirviColors.warning.withValues(alpha: 0.10),
+        color: GirviColors.info.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: GirviColors.warning.withValues(alpha: 0.24)),
+        border: Border.all(color: GirviColors.info.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,

@@ -96,12 +96,45 @@ void main() {
 
     expect(controller.releaseDiscount, discount);
     expect(
+      controller.releasePrincipalReceived,
+      controller.releasePrincipalDueForSelected,
+    );
+    expect(
       controller.releaseInterestReceived,
       interestDue - discount,
     );
     expect(
       controller.releaseSettlementValue,
       closeTo(grossDue, 0.01),
+    );
+  });
+
+  test('release discount cannot reduce locked principal', () async {
+    final customerId =
+        await _insertCustomer(db, 'Locked Principal Customer', '9000000011');
+    await _insertLoan(
+      db,
+      customerId,
+      'GRV-LOCK-001',
+      'Gold bracelet',
+      50000,
+    );
+
+    await controller.load();
+    final account = controller.customerAccounts.single;
+    await controller.selectLoan(account.loans.single);
+    controller.setPaymentType(GirviPaymentType.fullRelease);
+
+    final principalDue = controller.releasePrincipalDueForSelected;
+    final interestDue = controller.netInterestDueForSelected;
+
+    controller.onReleaseDiscountChanged((interestDue + 1).toStringAsFixed(0));
+
+    expect(controller.releasePrincipalReceived, principalDue);
+    expect(await controller.recordPayment(), isFalse);
+    expect(
+      controller.errorMessage,
+      'Interest discount cannot exceed interest due.',
     );
   });
 }

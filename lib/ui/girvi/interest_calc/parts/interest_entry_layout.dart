@@ -97,6 +97,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                 _CustomerReadyPanel(
                   account: selectedCustomer,
                   moneyFmt: _moneyFmt,
+                  dateFmt: _dateFmt,
                   selectedLoanId: null,
                   onLoanTap: _ctrl.selectLoan,
                 ),
@@ -144,7 +145,6 @@ extension InterestEntryLayout on _InterestCalcScreenState {
     final principalRepaid = _ctrl.principalRepaidForSelected +
         _ctrl.releasePrincipalCollectedForSelected;
     final interestCollected = _ctrl.interestCollectedForSelected;
-    final totalCollected = _ctrl.totalCollectedForSelected;
     final grossInterestAccrued = _ctrl.grossInterestAccruedForSelected;
     final netInterestDue = _ctrl.netInterestDueForSelected;
     final advanceInterestCredit = _ctrl.advanceInterestCreditForSelected;
@@ -153,8 +153,16 @@ extension InterestEntryLayout on _InterestCalcScreenState {
             loan.girviStatus == GirviStatus.released;
     final currentMonthlyInterest =
         _ctrl.currentLedgerMonthlyInterestForSelected;
-    final totalPayable = _ctrl.releasePrincipalDueForSelected + netInterestDue;
     final totalMonths = loan.monthsElapsed.ceil();
+    final interestCollectedMonths = _ctrl.payments.fold<int>(0, (sum, item) {
+      final recordsInterest = item.type == GirviPaymentType.interest ||
+          item.type == GirviPaymentType.partialInterest ||
+          (item.type == GirviPaymentType.fullRelease &&
+              item.interestComponent > 0);
+      return recordsInterest ? sum + (item.monthsCovered ?? 0) : sum;
+    });
+    final interestDueMonths =
+        netInterestDue <= 0 ? 0 : loan.unpaidMonths.ceil();
     final interestBreakdown = GirviLoanModel.calculateCompoundInterestBreakdown(
       principal: principalDisbursed,
       monthlyRatePercent: loan.interestRate,
@@ -177,7 +185,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
         gradient: LinearGradient(
           colors: [
             GirviColors.cardBg,
-            GirviColors.brandGold.withValues(alpha: 0.055),
+            GirviColors.bodyBg.withValues(alpha: 0.72),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -207,10 +215,10 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                     height: 54,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: GirviColors.brandGold.withValues(alpha: 0.16),
+                      color: GirviColors.brandGold.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: GirviColors.brandGold.withValues(alpha: 0.30),
+                        color: GirviColors.brandGold.withValues(alpha: 0.28),
                       ),
                     ),
                     child: const Icon(
@@ -225,7 +233,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Loan Overview',
+                          'Ticket Summary',
                           style: GoogleFonts.inter(
                             color: GirviColors.textDark,
                             fontSize: 12.5,
@@ -237,7 +245,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                         Text(
                           loan.ticketNo,
                           style: GoogleFonts.robotoMono(
-                            color: GirviColors.brandGold,
+                            color: GirviColors.textDark,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1,
@@ -331,7 +339,6 @@ extension InterestEntryLayout on _InterestCalcScreenState {
           _CollectionFocusStrip(
             interestDue: netInterestDue,
             monthlyInterest: currentMonthlyInterest,
-            totalPayable: totalPayable,
             unpaidMonths: totalMonths,
             advanceAmount: advanceInterestCredit,
             advanceMonths: advanceMonths,
@@ -371,7 +378,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
 
               final interestPanel = _OverviewMoneyPanel(
                 title: 'Interest',
-                primaryLabel: 'Due Now',
+                primaryLabel: 'Interest Due Now',
                 primaryValue: 'Rs ${_moneyFmt.format(netInterestDue)}',
                 secondaryLabel: advanceInterestCredit > 0
                     ? settlementComplete
@@ -388,7 +395,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                     ? settlementComplete
                         ? GirviColors.danger
                         : GirviColors.success
-                    : GirviColors.warning,
+                    : GirviColors.info,
               );
 
               final termsPanel = _OverviewTermsPanel(
@@ -397,8 +404,12 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                 maturityDate: loan.maturityDate == null
                     ? 'Not set'
                     : _dateFmt.format(loan.maturityDate!),
-                paidTill: 'Rs ${_moneyFmt.format(interestCollected)}',
-                totalCollected: 'Rs ${_moneyFmt.format(totalCollected)}',
+                interestCollected: _interestPeriodLabel(
+                    interestCollected, interestCollectedMonths),
+                interestDue: _interestPeriodLabel(
+                  netInterestDue,
+                  interestDueMonths,
+                ),
               );
 
               if (compact) {
@@ -428,5 +439,10 @@ extension InterestEntryLayout on _InterestCalcScreenState {
         ],
       ),
     );
+  }
+
+  String _interestPeriodLabel(double amount, int months) {
+    final monthLabel = '$months month${months == 1 ? '' : 's'}';
+    return 'Rs ${_moneyFmt.format(amount)} | $monthLabel';
   }
 }

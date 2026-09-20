@@ -60,6 +60,7 @@ class _InterestLedgerBalanceStrip extends StatelessWidget {
   final double interestPaid;
   final double netDue;
   final int equivalentMonths;
+  final DateTime? interestFromDate;
   final NumberFormat moneyFmt;
 
   const _InterestLedgerBalanceStrip({
@@ -67,13 +68,13 @@ class _InterestLedgerBalanceStrip extends StatelessWidget {
     required this.interestPaid,
     required this.netDue,
     required this.equivalentMonths,
+    required this.interestFromDate,
     required this.moneyFmt,
   });
 
   @override
   Widget build(BuildContext context) {
-    final monthLabel =
-        equivalentMonths <= 0 ? 'Under 1 mo' : '$equivalentMonths mo';
+    final coverageLabel = _coverageLabel();
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -101,17 +102,36 @@ class _InterestLedgerBalanceStrip extends StatelessWidget {
           _FocusMetric(
             label: 'Net Due',
             value: 'Rs ${moneyFmt.format(netDue)}',
-            color: netDue > 0 ? GirviColors.danger : GirviColors.success,
+            color: GirviColors.danger,
             wide: true,
           ),
           _FocusMetric(
-            label: 'Entry Equals',
-            value: monthLabel,
+            label: 'Interest Covered',
+            value: coverageLabel,
             color: GirviColors.info,
+            wide: true,
           ),
         ],
       ),
     );
+  }
+
+  String _coverageLabel() {
+    if (equivalentMonths <= 0) return 'Not set';
+
+    final monthLabel =
+        '$equivalentMonths month${equivalentMonths == 1 ? '' : 's'}';
+    final from = interestFromDate;
+    if (from == null) return monthLabel;
+
+    final monthFmt = DateFormat('MMM yyyy');
+    final startCycle = monthFmt.format(from);
+    if (equivalentMonths == 1) return '$startCycle | $monthLabel';
+
+    final endCycle = monthFmt.format(
+      DateTime(from.year, from.month + equivalentMonths - 1),
+    );
+    return '$startCycle - $endCycle | $monthLabel';
   }
 }
 
@@ -140,11 +160,13 @@ class _AmountShortcutRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final shortcuts = <_AmountShortcut>[
       if (isInterestEntry && interestDue > 0)
-        _AmountShortcut('Full Due', interestDue, GirviColors.warning),
+        _AmountShortcut('Full Interest Due', interestDue, GirviColors.info),
       if (isInterestEntry && expectedInterest > 0)
-        _AmountShortcut('Expected', expectedInterest, GirviColors.success),
+        _AmountShortcut(
+            'Expected Interest', expectedInterest, GirviColors.success),
       if (isInterestEntry && monthlyInterest > 0)
-        _AmountShortcut('1 Month', monthlyInterest, GirviColors.info),
+        _AmountShortcut(
+            'One Month Interest', monthlyInterest, GirviColors.info),
       if (paymentType == GirviPaymentType.partialPrincipal &&
           principalOutstanding > 0)
         _AmountShortcut(
@@ -272,7 +294,7 @@ class _PaymentHistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _colorForType(payment.type);
     final period = payment.type == GirviPaymentType.fullRelease
-        ? 'Principal Cash Rs ${moneyFmt.format(payment.principalComponent)} | Interest Cash Rs ${moneyFmt.format(payment.interestComponent)}'
+        ? 'Principal Rs ${moneyFmt.format(payment.principalComponent)} | Interest Rs ${moneyFmt.format(payment.interestComponent)}'
         : payment.interestFromDate != null && payment.interestToDate != null
             ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
             : payment.monthsCovered == null
@@ -299,7 +321,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        payment.type.displayName,
+                        _labelForType(payment.type),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
@@ -331,7 +353,7 @@ class _PaymentHistoryRow extends StatelessWidget {
             children: [
               Text(
                 payment.type == GirviPaymentType.fullRelease
-                    ? 'Cash Rs ${moneyFmt.format(payment.amount)}'
+                    ? 'Collected Rs ${moneyFmt.format(payment.amount)}'
                     : 'Rs ${moneyFmt.format(payment.amount)}',
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
@@ -351,7 +373,7 @@ class _PaymentHistoryRow extends StatelessWidget {
               Text(
                 payment.type == GirviPaymentType.fullRelease
                     ? 'Settlement Balance Rs ${moneyFmt.format(payment.balanceAfter)}'
-                    : 'Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
+                    : 'Remaining Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
                   color: GirviColors.textDark,
@@ -376,6 +398,21 @@ class _PaymentHistoryRow extends StatelessWidget {
         return GirviIcons.release;
       case GirviPaymentType.penalty:
         return GirviIcons.warning;
+    }
+  }
+
+  static String _labelForType(GirviPaymentType type) {
+    switch (type) {
+      case GirviPaymentType.interest:
+        return 'Interest Collection';
+      case GirviPaymentType.partialInterest:
+        return 'Partial Interest Collection';
+      case GirviPaymentType.partialPrincipal:
+        return 'Principal Collection';
+      case GirviPaymentType.fullRelease:
+        return 'Final Release Collection';
+      case GirviPaymentType.penalty:
+        return 'Penalty Collection';
     }
   }
 

@@ -95,12 +95,14 @@ class _SearchField extends StatelessWidget {
 class _CustomerReadyPanel extends StatelessWidget {
   final GirviCustomerGirviAccount account;
   final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
   final int? selectedLoanId;
   final ValueChanged<GirviLoanWithCustomer> onLoanTap;
 
   const _CustomerReadyPanel({
     required this.account,
     required this.moneyFmt,
+    required this.dateFmt,
     required this.selectedLoanId,
     required this.onLoanTap,
   });
@@ -185,6 +187,7 @@ class _CustomerReadyPanel extends StatelessWidget {
                     data: account.loans[i],
                     selected: account.loans[i].loan.id == selectedLoanId,
                     moneyFmt: moneyFmt,
+                    dateFmt: dateFmt,
                     onTap: () => onLoanTap(account.loans[i]),
                   ),
                   if (i != account.loans.length - 1)
@@ -348,12 +351,14 @@ class _TicketStackRow extends StatefulWidget {
   final GirviLoanWithCustomer data;
   final bool selected;
   final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
   final VoidCallback onTap;
 
   const _TicketStackRow({
     required this.data,
     required this.selected,
     required this.moneyFmt,
+    required this.dateFmt,
     required this.onTap,
   });
 
@@ -364,51 +369,71 @@ class _TicketStackRow extends StatefulWidget {
 class _TicketStackRowState extends State<_TicketStackRow> {
   bool _hovered = false;
 
+  void _setHovered(bool value) {
+    if (_hovered == value || !mounted) return;
+    setState(() => _hovered = value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final loan = widget.data.loan;
     final highlighted = widget.selected || _hovered;
-    final accent = widget.selected
-        ? GirviColors.brandGold
-        : loan.isOverdue
-            ? GirviColors.danger
-            : GirviColors.info;
+    final interestDue = widget.data.netInterestDue;
+    final principalDue = widget.data.principalDue;
+    final unpaidPeriod = loan.unpaidInterestElapsedPeriod;
+    final loanAge = GirviLoanModel.elapsedPeriodBetween(
+      loan.startDate,
+      loan.releaseDate ?? DateTime.now(),
+    );
+    final maturityDate = loan.maturityDate;
+    final interestPeriodLabel = interestDue > 0
+        ? 'Interest for ${unpaidPeriod.displayLabel}'
+        : loan.hasAdvanceInterest
+            ? 'Advance interest covered'
+            : 'No pending interest';
+    final loanAgeLabel = 'Age ${loanAge.displayLabel}';
+    final accent = loan.isOverdue ? GirviColors.danger : GirviColors.info;
+    final statusColor =
+        loan.girviStatus == GirviStatus.active ? GirviColors.success : accent;
+    final interestLine = widget.data.interestPaidTotal <= 0
+        ? 'Interest not received yet'
+        : 'Interest received Rs ${widget.moneyFmt.format(widget.data.interestPaidTotal)}';
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedScale(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOutCubic,
-          scale: _hovered && !widget.selected ? 1.006 : 1,
+          scale: _hovered && !widget.selected ? 1.003 : 1,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
             decoration: BoxDecoration(
               color: widget.selected
-                  ? GirviColors.brandGold.withValues(alpha: 0.15)
+                  ? GirviColors.info.withValues(alpha: 0.075)
                   : _hovered
-                      ? GirviColors.info.withValues(alpha: 0.07)
+                      ? GirviColors.info.withValues(alpha: 0.045)
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: widget.selected
-                    ? GirviColors.brandGold
+                    ? GirviColors.info.withValues(alpha: 0.62)
                     : _hovered
-                        ? GirviColors.info.withValues(alpha: 0.32)
+                        ? GirviColors.info.withValues(alpha: 0.34)
                         : Colors.transparent,
-                width: widget.selected ? 1.4 : 1,
+                width: widget.selected ? 1.25 : 1,
               ),
               boxShadow: highlighted
                   ? [
                       BoxShadow(
-                        color: accent.withValues(alpha: 0.10),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        color: GirviColors.info.withValues(alpha: 0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
                       ),
                     ]
                   : const [],
@@ -418,28 +443,31 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: 4,
-                  height: 62,
+                  height: 72,
                   decoration: BoxDecoration(
                     color: highlighted ? accent : Colors.transparent,
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 42,
+                  height: 42,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: loan.statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(9),
+                    color: GirviColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: GirviColors.success.withValues(alpha: 0.20),
+                    ),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     GirviIcons.ticket,
-                    color: loan.statusColor,
-                    size: 16,
+                    color: GirviColors.success,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,91 +480,172 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GirviStyles.ticketNumber.copyWith(
-                                fontSize: 13,
+                                fontSize: 16,
+                                letterSpacing: 0.9,
                                 color: widget.selected
-                                    ? GirviColors.brandDeep
-                                    : GirviColors.brandGold,
+                                    ? GirviColors.textDark
+                                    : GirviColors.textBody,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          _TinyTag(label: loan.statusLabel),
+                          const SizedBox(width: 8),
+                          _TicketStatusBadge(
+                            label: loan.statusLabel,
+                            color: statusColor,
+                          ),
                           if (widget.selected) ...[
-                            const SizedBox(width: 6),
-                            const _TinyTag(
+                            const SizedBox(width: 8),
+                            const _TicketStatusBadge(
                               label: 'Selected',
                               color: GirviColors.success,
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         loan.itemSummary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 12.5,
+                          fontSize: 13.2,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        interestLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: widget.data.interestPaidTotal <= 0
+                              ? GirviColors.textDark
+                              : GirviColors.success,
+                          fontSize: 12.8,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _TicketMetaBadge(
+                            icon: GirviIcons.dates,
+                            label:
+                                'Issue ${widget.dateFmt.format(loan.startDate)}',
+                            color: GirviColors.info,
+                          ),
+                          _TicketMetaBadge(
+                            icon: GirviIcons.dates,
+                            label: maturityDate == null
+                                ? 'Maturity not set'
+                                : 'Maturity ${widget.dateFmt.format(maturityDate)}',
+                            color: loan.isPastMaturity
+                                ? GirviColors.danger
+                                : GirviColors.success,
+                          ),
+                          _TicketMetaBadge(
+                            icon: Icons.timelapse_rounded,
+                            label: loanAgeLabel,
+                            color: GirviColors.textDark,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 132),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
                       Text(
-                        widget.data.interestPaidTotal <= 0
-                            ? 'Interest not received yet'
-                            : 'Interest paid Rs ${widget.moneyFmt.format(widget.data.interestPaidTotal)}',
+                        'Principal',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: GirviColors.textDark,
-                          fontSize: 12.5,
+                          fontSize: 11.4,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Rs ${widget.moneyFmt.format(principalDue)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.manrope(
+                          color: GirviColors.textDark,
+                          fontSize: 15.4,
                           fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: interestDue > 0
+                              ? GirviColors.danger.withValues(alpha: 0.10)
+                              : GirviColors.success.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: interestDue > 0
+                                ? GirviColors.danger.withValues(alpha: 0.22)
+                                : GirviColors.success.withValues(alpha: 0.22),
+                          ),
+                        ),
+                        child: Text(
+                          interestDue > 0
+                              ? 'Interest Rs ${widget.moneyFmt.format(interestDue)}'
+                              : 'No Interest',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: interestDue > 0
+                                ? GirviColors.danger
+                                : GirviColors.success,
+                            fontSize: 12.4,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        interestPeriodLabel,
+                        maxLines: 2,
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 11.3,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
                         ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Rs ${widget.moneyFmt.format(widget.data.principalDue)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.manrope(
-                        color: GirviColors.textDark,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Due Rs ${widget.moneyFmt.format(widget.data.netInterestDue)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: GirviColors.textDark,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 10),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 160),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutCubic,
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
                   child: widget.selected
                       ? const Icon(
                           GirviIcons.markDone,
-                          key: ValueKey('selected'),
-                          color: GirviColors.brandGold,
+                          color: GirviColors.info,
                           size: 20,
                         )
                       : Icon(
                           Icons.chevron_right_rounded,
-                          key: ValueKey(_hovered),
                           color: _hovered
                               ? GirviColors.info
                               : GirviColors.textMuted,
@@ -547,6 +656,81 @@ class _TicketStackRowState extends State<_TicketStackRow> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TicketStatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _TicketStatusBadge({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.inter(
+          color: color == GirviColors.brandGold
+              ? GirviColors.brandDeep
+              : color == GirviColors.success
+                  ? GirviColors.success
+                  : GirviColors.textDark,
+          fontSize: 12.2,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _TicketMetaBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _TicketMetaBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: GirviColors.textDark,
+              fontSize: 11.6,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }

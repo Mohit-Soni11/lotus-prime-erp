@@ -83,7 +83,9 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   double get amount => double.tryParse(_amountInput) ?? 0.0;
   double get releasePrincipalReceived =>
-      double.tryParse(_releasePrincipalInput) ?? 0.0;
+      _paymentType == GirviPaymentType.fullRelease
+          ? releasePrincipalDueForSelected
+          : double.tryParse(_releasePrincipalInput) ?? 0.0;
   double get releaseInterestReceived =>
       double.tryParse(_releaseInterestInput) ?? 0.0;
   double get releaseDiscount => double.tryParse(_releaseDiscountInput) ?? 0.0;
@@ -337,7 +339,12 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   void onReleasePrincipalChanged(String value) {
-    _releasePrincipalInput = value;
+    if (_paymentType == GirviPaymentType.fullRelease) {
+      _releasePrincipalInput =
+          _formatAmountInput(releasePrincipalDueForSelected);
+    } else {
+      _releasePrincipalInput = value;
+    }
     _errorMessage = null;
     _successMessage = null;
     notifyListeners();
@@ -353,7 +360,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   void onReleaseDiscountChanged(String value) {
     _releaseDiscountInput = value;
     final discount = releaseDiscount;
-    if (discount >= 0 && discount <= releaseTotalDueForSelected) {
+    if (discount >= 0 && discount <= netInterestDueForSelected) {
       _fillReleaseSettlementForDiscount(discount);
     }
     _errorMessage = null;
@@ -363,7 +370,7 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   void fillFullReleaseSettlement() {
     final discount =
-        releaseDiscount.clamp(0.0, releaseTotalDueForSelected).toDouble();
+        releaseDiscount.clamp(0.0, netInterestDueForSelected).toDouble();
     _fillReleaseSettlementForDiscount(discount);
     notifyListeners();
   }
@@ -404,6 +411,11 @@ class GirviInterestEntryController extends ChangeNotifier {
     if (_paymentType == GirviPaymentType.fullRelease) {
       if (releaseDiscount < 0) {
         _errorMessage = 'Discount cannot be negative.';
+        notifyListeners();
+        return false;
+      }
+      if (releaseDiscount > netInterestDueForSelected + 0.01) {
+        _errorMessage = 'Interest discount cannot exceed interest due.';
         notifyListeners();
         return false;
       }
@@ -682,7 +694,7 @@ class GirviInterestEntryController extends ChangeNotifier {
         : GirviPaymentType.interest;
     _paymentMode = GirviPaymentMode.cash;
     _paymentDate = DateTime.now();
-    final interestFrom = loan.startDate;
+    final interestFrom = loan.unpaidInterestStartDate;
     _interestFromDate = interestFrom;
     final suggestedMonths = _suggestedMonths(loan);
     _interestToDate = suggestedMonths <= 0
@@ -718,7 +730,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   int _suggestedMonths(GirviLoanModel loan) {
-    final from = loan.startDate;
+    final from = loan.unpaidInterestStartDate;
     final months = GirviLoanModel.chargeableMonthsBetween(from, DateTime.now());
     if (months <= 0) return 1;
     return months.clamp(1, 120);
@@ -756,12 +768,9 @@ class GirviInterestEntryController extends ChangeNotifier {
   void _fillReleaseSettlementForDiscount(double discount) {
     final interestDiscount =
         discount.clamp(0.0, netInterestDueForSelected).toDouble();
-    final principalDiscount = discount - interestDiscount;
     _releaseInterestInput = _formatAmountInput(
       netInterestDueForSelected - interestDiscount,
     );
-    _releasePrincipalInput = _formatAmountInput(
-      releasePrincipalDueForSelected - principalDiscount,
-    );
+    _releasePrincipalInput = _formatAmountInput(releasePrincipalDueForSelected);
   }
 }

@@ -128,15 +128,15 @@ class _OverviewTermsPanel extends StatelessWidget {
   final String tenure;
   final String startDate;
   final String maturityDate;
-  final String paidTill;
-  final String totalCollected;
+  final String interestCollected;
+  final String interestDue;
 
   const _OverviewTermsPanel({
     required this.tenure,
     required this.startDate,
     required this.maturityDate,
-    required this.paidTill,
-    required this.totalCollected,
+    required this.interestCollected,
+    required this.interestDue,
   });
 
   @override
@@ -155,22 +155,23 @@ class _OverviewTermsPanel extends StatelessWidget {
         color: GirviColors.brandGold,
       ),
       _OverviewInfoTile(
-        label: 'Maturity',
+        label: 'Maturity Date',
         value: maturityDate,
         icon: GirviIcons.dates,
         color: GirviColors.purple,
       ),
       _OverviewInfoTile(
-        label: 'Interest Paid',
-        value: paidTill,
+        label: 'Interest Collected',
+        value: interestCollected,
         icon: GirviIcons.markDone,
         color: GirviColors.success,
+        wide: true,
       ),
       _OverviewInfoTile(
-        label: 'Total Collected',
-        value: totalCollected,
-        icon: GirviIcons.cash,
-        color: GirviColors.info,
+        label: 'Interest Due',
+        value: interestDue,
+        icon: GirviIcons.interestRate,
+        color: GirviColors.danger,
         wide: true,
       ),
     ];
@@ -243,10 +244,10 @@ class _OverviewTermsPanel extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(child: tiles[2]),
-                      const SizedBox(width: 9),
-                      Expanded(child: tiles[3]),
                     ],
                   ),
+                  const SizedBox(height: 9),
+                  tiles[3],
                   const SizedBox(height: 9),
                   tiles[4],
                 ],
@@ -326,13 +327,19 @@ class _OverviewInfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final danger = color == GirviColors.danger;
+    final labelColor = danger ? GirviColors.danger : GirviColors.textDark;
+    final valueColor = danger ? GirviColors.danger : GirviColors.textDark;
     return Container(
       constraints: BoxConstraints(minHeight: wide ? 58 : 64),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
+        color: danger ? GirviColors.dangerBg : color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
+        border: Border.all(
+          color:
+              danger ? GirviColors.dangerBorder : color.withValues(alpha: 0.16),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +354,7 @@ class _OverviewInfoTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.textDark,
+                    color: labelColor,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                   ),
@@ -358,12 +365,13 @@ class _OverviewInfoTile extends StatelessWidget {
           const SizedBox(height: 7),
           Text(
             value,
-            maxLines: 1,
+            maxLines: wide ? 2 : 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
-              color: GirviColors.textDark,
-              fontSize: 15,
+              color: valueColor,
+              fontSize: wide ? 14.5 : 15,
               fontWeight: FontWeight.w900,
+              height: 1.12,
             ),
           ),
         ],
