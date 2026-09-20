@@ -118,14 +118,24 @@ extension InterestPaymentSections on _InterestCalcScreenState {
               )
             else
               _ReleaseSettlementBalanceStrip(
+                originalPrincipal: _ctrl.principalDisbursedForSelected,
                 principalDue: _ctrl.releasePrincipalDueForSelected,
                 interestDue: _ctrl.netInterestDueForSelected,
+                totalInterest: _ctrl.grossInterestAccruedForSelected,
                 principalCollected: _ctrl.releasePrincipalCollectedForSelected,
                 interestCollected: _ctrl.releaseInterestCollectedForSelected,
                 previousDiscount: _ctrl.releaseDiscountForSelected,
                 discount: _ctrl.releaseDiscount,
-                cashEntered: _ctrl.releaseEntryTotal,
+                interestRate: data.loan.interestRate,
+                startDate: data.loan.startDate,
+                maturityDate: data.loan.maturityDate,
+                releaseDate: _ctrl.paymentDate,
+                chargeableMonths: GirviLoanModel.chargeableMonthsBetween(
+                  data.loan.startDate,
+                  _ctrl.paymentDate,
+                ),
                 moneyFmt: _moneyFmt,
+                dateFmt: _dateFmt,
               ),
             if (_ctrl.isInterestEntry) ...[
               const SizedBox(height: 10),

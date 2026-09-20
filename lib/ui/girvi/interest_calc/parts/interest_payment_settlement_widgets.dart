@@ -35,6 +35,9 @@ class _EntryReviewBar extends StatelessWidget {
       principalOutstanding: principalOutstanding,
       moneyFmt: moneyFmt,
     );
+    final isFullRelease = paymentType == GirviPaymentType.fullRelease;
+    final releaseInterestPayable = math.max(interestDue - discountAmount, 0.0);
+    final releaseTotalPayable = principalOutstanding + releaseInterestPayable;
     final actionButton = SizedBox(
       height: 46,
       child: ElevatedButton.icon(
@@ -115,27 +118,38 @@ class _EntryReviewBar extends StatelessWidget {
               Wrap(
                 spacing: 18,
                 runSpacing: 8,
-                children: [
-                  _ReviewMetric(
-                    label: signal.referenceLabel,
-                    value: signal.referenceValue,
-                  ),
-                  _ReviewMetric(
-                    label: 'Entry Amount',
-                    value: 'Rs ${moneyFmt.format(enteredAmount)}',
-                  ),
-                  if (paymentType == GirviPaymentType.fullRelease &&
-                      discountAmount > 0)
-                    _ReviewMetric(
-                      label: 'Discount',
-                      value: 'Rs ${moneyFmt.format(discountAmount)}',
-                    ),
-                  _ReviewMetric(
-                    label: signal.balanceLabel,
-                    value: signal.balanceValue,
-                    valueColor: signal.color,
-                  ),
-                ],
+                children: isFullRelease
+                    ? [
+                        _ReviewMetric(
+                          label: 'Principal',
+                          value: 'Rs ${moneyFmt.format(principalOutstanding)}',
+                        ),
+                        _ReviewMetric(
+                          label: 'Total Interest',
+                          value:
+                              'Rs ${moneyFmt.format(releaseInterestPayable)}',
+                        ),
+                        _ReviewMetric(
+                          label: 'Total Payable',
+                          value: 'Rs ${moneyFmt.format(releaseTotalPayable)}',
+                          valueColor: signal.color,
+                        ),
+                      ]
+                    : [
+                        _ReviewMetric(
+                          label: signal.referenceLabel,
+                          value: signal.referenceValue,
+                        ),
+                        _ReviewMetric(
+                          label: 'Entry Amount',
+                          value: 'Rs ${moneyFmt.format(enteredAmount)}',
+                        ),
+                        _ReviewMetric(
+                          label: signal.balanceLabel,
+                          value: signal.balanceValue,
+                          valueColor: signal.color,
+                        ),
+                      ],
               ),
             ],
           );
@@ -353,35 +367,52 @@ class _EntryReviewSignal {
 }
 
 class _ReleaseSettlementBalanceStrip extends StatelessWidget {
+  final double originalPrincipal;
   final double principalDue;
   final double interestDue;
+  final double totalInterest;
   final double principalCollected;
   final double interestCollected;
   final double previousDiscount;
   final double discount;
-  final double cashEntered;
+  final double interestRate;
+  final DateTime startDate;
+  final DateTime? maturityDate;
+  final DateTime releaseDate;
+  final int chargeableMonths;
   final NumberFormat moneyFmt;
+  final DateFormat dateFmt;
 
   const _ReleaseSettlementBalanceStrip({
+    required this.originalPrincipal,
     required this.principalDue,
     required this.interestDue,
+    required this.totalInterest,
     required this.principalCollected,
     required this.interestCollected,
     required this.previousDiscount,
     required this.discount,
-    required this.cashEntered,
+    required this.interestRate,
+    required this.startDate,
+    required this.maturityDate,
+    required this.releaseDate,
+    required this.chargeableMonths,
     required this.moneyFmt,
+    required this.dateFmt,
   });
 
   @override
   Widget build(BuildContext context) {
     final grossDue = principalDue + interestDue;
     final netPayable = math.max(grossDue - discount, 0.0);
-    final balanceAfter = math.max(netPayable - cashEntered, 0.0);
     final earlierCash = principalCollected + interestCollected;
     final hasPriorSettlement = earlierCash > 0 || previousDiscount > 0;
-    final balanceColor =
-        balanceAfter > 0 ? GirviColors.warning : GirviColors.success;
+    final totalInterestPaid = interestCollected;
+    final elapsedLabel = _formatElapsedPeriod(
+      GirviLoanModel.elapsedPeriodBetween(startDate, releaseDate),
+    );
+    final compoundApplied =
+        chargeableMonths > GirviLoanModel.compoundCycleMonths;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -393,65 +424,100 @@ class _ReleaseSettlementBalanceStrip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return _SettlementHeader(
-                label: 'Net Payable',
-                amount: _money(netPayable),
-                helper: discount > 0
-                    ? 'Amount after settlement discount'
-                    : 'Principal due plus interest due',
-              );
-            },
+          _SettlementHeader(
+            label: 'Net Payable',
+            amount: _money(netPayable),
+            helper: discount > 0
+                ? 'Final release payable after interest waiver'
+                : 'Principal due plus current interest due',
           ),
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: GirviColors.cardBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: GirviColors.divider),
-            ),
-            child: Column(
-              children: [
-                _SettlementBreakdownRow(
-                  label: 'Principal Due',
-                  value: _money(principalDue),
+          _SettlementSummarySection(
+            title: 'Loan Timeline',
+            rows: [
+              _SettlementSummaryRow(
+                label: 'Principal Amount',
+                value: _money(originalPrincipal),
+                color: GirviColors.textDark,
+              ),
+              _SettlementSummaryRow(
+                label: 'Start Date',
+                value: dateFmt.format(startDate),
+                color: GirviColors.info,
+              ),
+              _SettlementSummaryRow(
+                label: 'Maturity Date',
+                value: maturityDate == null
+                    ? 'Not set'
+                    : dateFmt.format(maturityDate!),
+                color: GirviColors.purple,
+              ),
+              _SettlementSummaryRow(
+                label: 'Interest Rate',
+                value: '${_formatSmartNumber(interestRate)}% monthly',
+                color: GirviColors.warning,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _SettlementSummarySection(
+            title: 'Interest Position',
+            rows: [
+              _SettlementSummaryRow(
+                label: 'Elapsed Period',
+                value: elapsedLabel,
+                color: GirviColors.info,
+              ),
+              _SettlementSummaryRow(
+                label: 'Chargeable Months',
+                value: _formatMonths(chargeableMonths),
+                color: GirviColors.textDark,
+              ),
+              _SettlementSummaryRow(
+                label: 'Total Interest',
+                value: _money(totalInterest),
+                color: GirviColors.warning,
+              ),
+              if (totalInterestPaid > 0)
+                _SettlementSummaryRow(
+                  label: 'Interest Paid',
+                  value: _money(totalInterestPaid),
+                  color: GirviColors.success,
+                )
+              else
+                const _SettlementSummaryRow(
+                  label: 'Interest Received',
+                  value: 'Not received',
+                  color: GirviColors.textMuted,
+                ),
+              _SettlementSummaryRow(
+                label: totalInterestPaid > 0
+                    ? 'Interest Balance'
+                    : 'Unpaid Interest',
+                value: _money(interestDue),
+                color:
+                    interestDue > 0 ? GirviColors.danger : GirviColors.success,
+              ),
+              if (compoundApplied)
+                const _SettlementSummaryRow(
+                  label: 'Compound Interest',
+                  value: 'Applied',
                   color: GirviColors.purple,
                 ),
-                _SettlementBreakdownRow(
-                  label: 'Interest Due',
-                  value: _money(interestDue),
-                  color: GirviColors.warning,
+              if (discount > 0)
+                _SettlementSummaryRow(
+                  label: 'Interest Waiver',
+                  value: '- ${_money(discount)}',
+                  color: GirviColors.success,
                 ),
-                const Divider(height: 18, color: GirviColors.divider),
-                _SettlementBreakdownRow(
-                  label: 'Gross Settlement',
-                  value: _money(grossDue),
+              if (discount > 0)
+                _SettlementSummaryRow(
+                  label: 'Net Payable',
+                  value: _money(netPayable),
                   color: GirviColors.textDark,
                   strong: true,
                 ),
-                _SettlementBreakdownRow(
-                  label: 'Discount / Waiver',
-                  value: discount > 0 ? '- ${_money(discount)}' : _money(0),
-                  color: discount > 0
-                      ? GirviColors.success
-                      : GirviColors.textMuted,
-                ),
-                _SettlementBreakdownRow(
-                  label: 'Cash Entered',
-                  value: _money(cashEntered),
-                  color: GirviColors.success,
-                ),
-                const Divider(height: 18, color: GirviColors.divider),
-                _SettlementBreakdownRow(
-                  label: 'Balance After',
-                  value: _money(balanceAfter),
-                  color: balanceColor,
-                  strong: true,
-                ),
-              ],
-            ),
+            ],
           ),
           if (hasPriorSettlement) ...[
             const SizedBox(height: 10),
@@ -467,6 +533,184 @@ class _ReleaseSettlementBalanceStrip extends StatelessWidget {
   }
 
   String _money(double value) => 'Rs ${moneyFmt.format(value)}';
+
+  String _formatMonths(int months) {
+    if (months <= 0) return 'Not charged';
+    return '$months month${months == 1 ? '' : 's'}';
+  }
+
+  String _formatElapsedPeriod(GirviElapsedPeriod period) {
+    final totalMonths = (period.years * 12) + period.months;
+    final monthText = '$totalMonths month${totalMonths == 1 ? '' : 's'}';
+    final dayText = '${period.days} day${period.days == 1 ? '' : 's'}';
+    return '$monthText $dayText';
+  }
+
+  String _formatSmartNumber(double value) {
+    if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+  }
+}
+
+class _SettlementSummarySection extends StatelessWidget {
+  final String title;
+  final List<_SettlementSummaryRow> rows;
+
+  const _SettlementSummarySection({
+    required this.title,
+    required this.rows,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: GirviColors.cardBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: GirviColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: GirviColors.textDark,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoColumns = constraints.maxWidth >= 560;
+              if (!twoColumns) {
+                return Column(
+                  children: [
+                    for (var index = 0; index < rows.length; index++) ...[
+                      if (index > 0) const SizedBox(height: 8),
+                      _SettlementSummaryTile.fromRow(rows[index]),
+                    ],
+                  ],
+                );
+              }
+
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: rows.map((row) {
+                  final width = row.strong
+                      ? constraints.maxWidth
+                      : (constraints.maxWidth - 8) / 2;
+                  return SizedBox(
+                    width: width,
+                    child: _SettlementSummaryTile.fromRow(row),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettlementSummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool strong;
+
+  const _SettlementSummaryRow({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.strong = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+class _SettlementSummaryTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool strong;
+
+  const _SettlementSummaryTile({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.strong,
+  });
+
+  factory _SettlementSummaryTile.fromRow(_SettlementSummaryRow row) {
+    return _SettlementSummaryTile(
+      label: row.label,
+      value: row.value,
+      color: row.color,
+      strong: row.strong,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: strong
+            ? color.withValues(alpha: 0.07)
+            : GirviColors.inputBg.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: strong ? color.withValues(alpha: 0.22) : GirviColors.divider,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: GirviColors.textBody,
+                fontSize: 12,
+                fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.manrope(
+                color: color,
+                fontSize: strong ? 14.5 : 13.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SettlementHeader extends StatelessWidget {
@@ -544,63 +788,6 @@ class _SettlementHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SettlementBreakdownRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final bool strong;
-
-  const _SettlementBreakdownRow({
-    required this.label,
-    required this.value,
-    required this.color,
-    this.strong = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: GirviColors.textBody,
-                fontSize: 12.5,
-                fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.manrope(
-              color: color,
-              fontSize: strong ? 15 : 14,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
