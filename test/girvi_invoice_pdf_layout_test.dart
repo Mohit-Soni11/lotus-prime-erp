@@ -252,6 +252,8 @@ void main() {
 
   test('Girvi release receipt builds every Lotus invoice design', () async {
     final service = GirviInvoicePdfService();
+    final outputPath = Platform.environment['GIRVI_RELEASE_OUTPUT'];
+    final outputDir = Platform.environment['GIRVI_RELEASE_OUTPUT_DIR'];
     for (final template in PrintTemplateRegistry.forDocument(
       PrintTemplateDocumentType.girviReceipt,
     )) {
@@ -273,6 +275,16 @@ void main() {
         greaterThanOrEqualTo(3),
         reason: '${template.id} should include invoice, interest and release',
       );
+      if (outputPath != null &&
+          outputPath.isNotEmpty &&
+          template.id == PrintTemplateRegistry.defaultTemplateId) {
+        await File(outputPath).writeAsBytes(bytes);
+      }
+      if (outputDir != null && outputDir.isNotEmpty) {
+        await Directory(outputDir).create(recursive: true);
+        await File('$outputDir/girvi_release_${template.id}.pdf')
+            .writeAsBytes(bytes);
+      }
     }
   });
 
