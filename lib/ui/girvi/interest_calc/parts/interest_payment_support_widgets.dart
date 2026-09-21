@@ -292,14 +292,22 @@ class _PaymentHistoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorForType(payment.type);
+    final isPrincipalAdvance = payment.type == GirviPaymentType.interest &&
+        payment.principalComponent > 0 &&
+        payment.interestComponent <= 0;
+    final color =
+        isPrincipalAdvance ? GirviColors.purple : _colorForType(payment.type);
+    final title =
+        isPrincipalAdvance ? 'Principal Advance' : _labelForType(payment.type);
     final period = payment.type == GirviPaymentType.fullRelease
         ? 'Principal Rs ${moneyFmt.format(payment.principalComponent)} | Interest Rs ${moneyFmt.format(payment.interestComponent)}'
-        : payment.interestFromDate != null && payment.interestToDate != null
-            ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
-            : payment.monthsCovered == null
-                ? 'No interest period'
-                : '${payment.monthsCovered} month${payment.monthsCovered == 1 ? '' : 's'}';
+        : isPrincipalAdvance
+            ? 'Adjusted against principal'
+            : payment.interestFromDate != null && payment.interestToDate != null
+                ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
+                : payment.monthsCovered == null
+                    ? 'No interest period'
+                    : '${payment.monthsCovered} month${payment.monthsCovered == 1 ? '' : 's'}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -321,7 +329,7 @@ class _PaymentHistoryRow extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        _labelForType(payment.type),
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(

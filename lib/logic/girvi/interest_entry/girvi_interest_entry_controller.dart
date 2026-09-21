@@ -109,15 +109,29 @@ class GirviInterestEntryController extends ChangeNotifier {
   double get totalCollectedForSelected =>
       _payments.fold<double>(0, (sum, item) => sum + item.amount);
 
-  double get principalRepaidForSelected => _payments
-      .where((item) => item.type == GirviPaymentType.partialPrincipal)
-      .fold<double>(0, (sum, item) => sum + item.amount);
+  double get principalRepaidForSelected => _payments.fold<double>(0, (
+        sum,
+        item,
+      ) {
+        if (item.type == GirviPaymentType.partialPrincipal) {
+          return sum + item.amount;
+        }
+        if ((item.type == GirviPaymentType.interest ||
+                item.type == GirviPaymentType.partialInterest) &&
+            item.principalComponent > 0) {
+          return sum + item.principalComponent;
+        }
+        return sum;
+      });
 
   double get interestCollectedForSelected =>
       _payments.fold<double>(0, (sum, item) {
         if (item.type == GirviPaymentType.interest ||
             item.type == GirviPaymentType.partialInterest) {
-          return sum + item.amount;
+          final hasSplitComponents =
+              item.interestComponent > 0 || item.principalComponent > 0;
+          return sum +
+              (hasSplitComponents ? item.interestComponent : item.amount);
         }
         if (item.type == GirviPaymentType.fullRelease) {
           return sum + item.interestComponent;

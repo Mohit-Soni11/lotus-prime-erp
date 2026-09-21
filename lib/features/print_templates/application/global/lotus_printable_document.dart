@@ -25,6 +25,8 @@ class LotusPrintableDocument {
   final bool renderPolicySectionsAsPages;
   final bool startPolicySectionsOnNewPage;
   final bool showLegalSignatureFooter;
+  final String watermarkText;
+  final int? watermarkColorValue;
 
   const LotusPrintableDocument({
     required this.shopProfile,
@@ -49,6 +51,8 @@ class LotusPrintableDocument {
     this.renderPolicySectionsAsPages = false,
     this.startPolicySectionsOnNewPage = true,
     this.showLegalSignatureFooter = false,
+    this.watermarkText = '',
+    this.watermarkColorValue,
   });
 }
 

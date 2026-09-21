@@ -250,6 +250,32 @@ void main() {
     }
   });
 
+  test('Girvi release receipt builds every Lotus invoice design', () async {
+    final service = GirviInvoicePdfService();
+    for (final template in PrintTemplateRegistry.forDocument(
+      PrintTemplateDocumentType.girviReceipt,
+    )) {
+      final bytes = await service.build(
+        draft: _releaseDraft,
+        format: GirviInvoiceFormat.a4,
+        settings: GirviBillingModel.defaults.copyWith(
+          selectedTemplate: template.id,
+          printTermsAndConditions: false,
+          printCustomerDeclaration: false,
+        ),
+        templateId: template.id,
+      );
+
+      expect(bytes.length, greaterThan(1000), reason: template.id);
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-', reason: template.id);
+      expect(
+        _pdfPageCount(bytes),
+        greaterThanOrEqualTo(3),
+        reason: '${template.id} should include invoice, interest and release',
+      );
+    }
+  });
+
   test('Girvi invoice keeps table and photo flow stable across pages',
       () async {
     final photoPath = _previewPhotoPath();
@@ -454,10 +480,72 @@ final _simpleDraft = GirviInvoiceDraft(
   disbursementSummary: 'Cash Rs 40,000.00',
 );
 
+final _releaseDraft = GirviInvoiceDraft(
+  ticketNo: 'GRV-RELEASE-001',
+  createdAt: DateTime(2026, 9, 14),
+  customerName: 'Release Test Customer',
+  customerMobile: '9304479436',
+  customerCity: 'Patna, Bihar',
+  customerAddress: 'East Lakshmi Nagar, Khemnichak, Patna, Bihar 800027',
+  items: _simpleDraft.items,
+  totalValue: 64600,
+  loanAmount: 40000,
+  interestRate: 5,
+  durationMonths: 6,
+  startDate: DateTime(2026, 9, 14),
+  maturityDate: DateTime(2027, 3, 14),
+  monthlyInterest: 2000,
+  totalInterest: 12000,
+  totalDue: 52000,
+  payments: const [
+    GirviInvoicePayment(label: 'Cash', amount: 40000),
+  ],
+  disbursementSummary: 'Cash Rs 40,000.00',
+  ledgerEntries: [
+    GirviInvoiceLedgerEntry(
+      date: DateTime(2026, 10, 14),
+      typeLabel: 'Interest Collection',
+      modeLabel: 'Cash',
+      amount: 2000,
+      interestAmount: 2000,
+      balanceAfter: 40000,
+      monthsCovered: 1,
+      interestFromDate: DateTime(2026, 9, 14),
+      interestToDate: DateTime(2026, 10, 14),
+    ),
+    GirviInvoiceLedgerEntry(
+      date: DateTime(2026, 11, 14),
+      typeLabel: 'Interest Collection',
+      modeLabel: 'UPI',
+      amount: 2000,
+      interestAmount: 2000,
+      balanceAfter: 40000,
+      monthsCovered: 1,
+      interestFromDate: DateTime(2026, 10, 14),
+      interestToDate: DateTime(2026, 11, 14),
+    ),
+  ],
+  mode: GirviReceiptMode.release,
+  accountStatus: 'Ready for Delivery',
+  releaseDate: DateTime(2026, 9, 20),
+  expectedDeliveryDate: DateTime(2026, 9, 20),
+  releasePrincipal: 40000,
+  releaseInterest: 12000,
+  releaseDiscount: 500,
+  releaseTotalAmount: 51500,
+  releasePaymentMode: 'Cash',
+  releasedBy: 'Test Staff',
+);
+
 String? _previewPhotoPath() {
   final requested = Platform.environment['GIRVI_PREVIEW_PHOTO'];
   if (requested != null && File(requested).existsSync()) return requested;
 
   final bundledSample = File('lib/logo/gold.jpeg');
   return bundledSample.existsSync() ? bundledSample.absolute.path : null;
+}
+
+int _pdfPageCount(List<int> bytes) {
+  final source = String.fromCharCodes(bytes);
+  return RegExp(r'/Type\s*/Page\b').allMatches(source).length;
 }

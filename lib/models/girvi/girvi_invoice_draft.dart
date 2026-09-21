@@ -40,6 +40,37 @@ class GirviInvoicePayment {
 }
 
 @immutable
+class GirviInvoiceLedgerEntry {
+  const GirviInvoiceLedgerEntry({
+    required this.date,
+    required this.typeLabel,
+    required this.modeLabel,
+    required this.amount,
+    this.principalAmount = 0,
+    this.interestAmount = 0,
+    this.discountAmount = 0,
+    this.balanceAfter = 0,
+    this.monthsCovered,
+    this.interestFromDate,
+    this.interestToDate,
+    this.notes,
+  });
+
+  final DateTime date;
+  final String typeLabel;
+  final String modeLabel;
+  final double amount;
+  final double principalAmount;
+  final double interestAmount;
+  final double discountAmount;
+  final double balanceAfter;
+  final int? monthsCovered;
+  final DateTime? interestFromDate;
+  final DateTime? interestToDate;
+  final String? notes;
+}
+
+@immutable
 class GirviInvoiceItemDraft {
   const GirviInvoiceItemDraft({
     required this.serialNo,
@@ -95,6 +126,7 @@ class GirviInvoiceDraft {
     required this.totalDue,
     required this.payments,
     required this.disbursementSummary,
+    this.ledgerEntries = const [],
     this.mode = GirviReceiptMode.pledge,
     this.accountStatus = 'Active',
     this.releaseDate,
@@ -135,6 +167,7 @@ class GirviInvoiceDraft {
   final double totalDue;
   final List<GirviInvoicePayment> payments;
   final String disbursementSummary;
+  final List<GirviInvoiceLedgerEntry> ledgerEntries;
   final GirviReceiptMode mode;
   final String accountStatus;
   final DateTime? releaseDate;
@@ -178,6 +211,7 @@ class GirviInvoiceDraft {
       totalDue: totalDue,
       payments: payments,
       disbursementSummary: disbursementSummary,
+      ledgerEntries: ledgerEntries,
       mode: mode ?? this.mode,
       accountStatus: accountStatus,
       releaseDate: releaseDate,

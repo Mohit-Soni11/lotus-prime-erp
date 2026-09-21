@@ -133,8 +133,13 @@ class GirviRepository {
         final type = GirviPaymentType.fromDb(payment.paymentType);
         if (type == GirviPaymentType.interest ||
             type == GirviPaymentType.partialInterest) {
+          final hasSplitComponents =
+              payment.interestComponent > 0 || payment.principalComponent > 0;
           interestPaidByLoan[payment.girviId] =
-              (interestPaidByLoan[payment.girviId] ?? 0) + payment.amount;
+              (interestPaidByLoan[payment.girviId] ?? 0) +
+                  (hasSplitComponents
+                      ? payment.interestComponent
+                      : payment.amount);
         } else if (type == GirviPaymentType.fullRelease &&
             payment.interestComponent > 0) {
           interestPaidByLoan[payment.girviId] =
@@ -163,6 +168,12 @@ class GirviRepository {
           legacyPrincipalRepaidByLoan[payment.girviId] =
               (legacyPrincipalRepaidByLoan[payment.girviId] ?? 0) +
                   payment.amount;
+        } else if ((type == GirviPaymentType.interest ||
+                type == GirviPaymentType.partialInterest) &&
+            payment.principalComponent > 0) {
+          legacyPrincipalRepaidByLoan[payment.girviId] =
+              (legacyPrincipalRepaidByLoan[payment.girviId] ?? 0) +
+                  payment.principalComponent;
         }
       }
     }

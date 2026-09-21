@@ -73,21 +73,23 @@ class GirviInvoicePdfService {
   }) async {
     final textRenderer = await LotusPdfTextRenderer.create();
     final template = _resolveTemplate(templateId);
-    final printableDocument = format == GirviInvoiceFormat.a4
-        ? _printableDocument(
+    final printableDocuments = format == GirviInvoiceFormat.a4
+        ? _printableDocuments(
             shopProfile: _shopProfileFromBranding(branding),
             draft: draft,
             settings: settings,
             template: template,
           )
         : null;
-    if (printableDocument == null) {
+    if (printableDocuments == null) {
       await _warmPolicyText(settings, textRenderer, format);
     } else {
-      await LotusPrintTemplateRendererRegistry.warmPolicyText(
-        printableDocument,
-        textRenderer,
-      );
+      for (final printableDocument in printableDocuments) {
+        await LotusPrintTemplateRendererRegistry.warmPolicyText(
+          printableDocument,
+          textRenderer,
+        );
+      }
     }
     final devanagariFont = await LotusPdfTheme.loadDevanagariFont();
     final brandLogo = _loadBrandLogo(branding);
@@ -106,25 +108,30 @@ class GirviInvoicePdfService {
         copyIndex: copy,
       );
       final compact = format == GirviInvoiceFormat.compactA5;
-      final printable = printableDocument;
+      final printables = printableDocuments;
 
-      if (printable != null) {
-        pdf.addPage(
-          pw.MultiPage(
-            pageTheme: const pw.PageTheme(
-              pageFormat: PdfPageFormat.a4,
-              margin: pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
-            ),
-            build: (_) => LotusPrintTemplateRendererRegistry.buildA4(
-              templateId: template.id,
-              context: LotusPrintTemplateRenderContext(
-                document: printable,
-                textRenderer: textRenderer,
+      if (printables != null) {
+        for (final printable in printables) {
+          pdf.addPage(
+            pw.MultiPage(
+              pageTheme: pw.PageTheme(
+                pageFormat: PdfPageFormat.a4,
+                margin: const pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
+                buildBackground: _hasWatermark(printable)
+                    ? (_) => _documentWatermark(printable)
+                    : null,
               ),
-              isDuplicateCopy: duplicateStamp || copy > 0,
+              build: (_) => LotusPrintTemplateRendererRegistry.buildA4(
+                templateId: template.id,
+                context: LotusPrintTemplateRenderContext(
+                  document: printable,
+                  textRenderer: textRenderer,
+                ),
+                isDuplicateCopy: duplicateStamp || copy > 0,
+              ),
             ),
-          ),
-        );
+          );
+        }
         continue;
       }
 
@@ -159,6 +166,31 @@ class GirviInvoicePdfService {
     }
 
     return pdf.save();
+  }
+
+  bool _hasWatermark(LotusPrintableDocument document) {
+    return document.watermarkText.trim().isNotEmpty;
+  }
+
+  pw.Widget _documentWatermark(LotusPrintableDocument document) {
+    return pw.Center(
+      child: pw.Opacity(
+        opacity: 0.11,
+        child: pw.Transform.rotate(
+          angle: -0.45,
+          child: pw.Text(
+            document.watermarkText.trim().toUpperCase(),
+            style: pw.TextStyle(
+              color: PdfColor.fromInt(
+                document.watermarkColorValue ?? 0xFF059669,
+              ),
+              fontSize: 72,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _warmPolicyText(
@@ -303,13 +335,76 @@ class GirviInvoicePdfService {
     );
   }
 
-  LotusPrintableDocument _printableDocument({
+  List<LotusPrintableDocument>? _printableDocuments({
     required ShopPrintDocumentProfile shopProfile,
     required GirviInvoiceDraft draft,
     required GirviBillingModel settings,
     required PrintTemplateDefinition template,
   }) {
+    if (draft.isReleaseReceipt) {
+      final pledgeDraft = draft.copyWith(mode: GirviReceiptMode.pledge);
+      final interestDraft = draft.copyWith(mode: GirviReceiptMode.interest);
+      return [
+        _printableDocument(
+          shopProfile: shopProfile,
+          draft: pledgeDraft,
+          settings: settings,
+          template: template,
+          watermarkText: 'Released',
+          watermarkColorValue: 0xFF059669,
+        ),
+        _printableDocument(
+          shopProfile: shopProfile,
+          draft: interestDraft,
+          settings: settings,
+          template: template,
+        ),
+        _printableDocument(
+          shopProfile: shopProfile,
+          draft: draft,
+          settings: settings,
+          template: template,
+        ),
+      ];
+    }
+    return [
+      _printableDocument(
+        shopProfile: shopProfile,
+        draft: draft,
+        settings: settings,
+        template: template,
+      ),
+    ];
+  }
+
+  LotusPrintableDocument _printableDocument({
+    required ShopPrintDocumentProfile shopProfile,
+    required GirviInvoiceDraft draft,
+    required GirviBillingModel settings,
+    required PrintTemplateDefinition template,
+    String watermarkText = '',
+    int? watermarkColorValue,
+  }) {
     final policySettings = settings.withGirviSafePolicyCopy();
+    if (draft.isReleaseReceipt) {
+      return _releasePrintableDocument(
+        shopProfile: shopProfile,
+        draft: draft,
+        settings: settings,
+        template: template,
+        policySettings: policySettings,
+      );
+    }
+    if (draft.isInterestReceipt) {
+      return _interestPrintableDocument(
+        shopProfile: shopProfile,
+        draft: draft,
+        settings: settings,
+        template: template,
+        policySettings: policySettings,
+      );
+    }
+
     return LotusPrintableDocument(
       shopProfile: shopProfile,
       template: template,
@@ -334,6 +429,366 @@ class GirviInvoicePdfService {
       renderPolicySectionsAsPages: true,
       startPolicySectionsOnNewPage: false,
       showLegalSignatureFooter: _showGirviLegalFooter(policySettings),
+      watermarkText: watermarkText,
+      watermarkColorValue: watermarkColorValue,
+    );
+  }
+
+  LotusPrintableDocument _releasePrintableDocument({
+    required ShopPrintDocumentProfile shopProfile,
+    required GirviInvoiceDraft draft,
+    required GirviBillingModel settings,
+    required PrintTemplateDefinition template,
+    required GirviBillingModel policySettings,
+  }) {
+    final releasePrincipal = draft.releasePrincipal ?? draft.loanAmount;
+    final releaseInterest = draft.releaseInterest ?? 0;
+    final releasePenalty = draft.releasePenalty ?? 0;
+    final releaseDiscount = draft.releaseDiscount ?? 0;
+    final releaseTotal = draft.releaseTotalAmount ??
+        (releasePrincipal + releaseInterest + releasePenalty - releaseDiscount);
+    return LotusPrintableDocument(
+      shopProfile: shopProfile,
+      template: template,
+      profile: PrintTemplatePdfProfile.forTemplate(template.id),
+      title: 'RELEASE RECEIPT',
+      subtitle: 'Final Girvi settlement and item release document',
+      documentNumberLabel: 'Ticket No.',
+      documentNumber: draft.ticketNo,
+      documentDateLabel: 'Release Date',
+      documentDate: _dateFormat.format(draft.releaseDate ?? draft.createdAt),
+      badgeLabel: 'Release',
+      primaryPanel: LotusPrintablePanel(
+        title: 'FINAL SETTLEMENT',
+        compactDetailDividers: true,
+        details: [
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Principal Received',
+            value: _formatAmount(releasePrincipal),
+            highlight: true,
+          ),
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Interest Received',
+            value: _formatAmount(releaseInterest),
+          ),
+          if (releasePenalty > 0)
+            LotusPrintableDetail(
+              iconKey: 'amount',
+              label: 'Penalty / Charges',
+              value: _formatAmount(releasePenalty),
+            ),
+          if (releaseDiscount > 0)
+            LotusPrintableDetail(
+              iconKey: 'amount',
+              label: 'Discount / Waiver',
+              value: _formatAmount(releaseDiscount),
+            ),
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Total Payable Cleared',
+            value: _formatAmount(releaseTotal),
+            highlight: true,
+          ),
+          if ((draft.releasePaymentMode ?? '').trim().isNotEmpty)
+            LotusPrintableDetail(
+              iconKey: 'payment',
+              label: 'Collection Mode',
+              value: draft.releasePaymentMode!.trim(),
+            ),
+        ],
+      ),
+      secondaryPanel: _releaseCustomerTicketPanel(draft, settings),
+      itemTable: _releaseSettlementTable(
+        releasePrincipal: releasePrincipal,
+        releaseInterest: releaseInterest,
+        releasePenalty: releasePenalty,
+        releaseDiscount: releaseDiscount,
+        releaseTotal: releaseTotal,
+      ),
+      settlementPanels: [
+        if (draft.items.isNotEmpty) _releasedItemsPanel(draft),
+        LotusPrintablePanel(
+          title: 'DELIVERY STATUS',
+          details: [
+            LotusPrintableDetail(
+              iconKey: 'status',
+              label: 'Delivery Status',
+              value: _deliveryStatusLabel(draft),
+              highlight: true,
+            ),
+            LotusPrintableDetail(
+              iconKey: 'calendar',
+              label: 'Expected Pickup Date',
+              value: draft.expectedDeliveryDate == null
+                  ? '-'
+                  : _dateFormat.format(draft.expectedDeliveryDate!),
+            ),
+            if (draft.deliveredAt != null)
+              LotusPrintableDetail(
+                iconKey: 'calendar',
+                label: 'Delivered At',
+                value: _dateFormat.format(draft.deliveredAt!),
+                highlight: true,
+              ),
+          ],
+        ),
+        if ((draft.releaseNotes ?? '').trim().isNotEmpty)
+          LotusPrintablePanel(
+            title: 'RELEASE NOTES',
+            details: [
+              LotusPrintableDetail(
+                iconKey: 'notes',
+                label: 'Notes',
+                value: draft.releaseNotes!.trim(),
+                multiline: true,
+              ),
+            ],
+          ),
+      ],
+      policySections: const [],
+      footerMessage: '',
+      showHeaderDocumentMeta: true,
+      showHeaderBadge: true,
+      useFallbackShopName: false,
+      renderPolicySectionsAsPages: true,
+      startPolicySectionsOnNewPage: false,
+      showLegalSignatureFooter: _showGirviLegalFooter(policySettings),
+    );
+  }
+
+  LotusPrintableDocument _interestPrintableDocument({
+    required ShopPrintDocumentProfile shopProfile,
+    required GirviInvoiceDraft draft,
+    required GirviBillingModel settings,
+    required PrintTemplateDefinition template,
+    required GirviBillingModel policySettings,
+  }) {
+    final interestOutstanding = draft.interestOutstanding ?? 0;
+    final principalOutstanding = draft.principalOutstanding ?? draft.loanAmount;
+    final paidTill = draft.lastInterestPaidDate;
+    final interestRows = _interestLedgerRows(draft);
+    return LotusPrintableDocument(
+      shopProfile: shopProfile,
+      template: template,
+      profile: PrintTemplatePdfProfile.forTemplate(template.id),
+      title: 'INTEREST RECEIPT',
+      subtitle: 'Girvi interest collection acknowledgement',
+      documentNumberLabel: 'Ticket No.',
+      documentNumber: draft.ticketNo,
+      documentDateLabel: 'Receipt Date',
+      documentDate: _dateFormat.format(draft.createdAt),
+      badgeLabel: 'Interest',
+      primaryPanel: LotusPrintablePanel(
+        title: 'INTEREST COLLECTION STATUS',
+        compactDetailDividers: true,
+        details: [
+          if (paidTill != null)
+            LotusPrintableDetail(
+              iconKey: 'calendar',
+              label: 'Interest Paid Till',
+              value: _dateFormat.format(paidTill),
+              highlight: true,
+            ),
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Principal Outstanding',
+            value: _formatAmount(principalOutstanding),
+          ),
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Interest Outstanding',
+            value: _formatAmount(interestOutstanding),
+            danger: interestOutstanding > 0,
+            highlight: interestOutstanding <= 0,
+          ),
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Total Outstanding',
+            value: _formatAmount(draft.totalOutstanding),
+            highlight: true,
+          ),
+        ],
+      ),
+      secondaryPanel: _releaseCustomerTicketPanel(draft, settings),
+      itemTable: LotusPrintableTable(
+        title: 'INTEREST RECEIVED LEDGER',
+        headers: const [
+          'Date',
+          'Mode',
+          'Interest Period',
+          'Months',
+          'Interest Received',
+          'Balance',
+        ],
+        rows: interestRows.isEmpty
+            ? const [
+                [
+                  '-',
+                  '-',
+                  'No interest collection recorded',
+                  '-',
+                  '-',
+                  '-',
+                ],
+              ]
+            : interestRows,
+      ),
+      settlementPanels: const [],
+      policySections: const [],
+      footerMessage: '',
+      showHeaderDocumentMeta: true,
+      showHeaderBadge: true,
+      useFallbackShopName: false,
+      renderPolicySectionsAsPages: true,
+      startPolicySectionsOnNewPage: false,
+      showLegalSignatureFooter: _showGirviLegalFooter(policySettings),
+    );
+  }
+
+  static LotusPrintablePanel _releaseCustomerTicketPanel(
+    GirviInvoiceDraft draft,
+    GirviBillingModel settings,
+  ) {
+    return LotusPrintablePanel(
+      title: 'CUSTOMER & LOAN DETAILS',
+      compactDetailDividers: true,
+      details: [
+        LotusPrintableDetail(
+          iconKey: 'customer',
+          label: 'Customer',
+          value: _fallback(draft.customerName, 'Walk-in Customer'),
+          highlight: true,
+        ),
+        if (settings.showCustomerMobile)
+          LotusPrintableDetail(
+            iconKey: 'phone',
+            label: 'Mobile',
+            value: _fallback(draft.customerMobile, '--'),
+          ),
+        LotusPrintableDetail(
+          iconKey: 'invoice',
+          label: 'Ticket No.',
+          value: draft.ticketNo,
+          highlight: true,
+        ),
+        LotusPrintableDetail(
+          iconKey: 'calendar',
+          label: 'Start Date',
+          value: _dateFormat.format(draft.startDate),
+        ),
+        LotusPrintableDetail(
+          iconKey: 'calendar',
+          label: 'Maturity Date',
+          value: _dateFormat.format(draft.maturityDate),
+        ),
+        if (settings.showInterestRate)
+          LotusPrintableDetail(
+            iconKey: 'amount',
+            label: 'Monthly Interest Rate',
+            value: '${_trimNumber(draft.interestRate)}%',
+          ),
+      ],
+    );
+  }
+
+  static LotusPrintableTable _releaseSettlementTable({
+    required double releasePrincipal,
+    required double releaseInterest,
+    required double releasePenalty,
+    required double releaseDiscount,
+    required double releaseTotal,
+  }) {
+    return LotusPrintableTable(
+      title: 'RELEASE SETTLEMENT SUMMARY',
+      headers: const ['S.No', 'Particular', 'Amount'],
+      rows: [
+        ['01', 'Total Principal', _formatAmount(releasePrincipal)],
+        ['02', 'Total Interest', _formatAmount(releaseInterest)],
+        if (releasePenalty > 0)
+          ['03', 'Penalty / Charges', _formatAmount(releasePenalty)],
+        if (releaseDiscount > 0)
+          ['04', 'Discount / Waiver', '- ${_formatAmount(releaseDiscount)}'],
+        ['05', 'Total Paid', _formatAmount(releaseTotal)],
+      ],
+    );
+  }
+
+  static List<List<String>> _interestLedgerRows(GirviInvoiceDraft draft) {
+    final rows = draft.ledgerEntries.where((entry) {
+      final hasInterest = entry.interestAmount > 0;
+      final isInterestType = entry.typeLabel.toLowerCase().contains('interest');
+      return hasInterest || isInterestType;
+    }).toList()
+      ..sort((a, b) {
+        final byDate = a.date.compareTo(b.date);
+        if (byDate != 0) return byDate;
+        return a.typeLabel.compareTo(b.typeLabel);
+      });
+
+    return [
+      for (final entry in rows)
+        [
+          _dateFormat.format(entry.date),
+          entry.modeLabel,
+          _interestCoverageLabel(entry),
+          _monthsLabel(entry.monthsCovered),
+          _formatAmount(
+            entry.interestAmount > 0 ? entry.interestAmount : entry.amount,
+          ),
+          _formatAmount(entry.balanceAfter),
+        ],
+    ];
+  }
+
+  static String _interestCoverageLabel(GirviInvoiceLedgerEntry entry) {
+    final from = entry.interestFromDate;
+    final to = entry.interestToDate;
+    if (from != null && to != null) {
+      return '${_dateFormat.format(from)} to ${_dateFormat.format(to)}';
+    }
+    final months = entry.monthsCovered ?? 0;
+    if (months > 0) return _monthsLabel(months);
+    return 'Interest received';
+  }
+
+  static String _monthsLabel(int? months) {
+    final value = months ?? 0;
+    if (value <= 0) return '-';
+    return '$value month${value == 1 ? '' : 's'}';
+  }
+
+  static String _deliveryStatusLabel(GirviInvoiceDraft draft) {
+    if (draft.deliveredAt != null) return 'Delivered';
+    if (draft.accountStatus.trim().isNotEmpty) return draft.accountStatus;
+    return 'Ready for Delivery';
+  }
+
+  static LotusPrintablePanel _releasedItemsPanel(
+    GirviInvoiceDraft draft, {
+    String title = 'PLEDGED ITEMS RELEASED',
+  }) {
+    final items = draft.items.take(6).toList(growable: false);
+    return LotusPrintablePanel(
+      title: title,
+      compactDetailDividers: true,
+      details: [
+        for (final item in items)
+          LotusPrintableDetail(
+            iconKey: 'item',
+            label: 'Item ${item.serialNo.toString().padLeft(2, '0')}',
+            value:
+                '${item.description} | ${item.metal} ${item.purity} | Net ${_trimNumber(item.netWeight)} g',
+            multiline: true,
+          ),
+        if (draft.items.length > items.length)
+          LotusPrintableDetail(
+            iconKey: 'item',
+            label: 'Additional Items',
+            value: '${draft.items.length - items.length} more item(s)',
+          ),
+      ],
     );
   }
 
@@ -1034,11 +1489,21 @@ class GirviInvoicePdfService {
         first.day == second.day;
   }
 
-  String _amount(double value) {
+  String _amount(double value) => _formatAmount(value);
+
+  static String _formatAmount(double value) {
     final cents = (value * 100).round();
     if (cents % 100 == 0) {
       return 'Rs ${_wholeAmountFormat.format(cents ~/ 100)}';
     }
     return 'Rs ${_amountFormat.format(cents / 100)}';
+  }
+
+  static String _trimNumber(double value) {
+    final rounded = value.roundToDouble();
+    if ((value - rounded).abs() < 0.000001) {
+      return rounded.toInt().toString();
+    }
+    return value.toStringAsFixed(3).replaceFirst(RegExp(r'0+$'), '');
   }
 }

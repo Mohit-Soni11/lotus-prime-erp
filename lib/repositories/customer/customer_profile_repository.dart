@@ -331,6 +331,13 @@ class CustomerProfileRepository {
             ..where((t) => t.girviId.equals(loanId))
             ..orderBy([(t) => OrderingTerm(expression: t.sequenceNo)]))
           .get();
+      final ledgerRows = await (_db.select(_db.girviPayments)
+            ..where((t) => t.girviId.equals(loanId))
+            ..orderBy([
+              (t) => OrderingTerm(expression: t.paymentDate),
+              (t) => OrderingTerm(expression: t.id),
+            ]))
+          .get();
 
       final monthlyInterest = loan.loanAmount * loan.interestRate / 100;
       final totalInterest = monthlyInterest * loan.durationMonths;
@@ -413,6 +420,29 @@ class CustomerProfileRepository {
         totalDue: loan.loanAmount + totalInterest,
         payments: List.unmodifiable(payments),
         disbursementSummary: disbursementSummary,
+        ledgerEntries: List.unmodifiable(
+          ledgerRows.map(
+            (entry) {
+              final type = GirviPaymentType.fromDb(entry.paymentType);
+              final mode = GirviPaymentMode.fromDb(entry.paymentMode);
+              return GirviInvoiceLedgerEntry(
+                date: entry.paymentDate,
+                typeLabel: type.displayName,
+                modeLabel: mode.displayName,
+                amount: entry.amount,
+                principalAmount: entry.principalComponent,
+                interestAmount: entry.interestComponent,
+                discountAmount: entry.principalDiscountComponent +
+                    entry.interestDiscountComponent,
+                balanceAfter: entry.balanceAfter,
+                monthsCovered: entry.monthsCovered,
+                interestFromDate: entry.interestFromDate,
+                interestToDate: entry.interestToDate,
+                notes: entry.notes,
+              );
+            },
+          ),
+        ),
         mode: receiptMode,
         accountStatus: status.displayName,
         releaseDate: loan.releaseDate,
