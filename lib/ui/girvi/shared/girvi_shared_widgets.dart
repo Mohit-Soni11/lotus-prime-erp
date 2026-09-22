@@ -23,6 +23,7 @@ class GirviAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String screenTitle;
   final String screenSubtitle;
   final VoidCallback onBack;
+  final IconData moduleIcon;
   final List<Widget>? actions;
 
   const GirviAppBar({
@@ -30,6 +31,7 @@ class GirviAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.screenTitle,
     required this.screenSubtitle,
     required this.onBack,
+    this.moduleIcon = GirviIcons.moduleIcon,
     this.actions,
   });
 
@@ -50,36 +52,47 @@ class GirviAppBar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 20),
           _VertDivider(),
           const SizedBox(width: 20),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: GirviColors.brandGold,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: GirviColors.brandGold.withValues(alpha: 0.6),
-                        blurRadius: 6,
-                      )
-                    ],
-                  ),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  GirviColors.goldGradientStart,
+                  GirviColors.brandGold,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: GirviColors.brandGold.withValues(alpha: 0.42),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-                const SizedBox(width: 8),
-                Text(screenTitle, style: GirviStyles.shellTitle),
-              ]),
-              const SizedBox(height: 5),
-              const _RadarBadge(),
-            ],
+              ],
+            ),
+            child: Icon(
+              moduleIcon,
+              color: GirviColors.cardBg,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            screenTitle.toUpperCase(),
+            style: GirviStyles.shellTitle.copyWith(
+              fontSize: 18,
+              letterSpacing: 1.2,
+            ),
           ),
           const Spacer(),
-          if (actions != null) ...actions!,
-          const SizedBox(width: 10),
-          _ModuleBadge(subtitle: screenSubtitle),
+          if (actions != null) ...[
+            ...actions!,
+            const SizedBox(width: 12),
+          ],
+          const _RadarBadge(),
         ]),
       ),
     );
@@ -260,50 +273,6 @@ class _RadarBadgeState extends State<_RadarBadge>
                   letterSpacing: 0.8)),
         ),
       ]);
-}
-
-class _ModuleBadge extends StatelessWidget {
-  final String subtitle;
-  const _ModuleBadge({required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: GirviColors.moduleBadgeBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: GirviColors.moduleBadgeBorder),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: GirviColors.brandGold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(GirviIcons.moduleIcon,
-                color: GirviColors.brandGold, size: 14),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(GirviStrings.moduleBadge,
-                  style: GoogleFonts.inter(
-                      color: GirviColors.shellTextTitle,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3)),
-              Text(subtitle,
-                  style: GoogleFonts.inter(
-                      color: GirviColors.shellTextMuted,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w400)),
-            ],
-          ),
-        ]),
-      );
 }
 
 // =============================================================================

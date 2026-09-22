@@ -290,22 +290,12 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                 children: [
                   _StatusPill(label: loan.statusLabel, color: loan.statusColor),
                   SizedBox(
-                    width: 132,
-                    child: _OverviewActionButton(
-                      label: 'Change Bill',
-                      icon: Icons.swap_horiz_rounded,
-                      busy: false,
-                      onTap: _ctrl.showBillSelectionForSelectedCustomer,
-                    ),
-                  ),
-                  SizedBox(
                     width: 160,
                     child: _OverviewActionButton(
-                      label:
-                          _openingReceipt ? 'Opening...' : 'View Girvi Invoice',
+                      label: _openingReceipt ? 'Opening...' : 'View PDF',
                       icon: Icons.visibility_rounded,
                       busy: _openingReceipt,
-                      onTap: () => _previewGirviReceipt(data),
+                      onTap: () => _previewGirviDocumentSet(data),
                     ),
                   ),
                 ],

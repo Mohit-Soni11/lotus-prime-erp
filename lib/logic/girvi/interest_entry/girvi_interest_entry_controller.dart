@@ -530,14 +530,35 @@ class GirviInterestEntryController extends ChangeNotifier {
       _successMessage ??= 'Interest payment recorded successfully.';
       await _reloadAfterMutation(selectedId: selected.loan.id);
       return true;
-    } catch (e) {
-      AppLogger.debug('GirviInterestEntryController.recordPayment error: $e');
+    } on ArgumentError catch (error) {
+      AppLogger.debug(
+        'GirviInterestEntryController.recordPayment validation error: $error',
+      );
+      _errorMessage = _readableError(error.message) ??
+          'Payment entry could not be recorded with the entered values.';
+      return false;
+    } on StateError catch (error) {
+      AppLogger.debug(
+        'GirviInterestEntryController.recordPayment state error: $error',
+      );
+      _errorMessage = _readableError(error.message) ??
+          'Selected Girvi ticket is not ready for this action.';
+      return false;
+    } catch (error) {
+      AppLogger.debug(
+        'GirviInterestEntryController.recordPayment error: $error',
+      );
       _errorMessage = 'Payment entry failed. Please review and try again.';
       return false;
     } finally {
       _isSaving = false;
       notifyListeners();
     }
+  }
+
+  String? _readableError(Object? message) {
+    final value = message?.toString().trim();
+    return value == null || value.isEmpty ? null : value;
   }
 
   Future<void> _loadLoans() async {
