@@ -5,8 +5,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
     return GirviSectionCard(
       icon: GirviIcons.cash,
       title: 'Interest Collection Entry',
-      subtitle:
-          'Record verified interest or release collections for this ticket',
+      subtitle: 'Record verified interest collections and final settlements',
       accent: GirviColors.success,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,10 +76,11 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                       prefixText: 'Rs ',
                     ),
                     right: GirviInputField(
-                      label: 'Interest Received',
+                      label: 'Interest Due',
                       hint: '0',
                       icon: GirviIcons.cash,
                       controller: _releaseInterestCtrl,
+                      enabled: false,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
@@ -219,10 +219,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
               isSaving: _ctrl.isSaving,
               actionLabel: _ctrl.isInterestEntry
                   ? 'Record Interest Collection'
-                  : _ctrl.releaseSettlementValue + 0.01 >=
-                          _ctrl.releaseTotalDueForSelected
-                      ? 'Mark Ready for Delivery'
-                      : 'Record Partial Settlement',
+                  : 'Record Final Settlement',
               actionIcon:
                   _ctrl.isInterestEntry ? GirviIcons.save : GirviIcons.release,
               onRecord: _recordPayment,

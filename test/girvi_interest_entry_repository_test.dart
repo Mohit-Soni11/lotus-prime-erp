@@ -52,8 +52,7 @@ void main() {
     expect(loan.lastInterestPaidDate, periodTo);
   });
 
-  test('records interest ledger payment without stopping future accrual',
-      () async {
+  test('records interest ledger payment with paid-through period', () async {
     final loanId = await _insertLoan(
       db,
       startDate: DateTime(2025, 2, 9),
@@ -77,11 +76,11 @@ void main() {
     expect(payments, hasLength(1));
     expect(payments.single.type, GirviPaymentType.interest);
     expect(payments.single.amount, 20000);
-    expect(payments.single.monthsCovered, 5);
-    expect(payments.single.interestFromDate, isNull);
-    expect(payments.single.interestToDate, isNull);
+    expect(payments.single.monthsCovered, 8);
+    expect(payments.single.interestFromDate, DateTime(2025, 2, 9));
+    expect(payments.single.interestToDate, DateTime(2025, 10, 9));
     expect(payments.single.balanceAfter, 50000);
-    expect(loan!.lastInterestPaidDate, isNull);
+    expect(loan!.lastInterestPaidDate, DateTime(2025, 10, 9));
     expect(loansWithCustomer.single.interestPaidTotal, 20000);
 
     final ledgerSnapshot = GirviLoanWithCustomer(
@@ -102,7 +101,8 @@ void main() {
     expect(ledgerSnapshot.totalPayable, 80000);
   });
 
-  test('allocates extra interest collection as principal advance', () async {
+  test('allocates extra interest collection as future interest credit',
+      () async {
     final now = DateTime.now();
     final startDate = now.subtract(const Duration(days: 5));
     final loanId = await _insertLoan(
@@ -123,7 +123,7 @@ void main() {
     await repository.recordInterestLedgerPayment(
       loanId: loanId,
       paymentMode: GirviPaymentMode.cash,
-      amount: 500,
+      amount: 510,
       paymentDate: now,
       receiptNo: 'GIP-ADV-001',
     );
@@ -133,23 +133,22 @@ void main() {
     final joined =
         (await repository.getLoansWithCustomer(loanId: loanId)).single;
 
-    expect(loan!.loanAmount, 9700);
+    expect(loan!.loanAmount, 10200);
     expect(payments, hasLength(2));
     final advancePayment =
         payments.singleWhere((payment) => payment.receiptNo == 'GIP-ADV-001');
-    expect(advancePayment.amount, 500);
-    expect(advancePayment.interestComponent, 0);
-    expect(advancePayment.principalComponent, 500);
-    expect(advancePayment.monthsCovered, isNull);
-    expect(advancePayment.balanceAfter, 9700);
+    expect(advancePayment.amount, 510);
+    expect(advancePayment.interestComponent, 510);
+    expect(advancePayment.principalComponent, 0);
+    expect(advancePayment.monthsCovered, 1);
+    expect(advancePayment.balanceAfter, 10200);
     expect(joined.originalPrincipal, 10200);
-    expect(joined.interestPaidTotal, 510);
-    expect(joined.principalDue, 9700);
-    expect(joined.totalPayable, 9700);
+    expect(joined.interestPaidTotal, 1020);
+    expect(joined.principalDue, 10200);
+    expect(joined.advanceInterestCredit, greaterThan(0));
   });
 
-  test('repairs no-period interest overpayment into principal advance',
-      () async {
+  test('repairs no-period interest overpayment into interest credit', () async {
     final now = DateTime.now();
     final startDate = now.subtract(const Duration(days: 5));
     final loanId = await _insertLoan(
@@ -192,13 +191,13 @@ void main() {
     final joined =
         (await repository.getLoansWithCustomer(loanId: loanId)).single;
 
-    expect(loan!.loanAmount, 9700);
-    expect(repaired.interestComponent, 0);
-    expect(repaired.principalComponent, 500);
-    expect(repaired.balanceAfter, 9700);
+    expect(loan!.loanAmount, 10200);
+    expect(repaired.interestComponent, 500);
+    expect(repaired.principalComponent, 0);
+    expect(repaired.balanceAfter, 10200);
     expect(joined.originalPrincipal, 10200);
-    expect(joined.interestPaidTotal, 510);
-    expect(joined.principalDue, 9700);
+    expect(joined.interestPaidTotal, 1010);
+    expect(joined.principalDue, 10200);
   });
 
   test('normalizes payment amount and rejects duplicate receipt refs',

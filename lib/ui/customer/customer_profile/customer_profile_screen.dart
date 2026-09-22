@@ -1175,10 +1175,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   Widget _buildGirviRow(CustomerLoanModel loan) {
     final bool active = loan.isActive;
-    final Color statusColor =
-        active ? const Color(0xFFEF4444) : const Color(0xFF10B981);
-    final Color statusBg =
-        active ? const Color(0xFFFEE2E2) : const Color(0xFFD1FAE5);
+    final status = loan.lifecycleStatus;
+    final Color statusColor = _girviStatusColor(status.dbValue);
+    final Color statusBg = _girviStatusBackground(status.dbValue);
+    final Color statusBorder = _girviStatusBorder(status.dbValue);
 
     return Material(
       color: Colors.transparent,
@@ -1192,9 +1192,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             color: CustomerProfileColors.bodyBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: active
-                  ? const Color(0xFFFCA5A5)
-                  : CustomerProfileColors.bodyBorder,
+              color: active ? statusBorder : CustomerProfileColors.bodyBorder,
             ),
           ),
           child: Column(
@@ -1244,7 +1242,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      active ? "ACTIVE" : "RELEASED",
+                      loan.statusLabel,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
@@ -1321,6 +1319,57 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
         ),
       ),
     );
+  }
+
+  Color _girviStatusColor(String status) {
+    switch (status) {
+      case 'OVERDUE':
+        return const Color(0xFFDC2626);
+      case 'PARTIAL_RELEASE':
+        return const Color(0xFFD97706);
+      case 'READY_FOR_DELIVERY':
+        return const Color(0xFF2563EB);
+      case 'RELEASED':
+      case 'AUCTIONED':
+        return const Color(0xFF059669);
+      case 'ACTIVE':
+      default:
+        return const Color(0xFF047857);
+    }
+  }
+
+  Color _girviStatusBackground(String status) {
+    switch (status) {
+      case 'OVERDUE':
+        return const Color(0xFFFEE2E2);
+      case 'PARTIAL_RELEASE':
+        return const Color(0xFFFFF7ED);
+      case 'READY_FOR_DELIVERY':
+        return const Color(0xFFEFF6FF);
+      case 'RELEASED':
+      case 'AUCTIONED':
+        return const Color(0xFFD1FAE5);
+      case 'ACTIVE':
+      default:
+        return const Color(0xFFD1FAE5);
+    }
+  }
+
+  Color _girviStatusBorder(String status) {
+    switch (status) {
+      case 'OVERDUE':
+        return const Color(0xFFFCA5A5);
+      case 'PARTIAL_RELEASE':
+        return const Color(0xFFFCD34D);
+      case 'READY_FOR_DELIVERY':
+        return const Color(0xFF93C5FD);
+      case 'RELEASED':
+      case 'AUCTIONED':
+        return const Color(0xFFA7F3D0);
+      case 'ACTIVE':
+      default:
+        return const Color(0xFFA7F3D0);
+    }
   }
 
   Widget _buildAdvanceList(CustomerProfileModel p) {

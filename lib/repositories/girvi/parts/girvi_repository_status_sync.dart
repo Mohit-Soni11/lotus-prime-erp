@@ -24,7 +24,7 @@ extension GirviRepositoryStatusSync on GirviRepository {
 
   Future<int> syncSettlementStatus() async {
     const tolerance = 0.01;
-    await _repairUnallocatedInterestPrincipalAdvances();
+    await _repairUnallocatedInterestCredits();
     final openLoans = await (_db.select(_db.girviLoans)
           ..where(
             (loan) =>
@@ -115,7 +115,7 @@ extension GirviRepositoryStatusSync on GirviRepository {
     return updatedCount;
   }
 
-  Future<int> _repairUnallocatedInterestPrincipalAdvances() async {
+  Future<int> _repairUnallocatedInterestCredits() async {
     final openLoans = await (_db.select(_db.girviLoans)
           ..where(
             (loan) =>
@@ -137,26 +137,15 @@ extension GirviRepositoryStatusSync on GirviRepository {
           .get();
       if (payments.isEmpty) continue;
 
-      var restoredPrincipal = 0.0;
-      var interestPaid = 0.0;
-      var interestDiscount = 0.0;
-      var repairedPrincipal = 0.0;
-      final updates = <({
-        GirviPayment payment,
-        double principal,
-        double interest,
-        double balance
-      })>[];
+      final updates =
+          <({GirviPayment payment, double interest, double balance})>[];
 
       for (final payment in payments) {
         final type = GirviPaymentType.fromDb(payment.paymentType);
         if (type == GirviPaymentType.partialPrincipal) {
-          restoredPrincipal += payment.amount;
           continue;
         }
         if (type == GirviPaymentType.fullRelease) {
-          interestPaid += payment.interestComponent;
-          interestDiscount += payment.interestDiscountComponent;
           continue;
         }
         if (type != GirviPaymentType.interest &&
@@ -167,8 +156,6 @@ extension GirviRepositoryStatusSync on GirviRepository {
         final hasSplitComponents =
             payment.interestComponent > 0 || payment.principalComponent > 0;
         if (hasSplitComponents) {
-          interestPaid += payment.interestComponent;
-          restoredPrincipal += payment.principalComponent;
           continue;
         }
 
@@ -176,43 +163,14 @@ extension GirviRepositoryStatusSync on GirviRepository {
             payment.interestFromDate == null &&
             payment.interestToDate == null;
         if (!canRepairAsAdvance) {
-          interestPaid += payment.amount;
           continue;
         }
 
-        final originalPrincipal = loan.loanAmount + restoredPrincipal;
-        final grossInterest = GirviLoanModel.calculateCompoundInterest(
-          principal: originalPrincipal,
-          monthlyRatePercent: loan.interestRate,
-          months: GirviLoanModel.chargeableMonthsBetween(
-            loan.startDate,
-            payment.paymentDate,
-          ),
-        );
-        final interestDue = (grossInterest - interestPaid - interestDiscount)
-            .clamp(0.0, double.infinity)
-            .toDouble();
-        final interestComponent = _normalizeMoney(
-          payment.amount.clamp(0.0, interestDue).toDouble(),
-        );
-        final remainingPrincipal = (loan.loanAmount - repairedPrincipal)
-            .clamp(0.0, double.infinity)
-            .toDouble();
-        final principalComponent = _normalizeMoney(
-          (payment.amount - interestComponent)
-              .clamp(0.0, remainingPrincipal)
-              .toDouble(),
-        );
-
-        interestPaid += interestComponent;
-        if (principalComponent <= GirviRepository._moneyTolerance) continue;
-
-        repairedPrincipal += principalComponent;
+        final interestComponent = _normalizeMoney(payment.amount);
         updates.add((
           payment: payment,
-          principal: principalComponent,
           interest: interestComponent,
-          balance: _normalizeMoney(loan.loanAmount - repairedPrincipal),
+          balance: _normalizeMoney(loan.loanAmount),
         ));
       }
 
@@ -223,26 +181,13 @@ extension GirviRepositoryStatusSync on GirviRepository {
                 ..where((payment) => payment.id.equals(update.payment.id)))
               .write(
             GirviPaymentsCompanion(
-              principalComponent: drift.Value(update.principal),
+              principalComponent: const drift.Value(0),
               interestComponent: drift.Value(update.interest),
               balanceAfter: drift.Value(update.balance),
               updatedAt: drift.Value(DateTime.now()),
             ),
           );
         }
-        await updateLoan(
-          loan.id,
-          GirviLoansCompanion(
-            loanAmount: drift.Value(
-              _normalizeMoney(
-                (loan.loanAmount - repairedPrincipal)
-                    .clamp(0.0, double.infinity)
-                    .toDouble(),
-              ),
-            ),
-            updatedAt: drift.Value(DateTime.now()),
-          ),
-        );
       });
       repairedCount += updates.length;
     }

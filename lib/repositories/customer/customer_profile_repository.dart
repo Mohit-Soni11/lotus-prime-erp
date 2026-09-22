@@ -145,8 +145,7 @@ class CustomerProfileRepository {
             status: loan.status,
           ),
       };
-      final loans = loansByNumber.values.toList()
-        ..sort((a, b) => b.startDate.compareTo(a.startDate));
+      final loans = loansByNumber.values.toList()..sort(_compareCustomerLoans);
 
       final advanceOrders = await _fetchAdvanceOrders(customerId);
       final accountCreditBalance =
@@ -174,6 +173,24 @@ class CustomerProfileRepository {
       AppLogger.error("Customer profile fetch error: $e");
       return null;
     }
+  }
+
+  int _compareCustomerLoans(CustomerLoanModel a, CustomerLoanModel b) {
+    if (a.isActive != b.isActive) return a.isActive ? -1 : 1;
+
+    final ticketCompare =
+        _ticketSerial(b.loanNo).compareTo(_ticketSerial(a.loanNo));
+    if (ticketCompare != 0) return ticketCompare;
+
+    final dateCompare = b.startDate.compareTo(a.startDate);
+    if (dateCompare != 0) return dateCompare;
+
+    return b.id.compareTo(a.id);
+  }
+
+  int _ticketSerial(String loanNo) {
+    final match = RegExp(r'(\d+)$').firstMatch(loanNo.trim());
+    return int.tryParse(match?.group(1) ?? '') ?? 0;
   }
 
   Future<CustomerBillDetailModel?> fetchBillDetails({

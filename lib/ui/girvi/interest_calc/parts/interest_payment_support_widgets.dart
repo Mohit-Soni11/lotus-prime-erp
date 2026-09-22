@@ -297,8 +297,9 @@ class _PaymentHistoryRow extends StatelessWidget {
         payment.interestComponent <= 0;
     final color =
         isPrincipalAdvance ? GirviColors.purple : _colorForType(payment.type);
-    final title =
-        isPrincipalAdvance ? 'Principal Advance' : _labelForType(payment.type);
+    final title = isPrincipalAdvance
+        ? 'Principal Collection'
+        : _labelForType(payment.type);
     final period = payment.type == GirviPaymentType.fullRelease
         ? 'Principal Rs ${moneyFmt.format(payment.principalComponent)} | Interest Rs ${moneyFmt.format(payment.interestComponent)}'
         : isPrincipalAdvance
@@ -306,7 +307,7 @@ class _PaymentHistoryRow extends StatelessWidget {
             : payment.interestFromDate != null && payment.interestToDate != null
                 ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
                 : payment.monthsCovered == null
-                    ? 'No interest period'
+                    ? 'Interest credit'
                     : '${payment.monthsCovered} month${payment.monthsCovered == 1 ? '' : 's'}';
 
     return Container(

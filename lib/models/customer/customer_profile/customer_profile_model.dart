@@ -4,6 +4,7 @@
 // -----------------------------------------------------------------------------
 
 import '../../girvi/girvi_loan_model.dart';
+import '../../girvi/girvi_enums.dart';
 import 'package:flutter/foundation.dart';
 
 enum CustomerGender { male, female }
@@ -452,8 +453,10 @@ class CustomerLoanModel {
     required this.status,
   });
 
-  bool get isActive => status.toUpperCase() == 'ACTIVE';
-  bool get isReleased => status.toUpperCase() == 'RELEASED';
+  GirviStatus get lifecycleStatus => GirviStatus.fromDb(status);
+  bool get isActive => lifecycleStatus.isOpen;
+  bool get isReleased => lifecycleStatus.isClosed;
+  String get statusLabel => lifecycleStatus.displayName.toUpperCase();
 
   double get accruedInterest {
     final from = lastInterestPaidDate ?? startDate;

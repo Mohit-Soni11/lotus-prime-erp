@@ -766,7 +766,8 @@ class GirviInterestEntryController extends ChangeNotifier {
     final coveredMonths = interestMonthsCoveredByAmount;
     _monthsInput = coveredMonths <= 0 ? '0' : coveredMonths.toString();
     final loan = _selectedLoan?.loan;
-    final from = _interestFromDate ?? loan?.startDate;
+    final from =
+        _interestFromDate ?? loan?.lastInterestPaidDate ?? loan?.startDate;
     if (loan != null && from != null && coveredMonths > 0) {
       _interestFromDate = from;
       _interestToDate = GirviLoanModel.addChargeableMonths(from, coveredMonths);

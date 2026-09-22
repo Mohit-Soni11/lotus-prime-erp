@@ -14,6 +14,7 @@ import '../../features/print_templates/domain/print_template_registry.dart';
 import '../../features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
+import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
 
 part 'girvi_invoice_pdf_render_sections.dart';
@@ -41,6 +42,7 @@ class GirviInvoicePdfService {
   static final _wholeAmountFormat = NumberFormat('#,##,##0', 'en_IN');
   static final _compactAmountFormat = NumberFormat('#,##,##0', 'en_IN');
   static final _dateFormat = DateFormat('dd MMM yyyy');
+  static final _monthFormat = DateFormat('MMM yyyy');
 
   static const _navy = PdfColor.fromInt(0xFF172437);
   static const _navySoft = PdfColor.fromInt(0xFF22344E);
@@ -177,19 +179,54 @@ class GirviInvoicePdfService {
   }
 
   pw.Widget _documentWatermark(LotusPrintableDocument document) {
+    final color = PdfColor.fromInt(
+      document.watermarkColorValue ?? 0xFF059669,
+    );
+    final text = document.watermarkText.trim().toUpperCase();
+
     return pw.Center(
       child: pw.Opacity(
-        opacity: 0.11,
+        opacity: 0.18,
         child: pw.Transform.rotate(
           angle: -0.45,
-          child: pw.Text(
-            document.watermarkText.trim().toUpperCase(),
-            style: pw.TextStyle(
-              color: PdfColor.fromInt(
-                document.watermarkColorValue ?? 0xFF059669,
-              ),
-              fontSize: 72,
-              fontWeight: pw.FontWeight.bold,
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(
+              horizontal: 32,
+              vertical: 14,
+            ),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: color, width: 3),
+              borderRadius: pw.BorderRadius.circular(10),
+            ),
+            child: pw.Column(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                pw.Text(
+                  text,
+                  style: pw.TextStyle(
+                    color: color,
+                    fontSize: 76,
+                    fontWeight: pw.FontWeight.bold,
+                    letterSpacing: 3,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Container(
+                  height: 2,
+                  width: 230,
+                  color: color,
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  'FINAL SETTLEMENT COMPLETE',
+                  style: pw.TextStyle(
+                    color: color,
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

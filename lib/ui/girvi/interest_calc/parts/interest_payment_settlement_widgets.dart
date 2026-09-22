@@ -486,7 +486,7 @@ class _ReleaseSettlementBalanceStrip extends StatelessWidget {
                 )
               else
                 const _SettlementSummaryRow(
-                  label: 'Interest Received',
+                  label: 'Interest Paid',
                   value: 'Not received',
                   color: GirviColors.textMuted,
                 ),
@@ -673,10 +673,10 @@ class _SettlementSummaryTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: GirviColors.textDark,
               shape: BoxShape.circle,
             ),
           ),
@@ -687,9 +687,9 @@ class _SettlementSummaryTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: GirviColors.textBody,
-                fontSize: 12,
-                fontWeight: strong ? FontWeight.w900 : FontWeight.w800,
+                color: GirviColors.textDark,
+                fontSize: strong ? 13.5 : 13,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -701,8 +701,8 @@ class _SettlementSummaryTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: GoogleFonts.manrope(
-                color: color,
-                fontSize: strong ? 14.5 : 13.5,
+                color: GirviColors.textDark,
+                fontSize: strong ? 16 : 14.5,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -923,7 +923,7 @@ class _ReadyForDeliveryPanel extends StatelessWidget {
                 wide: true,
               ),
               _FocusMetric(
-                label: 'Interest Received',
+                label: 'Interest Collected',
                 value: 'Rs ${moneyFmt.format(interestCollected)}',
                 color: GirviColors.warning,
                 wide: true,

@@ -58,10 +58,12 @@ void _appendLifecycleReceiptPages({
             profile: profile,
             duplicateCopy: duplicateCopy,
           ),
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 14),
           _girviReleaseSettlement(draft, profile),
-          pw.SizedBox(height: 16),
+          pw.SizedBox(height: 12),
           _girviDeliveryStatus(draft, profile),
+          pw.SizedBox(height: 12),
+          _girviReleaseAcknowledgement(profile),
         ],
       ),
     );
@@ -77,7 +79,6 @@ bool _shouldShowReleasedWatermark(GirviInvoiceDraft draft) {
       draft.releaseDate != null;
 }
 
-const _receiptMuted = PdfColor.fromInt(0xFF4B5563);
 const _receiptGreen = PdfColor.fromInt(0xFF059669);
 const _receiptRed = PdfColor.fromInt(0xFFDC2626);
 
@@ -119,10 +120,10 @@ pw.Widget _girviAppendixHeader({
                 borderRadius: pw.BorderRadius.circular(profile.radius),
               ),
               child: pw.Text(
-                title == 'INTEREST RECEIPT' ? '%' : 'REL',
+                title == 'INTEREST RECEIPT' ? 'Rs' : 'REL',
                 style: pw.TextStyle(
                   color: accent,
-                  fontSize: title == 'INTEREST RECEIPT' ? 16 : 10,
+                  fontSize: title == 'INTEREST RECEIPT' ? 12 : 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -156,8 +157,8 @@ pw.Widget _girviAppendixHeader({
                   pw.Text(
                     subtitle,
                     style: pw.TextStyle(
-                      color: _receiptMuted,
-                      fontSize: profile.bodyFontSize + 1.5,
+                      color: profile.bodyTextColor,
+                      fontSize: profile.bodyFontSize + 2.4,
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
@@ -171,7 +172,7 @@ pw.Widget _girviAppendixHeader({
           spacing: 8,
           runSpacing: 8,
           children: [
-            _girviHeaderMetric('Ticket No.', draft.ticketNo, profile),
+            _girviHeaderMetric('Invoice No.', draft.ticketNo, profile),
             _girviHeaderMetric(
               'Customer',
               GirviInvoicePdfService._fallback(
@@ -201,8 +202,8 @@ pw.Widget _girviHeaderMetric(
   PrintTemplatePdfProfile profile,
 ) {
   return pw.Container(
-    width: 118,
-    padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    width: 120,
+    padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 9),
     decoration: pw.BoxDecoration(
       color: profile.panelColor,
       border: pw.Border.all(
@@ -217,18 +218,18 @@ pw.Widget _girviHeaderMetric(
         pw.Text(
           label,
           style: pw.TextStyle(
-            color: _receiptMuted,
-            fontSize: profile.labelFontSize - 0.8,
+            color: profile.bodyTextColor,
+            fontSize: profile.labelFontSize + 0.8,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
-        pw.SizedBox(height: 3),
+        pw.SizedBox(height: 4),
         pw.Text(
           value,
           maxLines: 2,
           style: pw.TextStyle(
             color: profile.bodyTextColor,
-            fontSize: profile.bodyFontSize + 1,
+            fontSize: profile.bodyFontSize + 1.8,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -256,7 +257,7 @@ pw.Widget _girviStatusPill(
     child: pw.Text(
       label,
       style: pw.TextStyle(
-        color: color,
+        color: width == null ? color : profile.bodyTextColor,
         fontSize:
             width == null ? profile.labelFontSize : profile.labelFontSize - 1,
         fontWeight: pw.FontWeight.bold,
@@ -277,36 +278,40 @@ pw.Widget _girviInterestSummary(
   );
   final coveredMonths =
       entries.fold<int>(0, (sum, entry) => sum + (entry.monthsCovered ?? 0));
+  final interestMonthLabel = coveredMonths > 0
+      ? '$coveredMonths month${coveredMonths == 1 ? '' : 's'}'
+      : _interestCollectionMonthSummary(entries);
   final interestOutstanding = draft.interestOutstanding ?? 0;
-  return pw.Row(
-    children: [
-      pw.Expanded(
-        child: _girviSummaryCard(
-          'Interest Received',
-          GirviInvoicePdfService._formatAmount(totalInterest),
-          profile,
-        ),
+  final cards = <pw.Widget>[
+    pw.Expanded(
+      child: _girviSummaryCard(
+        'Interest Received',
+        GirviInvoicePdfService._formatAmount(totalInterest),
+        profile,
       ),
-      pw.SizedBox(width: 10),
-      pw.Expanded(
-        child: _girviSummaryCard(
-          'Months Covered',
-          coveredMonths > 0
-              ? '$coveredMonths month${coveredMonths == 1 ? '' : 's'}'
-              : '-',
-          profile,
-        ),
+    ),
+    pw.SizedBox(width: 10),
+    pw.Expanded(
+      child: _girviSummaryCard(
+        'Interest Months',
+        interestMonthLabel,
+        profile,
       ),
+    ),
+    if (interestOutstanding > 0.005) ...[
       pw.SizedBox(width: 10),
       pw.Expanded(
         child: _girviSummaryCard(
           'Interest Outstanding',
           GirviInvoicePdfService._formatAmount(interestOutstanding),
           profile,
-          valueColor: interestOutstanding > 0 ? _receiptRed : null,
+          valueColor: _receiptRed,
         ),
       ),
     ],
+  ];
+  return pw.Row(
+    children: cards,
   );
 }
 
@@ -317,7 +322,7 @@ pw.Widget _girviSummaryCard(
   PdfColor? valueColor,
 }) {
   return pw.Container(
-    padding: pw.EdgeInsets.all(profile.panelPadding),
+    padding: pw.EdgeInsets.all(profile.panelPadding + 2),
     decoration: pw.BoxDecoration(
       color: profile.panelColor,
       border: pw.Border.all(
@@ -332,8 +337,8 @@ pw.Widget _girviSummaryCard(
         pw.Text(
           label,
           style: pw.TextStyle(
-            color: _receiptMuted,
-            fontSize: profile.labelFontSize,
+            color: profile.bodyTextColor,
+            fontSize: profile.labelFontSize + 1.5,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -342,7 +347,7 @@ pw.Widget _girviSummaryCard(
           value,
           style: pw.TextStyle(
             color: valueColor ?? profile.bodyTextColor,
-            fontSize: profile.titleFontSize - 2,
+            fontSize: profile.titleFontSize,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -355,40 +360,54 @@ pw.Widget _girviInterestLedgerTable(
   List<GirviInvoiceLedgerEntry> entries,
   PrintTemplatePdfProfile profile,
 ) {
+  final showBalance = entries.any((entry) => entry.balanceAfter.abs() > 0.005);
   final rows = entries.map((entry) {
     final amount =
         entry.interestAmount > 0 ? entry.interestAmount : entry.amount;
-    return [
+    final row = [
       GirviInvoicePdfService._dateFormat.format(entry.date),
       entry.modeLabel,
       _interestCoverageLabel(entry),
-      _monthsLabel(entry.monthsCovered),
+      _interestMonthLabel(entry),
       GirviInvoicePdfService._formatAmount(amount),
-      GirviInvoicePdfService._formatAmount(entry.balanceAfter),
     ];
+    if (showBalance) {
+      row.add(GirviInvoicePdfService._formatAmount(entry.balanceAfter));
+    }
+    return row;
   }).toList(growable: false);
+  final headers = <String>[
+    'Date',
+    'Mode',
+    'Interest Period',
+    'Months',
+    'Interest Received',
+    if (showBalance) 'Balance',
+  ];
+  final columnWidths = <int, pw.TableColumnWidth>{
+    0: const pw.FixedColumnWidth(72),
+    1: const pw.FixedColumnWidth(64),
+    2: const pw.FlexColumnWidth(1.7),
+    3: const pw.FixedColumnWidth(76),
+    4: const pw.FixedColumnWidth(94),
+    if (showBalance) 5: const pw.FixedColumnWidth(78),
+  };
 
   return _girviSection(
     title: 'INTEREST RECEIVED LEDGER',
     profile: profile,
     child: pw.TableHelper.fromTextArray(
-      headers: const [
-        'Date',
-        'Mode',
-        'Interest Period',
-        'Months',
-        'Interest Received',
-        'Balance',
-      ],
+      headers: headers,
       data: rows,
       headerStyle: pw.TextStyle(
         color: profile.tableHeaderTextColor,
-        fontSize: profile.tableFontSize,
+        fontSize: profile.tableFontSize + 1.3,
         fontWeight: pw.FontWeight.bold,
       ),
       cellStyle: pw.TextStyle(
         color: profile.bodyTextColor,
-        fontSize: profile.tableFontSize,
+        fontSize: profile.tableFontSize + 1.15,
+        fontWeight: pw.FontWeight.bold,
       ),
       headerDecoration: pw.BoxDecoration(color: profile.tableHeaderColor),
       border: pw.TableBorder.all(
@@ -398,17 +417,10 @@ pw.Widget _girviInterestLedgerTable(
       cellAlignment: pw.Alignment.centerLeft,
       headerAlignment: pw.Alignment.centerLeft,
       cellPadding: pw.EdgeInsets.symmetric(
-        horizontal: profile.tableCellPadding,
-        vertical: profile.tableCellPadding + 1.5,
+        horizontal: profile.tableCellPadding + 1,
+        vertical: profile.tableCellPadding + 2.2,
       ),
-      columnWidths: const {
-        0: pw.FixedColumnWidth(68),
-        1: pw.FixedColumnWidth(62),
-        2: pw.FlexColumnWidth(1.6),
-        3: pw.FixedColumnWidth(58),
-        4: pw.FixedColumnWidth(82),
-        5: pw.FixedColumnWidth(74),
-      },
+      columnWidths: columnWidths,
     ),
   );
 }
@@ -432,18 +444,13 @@ pw.Widget _girviReleaseSettlement(
 
   final rows = <List<String>>[
     [
-      'Principal Received',
-      GirviInvoicePdfService._formatAmount(releasePrincipal)
-    ],
-    [
       'Interest Already Collected',
       GirviInvoicePdfService._formatAmount(interestCollected)
     ],
     [
-      'Interest Due at Release',
+      'Interest Collected at Release',
       GirviInvoicePdfService._formatAmount(releaseInterest)
     ],
-    ['Total Interest', GirviInvoicePdfService._formatAmount(totalInterest)],
     if (releasePenalty > 0)
       [
         'Penalty / Charges',
@@ -454,7 +461,6 @@ pw.Widget _girviReleaseSettlement(
         'Discount / Waiver',
         '- ${GirviInvoicePdfService._formatAmount(releaseDiscount)}',
       ],
-    ['Total Paid', GirviInvoicePdfService._formatAmount(releaseTotal)],
     if ((draft.releasePaymentMode ?? '').trim().isNotEmpty)
       ['Collection Mode', draft.releasePaymentMode!.trim()],
   ];
@@ -492,9 +498,117 @@ pw.Widget _girviReleaseSettlement(
           ],
         ),
         pw.SizedBox(height: 12),
-        _girviKeyValueTable(rows, profile),
+        if (rows.isNotEmpty) _girviKeyValueTable(rows, profile),
+        _girviCompoundInterestBreakdown(draft, profile),
       ],
     ),
+  );
+}
+
+pw.Widget _girviCompoundInterestBreakdown(
+  GirviInvoiceDraft draft,
+  PrintTemplatePdfProfile profile,
+) {
+  final releaseDate = draft.releaseDate ?? draft.createdAt;
+  final chargeableMonths = GirviLoanModel.chargeableMonthsBetween(
+    draft.startDate,
+    releaseDate,
+  );
+  if (chargeableMonths <= GirviLoanModel.compoundCycleMonths) {
+    return pw.SizedBox.shrink();
+  }
+
+  final lines = GirviLoanModel.calculateCompoundInterestBreakdown(
+    principal: draft.loanAmount,
+    monthlyRatePercent: draft.interestRate,
+    months: chargeableMonths,
+  );
+  if (lines.isEmpty) return pw.SizedBox.shrink();
+
+  final rows = lines.map((line) {
+    final elapsedStart =
+        GirviLoanModel.compoundCycleMonths * (line.cycleNumber - 1);
+    final periodLabel = line.cycleNumber == 1
+        ? 'First ${line.months} month${line.months == 1 ? '' : 's'}'
+        : 'After $elapsedStart months - ${line.months} month${line.months == 1 ? '' : 's'}';
+    final nextBase = line.capitalizedAfterLine
+        ? GirviInvoicePdfService._formatAmount(
+            line.principalBase + line.interestAmount,
+          )
+        : '-';
+
+    return <String>[
+      periodLabel,
+      GirviInvoicePdfService._formatAmount(line.principalBase),
+      GirviInvoicePdfService._formatAmount(line.monthlyInterest),
+      GirviInvoicePdfService._formatAmount(line.interestAmount),
+      line.capitalizedAfterLine ? 'Yes - next base $nextBase' : 'No',
+    ];
+  }).toList();
+
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+    children: [
+      pw.SizedBox(height: 12),
+      _girviSection(
+        title: 'COMPOUND INTEREST BREAKDOWN',
+        profile: profile,
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              'Interest is capitalized after every 12 chargeable months. The next cycle calculates interest on principal plus capitalized interest.',
+              style: pw.TextStyle(
+                color: profile.bodyTextColor,
+                fontSize: profile.bodyFontSize + 0.9,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            pw.TableHelper.fromTextArray(
+              context: null,
+              headers: const [
+                'Period',
+                'Base Principal',
+                'Monthly Interest',
+                'Interest',
+                'Capitalized',
+              ],
+              data: rows,
+              headerStyle: pw.TextStyle(
+                color: profile.tableHeaderTextColor,
+                fontSize: profile.tableFontSize + 1,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              cellStyle: pw.TextStyle(
+                color: profile.bodyTextColor,
+                fontSize: profile.tableFontSize + 0.7,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              headerDecoration:
+                  pw.BoxDecoration(color: profile.tableHeaderColor),
+              border: pw.TableBorder.all(
+                color: profile.tableBorderColor,
+                width: profile.tableBorderWidth,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: pw.EdgeInsets.symmetric(
+                horizontal: profile.tableCellPadding,
+                vertical: profile.tableCellPadding + 1.5,
+              ),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(1.55),
+                1: pw.FlexColumnWidth(1.15),
+                2: pw.FlexColumnWidth(1.15),
+                3: pw.FlexColumnWidth(1.05),
+                4: pw.FlexColumnWidth(1.45),
+              },
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
 
@@ -547,7 +661,7 @@ pw.Widget _girviDeliveryStatus(
             pw.Text(
               'Pledged items cleared for handover.',
               style: pw.TextStyle(
-                color: _receiptMuted,
+                color: profile.bodyTextColor,
                 fontSize: profile.bodyFontSize + 1,
                 fontWeight: pw.FontWeight.bold,
               ),
@@ -556,6 +670,87 @@ pw.Widget _girviDeliveryStatus(
         ),
         pw.SizedBox(height: 12),
         _girviKeyValueTable(rows, profile),
+      ],
+    ),
+  );
+}
+
+pw.Widget _girviReleaseAcknowledgement(PrintTemplatePdfProfile profile) {
+  return pw.Container(
+    width: double.infinity,
+    padding: pw.EdgeInsets.all(profile.panelPadding + 3),
+    decoration: pw.BoxDecoration(
+      color: profile.panelColor,
+      border: pw.Border.all(
+        color: profile.borderColor,
+        width: profile.borderWidth,
+      ),
+      borderRadius: pw.BorderRadius.circular(profile.radius),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'ACKNOWLEDGEMENT',
+          style: pw.TextStyle(
+            color: profile.bodyTextColor,
+            fontSize: profile.documentTitleFontSize - 2,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.SizedBox(height: 8),
+        pw.Row(
+          children: [
+            pw.Expanded(
+              child: _girviSignatureBox('Customer Signature', profile),
+            ),
+            pw.SizedBox(width: 12),
+            pw.Expanded(
+              child: _girviSignatureBox('Shop Stamp', profile),
+            ),
+            pw.SizedBox(width: 12),
+            pw.Expanded(
+              child: _girviSignatureBox('Authorised Signature', profile),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+pw.Widget _girviSignatureBox(
+  String label,
+  PrintTemplatePdfProfile profile,
+) {
+  return pw.Container(
+    height: 44,
+    padding: const pw.EdgeInsets.fromLTRB(10, 8, 10, 8),
+    decoration: pw.BoxDecoration(
+      color: profile.panelColor,
+      border: pw.Border.all(
+        color: profile.borderColor,
+        width: profile.borderWidth,
+      ),
+      borderRadius: pw.BorderRadius.circular(profile.radius),
+    ),
+    child: pw.Column(
+      mainAxisAlignment: pw.MainAxisAlignment.end,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          height: 0.8,
+          color: profile.bodyTextColor,
+        ),
+        pw.SizedBox(height: 6),
+        pw.Text(
+          label,
+          style: pw.TextStyle(
+            color: profile.bodyTextColor,
+            fontSize: profile.labelFontSize + 0.6,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
       ],
     ),
   );
@@ -584,7 +779,7 @@ pw.Widget _girviSection({
           title,
           style: pw.TextStyle(
             color: profile.bodyTextColor,
-            fontSize: profile.documentTitleFontSize - 4,
+            fontSize: profile.documentTitleFontSize - 2,
             fontWeight: pw.FontWeight.bold,
           ),
         ),
@@ -633,9 +828,9 @@ pw.Widget _girviKeyValueCell(
     child: pw.Text(
       text,
       style: pw.TextStyle(
-        color: strong ? profile.bodyTextColor : _receiptMuted,
-        fontSize: profile.bodyFontSize,
-        fontWeight: strong ? pw.FontWeight.bold : pw.FontWeight.normal,
+        color: profile.bodyTextColor,
+        fontSize: profile.bodyFontSize + 1.3,
+        fontWeight: pw.FontWeight.bold,
       ),
     ),
   );
@@ -705,11 +900,29 @@ String _interestCoverageLabel(GirviInvoiceLedgerEntry entry) {
   }
   final months = entry.monthsCovered ?? 0;
   if (months > 0) return _monthsLabel(months);
-  return 'No interest period';
+  return 'Recorded on collection date';
 }
 
 String _monthsLabel(int? months) {
   final value = months ?? 0;
   if (value <= 0) return '-';
   return '$value month${value == 1 ? '' : 's'}';
+}
+
+String _interestMonthLabel(GirviInvoiceLedgerEntry entry) {
+  final months = entry.monthsCovered ?? 0;
+  if (months > 0) return _monthsLabel(months);
+  return GirviInvoicePdfService._monthFormat.format(entry.date);
+}
+
+String _interestCollectionMonthSummary(
+  List<GirviInvoiceLedgerEntry> entries,
+) {
+  if (entries.isEmpty) return '-';
+  final months = entries
+      .map((entry) => GirviInvoicePdfService._monthFormat.format(entry.date))
+      .toSet()
+      .toList(growable: false);
+  if (months.length == 1) return months.single;
+  return '${months.first} +${months.length - 1}';
 }

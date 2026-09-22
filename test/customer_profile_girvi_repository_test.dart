@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/models/girvi/girvi_enums.dart';
+import 'package:lotus_erp/repositories/customer/customer_list_repository.dart';
 import 'package:lotus_erp/repositories/customer/customer_profile_repository.dart';
 
 void main() {
@@ -53,6 +55,78 @@ void main() {
     expect(profile.loans.first.loanAmount, 25000);
     expect(profile.loans.last.loanNo, 'OLD/2025/00001');
     expect(profile.activeLoans, 2);
+  });
+
+  test('customer profile and list count every open Girvi status consistently',
+      () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Reyansh Soni',
+            mobile: '9304479436',
+          ),
+        );
+
+    Future<void> insertGirvi({
+      required String ticketNo,
+      required GirviStatus status,
+      required DateTime startDate,
+      double amount = 10000,
+    }) {
+      return db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: ticketNo,
+              customerId: customerId,
+              itemDescription: 'Gold chain',
+              grossWeight: const Value(10),
+              loanAmount: Value(amount),
+              interestRate: const Value(5),
+              startDate: Value(startDate),
+              status: Value(status.dbValue),
+            ),
+          );
+    }
+
+    await insertGirvi(
+      ticketNo: 'GRV-0006',
+      status: GirviStatus.released,
+      startDate: DateTime(2026, 9, 20),
+      amount: 6000,
+    );
+    await insertGirvi(
+      ticketNo: 'GRV-0005',
+      status: GirviStatus.overdue,
+      startDate: DateTime(2026, 9, 18),
+      amount: 5000,
+    );
+    await insertGirvi(
+      ticketNo: 'GRV-0008',
+      status: GirviStatus.active,
+      startDate: DateTime(2026, 9, 19),
+      amount: 8000,
+    );
+    await insertGirvi(
+      ticketNo: 'GRV-0007',
+      status: GirviStatus.readyForDelivery,
+      startDate: DateTime(2026, 9, 21),
+      amount: 7000,
+    );
+
+    final profile =
+        await CustomerProfileRepository(db: db).fetchProfile(customerId);
+    final customers = await CustomerListRepository(db: db).getAllCustomers();
+    final customer = customers.singleWhere((c) => c.id == customerId);
+
+    expect(profile, isNot(null));
+    expect(profile!.loans.map((loan) => loan.loanNo), [
+      'GRV-0008',
+      'GRV-0007',
+      'GRV-0005',
+      'GRV-0006',
+    ]);
+    expect(profile.activeLoans, 3);
+    expect(profile.completedLoans, 1);
+    expect(profile.totalActiveLoanAmount, 20000);
+    expect(customer.activeGirviCount, 3);
   });
 
   test('customer profile includes active booking advance orders', () async {

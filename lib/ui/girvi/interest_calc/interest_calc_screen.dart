@@ -228,12 +228,13 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     final selected = _ctrl.selectedLoan;
     if (selected == null) return false;
     final principal = _ctrl.releasePrincipalDueForSelected;
-    final interest = math.max(
-      _ctrl.netInterestDueForSelected - _ctrl.releaseDiscount,
+    final totalInterest = _ctrl.netInterestDueForSelected;
+    final discount = _ctrl.releaseDiscount;
+    final interestAfterWaiver = math.max(
+      totalInterest - discount,
       0.0,
     );
-    final totalPayable = principal + interest;
-    final received = _ctrl.releaseEntryTotal;
+    final totalPayable = principal + interestAfterWaiver;
 
     return await showDialog<bool>(
           context: context,
@@ -281,7 +282,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Confirm that total payable has been received for ticket ${selected.loan.ticketNo}.',
+                      'Confirm that the final receivable amount has been collected for ticket ${selected.loan.ticketNo}.',
                       style: GoogleFonts.inter(
                         color: GirviColors.textBody,
                         fontSize: 13,
@@ -299,17 +300,21 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
                     ),
                     _DeliveryConfirmLine(
                       label: 'Total Interest',
-                      value: 'Rs ${_moneyFmt.format(interest)}',
+                      value: 'Rs ${_moneyFmt.format(totalInterest)}',
                     ),
                     _DeliveryConfirmLine(
-                      label: 'Total Payable',
+                      label: 'Interest Waiver',
+                      value: discount > 0
+                          ? '- Rs ${_moneyFmt.format(discount)}'
+                          : 'Rs 0',
+                      valueColor: discount > 0
+                          ? GirviColors.success
+                          : GirviColors.textMuted,
+                    ),
+                    _DeliveryConfirmLine(
+                      label: 'Total Receivable',
                       value: 'Rs ${_moneyFmt.format(totalPayable)}',
                       valueColor: GirviColors.textDark,
-                    ),
-                    _DeliveryConfirmLine(
-                      label: 'Received Amount',
-                      value: 'Rs ${_moneyFmt.format(received)}',
-                      valueColor: GirviColors.success,
                     ),
                     const SizedBox(height: 12),
                     Container(

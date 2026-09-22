@@ -13,14 +13,16 @@ enum GirviStatus {
   final String displayName;
 
   static GirviStatus fromDb(String value) {
+    final normalized = value.trim().toUpperCase();
     return GirviStatus.values.firstWhere(
-      (status) => status.dbValue == value,
+      (status) => status.dbValue == normalized,
       orElse: () => GirviStatus.active,
     );
   }
 
   bool get isActive => this == GirviStatus.active;
   bool get isOverdue => this == GirviStatus.overdue;
+  bool get isOpen => !isClosed;
   bool get isClosed =>
       this == GirviStatus.released || this == GirviStatus.auctioned;
 }

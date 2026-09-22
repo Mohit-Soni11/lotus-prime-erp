@@ -11,6 +11,7 @@ import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
+import '../../models/girvi/girvi_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class CustomerListRepository {
@@ -137,12 +138,8 @@ class CustomerListRepository {
       final aggregate = aggregates[loan.customerId];
       if (aggregate == null) continue;
 
-      final status = loan.status.trim().toUpperCase();
-      final isOpen = status == 'ACTIVE' ||
-          status == 'OVERDUE' ||
-          status == 'PARTIAL_RELEASE' ||
-          status == 'READY_FOR_DELIVERY';
-      if (isOpen) aggregate.activeGirviCount += 1;
+      final status = GirviStatus.fromDb(loan.status);
+      if (status.isOpen) aggregate.activeGirviCount += 1;
 
       final activityDate = _latestDate([
         loan.updatedAt,
