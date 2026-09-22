@@ -288,6 +288,27 @@ void main() {
     }
   });
 
+  test('Girvi release receipt renders compound interest on interest appendix',
+      () async {
+    final outputPath = Platform.environment['GIRVI_COMPOUND_RELEASE_OUTPUT'];
+    final service = GirviInvoicePdfService();
+    final bytes = await service.build(
+      draft: _compoundReleaseDraft,
+      format: GirviInvoiceFormat.a4,
+      settings: GirviBillingModel.defaults.copyWith(
+        printTermsAndConditions: false,
+        printCustomerDeclaration: false,
+      ),
+    );
+
+    expect(bytes.length, greaterThan(1000));
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+    expect(_pdfPageCount(bytes), greaterThanOrEqualTo(3));
+    if (outputPath != null && outputPath.isNotEmpty) {
+      await File(outputPath).writeAsBytes(bytes);
+    }
+  });
+
   test('Girvi invoice keeps table and photo flow stable across pages',
       () async {
     final photoPath = _previewPhotoPath();
@@ -545,6 +566,51 @@ final _releaseDraft = GirviInvoiceDraft(
   releaseInterest: 12000,
   releaseDiscount: 500,
   releaseTotalAmount: 51500,
+  releasePaymentMode: 'Cash',
+  releasedBy: 'Test Staff',
+);
+
+final _compoundReleaseDraft = GirviInvoiceDraft(
+  ticketNo: 'GRV-COMPOUND-001',
+  createdAt: DateTime(2026, 9, 21),
+  customerName: 'Compound Release Customer',
+  customerMobile: '9304479436',
+  customerCity: 'Patna, Bihar',
+  customerAddress: 'East Lakshmi Nagar, Khemnichak, Patna, Bihar 800027',
+  items: _simpleDraft.items,
+  totalValue: 64600,
+  loanAmount: 10000,
+  interestRate: 5,
+  durationMonths: 9,
+  startDate: DateTime(2022, 2, 21),
+  maturityDate: DateTime(2022, 11, 21),
+  monthlyInterest: 500,
+  totalInterest: 78474,
+  totalDue: 88474,
+  payments: const [
+    GirviInvoicePayment(label: 'Cash', amount: 10000),
+  ],
+  disbursementSummary: 'Cash Rs 10,000.00',
+  ledgerEntries: [
+    GirviInvoiceLedgerEntry(
+      date: DateTime(2026, 9, 21),
+      typeLabel: 'Girvi Release',
+      modeLabel: 'Cash',
+      amount: 78474,
+      interestAmount: 78474,
+      balanceAfter: 10000,
+      monthsCovered: 55,
+      interestFromDate: DateTime(2022, 2, 21),
+      interestToDate: DateTime(2026, 9, 21),
+    ),
+  ],
+  mode: GirviReceiptMode.release,
+  accountStatus: 'Ready for Delivery',
+  releaseDate: DateTime(2026, 9, 21),
+  expectedDeliveryDate: DateTime(2026, 9, 21),
+  releasePrincipal: 10000,
+  releaseInterest: 78474,
+  releaseTotalAmount: 88474,
   releasePaymentMode: 'Cash',
   releasedBy: 'Test Staff',
 );

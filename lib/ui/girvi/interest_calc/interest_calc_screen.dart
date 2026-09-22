@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,9 +9,11 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
+import 'package:lotus_erp/core/printing/lotus_pdf_print_dispatcher.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../logic/girvi/interest_entry/girvi_interest_entry_controller.dart';
+import '../../../logic/girvi/girvi_interest_period_text.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';
@@ -614,7 +618,7 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
             ElevatedButton.icon(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
-                await _shareGirviReleaseDocumentForLoan(loanId);
+                await _saveGirviReleaseDocumentForLoan(loanId);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: GirviColors.info,
@@ -721,29 +725,67 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
       if (bytes == null) {
         return;
       }
-      await Printing.layoutPdf(
-        name: 'girvi_release_$loanId.pdf',
-        onLayout: (_) async => bytes,
+
+      final fileName = _girviReleaseDocumentFileName(loanId);
+      final result = await const LotusPdfPrintDispatcher().dispatch(
+        context: context,
+        bytes: bytes,
+        documentName: fileName,
+        outputFileName: fileName,
+        printerPickerTitle: 'Select Girvi Document Printer',
+        virtualSaveDialogTitle: 'Save Girvi Print Output As',
       );
+      if (!mounted) return;
+      if (!result.completed && result != LotusPdfPrintResult.cancelled) {
+        _showInfoFeedback('Girvi document could not be printed.');
+      }
     } catch (_) {
       if (mounted) _showInfoFeedback('Girvi document could not be printed.');
     }
   }
 
-  Future<void> _shareGirviReleaseDocumentForLoan(int loanId) async {
+  Future<void> _saveGirviReleaseDocumentForLoan(int loanId) async {
     try {
       final bytes = await _buildGirviReleaseDocumentPdfForLoan(loanId);
       if (!mounted) return;
       if (bytes == null) {
         return;
       }
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'girvi_release_$loanId.pdf',
+
+      final selectedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export Girvi Document PDF',
+        fileName: _girviReleaseDocumentFileName(loanId),
+        type: FileType.custom,
+        allowedExtensions: const ['pdf'],
+        lockParentWindow: true,
       );
+      if (selectedPath == null) return;
+
+      final outputPath = _ensurePdfExtension(selectedPath);
+      final file = File(outputPath);
+      final parentDir = file.parent;
+      if (!await parentDir.exists()) {
+        await parentDir.create(recursive: true);
+      }
+
+      await file.writeAsBytes(bytes, flush: true);
+      if (mounted) {
+        AppFeedback.success(
+          context,
+          message: 'Girvi document PDF saved successfully.',
+        );
+      }
     } catch (_) {
       if (mounted) _showInfoFeedback('Girvi document could not be saved.');
     }
+  }
+
+  String _girviReleaseDocumentFileName(int loanId) {
+    return 'girvi_release_$loanId.pdf';
+  }
+
+  String _ensurePdfExtension(String path) {
+    return path.toLowerCase().endsWith('.pdf') ? path : '$path.pdf';
   }
 
   Future<Uint8List?> _buildGirviTemplatePdfBytes({

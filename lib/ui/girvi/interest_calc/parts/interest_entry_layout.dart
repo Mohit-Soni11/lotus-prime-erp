@@ -350,6 +350,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
             const SizedBox(height: 12),
             _InterestBreakdownPanel(
               lines: interestBreakdown,
+              loanStartDate: loan.startDate,
               totalMonths: totalMonths,
               elapsedPeriod: elapsedPeriod,
               totalInterest: grossInterestAccrued,

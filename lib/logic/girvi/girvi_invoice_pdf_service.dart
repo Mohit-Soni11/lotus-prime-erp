@@ -16,6 +16,7 @@ import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
+import 'girvi_interest_period_text.dart';
 
 part 'girvi_invoice_pdf_render_sections.dart';
 part 'girvi_invoice_pdf_table_sections.dart';

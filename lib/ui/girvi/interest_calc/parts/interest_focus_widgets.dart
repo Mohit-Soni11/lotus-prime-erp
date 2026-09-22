@@ -237,6 +237,7 @@ class _FocusMetric extends StatelessWidget {
 
 class _InterestBreakdownPanel extends StatelessWidget {
   final List<GirviInterestBreakdownLine> lines;
+  final DateTime loanStartDate;
   final int totalMonths;
   final GirviElapsedPeriod elapsedPeriod;
   final double totalInterest;
@@ -244,6 +245,7 @@ class _InterestBreakdownPanel extends StatelessWidget {
 
   const _InterestBreakdownPanel({
     required this.lines,
+    required this.loanStartDate,
     required this.totalMonths,
     required this.elapsedPeriod,
     required this.totalInterest,
@@ -337,6 +339,7 @@ class _InterestBreakdownPanel extends StatelessWidget {
           for (var i = 0; i < lines.length; i++) ...[
             _InterestBreakdownRow(
               line: lines[i],
+              loanStartDate: loanStartDate,
               moneyFmt: moneyFmt,
             ),
             if (i != lines.length - 1) const SizedBox(height: 9),
@@ -349,18 +352,22 @@ class _InterestBreakdownPanel extends StatelessWidget {
 
 class _InterestBreakdownRow extends StatelessWidget {
   final GirviInterestBreakdownLine line;
+  final DateTime loanStartDate;
   final NumberFormat moneyFmt;
 
   const _InterestBreakdownRow({
     required this.line,
+    required this.loanStartDate,
     required this.moneyFmt,
   });
 
   @override
   Widget build(BuildContext context) {
-    final title = line.cycleNumber == 1
-        ? 'First ${line.months} month${line.months == 1 ? '' : 's'}'
-        : 'After ${GirviLoanModel.compoundCycleMonths * (line.cycleNumber - 1)} months - ${line.months} month${line.months == 1 ? '' : 's'}';
+    final period = GirviInterestPeriodText.forBreakdownLine(
+      loanStartDate: loanStartDate,
+      line: line,
+    );
+    final title = period.cycleLabel;
     final subtitle =
         'Base Rs ${moneyFmt.format(line.principalBase)} | Monthly Rs ${moneyFmt.format(line.monthlyInterest)}';
 
@@ -397,13 +404,24 @@ class _InterestBreakdownRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
+                  period.monthRangeLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.info,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: GirviColors.textDark,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
+                    color: GirviColors.textBody,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],

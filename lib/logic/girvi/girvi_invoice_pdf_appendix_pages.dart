@@ -31,6 +31,8 @@ void _appendLifecycleReceiptPages({
           pw.SizedBox(height: 18),
           _girviInterestSummary(draft, interestEntries, profile),
           pw.SizedBox(height: 16),
+          _girviCompoundInterestCalculation(draft, profile),
+          if (_hasCompoundInterestCalculation(draft)) pw.SizedBox(height: 16),
           _girviInterestLedgerTable(interestEntries, profile),
         ],
       ),
@@ -120,10 +122,10 @@ pw.Widget _girviAppendixHeader({
                 borderRadius: pw.BorderRadius.circular(profile.radius),
               ),
               child: pw.Text(
-                title == 'INTEREST RECEIPT' ? 'Rs' : 'REL',
+                title == 'INTEREST RECEIPT' ? '%' : 'REL',
                 style: pw.TextStyle(
                   color: accent,
-                  fontSize: title == 'INTEREST RECEIPT' ? 12 : 10,
+                  fontSize: title == 'INTEREST RECEIPT' ? 18 : 10,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -157,7 +159,7 @@ pw.Widget _girviAppendixHeader({
                   pw.Text(
                     subtitle,
                     style: pw.TextStyle(
-                      color: profile.bodyTextColor,
+                      color: profile.headerPrimaryTextColor,
                       fontSize: profile.bodyFontSize + 2.4,
                       fontWeight: pw.FontWeight.bold,
                     ),
@@ -430,12 +432,23 @@ pw.Widget _girviReleaseSettlement(
   PrintTemplatePdfProfile profile,
 ) {
   final releasePrincipal = draft.releasePrincipal ?? draft.loanAmount;
-  final interestCollected = _girviInterestLedgerEntries(draft).fold<double>(
+  final interestEntries = _girviInterestLedgerEntries(draft);
+  final releaseEntryInterest = interestEntries
+      .where((entry) => entry.typeLabel.toLowerCase().contains('release'))
+      .fold<double>(
+        0,
+        (sum, entry) =>
+            sum +
+            (entry.interestAmount > 0 ? entry.interestAmount : entry.amount),
+      );
+  final ledgerInterestTotal = interestEntries.fold<double>(
     0,
     (sum, entry) =>
         sum + (entry.interestAmount > 0 ? entry.interestAmount : entry.amount),
   );
-  final releaseInterest = draft.releaseInterest ?? 0;
+  final releaseInterest = draft.releaseInterest ?? releaseEntryInterest;
+  final interestCollected =
+      (ledgerInterestTotal - releaseEntryInterest).clamp(0.0, double.infinity);
   final releasePenalty = draft.releasePenalty ?? 0;
   final releaseDiscount = draft.releaseDiscount ?? 0;
   final releaseTotal = draft.releaseTotalAmount ??
@@ -443,14 +456,16 @@ pw.Widget _girviReleaseSettlement(
   final totalInterest = interestCollected + releaseInterest;
 
   final rows = <List<String>>[
-    [
-      'Interest Already Collected',
-      GirviInvoicePdfService._formatAmount(interestCollected)
-    ],
-    [
-      'Interest Collected at Release',
-      GirviInvoicePdfService._formatAmount(releaseInterest)
-    ],
+    if (interestCollected > 0.005)
+      [
+        'Interest Already Collected',
+        GirviInvoicePdfService._formatAmount(interestCollected)
+      ],
+    if (releaseInterest > 0.005)
+      [
+        'Interest Collected at Release',
+        GirviInvoicePdfService._formatAmount(releaseInterest)
+      ],
     if (releasePenalty > 0)
       [
         'Penalty / Charges',
@@ -499,13 +514,21 @@ pw.Widget _girviReleaseSettlement(
         ),
         pw.SizedBox(height: 12),
         if (rows.isNotEmpty) _girviKeyValueTable(rows, profile),
-        _girviCompoundInterestBreakdown(draft, profile),
       ],
     ),
   );
 }
 
-pw.Widget _girviCompoundInterestBreakdown(
+bool _hasCompoundInterestCalculation(GirviInvoiceDraft draft) {
+  final releaseDate = draft.releaseDate ?? draft.createdAt;
+  final chargeableMonths = GirviLoanModel.chargeableMonthsBetween(
+    draft.startDate,
+    releaseDate,
+  );
+  return chargeableMonths > GirviLoanModel.compoundCycleMonths;
+}
+
+pw.Widget _girviCompoundInterestCalculation(
   GirviInvoiceDraft draft,
   PrintTemplatePdfProfile profile,
 ) {
@@ -526,89 +549,85 @@ pw.Widget _girviCompoundInterestBreakdown(
   if (lines.isEmpty) return pw.SizedBox.shrink();
 
   final rows = lines.map((line) {
-    final elapsedStart =
-        GirviLoanModel.compoundCycleMonths * (line.cycleNumber - 1);
-    final periodLabel = line.cycleNumber == 1
-        ? 'First ${line.months} month${line.months == 1 ? '' : 's'}'
-        : 'After $elapsedStart months - ${line.months} month${line.months == 1 ? '' : 's'}';
-    final nextBase = line.capitalizedAfterLine
-        ? GirviInvoicePdfService._formatAmount(
-            line.principalBase + line.interestAmount,
-          )
-        : '-';
+    final period = GirviInterestPeriodText.forBreakdownLine(
+      loanStartDate: draft.startDate,
+      line: line,
+    );
+    final totalWithInterest = GirviInvoicePdfService._formatAmount(
+      line.principalBase + line.interestAmount,
+    );
 
     return <String>[
-      periodLabel,
+      line.cycleNumber.toString().padLeft(2, '0'),
+      '${period.cycleLabel}\n${period.monthRangeLabel}',
       GirviInvoicePdfService._formatAmount(line.principalBase),
-      GirviInvoicePdfService._formatAmount(line.monthlyInterest),
+      '${GirviInvoicePdfService._formatAmount(line.monthlyInterest)}\n'
+          '${_ratePercentLabel(line.monthlyRatePercent)} monthly',
       GirviInvoicePdfService._formatAmount(line.interestAmount),
-      line.capitalizedAfterLine ? 'Yes - next base $nextBase' : 'No',
+      line.capitalizedAfterLine
+          ? 'Capitalized\n$totalWithInterest'
+          : 'Final cycle\n$totalWithInterest',
     ];
   }).toList();
 
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-    children: [
-      pw.SizedBox(height: 12),
-      _girviSection(
-        title: 'COMPOUND INTEREST BREAKDOWN',
-        profile: profile,
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'Interest is capitalized after every 12 chargeable months. The next cycle calculates interest on principal plus capitalized interest.',
-              style: pw.TextStyle(
-                color: profile.bodyTextColor,
-                fontSize: profile.bodyFontSize + 0.9,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-            pw.SizedBox(height: 10),
-            pw.TableHelper.fromTextArray(
-              context: null,
-              headers: const [
-                'Period',
-                'Base Principal',
-                'Monthly Interest',
-                'Interest',
-                'Capitalized',
-              ],
-              data: rows,
-              headerStyle: pw.TextStyle(
-                color: profile.tableHeaderTextColor,
-                fontSize: profile.tableFontSize + 1,
-                fontWeight: pw.FontWeight.bold,
-              ),
-              cellStyle: pw.TextStyle(
-                color: profile.bodyTextColor,
-                fontSize: profile.tableFontSize + 0.7,
-                fontWeight: pw.FontWeight.bold,
-              ),
-              headerDecoration:
-                  pw.BoxDecoration(color: profile.tableHeaderColor),
-              border: pw.TableBorder.all(
-                color: profile.tableBorderColor,
-                width: profile.tableBorderWidth,
-              ),
-              cellAlignment: pw.Alignment.centerLeft,
-              headerAlignment: pw.Alignment.centerLeft,
-              cellPadding: pw.EdgeInsets.symmetric(
-                horizontal: profile.tableCellPadding,
-                vertical: profile.tableCellPadding + 1.5,
-              ),
-              columnWidths: const {
-                0: pw.FlexColumnWidth(1.55),
-                1: pw.FlexColumnWidth(1.15),
-                2: pw.FlexColumnWidth(1.15),
-                3: pw.FlexColumnWidth(1.05),
-                4: pw.FlexColumnWidth(1.45),
-              },
-            ),
-          ],
+  return _girviSection(
+    title: 'COMPOUND INTEREST CALCULATION',
+    profile: profile,
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Each completed 12-month cycle is added to the next principal base.',
+          style: pw.TextStyle(
+            color: profile.bodyTextColor,
+            fontSize: profile.bodyFontSize + 1.2,
+            fontWeight: pw.FontWeight.bold,
+          ),
         ),
-      ),
-    ],
+        pw.SizedBox(height: 10),
+        pw.TableHelper.fromTextArray(
+          context: null,
+          headers: const [
+            'No.',
+            'Interest Cycle',
+            'Base Principal',
+            'Monthly Interest',
+            'Total Interest',
+            'Next Base',
+          ],
+          data: rows,
+          headerStyle: pw.TextStyle(
+            color: profile.tableHeaderTextColor,
+            fontSize: profile.tableFontSize + 1,
+            fontWeight: pw.FontWeight.bold,
+          ),
+          cellStyle: pw.TextStyle(
+            color: profile.bodyTextColor,
+            fontSize: profile.tableFontSize + 0.75,
+            fontWeight: pw.FontWeight.bold,
+          ),
+          headerDecoration: pw.BoxDecoration(color: profile.tableHeaderColor),
+          border: pw.TableBorder.all(
+            color: profile.tableBorderColor,
+            width: profile.tableBorderWidth,
+          ),
+          cellAlignment: pw.Alignment.centerLeft,
+          headerAlignment: pw.Alignment.centerLeft,
+          cellPadding: pw.EdgeInsets.symmetric(
+            horizontal: profile.tableCellPadding,
+            vertical: profile.tableCellPadding + 1.5,
+          ),
+          columnWidths: const {
+            0: pw.FlexColumnWidth(0.45),
+            1: pw.FlexColumnWidth(1.65),
+            2: pw.FlexColumnWidth(1.35),
+            3: pw.FlexColumnWidth(1.05),
+            4: pw.FlexColumnWidth(1.05),
+            5: pw.FlexColumnWidth(1.15),
+          },
+        ),
+      ],
+    ),
   );
 }
 
@@ -619,21 +638,18 @@ pw.Widget _girviDeliveryStatus(
   final delivered = draft.deliveredAt != null;
   final status = delivered ? 'Delivered' : 'Ready for Delivery';
   final rows = <List<String>>[
-    ['Delivery Status', status],
-    [
-      'Release Date',
-      GirviInvoicePdfService._dateFormat.format(
-        draft.releaseDate ?? draft.createdAt,
-      ),
-    ],
-    [
-      'Expected Pickup Date',
-      draft.expectedDeliveryDate == null
-          ? '-'
-          : GirviInvoicePdfService._dateFormat.format(
-              draft.expectedDeliveryDate!,
-            ),
-    ],
+    if (draft.releaseDate != null)
+      [
+        'Release Date',
+        GirviInvoicePdfService._dateFormat.format(draft.releaseDate!),
+      ],
+    if (draft.expectedDeliveryDate != null)
+      [
+        'Expected Pickup Date',
+        GirviInvoicePdfService._dateFormat.format(
+          draft.expectedDeliveryDate!,
+        ),
+      ],
     if (draft.deliveredAt != null)
       [
         'Delivered At',
@@ -669,7 +685,7 @@ pw.Widget _girviDeliveryStatus(
           ],
         ),
         pw.SizedBox(height: 12),
-        _girviKeyValueTable(rows, profile),
+        if (rows.isNotEmpty) _girviKeyValueTable(rows, profile),
       ],
     ),
   );
@@ -907,6 +923,12 @@ String _monthsLabel(int? months) {
   final value = months ?? 0;
   if (value <= 0) return '-';
   return '$value month${value == 1 ? '' : 's'}';
+}
+
+String _ratePercentLabel(double value) {
+  if (value % 1 == 0) return '${value.toStringAsFixed(0)}%';
+  final text = value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+  return '$text%';
 }
 
 String _interestMonthLabel(GirviInvoiceLedgerEntry entry) {
