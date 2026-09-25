@@ -118,7 +118,7 @@ class _GirviLedgerLoadingState extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(
-              'Loading Girvi Ledger',
+              'Loading Pledge Ledger',
               style: GoogleFonts.manrope(
                 color: GirviColors.textDark,
                 fontSize: 15,

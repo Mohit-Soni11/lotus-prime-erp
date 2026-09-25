@@ -570,6 +570,7 @@ class GirviSummaryModel {
   final int totalAuctioned;
   final double totalPrincipalActive;
   final double totalInterestDue;
+  final double totalOverdueReceivable;
   final double totalPortfolioValue;
   final double totalCollectedThisMonth;
 
@@ -581,6 +582,7 @@ class GirviSummaryModel {
     required this.totalAuctioned,
     required this.totalPrincipalActive,
     required this.totalInterestDue,
+    this.totalOverdueReceivable = 0,
     required this.totalPortfolioValue,
     required this.totalCollectedThisMonth,
   });
@@ -593,6 +595,7 @@ class GirviSummaryModel {
         totalAuctioned: 0,
         totalPrincipalActive: 0,
         totalInterestDue: 0,
+        totalOverdueReceivable: 0,
         totalPortfolioValue: 0,
         totalCollectedThisMonth: 0,
       );

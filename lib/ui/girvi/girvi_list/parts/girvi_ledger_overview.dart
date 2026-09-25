@@ -6,34 +6,34 @@ extension _GirviLedgerOverview on _GirviListScreenState {
     final openTickets = summary.totalActive +
         summary.totalOverdue +
         summary.totalReadyForDelivery;
-    final closedTickets = summary.totalReleased + summary.totalAuctioned;
 
     final metrics = [
       _OverviewMetricData(
-        label: 'Active Principal',
+        label: 'Principal Outstanding',
         value: _money(summary.totalPrincipalActive),
-        caption: '$openTickets open tickets',
+        caption: '$openTickets open pledge accounts',
         icon: GirviIcons.loanTerms,
         color: GirviColors.brandGold,
       ),
       _OverviewMetricData(
-        label: 'Interest Due',
+        label: 'Interest Receivable',
         value: _money(summary.totalInterestDue),
-        caption: 'Accrued unpaid interest',
+        caption: 'Total unpaid interest to collect',
         icon: GirviIcons.interestRate,
         color: GirviColors.warning,
       ),
       _OverviewMetricData(
-        label: 'Overdue',
-        value: summary.totalOverdue.toString(),
-        caption: 'Tickets needing action',
-        icon: GirviIcons.overdue,
+        label: 'Overdue Receivable',
+        value: _money(summary.totalOverdueReceivable),
+        caption:
+            '${summary.totalOverdue} overdue account${summary.totalOverdue == 1 ? '' : 's'}',
+        icon: Icons.event_busy_rounded,
         color: GirviColors.danger,
       ),
       _OverviewMetricData(
-        label: 'Collected This Month',
+        label: 'This Month Collection',
         value: _money(summary.totalCollectedThisMonth),
-        caption: '$closedTickets delivered or auctioned',
+        caption: 'Interest and release receipts',
         icon: GirviIcons.cash,
         color: GirviColors.success,
       ),
@@ -47,8 +47,8 @@ extension _GirviLedgerOverview on _GirviListScreenState {
           _LedgerSectionHeader(
             icon: GirviIcons.list,
             color: GirviColors.brandGold,
-            title: 'Portfolio Overview',
-            subtitle: 'Live position of the Girvi loan book',
+            title: 'Pledge Position',
+            subtitle: 'Principal exposure, interest receivable and collections',
             trailing: _LedgerStatusBadge(
               icon: GirviIcons.active,
               label: '${summary.totalActive} active',
@@ -103,71 +103,95 @@ class _OverviewMetricData {
   });
 }
 
-class _OverviewMetricTile extends StatelessWidget {
+class _OverviewMetricTile extends StatefulWidget {
   final _OverviewMetricData metric;
 
   const _OverviewMetricTile({required this.metric});
 
   @override
+  State<_OverviewMetricTile> createState() => _OverviewMetricTileState();
+}
+
+class _OverviewMetricTileState extends State<_OverviewMetricTile> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final metric = widget.metric;
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 114),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: metric.color.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: metric.color.withValues(alpha: 0.18)),
-        ),
-        child: Row(
-          children: [
-            _LedgerIconBox(icon: metric.icon, color: metric.color),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    metric.label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textDark,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      height: 1.15,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      metric.value,
-                      style: GoogleFonts.manrope(
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          padding: EdgeInsets.all(_hovered ? 17 : 16),
+          decoration: BoxDecoration(
+            color: metric.color.withValues(alpha: _hovered ? 0.10 : 0.06),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: metric.color.withValues(alpha: _hovered ? 0.30 : 0.18),
+            ),
+            boxShadow: [
+              if (_hovered)
+                BoxShadow(
+                  color: metric.color.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+            ],
+          ),
+          child: Row(
+            children: [
+              _LedgerIconBox(icon: metric.icon, color: metric.color),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      metric.label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
                         color: GirviColors.textDark,
-                        fontSize: 23,
+                        fontSize: 13,
                         fontWeight: FontWeight.w900,
+                        height: 1.15,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    metric.caption,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textBody,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        metric.value,
+                        style: GoogleFonts.manrope(
+                          color: GirviColors.textDark,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      metric.caption,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textBody,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

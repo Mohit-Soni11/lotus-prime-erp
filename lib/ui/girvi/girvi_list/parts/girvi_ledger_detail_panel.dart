@@ -15,7 +15,7 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
               ? null
               : _LedgerPrimaryButton(
                   icon: Icons.add_rounded,
-                  label: 'New Girvi',
+                  label: 'New Pledge',
                   onTap: _openNewGirvi,
                 ),
         ),
@@ -32,8 +32,8 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
         _LedgerSectionHeader(
           icon: _loanStatusIcon(loan),
           color: loan.statusColor,
-          title: 'Ticket Details',
-          subtitle: 'Selected Girvi record',
+          title: 'Account Profile',
+          subtitle: 'Selected pledge account',
           trailing: _LedgerStatusBadge(
             icon: _loanStatusIcon(loan),
             label: loan.statusLabel,
@@ -54,7 +54,7 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
         ),
         const SizedBox(height: 14),
         _DetailSection(
-          title: 'Financial Position',
+          title: 'Financial Summary',
           children: [
             _DetailInfoRow(
               label: 'Original Principal',
@@ -79,7 +79,7 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
         ),
         const SizedBox(height: 12),
         _DetailSection(
-          title: 'Pledged Item Details',
+          title: 'Pledged Asset Details',
           children: [
             _DetailInfoRow(label: 'Item Name', value: loan.itemDescription),
             _DetailInfoRow(label: 'Item Count', value: '${loan.itemCount}'),

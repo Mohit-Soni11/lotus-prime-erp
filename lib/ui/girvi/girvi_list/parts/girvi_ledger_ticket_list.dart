@@ -4,8 +4,8 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
   Widget _buildTicketRegister({required bool compact}) {
     final loans = _controller.loans;
     final title = _controller.filter == GirviFilter.all
-        ? 'Ticket Register'
-        : '${_controller.filter.displayName} Tickets';
+        ? 'Pledge Account Register'
+        : '${_controller.filter.displayName} Accounts';
 
     final list = ListView.separated(
       shrinkWrap: compact,
@@ -46,7 +46,7 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
               color: GirviColors.info,
               title: title,
               subtitle:
-                  '${loans.length} visible record${loans.length == 1 ? '' : 's'}',
+                  '${loans.length} visible account${loans.length == 1 ? '' : 's'}',
             ),
           ),
           const Divider(height: 1, color: GirviColors.divider),
@@ -55,8 +55,8 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
               height: compact ? 280 : 360,
               child: _LedgerEmptyState(
                 icon: GirviIcons.search,
-                title: 'No Matching Tickets',
-                message: 'Change the search text or select another filter.',
+                title: 'No Matching Accounts',
+                message: 'Change the search text or select another view.',
                 action: _searchController.text.isEmpty
                     ? null
                     : _LedgerPrimaryButton(

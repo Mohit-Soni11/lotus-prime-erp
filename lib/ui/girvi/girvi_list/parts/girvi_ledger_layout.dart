@@ -80,13 +80,13 @@ extension _GirviLedgerLayout on _GirviListScreenState {
     return _LedgerSurface(
       child: _LedgerEmptyState(
         icon: GirviIcons.moduleIcon,
-        title: 'No Girvi Tickets',
-        message: 'Create the first Girvi ticket to start the ledger.',
+        title: 'No Pledge Accounts',
+        message: 'Create the first pledge account to start the ledger.',
         action: widget.onNewGirvi == null
             ? null
             : _LedgerPrimaryButton(
                 icon: Icons.add_rounded,
-                label: 'New Girvi',
+                label: 'New Pledge',
                 onTap: _openNewGirvi,
               ),
       ),

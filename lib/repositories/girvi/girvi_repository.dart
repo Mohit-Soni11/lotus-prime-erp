@@ -233,6 +233,7 @@ class GirviRepository {
     int totalAuctioned = 0;
     double totalPrincipal = 0;
     double totalInterestDue = 0;
+    double totalOverdueReceivable = 0;
     double totalValue = 0;
     final now = DateTime.now();
 
@@ -241,8 +242,12 @@ class GirviRepository {
       switch (loan.girviStatus) {
         case GirviStatus.active:
         case GirviStatus.partialRelease:
-          if (loan.isOverdue) {
+          final overdue = loan.maturityDate != null &&
+              now.isAfter(loan.maturityDate!) &&
+              item.totalPayable > 0;
+          if (overdue) {
             totalOverdue++;
+            totalOverdueReceivable += item.totalPayable;
           } else {
             totalActive++;
           }
@@ -259,6 +264,7 @@ class GirviRepository {
           totalOverdue++;
           totalPrincipal += item.principalDue;
           totalInterestDue += item.netInterestDue;
+          totalOverdueReceivable += item.totalPayable;
           totalValue += loan.totalValue;
       }
     }
@@ -278,6 +284,7 @@ class GirviRepository {
       totalAuctioned: totalAuctioned,
       totalPrincipalActive: totalPrincipal,
       totalInterestDue: totalInterestDue,
+      totalOverdueReceivable: totalOverdueReceivable,
       totalPortfolioValue: totalValue,
       totalCollectedThisMonth: monthlyCollected,
     );

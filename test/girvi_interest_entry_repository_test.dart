@@ -259,6 +259,31 @@ void main() {
     expect(summary.totalActive, 1);
     expect(summary.totalPrincipalActive, 7500);
     expect(summary.totalInterestDue, 300);
+    expect(summary.totalOverdueReceivable, 0);
+  });
+
+  test('ledger summary reports overdue receivable as payable amount', () async {
+    final now = DateTime.now();
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 10000,
+      interestRate: 5,
+      startDate: now.subtract(const Duration(days: 40)),
+    );
+
+    await repository.updateLoan(
+      loanId,
+      GirviLoansCompanion(
+        maturityDate: drift.Value(now.subtract(const Duration(days: 1))),
+      ),
+    );
+
+    final summary = await repository.getSummary();
+
+    expect(summary.totalOverdue, 1);
+    expect(summary.totalPrincipalActive, 10000);
+    expect(summary.totalInterestDue, 1000);
+    expect(summary.totalOverdueReceivable, 11000);
   });
 
   test('ready for delivery tickets are not counted as released tickets',

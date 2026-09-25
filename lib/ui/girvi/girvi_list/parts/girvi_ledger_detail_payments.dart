@@ -28,7 +28,7 @@ class _PaymentHistoryPanel extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Payment Ledger',
+                'Transaction Ledger',
                 style: GoogleFonts.manrope(
                   color: GirviColors.textDark,
                   fontSize: 14,

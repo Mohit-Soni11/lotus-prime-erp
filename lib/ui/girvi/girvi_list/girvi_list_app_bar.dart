@@ -101,11 +101,6 @@ class _GirviListAppBarState extends State<GirviListAppBar>
                   GirviStrings.listTitle,
                   style: GirviStyles.shellTitle.copyWith(fontSize: 18),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Loan control register',
-                  style: GirviStyles.shellMuted,
-                ),
               ],
             ),
             const Spacer(),

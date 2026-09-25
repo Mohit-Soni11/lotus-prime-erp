@@ -15,7 +15,7 @@ extension _GirviLedgerControls on _GirviListScreenState {
               ? null
               : _LedgerPrimaryButton(
                   icon: Icons.add_rounded,
-                  label: 'New Girvi',
+                  label: 'New Pledge',
                   onTap: _openNewGirvi,
                 );
 
@@ -84,7 +84,7 @@ class _LedgerSearchField extends StatelessWidget {
         decoration: InputDecoration(
           filled: true,
           fillColor: GirviColors.inputBg,
-          hintText: 'Search ticket, customer, mobile or item',
+          hintText: 'Search account, customer, mobile or pledged item',
           hintStyle: GoogleFonts.inter(
             color: GirviColors.textMuted,
             fontSize: 14,

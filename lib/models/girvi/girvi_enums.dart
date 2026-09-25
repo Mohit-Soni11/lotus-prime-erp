@@ -115,7 +115,7 @@ enum GirviPaymentType {
   interest('INTEREST', 'Interest Payment'),
   partialPrincipal('PARTIAL_PRINCIPAL', 'Partial Principal'),
   partialInterest('PARTIAL_INTEREST', 'Partial Interest'),
-  fullRelease('FULL_RELEASE', 'Girvi Release'),
+  fullRelease('FULL_RELEASE', 'Final Release'),
   penalty('PENALTY', 'Penalty / Fine');
 
   const GirviPaymentType(this.dbValue, this.displayName);

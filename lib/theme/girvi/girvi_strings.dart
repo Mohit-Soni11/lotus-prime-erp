@@ -20,8 +20,8 @@ class GirviStrings {
   // Screen titles
   static const String newGirviTitle = 'NEW GIRVI TICKET';
   static const String newGirviSub = 'Pawn loan registration';
-  static const String listTitle = 'GIRVI LEDGER';
-  static const String listSub = 'All pawn loans';
+  static const String listTitle = 'PLEDGE LEDGER';
+  static const String listSub = 'Secured pledge accounts';
   static const String releaseTitle = 'GIRVI RELEASE';
   static const String releaseSub = 'Redeem & settle';
   static const String calcTitle = 'INTEREST ENTRY';
@@ -52,11 +52,11 @@ class GirviStrings {
   static const String descRelease = 'Final settlement breakdown';
 
   // Messages
-  static const String successGirviSaved = 'Girvi ticket created successfully!';
+  static const String successGirviSaved = 'Pledge ticket created successfully!';
   static const String successReleased = 'Girvi released successfully!';
   static const String errorCustomerRequired = 'Please select a customer';
   static const String errorWeightZero = 'Net weight must be greater than zero';
   static const String errorAmountZero = 'Loan amount must be greater than zero';
-  static const String noLoansFound = 'No girvi loans found';
+  static const String noLoansFound = 'No pledge accounts found';
   static const String selectCustomerHint = 'Tap to search and select customer';
 }
