@@ -289,14 +289,11 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                     compactHeader ? WrapAlignment.start : WrapAlignment.end,
                 children: [
                   _StatusPill(label: loan.statusLabel, color: loan.statusColor),
-                  SizedBox(
-                    width: 160,
-                    child: _OverviewActionButton(
-                      label: _openingReceipt ? 'Opening...' : 'View PDF',
-                      icon: Icons.visibility_rounded,
-                      busy: _openingReceipt,
-                      onTap: () => _previewGirviDocumentSet(data),
-                    ),
+                  _OverviewActionButton(
+                    label: _openingReceipt ? 'Opening...' : 'View PDF',
+                    icon: Icons.visibility_rounded,
+                    busy: _openingReceipt,
+                    onTap: () => _previewGirviDocumentSet(data),
                   ),
                 ],
               );

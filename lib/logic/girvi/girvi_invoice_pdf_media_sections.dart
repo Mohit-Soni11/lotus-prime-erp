@@ -169,8 +169,8 @@ extension _GirviInvoicePdfMediaSections on GirviInvoicePdfService {
           pw.Container(
             width: double.infinity,
             padding: pw.EdgeInsets.symmetric(
-              horizontal: compact ? 7 : 9,
-              vertical: compact ? 5 : 6,
+              horizontal: compact ? 8 : 10,
+              vertical: compact ? 6 : 8,
             ),
             decoration: const pw.BoxDecoration(
               color: GirviInvoicePdfService._goldLight,
@@ -181,18 +181,27 @@ extension _GirviInvoicePdfMediaSections on GirviInvoicePdfService {
               textAlign: pw.TextAlign.center,
               style: pw.TextStyle(
                 color: GirviInvoicePdfService._ink,
-                fontSize: compact ? 7 : 8,
+                fontSize: compact ? 8.2 : 9.6,
                 fontWeight: pw.FontWeight.bold,
               ),
             ),
           ),
-          pw.SizedBox(height: compact ? 8 : 11),
+          pw.SizedBox(height: compact ? 9 : 12),
         ],
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            _buildSignature('Customer Signature', compact),
-            _buildSignature('Authorized Signature / Stamp', compact),
+            pw.Expanded(
+              child: _buildSignature('Customer Signature', compact),
+            ),
+            pw.SizedBox(width: compact ? 8 : 12),
+            pw.Expanded(
+              child: _buildSignature('Shop Stamp', compact),
+            ),
+            pw.SizedBox(width: compact ? 8 : 12),
+            pw.Expanded(
+              child: _buildSignature('Authorised Signature', compact),
+            ),
           ],
         ),
       ],
@@ -200,19 +209,32 @@ extension _GirviInvoicePdfMediaSections on GirviInvoicePdfService {
   }
 
   pw.Widget _buildSignature(String label, bool compact) {
-    return pw.SizedBox(
-      width: compact ? 128 : 165,
+    return pw.Container(
+      height: compact ? 42 : 50,
+      padding: pw.EdgeInsets.fromLTRB(
+        compact ? 7 : 9,
+        compact ? 7 : 8,
+        compact ? 7 : 9,
+        compact ? 7 : 8,
+      ),
+      decoration: pw.BoxDecoration(
+        color: GirviInvoicePdfService._surface,
+        border: pw.Border.all(color: GirviInvoicePdfService._line, width: 0.7),
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(5)),
+      ),
       child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        mainAxisAlignment: pw.MainAxisAlignment.end,
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
-          pw.SizedBox(height: compact ? 21 : 30),
-          pw.Container(height: 0.7, color: GirviInvoicePdfService._muted),
-          pw.SizedBox(height: 4),
+          pw.Container(height: 0.85, color: GirviInvoicePdfService._ink),
+          pw.SizedBox(height: compact ? 5 : 6),
           pw.Text(
             label,
+            textAlign: pw.TextAlign.center,
             style: pw.TextStyle(
-              color: GirviInvoicePdfService._muted,
-              fontSize: compact ? 7.5 : 8.5,
+              color: GirviInvoicePdfService._ink,
+              fontSize: compact ? 8.2 : 9.4,
+              fontWeight: pw.FontWeight.bold,
             ),
           ),
         ],

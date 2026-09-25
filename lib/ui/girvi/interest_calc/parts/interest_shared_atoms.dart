@@ -77,10 +77,11 @@ class _OverviewActionButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 36,
+        constraints: const BoxConstraints(minWidth: 116, maxWidth: 138),
+        padding: const EdgeInsets.symmetric(horizontal: 13),
         decoration: BoxDecoration(
-          color: GirviColors.shellBg,
+          color: GirviColors.shellBg.withValues(alpha: busy ? 0.82 : 1),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: GirviColors.shellBorder),
           boxShadow: const [
@@ -104,8 +105,8 @@ class _OverviewActionButton extends StatelessWidget {
                 ),
               )
             else
-              Icon(icon, color: GirviColors.brandGold, size: 15),
-            const SizedBox(width: 7),
+              Icon(icon, color: GirviColors.brandGold, size: 16),
+            const SizedBox(width: 8),
             Flexible(
               child: Text(
                 label,
@@ -113,7 +114,7 @@ class _OverviewActionButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: GirviColors.shellTextTitle,
-                  fontSize: 12.5,
+                  fontSize: 12.8,
                   fontWeight: FontWeight.w900,
                 ),
               ),

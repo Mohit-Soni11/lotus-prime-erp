@@ -289,6 +289,7 @@ extension _GirviInvoicePdfDetailSections on GirviInvoicePdfService {
 
   pw.Widget _buildCustomerDeclaration({
     required String number,
+    required String title,
     required String english,
     required String hindi,
     required bool compact,
@@ -306,8 +307,8 @@ extension _GirviInvoicePdfDetailSections on GirviInvoicePdfService {
       children: [
         _buildSectionHeading(
           number: number,
-          title: 'CUSTOMER DECLARATION',
-          subtitle: 'Bilingual acknowledgement before signing',
+          title: title,
+          subtitle: 'Customer confirmation before signing',
           compact: compact,
         ),
         pw.SizedBox(height: compact ? 7 : 9),

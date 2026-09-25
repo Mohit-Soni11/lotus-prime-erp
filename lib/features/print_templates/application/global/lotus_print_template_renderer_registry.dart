@@ -1030,7 +1030,7 @@ class _LotusDocumentLayoutEngine {
     final shopName = _shopName(document);
     final isGirviDocument = _isGirviDocument(document);
     final headerTitle = isGirviDocument
-        ? 'GIRVI TERMS & CUSTOMER DECLARATION'
+        ? 'PLEDGE TERMS & CUSTOMER CONSENT'
         : 'METAL PURCHASE POLICY';
     return pw.Container(
       width: double.infinity,
@@ -1058,7 +1058,7 @@ class _LotusDocumentLayoutEngine {
                     letterSpacing: 0.2,
                   ),
                 ),
-                if (shopName.isNotEmpty) ...[
+                if (!isGirviDocument && shopName.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
                     shopName,
@@ -1348,14 +1348,14 @@ class _LotusDocumentLayoutEngine {
     final profile = document.profile;
     final footerMessage = document.footerMessage.trim();
     final isGirviDocument = _isGirviDocument(document);
-    final customerSignatureTitle =
-        isGirviDocument ? 'Customer Signature' : 'Seller / Customer Signature';
-    final customerSignatureCaption = isGirviDocument
-        ? 'Customer confirms pledged-item details and Girvi terms'
-        : 'Customer confirms all terms and accepts full responsibility';
-    final legalAcknowledgement = isGirviDocument
-        ? 'By signing, the customer confirms that the Girvi terms, pledged item details, valuation, interest policy and release conditions have been read and accepted.'
-        : 'By signing, the seller/customer confirms that all invoice terms, policies, valuation and payout details have been read and accepted, and takes full responsibility for the declaration.';
+    if (isGirviDocument) {
+      return _girviLegalSignatureFooter(context, footerMessage);
+    }
+    const customerSignatureTitle = 'Seller / Customer Signature';
+    const customerSignatureCaption =
+        'Customer confirms all terms and accepts full responsibility';
+    const legalAcknowledgement =
+        'By signing, the seller/customer confirms that all invoice terms, policies, valuation and payout details have been read and accepted, and takes full responsibility for the declaration.';
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -1445,11 +1445,12 @@ class _LotusDocumentLayoutEngine {
 
   static List<pw.Widget> _footerMessageLines(
     String value,
-    LotusPrintTemplateRenderContext context,
-  ) {
+    LotusPrintTemplateRenderContext context, {
+    double? fontSize,
+  }) {
     final profile = context.document.profile;
     final textStyle = pw.TextStyle(
-      fontSize: _legalFooterFontSize,
+      fontSize: fontSize ?? _legalFooterFontSize,
       color: profile.bodyTextColor,
       lineSpacing: 1.15,
     );
@@ -1469,6 +1470,119 @@ class _LotusDocumentLayoutEngine {
           ),
         )
         .toList(growable: false);
+  }
+
+  static pw.Widget _girviLegalSignatureFooter(
+    LotusPrintTemplateRenderContext context,
+    String footerMessage,
+  ) {
+    final document = context.document;
+    final profile = document.profile;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(height: 10),
+        pw.Divider(color: profile.borderColor),
+        if (footerMessage.isNotEmpty) ...[
+          pw.SizedBox(height: 7),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.fromLTRB(10, 7, 10, 7),
+            decoration: pw.BoxDecoration(
+              color: profile.policyPanelColor,
+              border: pw.Border.all(color: profile.borderColor, width: 0.85),
+              borderRadius: pw.BorderRadius.circular(7),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Acknowledgement',
+                  style: pw.TextStyle(
+                    fontSize: 10.2,
+                    fontWeight: pw.FontWeight.bold,
+                    color: profile.bodyTextColor,
+                  ),
+                ),
+                pw.SizedBox(height: 3),
+                ..._footerMessageLines(
+                  footerMessage,
+                  context,
+                  fontSize: 8.8,
+                ),
+              ],
+            ),
+          ),
+        ],
+        pw.SizedBox(height: 13),
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            pw.Expanded(
+              child: _girviSignatureFooterBox(
+                profile,
+                title: 'Customer Signature',
+              ),
+            ),
+            pw.SizedBox(width: 12),
+            pw.Expanded(
+              child: _girviSignatureFooterBox(
+                profile,
+                title: 'Shop Stamp',
+              ),
+            ),
+            pw.SizedBox(width: 12),
+            pw.Expanded(
+              child: _girviSignatureFooterBox(
+                profile,
+                title: 'Authorised Signature',
+              ),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 7),
+        pw.Text(
+          'Customer confirms that the pledge details, valuation, loan terms, interest policy and release conditions have been read and accepted.',
+          style: pw.TextStyle(
+            fontSize: 8.2,
+            color: profile.bodyTextColor,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static pw.Widget _girviSignatureFooterBox(
+    dynamic profile, {
+    required String title,
+  }) {
+    return pw.Container(
+      height: 50,
+      padding: const pw.EdgeInsets.fromLTRB(9, 8, 9, 8),
+      decoration: pw.BoxDecoration(
+        color: profile.policyPanelColor,
+        border: pw.Border.all(color: profile.borderColor, width: 0.85),
+        borderRadius: pw.BorderRadius.circular(7),
+      ),
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.end,
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Container(height: 0.85, color: profile.bodyTextColor),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            title,
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(
+              fontSize: 9.4,
+              fontWeight: pw.FontWeight.bold,
+              color: profile.bodyTextColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   static pw.Widget _headerShopNameText(

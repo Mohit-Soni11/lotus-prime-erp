@@ -53,6 +53,8 @@ class GirviInvoicePdfService {
   static const _muted = PdfColor.fromInt(0xFF111111);
   static const _line = PdfColor.fromInt(0xFFD8DEE8);
   static const _surface = PdfColor.fromInt(0xFFF6F8FB);
+  static const _pledgeTermsTitle = 'Pledge Terms';
+  static const _customerConsentTitle = 'Customer Consent';
 
   static const customerItemHeaders = <String>[
     'S.No',
@@ -821,7 +823,7 @@ class GirviInvoicePdfService {
     if (policySettings.printTermsAndConditions && terms.isNotEmpty) {
       sections.add(
         LotusPrintablePolicySection(
-          title: 'Terms & Conditions',
+          title: _pledgeTermsTitle,
           body: terms,
         ),
       );
@@ -829,7 +831,7 @@ class GirviInvoicePdfService {
     if (policySettings.printCustomerDeclaration && declaration.isNotEmpty) {
       sections.add(
         LotusPrintablePolicySection(
-          title: 'Customer Declaration',
+          title: _customerConsentTitle,
           body: declaration,
         ),
       );
@@ -1031,9 +1033,8 @@ class GirviInvoicePdfService {
         ..add(
           _buildSectionHeading(
             number: (nextSection++).toString().padLeft(2, '0'),
-            title: 'TERMS & CONDITIONS',
-            subtitle:
-                'Each condition is printed separately in English and Hindi',
+            title: _pledgeTermsTitle.toUpperCase(),
+            subtitle: 'Loan, interest, pledge and release obligations',
             compact: compact,
           ),
         )
@@ -1062,6 +1063,7 @@ class GirviInvoicePdfService {
         ..add(
           _buildCustomerDeclaration(
             number: (nextSection++).toString().padLeft(2, '0'),
+            title: _customerConsentTitle.toUpperCase(),
             english: policySettings.customerDeclaration,
             hindi: policySettings.customerDeclarationHindi,
             compact: compact,

@@ -456,9 +456,8 @@ class GirviInterestEntryController extends ChangeNotifier {
         notifyListeners();
         return false;
       }
-      if (_expectedDeliveryDate.isBefore(
-        DateTime(_paymentDate.year, _paymentDate.month, _paymentDate.day),
-      )) {
+      if (!isReadyForDelivery &&
+          _dateOnly(_expectedDeliveryDate).isBefore(_dateOnly(_paymentDate))) {
         _errorMessage =
             'Expected pickup date cannot be before collection date.';
         notifyListeners();
@@ -484,9 +483,11 @@ class GirviInterestEntryController extends ChangeNotifier {
     try {
       if (_paymentType == GirviPaymentType.fullRelease) {
         if (isReadyForDelivery) {
+          final deliveredAt = DateTime.now();
+          _expectedDeliveryDate = _dateOnly(deliveredAt);
           await _repo.markGirviDelivered(
             loanId: selected.loan.id,
-            deliveredAt: DateTime.now(),
+            deliveredAt: deliveredAt,
             deliveredBy: 'Staff',
           );
           _successMessage = 'Girvi item delivered successfully.';
@@ -559,6 +560,10 @@ class GirviInterestEntryController extends ChangeNotifier {
   String? _readableError(Object? message) {
     final value = message?.toString().trim();
     return value == null || value.isEmpty ? null : value;
+  }
+
+  DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
   }
 
   Future<void> _loadLoans() async {
