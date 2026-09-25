@@ -294,6 +294,7 @@ void main() {
 
     expect(delivered, isTrue);
     expect(loan!.status, GirviStatus.released.dbValue);
+    expect(loan.expectedDeliveryDate, deliveredAt);
     expect(loan.deliveredAt, deliveredAt);
     expect(loan.releasedBy, 'Test Staff');
   });

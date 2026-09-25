@@ -137,6 +137,40 @@ void main() {
       'Interest discount cannot exceed interest due.',
     );
   });
+
+  test('delivers ready ticket even when expected pickup date is overdue',
+      () async {
+    final customerId =
+        await _insertCustomer(db, 'Delayed Pickup Customer', '9000000012');
+    final loanId = await _insertLoan(
+      db,
+      customerId,
+      'GRV-PICK-001',
+      'Gold chain',
+      25000,
+      status: GirviStatus.readyForDelivery,
+      releaseDate: DateTime(2026, 9, 22),
+      expectedDeliveryDate: DateTime(2026, 9, 22),
+      releasePrincipal: 25000,
+      releaseTotalAmount: 25000,
+    );
+
+    await controller.load();
+    final account = controller.customerAccounts.single;
+    await controller.selectLoan(account.loans.single);
+    controller.setPaymentType(GirviPaymentType.fullRelease);
+
+    expect(await controller.recordPayment(), isTrue);
+
+    final loan = await db.managers.girviLoans
+        .filter((row) => row.id(loanId))
+        .getSingle();
+
+    expect(controller.errorMessage, isNull);
+    expect(loan.status, GirviStatus.released.dbValue);
+    expect(loan.deliveredAt, isNotNull);
+    expect(loan.expectedDeliveryDate, loan.deliveredAt);
+  });
 }
 
 Future<int> _insertCustomer(AppDatabase db, String name, String mobile) {
@@ -153,8 +187,15 @@ Future<int> _insertLoan(
   int customerId,
   String ticketNo,
   String itemDescription,
-  double loanAmount,
-) {
+  double loanAmount, {
+  GirviStatus status = GirviStatus.active,
+  DateTime? releaseDate,
+  DateTime? expectedDeliveryDate,
+  double? releasePrincipal,
+  double? releaseInterest,
+  double? releaseDiscount,
+  double? releaseTotalAmount,
+}) {
   return db.into(db.girviLoans).insert(
         GirviLoansCompanion.insert(
           ticketNo: ticketNo,
@@ -167,6 +208,13 @@ Future<int> _insertLoan(
           loanAmount: drift.Value(loanAmount),
           startDate: drift.Value(DateTime(2026, 6, 1)),
           maturityDate: drift.Value(DateTime(2027, 6, 1)),
+          status: drift.Value(status.dbValue),
+          releaseDate: drift.Value(releaseDate),
+          expectedDeliveryDate: drift.Value(expectedDeliveryDate),
+          releasePrincipal: drift.Value(releasePrincipal),
+          releaseInterest: drift.Value(releaseInterest),
+          releaseDiscount: drift.Value(releaseDiscount),
+          releaseTotalAmount: drift.Value(releaseTotalAmount),
         ),
       );
 }

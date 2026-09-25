@@ -171,6 +171,7 @@ extension GirviRepositoryPayments on GirviRepository {
         loanId,
         GirviLoansCompanion(
           status: drift.Value(GirviStatus.released.dbValue),
+          expectedDeliveryDate: drift.Value(deliveredAt),
           deliveredAt: drift.Value(deliveredAt),
           releasedBy: drift.Value(deliveredBy ?? loan.releasedBy),
           updatedAt: drift.Value(DateTime.now()),

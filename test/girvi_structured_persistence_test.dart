@@ -113,6 +113,32 @@ void main() {
       expect(details.disbursements[1].amount, 20000);
     });
 
+    test('keeps pledged custody items separate from saleable stock inventory',
+        () async {
+      final customerId = await _insertCustomer(db);
+
+      final loanId = await repository.createLoanWithDetails(
+        loan: _loanInsert(
+          ticketNo: 'GRV-CUSTODY-001',
+          customerId: customerId,
+          itemDescription: 'Custody gold ring',
+          loanAmount: 30000,
+        ),
+        items: _twoItems(),
+        disbursements: _mixedDisbursements(),
+        expectedLoanAmount: 30000,
+      );
+
+      final details = await repository.getLoanDetails(loanId);
+      final stockItems = await db.select(db.stockItems).get();
+      final stockMovements = await db.select(db.stockMovements).get();
+
+      expect(details, isNotNull);
+      expect(details!.items, hasLength(2));
+      expect(stockItems, isEmpty);
+      expect(stockMovements, isEmpty);
+    });
+
     test('update replaces item, photo and disbursement details together',
         () async {
       final customerId = await _insertCustomer(db);

@@ -43,6 +43,8 @@ class GirviDetailsRepository {
     );
 
     return _db.transaction(() async {
+      // Pledged items are custody records only. They must never be mirrored
+      // into saleable stock or inventory movement tables from the Girvi flow.
       final loanId = await _db.into(_db.girviLoans).insert(loan);
       await _insertDetails(
         loanId: loanId,
