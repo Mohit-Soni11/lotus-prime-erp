@@ -565,6 +565,7 @@ class GirviSettlementResult {
 class GirviSummaryModel {
   final int totalActive;
   final int totalOverdue;
+  final int totalReadyForDelivery;
   final int totalReleased;
   final int totalAuctioned;
   final double totalPrincipalActive;
@@ -575,6 +576,7 @@ class GirviSummaryModel {
   const GirviSummaryModel({
     required this.totalActive,
     required this.totalOverdue,
+    this.totalReadyForDelivery = 0,
     required this.totalReleased,
     required this.totalAuctioned,
     required this.totalPrincipalActive,
@@ -586,6 +588,7 @@ class GirviSummaryModel {
   factory GirviSummaryModel.empty() => const GirviSummaryModel(
         totalActive: 0,
         totalOverdue: 0,
+        totalReadyForDelivery: 0,
         totalReleased: 0,
         totalAuctioned: 0,
         totalPrincipalActive: 0,
@@ -595,5 +598,9 @@ class GirviSummaryModel {
       );
 
   int get totalLoans =>
-      totalActive + totalOverdue + totalReleased + totalAuctioned;
+      totalActive +
+      totalOverdue +
+      totalReadyForDelivery +
+      totalReleased +
+      totalAuctioned;
 }

@@ -90,6 +90,9 @@ class GirviListController extends ChangeNotifier {
     }
 
     list.sort((a, b) {
+      final byPriority =
+          _lifecycleSortPriority(a).compareTo(_lifecycleSortPriority(b));
+      if (byPriority != 0) return byPriority;
       final byActivity = _latestActivityFor(b).compareTo(_latestActivityFor(a));
       if (byActivity != 0) return byActivity;
       return b.loan.id.compareTo(a.loan.id);
@@ -100,6 +103,25 @@ class GirviListController extends ChangeNotifier {
 
   DateTime _latestActivityFor(GirviLoanWithCustomer item) {
     return item.loan.updatedAt ?? item.loan.createdAt;
+  }
+
+  int _lifecycleSortPriority(GirviLoanWithCustomer item) {
+    final loan = item.loan;
+    if (loan.isOverdue || loan.girviStatus == GirviStatus.overdue) return 0;
+    switch (loan.girviStatus) {
+      case GirviStatus.active:
+        return 1;
+      case GirviStatus.partialRelease:
+        return 2;
+      case GirviStatus.readyForDelivery:
+        return 3;
+      case GirviStatus.released:
+        return 4;
+      case GirviStatus.auctioned:
+        return 5;
+      case GirviStatus.overdue:
+        return 0;
+    }
   }
 
   bool _matchesFilter(GirviLoanWithCustomer item, GirviFilter filter) {

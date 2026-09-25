@@ -11,6 +11,14 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
     return _dateFormat.format(value);
   }
 
+  String _weight(double value) {
+    final rounded = value.toStringAsFixed(3);
+    final cleaned = rounded
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+    return '$cleaned g';
+  }
+
   String _compactCustomerLocation(GirviLoanWithCustomer item) {
     final city = item.customerCity?.trim();
     if (city == null || city.isEmpty) return item.customerMobile;

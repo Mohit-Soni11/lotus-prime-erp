@@ -20,7 +20,10 @@ import 'girvi_list_app_bar.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_ledger_controls.dart';
+part 'parts/girvi_ledger_detail_actions.dart';
+part 'parts/girvi_ledger_detail_finance.dart';
 part 'parts/girvi_ledger_detail_panel.dart';
+part 'parts/girvi_ledger_detail_payments.dart';
 part 'parts/girvi_ledger_layout.dart';
 part 'parts/girvi_ledger_overview.dart';
 part 'parts/girvi_ledger_shared.dart';

@@ -224,42 +224,42 @@ class GirviRepository {
   }
 
   Future<GirviSummaryModel> getSummary() async {
-    final allLoans = await (_db.select(_db.girviLoans)).get();
+    final allLoans = await getLoansWithCustomer();
 
     int totalActive = 0;
     int totalOverdue = 0;
+    int totalReadyForDelivery = 0;
     int totalReleased = 0;
     int totalAuctioned = 0;
     double totalPrincipal = 0;
     double totalInterestDue = 0;
     double totalValue = 0;
-
     final now = DateTime.now();
 
-    for (final loan in allLoans) {
-      final model = _mapLoan(loan);
-      switch (GirviStatus.fromDb(loan.status)) {
+    for (final item in allLoans) {
+      final loan = item.loan;
+      switch (loan.girviStatus) {
         case GirviStatus.active:
         case GirviStatus.partialRelease:
-          final overdue =
-              loan.maturityDate != null && now.isAfter(loan.maturityDate!);
-          if (overdue) {
+          if (loan.isOverdue) {
             totalOverdue++;
           } else {
             totalActive++;
           }
-          totalPrincipal += loan.loanAmount;
-          totalInterestDue += model.accruedInterest;
+          totalPrincipal += item.principalDue;
+          totalInterestDue += item.netInterestDue;
           totalValue += loan.totalValue;
         case GirviStatus.released:
-        case GirviStatus.readyForDelivery:
           totalReleased++;
+        case GirviStatus.readyForDelivery:
+          totalReadyForDelivery++;
         case GirviStatus.auctioned:
           totalAuctioned++;
         case GirviStatus.overdue:
           totalOverdue++;
-          totalPrincipal += loan.loanAmount;
-          totalInterestDue += model.accruedInterest;
+          totalPrincipal += item.principalDue;
+          totalInterestDue += item.netInterestDue;
+          totalValue += loan.totalValue;
       }
     }
 
@@ -273,6 +273,7 @@ class GirviRepository {
     return GirviSummaryModel(
       totalActive: totalActive,
       totalOverdue: totalOverdue,
+      totalReadyForDelivery: totalReadyForDelivery,
       totalReleased: totalReleased,
       totalAuctioned: totalAuctioned,
       totalPrincipalActive: totalPrincipal,

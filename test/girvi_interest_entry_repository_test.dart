@@ -228,6 +228,62 @@ void main() {
     );
   });
 
+  test('ledger summary uses payment-adjusted principal and interest due',
+      () async {
+    final now = DateTime.now();
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 10000,
+      interestRate: 5,
+      startDate: now.subtract(const Duration(days: 3)),
+    );
+
+    await repository.recordPayment(
+      loanId: loanId,
+      paymentType: GirviPaymentType.partialPrincipal,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 2500,
+      paymentDate: now,
+      receiptNo: 'GIP-PRN-001',
+    );
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 200,
+      paymentDate: now,
+      receiptNo: 'GIP-INT-SUM-001',
+    );
+
+    final summary = await repository.getSummary();
+
+    expect(summary.totalActive, 1);
+    expect(summary.totalPrincipalActive, 7500);
+    expect(summary.totalInterestDue, 300);
+  });
+
+  test('ready for delivery tickets are not counted as released tickets',
+      () async {
+    final loanId = await _insertLoan(db);
+
+    await repository.recordReleaseSettlement(
+      loanId: loanId,
+      principalDue: 50000,
+      interestDue: 0,
+      principalReceived: 50000,
+      interestReceived: 0,
+      paymentMode: GirviPaymentMode.cash,
+      paymentDate: DateTime.now(),
+      expectedDeliveryDate: DateTime.now(),
+      receiptNo: 'GIP-READY-001',
+    );
+
+    final summary = await repository.getSummary();
+
+    expect(summary.totalReadyForDelivery, 1);
+    expect(summary.totalReleased, 0);
+    expect(summary.totalLoans, 1);
+  });
+
   test('tracks partial release settlement, ready state and final delivery',
       () async {
     final loanId = await _insertLoan(db);

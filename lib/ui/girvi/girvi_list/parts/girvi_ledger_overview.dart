@@ -3,7 +3,9 @@ part of '../girvi_list_screen.dart';
 extension _GirviLedgerOverview on _GirviListScreenState {
   Widget _buildPortfolioOverview() {
     final summary = _controller.summary;
-    final openTickets = summary.totalActive + summary.totalOverdue;
+    final openTickets = summary.totalActive +
+        summary.totalOverdue +
+        summary.totalReadyForDelivery;
     final closedTickets = summary.totalReleased + summary.totalAuctioned;
 
     final metrics = [
@@ -31,7 +33,7 @@ extension _GirviLedgerOverview on _GirviListScreenState {
       _OverviewMetricData(
         label: 'Collected This Month',
         value: _money(summary.totalCollectedThisMonth),
-        caption: '$closedTickets closed tickets',
+        caption: '$closedTickets delivered or auctioned',
         icon: GirviIcons.cash,
         color: GirviColors.success,
       ),
