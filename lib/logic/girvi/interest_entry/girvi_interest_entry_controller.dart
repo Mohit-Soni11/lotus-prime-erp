@@ -222,6 +222,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await _repo.purgeExpiredReleasedLoans();
       await _repo.syncOverdueStatus();
       await _repo.syncSettlementStatus();
       await _loadLoans();

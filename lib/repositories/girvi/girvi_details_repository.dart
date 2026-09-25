@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_persistence_models.dart';
+import 'girvi_repository.dart';
 
 class GirviLoanItemDetails {
   const GirviLoanItemDetails({
@@ -92,6 +93,7 @@ class GirviDetailsRepository {
   }
 
   Future<GirviLoanDetails?> getLoanDetails(int loanId) async {
+    await GirviRepository(_db).purgeExpiredReleasedLoans();
     final loan = await (_db.select(_db.girviLoans)
           ..where((row) => row.id.equals(loanId)))
         .getSingleOrNull();

@@ -32,6 +32,7 @@ class GirviAccountDetailController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await _repository.purgeExpiredReleasedLoans();
       await _repository.syncSettlementStatus();
       final results = await _repository.getLoansWithCustomer(loanId: loanId);
       if (results.isEmpty) {

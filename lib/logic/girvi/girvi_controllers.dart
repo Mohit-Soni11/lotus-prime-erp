@@ -42,6 +42,7 @@ class GirviListController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await _repo.purgeExpiredReleasedLoans();
       await _repo.syncOverdueStatus();
       await _repo.syncSettlementStatus();
       final results = await Future.wait([
@@ -130,11 +131,11 @@ class GirviListController extends ChangeNotifier {
       case GirviFilter.all:
         return true;
       case GirviFilter.active:
-        return loan.isActive && !loan.isOverdue;
+        return loan.girviStatus == GirviStatus.active ||
+            loan.girviStatus == GirviStatus.overdue ||
+            loan.girviStatus == GirviStatus.partialRelease;
       case GirviFilter.overdue:
         return loan.isOverdue || loan.girviStatus == GirviStatus.overdue;
-      case GirviFilter.settlementPending:
-        return loan.girviStatus == GirviStatus.partialRelease;
       case GirviFilter.readyForDelivery:
         return loan.girviStatus == GirviStatus.readyForDelivery;
       case GirviFilter.released:

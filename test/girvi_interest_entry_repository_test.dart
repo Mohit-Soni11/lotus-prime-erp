@@ -309,6 +309,134 @@ void main() {
     expect(summary.totalLoans, 1);
   });
 
+  test('permanently purges released accounts after 30 days', () async {
+    final now = DateTime(2026, 9, 25, 12);
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Released Retention Customer',
+            mobile: '9777777777',
+          ),
+        );
+
+    Future<int> insertReleasedLoan({
+      required String ticketNo,
+      required DateTime deliveredAt,
+    }) {
+      return db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: ticketNo,
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              grossWeight: const drift.Value(8),
+              loanAmount: const drift.Value(10000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(DateTime(2026, 1, 1)),
+              status: drift.Value(GirviStatus.released.dbValue),
+              releaseDate: drift.Value(deliveredAt),
+              deliveredAt: drift.Value(deliveredAt),
+            ),
+          );
+    }
+
+    final expiredLoanId = await insertReleasedLoan(
+      ticketNo: 'GRV-OLD-REL',
+      deliveredAt: now.subtract(const Duration(days: 31)),
+    );
+    final retainedLoanId = await insertReleasedLoan(
+      ticketNo: 'GRV-RECENT-REL',
+      deliveredAt: now.subtract(const Duration(days: 30)),
+    );
+
+    await db.into(db.girviPayments).insert(
+          GirviPaymentsCompanion.insert(
+            girviId: expiredLoanId,
+            paymentType: GirviPaymentType.fullRelease.dbValue,
+            amount: const drift.Value(10000),
+          ),
+        );
+    await db.into(db.girviDisbursements).insert(
+          GirviDisbursementsCompanion.insert(
+            girviId: expiredLoanId,
+            sequenceNo: 1,
+            mode: 'Cash',
+            displayLabel: 'Cash',
+            amount: 10000,
+          ),
+        );
+    final itemId = await db.into(db.girviLoanItems).insert(
+          GirviLoanItemsCompanion.insert(
+            girviId: expiredLoanId,
+            serialNo: 1,
+            itemName: 'Gold ring',
+            metalType: 'Gold',
+            purity: '22KT',
+          ),
+        );
+    await db.into(db.girviItemPhotos).insert(
+          GirviItemPhotosCompanion.insert(
+            itemId: itemId,
+            filePath: 'ring.jpg',
+          ),
+        );
+    await db.into(db.girviNoticeActions).insert(
+          GirviNoticeActionsCompanion.insert(
+            girviId: expiredLoanId,
+            actionType: 'DELIVERY',
+          ),
+        );
+
+    final purged = await repository.purgeExpiredReleasedLoans(now: now);
+
+    expect(purged, 1);
+    expect(await repository.getLoanById(expiredLoanId), isNull);
+    expect(await repository.getLoanById(retainedLoanId), isNotNull);
+    expect(await db.select(db.girviPayments).get(), isEmpty);
+    expect(await db.select(db.girviDisbursements).get(), isEmpty);
+    expect(await db.select(db.girviLoanItems).get(), isEmpty);
+    expect(await db.select(db.girviItemPhotos).get(), isEmpty);
+    expect(await db.select(db.girviNoticeActions).get(), isEmpty);
+  });
+
+  test('active ledger filter includes all running open accounts', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Ledger Filter Customer',
+            mobile: '9888888888',
+          ),
+        );
+
+    Future<void> insertLoan(String ticketNo, GirviStatus status) {
+      return db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: ticketNo,
+              customerId: customerId,
+              itemDescription: 'Gold item',
+              grossWeight: const drift.Value(10),
+              loanAmount: const drift.Value(10000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(DateTime(2026, 1, 1)),
+              status: drift.Value(status.dbValue),
+            ),
+          );
+    }
+
+    await insertLoan('GRV-ACTIVE-001', GirviStatus.active);
+    await insertLoan('GRV-OVERDUE-001', GirviStatus.overdue);
+    await insertLoan('GRV-PARTIAL-001', GirviStatus.partialRelease);
+    await insertLoan('GRV-READY-001', GirviStatus.readyForDelivery);
+    await insertLoan('GRV-RELEASED-001', GirviStatus.released);
+
+    final activeRows = await repository.getLoansWithCustomer(
+      filter: GirviFilter.active,
+    );
+
+    expect(activeRows.map((row) => row.loan.ticketNo).toSet(), {
+      'GRV-ACTIVE-001',
+      'GRV-OVERDUE-001',
+      'GRV-PARTIAL-001',
+    });
+  });
+
   test('tracks partial release settlement, ready state and final delivery',
       () async {
     final loanId = await _insertLoan(db);

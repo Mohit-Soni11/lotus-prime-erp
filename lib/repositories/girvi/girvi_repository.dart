@@ -71,6 +71,8 @@ class GirviRepository {
     int? customerId,
     int? loanId,
   }) async {
+    await purgeExpiredReleasedLoans();
+
     final query = _db.select(_db.girviLoans).join([
       drift.innerJoin(
         _db.customers,
@@ -82,14 +84,15 @@ class GirviRepository {
     if (filter != GirviFilter.all) {
       switch (filter) {
         case GirviFilter.active:
-          query.where(_db.girviLoans.status.equals(GirviStatus.active.dbValue));
+          query.where(
+            _db.girviLoans.status.equals(GirviStatus.active.dbValue) |
+                _db.girviLoans.status.equals(GirviStatus.overdue.dbValue) |
+                _db.girviLoans.status
+                    .equals(GirviStatus.partialRelease.dbValue),
+          );
         case GirviFilter.overdue:
           query
               .where(_db.girviLoans.status.equals(GirviStatus.overdue.dbValue));
-        case GirviFilter.settlementPending:
-          query.where(
-            _db.girviLoans.status.equals(GirviStatus.partialRelease.dbValue),
-          );
         case GirviFilter.readyForDelivery:
           query.where(
             _db.girviLoans.status.equals(GirviStatus.readyForDelivery.dbValue),

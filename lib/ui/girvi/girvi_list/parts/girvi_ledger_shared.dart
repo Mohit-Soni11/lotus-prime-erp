@@ -43,8 +43,6 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
         return GirviColors.success;
       case GirviFilter.overdue:
         return GirviColors.danger;
-      case GirviFilter.settlementPending:
-        return GirviColors.warning;
       case GirviFilter.readyForDelivery:
         return GirviColors.info;
       case GirviFilter.released:
@@ -62,8 +60,6 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
         return GirviIcons.active;
       case GirviFilter.overdue:
         return GirviIcons.overdue;
-      case GirviFilter.settlementPending:
-        return GirviIcons.release;
       case GirviFilter.readyForDelivery:
         return GirviIcons.markDone;
       case GirviFilter.released:

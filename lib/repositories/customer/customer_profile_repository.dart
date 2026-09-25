@@ -11,6 +11,7 @@ import '../../features/finance/due_management/domain/services/bill_due_policy.da
 import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
+import '../girvi/girvi_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class CustomerDeleteResult {
@@ -42,6 +43,7 @@ class CustomerProfileRepository {
   Future<CustomerProfileModel?> fetchProfile(int customerId) async {
     try {
       await _db.ensureReturnReversalSchema();
+      await GirviRepository(_db).purgeExpiredReleasedLoans();
       final cust = await (_db.select(_db.customers)
             ..where((t) => t.id.equals(customerId)))
           .getSingleOrNull();

@@ -12,6 +12,7 @@ import '../../features/finance/due_management/domain/services/bill_due_policy.da
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../girvi/girvi_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class CustomerListRepository {
@@ -45,6 +46,7 @@ class CustomerListRepository {
     CustomerSort sort = CustomerSort.newest,
   }) async {
     try {
+      await GirviRepository(_db).purgeExpiredReleasedLoans();
       final rows = await _db.select(_db.customers).get();
       final models = await _mapCustomers(rows);
       final filtered = _applyFilter(models, filter);

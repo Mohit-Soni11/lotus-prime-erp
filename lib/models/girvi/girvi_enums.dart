@@ -159,7 +159,6 @@ enum GirviFilter {
   all('All'),
   active('Active'),
   overdue('Overdue'),
-  settlementPending('Settlement Pending'),
   readyForDelivery('Ready for Delivery'),
   released('Released'),
   auctioned('Auctioned');

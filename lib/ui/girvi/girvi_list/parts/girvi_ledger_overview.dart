@@ -24,9 +24,8 @@ extension _GirviLedgerOverview on _GirviListScreenState {
       ),
       _OverviewMetricData(
         label: 'Overdue Receivable',
-        value: _money(summary.totalOverdueReceivable),
-        caption:
-            '${summary.totalOverdue} overdue account${summary.totalOverdue == 1 ? '' : 's'}',
+        value: summary.totalOverdue.toString(),
+        caption: 'Receivable ${_money(summary.totalOverdueReceivable)}',
         icon: Icons.event_busy_rounded,
         color: GirviColors.danger,
       ),
@@ -44,16 +43,11 @@ extension _GirviLedgerOverview on _GirviListScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LedgerSectionHeader(
+          const _LedgerSectionHeader(
             icon: GirviIcons.list,
             color: GirviColors.brandGold,
             title: 'Pledge Position',
             subtitle: 'Principal exposure, interest receivable and collections',
-            trailing: _LedgerStatusBadge(
-              icon: GirviIcons.active,
-              label: '${summary.totalActive} active',
-              color: GirviColors.success,
-            ),
           ),
           const SizedBox(height: 16),
           LayoutBuilder(

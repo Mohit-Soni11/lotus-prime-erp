@@ -1,6 +1,64 @@
 part of '../girvi_repository.dart';
 
 extension GirviRepositoryStatusSync on GirviRepository {
+  static const int releasedLoanRetentionDays = 30;
+
+  Future<int> purgeExpiredReleasedLoans({DateTime? now}) async {
+    final today = now ?? DateTime.now();
+    final cutoff = today.subtract(
+      const Duration(days: releasedLoanRetentionDays),
+    );
+    final releasedLoans = await (_db.select(_db.girviLoans)
+          ..where((loan) => loan.status.equals(GirviStatus.released.dbValue)))
+        .get();
+    final expiredLoanIds = releasedLoans
+        .where((loan) => _releasedAtForRetention(loan).isBefore(cutoff))
+        .map((loan) => loan.id)
+        .toList(growable: false);
+    if (expiredLoanIds.isEmpty) return 0;
+
+    await _db.transaction(() async {
+      final pledgedItems = await (_db.select(_db.girviLoanItems)
+            ..where((item) => item.girviId.isIn(expiredLoanIds)))
+          .get();
+      final pledgedItemIds =
+          pledgedItems.map((item) => item.id).toList(growable: false);
+      if (pledgedItemIds.isNotEmpty) {
+        await (_db.delete(_db.girviItemPhotos)
+              ..where((photo) => photo.itemId.isIn(pledgedItemIds)))
+            .go();
+      }
+      await (_db.delete(_db.girviPayments)
+            ..where((payment) => payment.girviId.isIn(expiredLoanIds)))
+          .go();
+      await (_db.delete(_db.girviDisbursements)
+            ..where((entry) => entry.girviId.isIn(expiredLoanIds)))
+          .go();
+      await (_db.delete(_db.girviNoticeActions)
+            ..where((entry) => entry.girviId.isIn(expiredLoanIds)))
+          .go();
+      await (_db.delete(_db.girviLoanItems)
+            ..where((item) => item.girviId.isIn(expiredLoanIds)))
+          .go();
+      await (_db.delete(_db.girviLoans)
+            ..where((loan) => loan.id.isIn(expiredLoanIds)))
+          .go();
+    });
+
+    AppLogger.debug(
+      'GirviRepository: ${expiredLoanIds.length} released loans purged '
+      'after $releasedLoanRetentionDays days.',
+    );
+    return expiredLoanIds.length;
+  }
+
+  DateTime _releasedAtForRetention(GirviLoan loan) {
+    return loan.deliveredAt ??
+        loan.releaseDate ??
+        loan.updatedAt ??
+        loan.createdAt;
+  }
+
   Future<int> syncOverdueStatus() async {
     final now = DateTime.now();
     int updated = 0;
