@@ -26,6 +26,18 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
   }
 
   String _maturityLabel(GirviLoanModel loan) {
+    if (loan.girviStatus == GirviStatus.readyForDelivery) {
+      final readyDate = loan.releaseDate ?? loan.updatedAt;
+      return readyDate == null
+          ? 'Ready for delivery'
+          : 'Ready ${_date(readyDate)}';
+    }
+    if (loan.girviStatus == GirviStatus.released) {
+      final deliveredDate = loan.deliveredAt ?? loan.releaseDate;
+      return deliveredDate == null
+          ? 'Released'
+          : 'Delivered ${_date(deliveredDate)}';
+    }
     if (loan.releaseDate != null) {
       return 'Released ${_date(loan.releaseDate)}';
     }
@@ -47,8 +59,6 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
         return GirviColors.info;
       case GirviFilter.released:
         return GirviColors.statusReleased;
-      case GirviFilter.auctioned:
-        return GirviColors.statusAuctioned;
     }
   }
 
@@ -64,8 +74,6 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
         return GirviIcons.markDone;
       case GirviFilter.released:
         return GirviIcons.released;
-      case GirviFilter.auctioned:
-        return GirviIcons.auctioned;
     }
   }
 
@@ -82,7 +90,7 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
       case GirviStatus.released:
         return GirviIcons.released;
       case GirviStatus.auctioned:
-        return GirviIcons.auctioned;
+        return GirviIcons.released;
     }
   }
 }

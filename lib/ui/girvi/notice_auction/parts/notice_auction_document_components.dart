@@ -283,7 +283,7 @@ class _NoticeDocumentCard extends StatelessWidget {
       case GirviNoticeType.second:
         return GirviColors.danger;
       case GirviNoticeType.finalNotice:
-        return GirviColors.statusAuctioned;
+        return GirviColors.info;
     }
   }
 }
@@ -375,7 +375,7 @@ class _CaseActions extends StatelessWidget {
         _ActionButton(
           label: item.stage == NoticeAuctionStage.settled
               ? 'Closed'
-              : 'Close Disposal',
+              : 'Close Recovery',
           color: item.stage == NoticeAuctionStage.settled
               ? GirviColors.success
               : GirviColors.danger,

@@ -168,6 +168,9 @@ class GirviInterestEntryController extends ChangeNotifier {
     final selected = _selectedLoan;
     if (selected == null) return 0;
     final loan = selected.loan;
+    if (GirviInterestCalculationType.isSimple(selected.interestType)) {
+      return selected.originalPrincipal * (loan.interestRate / 100);
+    }
     final breakdown = GirviLoanModel.calculateCompoundInterestBreakdown(
       principal: selected.originalPrincipal,
       monthlyRatePercent: loan.interestRate,
@@ -604,7 +607,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     _payments = [];
     _errorMessage = null;
     _successMessage = null;
-    _resetFormFromLoan(data.loan);
+    _resetFormFromLoan(data);
 
     if (notifyAtStart) notifyListeners();
 
@@ -729,7 +732,8 @@ class GirviInterestEntryController extends ChangeNotifier {
     _resetEmptyForm();
   }
 
-  void _resetFormFromLoan(GirviLoanModel loan) {
+  void _resetFormFromLoan(GirviLoanWithCustomer account) {
+    final loan = account.loan;
     _paymentType = loan.girviStatus == GirviStatus.readyForDelivery
         ? GirviPaymentType.fullRelease
         : GirviPaymentType.interest;
@@ -745,7 +749,13 @@ class GirviInterestEntryController extends ChangeNotifier {
     _amountInput = suggestedMonths <= 0
         ? ''
         : _formatAmountInput(
-            loan.interestForMonths(suggestedMonths.toDouble()));
+            GirviLoanModel.calculateInterest(
+              principal: account.originalPrincipal,
+              monthlyRatePercent: loan.interestRate,
+              months: suggestedMonths,
+              interestType: account.interestType,
+            ),
+          );
     _releasePrincipalInput = '';
     _releaseInterestInput = '';
     _releaseDiscountInput = '';

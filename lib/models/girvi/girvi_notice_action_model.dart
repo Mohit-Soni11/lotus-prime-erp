@@ -15,9 +15,9 @@ class GirviNoticeActionTypes {
 
 enum GirviNoticeType {
   first(1, 'First Notice', 'Initial settlement warning'),
-  second(2, 'Second Notice', 'Final warning before forfeiture review'),
+  second(2, 'Second Notice', 'Final warning before recovery review'),
   finalNotice(
-      3, 'Final Disposal Notice', 'Final redemption and disposal notice');
+      3, 'Final Settlement Notice', 'Final redemption and recovery notice');
 
   const GirviNoticeType(this.stage, this.label, this.subtitle);
 
@@ -123,7 +123,7 @@ class GirviNoticeAction {
       case GirviNoticeActionTypes.secondNoticePrepared:
         return 'Second notice prepared';
       case GirviNoticeActionTypes.finalNoticePrepared:
-        return 'Final disposal notice prepared';
+        return 'Final settlement notice prepared';
       case GirviNoticeActionTypes.noticePdfSaved:
         return 'Notice PDF saved';
       case GirviNoticeActionTypes.noticePdfPrinted:
@@ -133,11 +133,11 @@ class GirviNoticeAction {
       case GirviNoticeActionTypes.noticeDeliveryRecorded:
         return 'Notice delivery recorded';
       case GirviNoticeActionTypes.disposalSettled:
-        return 'Disposal settlement closed';
+        return 'Recovery settlement closed';
       case GirviNoticeActionTypes.noticeDraftCopied:
         return 'Legal notice prepared';
       case GirviNoticeActionTypes.auctionMarked:
-        return 'Auction status recorded';
+        return 'Closed status recorded';
       default:
         return 'Notice activity recorded';
     }

@@ -55,10 +55,10 @@ class _NoticeAuctionOverview extends StatelessWidget {
               SizedBox(
                 width: width,
                 child: _SummaryTile(
-                  label: 'Disposal Ready',
+                  label: 'Recovery Review',
                   value: stats.disposalReadyCount.toString(),
                   footer: 'Updated at ${stats.lastUpdatedAt}',
-                  accent: GirviColors.statusAuctioned,
+                  accent: GirviColors.info,
                 ),
               ),
             ],
@@ -214,7 +214,7 @@ class _NoticeAuctionControls extends StatelessWidget {
       case NoticeAuctionFilter.finalNotice:
         return 'Final Notice';
       case NoticeAuctionFilter.disposalReady:
-        return 'Disposal Ready';
+        return 'Recovery Review';
       case NoticeAuctionFilter.settled:
         return 'Closed';
     }
@@ -375,7 +375,7 @@ class _NoticeAuctionBody extends StatelessWidget {
       return const _EmptyState(
         title: 'No Notice Cases Found',
         subtitle:
-            'There are no Girvi accounts requiring notice or auction review.',
+            'There are no Girvi accounts requiring overdue notice review.',
       );
     }
 

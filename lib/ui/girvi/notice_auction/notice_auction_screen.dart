@@ -377,8 +377,8 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
           'यह सूचना है कि नीचे दिया गया गिरवी खाता देय तारीख के बाद भी लंबित है। कृपया सूचना अवधि में पूरी बकाया राशि जमा कर गिरवी वस्तु छुड़ाएं।',
         GirviNoticeType.second =>
           'पहली सूचना के बाद भी खाता लंबित है। यह दूसरी लिखित चेतावनी है। कृपया अंतिम कार्रवाई से बचने के लिए बकाया राशि तुरंत जमा करें।',
-        GirviNoticeType.finalNotice =>
-          'यह अंतिम सूचना है। यदि अंतिम तारीख तक पूरा भुगतान नहीं होता है, तो गिरवी वस्तु को न छुड़ाया गया मानकर लागू कानून, सहमत Girvi terms और business policy के अनुसार वैध वसूली या disposal प्रक्रिया शुरू की जा सकती है।',
+      GirviNoticeType.finalNotice =>
+          'यह अंतिम सूचना है। यदि अंतिम तारीख तक पूरा भुगतान नहीं होता है, तो गिरवी वस्तु को न छुड़ाया गया मानकर लागू कानून, सहमत Girvi terms और business policy के अनुसार वैध वसूली प्रक्रिया शुरू की जा सकती है।',
       };
       final closing = switch (noticeType) {
         GirviNoticeType.first =>
@@ -435,7 +435,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
       GirviNoticeType.second =>
         'The account remains overdue after the first notice. This is the second formal warning to clear the dues immediately and avoid final recovery review.',
       GirviNoticeType.finalNotice =>
-        'This is the final notice. If the account is not fully settled by the deadline, the pledged article may be treated as unredeemed and processed for lawful recovery or disposal in accordance with applicable law, agreed Girvi terms and business policy.',
+        'This is the final notice. If the account is not fully settled by the deadline, the pledged article may be treated as unredeemed and processed through lawful recovery in accordance with applicable law, agreed Girvi terms and business policy.',
     };
     final closing = switch (noticeType) {
       GirviNoticeType.first =>

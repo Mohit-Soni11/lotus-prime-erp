@@ -5,7 +5,7 @@ enum GirviStatus {
   overdue('OVERDUE', 'Overdue'),
   partialRelease('PARTIAL_RELEASE', 'Settlement Pending'),
   readyForDelivery('READY_FOR_DELIVERY', 'Ready for Delivery'),
-  auctioned('AUCTIONED', 'Auctioned');
+  auctioned('AUCTIONED', 'Closed');
 
   const GirviStatus(this.dbValue, this.displayName);
 
@@ -160,8 +160,7 @@ enum GirviFilter {
   active('Active'),
   overdue('Overdue'),
   readyForDelivery('Ready for Delivery'),
-  released('Released'),
-  auctioned('Auctioned');
+  released('Released');
 
   const GirviFilter(this.displayName);
 

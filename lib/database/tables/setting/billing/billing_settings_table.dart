@@ -108,7 +108,7 @@ class BillingSettings extends Table with BaseTable {
   IntColumn get girviNoticeDays => integer().withDefault(const Constant(30))();
   TextColumn get girviTerms => text().withDefault(const Constant(
       'Interest will be charged per month on the loan amount.\n'
-      'Unclaimed ornaments after notice period will be auctioned as per law.\n'
+      'Unredeemed pledge accounts will be handled through the overdue recovery process.\n'
       'Customer is responsible for timely repayment.'))();
   BoolColumn get girviAutoPrint =>
       boolean().withDefault(const Constant(true))();

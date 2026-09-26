@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
+import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_repository.dart';
+import 'package:lotus_erp/repositories/setting/billing_setup/girvi_billing_repo.dart';
 
 void main() {
   late AppDatabase db;
@@ -729,6 +731,55 @@ void main() {
     expect(seventeenMonthElapsed.years, 1);
     expect(seventeenMonthElapsed.months, 4);
     expect(seventeenMonthElapsed.days, 8);
+  });
+
+  test('ledger projection follows saved simple interest setting', () async {
+    await GirviBillingRepo(db: db).save(
+      GirviBillingModel.defaults.copyWith(interestType: 'Simple'),
+    );
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 10000,
+      interestRate: 10,
+      startDate: DateTime(2025, 1, 1),
+    );
+    await repository.updateLoan(
+      loanId,
+      GirviLoansCompanion(
+        releaseDate: drift.Value(DateTime(2026, 2, 1)),
+      ),
+    );
+
+    final account = (await repository.getLoansWithCustomer()).single;
+
+    expect(account.interestType, GirviInterestCalculationType.simple);
+    expect(account.grossInterestAccrued, 13000);
+    expect(account.netInterestDue, 13000);
+  });
+
+  test('ledger projection can still compound when billing setting requires it',
+      () async {
+    await GirviBillingRepo(db: db).save(
+      GirviBillingModel.defaults.copyWith(interestType: 'Compound'),
+    );
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 10000,
+      interestRate: 10,
+      startDate: DateTime(2025, 1, 1),
+    );
+    await repository.updateLoan(
+      loanId,
+      GirviLoansCompanion(
+        releaseDate: drift.Value(DateTime(2026, 2, 1)),
+      ),
+    );
+
+    final account = (await repository.getLoansWithCustomer()).single;
+
+    expect(account.interestType, GirviInterestCalculationType.compound);
+    expect(account.grossInterestAccrued, 14200);
+    expect(account.netInterestDue, 14200);
   });
 }
 

@@ -26,6 +26,20 @@ class GirviRepository {
     return trimmed;
   }
 
+  Future<String> _loadInterestCalculationType() async {
+    try {
+      await _db.ensureBillingSetupSchema();
+      final settings = await (_db.select(_db.girviBillingSettings)..limit(1))
+          .getSingleOrNull();
+      return GirviInterestCalculationType.normalize(settings?.interestType);
+    } catch (error) {
+      AppLogger.debug(
+        'GirviRepository: using compound interest fallback: $error',
+      );
+      return GirviInterestCalculationType.compound;
+    }
+  }
+
   // TICKET NUMBER GENERATION
 
   Future<String> generateNextTicketNo({
@@ -100,9 +114,6 @@ class GirviRepository {
         case GirviFilter.released:
           query.where(
               _db.girviLoans.status.equals(GirviStatus.released.dbValue));
-        case GirviFilter.auctioned:
-          query.where(
-              _db.girviLoans.status.equals(GirviStatus.auctioned.dbValue));
         default:
           break;
       }
@@ -120,6 +131,7 @@ class GirviRepository {
     query.orderBy([drift.OrderingTerm.desc(_db.girviLoans.startDate)]);
 
     final rows = await query.get();
+    final interestType = await _loadInterestCalculationType();
 
     final loanIds =
         rows.map((row) => row.readTable(_db.girviLoans).id).toList();
@@ -190,13 +202,14 @@ class GirviRepository {
         customerMobile: customer.mobile,
         customerCity: customer.city,
         customerAddress: _formatCustomerAddress(customer),
+        interestType: interestType,
         interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
         principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
         interestDiscountTotal: interestDiscountByLoan[loan.id] ?? 0,
         principalDiscountTotal: principalDiscountByLoan[loan.id] ?? 0,
         legacyPrincipalRepaidTotal: legacyPrincipalRepaidByLoan[loan.id] ?? 0,
       );
-    }).toList();
+    }).where((item) => item.loan.girviStatus != GirviStatus.auctioned).toList();
 
     // Search filter (client-side for simplicity)
     if (searchQuery.isNotEmpty) {
@@ -233,7 +246,6 @@ class GirviRepository {
     int totalOverdue = 0;
     int totalReadyForDelivery = 0;
     int totalReleased = 0;
-    int totalAuctioned = 0;
     double totalPrincipal = 0;
     double totalInterestDue = 0;
     double totalOverdueReceivable = 0;
@@ -262,7 +274,7 @@ class GirviRepository {
         case GirviStatus.readyForDelivery:
           totalReadyForDelivery++;
         case GirviStatus.auctioned:
-          totalAuctioned++;
+          break;
         case GirviStatus.overdue:
           totalOverdue++;
           totalPrincipal += item.principalDue;
@@ -284,7 +296,6 @@ class GirviRepository {
       totalOverdue: totalOverdue,
       totalReadyForDelivery: totalReadyForDelivery,
       totalReleased: totalReleased,
-      totalAuctioned: totalAuctioned,
       totalPrincipalActive: totalPrincipal,
       totalInterestDue: totalInterestDue,
       totalOverdueReceivable: totalOverdueReceivable,

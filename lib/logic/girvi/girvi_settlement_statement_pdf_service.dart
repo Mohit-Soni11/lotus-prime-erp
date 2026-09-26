@@ -381,7 +381,7 @@ class GirviSettlementStatementPdfService {
     if (loan.girviStatus == GirviStatus.partialRelease) {
       return 'Settlement Pending';
     }
-    if (loan.girviStatus == GirviStatus.auctioned) return 'Auctioned';
+    if (loan.girviStatus == GirviStatus.auctioned) return 'Closed';
     if (loan.girviStatus == GirviStatus.released) return 'Released';
     if (loan.isOverdue) return 'Overdue';
     return loan.statusLabel;

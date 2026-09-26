@@ -93,6 +93,7 @@ extension GirviRepositoryStatusSync on GirviRepository {
         .get();
     if (openLoans.isEmpty) return 0;
 
+    final interestType = await _loadInterestCalculationType();
     final loanIds = openLoans.map((loan) => loan.id).toList();
     final payments = await (_db.select(_db.girviPayments)
           ..where((payment) => payment.girviId.isIn(loanIds)))
@@ -147,10 +148,11 @@ extension GirviRepositoryStatusSync on GirviRepository {
         loan.startDate,
         loan.releaseDate ?? now,
       );
-      final grossInterest = GirviLoanModel.calculateCompoundInterest(
+      final grossInterest = GirviLoanModel.calculateInterest(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
         months: interestMonths,
+        interestType: interestType,
       );
       final interestDue = (grossInterest - interestPaid - interestDiscount)
           .clamp(0.0, double.infinity);

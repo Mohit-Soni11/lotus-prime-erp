@@ -59,7 +59,7 @@ class GirviBillingValidator {
     );
     final noticeDays = _parseInt(
       input.noticeDays,
-      label: 'Auction notice window',
+      label: 'Overdue notice window',
       min: 0,
       max: 365,
       unitLabel: 'days',

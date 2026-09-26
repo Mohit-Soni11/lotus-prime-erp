@@ -401,7 +401,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     if (loan.girviStatus == GirviStatus.partialRelease) {
       return 'Settlement Pending';
     }
-    if (loan.girviStatus == GirviStatus.auctioned) return 'Auctioned';
+    if (loan.girviStatus == GirviStatus.auctioned) return 'Closed';
     if (loan.girviStatus == GirviStatus.released) return 'Released';
     if (loan.isOverdue) return 'Overdue';
     return loan.statusLabel;
@@ -412,7 +412,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     if (account.loan.deliveredAt != null) return GirviColors.success;
     if (status == GirviStatus.readyForDelivery) return GirviColors.success;
     if (status == GirviStatus.partialRelease) return GirviColors.warning;
-    if (status == GirviStatus.auctioned) return GirviColors.statusAuctioned;
+    if (status == GirviStatus.auctioned) return GirviColors.textMuted;
     if (account.loan.isOverdue) return GirviColors.danger;
     return account.loan.statusColor;
   }

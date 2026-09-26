@@ -103,7 +103,6 @@ class SidebarMenu {
         MenuItemData(AppRoutes.interestCalcRoute),
         MenuItemData(AppRoutes.girviReleaseRoute),
         MenuItemData(AppRoutes.defaulterListRoute),
-        MenuItemData(AppRoutes.noticeAuctionRoute),
       ],
     ),
 

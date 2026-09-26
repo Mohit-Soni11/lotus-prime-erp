@@ -235,15 +235,18 @@ extension GirviRepositoryPayments on GirviRepository {
 
       final originalPrincipal = loan.loanAmount + principalRepaid;
       final interestComponent = receivedAmount;
+      final interestType = await _loadInterestCalculationType();
       final priorCoveredMonths = _coveredInterestMonthsFromTotalPaid(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
         totalInterestPaid: interestPaid + interestDiscount,
+        interestType: interestType,
       );
       final totalCoveredMonths = _coveredInterestMonthsFromTotalPaid(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
         totalInterestPaid: interestPaid + interestDiscount + receivedAmount,
+        interestType: interestType,
       );
       final entryCoveredMonths =
           (totalCoveredMonths - priorCoveredMonths).clamp(0, 1000000);
@@ -306,6 +309,7 @@ extension GirviRepositoryPayments on GirviRepository {
     required double principal,
     required double monthlyRatePercent,
     required double totalInterestPaid,
+    required String interestType,
   }) {
     if (principal <= 0 || monthlyRatePercent <= 0 || totalInterestPaid <= 0) {
       return 0;
@@ -314,10 +318,11 @@ extension GirviRepositoryPayments on GirviRepository {
     var coveredMonths = 0;
     while (coveredMonths < 1200) {
       final nextMonth = coveredMonths + 1;
-      final requiredInterest = GirviLoanModel.calculateCompoundInterest(
+      final requiredInterest = GirviLoanModel.calculateInterest(
         principal: principal,
         monthlyRatePercent: monthlyRatePercent,
         months: nextMonth,
+        interestType: interestType,
       );
       if (requiredInterest >
           totalInterestPaid + GirviRepository._moneyTolerance) {

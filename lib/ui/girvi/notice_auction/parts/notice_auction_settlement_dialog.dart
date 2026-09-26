@@ -40,7 +40,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
     _penaltyController = TextEditingController(text: '0');
     _noteController = TextEditingController(
       text:
-          'Final disposal settlement after three notices. Recovery proceeds adjusted against outstanding dues subject to applicable law and business policy.',
+          'Final recovery settlement after three notices. Recovery proceeds adjusted against outstanding dues subject to applicable law and business policy.',
     );
   }
 
@@ -163,7 +163,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               ),
             ),
             child: const Icon(
-              GirviIcons.auctioned,
+              GirviIcons.release,
               color: GirviColors.danger,
               size: 22,
             ),
@@ -174,7 +174,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Close Disposal Settlement',
+                  'Close Recovery Settlement',
                   style: GoogleFonts.manrope(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -366,7 +366,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               fontWeight: FontWeight.w800,
             ),
             decoration: InputDecoration(
-              hintText: 'Write the disposal recovery note for audit.',
+              hintText: 'Write the final recovery note for audit.',
               hintStyle: GirviStyles.caption.copyWith(
                 color: GirviColors.textHint,
                 fontSize: 12.5,
@@ -466,7 +466,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Close only after three notices are complete, supporting records are verified, and lawful disposal approval is available.',
+              'Close only after three notices are complete, supporting records are verified, and final recovery approval is available.',
               style: GirviStyles.caption.copyWith(
                 fontSize: 12.5,
                 height: 1.4,
@@ -490,7 +490,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
         children: [
           Expanded(
             child: Text(
-              'This action closes the notice and disposal workflow for this ticket.',
+              'This action closes the overdue notice workflow for this ticket.',
               style: GirviStyles.caption.copyWith(
                 color: GirviColors.textHint,
                 fontSize: 12.5,

@@ -8,6 +8,7 @@ class GirviLoanWithCustomer {
   final String customerMobile;
   final String? customerCity;
   final String customerAddress;
+  final String interestType;
   final double interestPaidTotal;
   final double principalPaidTotal;
   final double interestDiscountTotal;
@@ -20,6 +21,7 @@ class GirviLoanWithCustomer {
     required this.customerMobile,
     this.customerCity,
     this.customerAddress = '',
+    this.interestType = GirviInterestCalculationType.compound,
     this.interestPaidTotal = 0,
     this.principalPaidTotal = 0,
     this.interestDiscountTotal = 0,
@@ -29,10 +31,11 @@ class GirviLoanWithCustomer {
 
   double get originalPrincipal => loan.loanAmount + legacyPrincipalRepaidTotal;
 
-  double get grossInterestAccrued => GirviLoanModel.calculateCompoundInterest(
+  double get grossInterestAccrued => GirviLoanModel.calculateInterest(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
         months: loan.monthsElapsed.ceil(),
+        interestType: interestType,
       );
 
   double get netInterestDue {
@@ -52,6 +55,22 @@ class GirviLoanWithCustomer {
   }
 
   double get totalPayable => principalDue + netInterestDue;
+}
+
+class GirviInterestCalculationType {
+  GirviInterestCalculationType._();
+
+  static const simple = 'Simple';
+  static const compound = 'Compound';
+
+  static String normalize(String? value) {
+    final normalized = value?.trim().toLowerCase();
+    if (normalized == simple.toLowerCase()) return simple;
+    if (normalized == compound.toLowerCase()) return compound;
+    return compound;
+  }
+
+  static bool isSimple(String? value) => normalize(value) == simple;
 }
 
 /// One row in the compound interest calculation breakdown.
@@ -240,10 +259,11 @@ class GirviLoanModel {
 
   /// Compound-aware interest for unpaid months.
   double interestForMonths(double months) {
-    return calculateCompoundInterest(
+    return calculateInterest(
       principal: loanAmount,
       monthlyRatePercent: interestRate,
       months: months.ceil(),
+      interestType: GirviInterestCalculationType.compound,
     );
   }
 
@@ -281,6 +301,37 @@ class GirviLoanModel {
     }
 
     return totalInterest;
+  }
+
+  static double calculateSimpleInterest({
+    required double principal,
+    required double monthlyRatePercent,
+    required int months,
+  }) {
+    if (months <= 0 || principal <= 0 || monthlyRatePercent <= 0) {
+      return 0;
+    }
+    return principal * (monthlyRatePercent / 100) * months;
+  }
+
+  static double calculateInterest({
+    required double principal,
+    required double monthlyRatePercent,
+    required int months,
+    required String interestType,
+  }) {
+    if (GirviInterestCalculationType.isSimple(interestType)) {
+      return calculateSimpleInterest(
+        principal: principal,
+        monthlyRatePercent: monthlyRatePercent,
+        months: months,
+      );
+    }
+    return calculateCompoundInterest(
+      principal: principal,
+      monthlyRatePercent: monthlyRatePercent,
+      months: months,
+    );
   }
 
   static List<GirviInterestBreakdownLine> calculateCompoundInterestBreakdown({
@@ -567,7 +618,6 @@ class GirviSummaryModel {
   final int totalOverdue;
   final int totalReadyForDelivery;
   final int totalReleased;
-  final int totalAuctioned;
   final double totalPrincipalActive;
   final double totalInterestDue;
   final double totalOverdueReceivable;
@@ -579,7 +629,6 @@ class GirviSummaryModel {
     required this.totalOverdue,
     this.totalReadyForDelivery = 0,
     required this.totalReleased,
-    required this.totalAuctioned,
     required this.totalPrincipalActive,
     required this.totalInterestDue,
     this.totalOverdueReceivable = 0,
@@ -592,7 +641,6 @@ class GirviSummaryModel {
         totalOverdue: 0,
         totalReadyForDelivery: 0,
         totalReleased: 0,
-        totalAuctioned: 0,
         totalPrincipalActive: 0,
         totalInterestDue: 0,
         totalOverdueReceivable: 0,
@@ -604,6 +652,5 @@ class GirviSummaryModel {
       totalActive +
       totalOverdue +
       totalReadyForDelivery +
-      totalReleased +
-      totalAuctioned;
+      totalReleased;
 }

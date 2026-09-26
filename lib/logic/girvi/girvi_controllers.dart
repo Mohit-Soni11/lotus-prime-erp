@@ -140,8 +140,6 @@ class GirviListController extends ChangeNotifier {
         return loan.girviStatus == GirviStatus.readyForDelivery;
       case GirviFilter.released:
         return loan.girviStatus == GirviStatus.released;
-      case GirviFilter.auctioned:
-        return loan.girviStatus == GirviStatus.auctioned;
     }
   }
 

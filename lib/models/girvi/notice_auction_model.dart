@@ -182,7 +182,7 @@ class NoticeAuctionCase {
     return parts.join(' ');
   }
 
-  int get daysUntilAuctionReview => math.max(0, noticePeriodDays - overdueDays);
+  int get daysUntilRecoveryReview => math.max(0, noticePeriodDays - overdueDays);
 
   int get daysPastNoticePeriod => math.max(0, overdueDays - noticePeriodDays);
 
@@ -220,7 +220,7 @@ class NoticeAuctionCase {
       case NoticeAuctionStage.finalNoticeDue:
         return 'Final Notice';
       case NoticeAuctionStage.disposalReady:
-        return 'Disposal Ready';
+        return 'Recovery Review';
       case NoticeAuctionStage.settled:
         return 'Closed';
     }
@@ -235,11 +235,11 @@ class NoticeAuctionCase {
       case NoticeAuctionStage.secondNoticeDue:
         return 'Second notice is prepared. Continue with the final notice when required.';
       case NoticeAuctionStage.finalNoticeDue:
-        return 'Final notice is prepared. Wait for the notice cycle before disposal review.';
+        return 'Final notice is prepared. Wait for the notice cycle before recovery review.';
       case NoticeAuctionStage.disposalReady:
-        return 'All three notices are prepared. Review disposal settlement.';
+        return 'All three notices are prepared. Review final recovery settlement.';
       case NoticeAuctionStage.settled:
-        return 'Notice and disposal workflow is closed.';
+        return 'Notice and recovery workflow is closed.';
     }
   }
 
@@ -252,7 +252,7 @@ class NoticeAuctionCase {
       case NoticeAuctionStage.finalNoticeDue:
         return 'Prepare Final Notice';
       case NoticeAuctionStage.disposalReady:
-        return 'Close Disposal';
+        return 'Close Recovery';
       case NoticeAuctionStage.settled:
         return 'Closed';
     }
@@ -267,7 +267,7 @@ class NoticeAuctionCase {
       case NoticeAuctionStage.finalNoticeDue:
         return GirviColors.danger;
       case NoticeAuctionStage.disposalReady:
-        return GirviColors.statusAuctioned;
+        return GirviColors.info;
       case NoticeAuctionStage.settled:
         return GirviColors.success;
     }
@@ -282,7 +282,7 @@ class NoticeAuctionCase {
       case NoticeAuctionStage.finalNoticeDue:
         return GirviColors.dangerBg;
       case NoticeAuctionStage.disposalReady:
-        return GirviColors.statusAucBg;
+        return GirviColors.infoBg;
       case NoticeAuctionStage.settled:
         return GirviColors.successBg;
     }

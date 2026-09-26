@@ -238,10 +238,10 @@ class GirviBillingModel {
     this.noticeDays = 30,
     this.termsAndConditions =
         'Interest will be charged per month on the loan amount.\n'
-            'Unclaimed ornaments after notice period will be auctioned as per law.\n'
+            'Unredeemed pledge accounts will be handled through the overdue recovery process.\n'
             'Customer is responsible for timely repayment.',
     this.termsAndConditionsHindi = 'ऋण राशि पर ब्याज प्रति माह लिया जाएगा।\n'
-        'नोटिस अवधि के बाद न छुड़ाए गए आभूषणों की नीलामी लागू कानून के अनुसार की जा सकती है।\n'
+        'नोटिस अवधि के बाद न छुड़ाए गए गिरवी खातों पर बकाया वसूली प्रक्रिया लागू की जा सकती है।\n'
         'ग्राहक समय पर भुगतान और ऋण छुड़ाने के लिए जिम्मेदार है।',
     this.customerDeclaration =
         'I declare that the pledged articles belong to me, are free from dispute, and the information provided by me is true. '

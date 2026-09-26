@@ -268,7 +268,7 @@ class BillingSetupStrings {
   static const String cardSalesCount = '4 metals';
   static const String cardPurchaseCount = '4 metals';
   static const String cardGirviTitle = 'Girvi Billing';
-  static const String cardGirviSub = 'Interest, notice & auction rules';
+  static const String cardGirviSub = 'Interest and overdue notice rules';
   static const String cardGirviCount = '4 sections';
   static const String cardReturnTitle = 'Return & Buyback';
   static const String cardReturnSub = 'Return policy & buyback rates';
@@ -329,7 +329,7 @@ class BillingSetupStrings {
 
   static const String defaultGirviTerms =
       'Interest will be charged per month on the loan amount.\n'
-      'Unclaimed ornaments after notice period will be auctioned as per law.\n'
+      'Unredeemed pledge accounts will be handled through the overdue recovery process.\n'
       'Customer is responsible for timely repayment.';
 
   static const String defaultReturnTerms =

@@ -439,6 +439,7 @@ class CustomerLoanModel {
   final double interestRate;
   final DateTime startDate;
   final DateTime? lastInterestPaidDate;
+  final String interestType;
   final String status;
 
   const CustomerLoanModel({
@@ -450,6 +451,7 @@ class CustomerLoanModel {
     required this.interestRate,
     required this.startDate,
     this.lastInterestPaidDate,
+    this.interestType = GirviInterestCalculationType.compound,
     required this.status,
   });
 
@@ -461,10 +463,11 @@ class CustomerLoanModel {
   double get accruedInterest {
     final from = lastInterestPaidDate ?? startDate;
     final months = GirviLoanModel.chargeableMonthsBetween(from, DateTime.now());
-    return GirviLoanModel.calculateCompoundInterest(
+    return GirviLoanModel.calculateInterest(
       principal: loanAmount,
       monthlyRatePercent: interestRate,
       months: months,
+      interestType: interestType,
     );
   }
 

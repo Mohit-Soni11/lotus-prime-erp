@@ -11,6 +11,7 @@ import '../../features/finance/due_management/domain/services/bill_due_policy.da
 import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
+import '../../models/girvi/girvi_loan_model.dart';
 import '../girvi/girvi_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -121,6 +122,7 @@ class CustomerProfileRepository {
       final legacyLoanRows = await (_db.select(_db.loans)
             ..where((t) => t.customerId.equals(customerId)))
           .get();
+      final girviInterestType = await _loadGirviInterestCalculationType();
 
       final loansByNumber = <String, CustomerLoanModel>{
         for (final loan in legacyLoanRows)
@@ -144,6 +146,7 @@ class CustomerProfileRepository {
             interestRate: loan.interestRate,
             startDate: loan.startDate,
             lastInterestPaidDate: loan.lastInterestPaidDate,
+            interestType: girviInterestType,
             status: loan.status,
           ),
       };
@@ -193,6 +196,17 @@ class CustomerProfileRepository {
   int _ticketSerial(String loanNo) {
     final match = RegExp(r'(\d+)$').firstMatch(loanNo.trim());
     return int.tryParse(match?.group(1) ?? '') ?? 0;
+  }
+
+  Future<String> _loadGirviInterestCalculationType() async {
+    try {
+      await _db.ensureBillingSetupSchema();
+      final settings = await (_db.select(_db.girviBillingSettings)..limit(1))
+          .getSingleOrNull();
+      return GirviInterestCalculationType.normalize(settings?.interestType);
+    } catch (_) {
+      return GirviInterestCalculationType.compound;
+    }
   }
 
   Future<CustomerBillDetailModel?> fetchBillDetails({

@@ -45,7 +45,7 @@ class GirviNoticeActionRepository {
     return recordAction(
       girviId: girviId,
       actionType: GirviNoticeActionTypes.auctionMarked,
-      actionNote: 'Account marked as auctioned from Notice and Auction.',
+      actionNote: 'Account closed from overdue notice workflow.',
     );
   }
 
@@ -62,7 +62,7 @@ class GirviNoticeActionRepository {
     return recordAction(
       girviId: girviId,
       actionType: GirviNoticeActionTypes.disposalSettled,
-      actionNote: note ?? 'Disposal settlement closed after final notice.',
+      actionNote: note ?? 'Recovery settlement closed after final notice.',
       pledgedValuation: pledgedValuation,
       recoveredAmount: recoveredAmount,
       penaltyAmount: penaltyAmount,

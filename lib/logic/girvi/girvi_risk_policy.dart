@@ -292,7 +292,7 @@ class GirviRiskPolicy {
   static String _nextAction(GirviRiskStage stage) {
     switch (stage) {
       case GirviRiskStage.critical:
-        return 'Review for notice or auction';
+        return 'Review for overdue notice';
       case GirviRiskStage.highRisk:
         return 'Call customer and secure payment';
       case GirviRiskStage.watchlist:

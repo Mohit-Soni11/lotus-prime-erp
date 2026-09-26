@@ -50,8 +50,8 @@ class NoticeAuctionController extends ChangeNotifier {
 
       final candidateAccounts = loans.where((entry) {
         final status = entry.loan.girviStatus;
-        if (status == GirviStatus.auctioned) return true;
         if (status == GirviStatus.released ||
+            status == GirviStatus.auctioned ||
             status == GirviStatus.readyForDelivery) {
           return false;
         }
@@ -86,10 +86,10 @@ class NoticeAuctionController extends ChangeNotifier {
       );
       _applyFilters();
     } catch (error) {
-      AppLogger.debug('Notice & Auction load failed: $error');
+      AppLogger.debug('Overdue Notices load failed: $error');
       _state = _state.copyWith(
         isLoading: false,
-        errorMessage: 'Notice and auction records could not be loaded.',
+        errorMessage: 'Overdue notice records could not be loaded.',
       );
       notifyListeners();
     }
@@ -113,7 +113,7 @@ class NoticeAuctionController extends ChangeNotifier {
       );
       if (!updated) {
         _state = _state.copyWith(
-          inlineMessage: 'Auction status could not be updated.',
+          inlineMessage: 'Closed status could not be updated.',
         );
         notifyListeners();
         return false;
@@ -121,15 +121,15 @@ class NoticeAuctionController extends ChangeNotifier {
 
       await _noticeActionRepository.recordAuctionMarked(girviId: item.loan.id);
       _state = _state.copyWith(
-        inlineMessage: 'Ticket ${item.loan.ticketNo} marked as auctioned.',
+        inlineMessage: 'Ticket ${item.loan.ticketNo} marked as closed.',
       );
       notifyListeners();
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Notice & Auction mark auctioned failed: $error');
+      AppLogger.debug('Overdue Notices close status failed: $error');
       _state = _state.copyWith(
-        inlineMessage: 'Auction status could not be updated.',
+        inlineMessage: 'Closed status could not be updated.',
       );
       notifyListeners();
       return false;
@@ -153,7 +153,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Notice & Auction notice draft audit failed: $error');
+      AppLogger.debug('Overdue Notices notice draft audit failed: $error');
       _state = _state.copyWith(
         inlineMessage:
             'Notice copied, but notice history could not be updated.',
@@ -182,7 +182,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Notice & Auction notice stage audit failed: $error');
+      AppLogger.debug('Overdue Notices notice stage audit failed: $error');
       _state = _state.copyWith(
         inlineMessage: '${noticeType.label} could not be saved.',
       );
@@ -218,7 +218,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Notice & Auction delivery proof failed: $error');
+      AppLogger.debug('Overdue Notices delivery proof failed: $error');
       _state = _state.copyWith(
         inlineMessage: '${noticeType.label} proof could not be recorded.',
       );
@@ -249,7 +249,7 @@ class NoticeAuctionController extends ChangeNotifier {
       );
       if (!updated) {
         _state = _state.copyWith(
-          inlineMessage: 'Disposal settlement could not be closed.',
+          inlineMessage: 'Recovery settlement could not be closed.',
         );
         notifyListeners();
         return false;
@@ -268,15 +268,15 @@ class NoticeAuctionController extends ChangeNotifier {
 
       _state = _state.copyWith(
         inlineMessage:
-            'Disposal settlement closed for ticket ${item.loan.ticketNo}.',
+            'Recovery settlement closed for ticket ${item.loan.ticketNo}.',
       );
       notifyListeners();
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Notice & Auction disposal settlement failed: $error');
+      AppLogger.debug('Overdue Notices recovery settlement failed: $error');
       _state = _state.copyWith(
-        inlineMessage: 'Disposal settlement could not be closed.',
+        inlineMessage: 'Recovery settlement could not be closed.',
       );
       notifyListeners();
       return false;
