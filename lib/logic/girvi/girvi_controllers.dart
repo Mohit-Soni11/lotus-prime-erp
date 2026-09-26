@@ -94,16 +94,26 @@ class GirviListController extends ChangeNotifier {
       final byPriority =
           _lifecycleSortPriority(a).compareTo(_lifecycleSortPriority(b));
       if (byPriority != 0) return byPriority;
-      final byActivity = _latestActivityFor(b).compareTo(_latestActivityFor(a));
-      if (byActivity != 0) return byActivity;
-      return b.loan.id.compareTo(a.loan.id);
+      return _compareTicketSerialDescending(a, b);
     });
 
     _filteredLoans = list;
   }
 
-  DateTime _latestActivityFor(GirviLoanWithCustomer item) {
-    return item.loan.updatedAt ?? item.loan.createdAt;
+  int _compareTicketSerialDescending(
+    GirviLoanWithCustomer a,
+    GirviLoanWithCustomer b,
+  ) {
+    final byTicket = _ticketSortNumber(b).compareTo(_ticketSortNumber(a));
+    if (byTicket != 0) return byTicket;
+    final byStartDate = b.loan.startDate.compareTo(a.loan.startDate);
+    if (byStartDate != 0) return byStartDate;
+    return b.loan.id.compareTo(a.loan.id);
+  }
+
+  int _ticketSortNumber(GirviLoanWithCustomer item) {
+    final match = RegExp(r'(\d+)$').firstMatch(item.loan.ticketNo);
+    return int.tryParse(match?.group(1) ?? '') ?? item.loan.id;
   }
 
   int _lifecycleSortPriority(GirviLoanWithCustomer item) {

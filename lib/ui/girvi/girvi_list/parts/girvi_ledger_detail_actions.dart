@@ -3,14 +3,18 @@ part of '../girvi_list_screen.dart';
 class _LedgerDetailActions extends StatelessWidget {
   final bool canCollect;
   final bool openingPdf;
+  final GirviStatus status;
   final String statusLabel;
+  final bool hasDueAmount;
   final VoidCallback onPreviewPdf;
   final VoidCallback onCollect;
 
   const _LedgerDetailActions({
     required this.canCollect,
     required this.openingPdf,
+    required this.status,
     required this.statusLabel,
+    required this.hasDueAmount,
     required this.onPreviewPdf,
     required this.onCollect,
   });
@@ -19,17 +23,21 @@ class _LedgerDetailActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final pdfButton = _LedgerCommandButton(
       icon: GirviIcons.print,
-      label: openingPdf ? 'Opening Preview...' : 'Preview Invoice PDF',
+      label: openingPdf ? 'Opening Invoice...' : 'View Invoice PDF',
       color: GirviColors.info,
       onTap: openingPdf ? null : onPreviewPdf,
     );
+    final action = _ledgerActionFor(status, hasDueAmount: hasDueAmount);
 
     if (!canCollect) {
       return Column(
         children: [
           pdfButton,
           const SizedBox(height: 10),
-          _ClosedTicketNotice(statusLabel: statusLabel),
+          _ClosedTicketNotice(
+            statusLabel: statusLabel,
+            message: _closedActionMessage(status),
+          ),
         ],
       );
     }
@@ -43,9 +51,9 @@ class _LedgerDetailActions extends StatelessWidget {
               pdfButton,
               const SizedBox(height: 10),
               _LedgerCommandButton(
-                icon: GirviIcons.cash,
-                label: 'Collect / Settle',
-                color: GirviColors.success,
+                icon: action.icon,
+                label: action.label,
+                color: action.color,
                 onTap: onCollect,
               ),
             ],
@@ -58,9 +66,9 @@ class _LedgerDetailActions extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _LedgerCommandButton(
-                icon: GirviIcons.cash,
-                label: 'Collect / Settle',
-                color: GirviColors.success,
+                icon: action.icon,
+                label: action.label,
+                color: action.color,
                 onTap: onCollect,
               ),
             ),
@@ -69,6 +77,60 @@ class _LedgerDetailActions extends StatelessWidget {
       },
     );
   }
+
+  static _LedgerActionConfig _ledgerActionFor(
+    GirviStatus status, {
+    required bool hasDueAmount,
+  }) {
+    if (status == GirviStatus.readyForDelivery) {
+      return const _LedgerActionConfig(
+        icon: GirviIcons.markDone,
+        label: 'Complete Delivery',
+        color: GirviColors.success,
+      );
+    }
+
+    if (status == GirviStatus.partialRelease) {
+      return const _LedgerActionConfig(
+        icon: GirviIcons.release,
+        label: 'Complete Settlement',
+        color: GirviColors.success,
+      );
+    }
+
+    if (status == GirviStatus.overdue || hasDueAmount) {
+      return const _LedgerActionConfig(
+        icon: GirviIcons.cash,
+        label: 'Collect Interest',
+        color: GirviColors.danger,
+      );
+    }
+
+    return const _LedgerActionConfig(
+      icon: GirviIcons.cash,
+      label: 'Record Collection',
+      color: GirviColors.success,
+    );
+  }
+
+  static String _closedActionMessage(GirviStatus status) {
+    if (status == GirviStatus.released) {
+      return 'This pledge has been released. Collections are closed.';
+    }
+    return 'Collection is closed for this account.';
+  }
+}
+
+class _LedgerActionConfig {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _LedgerActionConfig({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 }
 
 class _LedgerCommandButton extends StatelessWidget {
@@ -109,8 +171,12 @@ class _LedgerCommandButton extends StatelessWidget {
 
 class _ClosedTicketNotice extends StatelessWidget {
   final String statusLabel;
+  final String message;
 
-  const _ClosedTicketNotice({required this.statusLabel});
+  const _ClosedTicketNotice({
+    required this.statusLabel,
+    required this.message,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +198,7 @@ class _ClosedTicketNotice extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Collection is closed for $statusLabel tickets.',
+              message,
               style: GoogleFonts.inter(
                 color: GirviColors.textBody,
                 fontSize: 13,

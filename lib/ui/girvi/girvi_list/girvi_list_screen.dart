@@ -1,7 +1,5 @@
-import 'dart:async';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -23,7 +21,6 @@ part 'parts/girvi_ledger_controls.dart';
 part 'parts/girvi_ledger_detail_actions.dart';
 part 'parts/girvi_ledger_detail_finance.dart';
 part 'parts/girvi_ledger_detail_panel.dart';
-part 'parts/girvi_ledger_detail_payments.dart';
 part 'parts/girvi_ledger_layout.dart';
 part 'parts/girvi_ledger_overview.dart';
 part 'parts/girvi_ledger_shared.dart';
@@ -47,6 +44,10 @@ class _GirviListScreenState extends State<GirviListScreen>
     with SingleTickerProviderStateMixin {
   final AppDatabase _db = AppDatabase();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _ticketRegisterFocusNode = FocusNode(
+    debugLabel: 'Girvi ticket register keyboard navigation',
+  );
+  final Map<int, GlobalKey> _ticketRowKeys = <int, GlobalKey>{};
 
   late final GirviListController _controller;
   late final AnimationController _fadeController;
@@ -58,6 +59,7 @@ class _GirviListScreenState extends State<GirviListScreen>
 
   int? _selectedLoanId;
   bool _openingInvoicePdf = false;
+  bool _ticketRegisterPointerInside = false;
 
   @override
   void initState() {
@@ -82,6 +84,7 @@ class _GirviListScreenState extends State<GirviListScreen>
   void dispose() {
     _controller.dispose();
     _searchController.dispose();
+    _ticketRegisterFocusNode.dispose();
     _fadeController.dispose();
     super.dispose();
   }
@@ -126,8 +129,77 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   void _selectLoan(GirviLoanWithCustomer item) {
+    _activateTicketRegisterNavigation();
     setState(() => _selectedLoanId = item.loan.id);
-    unawaited(_controller.loadPaymentsForLoan(item.loan.id));
+  }
+
+  void _setTicketRegisterPointerInside(bool inside) {
+    _ticketRegisterPointerInside = inside;
+    if (inside) {
+      _activateTicketRegisterNavigation();
+    } else if (_ticketRegisterFocusNode.hasFocus) {
+      _ticketRegisterFocusNode.unfocus();
+    }
+  }
+
+  void _activateTicketRegisterNavigation() {
+    if (!_ticketRegisterPointerInside) return;
+    if (!_ticketRegisterFocusNode.hasFocus) {
+      _ticketRegisterFocusNode.requestFocus();
+    }
+  }
+
+  KeyEventResult _handleTicketRegisterKey(FocusNode node, KeyEvent event) {
+    if (!_ticketRegisterPointerInside || !_ticketRegisterFocusNode.hasFocus) {
+      return KeyEventResult.ignored;
+    }
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      _moveTicketSelection(1);
+      return KeyEventResult.handled;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      _moveTicketSelection(-1);
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  void _moveTicketSelection(int direction) {
+    final visibleLoans = _controller.loans;
+    if (visibleLoans.isEmpty) return;
+
+    final selectedId = _selectedLoan?.loan.id;
+    final currentIndex = visibleLoans.indexWhere(
+      (item) => item.loan.id == selectedId,
+    );
+    final fallbackIndex = direction > 0 ? -1 : visibleLoans.length;
+    final nextIndex =
+        (currentIndex == -1 ? fallbackIndex : currentIndex) + direction;
+    final boundedIndex = nextIndex.clamp(0, visibleLoans.length - 1);
+    final nextItem = visibleLoans[boundedIndex];
+
+    if (nextItem.loan.id == selectedId) return;
+    _selectLoan(nextItem);
+    _ensureTicketVisible(nextItem.loan.id, direction: direction);
+  }
+
+  void _ensureTicketVisible(int loanId, {required int direction}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _ticketRowKeys[loanId]?.currentContext;
+      if (context == null) return;
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+        alignmentPolicy: direction > 0
+            ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
+            : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+      );
+    });
   }
 
   Future<void> _openTicketAccount(GirviLoanWithCustomer item) async {
@@ -333,7 +405,6 @@ class _GirviListScreenState extends State<GirviListScreen>
     if (_selectedLoanId != nextSelection) {
       setState(() => _selectedLoanId = nextSelection);
     }
-    unawaited(_controller.loadPaymentsForLoan(nextSelection));
   }
 
   @override

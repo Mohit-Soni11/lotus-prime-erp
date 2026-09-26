@@ -11,40 +11,68 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
     return _dateFormat.format(value);
   }
 
-  String _weight(double value) {
-    final rounded = value.toStringAsFixed(3);
-    final cleaned = rounded
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
-    return '$cleaned g';
-  }
-
   String _compactCustomerLocation(GirviLoanWithCustomer item) {
     final city = item.customerCity?.trim();
     if (city == null || city.isEmpty) return item.customerMobile;
     return '${item.customerMobile} | $city';
   }
 
-  String _maturityLabel(GirviLoanModel loan) {
+  String _ticketTimelineTitle(GirviLoanModel loan) {
+    return switch (loan.girviStatus) {
+      GirviStatus.readyForDelivery || GirviStatus.released => 'Delivery Status',
+      _ => 'Account Age',
+    };
+  }
+
+  String _ticketTimelineValue(GirviLoanModel loan) {
     if (loan.girviStatus == GirviStatus.readyForDelivery) {
       final readyDate = loan.releaseDate ?? loan.updatedAt;
       return readyDate == null
-          ? 'Ready for delivery'
-          : 'Ready ${_date(readyDate)}';
+          ? 'Ready for Delivery'
+          : 'Ready since ${_date(readyDate)}';
     }
     if (loan.girviStatus == GirviStatus.released) {
       final deliveredDate = loan.deliveredAt ?? loan.releaseDate;
       return deliveredDate == null
-          ? 'Released'
-          : 'Delivered ${_date(deliveredDate)}';
+          ? 'Delivered'
+          : 'Delivered on ${_date(deliveredDate)}';
     }
     if (loan.releaseDate != null) {
-      return 'Released ${_date(loan.releaseDate)}';
+      return 'Released on ${_date(loan.releaseDate)}';
     }
-    if (loan.maturityDate == null) return 'No maturity date';
-    if (loan.isOverdue) return '${loan.daysToMaturity.abs()} days overdue';
-    if (loan.daysToMaturity == 0) return 'Due today';
-    return '${loan.daysToMaturity} days left';
+    final today = DateUtils.dateOnly(DateTime.now());
+    final startDate = DateUtils.dateOnly(loan.startDate);
+    final accountAge = GirviLoanModel.elapsedPeriodBetween(startDate, today);
+    return _durationLabel(accountAge);
+  }
+
+  Color _ticketTimelineColor(
+    GirviLoanModel loan, {
+    bool hasDueAmount = false,
+  }) {
+    if (loan.girviStatus == GirviStatus.readyForDelivery ||
+        loan.girviStatus == GirviStatus.released) {
+      return GirviColors.success;
+    }
+    return (loan.isOverdue || hasDueAmount)
+        ? GirviColors.danger
+        : GirviColors.textDark;
+  }
+
+  String _durationLabel(GirviElapsedPeriod period) {
+    if (period.isZero) return '0 days';
+    final parts = <String>[
+      if (period.years > 0)
+        '${period.years} year${period.years == 1 ? '' : 's'}',
+      if (period.months > 0)
+        '${period.months} month${period.months == 1 ? '' : 's'}',
+      if (period.days > 0) '${period.days} day${period.days == 1 ? '' : 's'}',
+    ];
+    return parts.join(' ');
+  }
+
+  Color _dueAmountColor(double value) {
+    return value > 0.005 ? GirviColors.danger : GirviColors.success;
   }
 
   Color _filterColor(GirviFilter filter) {
