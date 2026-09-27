@@ -14,13 +14,11 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/girvi/girvi_account_detail_controller.dart';
 import '../../../logic/girvi/girvi_invoice_document_store.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
-import '../../../logic/girvi/girvi_payment_record_pdf_service.dart';
 import '../../../models/girvi/girvi_account_lifecycle_summary.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../repositories/girvi/girvi_details_repository.dart';
-import '../../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -65,8 +63,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   final DateFormat _dateTimeFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
   bool _openingGirviInvoice = false;
-  bool _viewingPaymentRecord = false;
-  bool _printingPaymentRecord = false;
+  bool _printingGirviInvoice = false;
 
   @override
   void initState() {
@@ -86,12 +83,8 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     if (mounted) setState(() => _openingGirviInvoice = value);
   }
 
-  void _setViewingPaymentRecord(bool value) {
-    if (mounted) setState(() => _viewingPaymentRecord = value);
-  }
-
-  void _setPrintingPaymentRecord(bool value) {
-    if (mounted) setState(() => _printingPaymentRecord = value);
+  void _setPrintingGirviInvoice(bool value) {
+    if (mounted) setState(() => _printingGirviInvoice = value);
   }
 
   void _openInterestEntry() {
@@ -202,13 +195,6 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
         screenTitle: 'GIRVI ACCOUNT',
         screenSubtitle: 'Ticket statement',
         onBack: widget.onBack,
-        actions: [
-          _AccountHeaderButton(
-            tooltip: 'Refresh account',
-            icon: GirviIcons.refresh,
-            onTap: _reload,
-          ),
-        ],
       ),
       body: ListenableBuilder(
         listenable: _controller,

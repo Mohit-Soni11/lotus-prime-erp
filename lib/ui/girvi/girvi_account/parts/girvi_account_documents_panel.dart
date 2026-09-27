@@ -93,7 +93,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
             title: 'View Girvi Invoice',
             subtitle: _openingGirviInvoice
                 ? 'Opening...'
-                : 'Invoice preview with ledger flip side',
+                : 'Invoice, interest and release pages',
             color: GirviColors.brandGold,
             onTap: _openingGirviInvoice ? null : _previewGirviInvoice,
           ),

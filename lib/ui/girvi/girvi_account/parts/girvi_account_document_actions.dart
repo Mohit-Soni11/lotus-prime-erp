@@ -55,9 +55,9 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
   }
 
   Future<void> _showGirviInvoicePreview({required Uint8List pdfBytes}) async {
-    final sides = await _rasterPdfSides(pdfBytes);
+    final pages = await _rasterPdfPages(pdfBytes);
     if (!mounted) return;
-    if (sides.isEmpty) {
+    if (pages.isEmpty) {
       return _showCleanPdfPreview(
         pdfBytes: pdfBytes,
         allowPrinting: false,
@@ -70,107 +70,44 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
       useSafeArea: false,
       builder: (dialogContext) => Material(
         type: MaterialType.transparency,
-        child: _GirviInvoiceFlipPreview(
-          sides: sides,
+        child: _GirviInvoicePagesPreview(
+          pages: pages,
           onClose: () => Navigator.of(dialogContext).pop(),
         ),
       ),
     );
   }
 
-  Future<void> _printPaymentRecord() async {
+  Future<void> _printGirviInvoice() async {
     final account = _controller.account;
-    if (account == null || _printingPaymentRecord) return;
+    if (account == null || _printingGirviInvoice) return;
 
-    _setPrintingPaymentRecord(true);
+    _setPrintingGirviInvoice(true);
     try {
-      final bytes = await _buildPaymentRecordPdf(account);
+      final bytes = await _buildGirviInvoicePdf(account);
       if (!mounted) return;
 
       await Printing.layoutPdf(
-        name: 'girvi_payment_record_${_safePdfName(account.loan.ticketNo)}.pdf',
+        name: 'girvi_invoice_${_safePdfName(account.loan.ticketNo)}.pdf',
         onLayout: (_) async => bytes,
       );
     } catch (_) {
-      if (mounted) _showMessage('Payment record could not be printed.');
+      if (mounted) _showMessage('Girvi invoice could not be printed.');
     } finally {
-      _setPrintingPaymentRecord(false);
+      _setPrintingGirviInvoice(false);
     }
   }
 
-  Future<void> _previewPaymentRecord() async {
-    final account = _controller.account;
-    if (account == null || _viewingPaymentRecord) return;
-
-    _setViewingPaymentRecord(true);
-    try {
-      final bytes = await _buildPaymentRecordPdf(account);
-      if (!mounted) return;
-
-      await _showPaymentRecordPreview(
-        pdfBytes: bytes,
-        fileName:
-            'girvi_payment_record_${_safePdfName(account.loan.ticketNo)}.pdf',
-      );
-    } catch (_) {
-      if (mounted) _showMessage('Payment record could not be opened.');
-    } finally {
-      _setViewingPaymentRecord(false);
-    }
-  }
-
-  Future<Uint8List> _buildPaymentRecordPdf(
-    GirviLoanWithCustomer account,
-  ) async {
-    final branding = await GirviInvoiceBrandingRepository(db: _db).fetch();
-    return GirviPaymentRecordPdfService().build(
-      account: account,
-      payments: _controller.payments,
-      details: _controller.details,
-      branding: branding,
-    );
-  }
-
-  Future<void> _showPaymentRecordPreview({
-    required Uint8List pdfBytes,
-    required String fileName,
-  }) async {
-    final sides = await _rasterPdfSides(pdfBytes);
-    if (!mounted) return;
-    if (sides.isNotEmpty) {
-      return showDialog<void>(
-        context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.78),
-        useSafeArea: false,
-        builder: (dialogContext) => Material(
-          type: MaterialType.transparency,
-          child: _GirviInvoiceFlipPreview(
-            sides: sides,
-            singleSideLabel: 'Payment record preview',
-            onClose: () => Navigator.of(dialogContext).pop(),
-          ),
-        ),
-      );
-    }
-
-    return _showCleanPdfPreview(
-      pdfBytes: pdfBytes,
-      allowPrinting: true,
-      fileName: fileName,
-    );
-  }
-
-  Future<List<PdfRaster>> _rasterPdfSides(Uint8List pdfBytes) async {
+  Future<List<PdfRaster>> _rasterPdfPages(Uint8List pdfBytes) async {
     try {
       final info = await Printing.info();
       if (!info.canRaster) return const [];
 
-      final sides = <PdfRaster>[];
+      final pages = <PdfRaster>[];
       await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
-        sides.add(page);
-        if (sides.length == 2) break;
+        pages.add(page);
       }
-      return List.unmodifiable(sides);
+      return List.unmodifiable(pages);
     } catch (_) {
       return const [];
     }

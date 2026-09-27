@@ -163,46 +163,6 @@ class _AccountActionButton extends StatelessWidget {
   }
 }
 
-class _AccountHeaderButton extends StatelessWidget {
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _AccountHeaderButton({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Container(
-        width: 40,
-        height: 40,
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: GirviColors.shellBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: GirviColors.shellBorder),
-        ),
-        child: IconButton(
-          tooltip: tooltip,
-          onPressed: onTap,
-          icon: Icon(
-            icon,
-            color: GirviColors.shellTextTitle,
-            size: 18,
-          ),
-          splashRadius: 20,
-          padding: EdgeInsets.zero,
-        ),
-      ),
-    );
-  }
-}
-
 class _AccountInfoGrid extends StatelessWidget {
   final List<_AccountInfoRowData> rows;
   final bool compact;

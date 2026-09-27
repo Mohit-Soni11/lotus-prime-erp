@@ -241,6 +241,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     final totalReceived = account.principalPaidTotal +
         account.legacyPrincipalRepaidTotal +
         account.interestPaidTotal;
+    final amountToCollect = account.totalPayable;
     final interestRate = account.loan.interestRate;
     final interestRateLabel = interestRate == interestRate.roundToDouble()
         ? interestRate.toStringAsFixed(0)
@@ -257,11 +258,11 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
         helper: 'Loan amount',
       ),
       _AccountMetricData(
-        label: 'Total Interest',
+        label: 'Interest Accrued',
         value: _money(account.grossInterestAccrued),
         icon: GirviIcons.interestRate,
         color: GirviColors.warning,
-        helper: 'Interest rate $interestRateLabel%',
+        helper: 'Total at $interestRateLabel%',
       ),
       if (principalDueVisible)
         _AccountMetricData(
@@ -276,24 +277,27 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
           label: 'Interest Due',
           value: _money(account.netInterestDue),
           icon: Icons.percent_rounded,
-          color: GirviColors.warning,
+          color: GirviColors.danger,
           helper: 'Unpaid interest',
         ),
+      _AccountMetricData(
+        label: 'Amount to Collect',
+        value: _money(amountToCollect),
+        icon: Icons.request_quote_rounded,
+        color:
+            amountToCollect <= 0.01 ? GirviColors.success : GirviColors.danger,
+        helper: amountToCollect <= 0.01
+            ? 'Nothing pending from customer'
+            : 'Receivable from customer',
+      ),
       _AccountMetricData(
         label: 'Total Received',
         value: _money(totalReceived),
         icon: GirviIcons.cash,
         color: GirviColors.success,
-        helper: 'Principal and interest',
-      ),
-      _AccountMetricData(
-        label: 'Net Payable',
-        value: _money(account.totalPayable),
-        icon: Icons.verified_rounded,
-        color: account.totalPayable <= 0.01
-            ? GirviColors.success
-            : GirviColors.danger,
-        helper: discountTotal > 0 ? 'Discount ${_money(discountTotal)}' : null,
+        helper: discountTotal > 0
+            ? 'Discount ${_money(discountTotal)}'
+            : 'Already collected',
       ),
     ];
 
