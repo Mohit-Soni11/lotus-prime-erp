@@ -30,21 +30,25 @@ class GirviInvoiceHubScreen extends StatefulWidget {
     super.key,
     required this.draft,
     required this.onFinalize,
+    this.finalizedLoanIdResolver,
   });
 
   final GirviInvoiceDraft draft;
   final Future<bool> Function() onFinalize;
+  final Future<int?> Function()? finalizedLoanIdResolver;
 
   static Future<bool?> push(
     BuildContext context, {
     required GirviInvoiceDraft draft,
     required Future<bool> Function() onFinalize,
+    Future<int?> Function()? finalizedLoanIdResolver,
   }) {
     return Navigator.of(context).push<bool>(
       PageRouteBuilder(
         pageBuilder: (_, animation, __) => GirviInvoiceHubScreen(
           draft: draft,
           onFinalize: onFinalize,
+          finalizedLoanIdResolver: finalizedLoanIdResolver,
         ),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(
           opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
@@ -69,6 +73,7 @@ class _GirviInvoiceHubScreenState extends State<GirviInvoiceHubScreen> {
     _controller = GirviInvoiceHubController(
       draft: widget.draft,
       onFinalize: widget.onFinalize,
+      finalizedLoanIdResolver: widget.finalizedLoanIdResolver,
     )..addListener(_onControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.generatePreview();

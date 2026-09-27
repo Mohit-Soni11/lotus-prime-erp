@@ -114,6 +114,7 @@ extension NewGirviActions on _NewGirviScreenState {
       context,
       draft: draft,
       onFinalize: () => _saveCurrentGirvi(invoiceGenerated: true),
+      finalizedLoanIdResolver: () async => _ctrl.lastSavedLoanId,
     );
     if (finalized == true && mounted) {
       await _handleSavedTicket(invoiceGenerated: true);

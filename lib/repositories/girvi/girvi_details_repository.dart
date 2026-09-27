@@ -92,8 +92,13 @@ class GirviDetailsRepository {
     });
   }
 
-  Future<GirviLoanDetails?> getLoanDetails(int loanId) async {
-    await GirviRepository(_db).purgeExpiredReleasedLoans();
+  Future<GirviLoanDetails?> getLoanDetails(
+    int loanId, {
+    bool purgeExpiredReleased = true,
+  }) async {
+    if (purgeExpiredReleased) {
+      await GirviRepository(_db).purgeExpiredReleasedLoans();
+    }
     final loan = await (_db.select(_db.girviLoans)
           ..where((row) => row.id.equals(loanId)))
         .getSingleOrNull();

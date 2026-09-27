@@ -15,6 +15,7 @@ import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
+import 'girvi_invoice_document_store.dart';
 import 'girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -30,10 +31,14 @@ class GirviInvoiceHubController extends ChangeNotifier {
     Future<bool> Function(GirviBillingModel model)? settingsSaver,
     Future<GirviInvoiceBranding> Function()? brandingLoader,
     ShopPrintInformationRepository? shopPrintRepository,
+    GirviInvoiceDocumentStore? documentStore,
+    Future<int?> Function()? finalizedLoanIdResolver,
   })  : _onFinalize = onFinalize,
         _pdfService = pdfService ?? GirviInvoicePdfService(),
         _brandingLoader =
             brandingLoader ?? GirviInvoiceBrandingRepository().fetch,
+        _documentStore = documentStore ?? const GirviInvoiceDocumentStore(),
+        _finalizedLoanIdResolver = finalizedLoanIdResolver,
         _shopPrintRepository =
             shopPrintRepository ?? ShopPrintInformationRepository() {
     final resolvedBillingRepo = billingRepo ?? GirviBillingRepo();
@@ -47,6 +52,8 @@ class GirviInvoiceHubController extends ChangeNotifier {
   late final Future<GirviBillingModel> Function() _settingsLoader;
   late final Future<bool> Function(GirviBillingModel model) _settingsSaver;
   final Future<GirviInvoiceBranding> Function() _brandingLoader;
+  final GirviInvoiceDocumentStore _documentStore;
+  final Future<int?> Function()? _finalizedLoanIdResolver;
   final ShopPrintInformationRepository _shopPrintRepository;
 
   GirviInvoiceHubState state = GirviInvoiceHubState.idle;
@@ -586,6 +593,8 @@ class GirviInvoiceHubController extends ChangeNotifier {
       isFinalized = await _onFinalize();
       if (!isFinalized) {
         errorMessage = 'Girvi ticket could not be saved.';
+      } else {
+        await _saveFinalizedInvoiceSnapshot();
       }
       return isFinalized;
     } catch (error) {
@@ -596,6 +605,25 @@ class GirviInvoiceHubController extends ChangeNotifier {
     } finally {
       isFinalizing = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _saveFinalizedInvoiceSnapshot() async {
+    try {
+      if (!_settingsLoaded) await _loadSavedSettings();
+      _shopPrintState ??= await _loadShopPrintState();
+      if (!_brandingLoaded) await _loadShopBranding();
+      final bytes = pdfBytes ?? await _buildPdfBytes();
+      final loanId = draft.loanId ?? await _finalizedLoanIdResolver?.call();
+      await _documentStore.saveInvoice(
+        loanId: loanId,
+        ticketNo: draft.ticketNo,
+        bytes: bytes,
+      );
+    } catch (error) {
+      AppLogger.debug(
+        'GirviInvoiceHubController: invoice snapshot was not saved: $error',
+      );
     }
   }
 

@@ -32,7 +32,6 @@ class GirviAccountDetailController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repository.purgeExpiredReleasedLoans();
       await _repository.syncSettlementStatus();
       final results = await _repository.getLoansWithCustomer(loanId: loanId);
       if (results.isEmpty) {
@@ -43,7 +42,10 @@ class GirviAccountDetailController extends ChangeNotifier {
         return;
       }
 
-      final loadedDetails = await _detailsRepository.getLoanDetails(loanId);
+      final loadedDetails = await _detailsRepository.getLoanDetails(
+        loanId,
+        purgeExpiredReleased: false,
+      );
       final loadedPayments = await _repository.getPaymentModelsForLoan(loanId);
       loadedPayments.sort((a, b) {
         final byDate = a.paymentDate.compareTo(b.paymentDate);

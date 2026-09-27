@@ -108,6 +108,7 @@ class GirviInvoiceItemDraft {
 @immutable
 class GirviInvoiceDraft {
   const GirviInvoiceDraft({
+    this.loanId,
     required this.ticketNo,
     required this.createdAt,
     required this.customerName,
@@ -149,6 +150,7 @@ class GirviInvoiceDraft {
     this.notes,
   });
 
+  final int? loanId;
   final String ticketNo;
   final DateTime createdAt;
   final String customerName;
@@ -194,6 +196,7 @@ class GirviInvoiceDraft {
     bool clearLifecycleFields = false,
   }) {
     return GirviInvoiceDraft(
+      loanId: loanId,
       ticketNo: ticketNo,
       createdAt: createdAt,
       customerName: customerName,

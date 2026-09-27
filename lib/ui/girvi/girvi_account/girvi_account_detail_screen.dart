@@ -12,6 +12,7 @@ import 'package:printing/printing.dart';
 import '../../../constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/girvi/girvi_account_detail_controller.dart';
+import '../../../logic/girvi/girvi_invoice_document_store.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_payment_record_pdf_service.dart';
 import '../../../models/girvi/girvi_account_lifecycle_summary.dart';
@@ -28,7 +29,12 @@ part 'parts/girvi_account_detail_layout.dart';
 part 'parts/girvi_account_detail_panels.dart';
 part 'parts/girvi_account_detail_payment_history.dart';
 part 'parts/girvi_account_detail_shared.dart';
+part 'parts/girvi_account_document_actions.dart';
+part 'parts/girvi_account_documents_panel.dart';
+part 'parts/girvi_account_lifecycle_widgets.dart';
+part 'parts/girvi_account_pledged_photos.dart';
 part 'parts/girvi_account_pledged_summary.dart';
+part 'parts/girvi_account_pledged_specs.dart';
 part 'parts/girvi_account_action_widgets.dart';
 part 'parts/girvi_account_invoice_preview.dart';
 
@@ -76,6 +82,18 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
 
   Future<void> _reload() => _controller.load(widget.loanId);
 
+  void _setOpeningGirviInvoice(bool value) {
+    if (mounted) setState(() => _openingGirviInvoice = value);
+  }
+
+  void _setViewingPaymentRecord(bool value) {
+    if (mounted) setState(() => _viewingPaymentRecord = value);
+  }
+
+  void _setPrintingPaymentRecord(bool value) {
+    if (mounted) setState(() => _printingPaymentRecord = value);
+  }
+
   void _openInterestEntry() {
     final account = _controller.account;
     if (account == null) return;
@@ -91,275 +109,6 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
               : 'girviLedger',
         },
       ).toString(),
-    );
-  }
-
-  Future<void> _previewGirviInvoice() async {
-    final account = _controller.account;
-    if (account == null || _openingGirviInvoice) return;
-
-    setState(() => _openingGirviInvoice = true);
-    try {
-      final bytes = await _buildGirviInvoicePdf(account);
-      if (!mounted) return;
-
-      await _showGirviInvoicePreview(pdfBytes: bytes);
-    } catch (_) {
-      if (mounted) _showMessage('Girvi invoice could not be opened.');
-    } finally {
-      if (mounted) setState(() => _openingGirviInvoice = false);
-    }
-  }
-
-  Future<Uint8List> _buildGirviInvoicePdf(
-    GirviLoanWithCustomer account,
-  ) async {
-    final draft =
-        await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
-      customerId: account.loan.customerId,
-      loanId: account.loan.id,
-    );
-    if (draft == null) {
-      throw StateError('Girvi invoice draft could not be loaded.');
-    }
-
-    final invoiceController = GirviInvoiceHubController(
-      draft: draft,
-      onFinalize: () async => true,
-    );
-    try {
-      await invoiceController.generatePreview();
-      final bytes = invoiceController.pdfBytes;
-      if (bytes == null) {
-        throw StateError('Girvi invoice PDF could not be generated.');
-      }
-      return bytes;
-    } finally {
-      invoiceController.dispose();
-    }
-  }
-
-  Future<void> _showGirviInvoicePreview({required Uint8List pdfBytes}) async {
-    final sides = await _rasterGirviInvoiceSides(pdfBytes);
-    if (!mounted) return;
-    if (sides.isEmpty) {
-      return _showCleanGirviInvoicePreview(pdfBytes: pdfBytes);
-    }
-
-    return showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.78),
-      useSafeArea: false,
-      builder: (dialogContext) => Material(
-        type: MaterialType.transparency,
-        child: _GirviInvoiceFlipPreview(
-          sides: sides,
-          onClose: () => Navigator.of(dialogContext).pop(),
-        ),
-      ),
-    );
-  }
-
-  Future<List<PdfRaster>> _rasterGirviInvoiceSides(Uint8List pdfBytes) async {
-    try {
-      final info = await Printing.info();
-      if (!info.canRaster) return const [];
-
-      final sides = <PdfRaster>[];
-      await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
-        sides.add(page);
-        if (sides.length == 2) break;
-      }
-      return List.unmodifiable(sides);
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<void> _showCleanGirviInvoicePreview({required Uint8List pdfBytes}) {
-    return showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.74),
-      useSafeArea: false,
-      builder: (dialogContext) => Dialog.fullscreen(
-        backgroundColor: const Color(0xFF111827),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: PdfPreview(
-                build: (_) async => pdfBytes,
-                initialPageFormat: PdfPageFormat.a4,
-                allowPrinting: false,
-                allowSharing: false,
-                canChangeOrientation: false,
-                canChangePageFormat: false,
-                canDebug: false,
-                useActions: false,
-                maxPageWidth: 860,
-                scrollViewDecoration: const BoxDecoration(
-                  color: Color(0xFF111827),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 18,
-              right: 18,
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.62),
-                shape: const CircleBorder(),
-                child: IconButton(
-                  tooltip: 'Close preview',
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(Icons.close_rounded, color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _printPaymentRecord() async {
-    final account = _controller.account;
-    if (account == null || _printingPaymentRecord) return;
-
-    setState(() => _printingPaymentRecord = true);
-    try {
-      final bytes = await _buildPaymentRecordPdf(account);
-      if (!mounted) return;
-
-      await Printing.layoutPdf(
-        name: 'girvi_payment_record_${_safePdfName(account.loan.ticketNo)}.pdf',
-        onLayout: (_) async => bytes,
-      );
-    } catch (_) {
-      if (mounted) _showMessage('Payment record could not be printed.');
-    } finally {
-      if (mounted) setState(() => _printingPaymentRecord = false);
-    }
-  }
-
-  Future<void> _previewPaymentRecord() async {
-    final account = _controller.account;
-    if (account == null || _viewingPaymentRecord) return;
-
-    setState(() => _viewingPaymentRecord = true);
-    try {
-      final bytes = await _buildPaymentRecordPdf(account);
-      if (!mounted) return;
-
-      await _showPaymentRecordPreview(
-        pdfBytes: bytes,
-        fileName:
-            'girvi_payment_record_${_safePdfName(account.loan.ticketNo)}.pdf',
-      );
-    } catch (_) {
-      if (mounted) _showMessage('Payment record could not be opened.');
-    } finally {
-      if (mounted) setState(() => _viewingPaymentRecord = false);
-    }
-  }
-
-  Future<Uint8List> _buildPaymentRecordPdf(
-      GirviLoanWithCustomer account) async {
-    final branding = await GirviInvoiceBrandingRepository(db: _db).fetch();
-    return GirviPaymentRecordPdfService().build(
-      account: account,
-      payments: _controller.payments,
-      details: _controller.details,
-      branding: branding,
-    );
-  }
-
-  Future<void> _showPaymentRecordPreview({
-    required Uint8List pdfBytes,
-    required String fileName,
-  }) async {
-    final sides = await _rasterPaymentRecordSides(pdfBytes);
-    if (!mounted) return;
-    if (sides.isNotEmpty) {
-      return showDialog<void>(
-        context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.78),
-        useSafeArea: false,
-        builder: (dialogContext) => Material(
-          type: MaterialType.transparency,
-          child: _GirviInvoiceFlipPreview(
-            sides: sides,
-            singleSideLabel: 'Payment record preview',
-            onClose: () => Navigator.of(dialogContext).pop(),
-          ),
-        ),
-      );
-    }
-
-    return _showCleanPaymentRecordPreview(
-      pdfBytes: pdfBytes,
-      fileName: fileName,
-    );
-  }
-
-  Future<List<PdfRaster>> _rasterPaymentRecordSides(Uint8List pdfBytes) async {
-    try {
-      final info = await Printing.info();
-      if (!info.canRaster) return const [];
-
-      final sides = <PdfRaster>[];
-      await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
-        sides.add(page);
-        if (sides.length == 2) break;
-      }
-      return List.unmodifiable(sides);
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<void> _showCleanPaymentRecordPreview({
-    required Uint8List pdfBytes,
-    required String fileName,
-  }) {
-    return showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.74),
-      useSafeArea: false,
-      builder: (dialogContext) => Dialog.fullscreen(
-        backgroundColor: const Color(0xFF111827),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: PdfPreview(
-                build: (_) async => pdfBytes,
-                initialPageFormat: PdfPageFormat.a4,
-                allowPrinting: true,
-                allowSharing: false,
-                canChangeOrientation: false,
-                canChangePageFormat: false,
-                canDebug: false,
-                pdfFileName: fileName,
-                maxPageWidth: 860,
-                scrollViewDecoration: const BoxDecoration(
-                  color: Color(0xFF111827),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 18,
-              right: 18,
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.62),
-                shape: const CircleBorder(),
-                child: IconButton(
-                  tooltip: 'Close preview',
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(Icons.close_rounded, color: Colors.white),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -429,7 +178,8 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     if (account.loan.girviStatus == GirviStatus.readyForDelivery) {
       return 'Complete Delivery';
     }
-    return 'Collect / Settle';
+    if (account.totalPayable > 0) return 'Collect Outstanding';
+    return 'Settle Account';
   }
 
   String? _paymentCoverageLabel(GirviPaymentModel payment) {

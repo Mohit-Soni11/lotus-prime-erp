@@ -199,138 +199,141 @@ class _PaymentTimelineRow extends StatelessWidget {
       _AccountInfoRowData('Balance After', money(payment.balanceAfter)),
     ];
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 78,
-          child: Column(
-            children: [
-              _PaymentDateBadge(
-                date: date(payment.paymentDate),
-                color: color,
-              ),
-              if (!isLast)
-                Container(
-                  width: 1,
-                  height: 112,
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  color: GirviColors.cardBorder,
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: GirviColors.cardBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.16)),
-            ),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 78,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            payment.type.displayName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.manrope(
-                              color: GirviColors.textDark,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: [
-                              _PaymentMetaChip(
-                                icon: _paymentModeIcon(payment.mode),
-                                label: payment.mode.displayName,
-                                color: color,
-                              ),
-                              if (hasReceiptNo)
-                                _PaymentMetaChip(
-                                  icon: Icons.receipt_long_rounded,
-                                  label: receiptNo,
-                                  color: GirviColors.info,
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Received',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            color: GirviColors.textBody,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 132),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              money(payment.amount),
-                              style: GoogleFonts.manrope(
-                                color: GirviColors.success,
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                _PaymentDateBadge(
+                  date: date(payment.paymentDate),
+                  color: color,
                 ),
-                if (coverageLabel != null) ...[
-                  const SizedBox(height: 9),
-                  _AccountInlineNotice(
-                    icon: Icons.date_range_rounded,
-                    color: GirviColors.info,
-                    text: coverageLabel!,
-                  ),
-                ],
-                const SizedBox(height: 10),
-                _AccountInfoGrid(rows: split, compact: true),
-                if ((payment.notes ?? '').trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    payment.notes!.trim(),
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textBody,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 1,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      color: GirviColors.cardBorder,
                     ),
                   ),
-                ],
               ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: GirviColors.cardBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: color.withValues(alpha: 0.16)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              payment.type.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.manrope(
+                                color: GirviColors.textDark,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                _PaymentMetaChip(
+                                  icon: _paymentModeIcon(payment.mode),
+                                  label: payment.mode.displayName,
+                                  color: color,
+                                ),
+                                if (hasReceiptNo)
+                                  _PaymentMetaChip(
+                                    icon: Icons.receipt_long_rounded,
+                                    label: receiptNo,
+                                    color: GirviColors.info,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Received',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              color: GirviColors.textBody,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 132),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                money(payment.amount),
+                                style: GoogleFonts.manrope(
+                                  color: GirviColors.success,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (coverageLabel != null) ...[
+                    const SizedBox(height: 9),
+                    _AccountInlineNotice(
+                      icon: Icons.date_range_rounded,
+                      color: GirviColors.info,
+                      text: coverageLabel!,
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  _AccountInfoGrid(rows: split, compact: true),
+                  if ((payment.notes ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      payment.notes!.trim(),
+                      style: GoogleFonts.inter(
+                        color: GirviColors.textBody,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -414,6 +414,7 @@ class CustomerProfileRepository {
           receiptMode == GirviReceiptMode.release ? 0.0 : totalInterest;
 
       return GirviInvoiceDraft(
+        loanId: loan.id,
         ticketNo: loan.ticketNo,
         createdAt: loan.createdAt,
         customerName: customer.name,
