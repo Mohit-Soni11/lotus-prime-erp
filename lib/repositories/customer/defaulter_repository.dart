@@ -51,8 +51,9 @@ class DefaulterRepository {
       final rows = await query.get();
       final loanIds =
           rows.map((row) => row.readTable(_db.girviLoans).id).toList();
-      final paymentSummary = await _loadPaymentSummary(loanIds);
+      final paymentSummary = await _loadPaymentSummary(loanIds, now);
       final itemSnapshots = await _loadItemSnapshots(loanIds);
+      final interestType = await _loadInterestCalculationType();
 
       final accounts = <DefaulterModel>[];
       for (final row in rows) {
@@ -66,6 +67,7 @@ class DefaulterRepository {
           customer: customer,
           summary: summary,
           itemSnapshot: itemSnapshot,
+          interestType: interestType,
           now: now,
         );
         if (account != null) accounts.add(account);
@@ -113,6 +115,7 @@ class DefaulterRepository {
 
   Future<Map<int, _PaymentSummary>> _loadPaymentSummary(
     List<int> loanIds,
+    DateTime now,
   ) async {
     if (loanIds.isEmpty) return const {};
 
@@ -121,9 +124,13 @@ class DefaulterRepository {
         .get();
 
     final byLoan = <int, _PaymentSummary>{};
+    final monthStart = DateTime(now.year, now.month);
     for (final payment in payments) {
       final current = byLoan[payment.girviId] ?? _PaymentSummary.empty();
-      byLoan[payment.girviId] = current.add(payment);
+      byLoan[payment.girviId] = current.add(
+        payment,
+        currentMonthStart: monthStart,
+      );
     }
     return byLoan;
   }
@@ -159,6 +166,7 @@ class DefaulterRepository {
     required Customer customer,
     required _PaymentSummary summary,
     required _PledgedItemSnapshot itemSnapshot,
+    required String interestType,
     required DateTime now,
   }) {
     final status = GirviStatus.fromDb(loan.status);
@@ -171,10 +179,20 @@ class DefaulterRepository {
     final interestMonths =
         GirviLoanModel.chargeableMonthsBetween(loan.startDate, now);
     final originalPrincipal = loan.loanAmount + summary.legacyPrincipalRepaid;
-    final grossInterest = GirviLoanModel.calculateCompoundInterest(
+    final grossInterest = GirviLoanModel.calculateInterest(
       principal: originalPrincipal,
       monthlyRatePercent: loan.interestRate,
       months: interestMonths,
+      interestType: interestType,
+    );
+    final coveredInterestMonths = math.max(
+      summary.coveredInterestMonths,
+      _coveredInterestMonthsFromTotalPaid(
+        principal: originalPrincipal,
+        monthlyRatePercent: loan.interestRate,
+        totalInterestPaid: summary.interestPaid + summary.interestDiscount,
+        interestType: interestType,
+      ),
     );
     final interestOutstanding = math.max(
       0.0,
@@ -192,6 +210,10 @@ class DefaulterRepository {
       lastInterestPaidDate: loan.lastInterestPaidDate,
       principalDue: principalOutstanding,
       interestDue: interestOutstanding,
+      hasCollectionHistory: summary.hasCollectionHistory,
+      hasInterestPaidBeforeMaturity:
+          summary.hasInterestPaidOnOrBefore(maturityDate),
+      coveredInterestMonths: coveredInterestMonths,
       now: now,
     );
 
@@ -230,6 +252,7 @@ class DefaulterRepository {
       interestOutstanding: interestOutstanding,
       totalDue: totalDue,
       totalReceived: summary.totalReceived,
+      currentMonthReceived: summary.currentMonthReceived,
       totalItemValue: itemSnapshot.totalValue > 0
           ? itemSnapshot.totalValue
           : loan.totalValue,
@@ -245,6 +268,8 @@ class DefaulterRepository {
       maturityOverdueDays: assessment.maturityOverdueDays,
       isInterestOverdue: assessment.isInterestOverdue,
       isMaturityOverdue: assessment.isMaturityOverdue,
+      hasInterestPaidBeforeMaturity:
+          summary.hasInterestPaidOnOrBefore(maturityDate),
       riskLevel: _mapSeverity(assessment.severity),
       collectionStage: assessment.stageLabel,
       nextActionLabel: assessment.nextActionLabel,
@@ -288,6 +313,48 @@ class DefaulterRepository {
       if (value != null && value.isAfter(latest)) latest = value;
     }
     return latest;
+  }
+
+  Future<String> _loadInterestCalculationType() async {
+    try {
+      await _db.ensureBillingSetupSchema();
+      final settings = await (_db.select(_db.girviBillingSettings)..limit(1))
+          .getSingleOrNull();
+      return GirviInterestCalculationType.normalize(settings?.interestType);
+    } catch (error) {
+      AppLogger.debug(
+        'Risk & Collections: using compound interest fallback: $error',
+      );
+      return GirviInterestCalculationType.compound;
+    }
+  }
+
+  int _coveredInterestMonthsFromTotalPaid({
+    required double principal,
+    required double monthlyRatePercent,
+    required double totalInterestPaid,
+    required String interestType,
+  }) {
+    if (principal <= 0 || monthlyRatePercent <= 0 || totalInterestPaid <= 0) {
+      return 0;
+    }
+
+    var coveredMonths = 0;
+    while (coveredMonths < 1200) {
+      final nextMonth = coveredMonths + 1;
+      final requiredInterest = GirviLoanModel.calculateInterest(
+        principal: principal,
+        monthlyRatePercent: monthlyRatePercent,
+        months: nextMonth,
+        interestType: interestType,
+      );
+      if (requiredInterest >
+          totalInterestPaid + GirviRiskPolicy.moneyTolerance) {
+        break;
+      }
+      coveredMonths = nextMonth;
+    }
+    return coveredMonths;
   }
 }
 
@@ -413,51 +480,83 @@ class _PledgedItemSnapshot {
 
 class _PaymentSummary {
   final double totalReceived;
+  final double currentMonthReceived;
   final double interestPaid;
   final double principalPaid;
   final double interestDiscount;
   final double principalDiscount;
   final double legacyPrincipalRepaid;
+  final int coveredInterestMonths;
   final DateTime? lastPaymentDate;
+  final DateTime? firstInterestPaymentDate;
+
+  bool get hasCollectionHistory => totalReceived > 0 || lastPaymentDate != null;
 
   const _PaymentSummary({
     required this.totalReceived,
+    required this.currentMonthReceived,
     required this.interestPaid,
     required this.principalPaid,
     required this.interestDiscount,
     required this.principalDiscount,
     required this.legacyPrincipalRepaid,
+    required this.coveredInterestMonths,
     required this.lastPaymentDate,
+    required this.firstInterestPaymentDate,
   });
 
   factory _PaymentSummary.empty() {
     return const _PaymentSummary(
       totalReceived: 0,
+      currentMonthReceived: 0,
       interestPaid: 0,
       principalPaid: 0,
       interestDiscount: 0,
       principalDiscount: 0,
       legacyPrincipalRepaid: 0,
+      coveredInterestMonths: 0,
       lastPaymentDate: null,
+      firstInterestPaymentDate: null,
     );
   }
 
-  _PaymentSummary add(GirviPayment payment) {
+  bool hasInterestPaidOnOrBefore(DateTime date) {
+    final paidOn = firstInterestPaymentDate;
+    if (paidOn == null) return false;
+    final paidDay = DateTime(paidOn.year, paidOn.month, paidOn.day);
+    final dueDay = DateTime(date.year, date.month, date.day);
+    return !paidDay.isAfter(dueDay);
+  }
+
+  _PaymentSummary add(
+    GirviPayment payment, {
+    required DateTime currentMonthStart,
+  }) {
     final type = GirviPaymentType.fromDb(payment.paymentType);
     var nextInterestPaid = interestPaid;
     var nextPrincipalPaid = principalPaid;
     var nextInterestDiscount = interestDiscount;
     var nextPrincipalDiscount = principalDiscount;
     var nextLegacyPrincipalRepaid = legacyPrincipalRepaid;
+    var nextCoveredInterestMonths = coveredInterestMonths;
+    var nextFirstInterestPaymentDate = firstInterestPaymentDate;
 
     if (type == GirviPaymentType.interest ||
         type == GirviPaymentType.partialInterest) {
       nextInterestPaid += payment.amount;
+      nextCoveredInterestMonths += payment.monthsCovered ?? 0;
+      nextFirstInterestPaymentDate =
+          _earliestDate(nextFirstInterestPaymentDate, payment.paymentDate);
     } else if (type == GirviPaymentType.fullRelease) {
       nextInterestPaid += payment.interestComponent;
       nextPrincipalPaid += payment.principalComponent;
       nextInterestDiscount += payment.interestDiscountComponent;
       nextPrincipalDiscount += payment.principalDiscountComponent;
+      nextCoveredInterestMonths += payment.monthsCovered ?? 0;
+      if (payment.interestComponent > 0) {
+        nextFirstInterestPaymentDate =
+            _earliestDate(nextFirstInterestPaymentDate, payment.paymentDate);
+      }
     } else if (type == GirviPaymentType.partialPrincipal) {
       nextLegacyPrincipalRepaid += payment.amount;
     }
@@ -466,15 +565,30 @@ class _PaymentSummary {
         lastPaymentDate == null || payment.paymentDate.isAfter(lastPaymentDate!)
             ? payment.paymentDate
             : lastPaymentDate;
+    final paymentMonth = DateTime(
+      payment.paymentDate.year,
+      payment.paymentDate.month,
+    );
+    final nextCurrentMonthReceived = paymentMonth == currentMonthStart
+        ? currentMonthReceived + payment.amount
+        : currentMonthReceived;
 
     return _PaymentSummary(
       totalReceived: totalReceived + payment.amount,
+      currentMonthReceived: nextCurrentMonthReceived,
       interestPaid: nextInterestPaid,
       principalPaid: nextPrincipalPaid,
       interestDiscount: nextInterestDiscount,
       principalDiscount: nextPrincipalDiscount,
       legacyPrincipalRepaid: nextLegacyPrincipalRepaid,
+      coveredInterestMonths: nextCoveredInterestMonths,
       lastPaymentDate: nextLastPaymentDate,
+      firstInterestPaymentDate: nextFirstInterestPaymentDate,
     );
+  }
+
+  DateTime _earliestDate(DateTime? current, DateTime candidate) {
+    if (current == null || candidate.isBefore(current)) return candidate;
+    return current;
   }
 }

@@ -182,7 +182,8 @@ class NoticeAuctionCase {
     return parts.join(' ');
   }
 
-  int get daysUntilRecoveryReview => math.max(0, noticePeriodDays - overdueDays);
+  int get daysUntilRecoveryReview =>
+      math.max(0, noticePeriodDays - overdueDays);
 
   int get daysPastNoticePeriod => math.max(0, overdueDays - noticePeriodDays);
 
@@ -214,11 +215,11 @@ class NoticeAuctionCase {
   String get stageLabel {
     switch (stage) {
       case NoticeAuctionStage.firstNoticeDue:
-        return 'First Notice';
+        return 'First Contact';
       case NoticeAuctionStage.secondNoticeDue:
-        return 'Second Notice';
+        return 'Second Contact';
       case NoticeAuctionStage.finalNoticeDue:
-        return 'Final Notice';
+        return 'Final Contact';
       case NoticeAuctionStage.disposalReady:
         return 'Recovery Review';
       case NoticeAuctionStage.settled:
@@ -230,29 +231,29 @@ class NoticeAuctionCase {
     switch (stage) {
       case NoticeAuctionStage.firstNoticeDue:
         return highestPreparedNoticeStage == 0
-            ? 'Prepare the first settlement warning.'
-            : 'First notice is prepared. Continue with the second notice when required.';
+            ? 'Prepare the first contact notice.'
+            : 'First contact notice is prepared. Continue with the second contact when required.';
       case NoticeAuctionStage.secondNoticeDue:
-        return 'Second notice is prepared. Continue with the final notice when required.';
+        return 'Second contact notice is prepared. Continue with the final contact when required.';
       case NoticeAuctionStage.finalNoticeDue:
-        return 'Final notice is prepared. Wait for the notice cycle before recovery review.';
+        return 'Final contact notice is prepared. Wait for the review cycle before recovery review.';
       case NoticeAuctionStage.disposalReady:
-        return 'All three notices are prepared. Review final recovery settlement.';
+        return 'All three contact notices are prepared. Review final recovery settlement.';
       case NoticeAuctionStage.settled:
-        return 'Notice and recovery workflow is closed.';
+        return 'Contact and recovery workflow is closed.';
     }
   }
 
   String get primaryActionLabel {
     switch (stage) {
       case NoticeAuctionStage.firstNoticeDue:
-        return 'Prepare First Notice';
+        return 'Prepare First Contact';
       case NoticeAuctionStage.secondNoticeDue:
-        return 'Prepare Second Notice';
+        return 'Prepare Second Contact';
       case NoticeAuctionStage.finalNoticeDue:
-        return 'Prepare Final Notice';
+        return 'Prepare Final Contact';
       case NoticeAuctionStage.disposalReady:
-        return 'Close Recovery';
+        return 'Complete Recovery';
       case NoticeAuctionStage.settled:
         return 'Closed';
     }

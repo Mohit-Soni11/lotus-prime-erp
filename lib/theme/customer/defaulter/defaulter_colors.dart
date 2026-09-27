@@ -1,6 +1,6 @@
 // ==========================================
 // FILE: defaulter_colors.dart
-// MODULE: Customer → Defaulter List
+// MODULE: Risk & Collections
 // DESCRIPTION: Master color palette for Defaulter List screen.
 //              Inherits POS shell/body pattern for design consistency.
 // ==========================================
@@ -29,10 +29,10 @@ class DefaulterColors {
   static const Color bodyTextMain = Color(0xFF0F172A);
   static const Color bodyTextMuted = Color(0xFF111827);
   static const Color bodyTextHint = Color(0xFF1F2937);
-  static const Color riskCardBg = Color(0xFFFFFBF2);
-  static const Color riskCardHoverBg = Color(0xFFFFF6E4);
-  static const Color riskMetricBg = Color(0xFFFFFFFF);
-  static const Color riskMetricBorder = Color(0xFFD8D2C5);
+  static const Color riskCardBg = Color(0xFFFFFFFF);
+  static const Color riskCardHoverBg = Color(0xFFFFFCF5);
+  static const Color riskMetricBg = Color(0xFFFBFCFE);
+  static const Color riskMetricBorder = Color(0xFFE3DFD7);
 
   // --- BRAND (Gold Accents) ---
   static const Color brandGold = Color(0xFFD4AF37);
@@ -99,7 +99,7 @@ class DefaulterColors {
   static const Color notifyBtnText = Color(0xFFFFFFFF);
 
   // --- TABLE ---
-  static const Color tableHeaderBg = Color(0xFFF1EDE4);
+  static const Color tableHeaderBg = Color(0xFFFAF7F0);
   static const Color tableRowAlt = Color(0xFFFAF8F4);
   static const Color tableHoverBg = Color(0xFFF6F1E8);
   static const Color tableDivider = Color(0xFFEDE9E0);

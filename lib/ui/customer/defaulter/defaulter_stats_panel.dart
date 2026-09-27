@@ -51,7 +51,8 @@ class DefaulterStatsPanel extends StatelessWidget {
                   value: stats.totalRiskAccounts.toString(),
                   valueStyle: DefaulterStyles.statValue,
                   footer: _RiskPills(
-                    overdue: stats.overdueCount,
+                    critical: stats.criticalCount,
+                    monitoring: stats.mediumCount,
                     settlement: stats.settlementPendingCount,
                   ),
                 ),
@@ -86,7 +87,8 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statPrincipalText,
                   ),
-                  footerText: '${stats.criticalCount} critical accounts',
+                  footerText:
+                      '${stats.criticalCount} critical no-payment accounts',
                 ),
               ),
               SizedBox(
@@ -103,7 +105,7 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statReceivedText,
                   ),
-                  footerText: 'Updated at ${stats.lastRefreshedAt}',
+                  footerText: 'Interest and release receipts',
                 ),
               ),
             ],
@@ -224,11 +226,13 @@ class _StatCard extends StatelessWidget {
 }
 
 class _RiskPills extends StatelessWidget {
-  final int overdue;
+  final int critical;
+  final int monitoring;
   final int settlement;
 
   const _RiskPills({
-    required this.overdue,
+    required this.critical,
+    required this.monitoring,
     required this.settlement,
   });
 
@@ -239,17 +243,23 @@ class _RiskPills extends StatelessWidget {
       runSpacing: 4,
       children: [
         _pill(
-          '$overdue overdue',
+          '$critical critical',
           DefaulterColors.riskCriticalText,
           DefaulterColors.riskCriticalBg,
         ),
+        if (monitoring > 0)
+          _pill(
+            '$monitoring monitoring',
+            DefaulterColors.riskMediumText,
+            DefaulterColors.riskMediumBg,
+          ),
         if (settlement > 0)
           _pill(
             '$settlement settlement',
             DefaulterColors.riskHighText,
             DefaulterColors.riskHighBg,
           ),
-        if (overdue == 0 && settlement == 0)
+        if (critical == 0 && monitoring == 0 && settlement == 0)
           const Text('Portfolio controlled', style: DefaulterStyles.statSuffix),
       ],
     );

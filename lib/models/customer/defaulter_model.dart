@@ -63,6 +63,7 @@ class DefaulterModel {
   final double interestOutstanding;
   final double totalDue;
   final double totalReceived;
+  final double currentMonthReceived;
   final double totalItemValue;
   final double netWeight;
   final DateTime startDate;
@@ -75,6 +76,7 @@ class DefaulterModel {
   final int maturityOverdueDays;
   final bool isInterestOverdue;
   final bool isMaturityOverdue;
+  final bool hasInterestPaidBeforeMaturity;
   final DefaulterRiskLevel riskLevel;
   final String collectionStage;
   final String nextActionLabel;
@@ -106,6 +108,7 @@ class DefaulterModel {
     required this.interestOutstanding,
     required this.totalDue,
     required this.totalReceived,
+    required this.currentMonthReceived,
     required this.totalItemValue,
     required this.netWeight,
     required this.startDate,
@@ -118,12 +121,13 @@ class DefaulterModel {
     required this.maturityOverdueDays,
     required this.isInterestOverdue,
     required this.isMaturityOverdue,
+    required this.hasInterestPaidBeforeMaturity,
     required this.riskLevel,
     required this.collectionStage,
     required this.nextActionLabel,
   });
 
-  bool get isOverdue => isInterestOverdue || isMaturityOverdue;
+  bool get isOverdue => isMaturityOverdue && !hasInterestPaidBeforeMaturity;
   bool get isSettlementPending => statusValue == 'PARTIAL_RELEASE';
   bool get hasPaymentHistory => totalReceived > 0 || lastPaymentDate != null;
 
@@ -219,7 +223,7 @@ class DefaulterStatsModel {
       totalPrincipalDue:
           list.fold(0.0, (sum, d) => sum + d.principalOutstanding),
       totalInterestDue: list.fold(0.0, (sum, d) => sum + d.interestOutstanding),
-      totalReceived: list.fold(0.0, (sum, d) => sum + d.totalReceived),
+      totalReceived: list.fold(0.0, (sum, d) => sum + d.currentMonthReceived),
       criticalCount:
           list.where((d) => d.riskLevel == DefaulterRiskLevel.critical).length,
       highCount:

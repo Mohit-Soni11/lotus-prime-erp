@@ -174,7 +174,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Close Recovery Settlement',
+                  'Complete Recovery Settlement',
                   style: GoogleFonts.manrope(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,

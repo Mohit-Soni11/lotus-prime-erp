@@ -1,6 +1,6 @@
 // ==========================================
 // FILE: defaulter_icons.dart
-// MODULE: Customer → Defaulter List
+// MODULE: Risk & Collections
 // DESCRIPTION: Centralized icon constants. No hardcoded icons in UI files.
 // ==========================================
 
@@ -14,6 +14,7 @@ class DefaulterIcons {
   static const IconData closeScreen = Icons.close_rounded;
 
   // --- SCREEN IDENTITY ---
+  static const IconData module = Icons.security_rounded;
   static const IconData defaulterShield = Icons.shield_outlined;
   static const IconData defaulterAlert = Icons.warning_amber_rounded;
   static const IconData listIcon = Icons.format_list_bulleted_rounded;
@@ -62,3 +63,4 @@ class DefaulterIcons {
   static const IconData share = Icons.share_rounded;
   static const IconData print = Icons.print_rounded;
 }
+

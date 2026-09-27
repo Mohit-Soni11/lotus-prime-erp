@@ -1,6 +1,6 @@
 // ==========================================
 // FILE: defaulter_styles.dart
-// MODULE: Customer → Defaulter List
+// MODULE: Risk & Collections
 // DESCRIPTION: Typography and decoration constants.
 // ==========================================
 
@@ -258,3 +258,4 @@ class DefaulterStyles {
         ),
       );
 }
+

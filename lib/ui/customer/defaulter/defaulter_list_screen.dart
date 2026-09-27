@@ -1,6 +1,6 @@
 // ==========================================
 // FILE: defaulter_list_screen.dart
-// MODULE: Customer → Defaulter List
+// MODULE: Risk & Collections
 // DESCRIPTION: Master screen widget.
 //              Composes: AppBar + StatsPanel + FilterBar + DataTable.
 //              Manages DefaulterLogic lifecycle via ChangeNotifierProvider
@@ -240,3 +240,4 @@ class _ResultCountBar extends StatelessWidget {
     );
   }
 }
+

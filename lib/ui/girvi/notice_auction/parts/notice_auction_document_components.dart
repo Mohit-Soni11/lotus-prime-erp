@@ -30,7 +30,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Notice Documents',
+                  'Contact Documents',
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textDark,
                     fontSize: 12.8,
@@ -109,7 +109,7 @@ class _NoNoticeDocuments extends StatelessWidget {
         border: Border.all(color: GirviColors.cardBorder),
       ),
       child: Text(
-        'No notice document has been prepared yet.',
+        'No contact document has been prepared yet.',
         style: GirviStyles.caption.copyWith(
           color: GirviColors.textDark,
           fontSize: 12.5,
@@ -367,7 +367,7 @@ class _CaseActions extends StatelessWidget {
         _ActionButton(
           label: item.stage == NoticeAuctionStage.settled
               ? 'Workflow Closed'
-              : item.nextNoticeType?.label ?? '3 Notices Prepared',
+              : item.primaryActionLabel,
           color: GirviColors.warning,
           onTap: onPrepareNotice,
         ),
@@ -375,7 +375,7 @@ class _CaseActions extends StatelessWidget {
         _ActionButton(
           label: item.stage == NoticeAuctionStage.settled
               ? 'Closed'
-              : 'Close Recovery',
+              : 'Complete Recovery',
           color: item.stage == NoticeAuctionStage.settled
               ? GirviColors.success
               : GirviColors.danger,

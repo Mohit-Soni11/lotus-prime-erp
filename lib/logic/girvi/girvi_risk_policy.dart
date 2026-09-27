@@ -14,6 +14,7 @@ enum GirviRiskStage {
   controlled,
   earlyRisk,
   watchlist,
+  collectionMonitoring,
   highRisk,
   critical,
   settlementPending,
@@ -65,6 +66,7 @@ class GirviRiskPolicy {
   static const int earlyRiskStartMonths = 1;
   static const int watchlistStartMonths = 3;
   static const int highRiskStartMonths = 6;
+  static const int criticalNoCollectionStartMonths = 12;
   static const int criticalUnpaidStartMonths = 18;
   static const int criticalMaturityOverdueMonths = 6;
 
@@ -75,9 +77,16 @@ class GirviRiskPolicy {
     required DateTime? lastInterestPaidDate,
     required double principalDue,
     required double interestDue,
+    bool hasCollectionHistory = false,
+    bool hasInterestPaidBeforeMaturity = false,
+    int coveredInterestMonths = 0,
     required DateTime now,
   }) {
     final totalDue = principalDue + interestDue;
+    final accountAgeMonths = GirviLoanModel.chargeableMonthsBetween(
+      startDate,
+      now,
+    );
     final maturityOverdueDays = math.max(
       0,
       _dateOnly(now).difference(_dateOnly(maturityDate)).inDays,
@@ -85,13 +94,29 @@ class GirviRiskPolicy {
     final maturityOverdueMonths = maturityOverdueDays <= 0
         ? 0
         : GirviLoanModel.chargeableMonthsBetween(maturityDate, now);
+    final normalizedCoveredMonths = math.max(0, coveredInterestMonths);
+    final uncoveredLedgerMonths =
+        math.max(0, accountAgeMonths - normalizedCoveredMonths);
     final interestStart = lastInterestPaidDate ?? startDate;
-    final unpaidInterestMonths = interestDue > moneyTolerance
+    final dateBasedUnpaidInterestMonths = interestDue > moneyTolerance
         ? GirviLoanModel.chargeableMonthsBetween(interestStart, now)
         : 0;
+    final unpaidInterestMonths = interestDue > moneyTolerance
+        ? normalizedCoveredMonths > 0
+            ? uncoveredLedgerMonths
+            : dateBasedUnpaidInterestMonths
+        : 0;
+    final uncoveredInterestStart = normalizedCoveredMonths > 0
+        ? GirviLoanModel.addChargeableMonths(
+            startDate,
+            normalizedCoveredMonths,
+          )
+        : interestStart;
     final interestOverdueDays = unpaidInterestMonths > 0
         ? math.max(
-            0, _dateOnly(now).difference(_dateOnly(interestStart)).inDays)
+            0,
+            _dateOnly(now).difference(_dateOnly(uncoveredInterestStart)).inDays,
+          )
         : 0;
     final riskAgeDays = math.max(interestOverdueDays, maturityOverdueDays);
     final isInterestOverdue = unpaidInterestMonths >= earlyRiskStartMonths;
@@ -154,11 +179,26 @@ class GirviRiskPolicy {
       );
     }
 
-    if (unpaidInterestMonths >= criticalUnpaidStartMonths ||
-        maturityOverdueMonths >= criticalMaturityOverdueMonths) {
+    if (isMaturityOverdue &&
+        unpaidInterestMonths > criticalNoCollectionStartMonths &&
+        totalDue > moneyTolerance) {
       return _result(
         stage: GirviRiskStage.critical,
         severity: GirviRiskSeverity.critical,
+        isRiskAccount: true,
+        isInterestOverdue: isInterestOverdue,
+        isMaturityOverdue: isMaturityOverdue,
+        unpaidInterestMonths: unpaidInterestMonths,
+        maturityOverdueDays: maturityOverdueDays,
+        maturityOverdueMonths: maturityOverdueMonths,
+        riskAgeDays: riskAgeDays,
+      );
+    }
+
+    if (isMaturityOverdue && normalizedCoveredMonths > 0) {
+      return _result(
+        stage: GirviRiskStage.collectionMonitoring,
+        severity: GirviRiskSeverity.medium,
         isRiskAccount: true,
         isInterestOverdue: isInterestOverdue,
         isMaturityOverdue: isMaturityOverdue,
@@ -261,6 +301,8 @@ class GirviRiskPolicy {
         return 'Settlement Pending';
       case GirviRiskStage.readyForDelivery:
         return 'Ready for Delivery';
+      case GirviRiskStage.collectionMonitoring:
+        return 'Collection Monitoring';
       case GirviRiskStage.controlled:
         return 'Controlled';
       default:
@@ -278,6 +320,8 @@ class GirviRiskPolicy {
         return 'High Risk';
       case GirviRiskStage.watchlist:
         return 'Watchlist';
+      case GirviRiskStage.collectionMonitoring:
+        return 'Collection Monitoring';
       case GirviRiskStage.earlyRisk:
         return 'Early Risk';
       case GirviRiskStage.settlementPending:
@@ -292,11 +336,13 @@ class GirviRiskPolicy {
   static String _nextAction(GirviRiskStage stage) {
     switch (stage) {
       case GirviRiskStage.critical:
-        return 'Review for overdue notice';
+        return 'Start three-step contact review';
       case GirviRiskStage.highRisk:
         return 'Call customer and secure payment';
       case GirviRiskStage.watchlist:
         return 'Schedule collection follow-up';
+      case GirviRiskStage.collectionMonitoring:
+        return 'Monitor account and collect pending interest';
       case GirviRiskStage.earlyRisk:
         return 'Send payment reminder';
       case GirviRiskStage.settlementPending:

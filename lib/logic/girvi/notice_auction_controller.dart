@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/notice_auction_model.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
+import 'girvi_risk_policy.dart';
 
 class NoticeAuctionController extends ChangeNotifier {
   NoticeAuctionController({
@@ -55,8 +57,33 @@ class NoticeAuctionController extends ChangeNotifier {
             status == GirviStatus.readyForDelivery) {
           return false;
         }
-        return entry.loan.maturityDate != null &&
-            now.isAfter(entry.loan.maturityDate!);
+        final maturityDate = entry.loan.maturityDate ??
+            GirviLoanModel.addChargeableMonths(
+              entry.loan.startDate,
+              entry.loan.durationMonths,
+            );
+        final coveredInterestMonths = _coveredInterestMonths(entry);
+        final hasInterestPaidBeforeMaturity =
+            entry.loan.lastInterestPaidDate != null &&
+                !entry.loan.lastInterestPaidDate!.isAfter(maturityDate);
+        final assessment = GirviRiskPolicy.assess(
+          status: status,
+          startDate: entry.loan.startDate,
+          maturityDate: maturityDate,
+          lastInterestPaidDate: entry.loan.lastInterestPaidDate,
+          principalDue: entry.principalDue,
+          interestDue: entry.netInterestDue,
+          hasCollectionHistory: entry.interestPaidTotal > 0 ||
+              entry.principalPaidTotal > 0 ||
+              entry.interestDiscountTotal > 0 ||
+              entry.principalDiscountTotal > 0 ||
+              entry.legacyPrincipalRepaidTotal > 0 ||
+              entry.loan.lastInterestPaidDate != null,
+          hasInterestPaidBeforeMaturity: hasInterestPaidBeforeMaturity,
+          coveredInterestMonths: coveredInterestMonths,
+          now: now,
+        );
+        return assessment.stage == GirviRiskStage.critical;
       }).toList();
       final actionHistory = await _noticeActionRepository.actionsByGirviIds(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
@@ -86,10 +113,10 @@ class NoticeAuctionController extends ChangeNotifier {
       );
       _applyFilters();
     } catch (error) {
-      AppLogger.debug('Overdue Notices load failed: $error');
+      AppLogger.debug('Contact & Recovery load failed: $error');
       _state = _state.copyWith(
         isLoading: false,
-        errorMessage: 'Overdue notice records could not be loaded.',
+        errorMessage: 'Contact and recovery records could not be loaded.',
       );
       notifyListeners();
     }
@@ -103,6 +130,41 @@ class NoticeAuctionController extends ChangeNotifier {
   void setSearchQuery(String query) {
     _state = _state.copyWith(searchQuery: query);
     _applyFilters();
+  }
+
+  int _coveredInterestMonths(GirviLoanWithCustomer entry) {
+    final paidThrough = entry.loan.lastInterestPaidDate;
+    if (paidThrough != null && paidThrough.isAfter(entry.loan.startDate)) {
+      return GirviLoanModel.chargeableMonthsBetween(
+        entry.loan.startDate,
+        paidThrough,
+      );
+    }
+
+    final totalInterestCredit =
+        entry.interestPaidTotal + entry.interestDiscountTotal;
+    if (entry.originalPrincipal <= 0 ||
+        entry.loan.interestRate <= 0 ||
+        totalInterestCredit <= 0) {
+      return 0;
+    }
+
+    var coveredMonths = 0;
+    while (coveredMonths < 1200) {
+      final nextMonth = coveredMonths + 1;
+      final requiredInterest = GirviLoanModel.calculateInterest(
+        principal: entry.originalPrincipal,
+        monthlyRatePercent: entry.loan.interestRate,
+        months: nextMonth,
+        interestType: entry.interestType,
+      );
+      if (requiredInterest >
+          totalInterestCredit + GirviRiskPolicy.moneyTolerance) {
+        break;
+      }
+      coveredMonths = nextMonth;
+    }
+    return coveredMonths;
   }
 
   Future<bool> markAuctioned(NoticeAuctionCase item) async {
@@ -127,7 +189,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Overdue Notices close status failed: $error');
+      AppLogger.debug('Contact & Recovery close status failed: $error');
       _state = _state.copyWith(
         inlineMessage: 'Closed status could not be updated.',
       );
@@ -153,7 +215,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Overdue Notices notice draft audit failed: $error');
+      AppLogger.debug('Contact & Recovery notice draft audit failed: $error');
       _state = _state.copyWith(
         inlineMessage:
             'Notice copied, but notice history could not be updated.',
@@ -182,7 +244,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Overdue Notices notice stage audit failed: $error');
+      AppLogger.debug('Contact & Recovery notice stage audit failed: $error');
       _state = _state.copyWith(
         inlineMessage: '${noticeType.label} could not be saved.',
       );
@@ -218,7 +280,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Overdue Notices delivery proof failed: $error');
+      AppLogger.debug('Contact & Recovery delivery proof failed: $error');
       _state = _state.copyWith(
         inlineMessage: '${noticeType.label} proof could not be recorded.',
       );
@@ -274,7 +336,7 @@ class NoticeAuctionController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Overdue Notices recovery settlement failed: $error');
+      AppLogger.debug('Contact & Recovery settlement failed: $error');
       _state = _state.copyWith(
         inlineMessage: 'Recovery settlement could not be closed.',
       );

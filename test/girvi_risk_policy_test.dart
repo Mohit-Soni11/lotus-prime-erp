@@ -63,7 +63,7 @@ void main() {
       expect(sixMonthsUnpaid.unpaidInterestMonths, 6);
     });
 
-    test('marks compound-plus-six-month exposure as critical', () {
+    test('keeps long unpaid exposure high risk before maturity', () {
       final result = GirviRiskPolicy.assess(
         status: GirviStatus.active,
         startDate: DateTime(2025, 1),
@@ -74,9 +74,90 @@ void main() {
         now: DateTime(2026, 7),
       );
 
+      expect(result.stage, GirviRiskStage.highRisk);
+      expect(result.severity, GirviRiskSeverity.high);
+      expect(result.unpaidInterestMonths, 18);
+    });
+
+    test('keeps old paid accounts in high risk before maturity', () {
+      final result = GirviRiskPolicy.assess(
+        status: GirviStatus.active,
+        startDate: DateTime(2025, 1),
+        maturityDate: DateTime(2027, 1),
+        lastInterestPaidDate: DateTime(2025, 8),
+        principalDue: 12000,
+        interestDue: 7200,
+        hasCollectionHistory: true,
+        now: DateTime(2026, 7),
+      );
+
+      expect(result.stage, GirviRiskStage.highRisk);
+      expect(result.severity, GirviRiskSeverity.high);
+      expect(result.isRiskAccount, isTrue);
+    });
+
+    test(
+        'marks matured 12 month plus accounts with no term interest as critical',
+        () {
+      final result = GirviRiskPolicy.assess(
+        status: GirviStatus.active,
+        startDate: DateTime(2025, 7),
+        maturityDate: DateTime(2026, 7),
+        lastInterestPaidDate: null,
+        principalDue: 12000,
+        interestDue: 7200,
+        hasCollectionHistory: false,
+        hasInterestPaidBeforeMaturity: false,
+        now: DateTime(2026, 8),
+      );
+
       expect(result.stage, GirviRiskStage.critical);
       expect(result.severity, GirviRiskSeverity.critical);
-      expect(result.unpaidInterestMonths, 18);
+      expect(result.isRiskAccount, isTrue);
+    });
+
+    test(
+        'keeps matured accounts critical when payment coverage is still above threshold',
+        () {
+      final result = GirviRiskPolicy.assess(
+        status: GirviStatus.active,
+        startDate: DateTime(2025, 1),
+        maturityDate: DateTime(2025, 7),
+        lastInterestPaidDate: DateTime(2025, 2),
+        principalDue: 12000,
+        interestDue: 8500,
+        hasCollectionHistory: true,
+        hasInterestPaidBeforeMaturity: true,
+        coveredInterestMonths: 1,
+        now: DateTime(2026, 7),
+      );
+
+      expect(result.stage, GirviRiskStage.critical);
+      expect(result.severity, GirviRiskSeverity.critical);
+      expect(result.unpaidInterestMonths, 17);
+      expect(result.isRiskAccount, isTrue);
+    });
+
+    test(
+        'moves matured accounts to monitoring when payment brings unpaid months within threshold',
+        () {
+      final result = GirviRiskPolicy.assess(
+        status: GirviStatus.active,
+        startDate: DateTime(2025, 1),
+        maturityDate: DateTime(2025, 7),
+        lastInterestPaidDate: DateTime(2025, 6),
+        principalDue: 12000,
+        interestDue: 6000,
+        hasCollectionHistory: true,
+        hasInterestPaidBeforeMaturity: true,
+        coveredInterestMonths: 6,
+        now: DateTime(2026, 7),
+      );
+
+      expect(result.stage, GirviRiskStage.collectionMonitoring);
+      expect(result.severity, GirviRiskSeverity.medium);
+      expect(result.unpaidInterestMonths, 12);
+      expect(result.isRiskAccount, isTrue);
     });
 
     test('keeps incomplete release settlement separate from delivery cases',

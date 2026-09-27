@@ -1,6 +1,6 @@
 // ==========================================
 // FILE: defaulter_filter_bar.dart
-// MODULE: Customer → Defaulter List
+// MODULE: Risk & Collections
 // DESCRIPTION: Search box + risk filter chips + sort dropdown.
 //              Communicates user actions back to DefaulterLogic.
 // ==========================================
@@ -234,19 +234,9 @@ class _FilterChips extends StatelessWidget {
         DefaulterColors.riskCriticalText
       ),
       (
-        DefaulterFilterBy.high,
-        DefaulterStrings.filterHigh,
-        DefaulterColors.riskHighText
-      ),
-      (
         DefaulterFilterBy.medium,
         DefaulterStrings.filterMedium,
         DefaulterColors.riskMediumText
-      ),
-      (
-        DefaulterFilterBy.low,
-        DefaulterStrings.filterLow,
-        DefaulterColors.riskLowText
       ),
       (
         DefaulterFilterBy.settlementPending,

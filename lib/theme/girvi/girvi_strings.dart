@@ -26,8 +26,8 @@ class GirviStrings {
   static const String releaseSub = 'Redeem & settle';
   static const String calcTitle = 'INTEREST ENTRY';
   static const String calcSub = 'Payment ledger';
-  static const String noticeTitle = 'OVERDUE NOTICES';
-  static const String noticeSub = 'Overdue notice management';
+  static const String noticeTitle = 'CONTACT & RECOVERY';
+  static const String noticeSub = 'Contact review and recovery control';
 
   // Section headers
   static const String secCustomer = 'Customer Selection';

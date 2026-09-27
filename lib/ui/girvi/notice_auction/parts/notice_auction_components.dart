@@ -28,18 +28,18 @@ class _NoticeAuctionOverview extends StatelessWidget {
               SizedBox(
                 width: width,
                 child: _SummaryTile(
-                  label: 'Notice Cases',
+                  label: 'Contact Review',
                   value: stats.totalCases.toString(),
-                  footer: '${stats.noticeDueCount} active cases',
+                  footer: '${stats.noticeDueCount} active accounts',
                   accent: GirviColors.warning,
                 ),
               ),
               SizedBox(
                 width: width,
                 child: _SummaryTile(
-                  label: 'Final Notice',
+                  label: 'Final Contact',
                   value: stats.finalNoticeCount.toString(),
-                  footer: '${state.noticePeriodDays} day notice cycle',
+                  footer: '${state.noticePeriodDays} day review cycle',
                   accent: GirviColors.danger,
                 ),
               ),
@@ -159,7 +159,7 @@ class _NoticeAuctionControls extends StatelessWidget {
             controller: searchController,
             style: GirviStyles.caption,
             decoration: InputDecoration(
-              hintText: 'Search customer, mobile, ticket, item or status',
+              hintText: 'Search customer, mobile, invoice, item or status',
               hintStyle:
                   GirviStyles.caption.copyWith(color: GirviColors.textHint),
               filled: true,
@@ -206,13 +206,13 @@ class _NoticeAuctionControls extends StatelessWidget {
   String _labelFor(NoticeAuctionFilter filter) {
     switch (filter) {
       case NoticeAuctionFilter.all:
-        return 'Active Cases';
+        return 'Active Review';
       case NoticeAuctionFilter.firstNotice:
-        return 'First Notice';
+        return 'First Contact';
       case NoticeAuctionFilter.secondNotice:
-        return 'Second Notice';
+        return 'Second Contact';
       case NoticeAuctionFilter.finalNotice:
-        return 'Final Notice';
+        return 'Final Contact';
       case NoticeAuctionFilter.disposalReady:
         return 'Recovery Review';
       case NoticeAuctionFilter.settled:
@@ -367,15 +367,15 @@ class _NoticeAuctionBody extends StatelessWidget {
     }
     if (state.errorMessage != null) {
       return _EmptyState(
-        title: 'Unable to Load Notice Cases',
+        title: 'Unable to Load Recovery Cases',
         subtitle: state.errorMessage!,
       );
     }
     if (state.visibleCases.isEmpty) {
       return const _EmptyState(
-        title: 'No Notice Cases Found',
+        title: 'No Recovery Cases Found',
         subtitle:
-            'There are no Girvi accounts requiring overdue notice review.',
+            'There are no Girvi accounts requiring contact or recovery review.',
       );
     }
 
@@ -536,7 +536,7 @@ class _CaseIdentity extends StatelessWidget {
           spacing: 8,
           runSpacing: 6,
           children: [
-            _InfoPill(label: 'Ticket', value: loan.ticketNo),
+            _InfoPill(label: 'Invoice', value: loan.ticketNo),
             _InfoPill(label: 'Mobile', value: account.customerMobile),
             _InfoPill(label: 'Maturity', value: maturityLabel),
           ],

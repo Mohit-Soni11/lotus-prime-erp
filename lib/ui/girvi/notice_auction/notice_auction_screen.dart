@@ -75,7 +75,6 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
       backgroundColor: GirviColors.bodyBg,
       appBar: NoticeAuctionAppBar(
         onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
-        onRefreshTap: _controller.load,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -377,7 +376,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
           'यह सूचना है कि नीचे दिया गया गिरवी खाता देय तारीख के बाद भी लंबित है। कृपया सूचना अवधि में पूरी बकाया राशि जमा कर गिरवी वस्तु छुड़ाएं।',
         GirviNoticeType.second =>
           'पहली सूचना के बाद भी खाता लंबित है। यह दूसरी लिखित चेतावनी है। कृपया अंतिम कार्रवाई से बचने के लिए बकाया राशि तुरंत जमा करें।',
-      GirviNoticeType.finalNotice =>
+        GirviNoticeType.finalNotice =>
           'यह अंतिम सूचना है। यदि अंतिम तारीख तक पूरा भुगतान नहीं होता है, तो गिरवी वस्तु को न छुड़ाया गया मानकर लागू कानून, सहमत Girvi terms और business policy के अनुसार वैध वसूली प्रक्रिया शुरू की जा सकती है।',
       };
       final closing = switch (noticeType) {
