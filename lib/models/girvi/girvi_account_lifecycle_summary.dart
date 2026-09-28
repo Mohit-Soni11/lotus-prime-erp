@@ -69,14 +69,15 @@ class GirviAccountLifecycleSummary {
         title: delivered ? 'Closed Period' : 'Running Period',
         value: elapsed.displayLabel,
         subtitle:
-            '$elapsedDays total day${elapsedDays == 1 ? '' : 's'} | $chargeableMonths bill month${chargeableMonths == 1 ? '' : 's'}',
+            '$elapsedDays total day${elapsedDays == 1 ? '' : 's'} | $chargeableMonths chargeable month${chargeableMonths == 1 ? '' : 's'}',
       ),
       settlement: GirviLifecycleTile(
         kind: settlementComplete
             ? GirviLifecycleTileKind.settlementComplete
             : GirviLifecycleTileKind.settlementPending,
-        title:
-            settlementComplete ? 'Settlement Complete' : 'Settlement Pending',
+        title: settlementComplete
+            ? 'Settlement Complete'
+            : 'Settlement in Progress',
         value: settlementComplete
             ? 'Balance cleared'
             : moneyLabel(account.totalPayable),
@@ -91,7 +92,7 @@ class GirviAccountLifecycleSummary {
                 ? GirviLifecycleTileKind.deliveryReady
                 : GirviLifecycleTileKind.deliveryPending,
         title: delivered
-            ? 'Delivery Delivered'
+            ? 'Item Delivered'
             : settlementComplete
                 ? 'Delivery Pending'
                 : 'Delivery Pending',

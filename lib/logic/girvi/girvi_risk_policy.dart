@@ -302,7 +302,7 @@ class GirviRiskPolicy {
       case GirviRiskStage.highRisk:
         return 'High Risk';
       case GirviRiskStage.watchlist:
-        return 'Watchlist';
+        return 'Monitoring';
       case GirviRiskStage.collectionMonitoring:
         return 'Collection Monitoring';
       case GirviRiskStage.earlyRisk:
@@ -317,7 +317,7 @@ class GirviRiskPolicy {
   static String _nextAction(GirviRiskStage stage) {
     switch (stage) {
       case GirviRiskStage.critical:
-        return 'Start three-step contact review';
+        return 'Begin Notice Review';
       case GirviRiskStage.highRisk:
         return 'Call customer and secure payment';
       case GirviRiskStage.watchlist:

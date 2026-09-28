@@ -15,7 +15,7 @@ extension _GirviLedgerControls on _GirviListScreenState {
               ? null
               : _LedgerPrimaryButton(
                   icon: Icons.add_rounded,
-                  label: 'New Pledge',
+                  label: 'New Pledge Ticket',
                   onTap: _openNewGirvi,
                 );
 

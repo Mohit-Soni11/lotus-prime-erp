@@ -38,7 +38,7 @@ class GirviAccountDetailController extends ChangeNotifier {
         _account = null;
         _details = null;
         _payments = const [];
-        _errorMessage = 'Girvi account could not be found.';
+        _errorMessage = 'Pledge account could not be found.';
         return;
       }
 
@@ -60,7 +60,7 @@ class GirviAccountDetailController extends ChangeNotifier {
       _account = null;
       _details = null;
       _payments = const [];
-      _errorMessage = 'Girvi account details could not be loaded.';
+      _errorMessage = 'Pledge account details could not be loaded.';
       AppLogger.error(
         'GirviAccountDetailController.load failed: $error',
         error: error,

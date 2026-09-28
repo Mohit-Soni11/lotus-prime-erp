@@ -9,13 +9,13 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
       return _LedgerSurface(
         child: _LedgerEmptyState(
           icon: GirviIcons.ticket,
-          title: 'No Ticket Selected',
-          message: 'Select a ticket from the register to view details.',
+          title: 'No Account Selected',
+          message: 'Select a pledge account from the register to view details.',
           action: widget.onNewGirvi == null
               ? null
               : _LedgerPrimaryButton(
                   icon: Icons.add_rounded,
-                  label: 'New Pledge',
+                  label: 'New Pledge Ticket',
                   onTap: _openNewGirvi,
                 ),
         ),
@@ -37,8 +37,8 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
         _LedgerSectionHeader(
           icon: _loanStatusIcon(loan),
           color: loan.statusColor,
-          title: 'Account Profile',
-          subtitle: 'Selected pledge account',
+          title: 'Pledge Account',
+          subtitle: 'Selected account summary and actions',
           trailing: _LedgerStatusBadge(
             icon: _loanStatusIcon(loan),
             label: loan.statusLabel,

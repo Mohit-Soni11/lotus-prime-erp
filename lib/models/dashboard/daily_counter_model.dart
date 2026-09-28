@@ -8,7 +8,7 @@
 //               1. Metal Sold   — Today's gold/silver gross weight from BillItems.
 //               2. Metal Bought — customer-received metal and sales returns
 //               3. New Due      — Today's bills where paidAmount is below finalAmount.
-//               4. New Pledge   — Pledge loans created today.
+//               4. New Pledge Ticket — Pledge loans created today.
 // =============================================================================
 
 /// One metal activity entry containing weight and pieces.

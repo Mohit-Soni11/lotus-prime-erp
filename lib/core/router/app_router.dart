@@ -68,7 +68,7 @@ import '../../ui/girvi/new_girvi/new_girvi_screen.dart';
 import '../../ui/girvi/girvi_account/girvi_account_detail_screen.dart';
 import '../../ui/girvi/girvi_list/girvi_list_screen.dart';
 import '../../ui/girvi/interest_calc/interest_calc_screen.dart';
-import '../../ui/girvi/notice_auction/notice_auction_screen.dart';
+import '../../ui/girvi/contact_recovery/contact_recovery_screen.dart';
 
 import '../../ui/report/day_book/day_book_screen.dart';
 import '../../ui/report/sales_report/sales_report_screen.dart';
@@ -251,7 +251,7 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: RoutePaths.girviNotice,
-        builder: (context, state) => NoticeAuctionScreen(
+        builder: (context, state) => ContactRecoveryScreen(
           initialTicketNo: state.uri.queryParameters['ticketNo'],
           onBack: () => context.go(RoutePaths.dashboard),
         ),

@@ -90,7 +90,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
           const SizedBox(height: 14),
           _AccountDocumentButton(
             icon: Icons.visibility_rounded,
-            title: 'View Girvi Invoice',
+            title: 'Preview Invoice PDF',
             subtitle: _openingGirviInvoice
                 ? 'Opening...'
                 : 'Invoice, interest and release pages',

@@ -1,4 +1,4 @@
-part of '../notice_auction_screen.dart';
+part of '../contact_recovery_screen.dart';
 
 class _SavedNoticePreviewDialog extends StatefulWidget {
   final _SavedNoticeDraft draft;
@@ -165,7 +165,7 @@ class _SavedNoticePreviewDialogState extends State<_SavedNoticePreviewDialog> {
 }
 
 class _NoticeEditorDialog extends StatefulWidget {
-  final NoticeAuctionCase item;
+  final ContactRecoveryCase item;
   final GirviNoticeType noticeType;
   final Map<GirviNoticeLanguage, String> initialTexts;
   final GirviNoticeLanguage initialLanguage;

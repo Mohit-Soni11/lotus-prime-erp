@@ -10,40 +10,44 @@ import 'package:printing/printing.dart';
 
 import '../../../constants/app_routes.dart';
 import '../../../logic/girvi/girvi_notice_pdf_service.dart';
-import '../../../logic/girvi/notice_auction_controller.dart';
+import '../../../logic/girvi/contact_recovery_controller.dart';
 import '../../../models/girvi/girvi_notice_action_model.dart';
-import '../../../models/girvi/notice_auction_model.dart';
+import '../../../models/girvi/contact_recovery_model.dart';
 import '../../../theme/girvi/girvi_theme.dart';
-import 'notice_auction_app_bar.dart';
+import 'contact_recovery_app_bar.dart';
 
-part 'parts/notice_auction_components.dart';
-part 'parts/notice_auction_dialogs.dart';
-part 'parts/notice_auction_document_components.dart';
-part 'parts/notice_auction_settlement_dialog.dart';
+part 'parts/contact_recovery_body.dart';
+part 'parts/contact_recovery_case_card.dart';
+part 'parts/contact_recovery_controls.dart';
+part 'parts/contact_recovery_dialogs.dart';
+part 'parts/contact_recovery_document_components.dart';
+part 'parts/contact_recovery_empty_state.dart';
+part 'parts/contact_recovery_overview.dart';
+part 'parts/contact_recovery_settlement_dialog.dart';
 
-class NoticeAuctionScreen extends StatefulWidget {
+class ContactRecoveryScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final String? initialTicketNo;
 
-  const NoticeAuctionScreen({
+  const ContactRecoveryScreen({
     super.key,
     this.onBack,
     this.initialTicketNo,
   });
 
   @override
-  State<NoticeAuctionScreen> createState() => _NoticeAuctionScreenState();
+  State<ContactRecoveryScreen> createState() => _ContactRecoveryScreenState();
 }
 
-class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
-  late final NoticeAuctionController _controller;
+class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
+  late final ContactRecoveryController _controller;
   final _noticePdfService = GirviNoticePdfService();
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _controller = NoticeAuctionController()..addListener(_syncState);
+    _controller = ContactRecoveryController()..addListener(_syncState);
     final initialTicket = widget.initialTicketNo?.trim();
     if (initialTicket != null && initialTicket.isNotEmpty) {
       _searchController.text = initialTicket;
@@ -73,14 +77,14 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
 
     return Scaffold(
       backgroundColor: GirviColors.bodyBg,
-      appBar: NoticeAuctionAppBar(
+      appBar: ContactRecoveryAppBar(
         onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _NoticeAuctionOverview(state: state),
-          _NoticeAuctionControls(
+          _ContactRecoveryOverview(state: state),
+          _ContactRecoveryControls(
             state: state,
             searchController: _searchController,
             onFilterChanged: _controller.setFilter,
@@ -91,13 +95,14 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
               onClose: _controller.dismissInlineMessage,
             ),
           Expanded(
-            child: _NoticeAuctionBody(
+            child: _ContactRecoveryBody(
               state: state,
               onOpenAccount: _openAccount,
               onPrepareNotice: _prepareNotice,
               onViewNotice: _viewSavedNotice,
               onDownloadNotice: _downloadSavedNotice,
               onPrintNotice: _printSavedNotice,
+              onInitiateRecovery: _initiateCollateralRecovery,
               onCloseDisposal: _closeDisposalSettlement,
             ),
           ),
@@ -106,7 +111,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     );
   }
 
-  void _openAccount(NoticeAuctionCase item) {
+  void _openAccount(ContactRecoveryCase item) {
     final uri = Uri(
       path: RoutePaths.girviAccountFor(item.loan.id),
       queryParameters: {'returnTo': 'girviNotice'},
@@ -114,7 +119,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     context.push(uri.toString());
   }
 
-  Future<void> _prepareNotice(NoticeAuctionCase item) async {
+  Future<void> _prepareNotice(ContactRecoveryCase item) async {
     final noticeType = item.nextNoticeType;
     if (noticeType == null) {
       _controller.showInlineMessage(
@@ -158,7 +163,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _copyNoticeText(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     String noticeText,
@@ -168,7 +173,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _printNotice(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     String noticeText,
@@ -197,7 +202,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _shareNotice(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     String noticeText,
@@ -226,7 +231,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _viewSavedNotice(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeAction action,
   ) async {
     final draft = _savedNoticeDraft(item, action);
@@ -241,7 +246,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _downloadSavedNotice(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeAction action,
   ) async {
     final draft = _savedNoticeDraft(item, action);
@@ -257,11 +262,12 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
       final normalizedPath = outputPath.toLowerCase().endsWith('.pdf')
           ? outputPath
           : '$outputPath.pdf';
-      final bytes = await _noticePdfService.build(
-        item: item,
+      final bytes = await _noticePdfService.buildStoredNotice(
+        ticketNo: item.loan.ticketNo,
         noticeType: draft.noticeType,
         noticeLanguage: draft.language,
         noticeText: draft.noticeText,
+        savedAt: action.actionAt,
       );
       await File(normalizedPath).writeAsBytes(bytes, flush: true);
       await _controller.recordNoticeDeliveryProof(
@@ -284,16 +290,17 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   Future<void> _printSavedNotice(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeAction action,
   ) async {
     final draft = _savedNoticeDraft(item, action);
     try {
-      final bytes = await _noticePdfService.build(
-        item: item,
+      final bytes = await _noticePdfService.buildStoredNotice(
+        ticketNo: item.loan.ticketNo,
         noticeType: draft.noticeType,
         noticeLanguage: draft.language,
         noticeText: draft.noticeText,
+        savedAt: action.actionAt,
       );
       final printed = await Printing.layoutPdf(
         name: draft.fileName,
@@ -319,7 +326,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     }
   }
 
-  Future<void> _closeDisposalSettlement(NoticeAuctionCase item) async {
+  Future<void> _closeDisposalSettlement(ContactRecoveryCase item) async {
     final result = await showDialog<_DisposalSettlementResult>(
       context: context,
       builder: (context) => _DisposalSettlementDialog(item: item),
@@ -335,8 +342,12 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     );
   }
 
+  Future<void> _initiateCollateralRecovery(ContactRecoveryCase item) async {
+    await _controller.initiateCollateralRecovery(item);
+  }
+
   String _buildNoticeText(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
   ) {
@@ -430,7 +441,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
     };
     final opening = switch (noticeType) {
       GirviNoticeType.first =>
-        'This is a formal notice that the Girvi account listed below remains overdue after maturity. Please clear the outstanding dues and redeem the pledged article within the notice period.',
+        'This is a formal notice that the pledge account listed below remains overdue after maturity. Please clear the outstanding dues and redeem the pledged article within the notice period.',
       GirviNoticeType.second =>
         'The account remains overdue after the first notice. This is the second formal warning to clear the dues immediately and avoid final recovery review.',
       GirviNoticeType.finalNotice =>
@@ -493,7 +504,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   String _noticePdfName(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
   ) {
@@ -503,7 +514,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
   }
 
   _SavedNoticeDraft _savedNoticeDraft(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeAction action,
   ) {
     final noticeType = _noticeTypeFromAction(action);
@@ -534,7 +545,7 @@ class _NoticeAuctionScreenState extends State<NoticeAuctionScreen> {
 }
 
 class _SavedNoticeDraft {
-  final NoticeAuctionCase item;
+  final ContactRecoveryCase item;
   final GirviNoticeAction action;
   final GirviNoticeType noticeType;
   final GirviNoticeLanguage language;

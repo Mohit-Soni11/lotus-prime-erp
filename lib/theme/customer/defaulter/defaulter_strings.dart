@@ -6,21 +6,21 @@ class DefaulterStrings {
   static const String moduleSubtitle =
       'Girvi exposure, collection priority and collateral recovery';
 
-  static const String statTotal = 'Collection Queue';
+  static const String statTotal = 'Action Queue';
   static const String statTotalDue = 'Total Receivable';
   static const String statCritical = 'Critical Cases';
   static const String statPrincipal = 'Principal Exposure';
   static const String statRecovery = 'Collateral Recovery';
-  static const String statReceived = 'This Month Collection';
+  static const String statReceived = 'Monthly Collections';
   static const String statSuffix = 'Open';
 
   static const String searchHint =
-      'Search account, customer, mobile, invoice, pledged item or city';
-  static const String filterAll = 'All Accounts';
+      'Search customer, mobile, invoice, item, city or recovery status';
+  static const String filterAll = 'Action Queue';
   static const String filterCritical = 'Critical';
-  static const String filterHigh = 'High Follow-up';
+  static const String filterHigh = 'High Risk';
   static const String filterMedium = 'Monitoring';
-  static const String filterLow = 'Early Follow-up';
+  static const String filterLow = 'Early Risk';
   static const String filterOverdue = 'Overdue';
   static const String filterRecovery = 'Collateral Recovery';
   static const String sortBy = 'Sort:';
@@ -53,13 +53,13 @@ class DefaulterStrings {
   static const String btnCall = 'Show Mobile';
   static const String btnNotify = 'Copy WhatsApp/SMS Reminder';
   static const String btnView = 'View Account';
-  static const String btnInterest = 'Collect / Settle';
+  static const String btnInterest = 'Collect Payment';
 
   static const String emptyTitle = 'No Risk Accounts Found';
   static const String emptySubtitle =
-      'All Girvi accounts are currently under control.\nNo overdue collection risk found.';
+      'All pledge accounts are currently under control.\nNo collection action is required.';
   static const String emptySearch = 'No results match your search.';
-  static const String emptyFilter = 'No risk accounts in this category.';
+  static const String emptyFilter = 'No collection accounts in this category.';
 
   static const String loadingData = 'Loading collection risk data...';
   static const String refreshing = 'Refreshing...';

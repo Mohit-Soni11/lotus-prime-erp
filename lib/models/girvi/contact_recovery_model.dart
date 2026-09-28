@@ -7,31 +7,33 @@ import 'girvi_enums.dart';
 import 'girvi_loan_model.dart';
 import 'girvi_notice_action_model.dart';
 
-enum NoticeAuctionStage {
+enum ContactRecoveryStage {
   firstNoticeDue,
   secondNoticeDue,
   finalNoticeDue,
   disposalReady,
+  recoveryInProgress,
   settled,
 }
 
-enum NoticeAuctionFilter {
+enum ContactRecoveryFilter {
   all,
   firstNotice,
   secondNotice,
   finalNotice,
   disposalReady,
+  recoveryInProgress,
   settled,
 }
 
-class NoticeAuctionCase {
+class ContactRecoveryCase {
   final GirviLoanWithCustomer account;
   final int noticePeriodDays;
   final DateTime now;
   final GirviNoticeAction? latestAction;
   final List<GirviNoticeAction> actionHistory;
 
-  const NoticeAuctionCase({
+  const ContactRecoveryCase({
     required this.account,
     required this.noticePeriodDays,
     required this.now,
@@ -41,7 +43,7 @@ class NoticeAuctionCase {
 
   GirviLoanModel get loan => account.loan;
 
-  bool get isAuctioned => loan.girviStatus == GirviStatus.auctioned;
+  bool get isRecoveryClosed => loan.girviStatus == GirviStatus.auctioned;
 
   bool get hasNoticeActivity => latestAction != null;
 
@@ -100,20 +102,34 @@ class NoticeAuctionCase {
   bool get hasDisposalSettlement =>
       actionHistory.any((action) => action.isDisposalSettlement);
 
+  bool get hasCollateralRecoveryInitiated =>
+      actionHistory.any((action) => action.isCollateralRecoveryInitiated);
+
   int get preparedNoticeCount => preparedNoticeStages.length;
 
   GirviNoticeType? get nextNoticeType {
-    if (hasDisposalSettlement || isAuctioned) return null;
+    if (hasDisposalSettlement ||
+        hasCollateralRecoveryInitiated ||
+        isRecoveryClosed) {
+      return null;
+    }
     if (highestPreparedNoticeStage <= 0) return GirviNoticeType.first;
     if (highestPreparedNoticeStage == 1) return GirviNoticeType.second;
     if (highestPreparedNoticeStage == 2) return GirviNoticeType.finalNotice;
     return null;
   }
 
+  bool get canInitiateCollateralRecovery =>
+      !hasDisposalSettlement &&
+      !hasCollateralRecoveryInitiated &&
+      !isRecoveryClosed &&
+      stage == ContactRecoveryStage.disposalReady;
+
   bool get canCloseDisposal =>
       !hasDisposalSettlement &&
-      !isAuctioned &&
-      stage == NoticeAuctionStage.disposalReady;
+      hasCollateralRecoveryInitiated &&
+      !isRecoveryClosed &&
+      stage == ContactRecoveryStage.recoveryInProgress;
 
   int get overdueDays {
     final maturity = loan.maturityDate;
@@ -152,7 +168,8 @@ class NoticeAuctionCase {
   String get noticesSentLabel => '$preparedNoticeCount/3 Sent';
 
   String get noticeProgressLabel {
-    if (stage == NoticeAuctionStage.settled) return 'Closed';
+    if (stage == ContactRecoveryStage.settled) return 'Closed';
+    if (stage == ContactRecoveryStage.recoveryInProgress) return 'Recovery';
     return '$currentNoticeStageNumber/3';
   }
 
@@ -196,116 +213,133 @@ class NoticeAuctionCase {
     return !DateUtils.dateOnly(now).isBefore(readyDate);
   }
 
-  NoticeAuctionStage get stage {
-    if (isAuctioned || hasDisposalSettlement) return NoticeAuctionStage.settled;
+  ContactRecoveryStage get stage {
+    if (isRecoveryClosed || hasDisposalSettlement) {
+      return ContactRecoveryStage.settled;
+    }
+    if (hasCollateralRecoveryInitiated) {
+      return ContactRecoveryStage.recoveryInProgress;
+    }
     if (highestPreparedNoticeStage >= 3) {
       return isFinalNoticeCycleComplete
-          ? NoticeAuctionStage.disposalReady
-          : NoticeAuctionStage.finalNoticeDue;
+          ? ContactRecoveryStage.disposalReady
+          : ContactRecoveryStage.finalNoticeDue;
     }
     if (highestPreparedNoticeStage == 2) {
-      return NoticeAuctionStage.secondNoticeDue;
+      return ContactRecoveryStage.secondNoticeDue;
     }
     if (highestPreparedNoticeStage == 1) {
-      return NoticeAuctionStage.firstNoticeDue;
+      return ContactRecoveryStage.firstNoticeDue;
     }
-    return NoticeAuctionStage.firstNoticeDue;
+    return ContactRecoveryStage.firstNoticeDue;
   }
 
   String get stageLabel {
     switch (stage) {
-      case NoticeAuctionStage.firstNoticeDue:
-        return 'First Contact';
-      case NoticeAuctionStage.secondNoticeDue:
-        return 'Second Contact';
-      case NoticeAuctionStage.finalNoticeDue:
-        return 'Final Contact';
-      case NoticeAuctionStage.disposalReady:
-        return 'Recovery Review';
-      case NoticeAuctionStage.settled:
+      case ContactRecoveryStage.firstNoticeDue:
+        return 'First Notice';
+      case ContactRecoveryStage.secondNoticeDue:
+        return 'Second Notice';
+      case ContactRecoveryStage.finalNoticeDue:
+        return 'Final Notice';
+      case ContactRecoveryStage.disposalReady:
+        return 'Recovery Approval';
+      case ContactRecoveryStage.recoveryInProgress:
+        return 'Collateral Recovery';
+      case ContactRecoveryStage.settled:
         return 'Closed';
     }
   }
 
   String get stageDescription {
     switch (stage) {
-      case NoticeAuctionStage.firstNoticeDue:
+      case ContactRecoveryStage.firstNoticeDue:
         return highestPreparedNoticeStage == 0
-            ? 'Prepare the first contact notice.'
-            : 'First contact notice is prepared. Continue with the second contact when required.';
-      case NoticeAuctionStage.secondNoticeDue:
-        return 'Second contact notice is prepared. Continue with the final contact when required.';
-      case NoticeAuctionStage.finalNoticeDue:
-        return 'Final contact notice is prepared. Wait for the review cycle before recovery review.';
-      case NoticeAuctionStage.disposalReady:
-        return 'All three contact notices are prepared. Review final recovery settlement.';
-      case NoticeAuctionStage.settled:
-        return 'Contact and recovery workflow is closed.';
+            ? 'Prepare the first customer notice.'
+            : 'First notice is prepared. Continue with the second notice when required.';
+      case ContactRecoveryStage.secondNoticeDue:
+        return 'Second notice is prepared. Continue with the final notice when required.';
+      case ContactRecoveryStage.finalNoticeDue:
+        return 'Final notice is prepared. Wait for the review cycle before recovery approval.';
+      case ContactRecoveryStage.disposalReady:
+        return 'All three notices are complete. Send the collateral to recovery only after final approval.';
+      case ContactRecoveryStage.recoveryInProgress:
+        return 'Collateral is in recovery. Record the final recovered value to close the case.';
+      case ContactRecoveryStage.settled:
+        return 'Notice and recovery workflow is closed.';
     }
   }
 
   String get primaryActionLabel {
     switch (stage) {
-      case NoticeAuctionStage.firstNoticeDue:
-        return 'Prepare First Contact';
-      case NoticeAuctionStage.secondNoticeDue:
-        return 'Prepare Second Contact';
-      case NoticeAuctionStage.finalNoticeDue:
-        return 'Prepare Final Contact';
-      case NoticeAuctionStage.disposalReady:
-        return 'Complete Recovery';
-      case NoticeAuctionStage.settled:
+      case ContactRecoveryStage.firstNoticeDue:
+        return 'Prepare First Notice';
+      case ContactRecoveryStage.secondNoticeDue:
+        return 'Prepare Second Notice';
+      case ContactRecoveryStage.finalNoticeDue:
+        return 'Prepare Final Notice';
+      case ContactRecoveryStage.disposalReady:
+        return 'Send to Recovery';
+      case ContactRecoveryStage.recoveryInProgress:
+        return 'Recovery Active';
+      case ContactRecoveryStage.settled:
         return 'Closed';
     }
   }
 
   Color get accentColor {
     switch (stage) {
-      case NoticeAuctionStage.firstNoticeDue:
+      case ContactRecoveryStage.firstNoticeDue:
         return GirviColors.warning;
-      case NoticeAuctionStage.secondNoticeDue:
+      case ContactRecoveryStage.secondNoticeDue:
         return GirviColors.danger;
-      case NoticeAuctionStage.finalNoticeDue:
+      case ContactRecoveryStage.finalNoticeDue:
         return GirviColors.danger;
-      case NoticeAuctionStage.disposalReady:
+      case ContactRecoveryStage.disposalReady:
         return GirviColors.info;
-      case NoticeAuctionStage.settled:
+      case ContactRecoveryStage.recoveryInProgress:
+        return GirviColors.brandGold;
+      case ContactRecoveryStage.settled:
         return GirviColors.success;
     }
   }
 
   Color get accentBg {
     switch (stage) {
-      case NoticeAuctionStage.firstNoticeDue:
+      case ContactRecoveryStage.firstNoticeDue:
         return GirviColors.warningBg;
-      case NoticeAuctionStage.secondNoticeDue:
+      case ContactRecoveryStage.secondNoticeDue:
         return GirviColors.dangerBg;
-      case NoticeAuctionStage.finalNoticeDue:
+      case ContactRecoveryStage.finalNoticeDue:
         return GirviColors.dangerBg;
-      case NoticeAuctionStage.disposalReady:
+      case ContactRecoveryStage.disposalReady:
         return GirviColors.infoBg;
-      case NoticeAuctionStage.settled:
+      case ContactRecoveryStage.recoveryInProgress:
+        return GirviColors.brandGoldLight;
+      case ContactRecoveryStage.settled:
         return GirviColors.successBg;
     }
   }
 }
 
-class NoticeAuctionStats {
+class ContactRecoveryStats {
   final int totalCases;
   final int noticeDueCount;
   final int finalNoticeCount;
   final int disposalReadyCount;
+  final int recoveryInProgressCount;
   final int settledCount;
   final double principalExposure;
   final double interestExposure;
   final double totalExposure;
   final String lastUpdatedAt;
 
-  const NoticeAuctionStats({
+  const ContactRecoveryStats({
     required this.totalCases,
     required this.noticeDueCount,
     required this.finalNoticeCount,
     required this.disposalReadyCount,
+    required this.recoveryInProgressCount,
     required this.settledCount,
     required this.principalExposure,
     required this.interestExposure,
@@ -313,12 +347,13 @@ class NoticeAuctionStats {
     required this.lastUpdatedAt,
   });
 
-  factory NoticeAuctionStats.empty() {
-    return const NoticeAuctionStats(
+  factory ContactRecoveryStats.empty() {
+    return const ContactRecoveryStats(
       totalCases: 0,
       noticeDueCount: 0,
       finalNoticeCount: 0,
       disposalReadyCount: 0,
+      recoveryInProgressCount: 0,
       settledCount: 0,
       principalExposure: 0,
       interestExposure: 0,
@@ -328,18 +363,18 @@ class NoticeAuctionStats {
   }
 }
 
-class NoticeAuctionState {
-  final List<NoticeAuctionCase> allCases;
-  final List<NoticeAuctionCase> visibleCases;
-  final NoticeAuctionStats stats;
-  final NoticeAuctionFilter filter;
+class ContactRecoveryState {
+  final List<ContactRecoveryCase> allCases;
+  final List<ContactRecoveryCase> visibleCases;
+  final ContactRecoveryStats stats;
+  final ContactRecoveryFilter filter;
   final String searchQuery;
   final int noticePeriodDays;
   final bool isLoading;
   final String? errorMessage;
   final String? inlineMessage;
 
-  const NoticeAuctionState({
+  const ContactRecoveryState({
     required this.allCases,
     required this.visibleCases,
     required this.stats,
@@ -351,23 +386,23 @@ class NoticeAuctionState {
     this.inlineMessage,
   });
 
-  factory NoticeAuctionState.initial() {
-    return NoticeAuctionState(
+  factory ContactRecoveryState.initial() {
+    return ContactRecoveryState(
       allCases: const [],
       visibleCases: const [],
-      stats: NoticeAuctionStats.empty(),
-      filter: NoticeAuctionFilter.all,
+      stats: ContactRecoveryStats.empty(),
+      filter: ContactRecoveryFilter.all,
       searchQuery: '',
       noticePeriodDays: 30,
       isLoading: true,
     );
   }
 
-  NoticeAuctionState copyWith({
-    List<NoticeAuctionCase>? allCases,
-    List<NoticeAuctionCase>? visibleCases,
-    NoticeAuctionStats? stats,
-    NoticeAuctionFilter? filter,
+  ContactRecoveryState copyWith({
+    List<ContactRecoveryCase>? allCases,
+    List<ContactRecoveryCase>? visibleCases,
+    ContactRecoveryStats? stats,
+    ContactRecoveryFilter? filter,
     String? searchQuery,
     int? noticePeriodDays,
     bool? isLoading,
@@ -376,7 +411,7 @@ class NoticeAuctionState {
     bool clearError = false,
     bool clearInlineMessage = false,
   }) {
-    return NoticeAuctionState(
+    return ContactRecoveryState(
       allCases: allCases ?? this.allCases,
       visibleCases: visibleCases ?? this.visibleCases,
       stats: stats ?? this.stats,
@@ -390,24 +425,26 @@ class NoticeAuctionState {
     );
   }
 
-  int countForFilter(NoticeAuctionFilter filter) {
+  int countForFilter(ContactRecoveryFilter filter) {
     return allCases.where((item) => _matchesFilter(item, filter)).length;
   }
 
-  bool _matchesFilter(NoticeAuctionCase item, NoticeAuctionFilter filter) {
+  bool _matchesFilter(ContactRecoveryCase item, ContactRecoveryFilter filter) {
     switch (filter) {
-      case NoticeAuctionFilter.all:
-        return item.stage != NoticeAuctionStage.settled;
-      case NoticeAuctionFilter.firstNotice:
-        return item.stage == NoticeAuctionStage.firstNoticeDue;
-      case NoticeAuctionFilter.secondNotice:
-        return item.stage == NoticeAuctionStage.secondNoticeDue;
-      case NoticeAuctionFilter.finalNotice:
-        return item.stage == NoticeAuctionStage.finalNoticeDue;
-      case NoticeAuctionFilter.disposalReady:
-        return item.stage == NoticeAuctionStage.disposalReady;
-      case NoticeAuctionFilter.settled:
-        return item.stage == NoticeAuctionStage.settled;
+      case ContactRecoveryFilter.all:
+        return item.stage != ContactRecoveryStage.settled;
+      case ContactRecoveryFilter.firstNotice:
+        return item.stage == ContactRecoveryStage.firstNoticeDue;
+      case ContactRecoveryFilter.secondNotice:
+        return item.stage == ContactRecoveryStage.secondNoticeDue;
+      case ContactRecoveryFilter.finalNotice:
+        return item.stage == ContactRecoveryStage.finalNoticeDue;
+      case ContactRecoveryFilter.disposalReady:
+        return item.stage == ContactRecoveryStage.disposalReady;
+      case ContactRecoveryFilter.recoveryInProgress:
+        return item.stage == ContactRecoveryStage.recoveryInProgress;
+      case ContactRecoveryFilter.settled:
+        return item.stage == ContactRecoveryStage.settled;
     }
   }
 }

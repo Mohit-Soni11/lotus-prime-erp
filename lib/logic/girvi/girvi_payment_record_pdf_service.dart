@@ -49,7 +49,7 @@ class GirviPaymentRecordPdfService {
       title: 'Girvi Payment Record ${account.loan.ticketNo}',
       author: branding.printShopName,
       creator: branding.printShopName,
-      subject: 'Girvi account payment record',
+      subject: 'Pledge account payment record',
     );
 
     pdf.addPage(
@@ -80,7 +80,7 @@ class GirviPaymentRecordPdfService {
               ..add(
                 _buildSectionHeading(
                   title: 'PLEDGED ITEM PHOTOS',
-                  subtitle: 'Photos attached with this Girvi account',
+                  subtitle: 'Photos attached with this pledge account',
                 ),
               )
               ..add(pw.SizedBox(height: 8))
@@ -532,7 +532,7 @@ class GirviPaymentRecordPdfService {
       children: [
         _buildSectionHeading(
           title: 'SETTLEMENT & DELIVERY',
-          subtitle: 'Current closure status for this Girvi account',
+          subtitle: 'Current closure status for this pledge account',
         ),
         pw.SizedBox(height: 8),
         pw.Row(
@@ -743,7 +743,7 @@ class GirviPaymentRecordPdfService {
             borderRadius: const pw.BorderRadius.all(pw.Radius.circular(7)),
           ),
           child: pw.Text(
-            'No payment has been recorded for this Girvi account.',
+            'No payment has been recorded for this pledge account.',
             style: const pw.TextStyle(color: _ink, fontSize: 10),
           ),
         ),

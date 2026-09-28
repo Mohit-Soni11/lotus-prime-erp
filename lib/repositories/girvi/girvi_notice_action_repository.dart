@@ -41,11 +41,15 @@ class GirviNoticeActionRepository {
     );
   }
 
-  Future<void> recordAuctionMarked({required int girviId}) {
+  Future<void> recordCollateralRecoveryInitiated({
+    required int girviId,
+    String? note,
+  }) {
     return recordAction(
       girviId: girviId,
-      actionType: GirviNoticeActionTypes.auctionMarked,
-      actionNote: 'Account closed from overdue notice workflow.',
+      actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+      actionNote: note ??
+          'Collateral moved to recovery after completion of the notice workflow.',
     );
   }
 

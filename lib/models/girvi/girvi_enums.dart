@@ -3,7 +3,7 @@ enum GirviStatus {
   active('ACTIVE', 'Active'),
   released('RELEASED', 'Released'),
   overdue('OVERDUE', 'Overdue'),
-  partialRelease('PARTIAL_RELEASE', 'Settlement Pending'),
+  partialRelease('PARTIAL_RELEASE', 'Settlement in Progress'),
   readyForDelivery('READY_FOR_DELIVERY', 'Ready for Delivery'),
   auctioned('AUCTIONED', 'Closed');
 
@@ -156,8 +156,8 @@ enum GirviIdProofType {
 
 /// Filters available on the Girvi list screen.
 enum GirviFilter {
-  all('All'),
-  active('Active'),
+  all('All Accounts'),
+  active('Open'),
   overdue('Overdue'),
   readyForDelivery('Ready for Delivery'),
   released('Released');

@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
 
-class NoticeAuctionAppBar extends StatelessWidget
+class ContactRecoveryAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   final VoidCallback onBack;
 
-  const NoticeAuctionAppBar({
+  const ContactRecoveryAppBar({
     super.key,
     required this.onBack,
   });

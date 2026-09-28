@@ -1,13 +1,3 @@
-// ==========================================
-// FILE: defaulter_list_screen.dart
-// MODULE: Risk & Collections
-// DESCRIPTION: Master screen widget.
-//              Composes: AppBar + StatsPanel + FilterBar + DataTable.
-//              Manages DefaulterLogic lifecycle via ChangeNotifierProvider
-//              pattern (manual, no external package dependency).
-//              Matches full-page navigation pattern (like PosMasterSaleScreen).
-// ==========================================
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,14 +24,8 @@ class DefaulterListScreen extends StatefulWidget {
 
 class _DefaulterListScreenState extends State<DefaulterListScreen>
     with SingleTickerProviderStateMixin {
-  // ==========================================
-  // LOGIC
-  // ==========================================
   late final DefaulterLogic _logic;
 
-  // ==========================================
-  // ANIMATION (entry animation for body)
-  // ==========================================
   late final AnimationController _entryController;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
@@ -50,12 +34,10 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
   void initState() {
     super.initState();
 
-    // Init Logic
     _logic = DefaulterLogic();
     _logic.init();
     _logic.addListener(_onStateChanged);
 
-    // Entry animation
     _entryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 450),
@@ -72,7 +54,6 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
       CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
     );
 
-    // Start animation after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _entryController.forward();
     });
@@ -110,7 +91,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
     context.push(uri.toString());
   }
 
-  void _openNoticeAuction(DefaulterModel account) {
+  void _openContactRecovery(DefaulterModel account) {
     final uri = Uri(
       path: RoutePaths.girviNotice,
       queryParameters: {'ticketNo': account.referenceNo},
@@ -118,22 +99,15 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
     context.push(uri.toString());
   }
 
-  // ==========================================
-  // BUILD
-  // ==========================================
   @override
   Widget build(BuildContext context) {
     final state = _logic.state;
 
     return Scaffold(
       backgroundColor: DefaulterColors.bodyBg,
-
-      // ── APP BAR (Fixed according to updated premium design) ──────
       appBar: DefaulterAppBar(
         onBack: widget.onBack ?? () => Navigator.of(context).maybePop(),
       ),
-
-      // ── BODY ─────────────────────────────────
       body: FadeTransition(
         opacity: _fadeAnim,
         child: SlideTransition(
@@ -141,15 +115,11 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. Stats Summary Panel
               DefaulterStatsPanel(
                 stats: state.stats,
                 isLoading: state.isLoading,
               ),
-
               const SizedBox(height: 4),
-
-              // 2. Filter & Search Bar
               DefaulterFilterBar(
                 activeFilter: state.activeFilter,
                 activeSort: state.activeSort,
@@ -158,8 +128,6 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                 onSortChanged: _logic.setSort,
                 onSearchChanged: _logic.onSearch,
               ),
-
-              // 3. Result Count Bar
               _ResultCountBar(
                 displayedCount: state.displayedDefaulters.length,
                 totalCount: state.allDefaulters.length,
@@ -167,8 +135,6 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                 isLoading: state.isLoading,
                 lastUpdatedAt: state.stats.lastRefreshedAt,
               ),
-
-              // 4. Data Table (Expanded — fills remaining space)
               Expanded(
                 child: DefaulterDataTable(
                   defaulters: state.displayedDefaulters,
@@ -176,7 +142,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                   errorMessage: state.errorMessage,
                   onOpenAccount: _openGirviAccount,
                   onOpenInterestEntry: _openInterestEntry,
-                  onOpenNoticeAuction: _openNoticeAuction,
+                  onOpenContactRecovery: _openContactRecovery,
                 ),
               ),
             ],
@@ -211,8 +177,8 @@ class _ResultCountBar extends StatelessWidget {
     if (isLoading) return const SizedBox(height: 10);
 
     final String countText = displayedCount == totalCount
-        ? 'Showing all $totalCount risk accounts'
-        : 'Showing $displayedCount of $totalCount risk accounts';
+        ? 'Showing all $totalCount collection accounts'
+        : 'Showing $displayedCount of $totalCount collection accounts';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 2),
@@ -240,4 +206,3 @@ class _ResultCountBar extends StatelessWidget {
     );
   }
 }
-

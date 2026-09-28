@@ -1,10 +1,3 @@
-// ==========================================
-// FILE: defaulter_filter_bar.dart
-// MODULE: Risk & Collections
-// DESCRIPTION: Search box + risk filter chips + sort dropdown.
-//              Communicates user actions back to DefaulterLogic.
-// ==========================================
-
 import 'package:flutter/material.dart';
 
 import '../../../models/customer/defaulter_model.dart';
@@ -59,29 +52,22 @@ class _DefaulterFilterBarState extends State<DefaulterFilterBar> {
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Column(
         children: [
-          // --- ROW 1: Search + Sort ---
           Row(
             children: [
-              // Search Bar
               Expanded(
-                  child: _SearchBar(
-                controller: _searchCtrl,
-                onChanged: widget.onSearchChanged,
-              )),
-
+                child: _SearchBar(
+                  controller: _searchCtrl,
+                  onChanged: widget.onSearchChanged,
+                ),
+              ),
               const SizedBox(width: 12),
-
-              // Sort Dropdown
               _SortDropdown(
                 activeSort: widget.activeSort,
                 onSortChanged: widget.onSortChanged,
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
-          // --- ROW 2: Filter Chips ---
           _FilterChips(
             activeFilter: widget.activeFilter,
             onFilterChanged: widget.onFilterChanged,
@@ -92,10 +78,6 @@ class _DefaulterFilterBarState extends State<DefaulterFilterBar> {
   }
 }
 
-// ─────────────────────────────────────────
-// SEARCH BAR
-// ─────────────────────────────────────────
-
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
@@ -105,7 +87,7 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 42,
+      height: 48,
       decoration: DefaulterStyles.searchBarDecoration,
       child: TextField(
         controller: controller,
@@ -136,17 +118,13 @@ class _SearchBar extends StatelessWidget {
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
           isDense: true,
         ),
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────
-// SORT DROPDOWN
-// ─────────────────────────────────────────
 
 class _SortDropdown extends StatelessWidget {
   final DefaulterSortBy activeSort;
@@ -160,7 +138,7 @@ class _SortDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 42,
+      height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: DefaulterColors.bodyPanelBg,
@@ -206,10 +184,6 @@ class _SortDropdown extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
-// FILTER CHIPS ROW
-// ─────────────────────────────────────────
-
 class _FilterChips extends StatelessWidget {
   final DefaulterFilterBy activeFilter;
   final ValueChanged<DefaulterFilterBy> onFilterChanged;
@@ -245,31 +219,32 @@ class _FilterChips extends StatelessWidget {
       ),
     ];
 
-    return SizedBox(
-      height: 32,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: chips.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final (filter, label, color) = chips[i];
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips.map((chip) {
+          final (filter, label, color) = chip;
           final isActive = activeFilter == filter;
 
-          return GestureDetector(
+          return InkWell(
+            borderRadius: BorderRadius.circular(999),
             onTap: () => onFilterChanged(filter),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: isActive
                     ? DefaulterColors.filterChipActive
                     : DefaulterColors.filterChipBg,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(999),
                 border: Border.all(
                   color: isActive
                       ? DefaulterColors.filterChipActive
-                      : DefaulterColors.bodyBorder,
-                  width: 1,
+                      : (color ?? DefaulterColors.bodyBorder)
+                          .withValues(alpha: 0.28),
+                  width: isActive ? 1.4 : 1,
                 ),
               ),
               child: Text(
@@ -282,7 +257,7 @@ class _FilterChips extends StatelessWidget {
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }

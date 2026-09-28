@@ -379,7 +379,7 @@ class GirviSettlementStatementPdfService {
       return 'Settlement Complete - Delivery Pending';
     }
     if (loan.girviStatus == GirviStatus.partialRelease) {
-      return 'Settlement Pending';
+      return 'Settlement in Progress';
     }
     if (loan.girviStatus == GirviStatus.auctioned) return 'Closed';
     if (loan.girviStatus == GirviStatus.released) return 'Released';

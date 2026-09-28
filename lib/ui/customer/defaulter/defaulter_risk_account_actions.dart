@@ -4,14 +4,14 @@ class _AccountActions extends StatefulWidget {
   final DefaulterModel account;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenInterestEntry;
-  final VoidCallback onOpenNoticeAuction;
+  final VoidCallback onOpenContactRecovery;
   final VoidCallback onRevealMobile;
 
   const _AccountActions({
     required this.account,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
-    required this.onOpenNoticeAuction,
+    required this.onOpenContactRecovery,
     required this.onRevealMobile,
   });
 
@@ -54,7 +54,7 @@ class _AccountActionsState extends State<_AccountActions> {
               icon: DefaulterIcons.defaulterAlert,
               label: 'Contact Review',
               color: DefaulterColors.riskCriticalText,
-              onTap: widget.onOpenNoticeAuction,
+              onTap: widget.onOpenContactRecovery,
             ),
           ],
           const SizedBox(height: 8),
@@ -129,7 +129,7 @@ class _AccountActionsState extends State<_AccountActions> {
       '',
       'Dear ${account.customerName},',
       '',
-      'This is a formal payment reminder for your Girvi account. Please review the account details below and clear the pending amount at the earliest.',
+      'This is a formal payment reminder for your pledge account. Please review the account details below and clear the pending amount at the earliest.',
       '',
       'Ticket Number: ${account.referenceNo}',
       'Pledged Item: ${account.itemName}',

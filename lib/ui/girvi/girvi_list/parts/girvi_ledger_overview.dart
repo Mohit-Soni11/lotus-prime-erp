@@ -9,7 +9,7 @@ extension _GirviLedgerOverview on _GirviListScreenState {
 
     final metrics = [
       _OverviewMetricData(
-        label: 'Principal Outstanding',
+        label: 'Principal Exposure',
         value: _money(summary.totalPrincipalActive),
         caption: '$openTickets open pledge accounts',
         icon: GirviIcons.loanTerms,
@@ -23,16 +23,16 @@ extension _GirviLedgerOverview on _GirviListScreenState {
         color: GirviColors.warning,
       ),
       _OverviewMetricData(
-        label: 'Overdue Receivable',
+        label: 'Overdue Accounts',
         value: summary.totalOverdue.toString(),
-        caption: 'Receivable ${_money(summary.totalOverdueReceivable)}',
+        caption: 'Net receivable ${_money(summary.totalOverdueReceivable)}',
         icon: Icons.event_busy_rounded,
         color: GirviColors.danger,
       ),
       _OverviewMetricData(
-        label: 'This Month Collection',
+        label: 'Monthly Collections',
         value: _money(summary.totalCollectedThisMonth),
-        caption: 'Interest and release receipts',
+        caption: 'Interest and settlement receipts',
         icon: GirviIcons.cash,
         color: GirviColors.success,
       ),
@@ -46,7 +46,7 @@ extension _GirviLedgerOverview on _GirviListScreenState {
           const _LedgerSectionHeader(
             icon: GirviIcons.list,
             color: GirviColors.brandGold,
-            title: 'Pledge Position',
+            title: 'Pledge Portfolio',
             subtitle: 'Principal exposure, interest receivable and collections',
           ),
           const SizedBox(height: 16),

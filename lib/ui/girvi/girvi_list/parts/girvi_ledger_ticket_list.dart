@@ -5,7 +5,7 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
     final loans = _controller.loans;
     final title = _controller.filter == GirviFilter.all
         ? 'Pledge Account Register'
-        : '${_controller.filter.displayName} Accounts';
+        : '${_controller.filter.displayName} Register';
 
     final list = ListView.separated(
       shrinkWrap: compact,

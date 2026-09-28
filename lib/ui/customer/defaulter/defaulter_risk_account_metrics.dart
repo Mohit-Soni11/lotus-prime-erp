@@ -10,9 +10,9 @@ class _AccountMetrics extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
-        final columns = maxWidth >= 720
+        final columns = maxWidth >= 840
             ? 5
-            : maxWidth >= 440
+            : maxWidth >= 560
                 ? 3
                 : 2;
         const spacing = 8.0;
@@ -110,6 +110,7 @@ class _MetricTile extends StatelessWidget {
               style: DefaulterStyles.customerCity.copyWith(
                 fontWeight: FontWeight.w800,
                 color: DefaulterColors.bodyTextMain,
+                fontSize: 12.5,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -122,7 +123,7 @@ class _MetricTile extends StatelessWidget {
                 value,
                 style: DefaulterStyles.amountText.copyWith(
                   color: color,
-                  fontSize: 16.5,
+                  fontSize: 16,
                 ),
                 maxLines: 1,
               ),

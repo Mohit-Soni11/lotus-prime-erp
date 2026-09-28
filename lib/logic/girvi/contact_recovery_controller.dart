@@ -6,32 +6,34 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
-import '../../models/girvi/notice_auction_model.dart';
+import '../../models/girvi/contact_recovery_model.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 import 'girvi_risk_policy.dart';
 
-class NoticeAuctionController extends ChangeNotifier {
-  NoticeAuctionController({
+class ContactRecoveryController extends ChangeNotifier {
+  ContactRecoveryController({
     AppDatabase? db,
     GirviRepository? repository,
     GirviBillingRepo? billingRepo,
     GirviNoticeActionRepository? noticeActionRepository,
   }) {
     final resolvedDb = db ?? AppDatabase();
+    _db = resolvedDb;
     _repository = repository ?? GirviRepository(resolvedDb);
     _billingRepo = billingRepo ?? GirviBillingRepo(db: resolvedDb);
     _noticeActionRepository =
         noticeActionRepository ?? GirviNoticeActionRepository(resolvedDb);
   }
 
+  late final AppDatabase _db;
   late final GirviRepository _repository;
   late final GirviBillingRepo _billingRepo;
   late final GirviNoticeActionRepository _noticeActionRepository;
 
-  NoticeAuctionState _state = NoticeAuctionState.initial();
-  NoticeAuctionState get state => _state;
+  ContactRecoveryState _state = ContactRecoveryState.initial();
+  ContactRecoveryState get state => _state;
 
   static final DateFormat _timeFormat = DateFormat('hh:mm a');
 
@@ -91,7 +93,7 @@ class NoticeAuctionController extends ChangeNotifier {
 
       final cases = candidateAccounts
           .map(
-            (entry) => NoticeAuctionCase(
+            (entry) => ContactRecoveryCase(
               account: entry,
               noticePeriodDays: noticeDays,
               now: now,
@@ -116,13 +118,13 @@ class NoticeAuctionController extends ChangeNotifier {
       AppLogger.debug('Contact & Recovery load failed: $error');
       _state = _state.copyWith(
         isLoading: false,
-        errorMessage: 'Contact and recovery records could not be loaded.',
+        errorMessage: 'Notice and recovery records could not be loaded.',
       );
       notifyListeners();
     }
   }
 
-  void setFilter(NoticeAuctionFilter filter) {
+  void setFilter(ContactRecoveryFilter filter) {
     _state = _state.copyWith(filter: filter);
     _applyFilters();
   }
@@ -167,31 +169,31 @@ class NoticeAuctionController extends ChangeNotifier {
     return coveredMonths;
   }
 
-  Future<bool> markAuctioned(NoticeAuctionCase item) async {
-    try {
-      final updated = await _repository.updateStatus(
-        item.loan.id,
-        GirviStatus.auctioned,
-      );
-      if (!updated) {
-        _state = _state.copyWith(
-          inlineMessage: 'Closed status could not be updated.',
-        );
-        notifyListeners();
-        return false;
-      }
-
-      await _noticeActionRepository.recordAuctionMarked(girviId: item.loan.id);
+  Future<bool> initiateCollateralRecovery(ContactRecoveryCase item) async {
+    if (!item.canInitiateCollateralRecovery) {
       _state = _state.copyWith(
-        inlineMessage: 'Ticket ${item.loan.ticketNo} marked as closed.',
+        inlineMessage:
+            'Collateral recovery can be started only after the final review cycle is complete.',
+      );
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      await _noticeActionRepository.recordCollateralRecoveryInitiated(
+        girviId: item.loan.id,
+      );
+      _state = _state.copyWith(
+        inlineMessage:
+            'Ticket ${item.loan.ticketNo} moved to collateral recovery.',
       );
       notifyListeners();
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Contact & Recovery close status failed: $error');
+      AppLogger.debug('Contact & Recovery initiation failed: $error');
       _state = _state.copyWith(
-        inlineMessage: 'Closed status could not be updated.',
+        inlineMessage: 'Collateral recovery could not be started.',
       );
       notifyListeners();
       return false;
@@ -199,7 +201,7 @@ class NoticeAuctionController extends ChangeNotifier {
   }
 
   Future<bool> recordNoticeDraft(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     String noticeText,
   ) async {
     try {
@@ -226,7 +228,7 @@ class NoticeAuctionController extends ChangeNotifier {
   }
 
   Future<bool> recordNoticePrepared(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     String noticeText,
   ) async {
@@ -254,7 +256,7 @@ class NoticeAuctionController extends ChangeNotifier {
   }
 
   Future<bool> recordNoticeDeliveryProof({
-    required NoticeAuctionCase item,
+    required ContactRecoveryCase item,
     required GirviNoticeType noticeType,
     required String noticeText,
     required String actionType,
@@ -290,12 +292,29 @@ class NoticeAuctionController extends ChangeNotifier {
   }
 
   Future<bool> closeDisposalSettlement({
-    required NoticeAuctionCase item,
+    required ContactRecoveryCase item,
     required double pledgedValuation,
     required double recoveredAmount,
     required double penaltyAmount,
     required String note,
   }) async {
+    if (!item.canCloseDisposal) {
+      _state = _state.copyWith(
+        inlineMessage:
+            'Send this ticket to collateral recovery before closing settlement.',
+      );
+      notifyListeners();
+      return false;
+    }
+    if (pledgedValuation <= 0 || recoveredAmount <= 0) {
+      _state = _state.copyWith(
+        inlineMessage:
+            'Enter a valid pledged valuation and recovered amount before closing settlement.',
+      );
+      notifyListeners();
+      return false;
+    }
+
     try {
       final settlementTotal = item.account.totalPayable + penaltyAmount;
       final balanceDue = recoveredAmount >= settlementTotal
@@ -305,28 +324,26 @@ class NoticeAuctionController extends ChangeNotifier {
           ? recoveredAmount - settlementTotal
           : 0.0;
 
-      final updated = await _repository.updateStatus(
-        item.loan.id,
-        GirviStatus.auctioned,
-      );
-      if (!updated) {
-        _state = _state.copyWith(
-          inlineMessage: 'Recovery settlement could not be closed.',
+      await _db.transaction(() async {
+        final updated = await _repository.updateStatus(
+          item.loan.id,
+          GirviStatus.auctioned,
         );
-        notifyListeners();
-        return false;
-      }
+        if (!updated) {
+          throw StateError('Loan status could not be updated.');
+        }
 
-      await _noticeActionRepository.recordDisposalSettlement(
-        girviId: item.loan.id,
-        pledgedValuation: pledgedValuation,
-        recoveredAmount: recoveredAmount,
-        penaltyAmount: penaltyAmount,
-        settlementTotal: settlementTotal,
-        customerBalanceDue: balanceDue,
-        customerSurplus: surplus,
-        note: note,
-      );
+        await _noticeActionRepository.recordDisposalSettlement(
+          girviId: item.loan.id,
+          pledgedValuation: pledgedValuation,
+          recoveredAmount: recoveredAmount,
+          penaltyAmount: penaltyAmount,
+          settlementTotal: settlementTotal,
+          customerBalanceDue: balanceDue,
+          customerSurplus: surplus,
+          note: note,
+        );
+      });
 
       _state = _state.copyWith(
         inlineMessage:
@@ -356,37 +373,43 @@ class NoticeAuctionController extends ChangeNotifier {
   }
 
   void _applyFilters() {
-    var result = List<NoticeAuctionCase>.from(_state.allCases);
+    var result = List<ContactRecoveryCase>.from(_state.allCases);
 
     switch (_state.filter) {
-      case NoticeAuctionFilter.firstNotice:
+      case ContactRecoveryFilter.firstNotice:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.firstNoticeDue)
+            .where((item) => item.stage == ContactRecoveryStage.firstNoticeDue)
             .toList();
         break;
-      case NoticeAuctionFilter.secondNotice:
+      case ContactRecoveryFilter.secondNotice:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.secondNoticeDue)
+            .where((item) => item.stage == ContactRecoveryStage.secondNoticeDue)
             .toList();
         break;
-      case NoticeAuctionFilter.finalNotice:
+      case ContactRecoveryFilter.finalNotice:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.finalNoticeDue)
+            .where((item) => item.stage == ContactRecoveryStage.finalNoticeDue)
             .toList();
         break;
-      case NoticeAuctionFilter.disposalReady:
+      case ContactRecoveryFilter.disposalReady:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.disposalReady)
+            .where((item) => item.stage == ContactRecoveryStage.disposalReady)
             .toList();
         break;
-      case NoticeAuctionFilter.settled:
+      case ContactRecoveryFilter.recoveryInProgress:
         result = result
-            .where((item) => item.stage == NoticeAuctionStage.settled)
+            .where(
+                (item) => item.stage == ContactRecoveryStage.recoveryInProgress)
             .toList();
         break;
-      case NoticeAuctionFilter.all:
+      case ContactRecoveryFilter.settled:
         result = result
-            .where((item) => item.stage != NoticeAuctionStage.settled)
+            .where((item) => item.stage == ContactRecoveryStage.settled)
+            .toList();
+        break;
+      case ContactRecoveryFilter.all:
+        result = result
+            .where((item) => item.stage != ContactRecoveryStage.settled)
             .toList();
         break;
     }
@@ -422,25 +445,29 @@ class NoticeAuctionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  NoticeAuctionStats _buildStats(
-    List<NoticeAuctionCase> cases,
+  ContactRecoveryStats _buildStats(
+    List<ContactRecoveryCase> cases,
     DateTime now,
   ) {
     final activeCases = cases
-        .where((item) => item.stage != NoticeAuctionStage.settled)
+        .where((item) => item.stage != ContactRecoveryStage.settled)
         .toList();
 
-    return NoticeAuctionStats(
+    return ContactRecoveryStats(
       totalCases: activeCases.length,
       noticeDueCount: activeCases.length,
       finalNoticeCount: activeCases
-          .where((item) => item.stage == NoticeAuctionStage.finalNoticeDue)
+          .where((item) => item.stage == ContactRecoveryStage.finalNoticeDue)
           .length,
       disposalReadyCount: activeCases
-          .where((item) => item.stage == NoticeAuctionStage.disposalReady)
+          .where((item) => item.stage == ContactRecoveryStage.disposalReady)
+          .length,
+      recoveryInProgressCount: activeCases
+          .where(
+              (item) => item.stage == ContactRecoveryStage.recoveryInProgress)
           .length,
       settledCount: cases
-          .where((item) => item.stage == NoticeAuctionStage.settled)
+          .where((item) => item.stage == ContactRecoveryStage.settled)
           .length,
       principalExposure: activeCases.fold(
         0,
@@ -458,7 +485,7 @@ class NoticeAuctionController extends ChangeNotifier {
     );
   }
 
-  int _sortCases(NoticeAuctionCase a, NoticeAuctionCase b) {
+  int _sortCases(ContactRecoveryCase a, ContactRecoveryCase b) {
     final stageCompare = _stageRank(b.stage).compareTo(_stageRank(a.stage));
     if (stageCompare != 0) return stageCompare;
     final overdueCompare = b.overdueDays.compareTo(a.overdueDays);
@@ -466,17 +493,19 @@ class NoticeAuctionController extends ChangeNotifier {
     return b.account.totalPayable.compareTo(a.account.totalPayable);
   }
 
-  int _stageRank(NoticeAuctionStage stage) {
+  int _stageRank(ContactRecoveryStage stage) {
     switch (stage) {
-      case NoticeAuctionStage.disposalReady:
+      case ContactRecoveryStage.disposalReady:
         return 5;
-      case NoticeAuctionStage.finalNoticeDue:
+      case ContactRecoveryStage.recoveryInProgress:
+        return 6;
+      case ContactRecoveryStage.finalNoticeDue:
         return 4;
-      case NoticeAuctionStage.secondNoticeDue:
+      case ContactRecoveryStage.secondNoticeDue:
         return 3;
-      case NoticeAuctionStage.firstNoticeDue:
+      case ContactRecoveryStage.firstNoticeDue:
         return 2;
-      case NoticeAuctionStage.settled:
+      case ContactRecoveryStage.settled:
         return 1;
     }
   }

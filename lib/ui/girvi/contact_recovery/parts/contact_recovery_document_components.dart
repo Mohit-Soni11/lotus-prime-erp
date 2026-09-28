@@ -1,7 +1,7 @@
-part of '../notice_auction_screen.dart';
+part of '../contact_recovery_screen.dart';
 
 class _NoticeDocumentStrip extends StatelessWidget {
-  final NoticeAuctionCase item;
+  final ContactRecoveryCase item;
   final ValueChanged<GirviNoticeAction> onViewNotice;
   final ValueChanged<GirviNoticeAction> onDownloadNotice;
   final ValueChanged<GirviNoticeAction> onPrintNotice;
@@ -30,7 +30,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Contact Documents',
+                  'Notice Documents',
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textDark,
                     fontSize: 12.8,
@@ -109,7 +109,7 @@ class _NoNoticeDocuments extends StatelessWidget {
         border: Border.all(color: GirviColors.cardBorder),
       ),
       child: Text(
-        'No contact document has been prepared yet.',
+        'No notice document has been prepared yet.',
         style: GirviStyles.caption.copyWith(
           color: GirviColors.textDark,
           fontSize: 12.5,
@@ -341,15 +341,17 @@ class _MiniNoticeAction extends StatelessWidget {
 }
 
 class _CaseActions extends StatelessWidget {
-  final NoticeAuctionCase item;
+  final ContactRecoveryCase item;
   final VoidCallback onOpenAccount;
   final VoidCallback? onPrepareNotice;
+  final VoidCallback? onInitiateRecovery;
   final VoidCallback? onCloseDisposal;
 
   const _CaseActions({
     required this.item,
     required this.onOpenAccount,
     required this.onPrepareNotice,
+    required this.onInitiateRecovery,
     required this.onCloseDisposal,
   });
 
@@ -359,28 +361,29 @@ class _CaseActions extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ActionButton(
-          label: 'Open Account',
+          label: 'View Account',
           color: GirviColors.shellBg,
           onTap: onOpenAccount,
         ),
         const SizedBox(height: 8),
         _ActionButton(
-          label: item.stage == NoticeAuctionStage.settled
-              ? 'Workflow Closed'
-              : item.primaryActionLabel,
+          label: item.primaryActionLabel,
           color: GirviColors.warning,
-          onTap: onPrepareNotice,
+          onTap: _primaryAction,
         ),
-        const SizedBox(height: 8),
-        _ActionButton(
-          label: item.stage == NoticeAuctionStage.settled
-              ? 'Closed'
-              : 'Complete Recovery',
-          color: item.stage == NoticeAuctionStage.settled
-              ? GirviColors.success
-              : GirviColors.danger,
-          onTap: onCloseDisposal,
-        ),
+        if (item.stage == ContactRecoveryStage.recoveryInProgress ||
+            item.stage == ContactRecoveryStage.settled) ...[
+          const SizedBox(height: 8),
+          _ActionButton(
+            label: item.stage == ContactRecoveryStage.settled
+                ? 'Recovery Closed'
+                : 'Record Recovery',
+            color: item.stage == ContactRecoveryStage.settled
+                ? GirviColors.success
+                : GirviColors.danger,
+            onTap: onCloseDisposal,
+          ),
+        ],
         const SizedBox(height: 8),
         Text(
           item.stageDescription,
@@ -393,10 +396,24 @@ class _CaseActions extends StatelessWidget {
       ],
     );
   }
+
+  VoidCallback? get _primaryAction {
+    switch (item.stage) {
+      case ContactRecoveryStage.firstNoticeDue:
+      case ContactRecoveryStage.secondNoticeDue:
+      case ContactRecoveryStage.finalNoticeDue:
+        return onPrepareNotice;
+      case ContactRecoveryStage.disposalReady:
+        return onInitiateRecovery;
+      case ContactRecoveryStage.recoveryInProgress:
+      case ContactRecoveryStage.settled:
+        return null;
+    }
+  }
 }
 
 class _StageBadge extends StatelessWidget {
-  final NoticeAuctionCase item;
+  final ContactRecoveryCase item;
 
   const _StageBadge({required this.item});
 

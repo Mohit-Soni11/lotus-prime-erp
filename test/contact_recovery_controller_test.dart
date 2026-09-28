@@ -2,19 +2,19 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
-import 'package:lotus_erp/logic/girvi/notice_auction_controller.dart';
+import 'package:lotus_erp/logic/girvi/contact_recovery_controller.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
-import 'package:lotus_erp/models/girvi/notice_auction_model.dart';
+import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
 
 void main() {
-  group('NoticeAuctionController', () {
+  group('ContactRecoveryController', () {
     test('dispose does not close the app database connection', () async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);
 
-      final controller = NoticeAuctionController(db: db);
+      final controller = ContactRecoveryController(db: db);
       controller.dispose();
 
       await db.into(db.customers).insert(
@@ -61,7 +61,7 @@ void main() {
         customerMobile: '9304479436',
       );
 
-      final freshCase = NoticeAuctionCase(
+      final freshCase = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -72,7 +72,7 @@ void main() {
       expect(freshCase.loanAgeMonthsDaysLabel, '15 months 14 days');
       expect(freshCase.overdueAgeMonthsDaysLabel, '9 months 14 days');
 
-      final afterFirstNotice = NoticeAuctionCase(
+      final afterFirstNotice = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -89,12 +89,12 @@ void main() {
       );
 
       expect(afterFirstNotice.noticeProgressLabel, '2/3');
-      expect(afterFirstNotice.stage, NoticeAuctionStage.firstNoticeDue);
+      expect(afterFirstNotice.stage, ContactRecoveryStage.firstNoticeDue);
       expect(afterFirstNotice.noticesSentLabel, '1/3 Sent');
       expect(afterFirstNotice.preparedNoticeActions, hasLength(1));
       expect(afterFirstNotice.preparedNoticeActions.single.noticeStage, 1);
 
-      final afterSecondNotice = NoticeAuctionCase(
+      final afterSecondNotice = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -118,11 +118,11 @@ void main() {
         ],
       );
 
-      expect(afterSecondNotice.stage, NoticeAuctionStage.secondNoticeDue);
+      expect(afterSecondNotice.stage, ContactRecoveryStage.secondNoticeDue);
       expect(afterSecondNotice.noticeProgressLabel, '3/3');
       expect(afterSecondNotice.noticesSentLabel, '2/3 Sent');
 
-      final finalNoticeOnly = NoticeAuctionCase(
+      final finalNoticeOnly = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -138,11 +138,11 @@ void main() {
         ],
       );
 
-      expect(finalNoticeOnly.stage, NoticeAuctionStage.finalNoticeDue);
+      expect(finalNoticeOnly.stage, ContactRecoveryStage.finalNoticeDue);
       expect(finalNoticeOnly.nextNoticeType, isNull);
       expect(finalNoticeOnly.canCloseDisposal, isFalse);
 
-      final disposalReadyCase = NoticeAuctionCase(
+      final disposalReadyCase = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -158,10 +158,40 @@ void main() {
         ],
       );
 
-      expect(disposalReadyCase.stage, NoticeAuctionStage.disposalReady);
-      expect(disposalReadyCase.canCloseDisposal, isTrue);
+      expect(disposalReadyCase.stage, ContactRecoveryStage.disposalReady);
+      expect(disposalReadyCase.canInitiateCollateralRecovery, isTrue);
+      expect(disposalReadyCase.canCloseDisposal, isFalse);
 
-      final closedAfterThreeNotices = NoticeAuctionCase(
+      final recoveryInProgressCase = ContactRecoveryCase(
+        account: account,
+        noticePeriodDays: 30,
+        now: now,
+        actionHistory: [
+          GirviNoticeAction(
+            id: 4,
+            girviId: account.loan.id,
+            actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+            actionAt: now,
+            createdAt: now,
+          ),
+          GirviNoticeAction(
+            id: 3,
+            girviId: account.loan.id,
+            actionType: GirviNoticeType.finalNotice.actionType,
+            noticeStage: 3,
+            actionAt: now.subtract(const Duration(days: 30)),
+            createdAt: now.subtract(const Duration(days: 30)),
+          ),
+        ],
+      );
+
+      expect(
+        recoveryInProgressCase.stage,
+        ContactRecoveryStage.recoveryInProgress,
+      );
+      expect(recoveryInProgressCase.canCloseDisposal, isTrue);
+
+      final closedAfterThreeNotices = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -185,7 +215,7 @@ void main() {
         ],
       );
 
-      expect(closedAfterThreeNotices.stage, NoticeAuctionStage.settled);
+      expect(closedAfterThreeNotices.stage, ContactRecoveryStage.settled);
       expect(closedAfterThreeNotices.noticeProgressLabel, 'Closed');
       expect(closedAfterThreeNotices.noticesSentLabel, '3/3 Sent');
       expect(
@@ -195,7 +225,7 @@ void main() {
         [1, 2, 3],
       );
 
-      final legacyDraftNotice = NoticeAuctionCase(
+      final legacyDraftNotice = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: now,
@@ -213,23 +243,28 @@ void main() {
       expect(legacyDraftNotice.noticesSentLabel, '1/3 Sent');
       expect(legacyDraftNotice.preparedNoticeActions, hasLength(1));
 
-      final state = NoticeAuctionState.initial().copyWith(
+      final state = ContactRecoveryState.initial().copyWith(
         allCases: [
           freshCase,
           afterFirstNotice,
           afterSecondNotice,
           finalNoticeOnly,
           disposalReadyCase,
+          recoveryInProgressCase,
           closedAfterThreeNotices,
         ],
       );
 
-      expect(state.countForFilter(NoticeAuctionFilter.all), 5);
-      expect(state.countForFilter(NoticeAuctionFilter.firstNotice), 2);
-      expect(state.countForFilter(NoticeAuctionFilter.secondNotice), 1);
-      expect(state.countForFilter(NoticeAuctionFilter.finalNotice), 1);
-      expect(state.countForFilter(NoticeAuctionFilter.disposalReady), 1);
-      expect(state.countForFilter(NoticeAuctionFilter.settled), 1);
+      expect(state.countForFilter(ContactRecoveryFilter.all), 6);
+      expect(state.countForFilter(ContactRecoveryFilter.firstNotice), 2);
+      expect(state.countForFilter(ContactRecoveryFilter.secondNotice), 1);
+      expect(state.countForFilter(ContactRecoveryFilter.finalNotice), 1);
+      expect(state.countForFilter(ContactRecoveryFilter.disposalReady), 1);
+      expect(
+        state.countForFilter(ContactRecoveryFilter.recoveryInProgress),
+        1,
+      );
+      expect(state.countForFilter(ContactRecoveryFilter.settled), 1);
     });
 
     test('notice delivery proof persists without changing notice stage count',
@@ -310,7 +345,7 @@ void main() {
         customerName: 'Notice Customer',
         customerMobile: '9000000002',
       );
-      final noticeCase = NoticeAuctionCase(
+      final noticeCase = ContactRecoveryCase(
         account: account,
         noticePeriodDays: 30,
         now: DateTime(2026, 6, 24),

@@ -121,7 +121,7 @@ class AppRoutes {
     newGirviRoute: 'New Pledge Ticket',
     girviReleaseRoute: 'Pledge Ledger',
     interestCalcRoute: 'Interest Entry',
-    noticeAuctionRoute: 'Overdue Notices',
+    noticeAuctionRoute: 'Contact & Recovery',
     cashBookRoute: 'Cash Book',
     bankBookRoute: 'Bank Book',
     expenseEntryRoute: 'Expense Entry',

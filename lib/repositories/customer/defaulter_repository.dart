@@ -190,8 +190,7 @@ class DefaulterRepository {
   }
 
   bool _isOpenCollateralRecoveryAction(String actionType) {
-    return actionType != GirviNoticeActionTypes.disposalSettled &&
-        actionType != GirviNoticeActionTypes.auctionMarked;
+    return actionType == GirviNoticeActionTypes.collateralRecoveryInitiated;
   }
 
   DefaulterModel? _mapRiskAccount({

@@ -7,7 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/girvi_loan_model.dart';
-import '../../models/girvi/notice_auction_model.dart';
+import '../../models/girvi/contact_recovery_model.dart';
 
 class GirviNoticePdfService {
   static const PdfColor _navy = PdfColor.fromInt(0xFF172437);
@@ -22,7 +22,7 @@ class GirviNoticePdfService {
   static final NumberFormat _amountFormat = NumberFormat('#,##,##0', 'en_IN');
 
   Future<Uint8List> build({
-    required NoticeAuctionCase item,
+    required ContactRecoveryCase item,
     required GirviNoticeType noticeType,
     required GirviNoticeLanguage noticeLanguage,
     required String noticeText,
@@ -69,8 +69,148 @@ class GirviNoticePdfService {
     return document.save();
   }
 
+  Future<Uint8List> buildStoredNotice({
+    required String ticketNo,
+    required GirviNoticeType noticeType,
+    required GirviNoticeLanguage noticeLanguage,
+    required String noticeText,
+    required DateTime savedAt,
+  }) async {
+    final devanagariFont = noticeLanguage == GirviNoticeLanguage.hindi
+        ? await LotusPdfTheme.loadDevanagariFont()
+        : null;
+    final document = pw.Document(
+      theme: await LotusPdfTheme.reportTheme(),
+      title: '${noticeType.label} - $ticketNo',
+      author: 'Lotus ERP',
+      creator: 'Lotus ERP',
+      subject: 'Stored ${noticeLanguage.label} Girvi notice',
+    );
+
+    document.addPage(
+      pw.Page(
+        pageTheme: const pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
+        ),
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [
+            _storedNoticeHeader(
+              ticketNo,
+              noticeType,
+              noticeLanguage,
+              devanagariFont,
+              savedAt,
+            ),
+            pw.SizedBox(height: 10),
+            _noticeBody(noticeText, noticeLanguage, devanagariFont),
+            pw.Spacer(),
+            pw.SizedBox(height: 10),
+            _signatureBlock(noticeLanguage, devanagariFont),
+            pw.SizedBox(height: 10),
+            _footer(context),
+          ],
+        ),
+      ),
+    );
+
+    return document.save();
+  }
+
+  pw.Widget _storedNoticeHeader(
+    String ticketNo,
+    GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
+    pw.Font? devanagariFont,
+    DateTime savedAt,
+  ) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(14),
+      decoration: pw.BoxDecoration(
+        color: _navy,
+        borderRadius: pw.BorderRadius.circular(8),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  language == GirviNoticeLanguage.hindi
+                      ? 'गिरवी सूचना'
+                      : 'GIRVI NOTICE',
+                  textDirection: pw.TextDirection.ltr,
+                  style: _textStyle(
+                    language,
+                    devanagariFont,
+                    color: PdfColors.white,
+                    fontSize: 22,
+                    bold: true,
+                  ),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  _noticeTitle(noticeType, language).toUpperCase(),
+                  textDirection: pw.TextDirection.ltr,
+                  style: _textStyle(
+                    language,
+                    devanagariFont,
+                    color: _gold,
+                    fontSize: 12.5,
+                    bold: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 14),
+          pw.Container(
+            width: 158,
+            padding: const pw.EdgeInsets.all(10),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.white,
+              borderRadius: pw.BorderRadius.circular(6),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  '${_label('Ticket Number', language)}: $ticketNo',
+                  textDirection: pw.TextDirection.ltr,
+                  textAlign: pw.TextAlign.right,
+                  style: _textStyle(
+                    language,
+                    devanagariFont,
+                    color: _ink,
+                    fontSize: 11.5,
+                    bold: true,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  '${_label('Notice Date', language)}: ${_dateFormat.format(savedAt)}',
+                  textDirection: pw.TextDirection.ltr,
+                  textAlign: pw.TextAlign.right,
+                  style: _textStyle(
+                    language,
+                    devanagariFont,
+                    color: _ink,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   pw.Widget _header(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     pw.Font? devanagariFont,
@@ -180,7 +320,7 @@ class GirviNoticePdfService {
   }
 
   pw.Widget _accountSummary(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     pw.Font? devanagariFont,
@@ -301,7 +441,7 @@ class GirviNoticePdfService {
   }
 
   pw.Widget _pledgedItemStrip(
-    NoticeAuctionCase item,
+    ContactRecoveryCase item,
     GirviNoticeLanguage language,
     pw.Font? devanagariFont,
   ) {
@@ -653,6 +793,7 @@ class GirviNoticePdfService {
     return switch (english) {
       'Account Summary' => 'खाता सार',
       'Ticket Number' => 'टिकट नंबर',
+      'Notice Date' => 'सूचना दिनांक',
       'Notice Stage' => 'सूचना चरण',
       'Customer' => 'ग्राहक',
       'Mobile' => 'मोबाइल',

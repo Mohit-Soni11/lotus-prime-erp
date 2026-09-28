@@ -1,9 +1,3 @@
-// ==========================================
-// FILE: defaulter_styles.dart
-// MODULE: Risk & Collections
-// DESCRIPTION: Typography and decoration constants.
-// ==========================================
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'defaulter_colors.dart';
@@ -11,15 +5,11 @@ import 'defaulter_colors.dart';
 class DefaulterStyles {
   DefaulterStyles._();
 
-  // ==========================================
-  // SHELL / APP BAR TYPOGRAPHY (Updated to Premium Match)
-  // ==========================================
-
   static TextStyle get shellModuleTitle => GoogleFonts.inter(
-        fontSize: 18.0, // Match 18px
-        fontWeight: FontWeight.w700, // Match w700
+        fontSize: 18.0,
+        fontWeight: FontWeight.w700,
         color: DefaulterColors.shellTextTitle,
-        letterSpacing: 1.2, // Match 1.2
+        letterSpacing: 1.2,
       );
 
   static TextStyle get shellSubtitle => GoogleFonts.inter(
@@ -30,16 +20,11 @@ class DefaulterStyles {
       );
 
   static TextStyle get onlineBadgeText => const TextStyle(
-        // Removed GoogleFonts to match exact style
-        fontSize: 13, // Match 12px
+        fontSize: 13,
         fontWeight: FontWeight.w700,
         color: DefaulterColors.onlineGreen,
         letterSpacing: 0.5,
       );
-
-  // ==========================================
-  // STATS PANEL
-  // ==========================================
 
   static const TextStyle statLabel = TextStyle(
     fontSize: 13.5,
@@ -75,20 +60,12 @@ class DefaulterStyles {
     height: 1.0,
   );
 
-  // ==========================================
-  // TABLE HEADER
-  // ==========================================
-
   static const TextStyle tableHeader = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w800,
     color: DefaulterColors.bodyTextMain,
     letterSpacing: 0.8,
   );
-
-  // ==========================================
-  // TABLE ROW CONTENT
-  // ==========================================
 
   static const TextStyle customerName = TextStyle(
     fontSize: 15.5,
@@ -146,19 +123,11 @@ class DefaulterStyles {
     color: DefaulterColors.bodyTextHint,
   );
 
-  // ==========================================
-  // RISK BADGE
-  // ==========================================
-
   static const TextStyle riskBadgeText = TextStyle(
     fontSize: 13.5,
     fontWeight: FontWeight.w900,
     letterSpacing: 0.8,
   );
-
-  // ==========================================
-  // SEARCH & FILTER
-  // ==========================================
 
   static const TextStyle searchInputText = TextStyle(
     fontSize: 14.5,
@@ -171,10 +140,6 @@ class DefaulterStyles {
     fontWeight: FontWeight.w800,
     letterSpacing: 0.3,
   );
-
-  // ==========================================
-  // EMPTY STATE
-  // ==========================================
 
   static const TextStyle emptyTitle = TextStyle(
     fontSize: 18,
@@ -189,11 +154,6 @@ class DefaulterStyles {
     height: 1.6,
   );
 
-  // ==========================================
-  // DECORATIONS
-  // ==========================================
-
-  // Updated to match the shellPanel style from other headers
   static const BoxDecoration shellHeaderDecoration = BoxDecoration(
     color: DefaulterColors.shellPanelBg,
     border: Border(
@@ -258,4 +218,3 @@ class DefaulterStyles {
         ),
       );
 }
-

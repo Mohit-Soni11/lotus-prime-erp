@@ -4,14 +4,14 @@ class _RiskAccountCard extends StatefulWidget {
   final DefaulterModel account;
   final VoidCallback onOpenAccount;
   final VoidCallback onOpenInterestEntry;
-  final VoidCallback onOpenNoticeAuction;
+  final VoidCallback onOpenContactRecovery;
 
   const _RiskAccountCard({
     super.key,
     required this.account,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
-    required this.onOpenNoticeAuction,
+    required this.onOpenContactRecovery,
   });
 
   @override
@@ -73,7 +73,7 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                       account: account,
                       onOpenAccount: widget.onOpenAccount,
                       onOpenInterestEntry: widget.onOpenInterestEntry,
-                      onOpenNoticeAuction: widget.onOpenNoticeAuction,
+                      onOpenContactRecovery: widget.onOpenContactRecovery,
                       onRevealMobile: _revealMobile,
                     ),
                   ),
@@ -102,7 +102,7 @@ class _RiskAccountCardState extends State<_RiskAccountCard> {
                   account: account,
                   onOpenAccount: widget.onOpenAccount,
                   onOpenInterestEntry: widget.onOpenInterestEntry,
-                  onOpenNoticeAuction: widget.onOpenNoticeAuction,
+                  onOpenContactRecovery: widget.onOpenContactRecovery,
                   onRevealMobile: _revealMobile,
                 ),
               ],

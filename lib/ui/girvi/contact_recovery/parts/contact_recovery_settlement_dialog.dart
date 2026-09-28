@@ -1,4 +1,4 @@
-part of '../notice_auction_screen.dart';
+part of '../contact_recovery_screen.dart';
 
 class _DisposalSettlementResult {
   final double pledgedValuation;
@@ -15,7 +15,7 @@ class _DisposalSettlementResult {
 }
 
 class _DisposalSettlementDialog extends StatefulWidget {
-  final NoticeAuctionCase item;
+  final ContactRecoveryCase item;
 
   const _DisposalSettlementDialog({required this.item});
 
@@ -29,6 +29,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
   late final TextEditingController _recoveredController;
   late final TextEditingController _penaltyController;
   late final TextEditingController _noteController;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -36,7 +37,9 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
     _valuationController = TextEditingController(
       text: widget.item.loan.totalValue.toStringAsFixed(0),
     );
-    _recoveredController = TextEditingController(text: '0');
+    _recoveredController = TextEditingController(
+      text: widget.item.account.totalPayable.toStringAsFixed(0),
+    );
     _penaltyController = TextEditingController(text: '0');
     _noteController = TextEditingController(
       text:
@@ -174,7 +177,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Complete Recovery Settlement',
+                  'Record Recovery Settlement',
                   style: GoogleFonts.manrope(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
@@ -345,6 +348,10 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             balanceDue: balanceDue,
             surplus: surplus,
           ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 12),
+            _validationMessage(_errorMessage!),
+          ],
           const SizedBox(height: 14),
           _legalNotice(),
           const SizedBox(height: 14),
@@ -470,6 +477,39 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
               style: GirviStyles.caption.copyWith(
                 fontSize: 12.5,
                 height: 1.4,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _validationMessage(String message) {
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: GirviColors.dangerBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: GirviColors.dangerBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            GirviIcons.warning,
+            color: GirviColors.danger,
+            size: 18,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              message,
+              style: GirviStyles.caption.copyWith(
+                fontSize: 12.5,
+                height: 1.35,
+                color: GirviColors.danger,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -613,10 +653,20 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
   }
 
   void _closeSettlement() {
+    final pledgedValuation = _number(_valuationController.text);
+    final recoveredAmount = _number(_recoveredController.text);
+    if (pledgedValuation <= 0 || recoveredAmount <= 0) {
+      setState(() {
+        _errorMessage =
+            'Enter a valid pledged valuation and recovered amount before closing settlement.';
+      });
+      return;
+    }
+
     Navigator.of(context).pop(
       _DisposalSettlementResult(
-        pledgedValuation: _number(_valuationController.text),
-        recoveredAmount: _number(_recoveredController.text),
+        pledgedValuation: pledgedValuation,
+        recoveredAmount: recoveredAmount,
         penaltyAmount: _number(_penaltyController.text),
         note: _noteController.text.trim(),
       ),
@@ -647,7 +697,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
             ],
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) => setState(() => _errorMessage = null),
             style: GoogleFonts.manrope(
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -712,12 +762,17 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
         children: [
           Text(label, style: GirviStyles.caption.copyWith(fontSize: 12.5)),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.manrope(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: accent,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: GoogleFonts.manrope(
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+                color: accent,
+              ),
+              maxLines: 1,
             ),
           ),
         ],
@@ -748,54 +803,4 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
 
   String _money(double value) =>
       'Rs ${NumberFormat('#,##,##0', 'en_IN').format(value)}';
-}
-
-class _EmptyState extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _EmptyState({
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 74,
-              height: 74,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: GirviColors.successBg,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                GirviIcons.released,
-                color: GirviColors.success,
-                size: 34,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: GirviStyles.sectionTitle,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: GirviStyles.caption,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

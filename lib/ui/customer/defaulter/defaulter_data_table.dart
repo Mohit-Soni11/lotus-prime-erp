@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE        : defaulter_data_table.dart
 // MODULE      : Risk & Collections
-// DESCRIPTION : Premium collection queue for live Girvi risk accounts.
+// DESCRIPTION : Premium collection register for pledge accounts requiring action.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -26,7 +26,7 @@ class DefaulterDataTable extends StatelessWidget {
   final String? errorMessage;
   final ValueChanged<DefaulterModel> onOpenAccount;
   final ValueChanged<DefaulterModel> onOpenInterestEntry;
-  final ValueChanged<DefaulterModel> onOpenNoticeAuction;
+  final ValueChanged<DefaulterModel> onOpenContactRecovery;
 
   const DefaulterDataTable({
     super.key,
@@ -34,7 +34,7 @@ class DefaulterDataTable extends StatelessWidget {
     required this.isLoading,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
-    required this.onOpenNoticeAuction,
+    required this.onOpenContactRecovery,
     this.errorMessage,
   });
 
@@ -54,7 +54,7 @@ class DefaulterDataTable extends StatelessWidget {
                 errorMessage: errorMessage,
                 onOpenAccount: onOpenAccount,
                 onOpenInterestEntry: onOpenInterestEntry,
-                onOpenNoticeAuction: onOpenNoticeAuction,
+                onOpenContactRecovery: onOpenContactRecovery,
               ),
             ),
           ],
@@ -100,12 +100,12 @@ class _QueueHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Collection Priority Register',
+                  'Collection Action Register',
                   style: DefaulterStyles.customerName.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$count Girvi account${count == 1 ? '' : 's'} requiring follow-up',
+                  '$count pledge account${count == 1 ? '' : 's'} requiring action',
                   style: DefaulterStyles.customerCity,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -113,7 +113,7 @@ class _QueueHeader extends StatelessWidget {
               ],
             ),
           ),
-          const _HeaderBadge(label: 'Live Queue'),
+          const _HeaderBadge(label: 'Live Register'),
         ],
       ),
     );
@@ -151,14 +151,14 @@ class _QueueBody extends StatelessWidget {
   final String? errorMessage;
   final ValueChanged<DefaulterModel> onOpenAccount;
   final ValueChanged<DefaulterModel> onOpenInterestEntry;
-  final ValueChanged<DefaulterModel> onOpenNoticeAuction;
+  final ValueChanged<DefaulterModel> onOpenContactRecovery;
 
   const _QueueBody({
     required this.defaulters,
     required this.isLoading,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
-    required this.onOpenNoticeAuction,
+    required this.onOpenContactRecovery,
     this.errorMessage,
   });
 
@@ -179,7 +179,7 @@ class _QueueBody extends StatelessWidget {
           account: account,
           onOpenAccount: () => onOpenAccount(account),
           onOpenInterestEntry: () => onOpenInterestEntry(account),
-          onOpenNoticeAuction: () => onOpenNoticeAuction(account),
+          onOpenContactRecovery: () => onOpenContactRecovery(account),
         );
       },
     );

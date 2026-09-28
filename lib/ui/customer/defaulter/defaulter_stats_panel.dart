@@ -89,8 +89,7 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statPrincipalText,
                   ),
-                  footerText:
-                      '${stats.criticalCount} critical no-payment accounts',
+                  footerText: '${stats.criticalCount} critical accounts',
                 ),
               ),
               SizedBox(
@@ -105,7 +104,7 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statRecoveryText,
                   ),
-                  footerText: 'Notice and recovery workflow',
+                  footerText: 'Cases in recovery workflow',
                 ),
               ),
               SizedBox(
@@ -122,7 +121,7 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statReceivedText,
                   ),
-                  footerText: 'Interest and release receipts',
+                  footerText: 'Interest and settlement receipts',
                 ),
               ),
             ],
@@ -266,13 +265,13 @@ class _RiskPills extends StatelessWidget {
         ),
         if (monitoring > 0)
           _pill(
-            '$monitoring monitoring',
+            '$monitoring in monitoring',
             DefaulterColors.riskMediumText,
             DefaulterColors.riskMediumBg,
           ),
         if (recovery > 0)
           _pill(
-            '$recovery recovery',
+            '$recovery in recovery',
             DefaulterColors.riskHighText,
             DefaulterColors.riskHighBg,
           ),

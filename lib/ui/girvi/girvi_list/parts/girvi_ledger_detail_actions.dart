@@ -23,7 +23,7 @@ class _LedgerDetailActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final pdfButton = _LedgerCommandButton(
       icon: GirviIcons.print,
-      label: openingPdf ? 'Opening Invoice...' : 'View Invoice PDF',
+      label: openingPdf ? 'Opening Invoice...' : 'Preview Invoice PDF',
       color: GirviColors.info,
       onTap: openingPdf ? null : onPreviewPdf,
     );

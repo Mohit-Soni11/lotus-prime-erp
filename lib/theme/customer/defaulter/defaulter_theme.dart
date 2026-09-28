@@ -9,4 +9,3 @@ export 'defaulter_colors.dart';
 export 'defaulter_icons.dart';
 export 'defaulter_styles.dart';
 export 'defaulter_strings.dart';
-

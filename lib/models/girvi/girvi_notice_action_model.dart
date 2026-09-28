@@ -9,15 +9,15 @@ class GirviNoticeActionTypes {
   static const noticePdfPrinted = 'NOTICE_PDF_PRINTED';
   static const noticePdfShared = 'NOTICE_PDF_SHARED';
   static const noticeDeliveryRecorded = 'NOTICE_DELIVERY_RECORDED';
+  static const collateralRecoveryInitiated = 'COLLATERAL_RECOVERY_INITIATED';
   static const disposalSettled = 'DISPOSAL_SETTLED';
   static const auctionMarked = 'AUCTION_MARKED';
 }
 
 enum GirviNoticeType {
-  first(1, 'First Notice', 'Initial settlement warning'),
-  second(2, 'Second Notice', 'Final warning before recovery review'),
-  finalNotice(
-      3, 'Final Settlement Notice', 'Final redemption and recovery notice');
+  first(1, 'First Notice', 'Initial account contact'),
+  second(2, 'Second Notice', 'Follow-up before final recovery review'),
+  finalNotice(3, 'Final Notice', 'Final redemption and recovery notice');
 
   const GirviNoticeType(this.stage, this.label, this.subtitle);
 
@@ -116,6 +116,9 @@ class GirviNoticeAction {
   bool get isDisposalSettlement =>
       actionType == GirviNoticeActionTypes.disposalSettled;
 
+  bool get isCollateralRecoveryInitiated =>
+      actionType == GirviNoticeActionTypes.collateralRecoveryInitiated;
+
   String get displayLabel {
     switch (actionType) {
       case GirviNoticeActionTypes.firstNoticePrepared:
@@ -123,7 +126,7 @@ class GirviNoticeAction {
       case GirviNoticeActionTypes.secondNoticePrepared:
         return 'Second notice prepared';
       case GirviNoticeActionTypes.finalNoticePrepared:
-        return 'Final settlement notice prepared';
+        return 'Final notice prepared';
       case GirviNoticeActionTypes.noticePdfSaved:
         return 'Notice PDF saved';
       case GirviNoticeActionTypes.noticePdfPrinted:
@@ -132,6 +135,8 @@ class GirviNoticeAction {
         return 'Notice PDF shared';
       case GirviNoticeActionTypes.noticeDeliveryRecorded:
         return 'Notice delivery recorded';
+      case GirviNoticeActionTypes.collateralRecoveryInitiated:
+        return 'Collateral recovery initiated';
       case GirviNoticeActionTypes.disposalSettled:
         return 'Recovery settlement closed';
       case GirviNoticeActionTypes.noticeDraftCopied:

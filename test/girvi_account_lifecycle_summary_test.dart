@@ -21,9 +21,9 @@ void main() {
     expect(summary.delivered, isFalse);
     expect(summary.period.kind, GirviLifecycleTileKind.runningPeriod);
     expect(summary.period.value, '3 months 2 days');
-    expect(summary.period.subtitle, '92 total days | 4 bill months');
+    expect(summary.period.subtitle, '92 total days | 4 chargeable months');
     expect(summary.settlement.kind, GirviLifecycleTileKind.settlementPending);
-    expect(summary.settlement.title, 'Settlement Pending');
+    expect(summary.settlement.title, 'Settlement in Progress');
     expect(summary.settlement.value, startsWith('Rs '));
     expect(summary.delivery.kind, GirviLifecycleTileKind.deliveryPending);
     expect(summary.delivery.value, 'Not delivered');
@@ -73,7 +73,7 @@ void main() {
     expect(summary.delivered, isTrue);
     expect(summary.period.kind, GirviLifecycleTileKind.closedPeriod);
     expect(summary.delivery.kind, GirviLifecycleTileKind.deliveryDelivered);
-    expect(summary.delivery.title, 'Delivery Delivered');
+    expect(summary.delivery.title, 'Item Delivered');
     expect(summary.delivery.subtitle, 'Done 21/06/2026 19:35');
   });
 }

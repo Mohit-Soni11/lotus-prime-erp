@@ -141,7 +141,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
       return 'Settlement Complete - Delivery Pending';
     }
     if (loan.girviStatus == GirviStatus.partialRelease) {
-      return 'Settlement Pending';
+      return 'Settlement in Progress';
     }
     if (loan.girviStatus == GirviStatus.auctioned) return 'Closed';
     if (loan.girviStatus == GirviStatus.released) return 'Released';
@@ -214,7 +214,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
           final account = _controller.account;
           if (account == null) {
             return _AccountErrorState(
-              message: 'Girvi account could not be found.',
+              message: 'Pledge account could not be found.',
               onRetry: _reload,
               onBack: widget.onBack,
             );
