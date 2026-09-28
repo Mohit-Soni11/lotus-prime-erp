@@ -87,6 +87,10 @@ class DefaulterColors {
   static const Color statPrincipalIcon = Color(0xFF2563EB);
   static const Color statPrincipalText = Color(0xFF1D4ED8);
 
+  static const Color statRecoveryBg = Color(0xFFFFF3E0);
+  static const Color statRecoveryIcon = Color(0xFFE65100);
+  static const Color statRecoveryText = Color(0xFFC2410C);
+
   static const Color statReceivedBg = Color(0xFFECFDF5);
   static const Color statReceivedIcon = Color(0xFF059669);
   static const Color statReceivedText = Color(0xFF047857);

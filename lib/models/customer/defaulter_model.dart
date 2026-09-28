@@ -33,7 +33,7 @@ enum DefaulterFilterBy {
   medium,
   low,
   overdue,
-  settlementPending,
+  collateralRecovery,
 }
 
 class DefaulterModel {
@@ -77,6 +77,7 @@ class DefaulterModel {
   final bool isInterestOverdue;
   final bool isMaturityOverdue;
   final bool hasInterestPaidBeforeMaturity;
+  final bool isCollateralRecovery;
   final DefaulterRiskLevel riskLevel;
   final String collectionStage;
   final String nextActionLabel;
@@ -122,13 +123,13 @@ class DefaulterModel {
     required this.isInterestOverdue,
     required this.isMaturityOverdue,
     required this.hasInterestPaidBeforeMaturity,
+    required this.isCollateralRecovery,
     required this.riskLevel,
     required this.collectionStage,
     required this.nextActionLabel,
   });
 
   bool get isOverdue => isMaturityOverdue && !hasInterestPaidBeforeMaturity;
-  bool get isSettlementPending => statusValue == 'PARTIAL_RELEASE';
   bool get hasPaymentHistory => totalReceived > 0 || lastPaymentDate != null;
 
   String get riskAgeLabel {
@@ -163,7 +164,7 @@ class DefaulterModel {
 class DefaulterStatsModel {
   final int totalRiskAccounts;
   final int overdueCount;
-  final int settlementPendingCount;
+  final int collateralRecoveryCount;
   final double totalAmountDue;
   final double totalPrincipalDue;
   final double totalInterestDue;
@@ -178,7 +179,7 @@ class DefaulterStatsModel {
   const DefaulterStatsModel({
     required this.totalRiskAccounts,
     required this.overdueCount,
-    required this.settlementPendingCount,
+    required this.collateralRecoveryCount,
     required this.totalAmountDue,
     required this.totalPrincipalDue,
     required this.totalInterestDue,
@@ -197,7 +198,7 @@ class DefaulterStatsModel {
     return const DefaulterStatsModel(
       totalRiskAccounts: 0,
       overdueCount: 0,
-      settlementPendingCount: 0,
+      collateralRecoveryCount: 0,
       totalAmountDue: 0,
       totalPrincipalDue: 0,
       totalInterestDue: 0,
@@ -218,7 +219,7 @@ class DefaulterStatsModel {
     return DefaulterStatsModel(
       totalRiskAccounts: list.length,
       overdueCount: list.where((d) => d.isOverdue).length,
-      settlementPendingCount: list.where((d) => d.isSettlementPending).length,
+      collateralRecoveryCount: list.where((d) => d.isCollateralRecovery).length,
       totalAmountDue: list.fold(0.0, (sum, d) => sum + d.totalDue),
       totalPrincipalDue:
           list.fold(0.0, (sum, d) => sum + d.principalOutstanding),

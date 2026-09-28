@@ -160,8 +160,7 @@ void main() {
       expect(result.isRiskAccount, isTrue);
     });
 
-    test('keeps incomplete release settlement separate from delivery cases',
-        () {
+    test('partial release balances follow normal collection risk', () {
       final partialSettlement = GirviRiskPolicy.assess(
         status: GirviStatus.partialRelease,
         startDate: DateTime(2026, 1),
@@ -172,6 +171,11 @@ void main() {
         now: DateTime(2026, 7),
       );
 
+      expect(partialSettlement.stage, GirviRiskStage.earlyRisk);
+      expect(partialSettlement.isRiskAccount, isTrue);
+    });
+
+    test('keeps ready delivery outside collection risk', () {
       final readyForDelivery = GirviRiskPolicy.assess(
         status: GirviStatus.readyForDelivery,
         startDate: DateTime(2026, 1),
@@ -182,8 +186,6 @@ void main() {
         now: DateTime(2026, 7),
       );
 
-      expect(partialSettlement.stage, GirviRiskStage.settlementPending);
-      expect(partialSettlement.isRiskAccount, isTrue);
       expect(readyForDelivery.stage, GirviRiskStage.readyForDelivery);
       expect(readyForDelivery.isRiskAccount, isFalse);
     });

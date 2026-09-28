@@ -4,12 +4,13 @@ class DefaulterStrings {
   static const String systemOnline = 'SYSTEM ONLINE';
   static const String moduleTitle = 'RISK & COLLECTIONS';
   static const String moduleSubtitle =
-      'Girvi exposure, collection priority and settlement control';
+      'Girvi exposure, collection priority and collateral recovery';
 
   static const String statTotal = 'Collection Queue';
   static const String statTotalDue = 'Total Receivable';
   static const String statCritical = 'Critical Cases';
   static const String statPrincipal = 'Principal Exposure';
+  static const String statRecovery = 'Collateral Recovery';
   static const String statReceived = 'This Month Collection';
   static const String statSuffix = 'Open';
 
@@ -21,7 +22,7 @@ class DefaulterStrings {
   static const String filterMedium = 'Monitoring';
   static const String filterLow = 'Early Follow-up';
   static const String filterOverdue = 'Overdue';
-  static const String filterSettlement = 'Settlement Pending';
+  static const String filterRecovery = 'Collateral Recovery';
   static const String sortBy = 'Sort:';
   static const String sortOverdue = 'Collection Age';
   static const String sortAmount = 'Receivable';

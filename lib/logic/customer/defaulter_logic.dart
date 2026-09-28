@@ -143,8 +143,8 @@ class DefaulterLogic extends ChangeNotifier {
       case DefaulterFilterBy.overdue:
         result = result.where((d) => d.isOverdue).toList();
         break;
-      case DefaulterFilterBy.settlementPending:
-        result = result.where((d) => d.isSettlementPending).toList();
+      case DefaulterFilterBy.collateralRecovery:
+        result = result.where((d) => d.isCollateralRecovery).toList();
         break;
       case DefaulterFilterBy.all:
         break;

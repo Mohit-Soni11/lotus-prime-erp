@@ -17,7 +17,6 @@ enum GirviRiskStage {
   collectionMonitoring,
   highRisk,
   critical,
-  settlementPending,
   readyForDelivery,
 }
 
@@ -165,20 +164,6 @@ class GirviRiskPolicy {
       );
     }
 
-    if (status == GirviStatus.partialRelease) {
-      return _result(
-        stage: GirviRiskStage.settlementPending,
-        severity: GirviRiskSeverity.low,
-        isRiskAccount: true,
-        isInterestOverdue: isInterestOverdue,
-        isMaturityOverdue: isMaturityOverdue,
-        unpaidInterestMonths: unpaidInterestMonths,
-        maturityOverdueDays: maturityOverdueDays,
-        maturityOverdueMonths: maturityOverdueMonths,
-        riskAgeDays: riskAgeDays,
-      );
-    }
-
     if (isMaturityOverdue &&
         unpaidInterestMonths > criticalNoCollectionStartMonths &&
         totalDue > moneyTolerance) {
@@ -297,8 +282,6 @@ class GirviRiskPolicy {
     bool isInterestOverdue,
   ) {
     switch (stage) {
-      case GirviRiskStage.settlementPending:
-        return 'Settlement Pending';
       case GirviRiskStage.readyForDelivery:
         return 'Ready for Delivery';
       case GirviRiskStage.collectionMonitoring:
@@ -324,8 +307,6 @@ class GirviRiskPolicy {
         return 'Collection Monitoring';
       case GirviRiskStage.earlyRisk:
         return 'Early Risk';
-      case GirviRiskStage.settlementPending:
-        return 'Settlement Pending';
       case GirviRiskStage.readyForDelivery:
         return 'Ready for Delivery';
       case GirviRiskStage.controlled:
@@ -345,8 +326,6 @@ class GirviRiskPolicy {
         return 'Monitor account and collect pending interest';
       case GirviRiskStage.earlyRisk:
         return 'Send payment reminder';
-      case GirviRiskStage.settlementPending:
-        return 'Complete remaining settlement';
       case GirviRiskStage.readyForDelivery:
         return 'Move to delivery workflow';
       case GirviRiskStage.controlled:

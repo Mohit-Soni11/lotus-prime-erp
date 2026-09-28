@@ -47,7 +47,8 @@ class _AccountActionsState extends State<_AccountActions> {
             color: DefaulterColors.brandGoldDark,
             onTap: widget.onOpenInterestEntry,
           ),
-          if (account.riskLevel == DefaulterRiskLevel.critical) ...[
+          if (account.riskLevel == DefaulterRiskLevel.critical ||
+              account.isCollateralRecovery) ...[
             const SizedBox(height: 8),
             _ActionButton(
               icon: DefaulterIcons.defaulterAlert,

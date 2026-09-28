@@ -16,6 +16,7 @@ import '../../logic/girvi/girvi_risk_policy.dart';
 import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import '../../models/girvi/girvi_notice_action_model.dart';
 import '../girvi/girvi_repository.dart';
 
 class DefaulterRepository {
@@ -53,6 +54,7 @@ class DefaulterRepository {
           rows.map((row) => row.readTable(_db.girviLoans).id).toList();
       final paymentSummary = await _loadPaymentSummary(loanIds, now);
       final itemSnapshots = await _loadItemSnapshots(loanIds);
+      final collateralRecoveryIds = await _loadCollateralRecoveryIds(loanIds);
       final interestType = await _loadInterestCalculationType();
 
       final accounts = <DefaulterModel>[];
@@ -67,6 +69,7 @@ class DefaulterRepository {
           customer: customer,
           summary: summary,
           itemSnapshot: itemSnapshot,
+          isCollateralRecovery: collateralRecoveryIds.contains(loan.id),
           interestType: interestType,
           now: now,
         );
@@ -96,6 +99,7 @@ class DefaulterRepository {
           readsFrom: {
             _db.girviLoans,
             _db.girviPayments,
+            _db.girviNoticeActions,
             _db.customers,
           },
         )
@@ -161,11 +165,41 @@ class DefaulterRepository {
     );
   }
 
+  Future<Set<int>> _loadCollateralRecoveryIds(List<int> loanIds) async {
+    if (loanIds.isEmpty) return const {};
+
+    try {
+      await _db.ensureGirviNoticeActionSchema();
+      final rows = await (_db.select(_db.girviNoticeActions)
+            ..where((action) => action.girviId.isIn(loanIds)))
+          .get();
+
+      final ids = <int>{};
+      for (final row in rows) {
+        if (_isOpenCollateralRecoveryAction(row.actionType)) {
+          ids.add(row.girviId);
+        }
+      }
+      return ids;
+    } catch (error) {
+      AppLogger.debug(
+        'Risk & Collections: collateral recovery flags unavailable: $error',
+      );
+      return const {};
+    }
+  }
+
+  bool _isOpenCollateralRecoveryAction(String actionType) {
+    return actionType != GirviNoticeActionTypes.disposalSettled &&
+        actionType != GirviNoticeActionTypes.auctionMarked;
+  }
+
   DefaulterModel? _mapRiskAccount({
     required GirviLoan loan,
     required Customer customer,
     required _PaymentSummary summary,
     required _PledgedItemSnapshot itemSnapshot,
+    required bool isCollateralRecovery,
     required String interestType,
     required DateTime now,
   }) {
@@ -270,6 +304,7 @@ class DefaulterRepository {
       isMaturityOverdue: assessment.isMaturityOverdue,
       hasInterestPaidBeforeMaturity:
           summary.hasInterestPaidOnOrBefore(maturityDate),
+      isCollateralRecovery: isCollateralRecovery,
       riskLevel: _mapSeverity(assessment.severity),
       collectionStage: assessment.stageLabel,
       nextActionLabel: assessment.nextActionLabel,

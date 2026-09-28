@@ -27,11 +27,13 @@ class DefaulterStatsPanel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final columns = constraints.maxWidth >= 1180
-              ? 4
-              : constraints.maxWidth >= 760
-                  ? 2
-                  : 1;
+          final columns = constraints.maxWidth >= 1420
+              ? 5
+              : constraints.maxWidth >= 1180
+                  ? 4
+                  : constraints.maxWidth >= 760
+                      ? 2
+                      : 1;
           final spacing = columns == 1 ? 10.0 : 14.0;
           final cardWidth =
               (constraints.maxWidth - (spacing * (columns - 1))) / columns;
@@ -53,7 +55,7 @@ class DefaulterStatsPanel extends StatelessWidget {
                   footer: _RiskPills(
                     critical: stats.criticalCount,
                     monitoring: stats.mediumCount,
-                    settlement: stats.settlementPendingCount,
+                    recovery: stats.collateralRecoveryCount,
                   ),
                 ),
               ),
@@ -89,6 +91,21 @@ class DefaulterStatsPanel extends StatelessWidget {
                   ),
                   footerText:
                       '${stats.criticalCount} critical no-payment accounts',
+                ),
+              ),
+              SizedBox(
+                width: cardWidth,
+                child: _StatCard(
+                  isLoading: isLoading,
+                  iconData: DefaulterIcons.collateralRecovery,
+                  iconBg: DefaulterColors.statRecoveryBg,
+                  iconColor: DefaulterColors.statRecoveryIcon,
+                  label: DefaulterStrings.statRecovery,
+                  value: stats.collateralRecoveryCount.toString(),
+                  valueStyle: DefaulterStyles.statAmountValue.copyWith(
+                    color: DefaulterColors.statRecoveryText,
+                  ),
+                  footerText: 'Notice and recovery workflow',
                 ),
               ),
               SizedBox(
@@ -228,12 +245,12 @@ class _StatCard extends StatelessWidget {
 class _RiskPills extends StatelessWidget {
   final int critical;
   final int monitoring;
-  final int settlement;
+  final int recovery;
 
   const _RiskPills({
     required this.critical,
     required this.monitoring,
-    required this.settlement,
+    required this.recovery,
   });
 
   @override
@@ -253,13 +270,13 @@ class _RiskPills extends StatelessWidget {
             DefaulterColors.riskMediumText,
             DefaulterColors.riskMediumBg,
           ),
-        if (settlement > 0)
+        if (recovery > 0)
           _pill(
-            '$settlement settlement',
+            '$recovery recovery',
             DefaulterColors.riskHighText,
             DefaulterColors.riskHighBg,
           ),
-        if (critical == 0 && monitoring == 0 && settlement == 0)
+        if (critical == 0 && monitoring == 0 && recovery == 0)
           const Text('Portfolio controlled', style: DefaulterStyles.statSuffix),
       ],
     );

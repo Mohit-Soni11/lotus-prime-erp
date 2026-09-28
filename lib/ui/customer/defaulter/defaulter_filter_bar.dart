@@ -239,8 +239,8 @@ class _FilterChips extends StatelessWidget {
         DefaulterColors.riskMediumText
       ),
       (
-        DefaulterFilterBy.settlementPending,
-        DefaulterStrings.filterSettlement,
+        DefaulterFilterBy.collateralRecovery,
+        DefaulterStrings.filterRecovery,
         DefaulterColors.riskHighText
       ),
     ];

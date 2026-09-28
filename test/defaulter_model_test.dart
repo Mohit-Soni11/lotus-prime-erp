@@ -105,6 +105,7 @@ DefaulterModel _defaulter({
     isInterestOverdue: isInterestOverdue,
     isMaturityOverdue: isMaturityOverdue,
     hasInterestPaidBeforeMaturity: hasInterestPaidBeforeMaturity,
+    isCollateralRecovery: false,
     riskLevel: riskLevel,
     collectionStage: 'Monitoring',
     nextActionLabel: 'Review',

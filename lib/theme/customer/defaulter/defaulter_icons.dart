@@ -25,6 +25,7 @@ class DefaulterIcons {
   static const IconData criticalCount = Icons.local_fire_department_rounded;
   static const IconData principal = Icons.account_balance_wallet_outlined;
   static const IconData collected = Icons.payments_outlined;
+  static const IconData collateralRecovery = Icons.gavel_rounded;
 
   // --- RISK LEVELS ---
   static const IconData riskCritical = Icons.crisis_alert_rounded;
@@ -63,4 +64,3 @@ class DefaulterIcons {
   static const IconData share = Icons.share_rounded;
   static const IconData print = Icons.print_rounded;
 }
-
