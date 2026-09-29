@@ -151,7 +151,7 @@ class _NoticeDocumentCard extends StatelessWidget {
       onTap: onView,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: 196,
+        width: 206,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -183,7 +183,7 @@ class _NoticeDocumentCard extends StatelessWidget {
                     '0${noticeType.stage}',
                     style: GoogleFonts.inter(
                       color: color,
-                      fontSize: 12.5,
+                      fontSize: 12.3,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -565,6 +565,46 @@ class _ActionButton extends StatelessWidget {
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewTitleBadge extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _PreviewTitleBadge({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.58),
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.visibility_rounded,
+              color: Colors.white,
+              size: 17,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '$title | $subtitle',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
       ),
     );

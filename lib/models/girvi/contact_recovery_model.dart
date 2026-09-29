@@ -32,6 +32,8 @@ class ContactRecoveryCase {
   final DateTime now;
   final GirviNoticeAction? latestAction;
   final List<GirviNoticeAction> actionHistory;
+  final List<GirviPaymentModel> paymentHistory;
+  final List<String> itemPhotoPaths;
 
   const ContactRecoveryCase({
     required this.account,
@@ -39,6 +41,8 @@ class ContactRecoveryCase {
     required this.now,
     this.latestAction,
     this.actionHistory = const [],
+    this.paymentHistory = const [],
+    this.itemPhotoPaths = const [],
   });
 
   GirviLoanModel get loan => account.loan;
@@ -46,6 +50,9 @@ class ContactRecoveryCase {
   bool get isRecoveryClosed => loan.girviStatus == GirviStatus.auctioned;
 
   bool get hasNoticeActivity => latestAction != null;
+
+  bool get hasItemPhotos =>
+      itemPhotoPaths.any((path) => path.trim().isNotEmpty);
 
   List<GirviNoticeAction> get noticeActions =>
       actionHistory.where((action) => action.isNoticePreparation).toList();
@@ -149,6 +156,25 @@ class ContactRecoveryCase {
   String get loanAgeLabel => loanAgePeriod.displayLabel;
 
   String get loanAgeMonthsDaysLabel => _monthsDaysLabel(loanAgePeriod);
+
+  int get chargeableInterestMonths =>
+      GirviLoanModel.chargeableMonthsBetween(loan.startDate, now);
+
+  String get chargeableInterestMonthsLabel {
+    final months = chargeableInterestMonths;
+    return '$months chargeable month${months == 1 ? '' : 's'}';
+  }
+
+  List<GirviInterestBreakdownLine> get compoundInterestBreakdown {
+    if (GirviInterestCalculationType.isSimple(account.interestType)) {
+      return const [];
+    }
+    return GirviLoanModel.calculateCompoundInterestBreakdown(
+      principal: account.originalPrincipal,
+      monthlyRatePercent: loan.interestRate,
+      months: chargeableInterestMonths,
+    );
+  }
 
   GirviElapsedPeriod get overdueAgePeriod {
     final maturity = loan.maturityDate;

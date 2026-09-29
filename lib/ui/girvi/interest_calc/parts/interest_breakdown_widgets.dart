@@ -133,8 +133,9 @@ class _InterestBreakdownRow extends StatelessWidget {
       line: line,
     );
     final title = period.cycleLabel;
-    final subtitle =
-        'Base Rs ${moneyFmt.format(line.principalBase)} | Monthly Rs ${moneyFmt.format(line.monthlyInterest)}';
+    final cycleName = line.months == GirviLoanModel.compoundCycleMonths
+        ? 'Year ${line.cycleNumber}'
+        : 'Period ${line.cycleNumber}';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
@@ -150,6 +151,7 @@ class _InterestBreakdownRow extends StatelessWidget {
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _CountBadge(value: line.cycleNumber.toString().padLeft(2, '0')),
           const SizedBox(width: 11),
@@ -158,7 +160,7 @@ class _InterestBreakdownRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  '$cycleName - $title',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -178,16 +180,38 @@ class _InterestBreakdownRow extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: GirviColors.textBody,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    _BreakdownMiniMetric(
+                      label: 'Opening',
+                      value: 'Rs ${moneyFmt.format(line.principalBase)}',
+                    ),
+                    _BreakdownMiniMetric(
+                      label: 'Monthly Rate',
+                      value: '${line.monthlyRatePercent.toStringAsFixed(2)}%',
+                    ),
+                    _BreakdownMiniMetric(
+                      label: 'Interest / Month',
+                      value: 'Rs ${moneyFmt.format(line.monthlyInterest)}',
+                    ),
+                    _BreakdownMiniMetric(
+                      label: 'Period',
+                      value:
+                          '${line.months} month${line.months == 1 ? '' : 's'}',
+                    ),
+                    _BreakdownMiniMetric(
+                      label: 'Period Interest',
+                      value: 'Rs ${moneyFmt.format(line.interestAmount)}',
+                    ),
+                    _BreakdownMiniMetric(
+                      label: 'Closing',
+                      value: 'Rs ${moneyFmt.format(line.closingAmount)}',
+                      accent: GirviColors.success,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -199,14 +223,58 @@ class _InterestBreakdownRow extends StatelessWidget {
               color: GirviColors.purple,
             ),
           ],
-          const SizedBox(width: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreakdownMiniMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? accent;
+
+  const _BreakdownMiniMetric({
+    required this.label,
+    required this.value,
+    this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = accent ?? GirviColors.textDark;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 136),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: (accent ?? GirviColors.info).withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            'Rs ${moneyFmt.format(line.interestAmount)}',
+            label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.manrope(
-              color: GirviColors.textDark,
-              fontSize: 17,
+            style: GoogleFonts.inter(
+              color: GirviColors.textMuted,
+              fontSize: 10.8,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: color,
+              fontSize: 12.4,
               fontWeight: FontWeight.w900,
             ),
           ),

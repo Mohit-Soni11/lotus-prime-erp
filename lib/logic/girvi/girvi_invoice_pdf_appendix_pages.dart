@@ -554,15 +554,16 @@ pw.Widget _girviCompoundInterestCalculation(
       line: line,
     );
     final totalWithInterest = GirviInvoicePdfService._formatAmount(
-      line.principalBase + line.interestAmount,
+      line.closingAmount,
     );
 
     return <String>[
       line.cycleNumber.toString().padLeft(2, '0'),
       '${period.cycleLabel}\n${period.monthRangeLabel}',
       GirviInvoicePdfService._formatAmount(line.principalBase),
-      '${GirviInvoicePdfService._formatAmount(line.monthlyInterest)}\n'
-          '${_ratePercentLabel(line.monthlyRatePercent)} monthly',
+      '${_ratePercentLabel(line.monthlyRatePercent)} monthly',
+      GirviInvoicePdfService._formatAmount(line.monthlyInterest),
+      period.monthsLabel,
       GirviInvoicePdfService._formatAmount(line.interestAmount),
       line.capitalizedAfterLine
           ? 'Capitalized\n$totalWithInterest'
@@ -589,11 +590,13 @@ pw.Widget _girviCompoundInterestCalculation(
           context: null,
           headers: const [
             'No.',
-            'Interest Cycle',
-            'Base Principal',
-            'Monthly Interest',
-            'Total Interest',
-            'Next Base',
+            'Period',
+            'Opening Amount',
+            'Monthly Rate',
+            'Interest / Month',
+            'Applicable Months',
+            'Period Interest',
+            'Closing Amount',
           ],
           data: rows,
           headerStyle: pw.TextStyle(
@@ -619,11 +622,13 @@ pw.Widget _girviCompoundInterestCalculation(
           ),
           columnWidths: const {
             0: pw.FlexColumnWidth(0.45),
-            1: pw.FlexColumnWidth(1.65),
-            2: pw.FlexColumnWidth(1.35),
-            3: pw.FlexColumnWidth(1.05),
-            4: pw.FlexColumnWidth(1.05),
-            5: pw.FlexColumnWidth(1.15),
+            1: pw.FlexColumnWidth(1.45),
+            2: pw.FlexColumnWidth(1.15),
+            3: pw.FlexColumnWidth(0.9),
+            4: pw.FlexColumnWidth(1.1),
+            5: pw.FlexColumnWidth(1.0),
+            6: pw.FlexColumnWidth(1.05),
+            7: pw.FlexColumnWidth(1.1),
           },
         ),
       ],

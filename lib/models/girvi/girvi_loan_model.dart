@@ -92,6 +92,8 @@ class GirviInterestBreakdownLine {
   });
 
   double get monthlyInterest => principalBase * (monthlyRatePercent / 100);
+
+  double get closingAmount => principalBase + interestAmount;
 }
 
 /// Human-readable elapsed period between two dates.
@@ -649,8 +651,5 @@ class GirviSummaryModel {
       );
 
   int get totalLoans =>
-      totalActive +
-      totalOverdue +
-      totalReadyForDelivery +
-      totalReleased;
+      totalActive + totalOverdue + totalReadyForDelivery + totalReleased;
 }
