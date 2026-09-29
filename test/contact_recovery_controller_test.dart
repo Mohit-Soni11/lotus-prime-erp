@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/contact_recovery_controller.dart';
+import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
@@ -359,6 +360,60 @@ void main() {
         noticeCase.latestDeliveryProofForStage(1)?.deliveryProofLabel,
         'Saved via PDF File',
       );
+    });
+
+    test('generated notices do not include pledged valuation', () {
+      final account = GirviLoanWithCustomer(
+        loan: GirviLoanModel(
+          id: 17,
+          ticketNo: 'GRV-0017',
+          customerId: 1,
+          itemDescription: '#1 chain | Gold | 22KT | 1 pcs | Net 12.000 g',
+          itemCount: 1,
+          metalType: 'Gold',
+          metalPurity: '22KT',
+          grossWeight: 12,
+          stoneWeight: 0,
+          netWeight: 12,
+          ratePerGram: 12000,
+          totalValue: 144000,
+          ltvPercent: 69.44,
+          loanAmount: 100000,
+          interestRate: 5,
+          durationMonths: 6,
+          disbursementMode: 'Cash',
+          startDate: DateTime(2025, 1, 15),
+          maturityDate: DateTime(2025, 7, 15),
+          createdAt: DateTime(2025, 1, 15),
+          status: 'OVERDUE',
+        ),
+        customerName: 'REYANSH SONI',
+        customerMobile: '9304479436',
+      );
+      final recoveryCase = ContactRecoveryCase(
+        account: account,
+        noticePeriodDays: 30,
+        now: DateTime(2026, 9, 29),
+      );
+      final service = GirviNoticeGenerationService(
+        now: DateTime(2026, 9, 29),
+      );
+
+      for (final noticeType in GirviNoticeType.values) {
+        final notices = service.buildAll(
+          item: recoveryCase,
+          noticeType: noticeType,
+        );
+        for (final noticeText in notices.values) {
+          expect(noticeText, isNot(contains('Pledged Valuation')));
+          expect(noticeText, isNot(contains('Pledged Value')));
+          expect(noticeText, isNot(contains('Valuation:')));
+          expect(noticeText, isNot(contains('गिरवी मूल्यांकन')));
+          expect(noticeText, isNot(contains('गिरवी मूल्य')));
+          expect(noticeText, isNot(contains('मूल्यांकन:')));
+          expect(noticeText, contains('GRV-0017'));
+        }
+      }
     });
 
     test('notice schema safety upgrades a legacy action table', () async {

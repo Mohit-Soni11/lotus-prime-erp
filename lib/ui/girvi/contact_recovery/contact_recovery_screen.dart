@@ -642,7 +642,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
             noticeType: noticeType,
             language: language,
           )
-        : storedText;
+        : _noticeTextWithoutValuation(storedText);
     return _SavedNoticeDraft(
       item: item,
       action: action,
@@ -651,6 +651,25 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       noticeText: noticeText,
       fileName: _noticePdfName(item, noticeType, language),
     );
+  }
+
+  String _noticeTextWithoutValuation(String noticeText) {
+    const hiddenPrefixes = <String>[
+      'Pledged Valuation:',
+      'Pledged Value:',
+      'Valuation:',
+      'गिरवी मूल्यांकन:',
+      'गिरवी मूल्य:',
+      'मूल्यांकन:',
+    ];
+    return noticeText
+        .split('\n')
+        .where((line) {
+          final trimmed = line.trim();
+          return !hiddenPrefixes.any(trimmed.startsWith);
+        })
+        .join('\n')
+        .trim();
   }
 
   GirviNoticeLanguage _noticeLanguageForText(String value) {

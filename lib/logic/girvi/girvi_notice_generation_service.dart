@@ -93,59 +93,63 @@ class GirviNoticeGenerationService {
     final data = _NoticeData(item: item, noticeType: noticeType, service: this);
     final tone = _englishTone(noticeType);
     final lines = <String>[
+      noticeType.label.toUpperCase(),
+      'Notice Number: ${data.noticeNumber}',
+      'Notice Date: ${data.noticeDate}',
+      'Account / Pledge Reference: ${data.ticketNo}',
+      '',
       'Subject: ${tone.subject}',
       '',
       'Dear ${data.customerName},',
       '',
       tone.opening,
       '',
-      'Notice Details',
-      'Notice Date: ${data.noticeDate}',
+      '1. Notice Reference',
+      'Notice Type: ${noticeType.label}',
       'Notice Stage: ${noticeType.stage}/3',
       'Invoice Number: ${data.ticketNo}',
+      'Settlement Deadline: ${data.deadline}',
+      if (tone.previousReference.isNotEmpty) tone.previousReference,
+      '',
+      '2. Customer and Pledge Details',
+      'Customer Name: ${data.customerName}',
       'Customer Mobile: ${data.mobile}',
       'Customer Address: ${data.address}',
-      '',
-      'Pledge Account Details',
-      'Pledge Date: ${data.startDate}',
-      'Maturity Date: ${data.maturityDate}',
-      '',
-      'Duration and Interest Period',
-      'Actual Duration: ${data.actualDuration}',
-      'Total Calendar Duration: ${data.calendarDuration}',
-      'Chargeable Interest Period: ${data.chargeablePeriod}',
-      'Period Basis: Actual duration is the calendar time from pledge date to notice date. Chargeable interest period is read from the verified account interest record and is used for financial settlement.',
-      '',
-      'Overdue Period: ${data.overdueAge}',
-      'Recorded Interest Method: ${data.interestType}',
-      'Recorded Interest Rate: ${data.interestRate}',
-      '',
-      'Pledged Item Details',
-      'Item: ${data.itemSummary}',
+      'Pledged Item: ${data.itemSummary}',
       'Gross Weight: ${data.grossWeight}',
       'Net Weight: ${data.netWeight}',
-      'Valuation: ${data.valuation}',
+      'Original Principal: ${data.originalPrincipal}',
+      'Pledge Date: ${data.startDate}',
+      'Maturity Date: ${data.maturityDate}',
+      'Interest Terms: ${data.interestType}, ${data.interestRate}',
       '',
-      'Verified Ledger Summary',
+      '3. Account Duration',
+      'Actual Duration: ${data.actualDuration}',
+      'Calendar Duration: ${data.calendarDuration}',
+      'Interest Calculation Period: ${data.chargeablePeriod}',
+      'Period Basis: Actual duration is the calendar time from pledge date to notice date. Chargeable interest period is read from the verified account interest record and is used for financial settlement.',
+      'Overdue Period: ${data.overdueAge}',
+      '',
+      '4. Interest and Outstanding Breakdown',
+      ...data.englishInterestBreakdownLines,
+      '',
+      'Recorded Interest Collection Ledger',
+      ...data.englishLedgerLines,
+      '',
+      '5. Outstanding Summary',
+      'Original Principal: ${data.originalPrincipal}',
       'Principal Outstanding: ${data.principalDue}',
       'Interest Received / Adjusted: ${data.interestCredit}',
       'Interest Outstanding: ${data.interestDue}',
       'Total Payable: ${data.totalPayable}',
       '',
-      'Recorded Interest Ledger',
-      ...data.englishLedgerLines,
-      if (data.englishCompoundLines.isNotEmpty) ...[
-        '',
-        'Recorded Compound Interest Breakdown',
-        ...data.englishCompoundLines,
-      ],
-      '',
-      'Requested Action',
+      '6. Required Action',
       'Please visit the shop or contact the shop on the provided contact number before ${data.deadline} to complete payment, settlement, or an acceptable resolution.',
       '',
       tone.closing,
       '',
-      'This notice is prepared from the verified account and interest ledger records. The notice generator does not calculate or add any separate financial amount.',
+      'Financial Record Declaration',
+      'This notice is prepared from the verified account, interest ledger and saved pledge records. The notice generator does not calculate or add any separate financial amount. Unsupported penalties, illegal threats or unverified recovery wording are not included.',
       '',
       'Authorised Signatory',
     ];
@@ -156,59 +160,63 @@ class GirviNoticeGenerationService {
     final data = _NoticeData(item: item, noticeType: noticeType, service: this);
     final tone = _hindiTone(noticeType);
     final lines = <String>[
+      noticeType.label.toUpperCase(),
+      'सूचना नंबर: ${data.noticeNumber}',
+      'सूचना दिनांक: ${data.noticeDate}',
+      'खाता / गिरवी संदर्भ: ${data.ticketNo}',
+      '',
       'विषय: ${tone.subject}',
       '',
       'प्रिय ${data.customerName},',
       '',
       tone.opening,
       '',
-      'सूचना विवरण',
-      'सूचना दिनांक: ${data.noticeDate}',
+      '1. सूचना संदर्भ',
+      'सूचना प्रकार: ${noticeType.label}',
       'सूचना चरण: ${noticeType.stage}/3',
       'इनवॉइस नंबर: ${data.ticketNo}',
+      'निपटान की अंतिम तिथि: ${data.deadline}',
+      if (tone.previousReferenceHindi.isNotEmpty) tone.previousReferenceHindi,
+      '',
+      '2. ग्राहक और गिरवी विवरण',
+      'ग्राहक नाम: ${data.customerName}',
       'ग्राहक मोबाइल: ${data.mobile}',
       'ग्राहक पता: ${data.addressHindi}',
-      '',
-      'गिरवी खाता विवरण',
-      'गिरवी तारीख: ${data.startDate}',
-      'परिपक्वता तारीख: ${data.maturityDate}',
-      '',
-      'अवधि और ब्याज गणना अवधि',
-      'वास्तविक अवधि: ${data.actualDuration}',
-      'कुल कैलेंडर अवधि: ${data.calendarDuration}',
-      'चार्जेबल ब्याज अवधि: ${data.chargeablePeriod}',
-      'अवधि आधार: वास्तविक अवधि गिरवी तारीख से सूचना तारीख तक का कैलेंडर समय है। चार्जेबल ब्याज अवधि सत्यापित खाते के ब्याज रिकॉर्ड से ली गई है और वित्तीय निपटान के लिए उपयोग होती है।',
-      '',
-      'बकाया अवधि: ${data.overdueAge}',
-      'रिकॉर्डेड ब्याज पद्धति: ${data.interestTypeHindi}',
-      'रिकॉर्डेड ब्याज दर: ${data.interestRate}',
-      '',
-      'गिरवी वस्तु विवरण',
-      'वस्तु: ${data.itemSummaryHindi}',
+      'गिरवी वस्तु: ${data.itemSummaryHindi}',
       'कुल वजन: ${data.grossWeight}',
       'नेट वजन: ${data.netWeight}',
-      'मूल्यांकन: ${data.valuation}',
+      'मूल मूलधन: ${data.originalPrincipal}',
+      'गिरवी तारीख: ${data.startDate}',
+      'परिपक्वता तारीख: ${data.maturityDate}',
+      'ब्याज शर्तें: ${data.interestTypeHindi}, ${data.interestRate}',
       '',
-      'सत्यापित लेजर सारांश',
+      '3. खाते की अवधि',
+      'वास्तविक अवधि: ${data.actualDuration}',
+      'कुल कैलेंडर अवधि: ${data.calendarDuration}',
+      'ब्याज गणना अवधि: ${data.chargeablePeriod}',
+      'अवधि आधार: वास्तविक अवधि गिरवी तारीख से सूचना तारीख तक का कैलेंडर समय है। चार्जेबल ब्याज अवधि सत्यापित खाते के ब्याज रिकॉर्ड से ली गई है और वित्तीय निपटान के लिए उपयोग होती है।',
+      'बकाया अवधि: ${data.overdueAge}',
+      '',
+      '4. ब्याज और बकाया विवरण',
+      ...data.hindiInterestBreakdownLines,
+      '',
+      'रिकॉर्डेड ब्याज भुगतान लेजर',
+      ...data.hindiLedgerLines,
+      '',
+      '5. बकाया सारांश',
+      'मूल मूलधन: ${data.originalPrincipal}',
       'मूलधन बकाया: ${data.principalDue}',
       'प्राप्त / समायोजित ब्याज: ${data.interestCredit}',
       'ब्याज बकाया: ${data.interestDue}',
       'कुल देय राशि: ${data.totalPayable}',
       '',
-      'रिकॉर्डेड ब्याज लेजर',
-      ...data.hindiLedgerLines,
-      if (data.hindiCompoundLines.isNotEmpty) ...[
-        '',
-        'रिकॉर्डेड चक्रवृद्धि ब्याज विवरण',
-        ...data.hindiCompoundLines,
-      ],
-      '',
-      'आवश्यक कार्रवाई',
+      '6. आवश्यक कार्रवाई',
       'कृपया ${data.deadline} से पहले दुकान पर आएं या दिए गए संपर्क नंबर पर संपर्क करके भुगतान, निपटान या स्वीकार्य समाधान पूरा करें।',
       '',
       tone.closing,
       '',
-      'यह सूचना सत्यापित खाते और ब्याज लेजर रिकॉर्ड के आधार पर तैयार की गई है। सूचना प्रणाली अपनी तरफ से कोई अलग वित्तीय गणना या अतिरिक्त राशि नहीं जोड़ती है।',
+      'वित्तीय रिकॉर्ड घोषणा',
+      'यह सूचना सत्यापित खाते, ब्याज लेजर और सेव किए गए गिरवी रिकॉर्ड के आधार पर तैयार की गई है। सूचना प्रणाली अपनी तरफ से कोई अलग वित्तीय गणना या अतिरिक्त राशि नहीं जोड़ती है। कोई असमर्थित दंड, गैरकानूनी धमकी या अप्रमाणित वसूली भाषा शामिल नहीं की गई है।',
       '',
       'अधिकृत हस्ताक्षर',
     ];
@@ -232,6 +240,10 @@ class GirviNoticeGenerationService {
               'The account remains unresolved after the earlier notice. This second notice requests immediate attention to the pending dues and account settlement.',
           closing:
               'If the account is not regularised within the notice period, the case may move to final notice review according to applicable terms and policy.',
+          previousReference:
+              'Previous Notice Reference: First notice was already prepared for this account.',
+          previousReferenceHindi:
+              'पूर्व सूचना संदर्भ: इस खाते के लिए पहली सूचना पहले से तैयार की जा चुकी है।',
         );
       case GirviNoticeType.finalNotice:
         return const _NoticeTone(
@@ -240,6 +252,10 @@ class GirviNoticeGenerationService {
               'This is the final notice for the pledge account below. The customer is requested to respond, pay, settle, or provide an acceptable resolution within the prescribed period.',
           closing:
               'If no response, payment, settlement, or acceptable action is received within the prescribed period, the pledged item may be sent to the recovery process according to the applicable agreement, business policy and law, including sale or melting where legally permitted. Recovery proceeds may be adjusted against outstanding principal, interest and valid charges. Any legally recoverable remaining balance, if any, will be handled according to applicable terms and law.',
+          previousReference:
+              'Previous Notice Reference: Earlier notices have not resulted in account settlement.',
+          previousReferenceHindi:
+              'पूर्व सूचना संदर्भ: पिछली सूचनाओं के बाद भी खाते का निपटान नहीं हुआ है।',
         );
     }
   }
@@ -261,6 +277,8 @@ class GirviNoticeGenerationService {
               'पहली सूचना के बाद भी खाता लंबित है। यह दूसरी सूचना बकाया राशि और खाते के निपटान पर तुरंत ध्यान देने के लिए जारी की जा रही है।',
           closing:
               'यदि सूचना अवधि में खाता नियमित नहीं किया जाता है, तो मामला लागू शर्तों और नीति के अनुसार अंतिम सूचना समीक्षा में जा सकता है।',
+          previousReferenceHindi:
+              'पूर्व सूचना संदर्भ: इस खाते के लिए पहली सूचना पहले से तैयार की जा चुकी है।',
         );
       case GirviNoticeType.finalNotice:
         return const _NoticeTone(
@@ -269,6 +287,8 @@ class GirviNoticeGenerationService {
               'यह नीचे दिए गए गिरवी खाते की अंतिम सूचना है। ग्राहक से अनुरोध है कि निर्धारित अवधि में जवाब दें, भुगतान करें, निपटान करें या कोई स्वीकार्य समाधान दें।',
           closing:
               'यदि निर्धारित अवधि में ग्राहक की ओर से कोई जवाब, भुगतान, निपटान या स्वीकार्य कार्रवाई प्राप्त नहीं होती है, तो गिरवी वस्तु को लागू समझौते, व्यापार नीति और कानून के अनुसार वसूली प्रक्रिया में भेजा जा सकता है, जिसमें कानूनन अनुमति होने पर बिक्री या गलाना शामिल हो सकता है। प्राप्त वसूली राशि को बकाया मूलधन, ब्याज और वैध शुल्कों में समायोजित किया जा सकता है। यदि कोई कानूनी रूप से वसूल योग्य शेष राशि बचती है, तो उसे लागू शर्तों और कानून के अनुसार संभाला जाएगा।',
+          previousReferenceHindi:
+              'पूर्व सूचना संदर्भ: पिछली सूचनाओं के बाद भी खाते का निपटान नहीं हुआ है।',
         );
     }
   }
@@ -315,6 +335,8 @@ class _NoticeData {
   GirviLoanWithCustomer get account => item.account;
   GirviLoanModel get loan => item.loan;
 
+  String get noticeNumber =>
+      '${loan.ticketNo}-N${noticeType.stage.toString().padLeft(2, '0')}';
   String get ticketNo => loan.ticketNo;
   String get customerName => account.customerName;
   String get mobile => account.customerMobile;
@@ -349,7 +371,7 @@ class _NoticeData {
       .replaceAll('Net Weight', 'नेट वजन');
   String get grossWeight => '${loan.grossWeight.toStringAsFixed(3)} g';
   String get netWeight => '${loan.netWeight.toStringAsFixed(3)} g';
-  String get valuation => service.money(loan.totalValue);
+  String get originalPrincipal => service.money(account.originalPrincipal);
   String get principalDue => service.money(account.principalDue);
   String get interestDue => service.money(account.netInterestDue);
   String get interestCredit {
@@ -358,6 +380,46 @@ class _NoticeData {
   }
 
   String get totalPayable => service.money(account.totalPayable);
+
+  List<String> get englishInterestBreakdownLines {
+    if (GirviInterestCalculationType.isSimple(account.interestType)) {
+      return englishSimpleLines;
+    }
+    return englishCompoundLines;
+  }
+
+  List<String> get hindiInterestBreakdownLines {
+    if (GirviInterestCalculationType.isSimple(account.interestType)) {
+      return hindiSimpleLines;
+    }
+    return hindiCompoundLines;
+  }
+
+  List<String> get englishSimpleLines {
+    return [
+      'Simple Interest Breakdown',
+      'Period: ${service.date(loan.startDate)} to ${service.date(service._now)}',
+      'Opening Amount: ${service.money(account.originalPrincipal)}',
+      'Monthly Interest Rate: ${loan.interestRate.toStringAsFixed(2)}%',
+      'Interest per Month: ${service.money(item.recordedMonthlyInterestAmount)}',
+      'Chargeable Period: ${item.chargeableInterestMonthsLabel}',
+      'Recorded Interest for Period: ${service.money(account.grossInterestAccrued)}',
+      'Closing Amount before receipts / adjustments: ${service.money(item.recordedInterestClosingAmount)}',
+    ];
+  }
+
+  List<String> get hindiSimpleLines {
+    return [
+      'साधारण ब्याज विवरण',
+      'अवधि: ${service.date(loan.startDate)} से ${service.date(service._now)} तक',
+      'ओपनिंग राशि: ${service.money(account.originalPrincipal)}',
+      'मासिक ब्याज दर: ${loan.interestRate.toStringAsFixed(2)}%',
+      'एक माह का ब्याज: ${service.money(item.recordedMonthlyInterestAmount)}',
+      'चार्जेबल अवधि: ${item.chargeableInterestMonthsLabel}',
+      'रिकॉर्डेड अवधि ब्याज: ${service.money(account.grossInterestAccrued)}',
+      'प्राप्ति / समायोजन से पहले क्लोजिंग राशि: ${service.money(item.recordedInterestClosingAmount)}',
+    ];
+  }
 
   List<String> get englishLedgerLines {
     final entries = service._interestLedger(item);
@@ -387,32 +449,46 @@ class _NoticeData {
 
   List<String> get englishCompoundLines {
     final lines = item.compoundInterestBreakdown;
-    if (lines.isEmpty) return const [];
+    if (lines.isEmpty) {
+      return [
+        'Compound Interest Breakdown',
+        'No compound breakdown is available in the verified account record for this notice.',
+      ];
+    }
     return [
+      'Compound Interest Breakdown',
       for (final line in lines) ...[
         _compoundTitle(line, isHindi: false),
+        'Period: ${_compoundPeriodRange(line)}',
         'Opening Amount: ${service.money(line.principalBase)}',
         'Monthly Interest Rate: ${line.monthlyRatePercent.toStringAsFixed(2)}%',
         'Interest per Month: ${service.money(line.monthlyInterest)}',
-        'Applicable Period: ${line.months} month${line.months == 1 ? '' : 's'}',
+        'Chargeable Period: ${line.months} month${line.months == 1 ? '' : 's'}',
         'Interest for ${_compoundCycleName(line, isHindi: false)}: ${service.money(line.interestAmount)}',
-        'Closing Amount after ${_compoundCycleName(line, isHindi: false)}: ${service.money(line.closingAmount)}',
+        'Closing Amount: ${service.money(line.closingAmount)}',
       ],
     ];
   }
 
   List<String> get hindiCompoundLines {
     final lines = item.compoundInterestBreakdown;
-    if (lines.isEmpty) return const [];
+    if (lines.isEmpty) {
+      return [
+        'चक्रवृद्धि ब्याज विवरण',
+        'इस सूचना के लिए सत्यापित खाते में चक्रवृद्धि ब्याज विवरण उपलब्ध नहीं है।',
+      ];
+    }
     return [
+      'चक्रवृद्धि ब्याज विवरण',
       for (final line in lines) ...[
         _compoundTitle(line, isHindi: true),
+        'अवधि: ${_compoundPeriodRange(line)}',
         'ओपनिंग राशि: ${service.money(line.principalBase)}',
         'मासिक ब्याज दर: ${line.monthlyRatePercent.toStringAsFixed(2)}%',
         'एक माह का ब्याज: ${service.money(line.monthlyInterest)}',
-        'लागू अवधि: ${line.months} माह',
+        'चार्जेबल अवधि: ${line.months} माह',
         '${_compoundCycleName(line, isHindi: true)} का ब्याज: ${service.money(line.interestAmount)}',
-        '${_compoundCycleName(line, isHindi: true)} के बाद क्लोजिंग राशि: ${service.money(line.closingAmount)}',
+        'क्लोजिंग राशि: ${service.money(line.closingAmount)}',
       ],
     ];
   }
@@ -468,9 +544,15 @@ class _NoticeData {
       line: line,
     );
     final cycle = _compoundCycleName(line, isHindi: isHindi);
-    return isHindi
-        ? '$cycle - ${period.monthRangeLabel}'
-        : '$cycle - ${period.monthRangeLabel}';
+    return '$cycle - ${period.monthRangeLabel}';
+  }
+
+  String _compoundPeriodRange(GirviInterestBreakdownLine line) {
+    final period = GirviInterestPeriodText.forBreakdownLine(
+      loanStartDate: loan.startDate,
+      line: line,
+    );
+    return period.monthRangeLabel;
   }
 
   String _compoundCycleName(
@@ -498,10 +580,14 @@ class _NoticeTone {
   final String subject;
   final String opening;
   final String closing;
+  final String previousReference;
+  final String previousReferenceHindi;
 
   const _NoticeTone({
     required this.subject,
     required this.opening,
     required this.closing,
+    this.previousReference = '',
+    this.previousReferenceHindi = '',
   });
 }

@@ -104,7 +104,11 @@ class GirviNoticePdfService {
               savedAt,
             ),
             pw.SizedBox(height: 10),
-            _noticeBody(noticeText, noticeLanguage, devanagariFont),
+            _noticeBody(
+              _noticeTextWithoutValuation(noticeText),
+              noticeLanguage,
+              devanagariFont,
+            ),
             pw.Spacer(),
             pw.SizedBox(height: 10),
             _signatureBlock(noticeLanguage, devanagariFont),
@@ -433,12 +437,6 @@ class GirviNoticePdfService {
                 color: _danger,
               ),
               _metric(
-                _label('Pledged Value', language),
-                _money(loan.totalValue),
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
                 _label('Settlement Deadline', language),
                 _dateFormat.format(
                   DateTime.now().add(Duration(days: item.noticePeriodDays)),
@@ -628,6 +626,8 @@ class GirviNoticePdfService {
             'सूचना चरण:',
             'गिरवी वस्तु:',
             'गिरवी मूल्यांकन:',
+            'गिरवी मूल्य:',
+            'मूल्यांकन:',
             'मूलधन बकाया:',
             'ब्याज बकाया:',
             'कुल देय राशि:',
@@ -656,6 +656,8 @@ class GirviNoticePdfService {
             'Notice Stage:',
             'Pledged Item:',
             'Pledged Valuation:',
+            'Pledged Value:',
+            'Valuation:',
             'Principal Outstanding:',
             'Interest Outstanding:',
             'Total Payable:',
@@ -683,6 +685,25 @@ class GirviNoticePdfService {
       lines.removeLast();
     }
     return lines.join('\n');
+  }
+
+  String _noticeTextWithoutValuation(String noticeText) {
+    const hiddenPrefixes = <String>[
+      'Pledged Valuation:',
+      'Pledged Value:',
+      'Valuation:',
+      'गिरवी मूल्यांकन:',
+      'गिरवी मूल्य:',
+      'मूल्यांकन:',
+    ];
+    return noticeText
+        .split('\n')
+        .where((line) {
+          final trimmed = line.trim();
+          return !hiddenPrefixes.any(trimmed.startsWith);
+        })
+        .join('\n')
+        .trim();
   }
 
   String _itemSummary(
@@ -832,7 +853,6 @@ class GirviNoticePdfService {
       'Interest' => 'ब्याज',
       'Total Payable' => 'कुल देय',
       'Pledged Item' => 'गिरवी वस्तु',
-      'Pledged Value' => 'गिरवी मूल्य',
       'Settlement Deadline' => 'अंतिम तारीख',
       'Not Set' => 'निश्चित नहीं',
       'Notice Text' => 'सूचना',

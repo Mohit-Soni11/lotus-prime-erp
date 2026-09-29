@@ -176,6 +176,12 @@ class ContactRecoveryCase {
     );
   }
 
+  double get recordedMonthlyInterestAmount =>
+      account.originalPrincipal * (loan.interestRate / 100);
+
+  double get recordedInterestClosingAmount =>
+      account.originalPrincipal + account.grossInterestAccrued;
+
   GirviElapsedPeriod get overdueAgePeriod {
     final maturity = loan.maturityDate;
     if (maturity == null) {
