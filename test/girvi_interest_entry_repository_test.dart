@@ -6,6 +6,7 @@ import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_repository.dart';
+import 'package:lotus_erp/repositories/girvi/girvi_interest_period_snapshot_repository.dart';
 import 'package:lotus_erp/repositories/setting/billing_setup/girvi_billing_repo.dart';
 
 void main() {
@@ -52,6 +53,36 @@ void main() {
     expect(payments.single.balanceAfter, 50000);
     expect(loan!.loanAmount, 50000);
     expect(loan.lastInterestPaidDate, periodTo);
+  });
+
+  test('persists verified interest periods with the loan interest method',
+      () async {
+    final loanId = await _insertLoan(
+      db,
+      startDate: DateTime(2025, 1, 1),
+    );
+    await db.update(db.girviLoans).write(const GirviLoansCompanion(
+        interestCalculationType: drift.Value('Simple')));
+
+    final accounts = await repository.getLoansWithCustomer();
+    final snapshots = await GirviInterestPeriodSnapshotRepository(db)
+        .synchronizeForLoans(accounts, asOf: DateTime(2026, 3, 1));
+
+    expect(snapshots[loanId], hasLength(1));
+    expect(snapshots[loanId]!.single.interestType, 'Simple');
+    expect(snapshots[loanId]!.single.chargeableMonths, 14);
+    expect(snapshots[loanId]!.single.interestPerMonth, 2500);
+    expect(snapshots[loanId]!.single.periodInterest, 35000);
+
+    await db.update(db.girviLoans).write(const GirviLoansCompanion(
+        interestCalculationType: drift.Value('Compound')));
+    final unchanged =
+        await GirviInterestPeriodSnapshotRepository(db).synchronizeForLoans(
+      await repository.getLoansWithCustomer(),
+      asOf: DateTime(2026, 3, 1),
+    );
+    expect(unchanged[loanId]!.first.interestType, 'Simple');
+    expect(unchanged[loanId]!.first.periodInterest, 35000);
   });
 
   test('records interest ledger payment with paid-through period', () async {

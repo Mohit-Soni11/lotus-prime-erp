@@ -5,6 +5,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/contact_recovery_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_interest_period_snapshot.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
@@ -411,9 +412,99 @@ void main() {
           expect(noticeText, isNot(contains('गिरवी मूल्यांकन')));
           expect(noticeText, isNot(contains('गिरवी मूल्य')));
           expect(noticeText, isNot(contains('मूल्यांकन:')));
+          expect(noticeText, isNot(contains('Notice Generator')));
+          expect(noticeText, isNot(contains('notice generator')));
+          expect(noticeText, isNot(contains('Verified Ledger')));
+          expect(noticeText, isNot(contains('Source of Truth')));
+          expect(noticeText, isNot(contains('Internal Record')));
           expect(noticeText, contains('GRV-0017'));
         }
       }
+    });
+
+    test('notice structure is stage-aware and keeps financial sections dynamic',
+        () {
+      final account = GirviLoanWithCustomer(
+        loan: GirviLoanModel(
+          id: 18,
+          ticketNo: 'GRV-0018',
+          customerId: 1,
+          itemDescription: '#1 ring | Gold | 22KT | 1 pcs | Net 10.000 g',
+          itemCount: 1,
+          metalType: 'Gold',
+          metalPurity: '22KT',
+          grossWeight: 10,
+          stoneWeight: 0,
+          netWeight: 10,
+          ratePerGram: 0,
+          totalValue: 0,
+          ltvPercent: 0,
+          loanAmount: 100000,
+          interestRate: 5,
+          durationMonths: 6,
+          disbursementMode: 'Cash',
+          startDate: DateTime(2020, 6, 15),
+          maturityDate: DateTime(2020, 12, 15),
+          createdAt: DateTime(2020, 6, 15),
+        ),
+        customerName: 'REYANSH SONI',
+        customerMobile: '9304479436',
+      );
+      final item = ContactRecoveryCase(
+        account: account,
+        noticePeriodDays: 30,
+        now: DateTime(2026, 9, 29),
+        interestPeriodSnapshots: [
+          GirviInterestPeriodSnapshot(
+            id: 1,
+            girviId: account.loan.id,
+            sequence: 1,
+            periodFrom: DateTime(2020, 6, 15),
+            periodTo: DateTime(2021, 6, 15),
+            interestType: GirviInterestCalculationType.compound,
+            openingAmount: 100000,
+            monthlyRatePercent: 5,
+            interestPerMonth: 5000,
+            chargeableMonths: 12,
+            periodInterest: 60000,
+            closingAmount: 160000,
+            finalized: true,
+            source: 'TEST',
+          ),
+        ],
+      );
+      final service = GirviNoticeGenerationService(now: item.now);
+
+      final first = service.build(
+        item: item,
+        noticeType: GirviNoticeType.first,
+        language: GirviNoticeLanguage.english,
+      );
+      final second = service.build(
+        item: item,
+        noticeType: GirviNoticeType.second,
+        language: GirviNoticeLanguage.english,
+      );
+      final finalNotice = service.build(
+        item: item,
+        noticeType: GirviNoticeType.finalNotice,
+        language: GirviNoticeLanguage.english,
+      );
+
+      for (final text in [first, second, finalNotice]) {
+        expect(text, isNot(contains('Dear Customer')));
+        expect(text, contains('Pledge Account and Duration'));
+        expect(text, contains('Actual Duration:'));
+        expect(text, contains('Chargeable Interest Period:'));
+        expect(text, contains('Compound Interest Breakdown'));
+        expect(text, contains('Compound Period 1'));
+        expect(text, contains('Monthly Interest Rate: 5.00%'));
+        expect(text, contains('Final Outstanding Summary'));
+        expect(text, isNot(contains('Valuation')));
+      }
+      expect(first, contains('This is the first notice.'));
+      expect(second, contains('follow-up to the earlier notice'));
+      expect(finalNotice, contains('This is the final notice'));
     });
 
     test('notice schema safety upgrades a legacy action table', () async {

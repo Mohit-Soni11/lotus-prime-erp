@@ -340,6 +340,446 @@ class _MiniNoticeAction extends StatelessWidget {
   }
 }
 
+class _NoticeDocumentPreview extends StatelessWidget {
+  final String noticeText;
+  final GirviNoticeLanguage language;
+  final GirviNoticeType noticeType;
+
+  const _NoticeDocumentPreview({
+    super.key,
+    required this.noticeText,
+    required this.language,
+    required this.noticeType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final document = _NoticePreviewData.parse(noticeText);
+    final accent = _stageColor(noticeType);
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 560),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.34)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _NoticePreviewHeader(
+              document: document,
+              accent: accent,
+              language: language,
+            ),
+            const SizedBox(height: 16),
+            for (final section in document.sections) ...[
+              _NoticePreviewSection(
+                section: section,
+                language: language,
+                accent: accent,
+              ),
+              const SizedBox(height: 14),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _stageColor(GirviNoticeType type) {
+    switch (type) {
+      case GirviNoticeType.first:
+        return GirviColors.warning;
+      case GirviNoticeType.second:
+        return GirviColors.danger;
+      case GirviNoticeType.finalNotice:
+        return GirviColors.info;
+    }
+  }
+}
+
+class _NoticePreviewHeader extends StatelessWidget {
+  final _NoticePreviewData document;
+  final Color accent;
+  final GirviNoticeLanguage language;
+
+  const _NoticePreviewHeader({
+    required this.document,
+    required this.accent,
+    required this.language,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          document.title,
+          style: GoogleFonts.inter(
+            color: GirviColors.shellBg,
+            fontSize: 19,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: document.metadata
+              .map((entry) => _NoticeMetadataPill(entry: entry, accent: accent))
+              .toList(),
+        ),
+        if (document.subject != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: GirviColors.brandGold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: GirviColors.brandGold.withValues(alpha: 0.4),
+              ),
+            ),
+            child: _NoticeLabelValue(
+              label: language == GirviNoticeLanguage.hindi ? 'विषय' : 'Subject',
+              value: document.subject!,
+              valueColor: GirviColors.textDark,
+              valueFontSize: 13.2,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _NoticeMetadataPill extends StatelessWidget {
+  final MapEntry<String, String> entry;
+  final Color accent;
+
+  const _NoticeMetadataPill({required this.entry, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 235),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          style: GoogleFonts.inter(
+            color: GirviColors.textDark,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+          children: [
+            TextSpan(
+              text: '${entry.key}: ',
+              style: TextStyle(color: accent, fontWeight: FontWeight.w900),
+            ),
+            TextSpan(text: entry.value),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoticePreviewSection extends StatelessWidget {
+  final _NoticePreviewSectionData section;
+  final GirviNoticeLanguage language;
+  final Color accent;
+
+  const _NoticePreviewSection({
+    required this.section,
+    required this.language,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final financialSection = _isFinancialSection(section.title);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (section.title.isNotEmpty) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(color: accent.withValues(alpha: 0.26)),
+            ),
+            child: Text(
+              section.title,
+              style: GoogleFonts.inter(
+                color: GirviColors.shellBg,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(height: 9),
+        ],
+        for (final line in section.lines) ...[
+          if (line.isParagraph)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                line.value,
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 13.2,
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+              decoration: BoxDecoration(
+                color: _lineBackground(line.label, financialSection),
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(
+                  color: _lineBorder(line.label, financialSection),
+                ),
+              ),
+              child: _NoticeLabelValue(
+                label: line.label,
+                value: line.value,
+                valueColor: _valueColor(line.label, financialSection),
+                valueFontSize: _isKeyFinancialValue(line.label) ? 14.4 : 13.1,
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  bool _isFinancialSection(String value) =>
+      value.contains('Interest') ||
+      value.contains('Outstanding') ||
+      value.contains('भुगतान') ||
+      value.contains('ब्याज') ||
+      value.contains('बकाया');
+
+  bool _isKeyFinancialValue(String label) =>
+      label.contains('Final Total Payable') ||
+      label.contains('Total Payable') ||
+      label.contains('अंतिम कुल देय राशि');
+
+  bool _isAlertValue(String label) =>
+      label.contains('Outstanding') || label.contains('बकाया');
+
+  Color _valueColor(String label, bool financialSection) {
+    if (_isKeyFinancialValue(label)) return GirviColors.danger;
+    if (_isAlertValue(label)) return GirviColors.danger;
+    if (label.contains('Chargeable') || label.contains('चार्जेबल')) {
+      return GirviColors.info;
+    }
+    return financialSection ? GirviColors.shellBg : GirviColors.textDark;
+  }
+
+  Color _lineBackground(String label, bool financialSection) {
+    if (_isKeyFinancialValue(label)) {
+      return GirviColors.dangerBg.withValues(alpha: 0.62);
+    }
+    if (_isAlertValue(label)) {
+      return GirviColors.dangerBg.withValues(alpha: 0.34);
+    }
+    if (financialSection) return GirviColors.infoBg.withValues(alpha: 0.38);
+    return GirviColors.bodyBg;
+  }
+
+  Color _lineBorder(String label, bool financialSection) {
+    if (_isKeyFinancialValue(label) || _isAlertValue(label)) {
+      return GirviColors.danger.withValues(alpha: 0.28);
+    }
+    return financialSection
+        ? GirviColors.info.withValues(alpha: 0.22)
+        : GirviColors.cardBorder;
+  }
+}
+
+class _NoticeLabelValue extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color valueColor;
+  final double valueFontSize;
+
+  const _NoticeLabelValue({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    required this.valueFontSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: GoogleFonts.inter(
+          color: GirviColors.textDark,
+          fontSize: 12.8,
+          height: 1.35,
+          fontWeight: FontWeight.w700,
+        ),
+        children: [
+          TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w900)),
+          TextSpan(
+            text: value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: valueFontSize,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoticePreviewData {
+  const _NoticePreviewData({
+    required this.title,
+    required this.metadata,
+    required this.subject,
+    required this.sections,
+  });
+
+  final String title;
+  final List<MapEntry<String, String>> metadata;
+  final String? subject;
+  final List<_NoticePreviewSectionData> sections;
+
+  factory _NoticePreviewData.parse(String source) {
+    final lines = source
+        .split('\n')
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList();
+    if (lines.isEmpty) {
+      return const _NoticePreviewData(
+        title: '',
+        metadata: [],
+        subject: null,
+        sections: [],
+      );
+    }
+
+    final metadata = <MapEntry<String, String>>[];
+    String? subject;
+    final sections = <_NoticePreviewSectionData>[];
+    var current = _NoticePreviewSectionData(title: '', lines: []);
+
+    for (final line in lines.skip(1)) {
+      final entry = _NoticePreviewLine.parse(line);
+      if (_isMetadata(entry.label)) {
+        metadata.add(MapEntry(entry.label, entry.value));
+      } else if (_isSubject(entry.label)) {
+        subject = entry.value;
+      } else if (entry.isSectionHeading) {
+        if (current.lines.isNotEmpty || current.title.isNotEmpty) {
+          sections.add(current);
+        }
+        current = _NoticePreviewSectionData(title: line, lines: []);
+      } else {
+        current.lines.add(entry);
+      }
+    }
+    if (current.lines.isNotEmpty || current.title.isNotEmpty) {
+      sections.add(current);
+    }
+    return _NoticePreviewData(
+      title: lines.first,
+      metadata: metadata,
+      subject: subject,
+      sections: sections,
+    );
+  }
+
+  static bool _isMetadata(String label) => {
+        'Notice Number',
+        'Notice Date',
+        'Pledge Reference',
+        'सूचना नंबर',
+        'सूचना दिनांक',
+        'गिरवी संदर्भ',
+      }.contains(label);
+
+  static bool _isSubject(String label) => label == 'Subject' || label == 'विषय';
+}
+
+class _NoticePreviewSectionData {
+  _NoticePreviewSectionData({required this.title, required this.lines});
+
+  final String title;
+  final List<_NoticePreviewLine> lines;
+}
+
+class _NoticePreviewLine {
+  const _NoticePreviewLine({
+    required this.label,
+    required this.value,
+    required this.isParagraph,
+    required this.isSectionHeading,
+  });
+
+  final String label;
+  final String value;
+  final bool isParagraph;
+  final bool isSectionHeading;
+
+  factory _NoticePreviewLine.parse(String line) {
+    final separator = line.indexOf(':');
+    if (separator <= 0) {
+      return _NoticePreviewLine(
+        label: '',
+        value: line,
+        isParagraph: !_sectionHeadings.contains(line),
+        isSectionHeading: _sectionHeadings.contains(line),
+      );
+    }
+    return _NoticePreviewLine(
+      label: line.substring(0, separator).trim(),
+      value: line.substring(separator + 1).trim(),
+      isParagraph: false,
+      isSectionHeading: false,
+    );
+  }
+
+  static const _sectionHeadings = {
+    'Pledge Account and Duration',
+    'Simple Interest Breakdown',
+    'Compound Interest Breakdown',
+    'Payments and Adjustments',
+    'Final Outstanding Summary',
+    'Required Action',
+    'साधारण ब्याज विवरण',
+    'चक्रवृद्धि ब्याज विवरण',
+    'गिरवी खाता और अवधि',
+    'भुगतान और समायोजन',
+    'अंतिम बकाया सारांश',
+    'आवश्यक कार्रवाई',
+  };
+}
+
 class _CaseActions extends StatelessWidget {
   final ContactRecoveryCase item;
   final VoidCallback onOpenAccount;

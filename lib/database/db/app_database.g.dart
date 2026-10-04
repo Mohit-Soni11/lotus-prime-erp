@@ -19635,6 +19635,12 @@ class $GirviLoansTable extends GirviLoans
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('Cash'));
+  static const VerificationMeta _interestCalculationTypeMeta =
+      const VerificationMeta('interestCalculationType');
+  @override
+  late final GeneratedColumn<String> interestCalculationType =
+      GeneratedColumn<String>('interest_calculation_type', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _invoiceGeneratedMeta =
       const VerificationMeta('invoiceGenerated');
   @override
@@ -19784,6 +19790,7 @@ class $GirviLoansTable extends GirviLoans
         interestRate,
         durationMonths,
         disbursementMode,
+        interestCalculationType,
         invoiceGenerated,
         startDate,
         maturityDate,
@@ -19931,6 +19938,13 @@ class $GirviLoansTable extends GirviLoans
           _disbursementModeMeta,
           disbursementMode.isAcceptableOrUnknown(
               data['disbursement_mode']!, _disbursementModeMeta));
+    }
+    if (data.containsKey('interest_calculation_type')) {
+      context.handle(
+          _interestCalculationTypeMeta,
+          interestCalculationType.isAcceptableOrUnknown(
+              data['interest_calculation_type']!,
+              _interestCalculationTypeMeta));
     }
     if (data.containsKey('invoice_generated')) {
       context.handle(
@@ -20097,6 +20111,9 @@ class $GirviLoansTable extends GirviLoans
           .read(DriftSqlType.int, data['${effectivePrefix}duration_months'])!,
       disbursementMode: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}disbursement_mode'])!,
+      interestCalculationType: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}interest_calculation_type']),
       invoiceGenerated: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}invoice_generated'])!,
       startDate: attachedDatabase.typeMapping
@@ -20206,6 +20223,10 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// Cash | UPI | NEFT | Bank Transfer | Cheque
   final String disbursementMode;
 
+  /// Interest method agreed for this pledge at creation time.
+  /// Nullable for legacy loans created before the field was introduced.
+  final String? interestCalculationType;
+
   /// Whether a customer-facing loan invoice was generated at creation
   final bool invoiceGenerated;
 
@@ -20284,6 +20305,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       required this.interestRate,
       required this.durationMonths,
       required this.disbursementMode,
+      this.interestCalculationType,
       required this.invoiceGenerated,
       required this.startDate,
       this.maturityDate,
@@ -20334,6 +20356,10 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
     map['interest_rate'] = Variable<double>(interestRate);
     map['duration_months'] = Variable<int>(durationMonths);
     map['disbursement_mode'] = Variable<String>(disbursementMode);
+    if (!nullToAbsent || interestCalculationType != null) {
+      map['interest_calculation_type'] =
+          Variable<String>(interestCalculationType);
+    }
     map['invoice_generated'] = Variable<bool>(invoiceGenerated);
     map['start_date'] = Variable<DateTime>(startDate);
     if (!nullToAbsent || maturityDate != null) {
@@ -20420,6 +20446,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       interestRate: Value(interestRate),
       durationMonths: Value(durationMonths),
       disbursementMode: Value(disbursementMode),
+      interestCalculationType: interestCalculationType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(interestCalculationType),
       invoiceGenerated: Value(invoiceGenerated),
       startDate: Value(startDate),
       maturityDate: maturityDate == null && nullToAbsent
@@ -20501,6 +20530,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       interestRate: serializer.fromJson<double>(json['interestRate']),
       durationMonths: serializer.fromJson<int>(json['durationMonths']),
       disbursementMode: serializer.fromJson<String>(json['disbursementMode']),
+      interestCalculationType:
+          serializer.fromJson<String?>(json['interestCalculationType']),
       invoiceGenerated: serializer.fromJson<bool>(json['invoiceGenerated']),
       startDate: serializer.fromJson<DateTime>(json['startDate']),
       maturityDate: serializer.fromJson<DateTime?>(json['maturityDate']),
@@ -20552,6 +20583,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       'interestRate': serializer.toJson<double>(interestRate),
       'durationMonths': serializer.toJson<int>(durationMonths),
       'disbursementMode': serializer.toJson<String>(disbursementMode),
+      'interestCalculationType':
+          serializer.toJson<String?>(interestCalculationType),
       'invoiceGenerated': serializer.toJson<bool>(invoiceGenerated),
       'startDate': serializer.toJson<DateTime>(startDate),
       'maturityDate': serializer.toJson<DateTime?>(maturityDate),
@@ -20599,6 +20632,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           double? interestRate,
           int? durationMonths,
           String? disbursementMode,
+          Value<String?> interestCalculationType = const Value.absent(),
           bool? invoiceGenerated,
           DateTime? startDate,
           Value<DateTime?> maturityDate = const Value.absent(),
@@ -20642,6 +20676,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         interestRate: interestRate ?? this.interestRate,
         durationMonths: durationMonths ?? this.durationMonths,
         disbursementMode: disbursementMode ?? this.disbursementMode,
+        interestCalculationType: interestCalculationType.present
+            ? interestCalculationType.value
+            : this.interestCalculationType,
         invoiceGenerated: invoiceGenerated ?? this.invoiceGenerated,
         startDate: startDate ?? this.startDate,
         maturityDate:
@@ -20725,6 +20762,9 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       disbursementMode: data.disbursementMode.present
           ? data.disbursementMode.value
           : this.disbursementMode,
+      interestCalculationType: data.interestCalculationType.present
+          ? data.interestCalculationType.value
+          : this.interestCalculationType,
       invoiceGenerated: data.invoiceGenerated.present
           ? data.invoiceGenerated.value
           : this.invoiceGenerated,
@@ -20802,6 +20842,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ..write('interestRate: $interestRate, ')
           ..write('durationMonths: $durationMonths, ')
           ..write('disbursementMode: $disbursementMode, ')
+          ..write('interestCalculationType: $interestCalculationType, ')
           ..write('invoiceGenerated: $invoiceGenerated, ')
           ..write('startDate: $startDate, ')
           ..write('maturityDate: $maturityDate, ')
@@ -20849,6 +20890,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         interestRate,
         durationMonths,
         disbursementMode,
+        interestCalculationType,
         invoiceGenerated,
         startDate,
         maturityDate,
@@ -20895,6 +20937,7 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           other.interestRate == this.interestRate &&
           other.durationMonths == this.durationMonths &&
           other.disbursementMode == this.disbursementMode &&
+          other.interestCalculationType == this.interestCalculationType &&
           other.invoiceGenerated == this.invoiceGenerated &&
           other.startDate == this.startDate &&
           other.maturityDate == this.maturityDate &&
@@ -20939,6 +20982,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
   final Value<double> interestRate;
   final Value<int> durationMonths;
   final Value<String> disbursementMode;
+  final Value<String?> interestCalculationType;
   final Value<bool> invoiceGenerated;
   final Value<DateTime> startDate;
   final Value<DateTime?> maturityDate;
@@ -20981,6 +21025,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.interestRate = const Value.absent(),
     this.durationMonths = const Value.absent(),
     this.disbursementMode = const Value.absent(),
+    this.interestCalculationType = const Value.absent(),
     this.invoiceGenerated = const Value.absent(),
     this.startDate = const Value.absent(),
     this.maturityDate = const Value.absent(),
@@ -21024,6 +21069,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.interestRate = const Value.absent(),
     this.durationMonths = const Value.absent(),
     this.disbursementMode = const Value.absent(),
+    this.interestCalculationType = const Value.absent(),
     this.invoiceGenerated = const Value.absent(),
     this.startDate = const Value.absent(),
     this.maturityDate = const Value.absent(),
@@ -21069,6 +21115,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     Expression<double>? interestRate,
     Expression<int>? durationMonths,
     Expression<String>? disbursementMode,
+    Expression<String>? interestCalculationType,
     Expression<bool>? invoiceGenerated,
     Expression<DateTime>? startDate,
     Expression<DateTime>? maturityDate,
@@ -21112,6 +21159,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       if (interestRate != null) 'interest_rate': interestRate,
       if (durationMonths != null) 'duration_months': durationMonths,
       if (disbursementMode != null) 'disbursement_mode': disbursementMode,
+      if (interestCalculationType != null)
+        'interest_calculation_type': interestCalculationType,
       if (invoiceGenerated != null) 'invoice_generated': invoiceGenerated,
       if (startDate != null) 'start_date': startDate,
       if (maturityDate != null) 'maturity_date': maturityDate,
@@ -21161,6 +21210,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       Value<double>? interestRate,
       Value<int>? durationMonths,
       Value<String>? disbursementMode,
+      Value<String?>? interestCalculationType,
       Value<bool>? invoiceGenerated,
       Value<DateTime>? startDate,
       Value<DateTime?>? maturityDate,
@@ -21203,6 +21253,8 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       interestRate: interestRate ?? this.interestRate,
       durationMonths: durationMonths ?? this.durationMonths,
       disbursementMode: disbursementMode ?? this.disbursementMode,
+      interestCalculationType:
+          interestCalculationType ?? this.interestCalculationType,
       invoiceGenerated: invoiceGenerated ?? this.invoiceGenerated,
       startDate: startDate ?? this.startDate,
       maturityDate: maturityDate ?? this.maturityDate,
@@ -21291,6 +21343,10 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     }
     if (disbursementMode.present) {
       map['disbursement_mode'] = Variable<String>(disbursementMode.value);
+    }
+    if (interestCalculationType.present) {
+      map['interest_calculation_type'] =
+          Variable<String>(interestCalculationType.value);
     }
     if (invoiceGenerated.present) {
       map['invoice_generated'] = Variable<bool>(invoiceGenerated.value);
@@ -21381,6 +21437,7 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
           ..write('interestRate: $interestRate, ')
           ..write('durationMonths: $durationMonths, ')
           ..write('disbursementMode: $disbursementMode, ')
+          ..write('interestCalculationType: $interestCalculationType, ')
           ..write('invoiceGenerated: $invoiceGenerated, ')
           ..write('startDate: $startDate, ')
           ..write('maturityDate: $maturityDate, ')
@@ -31012,7 +31069,7 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('ऋण राशि पर ब्याज प्रति माह लिया जाएगा।\n'
-          'नोटिस अवधि के बाद न छुड़ाए गए आभूषणों की नीलामी लागू कानून के अनुसार की जा सकती है।\n'
+          'नोटिस अवधि के बाद न छुड़ाए गए गिरवी खातों पर बकाया वसूली प्रक्रिया लागू की जा सकती है।\n'
           'ग्राहक समय पर भुगतान और ऋण छुड़ाने के लिए जिम्मेदार है।'));
   static const VerificationMeta _customerDeclarationMeta =
       const VerificationMeta('customerDeclaration');
@@ -49817,6 +49874,7 @@ typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   Value<double> interestRate,
   Value<int> durationMonths,
   Value<String> disbursementMode,
+  Value<String?> interestCalculationType,
   Value<bool> invoiceGenerated,
   Value<DateTime> startDate,
   Value<DateTime?> maturityDate,
@@ -49860,6 +49918,7 @@ typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<double> interestRate,
   Value<int> durationMonths,
   Value<String> disbursementMode,
+  Value<String?> interestCalculationType,
   Value<bool> invoiceGenerated,
   Value<DateTime> startDate,
   Value<DateTime?> maturityDate,
@@ -50036,6 +50095,10 @@ class $$GirviLoansTableFilterComposer
 
   ColumnFilters<String> get disbursementMode => $composableBuilder(
       column: $table.disbursementMode,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get interestCalculationType => $composableBuilder(
+      column: $table.interestCalculationType,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get invoiceGenerated => $composableBuilder(
@@ -50287,6 +50350,10 @@ class $$GirviLoansTableOrderingComposer
       column: $table.disbursementMode,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get interestCalculationType => $composableBuilder(
+      column: $table.interestCalculationType,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get invoiceGenerated => $composableBuilder(
       column: $table.invoiceGenerated,
       builder: (column) => ColumnOrderings(column));
@@ -50449,6 +50516,9 @@ class $$GirviLoansTableAnnotationComposer
 
   GeneratedColumn<String> get disbursementMode => $composableBuilder(
       column: $table.disbursementMode, builder: (column) => column);
+
+  GeneratedColumn<String> get interestCalculationType => $composableBuilder(
+      column: $table.interestCalculationType, builder: (column) => column);
 
   GeneratedColumn<bool> get invoiceGenerated => $composableBuilder(
       column: $table.invoiceGenerated, builder: (column) => column);
@@ -50666,6 +50736,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double> interestRate = const Value.absent(),
             Value<int> durationMonths = const Value.absent(),
             Value<String> disbursementMode = const Value.absent(),
+            Value<String?> interestCalculationType = const Value.absent(),
             Value<bool> invoiceGenerated = const Value.absent(),
             Value<DateTime> startDate = const Value.absent(),
             Value<DateTime?> maturityDate = const Value.absent(),
@@ -50709,6 +50780,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             interestRate: interestRate,
             durationMonths: durationMonths,
             disbursementMode: disbursementMode,
+            interestCalculationType: interestCalculationType,
             invoiceGenerated: invoiceGenerated,
             startDate: startDate,
             maturityDate: maturityDate,
@@ -50752,6 +50824,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double> interestRate = const Value.absent(),
             Value<int> durationMonths = const Value.absent(),
             Value<String> disbursementMode = const Value.absent(),
+            Value<String?> interestCalculationType = const Value.absent(),
             Value<bool> invoiceGenerated = const Value.absent(),
             Value<DateTime> startDate = const Value.absent(),
             Value<DateTime?> maturityDate = const Value.absent(),
@@ -50795,6 +50868,7 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             interestRate: interestRate,
             durationMonths: durationMonths,
             disbursementMode: disbursementMode,
+            interestCalculationType: interestCalculationType,
             invoiceGenerated: invoiceGenerated,
             startDate: startDate,
             maturityDate: maturityDate,

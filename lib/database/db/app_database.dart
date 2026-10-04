@@ -1046,6 +1046,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureStockInventorySchemaInternal();
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
+          await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureReturnReversalSchemaInternal();
         },
         onUpgrade: (Migrator m, int from, int to) async {
@@ -1820,6 +1821,26 @@ class AppDatabase extends _$AppDatabase {
               'v51 booking advance billing settings applied.',
             );
           }
+          if (from < 52) {
+            await ensureGirviInterestPeriodSnapshotSchema();
+            AppLogger.info(
+              'v52 Girvi interest period snapshot schema applied.',
+            );
+          }
+          if (from < 53) {
+            // Some lightweight legacy databases used by billing migrations do
+            // not contain the Girvi module tables. Their upgrade must remain
+            // independent from this optional field.
+            if (await _tableExists('girvi_loans')) {
+              await m.addColumn(
+                girviLoans,
+                girviLoans.interestCalculationType,
+              );
+            }
+            AppLogger.info(
+              'v53 Girvi interest method snapshot field applied.',
+            );
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -1833,6 +1854,7 @@ class AppDatabase extends _$AppDatabase {
 
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
+          await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureCustomerAccountLedgerSchema();
           await ensureSalesCustomerMetalSettlementSchema();
           await _ensurePurchaseItemHuidSchema();
@@ -1945,6 +1967,42 @@ class AppDatabase extends _$AppDatabase {
     for (final statement in _girviNoticeActionIndexSql) {
       await customStatement(statement);
     }
+  }
+
+  /// Stores finalized financial-period values for document and recovery
+  /// workflows. These values are intentionally separate from current loan
+  /// settings so later rate changes cannot rewrite historical notices.
+  Future<void> ensureGirviInterestPeriodSnapshotSchema() async {
+    // Lightweight module migrations may open a database before the Girvi
+    // tables exist. Do not create a child table until its parent is present.
+    if (!await _tableExists('girvi_loans')) return;
+
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS "girvi_interest_period_snapshots" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "girvi_id" INTEGER NOT NULL,
+        "period_sequence" INTEGER NOT NULL,
+        "period_from" INTEGER NOT NULL,
+        "period_to" INTEGER NOT NULL,
+        "interest_type" TEXT NOT NULL,
+        "opening_amount" REAL NOT NULL DEFAULT 0.0,
+        "monthly_rate_percent" REAL NOT NULL DEFAULT 0.0,
+        "interest_per_month" REAL NOT NULL DEFAULT 0.0,
+        "chargeable_months" INTEGER NOT NULL DEFAULT 0,
+        "period_interest" REAL NOT NULL DEFAULT 0.0,
+        "closing_amount" REAL NOT NULL DEFAULT 0.0,
+        "is_finalized" INTEGER NOT NULL DEFAULT 0,
+        "source" TEXT NOT NULL DEFAULT 'FINANCIAL_DOMAIN_SNAPSHOT',
+        "created_at" INTEGER NOT NULL,
+        "updated_at" INTEGER NOT NULL,
+        FOREIGN KEY ("girvi_id") REFERENCES "girvi_loans" ("id") ON DELETE CASCADE,
+        UNIQUE ("girvi_id", "period_sequence")
+      )
+    ''');
+    await customStatement('''
+      CREATE INDEX IF NOT EXISTS "idx_girvi_interest_snapshots_loan"
+      ON "girvi_interest_period_snapshots" ("girvi_id", "period_sequence")
+    ''');
   }
 
   Future<void> _ensureCustomerAccountLedgerSchema() async {

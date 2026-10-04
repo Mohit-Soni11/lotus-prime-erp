@@ -79,6 +79,10 @@ class GirviLoans extends Table with BaseTable {
   TextColumn get disbursementMode =>
       text().withDefault(const Constant('Cash'))();
 
+  /// Interest method agreed for this pledge at creation time.
+  /// Nullable for legacy loans created before the field was introduced.
+  TextColumn get interestCalculationType => text().nullable()();
+
   /// Whether a customer-facing loan invoice was generated at creation
   BoolColumn get invoiceGenerated =>
       boolean().withDefault(const Constant(false))();

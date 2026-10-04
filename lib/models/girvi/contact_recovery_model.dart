@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../theme/girvi/girvi_theme.dart';
 import 'girvi_enums.dart';
 import 'girvi_loan_model.dart';
+import 'girvi_interest_period_snapshot.dart';
 import 'girvi_notice_action_model.dart';
 
 enum ContactRecoveryStage {
@@ -33,6 +34,7 @@ class ContactRecoveryCase {
   final GirviNoticeAction? latestAction;
   final List<GirviNoticeAction> actionHistory;
   final List<GirviPaymentModel> paymentHistory;
+  final List<GirviInterestPeriodSnapshot> interestPeriodSnapshots;
   final List<String> itemPhotoPaths;
 
   const ContactRecoveryCase({
@@ -42,6 +44,7 @@ class ContactRecoveryCase {
     this.latestAction,
     this.actionHistory = const [],
     this.paymentHistory = const [],
+    this.interestPeriodSnapshots = const [],
     this.itemPhotoPaths = const [],
   });
 
@@ -77,6 +80,27 @@ class ContactRecoveryCase {
         .where((action) => _noticeStageFor(action) == stage)
         .toList();
   }
+
+  bool get hasVerifiedInterestTimeline => interestPeriodSnapshots.isNotEmpty;
+
+  double get verifiedGrossInterest => interestPeriodSnapshots.fold<double>(
+        0,
+        (sum, snapshot) => sum + snapshot.periodInterest,
+      );
+
+  double get verifiedInterestDue {
+    final due = verifiedGrossInterest -
+        account.interestPaidTotal -
+        account.interestDiscountTotal;
+    return due <= 0 ? 0 : due;
+  }
+
+  double get verifiedTotalPayable => account.principalDue + verifiedInterestDue;
+
+  int get verifiedChargeableInterestMonths => interestPeriodSnapshots.fold<int>(
+        0,
+        (sum, snapshot) => sum + snapshot.chargeableMonths,
+      );
 
   GirviNoticeAction? latestDeliveryProofForStage(int stage) {
     final proofs = deliveryProofsForStage(stage);
@@ -169,18 +193,18 @@ class ContactRecoveryCase {
     if (GirviInterestCalculationType.isSimple(account.interestType)) {
       return const [];
     }
-    return GirviLoanModel.calculateCompoundInterestBreakdown(
-      principal: account.originalPrincipal,
-      monthlyRatePercent: loan.interestRate,
-      months: chargeableInterestMonths,
-    );
+    return [
+      for (final snapshot in interestPeriodSnapshots) snapshot.breakdownLine,
+    ];
   }
 
-  double get recordedMonthlyInterestAmount =>
-      account.originalPrincipal * (loan.interestRate / 100);
+  double get recordedMonthlyInterestAmount => interestPeriodSnapshots.isEmpty
+      ? 0
+      : interestPeriodSnapshots.first.interestPerMonth;
 
-  double get recordedInterestClosingAmount =>
-      account.originalPrincipal + account.grossInterestAccrued;
+  double get recordedInterestClosingAmount => interestPeriodSnapshots.isEmpty
+      ? 0
+      : interestPeriodSnapshots.last.closingAmount;
 
   GirviElapsedPeriod get overdueAgePeriod {
     final maturity = loan.maturityDate;

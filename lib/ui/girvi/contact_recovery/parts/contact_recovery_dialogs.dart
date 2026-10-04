@@ -196,6 +196,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
   late GirviNoticeLanguage _language;
   late final Map<GirviNoticeLanguage, String> _texts;
   bool _busy = false;
+  bool _isEditing = false;
 
   @override
   void initState() {
@@ -291,34 +292,72 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                     onTap: () => _setLanguage(GirviNoticeLanguage.english),
                   ),
                 ),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: _isEditing ? 'Preview notice' : 'Edit notice text',
+                  child: IconButton(
+                    onPressed: _busy
+                        ? null
+                        : () {
+                            _syncCurrentLanguageText();
+                            setState(() => _isEditing = !_isEditing);
+                          },
+                    icon: Icon(
+                      _isEditing
+                          ? Icons.visibility_outlined
+                          : Icons.edit_outlined,
+                      size: 19,
+                    ),
+                    color: GirviColors.shellBg,
+                    style: IconButton.styleFrom(
+                      backgroundColor: GirviColors.bodyBg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9),
+                        side: const BorderSide(color: GirviColors.cardBorder),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _textController,
-              minLines: 16,
-              maxLines: 22,
-              style: GoogleFonts.inter(
-                fontSize: 13.2,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-                color: GirviColors.textDark,
-              ),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: GirviColors.bodyBg,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: GirviColors.cardBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: GirviColors.brandGold,
-                    width: 1.4,
-                  ),
-                ),
-              ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: _isEditing
+                  ? TextField(
+                      key: const ValueKey('notice-text-editor'),
+                      controller: _textController,
+                      minLines: 16,
+                      maxLines: 22,
+                      style: GoogleFonts.inter(
+                        fontSize: 13.2,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                        color: GirviColors.textDark,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: GirviColors.bodyBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              const BorderSide(color: GirviColors.cardBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: GirviColors.brandGold,
+                            width: 1.4,
+                          ),
+                        ),
+                      ),
+                    )
+                  : _NoticeDocumentPreview(
+                      key: const ValueKey('notice-document-preview'),
+                      noticeText: _textController.text,
+                      language: _language,
+                      noticeType: widget.noticeType,
+                    ),
             ),
           ],
         ),

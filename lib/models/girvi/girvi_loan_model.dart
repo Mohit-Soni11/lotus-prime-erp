@@ -143,6 +143,7 @@ class GirviLoanModel {
   final double interestRate;
   final int durationMonths;
   final String disbursementMode;
+  final String? interestCalculationType;
   final bool invoiceGenerated;
   final DateTime startDate;
   final DateTime? maturityDate;
@@ -188,6 +189,7 @@ class GirviLoanModel {
     required this.interestRate,
     required this.durationMonths,
     required this.disbursementMode,
+    this.interestCalculationType,
     this.invoiceGenerated = false,
     required this.startDate,
     required this.createdAt,

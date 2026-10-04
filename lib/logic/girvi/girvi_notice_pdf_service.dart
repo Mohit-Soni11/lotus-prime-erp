@@ -6,7 +6,6 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
-import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/contact_recovery_model.dart';
 
 class GirviNoticePdfService {
@@ -14,12 +13,7 @@ class GirviNoticePdfService {
   static const PdfColor _gold = PdfColor.fromInt(0xFFC89421);
   static const PdfColor _goldLight = PdfColor.fromInt(0xFFFFF7E0);
   static const PdfColor _ink = PdfColor.fromInt(0xFF111827);
-  static const PdfColor _line = PdfColor.fromInt(0xFF111827);
-  static const PdfColor _surface = PdfColor.fromInt(0xFFF7F9FC);
-  static const PdfColor _danger = PdfColor.fromInt(0xFFB91C1C);
-
   static final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
-  static final NumberFormat _amountFormat = NumberFormat('#,##,##0', 'en_IN');
 
   Future<Uint8List> build({
     required ContactRecoveryCase item,
@@ -39,30 +33,21 @@ class GirviNoticePdfService {
     );
 
     document.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageTheme: const pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
           margin: pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
         ),
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-          children: [
-            _header(item, noticeType, noticeLanguage, devanagariFont),
-            pw.SizedBox(height: 10),
-            _accountSummary(item, noticeType, noticeLanguage, devanagariFont),
-            pw.SizedBox(height: 10),
-            _noticeBody(
-              _pdfNoticeText(noticeText, noticeLanguage),
-              noticeLanguage,
-              devanagariFont,
-            ),
-            pw.Spacer(),
-            pw.SizedBox(height: 10),
-            _signatureBlock(noticeLanguage, devanagariFont),
-            pw.SizedBox(height: 10),
-            _footer(context),
-          ],
-        ),
+        build: (context) => [
+          _header(item, noticeType, noticeLanguage, devanagariFont),
+          pw.SizedBox(height: 10),
+          ..._noticeBodyWidgets(
+            _noticeTextWithoutValuation(noticeText),
+            noticeLanguage,
+            devanagariFont,
+          ),
+        ],
+        footer: _footer,
       ),
     );
 
@@ -88,34 +73,27 @@ class GirviNoticePdfService {
     );
 
     document.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageTheme: const pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
           margin: pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
         ),
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-          children: [
-            _storedNoticeHeader(
-              ticketNo,
-              noticeType,
-              noticeLanguage,
-              devanagariFont,
-              savedAt,
-            ),
-            pw.SizedBox(height: 10),
-            _noticeBody(
-              _noticeTextWithoutValuation(noticeText),
-              noticeLanguage,
-              devanagariFont,
-            ),
-            pw.Spacer(),
-            pw.SizedBox(height: 10),
-            _signatureBlock(noticeLanguage, devanagariFont),
-            pw.SizedBox(height: 10),
-            _footer(context),
-          ],
-        ),
+        build: (context) => [
+          _storedNoticeHeader(
+            ticketNo,
+            noticeType,
+            noticeLanguage,
+            devanagariFont,
+            savedAt,
+          ),
+          pw.SizedBox(height: 10),
+          ..._noticeBodyWidgets(
+            _noticeTextWithoutValuation(noticeText),
+            noticeLanguage,
+            devanagariFont,
+          ),
+        ],
+        footer: _footer,
       ),
     );
 
@@ -293,7 +271,7 @@ class GirviNoticePdfService {
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
                 pw.Text(
-                  _dateFormat.format(DateTime.now()),
+                  _dateFormat.format(item.now),
                   textDirection: pw.TextDirection.ltr,
                   style: _textStyle(
                     language,
@@ -323,228 +301,7 @@ class GirviNoticePdfService {
     );
   }
 
-  pw.Widget _accountSummary(
-    ContactRecoveryCase item,
-    GirviNoticeType noticeType,
-    GirviNoticeLanguage language,
-    pw.Font? devanagariFont,
-  ) {
-    final account = item.account;
-    final loan = item.loan;
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(11),
-      decoration: pw.BoxDecoration(
-        color: _surface,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: _line, width: 0.65),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            _label('Account Summary', language),
-            textDirection: pw.TextDirection.ltr,
-            style: _textStyle(
-              language,
-              devanagariFont,
-              color: _ink,
-              fontSize: 13.8,
-              bold: true,
-            ),
-          ),
-          pw.SizedBox(height: 8),
-          _pledgedItemStrip(item, language, devanagariFont),
-          pw.SizedBox(height: 7),
-          pw.Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            children: [
-              _metric(
-                _label('Notice Stage', language),
-                '${noticeType.stage}/3',
-                language: language,
-                devanagariFont: devanagariFont,
-                highlight: true,
-              ),
-              _metric(
-                _label('Customer', language),
-                account.customerName,
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Mobile', language),
-                account.customerMobile,
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Girvi Date', language),
-                _dateFormat.format(loan.startDate),
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Maturity Date', language),
-                loan.maturityDate == null
-                    ? _label('Not Set', language)
-                    : _dateFormat.format(loan.maturityDate!),
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Actual Duration', language),
-                item.loanAgeLabel,
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Calendar Duration', language),
-                item.loanAgeMonthsDaysLabel,
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Interest Calculation Period', language),
-                item.chargeableInterestMonthsLabel,
-                language: language,
-                devanagariFont: devanagariFont,
-                highlight: true,
-              ),
-              _metric(
-                _label('Overdue Age', language),
-                item.overdueAgeMonthsDaysLabel,
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Principal', language),
-                _money(account.principalDue),
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Interest', language),
-                _money(account.netInterestDue),
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-              _metric(
-                _label('Total Payable', language),
-                _money(account.totalPayable),
-                language: language,
-                devanagariFont: devanagariFont,
-                color: _danger,
-              ),
-              _metric(
-                _label('Settlement Deadline', language),
-                _dateFormat.format(
-                  DateTime.now().add(Duration(days: item.noticePeriodDays)),
-                ),
-                language: language,
-                devanagariFont: devanagariFont,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _pledgedItemStrip(
-    ContactRecoveryCase item,
-    GirviNoticeLanguage language,
-    pw.Font? devanagariFont,
-  ) {
-    return pw.Container(
-      width: double.infinity,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.white,
-        borderRadius: pw.BorderRadius.circular(6),
-        border: pw.Border.all(color: _line, width: 0.6),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            _label('Pledged Item', language).toUpperCase(),
-            textDirection: pw.TextDirection.ltr,
-            maxLines: 1,
-            style: _textStyle(
-              language,
-              devanagariFont,
-              color: _ink,
-              fontSize: 8.5,
-            ),
-          ),
-          pw.SizedBox(height: 3),
-          pw.Text(
-            _itemSummary(item.loan, language),
-            textDirection: pw.TextDirection.ltr,
-            maxLines: 2,
-            style: _textStyle(
-              language,
-              devanagariFont,
-              color: _ink,
-              fontSize: 10.6,
-              bold: true,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _metric(
-    String label,
-    String value, {
-    required GirviNoticeLanguage language,
-    required pw.Font? devanagariFont,
-    PdfColor color = _ink,
-    bool highlight = false,
-  }) {
-    return pw.Container(
-      width: 158,
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-      decoration: pw.BoxDecoration(
-        color: highlight ? _goldLight : PdfColors.white,
-        borderRadius: pw.BorderRadius.circular(6),
-        border: pw.Border.all(color: highlight ? _gold : _line, width: 0.6),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            label.toUpperCase(),
-            textDirection: pw.TextDirection.ltr,
-            maxLines: 1,
-            style: _textStyle(
-              language,
-              devanagariFont,
-              color: _ink,
-              fontSize: 8.2,
-            ),
-          ),
-          pw.SizedBox(height: 3),
-          pw.Text(
-            value,
-            textDirection: pw.TextDirection.ltr,
-            maxLines: 2,
-            style: _textStyle(
-              language,
-              devanagariFont,
-              color: color,
-              fontSize: 10.8,
-              bold: true,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _noticeBody(
+  List<pw.Widget> _noticeBodyWidgets(
     String noticeText,
     GirviNoticeLanguage language,
     pw.Font? devanagariFont,
@@ -559,132 +316,99 @@ class GirviNoticePdfService {
         .split('\n')
         .map((line) => line.trimRight())
         .toList(growable: false);
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: pw.BoxDecoration(
-            color: _surface,
-            borderRadius: pw.BorderRadius.circular(6),
-            border: pw.Border.all(color: _line, width: 0.6),
-          ),
+    final content = <pw.Widget>[];
+    var skippedTitle = false;
+    for (final paragraph in paragraphs) {
+      final text = paragraph.trim();
+      if (!skippedTitle && text.isNotEmpty) {
+        skippedTitle = true;
+        continue;
+      }
+      if (text.isEmpty) {
+        content.add(pw.SizedBox(height: 5));
+        continue;
+      }
+      if (_isNoticeSectionHeading(text, language)) {
+        content
+          ..add(pw.SizedBox(height: 7))
+          ..add(
+            pw.Container(
+              width: double.infinity,
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              decoration: pw.BoxDecoration(
+                color: _goldLight,
+                borderRadius: pw.BorderRadius.circular(5),
+                border: pw.Border.all(color: _gold, width: 0.7),
+              ),
+              child: pw.Text(
+                text,
+                textDirection: pw.TextDirection.ltr,
+                style: _textStyle(
+                  language,
+                  devanagariFont,
+                  color: _ink,
+                  fontSize: 11.2,
+                  bold: true,
+                ),
+              ),
+            ),
+          );
+        continue;
+      }
+      final isSubject = text.startsWith('Subject:') || text.startsWith('विषय:');
+      content.add(
+        pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 5, right: 5, bottom: 4),
           child: pw.Text(
-            _label('Notice Text', language),
+            text,
             textDirection: pw.TextDirection.ltr,
             style: _textStyle(
               language,
               devanagariFont,
-              color: _ink,
-              fontSize: 11.2,
-              bold: true,
+              color: isSubject ? _navy : _ink,
+              fontSize: isSubject ? 11.3 : 10.5,
+              bold: isSubject,
+              lineSpacing: 1.25,
             ),
           ),
         ),
-        pw.SizedBox(height: 6),
-        for (final paragraph in paragraphs)
-          paragraph.trim().isEmpty
-              ? pw.SizedBox(height: 4)
-              : pw.Padding(
-                  padding:
-                      const pw.EdgeInsets.only(left: 6, right: 6, bottom: 3),
-                  child: pw.Text(
-                    paragraph,
-                    textDirection: pw.TextDirection.ltr,
-                    style: _textStyle(
-                      language,
-                      devanagariFont,
-                      color: _ink,
-                      fontSize: 10.8,
-                      lineSpacing: 1.2,
-                    ),
-                  ),
-                ),
-      ],
-    );
+      );
+    }
+    return content;
   }
 
-  String _pdfNoticeText(String noticeText, GirviNoticeLanguage language) {
-    final detailPrefixes = language == GirviNoticeLanguage.hindi
-        ? const [
-            'सूचना दिनांक:',
-            'टिकट नंबर:',
-            'ग्राहक मोबाइल:',
-            'ग्राहक पता:',
-            'गिरवी रखने की तारीख:',
-            'देय तारीख:',
-            'परिपक्वता तारीख:',
-            'खाता अवधि:',
-            'वास्तविक अवधि:',
-            'कुल कैलेंडर अवधि:',
-            'ब्याज गणना अवधि:',
-            'चार्जेबल ब्याज अवधि:',
-            'अवधि आधार:',
-            'बकाया अवधि:',
-            'ओवरड्यू अवधि:',
-            'सूचना चरण:',
-            'गिरवी वस्तु:',
-            'गिरवी मूल्यांकन:',
-            'गिरवी मूल्य:',
-            'मूल्यांकन:',
-            'मूलधन बकाया:',
-            'ब्याज बकाया:',
-            'कुल देय राशि:',
-            'सूचना अवधि:',
-            'अंतिम तारीख:',
-            'निपटान की अंतिम तिथि:',
-            'दुकान साइन',
-            'दुकान हस्ताक्षर',
-            'अधिकृत हस्ताक्षरकर्ता',
-          ]
-        : const [
-            'Notice Date:',
-            'Ticket Number:',
-            'Customer Mobile:',
-            'Customer Address:',
-            'Girvi Date:',
-            'Maturity Date:',
-            'Account Age:',
-            'Actual Duration:',
-            'Total Calendar Duration:',
-            'Calendar Duration:',
-            'Interest Calculation Period:',
-            'Chargeable Interest Period:',
-            'Period Basis:',
-            'Overdue Age:',
-            'Notice Stage:',
-            'Pledged Item:',
-            'Pledged Valuation:',
-            'Pledged Value:',
-            'Valuation:',
-            'Principal Outstanding:',
-            'Interest Outstanding:',
-            'Total Payable:',
-            'Notice Period:',
-            'Settlement Deadline:',
-            'Authorised Signatory',
-          ];
-    final lines = <String>[];
-    var lastBlank = false;
-    for (final line in noticeText.split('\n')) {
-      final trimmed = line.trim();
-      final isDetail = detailPrefixes.any(trimmed.startsWith);
-      if (isDetail) continue;
-      if (trimmed.isEmpty) {
-        if (!lastBlank && lines.isNotEmpty) {
-          lines.add('');
-          lastBlank = true;
-        }
-        continue;
-      }
-      lines.add(line.trimRight());
-      lastBlank = false;
+  bool _isNoticeSectionHeading(String value, GirviNoticeLanguage language) {
+    final english = <String>{
+      'Dear Customer',
+      'Pledge Account and Duration',
+      'Interest Breakdown',
+      'Simple Interest Breakdown',
+      'Compound Interest Breakdown',
+      'Payments and Adjustments',
+      'Final Outstanding Summary',
+      'Required Action',
+      'Simple Interest Period',
+    };
+    final hindi = <String>{
+      'प्रिय ग्राहक',
+      'गिरवी खाता और अवधि',
+      'ब्याज विवरण',
+      'साधारण ब्याज विवरण',
+      'चक्रवृद्धि ब्याज विवरण',
+      'भुगतान और समायोजन',
+      'अंतिम बकाया सारांश',
+      'आवश्यक कार्रवाई',
+      'साधारण ब्याज अवधि',
+    };
+    if ((language == GirviNoticeLanguage.hindi ? hindi : english)
+        .contains(value)) {
+      return true;
     }
-    while (lines.isNotEmpty && lines.last.trim().isEmpty) {
-      lines.removeLast();
-    }
-    return lines.join('\n');
+    return value.startsWith('Compound Year ') ||
+        value.startsWith('Remaining Compound Period') ||
+        value.startsWith('चक्रवृद्धि वर्ष ') ||
+        value.startsWith('शेष चक्रवृद्धि अवधि');
   }
 
   String _noticeTextWithoutValuation(String noticeText) {
@@ -704,70 +428,6 @@ class GirviNoticePdfService {
         })
         .join('\n')
         .trim();
-  }
-
-  String _itemSummary(
-    GirviLoanModel loan,
-    GirviNoticeLanguage language,
-  ) {
-    final serialLabel =
-        language == GirviNoticeLanguage.hindi ? 'क्रमांक' : 'Serial Number';
-    final source = loan.itemDescription.trim().isEmpty
-        ? loan.itemSummary
-        : loan.itemDescription;
-    return source
-        .replaceAllMapped(
-          RegExp(r'#\s*(\d+)'),
-          (match) => '$serialLabel ${match.group(1)}',
-        )
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-  }
-
-  pw.Widget _signatureBlock(
-    GirviNoticeLanguage language,
-    pw.Font? devanagariFont,
-  ) {
-    return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-      children: [
-        _signature(
-          _label('Customer Acknowledgement', language),
-          language,
-          devanagariFont,
-        ),
-        _signature(
-          _label('Authorised Signatory', language),
-          language,
-          devanagariFont,
-        ),
-      ],
-    );
-  }
-
-  pw.Widget _signature(
-    String label,
-    GirviNoticeLanguage language,
-    pw.Font? devanagariFont,
-  ) {
-    return pw.Container(
-      width: 238,
-      padding: const pw.EdgeInsets.only(top: 22),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(top: pw.BorderSide(color: _line, width: 0.8)),
-      ),
-      child: pw.Text(
-        label,
-        textDirection: pw.TextDirection.ltr,
-        style: _textStyle(
-          language,
-          devanagariFont,
-          color: _ink,
-          fontSize: 10.2,
-          bold: true,
-        ),
-      ),
-    );
   }
 
   pw.Widget _footer(pw.Context context) {
@@ -861,6 +521,4 @@ class GirviNoticePdfService {
       _ => english,
     };
   }
-
-  String _money(double value) => 'Rs ${_amountFormat.format(value)}';
 }

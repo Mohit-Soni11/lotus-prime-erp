@@ -182,7 +182,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     String noticeText,
   ) async {
     await Clipboard.setData(ClipboardData(text: noticeText));
-    await _controller.recordNoticePrepared(item, noticeType, noticeText);
+    await _controller.recordNoticeDraft(item, noticeText);
   }
 
   Future<void> _printNotice(
@@ -202,7 +202,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       onLayout: (_) async => bytes,
     );
     if (printed) {
-      await _controller.recordNoticePrepared(item, noticeType, noticeText);
       await _controller.recordNoticeDeliveryProof(
         item: item,
         noticeType: noticeType,
@@ -231,7 +230,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       filename: _noticePdfName(item, noticeType, language),
     );
     if (shared) {
-      await _controller.recordNoticePrepared(item, noticeType, noticeText);
       await _controller.recordNoticeDeliveryProof(
         item: item,
         noticeType: noticeType,

@@ -152,7 +152,9 @@ extension GirviRepositoryStatusSync on GirviRepository {
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
         months: interestMonths,
-        interestType: interestType,
+        interestType: GirviInterestCalculationType.normalize(
+          loan.interestCalculationType ?? interestType,
+        ),
       );
       final interestDue = (grossInterest - interestPaid - interestDiscount)
           .clamp(0.0, double.infinity);

@@ -235,7 +235,10 @@ extension GirviRepositoryPayments on GirviRepository {
 
       final originalPrincipal = loan.loanAmount + principalRepaid;
       final interestComponent = receivedAmount;
-      final interestType = await _loadInterestCalculationType();
+      final interestType = GirviInterestCalculationType.normalize(
+        loanModel.interestCalculationType ??
+            await _loadInterestCalculationType(),
+      );
       final priorCoveredMonths = _coveredInterestMonthsFromTotalPaid(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
@@ -453,6 +456,30 @@ extension GirviRepositoryPayments on GirviRepository {
   Future<List<GirviPaymentModel>> getPaymentModelsForLoan(int loanId) async {
     final rows = await getPaymentsForLoan(loanId);
     return rows.map(_mapPayment).toList();
+  }
+
+  /// Loads several loan ledgers in one query for collection screens.
+  Future<Map<int, List<GirviPaymentModel>>> getPaymentModelsForLoans(
+    List<int> loanIds,
+  ) async {
+    if (loanIds.isEmpty) return const {};
+
+    final rows = await (_db.select(_db.girviPayments)
+          ..where((payment) => payment.girviId.isIn(loanIds))
+          ..orderBy([
+            (payment) => drift.OrderingTerm.asc(payment.girviId),
+            (payment) => drift.OrderingTerm.desc(payment.paymentDate),
+            (payment) => drift.OrderingTerm.desc(payment.id),
+          ]))
+        .get();
+
+    final result = <int, List<GirviPaymentModel>>{};
+    for (final row in rows) {
+      result
+          .putIfAbsent(row.girviId, () => <GirviPaymentModel>[])
+          .add(_mapPayment(row));
+    }
+    return result;
   }
 
   Future<double> getTotalPaidForLoan(int loanId) async {

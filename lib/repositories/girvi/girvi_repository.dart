@@ -193,23 +193,27 @@ class GirviRepository {
       }
     }
 
-    var result = rows.map((row) {
-      final loan = row.readTable(_db.girviLoans);
-      final customer = row.readTable(_db.customers);
-      return GirviLoanWithCustomer(
-        loan: _mapLoan(loan),
-        customerName: customer.name,
-        customerMobile: customer.mobile,
-        customerCity: customer.city,
-        customerAddress: _formatCustomerAddress(customer),
-        interestType: interestType,
-        interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
-        principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
-        interestDiscountTotal: interestDiscountByLoan[loan.id] ?? 0,
-        principalDiscountTotal: principalDiscountByLoan[loan.id] ?? 0,
-        legacyPrincipalRepaidTotal: legacyPrincipalRepaidByLoan[loan.id] ?? 0,
-      );
-    }).where((item) => item.loan.girviStatus != GirviStatus.auctioned).toList();
+    var result = rows
+        .map((row) {
+          final loan = row.readTable(_db.girviLoans);
+          final customer = row.readTable(_db.customers);
+          return GirviLoanWithCustomer(
+            loan: _mapLoan(loan),
+            customerName: customer.name,
+            customerMobile: customer.mobile,
+            customerCity: customer.city,
+            customerAddress: _formatCustomerAddress(customer),
+            interestType: loan.interestCalculationType ?? interestType,
+            interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
+            principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
+            interestDiscountTotal: interestDiscountByLoan[loan.id] ?? 0,
+            principalDiscountTotal: principalDiscountByLoan[loan.id] ?? 0,
+            legacyPrincipalRepaidTotal:
+                legacyPrincipalRepaidByLoan[loan.id] ?? 0,
+          );
+        })
+        .where((item) => item.loan.girviStatus != GirviStatus.auctioned)
+        .toList();
 
     // Search filter (client-side for simplicity)
     if (searchQuery.isNotEmpty) {
@@ -395,6 +399,7 @@ class GirviRepository {
       interestRate: row.interestRate,
       durationMonths: row.durationMonths,
       disbursementMode: row.disbursementMode,
+      interestCalculationType: row.interestCalculationType,
       invoiceGenerated: row.invoiceGenerated,
       startDate: row.startDate,
       createdAt: row.createdAt,

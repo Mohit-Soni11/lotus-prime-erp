@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_persistence_models.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import '../../repositories/girvi/girvi_details_repository.dart';
@@ -545,6 +546,10 @@ class NewGirviController extends ChangeNotifier {
         interestRate: drift.Value(_interestRate),
         durationMonths: drift.Value(_durationMonths),
         disbursementMode: drift.Value(disbursementSummary),
+        interestCalculationType:
+            drift.Value(GirviInterestCalculationType.normalize(
+          _billingSettings.interestType,
+        )),
         invoiceGenerated: drift.Value(
           invoiceGenerated || (_editingDetails?.loan.invoiceGenerated ?? false),
         ),

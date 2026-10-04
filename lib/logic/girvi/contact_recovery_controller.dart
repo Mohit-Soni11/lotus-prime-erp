@@ -5,11 +5,13 @@ import 'package:intl/intl.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_interest_period_snapshot.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/contact_recovery_model.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
+import '../../repositories/girvi/girvi_interest_period_snapshot_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 import 'girvi_risk_policy.dart';
 
@@ -32,6 +34,9 @@ class ContactRecoveryController extends ChangeNotifier {
   late final GirviRepository _repository;
   late final GirviBillingRepo _billingRepo;
   late final GirviNoticeActionRepository _noticeActionRepository;
+  late final GirviInterestPeriodSnapshotRepository
+      _interestPeriodSnapshotRepository =
+      GirviInterestPeriodSnapshotRepository(_db);
 
   AppDatabase get database => _db;
 
@@ -54,6 +59,13 @@ class ContactRecoveryController extends ChangeNotifier {
       final noticeDays = billing.noticeDays <= 0 ? 30 : billing.noticeDays;
       final now = DateTime.now();
       final loans = await _repository.getLoansWithCustomer();
+      // Materialize the financial timeline before cases are built. Notice
+      // generation only reads these snapshots and never recalculates history.
+      final interestPeriodSnapshots = await _interestPeriodSnapshotRepository
+          .synchronizeForLoans(loans, asOf: now);
+      final paymentHistory = await _loadPaymentHistory(
+        loans.map((entry) => entry.loan.id).toList(growable: false),
+      );
 
       final candidateAccounts = loans.where((entry) {
         final status = entry.loan.girviStatus;
@@ -67,7 +79,10 @@ class ContactRecoveryController extends ChangeNotifier {
               entry.loan.startDate,
               entry.loan.durationMonths,
             );
-        final coveredInterestMonths = _coveredInterestMonths(entry);
+        final coveredInterestMonths = _coveredInterestMonths(
+          entry,
+          paymentHistory[entry.loan.id] ?? const [],
+        );
         final hasInterestPaidBeforeMaturity =
             entry.loan.lastInterestPaidDate != null &&
                 !entry.loan.lastInterestPaidDate!.isAfter(maturityDate);
@@ -77,7 +92,10 @@ class ContactRecoveryController extends ChangeNotifier {
           maturityDate: maturityDate,
           lastInterestPaidDate: entry.loan.lastInterestPaidDate,
           principalDue: entry.principalDue,
-          interestDue: entry.netInterestDue,
+          interestDue: _verifiedInterestDue(
+            entry,
+            interestPeriodSnapshots[entry.loan.id] ?? const [],
+          ),
           hasCollectionHistory: entry.interestPaidTotal > 0 ||
               entry.principalPaidTotal > 0 ||
               entry.interestDiscountTotal > 0 ||
@@ -96,10 +114,6 @@ class ContactRecoveryController extends ChangeNotifier {
       final photoPaths = await _loadItemPhotoPaths(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
       );
-      final paymentHistory = await _loadPaymentHistory(
-        candidateAccounts.map((entry) => entry.loan.id).toList(),
-      );
-
       final cases = candidateAccounts
           .map(
             (entry) => ContactRecoveryCase(
@@ -111,6 +125,8 @@ class ContactRecoveryController extends ChangeNotifier {
                   : actionHistory[entry.loan.id]!.first,
               actionHistory: actionHistory[entry.loan.id] ?? const [],
               paymentHistory: paymentHistory[entry.loan.id] ?? const [],
+              interestPeriodSnapshots:
+                  interestPeriodSnapshots[entry.loan.id] ?? const [],
               itemPhotoPaths: photoPaths[entry.loan.id] ?? const [],
             ),
           )
@@ -145,7 +161,19 @@ class ContactRecoveryController extends ChangeNotifier {
     _applyFilters();
   }
 
-  int _coveredInterestMonths(GirviLoanWithCustomer entry) {
+  int _coveredInterestMonths(
+    GirviLoanWithCustomer entry,
+    List<GirviPaymentModel> payments,
+  ) {
+    final ledgerMonths = payments.fold<int>(0, (sum, payment) {
+      if (payment.type != GirviPaymentType.interest &&
+          payment.type != GirviPaymentType.partialInterest) {
+        return sum;
+      }
+      return sum + (payment.monthsCovered ?? 0).clamp(0, 1000000);
+    });
+    if (ledgerMonths > 0) return ledgerMonths;
+
     final paidThrough = entry.loan.lastInterestPaidDate;
     if (paidThrough != null && paidThrough.isAfter(entry.loan.startDate)) {
       return GirviLoanModel.chargeableMonthsBetween(
@@ -154,30 +182,10 @@ class ContactRecoveryController extends ChangeNotifier {
       );
     }
 
-    final totalInterestCredit =
-        entry.interestPaidTotal + entry.interestDiscountTotal;
-    if (entry.originalPrincipal <= 0 ||
-        entry.loan.interestRate <= 0 ||
-        totalInterestCredit <= 0) {
-      return 0;
-    }
-
-    var coveredMonths = 0;
-    while (coveredMonths < 1200) {
-      final nextMonth = coveredMonths + 1;
-      final requiredInterest = GirviLoanModel.calculateInterest(
-        principal: entry.originalPrincipal,
-        monthlyRatePercent: entry.loan.interestRate,
-        months: nextMonth,
-        interestType: entry.interestType,
-      );
-      if (requiredInterest >
-          totalInterestCredit + GirviRiskPolicy.moneyTolerance) {
-        break;
-      }
-      coveredMonths = nextMonth;
-    }
-    return coveredMonths;
+    // A payment without a stored covered period cannot safely be converted
+    // into months from the current rate. Treat it as unverified coverage and
+    // keep the account in the conservative risk bucket.
+    return 0;
   }
 
   Future<Map<int, List<String>>> _loadItemPhotoPaths(List<int> loanIds) async {
@@ -212,16 +220,24 @@ class ContactRecoveryController extends ChangeNotifier {
     return byLoan;
   }
 
+  double _verifiedInterestDue(
+    GirviLoanWithCustomer entry,
+    List<GirviInterestPeriodSnapshot> snapshots,
+  ) {
+    if (snapshots.isEmpty) return entry.netInterestDue;
+    final gross = snapshots.fold<double>(
+      0,
+      (sum, snapshot) => sum + snapshot.periodInterest,
+    );
+    final due = gross - entry.interestPaidTotal - entry.interestDiscountTotal;
+    return due <= 0 ? 0 : due;
+  }
+
   Future<Map<int, List<GirviPaymentModel>>> _loadPaymentHistory(
     List<int> loanIds,
   ) async {
     if (loanIds.isEmpty) return const {};
-
-    final result = <int, List<GirviPaymentModel>>{};
-    for (final loanId in loanIds) {
-      result[loanId] = await _repository.getPaymentModelsForLoan(loanId);
-    }
-    return result;
+    return _repository.getPaymentModelsForLoans(loanIds);
   }
 
   Future<bool> initiateCollateralRecovery(ContactRecoveryCase item) async {
@@ -532,11 +548,11 @@ class ContactRecoveryController extends ChangeNotifier {
       ),
       interestExposure: activeCases.fold(
         0,
-        (sum, item) => sum + item.account.netInterestDue,
+        (sum, item) => sum + item.verifiedInterestDue,
       ),
       totalExposure: activeCases.fold(
         0,
-        (sum, item) => sum + item.account.totalPayable,
+        (sum, item) => sum + item.verifiedTotalPayable,
       ),
       lastUpdatedAt: _timeFormat.format(now),
     );
@@ -547,7 +563,7 @@ class ContactRecoveryController extends ChangeNotifier {
     if (stageCompare != 0) return stageCompare;
     final overdueCompare = b.overdueDays.compareTo(a.overdueDays);
     if (overdueCompare != 0) return overdueCompare;
-    return b.account.totalPayable.compareTo(a.account.totalPayable);
+    return b.verifiedTotalPayable.compareTo(a.verifiedTotalPayable);
   }
 
   int _stageRank(ContactRecoveryStage stage) {
