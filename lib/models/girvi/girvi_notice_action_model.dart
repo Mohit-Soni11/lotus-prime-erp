@@ -61,7 +61,12 @@ class GirviNoticeAction {
   final String actionType;
   final int? noticeStage;
   final String? noticeText;
+  final String? documentHash;
   final String? actionNote;
+  final String? performedBy;
+  final String? approvedBy;
+  final DateTime? approvedAt;
+  final DateTime? noticeDeadlineAt;
   final double pledgedValuation;
   final double recoveredAmount;
   final double penaltyAmount;
@@ -84,7 +89,12 @@ class GirviNoticeAction {
     required this.createdAt,
     this.noticeStage,
     this.noticeText,
+    this.documentHash,
     this.actionNote,
+    this.performedBy,
+    this.approvedBy,
+    this.approvedAt,
+    this.noticeDeadlineAt,
     this.pledgedValuation = 0,
     this.recoveredAmount = 0,
     this.penaltyAmount = 0,
@@ -101,8 +111,7 @@ class GirviNoticeAction {
   bool get isNoticePreparation =>
       actionType == GirviNoticeActionTypes.secondNoticePrepared ||
       actionType == GirviNoticeActionTypes.finalNoticePrepared ||
-      actionType == GirviNoticeActionTypes.firstNoticePrepared ||
-      actionType == GirviNoticeActionTypes.noticeDraftCopied;
+      actionType == GirviNoticeActionTypes.firstNoticePrepared;
 
   bool get isNoticeDeliveryProof =>
       actionType == GirviNoticeActionTypes.noticePdfSaved ||
@@ -140,7 +149,7 @@ class GirviNoticeAction {
       case GirviNoticeActionTypes.disposalSettled:
         return 'Recovery settlement closed';
       case GirviNoticeActionTypes.noticeDraftCopied:
-        return 'Legal notice prepared';
+        return 'Legal notice draft copied';
       case GirviNoticeActionTypes.auctionMarked:
         return 'Closed status recorded';
       default:

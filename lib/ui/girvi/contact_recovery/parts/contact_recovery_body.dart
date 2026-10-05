@@ -63,7 +63,9 @@ class _ContactRecoveryBody extends StatelessWidget {
           item: item,
           onOpenAccount: () => onOpenAccount(item),
           onPrepareNotice:
-              item.nextNoticeType == null ? null : () => onPrepareNotice(item),
+              item.nextNoticeType == null || !item.canPrepareNextNotice
+                  ? null
+                  : () => onPrepareNotice(item),
           onViewNotice: (action) => onViewNotice(item, action),
           onDownloadNotice: (action) => onDownloadNotice(item, action),
           onPrintNotice: (action) => onPrintNotice(item, action),

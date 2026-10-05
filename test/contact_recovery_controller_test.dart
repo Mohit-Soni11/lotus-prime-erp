@@ -93,6 +93,8 @@ void main() {
       expect(afterFirstNotice.noticeProgressLabel, '2/3');
       expect(afterFirstNotice.stage, ContactRecoveryStage.firstNoticeDue);
       expect(afterFirstNotice.noticesSentLabel, '1/3 Sent');
+      expect(afterFirstNotice.canPrepareNextNotice, isFalse);
+      expect(afterFirstNotice.daysUntilNextNotice, 30);
       expect(afterFirstNotice.preparedNoticeActions, hasLength(1));
       expect(afterFirstNotice.preparedNoticeActions.single.noticeStage, 1);
 
@@ -242,8 +244,8 @@ void main() {
         ],
       );
 
-      expect(legacyDraftNotice.noticesSentLabel, '1/3 Sent');
-      expect(legacyDraftNotice.preparedNoticeActions, hasLength(1));
+      expect(legacyDraftNotice.noticesSentLabel, '0/3 Sent');
+      expect(legacyDraftNotice.preparedNoticeActions, isEmpty);
 
       final state = ContactRecoveryState.initial().copyWith(
         allCases: [
@@ -298,10 +300,22 @@ void main() {
           );
 
       final repository = GirviNoticeActionRepository(db);
+      await expectLater(
+        repository.recordNoticeDeliveryProof(
+          girviId: loanId,
+          noticeType: GirviNoticeType.first,
+          noticeText: 'First notice text',
+          actionType: GirviNoticeActionTypes.noticePdfSaved,
+          deliveryChannel: 'PDF File',
+          deliveryStatus: 'Saved',
+        ),
+        throwsA(isA<StateError>()),
+      );
       await repository.recordNoticePrepared(
         girviId: loanId,
         noticeType: GirviNoticeType.first,
         noticeText: 'First notice text',
+        noticePeriodDays: 30,
       );
       await repository.recordNoticeDeliveryProof(
         girviId: loanId,
@@ -311,6 +325,18 @@ void main() {
         deliveryChannel: 'PDF File',
         deliveryStatus: 'Saved',
         deliveryReference: r'C:\notice\GRV-NOT-001.pdf',
+      );
+
+      await expectLater(
+        repository.recordNoticeDeliveryProof(
+          girviId: loanId,
+          noticeType: GirviNoticeType.first,
+          noticeText: 'Edited after approval',
+          actionType: GirviNoticeActionTypes.noticePdfPrinted,
+          deliveryChannel: 'Printer',
+          deliveryStatus: 'Printed',
+        ),
+        throwsA(isA<StateError>()),
       );
 
       final history = (await repository.actionsByGirviIds([loanId]))[loanId]!;
@@ -535,11 +561,155 @@ void main() {
       final names = columns.map((row) => row.data['name']).toSet();
 
       expect(names, contains('notice_stage'));
+      expect(names, contains('document_hash'));
+      expect(names, contains('performed_by'));
+      expect(names, contains('approved_by'));
+      expect(names, contains('approved_at'));
+      expect(names, contains('notice_deadline_at'));
       expect(names, contains('pledged_valuation'));
       expect(names, contains('delivery_channel'));
       expect(names, contains('delivery_status'));
       expect(names, contains('delivery_reference'));
       expect(names, contains('delivered_at'));
+    });
+
+    test(
+        'cash recovery closes atomically with finance and customer surplus audit',
+        () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Recovery Customer',
+              mobile: '9000000003',
+            ),
+          );
+      final now = DateTime(2026, 6, 24);
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-REC-001',
+              customerId: customerId,
+              itemDescription: 'Gold chain',
+              grossWeight: const drift.Value(10),
+              netWeight: const drift.Value(10),
+              ratePerGram: const drift.Value(7000),
+              totalValue: const drift.Value(70000),
+              loanAmount: const drift.Value(20000),
+              interestRate: const drift.Value(0),
+              startDate: drift.Value(now.subtract(const Duration(days: 90))),
+              maturityDate: drift.Value(now.subtract(const Duration(days: 30))),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      await db.into(db.girviLoanItems).insert(
+            GirviLoanItemsCompanion.insert(
+              girviId: loanId,
+              serialNo: 1,
+              itemName: 'Gold chain',
+              metalType: 'Gold',
+              purity: '22KT',
+            ),
+          );
+      final auditRepository = GirviNoticeActionRepository(db);
+      await auditRepository.recordAction(
+        girviId: loanId,
+        actionType: GirviNoticeType.finalNotice.actionType,
+        noticeStage: 3,
+        noticeText: 'Approved final notice',
+        actionAt: now.subtract(const Duration(days: 31)),
+        noticeDeadlineAt: now.subtract(const Duration(days: 1)),
+      );
+      await auditRepository.recordAction(
+        girviId: loanId,
+        actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+      );
+      final account = GirviLoanWithCustomer(
+        loan: GirviLoanModel(
+          id: loanId,
+          ticketNo: 'GRV-REC-001',
+          customerId: customerId,
+          itemDescription: 'Gold chain',
+          itemCount: 1,
+          metalType: 'Gold',
+          metalPurity: '22KT',
+          grossWeight: 10,
+          stoneWeight: 0,
+          netWeight: 10,
+          ratePerGram: 7000,
+          totalValue: 70000,
+          ltvPercent: 28.57,
+          loanAmount: 20000,
+          interestRate: 0,
+          durationMonths: 2,
+          disbursementMode: 'Cash',
+          startDate: now.subtract(const Duration(days: 90)),
+          maturityDate: now.subtract(const Duration(days: 30)),
+          createdAt: now.subtract(const Duration(days: 90)),
+          status: 'OVERDUE',
+        ),
+        customerName: 'Recovery Customer',
+        customerMobile: '9000000003',
+      );
+      final recoveryCase = ContactRecoveryCase(
+        account: account,
+        noticePeriodDays: 30,
+        now: now,
+        actionHistory: [
+          GirviNoticeAction(
+            id: 2,
+            girviId: loanId,
+            actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+            actionAt: now,
+            createdAt: now,
+          ),
+          GirviNoticeAction(
+            id: 1,
+            girviId: loanId,
+            actionType: GirviNoticeType.finalNotice.actionType,
+            noticeStage: 3,
+            actionAt: now.subtract(const Duration(days: 31)),
+            createdAt: now.subtract(const Duration(days: 31)),
+          ),
+        ],
+      );
+
+      final controller = ContactRecoveryController(db: db);
+      addTearDown(controller.dispose);
+      final closed = await controller.closeDisposalSettlement(
+        item: recoveryCase,
+        pledgedValuation: 70000,
+        recoveredAmount: 22000,
+        penaltyAmount: 0,
+        note: 'Verified auction recovery.',
+      );
+
+      expect(closed, isTrue);
+      final cashEntries = await db.select(db.cashTransactions).get();
+      expect(cashEntries, hasLength(1));
+      expect(cashEntries.single.amount, 22000);
+      expect(cashEntries.single.referenceType, 'GIRVI_RECOVERY');
+      final ledgerEntries = await db.select(db.customerAccountLedger).get();
+      expect(ledgerEntries, hasLength(1));
+      expect(ledgerEntries.single.entryType, 'CREDIT');
+      expect(ledgerEntries.single.amount, 2000);
+      final actions = await db.select(db.girviNoticeActions).get();
+      expect(
+        actions.where(
+            (row) => row.actionType == GirviNoticeActionTypes.disposalSettled),
+        hasLength(1),
+      );
+      final savedLoan = await (db.select(db.girviLoans)
+            ..where((loan) => loan.id.equals(loanId)))
+          .getSingle();
+      expect(savedLoan.status, 'AUCTIONED');
+      final pledgedItems = await (db.select(db.girviLoanItems)
+            ..where((item) => item.girviId.equals(loanId)))
+          .get();
+      expect(pledgedItems.single.recoveryDispositionStatus, 'DISPOSED');
+      expect(
+        pledgedItems.single.recoveryDispositionReference,
+        'GIRVI-RECOVERY-GRV-REC-001',
+      );
     });
   });
 }

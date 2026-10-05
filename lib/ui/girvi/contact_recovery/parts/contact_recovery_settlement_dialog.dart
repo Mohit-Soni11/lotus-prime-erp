@@ -5,19 +5,27 @@ class _DisposalSettlementResult {
   final double recoveredAmount;
   final double penaltyAmount;
   final String note;
+  final RecoverySettlementPaymentMethod paymentMethod;
+  final int? bankAccountId;
 
   const _DisposalSettlementResult({
     required this.pledgedValuation,
     required this.recoveredAmount,
     required this.penaltyAmount,
     required this.note,
+    required this.paymentMethod,
+    required this.bankAccountId,
   });
 }
 
 class _DisposalSettlementDialog extends StatefulWidget {
   final ContactRecoveryCase item;
+  final List<RecoveryBankAccountOption> bankAccounts;
 
-  const _DisposalSettlementDialog({required this.item});
+  const _DisposalSettlementDialog({
+    required this.item,
+    required this.bankAccounts,
+  });
 
   @override
   State<_DisposalSettlementDialog> createState() =>
@@ -29,6 +37,9 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
   late final TextEditingController _recoveredController;
   late final TextEditingController _penaltyController;
   late final TextEditingController _noteController;
+  RecoverySettlementPaymentMethod _paymentMethod =
+      RecoverySettlementPaymentMethod.cash;
+  int? _bankAccountId;
   String? _errorMessage;
 
   @override
@@ -38,7 +49,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
       text: widget.item.loan.totalValue.toStringAsFixed(0),
     );
     _recoveredController = TextEditingController(
-      text: widget.item.account.totalPayable.toStringAsFixed(0),
+      text: widget.item.verifiedTotalPayable.toStringAsFixed(0),
     );
     _penaltyController = TextEditingController(text: '0');
     _noteController = TextEditingController(
@@ -58,7 +69,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final payable = widget.item.account.totalPayable;
+    final payable = widget.item.verifiedTotalPayable;
     final penalty = _number(_penaltyController.text);
     final recovered = _number(_recoveredController.text);
     final settlementTotal = payable + penalty;
@@ -348,6 +359,8 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             balanceDue: balanceDue,
             surplus: surplus,
           ),
+          const SizedBox(height: 14),
+          _paymentSelection(),
           if (_errorMessage != null) ...[
             const SizedBox(height: 12),
             _validationMessage(_errorMessage!),
@@ -402,6 +415,74 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
       ),
     );
   }
+
+  Widget _paymentSelection() {
+    final needsBank = _paymentMethod.requiresBankAccount;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recovery Proceeds Received In',
+          style: GirviStyles.caption.copyWith(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<RecoverySettlementPaymentMethod>(
+          initialValue: _paymentMethod,
+          isExpanded: true,
+          items: [
+            for (final method in RecoverySettlementPaymentMethod.values)
+              DropdownMenuItem(value: method, child: Text(method.label)),
+          ],
+          onChanged: (method) {
+            if (method == null) return;
+            setState(() {
+              _paymentMethod = method;
+              if (!method.requiresBankAccount) _bankAccountId = null;
+            });
+          },
+          decoration: _dropdownDecoration('Payment method'),
+        ),
+        if (needsBank) ...[
+          const SizedBox(height: 10),
+          DropdownButtonFormField<int>(
+            initialValue: _bankAccountId,
+            isExpanded: true,
+            items: [
+              for (final account in widget.bankAccounts)
+                DropdownMenuItem(value: account.id, child: Text(account.label)),
+            ],
+            onChanged: widget.bankAccounts.isEmpty
+                ? null
+                : (value) => setState(() => _bankAccountId = value),
+            decoration: _dropdownDecoration(
+              widget.bankAccounts.isEmpty
+                  ? 'No active bank account configured'
+                  : 'Deposit bank account',
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  InputDecoration _dropdownDecoration(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: GirviColors.bodyBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: GirviColors.cardBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: GirviColors.cardBorder),
+        ),
+      );
 
   Widget _settlementOutcome({
     required double payable,
@@ -662,6 +743,13 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
       });
       return;
     }
+    if (_paymentMethod.requiresBankAccount && _bankAccountId == null) {
+      setState(() {
+        _errorMessage =
+            'Select the active bank account receiving the recovery proceeds.';
+      });
+      return;
+    }
 
     Navigator.of(context).pop(
       _DisposalSettlementResult(
@@ -669,6 +757,8 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
         recoveredAmount: recoveredAmount,
         penaltyAmount: _number(_penaltyController.text),
         note: _noteController.text.trim(),
+        paymentMethod: _paymentMethod,
+        bankAccountId: _bankAccountId,
       ),
     );
   }

@@ -235,7 +235,7 @@ class GirviBillingModel {
     this.gracePeriodDays = 3,
     this.defaultDuration = '6 Months',
     this.reminderDays = 15,
-    this.noticeDays = 30,
+    this.noticeDays = 7,
     this.termsAndConditions =
         'Interest will be charged per month on the loan amount.\n'
             'Unredeemed pledge accounts will be handled through the overdue recovery process.\n'

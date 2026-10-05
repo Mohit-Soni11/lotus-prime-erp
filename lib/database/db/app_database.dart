@@ -1841,6 +1841,23 @@ class AppDatabase extends _$AppDatabase {
               'v53 Girvi interest method snapshot field applied.',
             );
           }
+          if (from < 54) {
+            await ensureGirviNoticeActionSchema();
+            AppLogger.info('v54 Girvi notice audit metadata applied.');
+          }
+          if (from < 55) {
+            await _ensureGirviCollateralRecoverySchema();
+            AppLogger.info(
+                'v55 Girvi collateral recovery disposition applied.');
+          }
+          if (from < 56) {
+            if (await _tableExists('girvi_billing_settings')) {
+              await customStatement(
+                'UPDATE "girvi_billing_settings" SET "notice_days" = 7',
+              );
+            }
+            AppLogger.info('v56 one-week Girvi notice workflow applied.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -1854,6 +1871,7 @@ class AppDatabase extends _$AppDatabase {
 
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
+          await _ensureGirviCollateralRecoverySchema();
           await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureCustomerAccountLedgerSchema();
           await ensureSalesCustomerMetalSettlementSchema();
@@ -1967,6 +1985,46 @@ class AppDatabase extends _$AppDatabase {
     for (final statement in _girviNoticeActionIndexSql) {
       await customStatement(statement);
     }
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS "trg_girvi_notice_one_approved_stage"
+      BEFORE INSERT ON "girvi_notice_actions"
+      WHEN NEW.action_type IN (
+        'FIRST_NOTICE_PREPARED',
+        'SECOND_NOTICE_PREPARED',
+        'FINAL_NOTICE_PREPARED'
+      )
+      AND EXISTS (
+        SELECT 1 FROM "girvi_notice_actions"
+        WHERE "girvi_id" = NEW."girvi_id"
+          AND "action_type" = NEW."action_type"
+      )
+      BEGIN
+        SELECT RAISE(ABORT, 'Approved notice stage already exists');
+      END
+    ''');
+  }
+
+  Future<void> _ensureGirviCollateralRecoverySchema() async {
+    if (!await _tableExists('girvi_loan_items')) return;
+    await _addColumnIfMissing(
+      tableName: 'girvi_loan_items',
+      columnName: 'recovery_disposition_status',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'girvi_loan_items',
+      columnName: 'recovery_disposition_reference',
+      declaration: 'TEXT',
+    );
+    await _addColumnIfMissing(
+      tableName: 'girvi_loan_items',
+      columnName: 'recovery_disposed_at',
+      declaration: 'INTEGER',
+    );
+    await customStatement('''
+      CREATE INDEX IF NOT EXISTS "idx_girvi_item_recovery_disposition"
+      ON "girvi_loan_items" ("recovery_disposition_status", "recovery_disposed_at")
+    ''');
   }
 
   /// Stores finalized financial-period values for document and recovery
@@ -2002,6 +2060,26 @@ class AppDatabase extends _$AppDatabase {
     await customStatement('''
       CREATE INDEX IF NOT EXISTS "idx_girvi_interest_snapshots_loan"
       ON "girvi_interest_period_snapshots" ("girvi_id", "period_sequence")
+    ''');
+    final loanColumns = await _tableColumns('girvi_loans');
+    if (!loanColumns.contains('release_date') ||
+        !loanColumns.contains('status')) {
+      return;
+    }
+    // v52 wrote the single simple-interest period as finalized immediately.
+    // Re-open only active legacy loans so their interest can continue to grow;
+    // released and recovery-closed accounts remain historically immutable.
+    await customStatement('''
+      UPDATE girvi_interest_period_snapshots
+      SET is_finalized = 0, updated_at = (strftime('%s', 'now') * 1000)
+      WHERE is_finalized = 1
+        AND lower(interest_type) = 'simple'
+        AND EXISTS (
+          SELECT 1 FROM girvi_loans
+          WHERE girvi_loans.id = girvi_interest_period_snapshots.girvi_id
+            AND girvi_loans.release_date IS NULL
+            AND girvi_loans.status <> 'AUCTIONED'
+        )
     ''');
   }
 
@@ -2621,7 +2699,7 @@ const List<String> _billingSetupSchemaSafetySql = [
     "grace_period_days" INTEGER NOT NULL DEFAULT 3,
     "default_duration" TEXT NOT NULL DEFAULT '6 Months',
     "reminder_days" INTEGER NOT NULL DEFAULT 15,
-    "notice_days" INTEGER NOT NULL DEFAULT 30,
+    "notice_days" INTEGER NOT NULL DEFAULT 7,
     "terms_and_conditions" TEXT NOT NULL DEFAULT '',
     "terms_and_conditions_hindi" TEXT NOT NULL DEFAULT 'ऋण राशि पर ब्याज प्रति माह लिया जाएगा।
 नोटिस अवधि के बाद न छुड़ाए गए आभूषणों की नीलामी लागू कानून के अनुसार की जा सकती है।
@@ -2740,7 +2818,7 @@ const List<String> _billingSetupSchemaSafetySql = [
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "grace_period_days" INTEGER NOT NULL DEFAULT 3',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "default_duration" TEXT NOT NULL DEFAULT "6 Months"',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "reminder_days" INTEGER NOT NULL DEFAULT 15',
-  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "notice_days" INTEGER NOT NULL DEFAULT 30',
+  'ALTER TABLE "girvi_billing_settings" ADD COLUMN "notice_days" INTEGER NOT NULL DEFAULT 7',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "terms_and_conditions" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "terms_and_conditions_hindi" TEXT NOT NULL DEFAULT ""',
   'ALTER TABLE "girvi_billing_settings" ADD COLUMN "customer_declaration" TEXT NOT NULL DEFAULT ""',
@@ -2973,7 +3051,12 @@ CREATE TABLE IF NOT EXISTS "girvi_notice_actions" (
   "action_type" TEXT NOT NULL,
   "notice_stage" INTEGER,
   "notice_text" TEXT,
+  "document_hash" TEXT,
   "action_note" TEXT,
+  "performed_by" TEXT,
+  "approved_by" TEXT,
+  "approved_at" INTEGER,
+  "notice_deadline_at" INTEGER,
   "pledged_valuation" REAL NOT NULL DEFAULT 0.0,
   "recovered_amount" REAL NOT NULL DEFAULT 0.0,
   "penalty_amount" REAL NOT NULL DEFAULT 0.0,
@@ -2991,6 +3074,11 @@ CREATE TABLE IF NOT EXISTS "girvi_notice_actions" (
 
 const List<String> _girviNoticeActionColumnSafetySql = [
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_stage" INTEGER',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "document_hash" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "performed_by" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "approved_by" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "approved_at" INTEGER',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_deadline_at" INTEGER',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "pledged_valuation" REAL NOT NULL DEFAULT 0.0',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "recovered_amount" REAL NOT NULL DEFAULT 0.0',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "penalty_amount" REAL NOT NULL DEFAULT 0.0',

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 
 import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_interest_period_snapshot.dart';
+import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 
 /// Owns the persisted financial timeline used by notices and recovery.
@@ -137,7 +138,10 @@ class GirviInterestPeriodSnapshotRepository {
           opening: principal,
           months: months,
           interest: interest,
-          finalized: true,
+          // A simple-interest account has one continually growing period. It
+          // becomes immutable only once the loan itself is released.
+          finalized: loan.releaseDate != null ||
+              loan.girviStatus == GirviStatus.auctioned,
         ),
       ];
     }

@@ -87,20 +87,15 @@ void main() {
       () async {
     await controller.load();
 
-    const exactTerms =
-        'Interest is payable every month.\n'
+    const exactTerms = 'Interest is payable every month.\n'
         'Original receipt is required for release.';
-    const exactTermsHindi =
-        'ब्याज हर महीने देय होगा।\n'
+    const exactTermsHindi = 'ब्याज हर महीने देय होगा।\n'
         'छुड़ाने के लिए मूल रसीद आवश्यक है।';
-    const exactDeclaration =
-        'I have verified all pledge details.\n'
+    const exactDeclaration = 'I have verified all pledge details.\n'
         'I accept the shop valuation.';
-    const exactDeclarationHindi =
-        'मैंने सभी गिरवी विवरण जांच लिए हैं।\n'
+    const exactDeclarationHindi = 'मैंने सभी गिरवी विवरण जांच लिए हैं।\n'
         'मैं दुकान का मूल्यांकन स्वीकार करता हूं।';
-    const exactFooter =
-        'Please keep this pledge receipt safely.\n'
+    const exactFooter = 'Please keep this pledge receipt safely.\n'
         'कृपया यह गिरवी रसीद सुरक्षित रखें।';
 
     controller.updateInput(
@@ -145,6 +140,10 @@ void main() {
     final saved = await repo.fetch();
     expect(saved.girviPrefix, GirviBillingModel.defaults.girviPrefix);
     expect(saved.startingNumber, GirviBillingModel.defaults.startingNumber);
+  });
+
+  test('Girvi Billing defaults the recovery notice interval to one week', () {
+    expect(GirviBillingModel.defaults.noticeDays, 7);
   });
 
   test('Girvi Billing keeps metal invoice settings independent', () async {

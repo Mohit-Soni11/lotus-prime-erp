@@ -35,4 +35,9 @@ class GirviLoanItems extends Table with BaseTable {
 
   TextColumn get notes => text().nullable()();
   BoolColumn get isLegacy => boolean().withDefault(const Constant(false))();
+
+  /// Set only when pledged collateral leaves custody through recovery.
+  TextColumn get recoveryDispositionStatus => text().nullable()();
+  TextColumn get recoveryDispositionReference => text().nullable()();
+  DateTimeColumn get recoveryDisposedAt => dateTime().nullable()();
 }

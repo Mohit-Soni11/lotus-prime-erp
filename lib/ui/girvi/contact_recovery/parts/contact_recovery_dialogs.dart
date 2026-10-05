@@ -170,10 +170,6 @@ class _NoticeEditorDialog extends StatefulWidget {
   final Map<GirviNoticeLanguage, String> initialTexts;
   final GirviNoticeLanguage initialLanguage;
   final Future<void> Function(GirviNoticeLanguage language, String text) onCopy;
-  final Future<void> Function(GirviNoticeLanguage language, String text)
-      onPrint;
-  final Future<void> Function(GirviNoticeLanguage language, String text)
-      onShare;
   final Future<bool> Function(GirviNoticeLanguage language, String text) onSave;
 
   const _NoticeEditorDialog({
@@ -182,8 +178,6 @@ class _NoticeEditorDialog extends StatefulWidget {
     required this.initialTexts,
     required this.initialLanguage,
     required this.onCopy,
-    required this.onPrint,
-    required this.onShare,
     required this.onSave,
   });
 
@@ -374,14 +368,6 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
           onPressed: _busy ? null : () => _run(widget.onCopy),
           child: Text('Copy Text', style: _actionTextStyle()),
         ),
-        TextButton(
-          onPressed: _busy ? null : () => _run(widget.onShare),
-          child: Text('Share PDF', style: _actionTextStyle()),
-        ),
-        TextButton(
-          onPressed: _busy ? null : () => _run(widget.onPrint),
-          child: Text('Print PDF', style: _actionTextStyle()),
-        ),
         ElevatedButton(
           onPressed: _busy ? null : _save,
           style: ElevatedButton.styleFrom(
@@ -401,7 +387,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                   ),
                 )
               : Text(
-                  'Save Notice',
+                  'Approve & Save Notice',
                   style: GoogleFonts.inter(fontWeight: FontWeight.w800),
                 ),
         ),

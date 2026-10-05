@@ -38,8 +38,8 @@ class GirviBillingSettings extends Table with BaseTable {
 
   // Days before expiry to send reminder
   IntColumn get reminderDays => integer().withDefault(const Constant(15))();
-  // Days after expiry before legal notice is issued
-  IntColumn get noticeDays => integer().withDefault(const Constant(30))();
+  // Required interval between recovery notices and before recovery eligibility.
+  IntColumn get noticeDays => integer().withDefault(const Constant(7))();
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECTION 4 — TERMS & PRINT

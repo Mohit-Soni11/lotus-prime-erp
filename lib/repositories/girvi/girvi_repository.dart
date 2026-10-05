@@ -84,6 +84,7 @@ class GirviRepository {
     String searchQuery = '',
     int? customerId,
     int? loanId,
+    bool includeAuctioned = false,
   }) async {
     await purgeExpiredReleasedLoans();
 
@@ -212,7 +213,11 @@ class GirviRepository {
                 legacyPrincipalRepaidByLoan[loan.id] ?? 0,
           );
         })
-        .where((item) => item.loan.girviStatus != GirviStatus.auctioned)
+        .where(
+          (item) =>
+              includeAuctioned ||
+              item.loan.girviStatus != GirviStatus.auctioned,
+        )
         .toList();
 
     // Search filter (client-side for simplicity)

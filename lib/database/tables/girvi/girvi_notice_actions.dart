@@ -20,7 +20,14 @@ class GirviNoticeActions extends Table with BaseTable {
   TextColumn get actionType => text()();
   IntColumn get noticeStage => integer().nullable()();
   TextColumn get noticeText => text().nullable()();
+  TextColumn get documentHash => text().nullable()();
   TextColumn get actionNote => text().nullable()();
+
+  /// The operator and approval metadata make a saved legal document traceable.
+  TextColumn get performedBy => text().nullable()();
+  TextColumn get approvedBy => text().nullable()();
+  DateTimeColumn get approvedAt => dateTime().nullable()();
+  DateTimeColumn get noticeDeadlineAt => dateTime().nullable()();
 
   RealColumn get pledgedValuation => real().withDefault(const Constant(0.0))();
   RealColumn get recoveredAmount => real().withDefault(const Constant(0.0))();

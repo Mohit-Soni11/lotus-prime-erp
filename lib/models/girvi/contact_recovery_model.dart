@@ -27,6 +27,35 @@ enum ContactRecoveryFilter {
   settled,
 }
 
+enum RecoverySettlementPaymentMethod {
+  cash('CASH', 'Cash', false),
+  upi('UPI', 'UPI', true),
+  neft('NEFT', 'NEFT', true),
+  rtgs('RTGS', 'RTGS', true),
+  imps('IMPS', 'IMPS', true),
+  cheque('CHEQUE', 'Cheque', true);
+
+  const RecoverySettlementPaymentMethod(
+    this.dbValue,
+    this.label,
+    this.requiresBankAccount,
+  );
+
+  final String dbValue;
+  final String label;
+  final bool requiresBankAccount;
+}
+
+class RecoveryBankAccountOption {
+  const RecoveryBankAccountOption({
+    required this.id,
+    required this.label,
+  });
+
+  final int id;
+  final String label;
+}
+
 class ContactRecoveryCase {
   final GirviLoanWithCustomer account;
   final int noticePeriodDays;
@@ -150,6 +179,36 @@ class ContactRecoveryCase {
     return null;
   }
 
+  GirviNoticeAction? get latestPreparedNoticeAction {
+    final notices = preparedNoticeActions;
+    return notices.isEmpty ? null : notices.last;
+  }
+
+  DateTime? get nextNoticeAvailableAt {
+    final latest = latestPreparedNoticeAction;
+    if (latest == null || highestPreparedNoticeStage >= 3) return null;
+    return latest.noticeDeadlineAt ??
+        latest.actionAt.add(Duration(days: noticePeriodDays));
+  }
+
+  bool get canPrepareNextNotice {
+    final availableAt = nextNoticeAvailableAt;
+    return nextNoticeType != null &&
+        (availableAt == null ||
+            !DateUtils.dateOnly(now).isBefore(DateUtils.dateOnly(availableAt)));
+  }
+
+  int get daysUntilNextNotice {
+    final availableAt = nextNoticeAvailableAt;
+    if (availableAt == null) return 0;
+    return math.max(
+      0,
+      DateUtils.dateOnly(availableAt)
+          .difference(DateUtils.dateOnly(now))
+          .inDays,
+    );
+  }
+
   bool get canInitiateCollateralRecovery =>
       !hasDisposalSettlement &&
       !hasCollateralRecoveryInitiated &&
@@ -234,7 +293,6 @@ class ContactRecoveryCase {
     if (stage != null) return stage;
     switch (action.actionType) {
       case GirviNoticeActionTypes.firstNoticePrepared:
-      case GirviNoticeActionTypes.noticeDraftCopied:
         return 1;
       case GirviNoticeActionTypes.secondNoticePrepared:
         return 2;
@@ -263,9 +321,8 @@ class ContactRecoveryCase {
   bool get isFinalNoticeCycleComplete {
     final finalAction = finalNoticeAction;
     if (finalAction == null) return false;
-    final readyDate = DateUtils.dateOnly(
-      finalAction.actionAt.add(Duration(days: noticePeriodDays)),
-    );
+    final readyDate = DateUtils.dateOnly(finalAction.noticeDeadlineAt ??
+        finalAction.actionAt.add(Duration(days: noticePeriodDays)));
     return !DateUtils.dateOnly(now).isBefore(readyDate);
   }
 
@@ -312,9 +369,13 @@ class ContactRecoveryCase {
       case ContactRecoveryStage.firstNoticeDue:
         return highestPreparedNoticeStage == 0
             ? 'Prepare the first customer notice.'
-            : 'First notice is prepared. Continue with the second notice when required.';
+            : canPrepareNextNotice
+                ? 'First notice is complete. The second notice can now be prepared.'
+                : 'First notice is complete. Second notice is available in $daysUntilNextNotice day${daysUntilNextNotice == 1 ? '' : 's'}.';
       case ContactRecoveryStage.secondNoticeDue:
-        return 'Second notice is prepared. Continue with the final notice when required.';
+        return canPrepareNextNotice
+            ? 'Second notice is complete. The final notice can now be prepared.'
+            : 'Second notice is complete. Final notice is available in $daysUntilNextNotice day${daysUntilNextNotice == 1 ? '' : 's'}.';
       case ContactRecoveryStage.finalNoticeDue:
         return 'Final notice is prepared. Wait for the review cycle before recovery approval.';
       case ContactRecoveryStage.disposalReady:
@@ -329,9 +390,15 @@ class ContactRecoveryCase {
   String get primaryActionLabel {
     switch (stage) {
       case ContactRecoveryStage.firstNoticeDue:
-        return 'Prepare First Notice';
+        return highestPreparedNoticeStage == 0
+            ? 'Prepare First Notice'
+            : canPrepareNextNotice
+                ? 'Prepare Second Notice'
+                : 'Second Notice Pending';
       case ContactRecoveryStage.secondNoticeDue:
-        return 'Prepare Second Notice';
+        return canPrepareNextNotice
+            ? 'Prepare Final Notice'
+            : 'Final Notice Pending';
       case ContactRecoveryStage.finalNoticeDue:
         return 'Prepare Final Notice';
       case ContactRecoveryStage.disposalReady:
@@ -449,7 +516,7 @@ class ContactRecoveryState {
       stats: ContactRecoveryStats.empty(),
       filter: ContactRecoveryFilter.all,
       searchQuery: '',
-      noticePeriodDays: 30,
+      noticePeriodDays: 7,
       isLoading: true,
     );
   }

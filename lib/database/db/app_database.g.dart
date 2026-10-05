@@ -22529,6 +22529,25 @@ class $GirviLoanItemsTable extends GirviLoanItems
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_legacy" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _recoveryDispositionStatusMeta =
+      const VerificationMeta('recoveryDispositionStatus');
+  @override
+  late final GeneratedColumn<String> recoveryDispositionStatus =
+      GeneratedColumn<String>('recovery_disposition_status', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _recoveryDispositionReferenceMeta =
+      const VerificationMeta('recoveryDispositionReference');
+  @override
+  late final GeneratedColumn<String> recoveryDispositionReference =
+      GeneratedColumn<String>(
+          'recovery_disposition_reference', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _recoveryDisposedAtMeta =
+      const VerificationMeta('recoveryDisposedAt');
+  @override
+  late final GeneratedColumn<DateTime> recoveryDisposedAt =
+      GeneratedColumn<DateTime>('recovery_disposed_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -22551,7 +22570,10 @@ class $GirviLoanItemsTable extends GirviLoanItems
         ratePerGram,
         valuationAmount,
         notes,
-        isLegacy
+        isLegacy,
+        recoveryDispositionStatus,
+        recoveryDispositionReference,
+        recoveryDisposedAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -22674,6 +22696,26 @@ class $GirviLoanItemsTable extends GirviLoanItems
       context.handle(_isLegacyMeta,
           isLegacy.isAcceptableOrUnknown(data['is_legacy']!, _isLegacyMeta));
     }
+    if (data.containsKey('recovery_disposition_status')) {
+      context.handle(
+          _recoveryDispositionStatusMeta,
+          recoveryDispositionStatus.isAcceptableOrUnknown(
+              data['recovery_disposition_status']!,
+              _recoveryDispositionStatusMeta));
+    }
+    if (data.containsKey('recovery_disposition_reference')) {
+      context.handle(
+          _recoveryDispositionReferenceMeta,
+          recoveryDispositionReference.isAcceptableOrUnknown(
+              data['recovery_disposition_reference']!,
+              _recoveryDispositionReferenceMeta));
+    }
+    if (data.containsKey('recovery_disposed_at')) {
+      context.handle(
+          _recoveryDisposedAtMeta,
+          recoveryDisposedAt.isAcceptableOrUnknown(
+              data['recovery_disposed_at']!, _recoveryDisposedAtMeta));
+    }
     return context;
   }
 
@@ -22726,6 +22768,15 @@ class $GirviLoanItemsTable extends GirviLoanItems
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       isLegacy: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_legacy'])!,
+      recoveryDispositionStatus: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}recovery_disposition_status']),
+      recoveryDispositionReference: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}recovery_disposition_reference']),
+      recoveryDisposedAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime,
+          data['${effectivePrefix}recovery_disposed_at']),
     );
   }
 
@@ -22757,6 +22808,11 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
   final double valuationAmount;
   final String? notes;
   final bool isLegacy;
+
+  /// Set only when pledged collateral leaves custody through recovery.
+  final String? recoveryDispositionStatus;
+  final String? recoveryDispositionReference;
+  final DateTime? recoveryDisposedAt;
   const GirviLoanItem(
       {required this.id,
       required this.createdAt,
@@ -22778,7 +22834,10 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       required this.ratePerGram,
       required this.valuationAmount,
       this.notes,
-      required this.isLegacy});
+      required this.isLegacy,
+      this.recoveryDispositionStatus,
+      this.recoveryDispositionReference,
+      this.recoveryDisposedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -22812,6 +22871,17 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       map['notes'] = Variable<String>(notes);
     }
     map['is_legacy'] = Variable<bool>(isLegacy);
+    if (!nullToAbsent || recoveryDispositionStatus != null) {
+      map['recovery_disposition_status'] =
+          Variable<String>(recoveryDispositionStatus);
+    }
+    if (!nullToAbsent || recoveryDispositionReference != null) {
+      map['recovery_disposition_reference'] =
+          Variable<String>(recoveryDispositionReference);
+    }
+    if (!nullToAbsent || recoveryDisposedAt != null) {
+      map['recovery_disposed_at'] = Variable<DateTime>(recoveryDisposedAt);
+    }
     return map;
   }
 
@@ -22845,6 +22915,17 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       isLegacy: Value(isLegacy),
+      recoveryDispositionStatus:
+          recoveryDispositionStatus == null && nullToAbsent
+              ? const Value.absent()
+              : Value(recoveryDispositionStatus),
+      recoveryDispositionReference:
+          recoveryDispositionReference == null && nullToAbsent
+              ? const Value.absent()
+              : Value(recoveryDispositionReference),
+      recoveryDisposedAt: recoveryDisposedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recoveryDisposedAt),
     );
   }
 
@@ -22874,6 +22955,12 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       valuationAmount: serializer.fromJson<double>(json['valuationAmount']),
       notes: serializer.fromJson<String?>(json['notes']),
       isLegacy: serializer.fromJson<bool>(json['isLegacy']),
+      recoveryDispositionStatus:
+          serializer.fromJson<String?>(json['recoveryDispositionStatus']),
+      recoveryDispositionReference:
+          serializer.fromJson<String?>(json['recoveryDispositionReference']),
+      recoveryDisposedAt:
+          serializer.fromJson<DateTime?>(json['recoveryDisposedAt']),
     );
   }
   @override
@@ -22902,6 +22989,11 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       'valuationAmount': serializer.toJson<double>(valuationAmount),
       'notes': serializer.toJson<String?>(notes),
       'isLegacy': serializer.toJson<bool>(isLegacy),
+      'recoveryDispositionStatus':
+          serializer.toJson<String?>(recoveryDispositionStatus),
+      'recoveryDispositionReference':
+          serializer.toJson<String?>(recoveryDispositionReference),
+      'recoveryDisposedAt': serializer.toJson<DateTime?>(recoveryDisposedAt),
     };
   }
 
@@ -22926,7 +23018,10 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           double? ratePerGram,
           double? valuationAmount,
           Value<String?> notes = const Value.absent(),
-          bool? isLegacy}) =>
+          bool? isLegacy,
+          Value<String?> recoveryDispositionStatus = const Value.absent(),
+          Value<String?> recoveryDispositionReference = const Value.absent(),
+          Value<DateTime?> recoveryDisposedAt = const Value.absent()}) =>
       GirviLoanItem(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -22951,6 +23046,15 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
         valuationAmount: valuationAmount ?? this.valuationAmount,
         notes: notes.present ? notes.value : this.notes,
         isLegacy: isLegacy ?? this.isLegacy,
+        recoveryDispositionStatus: recoveryDispositionStatus.present
+            ? recoveryDispositionStatus.value
+            : this.recoveryDispositionStatus,
+        recoveryDispositionReference: recoveryDispositionReference.present
+            ? recoveryDispositionReference.value
+            : this.recoveryDispositionReference,
+        recoveryDisposedAt: recoveryDisposedAt.present
+            ? recoveryDisposedAt.value
+            : this.recoveryDisposedAt,
       );
   GirviLoanItem copyWithCompanion(GirviLoanItemsCompanion data) {
     return GirviLoanItem(
@@ -22988,6 +23092,15 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           : this.valuationAmount,
       notes: data.notes.present ? data.notes.value : this.notes,
       isLegacy: data.isLegacy.present ? data.isLegacy.value : this.isLegacy,
+      recoveryDispositionStatus: data.recoveryDispositionStatus.present
+          ? data.recoveryDispositionStatus.value
+          : this.recoveryDispositionStatus,
+      recoveryDispositionReference: data.recoveryDispositionReference.present
+          ? data.recoveryDispositionReference.value
+          : this.recoveryDispositionReference,
+      recoveryDisposedAt: data.recoveryDisposedAt.present
+          ? data.recoveryDisposedAt.value
+          : this.recoveryDisposedAt,
     );
   }
 
@@ -23014,7 +23127,11 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           ..write('ratePerGram: $ratePerGram, ')
           ..write('valuationAmount: $valuationAmount, ')
           ..write('notes: $notes, ')
-          ..write('isLegacy: $isLegacy')
+          ..write('isLegacy: $isLegacy, ')
+          ..write('recoveryDispositionStatus: $recoveryDispositionStatus, ')
+          ..write(
+              'recoveryDispositionReference: $recoveryDispositionReference, ')
+          ..write('recoveryDisposedAt: $recoveryDisposedAt')
           ..write(')'))
         .toString();
   }
@@ -23041,7 +23158,10 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
         ratePerGram,
         valuationAmount,
         notes,
-        isLegacy
+        isLegacy,
+        recoveryDispositionStatus,
+        recoveryDispositionReference,
+        recoveryDisposedAt
       ]);
   @override
   bool operator ==(Object other) =>
@@ -23067,7 +23187,11 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           other.ratePerGram == this.ratePerGram &&
           other.valuationAmount == this.valuationAmount &&
           other.notes == this.notes &&
-          other.isLegacy == this.isLegacy);
+          other.isLegacy == this.isLegacy &&
+          other.recoveryDispositionStatus == this.recoveryDispositionStatus &&
+          other.recoveryDispositionReference ==
+              this.recoveryDispositionReference &&
+          other.recoveryDisposedAt == this.recoveryDisposedAt);
 }
 
 class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
@@ -23092,6 +23216,9 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
   final Value<double> valuationAmount;
   final Value<String?> notes;
   final Value<bool> isLegacy;
+  final Value<String?> recoveryDispositionStatus;
+  final Value<String?> recoveryDispositionReference;
+  final Value<DateTime?> recoveryDisposedAt;
   const GirviLoanItemsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -23114,6 +23241,9 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     this.valuationAmount = const Value.absent(),
     this.notes = const Value.absent(),
     this.isLegacy = const Value.absent(),
+    this.recoveryDispositionStatus = const Value.absent(),
+    this.recoveryDispositionReference = const Value.absent(),
+    this.recoveryDisposedAt = const Value.absent(),
   });
   GirviLoanItemsCompanion.insert({
     this.id = const Value.absent(),
@@ -23137,6 +23267,9 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     this.valuationAmount = const Value.absent(),
     this.notes = const Value.absent(),
     this.isLegacy = const Value.absent(),
+    this.recoveryDispositionStatus = const Value.absent(),
+    this.recoveryDispositionReference = const Value.absent(),
+    this.recoveryDisposedAt = const Value.absent(),
   })  : girviId = Value(girviId),
         serialNo = Value(serialNo),
         itemName = Value(itemName),
@@ -23164,6 +23297,9 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     Expression<double>? valuationAmount,
     Expression<String>? notes,
     Expression<bool>? isLegacy,
+    Expression<String>? recoveryDispositionStatus,
+    Expression<String>? recoveryDispositionReference,
+    Expression<DateTime>? recoveryDisposedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -23188,6 +23324,12 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
       if (valuationAmount != null) 'valuation_amount': valuationAmount,
       if (notes != null) 'notes': notes,
       if (isLegacy != null) 'is_legacy': isLegacy,
+      if (recoveryDispositionStatus != null)
+        'recovery_disposition_status': recoveryDispositionStatus,
+      if (recoveryDispositionReference != null)
+        'recovery_disposition_reference': recoveryDispositionReference,
+      if (recoveryDisposedAt != null)
+        'recovery_disposed_at': recoveryDisposedAt,
     });
   }
 
@@ -23212,7 +23354,10 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
       Value<double>? ratePerGram,
       Value<double>? valuationAmount,
       Value<String?>? notes,
-      Value<bool>? isLegacy}) {
+      Value<bool>? isLegacy,
+      Value<String?>? recoveryDispositionStatus,
+      Value<String?>? recoveryDispositionReference,
+      Value<DateTime?>? recoveryDisposedAt}) {
     return GirviLoanItemsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
@@ -23236,6 +23381,11 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
       valuationAmount: valuationAmount ?? this.valuationAmount,
       notes: notes ?? this.notes,
       isLegacy: isLegacy ?? this.isLegacy,
+      recoveryDispositionStatus:
+          recoveryDispositionStatus ?? this.recoveryDispositionStatus,
+      recoveryDispositionReference:
+          recoveryDispositionReference ?? this.recoveryDispositionReference,
+      recoveryDisposedAt: recoveryDisposedAt ?? this.recoveryDisposedAt,
     );
   }
 
@@ -23306,6 +23456,18 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     if (isLegacy.present) {
       map['is_legacy'] = Variable<bool>(isLegacy.value);
     }
+    if (recoveryDispositionStatus.present) {
+      map['recovery_disposition_status'] =
+          Variable<String>(recoveryDispositionStatus.value);
+    }
+    if (recoveryDispositionReference.present) {
+      map['recovery_disposition_reference'] =
+          Variable<String>(recoveryDispositionReference.value);
+    }
+    if (recoveryDisposedAt.present) {
+      map['recovery_disposed_at'] =
+          Variable<DateTime>(recoveryDisposedAt.value);
+    }
     return map;
   }
 
@@ -23332,7 +23494,11 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
           ..write('ratePerGram: $ratePerGram, ')
           ..write('valuationAmount: $valuationAmount, ')
           ..write('notes: $notes, ')
-          ..write('isLegacy: $isLegacy')
+          ..write('isLegacy: $isLegacy, ')
+          ..write('recoveryDispositionStatus: $recoveryDispositionStatus, ')
+          ..write(
+              'recoveryDispositionReference: $recoveryDispositionReference, ')
+          ..write('recoveryDisposedAt: $recoveryDisposedAt')
           ..write(')'))
         .toString();
   }
@@ -24462,12 +24628,42 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
   late final GeneratedColumn<String> noticeText = GeneratedColumn<String>(
       'notice_text', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _documentHashMeta =
+      const VerificationMeta('documentHash');
+  @override
+  late final GeneratedColumn<String> documentHash = GeneratedColumn<String>(
+      'document_hash', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _actionNoteMeta =
       const VerificationMeta('actionNote');
   @override
   late final GeneratedColumn<String> actionNote = GeneratedColumn<String>(
       'action_note', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _performedByMeta =
+      const VerificationMeta('performedBy');
+  @override
+  late final GeneratedColumn<String> performedBy = GeneratedColumn<String>(
+      'performed_by', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _approvedByMeta =
+      const VerificationMeta('approvedBy');
+  @override
+  late final GeneratedColumn<String> approvedBy = GeneratedColumn<String>(
+      'approved_by', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _approvedAtMeta =
+      const VerificationMeta('approvedAt');
+  @override
+  late final GeneratedColumn<DateTime> approvedAt = GeneratedColumn<DateTime>(
+      'approved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _noticeDeadlineAtMeta =
+      const VerificationMeta('noticeDeadlineAt');
+  @override
+  late final GeneratedColumn<DateTime> noticeDeadlineAt =
+      GeneratedColumn<DateTime>('notice_deadline_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _pledgedValuationMeta =
       const VerificationMeta('pledgedValuation');
   @override
@@ -24557,7 +24753,12 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
         actionType,
         noticeStage,
         noticeText,
+        documentHash,
         actionNote,
+        performedBy,
+        approvedBy,
+        approvedAt,
+        noticeDeadlineAt,
         pledgedValuation,
         recoveredAmount,
         penaltyAmount,
@@ -24618,11 +24819,41 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
           noticeText.isAcceptableOrUnknown(
               data['notice_text']!, _noticeTextMeta));
     }
+    if (data.containsKey('document_hash')) {
+      context.handle(
+          _documentHashMeta,
+          documentHash.isAcceptableOrUnknown(
+              data['document_hash']!, _documentHashMeta));
+    }
     if (data.containsKey('action_note')) {
       context.handle(
           _actionNoteMeta,
           actionNote.isAcceptableOrUnknown(
               data['action_note']!, _actionNoteMeta));
+    }
+    if (data.containsKey('performed_by')) {
+      context.handle(
+          _performedByMeta,
+          performedBy.isAcceptableOrUnknown(
+              data['performed_by']!, _performedByMeta));
+    }
+    if (data.containsKey('approved_by')) {
+      context.handle(
+          _approvedByMeta,
+          approvedBy.isAcceptableOrUnknown(
+              data['approved_by']!, _approvedByMeta));
+    }
+    if (data.containsKey('approved_at')) {
+      context.handle(
+          _approvedAtMeta,
+          approvedAt.isAcceptableOrUnknown(
+              data['approved_at']!, _approvedAtMeta));
+    }
+    if (data.containsKey('notice_deadline_at')) {
+      context.handle(
+          _noticeDeadlineAtMeta,
+          noticeDeadlineAt.isAcceptableOrUnknown(
+              data['notice_deadline_at']!, _noticeDeadlineAtMeta));
     }
     if (data.containsKey('pledged_valuation')) {
       context.handle(
@@ -24711,8 +24942,18 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
           .read(DriftSqlType.int, data['${effectivePrefix}notice_stage']),
       noticeText: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notice_text']),
+      documentHash: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}document_hash']),
       actionNote: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}action_note']),
+      performedBy: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}performed_by']),
+      approvedBy: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}approved_by']),
+      approvedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}approved_at']),
+      noticeDeadlineAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}notice_deadline_at']),
       pledgedValuation: attachedDatabase.typeMapping.read(
           DriftSqlType.double, data['${effectivePrefix}pledged_valuation'])!,
       recoveredAmount: attachedDatabase.typeMapping.read(
@@ -24753,7 +24994,14 @@ class GirviNoticeActionData extends DataClass
   final String actionType;
   final int? noticeStage;
   final String? noticeText;
+  final String? documentHash;
   final String? actionNote;
+
+  /// The operator and approval metadata make a saved legal document traceable.
+  final String? performedBy;
+  final String? approvedBy;
+  final DateTime? approvedAt;
+  final DateTime? noticeDeadlineAt;
   final double pledgedValuation;
   final double recoveredAmount;
   final double penaltyAmount;
@@ -24773,7 +25021,12 @@ class GirviNoticeActionData extends DataClass
       required this.actionType,
       this.noticeStage,
       this.noticeText,
+      this.documentHash,
       this.actionNote,
+      this.performedBy,
+      this.approvedBy,
+      this.approvedAt,
+      this.noticeDeadlineAt,
       required this.pledgedValuation,
       required this.recoveredAmount,
       required this.penaltyAmount,
@@ -24801,8 +25054,23 @@ class GirviNoticeActionData extends DataClass
     if (!nullToAbsent || noticeText != null) {
       map['notice_text'] = Variable<String>(noticeText);
     }
+    if (!nullToAbsent || documentHash != null) {
+      map['document_hash'] = Variable<String>(documentHash);
+    }
     if (!nullToAbsent || actionNote != null) {
       map['action_note'] = Variable<String>(actionNote);
+    }
+    if (!nullToAbsent || performedBy != null) {
+      map['performed_by'] = Variable<String>(performedBy);
+    }
+    if (!nullToAbsent || approvedBy != null) {
+      map['approved_by'] = Variable<String>(approvedBy);
+    }
+    if (!nullToAbsent || approvedAt != null) {
+      map['approved_at'] = Variable<DateTime>(approvedAt);
+    }
+    if (!nullToAbsent || noticeDeadlineAt != null) {
+      map['notice_deadline_at'] = Variable<DateTime>(noticeDeadlineAt);
     }
     map['pledged_valuation'] = Variable<double>(pledgedValuation);
     map['recovered_amount'] = Variable<double>(recoveredAmount);
@@ -24841,9 +25109,24 @@ class GirviNoticeActionData extends DataClass
       noticeText: noticeText == null && nullToAbsent
           ? const Value.absent()
           : Value(noticeText),
+      documentHash: documentHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(documentHash),
       actionNote: actionNote == null && nullToAbsent
           ? const Value.absent()
           : Value(actionNote),
+      performedBy: performedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(performedBy),
+      approvedBy: approvedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(approvedBy),
+      approvedAt: approvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(approvedAt),
+      noticeDeadlineAt: noticeDeadlineAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(noticeDeadlineAt),
       pledgedValuation: Value(pledgedValuation),
       recoveredAmount: Value(recoveredAmount),
       penaltyAmount: Value(penaltyAmount),
@@ -24877,7 +25160,13 @@ class GirviNoticeActionData extends DataClass
       actionType: serializer.fromJson<String>(json['actionType']),
       noticeStage: serializer.fromJson<int?>(json['noticeStage']),
       noticeText: serializer.fromJson<String?>(json['noticeText']),
+      documentHash: serializer.fromJson<String?>(json['documentHash']),
       actionNote: serializer.fromJson<String?>(json['actionNote']),
+      performedBy: serializer.fromJson<String?>(json['performedBy']),
+      approvedBy: serializer.fromJson<String?>(json['approvedBy']),
+      approvedAt: serializer.fromJson<DateTime?>(json['approvedAt']),
+      noticeDeadlineAt:
+          serializer.fromJson<DateTime?>(json['noticeDeadlineAt']),
       pledgedValuation: serializer.fromJson<double>(json['pledgedValuation']),
       recoveredAmount: serializer.fromJson<double>(json['recoveredAmount']),
       penaltyAmount: serializer.fromJson<double>(json['penaltyAmount']),
@@ -24904,7 +25193,12 @@ class GirviNoticeActionData extends DataClass
       'actionType': serializer.toJson<String>(actionType),
       'noticeStage': serializer.toJson<int?>(noticeStage),
       'noticeText': serializer.toJson<String?>(noticeText),
+      'documentHash': serializer.toJson<String?>(documentHash),
       'actionNote': serializer.toJson<String?>(actionNote),
+      'performedBy': serializer.toJson<String?>(performedBy),
+      'approvedBy': serializer.toJson<String?>(approvedBy),
+      'approvedAt': serializer.toJson<DateTime?>(approvedAt),
+      'noticeDeadlineAt': serializer.toJson<DateTime?>(noticeDeadlineAt),
       'pledgedValuation': serializer.toJson<double>(pledgedValuation),
       'recoveredAmount': serializer.toJson<double>(recoveredAmount),
       'penaltyAmount': serializer.toJson<double>(penaltyAmount),
@@ -24927,7 +25221,12 @@ class GirviNoticeActionData extends DataClass
           String? actionType,
           Value<int?> noticeStage = const Value.absent(),
           Value<String?> noticeText = const Value.absent(),
+          Value<String?> documentHash = const Value.absent(),
           Value<String?> actionNote = const Value.absent(),
+          Value<String?> performedBy = const Value.absent(),
+          Value<String?> approvedBy = const Value.absent(),
+          Value<DateTime?> approvedAt = const Value.absent(),
+          Value<DateTime?> noticeDeadlineAt = const Value.absent(),
           double? pledgedValuation,
           double? recoveredAmount,
           double? penaltyAmount,
@@ -24947,7 +25246,15 @@ class GirviNoticeActionData extends DataClass
         actionType: actionType ?? this.actionType,
         noticeStage: noticeStage.present ? noticeStage.value : this.noticeStage,
         noticeText: noticeText.present ? noticeText.value : this.noticeText,
+        documentHash:
+            documentHash.present ? documentHash.value : this.documentHash,
         actionNote: actionNote.present ? actionNote.value : this.actionNote,
+        performedBy: performedBy.present ? performedBy.value : this.performedBy,
+        approvedBy: approvedBy.present ? approvedBy.value : this.approvedBy,
+        approvedAt: approvedAt.present ? approvedAt.value : this.approvedAt,
+        noticeDeadlineAt: noticeDeadlineAt.present
+            ? noticeDeadlineAt.value
+            : this.noticeDeadlineAt,
         pledgedValuation: pledgedValuation ?? this.pledgedValuation,
         recoveredAmount: recoveredAmount ?? this.recoveredAmount,
         penaltyAmount: penaltyAmount ?? this.penaltyAmount,
@@ -24977,8 +25284,20 @@ class GirviNoticeActionData extends DataClass
           data.noticeStage.present ? data.noticeStage.value : this.noticeStage,
       noticeText:
           data.noticeText.present ? data.noticeText.value : this.noticeText,
+      documentHash: data.documentHash.present
+          ? data.documentHash.value
+          : this.documentHash,
       actionNote:
           data.actionNote.present ? data.actionNote.value : this.actionNote,
+      performedBy:
+          data.performedBy.present ? data.performedBy.value : this.performedBy,
+      approvedBy:
+          data.approvedBy.present ? data.approvedBy.value : this.approvedBy,
+      approvedAt:
+          data.approvedAt.present ? data.approvedAt.value : this.approvedAt,
+      noticeDeadlineAt: data.noticeDeadlineAt.present
+          ? data.noticeDeadlineAt.value
+          : this.noticeDeadlineAt,
       pledgedValuation: data.pledgedValuation.present
           ? data.pledgedValuation.value
           : this.pledgedValuation,
@@ -25022,7 +25341,12 @@ class GirviNoticeActionData extends DataClass
           ..write('actionType: $actionType, ')
           ..write('noticeStage: $noticeStage, ')
           ..write('noticeText: $noticeText, ')
+          ..write('documentHash: $documentHash, ')
           ..write('actionNote: $actionNote, ')
+          ..write('performedBy: $performedBy, ')
+          ..write('approvedBy: $approvedBy, ')
+          ..write('approvedAt: $approvedAt, ')
+          ..write('noticeDeadlineAt: $noticeDeadlineAt, ')
           ..write('pledgedValuation: $pledgedValuation, ')
           ..write('recoveredAmount: $recoveredAmount, ')
           ..write('penaltyAmount: $penaltyAmount, ')
@@ -25039,26 +25363,32 @@ class GirviNoticeActionData extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      createdAt,
-      updatedAt,
-      girviId,
-      actionType,
-      noticeStage,
-      noticeText,
-      actionNote,
-      pledgedValuation,
-      recoveredAmount,
-      penaltyAmount,
-      settlementTotal,
-      customerBalanceDue,
-      customerSurplus,
-      actionAt,
-      deliveryChannel,
-      deliveryStatus,
-      deliveryReference,
-      deliveredAt);
+  int get hashCode => Object.hashAll([
+        id,
+        createdAt,
+        updatedAt,
+        girviId,
+        actionType,
+        noticeStage,
+        noticeText,
+        documentHash,
+        actionNote,
+        performedBy,
+        approvedBy,
+        approvedAt,
+        noticeDeadlineAt,
+        pledgedValuation,
+        recoveredAmount,
+        penaltyAmount,
+        settlementTotal,
+        customerBalanceDue,
+        customerSurplus,
+        actionAt,
+        deliveryChannel,
+        deliveryStatus,
+        deliveryReference,
+        deliveredAt
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -25070,7 +25400,12 @@ class GirviNoticeActionData extends DataClass
           other.actionType == this.actionType &&
           other.noticeStage == this.noticeStage &&
           other.noticeText == this.noticeText &&
+          other.documentHash == this.documentHash &&
           other.actionNote == this.actionNote &&
+          other.performedBy == this.performedBy &&
+          other.approvedBy == this.approvedBy &&
+          other.approvedAt == this.approvedAt &&
+          other.noticeDeadlineAt == this.noticeDeadlineAt &&
           other.pledgedValuation == this.pledgedValuation &&
           other.recoveredAmount == this.recoveredAmount &&
           other.penaltyAmount == this.penaltyAmount &&
@@ -25093,7 +25428,12 @@ class GirviNoticeActionsCompanion
   final Value<String> actionType;
   final Value<int?> noticeStage;
   final Value<String?> noticeText;
+  final Value<String?> documentHash;
   final Value<String?> actionNote;
+  final Value<String?> performedBy;
+  final Value<String?> approvedBy;
+  final Value<DateTime?> approvedAt;
+  final Value<DateTime?> noticeDeadlineAt;
   final Value<double> pledgedValuation;
   final Value<double> recoveredAmount;
   final Value<double> penaltyAmount;
@@ -25113,7 +25453,12 @@ class GirviNoticeActionsCompanion
     this.actionType = const Value.absent(),
     this.noticeStage = const Value.absent(),
     this.noticeText = const Value.absent(),
+    this.documentHash = const Value.absent(),
     this.actionNote = const Value.absent(),
+    this.performedBy = const Value.absent(),
+    this.approvedBy = const Value.absent(),
+    this.approvedAt = const Value.absent(),
+    this.noticeDeadlineAt = const Value.absent(),
     this.pledgedValuation = const Value.absent(),
     this.recoveredAmount = const Value.absent(),
     this.penaltyAmount = const Value.absent(),
@@ -25134,7 +25479,12 @@ class GirviNoticeActionsCompanion
     required String actionType,
     this.noticeStage = const Value.absent(),
     this.noticeText = const Value.absent(),
+    this.documentHash = const Value.absent(),
     this.actionNote = const Value.absent(),
+    this.performedBy = const Value.absent(),
+    this.approvedBy = const Value.absent(),
+    this.approvedAt = const Value.absent(),
+    this.noticeDeadlineAt = const Value.absent(),
     this.pledgedValuation = const Value.absent(),
     this.recoveredAmount = const Value.absent(),
     this.penaltyAmount = const Value.absent(),
@@ -25156,7 +25506,12 @@ class GirviNoticeActionsCompanion
     Expression<String>? actionType,
     Expression<int>? noticeStage,
     Expression<String>? noticeText,
+    Expression<String>? documentHash,
     Expression<String>? actionNote,
+    Expression<String>? performedBy,
+    Expression<String>? approvedBy,
+    Expression<DateTime>? approvedAt,
+    Expression<DateTime>? noticeDeadlineAt,
     Expression<double>? pledgedValuation,
     Expression<double>? recoveredAmount,
     Expression<double>? penaltyAmount,
@@ -25177,7 +25532,12 @@ class GirviNoticeActionsCompanion
       if (actionType != null) 'action_type': actionType,
       if (noticeStage != null) 'notice_stage': noticeStage,
       if (noticeText != null) 'notice_text': noticeText,
+      if (documentHash != null) 'document_hash': documentHash,
       if (actionNote != null) 'action_note': actionNote,
+      if (performedBy != null) 'performed_by': performedBy,
+      if (approvedBy != null) 'approved_by': approvedBy,
+      if (approvedAt != null) 'approved_at': approvedAt,
+      if (noticeDeadlineAt != null) 'notice_deadline_at': noticeDeadlineAt,
       if (pledgedValuation != null) 'pledged_valuation': pledgedValuation,
       if (recoveredAmount != null) 'recovered_amount': recoveredAmount,
       if (penaltyAmount != null) 'penalty_amount': penaltyAmount,
@@ -25201,7 +25561,12 @@ class GirviNoticeActionsCompanion
       Value<String>? actionType,
       Value<int?>? noticeStage,
       Value<String?>? noticeText,
+      Value<String?>? documentHash,
       Value<String?>? actionNote,
+      Value<String?>? performedBy,
+      Value<String?>? approvedBy,
+      Value<DateTime?>? approvedAt,
+      Value<DateTime?>? noticeDeadlineAt,
       Value<double>? pledgedValuation,
       Value<double>? recoveredAmount,
       Value<double>? penaltyAmount,
@@ -25221,7 +25586,12 @@ class GirviNoticeActionsCompanion
       actionType: actionType ?? this.actionType,
       noticeStage: noticeStage ?? this.noticeStage,
       noticeText: noticeText ?? this.noticeText,
+      documentHash: documentHash ?? this.documentHash,
       actionNote: actionNote ?? this.actionNote,
+      performedBy: performedBy ?? this.performedBy,
+      approvedBy: approvedBy ?? this.approvedBy,
+      approvedAt: approvedAt ?? this.approvedAt,
+      noticeDeadlineAt: noticeDeadlineAt ?? this.noticeDeadlineAt,
       pledgedValuation: pledgedValuation ?? this.pledgedValuation,
       recoveredAmount: recoveredAmount ?? this.recoveredAmount,
       penaltyAmount: penaltyAmount ?? this.penaltyAmount,
@@ -25260,8 +25630,23 @@ class GirviNoticeActionsCompanion
     if (noticeText.present) {
       map['notice_text'] = Variable<String>(noticeText.value);
     }
+    if (documentHash.present) {
+      map['document_hash'] = Variable<String>(documentHash.value);
+    }
     if (actionNote.present) {
       map['action_note'] = Variable<String>(actionNote.value);
+    }
+    if (performedBy.present) {
+      map['performed_by'] = Variable<String>(performedBy.value);
+    }
+    if (approvedBy.present) {
+      map['approved_by'] = Variable<String>(approvedBy.value);
+    }
+    if (approvedAt.present) {
+      map['approved_at'] = Variable<DateTime>(approvedAt.value);
+    }
+    if (noticeDeadlineAt.present) {
+      map['notice_deadline_at'] = Variable<DateTime>(noticeDeadlineAt.value);
     }
     if (pledgedValuation.present) {
       map['pledged_valuation'] = Variable<double>(pledgedValuation.value);
@@ -25309,7 +25694,12 @@ class GirviNoticeActionsCompanion
           ..write('actionType: $actionType, ')
           ..write('noticeStage: $noticeStage, ')
           ..write('noticeText: $noticeText, ')
+          ..write('documentHash: $documentHash, ')
           ..write('actionNote: $actionNote, ')
+          ..write('performedBy: $performedBy, ')
+          ..write('approvedBy: $approvedBy, ')
+          ..write('approvedAt: $approvedAt, ')
+          ..write('noticeDeadlineAt: $noticeDeadlineAt, ')
           ..write('pledgedValuation: $pledgedValuation, ')
           ..write('recoveredAmount: $recoveredAmount, ')
           ..write('penaltyAmount: $penaltyAmount, ')
@@ -31049,7 +31439,7 @@ class $GirviBillingSettingsTable extends GirviBillingSettings
       'notice_days', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(30));
+      defaultValue: const Constant(7));
   static const VerificationMeta _termsAndConditionsMeta =
       const VerificationMeta('termsAndConditions');
   @override
@@ -51511,6 +51901,9 @@ typedef $$GirviLoanItemsTableCreateCompanionBuilder = GirviLoanItemsCompanion
   Value<double> valuationAmount,
   Value<String?> notes,
   Value<bool> isLegacy,
+  Value<String?> recoveryDispositionStatus,
+  Value<String?> recoveryDispositionReference,
+  Value<DateTime?> recoveryDisposedAt,
 });
 typedef $$GirviLoanItemsTableUpdateCompanionBuilder = GirviLoanItemsCompanion
     Function({
@@ -51535,6 +51928,9 @@ typedef $$GirviLoanItemsTableUpdateCompanionBuilder = GirviLoanItemsCompanion
   Value<double> valuationAmount,
   Value<String?> notes,
   Value<bool> isLegacy,
+  Value<String?> recoveryDispositionStatus,
+  Value<String?> recoveryDispositionReference,
+  Value<DateTime?> recoveryDisposedAt,
 });
 
 final class $$GirviLoanItemsTableReferences
@@ -51645,6 +52041,18 @@ class $$GirviLoanItemsTableFilterComposer
 
   ColumnFilters<bool> get isLegacy => $composableBuilder(
       column: $table.isLegacy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recoveryDispositionStatus => $composableBuilder(
+      column: $table.recoveryDispositionStatus,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recoveryDispositionReference => $composableBuilder(
+      column: $table.recoveryDispositionReference,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get recoveryDisposedAt => $composableBuilder(
+      column: $table.recoveryDisposedAt,
+      builder: (column) => ColumnFilters(column));
 
   $$GirviLoansTableFilterComposer get girviId {
     final $$GirviLoansTableFilterComposer composer = $composerBuilder(
@@ -51761,6 +52169,19 @@ class $$GirviLoanItemsTableOrderingComposer
   ColumnOrderings<bool> get isLegacy => $composableBuilder(
       column: $table.isLegacy, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get recoveryDispositionStatus => $composableBuilder(
+      column: $table.recoveryDispositionStatus,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get recoveryDispositionReference =>
+      $composableBuilder(
+          column: $table.recoveryDispositionReference,
+          builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get recoveryDisposedAt => $composableBuilder(
+      column: $table.recoveryDisposedAt,
+      builder: (column) => ColumnOrderings(column));
+
   $$GirviLoansTableOrderingComposer get girviId {
     final $$GirviLoansTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -51851,6 +52272,17 @@ class $$GirviLoanItemsTableAnnotationComposer
   GeneratedColumn<bool> get isLegacy =>
       $composableBuilder(column: $table.isLegacy, builder: (column) => column);
 
+  GeneratedColumn<String> get recoveryDispositionStatus => $composableBuilder(
+      column: $table.recoveryDispositionStatus, builder: (column) => column);
+
+  GeneratedColumn<String> get recoveryDispositionReference =>
+      $composableBuilder(
+          column: $table.recoveryDispositionReference,
+          builder: (column) => column);
+
+  GeneratedColumn<DateTime> get recoveryDisposedAt => $composableBuilder(
+      column: $table.recoveryDisposedAt, builder: (column) => column);
+
   $$GirviLoansTableAnnotationComposer get girviId {
     final $$GirviLoansTableAnnotationComposer composer = $composerBuilder(
         composer: this,
@@ -51938,6 +52370,9 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             Value<double> valuationAmount = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<bool> isLegacy = const Value.absent(),
+            Value<String?> recoveryDispositionStatus = const Value.absent(),
+            Value<String?> recoveryDispositionReference = const Value.absent(),
+            Value<DateTime?> recoveryDisposedAt = const Value.absent(),
           }) =>
               GirviLoanItemsCompanion(
             id: id,
@@ -51961,6 +52396,9 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             valuationAmount: valuationAmount,
             notes: notes,
             isLegacy: isLegacy,
+            recoveryDispositionStatus: recoveryDispositionStatus,
+            recoveryDispositionReference: recoveryDispositionReference,
+            recoveryDisposedAt: recoveryDisposedAt,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -51984,6 +52422,9 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             Value<double> valuationAmount = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<bool> isLegacy = const Value.absent(),
+            Value<String?> recoveryDispositionStatus = const Value.absent(),
+            Value<String?> recoveryDispositionReference = const Value.absent(),
+            Value<DateTime?> recoveryDisposedAt = const Value.absent(),
           }) =>
               GirviLoanItemsCompanion.insert(
             id: id,
@@ -52007,6 +52448,9 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             valuationAmount: valuationAmount,
             notes: notes,
             isLegacy: isLegacy,
+            recoveryDispositionStatus: recoveryDispositionStatus,
+            recoveryDispositionReference: recoveryDispositionReference,
+            recoveryDisposedAt: recoveryDisposedAt,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -52798,7 +53242,12 @@ typedef $$GirviNoticeActionsTableCreateCompanionBuilder
   required String actionType,
   Value<int?> noticeStage,
   Value<String?> noticeText,
+  Value<String?> documentHash,
   Value<String?> actionNote,
+  Value<String?> performedBy,
+  Value<String?> approvedBy,
+  Value<DateTime?> approvedAt,
+  Value<DateTime?> noticeDeadlineAt,
   Value<double> pledgedValuation,
   Value<double> recoveredAmount,
   Value<double> penaltyAmount,
@@ -52820,7 +53269,12 @@ typedef $$GirviNoticeActionsTableUpdateCompanionBuilder
   Value<String> actionType,
   Value<int?> noticeStage,
   Value<String?> noticeText,
+  Value<String?> documentHash,
   Value<String?> actionNote,
+  Value<String?> performedBy,
+  Value<String?> approvedBy,
+  Value<DateTime?> approvedAt,
+  Value<DateTime?> noticeDeadlineAt,
   Value<double> pledgedValuation,
   Value<double> recoveredAmount,
   Value<double> penaltyAmount,
@@ -52881,8 +53335,24 @@ class $$GirviNoticeActionsTableFilterComposer
   ColumnFilters<String> get noticeText => $composableBuilder(
       column: $table.noticeText, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get documentHash => $composableBuilder(
+      column: $table.documentHash, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get actionNote => $composableBuilder(
       column: $table.actionNote, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get performedBy => $composableBuilder(
+      column: $table.performedBy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get approvedBy => $composableBuilder(
+      column: $table.approvedBy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get approvedAt => $composableBuilder(
+      column: $table.approvedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get noticeDeadlineAt => $composableBuilder(
+      column: $table.noticeDeadlineAt,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get pledgedValuation => $composableBuilder(
       column: $table.pledgedValuation,
@@ -52973,8 +53443,25 @@ class $$GirviNoticeActionsTableOrderingComposer
   ColumnOrderings<String> get noticeText => $composableBuilder(
       column: $table.noticeText, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get documentHash => $composableBuilder(
+      column: $table.documentHash,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get actionNote => $composableBuilder(
       column: $table.actionNote, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get performedBy => $composableBuilder(
+      column: $table.performedBy, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get approvedBy => $composableBuilder(
+      column: $table.approvedBy, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get approvedAt => $composableBuilder(
+      column: $table.approvedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get noticeDeadlineAt => $composableBuilder(
+      column: $table.noticeDeadlineAt,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get pledgedValuation => $composableBuilder(
       column: $table.pledgedValuation,
@@ -53066,8 +53553,23 @@ class $$GirviNoticeActionsTableAnnotationComposer
   GeneratedColumn<String> get noticeText => $composableBuilder(
       column: $table.noticeText, builder: (column) => column);
 
+  GeneratedColumn<String> get documentHash => $composableBuilder(
+      column: $table.documentHash, builder: (column) => column);
+
   GeneratedColumn<String> get actionNote => $composableBuilder(
       column: $table.actionNote, builder: (column) => column);
+
+  GeneratedColumn<String> get performedBy => $composableBuilder(
+      column: $table.performedBy, builder: (column) => column);
+
+  GeneratedColumn<String> get approvedBy => $composableBuilder(
+      column: $table.approvedBy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get approvedAt => $composableBuilder(
+      column: $table.approvedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get noticeDeadlineAt => $composableBuilder(
+      column: $table.noticeDeadlineAt, builder: (column) => column);
 
   GeneratedColumn<double> get pledgedValuation => $composableBuilder(
       column: $table.pledgedValuation, builder: (column) => column);
@@ -53155,7 +53657,12 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             Value<String> actionType = const Value.absent(),
             Value<int?> noticeStage = const Value.absent(),
             Value<String?> noticeText = const Value.absent(),
+            Value<String?> documentHash = const Value.absent(),
             Value<String?> actionNote = const Value.absent(),
+            Value<String?> performedBy = const Value.absent(),
+            Value<String?> approvedBy = const Value.absent(),
+            Value<DateTime?> approvedAt = const Value.absent(),
+            Value<DateTime?> noticeDeadlineAt = const Value.absent(),
             Value<double> pledgedValuation = const Value.absent(),
             Value<double> recoveredAmount = const Value.absent(),
             Value<double> penaltyAmount = const Value.absent(),
@@ -53176,7 +53683,12 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             actionType: actionType,
             noticeStage: noticeStage,
             noticeText: noticeText,
+            documentHash: documentHash,
             actionNote: actionNote,
+            performedBy: performedBy,
+            approvedBy: approvedBy,
+            approvedAt: approvedAt,
+            noticeDeadlineAt: noticeDeadlineAt,
             pledgedValuation: pledgedValuation,
             recoveredAmount: recoveredAmount,
             penaltyAmount: penaltyAmount,
@@ -53197,7 +53709,12 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             required String actionType,
             Value<int?> noticeStage = const Value.absent(),
             Value<String?> noticeText = const Value.absent(),
+            Value<String?> documentHash = const Value.absent(),
             Value<String?> actionNote = const Value.absent(),
+            Value<String?> performedBy = const Value.absent(),
+            Value<String?> approvedBy = const Value.absent(),
+            Value<DateTime?> approvedAt = const Value.absent(),
+            Value<DateTime?> noticeDeadlineAt = const Value.absent(),
             Value<double> pledgedValuation = const Value.absent(),
             Value<double> recoveredAmount = const Value.absent(),
             Value<double> penaltyAmount = const Value.absent(),
@@ -53218,7 +53735,12 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             actionType: actionType,
             noticeStage: noticeStage,
             noticeText: noticeText,
+            documentHash: documentHash,
             actionNote: actionNote,
+            performedBy: performedBy,
+            approvedBy: approvedBy,
+            approvedAt: approvedAt,
+            noticeDeadlineAt: noticeDeadlineAt,
             pledgedValuation: pledgedValuation,
             recoveredAmount: recoveredAmount,
             penaltyAmount: penaltyAmount,

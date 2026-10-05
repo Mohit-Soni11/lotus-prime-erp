@@ -161,10 +161,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         initialLanguage: GirviNoticeLanguage.hindi,
         onCopy: (language, text) =>
             _copyNoticeText(item, noticeType, language, text),
-        onPrint: (language, text) =>
-            _printNotice(item, noticeType, language, text),
-        onShare: (language, text) =>
-            _shareNotice(item, noticeType, language, text),
         onSave: (language, text) => _controller.recordNoticePrepared(
           item,
           noticeType,
@@ -183,62 +179,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   ) async {
     await Clipboard.setData(ClipboardData(text: noticeText));
     await _controller.recordNoticeDraft(item, noticeText);
-  }
-
-  Future<void> _printNotice(
-    ContactRecoveryCase item,
-    GirviNoticeType noticeType,
-    GirviNoticeLanguage language,
-    String noticeText,
-  ) async {
-    final bytes = await _noticePdfService.build(
-      item: item,
-      noticeType: noticeType,
-      noticeLanguage: language,
-      noticeText: noticeText,
-    );
-    final printed = await Printing.layoutPdf(
-      name: _noticePdfName(item, noticeType, language),
-      onLayout: (_) async => bytes,
-    );
-    if (printed) {
-      await _controller.recordNoticeDeliveryProof(
-        item: item,
-        noticeType: noticeType,
-        noticeText: noticeText,
-        actionType: GirviNoticeActionTypes.noticePdfPrinted,
-        deliveryChannel: 'Printer',
-        deliveryStatus: 'Printed',
-      );
-    }
-  }
-
-  Future<void> _shareNotice(
-    ContactRecoveryCase item,
-    GirviNoticeType noticeType,
-    GirviNoticeLanguage language,
-    String noticeText,
-  ) async {
-    final bytes = await _noticePdfService.build(
-      item: item,
-      noticeType: noticeType,
-      noticeLanguage: language,
-      noticeText: noticeText,
-    );
-    final shared = await Printing.sharePdf(
-      bytes: bytes,
-      filename: _noticePdfName(item, noticeType, language),
-    );
-    if (shared) {
-      await _controller.recordNoticeDeliveryProof(
-        item: item,
-        noticeType: noticeType,
-        noticeText: noticeText,
-        actionType: GirviNoticeActionTypes.noticePdfShared,
-        deliveryChannel: 'Share Sheet',
-        deliveryStatus: 'Shared',
-      );
-    }
   }
 
   Future<void> _viewSavedNotice(
@@ -338,9 +278,14 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   }
 
   Future<void> _closeDisposalSettlement(ContactRecoveryCase item) async {
+    final bankAccounts = await _controller.loadActiveRecoveryBankAccounts();
+    if (!mounted) return;
     final result = await showDialog<_DisposalSettlementResult>(
       context: context,
-      builder: (context) => _DisposalSettlementDialog(item: item),
+      builder: (context) => _DisposalSettlementDialog(
+        item: item,
+        bankAccounts: bankAccounts,
+      ),
     );
 
     if (result == null) return;
@@ -350,6 +295,8 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       recoveredAmount: result.recoveredAmount,
       penaltyAmount: result.penaltyAmount,
       note: result.note,
+      paymentMode: result.paymentMethod.dbValue,
+      bankAccountId: result.bankAccountId,
     );
   }
 
