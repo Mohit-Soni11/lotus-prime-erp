@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:intl/intl.dart';
@@ -31,6 +32,12 @@ class GirviNoticePdfService {
       creator: 'Lotus ERP',
       subject: '${noticeLanguage.label} Girvi notice',
     );
+    final itemImage = await _loadItemImage(item);
+    final headerData = _extractHeaderData(
+      noticeText,
+      fallbackTicketNo: item.loan.ticketNo,
+      fallbackDate: _dateFormat.format(item.now),
+    );
 
     document.addPage(
       pw.MultiPage(
@@ -39,10 +46,29 @@ class GirviNoticePdfService {
           margin: pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
         ),
         build: (context) => [
-          _header(item, noticeType, noticeLanguage, devanagariFont),
+          _header(
+            ticketNo: item.loan.ticketNo,
+            noticeDate: _dateFormat.format(item.now),
+            language: noticeLanguage,
+            devanagariFont: devanagariFont,
+          ),
+          pw.SizedBox(height: 12),
+          _noticeHero(
+            header: headerData,
+            noticeType: noticeType,
+            language: noticeLanguage,
+            devanagariFont: devanagariFont,
+          ),
+          pw.SizedBox(height: 9),
+          _accountSnapshot(
+            item: item,
+            itemImage: itemImage,
+            language: noticeLanguage,
+            devanagariFont: devanagariFont,
+          ),
           pw.SizedBox(height: 10),
           ..._noticeBodyWidgets(
-            _noticeTextWithoutValuation(noticeText),
+            _noticeBodyText(noticeText),
             noticeLanguage,
             devanagariFont,
           ),
@@ -60,6 +86,7 @@ class GirviNoticePdfService {
     required GirviNoticeLanguage noticeLanguage,
     required String noticeText,
     required DateTime savedAt,
+    ContactRecoveryCase? item,
   }) async {
     final devanagariFont = noticeLanguage == GirviNoticeLanguage.hindi
         ? await LotusPdfTheme.loadDevanagariFont()
@@ -71,6 +98,12 @@ class GirviNoticePdfService {
       creator: 'Lotus ERP',
       subject: 'Stored ${noticeLanguage.label} Girvi notice',
     );
+    final itemImage = item == null ? null : await _loadItemImage(item);
+    final headerData = _extractHeaderData(
+      noticeText,
+      fallbackTicketNo: ticketNo,
+      fallbackDate: _dateFormat.format(savedAt),
+    );
 
     document.addPage(
       pw.MultiPage(
@@ -81,14 +114,29 @@ class GirviNoticePdfService {
         build: (context) => [
           _storedNoticeHeader(
             ticketNo,
-            noticeType,
             noticeLanguage,
             devanagariFont,
             savedAt,
           ),
           pw.SizedBox(height: 10),
+          _noticeHero(
+            header: headerData,
+            noticeType: noticeType,
+            language: noticeLanguage,
+            devanagariFont: devanagariFont,
+          ),
+          if (item != null) ...[
+            pw.SizedBox(height: 9),
+            _accountSnapshot(
+              item: item,
+              itemImage: itemImage,
+              language: noticeLanguage,
+              devanagariFont: devanagariFont,
+            ),
+          ],
+          pw.SizedBox(height: 10),
           ..._noticeBodyWidgets(
-            _noticeTextWithoutValuation(noticeText),
+            _noticeBodyText(noticeText),
             noticeLanguage,
             devanagariFont,
           ),
@@ -102,7 +150,6 @@ class GirviNoticePdfService {
 
   pw.Widget _storedNoticeHeader(
     String ticketNo,
-    GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     pw.Font? devanagariFont,
     DateTime savedAt,
@@ -116,38 +163,7 @@ class GirviNoticePdfService {
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Expanded(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  language == GirviNoticeLanguage.hindi
-                      ? 'गिरवी सूचना'
-                      : 'GIRVI NOTICE',
-                  textDirection: pw.TextDirection.ltr,
-                  style: _textStyle(
-                    language,
-                    devanagariFont,
-                    color: PdfColors.white,
-                    fontSize: 22,
-                    bold: true,
-                  ),
-                ),
-                pw.SizedBox(height: 5),
-                pw.Text(
-                  _noticeTitle(noticeType, language).toUpperCase(),
-                  textDirection: pw.TextDirection.ltr,
-                  style: _textStyle(
-                    language,
-                    devanagariFont,
-                    color: _gold,
-                    fontSize: 12.5,
-                    bold: true,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _brandMark(language, devanagariFont),
           pw.SizedBox(width: 14),
           pw.Container(
             width: 158,
@@ -191,12 +207,12 @@ class GirviNoticePdfService {
     );
   }
 
-  pw.Widget _header(
-    ContactRecoveryCase item,
-    GirviNoticeType noticeType,
-    GirviNoticeLanguage language,
-    pw.Font? devanagariFont,
-  ) {
+  pw.Widget _header({
+    required String ticketNo,
+    required String noticeDate,
+    required GirviNoticeLanguage language,
+    required pw.Font? devanagariFont,
+  }) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(14),
       decoration: pw.BoxDecoration(
@@ -206,59 +222,7 @@ class GirviNoticePdfService {
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Expanded(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  language == GirviNoticeLanguage.hindi
-                      ? 'गिरवी सूचना'
-                      : 'GIRVI NOTICE',
-                  textDirection: pw.TextDirection.ltr,
-                  style: _textStyle(
-                    language,
-                    devanagariFont,
-                    color: PdfColors.white,
-                    fontSize: 22,
-                    bold: true,
-                  ),
-                ),
-                pw.SizedBox(height: 5),
-                pw.Text(
-                  _noticeTitle(noticeType, language).toUpperCase(),
-                  textDirection: pw.TextDirection.ltr,
-                  style: _textStyle(
-                    language,
-                    devanagariFont,
-                    color: _gold,
-                    fontSize: 12.5,
-                    bold: true,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-                pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
-                  decoration: pw.BoxDecoration(
-                    color: _goldLight,
-                    borderRadius: pw.BorderRadius.circular(6),
-                    border: pw.Border.all(color: _gold, width: 1.2),
-                  ),
-                  child: pw.Text(
-                    '${_label('Ticket Number', language)}: ${item.loan.ticketNo}',
-                    textDirection: pw.TextDirection.ltr,
-                    style: _textStyle(
-                      language,
-                      devanagariFont,
-                      color: _ink,
-                      fontSize: 13,
-                      bold: true,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _brandMark(language, devanagariFont),
           pw.SizedBox(width: 14),
           pw.Container(
             width: 142,
@@ -271,7 +235,7 @@ class GirviNoticePdfService {
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
                 pw.Text(
-                  _dateFormat.format(item.now),
+                  '${_label('Ticket Number', language)}: $ticketNo',
                   textDirection: pw.TextDirection.ltr,
                   style: _textStyle(
                     language,
@@ -283,7 +247,7 @@ class GirviNoticePdfService {
                 ),
                 pw.SizedBox(height: 4),
                 pw.Text(
-                  _noticeSubtitle(noticeType, language),
+                  '${_label('Notice Date', language)}: $noticeDate',
                   textDirection: pw.TextDirection.ltr,
                   textAlign: pw.TextAlign.right,
                   style: _textStyle(
@@ -299,6 +263,315 @@ class GirviNoticePdfService {
         ],
       ),
     );
+  }
+
+  pw.Widget _brandMark(GirviNoticeLanguage language, pw.Font? devanagariFont) =>
+      pw.Expanded(
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              'LOTUS ERP',
+              style: _textStyle(
+                language,
+                devanagariFont,
+                color: PdfColors.white,
+                fontSize: 20,
+                bold: true,
+              ),
+            ),
+            pw.SizedBox(height: 3),
+            pw.Text(
+              'Simple  •  Secure  •  Smart',
+              style: _textStyle(
+                language,
+                devanagariFont,
+                color: PdfColors.white,
+                fontSize: 8.5,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  _NoticeHeaderData _extractHeaderData(
+    String noticeText, {
+    required String fallbackTicketNo,
+    required String fallbackDate,
+  }) {
+    String valueFor(List<String> prefixes, String fallback) {
+      for (final rawLine in noticeText.split('\n')) {
+        final line = rawLine.trim();
+        final separator = line.indexOf(':');
+        if (separator < 0) continue;
+        final key = line.substring(0, separator).trim().toLowerCase();
+        if (prefixes.any((prefix) => key == prefix.toLowerCase())) {
+          final value = line.substring(separator + 1).trim();
+          if (value.isNotEmpty) return value;
+        }
+      }
+      return fallback;
+    }
+
+    return _NoticeHeaderData(
+      noticeNumber: valueFor(const ['Notice Number', 'सूचना नंबर'], fallbackTicketNo),
+      noticeDate: valueFor(const ['Notice Date', 'सूचना दिनांक'], fallbackDate),
+      pledgeReference:
+          valueFor(const ['Pledge Reference', 'गिरवी संदर्भ'], fallbackTicketNo),
+      subject: valueFor(const ['Subject', 'विषय'], ''),
+    );
+  }
+
+  String _noticeBodyText(String noticeText) {
+    final lines = _noticeTextWithoutValuation(noticeText).split('\n');
+    final subjectIndex = lines.indexWhere((line) {
+      final trimmed = line.trim();
+      return trimmed.startsWith('Subject:') || trimmed.startsWith('विषय:');
+    });
+    if (subjectIndex >= 0 && subjectIndex + 1 < lines.length) {
+      return lines.skip(subjectIndex + 1).join('\n').trim();
+    }
+    final firstContentIndex = lines.indexWhere((line) => line.trim().isNotEmpty);
+    return firstContentIndex < 0
+        ? ''
+        : lines.skip(firstContentIndex + 1).join('\n').trim();
+  }
+
+  pw.Widget _noticeHero({
+    required _NoticeHeaderData header,
+    required GirviNoticeType noticeType,
+    required GirviNoticeLanguage language,
+    required pw.Font? devanagariFont,
+  }) {
+    final title = language == GirviNoticeLanguage.hindi
+        ? 'गिरवी सूचना'
+        : 'GIRVI NOTICE';
+    final heading = _noticeTitle(noticeType, language).toUpperCase();
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        pw.Center(
+          child: pw.Text(
+            title,
+            style: _textStyle(
+              language,
+              devanagariFont,
+              color: _navy,
+              fontSize: 24,
+              bold: true,
+            ),
+          ),
+        ),
+        pw.SizedBox(height: 4),
+        pw.Center(
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+            decoration: pw.BoxDecoration(
+              color: _gold,
+              borderRadius: pw.BorderRadius.circular(999),
+            ),
+            child: pw.Text(
+              heading,
+              style: _textStyle(
+                language,
+                devanagariFont,
+                color: _navy,
+                fontSize: 11.5,
+                bold: true,
+              ),
+            ),
+          ),
+        ),
+        pw.SizedBox(height: 7),
+        pw.Container(
+          padding: const pw.EdgeInsets.all(10),
+          decoration: pw.BoxDecoration(
+            color: const PdfColor.fromInt(0xFFF4FAFF),
+            borderRadius: pw.BorderRadius.circular(7),
+            border: pw.Border.all(color: const PdfColor.fromInt(0xFFB9DBF7)),
+          ),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: _heroField(
+                  '${_label('Notice Number', language)}: ${header.noticeNumber}',
+                  language,
+                  devanagariFont,
+                ),
+              ),
+              pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: _heroField(
+                  '${_label('Notice Date', language)}: ${header.noticeDate}',
+                  language,
+                  devanagariFont,
+                ),
+              ),
+              pw.SizedBox(width: 10),
+              pw.Expanded(
+                child: _heroField(
+                  '${_label('Pledge Reference', language)}: ${header.pledgeReference}',
+                  language,
+                  devanagariFont,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (header.subject.isNotEmpty) ...[
+          pw.SizedBox(height: 6),
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: pw.BoxDecoration(
+              color: _goldLight,
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: _gold, width: 0.65),
+            ),
+            child: pw.Text(
+              '${_label('Subject', language)}: ${header.subject}',
+              style: _textStyle(
+                language,
+                devanagariFont,
+                color: _ink,
+                fontSize: 10.3,
+                bold: true,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  pw.Widget _heroField(
+    String value,
+    GirviNoticeLanguage language,
+    pw.Font? devanagariFont,
+  ) =>
+      pw.Text(
+        value,
+        style: _textStyle(
+          language,
+          devanagariFont,
+          color: _navy,
+          fontSize: 9.4,
+          bold: true,
+        ),
+      );
+
+  pw.Widget _accountSnapshot({
+    required ContactRecoveryCase item,
+    required pw.MemoryImage? itemImage,
+    required GirviNoticeLanguage language,
+    required pw.Font? devanagariFont,
+  }) {
+    final loan = item.loan;
+    final account = item.account;
+    final money = NumberFormat('#,##,##0.00', 'en_IN');
+    final rows = <List<String>>[
+      [_label('Pledged Item', language), loan.itemDescription],
+      [_label('Net Weight', language), '${loan.netWeight.toStringAsFixed(3)} g'],
+      [_label('Original Principal', language), 'Rs ${money.format(account.originalPrincipal)}'],
+      [_label('Pledge Date', language), _dateFormat.format(loan.startDate)],
+      [_label('Maturity Date', language), loan.maturityDate == null ? _label('Not Set', language) : _dateFormat.format(loan.maturityDate!)],
+    ];
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        borderRadius: pw.BorderRadius.circular(7),
+        border: pw.Border.all(color: const PdfColor.fromInt(0xFFB9DBF7)),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 70,
+            height: 70,
+            alignment: pw.Alignment.center,
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFFF6F8FA),
+              borderRadius: pw.BorderRadius.circular(6),
+              border: pw.Border.all(color: const PdfColor.fromInt(0xFFD7E1EA)),
+            ),
+            child: itemImage == null
+                ? pw.Text(
+                    language == GirviNoticeLanguage.hindi ? 'वस्तु\nछवि नहीं' : 'Item\nimage\nnot available',
+                    textAlign: pw.TextAlign.center,
+                    style: _textStyle(
+                      language,
+                      devanagariFont,
+                      color: const PdfColor.fromInt(0xFF64748B),
+                      fontSize: 8,
+                      bold: true,
+                    ),
+                  )
+                : pw.Image(itemImage, fit: pw.BoxFit.cover),
+          ),
+          pw.SizedBox(width: 10),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                for (final row in rows) ...[
+                  pw.RichText(
+                    text: pw.TextSpan(
+                      children: [
+                        pw.TextSpan(
+                          text: '${row.first}: ',
+                          style: _textStyle(language, devanagariFont, color: _navy, fontSize: 9.2, bold: true),
+                        ),
+                        pw.TextSpan(
+                          text: row.last,
+                          style: _textStyle(language, devanagariFont, color: _ink, fontSize: 9.2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(height: 3),
+                ],
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 10),
+          pw.Container(
+            width: 150,
+            padding: const pw.EdgeInsets.all(8),
+            decoration: pw.BoxDecoration(
+              color: const PdfColor.fromInt(0xFFF4FAFF),
+              borderRadius: pw.BorderRadius.circular(5),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _heroField('${_label('Actual Duration', language)}: ${item.loanAgeMonthsDaysLabel}', language, devanagariFont),
+                pw.SizedBox(height: 5),
+                _heroField('${_label('Interest Calculation Period', language)}: ${item.chargeableInterestMonthsLabel}', language, devanagariFont),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<pw.MemoryImage?> _loadItemImage(ContactRecoveryCase item) async {
+    final candidates = <String>[
+      ...item.itemPhotoPaths,
+      if (item.loan.itemPhotoPath != null) item.loan.itemPhotoPath!,
+    ];
+    for (final path in candidates) {
+      final normalizedPath = path.trim();
+      if (normalizedPath.isEmpty) continue;
+      try {
+        final file = File(normalizedPath);
+        if (!await file.exists()) continue;
+        return pw.MemoryImage(await file.readAsBytes());
+      } catch (_) {
+        // Item media is optional. A notice must remain printable without it.
+      }
+    }
+    return null;
   }
 
   List<pw.Widget> _noticeBodyWidgets(
@@ -317,13 +590,8 @@ class GirviNoticePdfService {
         .map((line) => line.trimRight())
         .toList(growable: false);
     final content = <pw.Widget>[];
-    var skippedTitle = false;
     for (final paragraph in paragraphs) {
       final text = paragraph.trim();
-      if (!skippedTitle && text.isNotEmpty) {
-        skippedTitle = true;
-        continue;
-      }
       if (text.isEmpty) {
         content.add(pw.SizedBox(height: 5));
         continue;
@@ -386,6 +654,7 @@ class GirviNoticePdfService {
       'Simple Interest Breakdown',
       'Compound Interest Breakdown',
       'Payments and Adjustments',
+      'Previous Contact and Customer Response',
       'Final Outstanding Summary',
       'Required Action',
       'Simple Interest Period',
@@ -397,6 +666,7 @@ class GirviNoticePdfService {
       'साधारण ब्याज विवरण',
       'चक्रवृद्धि ब्याज विवरण',
       'भुगतान और समायोजन',
+      'पूर्व संपर्क और ग्राहक प्रतिक्रिया',
       'अंतिम बकाया सारांश',
       'आवश्यक कार्रवाई',
       'साधारण ब्याज अवधि',
@@ -479,26 +749,14 @@ class GirviNoticePdfService {
     return noticeType.label;
   }
 
-  String _noticeSubtitle(
-    GirviNoticeType noticeType,
-    GirviNoticeLanguage language,
-  ) {
-    if (language == GirviNoticeLanguage.hindi) {
-      return switch (noticeType) {
-        GirviNoticeType.first => 'पहली निपटान सूचना',
-        GirviNoticeType.second => 'दूसरी भुगतान चेतावनी',
-        GirviNoticeType.finalNotice => 'अंतिम वसूली सूचना',
-      };
-    }
-    return noticeType.subtitle;
-  }
-
   String _label(String english, GirviNoticeLanguage language) {
     if (language == GirviNoticeLanguage.english) return english;
     return switch (english) {
       'Account Summary' => 'खाता सार',
       'Ticket Number' => 'टिकट नंबर',
       'Notice Date' => 'सूचना दिनांक',
+      'Notice Number' => 'सूचना नंबर',
+      'Pledge Reference' => 'गिरवी संदर्भ',
       'Notice Stage' => 'सूचना चरण',
       'Customer' => 'ग्राहक',
       'Mobile' => 'मोबाइल',
@@ -513,6 +771,8 @@ class GirviNoticePdfService {
       'Interest' => 'ब्याज',
       'Total Payable' => 'कुल देय',
       'Pledged Item' => 'गिरवी वस्तु',
+      'Original Principal' => 'मूल मूलधन',
+      'Pledge Date' => 'गिरवी तारीख',
       'Settlement Deadline' => 'अंतिम तारीख',
       'Not Set' => 'निश्चित नहीं',
       'Notice Text' => 'सूचना',
@@ -521,4 +781,18 @@ class GirviNoticePdfService {
       _ => english,
     };
   }
+}
+
+class _NoticeHeaderData {
+  const _NoticeHeaderData({
+    required this.noticeNumber,
+    required this.noticeDate,
+    required this.pledgeReference,
+    required this.subject,
+  });
+
+  final String noticeNumber;
+  final String noticeDate;
+  final String pledgeReference;
+  final String subject;
 }

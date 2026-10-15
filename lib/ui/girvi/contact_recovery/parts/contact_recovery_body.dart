@@ -10,6 +10,9 @@ class _ContactRecoveryBody extends StatelessWidget {
       onDownloadNotice;
   final void Function(ContactRecoveryCase item, GirviNoticeAction action)
       onPrintNotice;
+  final void Function(ContactRecoveryCase item, GirviNoticeAction action)
+      onRecordCustomerResponse;
+  final ValueChanged<ContactRecoveryCase> onViewCustomerResponses;
   final ValueChanged<ContactRecoveryCase> onViewInvoice;
   final ValueChanged<ContactRecoveryCase> onDownloadInvoice;
   final ValueChanged<ContactRecoveryCase> onViewItemImage;
@@ -24,6 +27,8 @@ class _ContactRecoveryBody extends StatelessWidget {
     required this.onViewNotice,
     required this.onDownloadNotice,
     required this.onPrintNotice,
+    required this.onRecordCustomerResponse,
+    required this.onViewCustomerResponses,
     required this.onViewInvoice,
     required this.onDownloadInvoice,
     required this.onViewItemImage,
@@ -69,6 +74,9 @@ class _ContactRecoveryBody extends StatelessWidget {
           onViewNotice: (action) => onViewNotice(item, action),
           onDownloadNotice: (action) => onDownloadNotice(item, action),
           onPrintNotice: (action) => onPrintNotice(item, action),
+          onRecordCustomerResponse: (action) =>
+              onRecordCustomerResponse(item, action),
+          onViewCustomerResponses: () => onViewCustomerResponses(item),
           onViewInvoice: () => onViewInvoice(item),
           onDownloadInvoice: () => onDownloadInvoice(item),
           onViewItemImage: () => onViewItemImage(item),

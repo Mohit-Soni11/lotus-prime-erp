@@ -16,6 +16,7 @@ import '../../../logic/girvi/girvi_notice_generation_service.dart';
 import '../../../logic/girvi/girvi_notice_pdf_service.dart';
 import '../../../logic/girvi/contact_recovery_controller.dart';
 import '../../../models/girvi/girvi_notice_action_model.dart';
+import '../../../models/girvi/girvi_customer_response_model.dart';
 import '../../../models/girvi/contact_recovery_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
@@ -107,6 +108,8 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
               onViewNotice: _viewSavedNotice,
               onDownloadNotice: _downloadSavedNotice,
               onPrintNotice: _printSavedNotice,
+              onRecordCustomerResponse: _recordCustomerResponse,
+              onViewCustomerResponses: _viewCustomerResponses,
               onViewInvoice: _viewInvoice,
               onDownloadInvoice: _downloadInvoice,
               onViewItemImage: _viewItemImage,
@@ -161,6 +164,8 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         initialLanguage: GirviNoticeLanguage.hindi,
         onCopy: (language, text) =>
             _copyNoticeText(item, noticeType, language, text),
+        onPreview: (language, text) =>
+            _previewPreparedNotice(item, noticeType, language, text),
         onSave: (language, text) => _controller.recordNoticePrepared(
           item,
           noticeType,
@@ -181,18 +186,64 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     await _controller.recordNoticeDraft(item, noticeText);
   }
 
+  Future<void> _previewPreparedNotice(
+    ContactRecoveryCase item,
+    GirviNoticeType noticeType,
+    GirviNoticeLanguage language,
+    String noticeText,
+  ) async {
+    try {
+      final bytes = await _noticePdfService.build(
+        item: item,
+        noticeType: noticeType,
+        noticeLanguage: language,
+        noticeText: noticeText,
+      );
+      if (!mounted) return;
+      await _showNoticePreview(
+        title: '${noticeType.label} PDF',
+        subtitle: '${item.loan.ticketNo} · ${language.label} preview',
+        bytes: bytes,
+      );
+    } catch (_) {
+      _controller.showInlineMessage(
+        '${noticeType.label} PDF preview could not be generated.',
+      );
+    }
+  }
+
   Future<void> _viewSavedNotice(
     ContactRecoveryCase item,
     GirviNoticeAction action,
   ) async {
     final draft = _savedNoticeDraft(item, action);
-    await showDialog<void>(
-      context: context,
-      builder: (context) => _SavedNoticePreviewDialog(
-        draft: draft,
-        onDownload: () => _downloadSavedNotice(item, action),
-        onPrint: () => _printSavedNotice(item, action),
-      ),
+    try {
+      final bytes = await _buildSavedNoticePdf(item, action);
+      if (!mounted) return;
+      await _showNoticePreview(
+        title: '${draft.noticeType.label} PDF',
+        subtitle: '${draft.item.loan.ticketNo} · ${draft.language.label}',
+        bytes: bytes,
+      );
+    } catch (_) {
+      _controller.showInlineMessage(
+        '${draft.noticeType.label} PDF could not be opened for ticket ${item.loan.ticketNo}.',
+      );
+    }
+  }
+
+  Future<Uint8List> _buildSavedNoticePdf(
+    ContactRecoveryCase item,
+    GirviNoticeAction action,
+  ) {
+    final draft = _savedNoticeDraft(item, action);
+    return _noticePdfService.buildStoredNotice(
+      ticketNo: item.loan.ticketNo,
+      noticeType: draft.noticeType,
+      noticeLanguage: draft.language,
+      noticeText: draft.noticeText,
+      savedAt: action.actionAt,
+      item: item,
     );
   }
 
@@ -213,13 +264,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       final normalizedPath = outputPath.toLowerCase().endsWith('.pdf')
           ? outputPath
           : '$outputPath.pdf';
-      final bytes = await _noticePdfService.buildStoredNotice(
-        ticketNo: item.loan.ticketNo,
-        noticeType: draft.noticeType,
-        noticeLanguage: draft.language,
-        noticeText: draft.noticeText,
-        savedAt: action.actionAt,
-      );
+      final bytes = await _buildSavedNoticePdf(item, action);
       await File(normalizedPath).writeAsBytes(bytes, flush: true);
       await _controller.recordNoticeDeliveryProof(
         item: item,
@@ -246,13 +291,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   ) async {
     final draft = _savedNoticeDraft(item, action);
     try {
-      final bytes = await _noticePdfService.buildStoredNotice(
-        ticketNo: item.loan.ticketNo,
-        noticeType: draft.noticeType,
-        noticeLanguage: draft.language,
-        noticeText: draft.noticeText,
-        savedAt: action.actionAt,
-      );
+      final bytes = await _buildSavedNoticePdf(item, action);
       final printed = await Printing.layoutPdf(
         name: draft.fileName,
         onLayout: (_) async => bytes,
@@ -275,6 +314,55 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         '${draft.noticeType.label} PDF could not be printed.',
       );
     }
+  }
+
+  Future<void> _recordCustomerResponse(
+    ContactRecoveryCase item,
+    GirviNoticeAction notice,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _CustomerResponseDialog(
+        item: item,
+        notice: notice,
+        onSave: ({
+          required kind,
+          required channel,
+          required responseText,
+          promisedAmount,
+          promiseDueAt,
+          proofReference,
+        }) => _controller.recordCustomerResponse(
+          item: item,
+          notice: notice,
+          kind: kind,
+          channel: channel,
+          responseText: responseText,
+          promisedAmount: promisedAmount,
+          promiseDueAt: promiseDueAt,
+          proofReference: proofReference,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _viewCustomerResponses(ContactRecoveryCase item) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => _CustomerResponseTimelineDialog(
+        item: item,
+        onResolvePromise: ({
+          required response,
+          required status,
+          String? resolutionNote,
+        }) => _controller.resolveCustomerPromise(
+          item: item,
+          responseId: response.id,
+          status: status,
+          resolutionNote: resolutionNote,
+        ),
+      ),
+    );
   }
 
   Future<void> _closeDisposalSettlement(ContactRecoveryCase item) async {
@@ -410,6 +498,62 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
               child: _PreviewTitleBadge(
                 title: 'Invoice PDF',
                 subtitle: item.loan.ticketNo,
+              ),
+            ),
+            Positioned(
+              top: 18,
+              right: 18,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.62),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Close preview',
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showNoticePreview({
+    required String title,
+    required String subtitle,
+    required Uint8List bytes,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.78),
+      useSafeArea: false,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: const Color(0xFF111827),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: PdfPreview(
+                build: (_) async => bytes,
+                initialPageFormat: PdfPageFormat.a4,
+                allowPrinting: false,
+                allowSharing: false,
+                canChangeOrientation: false,
+                canChangePageFormat: false,
+                canDebug: false,
+                useActions: false,
+                maxPageWidth: 920,
+                scrollViewDecoration: const BoxDecoration(
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 22,
+              top: 18,
+              child: _PreviewTitleBadge(
+                title: title,
+                subtitle: subtitle,
               ),
             ),
             Positioned(

@@ -6,11 +6,13 @@ import 'package:intl/intl.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_customer_response_model.dart';
 import '../../models/girvi/girvi_interest_period_snapshot.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/contact_recovery_model.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
+import '../../repositories/girvi/girvi_customer_response_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/girvi/girvi_interest_period_snapshot_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
@@ -22,6 +24,7 @@ class ContactRecoveryController extends ChangeNotifier {
     GirviRepository? repository,
     GirviBillingRepo? billingRepo,
     GirviNoticeActionRepository? noticeActionRepository,
+    GirviCustomerResponseRepository? customerResponseRepository,
   }) {
     final resolvedDb = db ?? AppDatabase();
     _db = resolvedDb;
@@ -29,12 +32,15 @@ class ContactRecoveryController extends ChangeNotifier {
     _billingRepo = billingRepo ?? GirviBillingRepo(db: resolvedDb);
     _noticeActionRepository =
         noticeActionRepository ?? GirviNoticeActionRepository(resolvedDb);
+    _customerResponseRepository = customerResponseRepository ??
+        GirviCustomerResponseRepository(resolvedDb);
   }
 
   late final AppDatabase _db;
   late final GirviRepository _repository;
   late final GirviBillingRepo _billingRepo;
   late final GirviNoticeActionRepository _noticeActionRepository;
+  late final GirviCustomerResponseRepository _customerResponseRepository;
   late final GirviInterestPeriodSnapshotRepository
       _interestPeriodSnapshotRepository =
       GirviInterestPeriodSnapshotRepository(_db);
@@ -132,6 +138,9 @@ class ContactRecoveryController extends ChangeNotifier {
       final actionHistory = await _noticeActionRepository.actionsByGirviIds(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
       );
+      final customerResponses = await _customerResponseRepository.byGirviIds(
+        candidateAccounts.map((entry) => entry.loan.id).toList(),
+      );
       final photoPaths = await _loadItemPhotoPaths(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
       );
@@ -145,6 +154,7 @@ class ContactRecoveryController extends ChangeNotifier {
                   ? null
                   : actionHistory[entry.loan.id]!.first,
               actionHistory: actionHistory[entry.loan.id] ?? const [],
+              customerResponses: customerResponses[entry.loan.id] ?? const [],
               paymentHistory: paymentHistory[entry.loan.id] ?? const [],
               interestPeriodSnapshots:
                   interestPeriodSnapshots[entry.loan.id] ?? const [],
@@ -388,6 +398,78 @@ class ContactRecoveryController extends ChangeNotifier {
       AppLogger.debug('Contact & Recovery delivery proof failed: $error');
       _state = _state.copyWith(
         inlineMessage: '${noticeType.label} proof could not be recorded.',
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> recordCustomerResponse({
+    required ContactRecoveryCase item,
+    required GirviNoticeAction notice,
+    required GirviCustomerResponseKind kind,
+    required GirviContactChannel channel,
+    required String responseText,
+    double? promisedAmount,
+    DateTime? promiseDueAt,
+    String? proofReference,
+  }) async {
+    try {
+      final stage = notice.noticeStage;
+      if (stage == null || stage < 1 || stage > 3) {
+        throw StateError('A customer response must be linked to a saved notice.');
+      }
+      await _customerResponseRepository.record(
+        girviId: item.loan.id,
+        noticeActionId: notice.id,
+        noticeStage: stage,
+        kind: kind,
+        channel: channel,
+        responseText: responseText,
+        promisedAmount: promisedAmount,
+        promiseDueAt: promiseDueAt,
+        proofReference: proofReference,
+        performedBy: _operatorIdentity(),
+      );
+      _state = _state.copyWith(
+        inlineMessage: 'Customer response recorded for ${item.loan.ticketNo}.',
+      );
+      notifyListeners();
+      await load(keepInlineMessage: true);
+      return true;
+    } catch (error) {
+      AppLogger.debug('Customer response recording failed: $error');
+      _state = _state.copyWith(
+        inlineMessage: 'Customer response could not be recorded.',
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> resolveCustomerPromise({
+    required ContactRecoveryCase item,
+    required int responseId,
+    required GirviPromiseStatus status,
+    String? resolutionNote,
+  }) async {
+    try {
+      await _customerResponseRepository.resolve(
+        responseId: responseId,
+        status: status,
+        resolutionNote: resolutionNote,
+        performedBy: _operatorIdentity(),
+      );
+      _state = _state.copyWith(
+        inlineMessage: 'Customer promise updated for ${item.loan.ticketNo}.',
+      );
+      notifyListeners();
+      await load(keepInlineMessage: true);
+      return true;
+    } catch (error) {
+      AppLogger.debug('Customer promise resolution failed: $error');
+      _state = _state.copyWith(
+        inlineMessage: 'Customer promise could not be updated.',
       );
       notifyListeners();
       return false;

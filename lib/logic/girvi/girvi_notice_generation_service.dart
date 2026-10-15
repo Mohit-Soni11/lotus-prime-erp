@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../../models/girvi/contact_recovery_model.dart';
+import '../../models/girvi/girvi_customer_response_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
@@ -204,6 +205,13 @@ class GirviNoticeGenerationService {
             ),
           ],
         ),
+        if (noticeType.stage > 1 && data.priorCustomerResponses.isNotEmpty)
+          GirviNoticeSection(
+            title: language == GirviNoticeLanguage.hindi
+                ? 'पूर्व संपर्क और ग्राहक प्रतिक्रिया'
+                : 'Previous Contact and Customer Response',
+            blocks: data.customerResponseBlocks,
+          ),
         GirviNoticeSection(
           title: language == GirviNoticeLanguage.hindi
               ? 'गिरवी खाता और अवधि'
@@ -310,6 +318,78 @@ class _NoticeData {
   }
 
   String get originalPrincipal => service.money(account.originalPrincipal);
+
+  List<GirviCustomerResponse> get priorCustomerResponses {
+    final responses = item.customerResponses
+        .where((response) =>
+            response.noticeStage == null || response.noticeStage! < noticeType.stage)
+        .toList();
+    responses.sort((a, b) => a.receivedAt.compareTo(b.receivedAt));
+    return responses;
+  }
+
+  List<GirviNoticeBlock> get customerResponseBlocks {
+    final hindi = language == GirviNoticeLanguage.hindi;
+    return [
+      for (final response in priorCustomerResponses)
+        GirviNoticeBlock(
+          heading: '${hindi ? 'संपर्क' : 'Contact'} · ${service.date(response.receivedAt)}',
+          lines: [
+            '${hindi ? 'माध्यम' : 'Channel'}: ${_channelLabel(response, hindi)}',
+            '${hindi ? 'ग्राहक का कथन' : 'Customer Statement'}: ${response.responseText}',
+            if (response.isPromise)
+              '${hindi ? 'प्रतिबद्धता' : 'Commitment'}: ${_responseKindLabel(response, hindi)}',
+            if (response.promiseDueAt != null)
+              '${hindi ? 'वादा की तारीख' : 'Promised Date'}: ${service.date(response.promiseDueAt)}',
+            if (response.promisedAmount != null)
+              '${hindi ? 'वादा की राशि' : 'Promised Amount'}: ${service.money(response.promisedAmount!)}',
+            '${hindi ? 'रिकॉर्ड की स्थिति' : 'Recorded Status'}: ${_statusLabel(response, hindi)}',
+          ],
+        ),
+    ];
+  }
+
+  String _channelLabel(GirviCustomerResponse response, bool hindi) {
+    if (!hindi) return response.channel.label;
+    return switch (response.channel) {
+      GirviContactChannel.shopVisit => 'दुकान पर मुलाकात',
+      GirviContactChannel.phoneCall => 'फोन कॉल',
+      GirviContactChannel.whatsapp => 'व्हाट्सऐप',
+      GirviContactChannel.sms => 'एसएमएस',
+      GirviContactChannel.email => 'ईमेल',
+      GirviContactChannel.registeredPost => 'पंजीकृत डाक',
+      GirviContactChannel.other => 'अन्य माध्यम',
+    };
+  }
+
+  String _responseKindLabel(GirviCustomerResponse response, bool hindi) {
+    if (!hindi) return response.kind.label;
+    return switch (response.kind) {
+      GirviCustomerResponseKind.willVisit => 'दुकान आने का वादा',
+      GirviCustomerResponseKind.fullSettlement => 'पूर्ण निपटान का वादा',
+      GirviCustomerResponseKind.partialPayment => 'आंशिक भुगतान का वादा',
+      GirviCustomerResponseKind.extensionRequest => 'अतिरिक्त समय का अनुरोध',
+      GirviCustomerResponseKind.amountDispute => 'बकाया राशि पर आपत्ति',
+      GirviCustomerResponseKind.recoveryRequest => 'वसूली निपटान का अनुरोध',
+      GirviCustomerResponseKind.noResponse => 'कोई प्रतिक्रिया प्राप्त नहीं हुई',
+      GirviCustomerResponseKind.other => 'अन्य प्रतिक्रिया',
+    };
+  }
+
+  String _statusLabel(GirviCustomerResponse response, bool hindi) {
+    if (!hindi) {
+      return response.isDueOn(item.now) ? 'Past due' : response.status.label;
+    }
+    if (response.isDueOn(item.now)) return 'वादा की तिथि बीत चुकी है';
+    return switch (response.status) {
+      GirviPromiseStatus.open => 'खुला',
+      GirviPromiseStatus.fulfilled => 'पूरा हुआ',
+      GirviPromiseStatus.partiallyFulfilled => 'आंशिक रूप से पूरा हुआ',
+      GirviPromiseStatus.missed => 'पूरा नहीं हुआ',
+      GirviPromiseStatus.cancelled => 'रद्द',
+      GirviPromiseStatus.recorded => 'रिकॉर्ड किया गया',
+    };
+  }
   String get interestBreakdownTitle {
     final interestType = item.interestPeriodSnapshots.isEmpty
         ? account.interestType

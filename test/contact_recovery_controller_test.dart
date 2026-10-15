@@ -4,11 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/contact_recovery_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
+import 'package:lotus_erp/logic/girvi/girvi_notice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_period_snapshot.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_customer_response_model.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
+import 'package:lotus_erp/repositories/girvi/girvi_customer_response_repository.dart';
 
 void main() {
   group('ContactRecoveryController', () {
@@ -498,6 +501,20 @@ void main() {
             source: 'TEST',
           ),
         ],
+        customerResponses: [
+          GirviCustomerResponse(
+            id: 1,
+            girviId: account.loan.id,
+            noticeStage: 1,
+            kind: GirviCustomerResponseKind.willVisit,
+            channel: GirviContactChannel.phoneCall,
+            responseText: 'I will visit the shop on Friday.',
+            status: GirviPromiseStatus.open,
+            promiseDueAt: DateTime(2026, 9, 26),
+            receivedAt: DateTime(2026, 9, 20),
+            createdAt: DateTime(2026, 9, 20),
+          ),
+        ],
       );
       final service = GirviNoticeGenerationService(now: item.now);
 
@@ -529,7 +546,11 @@ void main() {
         expect(text, isNot(contains('Valuation')));
       }
       expect(first, contains('This is the first notice.'));
+      expect(first, isNot(contains('Previous Contact and Customer Response')));
       expect(second, contains('follow-up to the earlier notice'));
+      expect(second, contains('Previous Contact and Customer Response'));
+      expect(second, contains('I will visit the shop on Friday.'));
+      expect(second, contains('Recorded Status: Past due'));
       expect(finalNotice, contains('This is the final notice'));
     });
 
@@ -710,6 +731,101 @@ void main() {
         pledgedItems.single.recoveryDispositionReference,
         'GIRVI-RECOVERY-GRV-REC-001',
       );
+    });
+
+    test('customer promises require an approved notice and preserve resolution audit',
+        () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Promise Customer',
+              mobile: '9000000008',
+            ),
+          );
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-RESPONSE-001',
+              customerId: customerId,
+              itemDescription: 'Gold chain',
+              startDate: drift.Value(DateTime(2025, 1, 1)),
+              maturityDate: drift.Value(DateTime(2025, 7, 1)),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      final responses = GirviCustomerResponseRepository(db);
+      await expectLater(
+        responses.record(
+          girviId: loanId,
+          noticeStage: 1,
+          kind: GirviCustomerResponseKind.willVisit,
+          channel: GirviContactChannel.phoneCall,
+          responseText: 'I will visit in two days.',
+          promiseDueAt: DateTime(2026, 10, 7),
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      final notices = GirviNoticeActionRepository(db);
+      final noticeId = await notices.recordNoticePrepared(
+        girviId: loanId,
+        noticeType: GirviNoticeType.first,
+        noticeText: 'Approved first notice',
+        noticePeriodDays: 7,
+      );
+      final responseId = await responses.record(
+        girviId: loanId,
+        noticeActionId: noticeId,
+        kind: GirviCustomerResponseKind.partialPayment,
+        channel: GirviContactChannel.whatsapp,
+        responseText: 'I will pay Rs 2,000 on Friday.',
+        promisedAmount: 2000,
+        promiseDueAt: DateTime(2026, 10, 7),
+        proofReference: 'whatsapp-message-2026-10-05',
+      );
+      await responses.resolve(
+        responseId: responseId,
+        status: GirviPromiseStatus.partiallyFulfilled,
+        resolutionNote: 'Rs 2,000 received through UPI.',
+      );
+
+      final saved = (await responses.byGirviIds([loanId]))[loanId]!.single;
+      expect(saved.noticeActionId, noticeId);
+      expect(saved.noticeStage, 1);
+      expect(saved.status, GirviPromiseStatus.partiallyFulfilled);
+      expect(saved.proofReference, 'whatsapp-message-2026-10-05');
+      expect(saved.resolutionNote, 'Rs 2,000 received through UPI.');
+      await expectLater(
+        responses.resolve(
+          responseId: responseId,
+          status: GirviPromiseStatus.missed,
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('stored notice PDF renders an immutable saved notice source', () async {
+      final bytes = await GirviNoticePdfService().buildStoredNotice(
+        ticketNo: 'GRV-PDF-001',
+        noticeType: GirviNoticeType.first,
+        noticeLanguage: GirviNoticeLanguage.english,
+        savedAt: DateTime(2026, 10, 15),
+        noticeText: '''FIRST PLEDGE ACCOUNT NOTICE
+Notice Number: GRV-PDF-001-N01
+Notice Date: 15 October 2026
+Pledge Reference: GRV-PDF-001
+
+Subject: Reminder for Pending Pledge Account Settlement
+
+Dear PDF Customer,
+Please contact the branch to settle the verified outstanding amount.
+
+Required Action
+Please settle the account before the stated deadline.''',
+      );
+
+      expect(bytes, isNotEmpty);
+      expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
     });
   });
 }

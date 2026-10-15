@@ -5,12 +5,16 @@ class _NoticeDocumentStrip extends StatelessWidget {
   final ValueChanged<GirviNoticeAction> onViewNotice;
   final ValueChanged<GirviNoticeAction> onDownloadNotice;
   final ValueChanged<GirviNoticeAction> onPrintNotice;
+  final ValueChanged<GirviNoticeAction> onRecordCustomerResponse;
+  final VoidCallback onViewCustomerResponses;
 
   const _NoticeDocumentStrip({
     required this.item,
     required this.onViewNotice,
     required this.onDownloadNotice,
     required this.onPrintNotice,
+    required this.onRecordCustomerResponse,
+    required this.onViewCustomerResponses,
   });
 
   @override
@@ -38,6 +42,18 @@ class _NoticeDocumentStrip extends StatelessWidget {
                   ),
                 ),
               ),
+              TextButton.icon(
+                onPressed: onViewCustomerResponses,
+                icon: const Icon(Icons.history_rounded, size: 16),
+                label: const Text('Response timeline'),
+                style: TextButton.styleFrom(
+                  foregroundColor: GirviColors.info,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  textStyle: GirviStyles.caption.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
               _NoticeCountBadge(label: item.noticesSentLabel),
             ],
           ),
@@ -54,9 +70,13 @@ class _NoticeDocumentStrip extends StatelessWidget {
                   return _NoticeDocumentCard(
                     action: action,
                     latestProof: item.latestDeliveryProofForStage(stage),
+                    latestResponse: item.responsesForNoticeStage(stage).isEmpty
+                        ? null
+                        : item.responsesForNoticeStage(stage).first,
                     onView: () => onViewNotice(action),
                     onDownload: () => onDownloadNotice(action),
                     onPrint: () => onPrintNotice(action),
+                    onRecordResponse: () => onRecordCustomerResponse(action),
                   );
                 },
               ).toList(),
@@ -123,16 +143,20 @@ class _NoNoticeDocuments extends StatelessWidget {
 class _NoticeDocumentCard extends StatelessWidget {
   final GirviNoticeAction action;
   final GirviNoticeAction? latestProof;
+  final GirviCustomerResponse? latestResponse;
   final VoidCallback onView;
   final VoidCallback onDownload;
   final VoidCallback onPrint;
+  final VoidCallback onRecordResponse;
 
   const _NoticeDocumentCard({
     required this.action,
     required this.latestProof,
+    required this.latestResponse,
     required this.onView,
     required this.onDownload,
     required this.onPrint,
+    required this.onRecordResponse,
   });
 
   @override
@@ -141,6 +165,7 @@ class _NoticeDocumentCard extends StatelessWidget {
     final timestamp =
         DateFormat('dd MMM yyyy, hh:mm a').format(action.actionAt);
     final proof = latestProof;
+    final response = latestResponse;
     final proofTimestamp = proof == null
         ? null
         : DateFormat('dd MMM yyyy, hh:mm a')
@@ -242,6 +267,11 @@ class _NoticeDocumentCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(height: 6),
+            _CustomerResponseStatus(
+              response: response,
+              onRecordResponse: onRecordResponse,
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -285,6 +315,65 @@ class _NoticeDocumentCard extends StatelessWidget {
       case GirviNoticeType.finalNotice:
         return GirviColors.info;
     }
+  }
+}
+
+class _CustomerResponseStatus extends StatelessWidget {
+  final GirviCustomerResponse? response;
+  final VoidCallback onRecordResponse;
+
+  const _CustomerResponseStatus({
+    required this.response,
+    required this.onRecordResponse,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final value = response;
+    final color = value == null
+        ? GirviColors.textMuted
+        : value.status == GirviPromiseStatus.open
+            ? GirviColors.warning
+            : value.status == GirviPromiseStatus.missed
+                ? GirviColors.danger
+                : GirviColors.success;
+    final label = value == null
+        ? 'Customer response pending'
+        : value.isPromise
+            ? '${value.status.label}: ${value.kind.label}'
+            : value.kind.label;
+    return InkWell(
+      onTap: onRecordResponse,
+      borderRadius: BorderRadius.circular(7),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: color.withValues(alpha: 0.22)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.forum_outlined, size: 13, color: color),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                label,
+                style: GirviStyles.caption.copyWith(
+                  color: GirviColors.textDark,
+                  fontSize: 11.4,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(Icons.add_rounded, size: 15, color: color),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -769,12 +858,14 @@ class _NoticePreviewLine {
     'Simple Interest Breakdown',
     'Compound Interest Breakdown',
     'Payments and Adjustments',
+    'Previous Contact and Customer Response',
     'Final Outstanding Summary',
     'Required Action',
     'साधारण ब्याज विवरण',
     'चक्रवृद्धि ब्याज विवरण',
     'गिरवी खाता और अवधि',
     'भुगतान और समायोजन',
+    'पूर्व संपर्क और ग्राहक प्रतिक्रिया',
     'अंतिम बकाया सारांश',
     'आवश्यक कार्रवाई',
   };

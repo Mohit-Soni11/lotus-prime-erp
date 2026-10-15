@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/girvi/girvi_theme.dart';
 import 'girvi_enums.dart';
+import 'girvi_customer_response_model.dart';
 import 'girvi_loan_model.dart';
 import 'girvi_interest_period_snapshot.dart';
 import 'girvi_notice_action_model.dart';
@@ -65,6 +66,7 @@ class ContactRecoveryCase {
   final List<GirviPaymentModel> paymentHistory;
   final List<GirviInterestPeriodSnapshot> interestPeriodSnapshots;
   final List<String> itemPhotoPaths;
+  final List<GirviCustomerResponse> customerResponses;
 
   const ContactRecoveryCase({
     required this.account,
@@ -75,6 +77,7 @@ class ContactRecoveryCase {
     this.paymentHistory = const [],
     this.interestPeriodSnapshots = const [],
     this.itemPhotoPaths = const [],
+    this.customerResponses = const [],
   });
 
   GirviLoanModel get loan => account.loan;
@@ -85,6 +88,25 @@ class ContactRecoveryCase {
 
   bool get hasItemPhotos =>
       itemPhotoPaths.any((path) => path.trim().isNotEmpty);
+
+  /// Newest first. Responses are customer-contact evidence, never ledger data.
+  List<GirviCustomerResponse> get responseTimeline => customerResponses;
+
+  List<GirviCustomerResponse> responsesForNoticeStage(int stage) =>
+      customerResponses
+          .where((response) => response.noticeStage == stage)
+          .toList(growable: false);
+
+  List<GirviCustomerResponse> get openCustomerPromises => customerResponses
+      .where((response) => response.isPromise && response.status.isOpen)
+      .toList(growable: false);
+
+  List<GirviCustomerResponse> get missedCustomerPromises => openCustomerPromises
+      .where((response) => response.isDueOn(now))
+      .toList(growable: false);
+
+  GirviCustomerResponse? get latestCustomerResponse =>
+      customerResponses.isEmpty ? null : customerResponses.first;
 
   List<GirviNoticeAction> get noticeActions =>
       actionHistory.where((action) => action.isNoticePreparation).toList();
