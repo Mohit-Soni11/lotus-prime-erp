@@ -172,7 +172,11 @@ class _NoticeEditorDialog extends StatefulWidget {
   final Future<void> Function(GirviNoticeLanguage language, String text) onCopy;
   final Future<void> Function(GirviNoticeLanguage language, String text)
       onPreview;
-  final Future<bool> Function(GirviNoticeLanguage language, String text) onSave;
+  final Future<bool> Function(
+    GirviNoticeLanguage language,
+    String text,
+    Map<GirviNoticeLanguage, String> allTexts,
+  ) onSave;
 
   const _NoticeEditorDialog({
     required this.item,
@@ -228,7 +232,11 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     setState(() => _busy = true);
     try {
       _syncCurrentLanguageText();
-      final saved = await widget.onSave(_language, _textController.text.trim());
+      final saved = await widget.onSave(
+        _language,
+        _textController.text.trim(),
+        Map<GirviNoticeLanguage, String>.unmodifiable(_texts),
+      );
       if (saved && mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -410,7 +418,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                   ),
                 )
               : Text(
-                  'Approve & Save Notice',
+                  'Approve & Save Both Languages',
                   style: GoogleFonts.inter(fontWeight: FontWeight.w800),
                 ),
         ),
@@ -485,7 +493,8 @@ class _CustomerResponseTimelineDialog extends StatelessWidget {
                   shrinkWrap: true,
                   itemCount: responses.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _CustomerResponseTimelineCard(
+                  itemBuilder: (context, index) =>
+                      _CustomerResponseTimelineCard(
                     response: responses[index],
                     onResolve: responses[index].status.isOpen
                         ? () async {
@@ -609,8 +618,7 @@ class _CustomerResponseTimelineCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
@@ -709,8 +717,7 @@ class _PromiseResolutionDialogState extends State<_PromiseResolutionDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
         backgroundColor: GirviColors.cardBg,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           'Resolve Customer Promise',
           style: GirviStyles.sectionTitle.copyWith(fontSize: 17),
@@ -763,7 +770,8 @@ class _PromiseResolutionDialogState extends State<_PromiseResolutionDialog> {
                 maxLines: 4,
                 decoration: InputDecoration(
                   labelText: 'Resolution note (optional)',
-                  hintText: 'State what actually happened; do not overwrite the original response.',
+                  hintText:
+                      'State what actually happened; do not overwrite the original response.',
                   filled: true,
                   fillColor: GirviColors.bodyBg,
                   border: OutlineInputBorder(
@@ -1014,7 +1022,8 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
     required List<T> values,
     required String Function(T value) labelOf,
     required ValueChanged<T> onChanged,
-  }) => DropdownButtonFormField<T>(
+  }) =>
+      DropdownButtonFormField<T>(
         initialValue: value,
         isExpanded: true,
         decoration: _decoration(label, ''),
@@ -1024,9 +1033,11 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
                   child: Text(labelOf(entry)),
                 ))
             .toList(growable: false),
-        onChanged: _busy ? null : (value) {
-          if (value != null) onChanged(value);
-        },
+        onChanged: _busy
+            ? null
+            : (value) {
+                if (value != null) onChanged(value);
+              },
       );
 }
 

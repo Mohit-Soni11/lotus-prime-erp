@@ -28,6 +28,7 @@ import '../tables/girvi/girvi_item_photos.dart';
 import '../tables/girvi/girvi_disbursements.dart';
 import '../tables/girvi/girvi_notice_actions.dart';
 import '../tables/girvi/girvi_customer_responses.dart';
+import '../tables/girvi/girvi_notice_documents.dart';
 import '../tables/karigar/karigar_issues.dart';
 import '../tables/karigar/karigar_masters.dart';
 import '../tables/karigar/karigar_receipts.dart';
@@ -79,6 +80,7 @@ part 'app_database.g.dart';
     GirviDisbursements,
     GirviNoticeActions,
     GirviCustomerResponses,
+    GirviNoticeDocuments,
     DeliveryOrders,
     DeliveryItems,
     SalesBillingSettings,
@@ -118,6 +120,7 @@ class AppDatabase extends _$AppDatabase {
   Future<void>? _salesGstPricingSchemaFuture;
   Future<void>? _returnReversalSchemaFuture;
   Future<void>? _girviCustomerResponseSchemaFuture;
+  Future<void>? _girviNoticeDocumentSchemaFuture;
 
   /// Handles migration errors safely.
   ///
@@ -1865,6 +1868,10 @@ class AppDatabase extends _$AppDatabase {
             await ensureGirviCustomerResponseSchema();
             AppLogger.info('v57 Girvi customer response evidence schema applied.');
           }
+          if (from < 58) {
+            await ensureGirviNoticeDocumentSchema();
+            AppLogger.info('v58 bilingual Girvi notice documents applied.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -1879,6 +1886,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
           await ensureGirviCustomerResponseSchema();
+          await ensureGirviNoticeDocumentSchema();
           await _ensureGirviCollateralRecoverySchema();
           await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureCustomerAccountLedgerSchema();
@@ -2018,6 +2026,24 @@ class AppDatabase extends _$AppDatabase {
   Future<void> ensureGirviCustomerResponseSchema() {
     return _girviCustomerResponseSchemaFuture ??=
         _ensureGirviCustomerResponseSchemaInternal();
+  }
+
+  /// Adds language-specific, immutable notice snapshots without changing the
+  /// existing notice-stage audit rows used by legacy accounts.
+  Future<void> ensureGirviNoticeDocumentSchema() {
+    return _girviNoticeDocumentSchemaFuture ??=
+        _ensureGirviNoticeDocumentSchemaInternal();
+  }
+
+  Future<void> _ensureGirviNoticeDocumentSchemaInternal() async {
+    if (!await _tableExists('girvi_loans') ||
+        !await _tableExists('girvi_notice_actions')) {
+      return;
+    }
+    await customStatement(_createGirviNoticeDocumentsTableSql);
+    for (final statement in _girviNoticeDocumentIndexSql) {
+      await customStatement(statement);
+    }
   }
 
   Future<void> _ensureGirviCustomerResponseSchemaInternal() async {
@@ -3125,6 +3151,32 @@ const List<String> _girviNoticeActionIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_stage" ON "girvi_notice_actions" ("girvi_id", "notice_stage")',
   'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_type" ON "girvi_notice_actions" ("action_type")',
   'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_action_delivery" ON "girvi_notice_actions" ("girvi_id", "delivery_status", "delivered_at" DESC)',
+];
+
+const String _createGirviNoticeDocumentsTableSql = '''
+CREATE TABLE IF NOT EXISTS "girvi_notice_documents" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  "updated_at" INTEGER,
+  "girvi_id" INTEGER NOT NULL,
+  "notice_action_id" INTEGER NOT NULL,
+  "notice_stage" INTEGER NOT NULL,
+  "language" TEXT NOT NULL,
+  "notice_text" TEXT NOT NULL,
+  "document_hash" TEXT NOT NULL,
+  "generated_text" TEXT,
+  "was_manually_edited" INTEGER NOT NULL DEFAULT 0,
+  "approved_by" TEXT,
+  "approved_at" INTEGER,
+  UNIQUE("notice_action_id", "language"),
+  FOREIGN KEY ("girvi_id") REFERENCES "girvi_loans" ("id") ON DELETE CASCADE,
+  FOREIGN KEY ("notice_action_id") REFERENCES "girvi_notice_actions" ("id") ON DELETE CASCADE
+)
+''';
+
+const List<String> _girviNoticeDocumentIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_document_loan_stage" ON "girvi_notice_documents" ("girvi_id", "notice_stage")',
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_notice_document_action_language" ON "girvi_notice_documents" ("notice_action_id", "language")',
 ];
 
 const String _createGirviCustomerResponsesTableSql = '''

@@ -26562,6 +26562,675 @@ class GirviCustomerResponsesCompanion
   }
 }
 
+class $GirviNoticeDocumentsTable extends GirviNoticeDocuments
+    with TableInfo<$GirviNoticeDocumentsTable, GirviNoticeDocumentData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GirviNoticeDocumentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _girviIdMeta =
+      const VerificationMeta('girviId');
+  @override
+  late final GeneratedColumn<int> girviId = GeneratedColumn<int>(
+      'girvi_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_loans (id) ON DELETE CASCADE'));
+  static const VerificationMeta _noticeActionIdMeta =
+      const VerificationMeta('noticeActionId');
+  @override
+  late final GeneratedColumn<int> noticeActionId = GeneratedColumn<int>(
+      'notice_action_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_notice_actions (id) ON DELETE CASCADE'));
+  static const VerificationMeta _noticeStageMeta =
+      const VerificationMeta('noticeStage');
+  @override
+  late final GeneratedColumn<int> noticeStage = GeneratedColumn<int>(
+      'notice_stage', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+      'language', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _noticeTextMeta =
+      const VerificationMeta('noticeText');
+  @override
+  late final GeneratedColumn<String> noticeText = GeneratedColumn<String>(
+      'notice_text', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _documentHashMeta =
+      const VerificationMeta('documentHash');
+  @override
+  late final GeneratedColumn<String> documentHash = GeneratedColumn<String>(
+      'document_hash', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _generatedTextMeta =
+      const VerificationMeta('generatedText');
+  @override
+  late final GeneratedColumn<String> generatedText = GeneratedColumn<String>(
+      'generated_text', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _wasManuallyEditedMeta =
+      const VerificationMeta('wasManuallyEdited');
+  @override
+  late final GeneratedColumn<bool> wasManuallyEdited = GeneratedColumn<bool>(
+      'was_manually_edited', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("was_manually_edited" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _approvedByMeta =
+      const VerificationMeta('approvedBy');
+  @override
+  late final GeneratedColumn<String> approvedBy = GeneratedColumn<String>(
+      'approved_by', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _approvedAtMeta =
+      const VerificationMeta('approvedAt');
+  @override
+  late final GeneratedColumn<DateTime> approvedAt = GeneratedColumn<DateTime>(
+      'approved_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        girviId,
+        noticeActionId,
+        noticeStage,
+        language,
+        noticeText,
+        documentHash,
+        generatedText,
+        wasManuallyEdited,
+        approvedBy,
+        approvedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'girvi_notice_documents';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<GirviNoticeDocumentData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('girvi_id')) {
+      context.handle(_girviIdMeta,
+          girviId.isAcceptableOrUnknown(data['girvi_id']!, _girviIdMeta));
+    } else if (isInserting) {
+      context.missing(_girviIdMeta);
+    }
+    if (data.containsKey('notice_action_id')) {
+      context.handle(
+          _noticeActionIdMeta,
+          noticeActionId.isAcceptableOrUnknown(
+              data['notice_action_id']!, _noticeActionIdMeta));
+    } else if (isInserting) {
+      context.missing(_noticeActionIdMeta);
+    }
+    if (data.containsKey('notice_stage')) {
+      context.handle(
+          _noticeStageMeta,
+          noticeStage.isAcceptableOrUnknown(
+              data['notice_stage']!, _noticeStageMeta));
+    } else if (isInserting) {
+      context.missing(_noticeStageMeta);
+    }
+    if (data.containsKey('language')) {
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
+    } else if (isInserting) {
+      context.missing(_languageMeta);
+    }
+    if (data.containsKey('notice_text')) {
+      context.handle(
+          _noticeTextMeta,
+          noticeText.isAcceptableOrUnknown(
+              data['notice_text']!, _noticeTextMeta));
+    } else if (isInserting) {
+      context.missing(_noticeTextMeta);
+    }
+    if (data.containsKey('document_hash')) {
+      context.handle(
+          _documentHashMeta,
+          documentHash.isAcceptableOrUnknown(
+              data['document_hash']!, _documentHashMeta));
+    } else if (isInserting) {
+      context.missing(_documentHashMeta);
+    }
+    if (data.containsKey('generated_text')) {
+      context.handle(
+          _generatedTextMeta,
+          generatedText.isAcceptableOrUnknown(
+              data['generated_text']!, _generatedTextMeta));
+    }
+    if (data.containsKey('was_manually_edited')) {
+      context.handle(
+          _wasManuallyEditedMeta,
+          wasManuallyEdited.isAcceptableOrUnknown(
+              data['was_manually_edited']!, _wasManuallyEditedMeta));
+    }
+    if (data.containsKey('approved_by')) {
+      context.handle(
+          _approvedByMeta,
+          approvedBy.isAcceptableOrUnknown(
+              data['approved_by']!, _approvedByMeta));
+    }
+    if (data.containsKey('approved_at')) {
+      context.handle(
+          _approvedAtMeta,
+          approvedAt.isAcceptableOrUnknown(
+              data['approved_at']!, _approvedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {noticeActionId, language},
+      ];
+  @override
+  GirviNoticeDocumentData map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GirviNoticeDocumentData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      girviId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}girvi_id'])!,
+      noticeActionId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notice_action_id'])!,
+      noticeStage: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notice_stage'])!,
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
+      noticeText: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notice_text'])!,
+      documentHash: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}document_hash'])!,
+      generatedText: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}generated_text']),
+      wasManuallyEdited: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}was_manually_edited'])!,
+      approvedBy: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}approved_by']),
+      approvedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}approved_at']),
+    );
+  }
+
+  @override
+  $GirviNoticeDocumentsTable createAlias(String alias) {
+    return $GirviNoticeDocumentsTable(attachedDatabase, alias);
+  }
+}
+
+class GirviNoticeDocumentData extends DataClass
+    implements Insertable<GirviNoticeDocumentData> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final int girviId;
+  final int noticeActionId;
+  final int noticeStage;
+  final String language;
+  final String noticeText;
+  final String documentHash;
+  final String? generatedText;
+  final bool wasManuallyEdited;
+  final String? approvedBy;
+  final DateTime? approvedAt;
+  const GirviNoticeDocumentData(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.girviId,
+      required this.noticeActionId,
+      required this.noticeStage,
+      required this.language,
+      required this.noticeText,
+      required this.documentHash,
+      this.generatedText,
+      required this.wasManuallyEdited,
+      this.approvedBy,
+      this.approvedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['girvi_id'] = Variable<int>(girviId);
+    map['notice_action_id'] = Variable<int>(noticeActionId);
+    map['notice_stage'] = Variable<int>(noticeStage);
+    map['language'] = Variable<String>(language);
+    map['notice_text'] = Variable<String>(noticeText);
+    map['document_hash'] = Variable<String>(documentHash);
+    if (!nullToAbsent || generatedText != null) {
+      map['generated_text'] = Variable<String>(generatedText);
+    }
+    map['was_manually_edited'] = Variable<bool>(wasManuallyEdited);
+    if (!nullToAbsent || approvedBy != null) {
+      map['approved_by'] = Variable<String>(approvedBy);
+    }
+    if (!nullToAbsent || approvedAt != null) {
+      map['approved_at'] = Variable<DateTime>(approvedAt);
+    }
+    return map;
+  }
+
+  GirviNoticeDocumentsCompanion toCompanion(bool nullToAbsent) {
+    return GirviNoticeDocumentsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      girviId: Value(girviId),
+      noticeActionId: Value(noticeActionId),
+      noticeStage: Value(noticeStage),
+      language: Value(language),
+      noticeText: Value(noticeText),
+      documentHash: Value(documentHash),
+      generatedText: generatedText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(generatedText),
+      wasManuallyEdited: Value(wasManuallyEdited),
+      approvedBy: approvedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(approvedBy),
+      approvedAt: approvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(approvedAt),
+    );
+  }
+
+  factory GirviNoticeDocumentData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GirviNoticeDocumentData(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      girviId: serializer.fromJson<int>(json['girviId']),
+      noticeActionId: serializer.fromJson<int>(json['noticeActionId']),
+      noticeStage: serializer.fromJson<int>(json['noticeStage']),
+      language: serializer.fromJson<String>(json['language']),
+      noticeText: serializer.fromJson<String>(json['noticeText']),
+      documentHash: serializer.fromJson<String>(json['documentHash']),
+      generatedText: serializer.fromJson<String?>(json['generatedText']),
+      wasManuallyEdited: serializer.fromJson<bool>(json['wasManuallyEdited']),
+      approvedBy: serializer.fromJson<String?>(json['approvedBy']),
+      approvedAt: serializer.fromJson<DateTime?>(json['approvedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'girviId': serializer.toJson<int>(girviId),
+      'noticeActionId': serializer.toJson<int>(noticeActionId),
+      'noticeStage': serializer.toJson<int>(noticeStage),
+      'language': serializer.toJson<String>(language),
+      'noticeText': serializer.toJson<String>(noticeText),
+      'documentHash': serializer.toJson<String>(documentHash),
+      'generatedText': serializer.toJson<String?>(generatedText),
+      'wasManuallyEdited': serializer.toJson<bool>(wasManuallyEdited),
+      'approvedBy': serializer.toJson<String?>(approvedBy),
+      'approvedAt': serializer.toJson<DateTime?>(approvedAt),
+    };
+  }
+
+  GirviNoticeDocumentData copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          int? girviId,
+          int? noticeActionId,
+          int? noticeStage,
+          String? language,
+          String? noticeText,
+          String? documentHash,
+          Value<String?> generatedText = const Value.absent(),
+          bool? wasManuallyEdited,
+          Value<String?> approvedBy = const Value.absent(),
+          Value<DateTime?> approvedAt = const Value.absent()}) =>
+      GirviNoticeDocumentData(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        girviId: girviId ?? this.girviId,
+        noticeActionId: noticeActionId ?? this.noticeActionId,
+        noticeStage: noticeStage ?? this.noticeStage,
+        language: language ?? this.language,
+        noticeText: noticeText ?? this.noticeText,
+        documentHash: documentHash ?? this.documentHash,
+        generatedText:
+            generatedText.present ? generatedText.value : this.generatedText,
+        wasManuallyEdited: wasManuallyEdited ?? this.wasManuallyEdited,
+        approvedBy: approvedBy.present ? approvedBy.value : this.approvedBy,
+        approvedAt: approvedAt.present ? approvedAt.value : this.approvedAt,
+      );
+  GirviNoticeDocumentData copyWithCompanion(
+      GirviNoticeDocumentsCompanion data) {
+    return GirviNoticeDocumentData(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      girviId: data.girviId.present ? data.girviId.value : this.girviId,
+      noticeActionId: data.noticeActionId.present
+          ? data.noticeActionId.value
+          : this.noticeActionId,
+      noticeStage:
+          data.noticeStage.present ? data.noticeStage.value : this.noticeStage,
+      language: data.language.present ? data.language.value : this.language,
+      noticeText:
+          data.noticeText.present ? data.noticeText.value : this.noticeText,
+      documentHash: data.documentHash.present
+          ? data.documentHash.value
+          : this.documentHash,
+      generatedText: data.generatedText.present
+          ? data.generatedText.value
+          : this.generatedText,
+      wasManuallyEdited: data.wasManuallyEdited.present
+          ? data.wasManuallyEdited.value
+          : this.wasManuallyEdited,
+      approvedBy:
+          data.approvedBy.present ? data.approvedBy.value : this.approvedBy,
+      approvedAt:
+          data.approvedAt.present ? data.approvedAt.value : this.approvedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviNoticeDocumentData(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('noticeActionId: $noticeActionId, ')
+          ..write('noticeStage: $noticeStage, ')
+          ..write('language: $language, ')
+          ..write('noticeText: $noticeText, ')
+          ..write('documentHash: $documentHash, ')
+          ..write('generatedText: $generatedText, ')
+          ..write('wasManuallyEdited: $wasManuallyEdited, ')
+          ..write('approvedBy: $approvedBy, ')
+          ..write('approvedAt: $approvedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      girviId,
+      noticeActionId,
+      noticeStage,
+      language,
+      noticeText,
+      documentHash,
+      generatedText,
+      wasManuallyEdited,
+      approvedBy,
+      approvedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GirviNoticeDocumentData &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.girviId == this.girviId &&
+          other.noticeActionId == this.noticeActionId &&
+          other.noticeStage == this.noticeStage &&
+          other.language == this.language &&
+          other.noticeText == this.noticeText &&
+          other.documentHash == this.documentHash &&
+          other.generatedText == this.generatedText &&
+          other.wasManuallyEdited == this.wasManuallyEdited &&
+          other.approvedBy == this.approvedBy &&
+          other.approvedAt == this.approvedAt);
+}
+
+class GirviNoticeDocumentsCompanion
+    extends UpdateCompanion<GirviNoticeDocumentData> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<int> girviId;
+  final Value<int> noticeActionId;
+  final Value<int> noticeStage;
+  final Value<String> language;
+  final Value<String> noticeText;
+  final Value<String> documentHash;
+  final Value<String?> generatedText;
+  final Value<bool> wasManuallyEdited;
+  final Value<String?> approvedBy;
+  final Value<DateTime?> approvedAt;
+  const GirviNoticeDocumentsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.girviId = const Value.absent(),
+    this.noticeActionId = const Value.absent(),
+    this.noticeStage = const Value.absent(),
+    this.language = const Value.absent(),
+    this.noticeText = const Value.absent(),
+    this.documentHash = const Value.absent(),
+    this.generatedText = const Value.absent(),
+    this.wasManuallyEdited = const Value.absent(),
+    this.approvedBy = const Value.absent(),
+    this.approvedAt = const Value.absent(),
+  });
+  GirviNoticeDocumentsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required int girviId,
+    required int noticeActionId,
+    required int noticeStage,
+    required String language,
+    required String noticeText,
+    required String documentHash,
+    this.generatedText = const Value.absent(),
+    this.wasManuallyEdited = const Value.absent(),
+    this.approvedBy = const Value.absent(),
+    this.approvedAt = const Value.absent(),
+  })  : girviId = Value(girviId),
+        noticeActionId = Value(noticeActionId),
+        noticeStage = Value(noticeStage),
+        language = Value(language),
+        noticeText = Value(noticeText),
+        documentHash = Value(documentHash);
+  static Insertable<GirviNoticeDocumentData> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? girviId,
+    Expression<int>? noticeActionId,
+    Expression<int>? noticeStage,
+    Expression<String>? language,
+    Expression<String>? noticeText,
+    Expression<String>? documentHash,
+    Expression<String>? generatedText,
+    Expression<bool>? wasManuallyEdited,
+    Expression<String>? approvedBy,
+    Expression<DateTime>? approvedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (girviId != null) 'girvi_id': girviId,
+      if (noticeActionId != null) 'notice_action_id': noticeActionId,
+      if (noticeStage != null) 'notice_stage': noticeStage,
+      if (language != null) 'language': language,
+      if (noticeText != null) 'notice_text': noticeText,
+      if (documentHash != null) 'document_hash': documentHash,
+      if (generatedText != null) 'generated_text': generatedText,
+      if (wasManuallyEdited != null) 'was_manually_edited': wasManuallyEdited,
+      if (approvedBy != null) 'approved_by': approvedBy,
+      if (approvedAt != null) 'approved_at': approvedAt,
+    });
+  }
+
+  GirviNoticeDocumentsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<int>? girviId,
+      Value<int>? noticeActionId,
+      Value<int>? noticeStage,
+      Value<String>? language,
+      Value<String>? noticeText,
+      Value<String>? documentHash,
+      Value<String?>? generatedText,
+      Value<bool>? wasManuallyEdited,
+      Value<String?>? approvedBy,
+      Value<DateTime?>? approvedAt}) {
+    return GirviNoticeDocumentsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      girviId: girviId ?? this.girviId,
+      noticeActionId: noticeActionId ?? this.noticeActionId,
+      noticeStage: noticeStage ?? this.noticeStage,
+      language: language ?? this.language,
+      noticeText: noticeText ?? this.noticeText,
+      documentHash: documentHash ?? this.documentHash,
+      generatedText: generatedText ?? this.generatedText,
+      wasManuallyEdited: wasManuallyEdited ?? this.wasManuallyEdited,
+      approvedBy: approvedBy ?? this.approvedBy,
+      approvedAt: approvedAt ?? this.approvedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (girviId.present) {
+      map['girvi_id'] = Variable<int>(girviId.value);
+    }
+    if (noticeActionId.present) {
+      map['notice_action_id'] = Variable<int>(noticeActionId.value);
+    }
+    if (noticeStage.present) {
+      map['notice_stage'] = Variable<int>(noticeStage.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
+    if (noticeText.present) {
+      map['notice_text'] = Variable<String>(noticeText.value);
+    }
+    if (documentHash.present) {
+      map['document_hash'] = Variable<String>(documentHash.value);
+    }
+    if (generatedText.present) {
+      map['generated_text'] = Variable<String>(generatedText.value);
+    }
+    if (wasManuallyEdited.present) {
+      map['was_manually_edited'] = Variable<bool>(wasManuallyEdited.value);
+    }
+    if (approvedBy.present) {
+      map['approved_by'] = Variable<String>(approvedBy.value);
+    }
+    if (approvedAt.present) {
+      map['approved_at'] = Variable<DateTime>(approvedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GirviNoticeDocumentsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('girviId: $girviId, ')
+          ..write('noticeActionId: $noticeActionId, ')
+          ..write('noticeStage: $noticeStage, ')
+          ..write('language: $language, ')
+          ..write('noticeText: $noticeText, ')
+          ..write('documentHash: $documentHash, ')
+          ..write('generatedText: $generatedText, ')
+          ..write('wasManuallyEdited: $wasManuallyEdited, ')
+          ..write('approvedBy: $approvedBy, ')
+          ..write('approvedAt: $approvedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DeliveryOrdersTable extends DeliveryOrders
     with TableInfo<$DeliveryOrdersTable, DeliveryOrder> {
   @override
@@ -39614,6 +40283,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $GirviNoticeActionsTable(this);
   late final $GirviCustomerResponsesTable girviCustomerResponses =
       $GirviCustomerResponsesTable(this);
+  late final $GirviNoticeDocumentsTable girviNoticeDocuments =
+      $GirviNoticeDocumentsTable(this);
   late final $DeliveryOrdersTable deliveryOrders = $DeliveryOrdersTable(this);
   late final $DeliveryItemsTable deliveryItems = $DeliveryItemsTable(this);
   late final $SalesBillingSettingsTable salesBillingSettings =
@@ -39784,6 +40455,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxGirviResponseNoticeAction = Index(
       'idx_girvi_response_notice_action',
       'CREATE INDEX idx_girvi_response_notice_action ON girvi_customer_responses (notice_action_id)');
+  late final Index idxGirviNoticeDocumentLoanStage = Index(
+      'idx_girvi_notice_document_loan_stage',
+      'CREATE INDEX idx_girvi_notice_document_loan_stage ON girvi_notice_documents (girvi_id, notice_stage)');
+  late final Index idxGirviNoticeDocumentActionLanguage = Index(
+      'idx_girvi_notice_document_action_language',
+      'CREATE INDEX idx_girvi_notice_document_action_language ON girvi_notice_documents (notice_action_id, language)');
   late final Index idxDeliveryStatus = Index('idx_delivery_status',
       'CREATE INDEX idx_delivery_status ON delivery_orders (status)');
   late final Index idxDeliveryCustomer = Index('idx_delivery_customer',
@@ -39852,6 +40529,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         girviDisbursements,
         girviNoticeActions,
         girviCustomerResponses,
+        girviNoticeDocuments,
         deliveryOrders,
         deliveryItems,
         salesBillingSettings,
@@ -39933,6 +40611,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxGirviResponseLoanReceived,
         idxGirviResponseOpenPromise,
         idxGirviResponseNoticeAction,
+        idxGirviNoticeDocumentLoanStage,
+        idxGirviNoticeDocumentActionLanguage,
         idxDeliveryStatus,
         idxDeliveryCustomer,
         idxDeliveryDate,
@@ -40048,6 +40728,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
                 limitUpdateKind: UpdateKind.delete),
             result: [
               TableUpdate('girvi_customer_responses', kind: UpdateKind.update),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('girvi_loans',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('girvi_notice_documents', kind: UpdateKind.delete),
+            ],
+          ),
+          WritePropagation(
+            on: TableUpdateQuery.onTableName('girvi_notice_actions',
+                limitUpdateKind: UpdateKind.delete),
+            result: [
+              TableUpdate('girvi_notice_documents', kind: UpdateKind.delete),
             ],
           ),
           WritePropagation(
@@ -51307,6 +52001,25 @@ final class $$GirviLoansTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$GirviNoticeDocumentsTable,
+      List<GirviNoticeDocumentData>> _girviNoticeDocumentsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.girviNoticeDocuments,
+          aliasName: $_aliasNameGenerator(
+              db.girviLoans.id, db.girviNoticeDocuments.girviId));
+
+  $$GirviNoticeDocumentsTableProcessedTableManager
+      get girviNoticeDocumentsRefs {
+    final manager =
+        $$GirviNoticeDocumentsTableTableManager($_db, $_db.girviNoticeDocuments)
+            .filter((f) => f.girviId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_girviNoticeDocumentsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$GirviLoansTableFilterComposer
@@ -51579,6 +52292,28 @@ class $$GirviLoansTableFilterComposer
                   $removeJoinBuilderFromRootComposer:
                       $removeJoinBuilderFromRootComposer,
                 ));
+    return f(composer);
+  }
+
+  Expression<bool> girviNoticeDocumentsRefs(
+      Expression<bool> Function($$GirviNoticeDocumentsTableFilterComposer f)
+          f) {
+    final $$GirviNoticeDocumentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviNoticeDocuments,
+        getReferencedColumn: (t) => t.girviId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeDocumentsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviNoticeDocuments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
     return f(composer);
   }
 }
@@ -52015,6 +52750,29 @@ class $$GirviLoansTableAnnotationComposer
                 ));
     return f(composer);
   }
+
+  Expression<T> girviNoticeDocumentsRefs<T extends Object>(
+      Expression<T> Function($$GirviNoticeDocumentsTableAnnotationComposer a)
+          f) {
+    final $$GirviNoticeDocumentsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.girviNoticeDocuments,
+            getReferencedColumn: (t) => t.girviId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GirviNoticeDocumentsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.girviNoticeDocuments,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$GirviLoansTableTableManager extends RootTableManager<
@@ -52034,7 +52792,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
         bool girviLoanItemsRefs,
         bool girviDisbursementsRefs,
         bool girviNoticeActionsRefs,
-        bool girviCustomerResponsesRefs})> {
+        bool girviCustomerResponsesRefs,
+        bool girviNoticeDocumentsRefs})> {
   $$GirviLoansTableTableManager(_$AppDatabase db, $GirviLoansTable table)
       : super(TableManagerState(
           db: db,
@@ -52233,7 +52992,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
               girviLoanItemsRefs = false,
               girviDisbursementsRefs = false,
               girviNoticeActionsRefs = false,
-              girviCustomerResponsesRefs = false}) {
+              girviCustomerResponsesRefs = false,
+              girviNoticeDocumentsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
@@ -52241,7 +53001,8 @@ class $$GirviLoansTableTableManager extends RootTableManager<
                 if (girviLoanItemsRefs) db.girviLoanItems,
                 if (girviDisbursementsRefs) db.girviDisbursements,
                 if (girviNoticeActionsRefs) db.girviNoticeActions,
-                if (girviCustomerResponsesRefs) db.girviCustomerResponses
+                if (girviCustomerResponsesRefs) db.girviCustomerResponses,
+                if (girviNoticeDocumentsRefs) db.girviNoticeDocuments
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -52330,6 +53091,18 @@ class $$GirviLoansTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.girviId == item.id),
+                        typedResults: items),
+                  if (girviNoticeDocumentsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GirviLoansTableReferences
+                            ._girviNoticeDocumentsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GirviLoansTableReferences(db, table, p0)
+                                .girviNoticeDocumentsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.girviId == item.id),
                         typedResults: items)
                 ];
               },
@@ -52355,7 +53128,8 @@ typedef $$GirviLoansTableProcessedTableManager = ProcessedTableManager<
         bool girviLoanItemsRefs,
         bool girviDisbursementsRefs,
         bool girviNoticeActionsRefs,
-        bool girviCustomerResponsesRefs})>;
+        bool girviCustomerResponsesRefs,
+        bool girviNoticeDocumentsRefs})>;
 typedef $$GirviPaymentsTableCreateCompanionBuilder = GirviPaymentsCompanion
     Function({
   Value<int> id,
@@ -54281,6 +55055,25 @@ final class $$GirviNoticeActionsTableReferences extends BaseReferences<
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$GirviNoticeDocumentsTable,
+      List<GirviNoticeDocumentData>> _girviNoticeDocumentsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.girviNoticeDocuments,
+          aliasName: $_aliasNameGenerator(db.girviNoticeActions.id,
+              db.girviNoticeDocuments.noticeActionId));
+
+  $$GirviNoticeDocumentsTableProcessedTableManager
+      get girviNoticeDocumentsRefs {
+    final manager =
+        $$GirviNoticeDocumentsTableTableManager($_db, $_db.girviNoticeDocuments)
+            .filter((f) => f.noticeActionId.id($_item.id));
+
+    final cache =
+        $_typedResult.readTableOrNull(_girviNoticeDocumentsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$GirviNoticeActionsTableFilterComposer
@@ -54410,6 +55203,28 @@ class $$GirviNoticeActionsTableFilterComposer
                   $removeJoinBuilderFromRootComposer:
                       $removeJoinBuilderFromRootComposer,
                 ));
+    return f(composer);
+  }
+
+  Expression<bool> girviNoticeDocumentsRefs(
+      Expression<bool> Function($$GirviNoticeDocumentsTableFilterComposer f)
+          f) {
+    final $$GirviNoticeDocumentsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.girviNoticeDocuments,
+        getReferencedColumn: (t) => t.noticeActionId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeDocumentsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviNoticeDocuments,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
     return f(composer);
   }
 }
@@ -54644,6 +55459,29 @@ class $$GirviNoticeActionsTableAnnotationComposer
                 ));
     return f(composer);
   }
+
+  Expression<T> girviNoticeDocumentsRefs<T extends Object>(
+      Expression<T> Function($$GirviNoticeDocumentsTableAnnotationComposer a)
+          f) {
+    final $$GirviNoticeDocumentsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.id,
+            referencedTable: $db.girviNoticeDocuments,
+            getReferencedColumn: (t) => t.noticeActionId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GirviNoticeDocumentsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.girviNoticeDocuments,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$GirviNoticeActionsTableTableManager extends RootTableManager<
@@ -54657,7 +55495,10 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
     $$GirviNoticeActionsTableUpdateCompanionBuilder,
     (GirviNoticeActionData, $$GirviNoticeActionsTableReferences),
     GirviNoticeActionData,
-    PrefetchHooks Function({bool girviId, bool girviCustomerResponsesRefs})> {
+    PrefetchHooks Function(
+        {bool girviId,
+        bool girviCustomerResponsesRefs,
+        bool girviNoticeDocumentsRefs})> {
   $$GirviNoticeActionsTableTableManager(
       _$AppDatabase db, $GirviNoticeActionsTable table)
       : super(TableManagerState(
@@ -54781,11 +55622,14 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {girviId = false, girviCustomerResponsesRefs = false}) {
+              {girviId = false,
+              girviCustomerResponsesRefs = false,
+              girviNoticeDocumentsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
-                if (girviCustomerResponsesRefs) db.girviCustomerResponses
+                if (girviCustomerResponsesRefs) db.girviCustomerResponses,
+                if (girviNoticeDocumentsRefs) db.girviNoticeDocuments
               ],
               addJoins: <
                   T extends TableManagerState<
@@ -54827,6 +55671,18 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.noticeActionId == item.id),
+                        typedResults: items),
+                  if (girviNoticeDocumentsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$GirviNoticeActionsTableReferences
+                            ._girviNoticeDocumentsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GirviNoticeActionsTableReferences(db, table, p0)
+                                .girviNoticeDocumentsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.noticeActionId == item.id),
                         typedResults: items)
                 ];
               },
@@ -54846,7 +55702,10 @@ typedef $$GirviNoticeActionsTableProcessedTableManager = ProcessedTableManager<
     $$GirviNoticeActionsTableUpdateCompanionBuilder,
     (GirviNoticeActionData, $$GirviNoticeActionsTableReferences),
     GirviNoticeActionData,
-    PrefetchHooks Function({bool girviId, bool girviCustomerResponsesRefs})>;
+    PrefetchHooks Function(
+        {bool girviId,
+        bool girviCustomerResponsesRefs,
+        bool girviNoticeDocumentsRefs})>;
 typedef $$GirviCustomerResponsesTableCreateCompanionBuilder
     = GirviCustomerResponsesCompanion Function({
   Value<int> id,
@@ -55390,6 +56249,482 @@ typedef $$GirviCustomerResponsesTableProcessedTableManager
         $$GirviCustomerResponsesTableUpdateCompanionBuilder,
         (GirviCustomerResponseData, $$GirviCustomerResponsesTableReferences),
         GirviCustomerResponseData,
+        PrefetchHooks Function({bool girviId, bool noticeActionId})>;
+typedef $$GirviNoticeDocumentsTableCreateCompanionBuilder
+    = GirviNoticeDocumentsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required int girviId,
+  required int noticeActionId,
+  required int noticeStage,
+  required String language,
+  required String noticeText,
+  required String documentHash,
+  Value<String?> generatedText,
+  Value<bool> wasManuallyEdited,
+  Value<String?> approvedBy,
+  Value<DateTime?> approvedAt,
+});
+typedef $$GirviNoticeDocumentsTableUpdateCompanionBuilder
+    = GirviNoticeDocumentsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<int> girviId,
+  Value<int> noticeActionId,
+  Value<int> noticeStage,
+  Value<String> language,
+  Value<String> noticeText,
+  Value<String> documentHash,
+  Value<String?> generatedText,
+  Value<bool> wasManuallyEdited,
+  Value<String?> approvedBy,
+  Value<DateTime?> approvedAt,
+});
+
+final class $$GirviNoticeDocumentsTableReferences extends BaseReferences<
+    _$AppDatabase, $GirviNoticeDocumentsTable, GirviNoticeDocumentData> {
+  $$GirviNoticeDocumentsTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $GirviLoansTable _girviIdTable(_$AppDatabase db) =>
+      db.girviLoans.createAlias($_aliasNameGenerator(
+          db.girviNoticeDocuments.girviId, db.girviLoans.id));
+
+  $$GirviLoansTableProcessedTableManager? get girviId {
+    if ($_item.girviId == null) return null;
+    final manager = $$GirviLoansTableTableManager($_db, $_db.girviLoans)
+        .filter((f) => f.id($_item.girviId!));
+    final item = $_typedResult.readTableOrNull(_girviIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $GirviNoticeActionsTable _noticeActionIdTable(_$AppDatabase db) =>
+      db.girviNoticeActions.createAlias($_aliasNameGenerator(
+          db.girviNoticeDocuments.noticeActionId, db.girviNoticeActions.id));
+
+  $$GirviNoticeActionsTableProcessedTableManager? get noticeActionId {
+    if ($_item.noticeActionId == null) return null;
+    final manager =
+        $$GirviNoticeActionsTableTableManager($_db, $_db.girviNoticeActions)
+            .filter((f) => f.id($_item.noticeActionId!));
+    final item = $_typedResult.readTableOrNull(_noticeActionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GirviNoticeDocumentsTableFilterComposer
+    extends Composer<_$AppDatabase, $GirviNoticeDocumentsTable> {
+  $$GirviNoticeDocumentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get noticeStage => $composableBuilder(
+      column: $table.noticeStage, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get noticeText => $composableBuilder(
+      column: $table.noticeText, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get documentHash => $composableBuilder(
+      column: $table.documentHash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get generatedText => $composableBuilder(
+      column: $table.generatedText, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get wasManuallyEdited => $composableBuilder(
+      column: $table.wasManuallyEdited,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get approvedBy => $composableBuilder(
+      column: $table.approvedBy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get approvedAt => $composableBuilder(
+      column: $table.approvedAt, builder: (column) => ColumnFilters(column));
+
+  $$GirviLoansTableFilterComposer get girviId {
+    final $$GirviLoansTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableFilterComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$GirviNoticeActionsTableFilterComposer get noticeActionId {
+    final $$GirviNoticeActionsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.noticeActionId,
+        referencedTable: $db.girviNoticeActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeActionsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviNoticeActions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviNoticeDocumentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GirviNoticeDocumentsTable> {
+  $$GirviNoticeDocumentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get noticeStage => $composableBuilder(
+      column: $table.noticeStage, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get language => $composableBuilder(
+      column: $table.language, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get noticeText => $composableBuilder(
+      column: $table.noticeText, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get documentHash => $composableBuilder(
+      column: $table.documentHash,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get generatedText => $composableBuilder(
+      column: $table.generatedText,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get wasManuallyEdited => $composableBuilder(
+      column: $table.wasManuallyEdited,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get approvedBy => $composableBuilder(
+      column: $table.approvedBy, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get approvedAt => $composableBuilder(
+      column: $table.approvedAt, builder: (column) => ColumnOrderings(column));
+
+  $$GirviLoansTableOrderingComposer get girviId {
+    final $$GirviLoansTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$GirviNoticeActionsTableOrderingComposer get noticeActionId {
+    final $$GirviNoticeActionsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.noticeActionId,
+        referencedTable: $db.girviNoticeActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeActionsTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviNoticeActions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GirviNoticeDocumentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GirviNoticeDocumentsTable> {
+  $$GirviNoticeDocumentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get noticeStage => $composableBuilder(
+      column: $table.noticeStage, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
+  GeneratedColumn<String> get noticeText => $composableBuilder(
+      column: $table.noticeText, builder: (column) => column);
+
+  GeneratedColumn<String> get documentHash => $composableBuilder(
+      column: $table.documentHash, builder: (column) => column);
+
+  GeneratedColumn<String> get generatedText => $composableBuilder(
+      column: $table.generatedText, builder: (column) => column);
+
+  GeneratedColumn<bool> get wasManuallyEdited => $composableBuilder(
+      column: $table.wasManuallyEdited, builder: (column) => column);
+
+  GeneratedColumn<String> get approvedBy => $composableBuilder(
+      column: $table.approvedBy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get approvedAt => $composableBuilder(
+      column: $table.approvedAt, builder: (column) => column);
+
+  $$GirviLoansTableAnnotationComposer get girviId {
+    final $$GirviLoansTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.girviId,
+        referencedTable: $db.girviLoans,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviLoansTableAnnotationComposer(
+              $db: $db,
+              $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$GirviNoticeActionsTableAnnotationComposer get noticeActionId {
+    final $$GirviNoticeActionsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.noticeActionId,
+            referencedTable: $db.girviNoticeActions,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GirviNoticeActionsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.girviNoticeActions,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+}
+
+class $$GirviNoticeDocumentsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GirviNoticeDocumentsTable,
+    GirviNoticeDocumentData,
+    $$GirviNoticeDocumentsTableFilterComposer,
+    $$GirviNoticeDocumentsTableOrderingComposer,
+    $$GirviNoticeDocumentsTableAnnotationComposer,
+    $$GirviNoticeDocumentsTableCreateCompanionBuilder,
+    $$GirviNoticeDocumentsTableUpdateCompanionBuilder,
+    (GirviNoticeDocumentData, $$GirviNoticeDocumentsTableReferences),
+    GirviNoticeDocumentData,
+    PrefetchHooks Function({bool girviId, bool noticeActionId})> {
+  $$GirviNoticeDocumentsTableTableManager(
+      _$AppDatabase db, $GirviNoticeDocumentsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GirviNoticeDocumentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GirviNoticeDocumentsTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GirviNoticeDocumentsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<int> girviId = const Value.absent(),
+            Value<int> noticeActionId = const Value.absent(),
+            Value<int> noticeStage = const Value.absent(),
+            Value<String> language = const Value.absent(),
+            Value<String> noticeText = const Value.absent(),
+            Value<String> documentHash = const Value.absent(),
+            Value<String?> generatedText = const Value.absent(),
+            Value<bool> wasManuallyEdited = const Value.absent(),
+            Value<String?> approvedBy = const Value.absent(),
+            Value<DateTime?> approvedAt = const Value.absent(),
+          }) =>
+              GirviNoticeDocumentsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            noticeActionId: noticeActionId,
+            noticeStage: noticeStage,
+            language: language,
+            noticeText: noticeText,
+            documentHash: documentHash,
+            generatedText: generatedText,
+            wasManuallyEdited: wasManuallyEdited,
+            approvedBy: approvedBy,
+            approvedAt: approvedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required int girviId,
+            required int noticeActionId,
+            required int noticeStage,
+            required String language,
+            required String noticeText,
+            required String documentHash,
+            Value<String?> generatedText = const Value.absent(),
+            Value<bool> wasManuallyEdited = const Value.absent(),
+            Value<String?> approvedBy = const Value.absent(),
+            Value<DateTime?> approvedAt = const Value.absent(),
+          }) =>
+              GirviNoticeDocumentsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            girviId: girviId,
+            noticeActionId: noticeActionId,
+            noticeStage: noticeStage,
+            language: language,
+            noticeText: noticeText,
+            documentHash: documentHash,
+            generatedText: generatedText,
+            wasManuallyEdited: wasManuallyEdited,
+            approvedBy: approvedBy,
+            approvedAt: approvedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GirviNoticeDocumentsTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({girviId = false, noticeActionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (girviId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.girviId,
+                    referencedTable:
+                        $$GirviNoticeDocumentsTableReferences._girviIdTable(db),
+                    referencedColumn: $$GirviNoticeDocumentsTableReferences
+                        ._girviIdTable(db)
+                        .id,
+                  ) as T;
+                }
+                if (noticeActionId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.noticeActionId,
+                    referencedTable: $$GirviNoticeDocumentsTableReferences
+                        ._noticeActionIdTable(db),
+                    referencedColumn: $$GirviNoticeDocumentsTableReferences
+                        ._noticeActionIdTable(db)
+                        .id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GirviNoticeDocumentsTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $GirviNoticeDocumentsTable,
+        GirviNoticeDocumentData,
+        $$GirviNoticeDocumentsTableFilterComposer,
+        $$GirviNoticeDocumentsTableOrderingComposer,
+        $$GirviNoticeDocumentsTableAnnotationComposer,
+        $$GirviNoticeDocumentsTableCreateCompanionBuilder,
+        $$GirviNoticeDocumentsTableUpdateCompanionBuilder,
+        (GirviNoticeDocumentData, $$GirviNoticeDocumentsTableReferences),
+        GirviNoticeDocumentData,
         PrefetchHooks Function({bool girviId, bool noticeActionId})>;
 typedef $$DeliveryOrdersTableCreateCompanionBuilder = DeliveryOrdersCompanion
     Function({
@@ -62194,6 +63529,8 @@ class $AppDatabaseManager {
   $$GirviCustomerResponsesTableTableManager get girviCustomerResponses =>
       $$GirviCustomerResponsesTableTableManager(
           _db, _db.girviCustomerResponses);
+  $$GirviNoticeDocumentsTableTableManager get girviNoticeDocuments =>
+      $$GirviNoticeDocumentsTableTableManager(_db, _db.girviNoticeDocuments);
   $$DeliveryOrdersTableTableManager get deliveryOrders =>
       $$DeliveryOrdersTableTableManager(_db, _db.deliveryOrders);
   $$DeliveryItemsTableTableManager get deliveryItems =>

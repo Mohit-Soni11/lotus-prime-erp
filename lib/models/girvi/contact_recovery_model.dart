@@ -8,6 +8,7 @@ import 'girvi_customer_response_model.dart';
 import 'girvi_loan_model.dart';
 import 'girvi_interest_period_snapshot.dart';
 import 'girvi_notice_action_model.dart';
+import 'girvi_notice_document_record_model.dart';
 
 enum ContactRecoveryStage {
   firstNoticeDue,
@@ -67,6 +68,7 @@ class ContactRecoveryCase {
   final List<GirviInterestPeriodSnapshot> interestPeriodSnapshots;
   final List<String> itemPhotoPaths;
   final List<GirviCustomerResponse> customerResponses;
+  final List<GirviNoticeDocumentRecord> noticeDocuments;
 
   const ContactRecoveryCase({
     required this.account,
@@ -78,6 +80,7 @@ class ContactRecoveryCase {
     this.interestPeriodSnapshots = const [],
     this.itemPhotoPaths = const [],
     this.customerResponses = const [],
+    this.noticeDocuments = const [],
   });
 
   GirviLoanModel get loan => account.loan;
@@ -107,6 +110,23 @@ class ContactRecoveryCase {
 
   GirviCustomerResponse? get latestCustomerResponse =>
       customerResponses.isEmpty ? null : customerResponses.first;
+
+  List<GirviNoticeDocumentRecord> documentsForNoticeAction(int actionId) =>
+      noticeDocuments
+          .where((document) => document.noticeActionId == actionId)
+          .toList(growable: false);
+
+  GirviNoticeDocumentRecord? documentForNoticeAction(
+    int actionId,
+    GirviNoticeLanguage language,
+  ) {
+    for (final document in noticeDocuments) {
+      if (document.noticeActionId == actionId && document.language == language) {
+        return document;
+      }
+    }
+    return null;
+  }
 
   List<GirviNoticeAction> get noticeActions =>
       actionHistory.where((action) => action.isNoticePreparation).toList();

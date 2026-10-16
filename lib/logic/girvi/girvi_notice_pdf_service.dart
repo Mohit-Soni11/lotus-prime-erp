@@ -368,7 +368,9 @@ class GirviNoticePdfService {
             padding: const pw.EdgeInsets.symmetric(horizontal: 15, vertical: 5),
             decoration: pw.BoxDecoration(
               color: _gold,
-              borderRadius: pw.BorderRadius.circular(999),
+              // `pdf` draws extremely large radii as oversized curves. A
+              // bounded radius preserves the badge without painting the page.
+              borderRadius: pw.BorderRadius.circular(8),
             ),
             child: pw.Text(
               heading,
