@@ -35,7 +35,8 @@ void main() {
       expect(customers.single.name, 'Girvi Customer');
     });
 
-    test('case shows next notice stage and calendar age in months and days',
+    test(
+        'case shows single notice workflow and calendar age in months and days',
         () {
       final now = DateTime(2026, 6, 24);
       final account = GirviLoanWithCustomer(
@@ -66,211 +67,71 @@ void main() {
         customerMobile: '9304479436',
       );
 
-      final freshCase = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-      );
-
-      expect(freshCase.noticeProgressLabel, '1/3');
-      expect(freshCase.noticesSentLabel, '0/3 Sent');
-      expect(freshCase.loanAgeMonthsDaysLabel, '15 months 14 days');
-      expect(freshCase.overdueAgeMonthsDaysLabel, '9 months 14 days');
-
-      final afterFirstNotice = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
+      ContactRecoveryCase caseWith(List<GirviNoticeAction> actions,
+              {DateTime? asOf}) =>
+          ContactRecoveryCase(
+            account: account,
+            noticePeriodDays: 7,
+            now: asOf ?? now,
+            actionHistory: actions,
+          );
+      GirviNoticeAction notice({DateTime? deadline}) => GirviNoticeAction(
             id: 1,
             girviId: account.loan.id,
-            actionType: GirviNoticeType.first.actionType,
+            actionType: GirviNoticeActionTypes.noticePrepared,
             noticeStage: 1,
             actionAt: now,
             createdAt: now,
-          ),
-        ],
-      );
-
-      expect(afterFirstNotice.noticeProgressLabel, '2/3');
-      expect(afterFirstNotice.stage, ContactRecoveryStage.firstNoticeDue);
-      expect(afterFirstNotice.noticesSentLabel, '1/3 Sent');
-      expect(afterFirstNotice.canPrepareNextNotice, isFalse);
-      expect(afterFirstNotice.daysUntilNextNotice, 30);
-      expect(afterFirstNotice.preparedNoticeActions, hasLength(1));
-      expect(afterFirstNotice.preparedNoticeActions.single.noticeStage, 1);
-
-      final afterSecondNotice = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
+            noticeDeadlineAt: deadline ?? now.add(const Duration(days: 7)),
+          );
+      final fresh = caseWith([]);
+      expect(fresh.stage, ContactRecoveryStage.noticeRequired);
+      expect(fresh.nextNoticeType, GirviNoticeType.formal);
+      expect(fresh.noticeStatusLabel, 'Not prepared');
+      expect(fresh.loanAgeMonthsDaysLabel, '15 months 14 days');
+      expect(fresh.overdueAgeMonthsDaysLabel, '9 months 14 days');
+      final pending = caseWith([notice()]);
+      expect(pending.stage, ContactRecoveryStage.noticePending);
+      expect(pending.nextNoticeType, isNull);
+      expect(pending.canPrepareNotice, isFalse);
+      expect(pending.noticeStatusLabel, 'Approved');
+      expect(pending.preparedNoticeActions, hasLength(1));
+      final deadline = now.add(const Duration(days: 7, hours: 12));
+      final before = caseWith([notice(deadline: deadline)],
+          asOf: deadline.subtract(const Duration(seconds: 1)));
+      expect(before.canInitiateCollateralRecovery, isFalse);
+      final ready = caseWith([notice(deadline: deadline)], asOf: deadline);
+      expect(ready.stage, ContactRecoveryStage.disposalReady);
+      expect(ready.canInitiateCollateralRecovery, isTrue);
+      expect(ready.canCloseDisposal, isFalse);
+      final recovery = caseWith([
+        notice(),
+        GirviNoticeAction(
             id: 2,
-            girviId: account.loan.id,
-            actionType: GirviNoticeType.second.actionType,
-            noticeStage: 2,
-            actionAt: now,
-            createdAt: now,
-          ),
-          GirviNoticeAction(
-            id: 1,
-            girviId: account.loan.id,
-            actionType: GirviNoticeType.first.actionType,
-            noticeStage: 1,
-            actionAt: now,
-            createdAt: now,
-          ),
-        ],
-      );
-
-      expect(afterSecondNotice.stage, ContactRecoveryStage.secondNoticeDue);
-      expect(afterSecondNotice.noticeProgressLabel, '3/3');
-      expect(afterSecondNotice.noticesSentLabel, '2/3 Sent');
-
-      final finalNoticeOnly = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
-            id: 3,
-            girviId: account.loan.id,
-            actionType: GirviNoticeType.finalNotice.actionType,
-            noticeStage: 3,
-            actionAt: now,
-            createdAt: now,
-          ),
-        ],
-      );
-
-      expect(finalNoticeOnly.stage, ContactRecoveryStage.finalNoticeDue);
-      expect(finalNoticeOnly.nextNoticeType, isNull);
-      expect(finalNoticeOnly.canCloseDisposal, isFalse);
-
-      final disposalReadyCase = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
-            id: 3,
-            girviId: account.loan.id,
-            actionType: GirviNoticeType.finalNotice.actionType,
-            noticeStage: 3,
-            actionAt: now.subtract(const Duration(days: 30)),
-            createdAt: now.subtract(const Duration(days: 30)),
-          ),
-        ],
-      );
-
-      expect(disposalReadyCase.stage, ContactRecoveryStage.disposalReady);
-      expect(disposalReadyCase.canInitiateCollateralRecovery, isTrue);
-      expect(disposalReadyCase.canCloseDisposal, isFalse);
-
-      final recoveryInProgressCase = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
-            id: 4,
             girviId: account.loan.id,
             actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
             actionAt: now,
-            createdAt: now,
-          ),
-          GirviNoticeAction(
+            createdAt: now),
+      ]);
+      expect(recovery.canCloseDisposal, isTrue);
+      expect(recovery.nextNoticeType, isNull);
+      final closed = caseWith([
+        GirviNoticeAction(
             id: 3,
-            girviId: account.loan.id,
-            actionType: GirviNoticeType.finalNotice.actionType,
-            noticeStage: 3,
-            actionAt: now.subtract(const Duration(days: 30)),
-            createdAt: now.subtract(const Duration(days: 30)),
-          ),
-        ],
-      );
-
-      expect(
-        recoveryInProgressCase.stage,
-        ContactRecoveryStage.recoveryInProgress,
-      );
-      expect(recoveryInProgressCase.canCloseDisposal, isTrue);
-
-      final closedAfterThreeNotices = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
-            id: 4,
             girviId: account.loan.id,
             actionType: GirviNoticeActionTypes.disposalSettled,
             actionAt: now,
-            createdAt: now,
-          ),
-          for (final noticeType in GirviNoticeType.values)
-            GirviNoticeAction(
-              id: noticeType.stage,
-              girviId: account.loan.id,
-              actionType: noticeType.actionType,
-              noticeStage: noticeType.stage,
-              actionAt: now,
-              createdAt: now,
-            ),
-        ],
-      );
-
-      expect(closedAfterThreeNotices.stage, ContactRecoveryStage.settled);
-      expect(closedAfterThreeNotices.noticeProgressLabel, 'Closed');
-      expect(closedAfterThreeNotices.noticesSentLabel, '3/3 Sent');
-      expect(
-        closedAfterThreeNotices.preparedNoticeActions
-            .map((action) => action.noticeStage)
-            .toList(),
-        [1, 2, 3],
-      );
-
-      final legacyDraftNotice = ContactRecoveryCase(
-        account: account,
-        noticePeriodDays: 30,
-        now: now,
-        actionHistory: [
-          GirviNoticeAction(
-            id: 5,
-            girviId: account.loan.id,
-            actionType: GirviNoticeActionTypes.noticeDraftCopied,
-            actionAt: now,
-            createdAt: now,
-          ),
-        ],
-      );
-
-      expect(legacyDraftNotice.noticesSentLabel, '0/3 Sent');
-      expect(legacyDraftNotice.preparedNoticeActions, isEmpty);
-
-      final state = ContactRecoveryState.initial().copyWith(
-        allCases: [
-          freshCase,
-          afterFirstNotice,
-          afterSecondNotice,
-          finalNoticeOnly,
-          disposalReadyCase,
-          recoveryInProgressCase,
-          closedAfterThreeNotices,
-        ],
-      );
-
-      expect(state.countForFilter(ContactRecoveryFilter.all), 6);
-      expect(state.countForFilter(ContactRecoveryFilter.firstNotice), 2);
-      expect(state.countForFilter(ContactRecoveryFilter.secondNotice), 1);
-      expect(state.countForFilter(ContactRecoveryFilter.finalNotice), 1);
+            createdAt: now),
+      ]);
+      expect(closed.stage, ContactRecoveryStage.settled);
+      expect(closed.nextNoticeType, isNull);
+      final state = ContactRecoveryState.initial()
+          .copyWith(allCases: [fresh, pending, ready, recovery, closed]);
+      expect(state.countForFilter(ContactRecoveryFilter.all), 4);
+      expect(state.countForFilter(ContactRecoveryFilter.noticeRequired), 1);
+      expect(state.countForFilter(ContactRecoveryFilter.noticePending), 1);
       expect(state.countForFilter(ContactRecoveryFilter.disposalReady), 1);
-      expect(
-        state.countForFilter(ContactRecoveryFilter.recoveryInProgress),
-        1,
-      );
+      expect(state.countForFilter(ContactRecoveryFilter.recoveryInProgress), 1);
       expect(state.countForFilter(ContactRecoveryFilter.settled), 1);
     });
 
@@ -306,7 +167,7 @@ void main() {
       await expectLater(
         repository.recordNoticeDeliveryProof(
           girviId: loanId,
-          noticeType: GirviNoticeType.first,
+          noticeType: GirviNoticeType.formal,
           noticeText: 'First notice text',
           actionType: GirviNoticeActionTypes.noticePdfSaved,
           deliveryChannel: 'PDF File',
@@ -316,13 +177,13 @@ void main() {
       );
       await repository.recordNoticePrepared(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: 'First notice text',
         noticePeriodDays: 30,
       );
       await repository.recordNoticeDeliveryProof(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: 'First notice text',
         actionType: GirviNoticeActionTypes.noticePdfSaved,
         deliveryChannel: 'PDF File',
@@ -333,7 +194,7 @@ void main() {
       await expectLater(
         repository.recordNoticeDeliveryProof(
           girviId: loanId,
-          noticeType: GirviNoticeType.first,
+          noticeType: GirviNoticeType.formal,
           noticeText: 'Edited after approval',
           actionType: GirviNoticeActionTypes.noticePdfPrinted,
           deliveryChannel: 'Printer',
@@ -383,11 +244,15 @@ void main() {
         actionHistory: history,
       );
 
-      expect(noticeCase.noticesSentLabel, '1/3 Sent');
+      expect(noticeCase.noticeStatusLabel, 'Approved');
       expect(noticeCase.preparedNoticeActions, hasLength(1));
       expect(noticeCase.noticeDeliveryProofActions, hasLength(1));
       expect(
-        noticeCase.latestDeliveryProofForStage(1)?.deliveryProofLabel,
+        noticeCase
+            .latestDeliveryProofForNotice(
+              noticeCase.formalNoticeAction!,
+            )
+            ?.deliveryProofLabel,
         'Saved via PDF File',
       );
     });
@@ -451,7 +316,7 @@ void main() {
       }
     });
 
-    test('notice structure is stage-aware and keeps financial sections dynamic',
+    test('formal notice keeps financial sections and prior responses dynamic',
         () {
       final account = GirviLoanWithCustomer(
         loan: GirviLoanModel(
@@ -518,40 +383,25 @@ void main() {
       );
       final service = GirviNoticeGenerationService(now: item.now);
 
-      final first = service.build(
+      final text = service.build(
         item: item,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         language: GirviNoticeLanguage.english,
       );
-      final second = service.build(
-        item: item,
-        noticeType: GirviNoticeType.second,
-        language: GirviNoticeLanguage.english,
-      );
-      final finalNotice = service.build(
-        item: item,
-        noticeType: GirviNoticeType.finalNotice,
-        language: GirviNoticeLanguage.english,
-      );
-
-      for (final text in [first, second, finalNotice]) {
-        expect(text, isNot(contains('Dear Customer')));
-        expect(text, contains('Pledge Account and Duration'));
-        expect(text, contains('Actual Duration:'));
-        expect(text, contains('Chargeable Interest Period:'));
-        expect(text, contains('Compound Interest Breakdown'));
-        expect(text, contains('Compound Period 1'));
-        expect(text, contains('Monthly Interest Rate: 5.00%'));
-        expect(text, contains('Final Outstanding Summary'));
-        expect(text, isNot(contains('Valuation')));
-      }
-      expect(first, contains('This is the first notice.'));
-      expect(first, isNot(contains('Previous Contact and Customer Response')));
-      expect(second, contains('follow-up to the earlier notice'));
-      expect(second, contains('Previous Contact and Customer Response'));
-      expect(second, contains('I will visit the shop on Friday.'));
-      expect(second, contains('Recorded Status: Past due'));
-      expect(finalNotice, contains('This is the final notice'));
+      expect(text, contains('PLEDGE ACCOUNT NOTICE'));
+      expect(text, contains('GRV-0018-NOTICE'));
+      expect(text, contains('Pledge Account and Duration'));
+      expect(text, contains('Compound Interest Breakdown'));
+      expect(text, contains('Monthly Interest Rate: 5.00%'));
+      expect(text, contains('Final Outstanding Summary'));
+      expect(text, contains('Previous Contact and Customer Response'));
+      expect(text, contains('I will visit the shop on Friday.'));
+      expect(text, contains('Recorded Status: Past due'));
+      expect(text, isNot(contains('FIRST PLEDGE')));
+      expect(text, isNot(contains('SECOND PLEDGE')));
+      expect(text, isNot(contains('FINAL PLEDGE')));
+      expect(text, isNot(contains('earlier notices')));
+      expect(text, isNot(contains('Valuation')));
     });
 
     test('notice schema safety upgrades a legacy action table', () async {
@@ -634,8 +484,8 @@ void main() {
       final auditRepository = GirviNoticeActionRepository(db);
       await auditRepository.recordAction(
         girviId: loanId,
-        actionType: GirviNoticeType.finalNotice.actionType,
-        noticeStage: 3,
+        actionType: GirviNoticeType.formal.actionType,
+        noticeStage: 1,
         noticeText: 'Approved final notice',
         actionAt: now.subtract(const Duration(days: 31)),
         noticeDeadlineAt: now.subtract(const Duration(days: 1)),
@@ -686,8 +536,8 @@ void main() {
           GirviNoticeAction(
             id: 1,
             girviId: loanId,
-            actionType: GirviNoticeType.finalNotice.actionType,
-            noticeStage: 3,
+            actionType: GirviNoticeType.formal.actionType,
+            noticeStage: 1,
             actionAt: now.subtract(const Duration(days: 31)),
             createdAt: now.subtract(const Duration(days: 31)),
           ),
@@ -733,7 +583,8 @@ void main() {
       );
     });
 
-    test('customer promises require an approved notice and preserve resolution audit',
+    test(
+        'customer promises require an approved notice and preserve resolution audit',
         () async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);
@@ -769,7 +620,7 @@ void main() {
       final notices = GirviNoticeActionRepository(db);
       final noticeId = await notices.recordNoticePrepared(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: 'Approved first notice',
         noticePeriodDays: 7,
       );
@@ -804,10 +655,11 @@ void main() {
       );
     });
 
-    test('stored notice PDF renders an immutable saved notice source', () async {
+    test('stored notice PDF renders an immutable saved notice source',
+        () async {
       final bytes = await GirviNoticePdfService().buildStoredNotice(
         ticketNo: 'GRV-PDF-001',
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeLanguage: GirviNoticeLanguage.english,
         savedAt: DateTime(2026, 10, 15),
         noticeText: '''FIRST PLEDGE ACCOUNT NOTICE

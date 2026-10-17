@@ -284,7 +284,7 @@ class ContactRecoveryController extends ChangeNotifier {
     if (!item.canInitiateCollateralRecovery) {
       _state = _state.copyWith(
         inlineMessage:
-            'Collateral recovery can be started only after the final review cycle is complete.',
+            'Collateral recovery can be started only after the notice review period is complete.',
       );
       notifyListeners();
       return false;
@@ -351,7 +351,7 @@ class ContactRecoveryController extends ChangeNotifier {
     GirviNoticeLanguage primaryLanguage = GirviNoticeLanguage.english,
   }) async {
     try {
-      if (item.nextNoticeType != noticeType || !item.canPrepareNextNotice) {
+      if (item.nextNoticeType != noticeType || !item.canPrepareNotice) {
         throw StateError('This notice stage is not eligible yet.');
       }
       await _noticeActionRepository.recordNoticePrepared(
@@ -390,6 +390,7 @@ class ContactRecoveryController extends ChangeNotifier {
     required String deliveryChannel,
     required String deliveryStatus,
     GirviNoticeLanguage? noticeLanguage,
+    int? noticeActionId,
     String? deliveryReference,
   }) async {
     try {
@@ -401,6 +402,7 @@ class ContactRecoveryController extends ChangeNotifier {
         deliveryChannel: deliveryChannel,
         deliveryStatus: deliveryStatus,
         noticeLanguage: noticeLanguage,
+        noticeActionId: noticeActionId,
         deliveryReference: deliveryReference,
         performedBy: _operatorIdentity(),
       );
@@ -432,7 +434,7 @@ class ContactRecoveryController extends ChangeNotifier {
     String? proofReference,
   }) async {
     try {
-      final stage = notice.noticeStage;
+      final stage = notice.resolvedNoticeStage;
       if (stage == null || stage < 1 || stage > 3) {
         throw StateError(
             'A customer response must be linked to a saved notice.');
@@ -733,19 +735,14 @@ class ContactRecoveryController extends ChangeNotifier {
     var result = List<ContactRecoveryCase>.from(_state.allCases);
 
     switch (_state.filter) {
-      case ContactRecoveryFilter.firstNotice:
+      case ContactRecoveryFilter.noticeRequired:
         result = result
-            .where((item) => item.stage == ContactRecoveryStage.firstNoticeDue)
+            .where((item) => item.stage == ContactRecoveryStage.noticeRequired)
             .toList();
         break;
-      case ContactRecoveryFilter.secondNotice:
+      case ContactRecoveryFilter.noticePending:
         result = result
-            .where((item) => item.stage == ContactRecoveryStage.secondNoticeDue)
-            .toList();
-        break;
-      case ContactRecoveryFilter.finalNotice:
-        result = result
-            .where((item) => item.stage == ContactRecoveryStage.finalNoticeDue)
+            .where((item) => item.stage == ContactRecoveryStage.noticePending)
             .toList();
         break;
       case ContactRecoveryFilter.disposalReady:
@@ -786,7 +783,7 @@ class ContactRecoveryController extends ChangeNotifier {
             loan.metalPurity.toLowerCase().contains(query) ||
             item.stageLabel.toLowerCase().contains(query) ||
             item.stageDescription.toLowerCase().contains(query) ||
-            item.noticesSentLabel.toLowerCase().contains(query) ||
+            item.noticeStatusLabel.toLowerCase().contains(query) ||
             item.preparedNoticeActions.any(
               (action) =>
                   action.displayLabel.toLowerCase().contains(query) ||
@@ -812,9 +809,11 @@ class ContactRecoveryController extends ChangeNotifier {
 
     return ContactRecoveryStats(
       totalCases: activeCases.length,
-      noticeDueCount: activeCases.length,
-      finalNoticeCount: activeCases
-          .where((item) => item.stage == ContactRecoveryStage.finalNoticeDue)
+      noticeDueCount: activeCases
+          .where((item) => item.stage == ContactRecoveryStage.noticeRequired)
+          .length,
+      noticePendingCount: activeCases
+          .where((item) => item.stage == ContactRecoveryStage.noticePending)
           .length,
       disposalReadyCount: activeCases
           .where((item) => item.stage == ContactRecoveryStage.disposalReady)
@@ -856,11 +855,9 @@ class ContactRecoveryController extends ChangeNotifier {
         return 5;
       case ContactRecoveryStage.recoveryInProgress:
         return 6;
-      case ContactRecoveryStage.finalNoticeDue:
+      case ContactRecoveryStage.noticePending:
         return 4;
-      case ContactRecoveryStage.secondNoticeDue:
-        return 3;
-      case ContactRecoveryStage.firstNoticeDue:
+      case ContactRecoveryStage.noticeRequired:
         return 2;
       case ContactRecoveryStage.settled:
         return 1;

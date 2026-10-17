@@ -24616,6 +24616,15 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
   late final GeneratedColumn<String> actionType = GeneratedColumn<String>(
       'action_type', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _noticeActionIdMeta =
+      const VerificationMeta('noticeActionId');
+  @override
+  late final GeneratedColumn<int> noticeActionId = GeneratedColumn<int>(
+      'notice_action_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES girvi_notice_actions (id) ON DELETE RESTRICT'));
   static const VerificationMeta _noticeStageMeta =
       const VerificationMeta('noticeStage');
   @override
@@ -24751,6 +24760,7 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
         updatedAt,
         girviId,
         actionType,
+        noticeActionId,
         noticeStage,
         noticeText,
         documentHash,
@@ -24806,6 +24816,12 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
               data['action_type']!, _actionTypeMeta));
     } else if (isInserting) {
       context.missing(_actionTypeMeta);
+    }
+    if (data.containsKey('notice_action_id')) {
+      context.handle(
+          _noticeActionIdMeta,
+          noticeActionId.isAcceptableOrUnknown(
+              data['notice_action_id']!, _noticeActionIdMeta));
     }
     if (data.containsKey('notice_stage')) {
       context.handle(
@@ -24938,6 +24954,8 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
           .read(DriftSqlType.int, data['${effectivePrefix}girvi_id'])!,
       actionType: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}action_type'])!,
+      noticeActionId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notice_action_id']),
       noticeStage: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}notice_stage']),
       noticeText: attachedDatabase.typeMapping
@@ -24992,6 +25010,7 @@ class GirviNoticeActionData extends DataClass
   final DateTime? updatedAt;
   final int girviId;
   final String actionType;
+  final int? noticeActionId;
   final int? noticeStage;
   final String? noticeText;
   final String? documentHash;
@@ -25019,6 +25038,7 @@ class GirviNoticeActionData extends DataClass
       this.updatedAt,
       required this.girviId,
       required this.actionType,
+      this.noticeActionId,
       this.noticeStage,
       this.noticeText,
       this.documentHash,
@@ -25048,6 +25068,9 @@ class GirviNoticeActionData extends DataClass
     }
     map['girvi_id'] = Variable<int>(girviId);
     map['action_type'] = Variable<String>(actionType);
+    if (!nullToAbsent || noticeActionId != null) {
+      map['notice_action_id'] = Variable<int>(noticeActionId);
+    }
     if (!nullToAbsent || noticeStage != null) {
       map['notice_stage'] = Variable<int>(noticeStage);
     }
@@ -25103,6 +25126,9 @@ class GirviNoticeActionData extends DataClass
           : Value(updatedAt),
       girviId: Value(girviId),
       actionType: Value(actionType),
+      noticeActionId: noticeActionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(noticeActionId),
       noticeStage: noticeStage == null && nullToAbsent
           ? const Value.absent()
           : Value(noticeStage),
@@ -25158,6 +25184,7 @@ class GirviNoticeActionData extends DataClass
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
       girviId: serializer.fromJson<int>(json['girviId']),
       actionType: serializer.fromJson<String>(json['actionType']),
+      noticeActionId: serializer.fromJson<int?>(json['noticeActionId']),
       noticeStage: serializer.fromJson<int?>(json['noticeStage']),
       noticeText: serializer.fromJson<String?>(json['noticeText']),
       documentHash: serializer.fromJson<String?>(json['documentHash']),
@@ -25191,6 +25218,7 @@ class GirviNoticeActionData extends DataClass
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
       'girviId': serializer.toJson<int>(girviId),
       'actionType': serializer.toJson<String>(actionType),
+      'noticeActionId': serializer.toJson<int?>(noticeActionId),
       'noticeStage': serializer.toJson<int?>(noticeStage),
       'noticeText': serializer.toJson<String?>(noticeText),
       'documentHash': serializer.toJson<String?>(documentHash),
@@ -25219,6 +25247,7 @@ class GirviNoticeActionData extends DataClass
           Value<DateTime?> updatedAt = const Value.absent(),
           int? girviId,
           String? actionType,
+          Value<int?> noticeActionId = const Value.absent(),
           Value<int?> noticeStage = const Value.absent(),
           Value<String?> noticeText = const Value.absent(),
           Value<String?> documentHash = const Value.absent(),
@@ -25244,6 +25273,8 @@ class GirviNoticeActionData extends DataClass
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
         girviId: girviId ?? this.girviId,
         actionType: actionType ?? this.actionType,
+        noticeActionId:
+            noticeActionId.present ? noticeActionId.value : this.noticeActionId,
         noticeStage: noticeStage.present ? noticeStage.value : this.noticeStage,
         noticeText: noticeText.present ? noticeText.value : this.noticeText,
         documentHash:
@@ -25280,6 +25311,9 @@ class GirviNoticeActionData extends DataClass
       girviId: data.girviId.present ? data.girviId.value : this.girviId,
       actionType:
           data.actionType.present ? data.actionType.value : this.actionType,
+      noticeActionId: data.noticeActionId.present
+          ? data.noticeActionId.value
+          : this.noticeActionId,
       noticeStage:
           data.noticeStage.present ? data.noticeStage.value : this.noticeStage,
       noticeText:
@@ -25339,6 +25373,7 @@ class GirviNoticeActionData extends DataClass
           ..write('updatedAt: $updatedAt, ')
           ..write('girviId: $girviId, ')
           ..write('actionType: $actionType, ')
+          ..write('noticeActionId: $noticeActionId, ')
           ..write('noticeStage: $noticeStage, ')
           ..write('noticeText: $noticeText, ')
           ..write('documentHash: $documentHash, ')
@@ -25369,6 +25404,7 @@ class GirviNoticeActionData extends DataClass
         updatedAt,
         girviId,
         actionType,
+        noticeActionId,
         noticeStage,
         noticeText,
         documentHash,
@@ -25398,6 +25434,7 @@ class GirviNoticeActionData extends DataClass
           other.updatedAt == this.updatedAt &&
           other.girviId == this.girviId &&
           other.actionType == this.actionType &&
+          other.noticeActionId == this.noticeActionId &&
           other.noticeStage == this.noticeStage &&
           other.noticeText == this.noticeText &&
           other.documentHash == this.documentHash &&
@@ -25426,6 +25463,7 @@ class GirviNoticeActionsCompanion
   final Value<DateTime?> updatedAt;
   final Value<int> girviId;
   final Value<String> actionType;
+  final Value<int?> noticeActionId;
   final Value<int?> noticeStage;
   final Value<String?> noticeText;
   final Value<String?> documentHash;
@@ -25451,6 +25489,7 @@ class GirviNoticeActionsCompanion
     this.updatedAt = const Value.absent(),
     this.girviId = const Value.absent(),
     this.actionType = const Value.absent(),
+    this.noticeActionId = const Value.absent(),
     this.noticeStage = const Value.absent(),
     this.noticeText = const Value.absent(),
     this.documentHash = const Value.absent(),
@@ -25477,6 +25516,7 @@ class GirviNoticeActionsCompanion
     this.updatedAt = const Value.absent(),
     required int girviId,
     required String actionType,
+    this.noticeActionId = const Value.absent(),
     this.noticeStage = const Value.absent(),
     this.noticeText = const Value.absent(),
     this.documentHash = const Value.absent(),
@@ -25504,6 +25544,7 @@ class GirviNoticeActionsCompanion
     Expression<DateTime>? updatedAt,
     Expression<int>? girviId,
     Expression<String>? actionType,
+    Expression<int>? noticeActionId,
     Expression<int>? noticeStage,
     Expression<String>? noticeText,
     Expression<String>? documentHash,
@@ -25530,6 +25571,7 @@ class GirviNoticeActionsCompanion
       if (updatedAt != null) 'updated_at': updatedAt,
       if (girviId != null) 'girvi_id': girviId,
       if (actionType != null) 'action_type': actionType,
+      if (noticeActionId != null) 'notice_action_id': noticeActionId,
       if (noticeStage != null) 'notice_stage': noticeStage,
       if (noticeText != null) 'notice_text': noticeText,
       if (documentHash != null) 'document_hash': documentHash,
@@ -25559,6 +25601,7 @@ class GirviNoticeActionsCompanion
       Value<DateTime?>? updatedAt,
       Value<int>? girviId,
       Value<String>? actionType,
+      Value<int?>? noticeActionId,
       Value<int?>? noticeStage,
       Value<String?>? noticeText,
       Value<String?>? documentHash,
@@ -25584,6 +25627,7 @@ class GirviNoticeActionsCompanion
       updatedAt: updatedAt ?? this.updatedAt,
       girviId: girviId ?? this.girviId,
       actionType: actionType ?? this.actionType,
+      noticeActionId: noticeActionId ?? this.noticeActionId,
       noticeStage: noticeStage ?? this.noticeStage,
       noticeText: noticeText ?? this.noticeText,
       documentHash: documentHash ?? this.documentHash,
@@ -25623,6 +25667,9 @@ class GirviNoticeActionsCompanion
     }
     if (actionType.present) {
       map['action_type'] = Variable<String>(actionType.value);
+    }
+    if (noticeActionId.present) {
+      map['notice_action_id'] = Variable<int>(noticeActionId.value);
     }
     if (noticeStage.present) {
       map['notice_stage'] = Variable<int>(noticeStage.value);
@@ -25692,6 +25739,7 @@ class GirviNoticeActionsCompanion
           ..write('updatedAt: $updatedAt, ')
           ..write('girviId: $girviId, ')
           ..write('actionType: $actionType, ')
+          ..write('noticeActionId: $noticeActionId, ')
           ..write('noticeStage: $noticeStage, ')
           ..write('noticeText: $noticeText, ')
           ..write('documentHash: $documentHash, ')
@@ -54970,6 +55018,7 @@ typedef $$GirviNoticeActionsTableCreateCompanionBuilder
   Value<DateTime?> updatedAt,
   required int girviId,
   required String actionType,
+  Value<int?> noticeActionId,
   Value<int?> noticeStage,
   Value<String?> noticeText,
   Value<String?> documentHash,
@@ -54997,6 +55046,7 @@ typedef $$GirviNoticeActionsTableUpdateCompanionBuilder
   Value<DateTime?> updatedAt,
   Value<int> girviId,
   Value<String> actionType,
+  Value<int?> noticeActionId,
   Value<int?> noticeStage,
   Value<String?> noticeText,
   Value<String?> documentHash,
@@ -55032,6 +55082,21 @@ final class $$GirviNoticeActionsTableReferences extends BaseReferences<
     final manager = $$GirviLoansTableTableManager($_db, $_db.girviLoans)
         .filter((f) => f.id($_item.girviId!));
     final item = $_typedResult.readTableOrNull(_girviIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $GirviNoticeActionsTable _noticeActionIdTable(_$AppDatabase db) =>
+      db.girviNoticeActions.createAlias($_aliasNameGenerator(
+          db.girviNoticeActions.noticeActionId, db.girviNoticeActions.id));
+
+  $$GirviNoticeActionsTableProcessedTableManager? get noticeActionId {
+    if ($_item.noticeActionId == null) return null;
+    final manager =
+        $$GirviNoticeActionsTableTableManager($_db, $_db.girviNoticeActions)
+            .filter((f) => f.id($_item.noticeActionId!));
+    final item = $_typedResult.readTableOrNull(_noticeActionIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
@@ -55175,6 +55240,26 @@ class $$GirviNoticeActionsTableFilterComposer
             $$GirviLoansTableFilterComposer(
               $db: $db,
               $table: $db.girviLoans,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$GirviNoticeActionsTableFilterComposer get noticeActionId {
+    final $$GirviNoticeActionsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.noticeActionId,
+        referencedTable: $db.girviNoticeActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeActionsTableFilterComposer(
+              $db: $db,
+              $table: $db.girviNoticeActions,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -55337,6 +55422,26 @@ class $$GirviNoticeActionsTableOrderingComposer
             ));
     return composer;
   }
+
+  $$GirviNoticeActionsTableOrderingComposer get noticeActionId {
+    final $$GirviNoticeActionsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.noticeActionId,
+        referencedTable: $db.girviNoticeActions,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GirviNoticeActionsTableOrderingComposer(
+              $db: $db,
+              $table: $db.girviNoticeActions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$GirviNoticeActionsTableAnnotationComposer
@@ -55437,6 +55542,27 @@ class $$GirviNoticeActionsTableAnnotationComposer
     return composer;
   }
 
+  $$GirviNoticeActionsTableAnnotationComposer get noticeActionId {
+    final $$GirviNoticeActionsTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.noticeActionId,
+            referencedTable: $db.girviNoticeActions,
+            getReferencedColumn: (t) => t.id,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$GirviNoticeActionsTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.girviNoticeActions,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return composer;
+  }
+
   Expression<T> girviCustomerResponsesRefs<T extends Object>(
       Expression<T> Function($$GirviCustomerResponsesTableAnnotationComposer a)
           f) {
@@ -55497,6 +55623,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
     GirviNoticeActionData,
     PrefetchHooks Function(
         {bool girviId,
+        bool noticeActionId,
         bool girviCustomerResponsesRefs,
         bool girviNoticeDocumentsRefs})> {
   $$GirviNoticeActionsTableTableManager(
@@ -55517,6 +55644,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             Value<DateTime?> updatedAt = const Value.absent(),
             Value<int> girviId = const Value.absent(),
             Value<String> actionType = const Value.absent(),
+            Value<int?> noticeActionId = const Value.absent(),
             Value<int?> noticeStage = const Value.absent(),
             Value<String?> noticeText = const Value.absent(),
             Value<String?> documentHash = const Value.absent(),
@@ -55543,6 +55671,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
             girviId: girviId,
             actionType: actionType,
+            noticeActionId: noticeActionId,
             noticeStage: noticeStage,
             noticeText: noticeText,
             documentHash: documentHash,
@@ -55569,6 +55698,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             Value<DateTime?> updatedAt = const Value.absent(),
             required int girviId,
             required String actionType,
+            Value<int?> noticeActionId = const Value.absent(),
             Value<int?> noticeStage = const Value.absent(),
             Value<String?> noticeText = const Value.absent(),
             Value<String?> documentHash = const Value.absent(),
@@ -55595,6 +55725,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             updatedAt: updatedAt,
             girviId: girviId,
             actionType: actionType,
+            noticeActionId: noticeActionId,
             noticeStage: noticeStage,
             noticeText: noticeText,
             documentHash: documentHash,
@@ -55623,6 +55754,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
               .toList(),
           prefetchHooksCallback: (
               {girviId = false,
+              noticeActionId = false,
               girviCustomerResponsesRefs = false,
               girviNoticeDocumentsRefs = false}) {
             return PrefetchHooks(
@@ -55652,6 +55784,17 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
                         $$GirviNoticeActionsTableReferences._girviIdTable(db),
                     referencedColumn: $$GirviNoticeActionsTableReferences
                         ._girviIdTable(db)
+                        .id,
+                  ) as T;
+                }
+                if (noticeActionId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.noticeActionId,
+                    referencedTable: $$GirviNoticeActionsTableReferences
+                        ._noticeActionIdTable(db),
+                    referencedColumn: $$GirviNoticeActionsTableReferences
+                        ._noticeActionIdTable(db)
                         .id,
                   ) as T;
                 }
@@ -55704,6 +55847,7 @@ typedef $$GirviNoticeActionsTableProcessedTableManager = ProcessedTableManager<
     GirviNoticeActionData,
     PrefetchHooks Function(
         {bool girviId,
+        bool noticeActionId,
         bool girviCustomerResponsesRefs,
         bool girviNoticeDocumentsRefs})>;
 typedef $$GirviCustomerResponsesTableCreateCompanionBuilder

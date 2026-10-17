@@ -1,169 +1,5 @@
 part of '../contact_recovery_screen.dart';
 
-class _SavedNoticePreviewDialog extends StatefulWidget {
-  final _SavedNoticeDraft draft;
-  final Future<void> Function() onDownload;
-  final Future<void> Function() onPrint;
-
-  const _SavedNoticePreviewDialog({
-    required this.draft,
-    required this.onDownload,
-    required this.onPrint,
-  });
-
-  @override
-  State<_SavedNoticePreviewDialog> createState() =>
-      _SavedNoticePreviewDialogState();
-}
-
-class _SavedNoticePreviewDialogState extends State<_SavedNoticePreviewDialog> {
-  bool _busy = false;
-
-  Future<void> _run(Future<void> Function() action) async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      await action();
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final draft = widget.draft;
-    final actionDate = DateFormat('dd MMM yyyy, hh:mm a').format(
-      draft.action.actionAt,
-    );
-
-    return AlertDialog(
-      backgroundColor: GirviColors.cardBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      insetPadding: const EdgeInsets.all(24),
-      titlePadding: const EdgeInsets.fromLTRB(22, 20, 22, 0),
-      contentPadding: const EdgeInsets.fromLTRB(22, 14, 22, 6),
-      actionsPadding: const EdgeInsets.fromLTRB(18, 8, 18, 16),
-      title: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: GirviColors.brandGold.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: GirviColors.brandGold.withValues(alpha: 0.28),
-              ),
-            ),
-            child: Text(
-              '0${draft.noticeType.stage}',
-              style: GoogleFonts.inter(
-                color: GirviColors.brandGold,
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  draft.noticeType.label,
-                  style: GirviStyles.sectionTitle.copyWith(fontSize: 17),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${draft.item.loan.ticketNo} | ${draft.item.account.customerName} | ${draft.language.label} | $actionDate',
-                  style: GirviStyles.caption.copyWith(
-                    color: GirviColors.textDark,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      content: SizedBox(
-        width: 780,
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 560),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: GirviColors.bodyBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: GirviColors.cardBorder),
-          ),
-          child: SingleChildScrollView(
-            child: SelectableText(
-              draft.noticeText,
-              style: GoogleFonts.inter(
-                color: GirviColors.textDark,
-                fontSize: 13.6,
-                height: 1.5,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: Text(
-            'Close',
-            style: GirviStyles.caption.copyWith(
-              color: GirviColors.textDark,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-        TextButton.icon(
-          onPressed: _busy ? null : () => _run(widget.onDownload),
-          icon: const Icon(Icons.download_rounded, size: 17),
-          label: const Text('Save PDF'),
-          style: TextButton.styleFrom(
-            foregroundColor: GirviColors.textDark,
-            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
-          ),
-        ),
-        ElevatedButton.icon(
-          onPressed: _busy ? null : () => _run(widget.onPrint),
-          icon: _busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.print_rounded, size: 17),
-          label: Text(
-            _busy ? 'Working' : 'Print PDF',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w900),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GirviColors.shellBg,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(9),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _NoticeEditorDialog extends StatefulWidget {
   final ContactRecoveryCase item;
   final GirviNoticeType noticeType;
@@ -583,7 +419,7 @@ class _CustomerResponseTimelineCard extends StatelessWidget {
     final statusLabel = isPastDue ? 'Promise past due' : response.status.label;
     final stageLabel = response.noticeStage == null
         ? 'General account contact'
-        : 'After ${GirviNoticeType.fromStage(response.noticeStage!.clamp(1, 3).toInt()).label}';
+        : 'Response to approved notice';
     final details = <String>[
       '${response.channel.label} · ${DateFormat('dd MMM yyyy, hh:mm a').format(response.receivedAt)}',
       if (response.promiseDueAt != null)
@@ -885,7 +721,7 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final noticeType = _noticeTypeFromAction(widget.notice);
+    final noticeLabel = widget.notice.noticeLabel;
     final requiresAmount = _kind == GirviCustomerResponseKind.partialPayment;
     return AlertDialog(
       backgroundColor: GirviColors.cardBg,
@@ -902,7 +738,7 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '${noticeType.label} · ${widget.item.loan.ticketNo}',
+                '$noticeLabel · ${widget.item.loan.ticketNo}',
                 style: GirviStyles.caption.copyWith(
                   color: GirviColors.textMuted,
                   fontWeight: FontWeight.w800,

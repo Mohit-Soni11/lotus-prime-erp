@@ -31,15 +31,15 @@ class _ContactRecoveryOverview extends StatelessWidget {
                   label: 'Notice Queue',
                   value: stats.totalCases.toString(),
                   footer:
-                      '${stats.noticeDueCount} ${stats.noticeDueCount == 1 ? 'account' : 'accounts'} in review',
+                      '${stats.noticeDueCount} ${stats.noticeDueCount == 1 ? 'account' : 'accounts'} awaiting notice',
                   accent: GirviColors.warning,
                 ),
               ),
               SizedBox(
                 width: width,
                 child: _SummaryTile(
-                  label: 'Final Notice',
-                  value: stats.finalNoticeCount.toString(),
+                  label: 'Notice Period',
+                  value: stats.noticePendingCount.toString(),
                   footer: '${state.noticePeriodDays}-day notice cycle',
                   accent: GirviColors.danger,
                 ),

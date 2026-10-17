@@ -37,11 +37,13 @@ part 'parts/notice_language_selector.dart';
 class ContactRecoveryScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final String? initialTicketNo;
+  final ContactRecoveryController? controller;
 
   const ContactRecoveryScreen({
     super.key,
     this.onBack,
     this.initialTicketNo,
+    this.controller,
   });
 
   @override
@@ -56,7 +58,8 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = ContactRecoveryController()..addListener(_syncState);
+    _controller = widget.controller ?? ContactRecoveryController();
+    _controller.addListener(_syncState);
     final initialTicket = widget.initialTicketNo?.trim();
     if (initialTicket != null && initialTicket.isNotEmpty) {
       _searchController.text = initialTicket;
@@ -71,7 +74,9 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   @override
   void dispose() {
     _controller.removeListener(_syncState);
-    _controller.dispose();
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     _searchController.dispose();
     super.dispose();
   }
@@ -138,7 +143,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     final noticeType = item.nextNoticeType;
     if (noticeType == null) {
       _controller.showInlineMessage(
-        'All required notices are already prepared for ticket ${item.loan.ticketNo}.',
+        'The formal notice is already prepared for ticket ${item.loan.ticketNo}.',
       );
       return;
     }
@@ -235,7 +240,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       barrierColor: Colors.black.withValues(alpha: 0.78),
       useSafeArea: false,
       builder: (_) => NoticePdfLanguagePreview(
-        title: '${_noticeTypeFromAction(action).label} PDF',
+        title: '${action.noticeLabel} PDF',
         ticketNo: item.loan.ticketNo,
         availableLanguages: drafts.keys.toSet(),
         initialLanguage: drafts.containsKey(primaryLanguage)
@@ -279,7 +284,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     final selectedLanguage = await showDialog<GirviNoticeLanguage>(
       context: context,
       builder: (context) => _NoticeLanguageSelectorDialog(
-        noticeType: _noticeTypeFromAction(action),
+        noticeType: GirviNoticeType.formal,
         availableLanguages: drafts.keys.toSet(),
       ),
     );
@@ -296,7 +301,9 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       noticeLanguage: draft.language,
       noticeText: draft.noticeText,
       savedAt: draft.action.actionAt,
-      item: draft.item,
+      legacyNoticeStage: draft.action.isLegacyNoticePreparation
+          ? draft.action.resolvedNoticeStage
+          : null,
     );
   }
 
@@ -308,7 +315,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     if (draft == null) return;
     try {
       final outputPath = await FilePicker.platform.saveFile(
-        dialogTitle: 'Save ${draft.noticeType.label}',
+        dialogTitle: 'Save ${draft.action.noticeLabel}',
         fileName: draft.fileName,
         type: FileType.custom,
         allowedExtensions: const ['pdf'],
@@ -325,17 +332,18 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         noticeType: draft.noticeType,
         noticeText: draft.noticeText,
         noticeLanguage: draft.language,
+        noticeActionId: draft.action.id,
         actionType: GirviNoticeActionTypes.noticePdfSaved,
         deliveryChannel: 'PDF File',
         deliveryStatus: 'Saved',
         deliveryReference: normalizedPath,
       );
       _controller.showInlineMessage(
-        '${draft.noticeType.label} (${draft.language.label}) PDF saved for ticket ${item.loan.ticketNo}.${proofRecorded ? '' : ' Saving the audit record failed; the PDF file was saved.'}',
+        '${draft.action.noticeLabel} (${draft.language.label}) PDF saved for ticket ${item.loan.ticketNo}.${proofRecorded ? '' : ' Saving the audit record failed; the PDF file was saved.'}',
       );
     } catch (_) {
       _controller.showInlineMessage(
-        '${draft.noticeType.label} PDF could not be saved.',
+        '${draft.action.noticeLabel} PDF could not be saved.',
       );
     }
   }
@@ -358,17 +366,18 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
           noticeType: draft.noticeType,
           noticeText: draft.noticeText,
           noticeLanguage: draft.language,
+          noticeActionId: draft.action.id,
           actionType: GirviNoticeActionTypes.noticePdfPrinted,
           deliveryChannel: 'Printer',
           deliveryStatus: 'Printed',
         );
         _controller.showInlineMessage(
-          '${draft.noticeType.label} (${draft.language.label}) PDF sent to printer for ticket ${item.loan.ticketNo}.${proofRecorded ? '' : ' Saving the audit record failed.'}',
+          '${draft.action.noticeLabel} (${draft.language.label}) PDF sent to printer for ticket ${item.loan.ticketNo}.${proofRecorded ? '' : ' Saving the audit record failed.'}',
         );
       }
     } catch (_) {
       _controller.showInlineMessage(
-        '${draft.noticeType.label} PDF could not be printed.',
+        '${draft.action.noticeLabel} PDF could not be printed.',
       );
     }
   }
@@ -774,7 +783,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   ) {
     final safeTicket =
         item.loan.ticketNo.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '_');
-    return 'girvi_${safeTicket}_notice_${noticeType.stage}_${language.fileLabel}.pdf';
+    return 'girvi_${safeTicket}_notice_${language.fileLabel}.pdf';
   }
 
   _SavedNoticeDraft _savedNoticeDraft(
@@ -782,7 +791,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     GirviNoticeAction action, {
     GirviNoticeDocumentRecord? document,
   }) {
-    final noticeType = _noticeTypeFromAction(action);
+    const noticeType = GirviNoticeType.formal;
     final storedText =
         document?.noticeText.trim() ?? action.noticeText?.trim() ?? '';
     final selectedLanguage =
@@ -793,7 +802,9 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       noticeType: noticeType,
       language: selectedLanguage,
       noticeText: storedText,
-      fileName: _noticePdfName(item, noticeType, selectedLanguage),
+      fileName: action.isLegacyNoticePreparation
+          ? 'girvi_${item.loan.ticketNo.replaceAll(RegExp(r"[^A-Za-z0-9]+"), "_")}_legacy_notice_${action.resolvedNoticeStage}_${selectedLanguage.fileLabel}.pdf'
+          : _noticePdfName(item, noticeType, selectedLanguage),
     );
   }
 
@@ -821,25 +832,4 @@ class _SavedNoticeDraft {
     required this.noticeText,
     required this.fileName,
   });
-}
-
-GirviNoticeType _noticeTypeFromAction(GirviNoticeAction action) {
-  final stage = _noticeStageFromAction(action) ?? 1;
-  return GirviNoticeType.fromStage(stage.clamp(1, 3).toInt());
-}
-
-int? _noticeStageFromAction(GirviNoticeAction action) {
-  final stage = action.noticeStage;
-  if (stage != null) return stage;
-  switch (action.actionType) {
-    case GirviNoticeActionTypes.firstNoticePrepared:
-    case GirviNoticeActionTypes.noticeDraftCopied:
-      return 1;
-    case GirviNoticeActionTypes.secondNoticePrepared:
-      return 2;
-    case GirviNoticeActionTypes.finalNoticePrepared:
-      return 3;
-    default:
-      return null;
-  }
 }

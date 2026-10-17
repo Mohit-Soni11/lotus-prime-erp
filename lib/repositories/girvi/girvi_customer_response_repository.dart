@@ -25,7 +25,8 @@ class GirviCustomerResponseRepository {
     String performedBy = 'LOCAL_OPERATOR',
   }) async {
     final text = _requiredText(responseText, 'Customer response is required.');
-    if (promisedAmount != null && (promisedAmount.isNaN || promisedAmount < 0)) {
+    if (promisedAmount != null &&
+        (promisedAmount.isNaN || promisedAmount < 0)) {
       throw ArgumentError.value(
         promisedAmount,
         'promisedAmount',
@@ -40,7 +41,8 @@ class GirviCustomerResponseRepository {
       throw ArgumentError('A promised amount is required for partial payment.');
     }
     if (noticeStage != null && (noticeStage < 1 || noticeStage > 3)) {
-      throw ArgumentError.value(noticeStage, 'noticeStage', 'Invalid notice stage.');
+      throw ArgumentError.value(
+          noticeStage, 'noticeStage', 'Invalid notice stage.');
     }
 
     await _db.ensureGirviCustomerResponseSchema();
@@ -133,13 +135,13 @@ class GirviCustomerResponseRepository {
     final query = _db.select(_db.girviNoticeActions)
       ..where((row) =>
           row.girviId.equals(girviId) &
-          row.actionType.isIn(const [
-            GirviNoticeActionTypes.firstNoticePrepared,
-            GirviNoticeActionTypes.secondNoticePrepared,
-            GirviNoticeActionTypes.finalNoticePrepared,
-          ]));
-    if (noticeActionId != null) query.where((row) => row.id.equals(noticeActionId));
-    if (noticeStage != null) query.where((row) => row.noticeStage.equals(noticeStage));
+          row.actionType.isIn(GirviNoticeActionTypes.preparationTypes));
+    if (noticeActionId != null) {
+      query.where((row) => row.id.equals(noticeActionId));
+    }
+    if (noticeStage != null) {
+      query.where((row) => row.noticeStage.equals(noticeStage));
+    }
     final row = await (query
           ..orderBy([(entry) => OrderingTerm.desc(entry.actionAt)])
           ..limit(1))

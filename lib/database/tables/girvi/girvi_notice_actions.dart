@@ -18,6 +18,9 @@ class GirviNoticeActions extends Table with BaseTable {
       integer().references(GirviLoans, #id, onDelete: KeyAction.cascade)();
 
   TextColumn get actionType => text()();
+  IntColumn get noticeActionId => integer()
+      .nullable()
+      .references(GirviNoticeActions, #id, onDelete: KeyAction.restrict)();
   IntColumn get noticeStage => integer().nullable()();
   TextColumn get noticeText => text().nullable()();
   TextColumn get documentHash => text().nullable()();

@@ -70,12 +70,10 @@ class _ContactRecoveryControls extends StatelessWidget {
     switch (filter) {
       case ContactRecoveryFilter.all:
         return 'Notice Queue';
-      case ContactRecoveryFilter.firstNotice:
-        return 'First Notice';
-      case ContactRecoveryFilter.secondNotice:
-        return 'Second Notice';
-      case ContactRecoveryFilter.finalNotice:
-        return 'Final Notice';
+      case ContactRecoveryFilter.noticeRequired:
+        return 'Notice Required';
+      case ContactRecoveryFilter.noticePending:
+        return 'Notice Period';
       case ContactRecoveryFilter.disposalReady:
         return 'Recovery Approval';
       case ContactRecoveryFilter.recoveryInProgress:

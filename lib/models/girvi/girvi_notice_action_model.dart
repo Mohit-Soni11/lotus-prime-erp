@@ -1,10 +1,14 @@
+import 'girvi_notice_history.dart';
+
 class GirviNoticeActionTypes {
   GirviNoticeActionTypes._();
 
   static const noticeDraftCopied = 'NOTICE_DRAFT_COPIED';
-  static const firstNoticePrepared = 'FIRST_NOTICE_PREPARED';
-  static const secondNoticePrepared = 'SECOND_NOTICE_PREPARED';
-  static const finalNoticePrepared = 'FINAL_NOTICE_PREPARED';
+  static const noticePrepared = 'NOTICE_PREPARED';
+  static const preparationTypes = [
+    noticePrepared,
+    ...GirviNoticeHistory.preparationTypes,
+  ];
   static const noticePdfSaved = 'NOTICE_PDF_SAVED';
   static const noticePdfPrinted = 'NOTICE_PDF_PRINTED';
   static const noticePdfShared = 'NOTICE_PDF_SHARED';
@@ -15,33 +19,13 @@ class GirviNoticeActionTypes {
 }
 
 enum GirviNoticeType {
-  first(1, 'First Notice', 'Initial account contact'),
-  second(2, 'Second Notice', 'Follow-up before final recovery review'),
-  finalNotice(3, 'Final Notice', 'Final redemption and recovery notice');
+  formal(1, 'Formal Notice', 'Pledge account payment and recovery notice');
 
   const GirviNoticeType(this.stage, this.label, this.subtitle);
-
   final int stage;
   final String label;
   final String subtitle;
-
-  String get actionType {
-    switch (this) {
-      case GirviNoticeType.first:
-        return GirviNoticeActionTypes.firstNoticePrepared;
-      case GirviNoticeType.second:
-        return GirviNoticeActionTypes.secondNoticePrepared;
-      case GirviNoticeType.finalNotice:
-        return GirviNoticeActionTypes.finalNoticePrepared;
-    }
-  }
-
-  static GirviNoticeType fromStage(int stage) {
-    return GirviNoticeType.values.firstWhere(
-      (type) => type.stage == stage,
-      orElse: () => GirviNoticeType.first,
-    );
-  }
+  String get actionType => GirviNoticeActionTypes.noticePrepared;
 }
 
 enum GirviNoticeLanguage {
@@ -59,6 +43,7 @@ class GirviNoticeAction {
   final int id;
   final int girviId;
   final String actionType;
+  final int? noticeActionId;
   final int? noticeStage;
   final String? noticeText;
   final String? documentHash;
@@ -85,6 +70,7 @@ class GirviNoticeAction {
     required this.id,
     required this.girviId,
     required this.actionType,
+    this.noticeActionId,
     required this.actionAt,
     required this.createdAt,
     this.noticeStage,
@@ -108,10 +94,25 @@ class GirviNoticeAction {
     this.updatedAt,
   });
 
+  bool get isFormalNoticePreparation =>
+      actionType == GirviNoticeActionTypes.noticePrepared;
+
+  bool get isLegacyNoticePreparation =>
+      GirviNoticeHistory.preparationTypes.contains(actionType);
+
+  bool get isLegacyFinalNotice =>
+      actionType == GirviNoticeHistory.finalPrepared;
+
+  int? get resolvedNoticeStage =>
+      noticeStage ??
+      (isFormalNoticePreparation ? 1 : GirviNoticeHistory.stageFor(actionType));
+
+  String get noticeLabel => isLegacyNoticePreparation
+      ? GirviNoticeHistory.title(resolvedNoticeStage) ?? 'Earlier Notice'
+      : GirviNoticeType.formal.label;
+
   bool get isNoticePreparation =>
-      actionType == GirviNoticeActionTypes.secondNoticePrepared ||
-      actionType == GirviNoticeActionTypes.finalNoticePrepared ||
-      actionType == GirviNoticeActionTypes.firstNoticePrepared;
+      GirviNoticeActionTypes.preparationTypes.contains(actionType);
 
   bool get isNoticeDeliveryProof =>
       actionType == GirviNoticeActionTypes.noticePdfSaved ||
@@ -130,12 +131,12 @@ class GirviNoticeAction {
 
   String get displayLabel {
     switch (actionType) {
-      case GirviNoticeActionTypes.firstNoticePrepared:
-        return 'First notice prepared';
-      case GirviNoticeActionTypes.secondNoticePrepared:
-        return 'Second notice prepared';
-      case GirviNoticeActionTypes.finalNoticePrepared:
-        return 'Final notice prepared';
+      case GirviNoticeActionTypes.noticePrepared:
+        return 'Formal notice prepared';
+      case GirviNoticeHistory.firstPrepared:
+      case GirviNoticeHistory.secondPrepared:
+      case GirviNoticeHistory.finalPrepared:
+        return '$noticeLabel prepared (legacy)';
       case GirviNoticeActionTypes.noticePdfSaved:
         return 'Notice PDF saved';
       case GirviNoticeActionTypes.noticePdfPrinted:

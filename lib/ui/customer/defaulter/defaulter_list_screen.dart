@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../constants/app_routes.dart';
+import '../../../core/router/notice_recovery_navigation.dart';
 import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
 import '../../../theme/customer/defaulter/defaulter_theme.dart';
@@ -92,11 +93,9 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
   }
 
   void _openContactRecovery(DefaulterModel account) {
-    final uri = Uri(
-      path: RoutePaths.girviNotice,
-      queryParameters: {'ticketNo': account.referenceNo},
+    context.push(
+      NoticeRecoveryNavigation.fromRiskCollections(account.referenceNo),
     );
-    context.push(uri.toString());
   }
 
   @override

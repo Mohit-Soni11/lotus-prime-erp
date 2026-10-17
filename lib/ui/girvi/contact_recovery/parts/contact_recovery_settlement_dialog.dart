@@ -54,7 +54,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
     _penaltyController = TextEditingController(text: '0');
     _noteController = TextEditingController(
       text:
-          'Final recovery settlement after three notices. Recovery proceeds adjusted against outstanding dues subject to applicable law and business policy.',
+          'Recovery settlement after formal notice review. Recovery proceeds adjusted against outstanding dues subject to applicable law and business policy.',
     );
   }
 
@@ -197,7 +197,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Final recovery closure after all three notices are prepared.',
+                  'Recovery closure after the approved notice and recovery review.',
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.shellTextMuted,
                     fontSize: 12.8,
@@ -260,7 +260,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _snapshotChip('Notices ${widget.item.noticesSentLabel}'),
+              _snapshotChip('Notice ${widget.item.noticeStatusLabel}'),
               _snapshotChip(widget.item.stageLabel),
             ],
           ),
@@ -554,7 +554,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Close only after three notices are complete, supporting records are verified, and final recovery approval is available.',
+              'Close only after the notice period, supporting records and recovery approval have been reviewed.',
               style: GirviStyles.caption.copyWith(
                 fontSize: 12.5,
                 height: 1.4,

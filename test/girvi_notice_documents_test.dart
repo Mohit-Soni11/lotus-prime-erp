@@ -13,8 +13,9 @@ void main() {
   late GirviNoticeActionRepository actions;
   late int loanId;
   const texts = {
-    GirviNoticeLanguage.hindi: 'पहली सूचना: कृपया दुकान पर संपर्क करें।',
-    GirviNoticeLanguage.english: 'First notice: Please contact the branch.',
+    GirviNoticeLanguage.hindi: 'गिरवी सूचना: कृपया दुकान पर संपर्क करें।',
+    GirviNoticeLanguage.english:
+        'Pledge account notice: Please contact the branch.',
   };
 
   setUp(() async {
@@ -40,7 +41,7 @@ void main() {
   Future<int> approve({Map<GirviNoticeLanguage, String> documents = texts}) =>
       actions.recordNoticePrepared(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: texts[GirviNoticeLanguage.hindi]!,
         primaryLanguage: GirviNoticeLanguage.hindi,
         noticePeriodDays: 7,
@@ -85,7 +86,7 @@ void main() {
     await expectLater(
       actions.recordNoticePrepared(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: texts[GirviNoticeLanguage.hindi]!,
         primaryLanguage: GirviNoticeLanguage.english,
         noticePeriodDays: 7,
@@ -114,7 +115,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
     for (final language in GirviNoticeLanguage.values) {
       await actions.recordNoticeDeliveryProof(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: texts[language]!,
         noticeLanguage: language,
         actionType: GirviNoticeActionTypes.noticePdfSaved,
@@ -125,7 +126,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
     await expectLater(
       actions.recordNoticeDeliveryProof(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: texts[GirviNoticeLanguage.hindi]!,
         noticeLanguage: GirviNoticeLanguage.english,
         actionType: GirviNoticeActionTypes.noticePdfSaved,
@@ -141,7 +142,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
       () async {
     await actions.recordNoticePrepared(
       girviId: loanId,
-      noticeType: GirviNoticeType.first,
+      noticeType: GirviNoticeType.formal,
       noticeText: texts[GirviNoticeLanguage.hindi]!,
       noticePeriodDays: 7,
     );
@@ -149,7 +150,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
     await expectLater(
       actions.recordNoticeDeliveryProof(
         girviId: loanId,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: texts[GirviNoticeLanguage.hindi]!,
         noticeLanguage: GirviNoticeLanguage.english,
         actionType: GirviNoticeActionTypes.noticePdfPrinted,
@@ -180,7 +181,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
       final noticeId =
           await GirviNoticeActionRepository(migrationDb).recordNoticePrepared(
         girviId: loan,
-        noticeType: GirviNoticeType.first,
+        noticeType: GirviNoticeType.formal,
         noticeText: texts[GirviNoticeLanguage.hindi]!,
         noticePeriodDays: 7,
       );
@@ -211,7 +212,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
           lessThan(10));
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 58);
+      expect(version.read<int>('user_version'), 59);
     } finally {
       await migrationDb.close();
       await directory.delete(recursive: true);

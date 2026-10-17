@@ -8,6 +8,8 @@ import '../../models/girvi/girvi_notice_action_model.dart';
 import 'girvi_notice_document.dart';
 import 'girvi_notice_financial_timeline.dart';
 
+part 'notice/girvi_formal_notice_copy.dart';
+
 /// Builds customer notices from verified Girvi account records.
 /// Financial values remain owned by the existing account and ledger domain.
 class GirviNoticeGenerationService {
@@ -176,7 +178,7 @@ class GirviNoticeGenerationService {
     required GirviNoticeType noticeType,
     required GirviNoticeLanguage language,
   }) {
-    final copy = _NoticeCopy.forStage(noticeType, language);
+    final copy = _NoticeCopy.forLanguage(language);
     final data = _NoticeData(
       item: item,
       noticeType: noticeType,
@@ -205,7 +207,7 @@ class GirviNoticeGenerationService {
             ),
           ],
         ),
-        if (noticeType.stage > 1 && data.priorCustomerResponses.isNotEmpty)
+        if (data.priorCustomerResponses.isNotEmpty)
           GirviNoticeSection(
             title: language == GirviNoticeLanguage.hindi
                 ? 'पूर्व संपर्क और ग्राहक प्रतिक्रिया'
@@ -300,8 +302,7 @@ class _NoticeData {
   GirviLoanWithCustomer get account => item.account;
   GirviLoanModel get loan => item.loan;
   String get ticketNo => loan.ticketNo;
-  String get noticeNumber =>
-      '$ticketNo-N${noticeType.stage.toString().padLeft(2, '0')}';
+  String get noticeNumber => '$ticketNo-NOTICE';
   String get noticeDate => service.date(service._now);
   String get deadline =>
       service.date(service._now.add(Duration(days: item.noticePeriodDays)));
@@ -321,8 +322,7 @@ class _NoticeData {
 
   List<GirviCustomerResponse> get priorCustomerResponses {
     final responses = item.customerResponses
-        .where((response) =>
-            response.noticeStage == null || response.noticeStage! < noticeType.stage)
+        .where((response) => !response.receivedAt.isAfter(service._now))
         .toList();
     responses.sort((a, b) => a.receivedAt.compareTo(b.receivedAt));
     return responses;
@@ -333,7 +333,8 @@ class _NoticeData {
     return [
       for (final response in priorCustomerResponses)
         GirviNoticeBlock(
-          heading: '${hindi ? 'संपर्क' : 'Contact'} · ${service.date(response.receivedAt)}',
+          heading:
+              '${hindi ? 'संपर्क' : 'Contact'} · ${service.date(response.receivedAt)}',
           lines: [
             '${hindi ? 'माध्यम' : 'Channel'}: ${_channelLabel(response, hindi)}',
             '${hindi ? 'ग्राहक का कथन' : 'Customer Statement'}: ${response.responseText}',
@@ -371,7 +372,8 @@ class _NoticeData {
       GirviCustomerResponseKind.extensionRequest => 'अतिरिक्त समय का अनुरोध',
       GirviCustomerResponseKind.amountDispute => 'बकाया राशि पर आपत्ति',
       GirviCustomerResponseKind.recoveryRequest => 'वसूली निपटान का अनुरोध',
-      GirviCustomerResponseKind.noResponse => 'कोई प्रतिक्रिया प्राप्त नहीं हुई',
+      GirviCustomerResponseKind.noResponse =>
+        'कोई प्रतिक्रिया प्राप्त नहीं हुई',
       GirviCustomerResponseKind.other => 'अन्य प्रतिक्रिया',
     };
   }
@@ -390,6 +392,7 @@ class _NoticeData {
       GirviPromiseStatus.recorded => 'रिकॉर्ड किया गया',
     };
   }
+
   String get interestBreakdownTitle {
     final interestType = item.interestPeriodSnapshots.isEmpty
         ? account.interestType
@@ -428,89 +431,4 @@ class _NoticeData {
           RegExp(r'#\s*(\d+)'), (match) => 'Serial Number ${match.group(1)}')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
-}
-
-class _NoticeCopy {
-  const _NoticeCopy({
-    required this.title,
-    required this.subject,
-    required this.opening,
-    required this.accountContext,
-    required this.requiredAction,
-    required this.closing,
-  });
-
-  final String title;
-  final String subject;
-  final String Function(_NoticeData data) opening;
-  final String Function(_NoticeData data) accountContext;
-  final String Function(_NoticeData data) requiredAction;
-  final String Function(_NoticeData data) closing;
-
-  factory _NoticeCopy.forStage(
-      GirviNoticeType type, GirviNoticeLanguage language) {
-    final hindi = language == GirviNoticeLanguage.hindi;
-    switch (type) {
-      case GirviNoticeType.first:
-        return _NoticeCopy(
-          title:
-              hindi ? 'पहली गिरवी खाता सूचना' : 'FIRST PLEDGE ACCOUNT NOTICE',
-          subject: hindi
-              ? 'लंबित गिरवी खाते के लिए स्मरण सूचना'
-              : 'Reminder for Pending Pledge Account Settlement',
-          opening: (_) => hindi
-              ? 'आपके नीचे दिए गए गिरवी खाते के संबंध में यह औपचारिक स्मरण सूचना जारी की जा रही है।'
-              : 'This is a formal reminder regarding the pledge account referenced below.',
-          accountContext: (_) => hindi
-              ? 'खाता परिपक्वता तिथि के बाद भी लंबित है। सत्यापित बकाया राशि की समीक्षा और निपटान के लिए आपसे संपर्क अपेक्षित है।'
-              : 'The account remains pending after maturity and requires your attention for review and settlement of the verified outstanding balance.',
-          requiredAction: (data) => hindi
-              ? 'कृपया ${data.deadline} तक दुकान पर आएं या संपर्क करें और भुगतान, निपटान या स्वीकार्य समाधान पर चर्चा करें।'
-              : 'Please visit or contact the shop by ${data.deadline} to discuss payment, settlement, or an acceptable resolution.',
-          closing: (_) => hindi
-              ? 'यह पहली सूचना है। समय पर कार्रवाई से आगे की अनुवर्ती प्रक्रिया से बचा जा सकता है।'
-              : 'This is the first notice. Timely action can prevent further follow-up.',
-        );
-      case GirviNoticeType.second:
-        return _NoticeCopy(
-          title:
-              hindi ? 'दूसरी गिरवी खाता सूचना' : 'SECOND PLEDGE ACCOUNT NOTICE',
-          subject: hindi
-              ? 'लंबित गिरवी खाते के लिए अनुवर्ती सूचना'
-              : 'Follow-up for Pending Pledge Account Settlement',
-          opening: (_) => hindi
-              ? 'यह सूचना आपके खाते के लिए पहले जारी की गई सूचना के संदर्भ में भेजी जा रही है।'
-              : 'This notice is issued as a follow-up to the earlier notice for this pledge account.',
-          accountContext: (_) => hindi
-              ? 'खाता अब भी लंबित है। बकाया की समीक्षा और निपटान के लिए तुरंत संपर्क आवश्यक है।'
-              : 'The account remains unsettled. Immediate contact is required to review the outstanding balance and complete settlement.',
-          requiredAction: (data) => hindi
-              ? 'कृपया ${data.deadline} तक दुकान से संपर्क करके आवश्यक कार्रवाई पूरी करें।'
-              : 'Please contact the shop and complete the required action by ${data.deadline}.',
-          closing: (_) => hindi
-              ? 'निर्धारित अवधि में समाधान न होने पर यह मामला अंतिम सूचना समीक्षा में जा सकता है।'
-              : 'If the account is not resolved within the notice period, it may proceed to final notice review.',
-        );
-      case GirviNoticeType.finalNotice:
-        return _NoticeCopy(
-          title:
-              hindi ? 'अंतिम गिरवी खाता सूचना' : 'FINAL PLEDGE ACCOUNT NOTICE',
-          subject: hindi
-              ? 'गिरवी खाते के निपटान के लिए अंतिम सूचना'
-              : 'Final Notice for Pledge Account Settlement',
-          opening: (_) => hindi
-              ? 'यह आपके गिरवी खाते के संबंध में अंतिम सूचना है। पहले जारी की गई सूचनाओं के बाद भी खाता लंबित है।'
-              : 'This is the final notice for your pledge account. The account remains pending despite the earlier notices.',
-          accountContext: (_) => hindi
-              ? 'कृपया नीचे दिए गए सत्यापित खाते के विवरण की समीक्षा करें और निपटान के लिए तुरंत संपर्क करें।'
-              : 'Please review the verified account details below and contact the shop immediately for settlement.',
-          requiredAction: (data) => hindi
-              ? 'कृपया ${data.deadline} तक भुगतान, निपटान या स्वीकार्य समाधान के लिए दुकान से संपर्क करें।'
-              : 'Please contact the shop by ${data.deadline} for payment, settlement, or an acceptable resolution.',
-          closing: (_) => hindi
-              ? 'निर्धारित अवधि में कोई प्रतिक्रिया या समाधान नहीं मिलने पर मामला लागू शर्तों और कानून के अनुसार वसूली समीक्षा में भेजा जा सकता है।'
-              : 'If no response or resolution is received within the stated period, the case may proceed to recovery review in accordance with the applicable terms and law.',
-        );
-    }
-  }
 }

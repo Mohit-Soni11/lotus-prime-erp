@@ -1866,11 +1866,16 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 57) {
             await ensureGirviCustomerResponseSchema();
-            AppLogger.info('v57 Girvi customer response evidence schema applied.');
+            AppLogger.info(
+                'v57 Girvi customer response evidence schema applied.');
           }
           if (from < 58) {
             await ensureGirviNoticeDocumentSchema();
             AppLogger.info('v58 bilingual Girvi notice documents applied.');
+          }
+          if (from < 59) {
+            await ensureGirviNoticeActionSchema();
+            AppLogger.info('v59 single formal Girvi notice workflow applied.');
           }
           await _ensureReturnReversalSchemaInternal();
         },
@@ -2001,22 +2006,13 @@ class AppDatabase extends _$AppDatabase {
     for (final statement in _girviNoticeActionIndexSql) {
       await customStatement(statement);
     }
+    await customStatement(
+      'DROP TRIGGER IF EXISTS "trg_girvi_notice_one_approved_stage"',
+    );
     await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS "trg_girvi_notice_one_approved_stage"
-      BEFORE INSERT ON "girvi_notice_actions"
-      WHEN NEW.action_type IN (
-        'FIRST_NOTICE_PREPARED',
-        'SECOND_NOTICE_PREPARED',
-        'FINAL_NOTICE_PREPARED'
-      )
-      AND EXISTS (
-        SELECT 1 FROM "girvi_notice_actions"
-        WHERE "girvi_id" = NEW."girvi_id"
-          AND "action_type" = NEW."action_type"
-      )
-      BEGIN
-        SELECT RAISE(ABORT, 'Approved notice stage already exists');
-      END
+      CREATE UNIQUE INDEX IF NOT EXISTS "idx_girvi_one_formal_notice"
+      ON "girvi_notice_actions" ("girvi_id")
+      WHERE "action_type" = 'NOTICE_PREPARED'
     ''');
   }
 
@@ -3104,6 +3100,7 @@ CREATE TABLE IF NOT EXISTS "girvi_notice_actions" (
   "updated_at" INTEGER,
   "girvi_id" INTEGER NOT NULL,
   "action_type" TEXT NOT NULL,
+  "notice_action_id" INTEGER REFERENCES "girvi_notice_actions" ("id") ON DELETE RESTRICT,
   "notice_stage" INTEGER,
   "notice_text" TEXT,
   "document_hash" TEXT,
@@ -3128,6 +3125,7 @@ CREATE TABLE IF NOT EXISTS "girvi_notice_actions" (
 ''';
 
 const List<String> _girviNoticeActionColumnSafetySql = [
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_action_id" INTEGER REFERENCES "girvi_notice_actions" ("id") ON DELETE RESTRICT',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_stage" INTEGER',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "document_hash" TEXT',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "performed_by" TEXT',

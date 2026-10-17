@@ -19,7 +19,21 @@ class _NoticeDocumentStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actions = item.preparedNoticeActions;
+    final activeNotice = item.formalNoticeAction;
+    final legacyActions = item.legacyNoticeActions;
+    Widget noticeCard(GirviNoticeAction action) {
+      final responses = item.responsesForNotice(action);
+      return _NoticeDocumentCard(
+        action: action,
+        latestProof: item.latestDeliveryProofForNotice(action),
+        latestResponse: responses.isEmpty ? null : responses.first,
+        onView: () => onViewNotice(action),
+        onDownload: () => onDownloadNotice(action),
+        onPrint: () => onPrintNotice(action),
+        onRecordResponse: () => onRecordCustomerResponse(action),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -54,32 +68,33 @@ class _NoticeDocumentStrip extends StatelessWidget {
                   ),
                 ),
               ),
-              _NoticeCountBadge(label: item.noticesSentLabel),
+              _NoticeCountBadge(label: item.noticeStatusLabel),
             ],
           ),
           const SizedBox(height: 9),
-          if (actions.isEmpty)
-            const _NoNoticeDocuments()
+          if (activeNotice != null)
+            Align(
+                alignment: Alignment.centerLeft,
+                child: noticeCard(activeNotice))
+          else if (item.recoveryNoticeAction != null)
+            Text('An earlier approved notice is on record.',
+                style: GirviStyles.caption)
           else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: actions.map(
-                (action) {
-                  final stage = _noticeStageFromAction(action) ?? 1;
-                  return _NoticeDocumentCard(
-                    action: action,
-                    latestProof: item.latestDeliveryProofForStage(stage),
-                    latestResponse: item.responsesForNoticeStage(stage).isEmpty
-                        ? null
-                        : item.responsesForNoticeStage(stage).first,
-                    onView: () => onViewNotice(action),
-                    onDownload: () => onDownloadNotice(action),
-                    onPrint: () => onPrintNotice(action),
-                    onRecordResponse: () => onRecordCustomerResponse(action),
-                  );
-                },
-              ).toList(),
+            const _NoNoticeDocuments(),
+          if (legacyActions.isNotEmpty)
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text('Earlier notice records (${legacyActions.length})',
+                  style: GirviStyles.caption),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: legacyActions.map(noticeCard).toList()),
+                ),
+              ],
             ),
         ],
       ),
@@ -161,7 +176,7 @@ class _NoticeDocumentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final noticeType = _noticeTypeFromAction(action);
+    final noticeLabel = action.noticeLabel;
     final timestamp =
         DateFormat('dd MMM yyyy, hh:mm a').format(action.actionAt);
     final proof = latestProof;
@@ -170,7 +185,9 @@ class _NoticeDocumentCard extends StatelessWidget {
         ? null
         : DateFormat('dd MMM yyyy, hh:mm a')
             .format(proof.deliveredAt ?? proof.actionAt);
-    final color = _noticeStageColor(noticeType);
+    final color = action.isLegacyNoticePreparation
+        ? GirviColors.textMuted
+        : GirviColors.info;
 
     return InkWell(
       onTap: onView,
@@ -205,7 +222,7 @@ class _NoticeDocumentCard extends StatelessWidget {
                     border: Border.all(color: color.withValues(alpha: 0.24)),
                   ),
                   child: Text(
-                    '0${noticeType.stage}',
+                    action.isLegacyNoticePreparation ? 'H' : 'N',
                     style: GoogleFonts.inter(
                       color: color,
                       fontSize: 12.3,
@@ -216,7 +233,7 @@ class _NoticeDocumentCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    noticeType.label,
+                    noticeLabel,
                     style: GirviStyles.caption.copyWith(
                       color: GirviColors.textDark,
                       fontSize: 12.5,
@@ -304,17 +321,6 @@ class _NoticeDocumentCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _noticeStageColor(GirviNoticeType noticeType) {
-    switch (noticeType) {
-      case GirviNoticeType.first:
-        return GirviColors.warning;
-      case GirviNoticeType.second:
-        return GirviColors.danger;
-      case GirviNoticeType.finalNotice:
-        return GirviColors.info;
-    }
   }
 }
 
@@ -444,7 +450,7 @@ class _NoticeDocumentPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final document = _NoticePreviewData.parse(noticeText);
-    final accent = _stageColor(noticeType);
+    const accent = GirviColors.info;
     return Container(
       constraints: const BoxConstraints(maxHeight: 560),
       decoration: BoxDecoration(
@@ -475,17 +481,6 @@ class _NoticeDocumentPreview extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _stageColor(GirviNoticeType type) {
-    switch (type) {
-      case GirviNoticeType.first:
-        return GirviColors.warning;
-      case GirviNoticeType.second:
-        return GirviColors.danger;
-      case GirviNoticeType.finalNotice:
-        return GirviColors.info;
-    }
   }
 }
 
@@ -930,10 +925,10 @@ class _CaseActions extends StatelessWidget {
 
   VoidCallback? get _primaryAction {
     switch (item.stage) {
-      case ContactRecoveryStage.firstNoticeDue:
-      case ContactRecoveryStage.secondNoticeDue:
-      case ContactRecoveryStage.finalNoticeDue:
+      case ContactRecoveryStage.noticeRequired:
         return onPrepareNotice;
+      case ContactRecoveryStage.noticePending:
+        return null;
       case ContactRecoveryStage.disposalReady:
         return onInitiateRecovery;
       case ContactRecoveryStage.recoveryInProgress:

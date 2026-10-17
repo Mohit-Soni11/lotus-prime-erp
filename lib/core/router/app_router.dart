@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../constants/app_routes.dart';
+import 'notice_recovery_navigation.dart';
 import '../../theme/dashboard/app/uv.dart';
 
 import '../../ui/auth/login_screen.dart';
@@ -230,6 +231,10 @@ GoRouter createAppRouter() {
             loanId: loanId,
             returnTo: returnTo,
             onBack: () {
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
               if (returnTo == 'riskCollections') {
                 context.go(RoutePaths.customerDefaulters);
                 return;
@@ -253,7 +258,7 @@ GoRouter createAppRouter() {
         path: RoutePaths.girviNotice,
         builder: (context, state) => ContactRecoveryScreen(
           initialTicketNo: state.uri.queryParameters['ticketNo'],
-          onBack: () => context.go(RoutePaths.dashboard),
+          onBack: () => NoticeRecoveryNavigation.goBack(context, state.uri),
         ),
       ),
       GoRoute(
