@@ -178,6 +178,11 @@ void main() {
       language: GirviNoticeLanguage.english,
     );
     expect(notice, contains('Compound Interest Breakdown'));
+    expect(notice, contains('09 May 2023 to 08 May 2024'));
+    expect(notice, contains('09 May 2024 to 08 May 2025'));
+    expect(notice, contains('09 May 2025 to 08 May 2026'));
+    expect(notice, contains('09 May 2026 to 17 October 2026'));
+    expect(notice, isNot(contains('09 November 2026')));
     expect(notice, contains('Gross Interest: Rs 1,08,120'));
     expect(notice, contains('Interest Outstanding: Rs 1,08,120'));
     final approvedStatement = NoticeStatementData.parse(

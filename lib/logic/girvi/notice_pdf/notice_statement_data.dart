@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 
 import '../../../models/girvi/girvi_notice_action_model.dart';
 import 'notice_item_description.dart';
+import 'notice_period_display.dart';
 
 /// Reads the approved notice text so a later download cannot silently pick up
 /// changed loan balances or interest settings.
@@ -285,9 +286,21 @@ class NoticeStatementData {
           ?.value('Period', 'अवधि', language)
           ?.split(' to ')
           .first;
-  String? get interestPeriodTo =>
-      value('Interest Period To', 'ब्याज अवधि समाप्त') ??
-      periods.lastOrNull?.value('Period', 'अवधि', language)?.split(' to ').last;
+  String? get interestPeriodTo {
+    final recorded = value('Interest Period To', 'ब्याज अवधि समाप्त') ??
+        periods.lastOrNull
+            ?.value('Period', 'अवधि', language)
+            ?.split(' to ')
+            .last;
+    final asOf =
+        financialAsOf ?? NoticePeriodDisplay.parseNoticeDate(noticeDate);
+    final recordedDate = NoticePeriodDisplay.parseNoticeDate(recorded);
+    if (asOf != null && recordedDate != null && recordedDate.isAfter(asOf)) {
+      return DateFormat('dd MMMM yyyy').format(asOf);
+    }
+    return recorded;
+  }
+
   String? get compoundingCycle => value('Compounding Cycle', 'चक्रवृद्धि चक्र');
   String? get grossInterest {
     final recorded = value('Gross Interest', 'कुल ब्याज');

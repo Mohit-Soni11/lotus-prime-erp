@@ -19,6 +19,19 @@ class GirviNoticeFinancialTimeline {
   final String Function(double value) money;
   final String Function(DateTime? value) date;
 
+  /// A completed cycle ends the day before the next cycle starts. An open
+  /// cycle is shown only through the account's calculation date.
+  DateTime displayPeriodEnd(GirviInterestPeriodSnapshot snapshot) {
+    if (GirviInterestCalculationType.normalize(snapshot.interestType) ==
+            GirviInterestCalculationType.compound &&
+        snapshot.finalized &&
+        snapshot.chargeableMonths == GirviLoanModel.compoundCycleMonths) {
+      return snapshot.periodTo.subtract(const Duration(days: 1));
+    }
+    final asOf = item.loan.releaseDate ?? item.now;
+    return snapshot.periodTo.isAfter(asOf) ? asOf : snapshot.periodTo;
+  }
+
   GirviLoanWithCustomer get _account => item.account;
   List<GirviPaymentModel> get _interestPayments {
     final entries = item.paymentHistory.where((payment) {
@@ -115,7 +128,7 @@ class GirviNoticeFinancialTimeline {
         : (isHindi ? 'शेष चक्रवृद्धि अवधि' : 'Remaining Compound Period');
     return GirviNoticeBlock(
       heading:
-          '$label - ${date(snapshot.periodFrom)} ${isHindi ? 'से' : 'to'} ${date(snapshot.periodTo)}',
+          '$label - ${date(snapshot.periodFrom)} ${isHindi ? 'से' : 'to'} ${date(displayPeriodEnd(snapshot))}',
       lines: _snapshotLines(snapshot,
           isHindi: isHindi,
           closingLabel: isHindi ? 'क्लोजिंग राशि' : 'Closing Amount'),
@@ -128,7 +141,7 @@ class GirviNoticeFinancialTimeline {
     required String closingLabel,
   }) {
     return [
-      '${isHindi ? 'अवधि' : 'Period'}: ${date(snapshot.periodFrom)} ${isHindi ? 'से' : 'to'} ${date(snapshot.periodTo)}',
+      '${isHindi ? 'अवधि' : 'Period'}: ${date(snapshot.periodFrom)} ${isHindi ? 'से' : 'to'} ${date(displayPeriodEnd(snapshot))}',
       '${isHindi ? 'ओपनिंग राशि' : 'Opening Amount'}: ${money(snapshot.openingAmount)}',
       '${isHindi ? 'मासिक ब्याज दर' : 'Monthly Interest Rate'}: ${snapshot.monthlyRatePercent.toStringAsFixed(2)}%',
       '${isHindi ? 'एक माह का ब्याज' : 'Interest per Month'}: ${money(snapshot.interestPerMonth)}',

@@ -12,6 +12,7 @@ import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/girvi_notice_history.dart';
 import 'notice_pdf/notice_statement_data.dart';
+import 'notice_pdf/notice_period_display.dart';
 
 part 'notice_pdf/notice_statement_layout.dart';
 part 'notice_pdf/notice_statement_composition.dart';

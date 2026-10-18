@@ -48,6 +48,18 @@ void main() {
     expect(data.importantLines.join('\n'), text);
   });
 
+  test('a saved notice never displays an interest end after its notice date',
+      () {
+    const text = 'Notice Date: 17 October 2026\n'
+        'Interest Period To: 09 November 2026';
+    final data = NoticeStatementData.parse(
+      text,
+      GirviNoticeLanguage.english,
+    );
+    expect(data.interestPeriodTo, '17 October 2026');
+    expect(data.lines.join('\n'), text);
+  });
+
   test('compound notice carries verified payment and outstanding totals', () {
     final item = createNoticeCase(
       simple: false,
@@ -76,6 +88,15 @@ void main() {
     expect(data.interestOutstanding, 'Rs 15,520');
     expect(data.totalPayable, 'Rs 1,15,520');
     expect(data.monthlyRate, '1.00%');
+    expect(
+      data.periods.first.value('Period', 'अवधि', GirviNoticeLanguage.english),
+      '04 April 2025 to 03 April 2026',
+    );
+    expect(
+      data.periods.last.value('Period', 'अवधि', GirviNoticeLanguage.english),
+      '04 April 2026 to 04 October 2026',
+    );
+    expect(data.interestPeriodTo, '04 October 2026');
     expect(
         data.importantLines.join(' '), contains('Interest Received: Rs 3,000'));
   });

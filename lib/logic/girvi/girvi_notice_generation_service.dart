@@ -451,7 +451,7 @@ class _NoticeData {
       if (snapshots.isNotEmpty)
         '${hindi ? 'ब्याज अवधि शुरू' : 'Interest Period From'}: ${service.date(snapshots.first.periodFrom)}',
       if (snapshots.isNotEmpty)
-        '${hindi ? 'ब्याज अवधि समाप्त' : 'Interest Period To'}: ${service.date(snapshots.last.periodTo)}',
+        '${hindi ? 'ब्याज अवधि समाप्त' : 'Interest Period To'}: ${service.date(financialTimeline.displayPeriodEnd(snapshots.last))}',
       if (isCompound)
         '${hindi ? 'चक्रवृद्धि चक्र' : 'Compounding Cycle'}: ${hindi ? 'हर' : 'Every'} ${GirviLoanModel.compoundCycleMonths} ${hindi ? 'माह' : 'months'}',
       '${hindi ? 'कुल ब्याज' : 'Gross Interest'}: ${service.money(item.verifiedGrossInterest)}',

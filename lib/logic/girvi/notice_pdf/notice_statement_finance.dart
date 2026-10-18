@@ -4,17 +4,25 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
   pw.Widget _interestCard() {
     final periods = statement.periods;
     final rows = <pw.TableRow>[];
+    final asOf = statement.financialAsOf ??
+        NoticePeriodDisplay.parseNoticeDate(statement.noticeDate);
     var priorMonths = 0;
-    for (final period in periods) {
+    for (var index = 0; index < periods.length; index++) {
+      final period = periods[index];
       final months = int.tryParse(
         period.value('Chargeable Months', 'चार्जेबल माह', language) ?? '',
       );
-      final periodLabel = months != null && months > 0
-          ? '${priorMonths + 1}–${priorMonths + months} Months'
-          : period.value('Period', 'अवधि', language) ?? 'Not recorded';
+      final display = NoticePeriodDisplay.fromRecord(
+        period: period.value('Period', 'अवधि', language),
+        months: months,
+        priorMonths: priorMonths,
+        cycleNumber: index + 1,
+        compound: statement.isCompound,
+        asOf: asOf,
+      );
       if (months != null && months > 0) priorMonths += months;
       rows.add(pw.TableRow(children: [
-        _interestCell(periodLabel),
+        _periodCell(display),
         _interestCell(
             period.value('Opening Amount', 'ओपनिंग राशि', language) ?? '—'),
         _interestCell(
@@ -61,11 +69,11 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
             pw.Table(
               border: pw.TableBorder.all(color: _noticeBorder, width: 0.55),
               columnWidths: const {
-                0: pw.FlexColumnWidth(1.45),
-                1: pw.FlexColumnWidth(1.5),
-                2: pw.FlexColumnWidth(1.3),
-                3: pw.FlexColumnWidth(1.4),
-                4: pw.FlexColumnWidth(1.55),
+                0: pw.FlexColumnWidth(1.9),
+                1: pw.FlexColumnWidth(1.35),
+                2: pw.FlexColumnWidth(1.15),
+                3: pw.FlexColumnWidth(1.25),
+                4: pw.FlexColumnWidth(1.4),
               },
               children: [
                 pw.TableRow(
@@ -137,6 +145,26 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
       ),
     );
   }
+
+  pw.Widget _periodCell(NoticePeriodDisplay display) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+        child: pw.Column(
+          children: [
+            pw.Text(display.monthLabel,
+                textAlign: pw.TextAlign.center, style: _style(8.5, bold: true)),
+            if (display.dateRange != null) ...[
+              pw.Text(display.dateRange!,
+                  textAlign: pw.TextAlign.center,
+                  style: _style(8.1, bold: true)),
+            ],
+            if (display.chargeableLabel != null) ...[
+              pw.Text(display.chargeableLabel!,
+                  textAlign: pw.TextAlign.center,
+                  style: _style(8.1, bold: true)),
+            ],
+          ],
+        ),
+      );
 
   pw.Widget _interestCell(String value, {bool header = false}) => pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -216,7 +244,7 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
 
   pw.Widget _actionCard() => pw.Container(
         width: double.infinity,
-        padding: const pw.EdgeInsets.all(7),
+        padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
         decoration: pw.BoxDecoration(
           color: _noticePaleGold,
           border: pw.Border.all(color: _noticeGold, width: 0.8),
@@ -241,7 +269,7 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
             ),
             if (deadline != null) ...[
               pw.SizedBox(width: 11),
-              pw.Container(width: 0.7, height: 34, color: _noticeGold),
+              pw.Container(width: 0.7, height: 28, color: _noticeGold),
               pw.SizedBox(width: 11),
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,

@@ -1,6 +1,9 @@
 part of '../girvi_notice_pdf_service.dart';
 
 extension _NoticeStatementComposition on _NoticeStatementLayout {
+  bool get _actionOnInformationPage =>
+      statement.isCompound && statement.periods.length >= 4 && deadline != null;
+
   List<pw.Widget> summaryPage() => [
         _title(),
         _identityCard(),
@@ -18,11 +21,17 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
         pw.SizedBox(height: 3),
         _section(3, t('Final Outstanding Summary', 'अंतिम बकाया सारांश')),
         _outstandingCard(),
-        pw.SizedBox(height: 3),
-        _actionCard(),
+        if (!_actionOnInformationPage) ...[
+          pw.SizedBox(height: 3),
+          _actionCard(),
+        ],
       ];
 
   List<pw.Widget> informationPage() => [
+        if (_actionOnInformationPage) ...[
+          _actionCard(),
+          pw.SizedBox(height: 7),
+        ],
         _section(4, t('Important Information', 'महत्वपूर्ण जानकारी')),
         pw.SizedBox(height: 7),
         if (statement.financialAsOf != null) ...[
