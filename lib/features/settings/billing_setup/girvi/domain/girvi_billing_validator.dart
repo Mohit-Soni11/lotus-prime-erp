@@ -104,9 +104,6 @@ class GirviBillingValidator {
       messages.add(
           'Footer message cannot be empty when footer printing is enabled.');
     }
-    if (!GirviBillingOptions.interestTypes.contains(baseModel.interestType)) {
-      messages.add('Select a valid interest type.');
-    }
     if (!GirviBillingOptions.durations.contains(baseModel.defaultDuration)) {
       messages.add('Select a valid default duration.');
     }

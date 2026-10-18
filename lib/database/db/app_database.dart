@@ -2009,10 +2009,11 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'DROP TRIGGER IF EXISTS "trg_girvi_notice_one_approved_stage"',
     );
+    await customStatement('DROP INDEX IF EXISTS "idx_girvi_one_formal_notice"');
     await customStatement('''
       CREATE UNIQUE INDEX IF NOT EXISTS "idx_girvi_one_formal_notice"
       ON "girvi_notice_actions" ("girvi_id")
-      WHERE "action_type" = 'NOTICE_PREPARED'
+      WHERE "action_type" = 'NOTICE_PREPARED' AND "notice_action_id" IS NULL
     ''');
   }
 

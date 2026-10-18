@@ -65,11 +65,6 @@ class GirviBillingController extends ChangeNotifier {
     _markDirty(model: model);
   }
 
-  void updateInterestType(String value) {
-    if (!GirviBillingOptions.interestTypes.contains(value)) return;
-    _markDirty(model: _state.model.copyWith(interestType: value));
-  }
-
   void updateDefaultDuration(String value) {
     if (!GirviBillingOptions.durations.contains(value)) return;
     _markDirty(model: _state.model.copyWith(defaultDuration: value));

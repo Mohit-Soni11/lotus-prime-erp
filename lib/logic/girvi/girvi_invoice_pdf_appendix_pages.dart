@@ -525,7 +525,8 @@ bool _hasCompoundInterestCalculation(GirviInvoiceDraft draft) {
     draft.startDate,
     releaseDate,
   );
-  return chargeableMonths > GirviLoanModel.compoundCycleMonths;
+  return GirviInterestCalculationType.forChargeableMonths(chargeableMonths) ==
+      GirviInterestCalculationType.compound;
 }
 
 pw.Widget _girviCompoundInterestCalculation(
@@ -537,7 +538,8 @@ pw.Widget _girviCompoundInterestCalculation(
     draft.startDate,
     releaseDate,
   );
-  if (chargeableMonths <= GirviLoanModel.compoundCycleMonths) {
+  if (GirviInterestCalculationType.forChargeableMonths(chargeableMonths) !=
+      GirviInterestCalculationType.compound) {
     return pw.SizedBox.shrink();
   }
 

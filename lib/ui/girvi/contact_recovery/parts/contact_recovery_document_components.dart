@@ -21,10 +21,32 @@ class _NoticeDocumentStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeNotice = item.formalNoticeAction;
     final legacyActions = item.legacyNoticeActions;
+    final earlierNotices = [
+      ...item.earlierFormalNoticeActions,
+      ...legacyActions,
+    ];
     Widget noticeCard(GirviNoticeAction action) {
       final responses = item.responsesForNotice(action);
+      final approvedText = item
+              .documentsForNoticeAction(action.id)
+              .where((document) =>
+                  document.language == GirviNoticeLanguage.english)
+              .firstOrNull
+              ?.noticeText ??
+          action.noticeText;
+      final needsNewApproval = approvedText != null &&
+          NoticeStatementData.parse(
+            approvedText,
+            GirviNoticeLanguage.english,
+          ).isSimple &&
+          GirviLoanModel.chargeableMonthsBetween(
+                item.loan.startDate,
+                item.loan.releaseDate ?? item.now,
+              ) >
+              GirviLoanModel.compoundCycleMonths;
       return _NoticeDocumentCard(
         action: action,
+        needsNewApproval: action.id == activeNotice?.id && needsNewApproval,
         latestProof: item.latestDeliveryProofForNotice(action),
         latestResponse: responses.isEmpty ? null : responses.first,
         onView: () => onViewNotice(action),
@@ -81,10 +103,10 @@ class _NoticeDocumentStrip extends StatelessWidget {
                 style: GirviStyles.caption)
           else
             const _NoNoticeDocuments(),
-          if (legacyActions.isNotEmpty)
+          if (earlierNotices.isNotEmpty)
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text('Earlier notice records (${legacyActions.length})',
+              title: Text('Earlier notice records (${earlierNotices.length})',
                   style: GirviStyles.caption),
               children: [
                 Align(
@@ -92,7 +114,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
                   child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: legacyActions.map(noticeCard).toList()),
+                      children: earlierNotices.map(noticeCard).toList()),
                 ),
               ],
             ),
@@ -157,6 +179,7 @@ class _NoNoticeDocuments extends StatelessWidget {
 
 class _NoticeDocumentCard extends StatelessWidget {
   final GirviNoticeAction action;
+  final bool needsNewApproval;
   final GirviNoticeAction? latestProof;
   final GirviCustomerResponse? latestResponse;
   final VoidCallback onView;
@@ -166,6 +189,7 @@ class _NoticeDocumentCard extends StatelessWidget {
 
   const _NoticeDocumentCard({
     required this.action,
+    required this.needsNewApproval,
     required this.latestProof,
     required this.latestResponse,
     required this.onView,
@@ -246,6 +270,17 @@ class _NoticeDocumentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            if (needsNewApproval) ...[
+              Text(
+                'Compound Interest applies now. Prepare a corrected notice before Save or Print.',
+                style: GirviStyles.caption.copyWith(
+                  color: GirviColors.warning,
+                  fontSize: 11.8,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Text(
               'Prepared $timestamp',
               style: GirviStyles.caption.copyWith(
@@ -897,6 +932,14 @@ class _CaseActions extends StatelessWidget {
           color: GirviColors.warning,
           onTap: _primaryAction,
         ),
+        if (item.requiresCorrectedFormalNotice && onPrepareNotice != null) ...[
+          const SizedBox(height: 8),
+          _ActionButton(
+            label: 'Prepare Corrected Notice',
+            color: GirviColors.warning,
+            onTap: onPrepareNotice,
+          ),
+        ],
         if (item.stage == ContactRecoveryStage.recoveryInProgress ||
             item.stage == ContactRecoveryStage.settled) ...[
           const SizedBox(height: 8),

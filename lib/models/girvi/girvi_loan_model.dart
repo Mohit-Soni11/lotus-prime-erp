@@ -31,12 +31,15 @@ class GirviLoanWithCustomer {
 
   double get originalPrincipal => loan.loanAmount + legacyPrincipalRepaidTotal;
 
-  double get grossInterestAccrued => GirviLoanModel.calculateInterest(
-        principal: originalPrincipal,
-        monthlyRatePercent: loan.interestRate,
-        months: loan.monthsElapsed.ceil(),
-        interestType: interestType,
-      );
+  double get grossInterestAccrued {
+    final months = loan.monthsElapsed.ceil();
+    return GirviLoanModel.calculateInterest(
+      principal: originalPrincipal,
+      monthlyRatePercent: loan.interestRate,
+      months: months,
+      interestType: GirviInterestCalculationType.forChargeableMonths(months),
+    );
+  }
 
   double get netInterestDue {
     final due =
@@ -71,6 +74,15 @@ class GirviInterestCalculationType {
   }
 
   static bool isSimple(String? value) => normalize(value) == simple;
+
+  /// A pledge accrues simple interest through month 12. From the first
+  /// chargeable month after that anniversary, completed 12-month cycles are
+  /// capitalized by the compound-interest calculator.
+  static String forChargeableMonths(int months) =>
+      months > GirviLoanModel.compoundCycleMonths ? compound : simple;
+
+  static String forPeriod(DateTime start, DateTime end) =>
+      forChargeableMonths(GirviLoanModel.chargeableMonthsBetween(start, end));
 }
 
 /// One row in the compound interest calculation breakdown.
@@ -263,11 +275,13 @@ class GirviLoanModel {
 
   /// Compound-aware interest for unpaid months.
   double interestForMonths(double months) {
+    final chargeableMonths = months.ceil();
     return calculateInterest(
       principal: loanAmount,
       monthlyRatePercent: interestRate,
-      months: months.ceil(),
-      interestType: GirviInterestCalculationType.compound,
+      months: chargeableMonths,
+      interestType:
+          GirviInterestCalculationType.forChargeableMonths(chargeableMonths),
     );
   }
 

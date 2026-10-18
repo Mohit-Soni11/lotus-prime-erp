@@ -33,6 +33,19 @@ class GirviNoticeFinancialTimeline {
     return entries;
   }
 
+  double _interestReceived(GirviPaymentModel payment) {
+    if (payment.type == GirviPaymentType.fullRelease) {
+      return payment.interestComponent;
+    }
+    if (payment.type != GirviPaymentType.interest &&
+        payment.type != GirviPaymentType.partialInterest) {
+      return payment.interestComponent;
+    }
+    final hasSplit =
+        payment.interestComponent > 0 || payment.principalComponent > 0;
+    return hasSplit ? payment.interestComponent : payment.amount;
+  }
+
   List<GirviNoticeBlock> interestBlocks(GirviNoticeLanguage language) {
     if (!item.hasVerifiedInterestTimeline) {
       final isHindi = language == GirviNoticeLanguage.hindi;
@@ -137,7 +150,8 @@ class GirviNoticeFinancialTimeline {
           heading: date(payment.paymentDate),
           lines: [
             '${isHindi ? 'माध्यम' : 'Mode'}: ${payment.mode.displayName}',
-            '${isHindi ? 'ब्याज प्राप्त' : 'Interest Received'}: ${money(payment.interestComponent > 0 ? payment.interestComponent : payment.amount)}',
+            if (_interestReceived(payment) > 0)
+              '${isHindi ? 'ब्याज प्राप्त' : 'Interest Received'}: ${money(_interestReceived(payment))}',
             if (payment.interestDiscountComponent > 0)
               '${isHindi ? 'ब्याज समायोजन' : 'Interest Adjustment'}: ${money(payment.interestDiscountComponent)}',
             '${isHindi ? 'अवधि' : 'Interest Period'}: ${_paymentPeriod(payment, isHindi: isHindi)}',

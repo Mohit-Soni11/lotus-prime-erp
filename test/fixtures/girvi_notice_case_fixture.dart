@@ -3,7 +3,11 @@ import 'package:lotus_erp/models/girvi/girvi_customer_response_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_period_snapshot.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 
-ContactRecoveryCase createNoticeCase({bool simple = true}) {
+ContactRecoveryCase createNoticeCase({
+  bool simple = true,
+  double interestPaid = 0,
+  double interestDiscount = 0,
+}) {
   final start = DateTime(2025, 4, 4);
   final now = DateTime(2026, 10, 4);
   final interestType = simple
@@ -37,9 +41,26 @@ ContactRecoveryCase createNoticeCase({bool simple = true}) {
       customerMobile: '0000000000',
       customerAddress: 'Sample address, Patna',
       interestType: interestType,
+      interestPaidTotal: interestPaid,
+      interestDiscountTotal: interestDiscount,
     ),
     noticePeriodDays: 7,
     now: now,
+    paymentHistory: [
+      if (interestPaid > 0 || interestDiscount > 0)
+        GirviPaymentModel(
+          id: 1,
+          girviId: 1,
+          paymentDate: DateTime(2026, 1, 4),
+          amount: interestPaid,
+          paymentType: 'INTEREST',
+          paymentMode: 'CASH',
+          interestComponent: interestPaid,
+          interestDiscountComponent: interestDiscount,
+          balanceAfter: 0,
+          createdAt: DateTime(2026, 1, 4),
+        ),
+    ],
     interestPeriodSnapshots: [
       GirviInterestPeriodSnapshot(
         id: 1,

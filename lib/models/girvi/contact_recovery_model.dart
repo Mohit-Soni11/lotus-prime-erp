@@ -146,6 +146,34 @@ class ContactRecoveryCase {
     return null;
   }
 
+  bool get requiresCorrectedFormalNotice {
+    final approved = formalNoticeAction;
+    if (approved == null ||
+        hasCollateralRecoveryInitiated ||
+        isRecoveryClosed) {
+      return false;
+    }
+    final englishText = documentForNoticeAction(
+          approved.id,
+          GirviNoticeLanguage.english,
+        )?.noticeText ??
+        approved.noticeText ??
+        '';
+    return englishText.contains('Simple Interest Breakdown') &&
+        GirviLoanModel.chargeableMonthsBetween(
+              loan.startDate,
+              loan.releaseDate ?? now,
+            ) >
+            GirviLoanModel.compoundCycleMonths;
+  }
+
+  List<GirviNoticeAction> get earlierFormalNoticeActions =>
+      preparedNoticeActions
+          .where((action) =>
+              action.isFormalNoticePreparation &&
+              action.id != formalNoticeAction?.id)
+          .toList(growable: false);
+
   List<GirviNoticeAction> get legacyNoticeActions => preparedNoticeActions
       .where((action) => action.isLegacyNoticePreparation)
       .toList(growable: false);
@@ -216,13 +244,14 @@ class ContactRecoveryCase {
   bool get hasCollateralRecoveryInitiated =>
       actionHistory.any((action) => action.isCollateralRecoveryInitiated);
 
-  GirviNoticeType? get nextNoticeType => formalNoticeAction == null &&
-          !hasDisposalSettlement &&
-          !hasCollateralRecoveryInitiated &&
-          !isRecoveryClosed &&
-          recoveryNoticeAction == null
-      ? GirviNoticeType.formal
-      : null;
+  GirviNoticeType? get nextNoticeType =>
+      (formalNoticeAction == null || requiresCorrectedFormalNotice) &&
+              !hasDisposalSettlement &&
+              !hasCollateralRecoveryInitiated &&
+              !isRecoveryClosed &&
+              (recoveryNoticeAction == null || requiresCorrectedFormalNotice)
+          ? GirviNoticeType.formal
+          : null;
 
   bool get canPrepareNotice => nextNoticeType != null;
 
@@ -242,6 +271,7 @@ class ContactRecoveryCase {
       !hasDisposalSettlement &&
       !hasCollateralRecoveryInitiated &&
       !isRecoveryClosed &&
+      !requiresCorrectedFormalNotice &&
       stage == ContactRecoveryStage.disposalReady;
 
   bool get canCloseDisposal =>

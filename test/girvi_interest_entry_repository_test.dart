@@ -1,15 +1,24 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
+import 'package:lotus_erp/logic/girvi/girvi_notice_pdf_service.dart';
+import 'package:lotus_erp/logic/girvi/notice_pdf/notice_statement_data.dart';
+import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
+import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_repository.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_interest_period_snapshot_repository.dart';
 import 'package:lotus_erp/repositories/setting/billing_setup/girvi_billing_repo.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
   late GirviRepository repository;
 
@@ -55,7 +64,7 @@ void main() {
     expect(loan.lastInterestPaidDate, periodTo);
   });
 
-  test('persists verified interest periods with the loan interest method',
+  test('converts a saved simple timeline after month 12 automatically',
       () async {
     final loanId = await _insertLoan(
       db,
@@ -64,25 +73,208 @@ void main() {
     await db.update(db.girviLoans).write(const GirviLoansCompanion(
         interestCalculationType: drift.Value('Simple')));
 
+    await GirviBillingRepo(db: db).save(
+      GirviBillingModel.defaults.copyWith(interestType: 'Compound'),
+    );
+    final timeline = GirviInterestPeriodSnapshotRepository(db);
     final accounts = await repository.getLoansWithCustomer();
-    final snapshots = await GirviInterestPeriodSnapshotRepository(db)
-        .synchronizeForLoans(accounts, asOf: DateTime(2026, 3, 1));
+    final snapshots = await timeline.synchronizeForLoans(
+      accounts,
+      asOf: DateTime(2026, 1, 1),
+    );
 
     expect(snapshots[loanId], hasLength(1));
     expect(snapshots[loanId]!.single.interestType, 'Simple');
-    expect(snapshots[loanId]!.single.chargeableMonths, 14);
+    expect(snapshots[loanId]!.single.chargeableMonths, 12);
     expect(snapshots[loanId]!.single.interestPerMonth, 2500);
-    expect(snapshots[loanId]!.single.periodInterest, 35000);
+    expect(snapshots[loanId]!.single.periodInterest, 30000);
 
-    await db.update(db.girviLoans).write(const GirviLoansCompanion(
-        interestCalculationType: drift.Value('Compound')));
-    final unchanged =
-        await GirviInterestPeriodSnapshotRepository(db).synchronizeForLoans(
+    final converted = await timeline.synchronizeForLoans(
       await repository.getLoansWithCustomer(),
       asOf: DateTime(2026, 3, 1),
     );
-    expect(unchanged[loanId]!.first.interestType, 'Simple');
-    expect(unchanged[loanId]!.first.periodInterest, 35000);
+    expect(converted[loanId], hasLength(2));
+    expect(converted[loanId]!.map((row) => row.interestType),
+        everyElement('Compound'));
+    expect(converted[loanId]!.map((row) => row.chargeableMonths), [12, 2]);
+    expect(converted[loanId]!.map((row) => row.periodInterest), [30000, 8000]);
+    expect((await repository.getLoanById(loanId))!.interestCalculationType,
+        'Simple');
+  });
+
+  test('42-month legacy simple snapshot becomes compound in the next notice',
+      () async {
+    final asOf = DateTime(2026, 10, 17);
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 25000,
+      interestRate: 5,
+      startDate: DateTime(2023, 5, 9),
+    );
+    await repository.updateLoan(
+      loanId,
+      GirviLoansCompanion(
+        ticketNo: const drift.Value('GRV-0014'),
+        durationMonths: const drift.Value(6),
+        maturityDate: drift.Value(DateTime(2023, 11, 9)),
+        interestCalculationType: const drift.Value('Simple'),
+      ),
+    );
+    final timeline = GirviInterestPeriodSnapshotRepository(db);
+    await timeline.synchronizeForLoans(
+      await repository.getLoansWithCustomer(),
+      asOf: DateTime(2024, 5, 9),
+    );
+    await db.customStatement('''
+      UPDATE girvi_interest_period_snapshots
+      SET period_to = ?, chargeable_months = 42,
+          period_interest = 52500, closing_amount = 77500
+      WHERE girvi_id = ?
+    ''', [asOf.millisecondsSinceEpoch, loanId]);
+
+    final old = await timeline.getForLoan(loanId);
+    expect(old.single.interestType, 'Simple');
+    expect(old.single.periodInterest, 52500);
+
+    final account = (await repository.getLoansWithCustomer()).single;
+    final generator = GirviNoticeGenerationService(now: asOf);
+    final oldCase = ContactRecoveryCase(
+      account: account,
+      noticePeriodDays: 7,
+      now: asOf,
+      interestPeriodSnapshots: old,
+    );
+    final originalApprovedText = generator.build(
+      item: oldCase,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+    );
+    expect(
+      generator.validate(oldCase),
+      contains(contains('Interest method changed at month 13')),
+    );
+    final refreshed = await timeline.synchronizeForLoans(
+      [account],
+      asOf: asOf,
+    );
+    final periods = refreshed[loanId]!;
+    expect(
+        periods.map((period) => period.interestType), everyElement('Compound'));
+    expect(periods.map((period) => period.chargeableMonths), [12, 12, 12, 6]);
+    expect(periods.map((period) => period.periodInterest),
+        [15000, 24000, 38400, 30720]);
+    expect(periods.last.closingAmount, 133120);
+
+    final noticeCase = ContactRecoveryCase(
+      account: account,
+      noticePeriodDays: 7,
+      now: asOf,
+      interestPeriodSnapshots: periods,
+    );
+    expect(generator.validate(noticeCase), isEmpty);
+    final notice = generator.build(
+      item: noticeCase,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+    );
+    expect(notice, contains('Compound Interest Breakdown'));
+    expect(notice, contains('Gross Interest: Rs 1,08,120'));
+    expect(notice, contains('Interest Outstanding: Rs 1,08,120'));
+    final approvedStatement = NoticeStatementData.parse(
+      originalApprovedText,
+      GirviNoticeLanguage.english,
+    );
+    final verifiedStatement = NoticeStatementData.parse(
+      notice,
+      GirviNoticeLanguage.english,
+    );
+    final currentView = approvedStatement.withVerifiedFinancials(
+      verifiedStatement,
+      asOf: asOf,
+    );
+    expect(approvedStatement.isSimple, isTrue);
+    expect(currentView.isCompound, isTrue);
+    expect(currentView.periods, hasLength(4));
+    expect(currentView.totalPayable, 'Rs 1,33,120');
+    final pdf = await GirviNoticePdfService().build(
+      item: noticeCase,
+      noticeType: GirviNoticeType.formal,
+      noticeLanguage: GirviNoticeLanguage.english,
+      noticeText: notice,
+      branding: const GirviInvoiceBranding(
+        shopName: 'Shree Jewellers',
+        shopAddress: '12 Main Market, Jaipur',
+        shopMobile: '9876543210',
+      ),
+    );
+    expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
+    final previewDirectory = Platform.environment['NOTICE_LAYOUT_PREVIEW_DIR'];
+    if (previewDirectory != null && previewDirectory.isNotEmpty) {
+      await Directory(previewDirectory).create(recursive: true);
+      await File('$previewDirectory/notice_42_month_compound.pdf')
+          .writeAsBytes(pdf);
+    }
+    final correctedViewPdf = await GirviNoticePdfService().buildStoredNotice(
+      ticketNo: account.loan.ticketNo,
+      noticeType: GirviNoticeType.formal,
+      noticeLanguage: GirviNoticeLanguage.english,
+      noticeText: originalApprovedText,
+      savedAt: asOf,
+      verifiedFinancialText: notice,
+      financialAsOf: asOf,
+      branding: const GirviInvoiceBranding(
+        shopName: 'Shree Jewellers',
+        shopAddress: '12 Main Market, Jaipur',
+        shopMobile: '9876543210',
+      ),
+    );
+    expect(String.fromCharCodes(correctedViewPdf.take(5)), '%PDF-');
+    if (previewDirectory != null && previewDirectory.isNotEmpty) {
+      await File('$previewDirectory/notice_42_month_corrected_view.pdf')
+          .writeAsBytes(correctedViewPdf);
+    }
+
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 3000,
+      paymentDate: asOf,
+      receiptNo: 'GIP-42-MONTH-001',
+    );
+    final paidCase = ContactRecoveryCase(
+      account: (await repository.getLoansWithCustomer()).single,
+      noticePeriodDays: 7,
+      now: asOf,
+      paymentHistory: await repository.getPaymentModelsForLoan(loanId),
+      interestPeriodSnapshots: periods,
+    );
+    expect(generator.validate(paidCase), isEmpty);
+    final paidNotice = generator.build(
+      item: paidCase,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+    );
+    expect(paidNotice, contains('Interest Paid Total: Rs 3,000'));
+    expect(paidNotice, contains('Interest Outstanding: Rs 1,05,120'));
+    final paidPdf = await GirviNoticePdfService().build(
+      item: paidCase,
+      noticeType: GirviNoticeType.formal,
+      noticeLanguage: GirviNoticeLanguage.english,
+      noticeText: paidNotice,
+      branding: const GirviInvoiceBranding(
+        shopName: 'Shree Jewellers',
+        shopAddress: '12 Main Market, Jaipur',
+        shopMobile: '9876543210',
+      ),
+    );
+    expect(String.fromCharCodes(paidPdf.take(5)), '%PDF-');
+    final paidPreviewDirectory =
+        Platform.environment['NOTICE_PAID_PREVIEW_DIR'];
+    if (paidPreviewDirectory != null && paidPreviewDirectory.isNotEmpty) {
+      await Directory(paidPreviewDirectory).create(recursive: true);
+      await File('$paidPreviewDirectory/notice_42_month_compound_paid.pdf')
+          .writeAsBytes(paidPdf);
+    }
   });
 
   test('records interest ledger payment with paid-through period', () async {
@@ -705,6 +897,17 @@ void main() {
   });
 
   test('girvi interest charges started months and compounds annually', () {
+    expect(GirviInterestCalculationType.forChargeableMonths(12), 'Simple');
+    expect(GirviInterestCalculationType.forChargeableMonths(13), 'Compound');
+    expect(
+      GirviLoanModel.calculateInterest(
+        principal: 25000,
+        monthlyRatePercent: 5,
+        months: 42,
+        interestType: GirviInterestCalculationType.forChargeableMonths(42),
+      ),
+      108120,
+    );
     expect(
       GirviLoanModel.chargeableMonthsBetween(
         DateTime(2025, 6, 17),
@@ -764,9 +967,10 @@ void main() {
     expect(seventeenMonthElapsed.days, 8);
   });
 
-  test('ledger projection follows saved simple interest setting', () async {
+  test('ledger remains simple through month 12 despite compound setting',
+      () async {
     await GirviBillingRepo(db: db).save(
-      GirviBillingModel.defaults.copyWith(interestType: 'Simple'),
+      GirviBillingModel.defaults.copyWith(interestType: 'Compound'),
     );
     final loanId = await _insertLoan(
       db,
@@ -777,21 +981,20 @@ void main() {
     await repository.updateLoan(
       loanId,
       GirviLoansCompanion(
-        releaseDate: drift.Value(DateTime(2026, 2, 1)),
+        releaseDate: drift.Value(DateTime(2025, 12, 1)),
       ),
     );
 
     final account = (await repository.getLoansWithCustomer()).single;
 
     expect(account.interestType, GirviInterestCalculationType.simple);
-    expect(account.grossInterestAccrued, 13000);
-    expect(account.netInterestDue, 13000);
+    expect(account.grossInterestAccrued, 11000);
+    expect(account.netInterestDue, 11000);
   });
 
-  test('ledger projection can still compound when billing setting requires it',
-      () async {
+  test('ledger compounds after month 12 despite simple setting', () async {
     await GirviBillingRepo(db: db).save(
-      GirviBillingModel.defaults.copyWith(interestType: 'Compound'),
+      GirviBillingModel.defaults.copyWith(interestType: 'Simple'),
     );
     final loanId = await _insertLoan(
       db,

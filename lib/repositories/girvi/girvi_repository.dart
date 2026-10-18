@@ -26,20 +26,6 @@ class GirviRepository {
     return trimmed;
   }
 
-  Future<String> _loadInterestCalculationType() async {
-    try {
-      await _db.ensureBillingSetupSchema();
-      final settings = await (_db.select(_db.girviBillingSettings)..limit(1))
-          .getSingleOrNull();
-      return GirviInterestCalculationType.normalize(settings?.interestType);
-    } catch (error) {
-      AppLogger.debug(
-        'GirviRepository: using compound interest fallback: $error',
-      );
-      return GirviInterestCalculationType.compound;
-    }
-  }
-
   // TICKET NUMBER GENERATION
 
   Future<String> generateNextTicketNo({
@@ -132,7 +118,7 @@ class GirviRepository {
     query.orderBy([drift.OrderingTerm.desc(_db.girviLoans.startDate)]);
 
     final rows = await query.get();
-    final interestType = await _loadInterestCalculationType();
+    final asOf = DateTime.now();
 
     final loanIds =
         rows.map((row) => row.readTable(_db.girviLoans).id).toList();
@@ -204,7 +190,10 @@ class GirviRepository {
             customerMobile: customer.mobile,
             customerCity: customer.city,
             customerAddress: _formatCustomerAddress(customer),
-            interestType: loan.interestCalculationType ?? interestType,
+            interestType: GirviInterestCalculationType.forPeriod(
+              loan.startDate,
+              loan.releaseDate ?? asOf,
+            ),
             interestPaidTotal: interestPaidByLoan[loan.id] ?? 0,
             principalPaidTotal: principalPaidByLoan[loan.id] ?? 0,
             interestDiscountTotal: interestDiscountByLoan[loan.id] ?? 0,

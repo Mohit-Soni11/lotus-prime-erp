@@ -55,7 +55,6 @@ class DefaulterRepository {
       final paymentSummary = await _loadPaymentSummary(loanIds, now);
       final itemSnapshots = await _loadItemSnapshots(loanIds);
       final collateralRecoveryIds = await _loadCollateralRecoveryIds(loanIds);
-      final interestType = await _loadInterestCalculationType();
 
       final accounts = <DefaulterModel>[];
       for (final row in rows) {
@@ -70,7 +69,6 @@ class DefaulterRepository {
           summary: summary,
           itemSnapshot: itemSnapshot,
           isCollateralRecovery: collateralRecoveryIds.contains(loan.id),
-          interestType: interestType,
           now: now,
         );
         if (account != null) accounts.add(account);
@@ -199,7 +197,6 @@ class DefaulterRepository {
     required _PaymentSummary summary,
     required _PledgedItemSnapshot itemSnapshot,
     required bool isCollateralRecovery,
-    required String interestType,
     required DateTime now,
   }) {
     final status = GirviStatus.fromDb(loan.status);
@@ -216,7 +213,8 @@ class DefaulterRepository {
       principal: originalPrincipal,
       monthlyRatePercent: loan.interestRate,
       months: interestMonths,
-      interestType: interestType,
+      interestType:
+          GirviInterestCalculationType.forChargeableMonths(interestMonths),
     );
     final coveredInterestMonths = math.max(
       summary.coveredInterestMonths,
@@ -224,7 +222,6 @@ class DefaulterRepository {
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
         totalInterestPaid: summary.interestPaid + summary.interestDiscount,
-        interestType: interestType,
       ),
     );
     final interestOutstanding = math.max(
@@ -349,25 +346,10 @@ class DefaulterRepository {
     return latest;
   }
 
-  Future<String> _loadInterestCalculationType() async {
-    try {
-      await _db.ensureBillingSetupSchema();
-      final settings = await (_db.select(_db.girviBillingSettings)..limit(1))
-          .getSingleOrNull();
-      return GirviInterestCalculationType.normalize(settings?.interestType);
-    } catch (error) {
-      AppLogger.debug(
-        'Risk & Collections: using compound interest fallback: $error',
-      );
-      return GirviInterestCalculationType.compound;
-    }
-  }
-
   int _coveredInterestMonthsFromTotalPaid({
     required double principal,
     required double monthlyRatePercent,
     required double totalInterestPaid,
-    required String interestType,
   }) {
     if (principal <= 0 || monthlyRatePercent <= 0 || totalInterestPaid <= 0) {
       return 0;
@@ -380,7 +362,8 @@ class DefaulterRepository {
         principal: principal,
         monthlyRatePercent: monthlyRatePercent,
         months: nextMonth,
-        interestType: interestType,
+        interestType:
+            GirviInterestCalculationType.forChargeableMonths(nextMonth),
       );
       if (requiredInterest >
           totalInterestPaid + GirviRiskPolicy.moneyTolerance) {

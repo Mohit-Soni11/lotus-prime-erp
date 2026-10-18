@@ -25,8 +25,6 @@ class GirviInterestPeriodSnapshotRepository {
       result[account.loan.id] = await _synchronizeLoan(
         loan: account.loan,
         principal: account.originalPrincipal,
-        interestType:
-            account.loan.interestCalculationType ?? account.interestType,
         asOf: asOf,
       );
     }
@@ -52,14 +50,12 @@ class GirviInterestPeriodSnapshotRepository {
   Future<List<GirviInterestPeriodSnapshot>> synchronizeLoan({
     required GirviLoanModel loan,
     required double principal,
-    required String interestType,
     required DateTime asOf,
   }) async {
     await _db.ensureGirviInterestPeriodSnapshotSchema();
     return _synchronizeLoan(
       loan: loan,
       principal: principal,
-      interestType: interestType,
       asOf: asOf,
     );
   }
@@ -67,7 +63,6 @@ class GirviInterestPeriodSnapshotRepository {
   Future<List<GirviInterestPeriodSnapshot>> _synchronizeLoan({
     required GirviLoanModel loan,
     required double principal,
-    required String interestType,
     required DateTime asOf,
   }) async {
     final existing = await getForLoan(loan.id);
@@ -80,7 +75,6 @@ class GirviInterestPeriodSnapshotRepository {
     final desired = _buildDesired(
       loan: loan,
       principal: principal,
-      interestType: interestType,
       months: months,
       end: end,
     );
@@ -89,12 +83,23 @@ class GirviInterestPeriodSnapshotRepository {
       return getForLoan(loan.id);
     }
 
-    // A stored timeline is authoritative. A later billing-setting change
-    // must never append a different interest method to the same account.
-    final storedType =
-        GirviInterestCalculationType.normalize(existing.first.interestType);
-    final requestedType = GirviInterestCalculationType.normalize(interestType);
-    if (storedType != requestedType) return existing;
+    // The elapsed-month policy is authoritative. Replace legacy timelines
+    // atomically when the account crosses month 12 or an old setting supplied
+    // a conflicting method; approved notice text remains separately saved.
+    final requiredType =
+        GirviInterestCalculationType.forChargeableMonths(months);
+    if (existing.any((snapshot) =>
+        GirviInterestCalculationType.normalize(snapshot.interestType) !=
+        requiredType)) {
+      await _db.transaction(() async {
+        await _db.customStatement(
+          'DELETE FROM girvi_interest_period_snapshots WHERE girvi_id = ?',
+          [loan.id],
+        );
+        await _insertAll(desired);
+      });
+      return getForLoan(loan.id);
+    }
 
     // Completed periods are immutable. Only the current open remainder may
     // grow as time advances; new periods are appended when they begin.
@@ -117,11 +122,11 @@ class GirviInterestPeriodSnapshotRepository {
   List<_SnapshotDraft> _buildDesired({
     required GirviLoanModel loan,
     required double principal,
-    required String interestType,
     required int months,
     required DateTime end,
   }) {
-    final normalizedType = GirviInterestCalculationType.normalize(interestType);
+    final normalizedType =
+        GirviInterestCalculationType.forChargeableMonths(months);
     if (GirviInterestCalculationType.isSimple(normalizedType)) {
       final interest = GirviLoanModel.calculateSimpleInterest(
         principal: principal,
@@ -198,9 +203,7 @@ class GirviInterestPeriodSnapshotRepository {
       periodInterest: interest,
       closingAmount: opening + interest,
       finalized: finalized,
-      source: loan.interestCalculationType == null
-          ? 'LEGACY_BACKFILL'
-          : 'FINANCIAL_DOMAIN_SNAPSHOT',
+      source: 'AUTOMATIC_12_MONTH_POLICY',
     );
   }
 

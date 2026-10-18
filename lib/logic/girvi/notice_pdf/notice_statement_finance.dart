@@ -1,0 +1,260 @@
+part of '../girvi_notice_pdf_service.dart';
+
+extension _NoticeStatementFinance on _NoticeStatementLayout {
+  pw.Widget _interestCard() {
+    final periods = statement.periods;
+    final rows = <pw.TableRow>[];
+    var priorMonths = 0;
+    for (final period in periods) {
+      final months = int.tryParse(
+        period.value('Chargeable Months', 'चार्जेबल माह', language) ?? '',
+      );
+      final periodLabel = months != null && months > 0
+          ? '${priorMonths + 1}–${priorMonths + months} Months'
+          : period.value('Period', 'अवधि', language) ?? 'Not recorded';
+      if (months != null && months > 0) priorMonths += months;
+      rows.add(pw.TableRow(children: [
+        _interestCell(periodLabel),
+        _interestCell(
+            period.value('Opening Amount', 'ओपनिंग राशि', language) ?? '—'),
+        _interestCell(
+            period.value('Monthly Interest Rate', 'मासिक ब्याज दर', language) ??
+                '—'),
+        _interestCell(
+            period.value('Interest for Period', 'इस अवधि का ब्याज', language) ??
+                '—'),
+        _interestCell(
+            period.value('Closing Amount', 'क्लोजिंग राशि', language) ??
+                period.value('Closing / Outstanding Amount',
+                    'क्लोजिंग / बकाया राशि', language) ??
+                '—'),
+      ]));
+    }
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(5),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        border: pw.Border.all(color: _noticeBorder, width: 0.8),
+        borderRadius: pw.BorderRadius.circular(5),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: pw.BoxDecoration(
+              color: _noticePaleGold,
+              border: pw.Border.all(color: _noticeGold, width: 0.65),
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Text(
+              statement.isCompound
+                  ? 'Compound Interest Breakdown'
+                  : statement.isSimple
+                      ? 'Simple Interest Breakdown'
+                      : 'Approved Interest Details',
+              style: _style(10, bold: true),
+            ),
+          ),
+          if (rows.isNotEmpty)
+            pw.Table(
+              border: pw.TableBorder.all(color: _noticeBorder, width: 0.55),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(1.45),
+                1: pw.FlexColumnWidth(1.5),
+                2: pw.FlexColumnWidth(1.3),
+                3: pw.FlexColumnWidth(1.4),
+                4: pw.FlexColumnWidth(1.55),
+              },
+              children: [
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: _noticeBlueTint),
+                  children: [
+                    for (final label in [
+                      'Period',
+                      'Opening Balance (₹)',
+                      'Rate (p.m.)',
+                      'Interest (₹)',
+                      'Closing Balance (₹)',
+                    ])
+                      _interestCell(label, header: true),
+                  ],
+                ),
+                ...rows,
+              ],
+            )
+          else
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(7),
+              child: pw.Text(
+                  'See the approved notice details on the next page.',
+                  style: _style(9, bold: true)),
+            ),
+          pw.SizedBox(height: 5),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: _interestDetailBox(
+                  statement.isCompound
+                      ? 'Compound Interest Period'
+                      : statement.isSimple
+                          ? 'Simple Interest Period'
+                          : 'Interest Period',
+                  [
+                    _interestDetailRow('From', statement.interestPeriodFrom),
+                    _interestDetailRow('To', statement.interestPeriodTo),
+                    _interestDetailRow(
+                        'Total Months', statement.chargeablePeriod),
+                    if (statement.isCompound)
+                      _interestDetailRow(
+                          'Compounding', statement.compoundingCycle),
+                  ],
+                ),
+              ),
+              pw.SizedBox(width: 7),
+              pw.Expanded(
+                child: _interestDetailBox('Interest Calculation Summary', [
+                  _interestDetailRow(
+                      'Principal Amount', statement.originalPrincipal),
+                  _interestDetailRow('Monthly Rate', statement.monthlyRate),
+                  _interestDetailRow('Gross Interest', statement.grossInterest),
+                  if (statement.hasInterestPayment)
+                    _interestDetailRow(
+                        'Interest Paid', statement.interestPaidTotal),
+                  if (statement.hasInterestAdjustment)
+                    _interestDetailRow(
+                        'Interest Adjusted', statement.interestAdjustmentTotal),
+                  _interestDetailRow(
+                      'Interest Outstanding', statement.interestOutstanding,
+                      outstanding: true),
+                ]),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _interestCell(String value, {bool header = false}) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: pw.Text(printText(value),
+            textAlign: pw.TextAlign.center,
+            style: _style(header ? 8.1 : 8.6, bold: true)),
+      );
+
+  pw.Widget _interestDetailBox(String title, List<pw.Widget> rows) =>
+      pw.Container(
+        padding: const pw.EdgeInsets.all(5),
+        decoration: pw.BoxDecoration(
+          color: _noticeBlueTint,
+          border: pw.Border.all(color: _noticeBorder, width: 0.7),
+          borderRadius: pw.BorderRadius.circular(5),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(title, style: _style(9.5, bold: true)),
+            pw.SizedBox(height: 3),
+            ...rows,
+          ],
+        ),
+      );
+
+  pw.Widget _interestDetailRow(String label, String? value,
+          {bool outstanding = false}) =>
+      pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 1),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.SizedBox(
+                width: 105,
+                child: pw.Text(label, style: _style(8.4, bold: true))),
+            pw.Text(':', style: _style(8.4, bold: true)),
+            pw.SizedBox(width: 4),
+            pw.Expanded(
+              child: pw.Text(printText(value ?? 'Not recorded'),
+                  style: _style(8.6,
+                      bold: true,
+                      color: outstanding ? _noticeOutstanding : _noticeInk)),
+            ),
+          ],
+        ),
+      );
+
+  pw.Widget _outstandingCard() => _card(
+        pw.Column(
+          children: [
+            if (statement.principalOutstanding != null)
+              _totalRow(t('Principal Outstanding', 'मूलधन बकाया'),
+                  statement.principalOutstanding!),
+            if (statement.interestOutstanding != null)
+              _totalRow(t('Interest Outstanding', 'ब्याज बकाया'),
+                  statement.interestOutstanding!),
+            pw.SizedBox(height: 3),
+            pw.Container(
+              width: double.infinity,
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+              color: _noticeDeepNavy,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(t('Final Total Payable', 'अंतिम कुल देय राशि'),
+                      style: _style(10, bold: true, color: PdfColors.white)),
+                  pw.Text(printText(statement.totalPayable ?? '-'),
+                      style: _style(15, bold: true, color: _noticeGold)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  pw.Widget _actionCard() => pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.all(7),
+        decoration: pw.BoxDecoration(
+          color: _noticePaleGold,
+          border: pw.Border.all(color: _noticeGold, width: 0.8),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(t('Required Action', 'आवश्यक कार्रवाई'),
+                      style: _style(9.5, bold: true)),
+                  pw.SizedBox(height: 3),
+                  pw.Text(
+                    t('Please review the approved notice and contact the shop to settle or reconcile this account.',
+                        'कृपया स्वीकृत सूचना देखें और भुगतान या खाते के मिलान के लिए दुकान से संपर्क करें।'),
+                    style: _style(8),
+                  ),
+                ],
+              ),
+            ),
+            if (deadline != null) ...[
+              pw.SizedBox(width: 11),
+              pw.Container(width: 0.7, height: 34, color: _noticeGold),
+              pw.SizedBox(width: 11),
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(t('Last Date to Settle', 'भुगतान की अंतिम तारीख'),
+                      style: _style(7.5, bold: true)),
+                  pw.SizedBox(height: 3),
+                  pw.Text(DateFormat('dd MMM yyyy').format(deadline!),
+                      style: _style(9, bold: true)),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+}

@@ -3,8 +3,7 @@ part of '../contact_recovery_screen.dart';
 class _NoticeEditorDialog extends StatefulWidget {
   final ContactRecoveryCase item;
   final GirviNoticeType noticeType;
-  final Map<GirviNoticeLanguage, String> initialTexts;
-  final GirviNoticeLanguage initialLanguage;
+  final String initialText;
   final Future<void> Function(GirviNoticeLanguage language, String text) onCopy;
   final Future<void> Function(GirviNoticeLanguage language, String text)
       onPreview;
@@ -17,8 +16,7 @@ class _NoticeEditorDialog extends StatefulWidget {
   const _NoticeEditorDialog({
     required this.item,
     required this.noticeType,
-    required this.initialTexts,
-    required this.initialLanguage,
+    required this.initialText,
     required this.onCopy,
     required this.onPreview,
     required this.onSave,
@@ -30,17 +28,13 @@ class _NoticeEditorDialog extends StatefulWidget {
 
 class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
   late final TextEditingController _textController;
-  late GirviNoticeLanguage _language;
-  late final Map<GirviNoticeLanguage, String> _texts;
   bool _busy = false;
   bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    _language = widget.initialLanguage;
-    _texts = Map<GirviNoticeLanguage, String>.from(widget.initialTexts);
-    _textController = TextEditingController(text: _texts[_language] ?? '');
+    _textController = TextEditingController(text: widget.initialText);
   }
 
   @override
@@ -55,8 +49,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      _syncCurrentLanguageText();
-      await action(_language, _textController.text.trim());
+      await action(GirviNoticeLanguage.english, _textController.text.trim());
       if (mounted) Navigator.of(context).pop();
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -67,11 +60,11 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      _syncCurrentLanguageText();
+      final noticeText = _textController.text.trim();
       final saved = await widget.onSave(
-        _language,
-        _textController.text.trim(),
-        Map<GirviNoticeLanguage, String>.unmodifiable(_texts),
+        GirviNoticeLanguage.english,
+        noticeText,
+        {GirviNoticeLanguage.english: noticeText},
       );
       if (saved && mounted) Navigator.of(context).pop();
     } finally {
@@ -83,24 +76,13 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      _syncCurrentLanguageText();
-      await widget.onPreview(_language, _textController.text.trim());
+      await widget.onPreview(
+        GirviNoticeLanguage.english,
+        _textController.text.trim(),
+      );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  void _setLanguage(GirviNoticeLanguage value) {
-    if (_busy || value == _language) return;
-    _syncCurrentLanguageText();
-    setState(() {
-      _language = value;
-      _textController.text = _texts[value] ?? '';
-    });
-  }
-
-  void _syncCurrentLanguageText() {
-    _texts[_language] = _textController.text;
   }
 
   @override
@@ -127,50 +109,32 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
               ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _NoticeLanguageButton(
-                    label: 'Hindi',
-                    selected: _language == GirviNoticeLanguage.hindi,
-                    onTap: () => _setLanguage(GirviNoticeLanguage.hindi),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Tooltip(
+                message: _isEditing ? 'Preview notice' : 'Edit notice text',
+                child: IconButton(
+                  onPressed: _busy
+                      ? null
+                      : () {
+                          setState(() => _isEditing = !_isEditing);
+                        },
+                  icon: Icon(
+                    _isEditing
+                        ? Icons.visibility_outlined
+                        : Icons.edit_outlined,
+                    size: 19,
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _NoticeLanguageButton(
-                    label: 'English',
-                    selected: _language == GirviNoticeLanguage.english,
-                    onTap: () => _setLanguage(GirviNoticeLanguage.english),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Tooltip(
-                  message: _isEditing ? 'Preview notice' : 'Edit notice text',
-                  child: IconButton(
-                    onPressed: _busy
-                        ? null
-                        : () {
-                            _syncCurrentLanguageText();
-                            setState(() => _isEditing = !_isEditing);
-                          },
-                    icon: Icon(
-                      _isEditing
-                          ? Icons.visibility_outlined
-                          : Icons.edit_outlined,
-                      size: 19,
-                    ),
-                    color: GirviColors.shellBg,
-                    style: IconButton.styleFrom(
-                      backgroundColor: GirviColors.bodyBg,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9),
-                        side: const BorderSide(color: GirviColors.cardBorder),
-                      ),
+                  color: GirviColors.shellBg,
+                  style: IconButton.styleFrom(
+                    backgroundColor: GirviColors.bodyBg,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(9),
+                      side: const BorderSide(color: GirviColors.cardBorder),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
             const SizedBox(height: 12),
             AnimatedSwitcher(
@@ -207,7 +171,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                   : _NoticeDocumentPreview(
                       key: const ValueKey('notice-document-preview'),
                       noticeText: _textController.text,
-                      language: _language,
+                      language: GirviNoticeLanguage.english,
                       noticeType: widget.noticeType,
                     ),
             ),
@@ -254,7 +218,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                   ),
                 )
               : Text(
-                  'Approve & Save Both Languages',
+                  'Approve & Save Notice',
                   style: GoogleFonts.inter(fontWeight: FontWeight.w800),
                 ),
         ),
@@ -875,47 +839,4 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
                 if (value != null) onChanged(value);
               },
       );
-}
-
-class _NoticeLanguageButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NoticeLanguageButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? GirviColors.shellBg : GirviColors.bodyBg,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: selected ? GirviColors.shellBg : GirviColors.cardBorder,
-              width: 1.2,
-            ),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              color: selected ? Colors.white : GirviColors.textDark,
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

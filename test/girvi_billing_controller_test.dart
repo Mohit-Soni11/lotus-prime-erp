@@ -36,6 +36,16 @@ void main() {
     expect(controller.state.model.visibleDocumentFieldCount, greaterThan(0));
   });
 
+  test('billing save cannot choose the pledge interest method', () async {
+    await repo.save(GirviBillingModel.defaults);
+    await repo.save(
+      GirviBillingModel.defaults.copyWith(interestType: 'Compound'),
+    );
+
+    final saved = await repo.fetch();
+    expect(saved.interestType, 'Simple');
+  });
+
   test('Girvi Billing saves validated loan policy settings', () async {
     await controller.load();
 
@@ -53,7 +63,6 @@ void main() {
           footerMessage: 'Please keep this pledge receipt safely.',
         ),
       )
-      ..updateInterestType('Compound')
       ..updateDefaultDuration('12 Months')
       ..updateAutoPrint(false)
       ..updateModel(
@@ -74,7 +83,7 @@ void main() {
     expect(saved.gracePeriodDays, 5);
     expect(saved.reminderDays, 10);
     expect(saved.noticeDays, 45);
-    expect(saved.interestType, 'Compound');
+    expect(saved.interestType, 'Simple');
     expect(saved.defaultDuration, '12 Months');
     expect(saved.autoPrint, isFalse);
     expect(saved.showDuration, isTrue);

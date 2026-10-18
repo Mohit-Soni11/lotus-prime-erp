@@ -31,7 +31,6 @@ class GirviBillingRepo {
         girviPrefix: Value(model.girviPrefix),
         startingNumber: Value(model.startingNumber),
         defaultInterestRate: Value(model.defaultInterestRate),
-        interestType: Value(model.interestType),
         gracePeriodDays: Value(model.gracePeriodDays),
         defaultDuration: Value(model.defaultDuration),
         reminderDays: Value(model.reminderDays),

@@ -7,6 +7,7 @@ import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import 'girvi_notice_document.dart';
 import 'girvi_notice_financial_timeline.dart';
+import 'notice_pdf/notice_item_description.dart';
 
 part 'notice/girvi_formal_notice_copy.dart';
 
@@ -26,6 +27,25 @@ class GirviNoticeGenerationService {
       issues.add(
         'Verified interest-period snapshots are missing. Refresh the financial ledger before preparing this notice.',
       );
+    } else {
+      final months = GirviLoanModel.chargeableMonthsBetween(
+        item.loan.startDate,
+        item.loan.releaseDate ?? item.now,
+      );
+      final requiredType =
+          GirviInterestCalculationType.forChargeableMonths(months);
+      if (item.interestPeriodSnapshots.any((snapshot) =>
+          GirviInterestCalculationType.normalize(snapshot.interestType) !=
+          requiredType)) {
+        issues.add(
+          'Interest method changed at month 13. Refresh the financial ledger before preparing this notice.',
+        );
+      }
+      if (item.verifiedChargeableInterestMonths != months) {
+        issues.add(
+          'Verified interest months are out of date. Refresh the financial ledger before preparing this notice.',
+        );
+      }
     }
     final values = <String, double>{
       'principal outstanding': account.principalDue,
@@ -221,21 +241,26 @@ class GirviNoticeGenerationService {
           blocks: [
             GirviNoticeBlock(
               lines: [
-                '${language == GirviNoticeLanguage.hindi ? 'गिरवी वस्तु' : 'Pledged Item'}: ${data.itemSummary}',
+                '${language == GirviNoticeLanguage.hindi ? 'वस्तु का नाम' : 'Item Name'}: ${data.itemName}',
+                if (data.purity != null)
+                  '${language == GirviNoticeLanguage.hindi ? 'शुद्धता' : 'Purity'}: ${data.purity}',
                 '${language == GirviNoticeLanguage.hindi ? 'नेट वजन' : 'Net Weight'}: ${data.netWeight}',
                 '${language == GirviNoticeLanguage.hindi ? 'मूल मूलधन' : 'Original Principal'}: ${data.originalPrincipal}',
                 '${language == GirviNoticeLanguage.hindi ? 'गिरवी तारीख' : 'Pledge Date'}: ${data.startDate}',
                 '${language == GirviNoticeLanguage.hindi ? 'परिपक्वता तारीख' : 'Maturity Date'}: ${data.maturityDate}',
-                '${language == GirviNoticeLanguage.hindi ? 'वास्तविक अवधि' : 'Actual Duration'}: ${data.actualDuration}',
-                '${language == GirviNoticeLanguage.hindi ? 'कुल कैलेंडर अवधि' : 'Total Calendar Duration'}: ${data.calendarDuration}',
-                '${language == GirviNoticeLanguage.hindi ? 'चार्जेबल ब्याज अवधि' : 'Chargeable Interest Period'}: ${data.chargeablePeriod}',
+                '${language == GirviNoticeLanguage.hindi ? 'मूल ऋण अवधि' : 'Original Loan Period'}: ${data.agreedLoanTerm}',
+                '${language == GirviNoticeLanguage.hindi ? 'वर्तमान ऋण अवधि' : 'Current Loan Period'}: ${data.elapsedLoanPeriod}',
+                '${language == GirviNoticeLanguage.hindi ? 'ब्याज योग्य महीने' : 'Chargeable Months'}: ${data.chargeablePeriod}',
               ],
             ),
           ],
         ),
         GirviNoticeSection(
           title: data.interestBreakdownTitle,
-          blocks: data.financialTimeline.interestBlocks(language),
+          blocks: [
+            ...data.financialTimeline.interestBlocks(language),
+            GirviNoticeBlock(lines: data.interestSummaryLines),
+          ],
         ),
         if (paymentBlocks.isNotEmpty)
           GirviNoticeSection(
@@ -302,20 +327,29 @@ class _NoticeData {
   GirviLoanWithCustomer get account => item.account;
   GirviLoanModel get loan => item.loan;
   String get ticketNo => loan.ticketNo;
-  String get noticeNumber => '$ticketNo-NOTICE';
+  String get noticeNumber {
+    final priorFormalNotices = item.preparedNoticeActions
+        .where((action) => action.isFormalNoticePreparation)
+        .length;
+    return priorFormalNotices == 0
+        ? '$ticketNo-NOTICE'
+        : '$ticketNo-NOTICE-R${priorFormalNotices + 1}';
+  }
+
   String get noticeDate => service.date(service._now);
   String get deadline =>
       service.date(service._now.add(Duration(days: item.noticePeriodDays)));
   String get customerName => account.customerName;
   String get startDate => service.date(loan.startDate);
   String get maturityDate => service.date(loan.maturityDate);
-  String get actualDuration => item.loanAgeLabel;
-  String get calendarDuration => item.loanAgeMonthsDaysLabel;
+  String get agreedLoanTerm =>
+      '${loan.durationMonths} month${loan.durationMonths == 1 ? '' : 's'}';
+  String get elapsedLoanPeriod => item.loanAgeMonthsDaysLabel;
   String get chargeablePeriod {
     final months = item.verifiedChargeableInterestMonths;
     return months == 0
         ? 'Verified period unavailable'
-        : '$months chargeable month${months == 1 ? '' : 's'}';
+        : '$months month${months == 1 ? '' : 's'}';
   }
 
   String get originalPrincipal => service.money(account.originalPrincipal);
@@ -407,10 +441,31 @@ class _NoticeData {
   }
 
   String get netWeight => '${loan.netWeight.toStringAsFixed(3)} g';
-  String get itemSummary => _cleanItemSummary(
-        loan.itemDescription.trim().isEmpty
-            ? loan.itemSummary
-            : loan.itemDescription,
+
+  List<String> get interestSummaryLines {
+    final hindi = language == GirviNoticeLanguage.hindi;
+    final snapshots = item.interestPeriodSnapshots;
+    final isCompound = snapshots.isNotEmpty &&
+        !GirviInterestCalculationType.isSimple(snapshots.first.interestType);
+    return [
+      if (snapshots.isNotEmpty)
+        '${hindi ? 'ब्याज अवधि शुरू' : 'Interest Period From'}: ${service.date(snapshots.first.periodFrom)}',
+      if (snapshots.isNotEmpty)
+        '${hindi ? 'ब्याज अवधि समाप्त' : 'Interest Period To'}: ${service.date(snapshots.last.periodTo)}',
+      if (isCompound)
+        '${hindi ? 'चक्रवृद्धि चक्र' : 'Compounding Cycle'}: ${hindi ? 'हर' : 'Every'} ${GirviLoanModel.compoundCycleMonths} ${hindi ? 'माह' : 'months'}',
+      '${hindi ? 'कुल ब्याज' : 'Gross Interest'}: ${service.money(item.verifiedGrossInterest)}',
+      '${hindi ? 'प्राप्त ब्याज कुल' : 'Interest Paid Total'}: ${service.money(account.interestPaidTotal)}',
+      '${hindi ? 'ब्याज समायोजन कुल' : 'Interest Adjustment Total'}: ${service.money(account.interestDiscountTotal)}',
+    ];
+  }
+
+  String get itemName =>
+      NoticeItemDescription.itemNames(loan.itemDescription) ??
+      'Item not recorded';
+  String? get purity => NoticeItemDescription.purity(
+        loan.itemDescription,
+        fallback: loan.metalPurity,
       );
 
   List<String> get outstandingSummaryLines {
@@ -425,10 +480,4 @@ class _NoticeData {
       '${hindi ? 'अंतिम कुल देय राशि' : 'Final Total Payable'}: ${service.money(item.verifiedTotalPayable)}',
     ];
   }
-
-  String _cleanItemSummary(String source) => source
-      .replaceAllMapped(
-          RegExp(r'#\s*(\d+)'), (match) => 'Serial Number ${match.group(1)}')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
 }

@@ -92,6 +92,18 @@ class GirviInvoiceBranding {
     return configured.isNotEmpty ? configured : shopName;
   }
 
+  String get printShopAddress {
+    final businessAddress = printValue('business_address').trim();
+    if (businessAddress.isNotEmpty) return businessAddress;
+    final addressLines = [
+      printValue('address_line').trim(),
+      printValue('city_state_pin').trim(),
+    ].where((line) => line.isNotEmpty).toList(growable: false);
+    return addressLines.isNotEmpty
+        ? addressLines.join(', ')
+        : shopAddress.trim();
+  }
+
   List<String> get printHeaderLines {
     if (printFields.isEmpty) {
       return [

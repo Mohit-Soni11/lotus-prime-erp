@@ -25,6 +25,7 @@ class GirviBillingSettings extends Table with BaseTable {
   RealColumn get defaultInterestRate =>
       real().withDefault(const Constant(1.5))();
   // 'Simple' | 'Compound'
+  /// Kept for existing databases; the current interest method is age-based.
   TextColumn get interestType => text().withDefault(const Constant('Simple'))();
   // Days allowed after due date before penalty starts
   IntColumn get gracePeriodDays => integer().withDefault(const Constant(3))();
