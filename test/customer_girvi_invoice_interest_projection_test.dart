@@ -123,4 +123,57 @@ void main() {
       await db.close();
     }
   });
+
+  test(
+      'partial settlement retains its outstanding balances and is not a release',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    try {
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Settlement Customer',
+              mobile: '9000000016',
+            ),
+          );
+      final today = DateTime.now();
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-SETTLEMENT-001',
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              loanAmount: const drift.Value(3000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(today.subtract(const Duration(days: 40))),
+              status: drift.Value(GirviStatus.partialRelease.dbValue),
+              releaseTotalAmount: const drift.Value(600),
+            ),
+          );
+      await db.into(db.girviPayments).insert(
+            GirviPaymentsCompanion.insert(
+              girviId: loanId,
+              paymentType: GirviPaymentType.fullRelease.dbValue,
+              paymentDate: drift.Value(today),
+              amount: const drift.Value(600),
+              paymentMode: drift.Value(GirviPaymentMode.cash.dbValue),
+              principalComponent: const drift.Value(500),
+              interestComponent: const drift.Value(100),
+            ),
+          );
+
+      final draft = await CustomerProfileRepository(db: db)
+          .fetchGirviInvoiceDraft(customerId: customerId, loanId: loanId);
+
+      expect(draft, isNotNull);
+      expect(draft!.mode, GirviReceiptMode.interest);
+      expect(draft.isReleaseReceipt, isFalse);
+      expect(draft.principalOutstanding, 2500);
+      expect(draft.interestOutstanding, greaterThan(0));
+      expect(draft.totalOutstanding,
+          closeTo(2500 + draft.interestOutstanding!, 0.01));
+      expect(draft.ledgerEntries.single.principalAmount, 500);
+      expect(draft.ledgerEntries.single.interestAmount, 100);
+    } finally {
+      await db.close();
+    }
+  });
 }

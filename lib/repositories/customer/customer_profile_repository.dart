@@ -429,15 +429,18 @@ class CustomerProfileRepository {
         (entry) => entry.paid > 0 || entry.discount > 0,
       );
       final status = GirviStatus.fromDb(loan.status);
-      final receiptMode = status == GirviStatus.released ||
-              status == GirviStatus.readyForDelivery ||
-              loan.releaseDate != null ||
-              loan.releaseTotalAmount != null
+      final fullySettled = status == GirviStatus.released ||
+          status == GirviStatus.readyForDelivery;
+      final receiptMode = fullySettled
           ? GirviReceiptMode.release
-          : hasInterestCollection || loan.lastInterestPaidDate != null
+          : hasInterestCollection ||
+                  loan.lastInterestPaidDate != null ||
+                  status == GirviStatus.partialRelease
               ? GirviReceiptMode.interest
               : GirviReceiptMode.pledge;
       var legacyPrincipalRepaid = 0.0;
+      var releasePrincipalPaid = 0.0;
+      var releasePrincipalDiscount = 0.0;
       for (final payment in ledgerRows) {
         final type = GirviPaymentType.fromDb(payment.paymentType);
         if (type == GirviPaymentType.interest ||
@@ -445,7 +448,10 @@ class CustomerProfileRepository {
           legacyPrincipalRepaid += payment.principalComponent;
         } else if (type == GirviPaymentType.partialPrincipal) {
           legacyPrincipalRepaid += payment.amount;
-        } else if (type == GirviPaymentType.fullRelease) {}
+        } else if (type == GirviPaymentType.fullRelease) {
+          releasePrincipalPaid += payment.principalComponent;
+          releasePrincipalDiscount += payment.principalDiscountComponent;
+        }
       }
       final interestAsOfDate = loan.releaseDate ?? DateTime.now();
       final interestQuote = GirviInterestCalculator.quoteAt(
@@ -462,11 +468,13 @@ class CustomerProfileRepository {
           ? 0.0
           : interestQuote.grossInterest;
       final releaseTotal = loan.releaseTotalAmount ?? 0;
-      final principalOutstanding =
-          receiptMode == GirviReceiptMode.release ? 0.0 : loan.loanAmount;
-      final interestOutstanding = receiptMode == GirviReceiptMode.release
+      final principalOutstanding = fullySettled
           ? 0.0
-          : interestQuote.interestOutstanding;
+          : (loan.loanAmount - releasePrincipalPaid - releasePrincipalDiscount)
+              .clamp(0.0, double.infinity)
+              .toDouble();
+      final interestOutstanding =
+          fullySettled ? 0.0 : interestQuote.interestOutstanding;
 
       return GirviInvoiceDraft(
         loanId: loan.id,

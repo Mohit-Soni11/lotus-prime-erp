@@ -82,10 +82,18 @@ void main() {
           amount: 2000,
           interestAmount: 2000,
         ),
+        GirviInvoiceLedgerEntry(
+          date: collectionDate,
+          typeLabel: 'Interest Collection',
+          modeLabel: 'Cash',
+          amount: 500,
+          principalAmount: 500,
+        ),
       ],
       interestAdjustments: [
         GirviInterestAdjustment(date: collectionDate, paid: 2000),
       ],
+      principalOutstanding: 3000,
       interestOutstanding: 1240,
       mode: GirviReceiptMode.interest,
     );
@@ -93,7 +101,11 @@ void main() {
     expect(printable.interestQuote.currentMonthlyInterestType,
         GirviInterestCalculationType.simple);
     expect(printable.interestQuote.currentMonthlyInterest, 150);
+    expect(printable.interestQuote.lastChargedMonthlyInterestType,
+        GirviInterestCalculationType.compound);
+    expect(printable.interestQuote.lastChargedMonthlyInterest, 240);
     expect(printable.interestQuote.cycles.last.closingAmount, 4240);
+    expect(printable.totalOutstanding, 4240);
 
     final bytes = await GirviInvoicePdfService().build(
       draft: printable,

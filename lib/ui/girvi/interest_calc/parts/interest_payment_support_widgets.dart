@@ -91,6 +91,7 @@ class _InterestLedgerBalanceStrip extends StatelessWidget {
             label: 'Interest Received',
             value: 'Rs ${moneyFmt.format(interestPaid)}',
             color: GirviColors.success,
+            foregroundColor: GirviColors.successText,
             wide: true,
           ),
           _FocusMetric(
@@ -176,11 +177,13 @@ class _AmountShortcutButtonState extends State<_AmountShortcutButton> {
 
 class _PaymentHistoryRow extends StatelessWidget {
   final GirviPaymentModel payment;
+  final GirviLedgerBalance balance;
   final NumberFormat moneyFmt;
   final DateFormat dateFmt;
 
   const _PaymentHistoryRow({
     required this.payment,
+    required this.balance,
     required this.moneyFmt,
     required this.dateFmt,
   });
@@ -270,19 +273,36 @@ class _PaymentHistoryRow extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
+              const SizedBox(height: 4),
               Text(
-                payment.type == GirviPaymentType.fullRelease
-                    ? 'Settlement Balance Rs ${moneyFmt.format(payment.balanceAfter)}'
-                    : 'Remaining Balance Rs ${moneyFmt.format(payment.balanceAfter)}',
+                'Balance after this payment',
                 style: GoogleFonts.inter(
-                  fontSize: 12.5,
-                  color: GirviColors.textDark,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                  color: GirviColors.textMuted,
+                  fontWeight: FontWeight.w700,
                 ),
+              ),
+              _balanceLine('Principal', balance.principalRemaining),
+              _balanceLine('Interest', balance.interestRemaining),
+              _balanceLine(
+                'Total Remaining',
+                balance.totalRemaining,
+                emphasized: true,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _balanceLine(String label, double amount, {bool emphasized = false}) {
+    return Text(
+      '$label: Rs ${moneyFmt.format(amount)}',
+      style: GoogleFonts.inter(
+        fontSize: emphasized ? 13 : 12,
+        color: emphasized ? GirviColors.danger : GirviColors.textDark,
+        fontWeight: emphasized ? FontWeight.w900 : FontWeight.w700,
       ),
     );
   }

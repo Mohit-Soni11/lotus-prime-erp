@@ -41,7 +41,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
           else ...[
             if (_ctrl.isInterestEntry)
               GirviInputField(
-                label: 'Interest Received',
+                label: 'Amount Received Now',
                 hint: '0',
                 icon: GirviIcons.cash,
                 controller: _amountCtrl,
@@ -145,6 +145,8 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                 onTap: () => _pickDate(
                   initialDate: _ctrl.paymentDate,
                   onPicked: _ctrl.setPaymentDate,
+                  firstDate: data.loan.startDate,
+                  lastDate: DateTime.now(),
                 ),
               )
             else
@@ -156,6 +158,8 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                   onTap: () => _pickDate(
                     initialDate: _ctrl.paymentDate,
                     onPicked: _ctrl.setPaymentDate,
+                    firstDate: data.loan.startDate,
+                    lastDate: DateTime.now(),
                   ),
                 ),
                 right: _DateField(
@@ -236,6 +240,7 @@ extension InterestPaymentSections on _InterestCalcScreenState {
               children: _ctrl.payments.map((payment) {
                 return _PaymentHistoryRow(
                   payment: payment,
+                  balance: _ctrl.ledgerBalances[payment.id]!,
                   moneyFmt: _moneyFmt,
                   dateFmt: _dateFmt,
                 );

@@ -110,6 +110,38 @@ void main() {
     );
   });
 
+  test(
+      'final release recalculates payable interest when collection date changes',
+      () async {
+    final customerId =
+        await _insertCustomer(db, 'Date Change Customer', '9000000015');
+    await _insertLoan(
+      db,
+      customerId,
+      'GRV-DATE-001',
+      'Gold ring',
+      50000,
+      startDate: DateTime(2026, 1, 1),
+      interestRate: 1,
+    );
+
+    await controller.load();
+    await controller
+        .selectLoan(controller.customerAccounts.single.loans.single);
+    controller.setPaymentDate(DateTime(2026, 1, 20));
+    controller.setPaymentType(GirviPaymentType.fullRelease);
+    controller.onReleaseDiscountChanged('100');
+    final earlierInterest = controller.releaseInterestReceived;
+
+    controller.setPaymentDate(DateTime(2026, 2, 2));
+
+    expect(controller.releaseInterestReceived, greaterThan(earlierInterest));
+    expect(controller.releaseInterestReceived,
+        controller.netInterestDueForSelected - 100);
+    expect(controller.releaseSettlementValue,
+        controller.releaseTotalDueForSelected);
+  });
+
   test('interest entry and pledge ledger agree after year-one payment',
       () async {
     final customerId =
@@ -182,6 +214,11 @@ void main() {
     expect(controller.interestCollectedForSelected, 2000);
     expect(controller.netInterestDueForSelected, 1240);
     expect(controller.amount, 0);
+    final firstPayment = controller.payments.single;
+    final firstBalance = controller.ledgerBalances[firstPayment.id]!;
+    expect(firstBalance.principalRemaining, 3000);
+    expect(firstBalance.interestRemaining, 1240);
+    expect(firstBalance.totalRemaining, 4240);
 
     controller.onAmountChanged('500');
     expect(controller.amount, 500);
@@ -191,6 +228,13 @@ void main() {
     expect(controller.interestCollectedForSelected, 2500);
     expect(controller.netInterestDueForSelected, 740);
     expect(controller.amount, 0);
+    expect(controller.ledgerBalances[firstPayment.id]!.interestRemaining, 1240);
+    final secondPayment = controller.payments
+        .firstWhere((payment) => payment.id != firstPayment.id);
+    expect(
+        controller.ledgerBalances[secondPayment.id]!.principalRemaining, 3000);
+    expect(controller.ledgerBalances[secondPayment.id]!.interestRemaining, 740);
+    expect(controller.ledgerBalances[secondPayment.id]!.totalRemaining, 3740);
   });
 
   test('release discount cannot reduce locked principal', () async {
@@ -220,6 +264,41 @@ void main() {
       controller.errorMessage,
       'Interest discount cannot exceed interest due.',
     );
+  });
+
+  test('rejects invalid collection dates and records a rapid submit once',
+      () async {
+    final customerId =
+        await _insertCustomer(db, 'Collection Customer', '9000000013');
+    await _insertLoan(
+      db,
+      customerId,
+      'GRV-DATE-001',
+      'Gold chain',
+      3000,
+      startDate: DateTime(2026, 6, 1),
+      interestRate: 5,
+    );
+    await controller.load();
+    await controller
+        .selectLoan(controller.customerAccounts.single.loans.single);
+    controller.onAmountChanged('500');
+
+    controller.setPaymentDate(DateTime(2026, 5, 31));
+    expect(await controller.recordPayment(), isFalse);
+    expect(controller.errorMessage, contains('before the pledge date'));
+
+    controller.setPaymentDate(DateTime.now().add(const Duration(days: 2)));
+    expect(await controller.recordPayment(), isFalse);
+    expect(controller.errorMessage, contains('in the future'));
+
+    controller.setPaymentDate(DateTime.now());
+    final results = await Future.wait([
+      controller.recordPayment(),
+      controller.recordPayment(),
+    ]);
+    expect(results.where((result) => result), hasLength(1));
+    expect(controller.payments, hasLength(1));
   });
 
   test('delivers ready ticket even when expected pickup date is overdue',

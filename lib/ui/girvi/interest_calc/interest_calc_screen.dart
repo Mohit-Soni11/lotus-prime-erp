@@ -13,6 +13,7 @@ import 'package:lotus_erp/core/printing/lotus_pdf_print_dispatcher.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../logic/girvi/interest_entry/girvi_interest_entry_controller.dart';
+import '../../../logic/girvi/interest_entry/girvi_ledger_balance_service.dart';
 import '../../../logic/girvi/girvi_interest_period_text.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
@@ -173,13 +174,24 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   Future<void> _pickDate({
     required DateTime initialDate,
     required ValueChanged<DateTime> onPicked,
+    DateTime? firstDate,
+    DateTime? lastDate,
   }) async {
     final now = DateTime.now();
+    final earliest = DateUtils.dateOnly(firstDate ?? DateTime(2010));
+    final latest = DateUtils.dateOnly(lastDate ?? DateTime(now.year + 5));
+    if (earliest.isAfter(latest)) return;
+    final requestedDate = DateUtils.dateOnly(initialDate);
+    final selectedDate = requestedDate.isBefore(earliest)
+        ? earliest
+        : requestedDate.isAfter(latest)
+            ? latest
+            : requestedDate;
     final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(2010),
-      lastDate: DateTime(now.year + 5),
+      initialDate: selectedDate,
+      firstDate: earliest,
+      lastDate: latest,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(

@@ -6,6 +6,7 @@ import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/girvi/girvi_repository.dart';
 import 'girvi_customer_girvi_account.dart';
+import 'girvi_ledger_balance_service.dart';
 
 export 'girvi_customer_girvi_account.dart';
 
@@ -19,6 +20,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   List<GirviCustomerGirviAccount> _customerAccounts = [];
   List<GirviCustomerGirviAccount> _filteredCustomerAccounts = [];
   List<GirviPaymentModel> _payments = [];
+  Map<int, GirviLedgerBalance> _ledgerBalances = const {};
   GirviLoanWithCustomer? _selectedLoan;
   int? _selectedCustomerId;
 
@@ -43,6 +45,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   List<GirviCustomerGirviAccount> get customerAccounts =>
       _filteredCustomerAccounts;
   List<GirviPaymentModel> get payments => _payments;
+  Map<int, GirviLedgerBalance> get ledgerBalances => _ledgerBalances;
   GirviLoanWithCustomer? get selectedLoan => _selectedLoan;
   int? get selectedCustomerId => _selectedCustomerId;
   GirviPaymentType get paymentType => _paymentType;
@@ -289,6 +292,9 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   void setPaymentDate(DateTime value) {
     _paymentDate = value;
+    if (_paymentType == GirviPaymentType.fullRelease && !isReadyForDelivery) {
+      _fillReleaseSettlementForDiscount(releaseDiscount);
+    }
     notifyListeners();
   }
 
@@ -347,9 +353,22 @@ class GirviInterestEntryController extends ChangeNotifier {
   }
 
   Future<bool> recordPayment() async {
+    if (_isSaving) return false;
     final selected = _selectedLoan;
     if (selected == null) {
       _errorMessage = 'Select a girvi ticket before recording a payment.';
+      notifyListeners();
+      return false;
+    }
+
+    final collectionDate = _dateOnly(_paymentDate);
+    if (collectionDate.isBefore(_dateOnly(selected.loan.startDate))) {
+      _errorMessage = 'Collection date cannot be before the pledge date.';
+      notifyListeners();
+      return false;
+    }
+    if (collectionDate.isAfter(_dateOnly(DateTime.now()))) {
+      _errorMessage = 'Collection date cannot be in the future.';
       notifyListeners();
       return false;
     }
@@ -525,6 +544,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     _selectedCustomerId = data.loan.customerId;
     _selectedLoan = data;
     _payments = [];
+    _ledgerBalances = const {};
     _errorMessage = null;
     _successMessage = null;
     _resetFormFromLoan(data);
@@ -537,6 +557,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     ]);
 
     _payments = results[0] as List<GirviPaymentModel>;
+    _ledgerBalances = GirviLedgerBalanceService.calculate(data, _payments);
     _paymentReferenceNo = results[1] as String;
     if (_paymentType == GirviPaymentType.interest) {
       _amountInput = '';
@@ -648,6 +669,7 @@ class GirviInterestEntryController extends ChangeNotifier {
     if (clearCustomer) _selectedCustomerId = null;
     _selectedLoan = null;
     _payments = [];
+    _ledgerBalances = const {};
     _resetEmptyForm();
   }
 

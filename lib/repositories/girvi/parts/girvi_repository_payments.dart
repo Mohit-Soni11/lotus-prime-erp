@@ -51,19 +51,13 @@ extension GirviRepositoryPayments on GirviRepository {
 
     final interestBalanceAfterCash =
         (interestDueValue - interestReceivedValue).clamp(0.0, double.infinity);
-    final interestDiscount = _normalizeMoney(
-      discountValue.clamp(0.0, interestBalanceAfterCash).toDouble(),
-    );
-    final principalDiscount = _normalizeMoney(discountValue - interestDiscount);
-    final principalBalanceAfterCash =
-        (principalDueValue - principalReceivedValue)
-            .clamp(0.0, double.infinity);
-    if (principalDiscount > principalBalanceAfterCash + tolerance) {
-      throw ArgumentError('Discount exceeds the remaining settlement due');
+    if (discountValue > interestBalanceAfterCash + tolerance) {
+      throw ArgumentError('Interest discount cannot reduce principal due');
     }
+    final interestDiscount = discountValue;
 
     final principalRemaining = _normalizeMoney(
-      (principalDueValue - principalReceivedValue - principalDiscount)
+      (principalDueValue - principalReceivedValue)
           .clamp(0.0, double.infinity)
           .toDouble(),
     );
@@ -87,6 +81,39 @@ extension GirviRepositoryPayments on GirviRepository {
       }
       if (GirviStatus.fromDb(loan.status).isClosed) {
         throw StateError('Girvi loan is already closed');
+      }
+      if (GirviStatus.fromDb(loan.status) == GirviStatus.readyForDelivery) {
+        throw StateError('Girvi settlement is already complete');
+      }
+      final account = (await getLoansWithCustomer(loanId: loanId)).single;
+      if ((account.principalDue - principalDueValue).abs() > tolerance) {
+        throw StateError('Principal due changed; refresh the settlement');
+      }
+
+      final collectionDay = DateTime(
+        paymentDate.year,
+        paymentDate.month,
+        paymentDate.day,
+      );
+      final pledgeDay = DateTime(
+        loan.startDate.year,
+        loan.startDate.month,
+        loan.startDate.day,
+      );
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final pickupDay = DateTime(
+        expectedDeliveryDate.year,
+        expectedDeliveryDate.month,
+        expectedDeliveryDate.day,
+      );
+      if (collectionDay.isBefore(pledgeDay) || collectionDay.isAfter(today)) {
+        throw ArgumentError(
+            'Collection date must be between pledge date and today');
+      }
+      if (pickupDay.isBefore(collectionDay)) {
+        throw ArgumentError(
+            'Expected pickup date cannot be before collection date');
       }
 
       final amountReceived =
@@ -139,7 +166,7 @@ extension GirviRepositoryPayments on GirviRepository {
               ),
               principalComponent: drift.Value(principalReceivedValue),
               interestComponent: drift.Value(interestReceivedValue),
-              principalDiscountComponent: drift.Value(principalDiscount),
+              principalDiscountComponent: const drift.Value(0),
               interestDiscountComponent: drift.Value(interestDiscount),
               receiptNo: drift.Value(normalizedReceiptNo),
               notes: drift.Value(normalizedNotes),
@@ -150,7 +177,7 @@ extension GirviRepositoryPayments on GirviRepository {
         fullySettled: fullySettled,
         principalRemaining: principalRemaining,
         interestRemaining: interestRemaining,
-        principalDiscount: principalDiscount,
+        principalDiscount: 0,
         interestDiscount: interestDiscount,
       );
     });
@@ -209,6 +236,29 @@ extension GirviRepositoryPayments on GirviRepository {
         throw StateError('Girvi loan not found for interest payment');
       }
       final loanModel = _mapLoan(loan);
+      final collectionDay = DateTime(
+        paymentDate.year,
+        paymentDate.month,
+        paymentDate.day,
+      );
+      final pledgeDay = DateTime(
+        loan.startDate.year,
+        loan.startDate.month,
+        loan.startDate.day,
+      );
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      if (collectionDay.isBefore(pledgeDay)) {
+        throw ArgumentError(
+            'Collection date cannot be before the pledge date.');
+      }
+      if (collectionDay.isAfter(today)) {
+        throw ArgumentError('Collection date cannot be in the future.');
+      }
+      if (loanModel.girviStatus.isClosed ||
+          loanModel.girviStatus == GirviStatus.readyForDelivery) {
+        throw StateError('Interest cannot be collected after settlement.');
+      }
 
       final existingPayments = await (_db.select(_db.girviPayments)
             ..where((payment) => payment.girviId.equals(loanId)))

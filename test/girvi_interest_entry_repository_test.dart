@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_pdf_service.dart';
+import 'package:lotus_erp/logic/girvi/interest_entry/girvi_ledger_balance_service.dart';
 import 'package:lotus_erp/logic/girvi/notice_pdf/notice_statement_data.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
@@ -61,6 +62,31 @@ void main() {
     expect(payments.single.balanceAfter, 50000);
     expect(loan!.loanAmount, 50000);
     expect(loan.lastInterestPaidDate, periodTo);
+  });
+
+  test('rejects interest payments outside the pledge dates or after settlement',
+      () async {
+    final loanId = await _insertLoan(db);
+
+    Future<int> collectOn(DateTime date) =>
+        repository.recordInterestLedgerPayment(
+          loanId: loanId,
+          paymentMode: GirviPaymentMode.cash,
+          amount: 500,
+          paymentDate: date,
+        );
+
+    await expectLater(collectOn(DateTime(2025, 12, 31)), throwsArgumentError);
+    await expectLater(
+      collectOn(DateTime.now().add(const Duration(days: 2))),
+      throwsArgumentError,
+    );
+    await (db.update(db.girviLoans)..where((row) => row.id.equals(loanId)))
+        .write(GirviLoansCompanion(
+      status: drift.Value(GirviStatus.readyForDelivery.dbValue),
+    ));
+    await expectLater(collectOn(DateTime.now()), throwsStateError);
+    expect(await repository.getPaymentsForLoan(loanId), isEmpty);
   });
 
   test('converts a saved simple timeline after month 12 automatically',
@@ -752,6 +778,16 @@ void main() {
 
     expect(completed.fullySettled, isTrue);
     expect(completed.totalRemaining, 0);
+    final account = (await repository.getLoansWithCustomer()).single;
+    final balances = GirviLedgerBalanceService.calculate(account, payments);
+    final firstEntry =
+        payments.firstWhere((payment) => payment.receiptNo == 'GIP-SET-001');
+    final finalEntry =
+        payments.firstWhere((payment) => payment.receiptNo == 'GIP-SET-002');
+    expect(balances[firstEntry.id]!.principalRemaining, 30000);
+    expect(balances[firstEntry.id]!.interestRemaining, 10000);
+    expect(balances[firstEntry.id]!.totalRemaining, 40000);
+    expect(balances[finalEntry.id]!.totalRemaining, 0);
     expect(loan!.status, GirviStatus.readyForDelivery.dbValue);
     expect(loan.releaseDate, DateTime(2026, 6, 20));
     expect(loan.deliveredAt, isNull);
@@ -834,6 +870,95 @@ void main() {
       ),
       throwsArgumentError,
     );
+  });
+
+  test('final release never applies an interest waiver to principal', () async {
+    final loanId = await _insertLoan(db);
+
+    await expectLater(
+      repository.recordReleaseSettlement(
+        loanId: loanId,
+        principalDue: 50000,
+        interestDue: 1000,
+        principalReceived: 49000,
+        interestReceived: 1000,
+        discountAmount: 1000,
+        paymentMode: GirviPaymentMode.cash,
+        paymentDate: DateTime(2026, 6, 19),
+        expectedDeliveryDate: DateTime(2026, 6, 20),
+      ),
+      throwsArgumentError,
+    );
+    expect(await repository.getPaymentModelsForLoan(loanId), isEmpty);
+  });
+
+  test('final release rejects stale principal and invalid collection dates',
+      () async {
+    final loanId = await _insertLoan(db);
+
+    Future<GirviSettlementResult> settle({
+      double principalDue = 50000,
+      DateTime? paymentDate,
+      DateTime? pickupDate,
+    }) =>
+        repository.recordReleaseSettlement(
+          loanId: loanId,
+          principalDue: principalDue,
+          interestDue: 0,
+          principalReceived: 1000,
+          interestReceived: 0,
+          paymentMode: GirviPaymentMode.cash,
+          paymentDate: paymentDate ?? DateTime.now(),
+          expectedDeliveryDate: pickupDate ?? DateTime.now(),
+        );
+
+    await expectLater(settle(principalDue: 1000), throwsStateError);
+    await expectLater(
+      settle(paymentDate: DateTime(2025, 12, 31)),
+      throwsArgumentError,
+    );
+    await expectLater(
+      settle(paymentDate: DateTime.now().add(const Duration(days: 2))),
+      throwsArgumentError,
+    );
+    await expectLater(
+      settle(
+        paymentDate: DateTime(2026, 6, 20),
+        pickupDate: DateTime(2026, 6, 19),
+      ),
+      throwsArgumentError,
+    );
+    expect(await repository.getPaymentModelsForLoan(loanId), isEmpty);
+  });
+
+  test('final release cannot be recorded twice after full settlement',
+      () async {
+    final loanId = await _insertLoan(db);
+    await repository.recordReleaseSettlement(
+      loanId: loanId,
+      principalDue: 50000,
+      interestDue: 0,
+      principalReceived: 50000,
+      interestReceived: 0,
+      paymentMode: GirviPaymentMode.cash,
+      paymentDate: DateTime.now(),
+      expectedDeliveryDate: DateTime.now(),
+    );
+
+    await expectLater(
+      repository.recordReleaseSettlement(
+        loanId: loanId,
+        principalDue: 50000,
+        interestDue: 0,
+        principalReceived: 50000,
+        interestReceived: 0,
+        paymentMode: GirviPaymentMode.cash,
+        paymentDate: DateTime.now(),
+        expectedDeliveryDate: DateTime.now(),
+      ),
+      throwsStateError,
+    );
+    expect(await repository.getPaymentModelsForLoan(loanId), hasLength(1));
   });
 
   test('reconciles legacy zero-principal open loan as ready for delivery',

@@ -285,10 +285,10 @@ pw.Widget _girviInterestSummary(
 ) {
   final totalInterest = entries.fold<double>(
     0,
-    (sum, entry) =>
-        sum + (entry.interestAmount > 0 ? entry.interestAmount : entry.amount),
+    (sum, entry) => sum + _girviReceivedInterest(entry),
   );
   final interestOutstanding = draft.interestOutstanding ?? 0;
+  final principalOutstanding = draft.principalOutstanding ?? draft.loanAmount;
   final cards = <pw.Widget>[
     pw.Expanded(
       child: _girviSummaryCard(
@@ -301,41 +301,49 @@ pw.Widget _girviInterestSummary(
     pw.SizedBox(width: 10),
     pw.Expanded(
       child: _girviSummaryCard(
-        'Monthly ${quote.currentMonthlyInterestType} Interest',
-        GirviInvoicePdfService._formatAmount(quote.currentMonthlyInterest),
+        'Monthly ${quote.lastChargedMonthlyInterestType} Interest',
+        GirviInvoicePdfService._formatAmount(quote.lastChargedMonthlyInterest),
         profile,
       ),
     ),
-    if (interestOutstanding > 0.005) ...[
-      pw.SizedBox(width: 10),
-      pw.Expanded(
-        child: _girviSummaryCard(
-          'Interest Outstanding',
-          GirviInvoicePdfService._formatAmount(interestOutstanding),
-          profile,
-          valueColor: _receiptRed,
-        ),
+    pw.SizedBox(width: 10),
+    pw.Expanded(
+      child: _girviSummaryCard(
+        'Interest Outstanding',
+        GirviInvoicePdfService._formatAmount(interestOutstanding),
+        profile,
+        valueColor: _receiptRed,
       ),
-    ],
+    ),
   ];
-  final basisNote = quote.interestType != quote.currentMonthlyInterestType
-      ? 'Earlier unpaid interest was compounded. The current monthly charge uses the principal base after the interest payment.'
-      : null;
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Row(children: cards),
-      if (basisNote != null) ...[
-        pw.SizedBox(height: 8),
-        pw.Text(
-          basisNote,
-          style: pw.TextStyle(
-            color: profile.bodyTextColor,
-            fontSize: profile.bodyFontSize + 0.8,
-            fontWeight: pw.FontWeight.bold,
+      pw.SizedBox(height: 8),
+      pw.Row(
+        children: [
+          pw.Expanded(
+            child: _girviSummaryCard(
+              'Principal Outstanding',
+              GirviInvoicePdfService._formatAmount(principalOutstanding),
+              profile,
+              valueColor: _receiptRed,
+            ),
           ),
-        ),
-      ],
+          pw.SizedBox(width: 10),
+          pw.Expanded(
+            child: _girviSummaryCard(
+              'Total Outstanding',
+              GirviInvoicePdfService._formatAmount(
+                principalOutstanding + interestOutstanding,
+              ),
+              profile,
+              valueColor: _receiptRed,
+            ),
+          ),
+        ],
+      ),
     ],
   );
 }
@@ -386,8 +394,7 @@ pw.Widget _girviInterestLedgerTable(
   PrintTemplatePdfProfile profile,
 ) {
   final rows = entries.map((entry) {
-    final amount =
-        entry.interestAmount > 0 ? entry.interestAmount : entry.amount;
+    final amount = _girviReceivedInterest(entry);
     return [
       GirviInvoicePdfService._dateFormat.format(entry.date),
       entry.modeLabel,
@@ -447,14 +454,11 @@ pw.Widget _girviReleaseSettlement(
       .where((entry) => entry.typeLabel.toLowerCase().contains('release'))
       .fold<double>(
         0,
-        (sum, entry) =>
-            sum +
-            (entry.interestAmount > 0 ? entry.interestAmount : entry.amount),
+        (sum, entry) => sum + _girviReceivedInterest(entry),
       );
   final ledgerInterestTotal = interestEntries.fold<double>(
     0,
-    (sum, entry) =>
-        sum + (entry.interestAmount > 0 ? entry.interestAmount : entry.amount),
+    (sum, entry) => sum + _girviReceivedInterest(entry),
   );
   final releaseInterest = draft.releaseInterest ?? releaseEntryInterest;
   final interestCollected =
@@ -889,9 +893,7 @@ List<GirviInvoiceLedgerEntry> _girviInterestLedgerEntries(
   GirviInvoiceDraft draft,
 ) {
   final rows = draft.ledgerEntries.where((entry) {
-    final hasInterest = entry.interestAmount > 0;
-    final isInterestType = entry.typeLabel.toLowerCase().contains('interest');
-    return hasInterest || isInterestType;
+    return _girviReceivedInterest(entry) > 0.005;
   }).toList()
     ..sort((a, b) {
       final byDate = a.date.compareTo(b.date);
@@ -899,6 +901,17 @@ List<GirviInvoiceLedgerEntry> _girviInterestLedgerEntries(
       return a.typeLabel.compareTo(b.typeLabel);
     });
   return rows;
+}
+
+double _girviReceivedInterest(GirviInvoiceLedgerEntry entry) {
+  if (entry.interestAmount > 0) return entry.interestAmount;
+  final legacyInterestOnly =
+      entry.typeLabel.toLowerCase().contains('interest') &&
+          entry.principalAmount <= 0 &&
+          entry.discountAmount <= 0;
+  return legacyInterestOnly
+      ? entry.amount.clamp(0, double.infinity).toDouble()
+      : 0;
 }
 
 String _ratePercentLabel(double value) {
