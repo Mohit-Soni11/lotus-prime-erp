@@ -24,25 +24,25 @@ void _appendLifecycleReceiptPages({
         build: (_) => [
           _girviAppendixHeader(
             title: 'INTEREST RECEIPT',
-            subtitle: 'Date-wise interest collection record',
+            subtitle: 'Interest calculation, collections and account balance',
             draft: draft,
             profile: profile,
             duplicateCopy: duplicateCopy,
           ),
           pw.SizedBox(height: 18),
-          _girviInterestSummary(
-            draft,
-            interestEntries,
-            interestQuote,
-            profile,
-          ),
-          pw.SizedBox(height: 16),
           if (interestQuote.interestType ==
               GirviInterestCalculationType.compound) ...[
             _girviCompoundInterestCalculation(draft, interestQuote, profile),
             pw.SizedBox(height: 16),
           ],
           _girviInterestLedgerTable(interestEntries, profile),
+          pw.SizedBox(height: 16),
+          _girviInterestSummary(
+            draft,
+            interestEntries,
+            interestQuote,
+            profile,
+          ),
         ],
       ),
     );
@@ -567,64 +567,50 @@ pw.Widget _girviCompoundInterestCalculation(
   return _girviSection(
     title: 'COMPOUND INTEREST CALCULATION',
     profile: profile,
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'Only unpaid interest at each 12-month anniversary is added to the next interest base. Recorded payments and discounts are reflected in closing amounts.',
-          style: pw.TextStyle(
-            color: profile.bodyTextColor,
-            fontSize: profile.bodyFontSize + 1.2,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 10),
-        pw.TableHelper.fromTextArray(
-          context: null,
-          headers: const [
-            'No.',
-            'Period',
-            'Opening Amount',
-            'Monthly Rate',
-            'Interest / Month',
-            'Applicable Months',
-            'Period Interest',
-            'Closing Amount',
-          ],
-          data: rows,
-          headerStyle: pw.TextStyle(
-            color: profile.tableHeaderTextColor,
-            fontSize: profile.tableFontSize + 1,
-            fontWeight: pw.FontWeight.bold,
-          ),
-          cellStyle: pw.TextStyle(
-            color: profile.bodyTextColor,
-            fontSize: profile.tableFontSize + 0.75,
-            fontWeight: pw.FontWeight.bold,
-          ),
-          headerDecoration: pw.BoxDecoration(color: profile.tableHeaderColor),
-          border: pw.TableBorder.all(
-            color: profile.tableBorderColor,
-            width: profile.tableBorderWidth,
-          ),
-          cellAlignment: pw.Alignment.centerLeft,
-          headerAlignment: pw.Alignment.centerLeft,
-          cellPadding: pw.EdgeInsets.symmetric(
-            horizontal: profile.tableCellPadding,
-            vertical: profile.tableCellPadding + 1.5,
-          ),
-          columnWidths: const {
-            0: pw.FlexColumnWidth(0.45),
-            1: pw.FlexColumnWidth(1.45),
-            2: pw.FlexColumnWidth(1.15),
-            3: pw.FlexColumnWidth(0.9),
-            4: pw.FlexColumnWidth(1.1),
-            5: pw.FlexColumnWidth(1.0),
-            6: pw.FlexColumnWidth(1.05),
-            7: pw.FlexColumnWidth(1.1),
-          },
-        ),
+    child: pw.TableHelper.fromTextArray(
+      context: null,
+      headers: const [
+        'No.',
+        'Period',
+        'Opening Amount',
+        'Monthly Rate',
+        'Interest / Month',
+        'Applicable Months',
+        'Period Interest',
+        'Closing Amount',
       ],
+      data: rows,
+      headerStyle: pw.TextStyle(
+        color: profile.tableHeaderTextColor,
+        fontSize: profile.tableFontSize + 1,
+        fontWeight: pw.FontWeight.bold,
+      ),
+      cellStyle: pw.TextStyle(
+        color: profile.bodyTextColor,
+        fontSize: profile.tableFontSize + 0.75,
+        fontWeight: pw.FontWeight.bold,
+      ),
+      headerDecoration: pw.BoxDecoration(color: profile.tableHeaderColor),
+      border: pw.TableBorder.all(
+        color: profile.tableBorderColor,
+        width: profile.tableBorderWidth,
+      ),
+      cellAlignment: pw.Alignment.centerLeft,
+      headerAlignment: pw.Alignment.centerLeft,
+      cellPadding: pw.EdgeInsets.symmetric(
+        horizontal: profile.tableCellPadding,
+        vertical: profile.tableCellPadding + 1.5,
+      ),
+      columnWidths: const {
+        0: pw.FlexColumnWidth(0.45),
+        1: pw.FlexColumnWidth(1.45),
+        2: pw.FlexColumnWidth(1.15),
+        3: pw.FlexColumnWidth(0.9),
+        4: pw.FlexColumnWidth(1.1),
+        5: pw.FlexColumnWidth(1.0),
+        6: pw.FlexColumnWidth(1.05),
+        7: pw.FlexColumnWidth(1.1),
+      },
     ),
   );
 }
