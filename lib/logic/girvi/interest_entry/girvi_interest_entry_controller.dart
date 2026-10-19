@@ -149,9 +149,6 @@ class GirviInterestEntryController extends ChangeNotifier {
   GirviInterestQuote? get selectedInterestQuote =>
       _selectedLoan?.interestQuoteAt(_paymentDate);
 
-  double get currentLedgerMonthlyInterestForSelected =>
-      selectedInterestQuote?.currentMonthlyInterest ?? 0;
-
   double get grossInterestAccruedForSelected {
     return selectedInterestQuote?.grossInterest ?? 0;
   }

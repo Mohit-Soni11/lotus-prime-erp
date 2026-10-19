@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_calculator.dart';
+import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/repositories/customer/customer_profile_repository.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_repository.dart';
 
@@ -57,6 +58,67 @@ void main() {
       expect(draft.interestAdjustments, hasLength(1));
       expect(draft.interestAdjustments.single.paid, 12000);
       expect(draft.interestPrincipal, 100000);
+      expect(draft.interestAsOfDate, isNotNull);
+      expect(draft.interestQuote.currentMonthlyInterestType,
+          GirviInterestCalculationType.simple);
+
+      final printable = draft.copyWith(mode: GirviReceiptMode.interest);
+      expect(printable.interestPrincipal, draft.interestPrincipal);
+      expect(printable.interestAsOfDate, draft.interestAsOfDate);
+      expect(printable.interestAdjustments, draft.interestAdjustments);
+      expect(printable.interestQuote.interestOutstanding,
+          draft.interestQuote.interestOutstanding);
+
+      final original = draft.copyWith(
+        mode: GirviReceiptMode.pledge,
+        clearLifecycleFields: true,
+      );
+      expect(original.interestAdjustments, isEmpty);
+      expect(original.interestAsOfDate, draft.createdAt);
+    } finally {
+      await db.close();
+    }
+  });
+
+  test(
+      'partial interest without a full paid month still opens an interest receipt',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    try {
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Partial Receipt Customer',
+              mobile: '9000000015',
+            ),
+          );
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-PARTIAL-001',
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              grossWeight: const drift.Value(8),
+              netWeight: const drift.Value(8),
+              loanAmount: const drift.Value(3000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(
+                  DateTime.now().subtract(const Duration(days: 10))),
+            ),
+          );
+      await GirviRepository(db).recordInterestLedgerPayment(
+        loanId: loanId,
+        paymentMode: GirviPaymentMode.cash,
+        amount: 50,
+        paymentDate: DateTime.now(),
+      );
+
+      final draft = await CustomerProfileRepository(db: db)
+          .fetchGirviInvoiceDraft(customerId: customerId, loanId: loanId);
+
+      expect(draft, isNotNull);
+      expect(draft!.mode, GirviReceiptMode.interest);
+      expect(draft.interestQuote.interestOutstanding, 100);
+      expect(draft.interestQuote.currentMonthlyInterestType,
+          GirviInterestCalculationType.simple);
     } finally {
       await db.close();
     }

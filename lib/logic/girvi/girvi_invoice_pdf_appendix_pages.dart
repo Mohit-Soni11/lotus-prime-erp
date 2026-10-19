@@ -8,6 +8,7 @@ void _appendLifecycleReceiptPages({
 }) {
   final interestEntries = _girviInterestLedgerEntries(draft);
   if (interestEntries.isNotEmpty) {
+    final interestQuote = draft.interestQuote;
     pdf.addPage(
       pw.MultiPage(
         pageTheme: const pw.PageTheme(
@@ -29,10 +30,18 @@ void _appendLifecycleReceiptPages({
             duplicateCopy: duplicateCopy,
           ),
           pw.SizedBox(height: 18),
-          _girviInterestSummary(draft, interestEntries, profile),
+          _girviInterestSummary(
+            draft,
+            interestEntries,
+            interestQuote,
+            profile,
+          ),
           pw.SizedBox(height: 16),
-          _girviCompoundInterestCalculation(draft, profile),
-          if (_hasCompoundInterestCalculation(draft)) pw.SizedBox(height: 16),
+          if (interestQuote.interestType ==
+              GirviInterestCalculationType.compound) ...[
+            _girviCompoundInterestCalculation(draft, interestQuote, profile),
+            pw.SizedBox(height: 16),
+          ],
           _girviInterestLedgerTable(interestEntries, profile),
         ],
       ),
@@ -271,6 +280,7 @@ pw.Widget _girviStatusPill(
 pw.Widget _girviInterestSummary(
   GirviInvoiceDraft draft,
   List<GirviInvoiceLedgerEntry> entries,
+  GirviInterestQuote quote,
   PrintTemplatePdfProfile profile,
 ) {
   final totalInterest = entries.fold<double>(
@@ -278,11 +288,6 @@ pw.Widget _girviInterestSummary(
     (sum, entry) =>
         sum + (entry.interestAmount > 0 ? entry.interestAmount : entry.amount),
   );
-  final coveredMonths =
-      entries.fold<int>(0, (sum, entry) => sum + (entry.monthsCovered ?? 0));
-  final interestMonthLabel = coveredMonths > 0
-      ? '$coveredMonths month${coveredMonths == 1 ? '' : 's'}'
-      : _interestCollectionMonthSummary(entries);
   final interestOutstanding = draft.interestOutstanding ?? 0;
   final cards = <pw.Widget>[
     pw.Expanded(
@@ -290,13 +295,14 @@ pw.Widget _girviInterestSummary(
         'Interest Received',
         GirviInvoicePdfService._formatAmount(totalInterest),
         profile,
+        valueColor: _receiptGreen,
       ),
     ),
     pw.SizedBox(width: 10),
     pw.Expanded(
       child: _girviSummaryCard(
-        'Interest Months',
-        interestMonthLabel,
+        'Monthly ${quote.currentMonthlyInterestType} Interest',
+        GirviInvoicePdfService._formatAmount(quote.currentMonthlyInterest),
         profile,
       ),
     ),
@@ -312,8 +318,25 @@ pw.Widget _girviInterestSummary(
       ),
     ],
   ];
-  return pw.Row(
-    children: cards,
+  final basisNote = quote.interestType != quote.currentMonthlyInterestType
+      ? 'Earlier unpaid interest was compounded. The current monthly charge uses the principal base after the interest payment.'
+      : null;
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Row(children: cards),
+      if (basisNote != null) ...[
+        pw.SizedBox(height: 8),
+        pw.Text(
+          basisNote,
+          style: pw.TextStyle(
+            color: profile.bodyTextColor,
+            fontSize: profile.bodyFontSize + 0.8,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+      ],
+    ],
   );
 }
 
@@ -362,37 +385,24 @@ pw.Widget _girviInterestLedgerTable(
   List<GirviInvoiceLedgerEntry> entries,
   PrintTemplatePdfProfile profile,
 ) {
-  final showBalance = entries.any((entry) => entry.balanceAfter.abs() > 0.005);
   final rows = entries.map((entry) {
     final amount =
         entry.interestAmount > 0 ? entry.interestAmount : entry.amount;
-    final row = [
+    return [
       GirviInvoicePdfService._dateFormat.format(entry.date),
       entry.modeLabel,
-      _interestCoverageLabel(entry),
-      _interestMonthLabel(entry),
       GirviInvoicePdfService._formatAmount(amount),
     ];
-    if (showBalance) {
-      row.add(GirviInvoicePdfService._formatAmount(entry.balanceAfter));
-    }
-    return row;
   }).toList(growable: false);
   final headers = <String>[
     'Date',
     'Mode',
-    'Interest Period',
-    'Months',
     'Interest Received',
-    if (showBalance) 'Balance',
   ];
   final columnWidths = <int, pw.TableColumnWidth>{
     0: const pw.FixedColumnWidth(72),
     1: const pw.FixedColumnWidth(64),
     2: const pw.FlexColumnWidth(1.7),
-    3: const pw.FixedColumnWidth(76),
-    4: const pw.FixedColumnWidth(94),
-    if (showBalance) 5: const pw.FixedColumnWidth(78),
   };
 
   return _girviSection(
@@ -519,37 +529,12 @@ pw.Widget _girviReleaseSettlement(
   );
 }
 
-bool _hasCompoundInterestCalculation(GirviInvoiceDraft draft) {
-  final releaseDate = draft.releaseDate ?? draft.createdAt;
-  final chargeableMonths = GirviLoanModel.chargeableMonthsBetween(
-    draft.startDate,
-    releaseDate,
-  );
-  return GirviInterestCalculationType.forChargeableMonths(chargeableMonths) ==
-      GirviInterestCalculationType.compound;
-}
-
 pw.Widget _girviCompoundInterestCalculation(
   GirviInvoiceDraft draft,
+  GirviInterestQuote quote,
   PrintTemplatePdfProfile profile,
 ) {
-  final releaseDate = draft.releaseDate ?? draft.createdAt;
-  final chargeableMonths = GirviLoanModel.chargeableMonthsBetween(
-    draft.startDate,
-    releaseDate,
-  );
-  if (GirviInterestCalculationType.forChargeableMonths(chargeableMonths) !=
-      GirviInterestCalculationType.compound) {
-    return pw.SizedBox.shrink();
-  }
-
-  final lines = GirviInterestCalculator.quoteAt(
-    principal: draft.interestPrincipal ?? draft.loanAmount,
-    monthlyRatePercent: draft.interestRate,
-    startDate: draft.startDate,
-    asOf: releaseDate,
-    adjustments: draft.interestAdjustments,
-  ).cycles;
+  final lines = quote.cycles;
   if (lines.isEmpty) return pw.SizedBox.shrink();
 
   final rows = lines.map((line) {
@@ -916,44 +901,8 @@ List<GirviInvoiceLedgerEntry> _girviInterestLedgerEntries(
   return rows;
 }
 
-String _interestCoverageLabel(GirviInvoiceLedgerEntry entry) {
-  final from = entry.interestFromDate;
-  final to = entry.interestToDate;
-  if (from != null && to != null) {
-    return '${GirviInvoicePdfService._dateFormat.format(from)} to '
-        '${GirviInvoicePdfService._dateFormat.format(to)}';
-  }
-  final months = entry.monthsCovered ?? 0;
-  if (months > 0) return _monthsLabel(months);
-  return 'Recorded on collection date';
-}
-
-String _monthsLabel(int? months) {
-  final value = months ?? 0;
-  if (value <= 0) return '-';
-  return '$value month${value == 1 ? '' : 's'}';
-}
-
 String _ratePercentLabel(double value) {
   if (value % 1 == 0) return '${value.toStringAsFixed(0)}%';
   final text = value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
   return '$text%';
-}
-
-String _interestMonthLabel(GirviInvoiceLedgerEntry entry) {
-  final months = entry.monthsCovered ?? 0;
-  if (months > 0) return _monthsLabel(months);
-  return GirviInvoicePdfService._monthFormat.format(entry.date);
-}
-
-String _interestCollectionMonthSummary(
-  List<GirviInvoiceLedgerEntry> entries,
-) {
-  if (entries.isEmpty) return '-';
-  final months = entries
-      .map((entry) => GirviInvoicePdfService._monthFormat.format(entry.date))
-      .toSet()
-      .toList(growable: false);
-  if (months.length == 1) return months.single;
-  return '${months.first} +${months.length - 1}';
 }

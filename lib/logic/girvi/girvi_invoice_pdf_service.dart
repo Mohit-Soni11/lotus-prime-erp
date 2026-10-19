@@ -43,7 +43,6 @@ class GirviInvoicePdfService {
   static final _wholeAmountFormat = NumberFormat('#,##,##0', 'en_IN');
   static final _compactAmountFormat = NumberFormat('#,##,##0', 'en_IN');
   static final _dateFormat = DateFormat('dd MMM yyyy');
-  static final _monthFormat = DateFormat('MMM yyyy');
 
   static const _navy = PdfColor.fromInt(0xFF172437);
   static const _navySoft = PdfColor.fromInt(0xFF22344E);
@@ -598,8 +597,9 @@ class GirviInvoicePdfService {
           if (settings.showMonthlyInterest)
             LotusPrintableDetail(
               iconKey: 'amount',
-              label: 'Monthly Interest',
-              value: _amount(draft.monthlyInterest),
+              label:
+                  'Monthly ${draft.interestQuote.currentMonthlyInterestType} Interest',
+              value: _amount(draft.interestQuote.currentMonthlyInterest),
             ),
           if (settings.showTotalInterest)
             LotusPrintableDetail(

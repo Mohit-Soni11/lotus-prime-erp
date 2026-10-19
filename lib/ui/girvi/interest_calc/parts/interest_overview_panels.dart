@@ -1,13 +1,18 @@
 part of '../interest_calc_screen.dart';
 
+const _overviewPanelMinHeight = 244.0;
+
 class _OverviewMoneyPanel extends StatelessWidget {
   final String title;
   final String primaryLabel;
   final String primaryValue;
+  final Color? primaryTextColor;
   final String? secondaryLabel;
   final String? secondaryValue;
   final String? tertiaryLabel;
   final String? tertiaryValue;
+  final Color? tertiaryAccentColor;
+  final Color? tertiaryTextColor;
   final IconData icon;
   final Color color;
   final double? progress;
@@ -16,10 +21,13 @@ class _OverviewMoneyPanel extends StatelessWidget {
     required this.title,
     required this.primaryLabel,
     required this.primaryValue,
+    this.primaryTextColor,
     this.secondaryLabel,
     this.secondaryValue,
     this.tertiaryLabel,
     this.tertiaryValue,
+    this.tertiaryAccentColor,
+    this.tertiaryTextColor,
     required this.icon,
     required this.color,
     this.progress,
@@ -38,12 +46,13 @@ class _OverviewMoneyPanel extends StatelessWidget {
         _OverviewMiniValue(
           label: tertiaryLabel!,
           value: tertiaryValue!,
-          color: color,
+          color: tertiaryAccentColor ?? color,
+          textColor: tertiaryTextColor,
         ),
     ];
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 206),
+      constraints: const BoxConstraints(minHeight: _overviewPanelMinHeight),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
@@ -82,7 +91,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
           Text(
             primaryLabel,
             style: GoogleFonts.inter(
-              color: GirviColors.textDark,
+              color: primaryTextColor ?? GirviColors.textDark,
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
@@ -96,7 +105,7 @@ class _OverviewMoneyPanel extends StatelessWidget {
               child: Text(
                 primaryValue,
                 style: GoogleFonts.manrope(
-                  color: GirviColors.textDark,
+                  color: primaryTextColor ?? GirviColors.textDark,
                   fontSize: 30,
                   fontWeight: FontWeight.w900,
                 ),
@@ -128,15 +137,13 @@ class _OverviewTermsPanel extends StatelessWidget {
   final String tenure;
   final String startDate;
   final String maturityDate;
-  final String interestCollected;
-  final String interestDue;
+  final bool twoColumns;
 
   const _OverviewTermsPanel({
     required this.tenure,
     required this.startDate,
     required this.maturityDate,
-    required this.interestCollected,
-    required this.interestDue,
+    required this.twoColumns,
   });
 
   @override
@@ -160,24 +167,10 @@ class _OverviewTermsPanel extends StatelessWidget {
         icon: GirviIcons.dates,
         color: GirviColors.purple,
       ),
-      _OverviewInfoTile(
-        label: 'Interest Received',
-        value: interestCollected,
-        icon: GirviIcons.markDone,
-        color: GirviColors.success,
-        wide: true,
-      ),
-      _OverviewInfoTile(
-        label: 'Interest Outstanding',
-        value: interestDue,
-        icon: GirviIcons.interestRate,
-        color: GirviColors.danger,
-        wide: true,
-      ),
     ];
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 206),
+      constraints: const BoxConstraints(minHeight: _overviewPanelMinHeight),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
@@ -217,43 +210,29 @@ class _OverviewTermsPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final twoColumns = constraints.maxWidth >= 320;
-              if (!twoColumns) {
-                return Column(
-                  children: [
-                    for (var i = 0; i < tiles.length; i++) ...[
-                      tiles[i],
-                      if (i != tiles.length - 1) const SizedBox(height: 9),
-                    ],
-                  ],
-                );
-              }
-
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: tiles[0]),
-                      const SizedBox(width: 9),
-                      Expanded(child: tiles[1]),
-                    ],
-                  ),
-                  const SizedBox(height: 9),
-                  Row(
-                    children: [
-                      Expanded(child: tiles[2]),
-                    ],
-                  ),
-                  const SizedBox(height: 9),
-                  tiles[3],
-                  const SizedBox(height: 9),
-                  tiles[4],
+          if (!twoColumns)
+            Column(
+              children: [
+                for (var i = 0; i < tiles.length; i++) ...[
+                  tiles[i],
+                  if (i != tiles.length - 1) const SizedBox(height: 9),
                 ],
-              );
-            },
-          ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: tiles[0]),
+                    const SizedBox(width: 9),
+                    Expanded(child: tiles[1]),
+                  ],
+                ),
+                const SizedBox(height: 9),
+                tiles[2],
+              ],
+            ),
         ],
       ),
     );
@@ -264,11 +243,13 @@ class _OverviewMiniValue extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final Color? textColor;
 
   const _OverviewMiniValue({
     required this.label,
     required this.value,
     required this.color,
+    this.textColor,
   });
 
   @override
@@ -288,7 +269,7 @@ class _OverviewMiniValue extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: GirviColors.textDark,
+              color: textColor ?? GirviColors.textDark,
               fontSize: 12.5,
               fontWeight: FontWeight.w900,
             ),
@@ -299,7 +280,7 @@ class _OverviewMiniValue extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
-              color: GirviColors.textDark,
+              color: textColor ?? GirviColors.textDark,
               fontSize: 16,
               fontWeight: FontWeight.w900,
             ),
@@ -315,14 +296,12 @@ class _OverviewInfoTile extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  final bool wide;
 
   const _OverviewInfoTile({
     required this.label,
     required this.value,
     required this.icon,
     required this.color,
-    this.wide = false,
   });
 
   @override
@@ -331,7 +310,7 @@ class _OverviewInfoTile extends StatelessWidget {
     final labelColor = danger ? GirviColors.danger : GirviColors.textDark;
     final valueColor = danger ? GirviColors.danger : GirviColors.textDark;
     return Container(
-      constraints: BoxConstraints(minHeight: wide ? 58 : 64),
+      constraints: const BoxConstraints(minHeight: 64),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: danger ? GirviColors.dangerBg : color.withValues(alpha: 0.07),
@@ -365,11 +344,11 @@ class _OverviewInfoTile extends StatelessWidget {
           const SizedBox(height: 7),
           Text(
             value,
-            maxLines: wide ? 2 : 1,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.manrope(
               color: valueColor,
-              fontSize: wide ? 14.5 : 15,
+              fontSize: 15,
               fontWeight: FontWeight.w900,
               height: 1.12,
             ),

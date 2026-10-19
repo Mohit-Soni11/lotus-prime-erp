@@ -151,8 +151,6 @@ extension InterestEntryLayout on _InterestCalcScreenState {
     final settlementComplete =
         loan.girviStatus == GirviStatus.readyForDelivery ||
             loan.girviStatus == GirviStatus.released;
-    final currentMonthlyInterest =
-        _ctrl.currentLedgerMonthlyInterestForSelected;
     final interestQuote = _ctrl.selectedInterestQuote!;
     final totalMonths = interestQuote.chargeableMonths;
     final interestBreakdown = interestQuote.cycles;
@@ -273,13 +271,6 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                     compactHeader ? WrapAlignment.start : WrapAlignment.end,
                 children: [
                   _StatusPill(label: loan.statusLabel, color: loan.statusColor),
-                  _StatusPill(
-                    label: '${interestQuote.interestType} Interest',
-                    color: interestQuote.interestType ==
-                            GirviInterestCalculationType.compound
-                        ? GirviColors.brandGold
-                        : GirviColors.info,
-                  ),
                   _OverviewActionButton(
                     label: _openingReceipt ? 'Opening...' : 'View PDF',
                     icon: Icons.visibility_rounded,
@@ -317,7 +308,8 @@ extension InterestEntryLayout on _InterestCalcScreenState {
           _CollectionFocusStrip(
             interestDue: netInterestDue,
             interestReceived: interestCollected,
-            monthlyInterest: currentMonthlyInterest,
+            monthlyInterest: interestQuote.lastChargedMonthlyInterest,
+            monthlyInterestType: interestQuote.lastChargedMonthlyInterestType,
             advanceAmount: advanceInterestCredit,
             settlementComplete: settlementComplete,
             isOverdue: loan.isOverdue,
@@ -358,6 +350,7 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                 title: 'Interest',
                 primaryLabel: 'Interest Outstanding',
                 primaryValue: 'Rs ${_moneyFmt.format(netInterestDue)}',
+                primaryTextColor: GirviColors.danger,
                 secondaryLabel: advanceInterestCredit > 0
                     ? settlementComplete
                         ? 'Excess Received'
@@ -368,6 +361,8 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                     : 'Rs ${_moneyFmt.format(grossInterestAccrued)}',
                 tertiaryLabel: 'Interest Received',
                 tertiaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
+                tertiaryAccentColor: GirviColors.success,
+                tertiaryTextColor: GirviColors.successText,
                 icon: GirviIcons.interestRate,
                 color: advanceInterestCredit > 0
                     ? settlementComplete
@@ -382,8 +377,10 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                 maturityDate: loan.maturityDate == null
                     ? 'Not set'
                     : _dateFmt.format(loan.maturityDate!),
-                interestCollected: 'Rs ${_moneyFmt.format(interestCollected)}',
-                interestDue: 'Rs ${_moneyFmt.format(netInterestDue)}',
+                twoColumns: (compact
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 24) / 3) >=
+                    350,
               );
 
               if (compact) {

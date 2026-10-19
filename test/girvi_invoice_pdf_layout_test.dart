@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
+import 'package:lotus_erp/models/girvi/girvi_interest_calculator.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
@@ -47,6 +48,62 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  test('interest receipt uses payment-adjusted monthly basis and timeline',
+      () async {
+    final collectionDate = DateTime(2026, 10, 19);
+    final draft = GirviInvoiceDraft(
+      ticketNo: 'GRV-0019',
+      createdAt: collectionDate,
+      customerName: 'Interest Customer',
+      customerMobile: '9000000019',
+      customerCity: 'Patna',
+      items: _simpleDraft.items,
+      loanAmount: 3000,
+      interestPrincipal: 3000,
+      interestRate: 5,
+      durationMonths: 5,
+      startDate: DateTime(2025, 5, 5),
+      maturityDate: DateTime(2025, 10, 5),
+      interestAsOfDate: collectionDate,
+      monthlyInterest: 150,
+      totalInterest: 3240,
+      totalDue: 6240,
+      payments: const [
+        GirviInvoicePayment(label: 'Cash', amount: 3000),
+      ],
+      disbursementSummary: 'Cash',
+      ledgerEntries: [
+        GirviInvoiceLedgerEntry(
+          date: collectionDate,
+          typeLabel: 'Interest Collection',
+          modeLabel: 'Cash',
+          amount: 2000,
+          interestAmount: 2000,
+        ),
+      ],
+      interestAdjustments: [
+        GirviInterestAdjustment(date: collectionDate, paid: 2000),
+      ],
+      interestOutstanding: 1240,
+      mode: GirviReceiptMode.interest,
+    );
+    final printable = draft.copyWith(mode: GirviReceiptMode.interest);
+    expect(printable.interestQuote.currentMonthlyInterestType,
+        GirviInterestCalculationType.simple);
+    expect(printable.interestQuote.currentMonthlyInterest, 150);
+    expect(printable.interestQuote.cycles.last.closingAmount, 4240);
+
+    final bytes = await GirviInvoicePdfService().build(
+      draft: printable,
+      format: GirviInvoiceFormat.a4,
+    );
+    expect(_pdfPageCount(bytes), greaterThanOrEqualTo(2));
+    final output = Platform.environment['GIRVI_GRV0019_PREVIEW_OUTPUT'];
+    if (output != null && output.isNotEmpty) {
+      await File(output).writeAsBytes(bytes);
+    }
   });
 
   test('Girvi bilingual terms preserve one condition per line', () {

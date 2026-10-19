@@ -4,6 +4,7 @@ class _CollectionFocusStrip extends StatelessWidget {
   final double interestDue;
   final double interestReceived;
   final double monthlyInterest;
+  final String monthlyInterestType;
   final double advanceAmount;
   final bool settlementComplete;
   final bool isOverdue;
@@ -13,6 +14,7 @@ class _CollectionFocusStrip extends StatelessWidget {
     required this.interestDue,
     required this.interestReceived,
     required this.monthlyInterest,
+    required this.monthlyInterestType,
     required this.advanceAmount,
     required this.settlementComplete,
     required this.isOverdue,
@@ -40,7 +42,6 @@ class _CollectionFocusStrip extends StatelessWidget {
                 : interestDue > 0
                     ? 'Interest is pending for collection.'
                     : 'No interest is due today.';
-
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -123,7 +124,8 @@ class _CollectionFocusStrip extends StatelessWidget {
                         _FocusMetric(
                           label: 'Interest Received',
                           value: 'Rs ${moneyFmt.format(interestReceived)}',
-                          color: GirviColors.info,
+                          color: GirviColors.success,
+                          foregroundColor: GirviColors.successText,
                         ),
                       ]
                     : [
@@ -136,34 +138,34 @@ class _CollectionFocusStrip extends StatelessWidget {
                         _FocusMetric(
                           label: 'Interest Received',
                           value: 'Rs ${moneyFmt.format(interestReceived)}',
-                          color: accent,
+                          color: GirviColors.success,
+                          foregroundColor: GirviColors.successText,
                         ),
                         _FocusMetric(
-                          label: 'Monthly Interest',
+                          label: 'Monthly $monthlyInterestType Interest',
                           value: 'Rs ${moneyFmt.format(monthlyInterest)}',
                           color: GirviColors.brandGold,
+                          wide: true,
                         ),
                       ],
           );
 
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                leading,
-                const SizedBox(height: 12),
-                metrics,
-              ],
-            );
-          }
-
-          return Row(
-            children: [
-              SizedBox(width: 300, child: leading),
-              const SizedBox(width: 12),
-              Expanded(child: metrics),
-            ],
-          );
+          return compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    leading,
+                    const SizedBox(height: 12),
+                    metrics,
+                  ],
+                )
+              : Row(
+                  children: [
+                    SizedBox(width: 300, child: leading),
+                    const SizedBox(width: 12),
+                    Expanded(child: metrics),
+                  ],
+                );
         },
       ),
     );
@@ -174,22 +176,26 @@ class _FocusMetric extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final Color? foregroundColor;
   final bool wide;
 
   const _FocusMetric({
     required this.label,
     required this.value,
     required this.color,
+    this.foregroundColor,
     this.wide = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final danger = color == GirviColors.danger;
-    final textColor = danger ? GirviColors.danger : GirviColors.textDark;
+    final textColor =
+        foregroundColor ?? (danger ? GirviColors.danger : GirviColors.textDark);
 
     return Container(
       width: wide ? 260 : 190,
+      constraints: const BoxConstraints(minHeight: 84),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: danger ? GirviColors.dangerBg : GirviColors.cardBg,
@@ -204,7 +210,7 @@ class _FocusMetric extends StatelessWidget {
         children: [
           Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: textColor,

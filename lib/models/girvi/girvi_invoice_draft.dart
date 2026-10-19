@@ -115,6 +115,7 @@ class GirviInvoiceDraft {
     required this.durationMonths,
     required this.startDate,
     required this.maturityDate,
+    this.interestAsOfDate,
     this.monthlyInterest = 0,
     this.totalInterest = 0,
     this.totalDue = 0,
@@ -158,6 +159,7 @@ class GirviInvoiceDraft {
   final int durationMonths;
   final DateTime startDate;
   final DateTime maturityDate;
+  final DateTime? interestAsOfDate;
   final double monthlyInterest;
   final double totalInterest;
   final double totalDue;
@@ -200,16 +202,20 @@ class GirviInvoiceDraft {
       customerAddress: customerAddress,
       items: items,
       loanAmount: loanAmount,
+      interestPrincipal: interestPrincipal,
       interestRate: interestRate,
       durationMonths: durationMonths,
       startDate: startDate,
       maturityDate: maturityDate,
+      interestAsOfDate: clearLifecycleFields ? createdAt : interestAsOfDate,
       monthlyInterest: monthlyInterest,
       totalInterest: totalInterest,
       totalDue: totalDue,
       payments: payments,
       disbursementSummary: disbursementSummary,
       ledgerEntries: ledgerEntries,
+      interestAdjustments:
+          clearLifecycleFields ? const [] : interestAdjustments,
       mode: mode ?? this.mode,
       accountStatus: clearLifecycleFields ? 'Active' : accountStatus,
       releaseDate: clearLifecycleFields ? null : releaseDate,
@@ -236,6 +242,14 @@ class GirviInvoiceDraft {
   bool get isReleaseReceipt => mode == GirviReceiptMode.release;
 
   bool get isInterestReceipt => mode == GirviReceiptMode.interest;
+
+  GirviInterestQuote get interestQuote => GirviInterestCalculator.quoteAt(
+        principal: interestPrincipal ?? loanAmount,
+        monthlyRatePercent: interestRate,
+        startDate: startDate,
+        asOf: interestAsOfDate ?? releaseDate ?? createdAt,
+        adjustments: interestAdjustments,
+      );
 
   double get totalOutstanding {
     final principal = principalOutstanding ?? loanAmount;

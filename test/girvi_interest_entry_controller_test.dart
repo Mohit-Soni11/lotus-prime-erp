@@ -142,8 +142,8 @@ void main() {
         .interestQuoteAt(DateTime(2026, 2, 1));
     expect(ledgerQuote.interestType, 'Compound');
     expect(controller.amount, 1000);
-    expect(controller.currentLedgerMonthlyInterestForSelected,
-        ledgerQuote.currentMonthlyInterest);
+    expect(controller.selectedInterestQuote!.lastChargedMonthlyInterest,
+        ledgerQuote.lastChargedMonthlyInterest);
     expect(
         controller.grossInterestAccruedForSelected, ledgerQuote.grossInterest);
     expect(

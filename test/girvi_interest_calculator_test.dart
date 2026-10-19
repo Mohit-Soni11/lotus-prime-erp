@@ -103,4 +103,69 @@ void main() {
       2,
     );
   });
+
+  test('GRV-0019 monthly basis follows capitalized interest after payment', () {
+    GirviInterestQuote quote(List<GirviInterestAdjustment> adjustments) =>
+        GirviInterestCalculator.quoteAt(
+          principal: 3000,
+          monthlyRatePercent: 5,
+          startDate: DateTime(2025, 5, 5),
+          asOf: DateTime(2026, 10, 19),
+          adjustments: adjustments,
+        );
+
+    final beforePayment = quote(const []);
+    expect(beforePayment.interestType, GirviInterestCalculationType.compound);
+    expect(beforePayment.currentMonthlyInterestType,
+        GirviInterestCalculationType.compound);
+    expect(beforePayment.currentInterestBase, 4800);
+    expect(beforePayment.currentMonthlyInterest, 240);
+    expect(beforePayment.lastChargedMonthlyInterestType,
+        GirviInterestCalculationType.compound);
+    expect(beforePayment.lastChargedMonthlyInterest, 240);
+
+    final afterPayment = quote([
+      GirviInterestAdjustment(date: DateTime(2026, 10, 19), paid: 2000),
+    ]);
+    expect(afterPayment.interestType, GirviInterestCalculationType.compound);
+    expect(afterPayment.currentMonthlyInterestType,
+        GirviInterestCalculationType.simple);
+    expect(afterPayment.currentInterestBase, 3000);
+    expect(afterPayment.currentMonthlyInterest, 150);
+    expect(afterPayment.lastChargedMonthlyInterestType,
+        GirviInterestCalculationType.compound);
+    expect(afterPayment.lastChargedMonthlyInterest, 240);
+    expect(afterPayment.grossInterest, 3240);
+    expect(afterPayment.interestOutstanding, 1240);
+
+    final nextAnniversary = GirviInterestCalculator.quoteAt(
+      principal: 3000,
+      monthlyRatePercent: 5,
+      startDate: DateTime(2025, 5, 5),
+      asOf: DateTime(2027, 5, 5),
+      adjustments: [
+        GirviInterestAdjustment(date: DateTime(2026, 10, 19), paid: 2000),
+      ],
+    );
+    expect(nextAnniversary.currentMonthlyInterestType,
+        GirviInterestCalculationType.compound);
+    expect(nextAnniversary.currentInterestBase, 5140);
+    expect(nextAnniversary.currentMonthlyInterest, 257);
+    expect(nextAnniversary.lastChargedMonthlyInterestType,
+        GirviInterestCalculationType.simple);
+    expect(nextAnniversary.lastChargedMonthlyInterest, 150);
+
+    final thirdYear = GirviInterestCalculator.quoteAt(
+      principal: 3000,
+      monthlyRatePercent: 5,
+      startDate: DateTime(2025, 5, 5),
+      asOf: DateTime(2027, 6, 5),
+      adjustments: [
+        GirviInterestAdjustment(date: DateTime(2026, 10, 19), paid: 2000),
+      ],
+    );
+    expect(thirdYear.lastChargedMonthlyInterestType,
+        GirviInterestCalculationType.compound);
+    expect(thirdYear.lastChargedMonthlyInterest, 257);
+  });
 }

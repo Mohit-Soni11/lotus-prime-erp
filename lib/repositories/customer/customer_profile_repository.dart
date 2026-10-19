@@ -423,13 +423,18 @@ class CustomerProfileRepository {
                     '${entry.label} Rs ${entry.amount.toStringAsFixed(2)}',
               )
               .join(' + ');
+      final interestAdjustments =
+          GirviInterestPaymentAdjustments.fromPayments(ledgerRows);
+      final hasInterestCollection = interestAdjustments.any(
+        (entry) => entry.paid > 0 || entry.discount > 0,
+      );
       final status = GirviStatus.fromDb(loan.status);
       final receiptMode = status == GirviStatus.released ||
               status == GirviStatus.readyForDelivery ||
               loan.releaseDate != null ||
               loan.releaseTotalAmount != null
           ? GirviReceiptMode.release
-          : loan.lastInterestPaidDate != null
+          : hasInterestCollection || loan.lastInterestPaidDate != null
               ? GirviReceiptMode.interest
               : GirviReceiptMode.pledge;
       var legacyPrincipalRepaid = 0.0;
@@ -442,13 +447,12 @@ class CustomerProfileRepository {
           legacyPrincipalRepaid += payment.amount;
         } else if (type == GirviPaymentType.fullRelease) {}
       }
-      final interestAdjustments =
-          GirviInterestPaymentAdjustments.fromPayments(ledgerRows);
+      final interestAsOfDate = loan.releaseDate ?? DateTime.now();
       final interestQuote = GirviInterestCalculator.quoteAt(
         principal: loan.loanAmount + legacyPrincipalRepaid,
         monthlyRatePercent: loan.interestRate,
         startDate: loan.startDate,
-        asOf: loan.releaseDate ?? DateTime.now(),
+        asOf: interestAsOfDate,
         adjustments: interestAdjustments,
       );
       final monthlyInterest = receiptMode == GirviReceiptMode.pledge
@@ -495,6 +499,7 @@ class CustomerProfileRepository {
         durationMonths: loan.durationMonths,
         startDate: loan.startDate,
         maturityDate: maturityDate,
+        interestAsOfDate: interestAsOfDate,
         monthlyInterest: monthlyInterest,
         totalInterest: totalInterest,
         totalDue: loan.loanAmount + totalInterest,

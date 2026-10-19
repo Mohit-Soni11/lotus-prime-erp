@@ -58,6 +58,8 @@ class GirviInterestCalculator {
     var interestDiscount = 0.0;
     var cycleInterest = 0.0;
     var cycleOpening = principal;
+    var lastChargedMonthlyInterest = 0.0;
+    var lastChargedMonthlyInterestType = GirviInterestCalculationType.simple;
     final cycles = <GirviInterestBreakdownLine>[];
 
     void applyCredit(double amount, {required bool isDiscount}) {
@@ -94,6 +96,10 @@ class GirviInterestCalculator {
       final monthlyCharge = (principal + capitalized) *
           monthlyRatePercent.clamp(0, double.infinity) /
           100;
+      lastChargedMonthlyInterest = monthlyCharge;
+      lastChargedMonthlyInterestType = capitalized > 0.005
+          ? GirviInterestCalculationType.compound
+          : GirviInterestCalculationType.simple;
       grossInterest += monthlyCharge;
       cycleInterest += monthlyCharge;
       final creditApplied =
@@ -125,17 +131,24 @@ class GirviInterestCalculator {
       }
     }
     applyThrough(end);
+    final currentInterestBase = principal + capitalized;
     return GirviInterestQuote(
       chargeableMonths: months,
       interestType: GirviInterestCalculationType.forChargeableMonths(months),
+      currentMonthlyInterestType: capitalized > 0.005
+          ? GirviInterestCalculationType.compound
+          : GirviInterestCalculationType.simple,
+      currentInterestBase: currentInterestBase,
       grossInterest: grossInterest,
       interestPaid: interestPaid,
       interestDiscount: interestDiscount,
       interestOutstanding: capitalized + currentCycleDue,
       advanceInterestCredit: advanceCredit,
-      currentMonthlyInterest: (principal + capitalized) *
+      currentMonthlyInterest: currentInterestBase *
           monthlyRatePercent.clamp(0, double.infinity) /
           100,
+      lastChargedMonthlyInterest: lastChargedMonthlyInterest,
+      lastChargedMonthlyInterestType: lastChargedMonthlyInterestType,
       principalDue: principalDue > 0 ? principalDue : 0,
       cycles: List.unmodifiable(cycles),
     );
@@ -288,24 +301,32 @@ class GirviInterestAdjustment {
 class GirviInterestQuote {
   final int chargeableMonths;
   final String interestType;
+  final String currentMonthlyInterestType;
+  final double currentInterestBase;
   final double grossInterest;
   final double interestPaid;
   final double interestDiscount;
   final double interestOutstanding;
   final double advanceInterestCredit;
   final double currentMonthlyInterest;
+  final double lastChargedMonthlyInterest;
+  final String lastChargedMonthlyInterestType;
   final double principalDue;
   final List<GirviInterestBreakdownLine> cycles;
 
   const GirviInterestQuote({
     required this.chargeableMonths,
     required this.interestType,
+    required this.currentMonthlyInterestType,
+    required this.currentInterestBase,
     required this.grossInterest,
     required this.interestPaid,
     required this.interestDiscount,
     required this.interestOutstanding,
     required this.advanceInterestCredit,
     required this.currentMonthlyInterest,
+    required this.lastChargedMonthlyInterest,
+    required this.lastChargedMonthlyInterestType,
     required this.principalDue,
     required this.cycles,
   });

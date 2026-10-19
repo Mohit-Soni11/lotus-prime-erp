@@ -19,6 +19,7 @@ class GirviColors {
 
   // ── STATUS ────────────────────────────────────────────────────────────────
   static const Color success = Color(0xFF10B981);
+  static const Color successText = Color(0xFF047857);
   static const Color successBg = Color(0x1A10B981);
   static const Color successBorder = Color(0x3310B981);
   static const Color warning = Color(0xFFF59E0B);
