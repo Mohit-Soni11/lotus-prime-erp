@@ -37,9 +37,8 @@ void main() {
     final periodFrom = DateTime(2026, 1, 1);
     final periodTo = DateTime(2026, 2, 1);
 
-    final paymentId = await repository.recordPayment(
+    final paymentId = await repository.recordInterestLedgerPayment(
       loanId: loanId,
-      paymentType: GirviPaymentType.interest,
       paymentMode: GirviPaymentMode.cash,
       amount: 2500,
       paymentDate: periodTo,
@@ -282,6 +281,42 @@ void main() {
     }
   });
 
+  test('notice timeline recalculates completed years after dated payment',
+      () async {
+    final loanId = await _insertLoan(
+      db,
+      loanAmount: 100000,
+      interestRate: 1,
+      startDate: DateTime(2025, 1, 1),
+    );
+    final timeline = GirviInterestPeriodSnapshotRepository(db);
+    final before = await timeline.synchronizeForLoans(
+      await repository.getLoansWithCustomer(),
+      asOf: DateTime(2026, 2, 1),
+    );
+    expect(
+        before[loanId]!.map((period) => period.periodInterest), [12000, 1120]);
+
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 12000,
+      paymentDate: DateTime(2026, 1, 1),
+    );
+    final after = await timeline.synchronizeForLoans(
+      await repository.getLoansWithCustomer(),
+      asOf: DateTime(2026, 2, 1),
+    );
+    expect(
+        after[loanId]!.map((period) => period.periodInterest), [12000, 1000]);
+    expect(
+        after[loanId]!.map((period) => period.closingAmount), [100000, 101000]);
+    expect(
+        after[loanId]!
+            .every((period) => period.source == 'DATED_UNPAID_INTEREST_POLICY'),
+        isTrue);
+  });
+
   test('records interest ledger payment with paid-through period', () async {
     final loanId = await _insertLoan(
       db,
@@ -323,6 +358,9 @@ void main() {
       customerName: 'Interest Entry Customer',
       customerMobile: '9999999999',
       interestPaidTotal: 20000,
+      interestAdjustments: [
+        GirviInterestAdjustment(date: DateTime(2026, 6, 17), paid: 20000),
+      ],
     );
 
     expect(ledgerSnapshot.grossInterestAccrued, 50000);
@@ -468,10 +506,9 @@ void main() {
       startDate: now.subtract(const Duration(days: 3)),
     );
 
-    await repository.recordPayment(
+    await _seedHistoricalPrincipalPayment(
+      db,
       loanId: loanId,
-      paymentType: GirviPaymentType.partialPrincipal,
-      paymentMode: GirviPaymentMode.cash,
       amount: 2500,
       paymentDate: now,
       receiptNo: 'GIP-PRN-001',
@@ -814,10 +851,9 @@ void main() {
       paymentDate: now,
       receiptNo: 'GIP-LEGACY-I',
     );
-    await repository.recordPayment(
+    await _seedHistoricalPrincipalPayment(
+      db,
       loanId: loanId,
-      paymentType: GirviPaymentType.partialPrincipal,
-      paymentMode: GirviPaymentMode.cash,
       amount: 50000,
       paymentDate: now,
       receiptNo: 'GIP-LEGACY-P',
@@ -837,17 +873,17 @@ void main() {
     expect(joined.netInterestDue, 0);
   });
 
-  test('records partial principal payment and updates outstanding principal',
+  test('reads historical partial principal payment and outstanding principal',
       () async {
     final loanId = await _insertLoan(db);
 
-    await repository.recordPayment(
+    await _seedHistoricalPrincipalPayment(
+      db,
       loanId: loanId,
-      paymentType: GirviPaymentType.partialPrincipal,
-      paymentMode: GirviPaymentMode.upi,
       amount: 12000,
       paymentDate: DateTime(2026, 2, 10),
       receiptNo: 'GIP-00099',
+      paymentMode: GirviPaymentMode.upi,
     );
 
     final loan = await repository.getLoanById(loanId);
@@ -869,9 +905,8 @@ void main() {
       startDate: DateTime(2026, 1, 1),
     );
 
-    await repository.recordPayment(
+    await repository.recordInterestLedgerPayment(
       loanId: loanId,
-      paymentType: GirviPaymentType.interest,
       paymentMode: GirviPaymentMode.cash,
       amount: 4000,
       paymentDate: DateTime(2026, 4, 1),
@@ -898,18 +933,16 @@ void main() {
     );
     expect(advanceSnapshot.accruedInterest, 0);
     expect(advanceSnapshot.advanceInterestMonths, 13);
-    expect(advanceSnapshot.advanceInterestAmount, 3250);
   });
 
   test('girvi interest charges started months and compounds annually', () {
     expect(GirviInterestCalculationType.forChargeableMonths(12), 'Simple');
     expect(GirviInterestCalculationType.forChargeableMonths(13), 'Compound');
     expect(
-      GirviLoanModel.calculateInterest(
+      GirviInterestCalculator.interestForMonths(
         principal: 25000,
         monthlyRatePercent: 5,
         months: 42,
-        interestType: GirviInterestCalculationType.forChargeableMonths(42),
       ),
       108120,
     );
@@ -946,19 +979,33 @@ void main() {
       startDate: DateTime(2026, 1, 1),
       releaseDate: DateTime(2027, 2, 1),
     );
+    final paidThroughAnnualCycle = _loanModel(
+      loanAmount: 5000,
+      interestRate: 5,
+      startDate: DateTime(2026, 1, 1),
+      releaseDate: DateTime(2027, 2, 1),
+      lastInterestPaidDate: DateTime(2027, 1, 1),
+    );
     final seventeenMonthLoan = _loanModel(
       loanAmount: 50000,
       interestRate: 5,
       startDate: DateTime(2025, 2, 9),
       releaseDate: DateTime(2026, 6, 17),
     );
-    final seventeenMonthBreakdown = seventeenMonthLoan.accruedInterestBreakdown;
+    final seventeenMonthBreakdown = GirviInterestCalculator.quoteAt(
+      principal: seventeenMonthLoan.loanAmount,
+      monthlyRatePercent: seventeenMonthLoan.interestRate,
+      startDate: seventeenMonthLoan.startDate,
+      asOf: seventeenMonthLoan.releaseDate!,
+      adjustments: const [],
+    ).cycles;
     final seventeenMonthElapsed =
         seventeenMonthLoan.unpaidInterestElapsedPeriod;
 
     expect(oneStartedMonth.accruedInterest, 250);
     expect(annualCycle.accruedInterest, 3000);
     expect(monthAfterAnnualCycle.accruedInterest, 3400);
+    expect(paidThroughAnnualCycle.accruedInterest, 250);
     expect(seventeenMonthBreakdown, hasLength(2));
     expect(seventeenMonthBreakdown[0].months, 12);
     expect(seventeenMonthBreakdown[0].principalBase, 50000);
@@ -1042,11 +1089,36 @@ Future<int> _insertLoan(
           itemDescription: 'Gold chain',
           grossWeight: const drift.Value(12),
           netWeight: const drift.Value(12),
-          ratePerGram: const drift.Value(7000),
-          totalValue: const drift.Value(84000),
           loanAmount: drift.Value(loanAmount),
           interestRate: drift.Value(interestRate),
           startDate: drift.Value(startDate ?? DateTime(2026, 1, 1)),
+        ),
+      );
+}
+
+Future<void> _seedHistoricalPrincipalPayment(
+  AppDatabase db, {
+  required int loanId,
+  required double amount,
+  required DateTime paymentDate,
+  required String receiptNo,
+  GirviPaymentMode paymentMode = GirviPaymentMode.cash,
+}) async {
+  final loan = await (db.select(db.girviLoans)
+        ..where((row) => row.id.equals(loanId)))
+      .getSingle();
+  final balanceAfter = loan.loanAmount - amount;
+  await (db.update(db.girviLoans)..where((row) => row.id.equals(loanId)))
+      .write(GirviLoansCompanion(loanAmount: drift.Value(balanceAfter)));
+  await db.into(db.girviPayments).insert(
+        GirviPaymentsCompanion.insert(
+          girviId: loanId,
+          paymentType: GirviPaymentType.partialPrincipal.dbValue,
+          paymentMode: drift.Value(paymentMode.dbValue),
+          paymentDate: drift.Value(paymentDate),
+          amount: drift.Value(amount),
+          balanceAfter: drift.Value(balanceAfter),
+          receiptNo: drift.Value(receiptNo),
         ),
       );
 }
@@ -1069,9 +1141,6 @@ GirviLoanModel _loanModel({
     grossWeight: 1,
     stoneWeight: 0,
     netWeight: 1,
-    ratePerGram: 1,
-    totalValue: 1,
-    ltvPercent: 1,
     loanAmount: loanAmount,
     interestRate: interestRate,
     durationMonths: 12,

@@ -58,7 +58,7 @@ class _PledgedFinancialSummary extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Pledged Value Snapshot',
+                  'Pledged Item Snapshot',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(
@@ -189,8 +189,6 @@ class _PledgedItemDetailRow extends StatelessWidget {
   final String grossWeight;
   final String? lessWeight;
   final String netWeight;
-  final String rate;
-  final String value;
   final String? huid;
   final List<String> photoPaths;
   final Color color;
@@ -204,8 +202,6 @@ class _PledgedItemDetailRow extends StatelessWidget {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
-    required this.rate,
-    required this.value,
     required this.huid,
     required this.photoPaths,
     required this.color,
@@ -304,8 +300,6 @@ class _PledgedItemDetailRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              _PledgedValuePill(value: value, color: color),
             ],
           ),
           const SizedBox(height: 14),
@@ -317,7 +311,6 @@ class _PledgedItemDetailRow extends StatelessWidget {
                 grossWeight: grossWeight,
                 lessWeight: lessWeight,
                 netWeight: netWeight,
-                rate: rate,
                 huid: hasHuid ? huidText : null,
                 color: color,
               );
@@ -345,57 +338,6 @@ class _PledgedItemDetailRow extends StatelessWidget {
                 ],
               );
             },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PledgedValuePill extends StatelessWidget {
-  final String value;
-  final Color color;
-
-  const _PledgedValuePill({
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 118),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            'Valuation',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              color: GirviColors.textBody,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerRight,
-            child: Text(
-              value,
-              style: GoogleFonts.manrope(
-                color: color,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
           ),
         ],
       ),

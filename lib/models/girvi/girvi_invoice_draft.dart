@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'girvi_interest_calculator.dart';
 
 enum GirviReceiptMode {
   pledge,
@@ -81,11 +82,7 @@ class GirviInvoiceItemDraft {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
-    required this.valuationPurity,
-    required this.fineWeight,
-    required this.ratePerGram,
     required this.huid,
-    required this.value,
     this.photoPaths = const [],
   });
 
@@ -97,11 +94,7 @@ class GirviInvoiceItemDraft {
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
-  final String valuationPurity;
-  final double fineWeight;
-  final double ratePerGram;
   final String huid;
-  final double value;
   final List<String> photoPaths;
 }
 
@@ -116,18 +109,19 @@ class GirviInvoiceDraft {
     required this.customerCity,
     this.customerAddress = '',
     required this.items,
-    required this.totalValue,
     required this.loanAmount,
+    this.interestPrincipal,
     required this.interestRate,
     required this.durationMonths,
     required this.startDate,
     required this.maturityDate,
-    required this.monthlyInterest,
-    required this.totalInterest,
-    required this.totalDue,
+    this.monthlyInterest = 0,
+    this.totalInterest = 0,
+    this.totalDue = 0,
     required this.payments,
     required this.disbursementSummary,
     this.ledgerEntries = const [],
+    this.interestAdjustments = const [],
     this.mode = GirviReceiptMode.pledge,
     this.accountStatus = 'Active',
     this.releaseDate,
@@ -158,8 +152,8 @@ class GirviInvoiceDraft {
   final String customerCity;
   final String customerAddress;
   final List<GirviInvoiceItemDraft> items;
-  final double totalValue;
   final double loanAmount;
+  final double? interestPrincipal;
   final double interestRate;
   final int durationMonths;
   final DateTime startDate;
@@ -170,6 +164,7 @@ class GirviInvoiceDraft {
   final List<GirviInvoicePayment> payments;
   final String disbursementSummary;
   final List<GirviInvoiceLedgerEntry> ledgerEntries;
+  final List<GirviInterestAdjustment> interestAdjustments;
   final GirviReceiptMode mode;
   final String accountStatus;
   final DateTime? releaseDate;
@@ -204,7 +199,6 @@ class GirviInvoiceDraft {
       customerCity: customerCity,
       customerAddress: customerAddress,
       items: items,
-      totalValue: totalValue,
       loanAmount: loanAmount,
       interestRate: interestRate,
       durationMonths: durationMonths,
@@ -242,9 +236,6 @@ class GirviInvoiceDraft {
   bool get isReleaseReceipt => mode == GirviReceiptMode.release;
 
   bool get isInterestReceipt => mode == GirviReceiptMode.interest;
-
-  double get loanToValuePercent =>
-      totalValue <= 0 ? 0 : (loanAmount / totalValue) * 100;
 
   double get totalOutstanding {
     final principal = principalOutstanding ?? loanAmount;

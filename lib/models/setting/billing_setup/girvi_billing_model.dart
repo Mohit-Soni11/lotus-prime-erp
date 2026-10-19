@@ -46,10 +46,6 @@ class GirviInvoiceFieldSettings {
   final bool showGrossWeight;
   final bool showLessWeight;
   final bool showNetWeight;
-  final bool showValuationPurity;
-  final bool showFineWeight;
-  final bool showRatePerGram;
-  final bool showValuationAmount;
   final bool showItemPhotos;
 
   const GirviInvoiceFieldSettings({
@@ -62,10 +58,6 @@ class GirviInvoiceFieldSettings {
     this.showGrossWeight = true,
     this.showLessWeight = true,
     this.showNetWeight = true,
-    this.showValuationPurity = false,
-    this.showFineWeight = false,
-    this.showRatePerGram = false,
-    this.showValuationAmount = false,
     this.showItemPhotos = true,
   });
 
@@ -86,10 +78,6 @@ class GirviInvoiceFieldSettings {
         showGrossWeight,
         showLessWeight,
         showNetWeight,
-        showValuationPurity,
-        showFineWeight,
-        showRatePerGram,
-        showValuationAmount,
         showItemPhotos,
       ].where((value) => value).length;
 
@@ -103,10 +91,6 @@ class GirviInvoiceFieldSettings {
     bool? showGrossWeight,
     bool? showLessWeight,
     bool? showNetWeight,
-    bool? showValuationPurity,
-    bool? showFineWeight,
-    bool? showRatePerGram,
-    bool? showValuationAmount,
     bool? showItemPhotos,
   }) {
     return GirviInvoiceFieldSettings(
@@ -119,10 +103,6 @@ class GirviInvoiceFieldSettings {
       showGrossWeight: showGrossWeight ?? this.showGrossWeight,
       showLessWeight: showLessWeight ?? this.showLessWeight,
       showNetWeight: showNetWeight ?? this.showNetWeight,
-      showValuationPurity: showValuationPurity ?? this.showValuationPurity,
-      showFineWeight: showFineWeight ?? this.showFineWeight,
-      showRatePerGram: showRatePerGram ?? this.showRatePerGram,
-      showValuationAmount: showValuationAmount ?? this.showValuationAmount,
       showItemPhotos: showItemPhotos ?? this.showItemPhotos,
     );
   }
@@ -137,10 +117,6 @@ class GirviInvoiceFieldSettings {
         'grossWeight': showGrossWeight,
         'lessWeight': showLessWeight,
         'netWeight': showNetWeight,
-        'valuationPurity': showValuationPurity,
-        'fineWeight': showFineWeight,
-        'ratePerGram': showRatePerGram,
-        'valuationAmount': showValuationAmount,
         'itemPhotos': showItemPhotos,
       };
 
@@ -165,12 +141,6 @@ class GirviInvoiceFieldSettings {
       showGrossWeight: read('grossWeight', fallback.showGrossWeight),
       showLessWeight: read('lessWeight', fallback.showLessWeight),
       showNetWeight: read('netWeight', fallback.showNetWeight),
-      showValuationPurity:
-          read('valuationPurity', fallback.showValuationPurity),
-      showFineWeight: read('fineWeight', fallback.showFineWeight),
-      showRatePerGram: read('ratePerGram', fallback.showRatePerGram),
-      showValuationAmount:
-          read('valuationAmount', fallback.showValuationAmount),
       showItemPhotos: read('itemPhotos', fallback.showItemPhotos),
     );
   }
@@ -203,11 +173,7 @@ class GirviBillingModel {
   final bool showLessWeight;
   final bool showNetWeight;
   final bool showPurity;
-  final bool showValuationPurity;
-  final bool showFineWeight;
-  final bool showRate;
   final bool showHuid;
-  final bool showTotalValue;
   final bool showItemPhotos;
   final bool showKycDetails;
   final bool showKycPhoto;
@@ -259,11 +225,7 @@ class GirviBillingModel {
     this.showLessWeight = true,
     this.showNetWeight = true,
     this.showPurity = true,
-    this.showValuationPurity = false,
-    this.showFineWeight = false,
-    this.showRate = false,
     this.showHuid = true,
-    this.showTotalValue = false,
     this.showItemPhotos = true,
     this.showKycDetails = false,
     this.showKycPhoto = false,
@@ -355,7 +317,6 @@ class GirviBillingModel {
         showMonthlyInterest,
         showTotalInterest,
         showTotalDue,
-        showTotalValue,
         showDisbursementDetails,
         showKycDetails,
         showKycPhoto,
@@ -399,11 +360,7 @@ class GirviBillingModel {
     bool? showLessWeight,
     bool? showNetWeight,
     bool? showPurity,
-    bool? showValuationPurity,
-    bool? showFineWeight,
-    bool? showRate,
     bool? showHuid,
-    bool? showTotalValue,
     bool? showItemPhotos,
     bool? showKycDetails,
     bool? showKycPhoto,
@@ -448,11 +405,7 @@ class GirviBillingModel {
       showLessWeight: showLessWeight ?? this.showLessWeight,
       showNetWeight: showNetWeight ?? this.showNetWeight,
       showPurity: showPurity ?? this.showPurity,
-      showValuationPurity: showValuationPurity ?? this.showValuationPurity,
-      showFineWeight: showFineWeight ?? this.showFineWeight,
-      showRate: showRate ?? this.showRate,
       showHuid: showHuid ?? this.showHuid,
-      showTotalValue: showTotalValue ?? this.showTotalValue,
       showItemPhotos: showItemPhotos ?? this.showItemPhotos,
       showKycDetails: showKycDetails ?? this.showKycDetails,
       showKycPhoto: showKycPhoto ?? this.showKycPhoto,
@@ -506,7 +459,6 @@ class GirviBillingTemplateOptions {
         'monthlyInterest': model.showMonthlyInterest,
         'totalInterest': model.showTotalInterest,
         'totalDue': model.showTotalDue,
-        'totalValuation': model.showTotalValue,
         'disbursementDetails': model.showDisbursementDetails,
         'kycDetails': model.showKycDetails,
         'kycPhoto': model.showKycPhoto,
@@ -522,11 +474,7 @@ class GirviBillingTemplateOptions {
         'lessWeight': model.showLessWeight,
         'netWeight': model.showNetWeight,
         'purity': model.showPurity,
-        'valuationPurity': model.showValuationPurity,
-        'fineWeight': model.showFineWeight,
-        'rate': model.showRate,
         'huid': model.showHuid,
-        'totalValue': model.showTotalValue,
         'itemPhotos': model.showItemPhotos,
         'kycDetails': model.showKycDetails,
         'disbursementDetails': model.showDisbursementDetails,
@@ -574,10 +522,6 @@ class GirviBillingTemplateOptions {
         showLessWeight: readLegacy('lessWeight', base.showLessWeight),
         showNetWeight: readLegacy('netWeight', base.showNetWeight),
         showPurity: readLegacy('purity', base.showPurity),
-        showValuationPurity:
-            readLegacy('valuationPurity', base.showValuationPurity),
-        showFineWeight: readLegacy('fineWeight', base.showFineWeight),
-        showRate: readLegacy('rate', base.showRate),
         showHuid: readLegacy('huid', base.showHuid),
         showItemPhotos: readLegacy('itemPhotos', base.showItemPhotos),
         showKycDetails: readDocument(
@@ -598,10 +542,6 @@ class GirviBillingTemplateOptions {
         showTotalInterest:
             readDocument('totalInterest', base.showTotalInterest),
         showTotalDue: readDocument('totalDue', base.showTotalDue),
-        showTotalValue: readDocument(
-          'totalValuation',
-          readLegacy('totalValue', base.showTotalValue),
-        ),
         showDisbursementDetails: readDocument(
           'disbursementDetails',
           readLegacy(
@@ -644,10 +584,6 @@ class GirviBillingTemplateOptions {
               showGrossWeight: legacyApplied.showGrossWeight,
               showLessWeight: legacyApplied.showLessWeight,
               showNetWeight: legacyApplied.showNetWeight,
-              showValuationPurity: legacyApplied.showValuationPurity,
-              showFineWeight: legacyApplied.showFineWeight,
-              showRatePerGram: legacyApplied.showRate,
-              showValuationAmount: legacyApplied.showTotalValue,
               showItemPhotos: legacyApplied.showItemPhotos,
             ),
         };

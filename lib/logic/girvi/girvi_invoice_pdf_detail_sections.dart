@@ -90,9 +90,8 @@ extension _GirviInvoicePdfDetailSections on GirviInvoicePdfService {
     final entries = <_GirviDetailEntry>[
       if (settings.showTotalInterest)
         _GirviDetailEntry(
-          label: draft.isReleaseReceipt
-              ? 'Interest Settled'
-              : 'Total Interest at Maturity',
+          label:
+              draft.isReleaseReceipt ? 'Interest Settled' : 'Accrued Interest',
           value: _amount(
             draft.isReleaseReceipt
                 ? (draft.releaseInterest ?? draft.totalInterest)
@@ -110,12 +109,6 @@ extension _GirviInvoicePdfDetailSections on GirviInvoicePdfService {
           value: _amount(
             draft.releaseTotalAmount ?? draft.totalDue,
           ),
-          strong: true,
-        ),
-      if (settings.showTotalValue)
-        _GirviDetailEntry(
-          label: 'Total Pledged Valuation',
-          value: _amount(draft.totalValue),
           strong: true,
         ),
     ];

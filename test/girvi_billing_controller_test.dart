@@ -162,7 +162,6 @@ void main() {
         .settingsForMetal(GirviBillingMetal.gold)
         .copyWith(
           showHuid: false,
-          showValuationAmount: true,
         );
     final updated = controller.state.model.withMetalSettings(
       GirviBillingMetal.gold,
@@ -175,14 +174,6 @@ void main() {
     final saved = await repo.fetch();
     expect(
       saved.settingsForMetal(GirviBillingMetal.gold).showHuid,
-      isFalse,
-    );
-    expect(
-      saved.settingsForMetal(GirviBillingMetal.gold).showValuationAmount,
-      isTrue,
-    );
-    expect(
-      saved.settingsForMetal(GirviBillingMetal.silver).showValuationAmount,
       isFalse,
     );
   });

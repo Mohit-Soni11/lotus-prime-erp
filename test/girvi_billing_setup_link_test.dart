@@ -19,7 +19,7 @@ void main() {
     await db.close();
   });
 
-  test('Customer print defaults keep valuation details private', () {
+  test('Customer print defaults show pledged item details', () {
     final settings = GirviBillingModel.defaults;
     final gold = settings.settingsForMetal(GirviBillingMetal.gold);
     final silver = settings.settingsForMetal(GirviBillingMetal.silver);
@@ -28,14 +28,6 @@ void main() {
     expect(gold.showItemPhotos, isTrue);
     expect(gold.showHuid, isTrue);
     expect(silver.showHuid, isFalse);
-    expect(gold.showValuationPurity, isFalse);
-    expect(gold.showFineWeight, isFalse);
-    expect(gold.showRatePerGram, isFalse);
-    expect(gold.showValuationAmount, isFalse);
-    expect(settings.showValuationPurity, isFalse);
-    expect(settings.showFineWeight, isFalse);
-    expect(settings.showRate, isFalse);
-    expect(settings.showTotalValue, isFalse);
     expect(settings.showKycDetails, isFalse);
     expect(settings.showDisbursementDetails, isFalse);
     expect(settings.printTermsAndConditions, isFalse);
@@ -56,10 +48,6 @@ void main() {
               .settingsForMetal(GirviBillingMetal.gold)
               .copyWith(
                 showHuid: false,
-                showValuationPurity: true,
-                showFineWeight: true,
-                showRatePerGram: true,
-                showValuationAmount: true,
                 showItemPhotos: false,
               ),
         )
@@ -79,7 +67,6 @@ void main() {
           customerDeclarationHindi: 'मैंने गिरवी और ऋण का विवरण जांच लिया है।',
           showDuration: true,
           showMaturityDate: true,
-          showTotalValue: true,
           showDisbursementDetails: true,
           showKycDetails: true,
           showKycPhoto: true,
@@ -95,15 +82,10 @@ void main() {
     final silver = saved.settingsForMetal(GirviBillingMetal.silver);
 
     expect(gold.showHuid, isFalse);
-    expect(gold.showValuationPurity, isTrue);
-    expect(gold.showFineWeight, isTrue);
-    expect(gold.showRatePerGram, isTrue);
-    expect(gold.showValuationAmount, isTrue);
     expect(gold.showItemPhotos, isFalse);
     expect(silver.showLessWeight, isFalse);
     expect(saved.showDuration, isTrue);
     expect(saved.showMaturityDate, isTrue);
-    expect(saved.showTotalValue, isTrue);
     expect(saved.showDisbursementDetails, isTrue);
     expect(saved.showKycDetails, isTrue);
     expect(saved.showKycPhoto, isTrue);

@@ -70,7 +70,7 @@ extension NewGirviSections on _NewGirviScreenState {
         const SizedBox(height: 14),
         GirviDropdown<MetalPurity>(
           label: 'Metal Purity *',
-          icon: GirviIcons.valuation,
+          icon: Icons.verified_outlined,
           value: _ctrl.metalPurity,
           items: MetalPurity.values
               .map((e) => DropdownMenuItem(
@@ -118,7 +118,7 @@ extension NewGirviSections on _NewGirviScreenState {
             icon: Icons.scatter_plot_outlined,
             controller: _stoneWtCtrl,
             focusNode: _stoneWtFocus,
-            nextFocus: _rateFocus,
+            nextFocus: _loanAmtFocus,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
@@ -162,58 +162,6 @@ extension NewGirviSections on _NewGirviScreenState {
     );
   }
 
-  // â”€â”€ SECTION 3: VALUATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  // ignore: unused_element
-  Widget _buildSection3Valuation() {
-    return GirviSectionCard(
-      icon: GirviIcons.valuation,
-      title: GirviStrings.secValuation,
-      subtitle: GirviStrings.descValuation,
-      accent: GirviColors.accentValuation,
-      child: Column(children: [
-        GirviInputField(
-          label: 'Market Rate (Rs / gram) *',
-          hint: '0.00',
-          icon: GirviIcons.valuation,
-          controller: _rateCtrl,
-          focusNode: _rateFocus,
-          nextFocus: _loanAmtFocus,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-          ],
-          prefixText: 'Rs ',
-          validator: _ctrl.validateRatePerGram,
-        ),
-        const SizedBox(height: 14),
-        // Computed total value
-        GirviReadOnlyField(
-          label: 'Pledged Valuation',
-          value: _ctrl.totalValue > 0
-              ? _formatSmartMoney(_ctrl.totalValue)
-              : 'Not set',
-          highlighted: _ctrl.totalValue > 0,
-          valueColor: _ctrl.totalValue > 0
-              ? GirviColors.textDark
-              : GirviColors.textMuted,
-        ),
-        if (_ctrl.totalValue > 0) ...[
-          const SizedBox(height: 8),
-          _LtvSuggestionRow(
-            totalValue: _ctrl.totalValue,
-            onSuggestionTap: (ltv) {
-              _ctrl.onLtvChanged(ltv);
-              _loanAmtCtrl.text = _formatSmartNumber(_ctrl.loanAmount);
-            },
-          ),
-        ],
-      ]),
-    );
-  }
-
-  // â”€â”€ SECTION 4: LOAN TERMS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
   Widget _buildSection4LoanTerms() {
     return GirviSectionCard(
       icon: GirviIcons.loanTerms,
@@ -222,59 +170,25 @@ extension NewGirviSections on _NewGirviScreenState {
       accent: GirviColors.brandGold,
       showAccentBorder: false,
       child: Column(children: [
-        _LoanTermsGroupHeader(
+        const _LoanTermsGroupHeader(
           icon: GirviIcons.loanTerms,
-          title: 'Loan Value',
-          subtitle: 'Principal amount against the pledged valuation.',
-          trailing: _ctrl.totalValue > 0
-              ? 'Valuation ${_formatSmartMoney(_ctrl.totalValue)}'
-              : null,
+          title: 'Loan Amount',
+          subtitle: 'Principal disbursed against the pledged items.',
         ),
         const SizedBox(height: 12),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 760;
-            final amountField = GirviInputField(
-              label: 'Loan Amount (Rs)',
-              hint: '0.00',
-              icon: GirviIcons.loanTerms,
-              controller: _loanAmtCtrl,
-              focusNode: _loanAmtFocus,
-              nextFocus: _interestFocus,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-              ],
-              prefixText: 'Rs ',
-              validator: _ctrl.validateLoanAmount,
-            );
-            final ltvControl = _LtvIndicator(
-              ltv: _ctrl.totalValue > 0 ? _ctrl.computedLtv : _ctrl.ltvPercent,
-              enabled: _ctrl.totalValue > 0,
-              onChanged: (ltv) {
-                _ctrl.onLtvChanged(ltv);
-                _loanAmtCtrl.text = _formatSmartNumber(_ctrl.loanAmount);
-              },
-            );
-            if (!wide) {
-              return Column(
-                children: [
-                  amountField,
-                  const SizedBox(height: 12),
-                  ltvControl,
-                ],
-              );
-            }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: amountField),
-                const SizedBox(width: 12),
-                Expanded(child: ltvControl),
-              ],
-            );
-          },
+        GirviInputField(
+          label: 'Loan Amount (Rs)',
+          hint: '0.00',
+          icon: GirviIcons.loanTerms,
+          controller: _loanAmtCtrl,
+          focusNode: _loanAmtFocus,
+          nextFocus: _interestFocus,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+          ],
+          prefixText: 'Rs ',
+          validator: _ctrl.validateLoanAmount,
         ),
         const SizedBox(height: 18),
         const _LoanTermsGroupHeader(
@@ -347,18 +261,6 @@ extension NewGirviSections on _NewGirviScreenState {
           amountFor: _disbursementAmountFor,
           modeLabel: _disbursementModeLabel,
           onModeTap: _activateDisbursementMode,
-        ),
-        const SizedBox(height: 18),
-        _InterestPreviewCard(
-          principal: _ctrl.loanAmount,
-          monthly: _ctrl.monthlyInterest,
-          monthlyRate: _ctrl.interestRate,
-          total: _ctrl.totalInterestAtMaturity,
-          annualRate: _ctrl.interestRate * 12,
-          durationMonths: _ctrl.durationMonths,
-          hasLoanTerms: _ctrl.loanAmount > 0 &&
-              _ctrl.interestRate > 0 &&
-              _ctrl.durationMonths > 0,
         ),
       ]),
     );

@@ -45,9 +45,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
   @override
   void initState() {
     super.initState();
-    _valuationController = TextEditingController(
-      text: widget.item.loan.totalValue.toStringAsFixed(0),
-    );
+    _valuationController = TextEditingController();
     _recoveredController = TextEditingController(
       text: widget.item.verifiedTotalPayable.toStringAsFixed(0),
     );
@@ -268,7 +266,6 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
           _snapshotLine('Mobile', account.customerMobile),
           _snapshotLine('Maturity', _date(loan.maturityDate)),
           _snapshotLine('Overdue Age', widget.item.overdueAgeMonthsDaysLabel),
-          _snapshotLine('Pledged Value', _money(loan.totalValue)),
           _snapshotLine(
             'Total Payable',
             _money(payable),
@@ -335,7 +332,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
             children: [
               _settlementField(
                 controller: _valuationController,
-                label: 'Pledged Valuation',
+                label: 'Current Collateral Value',
                 helper: 'Current article value',
               ),
               _settlementField(
@@ -739,7 +736,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
     if (pledgedValuation <= 0 || recoveredAmount <= 0) {
       setState(() {
         _errorMessage =
-            'Enter a valid pledged valuation and recovered amount before closing settlement.';
+            'Enter a valid current collateral value and recovered amount before closing settlement.';
       });
       return;
     }

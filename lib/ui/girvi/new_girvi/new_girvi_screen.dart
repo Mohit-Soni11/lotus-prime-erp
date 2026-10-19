@@ -5,10 +5,7 @@ import 'dart:io';
 // MODULE      : Girvi / Pawn
 // LAYER       : UI / Screen
 // DESCRIPTION : Full production New Girvi Ticket screen.
-//               Sections:
-//               1. Customer Selection  2. Item Details  3. Weight Details
-//               4. Valuation          5. Loan Terms     6. Disbursement
-//               7. Dates              8. KYC            9. Notes
+//               Sections: customer, pledged items, loan terms, KYC and notes.
 //               - App Bar extracted to new_girvi_app_bar.dart
 //               Staggered animations, ListenableBuilder, zero setState.
 // =============================================================================
@@ -84,7 +81,6 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _huidCtrl = TextEditingController();
   final _grossWtCtrl = TextEditingController();
   final _stoneWtCtrl = TextEditingController();
-  final _rateCtrl = TextEditingController();
   final _loanAmtCtrl = TextEditingController();
   final _interestCtrl = TextEditingController();
   final _durationCtrl = TextEditingController();
@@ -103,14 +99,13 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _huidFocus = FocusNode();
   final _grossWtFocus = FocusNode();
   final _stoneWtFocus = FocusNode();
-  final _rateFocus = FocusNode();
   final _loanAmtFocus = FocusNode();
   final _interestFocus = FocusNode();
   final _durationFocus = FocusNode();
   final _idProofNoFocus = FocusNode();
 
   // â”€â”€ Animations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  static const int _sectionCount = 9;
+  static const int _sectionCount = 5;
   late final List<AnimationController> _sectionAnim;
   late final List<Animation<double>> _sectionFade;
   late final List<Animation<Offset>> _sectionSlide;
@@ -149,7 +144,6 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         .addListener(() => _ctrl.onGrossWeightChanged(_grossWtCtrl.text));
     _stoneWtCtrl
         .addListener(() => _ctrl.onStoneWeightChanged(_stoneWtCtrl.text));
-    _rateCtrl.addListener(() => _ctrl.onRatePerGramChanged(_rateCtrl.text));
     _interestCtrl
         .addListener(() => _ctrl.onInterestRateChanged(_interestCtrl.text));
     _durationCtrl
@@ -261,16 +255,6 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       draft.lessCtrl,
       item.lessWeight > 0 ? _formatSmartNumber(item.lessWeight) : '',
     );
-    _setControllerTextIfChanged(
-      draft.valuationPurityCtrl,
-      item.valuationPurityPercent == null
-          ? ''
-          : _formatPurityPercent(item.valuationPurityPercent!),
-    );
-    _setControllerTextIfChanged(
-      draft.rateCtrl,
-      item.ratePerGram > 0 ? _formatSmartNumber(item.ratePerGram) : '',
-    );
     draft.photoPaths
       ..clear()
       ..addAll(details.photos.map((photo) => photo.filePath));
@@ -345,12 +329,11 @@ class _NewGirviScreenState extends State<NewGirviScreen>
     if (_pledgedItems.isEmpty) {
       _setControllerTextIfChanged(_grossWtCtrl, '');
       _setControllerTextIfChanged(_stoneWtCtrl, '');
-      _setControllerTextIfChanged(_rateCtrl, '');
       _setControllerTextIfChanged(_loanAmtCtrl, '');
       _setControllerTextIfChanged(_itemDescCtrl, '');
       _setControllerTextIfChanged(_huidCtrl, '');
       _itemPhotoPath = null;
-      _ctrl.clearStructuredValuation();
+      _ctrl.clearStructuredItems();
       return;
     }
 
@@ -358,13 +341,8 @@ class _NewGirviScreenState extends State<NewGirviScreen>
         _pledgedItems.fold<double>(0, (sum, item) => sum + item.grossWeight);
     final totalLess =
         _pledgedItems.fold<double>(0, (sum, item) => sum + item.lessWeight);
-    final totalNet =
-        _pledgedItems.fold<double>(0, (sum, item) => sum + item.netWeight);
-    final totalValue =
-        _pledgedItems.fold<double>(0, (sum, item) => sum + item.itemValue);
     final totalPieces =
         _pledgedItems.fold<int>(0, (sum, item) => sum + item.itemCount);
-    final weightedRate = totalNet > 0 ? totalValue / totalNet : 0.0;
     final first = _pledgedItems.first;
 
     _setControllerTextIfChanged(
@@ -375,20 +353,14 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _stoneWtCtrl,
       totalLess > 0 ? _formatSmartNumber(totalLess) : '',
     );
-    _setControllerTextIfChanged(
-      _rateCtrl,
-      weightedRate > 0 ? _formatSmartNumber(weightedRate) : '',
-    );
     _setControllerTextIfChanged(_itemDescCtrl, _combinedItemDescription());
     _setControllerTextIfChanged(_huidCtrl, _combinedHuidNumbers());
     _itemPhotoPath = _firstAttachedItemPhoto();
 
-    _ctrl.syncStructuredValuation(
+    _ctrl.syncStructuredItems(
       itemCount: totalPieces,
       grossWeight: totalGross,
       stoneWeight: totalLess,
-      ratePerGram: weightedRate,
-      totalValue: totalValue,
       metalType: first.metalType,
       metalPurity: first.purity,
     );
@@ -412,9 +384,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       lines.add(
         'Serial Number ${item.serialNo} - $title | '
         '${item.metalType.displayName} | ${item.purityLabel} | '
-        '$pieceLabel | Net Weight ${_formatSmartWeight(item.netWeight)} | '
-        'Valuation ${item.valuationPurityLabel} | '
-        'Value ${_formatSmartMoney(item.itemValue)}',
+        '$pieceLabel | Net Weight ${_formatSmartWeight(item.netWeight)}',
       );
     }
     return lines.join('\n');
@@ -604,7 +574,6 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _huidCtrl,
       _grossWtCtrl,
       _stoneWtCtrl,
-      _rateCtrl,
       _loanAmtCtrl,
       _interestCtrl,
       _durationCtrl,
@@ -622,7 +591,6 @@ class _NewGirviScreenState extends State<NewGirviScreen>
       _huidFocus,
       _grossWtFocus,
       _stoneWtFocus,
-      _rateFocus,
       _loanAmtFocus,
       _interestFocus,
       _durationFocus,
@@ -730,7 +698,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
-                                      _animated(7, _buildSection7KYC()),
+                                      _animated(3, _buildSection7KYC()),
                                       const SizedBox(height: 16),
                                       _buildTicketSummaryPanel(),
                                     ],

@@ -214,36 +214,43 @@ extension GirviRepositoryPayments on GirviRepository {
             ..where((payment) => payment.girviId.equals(loanId)))
           .get();
       var principalRepaid = 0.0;
-      var interestPaid = 0.0;
-      var interestDiscount = 0.0;
+      final interestAdjustments = <GirviInterestAdjustment>[];
+      var calculationDate = paymentDate;
       for (final payment in existingPayments) {
         final type = GirviPaymentType.fromDb(payment.paymentType);
+        if (payment.paymentDate.isAfter(calculationDate)) {
+          calculationDate = payment.paymentDate;
+        }
+        final adjustment = GirviInterestPaymentAdjustments.fromPayment(payment);
+        if (adjustment != null) interestAdjustments.add(adjustment);
         if (type == GirviPaymentType.partialPrincipal) {
           principalRepaid += payment.amount;
         } else if (type == GirviPaymentType.interest ||
             type == GirviPaymentType.partialInterest) {
-          final hasSplitComponents =
-              payment.interestComponent > 0 || payment.principalComponent > 0;
-          interestPaid +=
-              hasSplitComponents ? payment.interestComponent : payment.amount;
           principalRepaid += payment.principalComponent;
-        } else if (type == GirviPaymentType.fullRelease) {
-          interestPaid += payment.interestComponent;
-          interestDiscount += payment.interestDiscountComponent;
         }
       }
 
       final originalPrincipal = loan.loanAmount + principalRepaid;
       final interestComponent = receivedAmount;
-      final priorCoveredMonths = _coveredInterestMonthsFromTotalPaid(
+      final priorCoveredMonths =
+          GirviInterestCalculator.coveredMonthsForTimeline(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
-        totalInterestPaid: interestPaid + interestDiscount,
+        startDate: loan.startDate,
+        asOf: calculationDate,
+        adjustments: interestAdjustments,
       );
-      final totalCoveredMonths = _coveredInterestMonthsFromTotalPaid(
+      final totalCoveredMonths =
+          GirviInterestCalculator.coveredMonthsForTimeline(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
-        totalInterestPaid: interestPaid + interestDiscount + receivedAmount,
+        startDate: loan.startDate,
+        asOf: calculationDate,
+        adjustments: [
+          ...interestAdjustments,
+          GirviInterestAdjustment(date: paymentDate, paid: receivedAmount),
+        ],
       );
       final entryCoveredMonths =
           (totalCoveredMonths - priorCoveredMonths).clamp(0, 1000000);
@@ -295,144 +302,6 @@ extension GirviRepositoryPayments on GirviRepository {
               balanceAfter: drift.Value(balanceAfter),
               principalComponent: const drift.Value(0),
               interestComponent: drift.Value(interestComponent),
-              receiptNo: drift.Value(normalizedReceiptNo),
-              notes: drift.Value(normalizedNotes),
-            ),
-          );
-    });
-  }
-
-  int _coveredInterestMonthsFromTotalPaid({
-    required double principal,
-    required double monthlyRatePercent,
-    required double totalInterestPaid,
-  }) {
-    if (principal <= 0 || monthlyRatePercent <= 0 || totalInterestPaid <= 0) {
-      return 0;
-    }
-
-    var coveredMonths = 0;
-    while (coveredMonths < 1200) {
-      final nextMonth = coveredMonths + 1;
-      final requiredInterest = GirviLoanModel.calculateInterest(
-        principal: principal,
-        monthlyRatePercent: monthlyRatePercent,
-        months: nextMonth,
-        interestType:
-            GirviInterestCalculationType.forChargeableMonths(nextMonth),
-      );
-      if (requiredInterest >
-          totalInterestPaid + GirviRepository._moneyTolerance) {
-        break;
-      }
-      coveredMonths = nextMonth;
-    }
-    return coveredMonths;
-  }
-
-  /// Legacy payment entry path kept for historical data compatibility.
-  /// New Interest Entry UI uses [recordInterestLedgerPayment]; release uses
-  /// [recordReleaseSettlement].
-  Future<int> recordPayment({
-    required int loanId,
-    required GirviPaymentType paymentType,
-    required GirviPaymentMode paymentMode,
-    required double amount,
-    required DateTime paymentDate,
-    int? monthsCovered,
-    DateTime? interestFromDate,
-    DateTime? interestToDate,
-    String? receiptNo,
-    String? notes,
-  }) async {
-    final receivedAmount = _normalizeMoney(amount);
-    final normalizedReceiptNo = _normalizeReference(receiptNo);
-    final normalizedNotes = _normalizeReference(notes);
-
-    if (receivedAmount <= 0) {
-      throw ArgumentError.value(
-        amount,
-        'amount',
-        'Payment amount must be > 0',
-      );
-    }
-
-    return _db.transaction(() async {
-      final loan = await getLoanById(loanId);
-      if (loan == null) {
-        throw StateError('Girvi loan not found for payment entry');
-      }
-      final loanModel = _mapLoan(loan);
-
-      var balanceAfter = loan.loanAmount;
-      var resolvedMonthsCovered = monthsCovered;
-      var resolvedInterestFromDate = interestFromDate;
-      var resolvedInterestToDate = interestToDate;
-      var loanUpdate = GirviLoansCompanion(
-        updatedAt: drift.Value(DateTime.now()),
-      );
-
-      if (paymentType == GirviPaymentType.interest) {
-        final interestStart = loanModel.lastInterestPaidDate ??
-            interestFromDate ??
-            loanModel.startDate;
-        final coveredMonths = loanModel.interestMonthsCoveredByPayment(
-          amount: receivedAmount,
-          fromDate: interestStart,
-          paymentDate: paymentDate,
-        );
-        if (coveredMonths <= 0) {
-          throw ArgumentError.value(
-            amount,
-            'amount',
-            'Interest payment must cover at least one full interest month',
-          );
-        }
-        final paidThrough =
-            GirviLoanModel.addChargeableMonths(interestStart, coveredMonths);
-        resolvedMonthsCovered = coveredMonths;
-        resolvedInterestFromDate = interestStart;
-        resolvedInterestToDate = paidThrough;
-        loanUpdate = loanUpdate.copyWith(
-          lastInterestPaidDate: drift.Value(paidThrough),
-        );
-      }
-
-      if (paymentType == GirviPaymentType.partialPrincipal) {
-        if (receivedAmount >
-            loan.loanAmount + GirviRepository._moneyTolerance) {
-          throw ArgumentError.value(
-            amount,
-            'amount',
-            'Principal payment cannot exceed outstanding principal',
-          );
-        }
-        balanceAfter = _normalizeMoney(
-          (loan.loanAmount - receivedAmount)
-              .clamp(0.0, double.infinity)
-              .toDouble(),
-        );
-        loanUpdate = loanUpdate.copyWith(
-          loanAmount: drift.Value(balanceAfter),
-        );
-      }
-
-      final updated = await updateLoan(loanId, loanUpdate);
-      if (!updated) {
-        throw StateError('Unable to update girvi loan before payment entry');
-      }
-
-      return _db.into(_db.girviPayments).insert(
-            GirviPaymentsCompanion.insert(
-              girviId: loanId,
-              paymentType: paymentType.dbValue,
-              paymentDate: drift.Value(paymentDate),
-              amount: drift.Value(receivedAmount),
-              paymentMode: drift.Value(paymentMode.dbValue),
-              monthsCovered: drift.Value(resolvedMonthsCovered),
-              interestFromDate: drift.Value(resolvedInterestFromDate),
-              interestToDate: drift.Value(resolvedInterestToDate),
-              balanceAfter: drift.Value(_normalizeMoney(balanceAfter)),
               receiptNo: drift.Value(normalizedReceiptNo),
               notes: drift.Value(normalizedNotes),
             ),

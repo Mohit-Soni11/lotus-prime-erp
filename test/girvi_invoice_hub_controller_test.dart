@@ -93,35 +93,6 @@ void main() {
       ),
       isTrue,
     );
-    await controller.setMetalCustomization(
-      GirviBillingMetal.gold,
-      'valuationAmount',
-      true,
-    );
-    expect(
-      controller.getMetalCustomizationValue(
-        GirviBillingMetal.gold,
-        'valuationAmount',
-      ),
-      isTrue,
-    );
-    expect(
-      controller.getCombinedCustomizationValue('valuationAmount'),
-      isFalse,
-    );
-    await controller.setCombinedCustomization('valuationAmount', true);
-    expect(
-      controller.getCombinedCustomizationValue('valuationAmount'),
-      isTrue,
-    );
-    expect(
-      controller.getMetalCustomizationValue(
-        GirviBillingMetal.silver,
-        'valuationAmount',
-      ),
-      isTrue,
-    );
-
     await controller.setDocumentCustomization('terms', true);
     await controller.setDocumentCustomization('declaration', false);
     await controller.setDocumentCustomization('kycDetails', true);
@@ -234,11 +205,7 @@ final _draft = GirviInvoiceDraft(
       grossWeight: 8.25,
       lessWeight: 0.25,
       netWeight: 8,
-      valuationPurity: '91.6%',
-      fineWeight: 7.328,
-      ratePerGram: 6823,
       huid: 'HUID123',
-      value: 50000,
     ),
     GirviInvoiceItemDraft(
       serialNo: 2,
@@ -249,14 +216,9 @@ final _draft = GirviInvoiceDraft(
       grossWeight: 102,
       lessWeight: 2,
       netWeight: 100,
-      valuationPurity: '92.5%',
-      fineWeight: 92.5,
-      ratePerGram: 95,
       huid: '',
-      value: 9500,
     ),
   ],
-  totalValue: 50000,
   loanAmount: 25000,
   interestRate: 2,
   durationMonths: 12,

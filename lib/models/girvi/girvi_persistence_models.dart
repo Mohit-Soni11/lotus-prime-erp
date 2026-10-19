@@ -9,12 +9,7 @@ class GirviLoanItemInput {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
-    required this.valuationMethod,
-    required this.fineWeight,
-    required this.ratePerGram,
-    required this.valuationAmount,
     this.huidNumber,
-    this.valuationPurityPercent,
     this.notes,
     this.photoPaths = const [],
   });
@@ -29,11 +24,6 @@ class GirviLoanItemInput {
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
-  final String valuationMethod;
-  final double? valuationPurityPercent;
-  final double fineWeight;
-  final double ratePerGram;
-  final double valuationAmount;
   final String? notes;
   final List<String> photoPaths;
 }

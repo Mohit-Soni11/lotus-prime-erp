@@ -1,108 +1,5 @@
 part of '../new_girvi_screen.dart';
 
-class _TotalItemValueHighlight extends StatelessWidget {
-  const _TotalItemValueHighlight({
-    required this.value,
-  });
-
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValue = value > 0;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: hasValue
-            ? GirviColors.success.withValues(alpha: 0.08)
-            : GirviColors.inputBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: hasValue
-              ? GirviColors.success.withValues(alpha: 0.32)
-              : GirviColors.cardBorder,
-          width: 1.4,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: hasValue
-                  ? GirviColors.success.withValues(alpha: 0.14)
-                  : GirviColors.cardBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: hasValue
-                    ? GirviColors.success.withValues(alpha: 0.24)
-                    : GirviColors.cardBorder,
-              ),
-            ),
-            child: Icon(
-              GirviIcons.valuation,
-              color: hasValue ? GirviColors.success : GirviColors.textMuted,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Total Pledged Valuation',
-                  style: GirviStyles.caption.copyWith(
-                    color: GirviColors.textBody,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    height: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  _formatSmartMoney(value),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    color:
-                        hasValue ? GirviColors.success : GirviColors.textDark,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (hasValue)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: GirviColors.success.withValues(alpha: 0.22),
-                ),
-              ),
-              child: Text(
-                'READY',
-                style: GoogleFonts.inter(
-                  color: GirviColors.success,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w900,
-                  height: 1.0,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LedgerSectionCard extends StatelessWidget {
   const _LedgerSectionCard({
     required this.icon,
@@ -339,8 +236,6 @@ class _LedgerTextCell extends StatelessWidget {
     this.inputFormatters,
     this.validator,
     this.textAlign = TextAlign.left,
-    this.prefixText,
-    this.suffixText,
   });
 
   final double width;
@@ -351,8 +246,6 @@ class _LedgerTextCell extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
   final TextAlign textAlign;
-  final String? prefixText;
-  final String? suffixText;
 
   @override
   Widget build(BuildContext context) {
@@ -374,8 +267,6 @@ class _LedgerTextCell extends StatelessWidget {
         ),
         decoration: InputDecoration(
           hintText: hint,
-          prefixText: prefixText,
-          suffixText: suffixText,
           hintStyle: GirviStyles.fieldHint.copyWith(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -615,62 +506,6 @@ class _LedgerReadOnlyCell extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.w900,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LedgerItemNameCell extends StatelessWidget {
-  const _LedgerItemNameCell({
-    required this.width,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final double width;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: GirviColors.cardBorder),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: GirviColors.textDark,
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-                height: 1.0,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GirviStyles.caption.copyWith(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                height: 1.0,
-              ),
-            ),
-          ],
         ),
       ),
     );

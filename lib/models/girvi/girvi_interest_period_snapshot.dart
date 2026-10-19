@@ -44,5 +44,6 @@ class GirviInterestPeriodSnapshot {
         monthlyRatePercent: monthlyRatePercent,
         interestAmount: periodInterest,
         capitalizedAfterLine: finalized,
+        closingBalance: closingAmount,
       );
 }

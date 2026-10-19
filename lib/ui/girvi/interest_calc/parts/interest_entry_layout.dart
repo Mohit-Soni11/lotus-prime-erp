@@ -153,29 +153,13 @@ extension InterestEntryLayout on _InterestCalcScreenState {
             loan.girviStatus == GirviStatus.released;
     final currentMonthlyInterest =
         _ctrl.currentLedgerMonthlyInterestForSelected;
-    final totalMonths = loan.monthsElapsed.ceil();
-    final interestCollectedMonths = _ctrl.payments.fold<int>(0, (sum, item) {
-      final recordsInterest = item.type == GirviPaymentType.interest ||
-          item.type == GirviPaymentType.partialInterest ||
-          (item.type == GirviPaymentType.fullRelease &&
-              item.interestComponent > 0);
-      return recordsInterest ? sum + (item.monthsCovered ?? 0) : sum;
-    });
-    final interestDueMonths =
-        netInterestDue <= 0 ? 0 : loan.unpaidMonths.ceil();
-    final interestBreakdown = GirviLoanModel.calculateCompoundInterestBreakdown(
-      principal: principalDisbursed,
-      monthlyRatePercent: loan.interestRate,
-      months: loan.monthsElapsed.ceil(),
-    );
+    final interestQuote = _ctrl.selectedInterestQuote!;
+    final totalMonths = interestQuote.chargeableMonths;
+    final interestBreakdown = interestQuote.cycles;
     final elapsedPeriod = GirviLoanModel.elapsedPeriodBetween(
       loan.startDate,
-      loan.releaseDate ?? DateTime.now(),
+      loan.releaseDate ?? _ctrl.paymentDate,
     );
-    final advanceMonths =
-        advanceInterestCredit <= 0 || currentMonthlyInterest <= 0
-            ? 0
-            : (advanceInterestCredit / currentMonthlyInterest).floor();
     final principalProgress = principalDisbursed <= 0
         ? 0.0
         : (principalRepaid / principalDisbursed).clamp(0.0, 1.0).toDouble();
@@ -289,6 +273,13 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                     compactHeader ? WrapAlignment.start : WrapAlignment.end,
                 children: [
                   _StatusPill(label: loan.statusLabel, color: loan.statusColor),
+                  _StatusPill(
+                    label: '${interestQuote.interestType} Interest',
+                    color: interestQuote.interestType ==
+                            GirviInterestCalculationType.compound
+                        ? GirviColors.brandGold
+                        : GirviColors.info,
+                  ),
                   _OverviewActionButton(
                     label: _openingReceipt ? 'Opening...' : 'View PDF',
                     icon: Icons.visibility_rounded,
@@ -325,10 +316,9 @@ extension InterestEntryLayout on _InterestCalcScreenState {
           const SizedBox(height: 16),
           _CollectionFocusStrip(
             interestDue: netInterestDue,
+            interestReceived: interestCollected,
             monthlyInterest: currentMonthlyInterest,
-            unpaidMonths: totalMonths,
             advanceAmount: advanceInterestCredit,
-            advanceMonths: advanceMonths,
             settlementComplete: settlementComplete,
             isOverdue: loan.isOverdue,
             moneyFmt: _moneyFmt,
@@ -366,17 +356,17 @@ extension InterestEntryLayout on _InterestCalcScreenState {
 
               final interestPanel = _OverviewMoneyPanel(
                 title: 'Interest',
-                primaryLabel: 'Interest Due Now',
+                primaryLabel: 'Interest Outstanding',
                 primaryValue: 'Rs ${_moneyFmt.format(netInterestDue)}',
                 secondaryLabel: advanceInterestCredit > 0
                     ? settlementComplete
                         ? 'Excess Received'
                         : 'Advance Credit'
-                    : 'Gross Interest',
+                    : 'Total Interest Accrued',
                 secondaryValue: advanceInterestCredit > 0
                     ? 'Rs ${_moneyFmt.format(advanceInterestCredit)}'
                     : 'Rs ${_moneyFmt.format(grossInterestAccrued)}',
-                tertiaryLabel: 'Interest Paid',
+                tertiaryLabel: 'Interest Received',
                 tertiaryValue: 'Rs ${_moneyFmt.format(interestCollected)}',
                 icon: GirviIcons.interestRate,
                 color: advanceInterestCredit > 0
@@ -392,12 +382,8 @@ extension InterestEntryLayout on _InterestCalcScreenState {
                 maturityDate: loan.maturityDate == null
                     ? 'Not set'
                     : _dateFmt.format(loan.maturityDate!),
-                interestCollected: _interestPeriodLabel(
-                    interestCollected, interestCollectedMonths),
-                interestDue: _interestPeriodLabel(
-                  netInterestDue,
-                  interestDueMonths,
-                ),
+                interestCollected: 'Rs ${_moneyFmt.format(interestCollected)}',
+                interestDue: 'Rs ${_moneyFmt.format(netInterestDue)}',
               );
 
               if (compact) {
@@ -427,10 +413,5 @@ extension InterestEntryLayout on _InterestCalcScreenState {
         ],
       ),
     );
-  }
-
-  String _interestPeriodLabel(double amount, int months) {
-    final monthLabel = '$months month${months == 1 ? '' : 's'}';
-    return 'Rs ${_moneyFmt.format(amount)} | $monthLabel';
   }
 }

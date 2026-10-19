@@ -7,7 +7,6 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_customer_response_model.dart';
-import '../../models/girvi/girvi_interest_period_snapshot.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/contact_recovery_model.dart';
@@ -111,10 +110,7 @@ class ContactRecoveryController extends ChangeNotifier {
               entry.loan.startDate,
               entry.loan.durationMonths,
             );
-        final coveredInterestMonths = _coveredInterestMonths(
-          entry,
-          paymentHistory[entry.loan.id] ?? const [],
-        );
+        final coveredInterestMonths = _coveredInterestMonths(entry, now);
         final hasInterestPaidBeforeMaturity =
             entry.loan.lastInterestPaidDate != null &&
                 !entry.loan.lastInterestPaidDate!.isAfter(maturityDate);
@@ -124,10 +120,7 @@ class ContactRecoveryController extends ChangeNotifier {
           maturityDate: maturityDate,
           lastInterestPaidDate: entry.loan.lastInterestPaidDate,
           principalDue: entry.principalDue,
-          interestDue: _verifiedInterestDue(
-            entry,
-            interestPeriodSnapshots[entry.loan.id] ?? const [],
-          ),
+          interestDue: entry.interestQuoteAt(now).interestOutstanding,
           hasCollectionHistory: entry.interestPaidTotal > 0 ||
               entry.principalPaidTotal > 0 ||
               entry.interestDiscountTotal > 0 ||
@@ -203,29 +196,15 @@ class ContactRecoveryController extends ChangeNotifier {
 
   int _coveredInterestMonths(
     GirviLoanWithCustomer entry,
-    List<GirviPaymentModel> payments,
+    DateTime asOf,
   ) {
-    final ledgerMonths = payments.fold<int>(0, (sum, payment) {
-      if (payment.type != GirviPaymentType.interest &&
-          payment.type != GirviPaymentType.partialInterest) {
-        return sum;
-      }
-      return sum + (payment.monthsCovered ?? 0).clamp(0, 1000000);
-    });
-    if (ledgerMonths > 0) return ledgerMonths;
-
-    final paidThrough = entry.loan.lastInterestPaidDate;
-    if (paidThrough != null && paidThrough.isAfter(entry.loan.startDate)) {
-      return GirviLoanModel.chargeableMonthsBetween(
-        entry.loan.startDate,
-        paidThrough,
-      );
-    }
-
-    // A payment without a stored covered period cannot safely be converted
-    // into months from the current rate. Treat it as unverified coverage and
-    // keep the account in the conservative risk bucket.
-    return 0;
+    return GirviInterestCalculator.coveredMonthsForTimeline(
+      principal: entry.originalPrincipal,
+      monthlyRatePercent: entry.loan.interestRate,
+      startDate: entry.loan.startDate,
+      asOf: asOf,
+      adjustments: entry.interestAdjustments,
+    );
   }
 
   Future<Map<int, List<String>>> _loadItemPhotoPaths(List<int> loanIds) async {
@@ -258,19 +237,6 @@ class ContactRecoveryController extends ChangeNotifier {
       }
     }
     return byLoan;
-  }
-
-  double _verifiedInterestDue(
-    GirviLoanWithCustomer entry,
-    List<GirviInterestPeriodSnapshot> snapshots,
-  ) {
-    if (snapshots.isEmpty) return entry.netInterestDue;
-    final gross = snapshots.fold<double>(
-      0,
-      (sum, snapshot) => sum + snapshot.periodInterest,
-    );
-    final due = gross - entry.interestPaidTotal - entry.interestDiscountTotal;
-    return due <= 0 ? 0 : due;
   }
 
   Future<Map<int, List<GirviPaymentModel>>> _loadPaymentHistory(
@@ -519,7 +485,7 @@ class ContactRecoveryController extends ChangeNotifier {
     if (pledgedValuation <= 0 || recoveredAmount <= 0) {
       _state = _state.copyWith(
         inlineMessage:
-            'Enter a valid pledged valuation and recovered amount before closing settlement.',
+            'Enter a valid current collateral value and recovered amount before closing settlement.',
       );
       notifyListeners();
       return false;

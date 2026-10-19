@@ -110,9 +110,7 @@ extension GirviRepositoryStatusSync on GirviRepository {
 
       var legacyPrincipalRepaid = 0.0;
       var releasePrincipalPaid = 0.0;
-      var interestPaid = 0.0;
       var principalDiscount = 0.0;
-      var interestDiscount = 0.0;
       DateTime? latestPaymentDate;
 
       for (final payment in loanPayments) {
@@ -121,16 +119,10 @@ extension GirviRepositoryStatusSync on GirviRepository {
           legacyPrincipalRepaid += payment.amount;
         } else if (type == GirviPaymentType.interest ||
             type == GirviPaymentType.partialInterest) {
-          final hasSplitComponents =
-              payment.interestComponent > 0 || payment.principalComponent > 0;
-          interestPaid +=
-              hasSplitComponents ? payment.interestComponent : payment.amount;
           legacyPrincipalRepaid += payment.principalComponent;
         } else if (type == GirviPaymentType.fullRelease) {
           releasePrincipalPaid += payment.principalComponent;
-          interestPaid += payment.interestComponent;
           principalDiscount += payment.principalDiscountComponent;
-          interestDiscount += payment.interestDiscountComponent;
         }
 
         if (latestPaymentDate == null ||
@@ -143,19 +135,13 @@ extension GirviRepositoryStatusSync on GirviRepository {
       final principalDue =
           (loan.loanAmount - releasePrincipalPaid - principalDiscount)
               .clamp(0.0, double.infinity);
-      final interestMonths = GirviLoanModel.chargeableMonthsBetween(
-        loan.startDate,
-        loan.releaseDate ?? now,
-      );
-      final grossInterest = GirviLoanModel.calculateInterest(
+      final interestDue = GirviInterestCalculator.quoteAt(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
-        months: interestMonths,
-        interestType:
-            GirviInterestCalculationType.forChargeableMonths(interestMonths),
-      );
-      final interestDue = (grossInterest - interestPaid - interestDiscount)
-          .clamp(0.0, double.infinity);
+        startDate: loan.startDate,
+        asOf: loan.releaseDate ?? now,
+        adjustments: GirviInterestPaymentAdjustments.fromPayments(loanPayments),
+      ).interestOutstanding;
 
       if (principalDue <= tolerance && interestDue <= tolerance) {
         final settlementDate = loan.releaseDate ?? latestPaymentDate ?? now;

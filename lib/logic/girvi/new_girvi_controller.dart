@@ -4,9 +4,8 @@
 // LAYER       : Logic / Controller
 // DESCRIPTION : ChangeNotifier controller for the New Girvi screen.
 //               Handles: customer selection, item entry, weight calculation,
-//               valuation, loan amount computation, ticket generation,
+//               loan amount, ticket generation,
 //               form validation, and DB save.
-//               Zero setState in UI — UI uses ListenableBuilder only.
 // =============================================================================
 
 import 'package:drift/drift.dart' as drift;
@@ -77,7 +76,6 @@ class NewGirviController extends ChangeNotifier {
     } else {
       _metalPurity = MetalPurity.k22;
     }
-    _recalculate();
     notifyListeners();
   }
 
@@ -86,7 +84,6 @@ class NewGirviController extends ChangeNotifier {
 
   void setMetalPurity(MetalPurity v) {
     _metalPurity = v;
-    _recalculate();
     notifyListeners();
   }
 
@@ -100,91 +97,46 @@ class NewGirviController extends ChangeNotifier {
       (_grossWeight - _stoneWeight).clamp(0.0, double.infinity);
 
   void onGrossWeightChanged(String v) {
-    _structuredTotalValue = null;
     _grossWeight = double.tryParse(v) ?? 0.0;
-    _recalculate();
     notifyListeners();
   }
 
   void onStoneWeightChanged(String v) {
-    _structuredTotalValue = null;
     _stoneWeight = double.tryParse(v) ?? 0.0;
-    _recalculate();
     notifyListeners();
   }
 
-  // ── VALUATION ─────────────────────────────────────────────────────────────
-  double _ratePerGram = 0.0;
-  double? _structuredTotalValue;
-  double get ratePerGram => _ratePerGram;
-
-  /// Computed: netWeight × ratePerGram
-  double get totalValue => _structuredTotalValue ?? (netWeight * _ratePerGram);
-
-  void onRatePerGramChanged(String v) {
-    _structuredTotalValue = null;
-    _ratePerGram = double.tryParse(v) ?? 0.0;
-    _recalculate();
-    notifyListeners();
-  }
-
-  void syncStructuredValuation({
+  void syncStructuredItems({
     required int itemCount,
     required double grossWeight,
     required double stoneWeight,
-    required double ratePerGram,
-    required double totalValue,
     MetalType? metalType,
     MetalPurity? metalPurity,
   }) {
     _itemCount = itemCount.clamp(1, 99);
     _grossWeight = grossWeight;
     _stoneWeight = stoneWeight;
-    _ratePerGram = ratePerGram;
-    _structuredTotalValue = totalValue > 0 ? totalValue : null;
     if (metalType != null) _metalType = metalType;
     if (metalPurity != null) _metalPurity = metalPurity;
-    _recalculate();
     notifyListeners();
   }
 
-  void clearStructuredValuation() {
-    _structuredTotalValue = null;
+  void clearStructuredItems() {
     _grossWeight = 0.0;
     _stoneWeight = 0.0;
-    _ratePerGram = 0.0;
     _itemCount = 1;
     _loanAmount = 0.0;
-    _ltvPercent = 50.0;
-    _recalculate();
     notifyListeners();
   }
 
   // ── LOAN AMOUNT ───────────────────────────────────────────────────────────
   double _loanAmount = 0.0;
-  double _ltvPercent = 50.0;
   double get loanAmount => _loanAmount;
-  double get ltvPercent => _ltvPercent;
-
-  /// Computed from loanAmount / totalValue
-  double get computedLtv =>
-      totalValue > 0 ? ((_loanAmount / totalValue) * 100) : 0.0;
 
   void onLoanAmountChanged(String v) {
     _loanAmount = double.tryParse(v) ?? 0.0;
-    _ltvPercent = computedLtv;
     notifyListeners();
   }
-
-  /// Called when user changes LTV slider — auto-fills loan amount
-  void onLtvChanged(double ltv) {
-    _ltvPercent = ltv;
-    _loanAmount = totalValue * (ltv / 100);
-    notifyListeners();
-  }
-
-  /// Auto-suggest loan amount at given LTV %
-  double suggestedLoanAt(double ltv) => totalValue * (ltv / 100);
 
   // ── INTEREST RATE ─────────────────────────────────────────────────────────
   double _interestRate = 0.0;
@@ -244,11 +196,6 @@ class NewGirviController extends ChangeNotifier {
     _idProofType = v;
     notifyListeners();
   }
-
-  // ── COMPUTED INTEREST PREVIEW ─────────────────────────────────────────────
-  double get monthlyInterest => _loanAmount * (_interestRate / 100);
-  double get totalInterestAtMaturity => monthlyInterest * _durationMonths;
-  double get totalDueAtMaturity => _loanAmount + totalInterestAtMaturity;
 
   // ── STATUS ────────────────────────────────────────────────────────────────
   bool _isSaving = false;
@@ -336,10 +283,7 @@ class NewGirviController extends ChangeNotifier {
       _metalPurity = MetalPurity.fromDb(loan.metalPurity);
       _grossWeight = loan.grossWeight;
       _stoneWeight = loan.stoneWeight;
-      _ratePerGram = loan.ratePerGram;
-      _structuredTotalValue = loan.totalValue > 0 ? loan.totalValue : null;
       _loanAmount = loan.loanAmount;
-      _ltvPercent = loan.ltvPercent;
       _interestRate = loan.interestRate;
       _durationMonths = loan.durationMonths;
       _startDate = loan.startDate;
@@ -365,13 +309,6 @@ class NewGirviController extends ChangeNotifier {
     }
   }
 
-  // ── RECALCULATE ───────────────────────────────────────────────────────────
-
-  void _recalculate() {
-    // Valuation changes must not overwrite user-entered loan terms.
-    // Loan amount is updated only by direct entry or the explicit LTV slider.
-  }
-
   // ── VALIDATION ────────────────────────────────────────────────────────────
 
   String? validateItemDescription(String? v) {
@@ -391,20 +328,10 @@ class NewGirviController extends ChangeNotifier {
     return null;
   }
 
-  String? validateRatePerGram(String? v) {
-    if (v == null || v.isEmpty) return 'Enter rate per gram';
-    final d = double.tryParse(v);
-    if (d == null || d <= 0) return 'Enter valid rate (> 0)';
-    return null;
-  }
-
   String? validateLoanAmount(String? v) {
     if (v == null || v.isEmpty) return 'Enter loan amount';
     final d = double.tryParse(v);
     if (d == null || d <= 0) return 'Amount must be > 0';
-    if (totalValue > 0 && d > totalValue) {
-      return 'Loan cannot exceed item value (Rs ${_formatStoredNumber(totalValue)})';
-    }
     return null;
   }
 
@@ -465,19 +392,6 @@ class NewGirviController extends ChangeNotifier {
       return false;
     }
 
-    final totalItemValue =
-        items.fold<double>(0.0, (sum, item) => sum + item.valuationAmount);
-    if (totalItemValue <= 0) {
-      _errorMessage = 'Pledged item valuation must be greater than zero';
-      notifyListeners();
-      return false;
-    }
-    if (_loanAmount - totalItemValue > 0.50) {
-      _errorMessage = 'Loan amount cannot exceed pledged item valuation';
-      notifyListeners();
-      return false;
-    }
-
     _isSaving = true;
     _errorMessage = null;
     _lastSavedLoanId = _isEditMode ? _editingLoanId : null;
@@ -491,7 +405,6 @@ class NewGirviController extends ChangeNotifier {
           items.fold<double>(0.0, (sum, item) => sum + item.lessWeight);
       final totalNet =
           items.fold<double>(0.0, (sum, item) => sum + item.netWeight);
-      final weightedRate = totalNet > 0 ? totalItemValue / totalNet : 0.0;
       final metalTypes = items.map((item) => item.metalType).toSet();
       final purities = items.map((item) => item.purity).toSet();
       final combinedDescription = items.map((item) {
@@ -536,11 +449,6 @@ class NewGirviController extends ChangeNotifier {
         grossWeight: drift.Value(totalGross),
         stoneWeight: drift.Value(totalLess),
         netWeight: drift.Value(totalNet),
-        ratePerGram: drift.Value(weightedRate),
-        totalValue: drift.Value(totalItemValue),
-        ltvPercent: drift.Value(
-          totalItemValue > 0 ? (_loanAmount / totalItemValue) * 100 : 0,
-        ),
         loanAmount: drift.Value(_loanAmount),
         interestRate: drift.Value(_interestRate),
         durationMonths: drift.Value(_durationMonths),
@@ -609,9 +517,6 @@ class NewGirviController extends ChangeNotifier {
     _metalPurity = MetalPurity.k22;
     _grossWeight = 0.0;
     _stoneWeight = 0.0;
-    _ratePerGram = 0.0;
-    _structuredTotalValue = null;
-    _ltvPercent = 50.0;
     _loanAmount = 0.0;
     _editingLoanId = null;
     _lastSavedLoanId = null;

@@ -285,7 +285,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
           lessThan(10));
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 59);
+      expect(version.read<int>('user_version'), 60);
     } finally {
       await migrationDb.close();
       await directory.delete(recursive: true);

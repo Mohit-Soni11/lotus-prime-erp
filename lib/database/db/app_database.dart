@@ -1877,6 +1877,29 @@ class AppDatabase extends _$AppDatabase {
             await ensureGirviNoticeActionSchema();
             AppLogger.info('v59 single formal Girvi notice workflow applied.');
           }
+          if (from < 60) {
+            for (final entry in <String, List<String>>{
+              'girvi_loans': ['rate_per_gram', 'total_value', 'ltv_percent'],
+              'girvi_loan_items': [
+                'valuation_method',
+                'valuation_purity_percent',
+                'fine_weight',
+                'rate_per_gram',
+                'valuation_amount',
+              ],
+            }.entries) {
+              if (!await _tableExists(entry.key)) continue;
+              final columns = await _tableColumns(entry.key);
+              for (final column in entry.value) {
+                if (columns.contains(column)) {
+                  await customStatement(
+                    'ALTER TABLE "${entry.key}" DROP COLUMN "$column"',
+                  );
+                }
+              }
+            }
+            AppLogger.info('v60 Girvi pledge valuation removed.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -2232,10 +2255,6 @@ class AppDatabase extends _$AppDatabase {
         "gross_weight",
         "less_weight",
         "net_weight",
-        "valuation_method",
-        "fine_weight",
-        "rate_per_gram",
-        "valuation_amount",
         "is_legacy"
       )
       SELECT
@@ -2259,10 +2278,6 @@ class AppDatabase extends _$AppDatabase {
         loan."gross_weight",
         loan."stone_weight",
         loan."net_weight",
-        'LEGACY',
-        loan."net_weight",
-        loan."rate_per_gram",
-        loan."total_value",
         1
       FROM "girvi_loans" AS loan
       WHERE NOT EXISTS (

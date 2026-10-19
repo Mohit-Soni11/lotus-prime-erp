@@ -19579,30 +19579,6 @@ class $GirviLoansTable extends GirviLoans
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _ratePerGramMeta =
-      const VerificationMeta('ratePerGram');
-  @override
-  late final GeneratedColumn<double> ratePerGram = GeneratedColumn<double>(
-      'rate_per_gram', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _totalValueMeta =
-      const VerificationMeta('totalValue');
-  @override
-  late final GeneratedColumn<double> totalValue = GeneratedColumn<double>(
-      'total_value', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _ltvPercentMeta =
-      const VerificationMeta('ltvPercent');
-  @override
-  late final GeneratedColumn<double> ltvPercent = GeneratedColumn<double>(
-      'ltv_percent', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
   static const VerificationMeta _loanAmountMeta =
       const VerificationMeta('loanAmount');
   @override
@@ -19783,9 +19759,6 @@ class $GirviLoansTable extends GirviLoans
         grossWeight,
         stoneWeight,
         netWeight,
-        ratePerGram,
-        totalValue,
-        ltvPercent,
         loanAmount,
         interestRate,
         durationMonths,
@@ -19896,24 +19869,6 @@ class $GirviLoansTable extends GirviLoans
     if (data.containsKey('net_weight')) {
       context.handle(_netWeightMeta,
           netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta));
-    }
-    if (data.containsKey('rate_per_gram')) {
-      context.handle(
-          _ratePerGramMeta,
-          ratePerGram.isAcceptableOrUnknown(
-              data['rate_per_gram']!, _ratePerGramMeta));
-    }
-    if (data.containsKey('total_value')) {
-      context.handle(
-          _totalValueMeta,
-          totalValue.isAcceptableOrUnknown(
-              data['total_value']!, _totalValueMeta));
-    }
-    if (data.containsKey('ltv_percent')) {
-      context.handle(
-          _ltvPercentMeta,
-          ltvPercent.isAcceptableOrUnknown(
-              data['ltv_percent']!, _ltvPercentMeta));
     }
     if (data.containsKey('loan_amount')) {
       context.handle(
@@ -20097,12 +20052,6 @@ class $GirviLoansTable extends GirviLoans
           .read(DriftSqlType.double, data['${effectivePrefix}stone_weight'])!,
       netWeight: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}net_weight'])!,
-      ratePerGram: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}rate_per_gram'])!,
-      totalValue: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}total_value'])!,
-      ltvPercent: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}ltv_percent'])!,
       loanAmount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}loan_amount'])!,
       interestRate: attachedDatabase.typeMapping
@@ -20201,15 +20150,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// Net metal weight = gross - stone (computed & stored for speed)
   final double netWeight;
 
-  /// Rate per gram at time of loan (₹/g)
-  final double ratePerGram;
-
-  /// Total market value of items (netWeight × ratePerGram)
-  final double totalValue;
-
-  /// LTV % = loanAmount / totalValue × 100 (stored for reporting)
-  final double ltvPercent;
-
   /// Principal loan amount disbursed to customer (₹)
   final double loanAmount;
 
@@ -20223,8 +20163,8 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
   /// Cash | UPI | NEFT | Bank Transfer | Cheque
   final String disbursementMode;
 
-  /// Interest method agreed for this pledge at creation time.
-  /// Nullable for legacy loans created before the field was introduced.
+  /// Legacy method recorded by older invoices. Current interest calculation
+  /// derives its method from chargeable months instead of reading this field.
   final String? interestCalculationType;
 
   /// Whether a customer-facing loan invoice was generated at creation
@@ -20298,9 +20238,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       required this.grossWeight,
       required this.stoneWeight,
       required this.netWeight,
-      required this.ratePerGram,
-      required this.totalValue,
-      required this.ltvPercent,
       required this.loanAmount,
       required this.interestRate,
       required this.durationMonths,
@@ -20349,9 +20286,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
     map['gross_weight'] = Variable<double>(grossWeight);
     map['stone_weight'] = Variable<double>(stoneWeight);
     map['net_weight'] = Variable<double>(netWeight);
-    map['rate_per_gram'] = Variable<double>(ratePerGram);
-    map['total_value'] = Variable<double>(totalValue);
-    map['ltv_percent'] = Variable<double>(ltvPercent);
     map['loan_amount'] = Variable<double>(loanAmount);
     map['interest_rate'] = Variable<double>(interestRate);
     map['duration_months'] = Variable<int>(durationMonths);
@@ -20439,9 +20373,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       grossWeight: Value(grossWeight),
       stoneWeight: Value(stoneWeight),
       netWeight: Value(netWeight),
-      ratePerGram: Value(ratePerGram),
-      totalValue: Value(totalValue),
-      ltvPercent: Value(ltvPercent),
       loanAmount: Value(loanAmount),
       interestRate: Value(interestRate),
       durationMonths: Value(durationMonths),
@@ -20523,9 +20454,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
       stoneWeight: serializer.fromJson<double>(json['stoneWeight']),
       netWeight: serializer.fromJson<double>(json['netWeight']),
-      ratePerGram: serializer.fromJson<double>(json['ratePerGram']),
-      totalValue: serializer.fromJson<double>(json['totalValue']),
-      ltvPercent: serializer.fromJson<double>(json['ltvPercent']),
       loanAmount: serializer.fromJson<double>(json['loanAmount']),
       interestRate: serializer.fromJson<double>(json['interestRate']),
       durationMonths: serializer.fromJson<int>(json['durationMonths']),
@@ -20576,9 +20504,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       'grossWeight': serializer.toJson<double>(grossWeight),
       'stoneWeight': serializer.toJson<double>(stoneWeight),
       'netWeight': serializer.toJson<double>(netWeight),
-      'ratePerGram': serializer.toJson<double>(ratePerGram),
-      'totalValue': serializer.toJson<double>(totalValue),
-      'ltvPercent': serializer.toJson<double>(ltvPercent),
       'loanAmount': serializer.toJson<double>(loanAmount),
       'interestRate': serializer.toJson<double>(interestRate),
       'durationMonths': serializer.toJson<int>(durationMonths),
@@ -20625,9 +20550,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           double? grossWeight,
           double? stoneWeight,
           double? netWeight,
-          double? ratePerGram,
-          double? totalValue,
-          double? ltvPercent,
           double? loanAmount,
           double? interestRate,
           int? durationMonths,
@@ -20669,9 +20591,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         grossWeight: grossWeight ?? this.grossWeight,
         stoneWeight: stoneWeight ?? this.stoneWeight,
         netWeight: netWeight ?? this.netWeight,
-        ratePerGram: ratePerGram ?? this.ratePerGram,
-        totalValue: totalValue ?? this.totalValue,
-        ltvPercent: ltvPercent ?? this.ltvPercent,
         loanAmount: loanAmount ?? this.loanAmount,
         interestRate: interestRate ?? this.interestRate,
         durationMonths: durationMonths ?? this.durationMonths,
@@ -20745,12 +20664,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
       stoneWeight:
           data.stoneWeight.present ? data.stoneWeight.value : this.stoneWeight,
       netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
-      ratePerGram:
-          data.ratePerGram.present ? data.ratePerGram.value : this.ratePerGram,
-      totalValue:
-          data.totalValue.present ? data.totalValue.value : this.totalValue,
-      ltvPercent:
-          data.ltvPercent.present ? data.ltvPercent.value : this.ltvPercent,
       loanAmount:
           data.loanAmount.present ? data.loanAmount.value : this.loanAmount,
       interestRate: data.interestRate.present
@@ -20835,9 +20748,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           ..write('grossWeight: $grossWeight, ')
           ..write('stoneWeight: $stoneWeight, ')
           ..write('netWeight: $netWeight, ')
-          ..write('ratePerGram: $ratePerGram, ')
-          ..write('totalValue: $totalValue, ')
-          ..write('ltvPercent: $ltvPercent, ')
           ..write('loanAmount: $loanAmount, ')
           ..write('interestRate: $interestRate, ')
           ..write('durationMonths: $durationMonths, ')
@@ -20883,9 +20793,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
         grossWeight,
         stoneWeight,
         netWeight,
-        ratePerGram,
-        totalValue,
-        ltvPercent,
         loanAmount,
         interestRate,
         durationMonths,
@@ -20930,9 +20837,6 @@ class GirviLoan extends DataClass implements Insertable<GirviLoan> {
           other.grossWeight == this.grossWeight &&
           other.stoneWeight == this.stoneWeight &&
           other.netWeight == this.netWeight &&
-          other.ratePerGram == this.ratePerGram &&
-          other.totalValue == this.totalValue &&
-          other.ltvPercent == this.ltvPercent &&
           other.loanAmount == this.loanAmount &&
           other.interestRate == this.interestRate &&
           other.durationMonths == this.durationMonths &&
@@ -20975,9 +20879,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
   final Value<double> grossWeight;
   final Value<double> stoneWeight;
   final Value<double> netWeight;
-  final Value<double> ratePerGram;
-  final Value<double> totalValue;
-  final Value<double> ltvPercent;
   final Value<double> loanAmount;
   final Value<double> interestRate;
   final Value<int> durationMonths;
@@ -21018,9 +20919,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.grossWeight = const Value.absent(),
     this.stoneWeight = const Value.absent(),
     this.netWeight = const Value.absent(),
-    this.ratePerGram = const Value.absent(),
-    this.totalValue = const Value.absent(),
-    this.ltvPercent = const Value.absent(),
     this.loanAmount = const Value.absent(),
     this.interestRate = const Value.absent(),
     this.durationMonths = const Value.absent(),
@@ -21062,9 +20960,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     this.grossWeight = const Value.absent(),
     this.stoneWeight = const Value.absent(),
     this.netWeight = const Value.absent(),
-    this.ratePerGram = const Value.absent(),
-    this.totalValue = const Value.absent(),
-    this.ltvPercent = const Value.absent(),
     this.loanAmount = const Value.absent(),
     this.interestRate = const Value.absent(),
     this.durationMonths = const Value.absent(),
@@ -21108,9 +21003,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     Expression<double>? grossWeight,
     Expression<double>? stoneWeight,
     Expression<double>? netWeight,
-    Expression<double>? ratePerGram,
-    Expression<double>? totalValue,
-    Expression<double>? ltvPercent,
     Expression<double>? loanAmount,
     Expression<double>? interestRate,
     Expression<int>? durationMonths,
@@ -21152,9 +21044,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       if (grossWeight != null) 'gross_weight': grossWeight,
       if (stoneWeight != null) 'stone_weight': stoneWeight,
       if (netWeight != null) 'net_weight': netWeight,
-      if (ratePerGram != null) 'rate_per_gram': ratePerGram,
-      if (totalValue != null) 'total_value': totalValue,
-      if (ltvPercent != null) 'ltv_percent': ltvPercent,
       if (loanAmount != null) 'loan_amount': loanAmount,
       if (interestRate != null) 'interest_rate': interestRate,
       if (durationMonths != null) 'duration_months': durationMonths,
@@ -21203,9 +21092,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       Value<double>? grossWeight,
       Value<double>? stoneWeight,
       Value<double>? netWeight,
-      Value<double>? ratePerGram,
-      Value<double>? totalValue,
-      Value<double>? ltvPercent,
       Value<double>? loanAmount,
       Value<double>? interestRate,
       Value<int>? durationMonths,
@@ -21246,9 +21132,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
       grossWeight: grossWeight ?? this.grossWeight,
       stoneWeight: stoneWeight ?? this.stoneWeight,
       netWeight: netWeight ?? this.netWeight,
-      ratePerGram: ratePerGram ?? this.ratePerGram,
-      totalValue: totalValue ?? this.totalValue,
-      ltvPercent: ltvPercent ?? this.ltvPercent,
       loanAmount: loanAmount ?? this.loanAmount,
       interestRate: interestRate ?? this.interestRate,
       durationMonths: durationMonths ?? this.durationMonths,
@@ -21322,15 +21205,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
     }
     if (netWeight.present) {
       map['net_weight'] = Variable<double>(netWeight.value);
-    }
-    if (ratePerGram.present) {
-      map['rate_per_gram'] = Variable<double>(ratePerGram.value);
-    }
-    if (totalValue.present) {
-      map['total_value'] = Variable<double>(totalValue.value);
-    }
-    if (ltvPercent.present) {
-      map['ltv_percent'] = Variable<double>(ltvPercent.value);
     }
     if (loanAmount.present) {
       map['loan_amount'] = Variable<double>(loanAmount.value);
@@ -21430,9 +21304,6 @@ class GirviLoansCompanion extends UpdateCompanion<GirviLoan> {
           ..write('grossWeight: $grossWeight, ')
           ..write('stoneWeight: $stoneWeight, ')
           ..write('netWeight: $netWeight, ')
-          ..write('ratePerGram: $ratePerGram, ')
-          ..write('totalValue: $totalValue, ')
-          ..write('ltvPercent: $ltvPercent, ')
           ..write('loanAmount: $loanAmount, ')
           ..write('interestRate: $interestRate, ')
           ..write('durationMonths: $durationMonths, ')
@@ -22476,44 +22347,6 @@ class $GirviLoanItemsTable extends GirviLoanItems
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _valuationMethodMeta =
-      const VerificationMeta('valuationMethod');
-  @override
-  late final GeneratedColumn<String> valuationMethod = GeneratedColumn<String>(
-      'valuation_method', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('PURITY'));
-  static const VerificationMeta _valuationPurityPercentMeta =
-      const VerificationMeta('valuationPurityPercent');
-  @override
-  late final GeneratedColumn<double> valuationPurityPercent =
-      GeneratedColumn<double>('valuation_purity_percent', aliasedName, true,
-          type: DriftSqlType.double, requiredDuringInsert: false);
-  static const VerificationMeta _fineWeightMeta =
-      const VerificationMeta('fineWeight');
-  @override
-  late final GeneratedColumn<double> fineWeight = GeneratedColumn<double>(
-      'fine_weight', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _ratePerGramMeta =
-      const VerificationMeta('ratePerGram');
-  @override
-  late final GeneratedColumn<double> ratePerGram = GeneratedColumn<double>(
-      'rate_per_gram', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _valuationAmountMeta =
-      const VerificationMeta('valuationAmount');
-  @override
-  late final GeneratedColumn<double> valuationAmount = GeneratedColumn<double>(
-      'valuation_amount', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -22564,11 +22397,6 @@ class $GirviLoanItemsTable extends GirviLoanItems
         grossWeight,
         lessWeight,
         netWeight,
-        valuationMethod,
-        valuationPurityPercent,
-        fineWeight,
-        ratePerGram,
-        valuationAmount,
         notes,
         isLegacy,
         recoveryDispositionStatus,
@@ -22658,36 +22486,6 @@ class $GirviLoanItemsTable extends GirviLoanItems
       context.handle(_netWeightMeta,
           netWeight.isAcceptableOrUnknown(data['net_weight']!, _netWeightMeta));
     }
-    if (data.containsKey('valuation_method')) {
-      context.handle(
-          _valuationMethodMeta,
-          valuationMethod.isAcceptableOrUnknown(
-              data['valuation_method']!, _valuationMethodMeta));
-    }
-    if (data.containsKey('valuation_purity_percent')) {
-      context.handle(
-          _valuationPurityPercentMeta,
-          valuationPurityPercent.isAcceptableOrUnknown(
-              data['valuation_purity_percent']!, _valuationPurityPercentMeta));
-    }
-    if (data.containsKey('fine_weight')) {
-      context.handle(
-          _fineWeightMeta,
-          fineWeight.isAcceptableOrUnknown(
-              data['fine_weight']!, _fineWeightMeta));
-    }
-    if (data.containsKey('rate_per_gram')) {
-      context.handle(
-          _ratePerGramMeta,
-          ratePerGram.isAcceptableOrUnknown(
-              data['rate_per_gram']!, _ratePerGramMeta));
-    }
-    if (data.containsKey('valuation_amount')) {
-      context.handle(
-          _valuationAmountMeta,
-          valuationAmount.isAcceptableOrUnknown(
-              data['valuation_amount']!, _valuationAmountMeta));
-    }
     if (data.containsKey('notes')) {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
@@ -22753,17 +22551,6 @@ class $GirviLoanItemsTable extends GirviLoanItems
           .read(DriftSqlType.double, data['${effectivePrefix}less_weight'])!,
       netWeight: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}net_weight'])!,
-      valuationMethod: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}valuation_method'])!,
-      valuationPurityPercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}valuation_purity_percent']),
-      fineWeight: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}fine_weight'])!,
-      ratePerGram: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}rate_per_gram'])!,
-      valuationAmount: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}valuation_amount'])!,
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       isLegacy: attachedDatabase.typeMapping
@@ -22801,11 +22588,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
-  final String valuationMethod;
-  final double? valuationPurityPercent;
-  final double fineWeight;
-  final double ratePerGram;
-  final double valuationAmount;
   final String? notes;
   final bool isLegacy;
 
@@ -22828,11 +22610,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       required this.grossWeight,
       required this.lessWeight,
       required this.netWeight,
-      required this.valuationMethod,
-      this.valuationPurityPercent,
-      required this.fineWeight,
-      required this.ratePerGram,
-      required this.valuationAmount,
       this.notes,
       required this.isLegacy,
       this.recoveryDispositionStatus,
@@ -22859,14 +22636,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
     map['gross_weight'] = Variable<double>(grossWeight);
     map['less_weight'] = Variable<double>(lessWeight);
     map['net_weight'] = Variable<double>(netWeight);
-    map['valuation_method'] = Variable<String>(valuationMethod);
-    if (!nullToAbsent || valuationPurityPercent != null) {
-      map['valuation_purity_percent'] =
-          Variable<double>(valuationPurityPercent);
-    }
-    map['fine_weight'] = Variable<double>(fineWeight);
-    map['rate_per_gram'] = Variable<double>(ratePerGram);
-    map['valuation_amount'] = Variable<double>(valuationAmount);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -22905,13 +22674,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       grossWeight: Value(grossWeight),
       lessWeight: Value(lessWeight),
       netWeight: Value(netWeight),
-      valuationMethod: Value(valuationMethod),
-      valuationPurityPercent: valuationPurityPercent == null && nullToAbsent
-          ? const Value.absent()
-          : Value(valuationPurityPercent),
-      fineWeight: Value(fineWeight),
-      ratePerGram: Value(ratePerGram),
-      valuationAmount: Value(valuationAmount),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       isLegacy: Value(isLegacy),
@@ -22947,12 +22709,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       grossWeight: serializer.fromJson<double>(json['grossWeight']),
       lessWeight: serializer.fromJson<double>(json['lessWeight']),
       netWeight: serializer.fromJson<double>(json['netWeight']),
-      valuationMethod: serializer.fromJson<String>(json['valuationMethod']),
-      valuationPurityPercent:
-          serializer.fromJson<double?>(json['valuationPurityPercent']),
-      fineWeight: serializer.fromJson<double>(json['fineWeight']),
-      ratePerGram: serializer.fromJson<double>(json['ratePerGram']),
-      valuationAmount: serializer.fromJson<double>(json['valuationAmount']),
       notes: serializer.fromJson<String?>(json['notes']),
       isLegacy: serializer.fromJson<bool>(json['isLegacy']),
       recoveryDispositionStatus:
@@ -22981,12 +22737,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       'grossWeight': serializer.toJson<double>(grossWeight),
       'lessWeight': serializer.toJson<double>(lessWeight),
       'netWeight': serializer.toJson<double>(netWeight),
-      'valuationMethod': serializer.toJson<String>(valuationMethod),
-      'valuationPurityPercent':
-          serializer.toJson<double?>(valuationPurityPercent),
-      'fineWeight': serializer.toJson<double>(fineWeight),
-      'ratePerGram': serializer.toJson<double>(ratePerGram),
-      'valuationAmount': serializer.toJson<double>(valuationAmount),
       'notes': serializer.toJson<String?>(notes),
       'isLegacy': serializer.toJson<bool>(isLegacy),
       'recoveryDispositionStatus':
@@ -23012,11 +22762,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           double? grossWeight,
           double? lessWeight,
           double? netWeight,
-          String? valuationMethod,
-          Value<double?> valuationPurityPercent = const Value.absent(),
-          double? fineWeight,
-          double? ratePerGram,
-          double? valuationAmount,
           Value<String?> notes = const Value.absent(),
           bool? isLegacy,
           Value<String?> recoveryDispositionStatus = const Value.absent(),
@@ -23037,13 +22782,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
         grossWeight: grossWeight ?? this.grossWeight,
         lessWeight: lessWeight ?? this.lessWeight,
         netWeight: netWeight ?? this.netWeight,
-        valuationMethod: valuationMethod ?? this.valuationMethod,
-        valuationPurityPercent: valuationPurityPercent.present
-            ? valuationPurityPercent.value
-            : this.valuationPurityPercent,
-        fineWeight: fineWeight ?? this.fineWeight,
-        ratePerGram: ratePerGram ?? this.ratePerGram,
-        valuationAmount: valuationAmount ?? this.valuationAmount,
         notes: notes.present ? notes.value : this.notes,
         isLegacy: isLegacy ?? this.isLegacy,
         recoveryDispositionStatus: recoveryDispositionStatus.present
@@ -23077,19 +22815,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
       lessWeight:
           data.lessWeight.present ? data.lessWeight.value : this.lessWeight,
       netWeight: data.netWeight.present ? data.netWeight.value : this.netWeight,
-      valuationMethod: data.valuationMethod.present
-          ? data.valuationMethod.value
-          : this.valuationMethod,
-      valuationPurityPercent: data.valuationPurityPercent.present
-          ? data.valuationPurityPercent.value
-          : this.valuationPurityPercent,
-      fineWeight:
-          data.fineWeight.present ? data.fineWeight.value : this.fineWeight,
-      ratePerGram:
-          data.ratePerGram.present ? data.ratePerGram.value : this.ratePerGram,
-      valuationAmount: data.valuationAmount.present
-          ? data.valuationAmount.value
-          : this.valuationAmount,
       notes: data.notes.present ? data.notes.value : this.notes,
       isLegacy: data.isLegacy.present ? data.isLegacy.value : this.isLegacy,
       recoveryDispositionStatus: data.recoveryDispositionStatus.present
@@ -23121,11 +22846,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           ..write('grossWeight: $grossWeight, ')
           ..write('lessWeight: $lessWeight, ')
           ..write('netWeight: $netWeight, ')
-          ..write('valuationMethod: $valuationMethod, ')
-          ..write('valuationPurityPercent: $valuationPurityPercent, ')
-          ..write('fineWeight: $fineWeight, ')
-          ..write('ratePerGram: $ratePerGram, ')
-          ..write('valuationAmount: $valuationAmount, ')
           ..write('notes: $notes, ')
           ..write('isLegacy: $isLegacy, ')
           ..write('recoveryDispositionStatus: $recoveryDispositionStatus, ')
@@ -23137,32 +22857,26 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        id,
-        createdAt,
-        updatedAt,
-        girviId,
-        serialNo,
-        itemName,
-        metalType,
-        purity,
-        purityFactor,
-        pieces,
-        huidNumber,
-        grossWeight,
-        lessWeight,
-        netWeight,
-        valuationMethod,
-        valuationPurityPercent,
-        fineWeight,
-        ratePerGram,
-        valuationAmount,
-        notes,
-        isLegacy,
-        recoveryDispositionStatus,
-        recoveryDispositionReference,
-        recoveryDisposedAt
-      ]);
+  int get hashCode => Object.hash(
+      id,
+      createdAt,
+      updatedAt,
+      girviId,
+      serialNo,
+      itemName,
+      metalType,
+      purity,
+      purityFactor,
+      pieces,
+      huidNumber,
+      grossWeight,
+      lessWeight,
+      netWeight,
+      notes,
+      isLegacy,
+      recoveryDispositionStatus,
+      recoveryDispositionReference,
+      recoveryDisposedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -23181,11 +22895,6 @@ class GirviLoanItem extends DataClass implements Insertable<GirviLoanItem> {
           other.grossWeight == this.grossWeight &&
           other.lessWeight == this.lessWeight &&
           other.netWeight == this.netWeight &&
-          other.valuationMethod == this.valuationMethod &&
-          other.valuationPurityPercent == this.valuationPurityPercent &&
-          other.fineWeight == this.fineWeight &&
-          other.ratePerGram == this.ratePerGram &&
-          other.valuationAmount == this.valuationAmount &&
           other.notes == this.notes &&
           other.isLegacy == this.isLegacy &&
           other.recoveryDispositionStatus == this.recoveryDispositionStatus &&
@@ -23209,11 +22918,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
   final Value<double> grossWeight;
   final Value<double> lessWeight;
   final Value<double> netWeight;
-  final Value<String> valuationMethod;
-  final Value<double?> valuationPurityPercent;
-  final Value<double> fineWeight;
-  final Value<double> ratePerGram;
-  final Value<double> valuationAmount;
   final Value<String?> notes;
   final Value<bool> isLegacy;
   final Value<String?> recoveryDispositionStatus;
@@ -23234,11 +22938,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     this.grossWeight = const Value.absent(),
     this.lessWeight = const Value.absent(),
     this.netWeight = const Value.absent(),
-    this.valuationMethod = const Value.absent(),
-    this.valuationPurityPercent = const Value.absent(),
-    this.fineWeight = const Value.absent(),
-    this.ratePerGram = const Value.absent(),
-    this.valuationAmount = const Value.absent(),
     this.notes = const Value.absent(),
     this.isLegacy = const Value.absent(),
     this.recoveryDispositionStatus = const Value.absent(),
@@ -23260,11 +22959,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     this.grossWeight = const Value.absent(),
     this.lessWeight = const Value.absent(),
     this.netWeight = const Value.absent(),
-    this.valuationMethod = const Value.absent(),
-    this.valuationPurityPercent = const Value.absent(),
-    this.fineWeight = const Value.absent(),
-    this.ratePerGram = const Value.absent(),
-    this.valuationAmount = const Value.absent(),
     this.notes = const Value.absent(),
     this.isLegacy = const Value.absent(),
     this.recoveryDispositionStatus = const Value.absent(),
@@ -23290,11 +22984,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     Expression<double>? grossWeight,
     Expression<double>? lessWeight,
     Expression<double>? netWeight,
-    Expression<String>? valuationMethod,
-    Expression<double>? valuationPurityPercent,
-    Expression<double>? fineWeight,
-    Expression<double>? ratePerGram,
-    Expression<double>? valuationAmount,
     Expression<String>? notes,
     Expression<bool>? isLegacy,
     Expression<String>? recoveryDispositionStatus,
@@ -23316,12 +23005,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
       if (grossWeight != null) 'gross_weight': grossWeight,
       if (lessWeight != null) 'less_weight': lessWeight,
       if (netWeight != null) 'net_weight': netWeight,
-      if (valuationMethod != null) 'valuation_method': valuationMethod,
-      if (valuationPurityPercent != null)
-        'valuation_purity_percent': valuationPurityPercent,
-      if (fineWeight != null) 'fine_weight': fineWeight,
-      if (ratePerGram != null) 'rate_per_gram': ratePerGram,
-      if (valuationAmount != null) 'valuation_amount': valuationAmount,
       if (notes != null) 'notes': notes,
       if (isLegacy != null) 'is_legacy': isLegacy,
       if (recoveryDispositionStatus != null)
@@ -23348,11 +23031,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
       Value<double>? grossWeight,
       Value<double>? lessWeight,
       Value<double>? netWeight,
-      Value<String>? valuationMethod,
-      Value<double?>? valuationPurityPercent,
-      Value<double>? fineWeight,
-      Value<double>? ratePerGram,
-      Value<double>? valuationAmount,
       Value<String?>? notes,
       Value<bool>? isLegacy,
       Value<String?>? recoveryDispositionStatus,
@@ -23373,12 +23051,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
       grossWeight: grossWeight ?? this.grossWeight,
       lessWeight: lessWeight ?? this.lessWeight,
       netWeight: netWeight ?? this.netWeight,
-      valuationMethod: valuationMethod ?? this.valuationMethod,
-      valuationPurityPercent:
-          valuationPurityPercent ?? this.valuationPurityPercent,
-      fineWeight: fineWeight ?? this.fineWeight,
-      ratePerGram: ratePerGram ?? this.ratePerGram,
-      valuationAmount: valuationAmount ?? this.valuationAmount,
       notes: notes ?? this.notes,
       isLegacy: isLegacy ?? this.isLegacy,
       recoveryDispositionStatus:
@@ -23434,22 +23106,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
     if (netWeight.present) {
       map['net_weight'] = Variable<double>(netWeight.value);
     }
-    if (valuationMethod.present) {
-      map['valuation_method'] = Variable<String>(valuationMethod.value);
-    }
-    if (valuationPurityPercent.present) {
-      map['valuation_purity_percent'] =
-          Variable<double>(valuationPurityPercent.value);
-    }
-    if (fineWeight.present) {
-      map['fine_weight'] = Variable<double>(fineWeight.value);
-    }
-    if (ratePerGram.present) {
-      map['rate_per_gram'] = Variable<double>(ratePerGram.value);
-    }
-    if (valuationAmount.present) {
-      map['valuation_amount'] = Variable<double>(valuationAmount.value);
-    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -23488,11 +23144,6 @@ class GirviLoanItemsCompanion extends UpdateCompanion<GirviLoanItem> {
           ..write('grossWeight: $grossWeight, ')
           ..write('lessWeight: $lessWeight, ')
           ..write('netWeight: $netWeight, ')
-          ..write('valuationMethod: $valuationMethod, ')
-          ..write('valuationPurityPercent: $valuationPurityPercent, ')
-          ..write('fineWeight: $fineWeight, ')
-          ..write('ratePerGram: $ratePerGram, ')
-          ..write('valuationAmount: $valuationAmount, ')
           ..write('notes: $notes, ')
           ..write('isLegacy: $isLegacy, ')
           ..write('recoveryDispositionStatus: $recoveryDispositionStatus, ')
@@ -33268,6 +32919,8 @@ class GirviBillingSetting extends DataClass
   final String girviPrefix;
   final int startingNumber;
   final double defaultInterestRate;
+
+  /// Kept for existing databases; the current interest method is age-based.
   final String interestType;
   final int gracePeriodDays;
   final String defaultDuration;
@@ -51874,9 +51527,6 @@ typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   Value<double> grossWeight,
   Value<double> stoneWeight,
   Value<double> netWeight,
-  Value<double> ratePerGram,
-  Value<double> totalValue,
-  Value<double> ltvPercent,
   Value<double> loanAmount,
   Value<double> interestRate,
   Value<int> durationMonths,
@@ -51918,9 +51568,6 @@ typedef $$GirviLoansTableUpdateCompanionBuilder = GirviLoansCompanion Function({
   Value<double> grossWeight,
   Value<double> stoneWeight,
   Value<double> netWeight,
-  Value<double> ratePerGram,
-  Value<double> totalValue,
-  Value<double> ltvPercent,
   Value<double> loanAmount,
   Value<double> interestRate,
   Value<int> durationMonths,
@@ -52118,15 +51765,6 @@ class $$GirviLoansTableFilterComposer
 
   ColumnFilters<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get ratePerGram => $composableBuilder(
-      column: $table.ratePerGram, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get totalValue => $composableBuilder(
-      column: $table.totalValue, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get ltvPercent => $composableBuilder(
-      column: $table.ltvPercent, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get loanAmount => $composableBuilder(
       column: $table.loanAmount, builder: (column) => ColumnFilters(column));
@@ -52416,15 +52054,6 @@ class $$GirviLoansTableOrderingComposer
   ColumnOrderings<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get ratePerGram => $composableBuilder(
-      column: $table.ratePerGram, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get totalValue => $composableBuilder(
-      column: $table.totalValue, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get ltvPercent => $composableBuilder(
-      column: $table.ltvPercent, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<double> get loanAmount => $composableBuilder(
       column: $table.loanAmount, builder: (column) => ColumnOrderings(column));
 
@@ -52585,15 +52214,6 @@ class $$GirviLoansTableAnnotationComposer
 
   GeneratedColumn<double> get netWeight =>
       $composableBuilder(column: $table.netWeight, builder: (column) => column);
-
-  GeneratedColumn<double> get ratePerGram => $composableBuilder(
-      column: $table.ratePerGram, builder: (column) => column);
-
-  GeneratedColumn<double> get totalValue => $composableBuilder(
-      column: $table.totalValue, builder: (column) => column);
-
-  GeneratedColumn<double> get ltvPercent => $composableBuilder(
-      column: $table.ltvPercent, builder: (column) => column);
 
   GeneratedColumn<double> get loanAmount => $composableBuilder(
       column: $table.loanAmount, builder: (column) => column);
@@ -52867,9 +52487,6 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double> grossWeight = const Value.absent(),
             Value<double> stoneWeight = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
-            Value<double> ratePerGram = const Value.absent(),
-            Value<double> totalValue = const Value.absent(),
-            Value<double> ltvPercent = const Value.absent(),
             Value<double> loanAmount = const Value.absent(),
             Value<double> interestRate = const Value.absent(),
             Value<int> durationMonths = const Value.absent(),
@@ -52911,9 +52528,6 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             grossWeight: grossWeight,
             stoneWeight: stoneWeight,
             netWeight: netWeight,
-            ratePerGram: ratePerGram,
-            totalValue: totalValue,
-            ltvPercent: ltvPercent,
             loanAmount: loanAmount,
             interestRate: interestRate,
             durationMonths: durationMonths,
@@ -52955,9 +52569,6 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             Value<double> grossWeight = const Value.absent(),
             Value<double> stoneWeight = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
-            Value<double> ratePerGram = const Value.absent(),
-            Value<double> totalValue = const Value.absent(),
-            Value<double> ltvPercent = const Value.absent(),
             Value<double> loanAmount = const Value.absent(),
             Value<double> interestRate = const Value.absent(),
             Value<int> durationMonths = const Value.absent(),
@@ -52999,9 +52610,6 @@ class $$GirviLoansTableTableManager extends RootTableManager<
             grossWeight: grossWeight,
             stoneWeight: stoneWeight,
             netWeight: netWeight,
-            ratePerGram: ratePerGram,
-            totalValue: totalValue,
-            ltvPercent: ltvPercent,
             loanAmount: loanAmount,
             interestRate: interestRate,
             durationMonths: durationMonths,
@@ -53672,11 +53280,6 @@ typedef $$GirviLoanItemsTableCreateCompanionBuilder = GirviLoanItemsCompanion
   Value<double> grossWeight,
   Value<double> lessWeight,
   Value<double> netWeight,
-  Value<String> valuationMethod,
-  Value<double?> valuationPurityPercent,
-  Value<double> fineWeight,
-  Value<double> ratePerGram,
-  Value<double> valuationAmount,
   Value<String?> notes,
   Value<bool> isLegacy,
   Value<String?> recoveryDispositionStatus,
@@ -53699,11 +53302,6 @@ typedef $$GirviLoanItemsTableUpdateCompanionBuilder = GirviLoanItemsCompanion
   Value<double> grossWeight,
   Value<double> lessWeight,
   Value<double> netWeight,
-  Value<String> valuationMethod,
-  Value<double?> valuationPurityPercent,
-  Value<double> fineWeight,
-  Value<double> ratePerGram,
-  Value<double> valuationAmount,
   Value<String?> notes,
   Value<bool> isLegacy,
   Value<String?> recoveryDispositionStatus,
@@ -53795,24 +53393,6 @@ class $$GirviLoanItemsTableFilterComposer
 
   ColumnFilters<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get valuationMethod => $composableBuilder(
-      column: $table.valuationMethod,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get valuationPurityPercent => $composableBuilder(
-      column: $table.valuationPurityPercent,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get fineWeight => $composableBuilder(
-      column: $table.fineWeight, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get ratePerGram => $composableBuilder(
-      column: $table.ratePerGram, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get valuationAmount => $composableBuilder(
-      column: $table.valuationAmount,
-      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
@@ -53923,24 +53503,6 @@ class $$GirviLoanItemsTableOrderingComposer
   ColumnOrderings<double> get netWeight => $composableBuilder(
       column: $table.netWeight, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get valuationMethod => $composableBuilder(
-      column: $table.valuationMethod,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get valuationPurityPercent => $composableBuilder(
-      column: $table.valuationPurityPercent,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get fineWeight => $composableBuilder(
-      column: $table.fineWeight, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get ratePerGram => $composableBuilder(
-      column: $table.ratePerGram, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get valuationAmount => $composableBuilder(
-      column: $table.valuationAmount,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
@@ -54028,21 +53590,6 @@ class $$GirviLoanItemsTableAnnotationComposer
 
   GeneratedColumn<double> get netWeight =>
       $composableBuilder(column: $table.netWeight, builder: (column) => column);
-
-  GeneratedColumn<String> get valuationMethod => $composableBuilder(
-      column: $table.valuationMethod, builder: (column) => column);
-
-  GeneratedColumn<double> get valuationPurityPercent => $composableBuilder(
-      column: $table.valuationPurityPercent, builder: (column) => column);
-
-  GeneratedColumn<double> get fineWeight => $composableBuilder(
-      column: $table.fineWeight, builder: (column) => column);
-
-  GeneratedColumn<double> get ratePerGram => $composableBuilder(
-      column: $table.ratePerGram, builder: (column) => column);
-
-  GeneratedColumn<double> get valuationAmount => $composableBuilder(
-      column: $table.valuationAmount, builder: (column) => column);
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
@@ -54141,11 +53688,6 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             Value<double> grossWeight = const Value.absent(),
             Value<double> lessWeight = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
-            Value<String> valuationMethod = const Value.absent(),
-            Value<double?> valuationPurityPercent = const Value.absent(),
-            Value<double> fineWeight = const Value.absent(),
-            Value<double> ratePerGram = const Value.absent(),
-            Value<double> valuationAmount = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<bool> isLegacy = const Value.absent(),
             Value<String?> recoveryDispositionStatus = const Value.absent(),
@@ -54167,11 +53709,6 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             grossWeight: grossWeight,
             lessWeight: lessWeight,
             netWeight: netWeight,
-            valuationMethod: valuationMethod,
-            valuationPurityPercent: valuationPurityPercent,
-            fineWeight: fineWeight,
-            ratePerGram: ratePerGram,
-            valuationAmount: valuationAmount,
             notes: notes,
             isLegacy: isLegacy,
             recoveryDispositionStatus: recoveryDispositionStatus,
@@ -54193,11 +53730,6 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             Value<double> grossWeight = const Value.absent(),
             Value<double> lessWeight = const Value.absent(),
             Value<double> netWeight = const Value.absent(),
-            Value<String> valuationMethod = const Value.absent(),
-            Value<double?> valuationPurityPercent = const Value.absent(),
-            Value<double> fineWeight = const Value.absent(),
-            Value<double> ratePerGram = const Value.absent(),
-            Value<double> valuationAmount = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<bool> isLegacy = const Value.absent(),
             Value<String?> recoveryDispositionStatus = const Value.absent(),
@@ -54219,11 +53751,6 @@ class $$GirviLoanItemsTableTableManager extends RootTableManager<
             grossWeight: grossWeight,
             lessWeight: lessWeight,
             netWeight: netWeight,
-            valuationMethod: valuationMethod,
-            valuationPurityPercent: valuationPurityPercent,
-            fineWeight: fineWeight,
-            ratePerGram: ratePerGram,
-            valuationAmount: valuationAmount,
             notes: notes,
             isLegacy: isLegacy,
             recoveryDispositionStatus: recoveryDispositionStatus,

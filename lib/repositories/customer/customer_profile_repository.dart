@@ -13,6 +13,7 @@ import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../girvi/girvi_repository.dart';
+import '../girvi/girvi_interest_payment_adjustments.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class CustomerDeleteResult {
@@ -118,11 +119,20 @@ class CustomerProfileRepository {
                   )
             ]))
           .get();
+      final girviIds = girviRows.map((loan) => loan.id).toList();
+      final girviPayments = girviIds.isEmpty
+          ? <GirviPayment>[]
+          : await (_db.select(_db.girviPayments)
+                ..where((payment) => payment.girviId.isIn(girviIds)))
+              .get();
+      final paymentsByLoan = <int, List<GirviPayment>>{};
+      for (final payment in girviPayments) {
+        paymentsByLoan.putIfAbsent(payment.girviId, () => []).add(payment);
+      }
 
       final legacyLoanRows = await (_db.select(_db.loans)
             ..where((t) => t.customerId.equals(customerId)))
           .get();
-      final asOf = DateTime.now();
 
       final loansByNumber = <String, CustomerLoanModel>{
         for (final loan in legacyLoanRows)
@@ -146,11 +156,11 @@ class CustomerProfileRepository {
             interestRate: loan.interestRate,
             startDate: loan.startDate,
             lastInterestPaidDate: loan.lastInterestPaidDate,
-            interestType: GirviInterestCalculationType.forPeriod(
-              loan.startDate,
-              loan.releaseDate ?? asOf,
-            ),
             status: loan.status,
+            recordedInterestOutstanding: _girviInterestOutstanding(
+              loan,
+              paymentsByLoan[loan.id] ?? const <GirviPayment>[],
+            ),
           ),
       };
       final loans = loansByNumber.values.toList()..sort(_compareCustomerLoans);
@@ -314,6 +324,31 @@ class CustomerProfileRepository {
     }
   }
 
+  double _girviInterestOutstanding(
+    GirviLoan loan,
+    List<GirviPayment> payments,
+  ) {
+    if (GirviStatus.fromDb(loan.status).isClosed) return 0;
+    final principalRepaid = payments.fold<double>(0, (sum, payment) {
+      final type = GirviPaymentType.fromDb(payment.paymentType);
+      if (type == GirviPaymentType.partialPrincipal) {
+        return sum + payment.amount;
+      }
+      if (type == GirviPaymentType.interest ||
+          type == GirviPaymentType.partialInterest) {
+        return sum + payment.principalComponent;
+      }
+      return sum;
+    });
+    return GirviInterestCalculator.quoteAt(
+      principal: loan.loanAmount + principalRepaid,
+      monthlyRatePercent: loan.interestRate,
+      startDate: loan.startDate,
+      asOf: loan.releaseDate ?? DateTime.now(),
+      adjustments: GirviInterestPaymentAdjustments.fromPayments(payments),
+    ).interestOutstanding;
+  }
+
   Future<GirviInvoiceDraft?> fetchGirviInvoiceDraft({
     required int customerId,
     required int loanId,
@@ -364,8 +399,6 @@ class CustomerProfileRepository {
             ]))
           .get();
 
-      final monthlyInterest = loan.loanAmount * loan.interestRate / 100;
-      final totalInterest = monthlyInterest * loan.durationMonths;
       final maturityDate = loan.maturityDate ??
           DateTime(
             loan.startDate.year,
@@ -399,11 +432,37 @@ class CustomerProfileRepository {
           : loan.lastInterestPaidDate != null
               ? GirviReceiptMode.interest
               : GirviReceiptMode.pledge;
+      var legacyPrincipalRepaid = 0.0;
+      for (final payment in ledgerRows) {
+        final type = GirviPaymentType.fromDb(payment.paymentType);
+        if (type == GirviPaymentType.interest ||
+            type == GirviPaymentType.partialInterest) {
+          legacyPrincipalRepaid += payment.principalComponent;
+        } else if (type == GirviPaymentType.partialPrincipal) {
+          legacyPrincipalRepaid += payment.amount;
+        } else if (type == GirviPaymentType.fullRelease) {}
+      }
+      final interestAdjustments =
+          GirviInterestPaymentAdjustments.fromPayments(ledgerRows);
+      final interestQuote = GirviInterestCalculator.quoteAt(
+        principal: loan.loanAmount + legacyPrincipalRepaid,
+        monthlyRatePercent: loan.interestRate,
+        startDate: loan.startDate,
+        asOf: loan.releaseDate ?? DateTime.now(),
+        adjustments: interestAdjustments,
+      );
+      final monthlyInterest = receiptMode == GirviReceiptMode.pledge
+          ? 0.0
+          : interestQuote.currentMonthlyInterest;
+      final totalInterest = receiptMode == GirviReceiptMode.pledge
+          ? 0.0
+          : interestQuote.grossInterest;
       final releaseTotal = loan.releaseTotalAmount ?? 0;
       final principalOutstanding =
           receiptMode == GirviReceiptMode.release ? 0.0 : loan.loanAmount;
-      final interestOutstanding =
-          receiptMode == GirviReceiptMode.release ? 0.0 : totalInterest;
+      final interestOutstanding = receiptMode == GirviReceiptMode.release
+          ? 0.0
+          : interestQuote.interestOutstanding;
 
       return GirviInvoiceDraft(
         loanId: loan.id,
@@ -424,19 +483,14 @@ class CustomerProfileRepository {
                 grossWeight: item.grossWeight,
                 lessWeight: item.lessWeight,
                 netWeight: item.netWeight,
-                valuationPurity:
-                    item.valuationPurityPercent?.toStringAsFixed(2) ?? '',
-                fineWeight: item.fineWeight,
-                ratePerGram: item.ratePerGram,
                 huid: item.huidNumber ?? '',
-                value: item.valuationAmount,
                 photoPaths:
                     List.unmodifiable(photosByItem[item.id] ?? const []),
               ),
             )
             .toList(growable: false),
-        totalValue: loan.totalValue,
         loanAmount: loan.loanAmount,
+        interestPrincipal: loan.loanAmount + legacyPrincipalRepaid,
         interestRate: loan.interestRate,
         durationMonths: loan.durationMonths,
         startDate: loan.startDate,
@@ -469,6 +523,7 @@ class CustomerProfileRepository {
             },
           ),
         ),
+        interestAdjustments: interestAdjustments,
         mode: receiptMode,
         accountStatus: status.displayName,
         releaseDate: loan.releaseDate,

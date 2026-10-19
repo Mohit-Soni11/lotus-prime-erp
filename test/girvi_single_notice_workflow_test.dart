@@ -309,7 +309,7 @@ void main() {
       expect(reply.responseText, 'Original reply');
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 59);
+      expect(version.read<int>('user_version'), 60);
       final index = await migrationDb
           .customSelect(
               "SELECT name FROM sqlite_master WHERE name = 'idx_girvi_one_formal_notice'")
@@ -363,9 +363,6 @@ ContactRecoveryCase _case(
               grossWeight: 10,
               stoneWeight: 0,
               netWeight: 10,
-              ratePerGram: 0,
-              totalValue: 0,
-              ltvPercent: 0,
               loanAmount: 10000,
               interestRate: 1,
               durationMonths: 6,

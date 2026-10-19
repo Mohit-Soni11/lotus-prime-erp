@@ -2,20 +2,18 @@ part of '../interest_calc_screen.dart';
 
 class _CollectionFocusStrip extends StatelessWidget {
   final double interestDue;
+  final double interestReceived;
   final double monthlyInterest;
-  final int unpaidMonths;
   final double advanceAmount;
-  final int advanceMonths;
   final bool settlementComplete;
   final bool isOverdue;
   final NumberFormat moneyFmt;
 
   const _CollectionFocusStrip({
     required this.interestDue,
+    required this.interestReceived,
     required this.monthlyInterest,
-    required this.unpaidMonths,
     required this.advanceAmount,
-    required this.advanceMonths,
     required this.settlementComplete,
     required this.isOverdue,
     required this.moneyFmt,
@@ -23,25 +21,25 @@ class _CollectionFocusStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAdvance = advanceMonths > 0 && !settlementComplete;
+    final hasAdvance = advanceAmount > 0 && !settlementComplete;
     final accent = settlementComplete
         ? GirviColors.success
         : hasAdvance
             ? GirviColors.success
             : isOverdue
                 ? GirviColors.danger
-                : unpaidMonths > 0
+                : interestDue > 0
                     ? GirviColors.info
                     : GirviColors.success;
     final statusText = settlementComplete
         ? 'Settlement complete. Item is awaiting delivery.'
         : hasAdvance
-            ? 'Advance interest credit covers about $advanceMonths month${advanceMonths == 1 ? '' : 's'}.'
-            : isOverdue
+            ? 'Advance interest credit is available for future charges.'
+            : isOverdue && interestDue > 0
                 ? 'Interest collection is overdue.'
-                : unpaidMonths > 0
-                    ? '$unpaidMonths chargeable month${unpaidMonths == 1 ? '' : 's'} pending.'
-                    : 'No chargeable interest pending.';
+                : interestDue > 0
+                    ? 'Interest is pending for collection.'
+                    : 'No interest is due today.';
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -123,9 +121,8 @@ class _CollectionFocusStrip extends StatelessWidget {
                           color: GirviColors.success,
                         ),
                         _FocusMetric(
-                          label: 'Covered Period',
-                          value:
-                              '$advanceMonths month${advanceMonths == 1 ? '' : 's'}',
+                          label: 'Interest Received',
+                          value: 'Rs ${moneyFmt.format(interestReceived)}',
                           color: GirviColors.info,
                         ),
                       ]
@@ -137,9 +134,8 @@ class _CollectionFocusStrip extends StatelessWidget {
                           wide: true,
                         ),
                         _FocusMetric(
-                          label: 'Period Due',
-                          value:
-                              '$unpaidMonths month${unpaidMonths == 1 ? '' : 's'}',
+                          label: 'Interest Received',
+                          value: 'Rs ${moneyFmt.format(interestReceived)}',
                           color: accent,
                         ),
                         _FocusMetric(

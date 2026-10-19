@@ -179,10 +179,7 @@ extension NewGirviInvoicePrintActions on _NewGirviScreenState {
               'Gross Wt.',
               'Less Wt.',
               'Net Wt.',
-              'Val. Purity',
-              'Fine Wt.',
               'HUID',
-              'Pledged Value',
             ],
             data: _pledgedItems.map((item) {
               final description = item.descriptionCtrl.text.trim();
@@ -196,10 +193,7 @@ extension NewGirviInvoicePrintActions on _NewGirviScreenState {
                 _formatSmartWeight(item.grossWeight, dashWhenZero: true),
                 _formatSmartWeight(item.lessWeight, dashWhenZero: true),
                 _formatSmartWeight(item.netWeight, dashWhenZero: true),
-                item.valuationPurityLabel,
-                _formatSmartWeight(item.fineWeight, dashWhenZero: true),
                 huid.isEmpty ? '-' : huid,
-                amount(item.itemValue),
               ];
             }).toList(),
             headerStyle:

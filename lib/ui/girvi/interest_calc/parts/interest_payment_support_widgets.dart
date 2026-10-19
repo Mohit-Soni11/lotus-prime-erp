@@ -59,23 +59,17 @@ class _InterestLedgerBalanceStrip extends StatelessWidget {
   final double grossInterest;
   final double interestPaid;
   final double netDue;
-  final int equivalentMonths;
-  final DateTime? interestFromDate;
   final NumberFormat moneyFmt;
 
   const _InterestLedgerBalanceStrip({
     required this.grossInterest,
     required this.interestPaid,
     required this.netDue,
-    required this.equivalentMonths,
-    required this.interestFromDate,
     required this.moneyFmt,
   });
 
   @override
   Widget build(BuildContext context) {
-    final coverageLabel = _coverageLabel();
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -88,126 +82,27 @@ class _InterestLedgerBalanceStrip extends StatelessWidget {
         runSpacing: 9,
         children: [
           _FocusMetric(
-            label: 'Gross Interest',
+            label: 'Total Interest Accrued',
             value: 'Rs ${moneyFmt.format(grossInterest)}',
             color: GirviColors.warning,
             wide: true,
           ),
           _FocusMetric(
-            label: 'Interest Paid',
+            label: 'Interest Received',
             value: 'Rs ${moneyFmt.format(interestPaid)}',
             color: GirviColors.success,
             wide: true,
           ),
           _FocusMetric(
-            label: 'Net Due',
+            label: 'Interest Outstanding',
             value: 'Rs ${moneyFmt.format(netDue)}',
             color: GirviColors.danger,
-            wide: true,
-          ),
-          _FocusMetric(
-            label: 'Interest Covered',
-            value: coverageLabel,
-            color: GirviColors.info,
             wide: true,
           ),
         ],
       ),
     );
   }
-
-  String _coverageLabel() {
-    if (equivalentMonths <= 0) return 'Not set';
-
-    final monthLabel =
-        '$equivalentMonths month${equivalentMonths == 1 ? '' : 's'}';
-    final from = interestFromDate;
-    if (from == null) return monthLabel;
-
-    final monthFmt = DateFormat('MMM yyyy');
-    final startCycle = monthFmt.format(from);
-    if (equivalentMonths == 1) return '$startCycle | $monthLabel';
-
-    final endCycle = monthFmt.format(
-      DateTime(from.year, from.month + equivalentMonths - 1),
-    );
-    return '$startCycle - $endCycle | $monthLabel';
-  }
-}
-
-class _AmountShortcutRail extends StatelessWidget {
-  final GirviPaymentType paymentType;
-  final bool isInterestEntry;
-  final double interestDue;
-  final double monthlyInterest;
-  final double principalOutstanding;
-  final double expectedInterest;
-  final NumberFormat moneyFmt;
-  final ValueChanged<double> onPick;
-
-  const _AmountShortcutRail({
-    required this.paymentType,
-    required this.isInterestEntry,
-    required this.interestDue,
-    required this.monthlyInterest,
-    required this.principalOutstanding,
-    required this.expectedInterest,
-    required this.moneyFmt,
-    required this.onPick,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final shortcuts = <_AmountShortcut>[
-      if (isInterestEntry && interestDue > 0)
-        _AmountShortcut('Full Interest Due', interestDue, GirviColors.info),
-      if (isInterestEntry && expectedInterest > 0)
-        _AmountShortcut(
-            'Expected Interest', expectedInterest, GirviColors.success),
-      if (isInterestEntry && monthlyInterest > 0)
-        _AmountShortcut(
-            'One Month Interest', monthlyInterest, GirviColors.info),
-      if (paymentType == GirviPaymentType.partialPrincipal &&
-          principalOutstanding > 0)
-        _AmountShortcut(
-          'Full Principal',
-          principalOutstanding,
-          GirviColors.purple,
-        ),
-    ];
-
-    final uniqueShortcuts = <_AmountShortcut>[];
-    for (final shortcut in shortcuts) {
-      final alreadyExists = uniqueShortcuts.any(
-        (item) => (item.amount - shortcut.amount).abs() < 0.01,
-      );
-      if (!alreadyExists) uniqueShortcuts.add(shortcut);
-    }
-
-    if (uniqueShortcuts.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final shortcut in uniqueShortcuts)
-          _AmountShortcutButton(
-            label: shortcut.label,
-            value: 'Rs ${moneyFmt.format(shortcut.amount)}',
-            color: shortcut.color,
-            onTap: () => onPick(shortcut.amount),
-          ),
-      ],
-    );
-  }
-}
-
-class _AmountShortcut {
-  final String label;
-  final double amount;
-  final Color color;
-
-  const _AmountShortcut(this.label, this.amount, this.color);
 }
 
 class _AmountShortcutButton extends StatefulWidget {
@@ -304,11 +199,7 @@ class _PaymentHistoryRow extends StatelessWidget {
         ? 'Principal Rs ${moneyFmt.format(payment.principalComponent)} | Interest Rs ${moneyFmt.format(payment.interestComponent)}'
         : isPrincipalAdvance
             ? 'Adjusted against principal'
-            : payment.interestFromDate != null && payment.interestToDate != null
-                ? '${dateFmt.format(payment.interestFromDate!)} - ${dateFmt.format(payment.interestToDate!)}'
-                : payment.monthsCovered == null
-                    ? 'Interest credit'
-                    : '${payment.monthsCovered} month${payment.monthsCovered == 1 ? '' : 's'}';
+            : 'Adjusted against interest';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),

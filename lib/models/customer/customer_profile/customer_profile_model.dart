@@ -439,8 +439,8 @@ class CustomerLoanModel {
   final double interestRate;
   final DateTime startDate;
   final DateTime? lastInterestPaidDate;
-  final String interestType;
   final String status;
+  final double? recordedInterestOutstanding;
 
   const CustomerLoanModel({
     required this.id,
@@ -451,8 +451,8 @@ class CustomerLoanModel {
     required this.interestRate,
     required this.startDate,
     this.lastInterestPaidDate,
-    this.interestType = GirviInterestCalculationType.compound,
     required this.status,
+    this.recordedInterestOutstanding,
   });
 
   GirviStatus get lifecycleStatus => GirviStatus.fromDb(status);
@@ -461,13 +461,24 @@ class CustomerLoanModel {
   String get statusLabel => lifecycleStatus.displayName.toUpperCase();
 
   double get accruedInterest {
-    final from = lastInterestPaidDate ?? startDate;
-    final months = GirviLoanModel.chargeableMonthsBetween(from, DateTime.now());
-    return GirviLoanModel.calculateInterest(
+    if (recordedInterestOutstanding != null) {
+      return recordedInterestOutstanding!;
+    }
+    final paidThroughMonths = lastInterestPaidDate == null
+        ? 0
+        : GirviInterestCalculator.chargeableMonthsBetween(
+            startDate,
+            lastInterestPaidDate!,
+          );
+    final currentMonths = GirviInterestCalculator.chargeableMonthsBetween(
+      startDate,
+      DateTime.now(),
+    );
+    return GirviInterestCalculator.interestBetweenMonths(
       principal: loanAmount,
       monthlyRatePercent: interestRate,
-      months: months,
-      interestType: interestType,
+      fromMonth: paidThroughMonths,
+      toMonth: currentMonths,
     );
   }
 

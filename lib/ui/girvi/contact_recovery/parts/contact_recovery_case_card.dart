@@ -565,7 +565,6 @@ class _PledgedItemSummary extends StatelessWidget {
       if (loan.stoneWeight > 0)
         _ItemAttribute('Less Weight', _weight(loan.stoneWeight)),
       _ItemAttribute('Net Weight', _weight(loan.netWeight)),
-      _ItemAttribute('Valuation', _money(loan.totalValue)),
     ];
 
     return Container(
@@ -629,9 +628,6 @@ class _PledgedItemSummary extends StatelessWidget {
   String _pieces(int count) => '$count piece${count == 1 ? '' : 's'}';
 
   String _weight(double value) => '${value.toStringAsFixed(3)} g';
-
-  String _money(double value) =>
-      'Rs ${NumberFormat('#,##,##0', 'en_IN').format(value)}';
 }
 
 class _ItemAttribute {

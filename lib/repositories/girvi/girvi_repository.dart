@@ -3,6 +3,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import 'girvi_interest_payment_adjustments.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 part 'parts/girvi_repository_payment_numbering.dart';
@@ -127,12 +128,19 @@ class GirviRepository {
     final interestDiscountByLoan = <int, double>{};
     final principalDiscountByLoan = <int, double>{};
     final legacyPrincipalRepaidByLoan = <int, double>{};
+    final interestAdjustmentsByLoan = <int, List<GirviInterestAdjustment>>{};
     if (loanIds.isNotEmpty) {
       final paymentRows = await (_db.select(_db.girviPayments)
             ..where((payment) => payment.girviId.isIn(loanIds)))
           .get();
       for (final payment in paymentRows) {
         final type = GirviPaymentType.fromDb(payment.paymentType);
+        final adjustment = GirviInterestPaymentAdjustments.fromPayment(payment);
+        if (adjustment != null) {
+          interestAdjustmentsByLoan
+              .putIfAbsent(payment.girviId, () => [])
+              .add(adjustment);
+        }
         if (type == GirviPaymentType.interest ||
             type == GirviPaymentType.partialInterest) {
           final hasSplitComponents =
@@ -200,6 +208,8 @@ class GirviRepository {
             principalDiscountTotal: principalDiscountByLoan[loan.id] ?? 0,
             legacyPrincipalRepaidTotal:
                 legacyPrincipalRepaidByLoan[loan.id] ?? 0,
+            interestAdjustments: List.unmodifiable(
+                interestAdjustmentsByLoan[loan.id] ?? const []),
           );
         })
         .where(
@@ -247,7 +257,6 @@ class GirviRepository {
     double totalPrincipal = 0;
     double totalInterestDue = 0;
     double totalOverdueReceivable = 0;
-    double totalValue = 0;
     final now = DateTime.now();
 
     for (final item in allLoans) {
@@ -266,7 +275,6 @@ class GirviRepository {
           }
           totalPrincipal += item.principalDue;
           totalInterestDue += item.netInterestDue;
-          totalValue += loan.totalValue;
         case GirviStatus.released:
           totalReleased++;
         case GirviStatus.readyForDelivery:
@@ -278,7 +286,6 @@ class GirviRepository {
           totalPrincipal += item.principalDue;
           totalInterestDue += item.netInterestDue;
           totalOverdueReceivable += item.totalPayable;
-          totalValue += loan.totalValue;
       }
     }
 
@@ -297,7 +304,6 @@ class GirviRepository {
       totalPrincipalActive: totalPrincipal,
       totalInterestDue: totalInterestDue,
       totalOverdueReceivable: totalOverdueReceivable,
-      totalPortfolioValue: totalValue,
       totalCollectedThisMonth: monthlyCollected,
     );
   }
@@ -386,9 +392,6 @@ class GirviRepository {
       grossWeight: row.grossWeight,
       stoneWeight: row.stoneWeight,
       netWeight: row.netWeight,
-      ratePerGram: row.ratePerGram,
-      totalValue: row.totalValue,
-      ltvPercent: row.ltvPercent,
       loanAmount: row.loanAmount,
       interestRate: row.interestRate,
       durationMonths: row.durationMonths,

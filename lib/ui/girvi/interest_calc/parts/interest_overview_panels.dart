@@ -161,14 +161,14 @@ class _OverviewTermsPanel extends StatelessWidget {
         color: GirviColors.purple,
       ),
       _OverviewInfoTile(
-        label: 'Interest Collected',
+        label: 'Interest Received',
         value: interestCollected,
         icon: GirviIcons.markDone,
         color: GirviColors.success,
         wide: true,
       ),
       _OverviewInfoTile(
-        label: 'Interest Due',
+        label: 'Interest Outstanding',
         value: interestDue,
         icon: GirviIcons.interestRate,
         color: GirviColors.danger,

@@ -113,13 +113,11 @@ class _LoanTermsGroupHeader extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final String? trailing;
 
   const _LoanTermsGroupHeader({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.trailing,
   });
 
   @override
@@ -166,170 +164,6 @@ class _LoanTermsGroupHeader extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        if (trailing != null) ...[
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: GirviColors.bodyBg,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: GirviColors.cardBorder),
-            ),
-            child: Text(
-              trailing!,
-              style: GoogleFonts.inter(
-                color: GirviColors.textDark,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _LtvSuggestionRow extends StatelessWidget {
-  final double totalValue;
-  final void Function(double ltv) onSuggestionTap;
-
-  const _LtvSuggestionRow({
-    required this.totalValue,
-    required this.onSuggestionTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const ltvs = [50.0, 60.0, 70.0, 75.0, 80.0];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Quick LTV Suggestions:',
-            style: GirviStyles.caption.copyWith(fontSize: 12.5)),
-        const SizedBox(height: 6),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: ltvs.map((ltv) {
-              final amt = totalValue * (ltv / 100);
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => onSuggestionTap(ltv),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: GirviColors.brandGoldLight,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: GirviColors.brandGold.withValues(alpha: 0.3)),
-                    ),
-                    child: Column(children: [
-                      Text('${ltv.toInt()}% LTV',
-                          style: GoogleFonts.inter(
-                              color: GirviColors.brandDeep,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700)),
-                      Text(_formatSmartMoney(amt),
-                          style: GoogleFonts.manrope(
-                              color: GirviColors.textDark,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800)),
-                    ]),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _LtvIndicator extends StatelessWidget {
-  final double ltv;
-  final bool enabled;
-  final void Function(double) onChanged;
-
-  const _LtvIndicator({
-    required this.ltv,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  Color get _color {
-    if (ltv <= 60) return GirviColors.success;
-    if (ltv <= 75) return GirviColors.warning;
-    return GirviColors.danger;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = enabled ? _color : GirviColors.brandGold;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Loan-to-Value (LTV)', style: GirviStyles.fieldLabel),
-        const SizedBox(height: 6),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: GirviStyles.inputHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: enabled
-                ? color.withValues(alpha: 0.06)
-                : GirviColors.inputBgLocked,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: enabled
-                  ? color.withValues(alpha: 0.25)
-                  : GirviColors.cardBorder,
-            ),
-          ),
-          child: Row(children: [
-            Icon(GirviIcons.loanTerms, color: color, size: 18),
-            const SizedBox(width: 10),
-            Container(width: 1, height: 22, color: GirviColors.cardBorder),
-            const SizedBox(width: 10),
-            Expanded(
-              child: SliderTheme(
-                data: SliderThemeData(
-                  activeTrackColor: color,
-                  thumbColor: color,
-                  inactiveTrackColor: GirviColors.divider,
-                  disabledActiveTrackColor: color.withValues(alpha: 0.35),
-                  disabledThumbColor: color.withValues(alpha: 0.70),
-                  overlayColor: color.withValues(alpha: 0.15),
-                  trackHeight: 3,
-                ),
-                child: Slider(
-                  value: ltv.clamp(0, 100),
-                  min: 0,
-                  max: 100,
-                  divisions: 20,
-                  onChanged: enabled ? onChanged : null,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 62,
-              child: Text(
-                _formatSmartPercent(ltv),
-                textAlign: TextAlign.right,
-                style: GoogleFonts.manrope(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                ),
-              ),
-            ),
-          ]),
         ),
       ],
     );

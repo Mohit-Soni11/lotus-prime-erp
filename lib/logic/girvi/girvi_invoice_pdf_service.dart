@@ -79,11 +79,16 @@ class GirviInvoicePdfService {
   }) async {
     final textRenderer = await LotusPdfTextRenderer.create();
     final template = _resolveTemplate(templateId);
+    final openingInvoiceSettings = settings.copyWith(
+      showMonthlyInterest: false,
+      showTotalInterest: false,
+      showTotalDue: false,
+    );
     final printableDocument = format == GirviInvoiceFormat.a4
         ? _printableDocument(
             shopProfile: _shopProfileFromBranding(branding),
             draft: draft,
-            settings: settings,
+            settings: openingInvoiceSettings,
             template: template,
           )
         : null;
@@ -164,7 +169,9 @@ class GirviInvoicePdfService {
             draft,
             format,
             copyLabel,
-            settings,
+            draft.mode == GirviReceiptMode.pledge
+                ? openingInvoiceSettings
+                : settings,
             branding,
             brandLogo,
             devanagariFont,
@@ -493,7 +500,7 @@ class GirviInvoicePdfService {
         if (settings.showInterestRate)
           LotusPrintableDetail(
             iconKey: 'amount',
-            label: 'Monthly Interest',
+            label: 'Monthly Interest Rate',
             value: '${draft.interestRate.toStringAsFixed(2)}%',
           ),
         if (draft.lastInterestPaidDate != null)
@@ -513,34 +520,6 @@ class GirviInvoicePdfService {
     final itemSettings = _combinedItemSettings(items, settings);
     final columns = [
       ..._visibleColumns(itemSettings),
-      if (itemSettings.showValuationPurity)
-        _GirviInvoiceColumn(
-          header: 'Val. Purity',
-          width: 0.85,
-          alignment: pw.Alignment.center,
-          value: (item) => item.valuationPurity,
-        ),
-      if (itemSettings.showFineWeight)
-        _GirviInvoiceColumn(
-          header: 'Fine Wt.',
-          width: 0.9,
-          alignment: pw.Alignment.centerRight,
-          value: (item) => '${item.fineWeight.toStringAsFixed(3)} g',
-        ),
-      if (itemSettings.showRatePerGram)
-        _GirviInvoiceColumn(
-          header: 'Rate / g',
-          width: 1.0,
-          alignment: pw.Alignment.centerRight,
-          value: (item) => _amount(item.ratePerGram),
-        ),
-      if (itemSettings.showValuationAmount)
-        _GirviInvoiceColumn(
-          header: 'Pledged Value',
-          width: 1.15,
-          alignment: pw.Alignment.centerRight,
-          value: (item) => _amount(item.value),
-        ),
     ];
 
     return LotusPrintableTable(
@@ -631,15 +610,9 @@ class GirviInvoicePdfService {
           if (settings.showTotalDue && draft.isReleaseReceipt)
             LotusPrintableDetail(
               iconKey: 'amount',
-              label: 'Original Maturity Due',
+              label: 'Accrued Principal + Interest',
               value: _amount(draft.totalDue),
               highlight: true,
-            ),
-          if (settings.showTotalValue)
-            LotusPrintableDetail(
-              iconKey: 'amount',
-              label: 'Pledged Valuation',
-              value: _amount(draft.totalValue),
             ),
         ],
       ),
@@ -966,14 +939,6 @@ class GirviInvoicePdfService {
             compact,
           ),
         );
-      if (_hasValuationFields(itemSettings)) {
-        widgets
-          ..add(pw.SizedBox(height: compact ? 7 : 9))
-          ..add(pw.NewPage(freeSpace: compact ? 70 : 95))
-          ..add(_buildSubsectionLabel('VALUATION DETAILS', compact))
-          ..add(pw.SizedBox(height: compact ? 5 : 7))
-          ..add(_buildValuationTable(draft.items, itemSettings, compact));
-      }
     }
 
     final kycSection = _buildKycSection(draft, settings, compact);

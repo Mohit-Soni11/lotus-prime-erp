@@ -381,11 +381,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                 _AccountInfoRowData('Gross Weight', _weight(loan.grossWeight)),
                 _AccountInfoRowData('Less Weight', _weight(loan.stoneWeight)),
                 _AccountInfoRowData('Net Weight', _weight(loan.netWeight)),
-                _AccountInfoRowData(
-                  'Rate Per Gram',
-                  _money(loan.ratePerGram, precise: true),
-                ),
-                _AccountInfoRowData('Pledged Value', _money(loan.totalValue)),
                 if ((loan.huidNumber ?? '').trim().isNotEmpty)
                   _AccountInfoRowData('HUID', loan.huidNumber!.trim()),
               ],
@@ -423,8 +418,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                       ? _weight(itemDetails.item.lessWeight)
                       : null,
                   netWeight: _weight(itemDetails.item.netWeight),
-                  rate: _money(itemDetails.item.ratePerGram, precise: true),
-                  value: _money(itemDetails.item.valuationAmount),
                   huid: itemDetails.item.huidNumber,
                   photoPaths: itemDetails.photos
                       .map((photo) => photo.filePath)

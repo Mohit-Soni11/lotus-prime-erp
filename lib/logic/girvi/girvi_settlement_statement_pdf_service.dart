@@ -62,8 +62,6 @@ class GirviSettlementStatementPdfService {
             ['Gross Weight', _weight(account.loan.grossWeight)],
             ['Less Weight', _weight(account.loan.stoneWeight)],
             ['Net Weight', _weight(account.loan.netWeight)],
-            ['Rate Per Gram', _money(account.loan.ratePerGram)],
-            ['Pledged Value', _money(account.loan.totalValue)],
           ]),
           pw.SizedBox(height: 14),
           _sectionTitle('Payment Ledger'),

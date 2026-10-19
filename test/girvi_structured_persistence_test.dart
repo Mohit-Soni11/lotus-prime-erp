@@ -24,59 +24,20 @@ void main() {
       await db.close();
     });
 
-    test('structured valuation feeds controller totals and loan suggestions',
+    test('structured items retain weight without changing the loan amount',
         () async {
       final controller = NewGirviController(db);
       addTearDown(controller.dispose);
-
-      controller.syncStructuredValuation(
-        itemCount: 1,
-        grossWeight: 12,
-        stoneWeight: 0,
-        ratePerGram: 11050,
-        totalValue: 132600,
-        metalType: MetalType.gold,
-        metalPurity: MetalPurity.k22,
-      );
-
-      expect(controller.totalValue, 132600);
-      expect(controller.netWeight, 12);
-      expect(controller.suggestedLoanAt(50), 66300);
-
-      controller.onLoanAmountChanged('66300');
-      expect(controller.computedLtv, 50);
-    });
-
-    test('loan amount is not overwritten by valuation or disbursement changes',
-        () async {
-      final controller = NewGirviController(db);
-      addTearDown(controller.dispose);
-
-      controller.syncStructuredValuation(
-        itemCount: 1,
-        grossWeight: 12,
-        stoneWeight: 0,
-        ratePerGram: 11050,
-        totalValue: 132600,
-        metalType: MetalType.gold,
-        metalPurity: MetalPurity.k22,
-      );
       controller.onLoanAmountChanged('25000');
-
-      controller.syncStructuredValuation(
+      controller.syncStructuredItems(
         itemCount: 1,
-        grossWeight: 5,
-        stoneWeight: 0,
-        ratePerGram: 11050,
-        totalValue: 55250,
+        grossWeight: 12,
+        stoneWeight: 2,
         metalType: MetalType.gold,
         metalPurity: MetalPurity.k22,
       );
-      controller.setDisbursementMode(GirviPaymentMode.cash);
-
-      expect(controller.totalValue, 55250);
+      expect(controller.netWeight, 10);
       expect(controller.loanAmount, 25000);
-      expect(controller.computedLtv, closeTo(45.2488, 0.001));
     });
 
     test('saves every item, photo and mixed disbursement atomically', () async {
@@ -100,11 +61,9 @@ void main() {
       expect(details!.items, hasLength(2));
       expect(details.items[0].item.itemName, 'Gold ring');
       expect(details.items[0].item.huidNumber, 'HUID-GOLD-1');
-      expect(details.items[0].item.valuationPurityPercent, 91.6);
       expect(details.items[0].photos.map((photo) => photo.filePath),
           ['/photos/ring-front.jpg', '/photos/ring-back.jpg']);
       expect(details.items[1].item.itemName, 'Silver payal');
-      expect(details.items[1].item.valuationMethod, 'DIRECT_RATE');
       expect(details.items[1].photos.single.filePath, '/photos/payal.jpg');
       expect(details.disbursements, hasLength(2));
       expect(details.disbursements[0].mode, 'Cash');
@@ -164,8 +123,6 @@ void main() {
           grossWeight: drift.Value(12),
           stoneWeight: drift.Value(1),
           netWeight: drift.Value(11),
-          ratePerGram: drift.Value(7000),
-          totalValue: drift.Value(70532),
           loanAmount: drift.Value(25000),
           disbursementMode: drift.Value('Cheque Rs 25000.00'),
         ),
@@ -180,11 +137,6 @@ void main() {
             grossWeight: 12,
             lessWeight: 1,
             netWeight: 11,
-            valuationMethod: 'PURITY',
-            valuationPurityPercent: 91.6,
-            fineWeight: 10.076,
-            ratePerGram: 7000,
-            valuationAmount: 70532,
             photoPaths: ['/photos/chain.jpg'],
           ),
         ],
@@ -258,7 +210,6 @@ void main() {
       controller.selectCustomer(customer);
       controller.onGrossWeightChanged('15');
       controller.onStoneWeightChanged('0');
-      controller.onRatePerGramChanged('5000');
       controller.onLoanAmountChanged('30000');
       controller.onInterestRateChanged('5');
       controller.onDurationChanged('8');
@@ -326,11 +277,6 @@ void main() {
             grossWeight: 12,
             lessWeight: 1,
             netWeight: 11,
-            valuationMethod: 'PURITY',
-            valuationPurityPercent: 91.6,
-            fineWeight: 10.076,
-            ratePerGram: 7000,
-            valuationAmount: 70532,
             photoPaths: ['/photos/edited-chain.jpg'],
           ),
         ],
@@ -475,8 +421,6 @@ GirviLoansCompanion _loanInsert({
     grossWeight: const drift.Value(15),
     stoneWeight: const drift.Value(0),
     netWeight: const drift.Value(15),
-    ratePerGram: const drift.Value(5000),
-    totalValue: const drift.Value(75000),
     loanAmount: drift.Value(loanAmount),
     disbursementMode: const drift.Value('Cash + UPI'),
   );
@@ -495,11 +439,6 @@ List<GirviLoanItemInput> _twoItems() {
       grossWeight: 5,
       lessWeight: 0,
       netWeight: 5,
-      valuationMethod: 'PURITY',
-      valuationPurityPercent: 91.6,
-      fineWeight: 4.58,
-      ratePerGram: 10000,
-      valuationAmount: 45800,
       photoPaths: ['/photos/ring-front.jpg', '/photos/ring-back.jpg'],
     ),
     GirviLoanItemInput(
@@ -512,10 +451,6 @@ List<GirviLoanItemInput> _twoItems() {
       grossWeight: 10,
       lessWeight: 0,
       netWeight: 10,
-      valuationMethod: 'DIRECT_RATE',
-      fineWeight: 10,
-      ratePerGram: 2920,
-      valuationAmount: 29200,
       photoPaths: ['/photos/payal.jpg'],
     ),
   ];

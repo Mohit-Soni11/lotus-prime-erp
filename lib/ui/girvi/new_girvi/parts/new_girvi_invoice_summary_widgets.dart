@@ -218,61 +218,6 @@ class _InvoiceAmountHero extends StatelessWidget {
   }
 }
 
-class _InvoiceMetricTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _InvoiceMetricTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 82),
-      padding: const EdgeInsets.all(9),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.17)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 15),
-          const SizedBox(height: 7),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GirviStyles.caption.copyWith(
-              fontSize: 12.5,
-              height: 1.15,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.manrope(
-              color: GirviColors.textDark,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _InvoiceDetailSection extends StatelessWidget {
   final String title;
   final IconData icon;

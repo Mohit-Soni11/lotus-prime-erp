@@ -64,7 +64,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
   final _releasePrincipalCtrl = TextEditingController();
   final _releaseInterestCtrl = TextEditingController();
   final _releaseDiscountCtrl = TextEditingController();
-  final _monthsCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
   late final AnimationController _fadeCtrl;
@@ -106,9 +105,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
         _ctrl.onReleaseDiscountChanged(_releaseDiscountCtrl.text);
       }
     });
-    _monthsCtrl.addListener(() {
-      if (!_syncingText) _ctrl.onMonthsChanged(_monthsCtrl.text);
-    });
     _notesCtrl.addListener(() {
       if (!_syncingText) _ctrl.onNotesChanged(_notesCtrl.text);
     });
@@ -125,7 +121,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _releasePrincipalCtrl.dispose();
     _releaseInterestCtrl.dispose();
     _releaseDiscountCtrl.dispose();
-    _monthsCtrl.dispose();
     _notesCtrl.dispose();
     _fadeCtrl.dispose();
     super.dispose();
@@ -151,7 +146,6 @@ class _InterestCalcScreenState extends State<InterestCalcScreen>
     _setText(_releasePrincipalCtrl, _ctrl.releasePrincipalInput);
     _setText(_releaseInterestCtrl, _ctrl.releaseInterestInput);
     _setText(_releaseDiscountCtrl, _ctrl.releaseDiscountInput);
-    _setText(_monthsCtrl, _ctrl.monthsInput);
     _setText(_notesCtrl, _ctrl.notes);
     _syncingText = false;
   }

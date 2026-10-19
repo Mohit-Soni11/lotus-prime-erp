@@ -83,34 +83,6 @@ class GirviInvoiceDisplayEditor extends StatelessWidget {
       group: 'Weight Details',
     ),
     GirviDisplayOption(
-      key: 'valuationPurity',
-      title: 'Valuation Purity',
-      subtitle: 'Purity percentage used for loan valuation',
-      icon: Icons.percent_rounded,
-      group: 'Valuation',
-    ),
-    GirviDisplayOption(
-      key: 'fineWeight',
-      title: 'Fine Weight',
-      subtitle: 'Net weight multiplied by valuation purity',
-      icon: Icons.calculate_outlined,
-      group: 'Valuation',
-    ),
-    GirviDisplayOption(
-      key: 'ratePerGram',
-      title: 'Valuation Rate / Gram',
-      subtitle: 'Rate used to calculate pledged value',
-      icon: Icons.trending_up_rounded,
-      group: 'Valuation',
-    ),
-    GirviDisplayOption(
-      key: 'valuationAmount',
-      title: 'Item Valuation Amount',
-      subtitle: 'Calculated value of each pledged item',
-      icon: Icons.currency_rupee_rounded,
-      group: 'Valuation',
-    ),
-    GirviDisplayOption(
       key: 'photos',
       title: 'Pledged Item Photos',
       subtitle: 'Photos attached from the item ledger',
@@ -122,7 +94,6 @@ class GirviInvoiceDisplayEditor extends StatelessWidget {
   static const groups = [
     'Item Identity',
     'Weight Details',
-    'Valuation',
     'Media',
   ];
 
@@ -170,27 +141,6 @@ class GirviInvoiceDisplayEditor extends StatelessWidget {
               ),
             );
           },
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(11),
-          decoration: BoxDecoration(
-            color: BillingSetupColors.warning.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: BillingSetupColors.warning.withValues(alpha: 0.22),
-            ),
-          ),
-          child: Text(
-            'Valuation fields start OFF. Enable only the valuation details '
-            'you want the customer to see on the printed Girvi receipt.',
-            style: GoogleFonts.inter(
-              fontSize: 10.5,
-              color: BillingSetupColors.textMuted,
-              height: 1.35,
-            ),
-          ),
         ),
       ],
     );
@@ -276,13 +226,6 @@ class GirviInvoiceDocumentEditor extends StatelessWidget {
       title: 'Total Amount Due',
       subtitle: 'Principal plus estimated total interest',
       icon: Icons.payments_outlined,
-      group: 'Loan & Interest',
-    ),
-    GirviDisplayOption(
-      key: 'totalValuation',
-      title: 'Total Pledged Valuation',
-      subtitle: 'Combined valuation of all pledged items',
-      icon: Icons.price_check_outlined,
       group: 'Loan & Interest',
     ),
     GirviDisplayOption(
@@ -393,14 +336,6 @@ bool readGirviItemSetting(
       return settings.showLessWeight;
     case 'net':
       return settings.showNetWeight;
-    case 'valuationPurity':
-      return settings.showValuationPurity;
-    case 'fineWeight':
-      return settings.showFineWeight;
-    case 'ratePerGram':
-      return settings.showRatePerGram;
-    case 'valuationAmount':
-      return settings.showValuationAmount;
     case 'photos':
       return settings.showItemPhotos;
     default:
@@ -432,14 +367,6 @@ GirviInvoiceFieldSettings writeGirviItemSetting(
       return settings.copyWith(showLessWeight: value);
     case 'net':
       return settings.copyWith(showNetWeight: value);
-    case 'valuationPurity':
-      return settings.copyWith(showValuationPurity: value);
-    case 'fineWeight':
-      return settings.copyWith(showFineWeight: value);
-    case 'ratePerGram':
-      return settings.copyWith(showRatePerGram: value);
-    case 'valuationAmount':
-      return settings.copyWith(showValuationAmount: value);
     case 'photos':
       return settings.copyWith(showItemPhotos: value);
     default:
@@ -469,8 +396,6 @@ bool readGirviDocumentSetting(GirviBillingModel model, String key) {
       return model.showTotalInterest;
     case 'totalDue':
       return model.showTotalDue;
-    case 'totalValuation':
-      return model.showTotalValue;
     case 'disbursement':
       return model.showDisbursementDetails;
     case 'kycDetails':
@@ -516,8 +441,6 @@ GirviBillingModel writeGirviDocumentSetting(
       return model.copyWith(showTotalInterest: value);
     case 'totalDue':
       return model.copyWith(showTotalDue: value);
-    case 'totalValuation':
-      return model.copyWith(showTotalValue: value);
     case 'disbursement':
       return model.copyWith(showDisbursementDetails: value);
     case 'kycDetails':

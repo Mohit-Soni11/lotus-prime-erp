@@ -43,8 +43,10 @@ extension GirviInvoiceSetupCard on _GirviInvoiceHubScreenState {
           (option) => _controller.getCombinedCustomizationValue(option.key),
         )
         .length;
-    final visibleReceiptFields =
-        _controller.invoiceSettings.visibleDocumentFieldCount;
+    final visibleReceiptFields = _girviInvoiceDocumentOptions
+        .where(
+            (option) => _controller.getDocumentCustomizationValue(option.key))
+        .length;
 
     return Container(
       decoration: BoxDecoration(

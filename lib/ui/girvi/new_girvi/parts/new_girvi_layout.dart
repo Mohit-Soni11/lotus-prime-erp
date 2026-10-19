@@ -13,15 +13,13 @@ extension NewGirviLayout on _NewGirviScreenState {
           },
         ),
         const SizedBox(height: 16),
-        _animated(2, _buildPledgedValuationSection()),
-        const SizedBox(height: 16),
-        _animated(4, _buildSection4LoanTerms()),
+        _animated(2, _buildSection4LoanTerms()),
         const SizedBox(height: 16),
         if (includeKyc) ...[
-          _animated(7, _buildSection7KYC()),
+          _animated(3, _buildSection7KYC()),
           const SizedBox(height: 16),
         ],
-        _animated(8, _buildSection8Notes()),
+        _animated(4, _buildSection8Notes()),
       ],
     );
   }
@@ -61,8 +59,8 @@ extension NewGirviLayout on _NewGirviScreenState {
             ),
             _DeskMetric(
               icon: GirviIcons.interestRate,
-              label: 'Monthly Interest',
-              value: _deskMonthlyInterestLabel(),
+              label: 'Monthly Rate',
+              value: _deskMonthlyRateLabel(),
               color: GirviColors.accentInterest,
             ),
             _DeskMetric(
@@ -100,10 +98,8 @@ extension NewGirviLayout on _NewGirviScreenState {
     return _formatSmartWeight(_ctrl.netWeight);
   }
 
-  String _deskMonthlyInterestLabel() {
-    final hasLoanContext =
-        _ctrl.loanAmount > 0 || _loanAmtCtrl.text.trim().isNotEmpty;
-    if (!hasLoanContext || _ctrl.interestRate <= 0) return 'Not set';
+  String _deskMonthlyRateLabel() {
+    if (_ctrl.interestRate <= 0) return 'Not set';
     return '${_formatSmartPercent(_ctrl.interestRate)} monthly';
   }
 
@@ -129,7 +125,6 @@ extension NewGirviLayout on _NewGirviScreenState {
     final invoiceReady = completedSteps == 4;
     final hasKyc =
         _ctrl.idProofType != null && _idProofNoCtrl.text.trim().isNotEmpty;
-    final ltv = _ctrl.computedLtv.clamp(0.0, 999.0);
     final paymentParts = [
       for (final mode in _visibleDisbursementModes)
         if (_disbursementAmountFor(mode) > 0)
@@ -278,54 +273,6 @@ extension NewGirviLayout on _NewGirviScreenState {
                   duration: _ctrl.durationMonths > 0
                       ? '${_ctrl.durationMonths} months'
                       : 'Not set',
-                ),
-                const SizedBox(height: 10),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final metrics = [
-                      _InvoiceMetricTile(
-                        label: 'Item Value',
-                        value: _ctrl.totalValue > 0
-                            ? _formatSmartMoney(_ctrl.totalValue)
-                            : 'Not set',
-                        icon: GirviIcons.valuation,
-                        color: GirviColors.success,
-                      ),
-                      _InvoiceMetricTile(
-                        label: 'Monthly Interest',
-                        value: _ctrl.monthlyInterest > 0
-                            ? _formatSmartMoney(_ctrl.monthlyInterest)
-                            : 'Not set',
-                        icon: GirviIcons.interestRate,
-                        color: GirviColors.info,
-                      ),
-                      _InvoiceMetricTile(
-                        label: 'LTV Ratio',
-                        value: ltv > 0 ? _formatSmartPercent(ltv) : 'Not set',
-                        icon: Icons.pie_chart_outline_rounded,
-                        color: GirviColors.purple,
-                      ),
-                    ];
-                    if (constraints.maxWidth < 360) {
-                      return Column(
-                        children: [
-                          for (var i = 0; i < metrics.length; i++) ...[
-                            if (i > 0) const SizedBox(height: 8),
-                            metrics[i],
-                          ],
-                        ],
-                      );
-                    }
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        for (var i = 0; i < metrics.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 7),
-                          Expanded(child: metrics[i]),
-                        ],
-                      ],
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
                 _InvoiceDetailSection(

@@ -543,11 +543,13 @@ pw.Widget _girviCompoundInterestCalculation(
     return pw.SizedBox.shrink();
   }
 
-  final lines = GirviLoanModel.calculateCompoundInterestBreakdown(
-    principal: draft.loanAmount,
+  final lines = GirviInterestCalculator.quoteAt(
+    principal: draft.interestPrincipal ?? draft.loanAmount,
     monthlyRatePercent: draft.interestRate,
-    months: chargeableMonths,
-  );
+    startDate: draft.startDate,
+    asOf: releaseDate,
+    adjustments: draft.interestAdjustments,
+  ).cycles;
   if (lines.isEmpty) return pw.SizedBox.shrink();
 
   final rows = lines.map((line) {
@@ -580,7 +582,7 @@ pw.Widget _girviCompoundInterestCalculation(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'Each completed 12-month cycle is added to the next principal base.',
+          'Only unpaid interest at each 12-month anniversary is added to the next interest base. Recorded payments and discounts are reflected in closing amounts.',
           style: pw.TextStyle(
             color: profile.bodyTextColor,
             fontSize: profile.bodyFontSize + 1.2,

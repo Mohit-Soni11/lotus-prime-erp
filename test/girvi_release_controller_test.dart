@@ -51,6 +51,7 @@ void main() {
       customerName: loan.customerName,
     );
     addTearDown(controller.dispose);
+    expect(controller.total, 0);
 
     final ok = await controller.processRelease(releasedBy: 'Test Staff');
     final stored = await repository.getLoanById(loanId);
@@ -79,8 +80,6 @@ Future<int> _insertLoan(AppDatabase db, GirviStatus status) async {
           itemDescription: 'Gold ring',
           grossWeight: const drift.Value(4),
           netWeight: const drift.Value(4),
-          ratePerGram: const drift.Value(7800),
-          totalValue: const drift.Value(31200),
           loanAmount: const drift.Value(12000),
           interestRate: const drift.Value(5),
           startDate: drift.Value(DateTime(2026, 3, 10)),

@@ -252,14 +252,6 @@ class GirviInvoiceHubController extends ChangeNotifier {
         return settings.showLessWeight;
       case 'net':
         return settings.showNetWeight;
-      case 'valuationPurity':
-        return settings.showValuationPurity;
-      case 'fineWeight':
-        return settings.showFineWeight;
-      case 'ratePerGram':
-        return settings.showRatePerGram;
-      case 'valuationAmount':
-        return settings.showValuationAmount;
       case 'photos':
         return settings.showItemPhotos;
       default:
@@ -327,14 +319,6 @@ class GirviInvoiceHubController extends ChangeNotifier {
         return current.copyWith(showLessWeight: value);
       case 'net':
         return current.copyWith(showNetWeight: value);
-      case 'valuationPurity':
-        return current.copyWith(showValuationPurity: value);
-      case 'fineWeight':
-        return current.copyWith(showFineWeight: value);
-      case 'ratePerGram':
-        return current.copyWith(showRatePerGram: value);
-      case 'valuationAmount':
-        return current.copyWith(showValuationAmount: value);
       case 'photos':
         return current.copyWith(showItemPhotos: value);
       default:
@@ -358,14 +342,6 @@ class GirviInvoiceHubController extends ChangeNotifier {
         return invoiceSettings.showStartDate;
       case 'maturityDate':
         return invoiceSettings.showMaturityDate;
-      case 'monthlyInterest':
-        return invoiceSettings.showMonthlyInterest;
-      case 'totalInterest':
-        return invoiceSettings.showTotalInterest;
-      case 'totalDue':
-        return invoiceSettings.showTotalDue;
-      case 'totalValuation':
-        return invoiceSettings.showTotalValue;
       case 'disbursement':
         return invoiceSettings.showDisbursementDetails;
       case 'kycDetails':
@@ -407,18 +383,6 @@ class GirviInvoiceHubController extends ChangeNotifier {
         break;
       case 'maturityDate':
         invoiceSettings = invoiceSettings.copyWith(showMaturityDate: value);
-        break;
-      case 'monthlyInterest':
-        invoiceSettings = invoiceSettings.copyWith(showMonthlyInterest: value);
-        break;
-      case 'totalInterest':
-        invoiceSettings = invoiceSettings.copyWith(showTotalInterest: value);
-        break;
-      case 'totalDue':
-        invoiceSettings = invoiceSettings.copyWith(showTotalDue: value);
-        break;
-      case 'totalValuation':
-        invoiceSettings = invoiceSettings.copyWith(showTotalValue: value);
         break;
       case 'disbursement':
         invoiceSettings =
@@ -499,10 +463,6 @@ class GirviInvoiceHubController extends ChangeNotifier {
         showDuration: saved.showDuration,
         showStartDate: saved.showStartDate,
         showMaturityDate: saved.showMaturityDate,
-        showMonthlyInterest: saved.showMonthlyInterest,
-        showTotalInterest: saved.showTotalInterest,
-        showTotalDue: saved.showTotalDue,
-        showTotalValue: saved.showTotalValue,
         showDisbursementDetails: saved.showDisbursementDetails,
         showKycDetails: saved.showKycDetails,
         showKycPhoto: saved.showKycPhoto,

@@ -4,6 +4,7 @@ import '../../database/db/app_database.dart';
 import '../../models/girvi/girvi_interest_period_snapshot.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import 'girvi_interest_payment_adjustments.dart';
 
 /// Owns the persisted financial timeline used by notices and recovery.
 ///
@@ -26,6 +27,7 @@ class GirviInterestPeriodSnapshotRepository {
         loan: account.loan,
         principal: account.originalPrincipal,
         asOf: asOf,
+        adjustments: account.interestAdjustments,
       );
     }
     return result;
@@ -53,10 +55,14 @@ class GirviInterestPeriodSnapshotRepository {
     required DateTime asOf,
   }) async {
     await _db.ensureGirviInterestPeriodSnapshotSchema();
+    final payments = await (_db.select(_db.girviPayments)
+          ..where((payment) => payment.girviId.equals(loan.id)))
+        .get();
     return _synchronizeLoan(
       loan: loan,
       principal: principal,
       asOf: asOf,
+      adjustments: GirviInterestPaymentAdjustments.fromPayments(payments),
     );
   }
 
@@ -64,6 +70,7 @@ class GirviInterestPeriodSnapshotRepository {
     required GirviLoanModel loan,
     required double principal,
     required DateTime asOf,
+    required List<GirviInterestAdjustment> adjustments,
   }) async {
     final existing = await getForLoan(loan.id);
     final end = loan.releaseDate ?? asOf;
@@ -77,20 +84,28 @@ class GirviInterestPeriodSnapshotRepository {
       principal: principal,
       months: months,
       end: end,
+      adjustments: adjustments,
     );
     if (existing.isEmpty) {
       await _insertAll(desired);
       return getForLoan(loan.id);
     }
 
-    // The elapsed-month policy is authoritative. Replace legacy timelines
-    // atomically when the account crosses month 12 or an old setting supplied
-    // a conflicting method; approved notice text remains separately saved.
-    final requiredType =
-        GirviInterestCalculationType.forChargeableMonths(months);
-    if (existing.any((snapshot) =>
-        GirviInterestCalculationType.normalize(snapshot.interestType) !=
-        requiredType)) {
+    final current = {for (final row in existing) row.sequence: row};
+    final changed = existing.length != desired.length ||
+        desired.any((wanted) {
+          final stored = current[wanted.sequence];
+          return stored == null ||
+              stored.periodFrom != wanted.periodFrom ||
+              stored.periodTo != wanted.periodTo ||
+              stored.interestType != wanted.interestType ||
+              (stored.openingAmount - wanted.openingAmount).abs() > 0.01 ||
+              (stored.periodInterest - wanted.periodInterest).abs() > 0.01 ||
+              (stored.closingAmount - wanted.closingAmount).abs() > 0.01 ||
+              stored.finalized != wanted.finalized ||
+              stored.source != wanted.source;
+        });
+    if (changed) {
       await _db.transaction(() async {
         await _db.customStatement(
           'DELETE FROM girvi_interest_period_snapshots WHERE girvi_id = ?',
@@ -100,23 +115,7 @@ class GirviInterestPeriodSnapshotRepository {
       });
       return getForLoan(loan.id);
     }
-
-    // Completed periods are immutable. Only the current open remainder may
-    // grow as time advances; new periods are appended when they begin.
-    final existingBySequence = {
-      for (final snapshot in existing) snapshot.sequence: snapshot,
-    };
-    for (final wanted in desired) {
-      final stored = existingBySequence[wanted.sequence];
-      if (stored == null) {
-        await _insert(wanted);
-      } else if (!stored.finalized &&
-          (stored.periodTo != wanted.periodTo ||
-              (stored.periodInterest - wanted.periodInterest).abs() > 0.01)) {
-        await _updateOpenPeriod(wanted);
-      }
-    }
-    return getForLoan(loan.id);
+    return existing;
   }
 
   List<_SnapshotDraft> _buildDesired({
@@ -124,15 +123,19 @@ class GirviInterestPeriodSnapshotRepository {
     required double principal,
     required int months,
     required DateTime end,
+    required List<GirviInterestAdjustment> adjustments,
   }) {
     final normalizedType =
         GirviInterestCalculationType.forChargeableMonths(months);
+    final quote = GirviInterestCalculator.quoteAt(
+      principal: principal,
+      monthlyRatePercent: loan.interestRate,
+      startDate: loan.startDate,
+      asOf: end,
+      adjustments: adjustments,
+    );
     if (GirviInterestCalculationType.isSimple(normalizedType)) {
-      final interest = GirviLoanModel.calculateSimpleInterest(
-        principal: principal,
-        monthlyRatePercent: loan.interestRate,
-        months: months,
-      );
+      final line = quote.cycles.single;
       return [
         _draft(
           loan: loan,
@@ -142,7 +145,8 @@ class GirviInterestPeriodSnapshotRepository {
           to: end,
           opening: principal,
           months: months,
-          interest: interest,
+          interest: line.interestAmount,
+          closing: line.closingAmount,
           // A simple-interest account has one continually growing period. It
           // becomes immutable only once the loan itself is released.
           finalized: loan.releaseDate != null ||
@@ -151,11 +155,7 @@ class GirviInterestPeriodSnapshotRepository {
       ];
     }
 
-    final lines = GirviLoanModel.calculateCompoundInterestBreakdown(
-      principal: principal,
-      monthlyRatePercent: loan.interestRate,
-      months: months,
-    );
+    final lines = quote.cycles;
     return [
       for (final line in lines)
         _draft(
@@ -166,14 +166,17 @@ class GirviInterestPeriodSnapshotRepository {
             loan.startDate,
             GirviLoanModel.compoundCycleMonths * (line.cycleNumber - 1),
           ),
-          to: GirviLoanModel.addChargeableMonths(
-            loan.startDate,
-            GirviLoanModel.compoundCycleMonths * (line.cycleNumber - 1) +
-                line.months,
-          ),
+          to: line.cycleNumber == lines.length && !line.capitalizedAfterLine
+              ? end
+              : GirviLoanModel.addChargeableMonths(
+                  loan.startDate,
+                  GirviLoanModel.compoundCycleMonths * (line.cycleNumber - 1) +
+                      line.months,
+                ),
           opening: line.principalBase,
           months: line.months,
           interest: line.interestAmount,
+          closing: line.closingAmount,
           finalized: line.months == GirviLoanModel.compoundCycleMonths,
         ),
     ];
@@ -188,6 +191,7 @@ class GirviInterestPeriodSnapshotRepository {
     required double opening,
     required int months,
     required double interest,
+    required double closing,
     required bool finalized,
   }) {
     return _SnapshotDraft(
@@ -201,9 +205,9 @@ class GirviInterestPeriodSnapshotRepository {
       interestPerMonth: opening * (loan.interestRate / 100),
       chargeableMonths: months,
       periodInterest: interest,
-      closingAmount: opening + interest,
+      closingAmount: closing,
       finalized: finalized,
-      source: 'AUTOMATIC_12_MONTH_POLICY',
+      source: 'DATED_UNPAID_INTEREST_POLICY',
     );
   }
 
@@ -232,20 +236,6 @@ class GirviInterestPeriodSnapshotRepository {
         ${draft.finalized ? 1 : 0}, '${_sqlText(draft.source)}',
         $now, $now
       )
-      ''');
-  }
-
-  Future<void> _updateOpenPeriod(_SnapshotDraft draft) async {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await _db.customStatement('''
-      UPDATE girvi_interest_period_snapshots
-      SET period_to = ${draft.periodTo.millisecondsSinceEpoch},
-          chargeable_months = ${draft.chargeableMonths},
-          period_interest = ${draft.periodInterest},
-          interest_per_month = ${draft.interestPerMonth},
-          closing_amount = ${draft.closingAmount}, updated_at = $now
-      WHERE girvi_id = ${draft.girviId}
-        AND period_sequence = ${draft.sequence} AND is_finalized = 0
       ''');
   }
 

@@ -40,28 +40,17 @@ extension InterestPaymentSections on _InterestCalcScreenState {
             )
           else ...[
             if (_ctrl.isInterestEntry)
-              GirviRowTwo(
-                left: GirviInputField(
-                  label: 'Amount Received',
-                  hint: '0',
-                  icon: GirviIcons.cash,
-                  controller: _amountCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
-                  prefixText: 'Rs ',
-                ),
-                right: GirviInputField(
-                  label: 'Equivalent Months',
-                  hint: '1',
-                  icon: GirviIcons.dates,
-                  controller: _monthsCtrl,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  suffixText: 'months',
-                ),
+              GirviInputField(
+                label: 'Interest Received',
+                hint: '0',
+                icon: GirviIcons.cash,
+                controller: _amountCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                prefixText: 'Rs ',
               )
             else
               Column(
@@ -105,16 +94,17 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                 ],
               ),
             const SizedBox(height: 10),
-            if (_ctrl.isInterestEntry)
-              _AmountShortcutRail(
-                paymentType: _ctrl.paymentType,
-                isInterestEntry: true,
-                interestDue: _ctrl.netInterestDueForSelected,
-                monthlyInterest: _ctrl.currentLedgerMonthlyInterestForSelected,
-                principalOutstanding: data.loan.loanAmount,
-                expectedInterest: _ctrl.expectedInterest,
-                moneyFmt: _moneyFmt,
-                onPick: _setPaymentAmount,
+            if (_ctrl.isInterestEntry && _ctrl.netInterestDueForSelected > 0)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _AmountShortcutButton(
+                  label: 'Use Full Outstanding',
+                  value:
+                      'Rs ${_moneyFmt.format(_ctrl.netInterestDueForSelected)}',
+                  color: GirviColors.info,
+                  onTap: () =>
+                      _setPaymentAmount(_ctrl.netInterestDueForSelected),
+                ),
               )
             else
               _ReleaseSettlementBalanceStrip(
@@ -143,8 +133,6 @@ extension InterestPaymentSections on _InterestCalcScreenState {
                 grossInterest: _ctrl.grossInterestAccruedForSelected,
                 interestPaid: _ctrl.interestCollectedForSelected,
                 netDue: _ctrl.netInterestDueForSelected,
-                equivalentMonths: _ctrl.interestMonthsCoveredByAmount,
-                interestFromDate: _ctrl.interestFromDate,
                 moneyFmt: _moneyFmt,
               ),
             ],

@@ -904,8 +904,6 @@ class GirviPaymentRecordPdfService {
         'Gross Wt.',
         'Less Wt.',
         'Net Wt.',
-        'Rate / Gram',
-        'Value',
       ],
       data: rows
           .map(
@@ -918,8 +916,6 @@ class GirviPaymentRecordPdfService {
               _weight(row.grossWeight),
               row.lessWeight > 0.001 ? _weight(row.lessWeight) : '-',
               _weight(row.netWeight),
-              _money(row.ratePerGram),
-              _money(row.value),
             ],
           )
           .toList(growable: false),
@@ -943,8 +939,6 @@ class GirviPaymentRecordPdfService {
         5: pw.Alignment.centerRight,
         6: pw.Alignment.centerRight,
         7: pw.Alignment.centerRight,
-        8: pw.Alignment.centerRight,
-        9: pw.Alignment.centerRight,
       },
       columnWidths: const {
         0: pw.FlexColumnWidth(0.58),
@@ -955,8 +949,6 @@ class GirviPaymentRecordPdfService {
         5: pw.FlexColumnWidth(0.85),
         6: pw.FlexColumnWidth(0.8),
         7: pw.FlexColumnWidth(0.85),
-        8: pw.FlexColumnWidth(1),
-        9: pw.FlexColumnWidth(1),
       },
     );
   }
@@ -1003,8 +995,6 @@ class _PledgedPaymentRecordItem {
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
-  final double ratePerGram;
-  final double value;
 
   const _PledgedPaymentRecordItem({
     required this.serialNo,
@@ -1015,8 +1005,6 @@ class _PledgedPaymentRecordItem {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
-    required this.ratePerGram,
-    required this.value,
   });
 }
 

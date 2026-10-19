@@ -395,7 +395,9 @@ extension _GirviInvoicePdfRenderSections on GirviInvoicePdfService {
                           pw.Row(
                             children: [
                               pw.Text(
-                                'MONTHLY INTEREST',
+                                settings.showMonthlyInterest
+                                    ? 'MONTHLY INTEREST'
+                                    : 'MONTHLY RATE',
                                 style: pw.TextStyle(
                                   color: GirviInvoicePdfService._muted,
                                   fontSize: compact ? 5.5 : 6.5,
@@ -569,10 +571,6 @@ extension _GirviInvoicePdfRenderSections on GirviInvoicePdfService {
       showGrossWeight: enabled((value) => value.showGrossWeight),
       showLessWeight: enabled((value) => value.showLessWeight),
       showNetWeight: enabled((value) => value.showNetWeight),
-      showValuationPurity: enabled((value) => value.showValuationPurity),
-      showFineWeight: enabled((value) => value.showFineWeight),
-      showRatePerGram: enabled((value) => value.showRatePerGram),
-      showValuationAmount: enabled((value) => value.showValuationAmount),
       showItemPhotos: enabled((value) => value.showItemPhotos),
     );
   }

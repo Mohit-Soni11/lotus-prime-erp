@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'girvi_enums.dart';
+import 'girvi_interest_calculator.dart';
+
+export 'girvi_interest_calculator.dart';
 
 /// Joined Girvi loan projection with customer and payment aggregates.
 class GirviLoanWithCustomer {
@@ -14,6 +17,7 @@ class GirviLoanWithCustomer {
   final double interestDiscountTotal;
   final double principalDiscountTotal;
   final double legacyPrincipalRepaidTotal;
+  final List<GirviInterestAdjustment> interestAdjustments;
 
   const GirviLoanWithCustomer({
     required this.loan,
@@ -27,85 +31,35 @@ class GirviLoanWithCustomer {
     this.interestDiscountTotal = 0,
     this.principalDiscountTotal = 0,
     this.legacyPrincipalRepaidTotal = 0,
+    this.interestAdjustments = const [],
   });
 
   double get originalPrincipal => loan.loanAmount + legacyPrincipalRepaidTotal;
 
-  double get grossInterestAccrued {
-    final months = loan.monthsElapsed.ceil();
-    return GirviLoanModel.calculateInterest(
+  GirviInterestQuote interestQuoteAt([DateTime? asOf]) {
+    final end = loan.releaseDate ?? asOf ?? DateTime.now();
+    return GirviInterestCalculator.quoteAt(
       principal: originalPrincipal,
       monthlyRatePercent: loan.interestRate,
-      months: months,
-      interestType: GirviInterestCalculationType.forChargeableMonths(months),
+      startDate: loan.startDate,
+      asOf: end,
+      adjustments: interestAdjustments,
+      principalDue: principalDue,
     );
   }
 
-  double get netInterestDue {
-    final due =
-        grossInterestAccrued - interestPaidTotal - interestDiscountTotal;
-    return due <= 0 ? 0 : due;
-  }
+  double get grossInterestAccrued => interestQuoteAt().grossInterest;
 
-  double get advanceInterestCredit {
-    final advance = interestPaidTotal - grossInterestAccrued;
-    return advance <= 0 ? 0 : advance;
-  }
+  double get netInterestDue => interestQuoteAt().interestOutstanding;
+
+  double get advanceInterestCredit => interestQuoteAt().advanceInterestCredit;
 
   double get principalDue {
     final due = loan.loanAmount - principalPaidTotal - principalDiscountTotal;
     return due <= 0 ? 0 : due;
   }
 
-  double get totalPayable => principalDue + netInterestDue;
-}
-
-class GirviInterestCalculationType {
-  GirviInterestCalculationType._();
-
-  static const simple = 'Simple';
-  static const compound = 'Compound';
-
-  static String normalize(String? value) {
-    final normalized = value?.trim().toLowerCase();
-    if (normalized == simple.toLowerCase()) return simple;
-    if (normalized == compound.toLowerCase()) return compound;
-    return compound;
-  }
-
-  static bool isSimple(String? value) => normalize(value) == simple;
-
-  /// A pledge accrues simple interest through month 12. From the first
-  /// chargeable month after that anniversary, completed 12-month cycles are
-  /// capitalized by the compound-interest calculator.
-  static String forChargeableMonths(int months) =>
-      months > GirviLoanModel.compoundCycleMonths ? compound : simple;
-
-  static String forPeriod(DateTime start, DateTime end) =>
-      forChargeableMonths(GirviLoanModel.chargeableMonthsBetween(start, end));
-}
-
-/// One row in the compound interest calculation breakdown.
-class GirviInterestBreakdownLine {
-  final int cycleNumber;
-  final int months;
-  final double principalBase;
-  final double monthlyRatePercent;
-  final double interestAmount;
-  final bool capitalizedAfterLine;
-
-  const GirviInterestBreakdownLine({
-    required this.cycleNumber,
-    required this.months,
-    required this.principalBase,
-    required this.monthlyRatePercent,
-    required this.interestAmount,
-    required this.capitalizedAfterLine,
-  });
-
-  double get monthlyInterest => principalBase * (monthlyRatePercent / 100);
-
-  double get closingAmount => principalBase + interestAmount;
+  double get totalPayable => interestQuoteAt().totalPayable;
 }
 
 /// Human-readable elapsed period between two dates.
@@ -134,7 +88,8 @@ class GirviElapsedPeriod {
 
 /// Domain model for a Girvi loan with computed settlement values.
 class GirviLoanModel {
-  static const int compoundCycleMonths = 12;
+  static const int compoundCycleMonths =
+      GirviInterestCalculator.compoundCycleMonths;
 
   final int id;
   final String ticketNo;
@@ -148,9 +103,6 @@ class GirviLoanModel {
   final double grossWeight;
   final double stoneWeight;
   final double netWeight;
-  final double ratePerGram;
-  final double totalValue;
-  final double ltvPercent;
   final double loanAmount;
   final double interestRate;
   final int durationMonths;
@@ -194,9 +146,6 @@ class GirviLoanModel {
     required this.grossWeight,
     required this.stoneWeight,
     required this.netWeight,
-    required this.ratePerGram,
-    required this.totalValue,
-    required this.ltvPercent,
     required this.loanAmount,
     required this.interestRate,
     required this.durationMonths,
@@ -263,188 +212,37 @@ class GirviLoanModel {
 
   bool get hasAdvanceInterest => advanceInterestMonths > 0;
 
-  double get advanceInterestAmount =>
-      simpleInterestForMonths(advanceInterestMonths);
-
-  /// Accrued unpaid interest. After every 12 unpaid chargeable months, the
-  /// pending interest is capitalised and the next month runs on that balance.
-  double get accruedInterest => interestForMonths(unpaidMonths);
-
-  List<GirviInterestBreakdownLine> get accruedInterestBreakdown =>
-      interestBreakdownForMonths(unpaidMonths);
-
-  /// Compound-aware interest for unpaid months.
-  double interestForMonths(double months) {
-    final chargeableMonths = months.ceil();
-    return calculateInterest(
+  /// Estimate for legacy loan views that only store a paid-through date.
+  /// Financial actions use the complete dated payment ledger instead.
+  double get accruedInterest {
+    final paidThrough = lastInterestPaidDate;
+    final end = unpaidInterestEndDate;
+    if (paidThrough != null && !paidThrough.isBefore(end)) return 0;
+    final paidThroughAmount = paidThrough == null
+        ? 0.0
+        : GirviInterestCalculator.quoteAt(
+            principal: loanAmount,
+            monthlyRatePercent: interestRate,
+            startDate: startDate,
+            asOf: paidThrough,
+            adjustments: const [],
+          ).grossInterest;
+    return GirviInterestCalculator.quoteAt(
       principal: loanAmount,
       monthlyRatePercent: interestRate,
-      months: chargeableMonths,
-      interestType:
-          GirviInterestCalculationType.forChargeableMonths(chargeableMonths),
-    );
+      startDate: startDate,
+      asOf: end,
+      adjustments: paidThrough == null
+          ? const []
+          : [
+              GirviInterestAdjustment(
+                  date: paidThrough, paid: paidThroughAmount)
+            ],
+    ).interestOutstanding;
   }
 
-  List<GirviInterestBreakdownLine> interestBreakdownForMonths(double months) {
-    return calculateCompoundInterestBreakdown(
-      principal: loanAmount,
-      monthlyRatePercent: interestRate,
-      months: months.ceil(),
-    );
-  }
-
-  static double calculateCompoundInterest({
-    required double principal,
-    required double monthlyRatePercent,
-    required int months,
-  }) {
-    if (months <= 0 || principal <= 0 || monthlyRatePercent <= 0) {
-      return 0;
-    }
-
-    final monthlyRate = monthlyRatePercent / 100;
-    var principalBase = principal;
-    var totalInterest = 0.0;
-    var remainingMonths = months;
-
-    while (remainingMonths >= compoundCycleMonths) {
-      final cycleInterest = principalBase * monthlyRate * compoundCycleMonths;
-      totalInterest += cycleInterest;
-      principalBase += cycleInterest;
-      remainingMonths -= compoundCycleMonths;
-    }
-
-    if (remainingMonths > 0) {
-      totalInterest += principalBase * monthlyRate * remainingMonths;
-    }
-
-    return totalInterest;
-  }
-
-  static double calculateSimpleInterest({
-    required double principal,
-    required double monthlyRatePercent,
-    required int months,
-  }) {
-    if (months <= 0 || principal <= 0 || monthlyRatePercent <= 0) {
-      return 0;
-    }
-    return principal * (monthlyRatePercent / 100) * months;
-  }
-
-  static double calculateInterest({
-    required double principal,
-    required double monthlyRatePercent,
-    required int months,
-    required String interestType,
-  }) {
-    if (GirviInterestCalculationType.isSimple(interestType)) {
-      return calculateSimpleInterest(
-        principal: principal,
-        monthlyRatePercent: monthlyRatePercent,
-        months: months,
-      );
-    }
-    return calculateCompoundInterest(
-      principal: principal,
-      monthlyRatePercent: monthlyRatePercent,
-      months: months,
-    );
-  }
-
-  static List<GirviInterestBreakdownLine> calculateCompoundInterestBreakdown({
-    required double principal,
-    required double monthlyRatePercent,
-    required int months,
-  }) {
-    if (months <= 0 || principal <= 0 || monthlyRatePercent <= 0) {
-      return const [];
-    }
-
-    final monthlyRate = monthlyRatePercent / 100;
-    final lines = <GirviInterestBreakdownLine>[];
-    var principalBase = principal;
-    var remainingMonths = months;
-    var cycleNumber = 1;
-
-    while (remainingMonths > 0) {
-      final lineMonths = remainingMonths >= compoundCycleMonths
-          ? compoundCycleMonths
-          : remainingMonths;
-      final lineInterest = principalBase * monthlyRate * lineMonths;
-      final capitalizedAfterLine = lineMonths == compoundCycleMonths;
-
-      lines.add(
-        GirviInterestBreakdownLine(
-          cycleNumber: cycleNumber,
-          months: lineMonths,
-          principalBase: principalBase,
-          monthlyRatePercent: monthlyRatePercent,
-          interestAmount: lineInterest,
-          capitalizedAfterLine: capitalizedAfterLine,
-        ),
-      );
-
-      if (capitalizedAfterLine) principalBase += lineInterest;
-      remainingMonths -= lineMonths;
-      cycleNumber++;
-    }
-
-    return List.unmodifiable(lines);
-  }
-
-  /// Simple monthly interest used when a customer pays interest in advance.
-  double get monthlyInterest => loanAmount * (interestRate / 100);
-
-  double simpleInterestForMonths(int months) =>
-      monthlyInterest * months.clamp(0, 1000000);
-
-  int interestMonthsCoveredByAmount(double amount) {
-    if (amount <= 0 || monthlyInterest <= 0) return 0;
-    return amount ~/ monthlyInterest;
-  }
-
-  int interestMonthsCoveredByPayment({
-    required double amount,
-    required DateTime fromDate,
-    required DateTime paymentDate,
-  }) {
-    if (amount <= 0 || monthlyInterest <= 0) return 0;
-
-    final dueMonths = chargeableMonthsBetween(fromDate, paymentDate);
-    if (dueMonths <= 0) return interestMonthsCoveredByAmount(amount);
-
-    final dueInterest = interestForMonths(dueMonths.toDouble());
-    if (amount >= dueInterest) {
-      final advanceAmount = amount - dueInterest;
-      return dueMonths + interestMonthsCoveredByAmount(advanceAmount);
-    }
-
-    var coveredMonths = 0;
-    var chargedTillNow = 0.0;
-    for (var month = 1; month <= dueMonths; month++) {
-      final chargedThroughMonth = interestForMonths(month.toDouble());
-      final monthInterest = chargedThroughMonth - chargedTillNow;
-      if (chargedTillNow + monthInterest > amount) break;
-      coveredMonths = month;
-      chargedTillNow = chargedThroughMonth;
-    }
-    return coveredMonths;
-  }
-
-  static int chargeableMonthsBetween(DateTime from, DateTime to) {
-    final fromDate = DateUtils.dateOnly(from);
-    final toDate = DateUtils.dateOnly(to);
-    if (!toDate.isAfter(fromDate)) return 0;
-    final wholeMonths =
-        ((toDate.year - fromDate.year) * 12) + toDate.month - fromDate.month;
-    final monthAnchor =
-        DateUtils.dateOnly(addChargeableMonths(fromDate, wholeMonths));
-    if (!toDate.isAfter(monthAnchor)) {
-      return wholeMonths == 0 ? 1 : wholeMonths;
-    }
-    return wholeMonths + 1;
-  }
+  static int chargeableMonthsBetween(DateTime from, DateTime to) =>
+      GirviInterestCalculator.chargeableMonthsBetween(from, to);
 
   static GirviElapsedPeriod elapsedPeriodBetween(DateTime from, DateTime to) {
     final fromDate = DateUtils.dateOnly(from);
@@ -509,7 +307,11 @@ class GirviLoanModel {
   /// Is the maturity date past?
   bool get isPastMaturity {
     if (maturityDate == null) return false;
-    return DateTime.now().isAfter(maturityDate!);
+    final today = DateTime.now();
+    final maturity = maturityDate!;
+    return DateTime(today.year, today.month, today.day).isAfter(
+      DateTime(maturity.year, maturity.month, maturity.day),
+    );
   }
 
   /// Days remaining to maturity (negative = overdue)
@@ -530,7 +332,11 @@ class GirviLoanModel {
 
   bool get isActive => girviStatus.isActive;
   bool get isClosed => girviStatus.isClosed;
-  bool get isOverdue => isPastMaturity && isActive;
+  bool get isOverdue =>
+      girviStatus == GirviStatus.overdue ||
+      (isPastMaturity &&
+          (girviStatus == GirviStatus.active ||
+              girviStatus == GirviStatus.partialRelease));
 
   /// Color for status badge
   Color get statusColor {
@@ -639,7 +445,6 @@ class GirviSummaryModel {
   final double totalPrincipalActive;
   final double totalInterestDue;
   final double totalOverdueReceivable;
-  final double totalPortfolioValue;
   final double totalCollectedThisMonth;
 
   const GirviSummaryModel({
@@ -650,7 +455,6 @@ class GirviSummaryModel {
     required this.totalPrincipalActive,
     required this.totalInterestDue,
     this.totalOverdueReceivable = 0,
-    required this.totalPortfolioValue,
     required this.totalCollectedThisMonth,
   });
 
@@ -662,7 +466,6 @@ class GirviSummaryModel {
         totalPrincipalActive: 0,
         totalInterestDue: 0,
         totalOverdueReceivable: 0,
-        totalPortfolioValue: 0,
         totalCollectedThisMonth: 0,
       );
 

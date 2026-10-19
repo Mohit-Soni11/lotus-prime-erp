@@ -211,9 +211,11 @@ class GirviReleaseController extends ChangeNotifier {
   double get total => _total;
 
   void _initComputed() {
-    _principal = loan.loanAmount;
-    _interest = loan.accruedInterest;
-    _penalty = loan.isOverdue ? _computeDefaultPenalty() : 0.0;
+    final settled = loan.girviStatus == GirviStatus.readyForDelivery ||
+        loan.girviStatus == GirviStatus.released;
+    _principal = settled ? 0 : loan.loanAmount;
+    _interest = settled ? 0 : loan.accruedInterest;
+    _penalty = settled ? 0 : (loan.isOverdue ? _computeDefaultPenalty() : 0.0);
     _recomputeTotal();
   }
 
@@ -289,75 +291,4 @@ class GirviReleaseController extends ChangeNotifier {
       return false;
     }
   }
-}
-
-/// Provides calculation-only helpers for the standalone interest calculator.
-class InterestCalcController extends ChangeNotifier {
-  double _principal = 0.0;
-  double _ratePerMonth = 2.0;
-  int _months = 12;
-
-  double get principal => _principal;
-  double get ratePerMonth => _ratePerMonth;
-  int get months => _months;
-
-  double get monthlyInterest => _principal * (_ratePerMonth / 100);
-
-  double get totalInterest => monthlyInterest * _months;
-
-  double get totalDue => _principal + totalInterest;
-
-  double get annualRate => _ratePerMonth * 12;
-
-  /// Month-wise interest table
-  List<MonthRow> get monthTable {
-    final rows = <MonthRow>[];
-    double balance = _principal;
-    for (int m = 1; m <= _months; m++) {
-      final interest = balance * (_ratePerMonth / 100);
-      rows.add(
-          MonthRow(month: m, interest: interest, balance: balance + interest));
-    }
-    return rows;
-  }
-
-  /// Compound interest total (for comparison)
-  double get compoundTotalDue =>
-      _principal *
-      (1 + _ratePerMonth / 100).abs().toDouble() *
-      (1.0 + (_ratePerMonth / 100)).clamp(1, double.infinity);
-
-  void onPrincipalChanged(String v) {
-    _principal = double.tryParse(v) ?? 0.0;
-    notifyListeners();
-  }
-
-  void onRateChanged(String v) {
-    _ratePerMonth = double.tryParse(v) ?? 2.0;
-    notifyListeners();
-  }
-
-  void onMonthsChanged(String v) {
-    _months = int.tryParse(v) ?? 12;
-    notifyListeners();
-  }
-
-  void reset() {
-    _principal = 0.0;
-    _ratePerMonth = 2.0;
-    _months = 12;
-    notifyListeners();
-  }
-}
-
-class MonthRow {
-  final int month;
-  final double interest;
-  final double balance;
-
-  const MonthRow({
-    required this.month,
-    required this.interest,
-    required this.balance,
-  });
 }

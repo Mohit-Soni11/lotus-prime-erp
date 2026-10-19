@@ -64,7 +64,6 @@ class DefaulterModel {
   final double totalDue;
   final double totalReceived;
   final double currentMonthReceived;
-  final double totalItemValue;
   final double netWeight;
   final DateTime startDate;
   final DateTime? maturityDate;
@@ -110,7 +109,6 @@ class DefaulterModel {
     required this.totalDue,
     required this.totalReceived,
     required this.currentMonthReceived,
-    required this.totalItemValue,
     required this.netWeight,
     required this.startDate,
     required this.maturityDate,

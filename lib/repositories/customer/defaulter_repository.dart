@@ -18,6 +18,7 @@ import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../girvi/girvi_repository.dart';
+import '../girvi/girvi_interest_payment_adjustments.dart';
 
 class DefaulterRepository {
   final AppDatabase _db;
@@ -206,28 +207,25 @@ class DefaulterRepository {
           loan.durationMonths,
         );
 
-    final interestMonths =
-        GirviLoanModel.chargeableMonthsBetween(loan.startDate, now);
     final originalPrincipal = loan.loanAmount + summary.legacyPrincipalRepaid;
-    final grossInterest = GirviLoanModel.calculateInterest(
+    final quote = GirviInterestCalculator.quoteAt(
       principal: originalPrincipal,
       monthlyRatePercent: loan.interestRate,
-      months: interestMonths,
-      interestType:
-          GirviInterestCalculationType.forChargeableMonths(interestMonths),
+      startDate: loan.startDate,
+      asOf: now,
+      adjustments: summary.interestAdjustments,
     );
     final coveredInterestMonths = math.max(
       summary.coveredInterestMonths,
-      _coveredInterestMonthsFromTotalPaid(
+      GirviInterestCalculator.coveredMonthsForTimeline(
         principal: originalPrincipal,
         monthlyRatePercent: loan.interestRate,
-        totalInterestPaid: summary.interestPaid + summary.interestDiscount,
+        startDate: loan.startDate,
+        asOf: now,
+        adjustments: summary.interestAdjustments,
       ),
     );
-    final interestOutstanding = math.max(
-      0.0,
-      grossInterest - summary.interestPaid - summary.interestDiscount,
-    );
+    final interestOutstanding = quote.interestOutstanding;
     final principalOutstanding = math.max(
       0.0,
       loan.loanAmount - summary.principalPaid - summary.principalDiscount,
@@ -278,14 +276,11 @@ class DefaulterRepository {
       principalAmount: originalPrincipal,
       principalOutstanding: principalOutstanding,
       interestRate: loan.interestRate,
-      interestAccrued: grossInterest,
+      interestAccrued: quote.grossInterest,
       interestOutstanding: interestOutstanding,
       totalDue: totalDue,
       totalReceived: summary.totalReceived,
       currentMonthReceived: summary.currentMonthReceived,
-      totalItemValue: itemSnapshot.totalValue > 0
-          ? itemSnapshot.totalValue
-          : loan.totalValue,
       netWeight:
           itemSnapshot.netWeight > 0 ? itemSnapshot.netWeight : loan.netWeight,
       startDate: loan.startDate,
@@ -345,34 +340,6 @@ class DefaulterRepository {
     }
     return latest;
   }
-
-  int _coveredInterestMonthsFromTotalPaid({
-    required double principal,
-    required double monthlyRatePercent,
-    required double totalInterestPaid,
-  }) {
-    if (principal <= 0 || monthlyRatePercent <= 0 || totalInterestPaid <= 0) {
-      return 0;
-    }
-
-    var coveredMonths = 0;
-    while (coveredMonths < 1200) {
-      final nextMonth = coveredMonths + 1;
-      final requiredInterest = GirviLoanModel.calculateInterest(
-        principal: principal,
-        monthlyRatePercent: monthlyRatePercent,
-        months: nextMonth,
-        interestType:
-            GirviInterestCalculationType.forChargeableMonths(nextMonth),
-      );
-      if (requiredInterest >
-          totalInterestPaid + GirviRiskPolicy.moneyTolerance) {
-        break;
-      }
-      coveredMonths = nextMonth;
-    }
-    return coveredMonths;
-  }
 }
 
 class _PledgedItemSnapshot {
@@ -384,7 +351,6 @@ class _PledgedItemSnapshot {
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
-  final double totalValue;
 
   const _PledgedItemSnapshot({
     required this.itemCount,
@@ -395,7 +361,6 @@ class _PledgedItemSnapshot {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
-    required this.totalValue,
   });
 
   factory _PledgedItemSnapshot.fromItems(List<GirviLoanItem> items) {
@@ -409,7 +374,6 @@ class _PledgedItemSnapshot {
         grossWeight: 0,
         lessWeight: 0,
         netWeight: 0,
-        totalValue: 0,
       );
     }
 
@@ -428,7 +392,6 @@ class _PledgedItemSnapshot {
       grossWeight: sorted.fold(0.0, (sum, item) => sum + item.grossWeight),
       lessWeight: sorted.fold(0.0, (sum, item) => sum + item.lessWeight),
       netWeight: sorted.fold(0.0, (sum, item) => sum + item.netWeight),
-      totalValue: sorted.fold(0.0, (sum, item) => sum + item.valuationAmount),
     );
   }
 
@@ -445,7 +408,6 @@ class _PledgedItemSnapshot {
       grossWeight: loan.grossWeight,
       lessWeight: loan.stoneWeight,
       netWeight: loan.netWeight,
-      totalValue: loan.totalValue,
     );
   }
 
@@ -501,6 +463,7 @@ class _PaymentSummary {
   final double interestPaid;
   final double principalPaid;
   final double interestDiscount;
+  final List<GirviInterestAdjustment> interestAdjustments;
   final double principalDiscount;
   final double legacyPrincipalRepaid;
   final int coveredInterestMonths;
@@ -515,6 +478,7 @@ class _PaymentSummary {
     required this.interestPaid,
     required this.principalPaid,
     required this.interestDiscount,
+    required this.interestAdjustments,
     required this.principalDiscount,
     required this.legacyPrincipalRepaid,
     required this.coveredInterestMonths,
@@ -529,6 +493,7 @@ class _PaymentSummary {
       interestPaid: 0,
       principalPaid: 0,
       interestDiscount: 0,
+      interestAdjustments: [],
       principalDiscount: 0,
       legacyPrincipalRepaid: 0,
       coveredInterestMonths: 0,
@@ -553,6 +518,7 @@ class _PaymentSummary {
     var nextInterestPaid = interestPaid;
     var nextPrincipalPaid = principalPaid;
     var nextInterestDiscount = interestDiscount;
+    final adjustment = GirviInterestPaymentAdjustments.fromPayment(payment);
     var nextPrincipalDiscount = principalDiscount;
     var nextLegacyPrincipalRepaid = legacyPrincipalRepaid;
     var nextCoveredInterestMonths = coveredInterestMonths;
@@ -596,6 +562,9 @@ class _PaymentSummary {
       interestPaid: nextInterestPaid,
       principalPaid: nextPrincipalPaid,
       interestDiscount: nextInterestDiscount,
+      interestAdjustments: adjustment == null
+          ? interestAdjustments
+          : [...interestAdjustments, adjustment],
       principalDiscount: nextPrincipalDiscount,
       legacyPrincipalRepaid: nextLegacyPrincipalRepaid,
       coveredInterestMonths: nextCoveredInterestMonths,

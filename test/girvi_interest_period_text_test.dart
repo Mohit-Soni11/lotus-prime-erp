@@ -4,11 +4,13 @@ import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 
 void main() {
   test('compound interest rows describe covered calendar months', () {
-    final lines = GirviLoanModel.calculateCompoundInterestBreakdown(
+    final lines = GirviInterestCalculator.quoteAt(
       principal: 35000,
       monthlyRatePercent: 5,
-      months: 52,
-    );
+      startDate: DateTime(2022, 6, 14),
+      asOf: DateTime(2026, 10, 14),
+      adjustments: const [],
+    ).cycles;
 
     expect(lines, hasLength(5));
 
@@ -34,11 +36,13 @@ void main() {
   });
 
   test('started next calendar month is displayed as one covered month', () {
-    final line = GirviLoanModel.calculateCompoundInterestBreakdown(
+    final line = GirviInterestCalculator.quoteAt(
       principal: 1000,
       monthlyRatePercent: 5,
-      months: 1,
-    ).single;
+      startDate: DateTime(2026, 9, 28),
+      asOf: DateTime(2026, 9, 29),
+      adjustments: const [],
+    ).cycles.single;
 
     final period = GirviInterestPeriodText.forBreakdownLine(
       loanStartDate: DateTime(2026, 9, 28),

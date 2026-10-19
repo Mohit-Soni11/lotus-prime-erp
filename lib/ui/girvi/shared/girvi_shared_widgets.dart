@@ -848,7 +848,7 @@ class GirviTicketCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('â‚¹${fmt.format(loan.accruedInterest)}',
+                      Text('\u20B9${fmt.format(data.netInterestDue)}',
                           style: GoogleFonts.manrope(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,

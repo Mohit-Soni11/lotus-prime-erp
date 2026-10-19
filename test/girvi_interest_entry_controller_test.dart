@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/girvi_controllers.dart';
 import 'package:lotus_erp/models/girvi/girvi_enums.dart';
+import 'package:lotus_erp/repositories/girvi/girvi_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -109,6 +110,89 @@ void main() {
     );
   });
 
+  test('interest entry and pledge ledger agree after year-one payment',
+      () async {
+    final customerId =
+        await _insertCustomer(db, 'Compound Customer', '9000000013');
+    final loanId = await _insertLoan(
+      db,
+      customerId,
+      'GRV-COMP-001',
+      'Gold ring',
+      100000,
+      startDate: DateTime(2025, 1, 1),
+      interestRate: 1,
+    );
+    final repository = GirviRepository(db);
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 12000,
+      paymentDate: DateTime(2026, 1, 1),
+    );
+
+    await controller.load();
+    await controller
+        .selectLoan(controller.customerAccounts.single.loans.single);
+    controller.setPaymentDate(DateTime(2026, 2, 1));
+    controller.onAmountChanged('1000');
+
+    final ledgerQuote = (await repository.getLoansWithCustomer())
+        .single
+        .interestQuoteAt(DateTime(2026, 2, 1));
+    expect(ledgerQuote.interestType, 'Compound');
+    expect(controller.amount, 1000);
+    expect(controller.currentLedgerMonthlyInterestForSelected,
+        ledgerQuote.currentMonthlyInterest);
+    expect(
+        controller.grossInterestAccruedForSelected, ledgerQuote.grossInterest);
+    expect(
+        controller.netInterestDueForSelected, ledgerQuote.interestOutstanding);
+    expect(ledgerQuote.interestOutstanding, 1000);
+  });
+
+  test('partial interest collection stays amount based for GRV-0019 timeline',
+      () async {
+    final customerId =
+        await _insertCustomer(db, 'Partial Payment Customer', '9000000014');
+    final loanId = await _insertLoan(
+      db,
+      customerId,
+      'GRV-0019',
+      'Gold ring',
+      3000,
+      startDate: DateTime(2025, 5, 5),
+      interestRate: 5,
+    );
+    final repository = GirviRepository(db);
+    final collectionDate = DateTime(2026, 10, 19);
+    await repository.recordInterestLedgerPayment(
+      loanId: loanId,
+      paymentMode: GirviPaymentMode.cash,
+      amount: 2000,
+      paymentDate: collectionDate,
+    );
+
+    await controller.load();
+    await controller
+        .selectLoan(controller.customerAccounts.single.loans.single);
+    controller.setPaymentDate(collectionDate);
+
+    expect(controller.grossInterestAccruedForSelected, 3240);
+    expect(controller.interestCollectedForSelected, 2000);
+    expect(controller.netInterestDueForSelected, 1240);
+    expect(controller.amount, 0);
+
+    controller.onAmountChanged('500');
+    expect(controller.amount, 500);
+    expect(await controller.recordPayment(), isTrue);
+    controller.setPaymentDate(collectionDate);
+
+    expect(controller.interestCollectedForSelected, 2500);
+    expect(controller.netInterestDueForSelected, 740);
+    expect(controller.amount, 0);
+  });
+
   test('release discount cannot reduce locked principal', () async {
     final customerId =
         await _insertCustomer(db, 'Locked Principal Customer', '9000000011');
@@ -189,6 +273,8 @@ Future<int> _insertLoan(
   String itemDescription,
   double loanAmount, {
   GirviStatus status = GirviStatus.active,
+  DateTime? startDate,
+  double interestRate = 0,
   DateTime? releaseDate,
   DateTime? expectedDeliveryDate,
   double? releasePrincipal,
@@ -203,10 +289,9 @@ Future<int> _insertLoan(
           itemDescription: itemDescription,
           grossWeight: const drift.Value(10),
           netWeight: const drift.Value(10),
-          ratePerGram: const drift.Value(7000),
-          totalValue: const drift.Value(70000),
           loanAmount: drift.Value(loanAmount),
-          startDate: drift.Value(DateTime(2026, 6, 1)),
+          interestRate: drift.Value(interestRate),
+          startDate: drift.Value(startDate ?? DateTime(2026, 6, 1)),
           maturityDate: drift.Value(DateTime(2027, 6, 1)),
           status: drift.Value(status.dbValue),
           releaseDate: drift.Value(releaseDate),

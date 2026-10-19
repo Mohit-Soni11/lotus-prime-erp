@@ -23,13 +23,14 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
     }
 
     final loan = item.loan;
+    final interestQuote = item.interestQuoteAt();
     final canOpenPayment = !loan.isClosed;
-    final totalPayableColor = _dueAmountColor(item.totalPayable);
-    final principalDueColor = _dueAmountColor(item.principalDue);
-    final interestDueColor = _dueAmountColor(item.netInterestDue);
+    final totalPayableColor = _dueAmountColor(interestQuote.totalPayable);
+    final principalDueColor = _dueAmountColor(interestQuote.principalDue);
+    final interestDueColor = _dueAmountColor(interestQuote.interestOutstanding);
     final timelineColor = _ticketTimelineColor(
       loan,
-      hasDueAmount: item.totalPayable > 0.005,
+      hasDueAmount: interestQuote.totalPayable > 0.005,
     );
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,11 +52,23 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
           customerName: item.customerName,
           customerMeta: _compactCustomerLocation(item),
         ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _LedgerStatusBadge(
+            icon: GirviIcons.interestRate,
+            label: '${interestQuote.interestType} Interest',
+            color: interestQuote.interestType ==
+                    GirviInterestCalculationType.compound
+                ? GirviColors.brandGold
+                : GirviColors.info,
+          ),
+        ),
         const SizedBox(height: 14),
         _SettlementFocusBlock(
-          totalPayable: _money(item.totalPayable),
-          principalDue: _money(item.principalDue),
-          interestDue: _money(item.netInterestDue),
+          totalPayable: _money(interestQuote.totalPayable),
+          principalDue: _money(interestQuote.principalDue),
+          interestDue: _money(interestQuote.interestOutstanding),
           totalPayableColor: totalPayableColor,
           principalDueColor: principalDueColor,
           interestDueColor: interestDueColor,
@@ -75,7 +88,7 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
           openingPdf: _openingInvoicePdf,
           status: loan.girviStatus,
           statusLabel: loan.statusLabel,
-          hasDueAmount: item.totalPayable > 0.005,
+          hasDueAmount: interestQuote.totalPayable > 0.005,
           onPreviewPdf: () => _previewGirviInvoicePdf(item),
           onCollect: () => _openInterestEntry(item),
         ),

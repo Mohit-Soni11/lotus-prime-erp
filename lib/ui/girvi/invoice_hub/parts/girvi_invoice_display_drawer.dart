@@ -121,13 +121,12 @@ class _GirviInvoiceDisplayDrawerState
         for (final group in const ['Item Identity', 'Weight Details'])
           _buildItemFieldGroup(group),
         _sectionTitle(
-          icon: Icons.price_check_outlined,
-          title: 'Valuation & Photos',
-          subtitle: 'Valuation columns and pledged item media',
+          icon: Icons.photo_library_outlined,
+          title: 'Pledged Item Photos',
+          subtitle: 'Photos included with pledged items',
           color: _itemColor,
         ),
-        for (final group in const ['Valuation', 'Media'])
-          _buildItemFieldGroup(group),
+        _buildItemFieldGroup('Media'),
         _sectionTitle(
           icon: Icons.person_pin_circle_outlined,
           title: 'Customer & Loan Sections',

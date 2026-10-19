@@ -24,8 +24,6 @@ List<_PledgedPaymentRecordItem> buildPledgedPaymentRecordRows(
             grossWeight: details.item.grossWeight,
             lessWeight: details.item.lessWeight,
             netWeight: details.item.netWeight,
-            ratePerGram: details.item.ratePerGram,
-            value: details.item.valuationAmount,
           ),
         )
         .toList(growable: false);
@@ -41,8 +39,6 @@ List<_PledgedPaymentRecordItem> buildPledgedPaymentRecordRows(
       grossWeight: account.loan.grossWeight,
       lessWeight: account.loan.stoneWeight,
       netWeight: account.loan.netWeight,
-      ratePerGram: account.loan.ratePerGram,
-      value: account.loan.totalValue,
     ),
   ];
 }

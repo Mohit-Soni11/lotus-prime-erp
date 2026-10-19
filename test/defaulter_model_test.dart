@@ -92,7 +92,6 @@ DefaulterModel _defaulter({
     totalDue: 10500,
     totalReceived: totalReceived,
     currentMonthReceived: 0,
-    totalItemValue: 20000,
     netWeight: 10,
     startDate: DateTime(2026, 1, 1),
     maturityDate: DateTime(2026, 6, 1),

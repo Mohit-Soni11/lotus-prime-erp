@@ -5,7 +5,6 @@ class _PledgedItemSpecs extends StatelessWidget {
   final String grossWeight;
   final String? lessWeight;
   final String netWeight;
-  final String rate;
   final String? huid;
   final Color color;
 
@@ -14,7 +13,6 @@ class _PledgedItemSpecs extends StatelessWidget {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
-    required this.rate,
     required this.huid,
     required this.color,
   });
@@ -37,7 +35,6 @@ class _PledgedItemSpecs extends StatelessWidget {
           _PledgedSpecData('Gross Weight', grossWeight),
           if (lessWeight != null) _PledgedSpecData('Less Weight', lessWeight!),
           _PledgedSpecData('Net Weight', netWeight, color: color),
-          _PledgedSpecData('Rate / Gram', rate),
           if (huid != null) _PledgedSpecData('HUID', huid!),
         ];
 

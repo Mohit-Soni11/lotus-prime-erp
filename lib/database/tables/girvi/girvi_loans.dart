@@ -4,7 +4,7 @@
 // LAYER       : Database / Tables
 // DESCRIPTION : Full production-grade Girvi (Pawn Loan) table.
 //               Schema v9 — new table, no migration from old Loans table.
-//               Fields cover: ticket, customer ref, item details, valuation,
+//               Fields cover: ticket, customer ref, item details,
 //               loan terms, KYC, dates, status, and release settlement data.
 // =============================================================================
 
@@ -53,16 +53,6 @@ class GirviLoans extends Table with BaseTable {
 
   /// Net metal weight = gross - stone (computed & stored for speed)
   RealColumn get netWeight => real().withDefault(const Constant(0.0))();
-
-  // ── VALUATION ─────────────────────────────────────────────────────────────
-  /// Rate per gram at time of loan (₹/g)
-  RealColumn get ratePerGram => real().withDefault(const Constant(0.0))();
-
-  /// Total market value of items (netWeight × ratePerGram)
-  RealColumn get totalValue => real().withDefault(const Constant(0.0))();
-
-  /// LTV % = loanAmount / totalValue × 100 (stored for reporting)
-  RealColumn get ltvPercent => real().withDefault(const Constant(0.0))();
 
   // ── LOAN TERMS ────────────────────────────────────────────────────────────
   /// Principal loan amount disbursed to customer (₹)

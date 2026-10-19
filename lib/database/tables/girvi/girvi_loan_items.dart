@@ -26,13 +26,6 @@ class GirviLoanItems extends Table with BaseTable {
   RealColumn get lessWeight => real().withDefault(const Constant(0.0))();
   RealColumn get netWeight => real().withDefault(const Constant(0.0))();
 
-  TextColumn get valuationMethod =>
-      text().withDefault(const Constant('PURITY'))();
-  RealColumn get valuationPurityPercent => real().nullable()();
-  RealColumn get fineWeight => real().withDefault(const Constant(0.0))();
-  RealColumn get ratePerGram => real().withDefault(const Constant(0.0))();
-  RealColumn get valuationAmount => real().withDefault(const Constant(0.0))();
-
   TextColumn get notes => text().nullable()();
   BoolColumn get isLegacy => boolean().withDefault(const Constant(false))();
 

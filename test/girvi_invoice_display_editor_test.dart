@@ -14,11 +14,9 @@ void main() {
     expect(find.text('Platinum'), findsOneWidget);
     expect(find.text('EDITABLE'), findsOneWidget);
     expect(find.byIcon(Icons.lock_outline_rounded), findsNothing);
-    expect(find.byType(Switch), findsNWidgets(14));
-    expect(find.text('Valuation Purity'), findsOneWidget);
-    expect(find.text('Fine Weight'), findsOneWidget);
-    expect(find.text('Valuation Rate / Gram'), findsOneWidget);
-    expect(find.text('Item Valuation Amount'), findsOneWidget);
+    expect(find.byType(Switch), findsNWidgets(10));
+    expect(find.text('Valuation Purity'), findsNothing);
+    expect(find.text('Fine Weight'), findsNothing);
 
     await tester.tap(find.text('Silver'));
     await tester.pumpAndSettle();
@@ -36,7 +34,7 @@ void main() {
     expect(find.text('Customer Mobile'), findsOneWidget);
     expect(find.text('Loan Amount'), findsOneWidget);
     expect(find.text('Monthly Interest Amount'), findsOneWidget);
-    expect(find.text('Total Pledged Valuation'), findsOneWidget);
+    expect(find.text('Total Pledged Valuation'), findsNothing);
     expect(find.text('Disbursement Breakdown'), findsOneWidget);
     expect(find.text('KYC Type & Number'), findsOneWidget);
     expect(find.text('KYC Card Photo'), findsOneWidget);
@@ -44,7 +42,7 @@ void main() {
     expect(find.text('Terms & Conditions'), findsOneWidget);
     expect(find.text('Customer Declaration'), findsOneWidget);
     expect(find.text('Footer Message'), findsOneWidget);
-    expect(find.byType(Switch), findsNWidgets(18));
+    expect(find.byType(Switch), findsNWidgets(17));
   });
 }
 

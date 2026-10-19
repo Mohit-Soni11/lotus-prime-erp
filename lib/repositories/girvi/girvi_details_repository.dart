@@ -170,11 +170,6 @@ class GirviDetailsRepository {
               grossWeight: drift.Value(input.grossWeight),
               lessWeight: drift.Value(input.lessWeight),
               netWeight: drift.Value(input.netWeight),
-              valuationMethod: drift.Value(input.valuationMethod.trim()),
-              valuationPurityPercent: drift.Value(input.valuationPurityPercent),
-              fineWeight: drift.Value(input.fineWeight),
-              ratePerGram: drift.Value(input.ratePerGram),
-              valuationAmount: drift.Value(input.valuationAmount),
               notes: drift.Value(_nullableText(input.notes)),
             ),
           );
@@ -239,11 +234,6 @@ class GirviDetailsRepository {
       final expectedNet = item.grossWeight - item.lessWeight;
       if ((item.netWeight - expectedNet).abs() > 0.001) {
         throw ArgumentError('Item net weight does not match its weights.');
-      }
-      if (item.fineWeight < 0 ||
-          item.ratePerGram <= 0 ||
-          item.valuationAmount < 0) {
-        throw ArgumentError('Item valuation values are invalid.');
       }
       if (item.photoPaths.any((path) => path.trim().isEmpty)) {
         throw ArgumentError('Item photo path cannot be empty.');

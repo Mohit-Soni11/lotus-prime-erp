@@ -12,8 +12,6 @@ class _PledgedItemDraft {
       huidCtrl,
       grossCtrl,
       lessCtrl,
-      valuationPurityCtrl,
-      rateCtrl,
       customPurityCtrl,
     ]) {
       controller.addListener(_notifyChanged);
@@ -28,8 +26,6 @@ class _PledgedItemDraft {
   final huidCtrl = TextEditingController();
   final grossCtrl = TextEditingController();
   final lessCtrl = TextEditingController();
-  final valuationPurityCtrl = TextEditingController();
-  final rateCtrl = TextEditingController();
   final customPurityCtrl = TextEditingController();
 
   final descriptionFocus = FocusNode();
@@ -37,8 +33,6 @@ class _PledgedItemDraft {
   final huidFocus = FocusNode();
   final grossFocus = FocusNode();
   final lessFocus = FocusNode();
-  final valuationPurityFocus = FocusNode();
-  final rateFocus = FocusNode();
   final customPurityFocus = FocusNode();
 
   MetalType metalType = MetalType.gold;
@@ -51,19 +45,6 @@ class _PledgedItemDraft {
   double get netWeight =>
       (grossWeight - lessWeight).clamp(0.0, double.infinity);
   double get entryPurityFactor => _entryPurityFactorFor(this);
-  double get valuationPurityPercent {
-    final parsed = double.tryParse(valuationPurityCtrl.text.trim());
-    if (parsed == null || parsed <= 0) return 0;
-    return parsed.clamp(0.0, 100.0).toDouble();
-  }
-
-  double get valuationPurityFactor => valuationPurityPercent / 100;
-  bool get usesDirectSilverRate =>
-      metalType == MetalType.silver && valuationPurityCtrl.text.trim().isEmpty;
-  double get fineWeight =>
-      usesDirectSilverRate ? netWeight : netWeight * valuationPurityFactor;
-  double get ratePerGram => double.tryParse(rateCtrl.text) ?? 0.0;
-  double get itemValue => fineWeight * ratePerGram;
   List<String> get validPhotoPaths => photoPaths
       .where((path) => path.isNotEmpty && File(path).existsSync())
       .toList();
@@ -74,12 +55,6 @@ class _PledgedItemDraft {
     final custom = customPurityCtrl.text.trim();
     if (purity == MetalPurity.other && custom.isNotEmpty) return custom;
     return purity.shortLabel;
-  }
-
-  String get valuationPurityLabel {
-    if (usesDirectSilverRate) return 'Direct';
-    if (valuationPurityPercent <= 0) return '-';
-    return '${_formatPurityPercent(valuationPurityPercent)}%';
   }
 
   void setMetalType(MetalType value) {
@@ -131,8 +106,6 @@ class _PledgedItemDraft {
       huidCtrl,
       grossCtrl,
       lessCtrl,
-      valuationPurityCtrl,
-      rateCtrl,
       customPurityCtrl,
     ]) {
       controller.removeListener(_notifyChanged);
@@ -144,8 +117,6 @@ class _PledgedItemDraft {
       huidFocus,
       grossFocus,
       lessFocus,
-      valuationPurityFocus,
-      rateFocus,
       customPurityFocus,
     ]) {
       focus.dispose();
@@ -238,11 +209,6 @@ Color _pledgedMetalAccent(MetalType metalType) {
   }
 }
 
-String _formatPurityPercent(double value) {
-  final normalized = value.clamp(0.0, 100.0).toDouble();
-  return _formatSmartNumber(normalized);
-}
-
 double _entryPurityFactorFor(_PledgedItemDraft item) {
   if (item.purity != MetalPurity.other) return item.purity.fineness;
 
@@ -285,33 +251,6 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
               const SizedBox(height: 10),
               _buildPledgedPhotoPreviewCard(),
             ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPledgedValuationSection() {
-    return _LedgerSectionCard(
-      icon: GirviIcons.valuation,
-      title: 'Pledged Valuation',
-      subtitle: 'Fine weight and market-rate estimate',
-      accent: GirviColors.accentValuation,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildValuationGrid(),
-          const SizedBox(height: 12),
-          _TotalItemValueHighlight(value: _ctrl.totalValue),
-          if (_ctrl.totalValue > 0) ...[
-            const SizedBox(height: 12),
-            _LtvSuggestionRow(
-              totalValue: _ctrl.totalValue,
-              onSuggestionTap: (ltv) {
-                _ctrl.onLtvChanged(ltv);
-                _loanAmtCtrl.text = _formatSmartNumber(_ctrl.loanAmount);
-              },
-            ),
           ],
         ],
       ),
@@ -555,162 +494,6 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
     );
   }
 
-  Widget _buildValuationGrid() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: GirviColors.cardBg,
-          border: Border.all(color: GirviColors.cardBorder),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final tableWidth =
-                constraints.maxWidth < 916 ? 916.0 : constraints.maxWidth;
-            final columnScale =
-                ((tableWidth - 60) / 856).clamp(1.0, 1.35).toDouble();
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: tableWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _LedgerHeader(
-                      scale: columnScale,
-                      columns: const [
-                        _LedgerColumn('S.No', 46),
-                        _LedgerColumn('Item', 260),
-                        _LedgerColumn('Net Wt.', 96),
-                        _LedgerColumn('Val. Purity', 106),
-                        _LedgerColumn('Fine Wt.', 96),
-                        _LedgerColumn('Rate / g', 126),
-                        _LedgerColumn('Pledged Value', 126),
-                      ],
-                    ),
-                    if (_pledgedItems.isEmpty)
-                      _buildValuationEmptyState()
-                    else
-                      for (final item in _pledgedItems)
-                        _buildValuationLedgerRow(item, columnScale),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildValuationLedgerRow(_PledgedItemDraft item, double scale) {
-    final description = item.descriptionCtrl.text.trim();
-    final itemName =
-        description.isEmpty ? 'Pledged Item ${item.serialNo}' : description;
-    double w(double value) => value * scale;
-    return Container(
-      decoration: BoxDecoration(
-        color: item.serialNo.isOdd ? Colors.white : GirviColors.inputBg,
-        border: const Border(
-          top: BorderSide(color: GirviColors.divider),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _LedgerSerialCell(serialNo: item.serialNo, width: w(46)),
-          const SizedBox(width: 6),
-          _LedgerItemNameCell(
-            width: w(260),
-            title: itemName,
-            subtitle: '${item.metalType.displayName} / ${item.purityLabel}',
-          ),
-          const SizedBox(width: 6),
-          _LedgerReadOnlyCell(
-            width: w(96),
-            value: _formatLedgerWeight(item.netWeight),
-            color: item.netWeight > 0
-                ? GirviColors.brandGold
-                : GirviColors.textMuted,
-          ),
-          const SizedBox(width: 6),
-          _LedgerTextCell(
-            width: w(106),
-            controller: item.valuationPurityCtrl,
-            focusNode: item.valuationPurityFocus,
-            hint: '',
-            suffixText: '%',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-            ],
-            textAlign: TextAlign.right,
-            validator: (value) => _validateValuationPurity(item, value),
-          ),
-          const SizedBox(width: 6),
-          _LedgerReadOnlyCell(
-            width: w(96),
-            value: _formatLedgerWeight(item.fineWeight),
-            color: item.fineWeight > 0
-                ? GirviColors.success
-                : GirviColors.textMuted,
-          ),
-          const SizedBox(width: 6),
-          _LedgerTextCell(
-            width: w(126),
-            controller: item.rateCtrl,
-            focusNode: item.rateFocus,
-            hint: '0.00',
-            prefixText: 'Rs ',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
-            ],
-            textAlign: TextAlign.right,
-            validator: _ctrl.validateRatePerGram,
-          ),
-          const SizedBox(width: 6),
-          _LedgerReadOnlyCell(
-            width: w(126),
-            value: _formatLedgerAmount(item.itemValue),
-            color: item.itemValue > 0
-                ? GirviColors.success
-                : GirviColors.textMuted,
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatLedgerWeight(double value) {
-    if (value <= 0) return '-';
-    return _formatSmartWeight(value);
-  }
-
-  String _formatLedgerAmount(double value) {
-    if (value <= 0) return '-';
-    return _formatSmartMoney(value);
-  }
-
-  Widget _buildValuationEmptyState() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
-      decoration: const BoxDecoration(
-        color: GirviColors.cardBg,
-        border: Border(top: BorderSide(color: GirviColors.divider)),
-      ),
-      child: Text(
-        'Valuation will appear after pledged item entry.',
-        style: GoogleFonts.inter(
-          color: GirviColors.textMuted,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
   Widget _buildPledgedItemsTotals() {
     final summaries = _buildMetalWeightSummaries();
     final totalPieces =
@@ -722,6 +505,9 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
       onAdd: _addPledgedItem,
     );
   }
+
+  String _formatLedgerWeight(double value) =>
+      value <= 0 ? '-' : _formatSmartWeight(value);
 
   List<_MetalWeightSummary> _buildMetalWeightSummaries() {
     return MetalType.values
@@ -872,17 +658,6 @@ extension NewGirviPledgedItemsSection on _NewGirviScreenState {
     final parsed = double.tryParse(value);
     if (parsed == null || parsed < 0) return 'Invalid';
     if (parsed > item.grossWeight) return 'Too high';
-    return null;
-  }
-
-  String? _validateValuationPurity(_PledgedItemDraft item, String? value) {
-    if (item.metalType == MetalType.silver &&
-        (value == null || value.trim().isEmpty)) {
-      return null;
-    }
-    final parsed = double.tryParse(value?.trim() ?? '');
-    if (parsed == null || parsed <= 0) return 'Required';
-    if (parsed > 100) return 'Max 100';
     return null;
   }
 }
