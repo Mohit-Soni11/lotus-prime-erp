@@ -138,9 +138,7 @@ void main() {
       expect(result.isRiskAccount, isTrue);
     });
 
-    test(
-        'moves matured accounts to monitoring when payment brings unpaid months within threshold',
-        () {
+    test('marks exactly twelve unpaid months as critical', () {
       final result = GirviRiskPolicy.assess(
         status: GirviStatus.active,
         startDate: DateTime(2025, 1),
@@ -154,8 +152,8 @@ void main() {
         now: DateTime(2026, 7),
       );
 
-      expect(result.stage, GirviRiskStage.collectionMonitoring);
-      expect(result.severity, GirviRiskSeverity.medium);
+      expect(result.stage, GirviRiskStage.critical);
+      expect(result.severity, GirviRiskSeverity.critical);
       expect(result.unpaidInterestMonths, 12);
       expect(result.isRiskAccount, isTrue);
     });

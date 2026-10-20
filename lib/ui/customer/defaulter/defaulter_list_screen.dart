@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../constants/app_routes.dart';
+import '../../../core/time/date_sensitive_refresh.dart';
 import '../../../core/router/notice_recovery_navigation.dart';
 import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
@@ -26,6 +27,7 @@ class DefaulterListScreen extends StatefulWidget {
 class _DefaulterListScreenState extends State<DefaulterListScreen>
     with SingleTickerProviderStateMixin {
   late final DefaulterLogic _logic;
+  late final DateSensitiveRefresh _dateRefresh;
 
   late final AnimationController _entryController;
   late final Animation<double> _fadeAnim;
@@ -38,6 +40,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
     _logic = DefaulterLogic();
     _logic.init();
     _logic.addListener(_onStateChanged);
+    _dateRefresh = DateSensitiveRefresh(onRefresh: _logic.refresh);
 
     _entryController = AnimationController(
       vsync: this,
@@ -66,6 +69,7 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
 
   @override
   void dispose() {
+    _dateRefresh.dispose();
     _logic.removeListener(_onStateChanged);
     _logic.dispose();
     _entryController.dispose();
@@ -129,7 +133,10 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
               ),
               _ResultCountBar(
                 displayedCount: state.displayedDefaulters.length,
-                totalCount: state.allDefaulters.length,
+                totalCount:
+                    state.activeFilter == DefaulterFilterBy.collateralRecovery
+                        ? state.stats.collateralRecoveryCount
+                        : state.stats.totalRiskAccounts,
                 activeFilter: state.activeFilter,
                 isLoading: state.isLoading,
                 lastUpdatedAt: state.stats.lastRefreshedAt,
@@ -137,6 +144,8 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
               Expanded(
                 child: DefaulterDataTable(
                   defaulters: state.displayedDefaulters,
+                  showRecoveryHistory: state.activeFilter ==
+                      DefaulterFilterBy.collateralRecovery,
                   isLoading: state.isLoading,
                   errorMessage: state.errorMessage,
                   onOpenAccount: _openGirviAccount,
@@ -175,9 +184,12 @@ class _ResultCountBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isLoading) return const SizedBox(height: 10);
 
+    final noun = activeFilter == DefaulterFilterBy.collateralRecovery
+        ? 'recovery cases'
+        : 'collection accounts';
     final String countText = displayedCount == totalCount
-        ? 'Showing all $totalCount collection accounts'
-        : 'Showing $displayedCount of $totalCount collection accounts';
+        ? 'Showing all $totalCount $noun'
+        : 'Showing $displayedCount of $totalCount $noun';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 2),

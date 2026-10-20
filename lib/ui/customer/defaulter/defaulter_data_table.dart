@@ -5,7 +5,6 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -22,6 +21,7 @@ part 'defaulter_table_states.dart';
 
 class DefaulterDataTable extends StatelessWidget {
   final List<DefaulterModel> defaulters;
+  final bool showRecoveryHistory;
   final bool isLoading;
   final String? errorMessage;
   final ValueChanged<DefaulterModel> onOpenAccount;
@@ -31,6 +31,7 @@ class DefaulterDataTable extends StatelessWidget {
   const DefaulterDataTable({
     super.key,
     required this.defaulters,
+    this.showRecoveryHistory = false,
     required this.isLoading,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
@@ -46,7 +47,10 @@ class DefaulterDataTable extends StatelessWidget {
         decoration: DefaulterStyles.tableContainerDecoration,
         child: Column(
           children: [
-            _QueueHeader(count: defaulters.length),
+            _QueueHeader(
+              count: defaulters.length,
+              showRecoveryHistory: showRecoveryHistory,
+            ),
             Expanded(
               child: _QueueBody(
                 defaulters: defaulters,
@@ -66,14 +70,18 @@ class DefaulterDataTable extends StatelessWidget {
 
 class _QueueHeader extends StatelessWidget {
   final int count;
+  final bool showRecoveryHistory;
 
-  const _QueueHeader({required this.count});
+  const _QueueHeader({
+    required this.count,
+    required this.showRecoveryHistory,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 58,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       decoration: DefaulterStyles.tableHeaderDecoration,
       child: Row(
         children: [
@@ -100,12 +108,16 @@ class _QueueHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Collection Action Register',
+                  showRecoveryHistory
+                      ? 'Recovery Register'
+                      : 'Collection Accounts',
                   style: DefaulterStyles.customerName.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$count pledge account${count == 1 ? '' : 's'} requiring action',
+                  showRecoveryHistory
+                      ? 'Recovery cases in progress and completed settlements'
+                      : 'Review each pledge balance and choose the next action',
                   style: DefaulterStyles.customerCity,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -113,7 +125,7 @@ class _QueueHeader extends StatelessWidget {
               ],
             ),
           ),
-          const _HeaderBadge(label: 'Live Register'),
+          _HeaderBadge(label: '$count account${count == 1 ? '' : 's'}'),
         ],
       ),
     );

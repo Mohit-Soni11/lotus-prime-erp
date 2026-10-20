@@ -13,12 +13,16 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../logic/girvi/girvi_risk_policy.dart';
+import '../../logic/girvi/girvi_notice_eligibility.dart';
+import '../../logic/customer/risk_payment_monitoring.dart';
 import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../girvi/girvi_repository.dart';
 import '../girvi/girvi_interest_payment_adjustments.dart';
+
+part 'defaulter_recovery_history.dart';
 
 class DefaulterRepository {
   final AppDatabase _db;
@@ -42,20 +46,22 @@ class DefaulterRepository {
         GirviStatus.partialRelease.dbValue,
       ];
 
+      final settledLoanIds = await _loadSettledRecoveryLoanIds();
       final query = _db.select(_db.girviLoans).join([
         innerJoin(
           _db.customers,
           _db.customers.id.equalsExp(_db.girviLoans.customerId),
         ),
       ])
-        ..where(_db.girviLoans.status.isIn(openStatuses));
+        ..where(_db.girviLoans.status.isIn(openStatuses) |
+            _db.girviLoans.id.isIn(settledLoanIds));
 
       final rows = await query.get();
       final loanIds =
           rows.map((row) => row.readTable(_db.girviLoans).id).toList();
       final paymentSummary = await _loadPaymentSummary(loanIds, now);
       final itemSnapshots = await _loadItemSnapshots(loanIds);
-      final collateralRecoveryIds = await _loadCollateralRecoveryIds(loanIds);
+      final workflow = await _loadNoticeWorkflow(loanIds);
 
       final accounts = <DefaulterModel>[];
       for (final row in rows) {
@@ -64,14 +70,26 @@ class DefaulterRepository {
         final summary = paymentSummary[loan.id] ?? _PaymentSummary.empty();
         final itemSnapshot =
             itemSnapshots[loan.id] ?? _PledgedItemSnapshot.fromLoan(loan);
-        final account = _mapRiskAccount(
-          loan: loan,
-          customer: customer,
-          summary: summary,
-          itemSnapshot: itemSnapshot,
-          isCollateralRecovery: collateralRecoveryIds.contains(loan.id),
-          now: now,
-        );
+        final settlement = workflow.settlements[loan.id];
+        final account = settlement != null &&
+                GirviStatus.fromDb(loan.status) == GirviStatus.auctioned
+            ? _mapRecoveredAccount(
+                loan: loan,
+                customer: customer,
+                summary: summary,
+                itemSnapshot: itemSnapshot,
+                settlement: settlement,
+                address: _formatCustomerAddress(customer),
+              )
+            : _mapRiskAccount(
+                loan: loan,
+                customer: customer,
+                summary: summary,
+                itemSnapshot: itemSnapshot,
+                isCollateralRecovery: workflow.recoveryIds.contains(loan.id),
+                hasNoticeWorkflow: workflow.noticeIds.contains(loan.id),
+                now: now,
+              );
         if (account != null) accounts.add(account);
       }
 
@@ -109,7 +127,7 @@ class DefaulterRepository {
   Future<int> fetchDefaulterCount() async {
     try {
       final accounts = await fetchAllDefaulters();
-      return accounts.length;
+      return accounts.where((account) => !account.isRecoverySettled).length;
     } catch (e) {
       AppLogger.debug('Risk & Collections count failed: $e');
       return 0;
@@ -164,8 +182,39 @@ class DefaulterRepository {
     );
   }
 
-  Future<Set<int>> _loadCollateralRecoveryIds(List<int> loanIds) async {
-    if (loanIds.isEmpty) return const {};
+  Future<Set<int>> _loadSettledRecoveryLoanIds() async {
+    try {
+      await _db.ensureGirviNoticeActionSchema();
+      final rows = await (_db.selectOnly(_db.girviNoticeActions)
+            ..addColumns([_db.girviNoticeActions.girviId])
+            ..where(_db.girviNoticeActions.actionType
+                .equals(GirviNoticeActionTypes.disposalSettled)))
+          .get();
+      return rows
+          .map((row) => row.read(_db.girviNoticeActions.girviId))
+          .whereType<int>()
+          .toSet();
+    } catch (error) {
+      AppLogger.debug('Recovery register IDs unavailable: $error');
+      return <int>{};
+    }
+  }
+
+  Future<
+      ({
+        Set<int> recoveryIds,
+        Set<int> noticeIds,
+        Map<int, GirviNoticeActionData> settlements,
+      })> _loadNoticeWorkflow(
+    List<int> loanIds,
+  ) async {
+    if (loanIds.isEmpty) {
+      return (
+        recoveryIds: <int>{},
+        noticeIds: <int>{},
+        settlements: <int, GirviNoticeActionData>{},
+      );
+    }
 
     try {
       await _db.ensureGirviNoticeActionSchema();
@@ -173,18 +222,38 @@ class DefaulterRepository {
             ..where((action) => action.girviId.isIn(loanIds)))
           .get();
 
-      final ids = <int>{};
+      final recoveryIds = <int>{};
+      final noticeIds = <int>{};
+      final settlements = <int, GirviNoticeActionData>{};
       for (final row in rows) {
         if (_isOpenCollateralRecoveryAction(row.actionType)) {
-          ids.add(row.girviId);
+          recoveryIds.add(row.girviId);
+        }
+        if (GirviNoticeActionTypes.preparationTypes.contains(row.actionType) ||
+            _isOpenCollateralRecoveryAction(row.actionType)) {
+          noticeIds.add(row.girviId);
+        }
+        if (row.actionType == GirviNoticeActionTypes.disposalSettled) {
+          final previous = settlements[row.girviId];
+          if (previous == null || row.actionAt.isAfter(previous.actionAt)) {
+            settlements[row.girviId] = row;
+          }
         }
       }
-      return ids;
+      return (
+        recoveryIds: recoveryIds,
+        noticeIds: noticeIds,
+        settlements: settlements,
+      );
     } catch (error) {
       AppLogger.debug(
         'Risk & Collections: collateral recovery flags unavailable: $error',
       );
-      return const {};
+      return (
+        recoveryIds: <int>{},
+        noticeIds: <int>{},
+        settlements: <int, GirviNoticeActionData>{},
+      );
     }
   }
 
@@ -198,6 +267,7 @@ class DefaulterRepository {
     required _PaymentSummary summary,
     required _PledgedItemSnapshot itemSnapshot,
     required bool isCollateralRecovery,
+    required bool hasNoticeWorkflow,
     required DateTime now,
   }) {
     final status = GirviStatus.fromDb(loan.status);
@@ -247,6 +317,17 @@ class DefaulterRepository {
 
     if (!assessment.isRiskAccount) return null;
 
+    final paymentMonitoring = summary.hasCollectionHistory &&
+        RiskPaymentMonitoring.applies(
+          isMaturityOverdue: assessment.isMaturityOverdue,
+          totalDue: totalDue,
+          maturityDate: maturityDate,
+          lastPaymentDate: summary.lastPaymentDate,
+          asOf: now,
+        );
+    final staleMonitoring = !paymentMonitoring &&
+        assessment.stage == GirviRiskStage.collectionMonitoring;
+
     final lastActivityAt = _latestDate(
       loan.updatedAt,
       summary.lastPaymentDate,
@@ -271,7 +352,11 @@ class DefaulterRepository {
       pieces: itemSnapshot.pieces,
       grossWeight: itemSnapshot.grossWeight,
       lessWeight: itemSnapshot.lessWeight,
-      statusLabel: assessment.statusLabel,
+      statusLabel: paymentMonitoring
+          ? 'Payment Monitoring'
+          : staleMonitoring
+              ? 'High Follow-up'
+              : assessment.statusLabel,
       statusValue: status.dbValue,
       principalAmount: originalPrincipal,
       principalOutstanding: principalOutstanding,
@@ -296,9 +381,28 @@ class DefaulterRepository {
       hasInterestPaidBeforeMaturity:
           summary.hasInterestPaidOnOrBefore(maturityDate),
       isCollateralRecovery: isCollateralRecovery,
-      riskLevel: _mapSeverity(assessment.severity),
-      collectionStage: assessment.stageLabel,
-      nextActionLabel: assessment.nextActionLabel,
+      isPaymentMonitoring: paymentMonitoring,
+      isNoticeEligible: GirviNoticeEligibility.hasMaturedBalance(
+        status: status,
+        maturityDate: maturityDate,
+        principalDue: principalOutstanding,
+        interestDue: interestOutstanding,
+        asOf: now,
+      ),
+      hasNoticeWorkflow: hasNoticeWorkflow,
+      riskLevel: paymentMonitoring
+          ? DefaulterRiskLevel.medium
+          : staleMonitoring
+              ? DefaulterRiskLevel.high
+              : _mapSeverity(assessment.severity),
+      collectionStage: paymentMonitoring
+          ? 'Payment Monitoring'
+          : staleMonitoring
+              ? 'High Follow-up'
+              : assessment.stageLabel,
+      nextActionLabel: paymentMonitoring
+          ? 'Review the remaining balance and follow up'
+          : assessment.nextActionLabel,
     );
   }
 

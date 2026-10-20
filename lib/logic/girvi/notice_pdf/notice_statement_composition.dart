@@ -2,7 +2,9 @@ part of '../girvi_notice_pdf_service.dart';
 
 extension _NoticeStatementComposition on _NoticeStatementLayout {
   bool get _actionOnInformationPage =>
-      statement.isCompound && statement.periods.length >= 4 && deadline != null;
+      statement.isCompound &&
+      statement.periods.length >= 4 &&
+      (deadline != null || noticePeriodDays != null);
 
   List<pw.Widget> summaryPage() => [
         _title(),

@@ -267,17 +267,23 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
                 ],
               ),
             ),
-            if (deadline != null) ...[
+            if (deadline != null || noticePeriodDays != null) ...[
               pw.SizedBox(width: 11),
               pw.Container(width: 0.7, height: 28, color: _noticeGold),
               pw.SizedBox(width: 11),
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(t('Last Date to Settle', 'भुगतान की अंतिम तारीख'),
+                  pw.Text(
+                      noticePeriodDays != null
+                          ? t('Time to Respond', 'उत्तर देने का समय')
+                          : t('Last Date to Settle', 'भुगतान की अंतिम तारीख'),
                       style: _style(7.5, bold: true)),
                   pw.SizedBox(height: 3),
-                  pw.Text(DateFormat('dd MMM yyyy').format(deadline!),
+                  pw.Text(
+                      noticePeriodDays != null
+                          ? 'Within $noticePeriodDays days of delivery'
+                          : DateFormat('dd MMM yyyy').format(deadline!),
                       style: _style(9, bold: true)),
                 ],
               ),

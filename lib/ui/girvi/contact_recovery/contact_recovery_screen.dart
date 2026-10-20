@@ -10,6 +10,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import '../../../constants/app_routes.dart';
+import '../../../core/time/date_sensitive_refresh.dart';
 import '../../../logic/girvi/girvi_invoice_document_store.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../logic/girvi/girvi_notice_generation_service.dart';
@@ -18,6 +19,7 @@ import '../../../logic/girvi/notice_pdf/notice_statement_data.dart';
 import '../../../logic/girvi/notice_pdf/notice_item_photo_resolver.dart';
 import '../../../logic/girvi/contact_recovery_controller.dart';
 import '../../../models/girvi/girvi_notice_action_model.dart';
+import '../../../models/girvi/girvi_notice_review_period.dart';
 import '../../../models/girvi/girvi_customer_response_model.dart';
 import '../../../models/girvi/girvi_notice_document_record_model.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
@@ -35,6 +37,7 @@ part 'parts/contact_recovery_document_components.dart';
 part 'parts/contact_recovery_empty_state.dart';
 part 'parts/contact_recovery_overview.dart';
 part 'parts/contact_recovery_settlement_dialog.dart';
+part 'parts/contact_recovery_delivery_dialog.dart';
 
 class ContactRecoveryScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -54,6 +57,7 @@ class ContactRecoveryScreen extends StatefulWidget {
 
 class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   late final ContactRecoveryController _controller;
+  late final DateSensitiveRefresh _dateRefresh;
   final _noticePdfService = GirviNoticePdfService();
   late final _noticeItemPhotoResolver =
       NoticeItemPhotoResolver(_controller.database);
@@ -74,10 +78,20 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       () => _controller.setSearchQuery(_searchController.text),
     );
     _controller.load();
+    _dateRefresh = DateSensitiveRefresh(
+      onRefresh: _controller.load,
+      hasDueEvent: (now) => _controller.state.allCases.any((item) {
+        final dueAt = item.recoveryReviewAvailableAt;
+        return item.stage == ContactRecoveryStage.noticePending &&
+            dueAt != null &&
+            !now.isBefore(dueAt);
+      }),
+    );
   }
 
   @override
   void dispose() {
+    _dateRefresh.dispose();
     _controller.removeListener(_syncState);
     if (widget.controller == null) {
       _controller.dispose();
@@ -121,6 +135,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
               onViewNotice: _viewSavedNotice,
               onDownloadNotice: _downloadSavedNotice,
               onPrintNotice: _printSavedNotice,
+              onRecordDelivery: _recordConfirmedDelivery,
               onRecordCustomerResponse: _recordCustomerResponse,
               onViewCustomerResponses: _viewCustomerResponses,
               onViewInvoice: _viewInvoice,
@@ -408,13 +423,22 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     final branding = await _noticeBranding;
     final itemPhotoPath =
         await _noticeItemPhotoResolver.resolve(draft.item.loan.id);
+    final usesDeliveryPeriod =
+        draft.noticeText.contains('after receiving this notice');
     return _noticePdfService.buildStoredNotice(
       ticketNo: draft.item.loan.ticketNo,
       noticeType: draft.noticeType,
       noticeLanguage: draft.language,
       noticeText: draft.noticeText,
       savedAt: draft.action.actionAt,
-      deadline: draft.action.noticeDeadlineAt,
+      deadline: usesDeliveryPeriod ? null : draft.action.noticeDeadlineAt,
+      noticePeriodDays: usesDeliveryPeriod
+          ? GirviNoticeReviewPeriod.duration(
+              approvedAt: draft.action.actionAt,
+              approvedDeadline: draft.action.noticeDeadlineAt,
+              fallbackDays: draft.item.noticePeriodDays,
+            ).inDays
+          : null,
       branding: branding,
       itemPhotoPath: itemPhotoPath,
       originalLoanDurationMonths: draft.item.loan.durationMonths,
@@ -501,6 +525,36 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         '${draft.action.noticeLabel} PDF could not be printed.',
       );
     }
+  }
+
+  Future<void> _recordConfirmedDelivery(
+    ContactRecoveryCase item,
+    GirviNoticeAction action,
+  ) async {
+    final draft =
+        _savedNoticeDrafts(item, action)[GirviNoticeLanguage.english] ??
+            (action.isLegacyNoticePreparation &&
+                    action.noticeText?.trim().isNotEmpty == true
+                ? _savedNoticeDraft(item, action)
+                : null);
+    if (draft == null || !mounted) return;
+    if (!await _canDeliverApprovedNotice(draft) || !mounted) return;
+    final delivery = await showDialog<_NoticeDeliveryResult>(
+      context: context,
+      builder: (context) => _NoticeDeliveryDialog(ticketNo: item.loan.ticketNo),
+    );
+    if (delivery == null || !mounted) return;
+    await _controller.recordNoticeDeliveryProof(
+      item: item,
+      noticeType: draft.noticeType,
+      noticeText: draft.noticeText,
+      noticeLanguage: draft.language,
+      noticeActionId: draft.action.id,
+      actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+      deliveryChannel: delivery.channel,
+      deliveryStatus: 'Delivered',
+      deliveryReference: delivery.reference,
+    );
   }
 
   Future<void> _recordCustomerResponse(

@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import '../../models/customer/defaulter_model.dart';
+import '../girvi/girvi_ticket_number_order.dart';
 import '../../repositories/customer/defaulter_repository.dart';
 
 class DefaulterLogic extends ChangeNotifier {
@@ -132,9 +133,7 @@ class DefaulterLogic extends ChangeNotifier {
             .toList();
         break;
       case DefaulterFilterBy.medium:
-        result = result
-            .where((d) => d.riskLevel == DefaulterRiskLevel.medium)
-            .toList();
+        result = result.where((d) => d.isPaymentMonitoring).toList();
         break;
       case DefaulterFilterBy.low:
         result =
@@ -150,9 +149,28 @@ class DefaulterLogic extends ChangeNotifier {
         break;
     }
 
+    if (_state.activeFilter != DefaulterFilterBy.collateralRecovery) {
+      result = result.where((d) => !d.isRecoverySettled).toList();
+    }
+
     switch (_state.activeSort) {
+      case DefaulterSortBy.newestInvoice:
+        result.sort((a, b) {
+          final ticketOrder = GirviTicketNumberOrder.compareNewestFirst(
+            a.referenceNo,
+            b.referenceNo,
+          );
+          return ticketOrder != 0 ? ticketOrder : b.loanId.compareTo(a.loanId);
+        });
+        break;
       case DefaulterSortBy.daysOverdue:
-        result.sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue));
+        result.sort((a, b) {
+          final ageOrder = b.daysOverdue.compareTo(a.daysOverdue);
+          return ageOrder != 0
+              ? ageOrder
+              : GirviTicketNumberOrder.compareNewestFirst(
+                  a.referenceNo, b.referenceNo);
+        });
         break;
       case DefaulterSortBy.amountDue:
         result.sort((a, b) => b.totalDue.compareTo(a.totalDue));

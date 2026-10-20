@@ -20,6 +20,7 @@ enum DefaulterType {
 }
 
 enum DefaulterSortBy {
+  newestInvoice,
   daysOverdue,
   amountDue,
   customerName,
@@ -77,6 +78,15 @@ class DefaulterModel {
   final bool isMaturityOverdue;
   final bool hasInterestPaidBeforeMaturity;
   final bool isCollateralRecovery;
+  final bool isPaymentMonitoring;
+  final bool isNoticeEligible;
+  final bool isRecoverySettled;
+  final double recoveredAmount;
+  final double recoverySettlementTotal;
+  final double recoveryBalanceDue;
+  final double recoverySurplus;
+  final DateTime? recoverySettledAt;
+  final bool hasNoticeWorkflow;
   final DefaulterRiskLevel riskLevel;
   final String collectionStage;
   final String nextActionLabel;
@@ -122,12 +132,21 @@ class DefaulterModel {
     required this.isMaturityOverdue,
     required this.hasInterestPaidBeforeMaturity,
     required this.isCollateralRecovery,
+    this.isPaymentMonitoring = false,
+    this.isNoticeEligible = false,
+    this.isRecoverySettled = false,
+    this.recoveredAmount = 0,
+    this.recoverySettlementTotal = 0,
+    this.recoveryBalanceDue = 0,
+    this.recoverySurplus = 0,
+    this.recoverySettledAt,
+    this.hasNoticeWorkflow = false,
     required this.riskLevel,
     required this.collectionStage,
     required this.nextActionLabel,
   });
 
-  bool get isOverdue => isMaturityOverdue && !hasInterestPaidBeforeMaturity;
+  bool get isOverdue => isMaturityOverdue;
   bool get hasPaymentHistory => totalReceived > 0 || lastPaymentDate != null;
 
   String get riskAgeLabel {
@@ -163,6 +182,8 @@ class DefaulterStatsModel {
   final int totalRiskAccounts;
   final int overdueCount;
   final int collateralRecoveryCount;
+  final int recoveryInProgressCount;
+  final int recoveryCompletedCount;
   final double totalAmountDue;
   final double totalPrincipalDue;
   final double totalInterestDue;
@@ -178,6 +199,8 @@ class DefaulterStatsModel {
     required this.totalRiskAccounts,
     required this.overdueCount,
     required this.collateralRecoveryCount,
+    required this.recoveryInProgressCount,
+    required this.recoveryCompletedCount,
     required this.totalAmountDue,
     required this.totalPrincipalDue,
     required this.totalInterestDue,
@@ -197,6 +220,8 @@ class DefaulterStatsModel {
       totalRiskAccounts: 0,
       overdueCount: 0,
       collateralRecoveryCount: 0,
+      recoveryInProgressCount: 0,
+      recoveryCompletedCount: 0,
       totalAmountDue: 0,
       totalPrincipalDue: 0,
       totalInterestDue: 0,
@@ -213,24 +238,30 @@ class DefaulterStatsModel {
   factory DefaulterStatsModel.fromList(List<DefaulterModel> list) {
     final now = DateTime.now();
     final time = DateFormat('hh:mm a').format(now);
+    final active = list.where((account) => !account.isRecoverySettled).toList();
 
     return DefaulterStatsModel(
-      totalRiskAccounts: list.length,
-      overdueCount: list.where((d) => d.isOverdue).length,
+      totalRiskAccounts: active.length,
+      overdueCount: active.where((d) => d.isOverdue).length,
       collateralRecoveryCount: list.where((d) => d.isCollateralRecovery).length,
-      totalAmountDue: list.fold(0.0, (sum, d) => sum + d.totalDue),
+      recoveryInProgressCount:
+          active.where((d) => d.isCollateralRecovery).length,
+      recoveryCompletedCount: list.where((d) => d.isRecoverySettled).length,
+      totalAmountDue: active.fold(0.0, (sum, d) => sum + d.totalDue),
       totalPrincipalDue:
-          list.fold(0.0, (sum, d) => sum + d.principalOutstanding),
-      totalInterestDue: list.fold(0.0, (sum, d) => sum + d.interestOutstanding),
-      totalReceived: list.fold(0.0, (sum, d) => sum + d.currentMonthReceived),
-      criticalCount:
-          list.where((d) => d.riskLevel == DefaulterRiskLevel.critical).length,
+          active.fold(0.0, (sum, d) => sum + d.principalOutstanding),
+      totalInterestDue:
+          active.fold(0.0, (sum, d) => sum + d.interestOutstanding),
+      totalReceived: active.fold(0.0, (sum, d) => sum + d.currentMonthReceived),
+      criticalCount: active
+          .where((d) => d.riskLevel == DefaulterRiskLevel.critical)
+          .length,
       highCount:
-          list.where((d) => d.riskLevel == DefaulterRiskLevel.high).length,
-      mediumCount:
-          list.where((d) => d.riskLevel == DefaulterRiskLevel.medium).length,
-      lowCount: list.where((d) => d.riskLevel == DefaulterRiskLevel.low).length,
-      highestRiskDays: list.fold<int>(
+          active.where((d) => d.riskLevel == DefaulterRiskLevel.high).length,
+      mediumCount: active.where((d) => d.isPaymentMonitoring).length,
+      lowCount:
+          active.where((d) => d.riskLevel == DefaulterRiskLevel.low).length,
+      highestRiskDays: active.fold<int>(
         0,
         (max, d) => d.daysOverdue > max ? d.daysOverdue : max,
       ),
@@ -266,7 +297,7 @@ class DefaulterScreenState {
       displayedDefaulters: const [],
       stats: DefaulterStatsModel.empty(),
       activeFilter: DefaulterFilterBy.all,
-      activeSort: DefaulterSortBy.daysOverdue,
+      activeSort: DefaulterSortBy.newestInvoice,
       searchQuery: '',
       isLoading: true,
       errorMessage: null,

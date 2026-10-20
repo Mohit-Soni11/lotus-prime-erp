@@ -5,6 +5,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
   final ValueChanged<GirviNoticeAction> onViewNotice;
   final ValueChanged<GirviNoticeAction> onDownloadNotice;
   final ValueChanged<GirviNoticeAction> onPrintNotice;
+  final ValueChanged<GirviNoticeAction> onRecordDelivery;
   final ValueChanged<GirviNoticeAction> onRecordCustomerResponse;
   final VoidCallback onViewCustomerResponses;
 
@@ -13,6 +14,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
     required this.onViewNotice,
     required this.onDownloadNotice,
     required this.onPrintNotice,
+    required this.onRecordDelivery,
     required this.onRecordCustomerResponse,
     required this.onViewCustomerResponses,
   });
@@ -48,10 +50,12 @@ class _NoticeDocumentStrip extends StatelessWidget {
         action: action,
         needsNewApproval: action.id == activeNotice?.id && needsNewApproval,
         latestProof: item.latestDeliveryProofForNotice(action),
+        latestPdfActivity: item.latestPdfActivityForNotice(action),
         latestResponse: responses.isEmpty ? null : responses.first,
         onView: () => onViewNotice(action),
         onDownload: () => onDownloadNotice(action),
         onPrint: () => onPrintNotice(action),
+        onRecordDelivery: () => onRecordDelivery(action),
         onRecordResponse: () => onRecordCustomerResponse(action),
       );
     }
@@ -181,20 +185,24 @@ class _NoticeDocumentCard extends StatelessWidget {
   final GirviNoticeAction action;
   final bool needsNewApproval;
   final GirviNoticeAction? latestProof;
+  final GirviNoticeAction? latestPdfActivity;
   final GirviCustomerResponse? latestResponse;
   final VoidCallback onView;
   final VoidCallback onDownload;
   final VoidCallback onPrint;
+  final VoidCallback onRecordDelivery;
   final VoidCallback onRecordResponse;
 
   const _NoticeDocumentCard({
     required this.action,
     required this.needsNewApproval,
     required this.latestProof,
+    required this.latestPdfActivity,
     required this.latestResponse,
     required this.onView,
     required this.onDownload,
     required this.onPrint,
+    required this.onRecordDelivery,
     required this.onRecordResponse,
   });
 
@@ -308,17 +316,27 @@ class _NoticeDocumentCard extends StatelessWidget {
               ),
               child: Text(
                 proof == null
-                    ? 'Proof pending'
+                    ? 'Customer delivery not recorded'
                     : '${proof.deliveryProofLabel} - $proofTimestamp',
                 style: GirviStyles.caption.copyWith(
                   color: GirviColors.textDark,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (latestPdfActivity != null) ...[
+              const SizedBox(height: 5),
+              Text(
+                latestPdfActivity!.displayLabel,
+                style: GirviStyles.caption.copyWith(
+                  color: GirviColors.textMuted,
+                  fontSize: 11.7,
+                ),
+              ),
+            ],
             const SizedBox(height: 6),
             _CustomerResponseStatus(
               response: response,
@@ -351,6 +369,21 @@ class _NoticeDocumentCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 7),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onRecordDelivery,
+                icon: const Icon(Icons.verified_outlined, size: 16),
+                label: Text(proof == null
+                    ? 'Record Customer Delivery'
+                    : 'Update Delivery Record'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: GirviColors.info,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
             ),
           ],
         ),

@@ -6,6 +6,16 @@ import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'fixtures/girvi_notice_case_fixture.dart';
 
 void main() {
+  test('new notice gives the review period after customer delivery', () {
+    final item = createNoticeCase();
+    final notice = GirviNoticeGenerationService(now: item.now).build(
+      item: item,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+    );
+    expect(notice, contains('within 7 days after receiving this notice'));
+  });
+
   for (final simple in [true, false]) {
     for (final language in GirviNoticeLanguage.values) {
       test(

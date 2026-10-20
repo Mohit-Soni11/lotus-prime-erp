@@ -17,6 +17,7 @@ class _NoticeStatementLayout {
     required this.noticeType,
     required this.savedAt,
     required this.deadline,
+    required this.noticePeriodDays,
     required this.legacyNoticeStage,
     required this.branding,
     required this.logo,
@@ -31,6 +32,7 @@ class _NoticeStatementLayout {
   final GirviNoticeType noticeType;
   final DateTime savedAt;
   final DateTime? deadline;
+  final int? noticePeriodDays;
   final int? legacyNoticeStage;
   final GirviInvoiceBranding branding;
   final pw.MemoryImage? logo;

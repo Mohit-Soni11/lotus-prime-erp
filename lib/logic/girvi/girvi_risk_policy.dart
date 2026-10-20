@@ -165,7 +165,7 @@ class GirviRiskPolicy {
     }
 
     if (isMaturityOverdue &&
-        unpaidInterestMonths > criticalNoCollectionStartMonths &&
+        unpaidInterestMonths >= criticalNoCollectionStartMonths &&
         totalDue > moneyTolerance) {
       return _result(
         stage: GirviRiskStage.critical,

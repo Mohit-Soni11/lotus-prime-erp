@@ -30,6 +30,7 @@ void main() {
             ticketNo: 'GRV-LANGUAGE-001',
             customerId: customerId,
             itemDescription: 'Gold ring',
+            loanAmount: const drift.Value(10000),
             startDate: drift.Value(DateTime(2025, 1, 1)),
             maturityDate: drift.Value(DateTime(2025, 7, 1)),
             status: const drift.Value('OVERDUE'),
@@ -249,7 +250,11 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
             GirviLoansCompanion.insert(
                 ticketNo: 'GRV-MIGRATION',
                 customerId: customer,
-                itemDescription: 'Ring'),
+                itemDescription: 'Ring',
+                loanAmount: const drift.Value(10000),
+                startDate: drift.Value(DateTime(2025, 1, 1)),
+                maturityDate: drift.Value(DateTime(2025, 7, 1)),
+                status: const drift.Value('OVERDUE')),
           );
       final noticeId =
           await GirviNoticeActionRepository(migrationDb).recordNoticePrepared(

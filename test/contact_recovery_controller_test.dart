@@ -12,6 +12,7 @@ import 'package:lotus_erp/models/girvi/girvi_customer_response_model.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_customer_response_repository.dart';
+import 'package:lotus_erp/repositories/customer/defaulter_repository.dart';
 
 void main() {
   group('ContactRecoveryController', () {
@@ -98,8 +99,21 @@ void main() {
           asOf: deadline.subtract(const Duration(seconds: 1)));
       expect(before.canInitiateCollateralRecovery, isFalse);
       final ready = caseWith([notice(deadline: deadline)], asOf: deadline);
-      expect(ready.stage, ContactRecoveryStage.disposalReady);
-      expect(ready.canInitiateCollateralRecovery, isTrue);
+      expect(ready.stage, ContactRecoveryStage.noticePending);
+      expect(ready.canInitiateCollateralRecovery, isFalse);
+      final delivered = caseWith([
+        notice(deadline: deadline),
+        GirviNoticeAction(
+          id: 4,
+          girviId: account.loan.id,
+          actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+          noticeActionId: 1,
+          deliveryStatus: 'Delivered',
+          actionAt: now,
+          createdAt: now,
+        ),
+      ], asOf: deadline);
+      expect(delivered.canInitiateCollateralRecovery, isTrue);
       expect(ready.canCloseDisposal, isFalse);
       final recovery = caseWith([
         notice(),
@@ -126,8 +140,8 @@ void main() {
           .copyWith(allCases: [fresh, pending, ready, recovery, closed]);
       expect(state.countForFilter(ContactRecoveryFilter.all), 4);
       expect(state.countForFilter(ContactRecoveryFilter.noticeRequired), 1);
-      expect(state.countForFilter(ContactRecoveryFilter.noticePending), 1);
-      expect(state.countForFilter(ContactRecoveryFilter.disposalReady), 1);
+      expect(state.countForFilter(ContactRecoveryFilter.noticePending), 2);
+      expect(state.countForFilter(ContactRecoveryFilter.disposalReady), 0);
       expect(state.countForFilter(ContactRecoveryFilter.recoveryInProgress), 1);
       expect(state.countForFilter(ContactRecoveryFilter.settled), 1);
     });
@@ -199,11 +213,12 @@ void main() {
       );
 
       final history = (await repository.actionsByGirviIds([loanId]))[loanId]!;
-      final proof =
-          history.firstWhere((action) => action.isNoticeDeliveryProof);
-      expect(proof.deliveryStatus, 'Saved');
-      expect(proof.deliveryChannel, 'PDF File');
-      expect(proof.deliveryReference, r'C:\notice\GRV-NOT-001.pdf');
+      final pdfActivity =
+          history.firstWhere((action) => action.isNoticePdfActivity);
+      expect(pdfActivity.deliveryStatus, 'Saved');
+      expect(pdfActivity.deliveryChannel, 'PDF File');
+      expect(pdfActivity.deliveryReference, r'C:\notice\GRV-NOT-001.pdf');
+      expect(pdfActivity.deliveredAt, isNull);
 
       final account = GirviLoanWithCustomer(
         loan: GirviLoanModel(
@@ -238,14 +253,111 @@ void main() {
 
       expect(noticeCase.noticeStatusLabel, 'Approved');
       expect(noticeCase.preparedNoticeActions, hasLength(1));
-      expect(noticeCase.noticeDeliveryProofActions, hasLength(1));
+      expect(noticeCase.noticeDeliveryProofActions, isEmpty);
+      expect(noticeCase.noticePdfActivityActions, hasLength(1));
+      expect(
+        noticeCase.latestDeliveryProofForNotice(noticeCase.formalNoticeAction!),
+        isNull,
+      );
       expect(
         noticeCase
-            .latestDeliveryProofForNotice(
-              noticeCase.formalNoticeAction!,
-            )
+            .latestPdfActivityForNotice(noticeCase.formalNoticeAction!)
             ?.deliveryProofLabel,
         'Saved via PDF File',
+      );
+    });
+
+    test('matured account appears before notice and remains after approval',
+        () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Monitoring Customer',
+              mobile: '9000000011',
+            ),
+          );
+      final now = DateTime.now();
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-MON-001',
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              loanAmount: const drift.Value(10000),
+              interestRate: const drift.Value(0),
+              startDate: drift.Value(now.subtract(const Duration(days: 90))),
+              maturityDate: drift.Value(now.subtract(const Duration(days: 1))),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      final controller = ContactRecoveryController(db: db);
+      addTearDown(controller.dispose);
+      await controller.load();
+      expect(controller.state.allCases, hasLength(1));
+      expect(controller.state.allCases.single.canPrepareNotice, isTrue);
+
+      await GirviNoticeActionRepository(db).recordNoticePrepared(
+        girviId: loanId,
+        noticeType: GirviNoticeType.formal,
+        noticeText: 'Approved notice for monitoring customer',
+        noticePeriodDays: 7,
+      );
+      await controller.load();
+      expect(controller.state.allCases, hasLength(1));
+      expect(controller.state.allCases.single.loan.id, loanId);
+    });
+
+    test(
+        'recent interest payment keeps a matured monitoring ticket in notice workflow',
+        () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Monitoring Customer',
+              mobile: '9000000012',
+            ),
+          );
+      final now = DateTime.now();
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-0016',
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              loanAmount: const drift.Value(5000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(now.subtract(const Duration(days: 90))),
+              maturityDate: drift.Value(now.subtract(const Duration(days: 30))),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      await db.into(db.girviPayments).insert(
+            GirviPaymentsCompanion.insert(
+              girviId: loanId,
+              paymentType: 'INTEREST',
+              amount: const drift.Value(250),
+              paymentDate: drift.Value(now),
+              interestComponent: const drift.Value(250),
+              monthsCovered: const drift.Value(1),
+            ),
+          );
+
+      final riskAccount = (await DefaulterRepository(db: db)
+              .fetchAllDefaulters(syncStatuses: false))
+          .single;
+      expect(riskAccount.isPaymentMonitoring, isTrue);
+      expect(riskAccount.isNoticeEligible, isTrue);
+      expect(riskAccount.totalDue, greaterThan(0));
+
+      final controller = ContactRecoveryController(db: db);
+      addTearDown(controller.dispose);
+      await controller.load();
+      expect(controller.state.allCases, hasLength(1));
+      expect(controller.state.allCases.single.loan.ticketNo, 'GRV-0016');
+      expect(controller.state.allCases.single.canPrepareNotice, isTrue);
+      expect(
+        controller.state.allCases.single.canInitiateCollateralRecovery,
+        isFalse,
       );
     });
 
@@ -527,6 +639,39 @@ void main() {
 
       final controller = ContactRecoveryController(db: db);
       addTearDown(controller.dispose);
+      final riskRepository = DefaulterRepository(db: db);
+      final activeRecovery = await riskRepository.fetchAllDefaulters(
+        syncStatuses: false,
+      );
+      expect(activeRecovery.single.isCollateralRecovery, isTrue);
+      expect(activeRecovery.single.isRecoverySettled, isFalse);
+      await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
+          .write(const GirviLoansCompanion(loanAmount: drift.Value(19000)));
+      final staleAmountClosed = await controller.closeDisposalSettlement(
+        item: recoveryCase,
+        pledgedValuation: 70000,
+        recoveredAmount: 22000,
+        penaltyAmount: 0,
+        note: 'Stale amount must be rejected.',
+      );
+      expect(staleAmountClosed, isFalse);
+      expect(await db.select(db.cashTransactions).get(), isEmpty);
+      await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
+          .write(const GirviLoansCompanion(
+        loanAmount: drift.Value(20000),
+        status: drift.Value('RELEASED'),
+      ));
+      final closedLoanSettled = await controller.closeDisposalSettlement(
+        item: recoveryCase,
+        pledgedValuation: 70000,
+        recoveredAmount: 22000,
+        penaltyAmount: 0,
+        note: 'Closed account must be rejected.',
+      );
+      expect(closedLoanSettled, isFalse);
+      expect(await db.select(db.cashTransactions).get(), isEmpty);
+      await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
+          .write(const GirviLoansCompanion(status: drift.Value('OVERDUE')));
       final closed = await controller.closeDisposalSettlement(
         item: recoveryCase,
         pledgedValuation: 70000,
@@ -554,6 +699,14 @@ void main() {
             ..where((loan) => loan.id.equals(loanId)))
           .getSingle();
       expect(savedLoan.status, 'AUCTIONED');
+      final recoveryRegister = await riskRepository.fetchAllDefaulters(
+        syncStatuses: false,
+      );
+      expect(recoveryRegister, hasLength(1));
+      expect(recoveryRegister.single.isRecoverySettled, isTrue);
+      expect(recoveryRegister.single.recoveredAmount, 22000);
+      expect(recoveryRegister.single.recoverySurplus, 2000);
+      expect(await riskRepository.fetchDefaulterCount(), 0);
       final pledgedItems = await (db.select(db.girviLoanItems)
             ..where((item) => item.girviId.equals(loanId)))
           .get();
@@ -580,6 +733,7 @@ void main() {
               ticketNo: 'GRV-RESPONSE-001',
               customerId: customerId,
               itemDescription: 'Gold chain',
+              loanAmount: const drift.Value(10000),
               startDate: drift.Value(DateTime(2025, 1, 1)),
               maturityDate: drift.Value(DateTime(2025, 7, 1)),
               status: const drift.Value('OVERDUE'),

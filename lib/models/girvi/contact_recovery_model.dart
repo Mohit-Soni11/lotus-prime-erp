@@ -9,6 +9,7 @@ import 'girvi_loan_model.dart';
 import 'girvi_interest_period_snapshot.dart';
 import 'girvi_notice_action_model.dart';
 import 'girvi_notice_document_record_model.dart';
+import 'girvi_notice_review_period.dart';
 
 part 'contact_recovery_state.dart';
 
@@ -87,6 +88,11 @@ class ContactRecoveryCase {
 
   bool get isRecoveryClosed => loan.girviStatus == GirviStatus.auctioned;
 
+  bool get hasOutstandingBalance {
+    final payable = account.interestQuoteAt(now).totalPayable;
+    return payable.isFinite && payable > 0.01;
+  }
+
   bool get hasNoticeActivity => latestAction != null;
 
   bool get hasItemPhotos =>
@@ -129,6 +135,9 @@ class ContactRecoveryCase {
 
   List<GirviNoticeAction> get noticeDeliveryProofActions =>
       actionHistory.where((action) => action.isNoticeDeliveryProof).toList();
+
+  List<GirviNoticeAction> get noticePdfActivityActions =>
+      actionHistory.where((action) => action.isNoticePdfActivity).toList();
 
   List<GirviNoticeAction> get preparedNoticeActions {
     final notices = noticeActions.toList()
@@ -197,7 +206,7 @@ class ContactRecoveryCase {
                   response.noticeStage == notice.resolvedNoticeStage))
           .toList(growable: false);
 
-  GirviNoticeAction? latestDeliveryProofForNotice(GirviNoticeAction notice) {
+  List<GirviNoticeAction> _deliveryProofsForNotice(GirviNoticeAction notice) {
     final hashes = {
       if (notice.documentHash != null) notice.documentHash,
       for (final document in documentsForNoticeAction(notice.id))
@@ -214,7 +223,33 @@ class ContactRecoveryCase {
                             notice.resolvedNoticeStage))))
         .toList()
       ..sort((a, b) => b.actionAt.compareTo(a.actionAt));
+    return proofs;
+  }
+
+  GirviNoticeAction? latestDeliveryProofForNotice(GirviNoticeAction notice) {
+    final proofs = _deliveryProofsForNotice(notice);
     return proofs.isEmpty ? null : proofs.first;
+  }
+
+  GirviNoticeAction? firstDeliveryProofForNotice(GirviNoticeAction notice) {
+    final proofs = _deliveryProofsForNotice(notice);
+    if (proofs.isEmpty) return null;
+    return proofs.reduce((first, proof) {
+      final firstAt = first.deliveredAt ?? first.actionAt;
+      final proofAt = proof.deliveredAt ?? proof.actionAt;
+      return proofAt.isBefore(firstAt) ? proof : first;
+    });
+  }
+
+  GirviNoticeAction? latestPdfActivityForNotice(GirviNoticeAction notice) {
+    final activities = noticePdfActivityActions
+        .where((action) =>
+            action.noticeActionId == notice.id &&
+            (action.actionType == GirviNoticeActionTypes.noticePdfSaved ||
+                action.actionType == GirviNoticeActionTypes.noticePdfPrinted))
+        .toList()
+      ..sort((a, b) => b.actionAt.compareTo(a.actionAt));
+    return activities.isEmpty ? null : activities.first;
   }
 
   bool get hasVerifiedInterestTimeline => interestPeriodSnapshots.isNotEmpty;
@@ -253,13 +288,18 @@ class ContactRecoveryCase {
           ? GirviNoticeType.formal
           : null;
 
-  bool get canPrepareNotice => nextNoticeType != null;
+  bool get canPrepareNotice => nextNoticeType != null && hasOutstandingBalance;
 
   DateTime? get recoveryReviewAvailableAt {
     final notice = recoveryNoticeAction;
     if (notice == null) return null;
-    return notice.noticeDeadlineAt ??
-        notice.actionAt.add(Duration(days: noticePeriodDays));
+    final proof = firstDeliveryProofForNotice(notice);
+    return GirviNoticeReviewPeriod.deadline(
+      approvedAt: notice.actionAt,
+      approvedDeadline: notice.noticeDeadlineAt,
+      deliveredAt: proof?.deliveredAt ?? proof?.actionAt,
+      fallbackDays: noticePeriodDays,
+    );
   }
 
   bool get isNoticePeriodComplete {
@@ -267,11 +307,18 @@ class ContactRecoveryCase {
     return deadline != null && !now.isBefore(deadline);
   }
 
+  bool get hasConfirmedNoticeDelivery {
+    final notice = recoveryNoticeAction;
+    return notice != null && firstDeliveryProofForNotice(notice) != null;
+  }
+
   bool get canInitiateCollateralRecovery =>
+      hasOutstandingBalance &&
       !hasDisposalSettlement &&
       !hasCollateralRecoveryInitiated &&
       !isRecoveryClosed &&
       !requiresCorrectedFormalNotice &&
+      hasConfirmedNoticeDelivery &&
       stage == ContactRecoveryStage.disposalReady;
 
   bool get canCloseDisposal =>
@@ -382,10 +429,12 @@ class ContactRecoveryCase {
   String get stageDescription => switch (stage) {
         ContactRecoveryStage.noticeRequired =>
           'Prepare one formal notice. Customer replies are recorded against the saved notice.',
-        ContactRecoveryStage.noticePending =>
-          'Notice approved. Record delivery and customer replies while the notice period runs.',
-        ContactRecoveryStage.disposalReady =>
-          'The notice period has ended. Review delivery, payments and customer replies before approving recovery.',
+        ContactRecoveryStage.noticePending => hasConfirmedNoticeDelivery
+            ? 'Customer delivery confirmed. The notice review period is running; record any replies.'
+            : 'Notice approved. Confirm customer delivery to start the review period.',
+        ContactRecoveryStage.disposalReady => hasConfirmedNoticeDelivery
+            ? 'The notice period has ended. Review payments and customer replies before approving recovery.'
+            : 'The notice period has ended. Record confirmed customer delivery before recovery.',
         ContactRecoveryStage.recoveryInProgress =>
           'Collateral is in recovery. Record the recovered value to close the case.',
         ContactRecoveryStage.settled =>

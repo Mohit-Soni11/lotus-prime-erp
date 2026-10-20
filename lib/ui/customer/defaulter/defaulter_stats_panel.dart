@@ -104,7 +104,8 @@ class DefaulterStatsPanel extends StatelessWidget {
                   valueStyle: DefaulterStyles.statAmountValue.copyWith(
                     color: DefaulterColors.statRecoveryText,
                   ),
-                  footerText: 'Cases in recovery workflow',
+                  footerText:
+                      '${stats.recoveryInProgressCount} active · ${stats.recoveryCompletedCount} closed',
                 ),
               ),
               SizedBox(

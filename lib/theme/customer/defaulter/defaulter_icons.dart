@@ -37,7 +37,6 @@ class DefaulterIcons {
   static const IconData personAvatar = Icons.person_rounded;
   static const IconData phoneCall = Icons.phone_rounded;
   static const IconData whatsapp = Icons.chat_rounded;
-  static const IconData notify = Icons.notifications_outlined;
   static const IconData viewProfile = Icons.open_in_new_rounded;
   static const IconData cityPin = Icons.location_on_outlined;
   static const IconData loanTag = Icons.sell_outlined;

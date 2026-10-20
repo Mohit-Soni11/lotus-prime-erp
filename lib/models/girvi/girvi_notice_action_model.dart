@@ -114,14 +114,16 @@ class GirviNoticeAction {
   bool get isNoticePreparation =>
       GirviNoticeActionTypes.preparationTypes.contains(actionType);
 
-  bool get isNoticeDeliveryProof =>
+  bool get isNoticePdfActivity =>
       actionType == GirviNoticeActionTypes.noticePdfSaved ||
       actionType == GirviNoticeActionTypes.noticePdfPrinted ||
-      actionType == GirviNoticeActionTypes.noticePdfShared ||
-      actionType == GirviNoticeActionTypes.noticeDeliveryRecorded ||
-      deliveryStatus != null;
+      actionType == GirviNoticeActionTypes.noticePdfShared;
 
-  bool get isNotice => isNoticePreparation || isNoticeDeliveryProof;
+  bool get isNoticeDeliveryProof =>
+      actionType == GirviNoticeActionTypes.noticeDeliveryRecorded;
+
+  bool get isNotice =>
+      isNoticePreparation || isNoticePdfActivity || isNoticeDeliveryProof;
 
   bool get isDisposalSettlement =>
       actionType == GirviNoticeActionTypes.disposalSettled;

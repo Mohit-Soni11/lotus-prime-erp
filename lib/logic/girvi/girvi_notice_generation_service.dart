@@ -337,8 +337,8 @@ class _NoticeData {
   }
 
   String get noticeDate => service.date(service._now);
-  String get deadline =>
-      service.date(service._now.add(Duration(days: item.noticePeriodDays)));
+  String get noticeReviewPeriod =>
+      '${item.noticePeriodDays} day${item.noticePeriodDays == 1 ? '' : 's'}';
   String get customerName => account.customerName;
   String get startDate => service.date(loan.startDate);
   String get maturityDate => service.date(loan.maturityDate);

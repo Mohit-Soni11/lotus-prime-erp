@@ -53,8 +53,9 @@ class _InfoChip extends StatelessWidget {
 
 class _RiskBadge extends StatelessWidget {
   final DefaulterRiskLevel level;
+  final String? label;
 
-  const _RiskBadge({required this.level});
+  const _RiskBadge({required this.level, this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -79,10 +80,34 @@ class _RiskBadge extends StatelessWidget {
           ),
           const SizedBox(width: 5),
           Text(
-            config.label,
+            label ?? config.label,
             style: DefaulterStyles.riskBadgeText.copyWith(color: config.text),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RecoveryClosedBadge extends StatelessWidget {
+  const _RecoveryClosedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: DefaulterColors.statReceivedBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: DefaulterColors.statReceivedText.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Text(
+        'RECOVERY CLOSED',
+        style: DefaulterStyles.riskBadgeText.copyWith(
+          color: DefaulterColors.statReceivedText,
+        ),
       ),
     );
   }

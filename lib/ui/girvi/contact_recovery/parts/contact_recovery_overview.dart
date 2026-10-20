@@ -38,7 +38,7 @@ class _ContactRecoveryOverview extends StatelessWidget {
               SizedBox(
                 width: width,
                 child: _SummaryTile(
-                  label: 'Notice Period',
+                  label: 'Notice in Progress',
                   value: stats.noticePendingCount.toString(),
                   footer: '${state.noticePeriodDays}-day notice cycle',
                   accent: GirviColors.danger,
@@ -57,11 +57,9 @@ class _ContactRecoveryOverview extends StatelessWidget {
                 width: width,
                 child: _SummaryTile(
                   label: 'Collateral Recovery',
-                  value:
-                      (stats.disposalReadyCount + stats.recoveryInProgressCount)
-                          .toString(),
+                  value: stats.recoveryInProgressCount.toString(),
                   footer:
-                      '${stats.recoveryInProgressCount} in collateral recovery',
+                      '${stats.disposalReadyCount} ready for recovery review',
                   accent: GirviColors.info,
                 ),
               ),

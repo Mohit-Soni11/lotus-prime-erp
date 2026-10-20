@@ -76,12 +76,6 @@ class DefaulterColors {
   static const Color statReceivedIcon = Color(0xFF059669);
   static const Color statReceivedText = Color(0xFF047857);
 
-  static const Color callBtnBg = Color(0xFF1B5E20);
-  static const Color callBtnText = Color(0xFFFFFFFF);
-
-  static const Color notifyBtnBg = Color(0xFF0D47A1);
-  static const Color notifyBtnText = Color(0xFFFFFFFF);
-
   static const Color tableHeaderBg = Color(0xFFFAF7F0);
   static const Color tableRowAlt = Color(0xFFFAF8F4);
   static const Color tableHoverBg = Color(0xFFF6F1E8);

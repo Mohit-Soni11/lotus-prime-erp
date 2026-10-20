@@ -159,6 +159,10 @@ class _SortDropdown extends StatelessWidget {
           dropdownColor: DefaulterColors.bodyPanelBg,
           items: [
             _sortItem(
+              DefaulterSortBy.newestInvoice,
+              DefaulterStrings.sortNewest,
+            ),
+            _sortItem(
                 DefaulterSortBy.daysOverdue, DefaulterStrings.sortOverdue),
             _sortItem(DefaulterSortBy.amountDue, DefaulterStrings.sortAmount),
             _sortItem(DefaulterSortBy.customerName, DefaulterStrings.sortName),

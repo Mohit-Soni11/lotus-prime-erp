@@ -100,6 +100,50 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('customer delivery requires a separate evidence record',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final fixture = createNoticeCase();
+    final approved = GirviNoticeAction(
+      id: 10,
+      girviId: fixture.loan.id,
+      actionType: GirviNoticeActionTypes.noticePrepared,
+      noticeStage: 1,
+      noticeText: 'Compound Interest Breakdown',
+      actionAt: fixture.now,
+      createdAt: fixture.now,
+    );
+    final item = ContactRecoveryCase(
+      account: fixture.account,
+      noticePeriodDays: 7,
+      now: fixture.now,
+      interestPeriodSnapshots: fixture.interestPeriodSnapshots,
+      actionHistory: [approved],
+    );
+    final controller = _NoticeController(db, item);
+    addTearDown(controller.dispose);
+    addTearDown(db.close);
+    await showScreen(tester, controller);
+    expect(find.text('Customer delivery not recorded'), findsOneWidget);
+    await tester.tap(find.text('Record Customer Delivery'));
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.text('Confirm Delivery'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Enter a receipt, tracking or message reference.'),
+        findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Delivery evidence reference'),
+      'ACK-001',
+    );
+    await tester.tap(find.text('Confirm Delivery'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(controller.deliveryReference, 'ACK-001');
+    expect(controller.deliveryActionType,
+        GirviNoticeActionTypes.noticeDeliveryRecorded);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('older simple approval exposes a corrected compound notice',
       (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -146,6 +190,8 @@ class _NoticeController extends ContactRecoveryController {
   final ContactRecoveryCase item;
   Map<GirviNoticeLanguage, String>? savedDocuments;
   GirviNoticeType? savedType;
+  String? deliveryReference;
+  String? deliveryActionType;
 
   @override
   ContactRecoveryState get state => ContactRecoveryState.initial().copyWith(
@@ -169,6 +215,23 @@ class _NoticeController extends ContactRecoveryController {
   }) async {
     savedDocuments = noticeDocuments;
     savedType = noticeType;
+    return true;
+  }
+
+  @override
+  Future<bool> recordNoticeDeliveryProof({
+    required ContactRecoveryCase item,
+    required GirviNoticeType noticeType,
+    required String noticeText,
+    required String actionType,
+    required String deliveryChannel,
+    required String deliveryStatus,
+    GirviNoticeLanguage? noticeLanguage,
+    int? noticeActionId,
+    String? deliveryReference,
+  }) async {
+    this.deliveryReference = deliveryReference;
+    deliveryActionType = actionType;
     return true;
   }
 }

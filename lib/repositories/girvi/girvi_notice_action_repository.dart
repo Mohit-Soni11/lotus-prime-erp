@@ -6,7 +6,8 @@ import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/girvi_notice_history.dart';
-import '../../models/girvi/girvi_enums.dart';
+import '../../models/girvi/girvi_notice_review_period.dart';
+import 'girvi_notice_account_guard.dart';
 
 class GirviNoticeActionRepository {
   GirviNoticeActionRepository(this._db, {DateTime Function()? now})
@@ -15,6 +16,8 @@ class GirviNoticeActionRepository {
   final DateTime Function() _now;
 
   final AppDatabase _db;
+  late final GirviNoticeAccountGuard _accountGuard =
+      GirviNoticeAccountGuard(_db);
   bool _schemaReady = false;
 
   Future<void> ensureSchema() async {
@@ -77,7 +80,11 @@ class GirviNoticeActionRepository {
     await ensureSchema();
 
     return _db.transaction(() async {
-      await _requireOpenAccount(girviId);
+      await _accountGuard.requireOutstanding(
+        girviId,
+        _now(),
+        requireMaturity: true,
+      );
       final recovery = await (_db.select(_db.girviNoticeActions)
             ..where((row) =>
                 row.girviId.equals(girviId) &
@@ -170,16 +177,32 @@ class GirviNoticeActionRepository {
   }) async {
     await ensureSchema();
     return _db.transaction(() async {
-      await _requireOpenAccount(girviId);
+      await _accountGuard.requireOutstanding(girviId, _now());
       final approvedNotice = await _recoveryNotice(girviId);
       if (approvedNotice == null) {
         throw StateError(
             'An approved formal notice is required before recovery.');
       }
-      final recoveryEligibleAt = approvedNotice.noticeDeadlineAt ??
-          approvedNotice.actionAt.add(
-            Duration(days: noticePeriodDays <= 0 ? 7 : noticePeriodDays),
-          );
+      final confirmedDeliveries = await (_db.select(_db.girviNoticeActions)
+            ..where((action) =>
+                action.girviId.equals(girviId) &
+                action.noticeActionId.equals(approvedNotice.id) &
+                action.actionType.equals(
+                  GirviNoticeActionTypes.noticeDeliveryRecorded,
+                )))
+          .get();
+      if (confirmedDeliveries.isEmpty) {
+        throw StateError('Record confirmed customer delivery before recovery.');
+      }
+      final firstDelivery = confirmedDeliveries
+          .map((action) => action.deliveredAt ?? action.actionAt)
+          .reduce((first, date) => date.isBefore(first) ? date : first);
+      final recoveryEligibleAt = GirviNoticeReviewPeriod.deadline(
+        approvedAt: approvedNotice.actionAt,
+        approvedDeadline: approvedNotice.noticeDeadlineAt,
+        deliveredAt: firstDelivery,
+        fallbackDays: noticePeriodDays,
+      )!;
       if (_now().isBefore(recoveryEligibleAt)) {
         throw StateError('The notice review period has not completed.');
       }
@@ -272,6 +295,13 @@ class GirviNoticeActionRepository {
     DateTime? deliveredAt,
     String performedBy = 'LOCAL_OPERATOR',
   }) async {
+    if (actionType == GirviNoticeActionTypes.noticeDeliveryRecorded &&
+        (deliveryStatus.trim() != 'Delivered' ||
+            (deliveryReference?.trim().isNotEmpty != true))) {
+      throw ArgumentError(
+        'Confirmed delivery requires a delivered status and evidence reference.',
+      );
+    }
     await ensureSchema();
     return _db.transaction(() async {
       final prepared =
@@ -299,6 +329,13 @@ class GirviNoticeActionRepository {
         throw StateError(
             'Delivery proof must use the saved, approved notice version.');
       }
+      final deliveryDate = deliveredAt ?? _now();
+      if (actionType == GirviNoticeActionTypes.noticeDeliveryRecorded &&
+          (deliveryDate.isBefore(prepared.actionAt) ||
+              deliveryDate.isAfter(_now()))) {
+        throw StateError(
+            'Delivery date must follow notice approval and cannot be in the future.');
+      }
       return recordAction(
         girviId: girviId,
         actionType: actionType,
@@ -314,7 +351,9 @@ class GirviNoticeActionRepository {
         deliveryChannel: deliveryChannel,
         deliveryStatus: deliveryStatus,
         deliveryReference: deliveryReference,
-        deliveredAt: deliveredAt ?? _now(),
+        deliveredAt: actionType == GirviNoticeActionTypes.noticeDeliveryRecorded
+            ? deliveryDate
+            : null,
       );
     });
   }
@@ -449,20 +488,6 @@ class GirviNoticeActionRepository {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     );
-  }
-
-  Future<void> _requireOpenAccount(int girviId) async {
-    final loan = await (_db.select(_db.girviLoans)
-          ..where((row) => row.id.equals(girviId)))
-        .getSingleOrNull();
-    if (loan == null) {
-      throw StateError('The pledge account was not found.');
-    }
-    final status = GirviStatus.fromDb(loan.status);
-    if (status.isClosed || status == GirviStatus.readyForDelivery) {
-      throw StateError(
-          'An open pledge account with outstanding dues is required.');
-    }
   }
 
   Future<GirviNoticeActionData?> _recoveryNotice(int girviId) async {

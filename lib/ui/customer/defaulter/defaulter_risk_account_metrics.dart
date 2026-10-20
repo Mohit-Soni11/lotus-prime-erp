@@ -7,61 +7,81 @@ class _AccountMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final metrics = account.isRecoverySettled
+        ? [
+            (
+              'Settlement Total',
+              account.recoverySettlementTotal,
+              DefaulterColors.bodyTextMain,
+              false
+            ),
+            (
+              'Amount Recovered',
+              account.recoveredAmount,
+              DefaulterColors.statReceivedText,
+              true
+            ),
+            (
+              'Balance Due',
+              account.recoveryBalanceDue,
+              DefaulterColors.riskCriticalText,
+              false
+            ),
+            (
+              'Customer Surplus',
+              account.recoverySurplus,
+              DefaulterColors.statReceivedText,
+              false
+            ),
+          ]
+        : [
+            (
+              'Principal Due',
+              account.principalOutstanding,
+              DefaulterColors.statPrincipalText,
+              false
+            ),
+            (
+              'Interest Due',
+              account.interestOutstanding,
+              DefaulterColors.riskCriticalText,
+              false
+            ),
+            (
+              'Total to Collect',
+              account.totalDue,
+              DefaulterColors.riskCriticalText,
+              true
+            ),
+            (
+              'Already Collected',
+              account.totalReceived,
+              DefaulterColors.statReceivedText,
+              false
+            ),
+          ];
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-        final columns = maxWidth >= 840
-            ? 5
-            : maxWidth >= 560
-                ? 3
-                : 2;
-        const spacing = 8.0;
-        final tileWidth = (maxWidth - spacing * (columns - 1)) / columns;
-
+        final columns = constraints.maxWidth >= 900
+            ? 4
+            : constraints.maxWidth >= 520
+                ? 2
+                : 1;
+        const spacing = 9.0;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: [
-            _MetricTile(
-              width: tileWidth,
-              label: 'Principal Due',
-              value: DefaulterLogic.formatAmountCompact(
-                account.principalOutstanding,
-              ),
-              color: DefaulterColors.statPrincipalText,
-            ),
-            _MetricTile(
-              width: tileWidth,
-              label: 'Interest Due',
-              value: DefaulterLogic.formatAmountCompact(
-                account.interestOutstanding,
-              ),
-              color: DefaulterColors.riskHighText,
-              subLabel: '${account.interestRate.toStringAsFixed(2)}% monthly',
-            ),
-            _MetricTile(
-              width: tileWidth,
-              label: 'Total Receivable',
-              value: DefaulterLogic.formatAmountCompact(account.totalDue),
-              color: DefaulterColors.riskCriticalText,
-            ),
-            _MetricTile(
-              width: tileWidth,
-              label: 'Collection Age',
-              value: account.riskAgeLabel,
-              color: _riskConfig(account.riskLevel).text,
-              subLabel: account.collectionStage,
-            ),
-            _MetricTile(
-              width: tileWidth,
-              label: 'Total Received',
-              value: DefaulterLogic.formatAmountCompact(account.totalReceived),
-              color: DefaulterColors.statReceivedText,
-              subLabel: account.hasPaymentHistory
-                  ? 'Collection history'
-                  : 'No receipt recorded',
-            ),
-          ],
+          children: metrics
+              .map((metric) => _MetricTile(
+                    width: width,
+                    label: metric.$1,
+                    value: DefaulterLogic.formatAmountCompact(metric.$2),
+                    color: metric.$3,
+                    highlighted: metric.$4,
+                  ))
+              .toList(),
         );
       },
     );
@@ -72,77 +92,59 @@ class _MetricTile extends StatelessWidget {
   final double width;
   final String label;
   final String value;
-  final String? subLabel;
   final Color color;
+  final bool highlighted;
 
   const _MetricTile({
     required this.width,
     required this.label,
     required this.value,
     required this.color,
-    this.subLabel,
+    this.highlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: width,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 98),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: DefaulterColors.riskMetricBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: DefaulterColors.riskMetricBorder),
-          boxShadow: const [
-            BoxShadow(
-              color: DefaulterColors.shadowLight,
-              blurRadius: 7,
-              offset: Offset(0, 2),
-            ),
-          ],
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      decoration: BoxDecoration(
+        color: highlighted
+            ? color.withValues(alpha: 0.065)
+            : DefaulterColors.riskMetricBg,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: highlighted
+              ? color.withValues(alpha: 0.22)
+              : DefaulterColors.riskMetricBorder,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: DefaulterStyles.customerCity.copyWith(
-                fontWeight: FontWeight.w800,
-                color: DefaulterColors.bodyTextMain,
-                fontSize: 12.5,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: DefaulterStyles.customerCity.copyWith(
+              color: DefaulterColors.bodyTextMain,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 7),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: DefaulterStyles.amountText.copyWith(
-                  color: color,
-                  fontSize: 16,
-                ),
-                maxLines: 1,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 5),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: DefaulterStyles.amountText.copyWith(
+                color: color,
+                fontSize: highlighted ? 19 : 17,
               ),
             ),
-            if (subLabel != null && subLabel!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                subLabel!,
-                style: DefaulterStyles.interestRate.copyWith(
-                  fontSize: 12.2,
-                  height: 1.15,
-                  color: DefaulterColors.bodyTextHint,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

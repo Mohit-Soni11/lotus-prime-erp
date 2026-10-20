@@ -16,7 +16,7 @@ import '../../repositories/girvi/girvi_notice_document_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/girvi/girvi_interest_period_snapshot_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
-import 'girvi_risk_policy.dart';
+import 'girvi_notice_eligibility.dart';
 
 class ContactRecoveryController extends ChangeNotifier {
   ContactRecoveryController({
@@ -72,10 +72,14 @@ class ContactRecoveryController extends ChangeNotifier {
 
   ContactRecoveryState _state = ContactRecoveryState.initial();
   ContactRecoveryState get state => _state;
+  bool _isDisposed = false;
+  int _loadRevision = 0;
 
   static final DateFormat _timeFormat = DateFormat('hh:mm a');
 
   Future<void> load({bool keepInlineMessage = false}) async {
+    if (_isDisposed) return;
+    final revision = ++_loadRevision;
     _state = _state.copyWith(
       isLoading: true,
       clearError: true,
@@ -90,11 +94,7 @@ class ContactRecoveryController extends ChangeNotifier {
       final now = DateTime.now();
       final loans =
           await _repository.getLoansWithCustomer(includeAuctioned: true);
-      // Materialize the financial timeline before cases are built. Notice
-      // generation only reads these snapshots and never recalculates history.
-      final interestPeriodSnapshots = await _interestPeriodSnapshotRepository
-          .synchronizeForLoans(loans, asOf: now);
-      final paymentHistory = await _loadPaymentHistory(
+      final workflowIds = await _loadOpenWorkflowIds(
         loans.map((entry) => entry.loan.id).toList(growable: false),
       );
 
@@ -105,36 +105,32 @@ class ContactRecoveryController extends ChangeNotifier {
           return false;
         }
         if (status == GirviStatus.auctioned) return true;
+        final quote = entry.interestQuoteAt(now);
+        if (!quote.totalPayable.isFinite || quote.totalPayable <= 0.01) {
+          return false;
+        }
         final maturityDate = entry.loan.maturityDate ??
             GirviLoanModel.addChargeableMonths(
               entry.loan.startDate,
               entry.loan.durationMonths,
             );
-        final coveredInterestMonths = _coveredInterestMonths(entry, now);
-        final hasInterestPaidBeforeMaturity =
-            entry.loan.lastInterestPaidDate != null &&
-                !entry.loan.lastInterestPaidDate!.isAfter(maturityDate);
-        final assessment = GirviRiskPolicy.assess(
-          status: status,
-          startDate: entry.loan.startDate,
-          maturityDate: maturityDate,
-          lastInterestPaidDate: entry.loan.lastInterestPaidDate,
-          principalDue: entry.principalDue,
-          interestDue: entry.interestQuoteAt(now).interestOutstanding,
-          hasCollectionHistory: entry.interestPaidTotal > 0 ||
-              entry.principalPaidTotal > 0 ||
-              entry.interestDiscountTotal > 0 ||
-              entry.principalDiscountTotal > 0 ||
-              entry.legacyPrincipalRepaidTotal > 0 ||
-              entry.loan.lastInterestPaidDate != null,
-          hasInterestPaidBeforeMaturity: hasInterestPaidBeforeMaturity,
-          coveredInterestMonths: coveredInterestMonths,
-          now: now,
-        );
-        return assessment.stage == GirviRiskStage.critical;
+        return GirviNoticeEligibility.hasMaturedBalance(
+              status: status,
+              maturityDate: maturityDate,
+              principalDue: entry.principalDue,
+              interestDue: quote.interestOutstanding,
+              asOf: now,
+            ) ||
+            workflowIds.contains(entry.loan.id);
       }).toList();
+      // Only notice candidates need persisted statement timelines.
+      final interestPeriodSnapshots = await _interestPeriodSnapshotRepository
+          .synchronizeForLoans(candidateAccounts, asOf: now);
+      final paymentHistory = await _loadPaymentHistory(
+        candidateAccounts.map((entry) => entry.loan.id).toList(growable: false),
+      );
       final actionHistory = await _noticeActionRepository.actionsByGirviIds(
-        candidateAccounts.map((entry) => entry.loan.id).toList(),
+        candidateAccounts.map((entry) => entry.loan.id).toList(growable: false),
       );
       final customerResponses = await _customerResponseRepository.byGirviIds(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
@@ -166,6 +162,8 @@ class ContactRecoveryController extends ChangeNotifier {
           .toList()
         ..sort(_sortCases);
 
+      if (_isDisposed || revision != _loadRevision) return;
+
       _state = _state.copyWith(
         allCases: cases,
         stats: _buildStats(cases, now),
@@ -175,6 +173,7 @@ class ContactRecoveryController extends ChangeNotifier {
       );
       _applyFilters();
     } catch (error) {
+      if (_isDisposed || revision != _loadRevision) return;
       AppLogger.debug('Contact & Recovery load failed: $error');
       _state = _state.copyWith(
         isLoading: false,
@@ -182,6 +181,13 @@ class ContactRecoveryController extends ChangeNotifier {
       );
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _loadRevision++;
+    super.dispose();
   }
 
   void setFilter(ContactRecoveryFilter filter) {
@@ -194,17 +200,18 @@ class ContactRecoveryController extends ChangeNotifier {
     _applyFilters();
   }
 
-  int _coveredInterestMonths(
-    GirviLoanWithCustomer entry,
-    DateTime asOf,
-  ) {
-    return GirviInterestCalculator.coveredMonthsForTimeline(
-      principal: entry.originalPrincipal,
-      monthlyRatePercent: entry.loan.interestRate,
-      startDate: entry.loan.startDate,
-      asOf: asOf,
-      adjustments: entry.interestAdjustments,
-    );
+  Future<Set<int>> _loadOpenWorkflowIds(List<int> loanIds) async {
+    if (loanIds.isEmpty) return <int>{};
+    await _noticeActionRepository.ensureSchema();
+    final rows = await (_db.select(_db.girviNoticeActions)
+          ..where((action) =>
+              action.girviId.isIn(loanIds) &
+              action.actionType.isIn([
+                ...GirviNoticeActionTypes.preparationTypes,
+                GirviNoticeActionTypes.collateralRecoveryInitiated,
+              ])))
+        .get();
+    return rows.map((row) => row.girviId).toSet();
   }
 
   Future<Map<int, List<String>>> _loadItemPhotoPaths(List<int> loanIds) async {
@@ -482,7 +489,12 @@ class ContactRecoveryController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    if (pledgedValuation <= 0 || recoveredAmount <= 0) {
+    if (!pledgedValuation.isFinite ||
+        !recoveredAmount.isFinite ||
+        !penaltyAmount.isFinite ||
+        pledgedValuation <= 0 ||
+        recoveredAmount <= 0 ||
+        penaltyAmount < 0) {
       _state = _state.copyWith(
         inlineMessage:
             'Enter a valid current collateral value and recovered amount before closing settlement.',
@@ -495,15 +507,6 @@ class ContactRecoveryController extends ChangeNotifier {
       final normalizedPledgedValuation = _money(pledgedValuation);
       final normalizedRecoveredAmount = _money(recoveredAmount);
       final normalizedPenaltyAmount = _money(penaltyAmount);
-      final settlementTotal = _money(
-        item.verifiedTotalPayable + normalizedPenaltyAmount,
-      );
-      final balanceDue = normalizedRecoveredAmount >= settlementTotal
-          ? 0.0
-          : _money(settlementTotal - normalizedRecoveredAmount);
-      final surplus = normalizedRecoveredAmount > settlementTotal
-          ? _money(normalizedRecoveredAmount - settlementTotal)
-          : 0.0;
       final normalizedPaymentMode = paymentMode.trim().toUpperCase();
       if (!_isSupportedRecoveryPaymentMode(normalizedPaymentMode)) {
         throw ArgumentError.value(paymentMode, 'paymentMode');
@@ -522,6 +525,35 @@ class ContactRecoveryController extends ChangeNotifier {
         if (alreadySettled != null) {
           throw StateError('This recovery settlement is already closed.');
         }
+
+        final currentLoan = await _repository.getLoanById(item.loan.id);
+        if (currentLoan == null ||
+            GirviStatus.fromDb(currentLoan.status).isClosed ||
+            GirviStatus.fromDb(currentLoan.status) ==
+                GirviStatus.readyForDelivery) {
+          throw StateError(
+              'The pledge account is no longer open for recovery.');
+        }
+        final currentAccounts = await _repository.getLoansWithCustomer(
+          loanId: item.loan.id,
+        );
+        if (currentAccounts.isEmpty) {
+          throw StateError('The current pledge account could not be loaded.');
+        }
+        final currentPayable = _money(
+          currentAccounts.single.interestQuoteAt(DateTime.now()).totalPayable,
+        );
+        if ((currentPayable - _money(item.verifiedTotalPayable)).abs() > 0.01) {
+          throw StateError('Recovery balance changed. Refresh and review it.');
+        }
+        final settlementTotal =
+            _money(currentPayable + normalizedPenaltyAmount);
+        final balanceDue = normalizedRecoveredAmount >= settlementTotal
+            ? 0.0
+            : _money(settlementTotal - normalizedRecoveredAmount);
+        final surplus = normalizedRecoveredAmount > settlementTotal
+            ? _money(normalizedRecoveredAmount - settlementTotal)
+            : 0.0;
 
         final referenceId = 'GIRVI-RECOVERY-${item.loan.ticketNo}';
         final transactionId = _recoveryTransactionId(item.loan.id);
@@ -658,9 +690,14 @@ class ContactRecoveryController extends ChangeNotifier {
     } catch (error) {
       AppLogger.debug('Contact & Recovery settlement failed: $error');
       _state = _state.copyWith(
-        inlineMessage: 'Recovery settlement could not be closed.',
+        inlineMessage: error is StateError
+            ? error.message.toString()
+            : 'Recovery settlement could not be closed.',
       );
       notifyListeners();
+      if (error is StateError && !_isDisposed) {
+        await load(keepInlineMessage: true);
+      }
       return false;
     }
   }
