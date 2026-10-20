@@ -26,8 +26,8 @@ class GirviAccountDetailController extends ChangeNotifier {
   GirviLoanDetails? get details => _details;
   List<GirviPaymentModel> get payments => _payments;
 
-  Future<void> load(int loanId) async {
-    _isLoading = true;
+  Future<void> load(int loanId, {bool showLoading = true}) async {
+    if (showLoading) _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 

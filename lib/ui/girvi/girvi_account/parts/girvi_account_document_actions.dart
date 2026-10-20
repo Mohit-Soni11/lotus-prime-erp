@@ -11,6 +11,11 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
       if (!mounted) return;
 
       await _showGirviInvoicePreview(pdfBytes: bytes);
+    } on _IssuedInvoiceMissing {
+      if (mounted) {
+        _showMessage(
+            'The original issued invoice PDF is unavailable. Please restore the saved document.');
+      }
     } catch (_) {
       if (mounted) _showMessage('Girvi invoice could not be opened.');
     } finally {
@@ -27,6 +32,7 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
         ticketNo: account.loan.ticketNo,
       );
       if (savedBytes != null) return savedBytes;
+      throw const _IssuedInvoiceMissing();
     }
 
     final draft =
@@ -91,6 +97,11 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
         name: 'girvi_invoice_${_safePdfName(account.loan.ticketNo)}.pdf',
         onLayout: (_) async => bytes,
       );
+    } on _IssuedInvoiceMissing {
+      if (mounted) {
+        _showMessage(
+            'The original issued invoice PDF is unavailable. Please restore the saved document.');
+      }
     } catch (_) {
       if (mounted) _showMessage('Girvi invoice could not be printed.');
     } finally {
@@ -161,4 +172,8 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
       ),
     );
   }
+}
+
+class _IssuedInvoiceMissing implements Exception {
+  const _IssuedInvoiceMissing();
 }

@@ -72,7 +72,7 @@ void main() {
         'GRV-A-002');
   });
 
-  test('customer bills stay in numeric ticket order after search', () async {
+  test('customer bills show newest ticket first after search', () async {
     final customerId =
         await _insertCustomer(db, 'Ordered Customer', '9000000020');
     for (final ticketNo in [
@@ -89,14 +89,32 @@ void main() {
     expect(
       controller.customerAccounts.single.loans
           .map((item) => item.loan.ticketNo),
-      ['GRV-0011', 'GRV-0012', 'GRV-0013', 'GRV-0014', 'GRV-0015'],
+      ['GRV-0015', 'GRV-0014', 'GRV-0013', 'GRV-0012', 'GRV-0011'],
     );
 
     controller.onSearchChanged('gold ring');
     expect(
       controller.customerAccounts.single.loans
           .map((item) => item.loan.ticketNo),
-      ['GRV-0011', 'GRV-0012', 'GRV-0013', 'GRV-0014', 'GRV-0015'],
+      ['GRV-0015', 'GRV-0014', 'GRV-0013', 'GRV-0012', 'GRV-0011'],
+    );
+  });
+
+  test('customer with the newest ticket appears first', () async {
+    final firstCustomer =
+        await _insertCustomer(db, 'First Customer', '9000000031');
+    final secondCustomer =
+        await _insertCustomer(db, 'Second Customer', '9000000032');
+    await _insertLoan(db, firstCustomer, 'GRV-001', 'Gold ring', 3000);
+    await _insertLoan(db, secondCustomer, 'GRV-002', 'Gold chain', 4000);
+    await _insertLoan(db, firstCustomer, 'GRV-003', 'Gold bangle', 5000);
+
+    await controller.load();
+
+    expect(controller.customerAccounts.first.customerId, firstCustomer);
+    expect(
+      controller.customerAccounts.first.loans.map((item) => item.loan.ticketNo),
+      ['GRV-003', 'GRV-001'],
     );
   });
 

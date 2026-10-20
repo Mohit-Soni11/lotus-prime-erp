@@ -5,10 +5,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
     GirviLoanWithCustomer account,
     bool actionEnabled,
   ) {
-    final balanceCleared =
-        GirviAccountLifecycleSummary.isSettlementComplete(account);
-    final balanceColor =
-        balanceCleared ? GirviColors.success : GirviColors.danger;
+    final documentBusy = _openingGirviInvoice || _printingGirviInvoice;
 
     return Padding(
       padding: const EdgeInsets.all(18),
@@ -38,7 +35,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Invoice preview and settlement workflow',
+                      'Invoice and settlement',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
@@ -53,41 +50,6 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
             ],
           ),
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: balanceColor.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: balanceColor.withValues(alpha: 0.16)),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  balanceCleared
-                      ? Icons.verified_rounded
-                      : Icons.pending_actions_rounded,
-                  color: balanceColor,
-                  size: 18,
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    balanceCleared
-                        ? 'No payable balance on this account'
-                        : 'Net payable ${_money(account.totalPayable)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textDark,
-                      fontSize: 12.8,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
           _AccountDocumentButton(
             icon: Icons.visibility_rounded,
             title: 'Preview Invoice PDF',
@@ -95,7 +57,17 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
                 ? 'Opening...'
                 : 'Invoice, interest and release pages',
             color: GirviColors.brandGold,
-            onTap: _openingGirviInvoice ? null : _previewGirviInvoice,
+            onTap: documentBusy ? null : _previewGirviInvoice,
+          ),
+          const SizedBox(height: 10),
+          _AccountDocumentButton(
+            icon: Icons.print_rounded,
+            title: 'Print Invoice PDF',
+            subtitle: _printingGirviInvoice
+                ? 'Preparing...'
+                : 'Print the invoice document',
+            color: GirviColors.info,
+            onTap: documentBusy ? null : _printGirviInvoice,
           ),
           if (actionEnabled) ...[
             const SizedBox(height: 14),

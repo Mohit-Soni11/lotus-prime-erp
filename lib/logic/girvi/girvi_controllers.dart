@@ -48,11 +48,14 @@ class GirviListController extends ChangeNotifier {
       await _repo.syncSettlementStatus();
       final accounts = await _repo.getLoansWithCustomer();
       accounts.sort((a, b) {
-        final ticketOrder = GirviTicketNumberOrder.compare(
+        final statusOrder = _registerPriority(a.loan.girviStatus)
+            .compareTo(_registerPriority(b.loan.girviStatus));
+        if (statusOrder != 0) return statusOrder;
+        final ticketOrder = GirviTicketNumberOrder.compareNewestFirst(
           a.loan.ticketNo,
           b.loan.ticketNo,
         );
-        return ticketOrder != 0 ? ticketOrder : a.loan.id.compareTo(b.loan.id);
+        return ticketOrder != 0 ? ticketOrder : b.loan.id.compareTo(a.loan.id);
       });
       _allLoans = accounts;
       _summary = await _repo.getSummary(loans: accounts);
@@ -90,6 +93,15 @@ class GirviListController extends ChangeNotifier {
 
     _filteredLoans = list;
   }
+
+  int _registerPriority(GirviStatus status) => switch (status) {
+        GirviStatus.active ||
+        GirviStatus.overdue ||
+        GirviStatus.partialRelease =>
+          0,
+        GirviStatus.readyForDelivery => 1,
+        GirviStatus.released || GirviStatus.auctioned => 2,
+      };
 
   bool _matchesSearch(GirviLoanWithCustomer item) {
     if (_searchQuery.isEmpty) return true;

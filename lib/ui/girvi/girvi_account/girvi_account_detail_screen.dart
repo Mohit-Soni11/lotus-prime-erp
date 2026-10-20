@@ -26,12 +26,13 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 part 'parts/girvi_account_detail_layout.dart';
 part 'parts/girvi_account_detail_panels.dart';
 part 'parts/girvi_account_detail_payment_history.dart';
+part 'parts/girvi_account_disbursements.dart';
 part 'parts/girvi_account_detail_shared.dart';
 part 'parts/girvi_account_document_actions.dart';
 part 'parts/girvi_account_documents_panel.dart';
 part 'parts/girvi_account_lifecycle_widgets.dart';
 part 'parts/girvi_account_pledged_photos.dart';
-part 'parts/girvi_account_pledged_summary.dart';
+part 'parts/girvi_account_pledged_item_row.dart';
 part 'parts/girvi_account_pledged_specs.dart';
 part 'parts/girvi_account_action_widgets.dart';
 part 'parts/girvi_account_invoice_preview.dart';
@@ -87,11 +88,11 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     if (mounted) setState(() => _printingGirviInvoice = value);
   }
 
-  void _openInterestEntry() {
+  Future<void> _openInterestEntry() async {
     final account = _controller.account;
     if (account == null) return;
 
-    context.push(
+    await context.push(
       Uri(
         path: RoutePaths.girviInterest,
         queryParameters: {
@@ -103,6 +104,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
         },
       ).toString(),
     );
+    if (mounted) await _controller.load(widget.loanId, showLoading: false);
   }
 
   String _safePdfName(String value) {

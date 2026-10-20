@@ -65,9 +65,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
   ) {
     final loan = account.loan;
     final address = _customerAddress(account);
-    final principalLabel = _money(account.originalPrincipal);
-    final itemLabel =
-        '${loan.itemCount} item${loan.itemCount == 1 ? '' : 's'} | ${_weight(loan.netWeight)}';
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -137,37 +134,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             ],
           ),
           const SizedBox(height: 18),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _AccountQuickFact(
-                label: 'Principal',
-                value: principalLabel,
-                icon: Icons.account_balance_wallet_rounded,
-                color: GirviColors.textDark,
-              ),
-              _AccountQuickFact(
-                label: 'Start Date',
-                value: _date(loan.startDate),
-                icon: GirviIcons.dates,
-                color: GirviColors.info,
-              ),
-              _AccountQuickFact(
-                label: 'Pledged Item',
-                value: itemLabel,
-                icon: GirviIcons.itemDetails,
-                color: GirviColors.brandGold,
-              ),
-              _AccountQuickFact(
-                label: 'Interest Rate',
-                value: '${loan.interestRate.toStringAsFixed(2)}% monthly',
-                icon: GirviIcons.interestRate,
-                color: GirviColors.warning,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
           _buildAccountLifecycleOverview(account),
         ],
       ),
@@ -236,8 +202,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
   }
 
   Widget _buildFinancialOverview(GirviLoanWithCustomer account) {
-    final discountTotal =
-        account.principalDiscountTotal + account.interestDiscountTotal;
     final totalReceived = account.principalPaidTotal +
         account.legacyPrincipalRepaidTotal +
         account.interestPaidTotal;
@@ -295,9 +259,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
         value: _money(totalReceived),
         icon: GirviIcons.cash,
         color: GirviColors.success,
-        helper: discountTotal > 0
-            ? 'Discount ${_money(discountTotal)}'
-            : 'Already collected',
+        helper: 'Already collected',
       ),
     ];
 
@@ -317,17 +279,29 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
         const spacing = 12.0;
         final cardWidth = (safeWidth - (columns - 1) * spacing) / columns;
 
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: metrics
-              .map(
-                (metric) => SizedBox(
-                  width: cardWidth > 0 ? cardWidth : safeWidth,
-                  child: _AccountMetricCard(data: metric),
-                ),
-              )
-              .toList(),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 2, bottom: 10),
+              child: Text(
+                'Financial Overview',
+                style: GirviStyles.sectionTitle,
+              ),
+            ),
+            Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: metrics
+                  .map(
+                    (metric) => SizedBox(
+                      width: cardWidth > 0 ? cardWidth : safeWidth,
+                      child: _AccountMetricCard(data: metric),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
         );
       },
     );
@@ -337,8 +311,8 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     final loan = account.loan;
     final detailedItems =
         _controller.details?.items ?? const <GirviLoanItemDetails>[];
-    final totalAmount =
-        account.originalPrincipal + account.grossInterestAccrued;
+    final itemCount =
+        detailedItems.isEmpty ? loan.itemCount : detailedItems.length;
     return _AccountSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,22 +321,8 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             icon: GirviIcons.itemDetails,
             color: GirviColors.brandGold,
             title: 'Pledged Item Details',
-            subtitle: detailedItems.isEmpty
-                ? 'Summary captured at ticket creation'
-                : '${detailedItems.length} pledged item${detailedItems.length == 1 ? '' : 's'} with smart details',
-            trailing: _AccountStatusBadge(
-              label: 'Principal ${_money(account.originalPrincipal)}',
-              color: GirviColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _PledgedFinancialSummary(
-            principal: _money(account.originalPrincipal),
-            interest: _money(account.grossInterestAccrued),
-            totalAmount: _money(totalAmount),
-            itemCount:
-                '${loan.itemCount} item${loan.itemCount == 1 ? '' : 's'}',
-            netWeight: _weight(loan.netWeight),
+            subtitle:
+                '$itemCount item${itemCount == 1 ? '' : 's'} · ${_weight(loan.netWeight)} net weight',
           ),
           const SizedBox(height: 14),
           if (detailedItems.isNotEmpty)
@@ -376,8 +336,6 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                   'Metal / Purity',
                   '${loan.metalTypeEnum.displayName} / ${loan.metalPurity}',
                 ),
-                _AccountInfoRowData(
-                    'Principal Amount', _money(account.originalPrincipal)),
                 _AccountInfoRowData('Gross Weight', _weight(loan.grossWeight)),
                 _AccountInfoRowData('Less Weight', _weight(loan.stoneWeight)),
                 _AccountInfoRowData('Net Weight', _weight(loan.netWeight)),
@@ -456,19 +414,21 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                 'Monthly Interest Rate',
                 '${loan.interestRate.toStringAsFixed(2)}%',
               ),
-              _AccountInfoRowData(
-                'Disbursement Mode',
-                loan.disbursementMode,
-              ),
+              if (_controller.details?.disbursements.isEmpty ?? true)
+                _AccountInfoRowData(
+                  'Disbursement Mode',
+                  loan.disbursementMode,
+                ),
               _AccountInfoRowData(
                 'Last Interest Paid',
                 _date(loan.lastInterestPaidDate),
               ),
               _AccountInfoRowData(
-                'Elapsed Period',
+                'Unpaid Interest Period',
                 loan.unpaidInterestElapsedPeriod.displayLabel,
               ),
-              _AccountInfoRowData('Notes', _emptyText(loan.notes)),
+              if ((loan.notes ?? '').trim().isNotEmpty)
+                _AccountInfoRowData('Notes', loan.notes!.trim()),
             ],
           ),
         ],
@@ -509,11 +469,5 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
       default:
         return GirviColors.textDark;
     }
-  }
-
-  String _emptyText(String? value) {
-    final trimmed = value?.trim();
-    if (trimmed == null || trimmed.isEmpty) return 'Not set';
-    return trimmed;
   }
 }

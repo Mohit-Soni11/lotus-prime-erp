@@ -137,14 +137,12 @@ class _AccountSectionHeader extends StatelessWidget {
   final Color color;
   final String title;
   final String subtitle;
-  final Widget? trailing;
 
   const _AccountSectionHeader({
     required this.icon,
     required this.color,
     required this.title,
     required this.subtitle,
-    this.trailing,
   });
 
   @override
@@ -177,10 +175,6 @@ class _AccountSectionHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) ...[
-          const SizedBox(width: 12),
-          trailing!,
-        ],
       ],
     );
   }
@@ -327,80 +321,6 @@ class _AccountMetaChip extends StatelessWidget {
                   fontSize: 12.6,
                   fontWeight: FontWeight.w800,
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AccountQuickFact extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _AccountQuickFact({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 192,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 66),
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
-        decoration: BoxDecoration(
-          color: GirviColors.inputBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.14)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.09),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 17),
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textBody,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: GirviColors.textDark,
-                      fontSize: 12.7,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
               ),
             ),
           ],

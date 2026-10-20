@@ -12,7 +12,7 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
       color: GirviColors.info,
       title: _registerTitle,
       subtitle:
-          '$count visible account${count == 1 ? '' : 's'} · Ticket number order',
+          '$count visible account${count == 1 ? '' : 's'} · Open first, released last',
     );
   }
 

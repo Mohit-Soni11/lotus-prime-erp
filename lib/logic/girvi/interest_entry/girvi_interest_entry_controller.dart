@@ -513,9 +513,11 @@ class GirviInterestEntryController extends ChangeNotifier {
     final rows = await _repo.getLoansWithCustomer();
     _allLoans = rows.where((item) => !item.loan.isClosed).toList()
       ..sort((a, b) {
-        final aDate = a.loan.updatedAt ?? a.loan.startDate;
-        final bDate = b.loan.updatedAt ?? b.loan.startDate;
-        return bDate.compareTo(aDate);
+        final ticketOrder = GirviTicketNumberOrder.compareNewestFirst(
+          a.loan.ticketNo,
+          b.loan.ticketNo,
+        );
+        return ticketOrder != 0 ? ticketOrder : b.loan.id.compareTo(a.loan.id);
       });
     _customerAccounts = _buildCustomerAccounts(_allLoans);
   }
@@ -624,13 +626,13 @@ class GirviInterestEntryController extends ChangeNotifier {
     final accounts = grouped.entries.map((entry) {
       final customerLoans = entry.value
         ..sort((a, b) {
-          final ticketOrder = GirviTicketNumberOrder.compare(
+          final ticketOrder = GirviTicketNumberOrder.compareNewestFirst(
             a.loan.ticketNo,
             b.loan.ticketNo,
           );
           return ticketOrder != 0
               ? ticketOrder
-              : a.loan.id.compareTo(b.loan.id);
+              : b.loan.id.compareTo(a.loan.id);
         });
       return GirviCustomerGirviAccount(
         customerId: entry.key,
@@ -640,7 +642,10 @@ class GirviInterestEntryController extends ChangeNotifier {
         loans: List.unmodifiable(customerLoans),
       );
     }).toList()
-      ..sort((a, b) => b.latestActivity.compareTo(a.latestActivity));
+      ..sort((a, b) => GirviTicketNumberOrder.compareNewestFirst(
+            a.loans.first.loan.ticketNo,
+            b.loans.first.loan.ticketNo,
+          ));
 
     return List.unmodifiable(accounts);
   }

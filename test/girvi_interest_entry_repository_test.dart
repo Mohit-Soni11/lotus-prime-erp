@@ -600,8 +600,7 @@ void main() {
     expect(summary.totalOverdue, 0);
   });
 
-  test('pledge register keeps ticket order across lifecycle statuses',
-      () async {
+  test('pledge register keeps open tickets above released tickets', () async {
     final customerId = await db.into(db.customers).insert(
           CustomersCompanion.insert(
             name: 'Register Order Customer',
@@ -626,12 +625,14 @@ void main() {
     await addTicket('GRV-0013', GirviStatus.active);
     await addTicket('GRV-0011', GirviStatus.overdue);
     await addTicket('GRV-0012', GirviStatus.released);
+    await addTicket('GRV-0015', GirviStatus.released);
+    await addTicket('GRV-0016', GirviStatus.readyForDelivery);
 
     final controller = GirviListController(db);
     addTearDown(controller.dispose);
     await controller.load();
     expect(controller.loans.map((item) => item.loan.ticketNo).toList(),
-        ['GRV-0011', 'GRV-0012', 'GRV-0013']);
+        ['GRV-0013', 'GRV-0011', 'GRV-0016', 'GRV-0015', 'GRV-0012']);
 
     controller.onSearchChanged('0012');
     expect(controller.countForFilter(GirviFilter.all), 1);
@@ -640,7 +641,16 @@ void main() {
     controller.onSearchChanged('');
     await addTicket('GRV-0014', GirviStatus.active);
     await controller.reload();
-    expect(controller.loans.last.loan.ticketNo, 'GRV-0014');
+    expect(controller.loans.first.loan.ticketNo, 'GRV-0014');
+    expect(controller.loans.last.loan.ticketNo, 'GRV-0012');
+
+    controller.setFilter(GirviFilter.released);
+    expect(controller.loans.map((item) => item.loan.ticketNo).toList(),
+        ['GRV-0015', 'GRV-0012']);
+
+    controller.setFilter(GirviFilter.active);
+    expect(controller.loans.map((item) => item.loan.ticketNo).toList(),
+        ['GRV-0014', 'GRV-0013', 'GRV-0011']);
   });
 
   test('ready for delivery tickets are not counted as released tickets',

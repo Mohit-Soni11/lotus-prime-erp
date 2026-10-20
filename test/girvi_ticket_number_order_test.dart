@@ -23,4 +23,11 @@ void main() {
       'GRV-A-10',
     ]);
   });
+
+  test('newest ticket order keeps numeric suffixes ahead of older tickets', () {
+    final tickets = ['GRV-9', 'GRV-11', 'GRV-2', 'GRV-10']
+      ..sort(GirviTicketNumberOrder.compareNewestFirst);
+
+    expect(tickets, ['GRV-11', 'GRV-10', 'GRV-9', 'GRV-2']);
+  });
 }

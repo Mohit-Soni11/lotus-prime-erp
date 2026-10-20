@@ -30,6 +30,9 @@ class GirviTicketNumberOrder {
     return lengthOrder != 0 ? lengthOrder : first.compareTo(second);
   }
 
+  static int compareNewestFirst(String first, String second) =>
+      compare(second, first);
+
   static int _compareNumbers(String first, String second) {
     final left = first.replaceFirst(_leadingZeroes, '');
     final right = second.replaceFirst(_leadingZeroes, '');

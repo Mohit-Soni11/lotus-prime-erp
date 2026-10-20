@@ -1,12 +1,7 @@
 part of '../girvi_account_detail_screen.dart';
 
 extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
-  Widget _buildPaymentLedger(
-    GirviLoanWithCustomer account,
-    List<GirviPaymentModel> payments,
-  ) {
-    final totalReceived =
-        payments.fold<double>(0, (sum, payment) => sum + payment.amount);
+  Widget _buildPaymentLedger(List<GirviPaymentModel> payments) {
     final totalDiscount = payments.fold<double>(
       0,
       (sum, payment) => sum + payment.discountAmount,
@@ -19,16 +14,10 @@ extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
           _AccountSectionHeader(
             icon: Icons.history_rounded,
             color: GirviColors.success,
-            title: 'Payment Ledger',
-            subtitle:
-                '${payments.length} date-wise payment record${payments.length == 1 ? '' : 's'}',
-            trailing: _PaymentLedgerHeaderActions(
-              receivedLabel: 'Received ${_money(totalReceived)}',
-              viewing: _openingGirviInvoice,
-              printing: _printingGirviInvoice,
-              onView: _openingGirviInvoice ? null : _previewGirviInvoice,
-              onPrint: _printingGirviInvoice ? null : _printGirviInvoice,
-            ),
+            title: 'Payment History',
+            subtitle: payments.isEmpty
+                ? 'No payments recorded'
+                : '${payments.length} payment record${payments.length == 1 ? '' : 's'} · oldest first',
           ),
           if (totalDiscount > 0) ...[
             const SizedBox(height: 10),
@@ -58,114 +47,7 @@ extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
                   ),
               ],
             ),
-          const SizedBox(height: 12),
-          _AccountInlineNotice(
-            icon: account.totalPayable <= 0.01
-                ? Icons.verified_rounded
-                : Icons.pending_actions_rounded,
-            color: account.totalPayable <= 0.01
-                ? GirviColors.success
-                : GirviColors.warning,
-            text: account.totalPayable <= 0.01
-                ? 'Principal and interest settlement is complete.'
-                : 'Current balance ${_money(account.totalPayable)} remains payable.',
-          ),
         ],
-      ),
-    );
-  }
-}
-
-class _PaymentLedgerHeaderActions extends StatelessWidget {
-  final String receivedLabel;
-  final bool viewing;
-  final bool printing;
-  final VoidCallback? onView;
-  final VoidCallback? onPrint;
-
-  const _PaymentLedgerHeaderActions({
-    required this.receivedLabel,
-    required this.viewing,
-    required this.printing,
-    required this.onView,
-    required this.onPrint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _AccountStatusBadge(
-          label: receivedLabel,
-          color: GirviColors.success,
-        ),
-        const SizedBox(width: 8),
-        _PaymentLedgerToolButton(
-          tooltip: viewing ? 'Opening invoice' : 'Preview invoice PDF',
-          loading: viewing,
-          icon: Icons.visibility_rounded,
-          onPressed: onView,
-          color: GirviColors.info,
-        ),
-        const SizedBox(width: 6),
-        _PaymentLedgerToolButton(
-          tooltip: printing ? 'Preparing invoice' : 'Print invoice PDF',
-          loading: printing,
-          icon: Icons.print_rounded,
-          onPressed: onPrint,
-          color: GirviColors.shellBg,
-        ),
-      ],
-    );
-  }
-}
-
-class _PaymentLedgerToolButton extends StatelessWidget {
-  final String tooltip;
-  final bool loading;
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final Color color;
-
-  const _PaymentLedgerToolButton({
-    required this.tooltip,
-    required this.loading,
-    required this.icon,
-    required this.onPressed,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: SizedBox(
-        width: 36,
-        height: 36,
-        child: IconButton(
-          onPressed: onPressed,
-          padding: EdgeInsets.zero,
-          style: IconButton.styleFrom(
-            backgroundColor: color,
-            disabledBackgroundColor: color.withValues(alpha: 0.45),
-            foregroundColor: Colors.white,
-            disabledForegroundColor: Colors.white.withValues(alpha: 0.76),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          icon: loading
-              ? const SizedBox(
-                  width: 15,
-                  height: 15,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Icon(icon, size: 18),
-        ),
       ),
     );
   }
@@ -192,11 +74,24 @@ class _PaymentTimelineRow extends StatelessWidget {
     final receiptNo = payment.receiptNo?.trim();
     final hasReceiptNo = receiptNo != null && receiptNo.isNotEmpty;
     final split = <_AccountInfoRowData>[
-      _AccountInfoRowData('Principal', money(payment.principalComponent)),
-      _AccountInfoRowData('Interest', money(payment.interestComponent)),
-      if (payment.discountAmount > 0)
-        _AccountInfoRowData('Discount', money(payment.discountAmount)),
-      _AccountInfoRowData('Balance After', money(payment.balanceAfter)),
+      if (payment.type == GirviPaymentType.fullRelease) ...[
+        if (payment.principalComponent > 0.01)
+          _AccountInfoRowData(
+            'Principal Received',
+            money(payment.principalComponent),
+          ),
+        if (payment.interestComponent > 0.01)
+          _AccountInfoRowData(
+            'Interest Received',
+            money(payment.interestComponent),
+          ),
+        if (payment.discountAmount > 0.01)
+          _AccountInfoRowData('Discount', money(payment.discountAmount)),
+        _AccountInfoRowData(
+          'Total Due After Payment',
+          money(payment.balanceAfter),
+        ),
+      ],
     ];
 
     return Row(
@@ -204,20 +99,9 @@ class _PaymentTimelineRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 78,
-          child: Column(
-            children: [
-              _PaymentDateBadge(
-                date: date(payment.paymentDate),
-                color: color,
-              ),
-              if (!isLast)
-                Container(
-                  width: 1,
-                  height: 118,
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  color: GirviColors.cardBorder,
-                ),
-            ],
+          child: _PaymentDateBadge(
+            date: date(payment.paymentDate),
+            color: color,
           ),
         ),
         const SizedBox(width: 10),
@@ -313,8 +197,10 @@ class _PaymentTimelineRow extends StatelessWidget {
                     text: coverageLabel!,
                   ),
                 ],
-                const SizedBox(height: 10),
-                _AccountInfoGrid(rows: split, compact: true),
+                if (split.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _AccountInfoGrid(rows: split, compact: true),
+                ],
                 if ((payment.notes ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
