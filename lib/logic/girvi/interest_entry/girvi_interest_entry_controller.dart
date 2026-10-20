@@ -7,6 +7,7 @@ import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/girvi/girvi_repository.dart';
 import 'girvi_customer_girvi_account.dart';
 import 'girvi_ledger_balance_service.dart';
+import '../girvi_ticket_number_order.dart';
 
 export 'girvi_customer_girvi_account.dart';
 
@@ -190,7 +191,6 @@ class GirviInterestEntryController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repo.purgeExpiredReleasedLoans();
       await _repo.syncOverdueStatus();
       await _repo.syncSettlementStatus();
       await _loadLoans();
@@ -624,9 +624,13 @@ class GirviInterestEntryController extends ChangeNotifier {
     final accounts = grouped.entries.map((entry) {
       final customerLoans = entry.value
         ..sort((a, b) {
-          final aDate = a.loan.updatedAt ?? a.loan.startDate;
-          final bDate = b.loan.updatedAt ?? b.loan.startDate;
-          return bDate.compareTo(aDate);
+          final ticketOrder = GirviTicketNumberOrder.compare(
+            a.loan.ticketNo,
+            b.loan.ticketNo,
+          );
+          return ticketOrder != 0
+              ? ticketOrder
+              : a.loan.id.compareTo(b.loan.id);
         });
       return GirviCustomerGirviAccount(
         customerId: entry.key,

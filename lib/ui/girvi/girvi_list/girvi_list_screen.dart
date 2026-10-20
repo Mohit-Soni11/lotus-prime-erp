@@ -15,6 +15,7 @@ import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
+import 'girvi_ledger_money_formatter.dart';
 import 'girvi_list_app_bar.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
@@ -24,15 +25,19 @@ part 'parts/girvi_ledger_detail_finance.dart';
 part 'parts/girvi_ledger_detail_panel.dart';
 part 'parts/girvi_ledger_layout.dart';
 part 'parts/girvi_ledger_overview.dart';
+part 'parts/girvi_ledger_register_components.dart';
 part 'parts/girvi_ledger_shared.dart';
 part 'parts/girvi_ledger_ticket_list.dart';
+part 'parts/girvi_ledger_ticket_row.dart';
 
 class GirviListScreen extends StatefulWidget {
+  final AppDatabase? database;
   final VoidCallback? onBack;
-  final VoidCallback? onNewGirvi;
+  final Future<void> Function()? onNewGirvi;
 
   const GirviListScreen({
     super.key,
+    this.database,
     this.onBack,
     this.onNewGirvi,
   });
@@ -43,7 +48,7 @@ class GirviListScreen extends StatefulWidget {
 
 class _GirviListScreenState extends State<GirviListScreen>
     with SingleTickerProviderStateMixin {
-  final AppDatabase _db = AppDatabase();
+  late final AppDatabase _db;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _ticketRegisterFocusNode = FocusNode(
     debugLabel: 'Girvi ticket register keyboard navigation',
@@ -54,8 +59,6 @@ class _GirviListScreenState extends State<GirviListScreen>
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
 
-  final NumberFormat _moneyFormat = NumberFormat('#,##,##0', 'en_IN');
-  final NumberFormat _preciseMoneyFormat = NumberFormat('#,##,##0.00', 'en_IN');
   final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
 
   int? _selectedLoanId;
@@ -65,6 +68,7 @@ class _GirviListScreenState extends State<GirviListScreen>
   @override
   void initState() {
     super.initState();
+    _db = widget.database ?? AppDatabase();
     _controller = GirviListController(_db);
     _fadeController = AnimationController(
       vsync: this,
@@ -99,11 +103,9 @@ class _GirviListScreenState extends State<GirviListScreen>
   }
 
   Future<void> _reloadLedger() async {
-    _fadeController.reset();
     await _controller.reload();
     if (!mounted) return;
     _syncSelectionWithVisibleTickets();
-    _fadeController.forward();
   }
 
   void _handleSearchChanged() {
@@ -206,7 +208,8 @@ class _GirviListScreenState extends State<GirviListScreen>
   Future<void> _openTicketAccount(GirviLoanWithCustomer item) async {
     _selectLoan(item);
     if (!mounted) return;
-    context.go(RoutePaths.girviAccountFor(item.loan.id));
+    await context.push(RoutePaths.girviAccountFor(item.loan.id));
+    if (mounted) await _reloadLedger();
   }
 
   void _setFilter(GirviFilter filter) {
@@ -218,11 +221,12 @@ class _GirviListScreenState extends State<GirviListScreen>
     _searchController.clear();
   }
 
-  void _openNewGirvi() {
-    widget.onNewGirvi?.call();
+  Future<void> _openNewGirvi() async {
+    await widget.onNewGirvi?.call();
+    if (mounted) await _reloadLedger();
   }
 
-  void _openInterestEntry(GirviLoanWithCustomer item) {
+  Future<void> _openInterestEntry(GirviLoanWithCustomer item) async {
     final route = RouteMapper.toPath(AppRoutes.interestCalcRoute);
     final uri = Uri(
       path: route,
@@ -231,7 +235,8 @@ class _GirviListScreenState extends State<GirviListScreen>
         'returnTo': 'girviLedger',
       },
     );
-    context.go(uri.toString());
+    await context.push(uri.toString());
+    if (mounted) await _reloadLedger();
   }
 
   Future<void> _previewGirviInvoicePdf(GirviLoanWithCustomer item) async {
@@ -250,6 +255,13 @@ class _GirviListScreenState extends State<GirviListScreen>
           ticketNo: item.loan.ticketNo,
           customerName: item.customerName,
           pdfBytes: savedBytes,
+        );
+        return;
+      }
+
+      if (item.loan.invoiceGenerated) {
+        _showLedgerMessage(
+          'The original issued invoice PDF is unavailable. Please restore the saved document.',
         );
         return;
       }

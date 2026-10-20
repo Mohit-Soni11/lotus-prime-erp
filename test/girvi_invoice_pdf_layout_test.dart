@@ -118,6 +118,75 @@ void main() {
     }
   });
 
+  test('released account renders reconciled interest and settlement pages',
+      () async {
+    final day = DateTime(2026, 10, 19);
+    final draft = GirviInvoiceDraft(
+      ticketNo: 'GRV-0019',
+      createdAt: day,
+      customerName: 'Release Customer',
+      customerMobile: '9000000019',
+      customerCity: 'Patna',
+      items: _simpleDraft.items,
+      loanAmount: 3000,
+      interestPrincipal: 3000,
+      interestRate: 5,
+      durationMonths: 5,
+      startDate: DateTime(2025, 5, 5),
+      maturityDate: DateTime(2025, 10, 5),
+      interestAsOfDate: day,
+      payments: const [GirviInvoicePayment(label: 'Cash', amount: 3000)],
+      disbursementSummary: 'Cash',
+      ledgerEntries: [
+        GirviInvoiceLedgerEntry(
+          date: day,
+          typeLabel: 'Interest Payment',
+          modeLabel: 'Cash',
+          amount: 2000,
+          interestAmount: 2000,
+        ),
+        GirviInvoiceLedgerEntry(
+          date: day,
+          typeLabel: 'Final Release',
+          modeLabel: 'Cash',
+          amount: 4240,
+          principalAmount: 3000,
+          interestAmount: 1240,
+        ),
+      ],
+      interestAdjustments: [
+        GirviInterestAdjustment(date: day, paid: 2000),
+        GirviInterestAdjustment(date: day, paid: 1240),
+      ],
+      mode: GirviReceiptMode.release,
+      accountStatus: 'Ready for Delivery',
+      releaseDate: day,
+      expectedDeliveryDate: day.add(const Duration(days: 1)),
+      releasePrincipal: 3000,
+      releaseInterest: 1240,
+      releaseTotalAmount: 4240,
+      releasePaymentMode: 'Cash',
+      principalOutstanding: 0,
+      interestOutstanding: 0,
+    );
+
+    final bytes = await GirviInvoicePdfService().build(
+      draft: draft,
+      format: GirviInvoiceFormat.a4,
+      settings: GirviBillingModel.defaults.copyWith(
+        selectedTemplate: PrintTemplateRegistry.lotusSignature.id,
+        printTermsAndConditions: true,
+        printCustomerDeclaration: true,
+      ),
+      templateId: PrintTemplateRegistry.lotusSignature.id,
+    );
+    expect(_pdfPageCount(bytes), greaterThanOrEqualTo(4));
+    final output = Platform.environment['GIRVI_RELEASE_RECONCILED_OUTPUT'];
+    if (output != null && output.isNotEmpty) {
+      await File(output).writeAsBytes(bytes);
+    }
+  });
+
   test('Girvi bilingual terms preserve one condition per line', () {
     final rows = GirviInvoicePdfService.pairBilingualLines(
       'First English term.\nSecond English term.',
@@ -582,13 +651,22 @@ final _releaseDraft = GirviInvoiceDraft(
       interestFromDate: DateTime(2026, 10, 14),
       interestToDate: DateTime(2026, 11, 14),
     ),
+    GirviInvoiceLedgerEntry(
+      date: DateTime(2026, 11, 20),
+      typeLabel: 'Final Release',
+      modeLabel: 'Cash',
+      amount: 51500,
+      principalAmount: 40000,
+      interestAmount: 11500,
+      discountAmount: 500,
+    ),
   ],
   mode: GirviReceiptMode.release,
   accountStatus: 'Ready for Delivery',
-  releaseDate: DateTime(2026, 9, 20),
-  expectedDeliveryDate: DateTime(2026, 9, 20),
+  releaseDate: DateTime(2026, 11, 20),
+  expectedDeliveryDate: DateTime(2026, 11, 21),
   releasePrincipal: 40000,
-  releaseInterest: 12000,
+  releaseInterest: 11500,
   releaseDiscount: 500,
   releaseTotalAmount: 51500,
   releasePaymentMode: 'Cash',
@@ -620,7 +698,8 @@ final _compoundReleaseDraft = GirviInvoiceDraft(
       date: DateTime(2026, 9, 21),
       typeLabel: 'Girvi Release',
       modeLabel: 'Cash',
-      amount: 78474,
+      amount: 88474,
+      principalAmount: 10000,
       interestAmount: 78474,
       balanceAfter: 10000,
       monthsCovered: 55,

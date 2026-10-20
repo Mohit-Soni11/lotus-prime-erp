@@ -16,6 +16,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../constants/app_routes.dart';
 import 'notice_recovery_navigation.dart';
+import 'workspace_navigation.dart';
+import 'workspace_transition_page.dart';
 import '../../theme/dashboard/app/uv.dart';
 
 import '../../ui/auth/login_screen.dart';
@@ -170,7 +172,7 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: RoutePaths.girviNew,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final editLoanId = int.tryParse(
             state.uri.queryParameters['editLoanId'] ?? '',
           );
@@ -178,87 +180,97 @@ GoRouter createAppRouter() {
             state.uri.queryParameters['returnCustomerId'] ?? '',
           );
 
-          return NewGirviScreen(
-            editLoanId: editLoanId,
-            onBack: () {
-              if (returnCustomerId != null) {
-                context.go(RoutePaths.customerProfileFor(returnCustomerId));
-                return;
-              }
-              context.go(RoutePaths.dashboard);
-            },
+          return WorkspaceTransitionPage(
+            key: state.pageKey,
+            child: NewGirviScreen(
+              editLoanId: editLoanId,
+              onBack: () => WorkspaceNavigation.backTo(
+                context,
+                returnCustomerId == null
+                    ? RoutePaths.dashboard
+                    : RoutePaths.customerProfileFor(returnCustomerId),
+              ),
+            ),
           );
         },
       ),
       GoRoute(
         path: RoutePaths.girviInterest,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final returnTo = state.uri.queryParameters['returnTo'];
-          return InterestCalcScreen(
-            initialTicketNo: state.uri.queryParameters['ticketNo'],
-            onBack: () {
-              if (returnTo == 'riskCollections') {
-                context.go(RoutePaths.customerDefaulters);
-                return;
-              }
-              if (returnTo == 'girviNotice') {
-                context.go(RoutePaths.girviNotice);
-                return;
-              }
-              if (returnTo == 'girviLedger') {
-                context.go(RoutePaths.girviList);
-                return;
-              }
-              context.go(RoutePaths.dashboard);
-            },
+          final fallbackPath = switch (returnTo) {
+            'riskCollections' => RoutePaths.customerDefaulters,
+            'girviNotice' => RoutePaths.girviNotice,
+            'girviLedger' => RoutePaths.girviList,
+            _ => RoutePaths.dashboard,
+          };
+          return WorkspaceTransitionPage(
+            key: state.pageKey,
+            child: InterestCalcScreen(
+              initialTicketNo: state.uri.queryParameters['ticketNo'],
+              onBack: () => WorkspaceNavigation.backTo(context, fallbackPath),
+            ),
           );
         },
       ),
       GoRoute(
         path: RoutePaths.girviList,
-        builder: (context, state) => GirviListScreen(
-          onBack: () => context.go(RoutePaths.dashboard),
-          onNewGirvi: () => context.go(RoutePaths.girviNew),
+        pageBuilder: (context, state) => WorkspaceTransitionPage(
+          key: state.pageKey,
+          child: GirviListScreen(
+            onBack: () => WorkspaceNavigation.backTo(
+              context,
+              RoutePaths.dashboard,
+            ),
+            onNewGirvi: () async {
+              await context.push(RoutePaths.girviNew);
+            },
+          ),
         ),
       ),
       GoRoute(
         path: RoutePaths.girviAccountDetail,
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final loanId =
               int.tryParse(state.pathParameters['loanId'] ?? '') ?? 0;
           final returnTo = state.uri.queryParameters['returnTo'];
-          return GirviAccountDetailScreen(
-            loanId: loanId,
-            returnTo: returnTo,
-            onBack: () {
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-              if (returnTo == 'riskCollections') {
-                context.go(RoutePaths.customerDefaulters);
-                return;
-              }
-              if (returnTo == 'girviNotice') {
-                context.go(RoutePaths.girviNotice);
-                return;
-              }
-              context.go(RoutePaths.girviList);
-            },
+          return WorkspaceTransitionPage(
+            key: state.pageKey,
+            child: GirviAccountDetailScreen(
+              loanId: loanId,
+              returnTo: returnTo,
+              onBack: () => WorkspaceNavigation.backTo(
+                context,
+                switch (returnTo) {
+                  'riskCollections' => RoutePaths.customerDefaulters,
+                  'girviNotice' => RoutePaths.girviNotice,
+                  _ => RoutePaths.girviList,
+                },
+              ),
+            ),
           );
         },
       ),
       GoRoute(
         path: RoutePaths.customerDefaulters,
-        builder: (context, state) => DefaulterListScreen(
-          onBack: () => context.go(RoutePaths.dashboard),
+        pageBuilder: (context, state) => WorkspaceTransitionPage(
+          key: state.pageKey,
+          child: DefaulterListScreen(
+            onBack: () => WorkspaceNavigation.backTo(
+              context,
+              RoutePaths.dashboard,
+            ),
+          ),
         ),
       ),
       GoRoute(
         path: RoutePaths.girviNotice,
-        builder: (context, state) => ContactRecoveryScreen(
-          initialTicketNo: state.uri.queryParameters['ticketNo'],
-          onBack: () => NoticeRecoveryNavigation.goBack(context, state.uri),
+        pageBuilder: (context, state) => WorkspaceTransitionPage(
+          key: state.pageKey,
+          child: ContactRecoveryScreen(
+            initialTicketNo: state.uri.queryParameters['ticketNo'],
+            onBack: () => NoticeRecoveryNavigation.goBack(context, state.uri),
+          ),
         ),
       ),
       GoRoute(
@@ -320,18 +332,27 @@ GoRouter createAppRouter() {
         ),
       ),
       ShellRoute(
-        builder: (context, state, child) => AppShell(child: child),
+        pageBuilder: (context, state, child) => WorkspaceTransitionPage(
+          key: state.pageKey,
+          child: AppShell(child: child),
+        ),
         routes: [
           GoRoute(
             path: RoutePaths.dashboard,
             builder: (context, state) => DashboardScreen(
-              onNavigate: (routeId) => context.go(RouteMapper.toPath(routeId)),
+              onNavigate: (routeId) => WorkspaceNavigation.open(
+                context,
+                RouteMapper.toPath(routeId),
+              ),
               onNavigateWithId: (routeId, {customerId}) {
                 if (routeId == AppRoutes.customerProfileRoute &&
                     customerId != null) {
                   context.go(RoutePaths.customerProfileFor(customerId));
                 } else {
-                  context.go(RouteMapper.toPath(routeId));
+                  WorkspaceNavigation.open(
+                    context,
+                    RouteMapper.toPath(routeId),
+                  );
                 }
               },
             ),

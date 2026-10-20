@@ -39,7 +39,8 @@ part 'parts/interest_ready_delivery_panel.dart';
 part 'parts/interest_receipt_actions.dart';
 part 'parts/interest_release_settlement_widgets.dart';
 part 'parts/interest_shared_atoms.dart';
-part 'parts/interest_ticket_stack_widgets.dart';
+part 'parts/interest_entry_pills.dart';
+part 'parts/interest_ticket_row.dart';
 
 class InterestCalcScreen extends StatefulWidget {
   final VoidCallback? onBack;

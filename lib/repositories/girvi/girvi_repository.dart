@@ -73,8 +73,6 @@ class GirviRepository {
     int? loanId,
     bool includeAuctioned = false,
   }) async {
-    await purgeExpiredReleasedLoans();
-
     final query = _db.select(_db.girviLoans).join([
       drift.innerJoin(
         _db.customers,
@@ -247,8 +245,10 @@ class GirviRepository {
     return parts.join(', ');
   }
 
-  Future<GirviSummaryModel> getSummary() async {
-    final allLoans = await getLoansWithCustomer();
+  Future<GirviSummaryModel> getSummary({
+    List<GirviLoanWithCustomer>? loans,
+  }) async {
+    final allLoans = loans ?? await getLoansWithCustomer();
 
     int totalActive = 0;
     int totalOverdue = 0;
@@ -264,17 +264,16 @@ class GirviRepository {
       switch (loan.girviStatus) {
         case GirviStatus.active:
         case GirviStatus.partialRelease:
-          final overdue = loan.maturityDate != null &&
-              now.isAfter(loan.maturityDate!) &&
-              item.totalPayable > 0;
+          final quote = item.interestQuoteAt(now);
+          final overdue = loan.isPastMaturity && quote.totalPayable > 0;
           if (overdue) {
             totalOverdue++;
-            totalOverdueReceivable += item.totalPayable;
+            totalOverdueReceivable += quote.totalPayable;
           } else {
             totalActive++;
           }
-          totalPrincipal += item.principalDue;
-          totalInterestDue += item.netInterestDue;
+          totalPrincipal += quote.principalDue;
+          totalInterestDue += quote.interestOutstanding;
         case GirviStatus.released:
           totalReleased++;
         case GirviStatus.readyForDelivery:
@@ -282,17 +281,21 @@ class GirviRepository {
         case GirviStatus.auctioned:
           break;
         case GirviStatus.overdue:
+          final quote = item.interestQuoteAt(now);
           totalOverdue++;
-          totalPrincipal += item.principalDue;
-          totalInterestDue += item.netInterestDue;
-          totalOverdueReceivable += item.totalPayable;
+          totalPrincipal += quote.principalDue;
+          totalInterestDue += quote.interestOutstanding;
+          totalOverdueReceivable += quote.totalPayable;
       }
     }
 
     // Monthly collections
     final firstOfMonth = DateTime(now.year, now.month, 1);
+    final firstOfNextMonth = DateTime(now.year, now.month + 1, 1);
     final payments = await (_db.select(_db.girviPayments)
-          ..where((p) => p.paymentDate.isBiggerOrEqualValue(firstOfMonth)))
+          ..where((p) =>
+              p.paymentDate.isBiggerOrEqualValue(firstOfMonth) &
+              p.paymentDate.isSmallerThanValue(firstOfNextMonth)))
         .get();
     final monthlyCollected = payments.fold<double>(0.0, (s, p) => s + p.amount);
 

@@ -3,6 +3,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../repositories/girvi/girvi_repository.dart';
+import 'girvi_ticket_number_order.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 export 'interest_entry/girvi_interest_entry_controller.dart';
@@ -33,25 +34,28 @@ class GirviListController extends ChangeNotifier {
   bool get isLoadingSelectedPayments => _isLoadingSelectedPayments;
   String? get errorMessage => _errorMessage;
   bool get hasLoans => _allLoans.isNotEmpty;
-  int countForFilter(GirviFilter filter) =>
-      _allLoans.where((item) => _matchesFilter(item, filter)).length;
+  int countForFilter(GirviFilter filter) => _allLoans
+      .where((item) => _matchesFilter(item, filter) && _matchesSearch(item))
+      .length;
 
-  Future<void> load() async {
-    _isLoading = true;
+  Future<void> load({bool showLoading = true}) async {
+    if (showLoading) _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _repo.purgeExpiredReleasedLoans();
       await _repo.syncOverdueStatus();
       await _repo.syncSettlementStatus();
-      final results = await Future.wait([
-        _repo.getLoansWithCustomer(),
-        _repo.getSummary(),
-      ]);
-
-      _allLoans = results[0] as List<GirviLoanWithCustomer>;
-      _summary = results[1] as GirviSummaryModel;
+      final accounts = await _repo.getLoansWithCustomer();
+      accounts.sort((a, b) {
+        final ticketOrder = GirviTicketNumberOrder.compare(
+          a.loan.ticketNo,
+          b.loan.ticketNo,
+        );
+        return ticketOrder != 0 ? ticketOrder : a.loan.id.compareTo(b.loan.id);
+      });
+      _allLoans = accounts;
+      _summary = await _repo.getSummary(loans: accounts);
       _applyFilter();
       _syncSelectedPaymentsWithVisibleLoans();
     } catch (e) {
@@ -81,58 +85,20 @@ class GirviListController extends ChangeNotifier {
       list = list.where((item) => _matchesFilter(item, _filter)).toList();
     }
     if (_searchQuery.isNotEmpty) {
-      list = list
-          .where((g) =>
-              g.loan.ticketNo.toLowerCase().contains(_searchQuery) ||
-              g.customerName.toLowerCase().contains(_searchQuery) ||
-              g.customerMobile.contains(_searchQuery) ||
-              g.loan.itemDescription.toLowerCase().contains(_searchQuery))
-          .toList();
+      list = list.where(_matchesSearch).toList();
     }
-
-    list.sort((a, b) {
-      final byPriority =
-          _lifecycleSortPriority(a).compareTo(_lifecycleSortPriority(b));
-      if (byPriority != 0) return byPriority;
-      return _compareTicketSerialDescending(a, b);
-    });
 
     _filteredLoans = list;
   }
 
-  int _compareTicketSerialDescending(
-    GirviLoanWithCustomer a,
-    GirviLoanWithCustomer b,
-  ) {
-    final byTicket = _ticketSortNumber(b).compareTo(_ticketSortNumber(a));
-    if (byTicket != 0) return byTicket;
-    final byStartDate = b.loan.startDate.compareTo(a.loan.startDate);
-    if (byStartDate != 0) return byStartDate;
-    return b.loan.id.compareTo(a.loan.id);
-  }
-
-  int _ticketSortNumber(GirviLoanWithCustomer item) {
-    final match = RegExp(r'(\d+)$').firstMatch(item.loan.ticketNo);
-    return int.tryParse(match?.group(1) ?? '') ?? item.loan.id;
-  }
-
-  int _lifecycleSortPriority(GirviLoanWithCustomer item) {
-    final loan = item.loan;
-    if (loan.isOverdue || loan.girviStatus == GirviStatus.overdue) return 0;
-    switch (loan.girviStatus) {
-      case GirviStatus.active:
-        return 1;
-      case GirviStatus.partialRelease:
-        return 2;
-      case GirviStatus.readyForDelivery:
-        return 3;
-      case GirviStatus.released:
-        return 4;
-      case GirviStatus.auctioned:
-        return 5;
-      case GirviStatus.overdue:
-        return 0;
-    }
+  bool _matchesSearch(GirviLoanWithCustomer item) {
+    if (_searchQuery.isEmpty) return true;
+    return item.loan.ticketNo.toLowerCase().contains(_searchQuery) ||
+        item.customerName.toLowerCase().contains(_searchQuery) ||
+        item.customerMobile.contains(_searchQuery) ||
+        item.loan.itemDescription.toLowerCase().contains(_searchQuery) ||
+        item.loan.metalType.toLowerCase().contains(_searchQuery) ||
+        item.loan.metalPurity.toLowerCase().contains(_searchQuery);
   }
 
   bool _matchesFilter(GirviLoanWithCustomer item, GirviFilter filter) {
@@ -183,7 +149,7 @@ class GirviListController extends ChangeNotifier {
     _isLoadingSelectedPayments = false;
   }
 
-  Future<void> reload() => load();
+  Future<void> reload() => load(showLoading: false);
 }
 
 /// Handles legacy release-screen delivery without bypassing settlement.

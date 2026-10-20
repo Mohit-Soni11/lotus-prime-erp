@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/logic/girvi/girvi_controllers.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_pdf_service.dart';
 import 'package:lotus_erp/logic/girvi/interest_entry/girvi_ledger_balance_service.dart';
@@ -579,6 +580,69 @@ void main() {
     expect(summary.totalOverdueReceivable, 11000);
   });
 
+  test('maturity date stays active until the following calendar day', () async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final loanId = await _insertLoan(
+      db,
+      startDate: today.subtract(const Duration(days: 30)),
+    );
+    await repository.updateLoan(
+      loanId,
+      GirviLoansCompanion(maturityDate: drift.Value(today)),
+    );
+
+    expect(await repository.syncOverdueStatus(), 0);
+    expect((await repository.getLoanById(loanId))!.status,
+        GirviStatus.active.dbValue);
+    final summary = await repository.getSummary();
+    expect(summary.totalActive, 1);
+    expect(summary.totalOverdue, 0);
+  });
+
+  test('pledge register keeps ticket order across lifecycle statuses',
+      () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Register Order Customer',
+            mobile: '9888888888',
+          ),
+        );
+
+    Future<void> addTicket(String number, GirviStatus status) async {
+      await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: number,
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              loanAmount: const drift.Value(10000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(DateTime.now()),
+              status: drift.Value(status.dbValue),
+            ),
+          );
+    }
+
+    await addTicket('GRV-0013', GirviStatus.active);
+    await addTicket('GRV-0011', GirviStatus.overdue);
+    await addTicket('GRV-0012', GirviStatus.released);
+
+    final controller = GirviListController(db);
+    addTearDown(controller.dispose);
+    await controller.load();
+    expect(controller.loans.map((item) => item.loan.ticketNo).toList(),
+        ['GRV-0011', 'GRV-0012', 'GRV-0013']);
+
+    controller.onSearchChanged('0012');
+    expect(controller.countForFilter(GirviFilter.all), 1);
+    expect(controller.loans.single.loan.ticketNo, 'GRV-0012');
+
+    controller.onSearchChanged('');
+    await addTicket('GRV-0014', GirviStatus.active);
+    await controller.reload();
+    expect(controller.loans.last.loan.ticketNo, 'GRV-0014');
+  });
+
   test('ready for delivery tickets are not counted as released tickets',
       () async {
     final loanId = await _insertLoan(db);
@@ -602,7 +666,7 @@ void main() {
     expect(summary.totalLoans, 1);
   });
 
-  test('permanently purges released accounts after 30 days', () async {
+  test('keeps released account history beyond 30 days', () async {
     final now = DateTime(2026, 9, 25, 12);
     final customerId = await db.into(db.customers).insert(
           CustomersCompanion.insert(
@@ -678,16 +742,17 @@ void main() {
           ),
         );
 
-    final purged = await repository.purgeExpiredReleasedLoans(now: now);
+    final retainedLoans = await repository.getLoansWithCustomer();
 
-    expect(purged, 1);
-    expect(await repository.getLoanById(expiredLoanId), isNull);
+    expect(retainedLoans.map((entry) => entry.loan.id),
+        containsAll([expiredLoanId, retainedLoanId]));
+    expect(await repository.getLoanById(expiredLoanId), isNotNull);
     expect(await repository.getLoanById(retainedLoanId), isNotNull);
-    expect(await db.select(db.girviPayments).get(), isEmpty);
-    expect(await db.select(db.girviDisbursements).get(), isEmpty);
-    expect(await db.select(db.girviLoanItems).get(), isEmpty);
-    expect(await db.select(db.girviItemPhotos).get(), isEmpty);
-    expect(await db.select(db.girviNoticeActions).get(), isEmpty);
+    expect(await db.select(db.girviPayments).get(), hasLength(1));
+    expect(await db.select(db.girviDisbursements).get(), hasLength(1));
+    expect(await db.select(db.girviLoanItems).get(), hasLength(1));
+    expect(await db.select(db.girviItemPhotos).get(), hasLength(1));
+    expect(await db.select(db.girviNoticeActions).get(), hasLength(1));
   });
 
   test('active ledger filter includes all running open accounts', () async {

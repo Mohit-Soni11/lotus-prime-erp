@@ -91,7 +91,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     final account = _controller.account;
     if (account == null) return;
 
-    context.go(
+    context.push(
       Uri(
         path: RoutePaths.girviInterest,
         queryParameters: {

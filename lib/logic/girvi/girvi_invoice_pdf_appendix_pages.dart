@@ -6,14 +6,23 @@ void _appendLifecycleReceiptPages({
   required PrintTemplatePdfProfile profile,
   required bool duplicateCopy,
 }) {
-  final interestEntries = _girviInterestLedgerEntries(draft);
+  final summary = GirviReceiptFinancialSummary.fromDraft(draft);
+  final interestEntries = summary.interestEntries;
   if (interestEntries.isNotEmpty) {
     final interestQuote = draft.interestQuote;
     pdf.addPage(
       pw.MultiPage(
-        pageTheme: const pw.PageTheme(
+        pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
+          margin: const pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
+          buildForeground: draft.isReleaseReceipt
+              ? (_) => _girviStatusWatermark(
+                    label: 'Released',
+                    subtitle: 'Account settled',
+                    color: _receiptGreen,
+                    opacity: 0.11,
+                  )
+              : null,
         ),
         footer: (context) => _girviAppendixFooter(
           context,
@@ -39,7 +48,7 @@ void _appendLifecycleReceiptPages({
           pw.SizedBox(height: 16),
           _girviInterestSummary(
             draft,
-            interestEntries,
+            summary,
             interestQuote,
             profile,
           ),
@@ -51,9 +60,18 @@ void _appendLifecycleReceiptPages({
   if (draft.isReleaseReceipt) {
     pdf.addPage(
       pw.MultiPage(
-        pageTheme: const pw.PageTheme(
+        pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
+          margin: const pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
+          buildForeground: (_) => _girviStatusWatermark(
+            label:
+                draft.deliveredAt == null ? 'Ready for Delivery' : 'Delivered',
+            subtitle: draft.deliveredAt == null
+                ? 'Settlement complete'
+                : 'Item handover complete',
+            color: _receiptGreen,
+            opacity: 0.11,
+          ),
         ),
         footer: (context) => _girviAppendixFooter(
           context,
@@ -64,13 +82,13 @@ void _appendLifecycleReceiptPages({
         build: (_) => [
           _girviAppendixHeader(
             title: 'RELEASE RECEIPT',
-            subtitle: 'Final settlement and item release record',
+            subtitle: 'Final settlement and item handover status',
             draft: draft,
             profile: profile,
             duplicateCopy: duplicateCopy,
           ),
           pw.SizedBox(height: 14),
-          _girviReleaseSettlement(draft, profile),
+          _girviReleaseSettlement(draft, summary, profile),
           pw.SizedBox(height: 12),
           _girviDeliveryStatus(draft, profile),
           pw.SizedBox(height: 12),
@@ -277,485 +295,6 @@ pw.Widget _girviStatusPill(
   );
 }
 
-pw.Widget _girviInterestSummary(
-  GirviInvoiceDraft draft,
-  List<GirviInvoiceLedgerEntry> entries,
-  GirviInterestQuote quote,
-  PrintTemplatePdfProfile profile,
-) {
-  final totalInterest = entries.fold<double>(
-    0,
-    (sum, entry) => sum + _girviReceivedInterest(entry),
-  );
-  final interestOutstanding = draft.interestOutstanding ?? 0;
-  final principalOutstanding = draft.principalOutstanding ?? draft.loanAmount;
-  final cards = <pw.Widget>[
-    pw.Expanded(
-      child: _girviSummaryCard(
-        'Interest Received',
-        GirviInvoicePdfService._formatAmount(totalInterest),
-        profile,
-        valueColor: _receiptGreen,
-      ),
-    ),
-    pw.SizedBox(width: 10),
-    pw.Expanded(
-      child: _girviSummaryCard(
-        'Monthly ${quote.lastChargedMonthlyInterestType} Interest',
-        GirviInvoicePdfService._formatAmount(quote.lastChargedMonthlyInterest),
-        profile,
-      ),
-    ),
-    pw.SizedBox(width: 10),
-    pw.Expanded(
-      child: _girviSummaryCard(
-        'Interest Outstanding',
-        GirviInvoicePdfService._formatAmount(interestOutstanding),
-        profile,
-        valueColor: _receiptRed,
-      ),
-    ),
-  ];
-  return pw.Column(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      pw.Row(children: cards),
-      pw.SizedBox(height: 8),
-      pw.Row(
-        children: [
-          pw.Expanded(
-            child: _girviSummaryCard(
-              'Principal Outstanding',
-              GirviInvoicePdfService._formatAmount(principalOutstanding),
-              profile,
-              valueColor: _receiptRed,
-            ),
-          ),
-          pw.SizedBox(width: 10),
-          pw.Expanded(
-            child: _girviSummaryCard(
-              'Total Outstanding',
-              GirviInvoicePdfService._formatAmount(
-                principalOutstanding + interestOutstanding,
-              ),
-              profile,
-              valueColor: _receiptRed,
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-pw.Widget _girviSummaryCard(
-  String label,
-  String value,
-  PrintTemplatePdfProfile profile, {
-  PdfColor? valueColor,
-}) {
-  return pw.Container(
-    padding: pw.EdgeInsets.all(profile.panelPadding + 2),
-    decoration: pw.BoxDecoration(
-      color: profile.panelColor,
-      border: pw.Border.all(
-        color: profile.borderColor,
-        width: profile.borderWidth,
-      ),
-      borderRadius: pw.BorderRadius.circular(profile.radius),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          label,
-          style: pw.TextStyle(
-            color: profile.bodyTextColor,
-            fontSize: profile.labelFontSize + 1.5,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 6),
-        pw.Text(
-          value,
-          style: pw.TextStyle(
-            color: valueColor ?? profile.bodyTextColor,
-            fontSize: profile.titleFontSize,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-pw.Widget _girviInterestLedgerTable(
-  List<GirviInvoiceLedgerEntry> entries,
-  PrintTemplatePdfProfile profile,
-) {
-  final rows = entries.map((entry) {
-    final amount = _girviReceivedInterest(entry);
-    return [
-      GirviInvoicePdfService._dateFormat.format(entry.date),
-      entry.modeLabel,
-      GirviInvoicePdfService._formatAmount(amount),
-    ];
-  }).toList(growable: false);
-  final headers = <String>[
-    'Date',
-    'Mode',
-    'Interest Received',
-  ];
-  final columnWidths = <int, pw.TableColumnWidth>{
-    0: const pw.FixedColumnWidth(72),
-    1: const pw.FixedColumnWidth(64),
-    2: const pw.FlexColumnWidth(1.7),
-  };
-
-  return _girviSection(
-    title: 'INTEREST RECEIVED LEDGER',
-    profile: profile,
-    child: pw.TableHelper.fromTextArray(
-      headers: headers,
-      data: rows,
-      headerStyle: pw.TextStyle(
-        color: profile.tableHeaderTextColor,
-        fontSize: profile.tableFontSize + 1.3,
-        fontWeight: pw.FontWeight.bold,
-      ),
-      cellStyle: pw.TextStyle(
-        color: profile.bodyTextColor,
-        fontSize: profile.tableFontSize + 1.15,
-        fontWeight: pw.FontWeight.bold,
-      ),
-      headerDecoration: pw.BoxDecoration(color: profile.tableHeaderColor),
-      border: pw.TableBorder.all(
-        color: profile.tableBorderColor,
-        width: profile.tableBorderWidth,
-      ),
-      cellAlignment: pw.Alignment.centerLeft,
-      headerAlignment: pw.Alignment.centerLeft,
-      cellPadding: pw.EdgeInsets.symmetric(
-        horizontal: profile.tableCellPadding + 1,
-        vertical: profile.tableCellPadding + 2.2,
-      ),
-      columnWidths: columnWidths,
-    ),
-  );
-}
-
-pw.Widget _girviReleaseSettlement(
-  GirviInvoiceDraft draft,
-  PrintTemplatePdfProfile profile,
-) {
-  final releasePrincipal = draft.releasePrincipal ?? draft.loanAmount;
-  final interestEntries = _girviInterestLedgerEntries(draft);
-  final releaseEntryInterest = interestEntries
-      .where((entry) => entry.typeLabel.toLowerCase().contains('release'))
-      .fold<double>(
-        0,
-        (sum, entry) => sum + _girviReceivedInterest(entry),
-      );
-  final ledgerInterestTotal = interestEntries.fold<double>(
-    0,
-    (sum, entry) => sum + _girviReceivedInterest(entry),
-  );
-  final releaseInterest = draft.releaseInterest ?? releaseEntryInterest;
-  final interestCollected =
-      (ledgerInterestTotal - releaseEntryInterest).clamp(0.0, double.infinity);
-  final releasePenalty = draft.releasePenalty ?? 0;
-  final releaseDiscount = draft.releaseDiscount ?? 0;
-  final releaseTotal = draft.releaseTotalAmount ??
-      (releasePrincipal + releaseInterest + releasePenalty - releaseDiscount);
-  final totalInterest = interestCollected + releaseInterest;
-
-  final rows = <List<String>>[
-    if (interestCollected > 0.005)
-      [
-        'Interest Already Collected',
-        GirviInvoicePdfService._formatAmount(interestCollected)
-      ],
-    if (releaseInterest > 0.005)
-      [
-        'Interest Collected at Release',
-        GirviInvoicePdfService._formatAmount(releaseInterest)
-      ],
-    if (releasePenalty > 0)
-      [
-        'Penalty / Charges',
-        GirviInvoicePdfService._formatAmount(releasePenalty)
-      ],
-    if (releaseDiscount > 0)
-      [
-        'Discount / Waiver',
-        '- ${GirviInvoicePdfService._formatAmount(releaseDiscount)}',
-      ],
-    if ((draft.releasePaymentMode ?? '').trim().isNotEmpty)
-      ['Collection Mode', draft.releasePaymentMode!.trim()],
-  ];
-
-  return _girviSection(
-    title: 'FINAL SETTLEMENT',
-    profile: profile,
-    child: pw.Column(
-      children: [
-        pw.Row(
-          children: [
-            pw.Expanded(
-              child: _girviSummaryCard(
-                'Principal',
-                GirviInvoicePdfService._formatAmount(releasePrincipal),
-                profile,
-              ),
-            ),
-            pw.SizedBox(width: 10),
-            pw.Expanded(
-              child: _girviSummaryCard(
-                'Total Interest',
-                GirviInvoicePdfService._formatAmount(totalInterest),
-                profile,
-              ),
-            ),
-            pw.SizedBox(width: 10),
-            pw.Expanded(
-              child: _girviSummaryCard(
-                'Total Paid',
-                GirviInvoicePdfService._formatAmount(releaseTotal),
-                profile,
-              ),
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 12),
-        if (rows.isNotEmpty) _girviKeyValueTable(rows, profile),
-      ],
-    ),
-  );
-}
-
-pw.Widget _girviCompoundInterestCalculation(
-  GirviInvoiceDraft draft,
-  GirviInterestQuote quote,
-  PrintTemplatePdfProfile profile,
-) {
-  final lines = quote.cycles;
-  if (lines.isEmpty) return pw.SizedBox.shrink();
-
-  final rows = lines.map((line) {
-    final period = GirviInterestPeriodText.forBreakdownLine(
-      loanStartDate: draft.startDate,
-      line: line,
-    );
-    final totalWithInterest = GirviInvoicePdfService._formatAmount(
-      line.closingAmount,
-    );
-
-    return <String>[
-      line.cycleNumber.toString().padLeft(2, '0'),
-      '${period.cycleLabel}\n${period.monthRangeLabel}',
-      GirviInvoicePdfService._formatAmount(line.principalBase),
-      '${_ratePercentLabel(line.monthlyRatePercent)} monthly',
-      GirviInvoicePdfService._formatAmount(line.monthlyInterest),
-      period.monthsLabel,
-      GirviInvoicePdfService._formatAmount(line.interestAmount),
-      line.capitalizedAfterLine
-          ? 'Capitalized\n$totalWithInterest'
-          : 'Final cycle\n$totalWithInterest',
-    ];
-  }).toList();
-
-  return _girviSection(
-    title: 'COMPOUND INTEREST CALCULATION',
-    profile: profile,
-    child: pw.TableHelper.fromTextArray(
-      context: null,
-      headers: const [
-        'No.',
-        'Period',
-        'Opening Amount',
-        'Monthly Rate',
-        'Interest / Month',
-        'Applicable Months',
-        'Period Interest',
-        'Closing Amount',
-      ],
-      data: rows,
-      headerStyle: pw.TextStyle(
-        color: profile.tableHeaderTextColor,
-        fontSize: profile.tableFontSize + 1,
-        fontWeight: pw.FontWeight.bold,
-      ),
-      cellStyle: pw.TextStyle(
-        color: profile.bodyTextColor,
-        fontSize: profile.tableFontSize + 0.75,
-        fontWeight: pw.FontWeight.bold,
-      ),
-      headerDecoration: pw.BoxDecoration(color: profile.tableHeaderColor),
-      border: pw.TableBorder.all(
-        color: profile.tableBorderColor,
-        width: profile.tableBorderWidth,
-      ),
-      cellAlignment: pw.Alignment.centerLeft,
-      headerAlignment: pw.Alignment.centerLeft,
-      cellPadding: pw.EdgeInsets.symmetric(
-        horizontal: profile.tableCellPadding,
-        vertical: profile.tableCellPadding + 1.5,
-      ),
-      columnWidths: const {
-        0: pw.FlexColumnWidth(0.45),
-        1: pw.FlexColumnWidth(1.45),
-        2: pw.FlexColumnWidth(1.15),
-        3: pw.FlexColumnWidth(0.9),
-        4: pw.FlexColumnWidth(1.1),
-        5: pw.FlexColumnWidth(1.0),
-        6: pw.FlexColumnWidth(1.05),
-        7: pw.FlexColumnWidth(1.1),
-      },
-    ),
-  );
-}
-
-pw.Widget _girviDeliveryStatus(
-  GirviInvoiceDraft draft,
-  PrintTemplatePdfProfile profile,
-) {
-  final delivered = draft.deliveredAt != null;
-  final status = delivered ? 'Delivered' : 'Ready for Delivery';
-  final rows = <List<String>>[
-    if (draft.releaseDate != null)
-      [
-        'Release Date',
-        GirviInvoicePdfService._dateFormat.format(draft.releaseDate!),
-      ],
-    if (draft.expectedDeliveryDate != null)
-      [
-        'Expected Pickup Date',
-        GirviInvoicePdfService._dateFormat.format(
-          draft.expectedDeliveryDate!,
-        ),
-      ],
-    if (draft.deliveredAt != null)
-      [
-        'Delivered At',
-        GirviInvoicePdfService._dateFormat.format(draft.deliveredAt!),
-      ],
-    if ((draft.releaseNotes ?? '').trim().isNotEmpty)
-      ['Release Notes', draft.releaseNotes!.trim()],
-  ];
-
-  return _girviSection(
-    title: 'RELEASE SUMMARY',
-    profile: profile,
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Row(
-          children: [
-            _girviStatusPill(
-              status.toUpperCase(),
-              _receiptGreen,
-              profile: profile,
-              width: 128,
-            ),
-            pw.SizedBox(width: 8),
-            pw.Text(
-              'Pledged items cleared for handover.',
-              style: pw.TextStyle(
-                color: profile.bodyTextColor,
-                fontSize: profile.bodyFontSize + 1,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        pw.SizedBox(height: 12),
-        if (rows.isNotEmpty) _girviKeyValueTable(rows, profile),
-      ],
-    ),
-  );
-}
-
-pw.Widget _girviReleaseAcknowledgement(PrintTemplatePdfProfile profile) {
-  return pw.Container(
-    width: double.infinity,
-    padding: pw.EdgeInsets.all(profile.panelPadding + 3),
-    decoration: pw.BoxDecoration(
-      color: profile.panelColor,
-      border: pw.Border.all(
-        color: profile.borderColor,
-        width: profile.borderWidth,
-      ),
-      borderRadius: pw.BorderRadius.circular(profile.radius),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'ACKNOWLEDGEMENT',
-          style: pw.TextStyle(
-            color: profile.bodyTextColor,
-            fontSize: profile.documentTitleFontSize - 2,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 8),
-        pw.Row(
-          children: [
-            pw.Expanded(
-              child: _girviSignatureBox('Customer Signature', profile),
-            ),
-            pw.SizedBox(width: 12),
-            pw.Expanded(
-              child: _girviSignatureBox('Shop Stamp', profile),
-            ),
-            pw.SizedBox(width: 12),
-            pw.Expanded(
-              child: _girviSignatureBox('Authorised Signature', profile),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-pw.Widget _girviSignatureBox(
-  String label,
-  PrintTemplatePdfProfile profile,
-) {
-  return pw.Container(
-    height: 44,
-    padding: const pw.EdgeInsets.fromLTRB(10, 8, 10, 8),
-    decoration: pw.BoxDecoration(
-      color: profile.panelColor,
-      border: pw.Border.all(
-        color: profile.borderColor,
-        width: profile.borderWidth,
-      ),
-      borderRadius: pw.BorderRadius.circular(profile.radius),
-    ),
-    child: pw.Column(
-      mainAxisAlignment: pw.MainAxisAlignment.end,
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Container(
-          height: 0.8,
-          color: profile.bodyTextColor,
-        ),
-        pw.SizedBox(height: 6),
-        pw.Text(
-          label,
-          style: pw.TextStyle(
-            color: profile.bodyTextColor,
-            fontSize: profile.labelFontSize + 0.6,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 pw.Widget _girviSection({
   required String title,
   required PrintTemplatePdfProfile profile,
@@ -873,31 +412,6 @@ pw.Widget _girviAppendixFooter(
       ],
     ),
   );
-}
-
-List<GirviInvoiceLedgerEntry> _girviInterestLedgerEntries(
-  GirviInvoiceDraft draft,
-) {
-  final rows = draft.ledgerEntries.where((entry) {
-    return _girviReceivedInterest(entry) > 0.005;
-  }).toList()
-    ..sort((a, b) {
-      final byDate = a.date.compareTo(b.date);
-      if (byDate != 0) return byDate;
-      return a.typeLabel.compareTo(b.typeLabel);
-    });
-  return rows;
-}
-
-double _girviReceivedInterest(GirviInvoiceLedgerEntry entry) {
-  if (entry.interestAmount > 0) return entry.interestAmount;
-  final legacyInterestOnly =
-      entry.typeLabel.toLowerCase().contains('interest') &&
-          entry.principalAmount <= 0 &&
-          entry.discountAmount <= 0;
-  return legacyInterestOnly
-      ? entry.amount.clamp(0, double.infinity).toDouble()
-      : 0;
 }
 
 String _ratePercentLabel(double value) {

@@ -283,6 +283,7 @@ class GirviInterestBreakdownLine {
   });
 
   double get monthlyInterest => principalBase * monthlyRatePercent / 100;
+  double get grossClosingAmount => principalBase + interestAmount;
   double get closingAmount => closingBalance ?? principalBase + interestAmount;
 }
 

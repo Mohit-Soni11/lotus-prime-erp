@@ -112,7 +112,7 @@ class _CustomerReadyPanel extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Select the exact bill to open the collection desk.',
+                            'Listed by invoice number. Select a bill to collect payment.',
                             style: GoogleFonts.inter(
                               color: GirviColors.textDark,
                               fontSize: 13,
@@ -134,8 +134,7 @@ class _CustomerReadyPanel extends StatelessWidget {
                     dateFmt: dateFmt,
                     onTap: () => onLoanTap(account.loans[i]),
                   ),
-                  if (i != account.loans.length - 1)
-                    Container(height: 1, color: GirviColors.divider),
+                  if (i != account.loans.length - 1) const SizedBox(height: 10),
                 ],
               ],
             ),

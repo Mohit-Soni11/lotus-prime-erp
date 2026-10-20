@@ -18,7 +18,6 @@ class NoticeItemPhotoResolver {
       final settings = await _billing.fetch();
       final details = await _details.getLoanDetails(
         loanId,
-        purgeExpiredReleased: false,
       );
       if (details == null) return null;
       for (final item in details.items) {

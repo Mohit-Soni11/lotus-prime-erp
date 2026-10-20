@@ -17,12 +17,16 @@ import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/setting/billing_setup/girvi_billing_model.dart';
 import 'girvi_interest_period_text.dart';
+import 'girvi_receipt_financial_summary.dart';
 
 part 'girvi_invoice_pdf_render_sections.dart';
 part 'girvi_invoice_pdf_table_sections.dart';
 part 'girvi_invoice_pdf_detail_sections.dart';
 part 'girvi_invoice_pdf_media_sections.dart';
 part 'girvi_invoice_pdf_appendix_pages.dart';
+part 'girvi_invoice_pdf_interest_sections.dart';
+part 'girvi_invoice_pdf_release_sections.dart';
+part 'girvi_invoice_pdf_watermark.dart';
 part 'girvi_invoice_pdf_models.dart';
 
 enum GirviInvoiceFormat {
@@ -128,6 +132,9 @@ class GirviInvoicePdfService {
               buildBackground: _hasWatermark(printable)
                   ? (_) => _documentWatermark(printable)
                   : null,
+              buildForeground: _hasWatermark(printable)
+                  ? (_) => _documentWatermark(printable, opacity: 0.08)
+                  : null,
             ),
             build: (_) => LotusPrintTemplateRendererRegistry.buildA4(
               templateId: template.id,
@@ -187,59 +194,18 @@ class GirviInvoicePdfService {
     return document.watermarkText.trim().isNotEmpty;
   }
 
-  pw.Widget _documentWatermark(LotusPrintableDocument document) {
+  pw.Widget _documentWatermark(
+    LotusPrintableDocument document, {
+    double opacity = 0.18,
+  }) {
     final color = PdfColor.fromInt(
       document.watermarkColorValue ?? 0xFF059669,
     );
-    final text = document.watermarkText.trim().toUpperCase();
-
-    return pw.Center(
-      child: pw.Opacity(
-        opacity: 0.18,
-        child: pw.Transform.rotate(
-          angle: -0.45,
-          child: pw.Container(
-            padding: const pw.EdgeInsets.symmetric(
-              horizontal: 32,
-              vertical: 14,
-            ),
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: color, width: 3),
-              borderRadius: pw.BorderRadius.circular(10),
-            ),
-            child: pw.Column(
-              mainAxisSize: pw.MainAxisSize.min,
-              children: [
-                pw.Text(
-                  text,
-                  style: pw.TextStyle(
-                    color: color,
-                    fontSize: 76,
-                    fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 3,
-                  ),
-                ),
-                pw.SizedBox(height: 4),
-                pw.Container(
-                  height: 2,
-                  width: 230,
-                  color: color,
-                ),
-                pw.SizedBox(height: 5),
-                pw.Text(
-                  'FINAL SETTLEMENT COMPLETE',
-                  style: pw.TextStyle(
-                    color: color,
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return _girviStatusWatermark(
+      label: document.watermarkText,
+      subtitle: 'Final Settlement Complete',
+      color: color,
+      opacity: opacity,
     );
   }
 

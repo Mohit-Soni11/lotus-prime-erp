@@ -44,7 +44,6 @@ class GirviAccountDetailController extends ChangeNotifier {
 
       final loadedDetails = await _detailsRepository.getLoanDetails(
         loanId,
-        purgeExpiredReleased: false,
       );
       final loadedPayments = await _repository.getPaymentModelsForLoan(loanId);
       loadedPayments.sort((a, b) {

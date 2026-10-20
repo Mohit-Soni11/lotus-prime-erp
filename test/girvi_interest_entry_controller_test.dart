@@ -72,6 +72,34 @@ void main() {
         'GRV-A-002');
   });
 
+  test('customer bills stay in numeric ticket order after search', () async {
+    final customerId =
+        await _insertCustomer(db, 'Ordered Customer', '9000000020');
+    for (final ticketNo in [
+      'GRV-0013',
+      'GRV-0011',
+      'GRV-0015',
+      'GRV-0012',
+      'GRV-0014',
+    ]) {
+      await _insertLoan(db, customerId, ticketNo, 'Gold ring', 3000);
+    }
+
+    await controller.load();
+    expect(
+      controller.customerAccounts.single.loans
+          .map((item) => item.loan.ticketNo),
+      ['GRV-0011', 'GRV-0012', 'GRV-0013', 'GRV-0014', 'GRV-0015'],
+    );
+
+    controller.onSearchChanged('gold ring');
+    expect(
+      controller.customerAccounts.single.loans
+          .map((item) => item.loan.ticketNo),
+      ['GRV-0011', 'GRV-0012', 'GRV-0013', 'GRV-0014', 'GRV-0015'],
+    );
+  });
+
   test('release discount auto-fills the net settlement interest first',
       () async {
     final customerId =

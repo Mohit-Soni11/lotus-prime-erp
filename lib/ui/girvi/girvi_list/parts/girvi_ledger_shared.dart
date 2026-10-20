@@ -1,10 +1,7 @@
 part of '../girvi_list_screen.dart';
 
 extension _GirviLedgerFormatters on _GirviListScreenState {
-  String _money(double value, {bool precise = false}) {
-    final formatter = precise ? _preciseMoneyFormat : _moneyFormat;
-    return 'Rs ${formatter.format(value)}';
-  }
+  String _money(double value) => GirviLedgerMoneyFormatter.format(value);
 
   String _date(DateTime? value) {
     if (value == null) return 'Not set';
@@ -46,17 +43,12 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
     return _durationLabel(accountAge);
   }
 
-  Color _ticketTimelineColor(
-    GirviLoanModel loan, {
-    bool hasDueAmount = false,
-  }) {
+  Color _ticketTimelineColor(GirviLoanModel loan) {
     if (loan.girviStatus == GirviStatus.readyForDelivery ||
         loan.girviStatus == GirviStatus.released) {
       return GirviColors.success;
     }
-    return (loan.isOverdue || hasDueAmount)
-        ? GirviColors.danger
-        : GirviColors.textDark;
+    return loan.isOverdue ? GirviColors.danger : GirviColors.textDark;
   }
 
   String _durationLabel(GirviElapsedPeriod period) {

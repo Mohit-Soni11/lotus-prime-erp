@@ -28,10 +28,7 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
     final totalPayableColor = _dueAmountColor(interestQuote.totalPayable);
     final principalDueColor = _dueAmountColor(interestQuote.principalDue);
     final interestDueColor = _dueAmountColor(interestQuote.interestOutstanding);
-    final timelineColor = _ticketTimelineColor(
-      loan,
-      hasDueAmount: interestQuote.totalPayable > 0.005,
-    );
+    final timelineColor = _ticketTimelineColor(loan);
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

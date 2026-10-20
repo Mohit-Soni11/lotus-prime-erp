@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../constants/app_routes.dart';
+import '../../../core/router/workspace_navigation.dart';
 import '../../../theme/sidebar/sidebar_theme.dart';
 
 class CustomSidebar extends StatefulWidget {
@@ -45,7 +46,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
       return;
     }
     final path = RouteMapper.toPath(routeId);
-    context.go(path);
+    WorkspaceNavigation.open(context, path);
   }
 
   @override
