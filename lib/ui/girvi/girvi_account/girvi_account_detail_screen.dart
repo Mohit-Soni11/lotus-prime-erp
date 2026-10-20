@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,18 +23,17 @@ import '../shared/girvi_shared_widgets.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_account_detail_layout.dart';
+part 'parts/girvi_account_balance_widgets.dart';
 part 'parts/girvi_account_detail_panels.dart';
 part 'parts/girvi_account_detail_payment_history.dart';
 part 'parts/girvi_account_disbursements.dart';
 part 'parts/girvi_account_detail_shared.dart';
 part 'parts/girvi_account_document_actions.dart';
 part 'parts/girvi_account_documents_panel.dart';
-part 'parts/girvi_account_lifecycle_widgets.dart';
 part 'parts/girvi_account_pledged_photos.dart';
 part 'parts/girvi_account_pledged_item_row.dart';
 part 'parts/girvi_account_pledged_specs.dart';
 part 'parts/girvi_account_action_widgets.dart';
-part 'parts/girvi_account_invoice_preview.dart';
 
 class GirviAccountDetailScreen extends StatefulWidget {
   final int loanId;
@@ -62,6 +60,7 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   final NumberFormat _preciseMoneyFormat = NumberFormat('#,##,##0.00', 'en_IN');
   final DateFormat _dateFormat = DateFormat('dd MMM yyyy');
   final DateFormat _dateTimeFormat = DateFormat('dd MMM yyyy, hh:mm a');
+  final ScrollController _paymentHistoryScrollController = ScrollController();
 
   bool _openingGirviInvoice = false;
   bool _printingGirviInvoice = false;
@@ -73,7 +72,19 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant GirviAccountDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.loanId != widget.loanId) {
+      if (_paymentHistoryScrollController.hasClients) {
+        _paymentHistoryScrollController.jumpTo(0);
+      }
+      _controller.load(widget.loanId);
+    }
+  }
+
+  @override
   void dispose() {
+    _paymentHistoryScrollController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -140,10 +151,10 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     final loan = account.loan;
     if (loan.deliveredAt != null) return 'Delivered and Closed';
     if (loan.girviStatus == GirviStatus.readyForDelivery) {
-      return 'Settlement Complete - Delivery Pending';
+      return 'Ready for Delivery';
     }
     if (loan.girviStatus == GirviStatus.partialRelease) {
-      return 'Settlement in Progress';
+      return 'Partially Settled';
     }
     if (loan.girviStatus == GirviStatus.auctioned) return 'Closed';
     if (loan.girviStatus == GirviStatus.released) return 'Released';

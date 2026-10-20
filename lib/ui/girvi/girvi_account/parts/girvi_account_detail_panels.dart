@@ -46,7 +46,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                   Expanded(child: identity),
                   Container(
                     width: 1,
-                    constraints: const BoxConstraints(minHeight: 246),
+                    constraints: const BoxConstraints(minHeight: 190),
                     color: const Color(0xFFE8E3DA),
                   ),
                   SizedBox(width: 390, child: documents),
@@ -133,135 +133,134 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          _buildAccountLifecycleOverview(account),
+          const SizedBox(height: 14),
+          _buildAccountStatusOverview(account),
         ],
       ),
     );
   }
 
-  Widget _buildAccountLifecycleOverview(GirviLoanWithCustomer account) {
-    final summary = GirviAccountLifecycleSummary.fromAccount(
-      account,
-      dateLabel: _date,
-      dateTimeLabel: _dateTime,
-      moneyLabel: _money,
-    );
+  Widget _buildAccountStatusOverview(GirviLoanWithCustomer account) {
+    final loan = account.loan;
+    if (loan.girviStatus == GirviStatus.auctioned) {
+      return const _AccountStatusBadge(
+        label: 'Account Closed',
+        color: GirviColors.textMuted,
+      );
+    }
 
-    return _AccountLifecycleRail(
-      items: [
-        _lifecycleItem(summary.period),
-        _lifecycleItem(summary.settlement),
-        _lifecycleItem(summary.delivery),
+    final settled = GirviAccountLifecycleSummary.isSettlementComplete(account);
+    final delivered =
+        loan.deliveredAt != null || loan.girviStatus == GirviStatus.released;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _AccountStatusBadge(
+          label: settled ? 'Settlement Complete' : 'Payment Pending',
+          color: settled ? GirviColors.success : GirviColors.warning,
+        ),
+        _AccountStatusBadge(
+          label: delivered
+              ? 'Item Delivered'
+              : settled
+                  ? 'Ready for Pickup'
+                  : 'Delivery Pending',
+          color: delivered
+              ? GirviColors.success
+              : settled
+                  ? GirviColors.info
+                  : GirviColors.textBody,
+        ),
       ],
     );
   }
 
-  _AccountLifecycleItem _lifecycleItem(GirviLifecycleTile tile) {
-    return _AccountLifecycleItem(
-      icon: _lifecycleIcon(tile.kind),
-      title: tile.title,
-      value: tile.value,
-      subtitle: tile.subtitle,
-      color: _lifecycleColor(tile.kind),
-    );
-  }
-
-  IconData _lifecycleIcon(GirviLifecycleTileKind kind) {
-    switch (kind) {
-      case GirviLifecycleTileKind.runningPeriod:
-      case GirviLifecycleTileKind.closedPeriod:
-        return Icons.schedule_rounded;
-      case GirviLifecycleTileKind.settlementComplete:
-        return Icons.verified_rounded;
-      case GirviLifecycleTileKind.settlementPending:
-        return Icons.pending_actions_rounded;
-      case GirviLifecycleTileKind.deliveryDelivered:
-        return Icons.inventory_2_rounded;
-      case GirviLifecycleTileKind.deliveryReady:
-        return Icons.event_available_rounded;
-      case GirviLifecycleTileKind.deliveryPending:
-        return Icons.lock_clock_rounded;
-    }
-  }
-
-  Color _lifecycleColor(GirviLifecycleTileKind kind) {
-    switch (kind) {
-      case GirviLifecycleTileKind.runningPeriod:
-      case GirviLifecycleTileKind.closedPeriod:
-      case GirviLifecycleTileKind.deliveryReady:
-        return GirviColors.info;
-      case GirviLifecycleTileKind.settlementComplete:
-      case GirviLifecycleTileKind.deliveryDelivered:
-        return GirviColors.success;
-      case GirviLifecycleTileKind.settlementPending:
-        return GirviColors.warning;
-      case GirviLifecycleTileKind.deliveryPending:
-        return GirviColors.textBody;
-    }
-  }
-
   Widget _buildFinancialOverview(GirviLoanWithCustomer account) {
-    final totalReceived = account.principalPaidTotal +
-        account.legacyPrincipalRepaidTotal +
-        account.interestPaidTotal;
-    final amountToCollect = account.totalPayable;
-    final interestRate = account.loan.interestRate;
-    final interestRateLabel = interestRate == interestRate.roundToDouble()
-        ? interestRate.toStringAsFixed(0)
-        : interestRate.toStringAsFixed(2);
-    final principalDueVisible = account.principalDue > 0.01;
-    final interestDueVisible = account.netInterestDue > 0.01;
-
-    final metrics = [
-      _AccountMetricData(
-        label: 'Original Principal',
-        value: _money(account.originalPrincipal),
-        icon: GirviIcons.loanTerms,
-        color: GirviColors.textDark,
-        helper: 'Loan amount',
-      ),
-      _AccountMetricData(
-        label: 'Interest Accrued',
-        value: _money(account.grossInterestAccrued),
-        icon: GirviIcons.interestRate,
-        color: GirviColors.warning,
-        helper: 'Total at $interestRateLabel%',
-      ),
-      if (principalDueVisible)
-        _AccountMetricData(
-          label: 'Principal Due',
-          value: _money(account.principalDue),
-          icon: Icons.account_balance_rounded,
-          color: GirviColors.danger,
-          helper: 'Outstanding principal',
-        ),
-      if (interestDueVisible)
-        _AccountMetricData(
-          label: 'Interest Due',
-          value: _money(account.netInterestDue),
-          icon: Icons.percent_rounded,
-          color: GirviColors.danger,
-          helper: 'Unpaid interest',
-        ),
-      _AccountMetricData(
-        label: 'Amount to Collect',
-        value: _money(amountToCollect),
-        icon: Icons.request_quote_rounded,
-        color:
-            amountToCollect <= 0.01 ? GirviColors.success : GirviColors.danger,
-        helper: amountToCollect <= 0.01
-            ? 'Nothing pending from customer'
-            : 'Receivable from customer',
-      ),
-      _AccountMetricData(
-        label: 'Total Received',
-        value: _money(totalReceived),
-        icon: GirviIcons.cash,
-        color: GirviColors.success,
-        helper: 'Already collected',
-      ),
-    ];
+    final interestQuote = account.interestQuoteAt();
+    final principalReceived =
+        account.principalPaidTotal + account.legacyPrincipalRepaidTotal;
+    final totalReceived = principalReceived + account.interestPaidTotal;
+    final totalDiscount =
+        account.principalDiscountTotal + account.interestDiscountTotal;
+    final amountToCollect = interestQuote.totalPayable;
+    final grossTotal = account.originalPrincipal + interestQuote.grossInterest;
+    final principalCard = _AccountBalanceCard(
+      title: 'Original Principal',
+      amount: _money(account.originalPrincipal),
+      icon: Icons.account_balance_rounded,
+      color: GirviColors.info,
+      compact: true,
+      note: 'Loan amount at pledge',
+    );
+    final interestCard = _AccountBalanceCard(
+      title: 'Total Interest Accrued',
+      amount: _money(interestQuote.grossInterest),
+      icon: GirviIcons.interestRate,
+      color: GirviColors.warning,
+      compact: true,
+      note:
+          '${interestQuote.interestType} · ${interestQuote.chargeableMonths} chargeable months',
+    );
+    final grossCard = _AccountBalanceCard(
+      title: 'Gross Total',
+      amount: _money(grossTotal),
+      icon: Icons.calculate_rounded,
+      color: GirviColors.textDark,
+      compact: true,
+      note: 'Principal + interest before payments and discounts',
+    );
+    final balanceCard = _AccountBalanceCard(
+      title: amountToCollect <= 0.01 ? 'Account Settled' : 'Amount to Collect',
+      amount: _money(amountToCollect),
+      icon: amountToCollect <= 0.01
+          ? Icons.verified_rounded
+          : Icons.request_quote_rounded,
+      color: amountToCollect <= 0.01 ? GirviColors.success : GirviColors.danger,
+      note: amountToCollect <= 0.01 ? 'No remaining balance' : null,
+      lines: [
+        if (interestQuote.principalDue > 0.01)
+          _AccountBalanceLine(
+              'Principal Due', _money(interestQuote.principalDue)),
+        if (interestQuote.interestOutstanding > 0.01)
+          _AccountBalanceLine(
+            'Interest Due',
+            _money(interestQuote.interestOutstanding),
+          ),
+      ],
+    );
+    final receivedCard = _AccountBalanceCard(
+      title: 'Total Received',
+      amount: _money(totalReceived),
+      icon: GirviIcons.cash,
+      color: GirviColors.success,
+      lines: [
+        if (account.interestPaidTotal > 0.01)
+          _AccountBalanceLine(
+            'Interest Received',
+            _money(account.interestPaidTotal),
+            color: GirviColors.success,
+          )
+        else if (interestQuote.interestOutstanding > 0.01)
+          _AccountBalanceLine(
+            'Interest Due',
+            _money(interestQuote.interestOutstanding),
+            color: GirviColors.danger,
+          ),
+        if (principalReceived > 0.01)
+          _AccountBalanceLine(
+            'Principal Received',
+            _money(principalReceived),
+            color: GirviColors.success,
+          )
+        else if (interestQuote.principalDue > 0.01)
+          _AccountBalanceLine(
+            'Principal Due',
+            _money(interestQuote.principalDue),
+            color: GirviColors.danger,
+          ),
+      ],
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -269,16 +268,13 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
         final safeWidth = maxWidth <= 0 ? 320.0 : maxWidth;
-        final maxColumns = safeWidth >= 1180
-            ? 6
-            : safeWidth >= 760
-                ? 3
-                : 2;
-        final columns =
-            metrics.length < maxColumns ? metrics.length : maxColumns;
+        final columns = safeWidth >= 960
+            ? 3
+            : safeWidth >= 680
+                ? 2
+                : 1;
         const spacing = 12.0;
         final cardWidth = (safeWidth - (columns - 1) * spacing) / columns;
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -292,15 +288,47 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             Wrap(
               spacing: spacing,
               runSpacing: spacing,
-              children: metrics
-                  .map(
-                    (metric) => SizedBox(
-                      width: cardWidth > 0 ? cardWidth : safeWidth,
-                      child: _AccountMetricCard(data: metric),
-                    ),
-                  )
-                  .toList(),
+              children: [
+                for (final card in [principalCard, interestCard, grossCard])
+                  SizedBox(width: cardWidth, child: card),
+              ],
             ),
+            const SizedBox(height: spacing),
+            Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final card in [receivedCard, balanceCard])
+                  SizedBox(
+                    width: (safeWidth - (safeWidth >= 680 ? spacing : 0)) /
+                        (safeWidth >= 680 ? 2 : 1),
+                    child: card,
+                  ),
+              ],
+            ),
+            if (totalDiscount > 0.01 ||
+                interestQuote.advanceInterestCredit > 0.01) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (totalDiscount > 0.01)
+                    _AccountMetaChip(
+                      icon: Icons.local_offer_rounded,
+                      label: 'Discount applied ${_money(totalDiscount)}',
+                      color: GirviColors.warning,
+                    ),
+                  if (interestQuote.advanceInterestCredit > 0.01)
+                    _AccountMetaChip(
+                      icon: Icons.savings_rounded,
+                      label:
+                          'Advance interest credit ${_money(interestQuote.advanceInterestCredit)}',
+                      color: GirviColors.info,
+                    ),
+                ],
+              ),
+            ],
           ],
         );
       },
@@ -321,8 +349,7 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             icon: GirviIcons.itemDetails,
             color: GirviColors.brandGold,
             title: 'Pledged Item Details',
-            subtitle:
-                '$itemCount item${itemCount == 1 ? '' : 's'} · ${_weight(loan.netWeight)} net weight',
+            subtitle: itemCount > 1 ? '$itemCount pledged items' : null,
           ),
           const SizedBox(height: 14),
           if (detailedItems.isNotEmpty)
@@ -331,13 +358,20 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             _AccountInfoGrid(
               rows: [
                 _AccountInfoRowData('Item Name', loan.itemDescription),
-                _AccountInfoRowData('Item Count', loan.itemCount.toString()),
+                if (loan.itemCount > 1)
+                  _AccountInfoRowData('Item Count', loan.itemCount.toString()),
                 _AccountInfoRowData(
                   'Metal / Purity',
                   '${loan.metalTypeEnum.displayName} / ${loan.metalPurity}',
                 ),
-                _AccountInfoRowData('Gross Weight', _weight(loan.grossWeight)),
-                _AccountInfoRowData('Less Weight', _weight(loan.stoneWeight)),
+                if (loan.stoneWeight > 0.001 ||
+                    (loan.grossWeight - loan.netWeight).abs() > 0.001)
+                  _AccountInfoRowData(
+                    'Gross Weight',
+                    _weight(loan.grossWeight),
+                  ),
+                if (loan.stoneWeight > 0.001)
+                  _AccountInfoRowData('Less Weight', _weight(loan.stoneWeight)),
                 _AccountInfoRowData('Net Weight', _weight(loan.netWeight)),
                 if ((loan.huidNumber ?? '').trim().isNotEmpty)
                   _AccountInfoRowData('HUID', loan.huidNumber!.trim()),
@@ -366,12 +400,21 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
               SizedBox(
                 width: cardWidth,
                 child: _PledgedItemDetailRow(
+                  showSerial: items.length > 1,
                   serialNo: itemDetails.item.serialNo,
                   itemName: itemDetails.item.itemName,
                   metal: itemDetails.item.metalType,
                   purity: itemDetails.item.purity,
-                  pieces: itemDetails.item.pieces,
-                  grossWeight: _weight(itemDetails.item.grossWeight),
+                  pieceLabel: itemDetails.item.pieces > 1
+                      ? '${itemDetails.item.pieces} pieces'
+                      : null,
+                  grossWeight: itemDetails.item.lessWeight > 0.001 ||
+                          (itemDetails.item.grossWeight -
+                                      itemDetails.item.netWeight)
+                                  .abs() >
+                              0.001
+                      ? _weight(itemDetails.item.grossWeight)
+                      : null,
                   lessWeight: itemDetails.item.lessWeight > 0.001
                       ? _weight(itemDetails.item.lessWeight)
                       : null,
@@ -391,6 +434,20 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
 
   Widget _buildLoanTermsPanel(GirviLoanWithCustomer account) {
     final loan = account.loan;
+    final disbursements =
+        _controller.details?.disbursements ?? const <GirviDisbursement>[];
+    final loanEnd = loan.releaseDate ?? DateTime.now();
+    final periodEnd =
+        loanEnd.isBefore(loan.startDate) ? loan.startDate : loanEnd;
+    final currentPeriod =
+        GirviLoanModel.elapsedPeriodBetween(loan.startDate, periodEnd);
+    final chargeableMonths =
+        GirviLoanModel.chargeableMonthsBetween(loan.startDate, periodEnd);
+    final singleDisbursement =
+        disbursements.length == 1 ? disbursements.single : null;
+    final disbursementLabel = singleDisbursement == null
+        ? '${_money(account.originalPrincipal)} via ${loan.disbursementMode.trim().isEmpty ? 'Mode not recorded' : loan.disbursementMode.trim()}'
+        : '${_money(singleDisbursement.amount)} via ${singleDisbursement.displayLabel}';
     return _AccountSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,38 +456,65 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
             icon: GirviIcons.dates,
             color: GirviColors.info,
             title: 'Loan Terms',
-            subtitle: 'Principal, interest rate and maturity timeline',
+            subtitle: 'Amount, dates, interest and disbursement',
           ),
           const SizedBox(height: 14),
           _AccountInfoGrid(
             rows: [
-              _AccountInfoRowData('Start Date', _date(loan.startDate)),
-              _AccountInfoRowData('Maturity Date', _date(loan.maturityDate)),
               _AccountInfoRowData(
-                'Duration',
-                '${loan.durationMonths} month${loan.durationMonths == 1 ? '' : 's'}',
+                'Original Principal',
+                _money(account.originalPrincipal),
               ),
               _AccountInfoRowData(
                 'Monthly Interest Rate',
                 '${loan.interestRate.toStringAsFixed(2)}%',
               ),
-              if (_controller.details?.disbursements.isEmpty ?? true)
+              _AccountInfoRowData('Pledge Date', _date(loan.startDate)),
+              _AccountInfoRowData('Maturity Date', _date(loan.maturityDate)),
+              _AccountInfoRowData(
+                'Original Loan Period',
+                '${loan.durationMonths} month${loan.durationMonths == 1 ? '' : 's'}',
+              ),
+              _AccountInfoRowData(
+                loan.releaseDate == null
+                    ? 'Current Loan Period'
+                    : 'Loan Period at Settlement',
+                currentPeriod.displayLabel,
+              ),
+              _AccountInfoRowData('Chargeable Months', '$chargeableMonths'),
+              if (account.netInterestDue > 0.01)
                 _AccountInfoRowData(
-                  'Disbursement Mode',
-                  loan.disbursementMode,
+                  'Unpaid Interest Period',
+                  loan.unpaidInterestElapsedPeriod.displayLabel,
                 ),
-              _AccountInfoRowData(
-                'Last Interest Paid',
-                _date(loan.lastInterestPaidDate),
-              ),
-              _AccountInfoRowData(
-                'Unpaid Interest Period',
-                loan.unpaidInterestElapsedPeriod.displayLabel,
-              ),
+              if (loan.lastInterestPaidDate != null)
+                _AccountInfoRowData(
+                  'Interest Paid Through',
+                  _date(loan.lastInterestPaidDate),
+                ),
+              if (disbursements.length <= 1)
+                _AccountInfoRowData('Disbursed', disbursementLabel),
+              if (singleDisbursement?.referenceNo?.trim().isNotEmpty ?? false)
+                _AccountInfoRowData(
+                  'Disbursement Reference',
+                  singleDisbursement!.referenceNo!.trim(),
+                ),
+              if (loan.deliveredAt != null)
+                _AccountInfoRowData(
+                    'Delivered On', _dateTime(loan.deliveredAt)),
+              if (loan.deliveredAt == null && loan.expectedDeliveryDate != null)
+                _AccountInfoRowData(
+                  'Expected Pickup Date',
+                  _date(loan.expectedDeliveryDate),
+                ),
               if ((loan.notes ?? '').trim().isNotEmpty)
                 _AccountInfoRowData('Notes', loan.notes!.trim()),
             ],
           ),
+          if (disbursements.length > 1) ...[
+            const SizedBox(height: 16),
+            _buildDisbursementBreakdown(disbursements),
+          ],
         ],
       ),
     );

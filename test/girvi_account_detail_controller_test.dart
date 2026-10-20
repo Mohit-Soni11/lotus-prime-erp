@@ -67,4 +67,46 @@ void main() {
     expect(controller.account!.interestPaidTotal, 100);
     expect(controller.details!.disbursements, hasLength(2));
   });
+
+  test('latest account request wins when loads overlap', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final controller = GirviAccountDetailController(db);
+    addTearDown(controller.dispose);
+    addTearDown(db.close);
+
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Account Customer',
+            mobile: '9000000042',
+          ),
+        );
+    Future<int> addLoan(String ticketNo) => db.into(db.girviLoans).insert(
+          GirviLoansCompanion.insert(
+            ticketNo: ticketNo,
+            customerId: customerId,
+            itemDescription: 'Gold ring',
+            startDate: drift.Value(DateTime(2025, 1, 1)),
+          ),
+        );
+    final firstId = await addLoan('GRV-ACCOUNT-002');
+    final secondId = await addLoan('GRV-ACCOUNT-003');
+
+    await Future.wait([controller.load(firstId), controller.load(secondId)]);
+
+    expect(controller.errorMessage, isNull);
+    expect(controller.account?.loan.id, secondId);
+    expect(controller.details?.loan.id, secondId);
+  });
+
+  test('disposing during account load does not notify a closed controller',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final controller = GirviAccountDetailController(db);
+
+    final pendingLoad = controller.load(1);
+    controller.dispose();
+
+    await expectLater(pendingLoad, completes);
+  });
 }

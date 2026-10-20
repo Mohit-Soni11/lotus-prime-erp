@@ -132,7 +132,7 @@ class _TicketStackRowState extends State<_TicketStackRow> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Divider(height: 1, color: GirviColors.divider),
+                    const Divider(height: 1, color: GirviColors.divider),
                     const SizedBox(height: 11),
                     if (compact) ...[
                       details,
@@ -277,7 +277,7 @@ class _TicketDuePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          Divider(height: 1, color: GirviColors.divider),
+          const Divider(height: 1, color: GirviColors.divider),
           const SizedBox(height: 7),
           Text(
             'Interest Due',

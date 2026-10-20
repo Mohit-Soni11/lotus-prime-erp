@@ -1,12 +1,13 @@
 part of '../girvi_account_detail_screen.dart';
 
 class _PledgedItemDetailRow extends StatelessWidget {
+  final bool showSerial;
   final int serialNo;
   final String itemName;
   final String metal;
   final String purity;
-  final int pieces;
-  final String grossWeight;
+  final String? pieceLabel;
+  final String? grossWeight;
   final String? lessWeight;
   final String netWeight;
   final String? huid;
@@ -14,11 +15,12 @@ class _PledgedItemDetailRow extends StatelessWidget {
   final Color color;
 
   const _PledgedItemDetailRow({
+    required this.showSerial,
     required this.serialNo,
     required this.itemName,
     required this.metal,
     required this.purity,
-    required this.pieces,
+    required this.pieceLabel,
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
@@ -31,7 +33,6 @@ class _PledgedItemDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final huidText = huid?.trim();
     final hasHuid = huidText != null && huidText.isNotEmpty;
-    final pieceLabel = pieces == 1 ? '1 piece' : '$pieces pieces';
     final metalLabel = metal.trim().isEmpty ? 'Metal not set' : metal.trim();
     final purityLabel =
         purity.trim().isEmpty ? 'Purity not set' : purity.trim();
@@ -58,25 +59,27 @@ class _PledgedItemDetailRow extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: color.withValues(alpha: 0.20)),
-                ),
-                child: Text(
-                  serialNo.toString().padLeft(2, '0'),
-                  style: GoogleFonts.manrope(
-                    color: color,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+              if (showSerial) ...[
+                Container(
+                  width: 50,
+                  height: 50,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: color.withValues(alpha: 0.20)),
+                  ),
+                  child: Text(
+                    serialNo.toString().padLeft(2, '0'),
+                    style: GoogleFonts.manrope(
+                      color: color,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 13),
+                const SizedBox(width: 13),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

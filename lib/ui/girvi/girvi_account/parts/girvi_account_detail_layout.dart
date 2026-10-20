@@ -36,14 +36,6 @@ extension _GirviAccountDetailLayout on _GirviAccountDetailScreenState {
                                 _buildPledgedItemPanel(account),
                                 const SizedBox(height: 14),
                                 _buildLoanTermsPanel(account),
-                                if (_controller
-                                        .details?.disbursements.isNotEmpty ??
-                                    false) ...[
-                                  const SizedBox(height: 14),
-                                  _buildDisbursementPanel(
-                                    _controller.details!.disbursements,
-                                  ),
-                                ],
                               ],
                             ),
                           ),
@@ -62,13 +54,6 @@ extension _GirviAccountDetailLayout on _GirviAccountDetailScreenState {
                       _buildPledgedItemPanel(account),
                       const SizedBox(height: 14),
                       _buildLoanTermsPanel(account),
-                      if (_controller.details?.disbursements.isNotEmpty ??
-                          false) ...[
-                        const SizedBox(height: 14),
-                        _buildDisbursementPanel(
-                          _controller.details!.disbursements,
-                        ),
-                      ],
                       const SizedBox(height: 14),
                       _buildPaymentLedger(_controller.payments),
                     ],

@@ -61,26 +61,9 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
   }
 
   Future<void> _showGirviInvoicePreview({required Uint8List pdfBytes}) async {
-    final pages = await _rasterPdfPages(pdfBytes);
-    if (!mounted) return;
-    if (pages.isEmpty) {
-      return _showCleanPdfPreview(
-        pdfBytes: pdfBytes,
-        allowPrinting: false,
-      );
-    }
-
-    return showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.78),
-      useSafeArea: false,
-      builder: (dialogContext) => Material(
-        type: MaterialType.transparency,
-        child: _GirviInvoicePagesPreview(
-          pages: pages,
-          onClose: () => Navigator.of(dialogContext).pop(),
-        ),
-      ),
+    return _showCleanPdfPreview(
+      pdfBytes: pdfBytes,
+      allowPrinting: false,
     );
   }
 
@@ -109,21 +92,6 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
     }
   }
 
-  Future<List<PdfRaster>> _rasterPdfPages(Uint8List pdfBytes) async {
-    try {
-      final info = await Printing.info();
-      if (!info.canRaster) return const [];
-
-      final pages = <PdfRaster>[];
-      await for (final page in Printing.raster(pdfBytes, dpi: 144)) {
-        pages.add(page);
-      }
-      return List.unmodifiable(pages);
-    } catch (_) {
-      return const [];
-    }
-  }
-
   Future<void> _showCleanPdfPreview({
     required Uint8List pdfBytes,
     required bool allowPrinting,
@@ -149,8 +117,32 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
                 useActions: allowPrinting,
                 pdfFileName: fileName,
                 maxPageWidth: 860,
+                dpi: 200,
                 scrollViewDecoration: const BoxDecoration(
                   color: Color(0xFF111827),
+                ),
+                onError: (context, error) => const Center(
+                  child: Text(
+                    'PDF preview could not be displayed.',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 18,
+              left: 18,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Text(
+                    'Invoice PDF · Double-click a page to zoom',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               ),
             ),

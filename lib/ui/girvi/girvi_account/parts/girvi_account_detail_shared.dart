@@ -1,21 +1,5 @@
 part of '../girvi_account_detail_screen.dart';
 
-class _AccountMetricData {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final String? helper;
-
-  const _AccountMetricData({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    this.helper,
-  });
-}
-
 class _AccountInfoRowData {
   final String label;
   final String value;
@@ -50,99 +34,17 @@ class _AccountSurface extends StatelessWidget {
   }
 }
 
-class _AccountMetricCard extends StatelessWidget {
-  final _AccountMetricData data;
-
-  const _AccountMetricCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 158),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: GirviColors.cardBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: data.color.withValues(alpha: 0.18)),
-        boxShadow: const [
-          BoxShadow(
-            color: GirviColors.shadowLight,
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _AccountIconBox(icon: data.icon, color: data.color),
-              const Spacer(),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            data.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              color: GirviColors.textDark,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          SizedBox(
-            height: 30,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  data.value,
-                  maxLines: 1,
-                  style: GoogleFonts.manrope(
-                    color: data.color,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (data.helper != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              data.helper!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: GirviColors.textBody,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 class _AccountSectionHeader extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String title;
-  final String subtitle;
+  final String? subtitle;
 
   const _AccountSectionHeader({
     required this.icon,
     required this.color,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
   });
 
   @override
@@ -161,17 +63,19 @@ class _AccountSectionHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GirviStyles.sectionTitle,
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: GirviColors.textBody,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: GirviColors.textBody,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

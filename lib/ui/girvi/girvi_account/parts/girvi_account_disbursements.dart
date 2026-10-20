@@ -1,58 +1,56 @@
 part of '../girvi_account_detail_screen.dart';
 
 extension _GirviAccountDisbursements on _GirviAccountDetailScreenState {
-  Widget _buildDisbursementPanel(List<GirviDisbursement> entries) {
+  Widget _buildDisbursementBreakdown(List<GirviDisbursement> entries) {
     final total = entries.fold<double>(0, (sum, entry) => sum + entry.amount);
 
-    return _AccountSurface(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _AccountSectionHeader(
-            icon: Icons.account_balance_wallet_rounded,
-            color: GirviColors.info,
-            title: 'Loan Disbursement',
-            subtitle: 'How the pledge amount was paid out',
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _AccountSectionHeader(
+          icon: Icons.account_balance_wallet_rounded,
+          color: GirviColors.info,
+          title: 'Disbursement Breakdown',
+          subtitle: 'Payment modes used for this loan',
+        ),
+        const SizedBox(height: 14),
+        for (var index = 0; index < entries.length; index++) ...[
+          if (index > 0) const SizedBox(height: 8),
+          _AccountDisbursementRow(
+            entry: entries[index],
+            amount: _money(entries[index].amount),
           ),
-          const SizedBox(height: 14),
-          for (var index = 0; index < entries.length; index++) ...[
-            if (index > 0) const SizedBox(height: 8),
-            _AccountDisbursementRow(
-              entry: entries[index],
-              amount: _money(entries[index].amount),
+        ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Total Disbursed',
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
                 child: Text(
-                  'Total Disbursed',
-                  style: GoogleFonts.inter(
-                    color: GirviColors.textDark,
-                    fontSize: 13,
+                  _money(total),
+                  style: GoogleFonts.manrope(
+                    color: GirviColors.success,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 160),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    _money(total),
-                    style: GoogleFonts.manrope(
-                      color: GirviColors.success,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

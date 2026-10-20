@@ -2,79 +2,36 @@ part of '../girvi_account_detail_screen.dart';
 
 class _AccountDocumentButton extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
   final Color color;
   final VoidCallback? onTap;
 
   const _AccountDocumentButton({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 160),
-          opacity: enabled ? 1 : 0.66,
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 66),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.075),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withValues(alpha: 0.22)),
-            ),
-            child: Row(
-              children: [
-                _AccountIconBox(icon: icon, color: color),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.manrope(
-                          color: GirviColors.textDark,
-                          fontSize: 13.8,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          color: GirviColors.textBody,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: color,
-                  size: 14,
-                ),
-              ],
-            ),
+    return SizedBox(
+      height: 44,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 17),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          side: BorderSide(color: color.withValues(alpha: 0.35)),
+          backgroundColor: color.withValues(alpha: 0.06),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          textStyle: GoogleFonts.manrope(
+            fontSize: 12.7,
+            fontWeight: FontWeight.w900,
           ),
         ),
       ),

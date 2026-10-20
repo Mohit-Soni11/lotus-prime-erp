@@ -1,8 +1,8 @@
 part of '../girvi_account_detail_screen.dart';
 
 class _PledgedItemSpecs extends StatelessWidget {
-  final String pieceLabel;
-  final String grossWeight;
+  final String? pieceLabel;
+  final String? grossWeight;
   final String? lessWeight;
   final String netWeight;
   final String? huid;
@@ -23,20 +23,22 @@ class _PledgedItemSpecs extends StatelessWidget {
       builder: (context, constraints) {
         final safeWidth =
             constraints.maxWidth <= 0 ? 300.0 : constraints.maxWidth;
-        final columns = safeWidth >= 560
-            ? 3
-            : safeWidth >= 360
-                ? 2
-                : 1;
-        const spacing = 10.0;
-        final tileWidth = (safeWidth - ((columns - 1) * spacing)) / columns;
         final rows = [
-          _PledgedSpecData('Pieces', pieceLabel),
-          _PledgedSpecData('Gross Weight', grossWeight),
+          if (pieceLabel != null) _PledgedSpecData('Pieces', pieceLabel!),
+          if (grossWeight != null)
+            _PledgedSpecData('Gross Weight', grossWeight!),
           if (lessWeight != null) _PledgedSpecData('Less Weight', lessWeight!),
           _PledgedSpecData('Net Weight', netWeight, color: color),
           if (huid != null) _PledgedSpecData('HUID', huid!),
         ];
+        final maxColumns = safeWidth >= 560
+            ? 3
+            : safeWidth >= 360
+                ? 2
+                : 1;
+        final columns = rows.length < maxColumns ? rows.length : maxColumns;
+        const spacing = 10.0;
+        final tileWidth = (safeWidth - ((columns - 1) * spacing)) / columns;
 
         return Wrap(
           spacing: spacing,

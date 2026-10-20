@@ -2,11 +2,6 @@ part of '../girvi_account_detail_screen.dart';
 
 extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
   Widget _buildPaymentLedger(List<GirviPaymentModel> payments) {
-    final totalDiscount = payments.fold<double>(
-      0,
-      (sum, payment) => sum + payment.discountAmount,
-    );
-
     return _AccountSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -17,16 +12,12 @@ extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
             title: 'Payment History',
             subtitle: payments.isEmpty
                 ? 'No payments recorded'
-                : '${payments.length} payment record${payments.length == 1 ? '' : 's'} · oldest first',
+                : payments.length == 1
+                    ? '1 payment record'
+                    : payments.length > 3
+                        ? '${payments.length} payment records · scroll for more'
+                        : '${payments.length} payment records · oldest first',
           ),
-          if (totalDiscount > 0) ...[
-            const SizedBox(height: 10),
-            _AccountInlineNotice(
-              icon: Icons.local_offer_rounded,
-              color: GirviColors.warning,
-              text: 'Approved discount ${_money(totalDiscount)}',
-            ),
-          ],
           const SizedBox(height: 14),
           if (payments.isEmpty)
             const _AccountEmptyBlock(
@@ -34,21 +25,42 @@ extension _GirviAccountPaymentHistory on _GirviAccountDetailScreenState {
               title: 'No Payment Recorded',
               message: 'Interest or settlement entries will appear here.',
             )
-          else
+          else if (payments.length <= 3)
             Column(
               children: [
                 for (var index = 0; index < payments.length; index++)
-                  _PaymentTimelineRow(
-                    payment: payments[index],
-                    isLast: index == payments.length - 1,
-                    money: _money,
-                    date: _date,
-                    coverageLabel: _paymentCoverageLabel(payments[index]),
-                  ),
+                  _paymentRow(payments, index),
               ],
+            )
+          else
+            SizedBox(
+              height: 540,
+              child: Scrollbar(
+                controller: _paymentHistoryScrollController,
+                thumbVisibility: true,
+                child: ListView.builder(
+                  controller: _paymentHistoryScrollController,
+                  primary: false,
+                  padding: const EdgeInsets.only(right: 10),
+                  itemCount: payments.length,
+                  itemBuilder: (context, index) => _paymentRow(payments, index),
+                ),
+              ),
             ),
         ],
       ),
+    );
+  }
+
+  Widget _paymentRow(List<GirviPaymentModel> payments, int index) {
+    final payment = payments[index];
+    return _PaymentTimelineRow(
+      key: ValueKey(payment.id),
+      payment: payment,
+      isLast: index == payments.length - 1,
+      money: _money,
+      date: _date,
+      coverageLabel: _paymentCoverageLabel(payment),
     );
   }
 }
@@ -61,6 +73,7 @@ class _PaymentTimelineRow extends StatelessWidget {
   final String? coverageLabel;
 
   const _PaymentTimelineRow({
+    super.key,
     required this.payment,
     required this.isLast,
     required this.money,

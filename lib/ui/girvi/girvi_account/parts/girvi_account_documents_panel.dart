@@ -50,24 +50,26 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
             ],
           ),
           const SizedBox(height: 14),
-          _AccountDocumentButton(
-            icon: Icons.visibility_rounded,
-            title: 'Preview Invoice PDF',
-            subtitle: _openingGirviInvoice
-                ? 'Opening...'
-                : 'Invoice, interest and release pages',
-            color: GirviColors.brandGold,
-            onTap: documentBusy ? null : _previewGirviInvoice,
-          ),
-          const SizedBox(height: 10),
-          _AccountDocumentButton(
-            icon: Icons.print_rounded,
-            title: 'Print Invoice PDF',
-            subtitle: _printingGirviInvoice
-                ? 'Preparing...'
-                : 'Print the invoice document',
-            color: GirviColors.info,
-            onTap: documentBusy ? null : _printGirviInvoice,
+          Row(
+            children: [
+              Expanded(
+                child: _AccountDocumentButton(
+                  icon: Icons.visibility_rounded,
+                  label: _openingGirviInvoice ? 'Opening...' : 'Preview PDF',
+                  color: GirviColors.brandGold,
+                  onTap: documentBusy ? null : _previewGirviInvoice,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _AccountDocumentButton(
+                  icon: Icons.print_rounded,
+                  label: _printingGirviInvoice ? 'Preparing...' : 'Print PDF',
+                  color: GirviColors.info,
+                  onTap: documentBusy ? null : _printGirviInvoice,
+                ),
+              ),
+            ],
           ),
           if (actionEnabled) ...[
             const SizedBox(height: 14),
