@@ -9,6 +9,8 @@ const _noticeBorder = PdfColor.fromInt(0xFFC5DDF1);
 const _noticeInk = PdfColor.fromInt(0xFF0C3157);
 const _noticeOutstanding = PdfColor.fromInt(0xFFB42318);
 const _noticeReceived = PdfColor.fromInt(0xFF087F5B);
+const _noticeBlack = PdfColor.fromInt(0xFF202020);
+const _noticeDarkGold = PdfColor.fromInt(0xFF916A16);
 
 class _NoticeStatementLayout {
   const _NoticeStatementLayout({
@@ -161,17 +163,5 @@ class _NoticeStatementLayout {
           borderRadius: pw.BorderRadius.circular(5),
         ),
         child: content,
-      );
-
-  pw.Widget _pair(String label, String value) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 1),
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.SizedBox(width: 112, child: pw.Text(label, style: _style(8))),
-            pw.Expanded(
-                child: pw.Text(printText(value), style: _style(8, bold: true))),
-          ],
-        ),
       );
 }

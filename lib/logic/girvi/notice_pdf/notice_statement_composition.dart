@@ -105,47 +105,90 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
               child: pw.Text('FORMAL NOTICE', style: _style(10, bold: true)),
             ),
           ),
-          pw.SizedBox(height: 5),
-          pw.Center(
-            child: pw.Text(
-              statement.subject ?? noticeType.subtitle,
-              textAlign: pw.TextAlign.center,
-              style: _style(9),
-            ),
-          ),
-          pw.SizedBox(height: 7),
+          pw.SizedBox(height: 9),
         ],
       );
 
-  pw.Widget _identityCard() => _card(
-        pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
+  pw.Widget _identityCard() => pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+        decoration: pw.BoxDecoration(
+          color: PdfColors.white,
+          border: pw.Border.all(color: _noticeGold, width: 1),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
+            _noticeDocumentIcon(),
+            pw.SizedBox(width: 11),
             pw.Expanded(
+              flex: 12,
               child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  _pair('Notice No.',
+                  _identityFact('Notice No.',
                       statement.noticeNumber ?? '$ticketNo-NOTICE'),
-                  _pair('Notice Date', dateText),
-                  _pair('Pledge Reference',
+                  _identityFact('Notice Date', dateText),
+                  _identityFact('Pledge Reference',
                       statement.pledgeReference ?? ticketNo),
                 ],
               ),
             ),
-            pw.Container(width: 0.7, height: 36, color: _noticeBorder),
+            pw.SizedBox(width: 9),
+            pw.Container(width: 1, height: 57, color: _noticeGold),
             pw.SizedBox(width: 12),
             pw.Expanded(
+              flex: 11,
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text('Subject', style: _style(8.5, bold: true)),
+                  pw.Text('Subject',
+                      style: _style(10.3, bold: true, color: _noticeDarkGold)),
                   pw.SizedBox(height: 4),
                   pw.Text(statement.subject ?? noticeType.subtitle,
-                      style: _style(8.5)),
+                      style: _style(10.2, bold: true, color: _noticeBlack)),
                 ],
               ),
             ),
           ],
+        ),
+      );
+
+  pw.Widget _identityFact(String label, String value) => pw.Padding(
+        padding: const pw.EdgeInsets.symmetric(vertical: 2.3),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.SizedBox(
+              width: 90,
+              child: pw.Text(label,
+                  style: _style(9.8, bold: true, color: _noticeBlack)),
+            ),
+            pw.Text(':',
+                style: _style(9.8, bold: true, color: _noticeDarkGold)),
+            pw.SizedBox(width: 5),
+            pw.Expanded(
+              child: pw.Text(printText(value),
+                  style: _style(10.1, bold: true, color: _noticeBlack)),
+            ),
+          ],
+        ),
+      );
+
+  pw.Widget _noticeDocumentIcon() => pw.Container(
+        width: 38,
+        height: 44,
+        padding: const pw.EdgeInsets.all(6),
+        decoration: pw.BoxDecoration(
+          color: _noticeDeepNavy,
+          borderRadius: pw.BorderRadius.circular(5),
+        ),
+        child: pw.SvgImage(
+          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 32">'
+              '<path d="M5 2h12l6 6v22H5z" fill="none" stroke="#F1C96A" stroke-width="1.8"/>'
+              '<path d="M17 2v6h6M9 13h10M9 18h10M9 23h8" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>'
+              '</svg>',
         ),
       );
 

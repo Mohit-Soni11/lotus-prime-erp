@@ -24,7 +24,7 @@ class _NoticeCopy {
       title: hindi ? 'गिरवी खाता सूचना' : 'PLEDGE ACCOUNT NOTICE',
       subject: (data) => hindi
           ? 'गिरवी खाता ${data.ticketNo} की बकाया राशि के भुगतान की सूचना'
-          : 'Notice for payment of outstanding amount, Pledge Account ${data.ticketNo}',
+          : 'Request for Settlement of Outstanding Balance — Pledge Account ${data.ticketNo}',
       opening: (data) => hindi
           ? 'हमारे रिकॉर्ड के अनुसार, ${data.startDate} को शुरू हुआ गिरवी खाता ${data.ticketNo}, ${data.maturityDate} को परिपक्व हुआ। ${data.noticeDate} तक खाते में बकाया राशि शेष है।'
           : 'As per our records, pledge account ${data.ticketNo}, opened on ${data.startDate}, matured on ${data.maturityDate}. A balance remains outstanding as of ${data.noticeDate}.',
