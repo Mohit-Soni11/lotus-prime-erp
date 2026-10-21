@@ -508,7 +508,7 @@ void main() {
         noticeType: GirviNoticeType.formal,
         language: GirviNoticeLanguage.english,
       );
-      expect(text, contains('PLEDGE ACCOUNT NOTICE'));
+      expect(text, contains('FINAL NOTICE: PLEDGE ACCOUNT GRV-0018'));
       expect(text, contains('GRV-0018-NOTICE'));
       expect(text, contains('Pledge Account and Duration'));
       expect(text, contains('Compound Interest Breakdown'));

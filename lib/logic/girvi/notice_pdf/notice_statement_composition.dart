@@ -1,12 +1,8 @@
 part of '../girvi_notice_pdf_service.dart';
 
 extension _NoticeStatementComposition on _NoticeStatementLayout {
-  bool get _actionOnInformationPage => (statement.hasPayments ||
-      statement.hasAdjustments ||
-      (statement.isCompound && statement.periods.length >= 4));
-
-  bool get _hasApprovedActionSection => statement.importantLines
-      .contains(t('Required Action', 'आवश्यक कार्रवाई'));
+  bool get _isFinalNotice =>
+      statement.lines.firstOrNull?.startsWith('FINAL NOTICE:') == true;
 
   List<pw.Widget> summaryPage() => [
         _title(),
@@ -31,24 +27,18 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
             ],
           ),
         ),
-        if (!_actionOnInformationPage && !_hasApprovedActionSection) ...[
-          pw.SizedBox(height: 3),
-          _actionCard(),
-        ],
       ];
 
   List<pw.Widget> informationPage() {
     final draft = _noticeDraft();
     return [
-      if (_actionOnInformationPage && !_hasApprovedActionSection) ...[
-        _actionCard(),
-        pw.SizedBox(height: 4),
-      ],
       pw.Inseparable(
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            _section(4, t('Required Action', 'आवश्यक कार्रवाई')),
+            _actionCard(),
+            pw.SizedBox(height: 8),
+            _section(4, _isFinalNotice ? 'Final Notice' : 'Formal Notice'),
             pw.SizedBox(height: 8),
             if (statement.financialAsOf != null) ...[
               _verifiedFinancialNote(),
@@ -61,13 +51,13 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
             if (branding.shopMobile.trim().isNotEmpty)
               pw.Text('Phone: ${branding.shopMobile.trim()}', style: _style(9)),
             pw.SizedBox(height: 7),
-            pw.Text('FORMAL NOTICE: PLEDGE ACCOUNT $ticketNo',
+            pw.Text(
+                '${_isFinalNotice ? 'FINAL' : 'FORMAL'} NOTICE: PLEDGE ACCOUNT $ticketNo',
                 style: _style(12, bold: true)),
             pw.SizedBox(height: 5),
             pw.Row(children: [
               pw.Expanded(
-                child: pw.Text(
-                    'Notice No.: ${statement.noticeNumber ?? '$ticketNo-NOTICE'}',
+                child: pw.Text('Invoice No.: $ticketNo',
                     style: _style(9, bold: true)),
               ),
               pw.Text('Date: $dateText', style: _style(9, bold: true)),
@@ -102,7 +92,8 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
                 color: _noticeGold,
                 borderRadius: pw.BorderRadius.circular(12),
               ),
-              child: pw.Text('FORMAL NOTICE', style: _style(10, bold: true)),
+              child: pw.Text(_isFinalNotice ? 'FINAL NOTICE' : 'FORMAL NOTICE',
+                  style: _style(10, bold: true)),
             ),
           ),
           pw.SizedBox(height: 9),
@@ -127,8 +118,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
-                  _identityFact('Notice No.',
-                      statement.noticeNumber ?? '$ticketNo-NOTICE'),
+                  _identityFact('Invoice No.', ticketNo),
                   _identityFact('Notice Date', dateText),
                   _identityFact('Pledge Reference',
                       statement.pledgeReference ?? ticketNo),

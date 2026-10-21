@@ -20,7 +20,10 @@ void main() {
   test('notice draft uses the selected response period and account recipient',
       () {
     final item = createNoticeCase();
-    final notice = GirviNoticeGenerationService(now: item.now).build(
+    final notice = GirviNoticeGenerationService(
+      now: item.now,
+      shopName: 'Anjali Jewellers',
+    ).build(
       item: item,
       noticeType: GirviNoticeType.formal,
       language: GirviNoticeLanguage.english,
@@ -35,7 +38,14 @@ void main() {
     expect(draft, contains('Customer Address: Sample address, Patna'));
     expect(draft, contains('Customer Mobile: 0000000000'));
     expect(draft, contains('on or before 18 October 2026'));
-    expect(draft, contains('This notice or the absence of a reply'));
+    expect(draft, contains('Pledged Item: ring, 10.000 g, 22KT (91.6%)'));
+    expect(draft, contains('deposited with Anjali Jewellers'));
+    expect(draft, contains('contact Anjali Jewellers'));
+    expect(draft, contains('collect your pledged item'));
+    expect(draft, contains('may sell or melt the pledged item'));
+    expect(draft, isNot(contains('unrecorded')));
+    expect(draft, isNot(contains('disputed')));
+    expect(draft, isNot(contains('approved discounts')));
   });
 
   for (final simple in [true, false]) {
@@ -129,16 +139,14 @@ void main() {
       '04 April 2026 to 04 October 2026',
     );
     expect(data.interestPeriodTo, '04 October 2026');
-    expect(data.importantLines.join(' '), contains('Payments Received'));
-    expect(data.importantLines.join(' '), contains('Mode: Cash'));
-    expect(
-        data.importantLines.join(' '), contains('Amount Received: Rs 3,000'));
+    expect(data.importantLines.join(' '), isNot(contains('Payments Received')));
+    expect(data.importantLines.join(' '), isNot(contains('Mode: Cash')));
+    expect(data.importantLines.join(' '),
+        contains('after payments recorded in the pledge account'));
     expect(data.importantLines.join(' '), isNot(contains('Interest Period:')));
   });
 
-  test(
-      'receipt list includes principal and interest payments without covered months',
-      () {
+  test('notice omits payment records while retaining the total received', () {
     final item = createNoticeCase(
       simple: false,
       principalPaid: 5000,
@@ -158,10 +166,10 @@ void main() {
 
     expect(statement.chargeablePeriod, '18 months');
     expect(statement.totalReceived, 'Rs 8,000');
-    expect(customerCopy, contains('04 January 2026'));
-    expect(customerCopy, contains('Amount Received: Rs 3,000'));
-    expect(customerCopy, contains('04 February 2026'));
-    expect(customerCopy, contains('Amount Received: Rs 5,000'));
+    expect(customerCopy, isNot(contains('04 January 2026')));
+    expect(customerCopy, isNot(contains('Amount Received:')));
+    expect(customerCopy, isNot(contains('04 February 2026')));
+    expect(customerCopy, isNot(contains('Mode:')));
     expect(customerCopy, contains('on or before 03 November 2026'));
     expect(customerCopy, isNot(contains('Interest Period:')));
     expect(customerCopy, isNot(contains('months covered')));

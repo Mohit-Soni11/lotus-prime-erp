@@ -19,6 +19,7 @@ void main() {
     shopName: 'Shree Jewellers',
     shopAddress: '12 Main Market, Jaipur',
     shopMobile: '9876543210',
+    shopAlternateMobile: '9123456780',
     printFields: [
       ShopPrintDocumentField(
         id: 'legal_name',
@@ -32,6 +33,12 @@ void main() {
         value: '12 Main Market, Jaipur',
         group: ShopPrintFieldGroup.address,
       ),
+      ShopPrintDocumentField(
+        id: 'help_desk_number',
+        label: 'Help Desk Number',
+        value: '9123456780',
+        group: ShopPrintFieldGroup.contact,
+      ),
     ],
   );
 
@@ -43,7 +50,10 @@ void main() {
 
   test('long configured shop address supports flowing PDF layout', () async {
     final item = createNoticeCase();
-    final text = GirviNoticeGenerationService(now: item.now).build(
+    final text = GirviNoticeGenerationService(
+      now: item.now,
+      shopName: sampleBranding.printShopName,
+    ).build(
       item: item,
       noticeType: GirviNoticeType.formal,
       language: GirviNoticeLanguage.english,
@@ -77,7 +87,10 @@ void main() {
     final samplePhoto = img.Image(width: 64, height: 64);
     img.fill(samplePhoto, color: img.ColorRgb8(229, 190, 102));
     await photo.writeAsBytes(img.encodePng(samplePhoto));
-    final text = GirviNoticeGenerationService(now: item.now).build(
+    final text = GirviNoticeGenerationService(
+      now: item.now,
+      shopName: sampleBranding.printShopName,
+    ).build(
       item: item,
       noticeType: GirviNoticeType.formal,
       language: GirviNoticeLanguage.english,
@@ -108,7 +121,10 @@ void main() {
         interestPaid: 3000,
         interestDiscount: 200,
       );
-      final approved = GirviNoticeGenerationService(now: item.now).build(
+      final approved = GirviNoticeGenerationService(
+        now: item.now,
+        shopName: sampleBranding.printShopName,
+      ).build(
         item: item,
         noticeType: GirviNoticeType.formal,
         language: GirviNoticeLanguage.english,
@@ -168,7 +184,10 @@ void main() {
       interestPeriodSnapshots: periods,
       customerResponses: base.customerResponses,
     );
-    final approved = GirviNoticeGenerationService(now: item.now).build(
+    final approved = GirviNoticeGenerationService(
+      now: item.now,
+      shopName: sampleBranding.printShopName,
+    ).build(
       item: item,
       noticeType: GirviNoticeType.formal,
       language: GirviNoticeLanguage.english,
@@ -191,7 +210,10 @@ void main() {
   test('stored notice keeps three duration rows when older text lacks tenure',
       () async {
     final item = createNoticeCase();
-    final approved = GirviNoticeGenerationService(now: item.now).build(
+    final approved = GirviNoticeGenerationService(
+      now: item.now,
+      shopName: sampleBranding.printShopName,
+    ).build(
       item: item,
       noticeType: GirviNoticeType.formal,
       language: GirviNoticeLanguage.english,
@@ -223,7 +245,10 @@ void main() {
       () async {
     final savedCase = createNoticeCase(simple: true);
     final currentCase = createNoticeCase(simple: false);
-    final generator = GirviNoticeGenerationService(now: savedCase.now);
+    final generator = GirviNoticeGenerationService(
+      now: savedCase.now,
+      shopName: sampleBranding.printShopName,
+    );
     final savedText = generator.build(
       item: savedCase,
       noticeType: GirviNoticeType.formal,
@@ -276,7 +301,10 @@ void main() {
           () async {
         final item =
             createNoticeCase(simple: language == GirviNoticeLanguage.hindi);
-        final generator = GirviNoticeGenerationService(now: item.now);
+        final generator = GirviNoticeGenerationService(
+          now: item.now,
+          shopName: sampleBranding.printShopName,
+        );
         expect(generator.validate(item), isEmpty);
         final text = generator.build(
           item: item,

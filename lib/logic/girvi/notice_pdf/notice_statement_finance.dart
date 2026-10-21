@@ -278,51 +278,109 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
   pw.Widget _summaryDivider() =>
       pw.Container(height: 0.65, color: _noticeBorder);
 
-  pw.Widget _actionCard() => pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-        decoration: pw.BoxDecoration(
-          color: _noticePaleGold,
-          border: pw.Border.all(color: _noticeGold, width: 0.8),
-          borderRadius: pw.BorderRadius.circular(6),
-        ),
-        child: pw.Row(children: [
+  pw.Widget _actionCard() {
+    final isFinalNotice =
+        statement.lines.firstOrNull?.startsWith('FINAL NOTICE:') == true;
+    final settlementDate = deadline ??
+        _settlementDateInApprovedText() ??
+        (isFinalNotice && noticePeriodDays != null
+            ? DateTime(
+                savedAt.year, savedAt.month, savedAt.day + noticePeriodDays!)
+            : null);
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: pw.BoxDecoration(
+        color: _noticePaleGold,
+        border: pw.Border.all(color: _noticeGold, width: 1),
+        borderRadius: pw.BorderRadius.circular(9),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.center,
+        children: [
+          pw.SizedBox(
+            width: 31,
+            height: 31,
+            child: pw.SvgImage(
+              svg:
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+                  '<path d="M13.2 3.8a3.2 3.2 0 0 1 5.6 0l12 21.4a3.2 3.2 0 0 1-2.8 4.8H4a3.2 3.2 0 0 1-2.8-4.8z" fill="#C99C38"/>'
+                  '<path d="M16 10v9" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>'
+                  '<circle cx="16" cy="24" r="1.5" fill="#FFFFFF"/>'
+                  '</svg>',
+            ),
+          ),
+          pw.SizedBox(width: 10),
           pw.Expanded(
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('Required Action', style: _style(9.5, bold: true)),
+                pw.Text('Required Action', style: _style(10.5, bold: true)),
                 pw.SizedBox(height: 3),
                 pw.Text(
-                  'Please review the approved notice and contact the shop to settle or reconcile this account.',
-                  style: _style(8),
+                  settlementDate != null
+                      ? 'Kindly visit the shop or contact us by the date shown to settle the outstanding amount. You may collect your pledged item after full payment.'
+                      : 'Kindly visit the shop or contact us to settle the outstanding amount. You may collect your pledged item after full payment.',
+                  style: _style(8.8),
                 ),
               ],
             ),
           ),
-          if (deadline != null || noticePeriodDays != null) ...[
-            pw.SizedBox(width: 11),
-            pw.Container(width: 0.7, height: 28, color: _noticeGold),
-            pw.SizedBox(width: 11),
-            pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(
-                  noticePeriodDays != null
-                      ? 'Time to Respond'
-                      : 'Last Date to Settle',
-                  style: _style(7.5, bold: true),
-                ),
-                pw.SizedBox(height: 3),
-                pw.Text(
-                  noticePeriodDays != null
-                      ? 'Within $noticePeriodDays days of delivery'
-                      : DateFormat('dd MMM yyyy').format(deadline!),
-                  style: _style(9, bold: true),
-                ),
-              ],
+          if (settlementDate != null || noticePeriodDays != null) ...[
+            pw.SizedBox(width: 10),
+            pw.Container(width: 0.8, height: 38, color: _noticeGold),
+            pw.SizedBox(width: 10),
+            pw.SizedBox(
+              width: 18,
+              height: 18,
+              child: pw.SvgImage(
+                svg:
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">'
+                    '<rect x="2" y="4" width="16" height="14" rx="1.5" fill="none" stroke="#063562" stroke-width="1.8"/>'
+                    '<path d="M2 8h16M6 2v4M14 2v4" fill="none" stroke="#063562" stroke-width="1.8" stroke-linecap="round"/>'
+                    '<path d="M6 11h2M11 11h2M6 14h2M11 14h2" stroke="#063562" stroke-width="1.5" stroke-linecap="round"/>'
+                    '</svg>',
+              ),
+            ),
+            pw.SizedBox(width: 7),
+            pw.SizedBox(
+              width: 107,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    settlementDate == null
+                        ? 'Time to Respond'
+                        : 'Last Date to Settle',
+                    style: _style(8.2, bold: true),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    settlementDate == null
+                        ? 'Within $noticePeriodDays days of delivery'
+                        : DateFormat('dd MMM yyyy').format(settlementDate),
+                    style: _style(10.2, bold: true),
+                  ),
+                ],
+              ),
             ),
           ],
-        ]),
-      );
+        ],
+      ),
+    );
+  }
+
+  DateTime? _settlementDateInApprovedText() {
+    final pattern =
+        RegExp(r'on or before (\d{1,2} [A-Za-z]+ \d{4})', caseSensitive: false);
+    for (final line in statement.importantLines) {
+      final match = pattern.firstMatch(line);
+      if (match == null) continue;
+      for (final format in ['d MMMM yyyy', 'd MMM yyyy']) {
+        final date = DateFormat(format).tryParseStrict(match.group(1)!);
+        if (date != null) return date;
+      }
+    }
+    return null;
+  }
 }

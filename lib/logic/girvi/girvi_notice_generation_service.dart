@@ -13,9 +13,12 @@ part 'notice/girvi_formal_notice_copy.dart';
 /// Builds customer notices from verified Girvi account records.
 /// Financial values remain owned by the existing account and ledger domain.
 class GirviNoticeGenerationService {
-  GirviNoticeGenerationService({DateTime? now}) : _now = now ?? DateTime.now();
+  GirviNoticeGenerationService({DateTime? now, String? shopName})
+      : _now = now ?? DateTime.now(),
+        _shopName = shopName?.trim();
 
   final DateTime _now;
+  final String? _shopName;
   final DateFormat _date = DateFormat('dd MMMM yyyy');
   final NumberFormat _money = NumberFormat('#,##,##0', 'en_IN');
 
@@ -208,11 +211,11 @@ class GirviNoticeGenerationService {
       language: language,
       noticePeriodDays: noticePeriodDays ?? item.noticePeriodDays,
     );
-    final paymentBlocks = data.financialTimeline.paymentBlocks(language);
-
     return GirviNoticeDocument(
       language: language,
-      title: copy.title,
+      title: language == GirviNoticeLanguage.english
+          ? '${copy.title}: PLEDGE ACCOUNT ${data.ticketNo}'
+          : '${copy.title}: ${data.ticketNo}',
       noticeNumber: data.noticeNumber,
       noticeDate: data.noticeDate,
       pledgeReference: data.ticketNo,
@@ -231,8 +234,8 @@ class GirviNoticeGenerationService {
                     'Customer Mobile: ${data.account.customerMobile.trim()}',
                 ],
                 '${language == GirviNoticeLanguage.hindi ? 'प्रिय' : 'Dear'} ${data.customerName},',
-                copy.opening(data),
-                copy.accountContext(data),
+                ...copy.opening(data),
+                ...copy.accountContext(data),
               ],
             ),
           ],
@@ -271,13 +274,6 @@ class GirviNoticeGenerationService {
               : 'Account Summary',
           blocks: [GirviNoticeBlock(lines: data.outstandingSummaryLines)],
         ),
-        if (paymentBlocks.isNotEmpty)
-          GirviNoticeSection(
-            title: language == GirviNoticeLanguage.hindi
-                ? 'प्राप्त भुगतान'
-                : 'Payments Received',
-            blocks: paymentBlocks,
-          ),
         GirviNoticeSection(
           title: language == GirviNoticeLanguage.hindi
               ? 'आवश्यक कार्रवाई'
@@ -285,11 +281,11 @@ class GirviNoticeGenerationService {
           blocks: [
             GirviNoticeBlock(
               lines: [
-                copy.requiredAction(data),
-                copy.closing(data),
+                ...copy.requiredAction(data),
                 language == GirviNoticeLanguage.hindi
-                    ? 'यह सूचना गिरवी खाते की शर्तों, व्यापार नीति और लागू कानून के अनुसार जारी की जा रही है।'
-                    : 'This notice is issued in accordance with the pledge account terms, business policy and applicable law.',
+                    ? 'निपटान न होने पर कार्रवाई'
+                    : 'Consequence of Non-Settlement',
+                ...copy.closing(data),
                 '',
                 language == GirviNoticeLanguage.hindi
                     ? 'अधिकृत हस्ताक्षर'
@@ -348,6 +344,8 @@ class _NoticeData {
         service._now.day + noticePeriodDays,
       ));
   String get finalOutstanding => service.money(item.verifiedTotalPayable);
+  String get shopName =>
+      service._shopName?.isNotEmpty == true ? service._shopName! : 'our shop';
   String get customerName => account.customerName;
   String get startDate => service.date(loan.startDate);
   String get maturityDate => service.date(loan.maturityDate);
@@ -377,6 +375,15 @@ class _NoticeData {
   }
 
   String get netWeight => '${loan.netWeight.toStringAsFixed(3)} g';
+  String get pledgedItemSummary => [
+        itemName,
+        netWeight,
+        if (purity != null) purity!,
+      ].join(', ');
+  String get interestCalculatedTo => item.interestPeriodSnapshots.isEmpty
+      ? noticeDate
+      : service.date(financialTimeline
+          .displayPeriodEnd(item.interestPeriodSnapshots.last));
 
   List<String> get interestSummaryLines {
     final hindi = language == GirviNoticeLanguage.hindi;

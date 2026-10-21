@@ -48,6 +48,29 @@ class _NoticeStatementLayout {
   String get dateText =>
       statement.noticeDate ?? DateFormat('dd MMM yyyy').format(savedAt);
 
+  List<String> get _headerPhones {
+    final configuredPrimary = branding.printValue('mobile_number').trim();
+    final candidates = [
+      configuredPrimary.isNotEmpty ? configuredPrimary : branding.shopMobile,
+      branding.printValue('help_desk_number'),
+      branding.shopAlternateMobile,
+    ];
+    final numbers = <String>[];
+    final seen = <String>{};
+    for (final candidate in candidates) {
+      final value = candidate.trim();
+      if (value.isEmpty) continue;
+      final digits = value.replaceAll(RegExp(r'\D'), '');
+      final key = digits.length >= 10
+          ? digits.substring(digits.length - 10)
+          : value.toLowerCase();
+      if (!seen.add(key)) continue;
+      numbers.add(digits.length == 10 ? '+91 $digits' : value);
+      if (numbers.length == 2) break;
+    }
+    return numbers;
+  }
+
   pw.TextStyle _style(double size,
           {bool bold = false, PdfColor color = _noticeInk}) =>
       pw.TextStyle(
@@ -57,85 +80,84 @@ class _NoticeStatementLayout {
       );
 
   pw.Widget header(pw.Context context) => pw.Column(children: [
-        pw.Table(columnWidths: const {
-          0: pw.FixedColumnWidth(543)
-        }, children: [
-          pw.TableRow(
-            decoration: const pw.BoxDecoration(color: _noticeDeepNavy),
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.fromLTRB(8, 7, 8, 12),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(
+              bottom: pw.BorderSide(color: _noticeDarkGold, width: 1),
+            ),
+          ),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Padding(
-                padding:
-                    const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                child: pw.Row(children: [
-                  pw.SizedBox(
-                    width: 42,
-                    height: 42,
-                    child: logo == null
-                        ? _shopMonogram()
-                        : pw.Image(logo!, fit: pw.BoxFit.contain),
-                  ),
-                  pw.SizedBox(width: 11),
-                  pw.Expanded(
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      mainAxisAlignment: pw.MainAxisAlignment.center,
-                      children: [
-                        pw.Text(
-                          branding.printShopName.toUpperCase(),
-                          style: pw.TextStyle(
-                            fontSize: 19,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.white,
-                            letterSpacing: 0.35,
-                          ),
-                        ),
-                        if (branding.printShopAddress.isNotEmpty) ...[
-                          pw.SizedBox(height: 4),
-                          pw.Text(
-                            branding.printShopAddress,
-                            style: _style(9.2, color: _noticeGold),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  pw.SizedBox(width: 11),
-                  pw.Container(width: 0.7, height: 43, color: _noticeGold),
-                  pw.SizedBox(width: 12),
-                  pw.SizedBox(
-                    width: 188,
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      mainAxisAlignment: pw.MainAxisAlignment.center,
-                      children: [
-                        _headerMeta('Invoice No.', ticketNo),
-                        pw.SizedBox(height: 7),
-                        _headerMeta('Notice Date', dateText),
-                      ],
-                    ),
-                  ),
-                ]),
+              pw.SizedBox(
+                width: 68,
+                height: 68,
+                child: logo == null
+                    ? _shopMonogram()
+                    : pw.Image(logo!, fit: pw.BoxFit.contain),
               ),
+              pw.SizedBox(width: 12),
+              pw.Container(width: 0.8, height: 67, color: _noticeGold),
+              pw.SizedBox(width: 13),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  children: [
+                    pw.Text(
+                      branding.printShopName.toUpperCase(),
+                      style: _style(21, bold: true, color: _noticeBlack),
+                    ),
+                    if (branding.printShopAddress.isNotEmpty) ...[
+                      pw.SizedBox(height: 5),
+                      pw.Text(
+                        branding.printShopAddress,
+                        style: _style(10.2, bold: true, color: _noticeBlack),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (_headerPhones.isNotEmpty) ...[
+                pw.SizedBox(width: 13),
+                pw.SizedBox(
+                  width: 166,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _headerMeta('Mobile', _headerPhones.first),
+                      if (_headerPhones.length > 1) ...[
+                        pw.SizedBox(height: 8),
+                        _headerMeta('Alternate', _headerPhones[1]),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
-        ]),
-        pw.Container(height: 5, color: _noticeGold),
-        pw.SizedBox(height: 8),
+        ),
+        pw.SizedBox(height: 10),
       ]);
 
   pw.Widget _headerMeta(String label, String value) => pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.SizedBox(
-            width: 70,
-            child: pw.Text(label, style: _style(9.2, color: _noticeGold)),
+            width: 65,
+            child: pw.Text(
+              label,
+              style: _style(10.2, bold: true, color: _noticeBlack),
+            ),
           ),
-          pw.Text(':', style: _style(9.2, color: _noticeGold)),
+          pw.Text(':', style: _style(10.2, bold: true, color: _noticeBlack)),
           pw.SizedBox(width: 5),
           pw.Expanded(
             child: pw.Text(
               value,
-              style: _style(10.2, bold: true, color: PdfColors.white),
+              style: _style(10.7, bold: true, color: _noticeBlack),
             ),
           ),
         ],
@@ -144,12 +166,12 @@ class _NoticeStatementLayout {
   pw.Widget _shopMonogram() => pw.Container(
         decoration: pw.BoxDecoration(
           shape: pw.BoxShape.circle,
-          border: pw.Border.all(color: _noticeGold, width: 1.5),
+          border: pw.Border.all(color: _noticeDarkGold, width: 1.2),
         ),
         child: pw.Center(
           child: pw.Text(
             branding.initial,
-            style: _style(22, bold: true, color: _noticeGold),
+            style: _style(27, bold: true, color: _noticeDarkGold),
           ),
         ),
       );

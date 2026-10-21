@@ -31,14 +31,6 @@ class GirviNoticeFinancialTimeline {
     return snapshot.periodTo.isAfter(asOf) ? asOf : snapshot.periodTo;
   }
 
-  List<GirviPaymentModel> get _receivedPayments {
-    final entries = item.paymentHistory
-        .where((payment) => payment.amount > 0)
-        .toList()
-      ..sort((a, b) => a.paymentDate.compareTo(b.paymentDate));
-    return entries;
-  }
-
   List<GirviNoticeBlock> interestBlocks(GirviNoticeLanguage language) {
     if (!item.hasVerifiedInterestTimeline) {
       final isHindi = language == GirviNoticeLanguage.hindi;
@@ -128,20 +120,6 @@ class GirviNoticeFinancialTimeline {
       '${isHindi ? 'चार्जेबल माह' : 'Chargeable Months'}: ${snapshot.chargeableMonths}',
       '${isHindi ? 'इस अवधि का ब्याज' : 'Interest for Period'}: ${money(snapshot.periodInterest)}',
       '$closingLabel: ${money(snapshot.closingAmount)}',
-    ];
-  }
-
-  List<GirviNoticeBlock> paymentBlocks(GirviNoticeLanguage language) {
-    final isHindi = language == GirviNoticeLanguage.hindi;
-    return [
-      for (final payment in _receivedPayments)
-        GirviNoticeBlock(
-          heading: date(payment.paymentDate),
-          lines: [
-            '${isHindi ? 'माध्यम' : 'Mode'}: ${payment.mode.displayName}',
-            '${isHindi ? 'प्राप्त भुगतान' : 'Amount Received'}: ${money(payment.amount)}',
-          ],
-        ),
     ];
   }
 }

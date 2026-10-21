@@ -128,6 +128,8 @@ extension _NoticeStatementInformation on _NoticeStatementLayout {
   pw.Widget _draftLine(String value) {
     final subheading = value.startsWith('Contact · ') ||
         value == t('Applicable Adjustments', 'लागू समायोजन') ||
+        value ==
+            t('Consequence of Non-Settlement', 'निपटान न होने पर कार्रवाई') ||
         RegExp(r'^\d{1,2} [A-Za-z]+ \d{4}$').hasMatch(value);
     final salutation = value.startsWith('Dear ') || value.startsWith('प्रिय ');
     return pw.Padding(
@@ -189,10 +191,10 @@ extension _NoticeStatementInformation on _NoticeStatementLayout {
             pw.SizedBox(height: 16),
           pw.Container(width: 150, height: 0.7, color: _noticeInk),
           pw.SizedBox(height: 4),
-          pw.Text(t('Authorised Signatory', 'अधिकृत हस्ताक्षर'),
+          pw.Text(t('Authorised Signature & Stamp', 'अधिकृत हस्ताक्षर और मुहर'),
               style: _style(8.5, bold: true)),
           pw.SizedBox(height: 3),
-          pw.Text('Date & Stamp', style: _style(8.5)),
+          pw.Text('Date: $dateText', style: _style(8.5)),
         ],
       );
 }
