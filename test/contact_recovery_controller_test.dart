@@ -513,10 +513,10 @@ void main() {
       expect(text, contains('Pledge Account and Duration'));
       expect(text, contains('Compound Interest Breakdown'));
       expect(text, contains('Monthly Interest Rate: 5.00%'));
-      expect(text, contains('Final Outstanding Summary'));
-      expect(text, contains('Previous Contact and Customer Response'));
-      expect(text, contains('I will visit the shop on Friday.'));
-      expect(text, contains('Recorded Status: Past due'));
+      expect(text, contains('Account Summary'));
+      expect(text, isNot(contains('Previous Contact and Customer Response')));
+      expect(text, isNot(contains('I will visit the shop on Friday.')));
+      expect(text, contains('on or before 29 October 2026'));
       expect(text, isNot(contains('FIRST PLEDGE')));
       expect(text, isNot(contains('SECOND PLEDGE')));
       expect(text, isNot(contains('FINAL PLEDGE')));

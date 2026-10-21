@@ -2,11 +2,13 @@ part of '../girvi_notice_pdf_service.dart';
 
 extension _NoticeStatementInformation on _NoticeStatementLayout {
   List<pw.Widget> _noticeDraft() {
+    final actionHeading = t('Required Action', 'आवश्यक कार्रवाई');
     final headings = {
       t('Previous Contact and Customer Response',
           'पूर्व संपर्क और ग्राहक प्रतिक्रिया'),
       t('Payments and Adjustments', 'भुगतान और समायोजन'),
-      t('Required Action', 'आवश्यक कार्रवाई'),
+      t('Payments Received', 'प्राप्त भुगतान'),
+      actionHeading,
     };
     final sections = <(String?, List<String>)>[];
     String? heading;
@@ -23,22 +25,93 @@ extension _NoticeStatementInformation on _NoticeStatementLayout {
     }
     if (lines.isNotEmpty) sections.add((heading, lines));
 
-    return [
-      for (final (title, content) in sections) ...[
-        if (title != null) pw.SizedBox(height: 9),
-        if (title != null && content.isNotEmpty)
-          pw.Inseparable(
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [_draftHeading(title), _draftLine(content.first)],
-            ),
-          )
-        else if (content.isNotEmpty)
-          _draftLine(content.first),
-        for (final line in content.skip(1)) _draftLine(line),
-      ],
-    ];
+    final result = <pw.Widget>[];
+    var subjectAdded = false;
+    void addSubject() {
+      if (subjectAdded) return;
+      result.add(pw.SizedBox(height: 8));
+      result.add(pw.RichText(
+        text: pw.TextSpan(children: [
+          pw.TextSpan(text: 'Subject: ', style: _style(10, bold: true)),
+          pw.TextSpan(
+              text: statement.subject ?? noticeType.subtitle,
+              style: _style(10)),
+        ]),
+      ));
+      subjectAdded = true;
+    }
+
+    for (final (title, content) in sections) {
+      if (title == null) {
+        final recipientCount = content
+            .takeWhile((line) =>
+                line.startsWith('To:') ||
+                line.startsWith('Customer Address:') ||
+                line.startsWith('Customer Mobile:'))
+            .length;
+        for (final line in content.take(recipientCount)) {
+          result.add(_draftLine(line.startsWith('Customer Address:')
+              ? line.substring('Customer Address:'.length).trim()
+              : line.startsWith('Customer Mobile:')
+                  ? 'Mobile: ${line.substring('Customer Mobile:'.length).trim()}'
+                  : line));
+        }
+        addSubject();
+        for (final line in content.skip(recipientCount)) {
+          result.add(_draftLine(line));
+        }
+        continue;
+      }
+      if (title == t('Payments Received', 'प्राप्त भुगतान') ||
+          title == t('Payments and Adjustments', 'भुगतान और समायोजन')) {
+        continue;
+      }
+      addSubject();
+      result.add(pw.SizedBox(height: 9));
+      if (title == actionHeading && content.join().length <= 900) {
+        result.add(pw.Inseparable(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              for (final line in content) _draftLine(line),
+              _noticeSignoff(),
+            ],
+          ),
+        ));
+      } else {
+        result.add(pw.Inseparable(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              if (title != actionHeading) _draftHeading(title),
+              if (content.isNotEmpty) _draftLine(content.first),
+            ],
+          ),
+        ));
+        for (final line in content.skip(1)) {
+          result.add(_draftLine(line));
+        }
+        if (title == actionHeading) {
+          result.add(pw.Inseparable(child: _noticeSignoff()));
+        }
+      }
+    }
+    if (!subjectAdded) addSubject();
+    if (!sections.any((section) => section.$1 == actionHeading)) {
+      result.add(pw.Inseparable(child: _noticeSignoff()));
+    }
+    return result;
   }
+
+  pw.Widget _noticeSignoff() => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.SizedBox(height: 8),
+          pw.Text(t('Yours faithfully,', 'सादर,'), style: _style(9.5)),
+          pw.SizedBox(height: 3),
+          _signatureBlock(),
+        ],
+      );
 
   pw.Widget _draftHeading(String title) => pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 5),
@@ -104,22 +177,6 @@ extension _NoticeStatementInformation on _NoticeStatementLayout {
     return spans;
   }
 
-  pw.Widget _contactDetails() => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(t('Contact Details', 'संपर्क विवरण'),
-              style: _style(10, bold: true)),
-          pw.SizedBox(height: 4),
-          pw.Text(branding.printShopName, style: _style(9.5, bold: true)),
-          if (branding.shopMobile.trim().isNotEmpty)
-            pw.Text(branding.shopMobile.trim(), style: _style(9.5)),
-          if (branding.shopAlternateMobile.trim().isNotEmpty)
-            pw.Text(branding.shopAlternateMobile.trim(), style: _style(9.5)),
-          if (branding.printShopAddress.isNotEmpty)
-            pw.Text(branding.printShopAddress, style: _style(9.5)),
-        ],
-      );
-
   pw.Widget _signatureBlock() => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -127,13 +184,15 @@ extension _NoticeStatementInformation on _NoticeStatementLayout {
               style: _style(9, bold: true)),
           pw.SizedBox(height: 5),
           if (signature != null)
-            pw.Image(signature!, width: 110, height: 42, fit: pw.BoxFit.contain)
+            pw.Image(signature!, width: 110, height: 30, fit: pw.BoxFit.contain)
           else
-            pw.SizedBox(height: 32),
+            pw.SizedBox(height: 16),
           pw.Container(width: 150, height: 0.7, color: _noticeInk),
           pw.SizedBox(height: 4),
           pw.Text(t('Authorised Signatory', 'अधिकृत हस्ताक्षर'),
               style: _style(8.5, bold: true)),
+          pw.SizedBox(height: 3),
+          pw.Text('Date & Stamp', style: _style(8.5)),
         ],
       );
 }

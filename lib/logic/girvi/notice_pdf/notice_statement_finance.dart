@@ -223,38 +223,16 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
               _summaryLine('Total Interest', statement.grossInterest!),
             _summaryDivider(),
             if (statement.totalAccountCharges != null)
-              _summaryLine(
-                'Total Amount (Principal + Interest)',
-                statement.totalAccountCharges!,
-                highlighted: true,
-              ),
+              _summaryLine('Total Amount', statement.totalAccountCharges!,
+                  highlighted: true),
             if (statement.hasPayments && statement.totalReceived != null)
-              _summaryLine(
-                'Less: Total Received',
-                statement.totalReceived!,
-                color: _noticeReceived,
-                subtract: true,
-              ),
+              _summaryLine('Less: Payments Received', statement.totalReceived!,
+                  color: _noticeReceived, subtract: true),
             if (statement.hasAdjustments && statement.totalAdjustments != null)
               _summaryLine(
-                'Less: Approved Discount',
-                statement.totalAdjustments!,
-                color: _noticeReceived,
-                subtract: true,
-              ),
+                  'Less: Approved Discount', statement.totalAdjustments!,
+                  color: _noticeReceived, subtract: true),
             _summaryDivider(),
-            if (statement.principalOutstanding != null)
-              _summaryLine(
-                'Principal Outstanding',
-                statement.principalOutstanding!,
-                color: _noticeOutstanding,
-              ),
-            if (statement.interestOutstanding != null)
-              _summaryLine(
-                'Interest Outstanding',
-                statement.interestOutstanding!,
-                color: _noticeOutstanding,
-              ),
             pw.SizedBox(height: 2),
             pw.Container(
               width: double.infinity,
@@ -264,7 +242,7 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text(t('Final Outstanding', 'अंतिम बकाया राशि'),
+                  pw.Text('Final Outstanding',
                       style: _style(10, bold: true, color: PdfColors.white)),
                   pw.Text(printText(statement.totalPayable ?? '-'),
                       style: _style(15, bold: true, color: _noticeGold)),
@@ -276,13 +254,10 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
         padding: 3,
       );
 
-  pw.Widget _summaryLine(
-    String label,
-    String value, {
-    PdfColor color = _noticeInk,
-    bool highlighted = false,
-    bool subtract = false,
-  }) =>
+  pw.Widget _summaryLine(String label, String value,
+          {PdfColor color = _noticeInk,
+          bool highlighted = false,
+          bool subtract = false}) =>
       pw.Container(
         padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 1.5),
         color: highlighted ? _noticePaleGold : PdfColors.white,
@@ -311,45 +286,43 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
           border: pw.Border.all(color: _noticeGold, width: 0.8),
           borderRadius: pw.BorderRadius.circular(6),
         ),
-        child: pw.Row(
-          children: [
-            pw.Expanded(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(t('Required Action', 'आवश्यक कार्रवाई'),
-                      style: _style(9.5, bold: true)),
-                  pw.SizedBox(height: 3),
-                  pw.Text(
-                    t('Please review the approved notice and contact the shop to settle or reconcile this account.',
-                        'कृपया स्वीकृत सूचना देखें और भुगतान या खाते के मिलान के लिए दुकान से संपर्क करें।'),
-                    style: _style(8),
-                  ),
-                ],
-              ),
+        child: pw.Row(children: [
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('Required Action', style: _style(9.5, bold: true)),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  'Please review the approved notice and contact the shop to settle or reconcile this account.',
+                  style: _style(8),
+                ),
+              ],
             ),
-            if (deadline != null || noticePeriodDays != null) ...[
-              pw.SizedBox(width: 11),
-              pw.Container(width: 0.7, height: 28, color: _noticeGold),
-              pw.SizedBox(width: 11),
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                      noticePeriodDays != null
-                          ? t('Time to Respond', 'उत्तर देने का समय')
-                          : t('Last Date to Settle', 'भुगतान की अंतिम तारीख'),
-                      style: _style(7.5, bold: true)),
-                  pw.SizedBox(height: 3),
-                  pw.Text(
-                      noticePeriodDays != null
-                          ? 'Within $noticePeriodDays days of delivery'
-                          : DateFormat('dd MMM yyyy').format(deadline!),
-                      style: _style(9, bold: true)),
-                ],
-              ),
-            ],
+          ),
+          if (deadline != null || noticePeriodDays != null) ...[
+            pw.SizedBox(width: 11),
+            pw.Container(width: 0.7, height: 28, color: _noticeGold),
+            pw.SizedBox(width: 11),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  noticePeriodDays != null
+                      ? 'Time to Respond'
+                      : 'Last Date to Settle',
+                  style: _style(7.5, bold: true),
+                ),
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  noticePeriodDays != null
+                      ? 'Within $noticePeriodDays days of delivery'
+                      : DateFormat('dd MMM yyyy').format(deadline!),
+                  style: _style(9, bold: true),
+                ),
+              ],
+            ),
           ],
-        ),
+        ]),
       );
 }

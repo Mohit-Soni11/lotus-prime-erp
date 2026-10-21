@@ -18,8 +18,8 @@ part 'notice_pdf/notice_statement_composition.dart';
 part 'notice_pdf/notice_statement_finance.dart';
 part 'notice_pdf/notice_statement_information.dart';
 
-/// Renders approved wording as a branded statement. Original downloads keep
-/// the saved text; an updated view may show separately dated verified figures.
+/// Renders the approved account statement and its formal notice.
+/// Original downloads keep saved wording; corrected views date their figures.
 class GirviNoticePdfService {
   static const defaultBranding = GirviInvoiceBranding.fallback;
 
@@ -129,10 +129,8 @@ class GirviNoticePdfService {
         ),
         header: (context) =>
             context.pageNumber == 1 ? layout.header(context) : pw.SizedBox(),
-        footer: layout.footer,
         build: (_) => [
           ...layout.summaryPage(),
-          pw.NewPage(),
           ...layout.informationPage(),
         ],
       ),

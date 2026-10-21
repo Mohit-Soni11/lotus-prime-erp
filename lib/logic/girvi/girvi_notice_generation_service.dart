@@ -1,7 +1,6 @@
 import 'package:intl/intl.dart';
 
 import '../../models/girvi/contact_recovery_model.dart';
-import '../../models/girvi/girvi_customer_response_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
@@ -217,7 +216,7 @@ class GirviNoticeGenerationService {
       noticeNumber: data.noticeNumber,
       noticeDate: data.noticeDate,
       pledgeReference: data.ticketNo,
-      subject: copy.subject,
+      subject: copy.subject(data),
       sections: [
         GirviNoticeSection(
           title: '',
@@ -238,13 +237,6 @@ class GirviNoticeGenerationService {
             ),
           ],
         ),
-        if (data.priorCustomerResponses.isNotEmpty)
-          GirviNoticeSection(
-            title: language == GirviNoticeLanguage.hindi
-                ? 'पूर्व संपर्क और ग्राहक प्रतिक्रिया'
-                : 'Previous Contact and Customer Response',
-            blocks: data.customerResponseBlocks,
-          ),
         GirviNoticeSection(
           title: language == GirviNoticeLanguage.hindi
               ? 'गिरवी खाता और अवधि'
@@ -273,19 +265,19 @@ class GirviNoticeGenerationService {
             GirviNoticeBlock(lines: data.interestSummaryLines),
           ],
         ),
+        GirviNoticeSection(
+          title: language == GirviNoticeLanguage.hindi
+              ? 'खाते का सारांश'
+              : 'Account Summary',
+          blocks: [GirviNoticeBlock(lines: data.outstandingSummaryLines)],
+        ),
         if (paymentBlocks.isNotEmpty)
           GirviNoticeSection(
             title: language == GirviNoticeLanguage.hindi
-                ? 'भुगतान और समायोजन'
-                : 'Payments and Adjustments',
+                ? 'प्राप्त भुगतान'
+                : 'Payments Received',
             blocks: paymentBlocks,
           ),
-        GirviNoticeSection(
-          title: language == GirviNoticeLanguage.hindi
-              ? 'अंतिम बकाया सारांश'
-              : 'Final Outstanding Summary',
-          blocks: [GirviNoticeBlock(lines: data.outstandingSummaryLines)],
-        ),
         GirviNoticeSection(
           title: language == GirviNoticeLanguage.hindi
               ? 'आवश्यक कार्रवाई'
@@ -350,8 +342,12 @@ class _NoticeData {
   }
 
   String get noticeDate => service.date(service._now);
-  String get noticeReviewPeriod =>
-      '$noticePeriodDays day${noticePeriodDays == 1 ? '' : 's'}';
+  String get responseDueDate => service.date(DateTime(
+        service._now.year,
+        service._now.month,
+        service._now.day + noticePeriodDays,
+      ));
+  String get finalOutstanding => service.money(item.verifiedTotalPayable);
   String get customerName => account.customerName;
   String get startDate => service.date(loan.startDate);
   String get maturityDate => service.date(loan.maturityDate);
@@ -366,79 +362,6 @@ class _NoticeData {
   }
 
   String get originalPrincipal => service.money(account.originalPrincipal);
-
-  List<GirviCustomerResponse> get priorCustomerResponses {
-    final responses = item.customerResponses
-        .where((response) => !response.receivedAt.isAfter(service._now))
-        .toList();
-    responses.sort((a, b) => a.receivedAt.compareTo(b.receivedAt));
-    return responses;
-  }
-
-  List<GirviNoticeBlock> get customerResponseBlocks {
-    final hindi = language == GirviNoticeLanguage.hindi;
-    return [
-      for (final response in priorCustomerResponses)
-        GirviNoticeBlock(
-          heading:
-              '${hindi ? 'संपर्क' : 'Contact'} · ${service.date(response.receivedAt)}',
-          lines: [
-            '${hindi ? 'माध्यम' : 'Channel'}: ${_channelLabel(response, hindi)}',
-            '${hindi ? 'ग्राहक का कथन' : 'Customer Statement'}: ${response.responseText}',
-            if (response.isPromise)
-              '${hindi ? 'प्रतिबद्धता' : 'Commitment'}: ${_responseKindLabel(response, hindi)}',
-            if (response.promiseDueAt != null)
-              '${hindi ? 'वादा की तारीख' : 'Promised Date'}: ${service.date(response.promiseDueAt)}',
-            if (response.promisedAmount != null)
-              '${hindi ? 'वादा की राशि' : 'Promised Amount'}: ${service.money(response.promisedAmount!)}',
-            '${hindi ? 'रिकॉर्ड की स्थिति' : 'Recorded Status'}: ${_statusLabel(response, hindi)}',
-          ],
-        ),
-    ];
-  }
-
-  String _channelLabel(GirviCustomerResponse response, bool hindi) {
-    if (!hindi) return response.channel.label;
-    return switch (response.channel) {
-      GirviContactChannel.shopVisit => 'दुकान पर मुलाकात',
-      GirviContactChannel.phoneCall => 'फोन कॉल',
-      GirviContactChannel.whatsapp => 'व्हाट्सऐप',
-      GirviContactChannel.sms => 'एसएमएस',
-      GirviContactChannel.email => 'ईमेल',
-      GirviContactChannel.registeredPost => 'पंजीकृत डाक',
-      GirviContactChannel.other => 'अन्य माध्यम',
-    };
-  }
-
-  String _responseKindLabel(GirviCustomerResponse response, bool hindi) {
-    if (!hindi) return response.kind.label;
-    return switch (response.kind) {
-      GirviCustomerResponseKind.willVisit => 'दुकान आने का वादा',
-      GirviCustomerResponseKind.fullSettlement => 'पूर्ण निपटान का वादा',
-      GirviCustomerResponseKind.partialPayment => 'आंशिक भुगतान का वादा',
-      GirviCustomerResponseKind.extensionRequest => 'अतिरिक्त समय का अनुरोध',
-      GirviCustomerResponseKind.amountDispute => 'बकाया राशि पर आपत्ति',
-      GirviCustomerResponseKind.recoveryRequest => 'वसूली निपटान का अनुरोध',
-      GirviCustomerResponseKind.noResponse =>
-        'कोई प्रतिक्रिया प्राप्त नहीं हुई',
-      GirviCustomerResponseKind.other => 'अन्य प्रतिक्रिया',
-    };
-  }
-
-  String _statusLabel(GirviCustomerResponse response, bool hindi) {
-    if (!hindi) {
-      return response.isDueOn(item.now) ? 'Past due' : response.status.label;
-    }
-    if (response.isDueOn(item.now)) return 'वादा की तिथि बीत चुकी है';
-    return switch (response.status) {
-      GirviPromiseStatus.open => 'खुला',
-      GirviPromiseStatus.fulfilled => 'पूरा हुआ',
-      GirviPromiseStatus.partiallyFulfilled => 'आंशिक रूप से पूरा हुआ',
-      GirviPromiseStatus.missed => 'पूरा नहीं हुआ',
-      GirviPromiseStatus.cancelled => 'रद्द',
-      GirviPromiseStatus.recorded => 'रिकॉर्ड किया गया',
-    };
-  }
 
   String get interestBreakdownTitle {
     final interestType = item.interestPeriodSnapshots.isEmpty
@@ -470,6 +393,7 @@ class _NoticeData {
       '${hindi ? 'कुल ब्याज' : 'Gross Interest'}: ${service.money(item.verifiedGrossInterest)}',
       '${hindi ? 'प्राप्त ब्याज कुल' : 'Interest Paid Total'}: ${service.money(account.interestPaidTotal)}',
       '${hindi ? 'ब्याज समायोजन कुल' : 'Interest Adjustment Total'}: ${service.money(account.interestDiscountTotal)}',
+      '${hindi ? 'ब्याज बकाया' : 'Interest Outstanding'}: ${service.money(item.verifiedInterestDue)}',
     ];
   }
 
@@ -490,24 +414,14 @@ class _NoticeData {
     final totalAdjustments =
         account.principalDiscountTotal + account.interestDiscountTotal;
     return [
-      '${hindi ? 'मूल मूलधन' : 'Original Principal'}: ${service.money(account.originalPrincipal)}',
-      '${hindi ? 'कुल ब्याज' : 'Gross Interest'}: ${service.money(item.verifiedGrossInterest)}',
-      '${hindi ? 'कुल खाता राशि' : 'Total Account Charges'}: ${service.money(account.originalPrincipal + item.verifiedGrossInterest)}',
-      if (principalReceived > 0)
-        '${hindi ? 'प्राप्त मूलधन कुल' : 'Principal Paid Total'}: ${service.money(principalReceived)}',
-      if (interestReceived > 0)
-        '${hindi ? 'प्राप्त ब्याज कुल' : 'Interest Paid Total'}: ${service.money(interestReceived)}',
+      '${hindi ? 'मूलधन राशि' : 'Principal Amount'}: ${service.money(account.originalPrincipal)}',
+      '${hindi ? 'कुल ब्याज' : 'Total Interest'}: ${service.money(item.verifiedGrossInterest)}',
+      '${hindi ? 'कुल राशि' : 'Total Amount'}: ${service.money(account.originalPrincipal + item.verifiedGrossInterest)}',
       if (totalReceived > 0)
-        '${hindi ? 'कुल प्राप्त राशि' : 'Total Received'}: ${service.money(totalReceived)}',
-      if (account.principalDiscountTotal > 0)
-        '${hindi ? 'मूलधन समायोजन' : 'Principal Adjustment'}: ${service.money(account.principalDiscountTotal)}',
-      if (account.interestDiscountTotal > 0)
-        '${hindi ? 'ब्याज समायोजन' : 'Interest Adjustment'}: ${service.money(account.interestDiscountTotal)}',
+        '${hindi ? 'प्राप्त भुगतान' : 'Payments Received'}: ${service.money(totalReceived)}',
       if (totalAdjustments > 0)
-        '${hindi ? 'कुल समायोजन' : 'Total Adjustments'}: ${service.money(totalAdjustments)}',
-      '${hindi ? 'मूलधन बकाया' : 'Principal Outstanding'}: ${service.money(account.principalDue)}',
-      '${hindi ? 'ब्याज बकाया' : 'Interest Outstanding'}: ${service.money(item.verifiedInterestDue)}',
-      '${hindi ? 'अंतिम कुल देय राशि' : 'Final Total Payable'}: ${service.money(item.verifiedTotalPayable)}',
+        '${hindi ? 'स्वीकृत छूट' : 'Approved Discount'}: ${service.money(totalAdjustments)}',
+      '${hindi ? 'अंतिम बकाया राशि' : 'Final Outstanding'}: ${service.money(item.verifiedTotalPayable)}',
     ];
   }
 }

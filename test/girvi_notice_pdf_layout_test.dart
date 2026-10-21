@@ -283,7 +283,8 @@ void main() {
           noticeType: type,
           language: language,
         );
-        expect(text, contains('I will visit the shop on Friday.'));
+        expect(text, contains('on or before 11 October 2026'));
+        expect(text, isNot(contains('I will visit the shop on Friday.')));
         final service = GirviNoticePdfService();
         final prepared = await service.build(
           item: item,

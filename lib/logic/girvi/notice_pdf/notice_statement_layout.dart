@@ -45,7 +45,6 @@ class _NoticeStatementLayout {
       value.replaceAll(RegExp(r'\bRs (?=\d)'), '₹ ');
   String get dateText =>
       statement.noticeDate ?? DateFormat('dd MMM yyyy').format(savedAt);
-  String get noticeLabel => t('FORMAL NOTICE', 'औपचारिक सूचना');
 
   pw.TextStyle _style(double size,
           {bool bold = false, PdfColor color = _noticeInk}) =>
@@ -137,38 +136,6 @@ class _NoticeStatementLayout {
               style: _style(10.2, bold: true, color: PdfColors.white),
             ),
           ),
-        ],
-      );
-
-  pw.Widget footer(pw.Context context) => pw.Column(
-        mainAxisSize: pw.MainAxisSize.min,
-        children: [
-          pw.SizedBox(height: 4),
-          pw.Container(height: 4, color: _noticeGold),
-          pw.Table(columnWidths: const {
-            0: pw.FixedColumnWidth(543)
-          }, children: [
-            pw.TableRow(
-              decoration: const pw.BoxDecoration(color: _noticeDeepNavy),
-              children: [
-                pw.Padding(
-                  padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 15, vertical: 7),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(branding.printShopName,
-                          style: _style(8, color: PdfColors.white)),
-                      pw.Text(
-                        '${t('Page', 'पृष्ठ')} ${context.pageNumber} ${t('of', 'का')} ${context.pagesCount}',
-                        style: _style(8, color: PdfColors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ]),
         ],
       );
 

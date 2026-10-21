@@ -131,12 +131,28 @@ void main() {
         )
         .controller!
         .text;
-    expect(noticeText, contains('within 14 days after receiving this notice'));
+    expect(noticeText, contains('on or before 18 October 2026'));
+    await tester.enterText(
+      find.byKey(const ValueKey('notice-text-editor')),
+      '$noticeText\nPlease bring the account receipt.',
+    );
+    await tester.enterText(daysField, '21');
+    await tester.pump();
+    final updatedText = tester
+        .widget<TextField>(
+          find.byKey(const ValueKey('notice-text-editor')),
+        )
+        .controller!
+        .text;
+    expect(updatedText, contains('on or before 25 October 2026'));
+    expect(updatedText, contains('Please bring the account receipt.'));
+    expect(updatedText, isNot(contains('on or before 18 October 2026')));
     await tester.tap(find.text('Approve & Save Notice'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
-    expect(controller.savedDays, 14);
-    expect(controller.savedDocuments![GirviNoticeLanguage.english], noticeText);
+    expect(controller.savedDays, 21);
+    expect(
+        controller.savedDocuments![GirviNoticeLanguage.english], updatedText);
     expect(tester.takeException(), isNull);
   });
 

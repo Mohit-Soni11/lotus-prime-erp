@@ -38,6 +38,7 @@ class NoticeStatementData {
       'Purity',
       'Net Weight',
       'Original Principal',
+      'Principal Amount',
       'Pledge Date',
       'Maturity Date',
       'Original Loan Period',
@@ -46,23 +47,29 @@ class NoticeStatementData {
       'Principal Outstanding',
       'Interest Outstanding',
       'Final Total Payable',
+      'Final Outstanding',
       'Interest Period From',
       'Interest Period To',
       'Compounding Cycle',
       'Gross Interest',
+      'Total Interest',
       'Total Account Charges',
+      'Total Amount',
       'Principal Paid Total',
       'Interest Paid Total',
       'Interest Adjustment Total',
       'Principal Adjustment',
       'Interest Adjustment',
       'Total Received',
+      'Payments Received',
       'Total Adjustments',
+      'Approved Discount',
       'गिरवी वस्तु',
       'वस्तु का नाम',
       'शुद्धता',
       'नेट वजन',
       'मूल मूलधन',
+      'मूलधन राशि',
       'गिरवी तारीख',
       'परिपक्वता तारीख',
       'मूल ऋण अवधि',
@@ -71,18 +78,22 @@ class NoticeStatementData {
       'मूलधन बकाया',
       'ब्याज बकाया',
       'अंतिम कुल देय राशि',
+      'अंतिम बकाया राशि',
       'ब्याज अवधि शुरू',
       'ब्याज अवधि समाप्त',
       'चक्रवृद्धि चक्र',
       'कुल ब्याज',
       'कुल खाता राशि',
+      'कुल राशि',
       'प्राप्त मूलधन कुल',
       'प्राप्त ब्याज कुल',
       'ब्याज समायोजन कुल',
       'मूलधन समायोजन',
       'ब्याज समायोजन',
       'कुल प्राप्त राशि',
+      'प्राप्त भुगतान',
       'कुल समायोजन',
+      'स्वीकृत छूट',
     };
     final currentValues = Map<String, String>.of(values)
       ..removeWhere((key, _) => financialKeys.contains(key));
@@ -111,13 +122,15 @@ class NoticeStatementData {
     final interestHeadings = isHindi
         ? {'साधारण ब्याज विवरण', 'चक्रवृद्धि ब्याज विवरण'}
         : {'Simple Interest Breakdown', 'Compound Interest Breakdown'};
-    final finalHeading =
-        isHindi ? 'अंतिम बकाया सारांश' : 'Final Outstanding Summary';
+    final finalHeadings = isHindi
+        ? {'अंतिम बकाया सारांश', 'खाते का सारांश'}
+        : {'Final Outstanding Summary', 'Account Summary'};
     final responseHeading = isHindi
         ? 'पूर्व संपर्क और ग्राहक प्रतिक्रिया'
         : 'Previous Contact and Customer Response';
-    final paymentHeading =
-        isHindi ? 'भुगतान और समायोजन' : 'Payments and Adjustments';
+    final paymentHeadings = isHindi
+        ? {'भुगतान और समायोजन', 'प्राप्त भुगतान'}
+        : {'Payments and Adjustments', 'Payments Received'};
     final actionHeading = isHindi ? 'आवश्यक कार्रवाई' : 'Required Action';
     final hasSections =
         lines.contains(accountHeading) && lines.contains(actionHeading);
@@ -134,12 +147,12 @@ class NoticeStatementData {
       }
       if (!started) continue;
       if (line == responseHeading ||
-          line == paymentHeading ||
+          paymentHeadings.contains(line) ||
           line == actionHeading) {
         keep = true;
       } else if (line == accountHeading ||
           interestHeadings.contains(line) ||
-          line == finalHeading) {
+          finalHeadings.contains(line)) {
         keep = false;
         continue;
       }
@@ -167,6 +180,7 @@ class NoticeStatementData {
             'शुद्धता',
             'नेट वजन',
             'मूल मूलधन',
+            'मूलधन राशि',
             'गिरवी तारीख',
             'परिपक्वता तारीख',
             'वास्तविक अवधि',
@@ -193,16 +207,20 @@ class NoticeStatementData {
             'मूलधन समायोजन',
             'ब्याज समायोजन',
             'अंतिम कुल देय राशि',
+            'अंतिम बकाया राशि',
             'ब्याज अवधि शुरू',
             'ब्याज अवधि समाप्त',
             'चक्रवृद्धि चक्र',
             'कुल ब्याज',
             'कुल खाता राशि',
+            'कुल राशि',
             'प्राप्त मूलधन कुल',
             'प्राप्त ब्याज कुल',
             'ब्याज समायोजन कुल',
             'कुल प्राप्त राशि',
+            'प्राप्त भुगतान',
             'कुल समायोजन',
+            'स्वीकृत छूट',
           }
         : <String>{
             'Pledged Item',
@@ -210,6 +228,7 @@ class NoticeStatementData {
             'Purity',
             'Net Weight',
             'Original Principal',
+            'Principal Amount',
             'Pledge Date',
             'Maturity Date',
             'Actual Duration',
@@ -235,16 +254,21 @@ class NoticeStatementData {
             'Principal Adjustment',
             'Interest Adjustment',
             'Final Total Payable',
+            'Final Outstanding',
             'Interest Period From',
             'Interest Period To',
             'Compounding Cycle',
             'Gross Interest',
+            'Total Interest',
             'Total Account Charges',
+            'Total Amount',
             'Principal Paid Total',
             'Interest Paid Total',
             'Interest Adjustment Total',
             'Total Received',
+            'Payments Received',
             'Total Adjustments',
+            'Approved Discount',
           };
     return displayedKeys.contains(key);
   }
@@ -266,7 +290,9 @@ class NoticeStatementData {
       value('Purity', 'शुद्धता') ??
       (pledgedItem == null ? null : NoticeItemDescription.purity(pledgedItem!));
   String? get netWeight => value('Net Weight', 'नेट वजन');
-  String? get originalPrincipal => value('Original Principal', 'मूल मूलधन');
+  String? get originalPrincipal =>
+      value('Principal Amount', 'मूलधन राशि') ??
+      value('Original Principal', 'मूल मूलधन');
   String? get pledgeDate => value('Pledge Date', 'गिरवी तारीख');
   String? get maturityDate => value('Maturity Date', 'परिपक्वता तारीख');
   String? get actualDuration => value('Actual Duration', 'वास्तविक अवधि');
@@ -299,13 +325,16 @@ class NoticeStatementData {
   String? get interestOutstanding =>
       value('Interest Outstanding', 'ब्याज बकाया');
   String? get totalPayable =>
+      value('Final Outstanding', 'अंतिम बकाया राशि') ??
       value('Final Total Payable', 'अंतिम कुल देय राशि');
   String? get totalAccountCharges =>
+      value('Total Amount', 'कुल राशि') ??
       value('Total Account Charges', 'कुल खाता राशि') ??
       _sumAmounts(originalPrincipal, grossInterest, requireBoth: true);
   String? get principalPaidTotal =>
       value('Principal Paid Total', 'प्राप्त मूलधन कुल');
   String? get totalReceived =>
+      value('Payments Received', 'प्राप्त भुगतान') ??
       value('Total Received', 'कुल प्राप्त राशि') ??
       _sumAmounts(principalPaidTotal, interestPaidTotal);
   String? get principalAdjustment =>
@@ -313,6 +342,7 @@ class NoticeStatementData {
   String? get interestAdjustment =>
       value('Interest Adjustment', 'ब्याज समायोजन') ?? interestAdjustmentTotal;
   String? get totalAdjustments =>
+      value('Approved Discount', 'स्वीकृत छूट') ??
       value('Total Adjustments', 'कुल समायोजन') ??
       _sumAmounts(principalAdjustment, interestAdjustment);
 
@@ -352,7 +382,8 @@ class NoticeStatementData {
 
   String? get compoundingCycle => value('Compounding Cycle', 'चक्रवृद्धि चक्र');
   String? get grossInterest {
-    final recorded = value('Gross Interest', 'कुल ब्याज');
+    final recorded = value('Total Interest', 'कुल ब्याज') ??
+        value('Gross Interest', 'कुल ब्याज');
     if (recorded != null || periods.isEmpty) return recorded;
     var total = 0.0;
     for (final period in periods) {
@@ -432,10 +463,18 @@ class NoticeStatementData {
         ? {'साधारण ब्याज विवरण', 'चक्रवृद्धि ब्याज विवरण'}
         : {'Simple Interest Breakdown', 'Compound Interest Breakdown'};
     final interestEnd = language == GirviNoticeLanguage.hindi
-        ? {'भुगतान और समायोजन', 'अंतिम बकाया सारांश', 'आवश्यक कार्रवाई'}
+        ? {
+            'भुगतान और समायोजन',
+            'प्राप्त भुगतान',
+            'अंतिम बकाया सारांश',
+            'खाते का सारांश',
+            'आवश्यक कार्रवाई'
+          }
         : {
             'Payments and Adjustments',
+            'Payments Received',
             'Final Outstanding Summary',
+            'Account Summary',
             'Required Action'
           };
     final periodKey = language == GirviNoticeLanguage.hindi ? 'अवधि' : 'Period';

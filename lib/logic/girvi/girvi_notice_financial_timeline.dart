@@ -1,5 +1,4 @@
 import '../../models/girvi/contact_recovery_model.dart';
-import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_interest_period_snapshot.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
@@ -32,31 +31,12 @@ class GirviNoticeFinancialTimeline {
     return snapshot.periodTo.isAfter(asOf) ? asOf : snapshot.periodTo;
   }
 
-  GirviLoanWithCustomer get _account => item.account;
-  List<GirviPaymentModel> get _interestPayments {
-    final entries = item.paymentHistory.where((payment) {
-      if (payment.type == GirviPaymentType.interest ||
-          payment.type == GirviPaymentType.partialInterest) {
-        return true;
-      }
-      return payment.interestComponent > 0 ||
-          payment.interestDiscountComponent > 0;
-    }).toList()
+  List<GirviPaymentModel> get _receivedPayments {
+    final entries = item.paymentHistory
+        .where((payment) => payment.amount > 0)
+        .toList()
       ..sort((a, b) => a.paymentDate.compareTo(b.paymentDate));
     return entries;
-  }
-
-  double _interestReceived(GirviPaymentModel payment) {
-    if (payment.type == GirviPaymentType.fullRelease) {
-      return payment.interestComponent;
-    }
-    if (payment.type != GirviPaymentType.interest &&
-        payment.type != GirviPaymentType.partialInterest) {
-      return payment.interestComponent;
-    }
-    final hasSplit =
-        payment.interestComponent > 0 || payment.principalComponent > 0;
-    return hasSplit ? payment.interestComponent : payment.amount;
   }
 
   List<GirviNoticeBlock> interestBlocks(GirviNoticeLanguage language) {
@@ -153,51 +133,15 @@ class GirviNoticeFinancialTimeline {
 
   List<GirviNoticeBlock> paymentBlocks(GirviNoticeLanguage language) {
     final isHindi = language == GirviNoticeLanguage.hindi;
-    if (_interestPayments.isEmpty && !_hasAdjustments) {
-      return const [];
-    }
-
     return [
-      for (final payment in _interestPayments)
+      for (final payment in _receivedPayments)
         GirviNoticeBlock(
           heading: date(payment.paymentDate),
           lines: [
             '${isHindi ? 'माध्यम' : 'Mode'}: ${payment.mode.displayName}',
-            if (_interestReceived(payment) > 0)
-              '${isHindi ? 'ब्याज प्राप्त' : 'Interest Received'}: ${money(_interestReceived(payment))}',
-            if (payment.interestDiscountComponent > 0)
-              '${isHindi ? 'ब्याज समायोजन' : 'Interest Adjustment'}: ${money(payment.interestDiscountComponent)}',
-            '${isHindi ? 'अवधि' : 'Interest Period'}: ${_paymentPeriod(payment, isHindi: isHindi)}',
-          ],
-        ),
-      if (_hasAdjustments)
-        GirviNoticeBlock(
-          heading: isHindi ? 'लागू समायोजन' : 'Applicable Adjustments',
-          lines: [
-            if (_account.principalDiscountTotal > 0)
-              '${isHindi ? 'मूलधन समायोजन' : 'Principal Adjustment'}: ${money(_account.principalDiscountTotal)}',
-            if (_account.interestDiscountTotal > 0)
-              '${isHindi ? 'ब्याज समायोजन' : 'Interest Adjustment'}: ${money(_account.interestDiscountTotal)}',
+            '${isHindi ? 'प्राप्त भुगतान' : 'Amount Received'}: ${money(payment.amount)}',
           ],
         ),
     ];
-  }
-
-  bool get _hasAdjustments =>
-      _account.principalDiscountTotal > 0 || _account.interestDiscountTotal > 0;
-
-  String _paymentPeriod(GirviPaymentModel payment, {required bool isHindi}) {
-    final from = payment.interestFromDate;
-    final to = payment.interestToDate;
-    final months = payment.monthsCovered;
-    final monthText = months == null || months <= 0
-        ? ''
-        : ' ($months ${isHindi ? 'माह' : 'month${months == 1 ? '' : 's'}'})';
-    if (from != null && to != null) {
-      return '${date(from)} ${isHindi ? 'से' : 'to'} ${date(to)}$monthText';
-    }
-    return monthText.isEmpty
-        ? (isHindi ? 'रिकॉर्ड में उपलब्ध नहीं' : 'Not recorded')
-        : monthText.trim();
   }
 }

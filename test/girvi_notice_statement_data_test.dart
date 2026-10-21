@@ -6,14 +6,15 @@ import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'fixtures/girvi_notice_case_fixture.dart';
 
 void main() {
-  test('new notice gives the review period after customer delivery', () {
+  test('new notice prints the response date from the chosen number of days',
+      () {
     final item = createNoticeCase();
     final notice = GirviNoticeGenerationService(now: item.now).build(
       item: item,
       noticeType: GirviNoticeType.formal,
       language: GirviNoticeLanguage.english,
     );
-    expect(notice, contains('within 7 days after receiving this notice'));
+    expect(notice, contains('on or before 11 October 2026'));
   });
 
   test('notice draft uses the selected response period and account recipient',
@@ -33,7 +34,7 @@ void main() {
     expect(draft, contains('To: Sample Customer'));
     expect(draft, contains('Customer Address: Sample address, Patna'));
     expect(draft, contains('Customer Mobile: 0000000000'));
-    expect(draft, contains('within 14 days after receiving this notice'));
+    expect(draft, contains('on or before 18 October 2026'));
     expect(draft, contains('This notice or the absence of a reply'));
   });
 
@@ -61,7 +62,7 @@ void main() {
         expect(data.isCompound, !simple);
         expect(data.totalPayable, simple ? 'Rs 1,18,000' : 'Rs 1,18,720');
         expect(data.importantLines.join(' '),
-            contains('I will visit the shop on Friday.'));
+            isNot(contains('I will visit the shop on Friday.')));
         expect(data.importantLines.join(' '),
             isNot(contains(simple ? 'Rs 18,000' : 'Rs 18,720')));
       });
@@ -128,8 +129,42 @@ void main() {
       '04 April 2026 to 04 October 2026',
     );
     expect(data.interestPeriodTo, '04 October 2026');
+    expect(data.importantLines.join(' '), contains('Payments Received'));
+    expect(data.importantLines.join(' '), contains('Mode: Cash'));
     expect(
-        data.importantLines.join(' '), contains('Interest Received: Rs 3,000'));
+        data.importantLines.join(' '), contains('Amount Received: Rs 3,000'));
+    expect(data.importantLines.join(' '), isNot(contains('Interest Period:')));
+  });
+
+  test(
+      'receipt list includes principal and interest payments without covered months',
+      () {
+    final item = createNoticeCase(
+      simple: false,
+      principalPaid: 5000,
+      interestPaid: 3000,
+    );
+    final notice = GirviNoticeGenerationService(now: item.now).build(
+      item: item,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+      noticePeriodDays: 30,
+    );
+    final statement = NoticeStatementData.parse(
+      notice,
+      GirviNoticeLanguage.english,
+    );
+    final customerCopy = statement.importantLines.join('\n');
+
+    expect(statement.chargeablePeriod, '18 months');
+    expect(statement.totalReceived, 'Rs 8,000');
+    expect(customerCopy, contains('04 January 2026'));
+    expect(customerCopy, contains('Amount Received: Rs 3,000'));
+    expect(customerCopy, contains('04 February 2026'));
+    expect(customerCopy, contains('Amount Received: Rs 5,000'));
+    expect(customerCopy, contains('on or before 03 November 2026'));
+    expect(customerCopy, isNot(contains('Interest Period:')));
+    expect(customerCopy, isNot(contains('months covered')));
   });
 
   test('final summary reconciles principal, interest, receipts and adjustments',
@@ -154,13 +189,13 @@ void main() {
     expect(summary.originalPrincipal, 'Rs 1,00,000');
     expect(summary.grossInterest, 'Rs 18,720');
     expect(summary.totalAccountCharges, 'Rs 1,18,720');
-    expect(summary.principalPaidTotal, 'Rs 5,000');
+    expect(summary.principalPaidTotal, isNull);
     expect(summary.interestPaidTotal, 'Rs 3,000');
     expect(summary.totalReceived, 'Rs 8,000');
-    expect(summary.principalAdjustment, 'Rs 1,000');
+    expect(summary.principalAdjustment, isNull);
     expect(summary.interestAdjustment, 'Rs 200');
     expect(summary.totalAdjustments, 'Rs 1,200');
-    expect(summary.principalOutstanding, 'Rs 94,000');
+    expect(summary.principalOutstanding, isNull);
     expect(summary.interestOutstanding, 'Rs 15,520');
     expect(summary.totalPayable, 'Rs 1,09,520');
     expect(summary.hasPayments, isTrue);
@@ -187,9 +222,9 @@ void main() {
       GirviNoticeLanguage.english,
     );
     expect(summary.originalPrincipal, 'Rs 1,00,000');
-    expect(summary.principalPaidTotal, 'Rs 7,000');
+    expect(summary.principalPaidTotal, isNull);
     expect(summary.totalReceived, 'Rs 10,000');
-    expect(summary.principalOutstanding, 'Rs 93,000');
+    expect(summary.principalOutstanding, isNull);
     expect(summary.totalPayable, 'Rs 1,08,720');
   });
 

@@ -26,7 +26,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
         pw.Inseparable(
           child: pw.Column(
             children: [
-              _section(3, t('Final Outstanding Summary', 'अंतिम बकाया सारांश')),
+              _section(3, t('Account Summary', 'खाते का सारांश')),
               _outstandingCard(),
             ],
           ),
@@ -37,32 +37,49 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
         ],
       ];
 
-  List<pw.Widget> informationPage() => [
-        if (_actionOnInformationPage && !_hasApprovedActionSection) ...[
-          _actionCard(),
-          pw.SizedBox(height: 4),
-        ],
-        _section(4, t('Notice to Customer', 'ग्राहक के लिए सूचना')),
-        pw.SizedBox(height: 8),
-        if (statement.financialAsOf != null) ...[
-          _verifiedFinancialNote(),
-          pw.SizedBox(height: 4),
-        ],
-        ..._noticeDraft(),
-        pw.SizedBox(height: 13),
-        pw.Inseparable(
-          child: pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
-              pw.Container(height: 0.8, color: _noticeBorder),
-              pw.SizedBox(height: 8),
-              _contactDetails(),
-              pw.SizedBox(height: 12),
-              _signatureBlock(),
+  List<pw.Widget> informationPage() {
+    final draft = _noticeDraft();
+    return [
+      if (_actionOnInformationPage && !_hasApprovedActionSection) ...[
+        _actionCard(),
+        pw.SizedBox(height: 4),
+      ],
+      pw.Inseparable(
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            _section(4, t('Required Action', 'आवश्यक कार्रवाई')),
+            pw.SizedBox(height: 8),
+            if (statement.financialAsOf != null) ...[
+              _verifiedFinancialNote(),
+              pw.SizedBox(height: 4),
             ],
-          ),
+            pw.Text(branding.printShopName.toUpperCase(),
+                style: _style(11, bold: true)),
+            if (branding.printShopAddress.isNotEmpty)
+              pw.Text(branding.printShopAddress, style: _style(9)),
+            if (branding.shopMobile.trim().isNotEmpty)
+              pw.Text('Phone: ${branding.shopMobile.trim()}', style: _style(9)),
+            pw.SizedBox(height: 7),
+            pw.Text('FORMAL NOTICE: PLEDGE ACCOUNT $ticketNo',
+                style: _style(12, bold: true)),
+            pw.SizedBox(height: 5),
+            pw.Row(children: [
+              pw.Expanded(
+                child: pw.Text(
+                    'Notice No.: ${statement.noticeNumber ?? '$ticketNo-NOTICE'}',
+                    style: _style(9, bold: true)),
+              ),
+              pw.Text('Date: $dateText', style: _style(9, bold: true)),
+            ]),
+            pw.SizedBox(height: 6),
+            if (draft.isNotEmpty) draft.first,
+          ],
         ),
-      ];
+      ),
+      ...draft.skip(1),
+    ];
+  }
 
   pw.Widget _verifiedFinancialNote() => pw.Text(
         'Financial figures recalculated from the verified pledge ledger '
@@ -85,8 +102,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
                 color: _noticeGold,
                 borderRadius: pw.BorderRadius.circular(12),
               ),
-              child: pw.Text(noticeLabel.toUpperCase(),
-                  style: _style(10, bold: true)),
+              child: pw.Text('FORMAL NOTICE', style: _style(10, bold: true)),
             ),
           ),
           pw.SizedBox(height: 5),
@@ -108,10 +124,10 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
             pw.Expanded(
               child: pw.Column(
                 children: [
-                  _pair(t('Notice No.', 'सूचना नंबर'),
+                  _pair('Notice No.',
                       statement.noticeNumber ?? '$ticketNo-NOTICE'),
-                  _pair(t('Notice Date', 'सूचना दिनांक'), dateText),
-                  _pair(t('Pledge Reference', 'गिरवी संदर्भ'),
+                  _pair('Notice Date', dateText),
+                  _pair('Pledge Reference',
                       statement.pledgeReference ?? ticketNo),
                 ],
               ),
@@ -122,7 +138,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(t('Subject', 'विषय'), style: _style(8.5, bold: true)),
+                  pw.Text('Subject', style: _style(8.5, bold: true)),
                   pw.SizedBox(height: 4),
                   pw.Text(statement.subject ?? noticeType.subtitle,
                       style: _style(8.5)),

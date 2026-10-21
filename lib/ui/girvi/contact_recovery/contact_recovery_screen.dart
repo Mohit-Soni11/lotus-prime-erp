@@ -171,7 +171,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       return;
     }
 
-    final noticeService = GirviNoticeGenerationService();
+    final noticeService = GirviNoticeGenerationService(now: currentItem.now);
     final validationIssues = noticeService.validate(currentItem);
     if (validationIssues.isNotEmpty) {
       _controller.showInlineMessage(

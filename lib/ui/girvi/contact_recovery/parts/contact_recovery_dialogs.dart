@@ -60,10 +60,8 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
       setState(() {});
       return;
     }
-    final oldPeriod =
-        'within $_selectedDays day${_selectedDays == 1 ? '' : 's'} after receiving this notice';
-    final newPeriod =
-        'within $days day${days == 1 ? '' : 's'} after receiving this notice';
+    final oldPeriod = 'on or before ${_responseDate(_selectedDays)}';
+    final newPeriod = 'on or before ${_responseDate(days)}';
     final previousText = _textController.text;
     final nextText = previousText == _generatedText
         ? widget.generateTextForPeriod(days)
@@ -75,15 +73,19 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     });
   }
 
+  String _responseDate(int days) => DateFormat('dd MMMM yyyy').format(DateTime(
+        widget.item.now.year,
+        widget.item.now.month,
+        widget.item.now.day + days,
+      ));
+
   String? get _periodError {
     final days = int.tryParse(_daysController.text);
     if (days == null || days < 1 || days > 365) {
       return 'Enter 1 to 365 days.';
     }
-    if (!_textController.text.contains(
-      'within $days day${days == 1 ? '' : 's'} after receiving this notice',
-    )) {
-      return 'Keep the response period sentence in the notice text.';
+    if (!_textController.text.contains('on or before ${_responseDate(days)}')) {
+      return 'Keep the selected response date in the notice text.';
     }
     return null;
   }
@@ -168,7 +170,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
               cursorColor: GirviColors.shellBg,
               decoration: InputDecoration(
                 labelText: 'Response period (days)',
-                helperText: 'Starts when the customer receives the notice.',
+                helperText: 'Due date is calculated from the notice date.',
                 errorText: _periodError,
                 floatingLabelBehavior: FloatingLabelBehavior.always,
                 labelStyle: GirviStyles.fieldLabel,

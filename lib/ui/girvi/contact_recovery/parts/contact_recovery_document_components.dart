@@ -915,8 +915,10 @@ class _NoticePreviewLine {
     'Simple Interest Breakdown',
     'Compound Interest Breakdown',
     'Payments and Adjustments',
+    'Payments Received',
     'Previous Contact and Customer Response',
     'Final Outstanding Summary',
+    'Account Summary',
     'Required Action',
     'साधारण ब्याज विवरण',
     'चक्रवृद्धि ब्याज विवरण',
@@ -924,6 +926,7 @@ class _NoticePreviewLine {
     'भुगतान और समायोजन',
     'पूर्व संपर्क और ग्राहक प्रतिक्रिया',
     'अंतिम बकाया सारांश',
+    'खाते का सारांश',
     'आवश्यक कार्रवाई',
   };
 }
