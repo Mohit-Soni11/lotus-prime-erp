@@ -1,10 +1,12 @@
 part of '../girvi_notice_pdf_service.dart';
 
 extension _NoticeStatementComposition on _NoticeStatementLayout {
-  bool get _actionOnInformationPage =>
-      statement.isCompound &&
-      statement.periods.length >= 4 &&
-      (deadline != null || noticePeriodDays != null);
+  bool get _actionOnInformationPage => (statement.hasPayments ||
+      statement.hasAdjustments ||
+      (statement.isCompound && statement.periods.length >= 4));
+
+  bool get _hasApprovedActionSection => statement.importantLines
+      .contains(t('Required Action', 'आवश्यक कार्रवाई'));
 
   List<pw.Widget> summaryPage() => [
         _title(),
@@ -21,46 +23,52 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
         ),
         _interestCard(),
         pw.SizedBox(height: 3),
-        _section(3, t('Final Outstanding Summary', 'अंतिम बकाया सारांश')),
-        _outstandingCard(),
-        if (!_actionOnInformationPage) ...[
+        pw.Inseparable(
+          child: pw.Column(
+            children: [
+              _section(3, t('Final Outstanding Summary', 'अंतिम बकाया सारांश')),
+              _outstandingCard(),
+            ],
+          ),
+        ),
+        if (!_actionOnInformationPage && !_hasApprovedActionSection) ...[
           pw.SizedBox(height: 3),
           _actionCard(),
         ],
       ];
 
   List<pw.Widget> informationPage() => [
-        if (_actionOnInformationPage) ...[
+        if (_actionOnInformationPage && !_hasApprovedActionSection) ...[
           _actionCard(),
-          pw.SizedBox(height: 7),
+          pw.SizedBox(height: 4),
         ],
-        _section(4, t('Important Information', 'महत्वपूर्ण जानकारी')),
-        pw.SizedBox(height: 7),
+        _section(4, t('Notice to Customer', 'ग्राहक के लिए सूचना')),
+        pw.SizedBox(height: 8),
         if (statement.financialAsOf != null) ...[
           _verifiedFinancialNote(),
-          pw.SizedBox(height: 7),
+          pw.SizedBox(height: 4),
         ],
-        ..._informationCards(),
-        pw.SizedBox(height: 7),
-        _contactCard(),
-        pw.SizedBox(height: 10),
-        _signatureBlock(),
+        ..._noticeDraft(),
+        pw.SizedBox(height: 13),
+        pw.Inseparable(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Container(height: 0.8, color: _noticeBorder),
+              pw.SizedBox(height: 8),
+              _contactDetails(),
+              pw.SizedBox(height: 12),
+              _signatureBlock(),
+            ],
+          ),
+        ),
       ];
 
-  pw.Widget _verifiedFinancialNote() => pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-        decoration: pw.BoxDecoration(
-          color: _noticePaleGold,
-          border: pw.Border.all(color: _noticeGold, width: 0.7),
-          borderRadius: pw.BorderRadius.circular(5),
-        ),
-        child: pw.Text(
-          'Financial figures recalculated from the verified pledge ledger '
-          'as of ${DateFormat('dd MMMM yyyy').format(statement.financialAsOf!)}. '
-          'The original approved notice remains in the audit record.',
-          style: _style(8.7, bold: true),
-        ),
+  pw.Widget _verifiedFinancialNote() => pw.Text(
+        'Financial figures recalculated from the verified pledge ledger '
+        'as of ${DateFormat('dd MMMM yyyy').format(statement.financialAsOf!)}. '
+        'The original approved notice remains in the audit record.',
+        style: _style(8.7),
       );
 
   pw.Widget _title() => pw.Column(

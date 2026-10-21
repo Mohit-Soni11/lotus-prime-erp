@@ -40,7 +40,7 @@ class GirviCustomerResponseRepository {
         (promisedAmount == null || promisedAmount <= 0)) {
       throw ArgumentError('A promised amount is required for partial payment.');
     }
-    if (noticeStage != null && (noticeStage < 1 || noticeStage > 3)) {
+    if (noticeStage != null && noticeStage != GirviNoticeType.formal.stage) {
       throw ArgumentError.value(
           noticeStage, 'noticeStage', 'Invalid notice stage.');
     }

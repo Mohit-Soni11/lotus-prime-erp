@@ -22,11 +22,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeNotice = item.formalNoticeAction;
-    final legacyActions = item.legacyNoticeActions;
-    final earlierNotices = [
-      ...item.earlierFormalNoticeActions,
-      ...legacyActions,
-    ];
+    final earlierNotices = item.earlierFormalNoticeActions;
     Widget noticeCard(GirviNoticeAction action) {
       final responses = item.responsesForNotice(action);
       final approvedText = item
@@ -63,7 +59,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: GirviColors.bodyBg,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: GirviColors.cardBorder),
       ),
@@ -82,19 +78,22 @@ class _NoticeDocumentStrip extends StatelessWidget {
                   ),
                 ),
               ),
-              TextButton.icon(
-                onPressed: onViewCustomerResponses,
-                icon: const Icon(Icons.history_rounded, size: 16),
-                label: const Text('Response timeline'),
-                style: TextButton.styleFrom(
-                  foregroundColor: GirviColors.info,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  textStyle: GirviStyles.caption.copyWith(
-                    fontWeight: FontWeight.w800,
+              if (item.recoveryNoticeAction != null ||
+                  item.responseTimeline.isNotEmpty)
+                TextButton.icon(
+                  onPressed: onViewCustomerResponses,
+                  icon: const Icon(Icons.history_rounded, size: 16),
+                  label: const Text('Response timeline'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: GirviColors.info,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: GirviStyles.caption.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-              _NoticeCountBadge(label: item.noticeStatusLabel),
+              if (item.recoveryNoticeAction != null)
+                _NoticeCountBadge(label: item.noticeStatusLabel),
             ],
           ),
           const SizedBox(height: 9),
@@ -102,9 +101,6 @@ class _NoticeDocumentStrip extends StatelessWidget {
             Align(
                 alignment: Alignment.centerLeft,
                 child: noticeCard(activeNotice))
-          else if (item.recoveryNoticeAction != null)
-            Text('An earlier approved notice is on record.',
-                style: GirviStyles.caption)
           else
             const _NoNoticeDocuments(),
           if (earlierNotices.isNotEmpty)
@@ -217,9 +213,7 @@ class _NoticeDocumentCard extends StatelessWidget {
         ? null
         : DateFormat('dd MMM yyyy, hh:mm a')
             .format(proof.deliveredAt ?? proof.actionAt);
-    final color = action.isLegacyNoticePreparation
-        ? GirviColors.textMuted
-        : GirviColors.info;
+    const color = GirviColors.info;
 
     return InkWell(
       onTap: onView,
@@ -254,7 +248,7 @@ class _NoticeDocumentCard extends StatelessWidget {
                     border: Border.all(color: color.withValues(alpha: 0.24)),
                   ),
                   child: Text(
-                    action.isLegacyNoticePreparation ? 'H' : 'N',
+                    'N',
                     style: GoogleFonts.inter(
                       color: color,
                       fontSize: 12.3,
@@ -959,42 +953,46 @@ class _CaseActions extends StatelessWidget {
           color: GirviColors.shellBg,
           onTap: onOpenAccount,
         ),
-        const SizedBox(height: 8),
-        _ActionButton(
-          label: item.primaryActionLabel,
-          color: GirviColors.warning,
-          onTap: _primaryAction,
-        ),
+        if (_primaryAction case final action?) ...[
+          const SizedBox(height: 8),
+          _ActionButton(
+            label: item.stage == ContactRecoveryStage.noticeRequired
+                ? 'Prepare Notice'
+                : 'Send to Recovery',
+            color: GirviColors.warning,
+            onTap: action,
+          ),
+        ],
         if (item.requiresCorrectedFormalNotice && onPrepareNotice != null) ...[
           const SizedBox(height: 8),
           _ActionButton(
             label: 'Prepare Corrected Notice',
             color: GirviColors.warning,
-            onTap: onPrepareNotice,
+            onTap: onPrepareNotice!,
           ),
         ],
-        if (item.stage == ContactRecoveryStage.recoveryInProgress ||
-            item.stage == ContactRecoveryStage.settled) ...[
+        if (onCloseDisposal != null) ...[
           const SizedBox(height: 8),
           _ActionButton(
-            label: item.stage == ContactRecoveryStage.settled
-                ? 'Recovery Closed'
-                : 'Record Recovery',
-            color: item.stage == ContactRecoveryStage.settled
-                ? GirviColors.success
-                : GirviColors.danger,
-            onTap: onCloseDisposal,
+            label: 'Record Recovery',
+            color: GirviColors.danger,
+            onTap: onCloseDisposal!,
           ),
         ],
-        const SizedBox(height: 8),
-        Text(
-          item.stageDescription,
-          style: GirviStyles.caption.copyWith(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
+        if (item.stage == ContactRecoveryStage.noticePending ||
+            item.stage == ContactRecoveryStage.disposalReady) ...[
+          const SizedBox(height: 10),
+          Text(
+            item.stageDescription,
+            style: GirviStyles.caption.copyWith(
+              color: GirviColors.textMuted,
+              fontSize: 12.1,
+              height: 1.35,
+            ),
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
           ),
-          textAlign: TextAlign.center,
-        ),
+        ],
       ],
     );
   }
@@ -1084,23 +1082,30 @@ class _AmountTile extends StatelessWidget {
   final String label;
   final String value;
   final Color accent;
+  final bool emphasis;
 
   const _AmountTile({
     required this.label,
     required this.value,
     this.accent = GirviColors.textDark,
+    this.emphasis = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 142,
-      height: 74,
-      padding: const EdgeInsets.all(10),
+      height: 78,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: GirviColors.bodyBg,
+        color: emphasis
+            ? GirviColors.danger.withValues(alpha: 0.06)
+            : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: GirviColors.cardBorder),
+        border: Border.all(
+          color: emphasis
+              ? GirviColors.danger.withValues(alpha: 0.20)
+              : GirviColors.cardBorder,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1108,7 +1113,10 @@ class _AmountTile extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GirviStyles.caption.copyWith(fontSize: 12.5),
+            style: GirviStyles.caption.copyWith(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1118,7 +1126,7 @@ class _AmountTile extends StatelessWidget {
             child: Text(
               value,
               style: GoogleFonts.manrope(
-                fontSize: 16,
+                fontSize: 17,
                 fontWeight: FontWeight.w900,
                 color: accent,
               ),
@@ -1134,7 +1142,7 @@ class _AmountTile extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   final String label;
   final Color color;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   const _ActionButton({
     required this.label,
@@ -1144,7 +1152,6 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onTap != null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1152,16 +1159,14 @@ class _ActionButton extends StatelessWidget {
         height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: enabled ? color : GirviColors.inputBgLocked,
+          color: color,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: enabled ? color : GirviColors.cardBorder,
-          ),
+          border: Border.all(color: color),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: enabled ? Colors.white : GirviColors.textMuted,
+            color: Colors.white,
             fontSize: 12.5,
             fontWeight: FontWeight.w800,
           ),

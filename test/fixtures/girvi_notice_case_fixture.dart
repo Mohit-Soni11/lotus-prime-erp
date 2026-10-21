@@ -7,6 +7,9 @@ ContactRecoveryCase createNoticeCase({
   bool simple = true,
   double interestPaid = 0,
   double interestDiscount = 0,
+  double principalPaid = 0,
+  double legacyPrincipalPaid = 0,
+  double principalDiscount = 0,
 }) {
   final start = DateTime(2025, 4, 4);
   final now = DateTime(2026, 10, 4);
@@ -26,7 +29,7 @@ ContactRecoveryCase createNoticeCase({
         grossWeight: 10,
         stoneWeight: 0,
         netWeight: 10,
-        loanAmount: 100000,
+        loanAmount: 100000 - legacyPrincipalPaid,
         interestRate: 1,
         durationMonths: 6,
         disbursementMode: 'Cash',
@@ -40,10 +43,37 @@ ContactRecoveryCase createNoticeCase({
       interestType: interestType,
       interestPaidTotal: interestPaid,
       interestDiscountTotal: interestDiscount,
+      principalPaidTotal: principalPaid,
+      legacyPrincipalRepaidTotal: legacyPrincipalPaid,
+      principalDiscountTotal: principalDiscount,
     ),
     noticePeriodDays: 7,
     now: now,
     paymentHistory: [
+      if (legacyPrincipalPaid > 0)
+        GirviPaymentModel(
+          id: 3,
+          girviId: 1,
+          paymentDate: DateTime(2025, 12, 4),
+          amount: legacyPrincipalPaid,
+          paymentType: 'PARTIAL_PRINCIPAL',
+          paymentMode: 'CASH',
+          balanceAfter: 100000 - legacyPrincipalPaid,
+          createdAt: DateTime(2025, 12, 4),
+        ),
+      if (principalPaid > 0 || principalDiscount > 0)
+        GirviPaymentModel(
+          id: 2,
+          girviId: 1,
+          paymentDate: DateTime(2026, 2, 4),
+          amount: principalPaid,
+          paymentType: 'FULL_RELEASE',
+          paymentMode: 'CASH',
+          principalComponent: principalPaid,
+          principalDiscountComponent: principalDiscount,
+          balanceAfter: 0,
+          createdAt: DateTime(2026, 2, 4),
+        ),
       if (interestPaid > 0 || interestDiscount > 0)
         GirviPaymentModel(
           id: 1,

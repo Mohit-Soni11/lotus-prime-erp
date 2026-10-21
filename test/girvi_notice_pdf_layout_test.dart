@@ -6,6 +6,9 @@ import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
+import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_interest_period_snapshot.dart';
+import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
 import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 
 import 'fixtures/girvi_notice_case_fixture.dart';
@@ -100,6 +103,8 @@ void main() {
     for (final simple in [true, false]) {
       final item = createNoticeCase(
         simple: simple,
+        principalPaid: 5000,
+        principalDiscount: 1000,
         interestPaid: 3000,
         interestDiscount: 200,
       );
@@ -124,6 +129,62 @@ void main() {
         await File('$output/notice_interest_${method}_paid.pdf')
             .writeAsBytes(bytes);
       }
+    }
+  });
+
+  test('five compound periods keep the complete outstanding summary together',
+      () async {
+    final base = createNoticeCase(simple: false, interestPaid: 3000);
+    var opening = base.account.originalPrincipal;
+    final periods = <GirviInterestPeriodSnapshot>[];
+    for (var index = 0; index < 5; index++) {
+      final months = index == 4 ? 3 : 12;
+      final interest = opening * 0.01 * months;
+      final closing = opening + interest - (index == 0 ? 3000 : 0);
+      periods.add(GirviInterestPeriodSnapshot(
+        id: index + 1,
+        girviId: base.loan.id,
+        sequence: index + 1,
+        periodFrom: DateTime(2025 + index, 4, 4),
+        periodTo:
+            index == 4 ? DateTime(2029, 7, 4) : DateTime(2026 + index, 4, 4),
+        interestType: GirviInterestCalculationType.compound,
+        openingAmount: opening,
+        monthlyRatePercent: 1,
+        interestPerMonth: opening * 0.01,
+        chargeableMonths: months,
+        periodInterest: interest,
+        closingAmount: closing,
+        finalized: index < 4,
+        source: 'TEST',
+      ));
+      opening = closing;
+    }
+    final item = ContactRecoveryCase(
+      account: base.account,
+      noticePeriodDays: base.noticePeriodDays,
+      now: DateTime(2029, 7, 4),
+      paymentHistory: base.paymentHistory,
+      interestPeriodSnapshots: periods,
+      customerResponses: base.customerResponses,
+    );
+    final approved = GirviNoticeGenerationService(now: item.now).build(
+      item: item,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+    );
+    final pdf = await GirviNoticePdfService().build(
+      item: item,
+      noticeType: GirviNoticeType.formal,
+      noticeLanguage: GirviNoticeLanguage.english,
+      noticeText: approved,
+      branding: sampleBranding,
+    );
+    expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
+    final output = Platform.environment['NOTICE_LAYOUT_PREVIEW_DIR'];
+    if (output != null && output.isNotEmpty) {
+      await Directory(output).create(recursive: true);
+      await File('$output/notice_five_compound_periods.pdf').writeAsBytes(pdf);
     }
   });
 

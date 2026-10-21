@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:drift/drift.dart' as drift;
-import 'package:intl/intl.dart';
 
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -20,13 +19,14 @@ import 'girvi_notice_eligibility.dart';
 
 class ContactRecoveryController extends ChangeNotifier {
   ContactRecoveryController({
+    required String ticketNo,
     AppDatabase? db,
     GirviRepository? repository,
     GirviBillingRepo? billingRepo,
     GirviNoticeActionRepository? noticeActionRepository,
     GirviCustomerResponseRepository? customerResponseRepository,
     GirviNoticeDocumentRepository? noticeDocumentRepository,
-  }) {
+  }) : _ticketNo = ticketNo.trim() {
     final resolvedDb = db ?? AppDatabase();
     _db = resolvedDb;
     _repository = repository ?? GirviRepository(resolvedDb);
@@ -40,6 +40,7 @@ class ContactRecoveryController extends ChangeNotifier {
   }
 
   late final AppDatabase _db;
+  final String _ticketNo;
   late final GirviRepository _repository;
   late final GirviBillingRepo _billingRepo;
   late final GirviNoticeActionRepository _noticeActionRepository;
@@ -75,8 +76,6 @@ class ContactRecoveryController extends ChangeNotifier {
   bool _isDisposed = false;
   int _loadRevision = 0;
 
-  static final DateFormat _timeFormat = DateFormat('hh:mm a');
-
   Future<void> load({bool keepInlineMessage = false}) async {
     if (_isDisposed) return;
     final revision = ++_loadRevision;
@@ -88,12 +87,26 @@ class ContactRecoveryController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_ticketNo.isEmpty) {
+        _state = _state.copyWith(allCases: [], isLoading: false);
+        notifyListeners();
+        return;
+      }
+      final selectedLoan = await _repository.getLoanByTicket(_ticketNo);
+      if (_isDisposed || revision != _loadRevision) return;
+      if (selectedLoan == null) {
+        _state = _state.copyWith(allCases: [], isLoading: false);
+        notifyListeners();
+        return;
+      }
       await _repository.syncOverdueStatus();
       final billing = await _billingRepo.fetch();
       final noticeDays = billing.noticeDays <= 0 ? 7 : billing.noticeDays;
       final now = DateTime.now();
-      final loans =
-          await _repository.getLoansWithCustomer(includeAuctioned: true);
+      final loans = await _repository.getLoansWithCustomer(
+        loanId: selectedLoan.id,
+        includeAuctioned: true,
+      );
       final workflowIds = await _loadOpenWorkflowIds(
         loans.map((entry) => entry.loan.id).toList(growable: false),
       );
@@ -147,9 +160,9 @@ class ContactRecoveryController extends ChangeNotifier {
               account: entry,
               noticePeriodDays: noticeDays,
               now: now,
-              latestAction: (actionHistory[entry.loan.id] ?? const []).isEmpty
-                  ? null
-                  : actionHistory[entry.loan.id]!.first,
+              latestAction: _latestCurrentNoticeAction(
+                actionHistory[entry.loan.id] ?? const [],
+              ),
               actionHistory: actionHistory[entry.loan.id] ?? const [],
               customerResponses: customerResponses[entry.loan.id] ?? const [],
               noticeDocuments: noticeDocuments[entry.loan.id] ?? const [],
@@ -159,19 +172,16 @@ class ContactRecoveryController extends ChangeNotifier {
               itemPhotoPaths: photoPaths[entry.loan.id] ?? const [],
             ),
           )
-          .toList()
-        ..sort(_sortCases);
+          .toList();
 
       if (_isDisposed || revision != _loadRevision) return;
 
       _state = _state.copyWith(
         allCases: cases,
-        stats: _buildStats(cases, now),
-        noticePeriodDays: noticeDays,
         isLoading: false,
         clearError: true,
       );
-      _applyFilters();
+      notifyListeners();
     } catch (error) {
       if (_isDisposed || revision != _loadRevision) return;
       AppLogger.debug('Contact & Recovery load failed: $error');
@@ -190,14 +200,22 @@ class ContactRecoveryController extends ChangeNotifier {
     super.dispose();
   }
 
-  void setFilter(ContactRecoveryFilter filter) {
-    _state = _state.copyWith(filter: filter);
-    _applyFilters();
-  }
-
-  void setSearchQuery(String query) {
-    _state = _state.copyWith(searchQuery: query);
-    _applyFilters();
+  GirviNoticeAction? _latestCurrentNoticeAction(
+    List<GirviNoticeAction> actions,
+  ) {
+    final formal =
+        actions.where((action) => action.isFormalNoticePreparation).firstOrNull;
+    if (formal == null) return null;
+    return actions.where((action) {
+      if (!GirviNoticeActionTypes.recordableTypes.contains(action.actionType)) {
+        return false;
+      }
+      if (action.isFormalNoticePreparation) return true;
+      if (action.noticeActionId != null) {
+        return action.noticeActionId == formal.id;
+      }
+      return !action.actionAt.isBefore(formal.actionAt);
+    }).firstOrNull;
   }
 
   Future<Set<int>> _loadOpenWorkflowIds(List<int> loanIds) async {
@@ -206,10 +224,7 @@ class ContactRecoveryController extends ChangeNotifier {
     final rows = await (_db.select(_db.girviNoticeActions)
           ..where((action) =>
               action.girviId.isIn(loanIds) &
-              action.actionType.isIn([
-                ...GirviNoticeActionTypes.preparationTypes,
-                GirviNoticeActionTypes.collateralRecoveryInitiated,
-              ])))
+              action.actionType.equals(GirviNoticeActionTypes.noticePrepared)))
         .get();
     return rows.map((row) => row.girviId).toSet();
   }
@@ -318,6 +333,7 @@ class ContactRecoveryController extends ChangeNotifier {
     ContactRecoveryCase item,
     GirviNoticeType noticeType,
     String noticeText, {
+    int? noticePeriodDays,
     String? autoGeneratedText,
     Map<GirviNoticeLanguage, String>? noticeDocuments,
     Map<GirviNoticeLanguage, String>? autoGeneratedDocuments,
@@ -325,13 +341,13 @@ class ContactRecoveryController extends ChangeNotifier {
   }) async {
     try {
       if (item.nextNoticeType != noticeType || !item.canPrepareNotice) {
-        throw StateError('This notice stage is not eligible yet.');
+        throw StateError('This formal notice cannot be prepared now.');
       }
       await _noticeActionRepository.recordNoticePrepared(
         girviId: item.loan.id,
         noticeType: noticeType,
         noticeText: noticeText,
-        noticePeriodDays: item.noticePeriodDays,
+        noticePeriodDays: noticePeriodDays ?? item.noticePeriodDays,
         autoGeneratedText: autoGeneratedText,
         noticeDocuments: noticeDocuments,
         autoGeneratedDocuments: autoGeneratedDocuments,
@@ -349,7 +365,7 @@ class ContactRecoveryController extends ChangeNotifier {
       await load(keepInlineMessage: true);
       return true;
     } catch (error) {
-      AppLogger.debug('Contact & Recovery notice stage audit failed: $error');
+      AppLogger.debug('Formal notice approval failed: $error');
       _state = _state.copyWith(
         inlineMessage: '${noticeType.label} could not be saved.',
       );
@@ -411,7 +427,7 @@ class ContactRecoveryController extends ChangeNotifier {
   }) async {
     try {
       final stage = notice.resolvedNoticeStage;
-      if (stage == null || stage < 1 || stage > 3) {
+      if (!notice.isFormalNoticePreparation || stage != 1) {
         throw StateError(
             'A customer response must be linked to a saved notice.');
       }
@@ -735,138 +751,5 @@ class ContactRecoveryController extends ChangeNotifier {
   void dismissInlineMessage() {
     _state = _state.copyWith(clearInlineMessage: true);
     notifyListeners();
-  }
-
-  void _applyFilters() {
-    var result = List<ContactRecoveryCase>.from(_state.allCases);
-
-    switch (_state.filter) {
-      case ContactRecoveryFilter.noticeRequired:
-        result = result
-            .where((item) => item.stage == ContactRecoveryStage.noticeRequired)
-            .toList();
-        break;
-      case ContactRecoveryFilter.noticePending:
-        result = result
-            .where((item) => item.stage == ContactRecoveryStage.noticePending)
-            .toList();
-        break;
-      case ContactRecoveryFilter.disposalReady:
-        result = result
-            .where((item) => item.stage == ContactRecoveryStage.disposalReady)
-            .toList();
-        break;
-      case ContactRecoveryFilter.recoveryInProgress:
-        result = result
-            .where(
-                (item) => item.stage == ContactRecoveryStage.recoveryInProgress)
-            .toList();
-        break;
-      case ContactRecoveryFilter.settled:
-        result = result
-            .where((item) => item.stage == ContactRecoveryStage.settled)
-            .toList();
-        break;
-      case ContactRecoveryFilter.all:
-        result = result
-            .where((item) => item.stage != ContactRecoveryStage.settled)
-            .toList();
-        break;
-    }
-
-    final query = _state.searchQuery.trim().toLowerCase();
-    if (query.isNotEmpty) {
-      result = result.where((item) {
-        final loan = item.loan;
-        final account = item.account;
-        return loan.ticketNo.toLowerCase().contains(query) ||
-            account.customerName.toLowerCase().contains(query) ||
-            account.customerMobile.contains(query) ||
-            account.customerAddress.toLowerCase().contains(query) ||
-            loan.itemDescription.toLowerCase().contains(query) ||
-            loan.itemSummary.toLowerCase().contains(query) ||
-            loan.metalType.toLowerCase().contains(query) ||
-            loan.metalPurity.toLowerCase().contains(query) ||
-            item.stageLabel.toLowerCase().contains(query) ||
-            item.stageDescription.toLowerCase().contains(query) ||
-            item.noticeStatusLabel.toLowerCase().contains(query) ||
-            item.preparedNoticeActions.any(
-              (action) =>
-                  action.displayLabel.toLowerCase().contains(query) ||
-                  (action.noticeText?.toLowerCase().contains(query) ?? false),
-            ) ||
-            (item.latestAction?.displayLabel.toLowerCase().contains(query) ??
-                false);
-      }).toList();
-    }
-
-    result.sort(_sortCases);
-    _state = _state.copyWith(visibleCases: result, isLoading: false);
-    notifyListeners();
-  }
-
-  ContactRecoveryStats _buildStats(
-    List<ContactRecoveryCase> cases,
-    DateTime now,
-  ) {
-    final activeCases = cases
-        .where((item) => item.stage != ContactRecoveryStage.settled)
-        .toList();
-
-    return ContactRecoveryStats(
-      totalCases: activeCases.length,
-      noticeDueCount: activeCases
-          .where((item) => item.stage == ContactRecoveryStage.noticeRequired)
-          .length,
-      noticePendingCount: activeCases
-          .where((item) => item.stage == ContactRecoveryStage.noticePending)
-          .length,
-      disposalReadyCount: activeCases
-          .where((item) => item.stage == ContactRecoveryStage.disposalReady)
-          .length,
-      recoveryInProgressCount: activeCases
-          .where(
-              (item) => item.stage == ContactRecoveryStage.recoveryInProgress)
-          .length,
-      settledCount: cases
-          .where((item) => item.stage == ContactRecoveryStage.settled)
-          .length,
-      principalExposure: activeCases.fold(
-        0,
-        (sum, item) => sum + item.account.principalDue,
-      ),
-      interestExposure: activeCases.fold(
-        0,
-        (sum, item) => sum + item.verifiedInterestDue,
-      ),
-      totalExposure: activeCases.fold(
-        0,
-        (sum, item) => sum + item.verifiedTotalPayable,
-      ),
-      lastUpdatedAt: _timeFormat.format(now),
-    );
-  }
-
-  int _sortCases(ContactRecoveryCase a, ContactRecoveryCase b) {
-    final stageCompare = _stageRank(b.stage).compareTo(_stageRank(a.stage));
-    if (stageCompare != 0) return stageCompare;
-    final overdueCompare = b.overdueDays.compareTo(a.overdueDays);
-    if (overdueCompare != 0) return overdueCompare;
-    return b.verifiedTotalPayable.compareTo(a.verifiedTotalPayable);
-  }
-
-  int _stageRank(ContactRecoveryStage stage) {
-    switch (stage) {
-      case ContactRecoveryStage.disposalReady:
-        return 5;
-      case ContactRecoveryStage.recoveryInProgress:
-        return 6;
-      case ContactRecoveryStage.noticePending:
-        return 4;
-      case ContactRecoveryStage.noticeRequired:
-        return 2;
-      case ContactRecoveryStage.settled:
-        return 1;
-    }
   }
 }

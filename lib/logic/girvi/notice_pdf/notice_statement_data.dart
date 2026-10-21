@@ -50,8 +50,14 @@ class NoticeStatementData {
       'Interest Period To',
       'Compounding Cycle',
       'Gross Interest',
+      'Total Account Charges',
+      'Principal Paid Total',
       'Interest Paid Total',
       'Interest Adjustment Total',
+      'Principal Adjustment',
+      'Interest Adjustment',
+      'Total Received',
+      'Total Adjustments',
       'गिरवी वस्तु',
       'वस्तु का नाम',
       'शुद्धता',
@@ -69,8 +75,14 @@ class NoticeStatementData {
       'ब्याज अवधि समाप्त',
       'चक्रवृद्धि चक्र',
       'कुल ब्याज',
+      'कुल खाता राशि',
+      'प्राप्त मूलधन कुल',
       'प्राप्त ब्याज कुल',
       'ब्याज समायोजन कुल',
+      'मूलधन समायोजन',
+      'ब्याज समायोजन',
+      'कुल प्राप्त राशि',
+      'कुल समायोजन',
     };
     final currentValues = Map<String, String>.of(values)
       ..removeWhere((key, _) => financialKeys.contains(key));
@@ -185,8 +197,12 @@ class NoticeStatementData {
             'ब्याज अवधि समाप्त',
             'चक्रवृद्धि चक्र',
             'कुल ब्याज',
+            'कुल खाता राशि',
+            'प्राप्त मूलधन कुल',
             'प्राप्त ब्याज कुल',
             'ब्याज समायोजन कुल',
+            'कुल प्राप्त राशि',
+            'कुल समायोजन',
           }
         : <String>{
             'Pledged Item',
@@ -223,8 +239,12 @@ class NoticeStatementData {
             'Interest Period To',
             'Compounding Cycle',
             'Gross Interest',
+            'Total Account Charges',
+            'Principal Paid Total',
             'Interest Paid Total',
             'Interest Adjustment Total',
+            'Total Received',
+            'Total Adjustments',
           };
     return displayedKeys.contains(key);
   }
@@ -280,6 +300,35 @@ class NoticeStatementData {
       value('Interest Outstanding', 'ब्याज बकाया');
   String? get totalPayable =>
       value('Final Total Payable', 'अंतिम कुल देय राशि');
+  String? get totalAccountCharges =>
+      value('Total Account Charges', 'कुल खाता राशि') ??
+      _sumAmounts(originalPrincipal, grossInterest, requireBoth: true);
+  String? get principalPaidTotal =>
+      value('Principal Paid Total', 'प्राप्त मूलधन कुल');
+  String? get totalReceived =>
+      value('Total Received', 'कुल प्राप्त राशि') ??
+      _sumAmounts(principalPaidTotal, interestPaidTotal);
+  String? get principalAdjustment =>
+      value('Principal Adjustment', 'मूलधन समायोजन');
+  String? get interestAdjustment =>
+      value('Interest Adjustment', 'ब्याज समायोजन') ?? interestAdjustmentTotal;
+  String? get totalAdjustments =>
+      value('Total Adjustments', 'कुल समायोजन') ??
+      _sumAmounts(principalAdjustment, interestAdjustment);
+
+  String? _sumAmounts(String? first, String? second,
+      {bool requireBoth = false}) {
+    if (first == null && second == null) return null;
+    if (requireBoth && (first == null || second == null)) return null;
+    if (first == null) return second;
+    if (second == null) return first;
+    final left = double.tryParse(first.replaceAll(RegExp(r'[^0-9.-]'), ''));
+    final right = double.tryParse(second.replaceAll(RegExp(r'[^0-9.-]'), ''));
+    if (left == null || right == null) return null;
+    final prefix = first.trimLeft().startsWith('₹') ? '₹' : 'Rs';
+    return '$prefix ${NumberFormat('#,##,##0.##', 'en_IN').format(left + right)}';
+  }
+
   String? get interestPeriodFrom =>
       value('Interest Period From', 'ब्याज अवधि शुरू') ??
       periods.firstOrNull
@@ -330,6 +379,14 @@ class NoticeStatementData {
       value('Interest Adjustment Total', 'ब्याज समायोजन कुल');
   bool get hasInterestPayment => _hasPositiveAmount(interestPaidTotal);
   bool get hasInterestAdjustment => _hasPositiveAmount(interestAdjustmentTotal);
+  bool get hasPayments =>
+      _hasPositiveAmount(principalPaidTotal) ||
+      hasInterestPayment ||
+      _hasPositiveAmount(totalReceived);
+  bool get hasAdjustments =>
+      _hasPositiveAmount(principalAdjustment) ||
+      _hasPositiveAmount(interestAdjustment) ||
+      _hasPositiveAmount(totalAdjustments);
 
   bool _hasPositiveAmount(String? formatted) {
     if (formatted == null) return false;

@@ -225,19 +225,30 @@ class DefaulterRepository {
       final recoveryIds = <int>{};
       final noticeIds = <int>{};
       final settlements = <int, GirviNoticeActionData>{};
+      final formalNotices = <int, GirviNoticeActionData>{};
       for (final row in rows) {
-        if (_isOpenCollateralRecoveryAction(row.actionType)) {
-          recoveryIds.add(row.girviId);
-        }
-        if (GirviNoticeActionTypes.preparationTypes.contains(row.actionType) ||
-            _isOpenCollateralRecoveryAction(row.actionType)) {
-          noticeIds.add(row.girviId);
+        if (row.actionType == GirviNoticeActionTypes.noticePrepared) {
+          final previous = formalNotices[row.girviId];
+          if (previous == null || row.actionAt.isAfter(previous.actionAt)) {
+            formalNotices[row.girviId] = row;
+          }
         }
         if (row.actionType == GirviNoticeActionTypes.disposalSettled) {
           final previous = settlements[row.girviId];
           if (previous == null || row.actionAt.isAfter(previous.actionAt)) {
             settlements[row.girviId] = row;
           }
+        }
+      }
+      noticeIds.addAll(formalNotices.keys);
+      for (final row in rows) {
+        if (!_isOpenCollateralRecoveryAction(row.actionType)) continue;
+        final formal = formalNotices[row.girviId];
+        if (formal == null) continue;
+        if (row.noticeActionId == formal.id ||
+            (row.noticeActionId == null &&
+                !row.actionAt.isBefore(formal.actionAt))) {
+          recoveryIds.add(row.girviId);
         }
       }
       return (

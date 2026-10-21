@@ -20,7 +20,10 @@ void main() {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);
 
-      final controller = ContactRecoveryController(db: db);
+      final controller = ContactRecoveryController(
+        db: db,
+        ticketNo: 'GRV-DISPOSE-TEST',
+      );
       controller.dispose();
 
       await db.into(db.customers).insert(
@@ -136,14 +139,6 @@ void main() {
       ]);
       expect(closed.stage, ContactRecoveryStage.settled);
       expect(closed.nextNoticeType, isNull);
-      final state = ContactRecoveryState.initial()
-          .copyWith(allCases: [fresh, pending, ready, recovery, closed]);
-      expect(state.countForFilter(ContactRecoveryFilter.all), 4);
-      expect(state.countForFilter(ContactRecoveryFilter.noticeRequired), 1);
-      expect(state.countForFilter(ContactRecoveryFilter.noticePending), 2);
-      expect(state.countForFilter(ContactRecoveryFilter.disposalReady), 0);
-      expect(state.countForFilter(ContactRecoveryFilter.recoveryInProgress), 1);
-      expect(state.countForFilter(ContactRecoveryFilter.settled), 1);
     });
 
     test('notice delivery proof persists without changing notice stage count',
@@ -290,11 +285,35 @@ void main() {
               status: const drift.Value('OVERDUE'),
             ),
           );
-      final controller = ContactRecoveryController(db: db);
+      await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-MON-0012',
+              customerId: customerId,
+              itemDescription: 'Gold chain',
+              loanAmount: const drift.Value(12000),
+              interestRate: const drift.Value(5),
+              startDate: drift.Value(now.subtract(const Duration(days: 90))),
+              maturityDate: drift.Value(now.subtract(const Duration(days: 1))),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      final controller = ContactRecoveryController(
+        db: db,
+        ticketNo: 'GRV-MON-001',
+      );
       addTearDown(controller.dispose);
       await controller.load();
       expect(controller.state.allCases, hasLength(1));
+      expect(controller.state.allCases.single.loan.ticketNo, 'GRV-MON-001');
       expect(controller.state.allCases.single.canPrepareNotice, isTrue);
+
+      final missingController = ContactRecoveryController(
+        db: db,
+        ticketNo: 'GRV-MON-0013',
+      );
+      addTearDown(missingController.dispose);
+      await missingController.load();
+      expect(missingController.state.allCases, isEmpty);
 
       await GirviNoticeActionRepository(db).recordNoticePrepared(
         girviId: loanId,
@@ -349,7 +368,10 @@ void main() {
       expect(riskAccount.isNoticeEligible, isTrue);
       expect(riskAccount.totalDue, greaterThan(0));
 
-      final controller = ContactRecoveryController(db: db);
+      final controller = ContactRecoveryController(
+        db: db,
+        ticketNo: 'GRV-0016',
+      );
       addTearDown(controller.dispose);
       await controller.load();
       expect(controller.state.allCases, hasLength(1));
@@ -637,7 +659,10 @@ void main() {
         ],
       );
 
-      final controller = ContactRecoveryController(db: db);
+      final controller = ContactRecoveryController(
+        db: db,
+        ticketNo: 'GRV-REC-001',
+      );
       addTearDown(controller.dispose);
       final riskRepository = DefaulterRepository(db: db);
       final activeRecovery = await riskRepository.fetchAllDefaulters(

@@ -215,23 +215,56 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
 
   pw.Widget _outstandingCard() => _card(
         pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
           children: [
+            if (statement.originalPrincipal != null)
+              _summaryLine('Principal Amount', statement.originalPrincipal!),
+            if (statement.grossInterest != null)
+              _summaryLine('Total Interest', statement.grossInterest!),
+            _summaryDivider(),
+            if (statement.totalAccountCharges != null)
+              _summaryLine(
+                'Total Amount (Principal + Interest)',
+                statement.totalAccountCharges!,
+                highlighted: true,
+              ),
+            if (statement.hasPayments && statement.totalReceived != null)
+              _summaryLine(
+                'Less: Total Received',
+                statement.totalReceived!,
+                color: _noticeReceived,
+                subtract: true,
+              ),
+            if (statement.hasAdjustments && statement.totalAdjustments != null)
+              _summaryLine(
+                'Less: Approved Discount',
+                statement.totalAdjustments!,
+                color: _noticeReceived,
+                subtract: true,
+              ),
+            _summaryDivider(),
             if (statement.principalOutstanding != null)
-              _totalRow(t('Principal Outstanding', 'मूलधन बकाया'),
-                  statement.principalOutstanding!),
+              _summaryLine(
+                'Principal Outstanding',
+                statement.principalOutstanding!,
+                color: _noticeOutstanding,
+              ),
             if (statement.interestOutstanding != null)
-              _totalRow(t('Interest Outstanding', 'ब्याज बकाया'),
-                  statement.interestOutstanding!),
-            pw.SizedBox(height: 3),
+              _summaryLine(
+                'Interest Outstanding',
+                statement.interestOutstanding!,
+                color: _noticeOutstanding,
+              ),
+            pw.SizedBox(height: 2),
             pw.Container(
               width: double.infinity,
               padding:
-                  const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                  const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 3),
               color: _noticeDeepNavy,
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text(t('Final Total Payable', 'अंतिम कुल देय राशि'),
+                  pw.Text(t('Final Outstanding', 'अंतिम बकाया राशि'),
                       style: _style(10, bold: true, color: PdfColors.white)),
                   pw.Text(printText(statement.totalPayable ?? '-'),
                       style: _style(15, bold: true, color: _noticeGold)),
@@ -240,7 +273,35 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
             ),
           ],
         ),
+        padding: 3,
       );
+
+  pw.Widget _summaryLine(
+    String label,
+    String value, {
+    PdfColor color = _noticeInk,
+    bool highlighted = false,
+    bool subtract = false,
+  }) =>
+      pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 1.5),
+        color: highlighted ? _noticePaleGold : PdfColors.white,
+        child: pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Expanded(
+              child: pw.Text(label,
+                  style: _style(highlighted ? 9.7 : 9.2, bold: true)),
+            ),
+            pw.Text('${subtract ? '- ' : ''}${printText(value)}',
+                style:
+                    _style(highlighted ? 11 : 10.3, bold: true, color: color)),
+          ],
+        ),
+      );
+
+  pw.Widget _summaryDivider() =>
+      pw.Container(height: 0.65, color: _noticeBorder);
 
   pw.Widget _actionCard() => pw.Container(
         width: double.infinity,

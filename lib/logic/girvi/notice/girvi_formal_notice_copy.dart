@@ -30,7 +30,7 @@ class _NoticeCopy {
           : 'According to our records, payment for pledge account ${data.ticketNo} was due on ${data.maturityDate}. An outstanding balance remains on the account.',
       accountContext: (data) => hindi
           ? 'दिनांक ${data.noticeDate} तक दर्ज भुगतान और स्वीकृत समायोजन नीचे दिए गए हिसाब में शामिल हैं। कृपया खाते और गिरवी वस्तु का विवरण ध्यान से देखें।'
-          : 'The statement below includes recorded payments and approved adjustments as of ${data.noticeDate}. Please review the account and pledged-item details.',
+          : 'The account statement includes recorded payments and approved adjustments as of ${data.noticeDate}. Please review the account and pledged-item details.',
       requiredAction: (data) => hindi
           ? 'कृपया यह सूचना प्राप्त होने के ${data.noticeReviewPeriod} के भीतर बकाया भुगतान करें या खाते का मिलान और भुगतान व्यवस्था के लिए दुकान से संपर्क करें। किसी भुगतान के दर्ज न होने या हिसाब से असहमति होने पर उसका प्रमाण या विवरण साझा करें।'
           : 'Please pay the outstanding amount within ${data.noticeReviewPeriod} after receiving this notice, or contact the shop to reconcile the account and discuss payment arrangements. Please provide details or proof of any unrecorded payment or disputed entry.',

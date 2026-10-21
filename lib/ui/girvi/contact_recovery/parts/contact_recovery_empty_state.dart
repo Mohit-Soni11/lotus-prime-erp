@@ -22,12 +22,12 @@ class _EmptyState extends StatelessWidget {
               height: 74,
               alignment: Alignment.center,
               decoration: const BoxDecoration(
-                color: GirviColors.successBg,
+                color: GirviColors.infoBg,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                GirviIcons.released,
-                color: GirviColors.success,
+                Icons.receipt_long_outlined,
+                color: GirviColors.info,
                 size: 34,
               ),
             ),

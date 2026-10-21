@@ -10,7 +10,6 @@ import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../models/girvi/contact_recovery_model.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
-import '../../models/girvi/girvi_notice_history.dart';
 import 'notice_pdf/notice_statement_data.dart';
 import 'notice_pdf/notice_period_display.dart';
 
@@ -29,6 +28,7 @@ class GirviNoticePdfService {
     required GirviNoticeType noticeType,
     required GirviNoticeLanguage noticeLanguage,
     required String noticeText,
+    int? noticePeriodDays,
     GirviInvoiceBranding branding = defaultBranding,
     String? itemPhotoPath,
   }) =>
@@ -38,7 +38,7 @@ class GirviNoticePdfService {
         language: noticeLanguage,
         noticeText: noticeText,
         savedAt: item.now,
-        noticePeriodDays: item.noticePeriodDays,
+        noticePeriodDays: noticePeriodDays ?? item.noticePeriodDays,
         branding: branding,
         itemPhotoPath: itemPhotoPath,
         originalLoanDurationMonths: item.loan.durationMonths,
@@ -52,7 +52,6 @@ class GirviNoticePdfService {
     required DateTime savedAt,
     DateTime? deadline,
     int? noticePeriodDays,
-    int? legacyNoticeStage,
     GirviInvoiceBranding branding = defaultBranding,
     String? itemPhotoPath,
     int? originalLoanDurationMonths,
@@ -67,7 +66,6 @@ class GirviNoticePdfService {
         savedAt: savedAt,
         deadline: deadline,
         noticePeriodDays: noticePeriodDays,
-        legacyNoticeStage: legacyNoticeStage,
         branding: branding,
         itemPhotoPath: itemPhotoPath,
         originalLoanDurationMonths: originalLoanDurationMonths,
@@ -86,7 +84,6 @@ class GirviNoticePdfService {
     int? originalLoanDurationMonths,
     DateTime? deadline,
     int? noticePeriodDays,
-    int? legacyNoticeStage,
     String? verifiedFinancialText,
     DateTime? financialAsOf,
   }) async {
@@ -118,7 +115,6 @@ class GirviNoticePdfService {
       savedAt: savedAt,
       deadline: deadline,
       noticePeriodDays: noticePeriodDays,
-      legacyNoticeStage: legacyNoticeStage,
       branding: branding,
       logo: logo,
       signature: signature,
@@ -129,22 +125,16 @@ class GirviNoticePdfService {
       pw.MultiPage(
         pageTheme: const pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.fromLTRB(26, 20, 26, 28),
+          margin: pw.EdgeInsets.fromLTRB(26, 14, 26, 18),
         ),
-        header: layout.header,
+        header: (context) =>
+            context.pageNumber == 1 ? layout.header(context) : pw.SizedBox(),
         footer: layout.footer,
-        build: (_) => layout.summaryPage(),
-      ),
-    );
-    document.addPage(
-      pw.MultiPage(
-        pageTheme: const pw.PageTheme(
-          pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.fromLTRB(26, 20, 26, 28),
-        ),
-        header: layout.header,
-        footer: layout.footer,
-        build: (_) => layout.informationPage(),
+        build: (_) => [
+          ...layout.summaryPage(),
+          pw.NewPage(),
+          ...layout.informationPage(),
+        ],
       ),
     );
     return document.save();

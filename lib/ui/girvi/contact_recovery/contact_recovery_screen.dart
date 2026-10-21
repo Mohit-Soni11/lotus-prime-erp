@@ -31,11 +31,10 @@ import 'contact_recovery_app_bar.dart';
 
 part 'parts/contact_recovery_body.dart';
 part 'parts/contact_recovery_case_card.dart';
-part 'parts/contact_recovery_controls.dart';
+part 'parts/contact_recovery_inline_message.dart';
 part 'parts/contact_recovery_dialogs.dart';
 part 'parts/contact_recovery_document_components.dart';
 part 'parts/contact_recovery_empty_state.dart';
-part 'parts/contact_recovery_overview.dart';
 part 'parts/contact_recovery_settlement_dialog.dart';
 part 'parts/contact_recovery_delivery_dialog.dart';
 
@@ -62,22 +61,15 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   late final _noticeItemPhotoResolver =
       NoticeItemPhotoResolver(_controller.database);
   late final _noticeBranding = GirviInvoiceBrandingRepository().fetch();
-  final _searchController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? ContactRecoveryController();
+    _controller = widget.controller ??
+        ContactRecoveryController(ticketNo: widget.initialTicketNo ?? '');
     _controller.addListener(_syncState);
-    final initialTicket = widget.initialTicketNo?.trim();
-    if (initialTicket != null && initialTicket.isNotEmpty) {
-      _searchController.text = initialTicket;
-      _controller.setSearchQuery(initialTicket);
+    if (widget.initialTicketNo?.trim().isNotEmpty ?? false) {
+      _controller.load();
     }
-    _searchController.addListener(
-      () => _controller.setSearchQuery(_searchController.text),
-    );
-    _controller.load();
     _dateRefresh = DateSensitiveRefresh(
       onRefresh: _controller.load,
       hasDueEvent: (now) => _controller.state.allCases.any((item) {
@@ -96,7 +88,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     if (widget.controller == null) {
       _controller.dispose();
     }
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -116,35 +107,35 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ContactRecoveryOverview(state: state),
-          _ContactRecoveryControls(
-            state: state,
-            searchController: _searchController,
-            onFilterChanged: _controller.setFilter,
-          ),
           if (state.inlineMessage != null)
             _InlineMessage(
               message: state.inlineMessage!,
               onClose: _controller.dismissInlineMessage,
             ),
           Expanded(
-            child: _ContactRecoveryBody(
-              state: state,
-              onOpenAccount: _openAccount,
-              onPrepareNotice: _prepareNotice,
-              onViewNotice: _viewSavedNotice,
-              onDownloadNotice: _downloadSavedNotice,
-              onPrintNotice: _printSavedNotice,
-              onRecordDelivery: _recordConfirmedDelivery,
-              onRecordCustomerResponse: _recordCustomerResponse,
-              onViewCustomerResponses: _viewCustomerResponses,
-              onViewInvoice: _viewInvoice,
-              onDownloadInvoice: _downloadInvoice,
-              onViewItemImage: _viewItemImage,
-              onDownloadItemImage: _downloadItemImage,
-              onInitiateRecovery: _initiateCollateralRecovery,
-              onCloseDisposal: _closeDisposalSettlement,
-            ),
+            child: widget.initialTicketNo?.trim().isNotEmpty != true
+                ? const _EmptyState(
+                    title: 'Select an invoice',
+                    subtitle:
+                        'Open Notice & Recovery from the invoice in Risk & Collections.',
+                  )
+                : _ContactRecoveryBody(
+                    state: state,
+                    onOpenAccount: _openAccount,
+                    onPrepareNotice: _prepareNotice,
+                    onViewNotice: _viewSavedNotice,
+                    onDownloadNotice: _downloadSavedNotice,
+                    onPrintNotice: _printSavedNotice,
+                    onRecordDelivery: _recordConfirmedDelivery,
+                    onRecordCustomerResponse: _recordCustomerResponse,
+                    onViewCustomerResponses: _viewCustomerResponses,
+                    onViewInvoice: _viewInvoice,
+                    onDownloadInvoice: _downloadInvoice,
+                    onViewItemImage: _viewItemImage,
+                    onDownloadItemImage: _downloadItemImage,
+                    onInitiateRecovery: _initiateCollateralRecovery,
+                    onCloseDisposal: _closeDisposalSettlement,
+                  ),
           ),
         ],
       ),
@@ -189,30 +180,40 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       return;
     }
 
-    final initialTexts = {
-      GirviNoticeLanguage.english: noticeService.build(
-        item: currentItem,
-        noticeType: noticeType,
-        language: GirviNoticeLanguage.english,
-      ),
-    };
+    String generateTextForPeriod(int days) => noticeService.build(
+          item: currentItem,
+          noticeType: noticeType,
+          language: GirviNoticeLanguage.english,
+          noticePeriodDays: days,
+        );
+    final initialDays =
+        currentItem.noticePeriodDays > 0 ? currentItem.noticePeriodDays : 7;
+    final initialText = generateTextForPeriod(initialDays);
     await showDialog<void>(
       context: context,
       builder: (context) => _NoticeEditorDialog(
         item: currentItem,
         noticeType: noticeType,
-        initialText: initialTexts[GirviNoticeLanguage.english]!,
+        initialText: initialText,
+        generateTextForPeriod: generateTextForPeriod,
         onCopy: (language, text) =>
             _copyNoticeText(currentItem, noticeType, language, text),
-        onPreview: (language, text) =>
-            _previewPreparedNotice(currentItem, noticeType, language, text),
-        onSave: (language, text, allTexts) => _controller.recordNoticePrepared(
+        onPreview: (language, text, days) => _previewPreparedNotice(
+          currentItem,
+          noticeType,
+          language,
+          text,
+          days,
+        ),
+        onSave: (language, text, allTexts, days) =>
+            _controller.recordNoticePrepared(
           currentItem,
           noticeType,
           text,
-          autoGeneratedText: initialTexts[language],
+          noticePeriodDays: days,
+          autoGeneratedText: generateTextForPeriod(days),
           noticeDocuments: allTexts,
-          autoGeneratedDocuments: initialTexts,
+          autoGeneratedDocuments: {language: generateTextForPeriod(days)},
           primaryLanguage: language,
         ),
       ),
@@ -234,6 +235,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     GirviNoticeType noticeType,
     GirviNoticeLanguage language,
     String noticeText,
+    int noticePeriodDays,
   ) async {
     try {
       final branding = await _noticeBranding;
@@ -244,6 +246,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         noticeType: noticeType,
         noticeLanguage: language,
         noticeText: noticeText,
+        noticePeriodDays: noticePeriodDays,
         branding: branding,
         itemPhotoPath: itemPhotoPath,
       );
@@ -393,9 +396,8 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       drafts[document.language] =
           _savedNoticeDraft(item, action, document: document);
     }
-    // Legacy notices contain only the language that was actually approved.
-    final legacyText = action.noticeText?.trim() ?? '';
-    if (drafts.isEmpty && legacyText.isNotEmpty) {
+    final approvedText = action.noticeText?.trim() ?? '';
+    if (drafts.isEmpty && approvedText.isNotEmpty) {
       final draft = _savedNoticeDraft(item, action);
       if (draft.language == GirviNoticeLanguage.english) {
         drafts[draft.language] = draft;
@@ -444,9 +446,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       originalLoanDurationMonths: draft.item.loan.durationMonths,
       verifiedFinancialText: verifiedFinancialText,
       financialAsOf: financialAsOf,
-      legacyNoticeStage: draft.action.isLegacyNoticePreparation
-          ? draft.action.resolvedNoticeStage
-          : null,
     );
   }
 
@@ -531,12 +530,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     ContactRecoveryCase item,
     GirviNoticeAction action,
   ) async {
-    final draft =
-        _savedNoticeDrafts(item, action)[GirviNoticeLanguage.english] ??
-            (action.isLegacyNoticePreparation &&
-                    action.noticeText?.trim().isNotEmpty == true
-                ? _savedNoticeDraft(item, action)
-                : null);
+    final draft = _savedNoticeDrafts(item, action)[GirviNoticeLanguage.english];
     if (draft == null || !mounted) return;
     if (!await _canDeliverApprovedNotice(draft) || !mounted) return;
     final delivery = await showDialog<_NoticeDeliveryResult>(
@@ -986,11 +980,9 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       noticeType: noticeType,
       language: selectedLanguage,
       noticeText: storedText,
-      fileName: action.isLegacyNoticePreparation
-          ? 'girvi_${item.loan.ticketNo.replaceAll(RegExp(r"[^A-Za-z0-9]+"), "_")}_legacy_notice_${action.resolvedNoticeStage}_${selectedLanguage.fileLabel}.pdf'
-          : action.noticeActionId != null
-              ? 'girvi_${item.loan.ticketNo.replaceAll(RegExp(r"[^A-Za-z0-9]+"), "_")}_corrected_notice_${selectedLanguage.fileLabel}.pdf'
-              : _noticePdfName(item, noticeType, selectedLanguage),
+      fileName: action.noticeActionId != null
+          ? 'girvi_${item.loan.ticketNo.replaceAll(RegExp(r"[^A-Za-z0-9]+"), "_")}_corrected_notice_${selectedLanguage.fileLabel}.pdf'
+          : _noticePdfName(item, noticeType, selectedLanguage),
     );
   }
 

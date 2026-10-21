@@ -186,17 +186,20 @@ class GirviNoticeGenerationService {
     required ContactRecoveryCase item,
     required GirviNoticeType noticeType,
     required GirviNoticeLanguage language,
+    int? noticePeriodDays,
   }) =>
       buildDocument(
         item: item,
         noticeType: noticeType,
         language: language,
+        noticePeriodDays: noticePeriodDays,
       ).toPlainText();
 
   GirviNoticeDocument buildDocument({
     required ContactRecoveryCase item,
     required GirviNoticeType noticeType,
     required GirviNoticeLanguage language,
+    int? noticePeriodDays,
   }) {
     final copy = _NoticeCopy.forLanguage(language);
     final data = _NoticeData(
@@ -204,6 +207,7 @@ class GirviNoticeGenerationService {
       noticeType: noticeType,
       service: this,
       language: language,
+      noticePeriodDays: noticePeriodDays ?? item.noticePeriodDays,
     );
     final paymentBlocks = data.financialTimeline.paymentBlocks(language);
 
@@ -220,6 +224,13 @@ class GirviNoticeGenerationService {
           blocks: [
             GirviNoticeBlock(
               lines: [
+                if (language == GirviNoticeLanguage.english) ...[
+                  'To: ${data.customerName}',
+                  if (data.account.customerAddress.trim().isNotEmpty)
+                    'Customer Address: ${data.account.customerAddress.trim()}',
+                  if (data.account.customerMobile.trim().isNotEmpty)
+                    'Customer Mobile: ${data.account.customerMobile.trim()}',
+                ],
                 '${language == GirviNoticeLanguage.hindi ? 'प्रिय' : 'Dear'} ${data.customerName},',
                 copy.opening(data),
                 copy.accountContext(data),
@@ -312,6 +323,7 @@ class _NoticeData {
     required this.noticeType,
     required this.service,
     required this.language,
+    required this.noticePeriodDays,
   }) : financialTimeline = GirviNoticeFinancialTimeline(
           item: item,
           money: service.money,
@@ -322,6 +334,7 @@ class _NoticeData {
   final GirviNoticeType noticeType;
   final GirviNoticeGenerationService service;
   final GirviNoticeLanguage language;
+  final int noticePeriodDays;
   final GirviNoticeFinancialTimeline financialTimeline;
 
   GirviLoanWithCustomer get account => item.account;
@@ -338,7 +351,7 @@ class _NoticeData {
 
   String get noticeDate => service.date(service._now);
   String get noticeReviewPeriod =>
-      '${item.noticePeriodDays} day${item.noticePeriodDays == 1 ? '' : 's'}';
+      '$noticePeriodDays day${noticePeriodDays == 1 ? '' : 's'}';
   String get customerName => account.customerName;
   String get startDate => service.date(loan.startDate);
   String get maturityDate => service.date(loan.maturityDate);
@@ -470,13 +483,30 @@ class _NoticeData {
 
   List<String> get outstandingSummaryLines {
     final hindi = language == GirviNoticeLanguage.hindi;
+    final principalReceived =
+        account.principalPaidTotal + account.legacyPrincipalRepaidTotal;
+    final interestReceived = account.interestPaidTotal;
+    final totalReceived = principalReceived + interestReceived;
+    final totalAdjustments =
+        account.principalDiscountTotal + account.interestDiscountTotal;
     return [
-      '${hindi ? 'मूलधन बकाया' : 'Principal Outstanding'}: ${service.money(account.principalDue)}',
-      '${hindi ? 'ब्याज बकाया' : 'Interest Outstanding'}: ${service.money(item.verifiedInterestDue)}',
+      '${hindi ? 'मूल मूलधन' : 'Original Principal'}: ${service.money(account.originalPrincipal)}',
+      '${hindi ? 'कुल ब्याज' : 'Gross Interest'}: ${service.money(item.verifiedGrossInterest)}',
+      '${hindi ? 'कुल खाता राशि' : 'Total Account Charges'}: ${service.money(account.originalPrincipal + item.verifiedGrossInterest)}',
+      if (principalReceived > 0)
+        '${hindi ? 'प्राप्त मूलधन कुल' : 'Principal Paid Total'}: ${service.money(principalReceived)}',
+      if (interestReceived > 0)
+        '${hindi ? 'प्राप्त ब्याज कुल' : 'Interest Paid Total'}: ${service.money(interestReceived)}',
+      if (totalReceived > 0)
+        '${hindi ? 'कुल प्राप्त राशि' : 'Total Received'}: ${service.money(totalReceived)}',
       if (account.principalDiscountTotal > 0)
         '${hindi ? 'मूलधन समायोजन' : 'Principal Adjustment'}: ${service.money(account.principalDiscountTotal)}',
       if (account.interestDiscountTotal > 0)
         '${hindi ? 'ब्याज समायोजन' : 'Interest Adjustment'}: ${service.money(account.interestDiscountTotal)}',
+      if (totalAdjustments > 0)
+        '${hindi ? 'कुल समायोजन' : 'Total Adjustments'}: ${service.money(totalAdjustments)}',
+      '${hindi ? 'मूलधन बकाया' : 'Principal Outstanding'}: ${service.money(account.principalDue)}',
+      '${hindi ? 'ब्याज बकाया' : 'Interest Outstanding'}: ${service.money(item.verifiedInterestDue)}',
       '${hindi ? 'अंतिम कुल देय राशि' : 'Final Total Payable'}: ${service.money(item.verifiedTotalPayable)}',
     ];
   }

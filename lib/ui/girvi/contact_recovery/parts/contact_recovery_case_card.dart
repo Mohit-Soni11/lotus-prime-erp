@@ -44,16 +44,16 @@ class _ContactRecoveryCard extends StatelessWidget {
         : dateFmt.format(loan.maturityDate!);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: GirviColors.cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: item.accentColor.withValues(alpha: 0.30)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: item.accentColor.withValues(alpha: 0.24)),
         boxShadow: const [
           BoxShadow(
             color: GirviColors.shadowLight,
-            blurRadius: 14,
-            offset: Offset(0, 4),
+            blurRadius: 16,
+            offset: Offset(0, 5),
           ),
         ],
       ),
@@ -107,7 +107,7 @@ class _ContactRecoveryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(flex: 6, child: identity),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(
                 flex: 8,
                 child: Column(
@@ -121,7 +121,7 @@ class _ContactRecoveryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               SizedBox(width: 190, child: actions),
             ],
           );
@@ -156,9 +156,9 @@ class _CaseDocumentActions extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: GirviColors.infoBg.withValues(alpha: 0.34),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: GirviColors.info.withValues(alpha: 0.16)),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -414,26 +414,27 @@ class _CaseDurationPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: GirviColors.infoBg.withValues(alpha: 0.38),
+        color: GirviColors.bodyBg.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: GirviColors.info.withValues(alpha: 0.20)),
+        border: Border.all(color: GirviColors.cardBorder),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 520;
           final actual = _DurationBlock(
             icon: Icons.calendar_month_rounded,
-            title: 'Actual Duration',
+            title: 'Loan Age',
             primary: item.loanAgeLabel,
-            secondary: item.loanAgeMonthsDaysLabel,
+            secondary:
+                'Since ${DateFormat('dd MMM yyyy').format(item.loan.startDate)}',
             color: GirviColors.info,
           );
           final chargeable = _DurationBlock(
             icon: Icons.percent_rounded,
             title: 'Interest Calculation Period',
             primary: item.chargeableInterestMonthsLabel,
-            secondary: 'Used for account interest ledger',
-            color: GirviColors.danger,
+            secondary: 'Full months used for billing',
+            color: GirviColors.brandDeep,
             highlight: true,
           );
 
@@ -512,7 +513,7 @@ class _DurationBlock extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GirviStyles.caption.copyWith(
                     color: GirviColors.textDark,
-                    fontSize: 11.6,
+                    fontSize: 12.2,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -522,7 +523,9 @@ class _DurationBlock extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: highlight ? color : GirviColors.textDark,
+                    color: highlight
+                        ? GirviColors.brandDeep
+                        : GirviColors.textDark,
                     fontSize: highlight ? 14.4 : 13.8,
                     fontWeight: FontWeight.w900,
                     height: 1.12,
@@ -534,10 +537,8 @@ class _DurationBlock extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GirviStyles.caption.copyWith(
-                    color: highlight
-                        ? color.withValues(alpha: 0.88)
-                        : GirviColors.textMuted,
-                    fontSize: 11.5,
+                    color: GirviColors.textMuted,
+                    fontSize: 11.8,
                     fontWeight: FontWeight.w800,
                     height: 1.12,
                   ),
@@ -690,23 +691,53 @@ class _CaseAmounts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final account = item.account;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _AmountTile(label: 'Principal', value: _money(account.principalDue)),
-        _AmountTile(label: 'Interest', value: _money(account.netInterestDue)),
-        _AmountTile(
-          label: 'Total Payable',
-          value: _money(account.totalPayable),
-          accent: GirviColors.danger,
-        ),
-        _AmountTile(
-          label: 'Overdue Age',
-          value: item.overdueAgeMonthsDaysLabel,
-          accent: item.accentColor,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720
+            ? 4
+            : constraints.maxWidth >= 360
+                ? 2
+                : 1;
+        final tileWidth = (constraints.maxWidth - (columns - 1) * 8) / columns;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            SizedBox(
+              width: tileWidth,
+              child: _AmountTile(
+                label: 'Principal Due',
+                value: _money(account.principalDue),
+              ),
+            ),
+            SizedBox(
+              width: tileWidth,
+              child: _AmountTile(
+                label: 'Interest Due',
+                value: _money(account.netInterestDue),
+                accent: GirviColors.danger,
+              ),
+            ),
+            SizedBox(
+              width: tileWidth,
+              child: _AmountTile(
+                label: 'Total Payable',
+                value: _money(account.totalPayable),
+                accent: GirviColors.danger,
+                emphasis: true,
+              ),
+            ),
+            SizedBox(
+              width: tileWidth,
+              child: _AmountTile(
+                label: 'Overdue Age',
+                value: item.overdueAgeMonthsDaysLabel,
+                accent: GirviColors.brandDeep,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

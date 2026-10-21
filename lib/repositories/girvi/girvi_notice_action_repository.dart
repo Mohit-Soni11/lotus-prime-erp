@@ -5,7 +5,6 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
-import '../../models/girvi/girvi_notice_history.dart';
 import '../../models/girvi/girvi_notice_review_period.dart';
 import 'girvi_notice_account_guard.dart';
 
@@ -85,20 +84,29 @@ class GirviNoticeActionRepository {
         _now(),
         requireMaturity: true,
       );
+      final existing = await _recoveryNotice(girviId);
       final recovery = await (_db.select(_db.girviNoticeActions)
             ..where((row) =>
                 row.girviId.equals(girviId) &
                 row.actionType.isIn(const [
                   GirviNoticeActionTypes.collateralRecoveryInitiated,
                   GirviNoticeActionTypes.disposalSettled,
-                ]))
+                ]) &
+                (existing == null
+                    ? row.actionType
+                        .equals(GirviNoticeActionTypes.disposalSettled)
+                    : row.actionType
+                            .equals(GirviNoticeActionTypes.disposalSettled) |
+                        row.noticeActionId.equals(existing.id) |
+                        (row.noticeActionId.isNull() &
+                            row.actionAt
+                                .isBiggerOrEqualValue(existing.actionAt))))
             ..limit(1))
           .getSingleOrNull();
       if (recovery != null) {
         throw StateError(
             'A notice cannot be prepared after recovery has started.');
       }
-      final existing = await _recoveryNotice(girviId);
       final approvedEnglish = existing == null
           ? null
           : await (_db.select(_db.girviNoticeDocuments)
@@ -107,13 +115,14 @@ class GirviNoticeActionRepository {
                     row.language.equals(GirviNoticeLanguage.english.fileLabel))
                 ..limit(1))
               .getSingleOrNull();
-      if (existing != null &&
-          (supersedesNoticeActionId != existing.id ||
-              existing.actionType != GirviNoticeActionTypes.noticePrepared ||
-              noticeType != GirviNoticeType.formal ||
-              !(approvedEnglish?.noticeText ?? existing.noticeText ?? '')
-                  .contains('Simple Interest Breakdown') ||
-              !finalText.contains('Compound Interest Breakdown'))) {
+      final correctsSimpleFormal =
+          existing?.actionType == GirviNoticeActionTypes.noticePrepared &&
+              supersedesNoticeActionId == existing?.id &&
+              noticeType == GirviNoticeType.formal &&
+              (approvedEnglish?.noticeText ?? existing?.noticeText ?? '')
+                  .contains('Simple Interest Breakdown') &&
+              finalText.contains('Compound Interest Breakdown');
+      if (existing != null && !correctsSimpleFormal) {
         throw StateError('${noticeType.label} has already been saved.');
       }
       if (existing == null && supersedesNoticeActionId != null) {
@@ -212,7 +221,11 @@ class GirviNoticeActionRepository {
                   action.girviId.equals(girviId) &
                   action.actionType.equals(
                     GirviNoticeActionTypes.collateralRecoveryInitiated,
-                  ),
+                  ) &
+                  (action.noticeActionId.equals(approvedNotice.id) |
+                      (action.noticeActionId.isNull() &
+                          action.actionAt
+                              .isBiggerOrEqualValue(approvedNotice.actionAt))),
             )
             ..limit(1))
           .getSingleOrNull();
@@ -222,6 +235,7 @@ class GirviNoticeActionRepository {
       return recordAction(
         girviId: girviId,
         actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+        noticeActionId: approvedNotice.id,
         performedBy: performedBy,
         actionNote: note ??
             'Collateral moved to recovery after completion of the notice workflow.',
@@ -242,13 +256,22 @@ class GirviNoticeActionRepository {
   }) async {
     await ensureSchema();
     return _db.transaction(() async {
+      final approvedNotice = await _recoveryNotice(girviId);
+      if (approvedNotice == null) {
+        throw StateError(
+            'An approved formal notice is required before settlement.');
+      }
       final recoveryStarted = await (_db.select(_db.girviNoticeActions)
             ..where(
               (action) =>
                   action.girviId.equals(girviId) &
                   action.actionType.equals(
                     GirviNoticeActionTypes.collateralRecoveryInitiated,
-                  ),
+                  ) &
+                  (action.noticeActionId.equals(approvedNotice.id) |
+                      (action.noticeActionId.isNull() &
+                          action.actionAt
+                              .isBiggerOrEqualValue(approvedNotice.actionAt))),
             )
             ..limit(1))
           .getSingleOrNull();
@@ -270,6 +293,7 @@ class GirviNoticeActionRepository {
       return recordAction(
         girviId: girviId,
         actionType: GirviNoticeActionTypes.disposalSettled,
+        noticeActionId: approvedNotice.id,
         performedBy: performedBy,
         actionNote: note ?? 'Recovery settlement closed after notice review.',
         pledgedValuation: pledgedValuation,
@@ -340,9 +364,7 @@ class GirviNoticeActionRepository {
         girviId: girviId,
         actionType: actionType,
         noticeActionId: prepared.id,
-        noticeStage: prepared.noticeStage ??
-            GirviNoticeHistory.stageFor(prepared.actionType) ??
-            1,
+        noticeStage: prepared.noticeStage ?? 1,
         noticeText: finalText,
         documentHash: approvedDocumentHash,
         performedBy: performedBy,
@@ -382,8 +404,8 @@ class GirviNoticeActionRepository {
     String? deliveryReference,
     DateTime? deliveredAt,
   }) async {
-    if (GirviNoticeHistory.preparationTypes.contains(actionType)) {
-      throw StateError('The retired notice stages cannot be prepared.');
+    if (!GirviNoticeActionTypes.recordableTypes.contains(actionType)) {
+      throw StateError('Unknown notice action type.');
     }
     await ensureSchema();
     final now = actionAt ?? _now();
@@ -491,24 +513,16 @@ class GirviNoticeActionRepository {
   }
 
   Future<GirviNoticeActionData?> _recoveryNotice(int girviId) async {
-    final rows = await (_db.select(_db.girviNoticeActions)
+    return (_db.select(_db.girviNoticeActions)
           ..where((row) =>
               row.girviId.equals(girviId) &
-              row.actionType.isIn(const [
-                GirviNoticeActionTypes.noticePrepared,
-                GirviNoticeHistory.finalPrepared,
-              ]))
+              row.actionType.equals(GirviNoticeActionTypes.noticePrepared))
           ..orderBy([
             (row) => OrderingTerm.desc(row.actionAt),
             (row) => OrderingTerm.desc(row.id)
-          ]))
-        .get();
-    for (final row in rows) {
-      if (row.actionType == GirviNoticeActionTypes.noticePrepared) {
-        return row;
-      }
-    }
-    return rows.isEmpty ? null : rows.first;
+          ])
+          ..limit(1))
+        .getSingleOrNull();
   }
 
   Future<GirviNoticeActionData?> _approvedNotice(int girviId,

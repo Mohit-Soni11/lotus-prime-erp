@@ -21,15 +21,6 @@ enum ContactRecoveryStage {
   settled,
 }
 
-enum ContactRecoveryFilter {
-  all,
-  noticeRequired,
-  noticePending,
-  disposalReady,
-  recoveryInProgress,
-  settled,
-}
-
 enum RecoverySettlementPaymentMethod {
   cash('CASH', 'Cash', false),
   upi('UPI', 'UPI', true),
@@ -98,10 +89,16 @@ class ContactRecoveryCase {
   bool get hasItemPhotos =>
       itemPhotoPaths.any((path) => path.trim().isNotEmpty);
 
-  /// Newest first. Responses are customer-contact evidence, never ledger data.
-  List<GirviCustomerResponse> get responseTimeline => customerResponses;
+  /// Newest first. Responses to retired notice types remain in the audit store.
+  List<GirviCustomerResponse> get responseTimeline {
+    final formalIds = noticeActions.map((action) => action.id).toSet();
+    if (formalIds.isEmpty) return const [];
+    return customerResponses
+        .where((response) => formalIds.contains(response.noticeActionId))
+        .toList(growable: false);
+  }
 
-  List<GirviCustomerResponse> get openCustomerPromises => customerResponses
+  List<GirviCustomerResponse> get openCustomerPromises => responseTimeline
       .where((response) => response.isPromise && response.status.isOpen)
       .toList(growable: false);
 
@@ -110,7 +107,7 @@ class ContactRecoveryCase {
       .toList(growable: false);
 
   GirviCustomerResponse? get latestCustomerResponse =>
-      customerResponses.isEmpty ? null : customerResponses.first;
+      responseTimeline.isEmpty ? null : responseTimeline.first;
 
   List<GirviNoticeDocumentRecord> documentsForNoticeAction(int actionId) =>
       noticeDocuments
@@ -183,27 +180,11 @@ class ContactRecoveryCase {
               action.id != formalNoticeAction?.id)
           .toList(growable: false);
 
-  List<GirviNoticeAction> get legacyNoticeActions => preparedNoticeActions
-      .where((action) => action.isLegacyNoticePreparation)
-      .toList(growable: false);
-
-  /// Existing final notices keep their original approval date and deadline.
-  /// Earlier reminders never become formal recovery notices automatically.
-  GirviNoticeAction? get recoveryNoticeAction {
-    if (formalNoticeAction != null) return formalNoticeAction;
-    for (final action in preparedNoticeActions.reversed) {
-      if (action.isLegacyFinalNotice) return action;
-    }
-    return null;
-  }
+  GirviNoticeAction? get recoveryNoticeAction => formalNoticeAction;
 
   List<GirviCustomerResponse> responsesForNotice(GirviNoticeAction notice) =>
       customerResponses
-          .where((response) =>
-              response.noticeActionId == notice.id ||
-              (response.noticeActionId == null &&
-                  notice.isLegacyNoticePreparation &&
-                  response.noticeStage == notice.resolvedNoticeStage))
+          .where((response) => response.noticeActionId == notice.id)
           .toList(growable: false);
 
   List<GirviNoticeAction> _deliveryProofsForNotice(GirviNoticeAction notice) {
@@ -216,11 +197,7 @@ class ContactRecoveryCase {
         .where((proof) => (proof.noticeActionId != null
             ? proof.noticeActionId == notice.id
             : !proof.actionAt.isBefore(notice.actionAt) &&
-                (hashes.contains(proof.documentHash) ||
-                    (proof.documentHash == null &&
-                        notice.isLegacyNoticePreparation &&
-                        proof.resolvedNoticeStage ==
-                            notice.resolvedNoticeStage))))
+                hashes.contains(proof.documentHash)))
         .toList()
       ..sort((a, b) => b.actionAt.compareTo(a.actionAt));
     return proofs;
@@ -276,15 +253,21 @@ class ContactRecoveryCase {
   bool get hasDisposalSettlement =>
       actionHistory.any((action) => action.isDisposalSettlement);
 
-  bool get hasCollateralRecoveryInitiated =>
-      actionHistory.any((action) => action.isCollateralRecoveryInitiated);
+  bool get hasCollateralRecoveryInitiated {
+    final notice = formalNoticeAction;
+    if (notice == null) return false;
+    return actionHistory.any((action) =>
+        action.isCollateralRecoveryInitiated &&
+        (action.noticeActionId == notice.id ||
+            (action.noticeActionId == null &&
+                !action.actionAt.isBefore(notice.actionAt))));
+  }
 
   GirviNoticeType? get nextNoticeType =>
       (formalNoticeAction == null || requiresCorrectedFormalNotice) &&
               !hasDisposalSettlement &&
               !hasCollateralRecoveryInitiated &&
-              !isRecoveryClosed &&
-              (recoveryNoticeAction == null || requiresCorrectedFormalNotice)
+              !isRecoveryClosed
           ? GirviNoticeType.formal
           : null;
 
@@ -420,9 +403,9 @@ class ContactRecoveryCase {
 
   String get stageLabel => switch (stage) {
         ContactRecoveryStage.noticeRequired => 'Notice Required',
-        ContactRecoveryStage.noticePending => 'Notice Period',
-        ContactRecoveryStage.disposalReady => 'Recovery Approval',
-        ContactRecoveryStage.recoveryInProgress => 'Collateral Recovery',
+        ContactRecoveryStage.noticePending => 'Notice in Progress',
+        ContactRecoveryStage.disposalReady => 'Ready for Review',
+        ContactRecoveryStage.recoveryInProgress => 'In Recovery',
         ContactRecoveryStage.settled => 'Closed',
       };
 
@@ -439,14 +422,6 @@ class ContactRecoveryCase {
           'Collateral is in recovery. Record the recovered value to close the case.',
         ContactRecoveryStage.settled =>
           'Notice and recovery workflow is closed.',
-      };
-
-  String get primaryActionLabel => switch (stage) {
-        ContactRecoveryStage.noticeRequired => 'Prepare Notice',
-        ContactRecoveryStage.noticePending => 'Notice Period Active',
-        ContactRecoveryStage.disposalReady => 'Send to Recovery',
-        ContactRecoveryStage.recoveryInProgress => 'Recovery Active',
-        ContactRecoveryStage.settled => 'Closed',
       };
 
   Color get accentColor => switch (stage) {

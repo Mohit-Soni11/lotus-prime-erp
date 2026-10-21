@@ -53,44 +53,40 @@ class _ContactRecoveryBody extends StatelessWidget {
         subtitle: state.errorMessage!,
       );
     }
-    if (state.visibleCases.isEmpty) {
+    if (state.allCases.isEmpty) {
       return const _EmptyState(
-        title: 'No Recovery Cases Found',
+        title: 'Invoice unavailable for notice',
         subtitle:
-            'There are no pledge accounts requiring contact or recovery review.',
+            'This invoice was not found or is no longer eligible for notice and recovery.',
       );
     }
 
-    return ListView.separated(
+    final item = state.allCases.single;
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-      itemCount: state.visibleCases.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = state.visibleCases[index];
-        return _ContactRecoveryCard(
-          item: item,
-          onOpenAccount: () => onOpenAccount(item),
-          onPrepareNotice: item.nextNoticeType == null || !item.canPrepareNotice
-              ? null
-              : () => onPrepareNotice(item),
-          onViewNotice: (action) => onViewNotice(item, action),
-          onDownloadNotice: (action) => onDownloadNotice(item, action),
-          onPrintNotice: (action) => onPrintNotice(item, action),
-          onRecordDelivery: (action) => onRecordDelivery(item, action),
-          onRecordCustomerResponse: (action) =>
-              onRecordCustomerResponse(item, action),
-          onViewCustomerResponses: () => onViewCustomerResponses(item),
-          onViewInvoice: () => onViewInvoice(item),
-          onDownloadInvoice: () => onDownloadInvoice(item),
-          onViewItemImage: () => onViewItemImage(item),
-          onDownloadItemImage: () => onDownloadItemImage(item),
-          onInitiateRecovery: item.canInitiateCollateralRecovery
-              ? () => onInitiateRecovery(item)
-              : null,
-          onCloseDisposal:
-              item.canCloseDisposal ? () => onCloseDisposal(item) : null,
-        );
-      },
+      child: _ContactRecoveryCard(
+        item: item,
+        onOpenAccount: () => onOpenAccount(item),
+        onPrepareNotice: item.nextNoticeType == null || !item.canPrepareNotice
+            ? null
+            : () => onPrepareNotice(item),
+        onViewNotice: (action) => onViewNotice(item, action),
+        onDownloadNotice: (action) => onDownloadNotice(item, action),
+        onPrintNotice: (action) => onPrintNotice(item, action),
+        onRecordDelivery: (action) => onRecordDelivery(item, action),
+        onRecordCustomerResponse: (action) =>
+            onRecordCustomerResponse(item, action),
+        onViewCustomerResponses: () => onViewCustomerResponses(item),
+        onViewInvoice: () => onViewInvoice(item),
+        onDownloadInvoice: () => onDownloadInvoice(item),
+        onViewItemImage: () => onViewItemImage(item),
+        onDownloadItemImage: () => onDownloadItemImage(item),
+        onInitiateRecovery: item.canInitiateCollateralRecovery
+            ? () => onInitiateRecovery(item)
+            : null,
+        onCloseDisposal:
+            item.canCloseDisposal ? () => onCloseDisposal(item) : null,
+      ),
     );
   }
 }

@@ -8,6 +8,7 @@ const _noticeBlueTint = PdfColor.fromInt(0xFFF1F7FC);
 const _noticeBorder = PdfColor.fromInt(0xFFC5DDF1);
 const _noticeInk = PdfColor.fromInt(0xFF0C3157);
 const _noticeOutstanding = PdfColor.fromInt(0xFFB42318);
+const _noticeReceived = PdfColor.fromInt(0xFF087F5B);
 
 class _NoticeStatementLayout {
   const _NoticeStatementLayout({
@@ -18,7 +19,6 @@ class _NoticeStatementLayout {
     required this.savedAt,
     required this.deadline,
     required this.noticePeriodDays,
-    required this.legacyNoticeStage,
     required this.branding,
     required this.logo,
     required this.signature,
@@ -33,7 +33,6 @@ class _NoticeStatementLayout {
   final DateTime savedAt;
   final DateTime? deadline;
   final int? noticePeriodDays;
-  final int? legacyNoticeStage;
   final GirviInvoiceBranding branding;
   final pw.MemoryImage? logo;
   final pw.MemoryImage? signature;
@@ -46,9 +45,7 @@ class _NoticeStatementLayout {
       value.replaceAll(RegExp(r'\bRs (?=\d)'), '₹ ');
   String get dateText =>
       statement.noticeDate ?? DateFormat('dd MMM yyyy').format(savedAt);
-  String get noticeLabel =>
-      GirviNoticeHistory.title(legacyNoticeStage, hindi: hindi) ??
-      t('FORMAL NOTICE', 'औपचारिक सूचना');
+  String get noticeLabel => t('FORMAL NOTICE', 'औपचारिक सूचना');
 
   pw.TextStyle _style(double size,
           {bool bold = false, PdfColor color = _noticeInk}) =>
@@ -188,9 +185,9 @@ class _NoticeStatementLayout {
         ),
       );
 
-  pw.Widget _card(pw.Widget content) => pw.Container(
+  pw.Widget _card(pw.Widget content, {double padding = 5}) => pw.Container(
         width: double.infinity,
-        padding: const pw.EdgeInsets.all(5),
+        padding: pw.EdgeInsets.all(padding),
         decoration: pw.BoxDecoration(
           color: _noticeBlueTint,
           border: pw.Border.all(color: _noticeBorder, width: 0.8),
@@ -207,18 +204,6 @@ class _NoticeStatementLayout {
             pw.SizedBox(width: 112, child: pw.Text(label, style: _style(8))),
             pw.Expanded(
                 child: pw.Text(printText(value), style: _style(8, bold: true))),
-          ],
-        ),
-      );
-
-  pw.Widget _totalRow(String label, String value) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        child: pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(label, style: _style(8.7, bold: true)),
-            pw.Text(printText(value),
-                style: _style(9.2, bold: true, color: _noticeOutstanding)),
           ],
         ),
       );
