@@ -18,6 +18,14 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
               : 'Interest Calculation',
         ),
         _interestCard(),
+        if (statement.periods.length >= 4) ...[
+          pw.NewPage(),
+          pw.Text('Interest Calculation (continued)',
+              style: _style(13, bold: true)),
+          pw.SizedBox(height: 5),
+        ] else
+          pw.SizedBox(height: 3),
+        _interestDetailsCard(),
         pw.SizedBox(height: 3),
         pw.Inseparable(
           child: pw.Column(
@@ -96,7 +104,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
                   style: _style(10, bold: true)),
             ),
           ),
-          pw.SizedBox(height: 9),
+          pw.SizedBox(height: 5),
         ],
       );
 
@@ -114,22 +122,20 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
             _noticeDocumentIcon(),
             pw.SizedBox(width: 11),
             pw.Expanded(
-              flex: 12,
+              flex: 10,
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                 children: [
                   _identityFact('Invoice No.', ticketNo),
                   _identityFact('Notice Date', dateText),
-                  _identityFact('Pledge Reference',
-                      statement.pledgeReference ?? ticketNo),
                 ],
               ),
             ),
             pw.SizedBox(width: 9),
-            pw.Container(width: 1, height: 57, color: _noticeGold),
+            pw.Container(width: 1, height: 44, color: _noticeGold),
             pw.SizedBox(width: 12),
             pw.Expanded(
-              flex: 11,
+              flex: 13,
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
@@ -184,7 +190,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
 
   pw.Widget _section(int number, String title) => pw.Container(
         width: double.infinity,
-        padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: pw.BoxDecoration(
           color: _noticeNavy,
           borderRadius: pw.BorderRadius.circular(5),
@@ -211,7 +217,7 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
 
   pw.Widget _accountCard() => pw.Container(
         width: double.infinity,
-        padding: const pw.EdgeInsets.all(5),
+        padding: const pw.EdgeInsets.all(3),
         decoration: pw.BoxDecoration(
           color: PdfColors.white,
           border: pw.Border.all(color: _noticeBorder, width: 0.8),
@@ -303,11 +309,11 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
                       },
                       children: [
                         _durationRow(
-                          'Original Loan Period',
+                          'Agreed Loan Term',
                           statement.originalLoanPeriodLabel(
                               originalLoanDurationMonths),
                         ),
-                        _durationRow('Current Loan Period',
+                        _durationRow('Current Period',
                             statement.elapsedLoanPeriod ?? 'Not recorded'),
                         _durationRow('Chargeable Months',
                             statement.chargeablePeriod ?? 'Not recorded'),
@@ -327,7 +333,8 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.SizedBox(
-                width: 92, child: pw.Text(label, style: _style(9, bold: true))),
+                width: 110,
+                child: pw.Text(label, style: _style(9, bold: true))),
             pw.Text(':', style: _style(9, bold: true)),
             pw.SizedBox(width: 5),
             pw.Expanded(

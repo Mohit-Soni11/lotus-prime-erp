@@ -71,10 +71,12 @@ class _NoticeStatementLayout {
     return numbers;
   }
 
+  // Keep customer-facing copy legible on a physical A4 print. Text stays
+  // vector-based in the PDF; only actual shop/item images are raster assets.
   pw.TextStyle _style(double size,
-          {bool bold = false, PdfColor color = _noticeInk}) =>
+          {bool bold = true, PdfColor color = _noticeBlack}) =>
       pw.TextStyle(
-        fontSize: size,
+        fontSize: size < 12 ? 12 : size,
         fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
         color: color,
       );
@@ -82,7 +84,7 @@ class _NoticeStatementLayout {
   pw.Widget header(pw.Context context) => pw.Column(children: [
         pw.Container(
           width: double.infinity,
-          padding: const pw.EdgeInsets.fromLTRB(8, 7, 8, 12),
+          padding: const pw.EdgeInsets.fromLTRB(8, 4, 8, 6),
           decoration: const pw.BoxDecoration(
             border: pw.Border(
               bottom: pw.BorderSide(color: _noticeDarkGold, width: 1),
@@ -92,14 +94,14 @@ class _NoticeStatementLayout {
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               pw.SizedBox(
-                width: 68,
-                height: 68,
+                width: 56,
+                height: 56,
                 child: logo == null
                     ? _shopMonogram()
                     : pw.Image(logo!, fit: pw.BoxFit.contain),
               ),
               pw.SizedBox(width: 12),
-              pw.Container(width: 0.8, height: 67, color: _noticeGold),
+              pw.Container(width: 0.8, height: 55, color: _noticeGold),
               pw.SizedBox(width: 13),
               pw.Expanded(
                 child: pw.Column(
@@ -123,7 +125,7 @@ class _NoticeStatementLayout {
               if (_headerPhones.isNotEmpty) ...[
                 pw.SizedBox(width: 13),
                 pw.SizedBox(
-                  width: 166,
+                  width: 190,
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
@@ -139,7 +141,7 @@ class _NoticeStatementLayout {
             ],
           ),
         ),
-        pw.SizedBox(height: 10),
+        pw.SizedBox(height: 5),
       ]);
 
   pw.Widget _headerMeta(String label, String value) => pw.Row(

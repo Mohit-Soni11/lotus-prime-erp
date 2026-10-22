@@ -40,7 +40,7 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
     }
     return pw.Container(
       width: double.infinity,
-      padding: const pw.EdgeInsets.all(5),
+      padding: const pw.EdgeInsets.all(3),
       decoration: pw.BoxDecoration(
         color: PdfColors.white,
         border: pw.Border.all(color: _noticeBorder, width: 0.8),
@@ -68,12 +68,13 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
           if (rows.isNotEmpty)
             pw.Table(
               border: pw.TableBorder.all(color: _noticeBorder, width: 0.55),
+              defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
               columnWidths: const {
-                0: pw.FlexColumnWidth(1.9),
-                1: pw.FlexColumnWidth(1.35),
-                2: pw.FlexColumnWidth(1.15),
-                3: pw.FlexColumnWidth(1.25),
-                4: pw.FlexColumnWidth(1.4),
+                0: pw.FlexColumnWidth(2.35),
+                1: pw.FlexColumnWidth(1.15),
+                2: pw.FlexColumnWidth(0.85),
+                3: pw.FlexColumnWidth(1.05),
+                4: pw.FlexColumnWidth(1.2),
               },
               children: [
                 pw.TableRow(
@@ -81,10 +82,10 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
                   children: [
                     for (final label in [
                       'Period',
-                      'Opening Balance (₹)',
-                      'Rate (p.m.)',
+                      'Opening (₹)',
+                      'Rate / month',
                       'Interest (₹)',
-                      'Closing Balance (₹)',
+                      statement.hasPayments ? 'Closing net (₹)' : 'Closing (₹)',
                     ])
                       _interestCell(label, header: true),
                   ],
@@ -99,82 +100,87 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
                   'See the approved notice details on the next page.',
                   style: _style(9, bold: true)),
             ),
-          pw.SizedBox(height: 5),
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                child: _interestDetailBox(
-                  statement.isCompound
-                      ? 'Compound Interest Period'
-                      : statement.isSimple
-                          ? 'Simple Interest Period'
-                          : 'Interest Period',
-                  [
-                    _interestDetailRow('From', statement.interestPeriodFrom),
-                    _interestDetailRow('To', statement.interestPeriodTo),
-                    _interestDetailRow(
-                        'Total Months', statement.chargeablePeriod),
-                    if (statement.isCompound)
-                      _interestDetailRow(
-                          'Compounding', statement.compoundingCycle),
-                  ],
-                ),
-              ),
-              pw.SizedBox(width: 7),
-              pw.Expanded(
-                child: _interestDetailBox('Interest Calculation Summary', [
-                  _interestDetailRow(
-                      'Principal Amount', statement.originalPrincipal),
-                  _interestDetailRow('Monthly Rate', statement.monthlyRate),
-                  _interestDetailRow('Gross Interest', statement.grossInterest),
-                  if (statement.hasInterestPayment)
-                    _interestDetailRow(
-                        'Interest Paid', statement.interestPaidTotal),
-                  if (statement.hasInterestAdjustment)
-                    _interestDetailRow(
-                        'Interest Adjusted', statement.interestAdjustmentTotal),
-                  _interestDetailRow(
-                      'Interest Outstanding', statement.interestOutstanding,
-                      outstanding: true),
-                ]),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
+  pw.Widget _interestDetailsCard() => pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Expanded(
+            child: _interestDetailBox(
+              statement.isCompound
+                  ? 'Compound Interest Period'
+                  : statement.isSimple
+                      ? 'Simple Interest Period'
+                      : 'Interest Period',
+              [
+                _interestDetailRow('From', statement.interestPeriodFrom,
+                    labelWidth: 75),
+                _interestDetailRow('To', statement.interestPeriodTo,
+                    labelWidth: 75),
+                _interestDetailRow(
+                    'Chargeable Months', statement.chargeablePeriod,
+                    labelWidth: 135),
+                if (statement.isCompound)
+                  _interestDetailRow('Compounding', statement.compoundingCycle,
+                      labelWidth: 135),
+              ],
+            ),
+          ),
+          pw.SizedBox(width: 7),
+          pw.Expanded(child: _interestCalculationSummary()),
+        ],
+      );
+
   pw.Widget _periodCell(NoticePeriodDisplay display) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 1),
         child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(display.monthLabel,
-                textAlign: pw.TextAlign.center, style: _style(8.5, bold: true)),
+            pw.Text(display.monthLabel, style: _style(12, bold: true)),
             if (display.dateRange != null) ...[
-              pw.Text(display.dateRange!,
-                  textAlign: pw.TextAlign.center,
-                  style: _style(8.1, bold: true)),
-            ],
-            if (display.chargeableLabel != null) ...[
-              pw.Text(display.chargeableLabel!,
-                  textAlign: pw.TextAlign.center,
-                  style: _style(8.1, bold: true)),
+              pw.SizedBox(height: 3),
+              pw.Text(display.dateRange!, style: _style(12, bold: true)),
             ],
           ],
         ),
       );
 
   pw.Widget _interestCell(String value, {bool header = false}) => pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1),
         child: pw.Text(printText(value),
-            textAlign: pw.TextAlign.center,
-            style: _style(header ? 8.1 : 8.6, bold: true)),
+            textAlign: pw.TextAlign.center, style: _style(12, bold: true)),
+      );
+
+  pw.Widget _interestCalculationSummary() => _interestDetailBox(
+        'Interest Calculation Summary',
+        [
+          if (statement.originalPrincipal != null)
+            _interestDetailRow('Principal Amount', statement.originalPrincipal!,
+                labelWidth: 145),
+          if (statement.monthlyRate != null)
+            _interestDetailRow('Monthly Rate', statement.monthlyRate!,
+                labelWidth: 145),
+          if (statement.grossInterest != null)
+            _interestDetailRow('Total Interest', statement.grossInterest!,
+                labelWidth: 145),
+          if (statement.hasPayments && statement.totalReceived != null)
+            _interestDetailRow('Less: Payments', statement.totalReceived!,
+                labelWidth: 145, received: true),
+          if (statement.hasAdjustments && statement.totalAdjustments != null)
+            _interestDetailRow('Less: Adjustments', statement.totalAdjustments!,
+                labelWidth: 145),
+          if (statement.totalPayable != null)
+            _interestDetailRow('Total Outstanding', statement.totalPayable!,
+                labelWidth: 145, outstanding: true),
+        ],
       );
 
   pw.Widget _interestDetailBox(String title, List<pw.Widget> rows) =>
       pw.Container(
+        width: double.infinity,
         padding: const pw.EdgeInsets.all(5),
         decoration: pw.BoxDecoration(
           color: _noticeBlueTint,
@@ -184,30 +190,36 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(title, style: _style(9.5, bold: true)),
-            pw.SizedBox(height: 3),
+            pw.Text(title, style: _style(13, bold: true)),
+            pw.SizedBox(height: 2),
             ...rows,
           ],
         ),
       );
 
   pw.Widget _interestDetailRow(String label, String? value,
-          {bool outstanding = false}) =>
+          {double labelWidth = 180,
+          bool outstanding = false,
+          bool received = false}) =>
       pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 1),
         child: pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.SizedBox(
-                width: 105,
-                child: pw.Text(label, style: _style(8.4, bold: true))),
-            pw.Text(':', style: _style(8.4, bold: true)),
-            pw.SizedBox(width: 4),
+                width: labelWidth,
+                child: pw.Text(label, style: _style(12, bold: true))),
+            pw.Text(':', style: _style(12, bold: true)),
+            pw.SizedBox(width: 7),
             pw.Expanded(
               child: pw.Text(printText(value ?? 'Not recorded'),
-                  style: _style(8.6,
+                  style: _style(12,
                       bold: true,
-                      color: outstanding ? _noticeOutstanding : _noticeInk)),
+                      color: outstanding
+                          ? _noticeOutstanding
+                          : received
+                              ? _noticeReceived
+                              : _noticeBlack)),
             ),
           ],
         ),
@@ -230,8 +242,8 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
                   color: _noticeReceived, subtract: true),
             if (statement.hasAdjustments && statement.totalAdjustments != null)
               _summaryLine(
-                  'Less: Approved Discount', statement.totalAdjustments!,
-                  color: _noticeReceived, subtract: true),
+                  'Less: Account Adjustments', statement.totalAdjustments!,
+                  subtract: true),
             _summaryDivider(),
             pw.SizedBox(height: 2),
             pw.Container(
@@ -255,11 +267,11 @@ extension _NoticeStatementFinance on _NoticeStatementLayout {
       );
 
   pw.Widget _summaryLine(String label, String value,
-          {PdfColor color = _noticeInk,
+          {PdfColor color = _noticeBlack,
           bool highlighted = false,
           bool subtract = false}) =>
       pw.Container(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 1.5),
+        padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 0.5),
         color: highlighted ? _noticePaleGold : PdfColors.white,
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,

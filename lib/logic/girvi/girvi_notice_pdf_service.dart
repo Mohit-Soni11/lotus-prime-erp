@@ -131,6 +131,7 @@ class GirviNoticePdfService {
             context.pageNumber == 1 ? layout.header(context) : pw.SizedBox(),
         build: (_) => [
           ...layout.summaryPage(),
+          pw.NewPage(),
           ...layout.informationPage(),
         ],
       ),
