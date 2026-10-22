@@ -7,27 +7,147 @@ class _NoticeSendDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SimpleDialog(
-        title: const Text('Send Notice PDF'),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 18,
+        contentPadding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Send Notice PDF',
+              style: GoogleFonts.inter(
+                color: Colors.black,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Choose how you want to send the notice.',
+              style: GoogleFonts.inter(
+                color: GirviColors.textDark,
+                fontSize: 12.2,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
         children: [
-          _option(context, _NoticeSendMethod.print, Icons.print_outlined,
-              'Print', 'Print a copy to hand to the customer.'),
-          _option(context, _NoticeSendMethod.whatsapp, Icons.send_outlined,
-              'WhatsApp', 'Share the PDF with the customer on WhatsApp.'),
-          _option(context, _NoticeSendMethod.download, Icons.download_outlined,
-              'Download PDF', 'Save a copy to print and hand over later.'),
+          _option(
+            context,
+            _NoticeSendMethod.print,
+            Icons.print_rounded,
+            'Print',
+            'Open your connected printer and print now.',
+          ),
+          _option(
+            context,
+            _NoticeSendMethod.whatsapp,
+            Icons.send_rounded,
+            'WhatsApp',
+            'Share the notice PDF with the customer.',
+          ),
+          _option(
+            context,
+            _NoticeSendMethod.download,
+            Icons.download_rounded,
+            'Download PDF',
+            'Save a named PDF copy for later use.',
+          ),
         ],
       );
 
-  Widget _option(BuildContext context, _NoticeSendMethod method, IconData icon,
-          String title, String subtitle) =>
-      SimpleDialogOption(
-        onPressed: () => Navigator.of(context).pop(method),
-        child: ListTile(
-          leading: Icon(icon, color: GirviColors.shellBg),
-          title: Text(title),
-          subtitle: Text(subtitle),
+  Widget _option(
+    BuildContext context,
+    _NoticeSendMethod method,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
+    final palette = switch (method) {
+      _NoticeSendMethod.print => (
+          accent: const Color(0xFFB77900),
+          background: const Color(0xFFFFF6DD),
+          border: const Color(0xFFF0CD76),
         ),
-      );
+      _NoticeSendMethod.whatsapp => (
+          accent: const Color(0xFF078A53),
+          background: const Color(0xFFE7F8EF),
+          border: const Color(0xFF9BDFC0),
+        ),
+      _NoticeSendMethod.download => (
+          accent: const Color(0xFF1769D1),
+          background: const Color(0xFFEAF2FF),
+          border: const Color(0xFFA9C8F8),
+        ),
+    };
+
+    return SimpleDialogOption(
+      padding: const EdgeInsets.only(bottom: 10),
+      onPressed: () => Navigator.of(context).pop(method),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        decoration: BoxDecoration(
+          color: palette.background,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: palette.border, width: 1.15),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x140E1A2B),
+              blurRadius: 7,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(11),
+                border: Border.all(color: palette.border),
+              ),
+              child: Icon(icon, color: palette.accent, size: 23),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: Colors.black,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      color: Colors.black87,
+                      fontSize: 12.2,
+                      fontWeight: FontWeight.w700,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 15, color: palette.accent),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 extension _NoticeDispatch on _ContactRecoveryScreenState {
@@ -56,12 +176,15 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
             branding: branding,
             itemPhotoPath: itemPhotoPath,
           ));
-      final fileName = 'girvi_notice_${item.loan.ticketNo}.pdf';
+      final fileName = _noticeFileName(item.loan.ticketNo);
       final reference = await _dispatchNotice(
         method,
         bytes,
         fileName,
+        item.loan.ticketNo,
         item.account.customerMobile,
+        item.account.customerName,
+        branding,
       );
       if (reference == null || !mounted) return false;
 
@@ -124,7 +247,10 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
     _NoticeSendMethod method,
     Uint8List bytes,
     String fileName,
+    String ticketNo,
     String customerMobile,
+    String customerName,
+    GirviInvoiceBranding branding,
   ) async {
     final injected = widget.noticeDispatcher;
     if (injected != null) {
@@ -156,8 +282,13 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
         await file.writeAsBytes(bytes, flush: true);
         final result = await SharePlus.instance.share(ShareParams(
           title: 'Send Notice PDF',
-          subject: 'Pledge notice $fileName',
-          text: 'Pledge account notice PDF for $customerMobile',
+          subject: 'Formal Notice - $ticketNo',
+          text: _whatsAppMessage(
+            customerName: customerName,
+            ticketNo: ticketNo,
+            shopName: branding.printShopName,
+            shopPhone: branding.shopMobile,
+          ),
           files: [
             XFile(file.path, mimeType: 'application/pdf', name: fileName),
           ],
@@ -168,7 +299,15 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Confirm WhatsApp send'),
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            title: Text(
+              'Confirm WhatsApp send',
+              style: GoogleFonts.inter(
+                color: GirviColors.textDark,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             content: Text(
               'Was this PDF sent to the correct customer number ($customerMobile) on WhatsApp?',
             ),
@@ -186,5 +325,25 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
         );
         return confirmed == true ? 'WhatsApp: $customerMobile' : null;
     }
+  }
+
+  String _noticeFileName(String ticketNo) {
+    final safeTicket =
+        ticketNo.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_');
+    final today = DateFormat('yyyyMMdd').format(DateTime.now());
+    return 'formal_notice_${safeTicket}_$today.pdf';
+  }
+
+  String _whatsAppMessage({
+    required String customerName,
+    required String ticketNo,
+    required String shopName,
+    required String shopPhone,
+  }) {
+    final phoneLine = shopPhone.trim().isEmpty ? '' : '\nPhone: $shopPhone';
+    return 'Dear ${customerName.trim()},\n\n'
+        'Please find attached the Formal Notice for Pledge Account $ticketNo. '
+        'Please review it and contact $shopName within the stated response period for settlement and release of your pledged item.\n\n'
+        '$shopName$phoneLine';
   }
 }
