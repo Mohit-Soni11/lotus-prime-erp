@@ -24,6 +24,7 @@ class GirviNoticeActions extends Table with BaseTable {
   IntColumn get noticeStage => integer().nullable()();
   TextColumn get noticeText => text().nullable()();
   TextColumn get documentHash => text().nullable()();
+  TextColumn get brandingSnapshot => text().nullable()();
   TextColumn get actionNote => text().nullable()();
 
   /// The operator and approval metadata make a saved legal document traceable.

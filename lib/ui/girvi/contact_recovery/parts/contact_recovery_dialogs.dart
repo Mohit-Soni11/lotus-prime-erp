@@ -5,7 +5,6 @@ class _NoticeEditorDialog extends StatefulWidget {
   final GirviNoticeType noticeType;
   final String initialText;
   final String Function(int days) generateTextForPeriod;
-  final Future<void> Function(GirviNoticeLanguage language, String text) onCopy;
   final Future<void> Function(
       GirviNoticeLanguage language, String text, int days) onPreview;
   final Future<bool> Function(
@@ -13,16 +12,16 @@ class _NoticeEditorDialog extends StatefulWidget {
     String text,
     Map<GirviNoticeLanguage, String> allTexts,
     int days,
-  ) onSave;
+    _NoticeSendMethod method,
+  ) onSend;
 
   const _NoticeEditorDialog({
     required this.item,
     required this.noticeType,
     required this.initialText,
     required this.generateTextForPeriod,
-    required this.onCopy,
     required this.onPreview,
-    required this.onSave,
+    required this.onSend,
   });
 
   @override
@@ -65,7 +64,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
     final previousText = _textController.text;
     final nextText = previousText == _generatedText
         ? widget.generateTextForPeriod(days)
-        : previousText.replaceFirst(oldPeriod, newPeriod);
+        : previousText.replaceAll(oldPeriod, newPeriod);
     setState(() {
       _selectedDays = days;
       _generatedText = widget.generateTextForPeriod(days);
@@ -92,38 +91,38 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
 
   bool get _validPeriod => _periodError == null;
 
-  Future<void> _run(
-    Future<void> Function(GirviNoticeLanguage language, String text) action,
-  ) async {
-    if (_busy || !_validPeriod) return;
-    setState(() => _busy = true);
-    try {
-      await action(GirviNoticeLanguage.english, _textController.text.trim());
-      if (mounted) Navigator.of(context).pop();
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+  String? get _approvalError => GirviNoticeApprovalValidator.validate(
+        generatedText: _generatedText,
+        approvedText: _textController.text,
+      );
 
-  Future<void> _save() async {
-    if (_busy || !_validPeriod) return;
+  bool get _validNotice => _validPeriod && _approvalError == null;
+
+  Future<void> _send() async {
+    if (_busy || !_validNotice) return;
+    final method = await showDialog<_NoticeSendMethod>(
+      context: context,
+      builder: (context) => const _NoticeSendDialog(),
+    );
+    if (method == null || !mounted) return;
     setState(() => _busy = true);
     try {
       final noticeText = _textController.text.trim();
-      final saved = await widget.onSave(
+      final sent = await widget.onSend(
         GirviNoticeLanguage.english,
         noticeText,
         {GirviNoticeLanguage.english: noticeText},
         _selectedDays,
+        method,
       );
-      if (saved && mounted) Navigator.of(context).pop();
+      if (sent && mounted) Navigator.of(context, rootNavigator: true).pop();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _previewPdf() async {
-    if (_busy || !_validPeriod) return;
+    if (_busy || !_validNotice) return;
     setState(() => _busy = true);
     try {
       await widget.onPreview(
@@ -276,6 +275,16 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                       noticeType: widget.noticeType,
                     ),
             ),
+            if (_approvalError != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _approvalError!,
+                style: GirviStyles.fieldHint.copyWith(
+                  color: GirviColors.danger,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -287,12 +296,8 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
             style: GirviStyles.caption.copyWith(color: GirviColors.textMuted),
           ),
         ),
-        TextButton(
-          onPressed: _busy || !_validPeriod ? null : () => _run(widget.onCopy),
-          child: Text('Copy Text', style: _actionTextStyle()),
-        ),
         OutlinedButton.icon(
-          onPressed: _busy || !_validPeriod ? null : _previewPdf,
+          onPressed: _busy || !_validNotice ? null : _previewPdf,
           icon: const Icon(Icons.picture_as_pdf_outlined, size: 17),
           label: const Text('Preview PDF'),
           style: OutlinedButton.styleFrom(
@@ -305,7 +310,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
           ),
         ),
         ElevatedButton(
-          onPressed: _busy || !_validPeriod ? null : _save,
+          onPressed: _busy || !_validNotice ? null : _send,
           style: ElevatedButton.styleFrom(
             backgroundColor: GirviColors.shellBg,
             foregroundColor: Colors.white,
@@ -327,18 +332,11 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
                   ),
                 )
               : Text(
-                  'Approve & Save Notice',
+                  'Send Notice',
                   style: GoogleFonts.inter(fontWeight: FontWeight.w800),
                 ),
         ),
       ],
-    );
-  }
-
-  TextStyle _actionTextStyle() {
-    return GoogleFonts.inter(
-      color: GirviColors.shellBg,
-      fontWeight: FontWeight.w800,
     );
   }
 }

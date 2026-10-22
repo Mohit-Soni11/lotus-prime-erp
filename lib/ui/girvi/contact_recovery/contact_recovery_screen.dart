@@ -8,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../constants/app_routes.dart';
 import '../../../core/time/date_sensitive_refresh.dart';
@@ -18,7 +20,10 @@ import '../../../logic/girvi/girvi_notice_pdf_service.dart';
 import '../../../logic/girvi/notice_pdf/notice_statement_data.dart';
 import '../../../logic/girvi/notice_pdf/notice_item_photo_resolver.dart';
 import '../../../logic/girvi/contact_recovery_controller.dart';
+import '../../../logic/girvi/notice/girvi_notice_approval_validator.dart';
 import '../../../models/girvi/girvi_notice_action_model.dart';
+import '../../../models/girvi/girvi_notice_branding_snapshot.dart';
+import '../../../models/girvi/girvi_invoice_branding.dart';
 import '../../../models/girvi/girvi_notice_review_period.dart';
 import '../../../models/girvi/girvi_customer_response_model.dart';
 import '../../../models/girvi/girvi_notice_document_record_model.dart';
@@ -36,18 +41,29 @@ part 'parts/contact_recovery_dialogs.dart';
 part 'parts/contact_recovery_document_components.dart';
 part 'parts/contact_recovery_empty_state.dart';
 part 'parts/contact_recovery_settlement_dialog.dart';
-part 'parts/contact_recovery_delivery_dialog.dart';
+part 'parts/contact_recovery_notice_dispatch.dart';
 
 class ContactRecoveryScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final String? initialTicketNo;
   final ContactRecoveryController? controller;
+  final GirviInvoiceBrandingRepository? brandingRepository;
+  final Future<String?> Function(
+    String method,
+    Uint8List bytes,
+    String fileName,
+    String customerMobile,
+  )? noticeDispatcher;
+  final Future<Uint8List> Function()? noticePdfBytesBuilder;
 
   const ContactRecoveryScreen({
     super.key,
     this.onBack,
     this.initialTicketNo,
     this.controller,
+    this.brandingRepository,
+    this.noticeDispatcher,
+    this.noticePdfBytesBuilder,
   });
 
   @override
@@ -60,7 +76,8 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
   final _noticePdfService = GirviNoticePdfService();
   late final _noticeItemPhotoResolver =
       NoticeItemPhotoResolver(_controller.database);
-  late final _noticeBranding = GirviInvoiceBrandingRepository().fetch();
+  late final _noticeBrandingRepository = widget.brandingRepository ??
+      GirviInvoiceBrandingRepository(db: _controller.database);
   @override
   void initState() {
     super.initState();
@@ -126,7 +143,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
                     onViewNotice: _viewSavedNotice,
                     onDownloadNotice: _downloadSavedNotice,
                     onPrintNotice: _printSavedNotice,
-                    onRecordDelivery: _recordConfirmedDelivery,
+                    onSettlement: _openSettlement,
                     onRecordCustomerResponse: _recordCustomerResponse,
                     onViewCustomerResponses: _viewCustomerResponses,
                     onViewInvoice: _viewInvoice,
@@ -150,6 +167,19 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     context.push(uri.toString());
   }
 
+  Future<void> _openSettlement(ContactRecoveryCase item) async {
+    await context.push(
+      Uri(
+        path: RoutePaths.girviInterest,
+        queryParameters: {
+          'ticketNo': item.loan.ticketNo,
+          'returnTo': 'girviNotice',
+        },
+      ).toString(),
+    );
+    if (mounted) await _controller.load();
+  }
+
   Future<void> _prepareNotice(ContactRecoveryCase item) async {
     await _controller.load();
     if (!mounted) return;
@@ -171,7 +201,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       return;
     }
 
-    final branding = await _noticeBranding;
+    final branding = await _noticeBrandingRepository.fetch();
     if (!mounted) return;
     final noticeService = GirviNoticeGenerationService(
       now: currentItem.now,
@@ -201,38 +231,27 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         noticeType: noticeType,
         initialText: initialText,
         generateTextForPeriod: generateTextForPeriod,
-        onCopy: (language, text) =>
-            _copyNoticeText(currentItem, noticeType, language, text),
         onPreview: (language, text, days) => _previewPreparedNotice(
           currentItem,
           noticeType,
           language,
           text,
           days,
+          branding,
         ),
-        onSave: (language, text, allTexts, days) =>
-            _controller.recordNoticePrepared(
+        onSend: (language, text, allTexts, days, method) => _sendPreparedNotice(
           currentItem,
           noticeType,
+          language,
           text,
-          noticePeriodDays: days,
-          autoGeneratedText: generateTextForPeriod(days),
-          noticeDocuments: allTexts,
-          autoGeneratedDocuments: {language: generateTextForPeriod(days)},
-          primaryLanguage: language,
+          allTexts,
+          days,
+          method,
+          branding,
+          generateTextForPeriod(days),
         ),
       ),
     );
-  }
-
-  Future<void> _copyNoticeText(
-    ContactRecoveryCase item,
-    GirviNoticeType noticeType,
-    GirviNoticeLanguage language,
-    String noticeText,
-  ) async {
-    await Clipboard.setData(ClipboardData(text: noticeText));
-    await _controller.recordNoticeDraft(item, noticeText);
   }
 
   Future<void> _previewPreparedNotice(
@@ -241,9 +260,9 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     GirviNoticeLanguage language,
     String noticeText,
     int noticePeriodDays,
+    GirviInvoiceBranding branding,
   ) async {
     try {
-      final branding = await _noticeBranding;
       final itemPhotoPath =
           await _noticeItemPhotoResolver.resolve(item.loan.id);
       final bytes = await _noticePdfService.build(
@@ -427,7 +446,14 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
 
   Future<Uint8List> _buildSavedNoticePdf(_SavedNoticeDraft draft,
       {String? verifiedFinancialText, DateTime? financialAsOf}) async {
-    final branding = await _noticeBranding;
+    final approvedBranding = GirviNoticeBrandingSnapshot.decode(
+      draft.action.brandingSnapshot,
+    );
+    if (draft.action.brandingSnapshot != null && approvedBranding == null) {
+      throw StateError('The approved shop profile snapshot is invalid.');
+    }
+    final branding =
+        approvedBranding ?? await _noticeBrandingRepository.fetch();
     final itemPhotoPath =
         await _noticeItemPhotoResolver.resolve(draft.item.loan.id);
     final usesDeliveryPeriod =
@@ -448,6 +474,12 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
           : null,
       branding: branding,
       itemPhotoPath: itemPhotoPath,
+      logoBytes: GirviNoticeBrandingSnapshot.assetBytes(
+          draft.action.brandingSnapshot, 'logoBytes'),
+      signatureBytes: GirviNoticeBrandingSnapshot.assetBytes(
+          draft.action.brandingSnapshot, 'signatureBytes'),
+      itemPhotoBytes: GirviNoticeBrandingSnapshot.assetBytes(
+          draft.action.brandingSnapshot, 'itemPhotoBytes'),
       originalLoanDurationMonths: draft.item.loan.durationMonths,
       verifiedFinancialText: verifiedFinancialText,
       financialAsOf: financialAsOf,
@@ -529,31 +561,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
         '${draft.action.noticeLabel} PDF could not be printed.',
       );
     }
-  }
-
-  Future<void> _recordConfirmedDelivery(
-    ContactRecoveryCase item,
-    GirviNoticeAction action,
-  ) async {
-    final draft = _savedNoticeDrafts(item, action)[GirviNoticeLanguage.english];
-    if (draft == null || !mounted) return;
-    if (!await _canDeliverApprovedNotice(draft) || !mounted) return;
-    final delivery = await showDialog<_NoticeDeliveryResult>(
-      context: context,
-      builder: (context) => _NoticeDeliveryDialog(ticketNo: item.loan.ticketNo),
-    );
-    if (delivery == null || !mounted) return;
-    await _controller.recordNoticeDeliveryProof(
-      item: item,
-      noticeType: draft.noticeType,
-      noticeText: draft.noticeText,
-      noticeLanguage: draft.language,
-      noticeActionId: draft.action.id,
-      actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
-      deliveryChannel: delivery.channel,
-      deliveryStatus: 'Delivered',
-      deliveryReference: delivery.reference,
-    );
   }
 
   Future<void> _recordCustomerResponse(

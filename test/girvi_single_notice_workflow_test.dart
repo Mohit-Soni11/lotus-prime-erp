@@ -77,6 +77,24 @@ void main() {
         throwsA(isA<Exception>()));
   });
 
+  test('approved shop snapshot persists with the notice action', () async {
+    const snapshot = '{"version":1,"shopName":"Anjali Jewellers"}';
+    final id = await repository.recordNoticePrepared(
+      girviId: loanId,
+      noticeType: GirviNoticeType.formal,
+      noticeText: english,
+      noticePeriodDays: 7,
+      noticeDocuments: documents,
+      brandingSnapshot: snapshot,
+    );
+    final action = (await history()).single;
+    expect(action.id, id);
+    expect(action.brandingSnapshot, snapshot);
+    expect(
+        (await db.select(db.girviNoticeActions).get()).single.brandingSnapshot,
+        snapshot);
+  });
+
   test('selected response days begin after confirmed delivery', () async {
     final noticeId = await approve(days: 14);
     final approved = (await history()).single;
@@ -90,6 +108,38 @@ void main() {
     clock = deliveryDeadline;
     expect(_case(loanId, clock, await history()).stage,
         ContactRecoveryStage.disposalReady);
+  });
+
+  test(
+      'sent notice PDF starts the response period and enables recovery after it',
+      () async {
+    final noticeId = await approve(days: 14);
+    await repository.recordNoticeDeliveryProof(
+      girviId: loanId,
+      noticeType: GirviNoticeType.formal,
+      noticeActionId: noticeId,
+      noticeText: english,
+      actionType: GirviNoticeActionTypes.noticePdfShared,
+      deliveryChannel: 'WhatsApp',
+      deliveryStatus: 'Shared',
+      deliveryReference: 'WhatsApp: 9304479436',
+    );
+
+    clock = clock.add(const Duration(days: 13, hours: 23));
+    expect(_case(loanId, clock, await history()).stage,
+        ContactRecoveryStage.noticePending);
+    await expectLater(
+      repository.recordCollateralRecoveryInitiated(girviId: loanId),
+      throwsStateError,
+    );
+
+    clock = DateTime(2026, 10, 31, 12, 30);
+    final ready = _case(loanId, clock, await history());
+    expect(ready.stage, ContactRecoveryStage.disposalReady);
+    expect(ready.canInitiateCollateralRecovery, isTrue);
+    await repository.recordCollateralRecoveryInitiated(girviId: loanId);
+    expect(_case(loanId, clock, await history()).stage,
+        ContactRecoveryStage.recoveryInProgress);
   });
 
   test('notice review starts on confirmed delivery; recovery is explicit',
@@ -351,7 +401,7 @@ void main() {
     );
   });
 
-  test('v58 upgrade preserves old notices, documents, replies and deadlines',
+  test('v58 upgrade removes retired notices and keeps the single formal notice',
       () async {
     final directory =
         await Directory.systemTemp.createTemp('single_notice_v58_');
@@ -374,6 +424,30 @@ void main() {
                 noticeText: 'Legacy notice $stage',
                 documentHash: _hash('Legacy notice $stage')));
       }
+      final formalId =
+          await migrationDb.into(migrationDb.girviNoticeActions).insert(
+                GirviNoticeActionsCompanion.insert(
+                  girviId: loan,
+                  actionType: GirviNoticeActionTypes.noticePrepared,
+                  noticeStage: const drift.Value(1),
+                  noticeText: const drift.Value('Current formal notice'),
+                  documentHash: drift.Value(_hash('Current formal notice')),
+                  actionAt: drift.Value(issuedAt),
+                  createdAt: drift.Value(issuedAt),
+                  noticeDeadlineAt:
+                      drift.Value(issuedAt.add(const Duration(days: 7))),
+                ),
+              );
+      await migrationDb.into(migrationDb.girviNoticeDocuments).insert(
+            GirviNoticeDocumentsCompanion.insert(
+              girviId: loan,
+              noticeActionId: formalId,
+              noticeStage: 1,
+              language: 'english',
+              noticeText: 'Current formal notice',
+              documentHash: _hash('Current formal notice'),
+            ),
+          );
       await migrationDb.into(migrationDb.girviCustomerResponses).insert(
             GirviCustomerResponsesCompanion.insert(
               girviId: loan,
@@ -393,28 +467,75 @@ void main() {
       migrationDb = AppDatabase.forTesting(NativeDatabase(file));
       final saved =
           await migrationDb.select(migrationDb.girviNoticeActions).get();
-      expect(saved.map((row) => row.id).toList(), ids);
-      expect(saved.map((row) => row.noticeText).toList(),
-          ['Legacy notice 1', 'Legacy notice 2', 'Legacy notice 3']);
+      expect(saved.map((row) => row.id).toList(), [formalId]);
+      expect(saved.single.noticeText, 'Current formal notice');
       expect(
           saved.every((row) =>
               row.noticeDeadlineAt == issuedAt.add(const Duration(days: 7))),
           isTrue);
       expect(await migrationDb.select(migrationDb.girviNoticeDocuments).get(),
-          hasLength(3));
-      final reply =
-          (await migrationDb.select(migrationDb.girviCustomerResponses).get())
-              .single;
-      expect(reply.noticeActionId, ids[1]);
-      expect(reply.responseText, 'Original reply');
+          hasLength(1));
+      expect(await migrationDb.select(migrationDb.girviCustomerResponses).get(),
+          isEmpty);
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 60);
+      expect(version.read<int>('user_version'), 62);
+      final actionColumns = await migrationDb
+          .customSelect('PRAGMA table_info(girvi_notice_actions)')
+          .get();
+      expect(
+        actionColumns.map((column) => column.read<String>('name')),
+        contains('branding_snapshot'),
+      );
       final index = await migrationDb
           .customSelect(
               "SELECT name FROM sqlite_master WHERE name = 'idx_girvi_one_formal_notice'")
           .get();
       expect(index, hasLength(1));
+    } finally {
+      await migrationDb.close();
+      await directory.delete(recursive: true);
+    }
+  });
+
+  test('v61 cleanup removes linked legacy activity without deleting loan data',
+      () async {
+    final directory =
+        await Directory.systemTemp.createTemp('single_notice_v61_');
+    final file = File('${directory.path}/legacy.sqlite');
+    var migrationDb = AppDatabase.forTesting(NativeDatabase(file));
+    try {
+      final loan = await _seedLoan(migrationDb);
+      final oldId = await _legacy(migrationDb, loan, 1, clock);
+      await migrationDb.into(migrationDb.girviNoticeActions).insert(
+            GirviNoticeActionsCompanion.insert(
+              girviId: loan,
+              actionType: GirviNoticeActionTypes.noticePdfPrinted,
+              noticeActionId: drift.Value(oldId),
+            ),
+          );
+      final recoveryId = await migrationDb
+          .into(migrationDb.girviNoticeActions)
+          .insert(
+            GirviNoticeActionsCompanion.insert(
+              girviId: loan,
+              actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+              noticeActionId: drift.Value(oldId),
+            ),
+          );
+      await migrationDb.customStatement('PRAGMA user_version = 61');
+      await migrationDb.close();
+      migrationDb = AppDatabase.forTesting(NativeDatabase(file));
+
+      final actions =
+          await migrationDb.select(migrationDb.girviNoticeActions).get();
+      expect(actions.map((action) => action.id), [recoveryId]);
+      expect(actions.single.noticeActionId, isNull);
+      expect(
+          await migrationDb.select(migrationDb.girviLoans).get(), hasLength(1));
+      final version =
+          await migrationDb.customSelect('PRAGMA user_version').getSingle();
+      expect(version.read<int>('user_version'), 62);
     } finally {
       await migrationDb.close();
       await directory.delete(recursive: true);

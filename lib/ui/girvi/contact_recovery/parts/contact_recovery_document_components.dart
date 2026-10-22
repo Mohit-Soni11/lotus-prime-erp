@@ -5,7 +5,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
   final ValueChanged<GirviNoticeAction> onViewNotice;
   final ValueChanged<GirviNoticeAction> onDownloadNotice;
   final ValueChanged<GirviNoticeAction> onPrintNotice;
-  final ValueChanged<GirviNoticeAction> onRecordDelivery;
+  final VoidCallback onSettlement;
   final ValueChanged<GirviNoticeAction> onRecordCustomerResponse;
   final VoidCallback onViewCustomerResponses;
 
@@ -14,7 +14,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
     required this.onViewNotice,
     required this.onDownloadNotice,
     required this.onPrintNotice,
-    required this.onRecordDelivery,
+    required this.onSettlement,
     required this.onRecordCustomerResponse,
     required this.onViewCustomerResponses,
   });
@@ -51,7 +51,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
         onView: () => onViewNotice(action),
         onDownload: () => onDownloadNotice(action),
         onPrint: () => onPrintNotice(action),
-        onRecordDelivery: () => onRecordDelivery(action),
+        onSettlement: onSettlement,
         onRecordResponse: () => onRecordCustomerResponse(action),
       );
     }
@@ -186,7 +186,7 @@ class _NoticeDocumentCard extends StatelessWidget {
   final VoidCallback onView;
   final VoidCallback onDownload;
   final VoidCallback onPrint;
-  final VoidCallback onRecordDelivery;
+  final VoidCallback onSettlement;
   final VoidCallback onRecordResponse;
 
   const _NoticeDocumentCard({
@@ -198,7 +198,7 @@ class _NoticeDocumentCard extends StatelessWidget {
     required this.onView,
     required this.onDownload,
     required this.onPrint,
-    required this.onRecordDelivery,
+    required this.onSettlement,
     required this.onRecordResponse,
   });
 
@@ -213,6 +213,15 @@ class _NoticeDocumentCard extends StatelessWidget {
         ? null
         : DateFormat('dd MMM yyyy, hh:mm a')
             .format(proof.deliveredAt ?? proof.actionAt);
+    final activityStatus = switch (latestPdfActivity?.actionType) {
+      GirviNoticeActionTypes.noticePdfShared =>
+        'WhatsApp sent · customer response pending',
+      GirviNoticeActionTypes.noticePdfPrinted =>
+        'Printed notice · customer response pending',
+      GirviNoticeActionTypes.noticePdfSaved =>
+        'PDF downloaded · customer response pending',
+      _ => 'Notice PDF not sent yet',
+    };
     const color = GirviColors.info;
 
     return InkWell(
@@ -310,7 +319,7 @@ class _NoticeDocumentCard extends StatelessWidget {
               ),
               child: Text(
                 proof == null
-                    ? 'Customer delivery not recorded'
+                    ? activityStatus
                     : '${proof.deliveryProofLabel} - $proofTimestamp',
                 style: GirviStyles.caption.copyWith(
                   color: GirviColors.textDark,
@@ -368,11 +377,10 @@ class _NoticeDocumentCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: onRecordDelivery,
-                icon: const Icon(Icons.verified_outlined, size: 16),
-                label: Text(proof == null
-                    ? 'Record Customer Delivery'
-                    : 'Update Delivery Record'),
+                onPressed: onSettlement,
+                icon:
+                    const Icon(Icons.account_balance_wallet_outlined, size: 16),
+                label: const Text('Settlement'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: GirviColors.info,
                   visualDensity: VisualDensity.compact,

@@ -427,7 +427,7 @@ class _NoticeData {
       if (totalReceived > 0)
         '${hindi ? 'प्राप्त भुगतान' : 'Payments Received'}: ${service.money(totalReceived)}',
       if (totalAdjustments > 0)
-        '${hindi ? 'स्वीकृत छूट' : 'Approved Discount'}: ${service.money(totalAdjustments)}',
+        '${hindi ? 'दर्ज समायोजन' : 'Recorded Adjustment'}: ${service.money(totalAdjustments)}',
       '${hindi ? 'अंतिम बकाया राशि' : 'Final Outstanding'}: ${service.money(item.verifiedTotalPayable)}',
     ];
   }

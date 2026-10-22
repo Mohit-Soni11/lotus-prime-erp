@@ -63,6 +63,7 @@ class NoticeStatementData {
       'Total Received',
       'Payments Received',
       'Total Adjustments',
+      'Recorded Adjustment',
       'Approved Discount',
       'गिरवी वस्तु',
       'वस्तु का नाम',
@@ -93,6 +94,7 @@ class NoticeStatementData {
       'कुल प्राप्त राशि',
       'प्राप्त भुगतान',
       'कुल समायोजन',
+      'दर्ज समायोजन',
       'स्वीकृत छूट',
     };
     final currentValues = Map<String, String>.of(values)
@@ -220,6 +222,7 @@ class NoticeStatementData {
             'कुल प्राप्त राशि',
             'प्राप्त भुगतान',
             'कुल समायोजन',
+            'दर्ज समायोजन',
             'स्वीकृत छूट',
           }
         : <String>{
@@ -268,6 +271,7 @@ class NoticeStatementData {
             'Total Received',
             'Payments Received',
             'Total Adjustments',
+            'Recorded Adjustment',
             'Approved Discount',
           };
     return displayedKeys.contains(key);
@@ -342,6 +346,7 @@ class NoticeStatementData {
   String? get interestAdjustment =>
       value('Interest Adjustment', 'ब्याज समायोजन') ?? interestAdjustmentTotal;
   String? get totalAdjustments =>
+      value('Recorded Adjustment', 'दर्ज समायोजन') ??
       value('Approved Discount', 'स्वीकृत छूट') ??
       value('Total Adjustments', 'कुल समायोजन') ??
       _sumAmounts(principalAdjustment, interestAdjustment);

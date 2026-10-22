@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,9 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/contact_recovery_controller.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_notice_branding_snapshot.dart';
+import 'package:lotus_erp/repositories/girvi/girvi_invoice_branding_repository.dart';
+import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 import 'package:lotus_erp/theme/girvi/girvi_theme.dart';
 import 'package:lotus_erp/ui/girvi/contact_recovery/contact_recovery_screen.dart';
 
@@ -29,6 +33,16 @@ void main() {
       home: ContactRecoveryScreen(
         initialTicketNo: controller.item.loan.ticketNo,
         controller: controller,
+        brandingRepository: GirviInvoiceBrandingRepository(
+          db: controller.database,
+          shopSetupLoader: () async => const {
+            'basic_info': {'brand_display_name': 'Test Jewellers'},
+          },
+          printProfileLoader: () async => ShopPrintDocumentProfile.empty,
+        ),
+        noticeDispatcher: (method, bytes, fileName, customerMobile) async =>
+            '$method:$customerMobile',
+        noticePdfBytesBuilder: () async => Uint8List.fromList([37, 80, 68, 70]),
       ),
     ));
     await tester.pump(const Duration(milliseconds: 350));
@@ -64,7 +78,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('one prepare action opens an English editor and saves its edits',
+  testWidgets('one prepare action opens an English editor and sends its edits',
       (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final controller = _NoticeController(db, createNoticeCase(simple: false));
@@ -82,7 +96,7 @@ void main() {
     await tester.tap(find.text('Prepare Notice'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('Formal Notice'), findsOneWidget);
-    expect(find.text('PLEDGE ACCOUNT NOTICE'), findsOneWidget);
+    expect(find.textContaining('FINAL NOTICE: PLEDGE ACCOUNT'), findsWidgets);
     expect(find.text('Hindi'), findsNothing);
     expect(find.text('English'), findsNothing);
     await tester.tap(find.byTooltip('Edit notice text'));
@@ -96,12 +110,21 @@ void main() {
     final edited = '$original\nCustomer-specific English edit.';
     await tester.enterText(
         find.byKey(const ValueKey('notice-text-editor')), edited);
-    await tester.tap(find.text('Approve & Save Notice'));
-    await tester.pump();
+    await tester.tap(find.text('Send Notice'));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.tap(find.text('Download PDF'));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 350));
+    expect(controller.savedDocuments, isNotNull,
+        reason: controller.inlineMessage);
     expect(controller.savedDocuments![GirviNoticeLanguage.english], edited);
     expect(controller.savedDocuments!.keys, {GirviNoticeLanguage.english});
     expect(controller.savedType, GirviNoticeType.formal);
+    expect(
+      GirviNoticeBrandingSnapshot.decode(controller.savedBrandingSnapshot)
+          ?.printShopName,
+      'Test Jewellers',
+    );
     expect(find.byType(AlertDialog), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -147,8 +170,10 @@ void main() {
     expect(updatedText, contains('on or before 25 October 2026'));
     expect(updatedText, contains('Please bring the account receipt.'));
     expect(updatedText, isNot(contains('on or before 18 October 2026')));
-    await tester.tap(find.text('Approve & Save Notice'));
-    await tester.pump();
+    await tester.tap(find.text('Send Notice'));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.tap(find.text('Download PDF'));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 350));
     expect(controller.savedDays, 21);
     expect(
@@ -174,10 +199,10 @@ void main() {
       find.widgetWithText(OutlinedButton, 'Preview PDF'),
     );
     expect(preview.style!.foregroundColor!.resolve({}), GirviColors.shellBg);
-    final approve = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Approve & Save Notice'),
+    final send = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Send Notice'),
     );
-    expect(approve.style!.backgroundColor!.resolve({}), GirviColors.shellBg);
+    expect(send.style!.backgroundColor!.resolve({}), GirviColors.shellBg);
     await tester.enterText(
       find.byKey(const ValueKey('notice-response-days')),
       '',
@@ -191,12 +216,12 @@ void main() {
       disabledPreview.style!.foregroundColor!.resolve({WidgetState.disabled}),
       GirviColors.shellBorder,
     );
-    final disabledApprove = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Approve & Save Notice'),
+    final disabledSend = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Send Notice'),
     );
-    expect(disabledApprove.onPressed, isNull);
+    expect(disabledSend.onPressed, isNull);
     expect(
-      disabledApprove.style!.foregroundColor!.resolve({WidgetState.disabled}),
+      disabledSend.style!.foregroundColor!.resolve({WidgetState.disabled}),
       GirviColors.shellBorder,
     );
     expect(tester.takeException(), isNull);
@@ -240,7 +265,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('customer delivery requires a separate evidence record',
+  testWidgets('notice card offers settlement without a delivery action',
       (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final fixture = createNoticeCase();
@@ -264,22 +289,9 @@ void main() {
     addTearDown(controller.dispose);
     addTearDown(db.close);
     await showScreen(tester, controller);
-    expect(find.text('Customer delivery not recorded'), findsOneWidget);
-    await tester.tap(find.text('Record Customer Delivery'));
-    await tester.pump(const Duration(milliseconds: 350));
-    await tester.tap(find.text('Confirm Delivery'));
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(find.text('Enter a receipt, tracking or message reference.'),
-        findsOneWidget);
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Delivery evidence reference'),
-      'ACK-001',
-    );
-    await tester.tap(find.text('Confirm Delivery'));
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(controller.deliveryReference, 'ACK-001');
-    expect(controller.deliveryActionType,
-        GirviNoticeActionTypes.noticeDeliveryRecorded);
+    expect(find.text('Settlement'), findsOneWidget);
+    expect(find.text('Record Customer Delivery'), findsNothing);
+    expect(find.text('Notice PDF not sent yet'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -314,7 +326,10 @@ void main() {
     await tester.tap(find.text('Prepare Corrected Notice'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('Compound Interest Breakdown'), findsWidgets);
-    await tester.tap(find.text('Approve & Save Notice'));
+    await tester.tap(find.text('Send Notice'));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.tap(find.text('Download PDF'));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 350));
     expect(controller.savedDocuments![GirviNoticeLanguage.english],
         contains('Compound Interest Breakdown'));
@@ -353,7 +368,10 @@ void main() {
     await tester.tap(find.text('Prepare Notice'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('Compound Interest Breakdown'), findsWidgets);
-    await tester.tap(find.text('Approve & Save Notice'));
+    await tester.tap(find.text('Send Notice'));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.tap(find.text('Download PDF'));
+    await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 350));
     expect(controller.savedDocuments?[GirviNoticeLanguage.english],
         contains('Compound Interest Breakdown'));
@@ -371,6 +389,8 @@ class _NoticeController extends ContactRecoveryController {
   int? savedDays;
   String? deliveryReference;
   String? deliveryActionType;
+  String? savedBrandingSnapshot;
+  String? inlineMessage;
 
   @override
   ContactRecoveryState get state => ContactRecoveryState.initial().copyWith(
@@ -390,11 +410,13 @@ class _NoticeController extends ContactRecoveryController {
     String? autoGeneratedText,
     Map<GirviNoticeLanguage, String>? noticeDocuments,
     Map<GirviNoticeLanguage, String>? autoGeneratedDocuments,
+    String? brandingSnapshot,
     GirviNoticeLanguage primaryLanguage = GirviNoticeLanguage.english,
   }) async {
     savedDocuments = noticeDocuments;
     savedType = noticeType;
     savedDays = noticePeriodDays;
+    savedBrandingSnapshot = brandingSnapshot;
     return true;
   }
 
@@ -413,5 +435,10 @@ class _NoticeController extends ContactRecoveryController {
     this.deliveryReference = deliveryReference;
     deliveryActionType = actionType;
     return true;
+  }
+
+  @override
+  void showInlineMessage(String message) {
+    inlineMessage = message;
   }
 }

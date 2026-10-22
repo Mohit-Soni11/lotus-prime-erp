@@ -71,6 +71,10 @@ class GirviInvoiceBrandingRepository {
             ? null
             : profile.logoPath!.trim(),
         logoShape: profile.logoShape,
+        signaturePath: profile.signaturePath?.trim().isEmpty ?? true
+            ? null
+            : profile.signaturePath!.trim(),
+        signatureShape: profile.signatureShape,
       );
     } catch (_) {
       return GirviInvoiceBranding.fallback;

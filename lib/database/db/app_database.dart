@@ -44,6 +44,7 @@ import '../tables/setting/billing/purchase_billing_settings.dart';
 import '../tables/setting/billing/girvi_billing_settings.dart';
 import '../tables/setting/billing/shop_print_information_settings.dart';
 import '../tables/setting/billing/booking_advance_billing_settings.dart';
+import 'migrations/girvi_retired_notice_cleanup.dart';
 
 // ✅ v16: Tax & GST
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
@@ -1900,6 +1901,17 @@ class AppDatabase extends _$AppDatabase {
             }
             AppLogger.info('v60 Girvi pledge valuation removed.');
           }
+          if (from < 61) {
+            await ensureGirviNoticeActionSchema();
+            AppLogger.info(
+                'v61 approved Girvi notice branding snapshot applied.');
+          }
+          if (from < 62 && await _tableExists('girvi_notice_actions')) {
+            for (final sql in retiredGirviNoticeCleanupSql) {
+              await customStatement(sql);
+            }
+            AppLogger.info('v62 retired staged Girvi notices removed.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -3120,6 +3132,7 @@ CREATE TABLE IF NOT EXISTS "girvi_notice_actions" (
   "notice_stage" INTEGER,
   "notice_text" TEXT,
   "document_hash" TEXT,
+  "branding_snapshot" TEXT,
   "action_note" TEXT,
   "performed_by" TEXT,
   "approved_by" TEXT,
@@ -3144,6 +3157,7 @@ const List<String> _girviNoticeActionColumnSafetySql = [
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_action_id" INTEGER REFERENCES "girvi_notice_actions" ("id") ON DELETE RESTRICT',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "notice_stage" INTEGER',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "document_hash" TEXT',
+  'ALTER TABLE "girvi_notice_actions" ADD COLUMN "branding_snapshot" TEXT',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "performed_by" TEXT',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "approved_by" TEXT',
   'ALTER TABLE "girvi_notice_actions" ADD COLUMN "approved_at" INTEGER',

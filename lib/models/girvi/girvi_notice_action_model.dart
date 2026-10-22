@@ -53,6 +53,7 @@ class GirviNoticeAction {
   final int? noticeStage;
   final String? noticeText;
   final String? documentHash;
+  final String? brandingSnapshot;
   final String? actionNote;
   final String? performedBy;
   final String? approvedBy;
@@ -82,6 +83,7 @@ class GirviNoticeAction {
     this.noticeStage,
     this.noticeText,
     this.documentHash,
+    this.brandingSnapshot,
     this.actionNote,
     this.performedBy,
     this.approvedBy,

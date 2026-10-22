@@ -54,6 +54,9 @@ class GirviNoticePdfService {
     int? noticePeriodDays,
     GirviInvoiceBranding branding = defaultBranding,
     String? itemPhotoPath,
+    Uint8List? logoBytes,
+    Uint8List? signatureBytes,
+    Uint8List? itemPhotoBytes,
     int? originalLoanDurationMonths,
     String? verifiedFinancialText,
     DateTime? financialAsOf,
@@ -68,6 +71,9 @@ class GirviNoticePdfService {
         noticePeriodDays: noticePeriodDays,
         branding: branding,
         itemPhotoPath: itemPhotoPath,
+        logoBytes: logoBytes,
+        signatureBytes: signatureBytes,
+        itemPhotoBytes: itemPhotoBytes,
         originalLoanDurationMonths: originalLoanDurationMonths,
         verifiedFinancialText: verifiedFinancialText,
         financialAsOf: financialAsOf,
@@ -81,6 +87,9 @@ class GirviNoticePdfService {
     required DateTime savedAt,
     required GirviInvoiceBranding branding,
     String? itemPhotoPath,
+    Uint8List? logoBytes,
+    Uint8List? signatureBytes,
+    Uint8List? itemPhotoBytes,
     int? originalLoanDurationMonths,
     DateTime? deadline,
     int? noticePeriodDays,
@@ -104,9 +113,11 @@ class GirviNoticePdfService {
       creator: branding.printShopName,
       subject: '${language.label} pledge account notice',
     );
-    final logo = await _loadImage(branding.logoPath);
-    final signature = await _loadImage(branding.signaturePath);
-    final itemPhoto = await _loadImage(itemPhotoPath);
+    final logo = await _loadImage(branding.logoPath, approvedBytes: logoBytes);
+    final signature =
+        await _loadImage(branding.signaturePath, approvedBytes: signatureBytes);
+    final itemPhoto =
+        await _loadImage(itemPhotoPath, approvedBytes: itemPhotoBytes);
     final layout = _NoticeStatementLayout(
       statement: statement,
       language: language,
@@ -139,7 +150,17 @@ class GirviNoticePdfService {
     return document.save();
   }
 
-  Future<pw.MemoryImage?> _loadImage(String? source) async {
+  Future<pw.MemoryImage?> _loadImage(String? source,
+      {Uint8List? approvedBytes}) async {
+    if (approvedBytes != null) {
+      if (approvedBytes.isEmpty) return null;
+      try {
+        if (img.decodeImage(approvedBytes) == null) return null;
+        return pw.MemoryImage(approvedBytes);
+      } catch (_) {
+        return null;
+      }
+    }
     final path = source?.trim() ?? '';
     if (path.isEmpty) return null;
     try {

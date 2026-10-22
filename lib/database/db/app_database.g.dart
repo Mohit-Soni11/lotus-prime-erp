@@ -24294,6 +24294,12 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
   late final GeneratedColumn<String> documentHash = GeneratedColumn<String>(
       'document_hash', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _brandingSnapshotMeta =
+      const VerificationMeta('brandingSnapshot');
+  @override
+  late final GeneratedColumn<String> brandingSnapshot = GeneratedColumn<String>(
+      'branding_snapshot', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _actionNoteMeta =
       const VerificationMeta('actionNote');
   @override
@@ -24415,6 +24421,7 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
         noticeStage,
         noticeText,
         documentHash,
+        brandingSnapshot,
         actionNote,
         performedBy,
         approvedBy,
@@ -24491,6 +24498,12 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
           _documentHashMeta,
           documentHash.isAcceptableOrUnknown(
               data['document_hash']!, _documentHashMeta));
+    }
+    if (data.containsKey('branding_snapshot')) {
+      context.handle(
+          _brandingSnapshotMeta,
+          brandingSnapshot.isAcceptableOrUnknown(
+              data['branding_snapshot']!, _brandingSnapshotMeta));
     }
     if (data.containsKey('action_note')) {
       context.handle(
@@ -24613,6 +24626,8 @@ class $GirviNoticeActionsTable extends GirviNoticeActions
           .read(DriftSqlType.string, data['${effectivePrefix}notice_text']),
       documentHash: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}document_hash']),
+      brandingSnapshot: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}branding_snapshot']),
       actionNote: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}action_note']),
       performedBy: attachedDatabase.typeMapping
@@ -24665,6 +24680,7 @@ class GirviNoticeActionData extends DataClass
   final int? noticeStage;
   final String? noticeText;
   final String? documentHash;
+  final String? brandingSnapshot;
   final String? actionNote;
 
   /// The operator and approval metadata make a saved legal document traceable.
@@ -24693,6 +24709,7 @@ class GirviNoticeActionData extends DataClass
       this.noticeStage,
       this.noticeText,
       this.documentHash,
+      this.brandingSnapshot,
       this.actionNote,
       this.performedBy,
       this.approvedBy,
@@ -24730,6 +24747,9 @@ class GirviNoticeActionData extends DataClass
     }
     if (!nullToAbsent || documentHash != null) {
       map['document_hash'] = Variable<String>(documentHash);
+    }
+    if (!nullToAbsent || brandingSnapshot != null) {
+      map['branding_snapshot'] = Variable<String>(brandingSnapshot);
     }
     if (!nullToAbsent || actionNote != null) {
       map['action_note'] = Variable<String>(actionNote);
@@ -24789,6 +24809,9 @@ class GirviNoticeActionData extends DataClass
       documentHash: documentHash == null && nullToAbsent
           ? const Value.absent()
           : Value(documentHash),
+      brandingSnapshot: brandingSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(brandingSnapshot),
       actionNote: actionNote == null && nullToAbsent
           ? const Value.absent()
           : Value(actionNote),
@@ -24839,6 +24862,7 @@ class GirviNoticeActionData extends DataClass
       noticeStage: serializer.fromJson<int?>(json['noticeStage']),
       noticeText: serializer.fromJson<String?>(json['noticeText']),
       documentHash: serializer.fromJson<String?>(json['documentHash']),
+      brandingSnapshot: serializer.fromJson<String?>(json['brandingSnapshot']),
       actionNote: serializer.fromJson<String?>(json['actionNote']),
       performedBy: serializer.fromJson<String?>(json['performedBy']),
       approvedBy: serializer.fromJson<String?>(json['approvedBy']),
@@ -24873,6 +24897,7 @@ class GirviNoticeActionData extends DataClass
       'noticeStage': serializer.toJson<int?>(noticeStage),
       'noticeText': serializer.toJson<String?>(noticeText),
       'documentHash': serializer.toJson<String?>(documentHash),
+      'brandingSnapshot': serializer.toJson<String?>(brandingSnapshot),
       'actionNote': serializer.toJson<String?>(actionNote),
       'performedBy': serializer.toJson<String?>(performedBy),
       'approvedBy': serializer.toJson<String?>(approvedBy),
@@ -24902,6 +24927,7 @@ class GirviNoticeActionData extends DataClass
           Value<int?> noticeStage = const Value.absent(),
           Value<String?> noticeText = const Value.absent(),
           Value<String?> documentHash = const Value.absent(),
+          Value<String?> brandingSnapshot = const Value.absent(),
           Value<String?> actionNote = const Value.absent(),
           Value<String?> performedBy = const Value.absent(),
           Value<String?> approvedBy = const Value.absent(),
@@ -24930,6 +24956,9 @@ class GirviNoticeActionData extends DataClass
         noticeText: noticeText.present ? noticeText.value : this.noticeText,
         documentHash:
             documentHash.present ? documentHash.value : this.documentHash,
+        brandingSnapshot: brandingSnapshot.present
+            ? brandingSnapshot.value
+            : this.brandingSnapshot,
         actionNote: actionNote.present ? actionNote.value : this.actionNote,
         performedBy: performedBy.present ? performedBy.value : this.performedBy,
         approvedBy: approvedBy.present ? approvedBy.value : this.approvedBy,
@@ -24972,6 +25001,9 @@ class GirviNoticeActionData extends DataClass
       documentHash: data.documentHash.present
           ? data.documentHash.value
           : this.documentHash,
+      brandingSnapshot: data.brandingSnapshot.present
+          ? data.brandingSnapshot.value
+          : this.brandingSnapshot,
       actionNote:
           data.actionNote.present ? data.actionNote.value : this.actionNote,
       performedBy:
@@ -25028,6 +25060,7 @@ class GirviNoticeActionData extends DataClass
           ..write('noticeStage: $noticeStage, ')
           ..write('noticeText: $noticeText, ')
           ..write('documentHash: $documentHash, ')
+          ..write('brandingSnapshot: $brandingSnapshot, ')
           ..write('actionNote: $actionNote, ')
           ..write('performedBy: $performedBy, ')
           ..write('approvedBy: $approvedBy, ')
@@ -25059,6 +25092,7 @@ class GirviNoticeActionData extends DataClass
         noticeStage,
         noticeText,
         documentHash,
+        brandingSnapshot,
         actionNote,
         performedBy,
         approvedBy,
@@ -25089,6 +25123,7 @@ class GirviNoticeActionData extends DataClass
           other.noticeStage == this.noticeStage &&
           other.noticeText == this.noticeText &&
           other.documentHash == this.documentHash &&
+          other.brandingSnapshot == this.brandingSnapshot &&
           other.actionNote == this.actionNote &&
           other.performedBy == this.performedBy &&
           other.approvedBy == this.approvedBy &&
@@ -25118,6 +25153,7 @@ class GirviNoticeActionsCompanion
   final Value<int?> noticeStage;
   final Value<String?> noticeText;
   final Value<String?> documentHash;
+  final Value<String?> brandingSnapshot;
   final Value<String?> actionNote;
   final Value<String?> performedBy;
   final Value<String?> approvedBy;
@@ -25144,6 +25180,7 @@ class GirviNoticeActionsCompanion
     this.noticeStage = const Value.absent(),
     this.noticeText = const Value.absent(),
     this.documentHash = const Value.absent(),
+    this.brandingSnapshot = const Value.absent(),
     this.actionNote = const Value.absent(),
     this.performedBy = const Value.absent(),
     this.approvedBy = const Value.absent(),
@@ -25171,6 +25208,7 @@ class GirviNoticeActionsCompanion
     this.noticeStage = const Value.absent(),
     this.noticeText = const Value.absent(),
     this.documentHash = const Value.absent(),
+    this.brandingSnapshot = const Value.absent(),
     this.actionNote = const Value.absent(),
     this.performedBy = const Value.absent(),
     this.approvedBy = const Value.absent(),
@@ -25199,6 +25237,7 @@ class GirviNoticeActionsCompanion
     Expression<int>? noticeStage,
     Expression<String>? noticeText,
     Expression<String>? documentHash,
+    Expression<String>? brandingSnapshot,
     Expression<String>? actionNote,
     Expression<String>? performedBy,
     Expression<String>? approvedBy,
@@ -25226,6 +25265,7 @@ class GirviNoticeActionsCompanion
       if (noticeStage != null) 'notice_stage': noticeStage,
       if (noticeText != null) 'notice_text': noticeText,
       if (documentHash != null) 'document_hash': documentHash,
+      if (brandingSnapshot != null) 'branding_snapshot': brandingSnapshot,
       if (actionNote != null) 'action_note': actionNote,
       if (performedBy != null) 'performed_by': performedBy,
       if (approvedBy != null) 'approved_by': approvedBy,
@@ -25256,6 +25296,7 @@ class GirviNoticeActionsCompanion
       Value<int?>? noticeStage,
       Value<String?>? noticeText,
       Value<String?>? documentHash,
+      Value<String?>? brandingSnapshot,
       Value<String?>? actionNote,
       Value<String?>? performedBy,
       Value<String?>? approvedBy,
@@ -25282,6 +25323,7 @@ class GirviNoticeActionsCompanion
       noticeStage: noticeStage ?? this.noticeStage,
       noticeText: noticeText ?? this.noticeText,
       documentHash: documentHash ?? this.documentHash,
+      brandingSnapshot: brandingSnapshot ?? this.brandingSnapshot,
       actionNote: actionNote ?? this.actionNote,
       performedBy: performedBy ?? this.performedBy,
       approvedBy: approvedBy ?? this.approvedBy,
@@ -25330,6 +25372,9 @@ class GirviNoticeActionsCompanion
     }
     if (documentHash.present) {
       map['document_hash'] = Variable<String>(documentHash.value);
+    }
+    if (brandingSnapshot.present) {
+      map['branding_snapshot'] = Variable<String>(brandingSnapshot.value);
     }
     if (actionNote.present) {
       map['action_note'] = Variable<String>(actionNote.value);
@@ -25394,6 +25439,7 @@ class GirviNoticeActionsCompanion
           ..write('noticeStage: $noticeStage, ')
           ..write('noticeText: $noticeText, ')
           ..write('documentHash: $documentHash, ')
+          ..write('brandingSnapshot: $brandingSnapshot, ')
           ..write('actionNote: $actionNote, ')
           ..write('performedBy: $performedBy, ')
           ..write('approvedBy: $approvedBy, ')
@@ -54549,6 +54595,7 @@ typedef $$GirviNoticeActionsTableCreateCompanionBuilder
   Value<int?> noticeStage,
   Value<String?> noticeText,
   Value<String?> documentHash,
+  Value<String?> brandingSnapshot,
   Value<String?> actionNote,
   Value<String?> performedBy,
   Value<String?> approvedBy,
@@ -54577,6 +54624,7 @@ typedef $$GirviNoticeActionsTableUpdateCompanionBuilder
   Value<int?> noticeStage,
   Value<String?> noticeText,
   Value<String?> documentHash,
+  Value<String?> brandingSnapshot,
   Value<String?> actionNote,
   Value<String?> performedBy,
   Value<String?> approvedBy,
@@ -54697,6 +54745,10 @@ class $$GirviNoticeActionsTableFilterComposer
 
   ColumnFilters<String> get documentHash => $composableBuilder(
       column: $table.documentHash, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get brandingSnapshot => $composableBuilder(
+      column: $table.brandingSnapshot,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get actionNote => $composableBuilder(
       column: $table.actionNote, builder: (column) => ColumnFilters(column));
@@ -54872,6 +54924,10 @@ class $$GirviNoticeActionsTableOrderingComposer
       column: $table.documentHash,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get brandingSnapshot => $composableBuilder(
+      column: $table.brandingSnapshot,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get actionNote => $composableBuilder(
       column: $table.actionNote, builder: (column) => ColumnOrderings(column));
 
@@ -55000,6 +55056,9 @@ class $$GirviNoticeActionsTableAnnotationComposer
 
   GeneratedColumn<String> get documentHash => $composableBuilder(
       column: $table.documentHash, builder: (column) => column);
+
+  GeneratedColumn<String> get brandingSnapshot => $composableBuilder(
+      column: $table.brandingSnapshot, builder: (column) => column);
 
   GeneratedColumn<String> get actionNote => $composableBuilder(
       column: $table.actionNote, builder: (column) => column);
@@ -55175,6 +55234,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             Value<int?> noticeStage = const Value.absent(),
             Value<String?> noticeText = const Value.absent(),
             Value<String?> documentHash = const Value.absent(),
+            Value<String?> brandingSnapshot = const Value.absent(),
             Value<String?> actionNote = const Value.absent(),
             Value<String?> performedBy = const Value.absent(),
             Value<String?> approvedBy = const Value.absent(),
@@ -55202,6 +55262,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             noticeStage: noticeStage,
             noticeText: noticeText,
             documentHash: documentHash,
+            brandingSnapshot: brandingSnapshot,
             actionNote: actionNote,
             performedBy: performedBy,
             approvedBy: approvedBy,
@@ -55229,6 +55290,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             Value<int?> noticeStage = const Value.absent(),
             Value<String?> noticeText = const Value.absent(),
             Value<String?> documentHash = const Value.absent(),
+            Value<String?> brandingSnapshot = const Value.absent(),
             Value<String?> actionNote = const Value.absent(),
             Value<String?> performedBy = const Value.absent(),
             Value<String?> approvedBy = const Value.absent(),
@@ -55256,6 +55318,7 @@ class $$GirviNoticeActionsTableTableManager extends RootTableManager<
             noticeStage: noticeStage,
             noticeText: noticeText,
             documentHash: documentHash,
+            brandingSnapshot: brandingSnapshot,
             actionNote: actionNote,
             performedBy: performedBy,
             approvedBy: approvedBy,

@@ -56,8 +56,9 @@ extension _NoticeStatementComposition on _NoticeStatementLayout {
                 style: _style(11, bold: true)),
             if (branding.printShopAddress.isNotEmpty)
               pw.Text(branding.printShopAddress, style: _style(9)),
-            if (branding.shopMobile.trim().isNotEmpty)
-              pw.Text('Phone: ${branding.shopMobile.trim()}', style: _style(9)),
+            if (_headerPhones.isNotEmpty)
+              pw.Text('Phone: ${_headerPhones.join('  |  ')}',
+                  style: _style(9)),
             pw.SizedBox(height: 7),
             pw.Text(
                 '${_isFinalNotice ? 'FINAL' : 'FORMAL'} NOTICE: PLEDGE ACCOUNT $ticketNo',

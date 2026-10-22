@@ -218,12 +218,34 @@ class ContactRecoveryCase {
     });
   }
 
+  /// A successful notice output starts the customer response period.
+  ///
+  /// New notices are sent through Print, WhatsApp, or Download. Earlier
+  /// records may still contain an explicit delivery confirmation, so retain
+  /// those as valid dispatch evidence as well.
+  List<GirviNoticeAction> _dispatchActionsForNotice(GirviNoticeAction notice) {
+    final actions = [
+      ..._deliveryProofsForNotice(notice),
+      ...noticePdfActivityActions.where(
+        (action) => action.noticeActionId == notice.id,
+      ),
+    ];
+    actions.sort((a, b) {
+      final aAt = a.deliveredAt ?? a.actionAt;
+      final bAt = b.deliveredAt ?? b.actionAt;
+      return aAt.compareTo(bAt);
+    });
+    return actions;
+  }
+
+  GirviNoticeAction? firstDispatchActionForNotice(GirviNoticeAction notice) {
+    final actions = _dispatchActionsForNotice(notice);
+    return actions.isEmpty ? null : actions.first;
+  }
+
   GirviNoticeAction? latestPdfActivityForNotice(GirviNoticeAction notice) {
     final activities = noticePdfActivityActions
-        .where((action) =>
-            action.noticeActionId == notice.id &&
-            (action.actionType == GirviNoticeActionTypes.noticePdfSaved ||
-                action.actionType == GirviNoticeActionTypes.noticePdfPrinted))
+        .where((action) => action.noticeActionId == notice.id)
         .toList()
       ..sort((a, b) => b.actionAt.compareTo(a.actionAt));
     return activities.isEmpty ? null : activities.first;
@@ -276,11 +298,11 @@ class ContactRecoveryCase {
   DateTime? get recoveryReviewAvailableAt {
     final notice = recoveryNoticeAction;
     if (notice == null) return null;
-    final proof = firstDeliveryProofForNotice(notice);
+    final dispatch = firstDispatchActionForNotice(notice);
     return GirviNoticeReviewPeriod.deadline(
       approvedAt: notice.actionAt,
       approvedDeadline: notice.noticeDeadlineAt,
-      deliveredAt: proof?.deliveredAt ?? proof?.actionAt,
+      deliveredAt: dispatch?.deliveredAt ?? dispatch?.actionAt,
       fallbackDays: noticePeriodDays,
     );
   }
@@ -290,9 +312,9 @@ class ContactRecoveryCase {
     return deadline != null && !now.isBefore(deadline);
   }
 
-  bool get hasConfirmedNoticeDelivery {
+  bool get hasNoticeDispatch {
     final notice = recoveryNoticeAction;
-    return notice != null && firstDeliveryProofForNotice(notice) != null;
+    return notice != null && firstDispatchActionForNotice(notice) != null;
   }
 
   bool get canInitiateCollateralRecovery =>
@@ -301,7 +323,7 @@ class ContactRecoveryCase {
       !hasCollateralRecoveryInitiated &&
       !isRecoveryClosed &&
       !requiresCorrectedFormalNotice &&
-      hasConfirmedNoticeDelivery &&
+      hasNoticeDispatch &&
       stage == ContactRecoveryStage.disposalReady;
 
   bool get canCloseDisposal =>
@@ -412,12 +434,12 @@ class ContactRecoveryCase {
   String get stageDescription => switch (stage) {
         ContactRecoveryStage.noticeRequired =>
           'Prepare one formal notice. Customer replies are recorded against the saved notice.',
-        ContactRecoveryStage.noticePending => hasConfirmedNoticeDelivery
-            ? 'Customer delivery confirmed. The notice review period is running; record any replies.'
-            : 'Notice approved. Confirm customer delivery to start the review period.',
-        ContactRecoveryStage.disposalReady => hasConfirmedNoticeDelivery
+        ContactRecoveryStage.noticePending => hasNoticeDispatch
+            ? 'Notice sent. The response period is running; record any replies.'
+            : 'Send the notice to start the response period.',
+        ContactRecoveryStage.disposalReady => hasNoticeDispatch
             ? 'The notice period has ended. Review payments and customer replies before approving recovery.'
-            : 'The notice period has ended. Record confirmed customer delivery before recovery.',
+            : 'Send the notice before approving recovery.',
         ContactRecoveryStage.recoveryInProgress =>
           'Collateral is in recovery. Record the recovered value to close the case.',
         ContactRecoveryStage.settled =>
