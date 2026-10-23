@@ -35,6 +35,7 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
   late int _selectedDays;
   bool _busy = false;
   bool _isEditing = false;
+  String _busyLabel = 'Preparing notice PDF...';
 
   @override
   void initState() {
@@ -105,8 +106,18 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
       builder: (context) => const _NoticeSendDialog(),
     );
     if (method == null || !mounted) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _busyLabel = switch (method) {
+        _NoticeSendMethod.print => 'Preparing PDF for printer...',
+        _NoticeSendMethod.whatsapp => 'Preparing PDF for WhatsApp...',
+        _NoticeSendMethod.download => 'Preparing PDF for download...',
+      };
+    });
     try {
+      // Give Flutter one frame to paint the active state before PDF creation
+      // performs synchronous layout work on the desktop UI isolate.
+      await Future<void>.delayed(const Duration(milliseconds: 16));
       final noticeText = _textController.text.trim();
       final sent = await widget.onSend(
         GirviNoticeLanguage.english,
@@ -323,13 +334,26 @@ class _NoticeEditorDialogState extends State<_NoticeEditorDialog> {
             ),
           ),
           child: _busy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Text(
+                      _busyLabel,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 )
               : Text(
                   'Send Notice',
@@ -760,6 +784,18 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
       initialDate: _promiseDueAt ?? today,
       firstDate: today.subtract(const Duration(days: 1)),
       lastDate: today.add(const Duration(days: 3650)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: GirviColors.shellBg,
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: Colors.black,
+          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+        ),
+        child: child!,
+      ),
     );
     if (selected != null && mounted) setState(() => _promiseDueAt = selected);
   }
@@ -795,11 +831,20 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
     final noticeLabel = widget.notice.noticeLabel;
     final requiresAmount = _kind == GirviCustomerResponseKind.partialPayment;
     return AlertDialog(
-      backgroundColor: GirviColors.cardBg,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: GirviColors.cardBorder),
+      ),
       title: Text(
         'Record Customer Response',
-        style: GirviStyles.sectionTitle.copyWith(fontSize: 17),
+        style: GoogleFonts.manrope(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+        ),
       ),
       content: SizedBox(
         width: 520,
@@ -810,8 +855,9 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
             children: [
               Text(
                 '$noticeLabel · ${widget.item.loan.ticketNo}',
-                style: GirviStyles.caption.copyWith(
-                  color: GirviColors.textMuted,
+                style: GoogleFonts.inter(
+                  color: Colors.black87,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -842,6 +888,8 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
                 controller: _responseController,
                 minLines: 3,
                 maxLines: 5,
+                style: _fieldTextStyle,
+                cursorColor: Colors.black,
                 decoration: _decoration(
                   'Customer statement',
                   'Record facts only, e.g. customer promised to visit on Friday.',
@@ -858,7 +906,12 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
                         : 'Promised date: ${DateFormat('dd MMM yyyy').format(_promiseDueAt!)}',
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: GirviColors.shellBg,
+                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFFFFFCF6),
+                    side: const BorderSide(color: GirviColors.cardBorder),
+                    textStyle: GoogleFonts.inter(
+                      fontWeight: FontWeight.w800,
+                    ),
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -873,12 +926,16 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
                   controller: _amountController,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
+                  style: _fieldTextStyle,
+                  cursorColor: Colors.black,
                   decoration: _decoration('Promised amount', 'e.g. 2000'),
                 ),
               ],
               const SizedBox(height: 10),
               TextField(
                 controller: _proofController,
+                style: _fieldTextStyle,
+                cursorColor: Colors.black,
                 decoration: _decoration(
                   'Proof reference (optional)',
                   'WhatsApp export, acknowledgement no., or file path',
@@ -891,6 +948,12 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
       actions: [
         TextButton(
           onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black,
+            backgroundColor: const Color(0xFFF3F4F6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
+          ),
           child: const Text('Cancel'),
         ),
         ElevatedButton.icon(
@@ -915,12 +978,45 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
     );
   }
 
+  TextStyle get _fieldTextStyle => GoogleFonts.inter(
+        color: Colors.black,
+        fontSize: 14.5,
+        fontWeight: FontWeight.w800,
+      );
+
   InputDecoration _decoration(String label, String hint) => InputDecoration(
         labelText: label,
         hintText: hint,
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: GoogleFonts.inter(
+          color: Colors.black,
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+        ),
+        floatingLabelStyle: GoogleFonts.inter(
+          color: Colors.black,
+          fontSize: 13,
+          fontWeight: FontWeight.w900,
+        ),
+        hintStyle: GoogleFonts.inter(
+          color: Colors.black54,
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+        ),
         filled: true,
-        fillColor: GirviColors.bodyBg,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
+        fillColor: const Color(0xFFFFFCF6),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: GirviColors.cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              const BorderSide(color: GirviColors.brandGold, width: 1.6),
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       );
 
   Widget _responseDropdown<T>({
@@ -933,11 +1029,17 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
       DropdownButtonFormField<T>(
         initialValue: value,
         isExpanded: true,
+        dropdownColor: Colors.white,
+        iconEnabledColor: Colors.black,
+        style: _fieldTextStyle,
         decoration: _decoration(label, ''),
         items: values
             .map((entry) => DropdownMenuItem<T>(
                   value: entry,
-                  child: Text(labelOf(entry)),
+                  child: Text(
+                    labelOf(entry),
+                    style: _fieldTextStyle,
+                  ),
                 ))
             .toList(growable: false),
         onChanged: _busy

@@ -47,7 +47,7 @@ class _NoticeSendDialog extends StatelessWidget {
             _NoticeSendMethod.whatsapp,
             Icons.send_rounded,
             'WhatsApp',
-            'Share the notice PDF with the customer.',
+            'Attach the PDF with the notice message ready to paste.',
           ),
           _option(
             context,
@@ -258,11 +258,15 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
     }
     switch (method) {
       case _NoticeSendMethod.print:
-        final printed = await Printing.layoutPdf(
-          name: fileName,
-          onLayout: (_) async => bytes,
+        final result = await const LotusPdfPrintDispatcher().dispatch(
+          context: context,
+          bytes: bytes,
+          documentName: 'Formal Notice $ticketNo',
+          outputFileName: fileName,
+          printerPickerTitle: 'Select Notice Printer',
+          virtualSaveDialogTitle: 'Save Notice Print Output As',
         );
-        return printed ? 'Printer' : null;
+        return result.completed ? 'Printer' : null;
       case _NoticeSendMethod.download:
         final outputPath = await FilePicker.platform.saveFile(
           dialogTitle: 'Download Notice PDF',
@@ -277,53 +281,41 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
         await File(path).writeAsBytes(bytes, flush: true);
         return path;
       case _NoticeSendMethod.whatsapp:
-        final temp = await getTemporaryDirectory();
-        final file = File('${temp.path}${Platform.pathSeparator}$fileName');
-        await file.writeAsBytes(bytes, flush: true);
-        final result = await SharePlus.instance.share(ShareParams(
-          title: 'Send Notice PDF',
-          subject: 'Formal Notice - $ticketNo',
-          text: _whatsAppMessage(
-            customerName: customerName,
-            ticketNo: ticketNo,
-            shopName: branding.printShopName,
-            shopPhone: branding.shopMobile,
-          ),
-          files: [
-            XFile(file.path, mimeType: 'application/pdf', name: fileName),
-          ],
-          fileNameOverrides: [fileName],
-        ));
-        if (result.status == ShareResultStatus.dismissed) return null;
-        if (!mounted) return null;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.transparent,
-            title: Text(
-              'Confirm WhatsApp send',
-              style: GoogleFonts.inter(
-                color: GirviColors.textDark,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            content: Text(
-              'Was this PDF sent to the correct customer number ($customerMobile) on WhatsApp?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Not sent'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Sent'),
+        final message = _whatsAppMessage(
+          customerName: customerName,
+          ticketNo: ticketNo,
+          shopName: branding.printShopName,
+          shopPhone: branding.shopMobile,
+        );
+        // WhatsApp Desktop ignores a native attachment caption on some Windows
+        // versions. Put the same message on the clipboard before opening the
+        // system share sheet, so the operator can paste it without retyping.
+        await Clipboard.setData(ClipboardData(text: message));
+        final tempDirectory = await getTemporaryDirectory();
+        final attachment = File(
+          '${tempDirectory.path}${Platform.pathSeparator}$fileName',
+        );
+        await attachment.writeAsBytes(bytes, flush: true);
+        final attachmentResult = await SharePlus.instance.share(
+          ShareParams(
+            title: 'Send Notice PDF',
+            subject: 'Formal Notice - $ticketNo',
+            text: message,
+            files: [
+              XFile(
+                attachment.path,
+                mimeType: 'application/pdf',
+                name: fileName,
               ),
             ],
+            fileNameOverrides: [fileName],
           ),
         );
-        return confirmed == true ? 'WhatsApp: $customerMobile' : null;
+        if (attachmentResult.status == ShareResultStatus.dismissed) return null;
+        _controller.showInlineMessage(
+          'WhatsApp PDF sharing is open. The notice message is copied already; if WhatsApp keeps its message box empty, press Ctrl+V and send.',
+        );
+        return 'WhatsApp: $customerMobile';
     }
   }
 
