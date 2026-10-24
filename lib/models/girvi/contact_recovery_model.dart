@@ -10,6 +10,7 @@ import 'girvi_interest_period_snapshot.dart';
 import 'girvi_notice_action_model.dart';
 import 'girvi_notice_document_record_model.dart';
 import 'girvi_notice_review_period.dart';
+import 'girvi_recovery_eligibility.dart';
 
 part 'contact_recovery_state.dart';
 
@@ -89,7 +90,7 @@ class ContactRecoveryCase {
   bool get hasItemPhotos =>
       itemPhotoPaths.any((path) => path.trim().isNotEmpty);
 
-  /// Newest first. Responses to retired notice types remain in the audit store.
+  /// Newest first. Only responses linked to a current formal notice appear.
   List<GirviCustomerResponse> get responseTimeline {
     final formalIds = noticeActions.map((action) => action.id).toSet();
     if (formalIds.isEmpty) return const [];
@@ -98,16 +99,83 @@ class ContactRecoveryCase {
         .toList(growable: false);
   }
 
-  List<GirviCustomerResponse> get openCustomerPromises => responseTimeline
-      .where((response) => response.isPromise && response.status.isOpen)
+  List<GirviCustomerResponse> get openCustomerFollowUps => responseTimeline
+      .where(
+          (response) => response.requiresFollowUpDate && response.status.isOpen)
       .toList(growable: false);
 
-  List<GirviCustomerResponse> get missedCustomerPromises => openCustomerPromises
-      .where((response) => response.isDueOn(now))
-      .toList(growable: false);
+  List<GirviCustomerResponse> get missedCustomerFollowUps =>
+      openCustomerFollowUps
+          .where((response) => response.isDueOn(now))
+          .toList(growable: false);
+
+  List<GirviCustomerResponse> get currentNoticeResponses {
+    final notice = recoveryNoticeAction;
+    if (notice == null) return const [];
+    final responses = responsesForNotice(notice).toList()
+      ..sort((left, right) {
+        final date = right.receivedAt.compareTo(left.receivedAt);
+        return date != 0 ? date : right.id.compareTo(left.id);
+      });
+    return responses;
+  }
 
   GirviCustomerResponse? get latestCustomerResponse =>
-      responseTimeline.isEmpty ? null : responseTimeline.first;
+      currentNoticeResponses.isEmpty ? null : currentNoticeResponses.first;
+
+  /// The most recent response controls recovery. A later customer reply can
+  /// replace an earlier visit, hold, or recovery request.
+  bool get customerAuthorisedRecovery =>
+      latestCustomerResponse?.kind.authorisesRecovery ?? false;
+
+  DateTime? get customerFollowUpUntil {
+    final response = latestCustomerResponse;
+    if (response == null ||
+        !response.requiresFollowUpDate ||
+        !response.status.isOpen) {
+      return null;
+    }
+    return response.promiseDueAt;
+  }
+
+  DateTime? get recoveryAvailableAt {
+    final notice = recoveryNoticeAction;
+    if (notice == null) return null;
+    final response = latestCustomerResponse;
+    final delivery = firstDispatchActionForNotice(notice);
+    return GirviRecoveryEligibility.availableAt(
+      deliveredAt: delivery?.deliveredAt ?? delivery?.actionAt,
+      noticeDeadline: recoveryReviewAvailableAt,
+      responseKind: response?.kind,
+      responseStatus: response?.status,
+      followUpDate: response?.promiseDueAt,
+    );
+  }
+
+  bool get isRecoveryReady {
+    final availableAt = recoveryAvailableAt;
+    return availableAt != null && !now.isBefore(availableAt);
+  }
+
+  String get recoveryBlockedMessage {
+    if (!hasNoticeDispatch) {
+      return 'Confirm customer delivery before starting collateral recovery.';
+    }
+    final response = latestCustomerResponse;
+    final followUpUntil = customerFollowUpUntil;
+    final availableAt = recoveryAvailableAt;
+    if (followUpUntil != null &&
+        availableAt != null &&
+        now.isBefore(availableAt) &&
+        availableAt.isAfter(recoveryReviewAvailableAt ?? now)) {
+      return '${response!.kind.label} is active through ${_dateLabel(followUpUntil)}.';
+    }
+    final deadline = recoveryReviewAvailableAt;
+    if (deadline != null && now.isBefore(deadline)) {
+      return 'Collateral recovery is available after ${_dateLabel(deadline)}.';
+    }
+    return 'Collateral recovery is not available for this account.';
+  }
 
   List<GirviNoticeDocumentRecord> documentsForNoticeAction(int actionId) =>
       noticeDocuments
@@ -218,18 +286,10 @@ class ContactRecoveryCase {
     });
   }
 
-  /// A successful notice output starts the customer response period.
-  ///
-  /// New notices are sent through Print, WhatsApp, or Download. Earlier
-  /// records may still contain an explicit delivery confirmation, so retain
-  /// those as valid dispatch evidence as well.
+  /// Only confirmed customer delivery starts the response period. PDF output
+  /// alone cannot prove that the customer received the notice.
   List<GirviNoticeAction> _dispatchActionsForNotice(GirviNoticeAction notice) {
-    final actions = [
-      ..._deliveryProofsForNotice(notice),
-      ...noticePdfActivityActions.where(
-        (action) => action.noticeActionId == notice.id,
-      ),
-    ];
+    final actions = _deliveryProofsForNotice(notice);
     actions.sort((a, b) {
       final aAt = a.deliveredAt ?? a.actionAt;
       final bAt = b.deliveredAt ?? b.actionAt;
@@ -324,7 +384,7 @@ class ContactRecoveryCase {
       !isRecoveryClosed &&
       !requiresCorrectedFormalNotice &&
       hasNoticeDispatch &&
-      stage == ContactRecoveryStage.disposalReady;
+      isRecoveryReady;
 
   bool get canCloseDisposal =>
       !hasDisposalSettlement &&
@@ -398,6 +458,25 @@ class ContactRecoveryCase {
         _ => noticeStatusLabel,
       };
 
+  String _dateLabel(DateTime value) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${value.day.toString().padLeft(2, '0')} '
+        '${months[value.month - 1]} ${value.year}';
+  }
+
   String _monthsDaysLabel(GirviElapsedPeriod period) {
     final months = (period.years * 12) + period.months;
     final parts = <String>[
@@ -418,7 +497,7 @@ class ContactRecoveryCase {
     if (recoveryNoticeAction == null) {
       return ContactRecoveryStage.noticeRequired;
     }
-    return isNoticePeriodComplete
+    return isRecoveryReady
         ? ContactRecoveryStage.disposalReady
         : ContactRecoveryStage.noticePending;
   }
@@ -435,11 +514,13 @@ class ContactRecoveryCase {
         ContactRecoveryStage.noticeRequired =>
           'Prepare one formal notice. Customer replies are recorded against the saved notice.',
         ContactRecoveryStage.noticePending => hasNoticeDispatch
-            ? 'Notice sent. The response period is running; record any replies.'
-            : 'Send the notice to start the response period.',
-        ContactRecoveryStage.disposalReady => hasNoticeDispatch
-            ? 'The notice period has ended. Review payments and customer replies before approving recovery.'
-            : 'Send the notice before approving recovery.',
+            ? recoveryBlockedMessage
+            : 'Issue the notice and confirm customer delivery to start the response period.',
+        ContactRecoveryStage.disposalReady => customerAuthorisedRecovery
+            ? 'Customer requested recovery settlement. Review the account before approving recovery.'
+            : hasNoticeDispatch
+                ? 'The notice period has ended. Review payments and customer replies before approving recovery.'
+                : 'Confirm notice delivery before approving recovery.',
         ContactRecoveryStage.recoveryInProgress =>
           'Collateral is in recovery. Record the recovered value to close the case.',
         ContactRecoveryStage.settled =>

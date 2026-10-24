@@ -3,13 +3,16 @@ import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/girvi/girvi_customer_response_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_notice_review_period.dart';
 
-/// Persistence boundary for customer replies and settlement promises.
+/// Persistence boundary for customer replies and their recovery effect.
 /// Financial entries remain exclusively owned by the Girvi payment repository.
 class GirviCustomerResponseRepository {
-  GirviCustomerResponseRepository(this._db);
+  GirviCustomerResponseRepository(this._db, {DateTime Function()? now})
+      : _now = now ?? DateTime.now;
 
   final AppDatabase _db;
+  final DateTime Function() _now;
 
   Future<int> record({
     required int girviId,
@@ -18,27 +21,16 @@ class GirviCustomerResponseRepository {
     required String responseText,
     int? noticeActionId,
     int? noticeStage,
-    double? promisedAmount,
     DateTime? promiseDueAt,
-    String? proofReference,
     DateTime? receivedAt,
     String performedBy = 'LOCAL_OPERATOR',
   }) async {
     final text = _requiredText(responseText, 'Customer response is required.');
-    if (promisedAmount != null &&
-        (promisedAmount.isNaN || promisedAmount < 0)) {
-      throw ArgumentError.value(
-        promisedAmount,
-        'promisedAmount',
-        'Promised amount must be zero or greater.',
-      );
+    if (kind.requiresFollowUpDate && promiseDueAt == null) {
+      throw ArgumentError('A follow-up date is required for ${kind.label}.');
     }
-    if (kind.isPromise && promiseDueAt == null) {
-      throw ArgumentError('A promise date is required for ${kind.label}.');
-    }
-    if (kind == GirviCustomerResponseKind.partialPayment &&
-        (promisedAmount == null || promisedAmount <= 0)) {
-      throw ArgumentError('A promised amount is required for partial payment.');
+    if (!kind.requiresFollowUpDate && promiseDueAt != null) {
+      throw ArgumentError('This response does not use a follow-up date.');
     }
     if (noticeStage != null && noticeStage != GirviNoticeType.formal.stage) {
       throw ArgumentError.value(
@@ -52,24 +44,77 @@ class GirviCustomerResponseRepository {
         noticeActionId: noticeActionId,
         noticeStage: noticeStage,
       );
-      final effectiveStage = noticeStage ?? linkedNotice?.noticeStage;
+      if (linkedNotice == null) {
+        throw StateError(
+            'Record a response only against a saved formal notice.');
+      }
+      final currentNotice = await (_db.select(_db.girviNoticeActions)
+            ..where((row) =>
+                row.girviId.equals(girviId) &
+                row.actionType.equals(GirviNoticeActionTypes.noticePrepared))
+            ..orderBy([
+              (row) => OrderingTerm.desc(row.actionAt),
+              (row) => OrderingTerm.desc(row.id),
+            ])
+            ..limit(1))
+          .getSingleOrNull();
+      if (currentNotice?.id != linkedNotice.id) {
+        throw StateError('Record the response against the current notice.');
+      }
+      final delivery = await (_db.select(_db.girviNoticeActions)
+            ..where((row) =>
+                row.girviId.equals(girviId) &
+                row.noticeActionId.equals(linkedNotice.id) &
+                row.actionType.equals(
+                  GirviNoticeActionTypes.noticeDeliveryRecorded,
+                ))
+            ..orderBy([(row) => OrderingTerm.asc(row.deliveredAt)])
+            ..limit(1))
+          .getSingleOrNull();
+      if (delivery == null) {
+        throw StateError(
+            'Confirm notice delivery before recording a customer response.');
+      }
+      final responseAt = receivedAt ?? _now();
+      final deliveredAt = delivery.deliveredAt ?? delivery.actionAt;
+      if (responseAt.isBefore(deliveredAt)) {
+        throw StateError('A response cannot predate notice delivery.');
+      }
+      if (kind.requiresFollowUpDate &&
+          promiseDueAt != null &&
+          DateTime(promiseDueAt.year, promiseDueAt.month, promiseDueAt.day)
+              .isBefore(DateTime(
+                  responseAt.year, responseAt.month, responseAt.day))) {
+        throw ArgumentError('The follow-up date cannot be in the past.');
+      }
+      if (kind == GirviCustomerResponseKind.noResponse) {
+        final deadline = GirviNoticeReviewPeriod.deadline(
+          approvedAt: linkedNotice.actionAt,
+          approvedDeadline: linkedNotice.noticeDeadlineAt,
+          deliveredAt: deliveredAt,
+          fallbackDays: 7,
+        );
+        if (deadline == null || responseAt.isBefore(deadline)) {
+          throw StateError(
+              'No response can be recorded only after the notice deadline.');
+        }
+      }
+      final effectiveStage = noticeStage ?? linkedNotice.noticeStage;
       return _db.into(_db.girviCustomerResponses).insert(
             GirviCustomerResponsesCompanion.insert(
               girviId: girviId,
-              noticeActionId: Value(linkedNotice?.id),
+              noticeActionId: Value(linkedNotice.id),
               noticeStage: Value(effectiveStage),
               responseKind: kind.dbValue,
               contactChannel: channel.dbValue,
               responseText: text,
-              promisedAmount: Value(promisedAmount),
               promiseDueAt: Value(promiseDueAt),
               status: Value(
-                kind.isPromise
+                kind.requiresFollowUpDate
                     ? GirviPromiseStatus.open.dbValue
                     : GirviPromiseStatus.recorded.dbValue,
               ),
-              proofReference: Value(_optionalText(proofReference)),
-              receivedAt: Value(receivedAt ?? DateTime.now()),
+              receivedAt: Value(responseAt),
               performedBy: Value(_optionalText(performedBy)),
             ),
           );
@@ -83,7 +128,8 @@ class GirviCustomerResponseRepository {
     String performedBy = 'LOCAL_OPERATOR',
   }) async {
     if (!status.isResolved) {
-      throw ArgumentError('Use OPEN only when recording a new promise.');
+      throw ArgumentError(
+          'Use OPEN only when recording a new customer follow-up.');
     }
     await _db.ensureGirviCustomerResponseSchema();
     final existing = await (_db.select(_db.girviCustomerResponses)
@@ -161,12 +207,10 @@ class GirviCustomerResponseRepository {
         kind: GirviCustomerResponseKind.fromDb(row.responseKind),
         channel: GirviContactChannel.fromDb(row.contactChannel),
         responseText: row.responseText,
-        promisedAmount: row.promisedAmount,
         promiseDueAt: row.promiseDueAt,
         status: GirviPromiseStatus.fromDb(row.status),
         resolvedAt: row.resolvedAt,
         resolutionNote: _optionalText(row.resolutionNote),
-        proofReference: _optionalText(row.proofReference),
         receivedAt: row.receivedAt,
         performedBy: _optionalText(row.performedBy),
         createdAt: row.createdAt,

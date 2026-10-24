@@ -743,7 +743,7 @@ void main() {
     });
 
     test(
-        'customer promises require an approved notice and preserve resolution audit',
+        'customer follow-ups require an approved notice and preserve resolution audit',
         () async {
       final db = AppDatabase.forTesting(NativeDatabase.memory());
       addTearDown(db.close);
@@ -784,28 +784,48 @@ void main() {
         noticeText: 'Approved first notice',
         noticePeriodDays: 7,
       );
+      await notices.recordNoticeDeliveryProof(
+        girviId: loanId,
+        noticeType: GirviNoticeType.formal,
+        noticeActionId: noticeId,
+        noticeText: 'Approved first notice',
+        actionType: GirviNoticeActionTypes.noticePdfPrinted,
+        deliveryChannel: 'Printer',
+        deliveryStatus: 'Printed',
+        deliveryReference: 'PRINT-$noticeId',
+      );
+      await notices.recordNoticeDeliveryProof(
+        girviId: loanId,
+        noticeType: GirviNoticeType.formal,
+        noticeActionId: noticeId,
+        noticeText: 'Approved first notice',
+        actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+        deliveryChannel: 'In person',
+        deliveryStatus: 'Delivered',
+        deliveryReference: 'ACK-$noticeId',
+      );
       final responseId = await responses.record(
         girviId: loanId,
         noticeActionId: noticeId,
-        kind: GirviCustomerResponseKind.partialPayment,
+        kind: GirviCustomerResponseKind.extensionRequest,
         channel: GirviContactChannel.whatsapp,
-        responseText: 'I will pay Rs 2,000 on Friday.',
-        promisedAmount: 2000,
-        promiseDueAt: DateTime(2026, 10, 7),
-        proofReference: 'whatsapp-message-2026-10-05',
+        responseText: 'I need more time until Friday.',
+        promiseDueAt: DateTime.now().add(const Duration(days: 2)),
       );
       await responses.resolve(
         responseId: responseId,
-        status: GirviPromiseStatus.partiallyFulfilled,
-        resolutionNote: 'Rs 2,000 received through UPI.',
+        status: GirviPromiseStatus.fulfilled,
+        resolutionNote: 'Customer attended and the follow-up was completed.',
       );
 
       final saved = (await responses.byGirviIds([loanId]))[loanId]!.single;
       expect(saved.noticeActionId, noticeId);
       expect(saved.noticeStage, 1);
-      expect(saved.status, GirviPromiseStatus.partiallyFulfilled);
-      expect(saved.proofReference, 'whatsapp-message-2026-10-05');
-      expect(saved.resolutionNote, 'Rs 2,000 received through UPI.');
+      expect(saved.status, GirviPromiseStatus.fulfilled);
+      expect(
+        saved.resolutionNote,
+        'Customer attended and the follow-up was completed.',
+      );
       await expectLater(
         responses.resolve(
           responseId: responseId,

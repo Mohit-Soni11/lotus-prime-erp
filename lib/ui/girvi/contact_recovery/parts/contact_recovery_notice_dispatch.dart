@@ -226,7 +226,7 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
         },
         deliveryStatus: switch (method) {
           _NoticeSendMethod.print => 'Printed',
-          _NoticeSendMethod.whatsapp => 'Shared',
+          _NoticeSendMethod.whatsapp => 'Share opened',
           _NoticeSendMethod.download => 'Saved',
         },
         deliveryReference: reference,
@@ -311,7 +311,7 @@ extension _NoticeDispatch on _ContactRecoveryScreenState {
             fileNameOverrides: [fileName],
           ),
         );
-        if (attachmentResult.status == ShareResultStatus.dismissed) return null;
+        if (attachmentResult.status != ShareResultStatus.success) return null;
         _controller.showInlineMessage(
           'WhatsApp PDF sharing is open. The notice message is copied already; if WhatsApp keeps its message box empty, press Ctrl+V and send.',
         );

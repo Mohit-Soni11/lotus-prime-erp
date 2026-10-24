@@ -1912,6 +1912,10 @@ class AppDatabase extends _$AppDatabase {
             }
             AppLogger.info('v62 retired staged Girvi notices removed.');
           }
+          if (from < 63) {
+            await _upgradeGirviCustomerResponseWorkflow();
+            AppLogger.info('v63 Girvi customer response workflow simplified.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -1926,6 +1930,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureGirviPaymentReceiptIndex();
           await ensureGirviNoticeActionSchema();
           await ensureGirviCustomerResponseSchema();
+          await _upgradeGirviCustomerResponseWorkflow();
           await ensureGirviNoticeDocumentSchema();
           await _ensureGirviCollateralRecoverySchema();
           await ensureGirviInterestPeriodSnapshotSchema();
@@ -2089,6 +2094,36 @@ class AppDatabase extends _$AppDatabase {
     for (final statement in _girviCustomerResponseIndexSql) {
       await customStatement(statement);
     }
+  }
+
+  /// Removes retired reply types and fields from the earlier promise workflow.
+  /// Only responses used by the current formal notice workflow are retained.
+  Future<void> _upgradeGirviCustomerResponseWorkflow() async {
+    if (!await _tableExists('girvi_customer_responses')) return;
+    await customStatement('''
+      DELETE FROM "girvi_customer_responses"
+      WHERE "response_kind" NOT IN (
+        'WILL_VISIT', 'EXTENSION_REQUEST', 'RECOVERY_REQUEST', 'NO_RESPONSE', 'HOLD_REQUEST'
+      )
+    ''');
+    final columns = await _tableColumns('girvi_customer_responses');
+    if (columns.contains('promised_amount')) {
+      await customStatement(
+        'ALTER TABLE "girvi_customer_responses" DROP COLUMN "promised_amount"',
+      );
+    }
+    if (columns.contains('proof_reference')) {
+      await customStatement(
+        'ALTER TABLE "girvi_customer_responses" DROP COLUMN "proof_reference"',
+      );
+    }
+    await customStatement(
+      'DROP INDEX IF EXISTS "idx_girvi_response_open_promise"',
+    );
+    await customStatement('''
+      CREATE INDEX IF NOT EXISTS "idx_girvi_response_open_follow_up"
+      ON "girvi_customer_responses" ("girvi_id", "status", "promise_due_at")
+    ''');
   }
 
   Future<void> _ensureGirviCollateralRecoverySchema() async {
@@ -3218,12 +3253,10 @@ CREATE TABLE IF NOT EXISTS "girvi_customer_responses" (
   "response_kind" TEXT NOT NULL,
   "contact_channel" TEXT NOT NULL,
   "response_text" TEXT NOT NULL,
-  "promised_amount" REAL,
   "promise_due_at" INTEGER,
   "status" TEXT NOT NULL DEFAULT 'OPEN',
   "resolved_at" INTEGER,
   "resolution_note" TEXT,
-  "proof_reference" TEXT,
   "received_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
   "performed_by" TEXT,
   FOREIGN KEY ("girvi_id") REFERENCES "girvi_loans" ("id") ON DELETE CASCADE,
@@ -3233,7 +3266,7 @@ CREATE TABLE IF NOT EXISTS "girvi_customer_responses" (
 
 const List<String> _girviCustomerResponseIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_girvi_response_loan_received" ON "girvi_customer_responses" ("girvi_id", "received_at" DESC)',
-  'CREATE INDEX IF NOT EXISTS "idx_girvi_response_open_promise" ON "girvi_customer_responses" ("girvi_id", "status", "promise_due_at")',
+  'CREATE INDEX IF NOT EXISTS "idx_girvi_response_open_follow_up" ON "girvi_customer_responses" ("girvi_id", "status", "promise_due_at")',
   'CREATE INDEX IF NOT EXISTS "idx_girvi_response_notice_action" ON "girvi_customer_responses" ("notice_action_id")',
 ];
 

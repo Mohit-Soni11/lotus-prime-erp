@@ -25532,12 +25532,6 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
   late final GeneratedColumn<String> responseText = GeneratedColumn<String>(
       'response_text', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _promisedAmountMeta =
-      const VerificationMeta('promisedAmount');
-  @override
-  late final GeneratedColumn<double> promisedAmount = GeneratedColumn<double>(
-      'promised_amount', aliasedName, true,
-      type: DriftSqlType.double, requiredDuringInsert: false);
   static const VerificationMeta _promiseDueAtMeta =
       const VerificationMeta('promiseDueAt');
   @override
@@ -25562,12 +25556,6 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
   @override
   late final GeneratedColumn<String> resolutionNote = GeneratedColumn<String>(
       'resolution_note', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _proofReferenceMeta =
-      const VerificationMeta('proofReference');
-  @override
-  late final GeneratedColumn<String> proofReference = GeneratedColumn<String>(
-      'proof_reference', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _receivedAtMeta =
       const VerificationMeta('receivedAt');
@@ -25594,12 +25582,10 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
         responseKind,
         contactChannel,
         responseText,
-        promisedAmount,
         promiseDueAt,
         status,
         resolvedAt,
         resolutionNote,
-        proofReference,
         receivedAt,
         performedBy
       ];
@@ -25667,12 +25653,6 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
     } else if (isInserting) {
       context.missing(_responseTextMeta);
     }
-    if (data.containsKey('promised_amount')) {
-      context.handle(
-          _promisedAmountMeta,
-          promisedAmount.isAcceptableOrUnknown(
-              data['promised_amount']!, _promisedAmountMeta));
-    }
     if (data.containsKey('promise_due_at')) {
       context.handle(
           _promiseDueAtMeta,
@@ -25694,12 +25674,6 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
           _resolutionNoteMeta,
           resolutionNote.isAcceptableOrUnknown(
               data['resolution_note']!, _resolutionNoteMeta));
-    }
-    if (data.containsKey('proof_reference')) {
-      context.handle(
-          _proofReferenceMeta,
-          proofReference.isAcceptableOrUnknown(
-              data['proof_reference']!, _proofReferenceMeta));
     }
     if (data.containsKey('received_at')) {
       context.handle(
@@ -25741,8 +25715,6 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
           DriftSqlType.string, data['${effectivePrefix}contact_channel'])!,
       responseText: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}response_text'])!,
-      promisedAmount: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}promised_amount']),
       promiseDueAt: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}promise_due_at']),
       status: attachedDatabase.typeMapping
@@ -25751,8 +25723,6 @@ class $GirviCustomerResponsesTable extends GirviCustomerResponses
           .read(DriftSqlType.dateTime, data['${effectivePrefix}resolved_at']),
       resolutionNote: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}resolution_note']),
-      proofReference: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}proof_reference']),
       receivedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}received_at'])!,
       performedBy: attachedDatabase.typeMapping
@@ -25779,14 +25749,10 @@ class GirviCustomerResponseData extends DataClass
   final String responseKind;
   final String contactChannel;
   final String responseText;
-  final double? promisedAmount;
   final DateTime? promiseDueAt;
   final String status;
   final DateTime? resolvedAt;
   final String? resolutionNote;
-
-  /// File path, message export ID, acknowledgement number, etc.
-  final String? proofReference;
   final DateTime receivedAt;
   final String? performedBy;
   const GirviCustomerResponseData(
@@ -25799,12 +25765,10 @@ class GirviCustomerResponseData extends DataClass
       required this.responseKind,
       required this.contactChannel,
       required this.responseText,
-      this.promisedAmount,
       this.promiseDueAt,
       required this.status,
       this.resolvedAt,
       this.resolutionNote,
-      this.proofReference,
       required this.receivedAt,
       this.performedBy});
   @override
@@ -25825,9 +25789,6 @@ class GirviCustomerResponseData extends DataClass
     map['response_kind'] = Variable<String>(responseKind);
     map['contact_channel'] = Variable<String>(contactChannel);
     map['response_text'] = Variable<String>(responseText);
-    if (!nullToAbsent || promisedAmount != null) {
-      map['promised_amount'] = Variable<double>(promisedAmount);
-    }
     if (!nullToAbsent || promiseDueAt != null) {
       map['promise_due_at'] = Variable<DateTime>(promiseDueAt);
     }
@@ -25837,9 +25798,6 @@ class GirviCustomerResponseData extends DataClass
     }
     if (!nullToAbsent || resolutionNote != null) {
       map['resolution_note'] = Variable<String>(resolutionNote);
-    }
-    if (!nullToAbsent || proofReference != null) {
-      map['proof_reference'] = Variable<String>(proofReference);
     }
     map['received_at'] = Variable<DateTime>(receivedAt);
     if (!nullToAbsent || performedBy != null) {
@@ -25865,9 +25823,6 @@ class GirviCustomerResponseData extends DataClass
       responseKind: Value(responseKind),
       contactChannel: Value(contactChannel),
       responseText: Value(responseText),
-      promisedAmount: promisedAmount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(promisedAmount),
       promiseDueAt: promiseDueAt == null && nullToAbsent
           ? const Value.absent()
           : Value(promiseDueAt),
@@ -25878,9 +25833,6 @@ class GirviCustomerResponseData extends DataClass
       resolutionNote: resolutionNote == null && nullToAbsent
           ? const Value.absent()
           : Value(resolutionNote),
-      proofReference: proofReference == null && nullToAbsent
-          ? const Value.absent()
-          : Value(proofReference),
       receivedAt: Value(receivedAt),
       performedBy: performedBy == null && nullToAbsent
           ? const Value.absent()
@@ -25901,12 +25853,10 @@ class GirviCustomerResponseData extends DataClass
       responseKind: serializer.fromJson<String>(json['responseKind']),
       contactChannel: serializer.fromJson<String>(json['contactChannel']),
       responseText: serializer.fromJson<String>(json['responseText']),
-      promisedAmount: serializer.fromJson<double?>(json['promisedAmount']),
       promiseDueAt: serializer.fromJson<DateTime?>(json['promiseDueAt']),
       status: serializer.fromJson<String>(json['status']),
       resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
       resolutionNote: serializer.fromJson<String?>(json['resolutionNote']),
-      proofReference: serializer.fromJson<String?>(json['proofReference']),
       receivedAt: serializer.fromJson<DateTime>(json['receivedAt']),
       performedBy: serializer.fromJson<String?>(json['performedBy']),
     );
@@ -25924,12 +25874,10 @@ class GirviCustomerResponseData extends DataClass
       'responseKind': serializer.toJson<String>(responseKind),
       'contactChannel': serializer.toJson<String>(contactChannel),
       'responseText': serializer.toJson<String>(responseText),
-      'promisedAmount': serializer.toJson<double?>(promisedAmount),
       'promiseDueAt': serializer.toJson<DateTime?>(promiseDueAt),
       'status': serializer.toJson<String>(status),
       'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
       'resolutionNote': serializer.toJson<String?>(resolutionNote),
-      'proofReference': serializer.toJson<String?>(proofReference),
       'receivedAt': serializer.toJson<DateTime>(receivedAt),
       'performedBy': serializer.toJson<String?>(performedBy),
     };
@@ -25945,12 +25893,10 @@ class GirviCustomerResponseData extends DataClass
           String? responseKind,
           String? contactChannel,
           String? responseText,
-          Value<double?> promisedAmount = const Value.absent(),
           Value<DateTime?> promiseDueAt = const Value.absent(),
           String? status,
           Value<DateTime?> resolvedAt = const Value.absent(),
           Value<String?> resolutionNote = const Value.absent(),
-          Value<String?> proofReference = const Value.absent(),
           DateTime? receivedAt,
           Value<String?> performedBy = const Value.absent()}) =>
       GirviCustomerResponseData(
@@ -25964,16 +25910,12 @@ class GirviCustomerResponseData extends DataClass
         responseKind: responseKind ?? this.responseKind,
         contactChannel: contactChannel ?? this.contactChannel,
         responseText: responseText ?? this.responseText,
-        promisedAmount:
-            promisedAmount.present ? promisedAmount.value : this.promisedAmount,
         promiseDueAt:
             promiseDueAt.present ? promiseDueAt.value : this.promiseDueAt,
         status: status ?? this.status,
         resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
         resolutionNote:
             resolutionNote.present ? resolutionNote.value : this.resolutionNote,
-        proofReference:
-            proofReference.present ? proofReference.value : this.proofReference,
         receivedAt: receivedAt ?? this.receivedAt,
         performedBy: performedBy.present ? performedBy.value : this.performedBy,
       );
@@ -25998,9 +25940,6 @@ class GirviCustomerResponseData extends DataClass
       responseText: data.responseText.present
           ? data.responseText.value
           : this.responseText,
-      promisedAmount: data.promisedAmount.present
-          ? data.promisedAmount.value
-          : this.promisedAmount,
       promiseDueAt: data.promiseDueAt.present
           ? data.promiseDueAt.value
           : this.promiseDueAt,
@@ -26010,9 +25949,6 @@ class GirviCustomerResponseData extends DataClass
       resolutionNote: data.resolutionNote.present
           ? data.resolutionNote.value
           : this.resolutionNote,
-      proofReference: data.proofReference.present
-          ? data.proofReference.value
-          : this.proofReference,
       receivedAt:
           data.receivedAt.present ? data.receivedAt.value : this.receivedAt,
       performedBy:
@@ -26032,12 +25968,10 @@ class GirviCustomerResponseData extends DataClass
           ..write('responseKind: $responseKind, ')
           ..write('contactChannel: $contactChannel, ')
           ..write('responseText: $responseText, ')
-          ..write('promisedAmount: $promisedAmount, ')
           ..write('promiseDueAt: $promiseDueAt, ')
           ..write('status: $status, ')
           ..write('resolvedAt: $resolvedAt, ')
           ..write('resolutionNote: $resolutionNote, ')
-          ..write('proofReference: $proofReference, ')
           ..write('receivedAt: $receivedAt, ')
           ..write('performedBy: $performedBy')
           ..write(')'))
@@ -26055,12 +25989,10 @@ class GirviCustomerResponseData extends DataClass
       responseKind,
       contactChannel,
       responseText,
-      promisedAmount,
       promiseDueAt,
       status,
       resolvedAt,
       resolutionNote,
-      proofReference,
       receivedAt,
       performedBy);
   @override
@@ -26076,12 +26008,10 @@ class GirviCustomerResponseData extends DataClass
           other.responseKind == this.responseKind &&
           other.contactChannel == this.contactChannel &&
           other.responseText == this.responseText &&
-          other.promisedAmount == this.promisedAmount &&
           other.promiseDueAt == this.promiseDueAt &&
           other.status == this.status &&
           other.resolvedAt == this.resolvedAt &&
           other.resolutionNote == this.resolutionNote &&
-          other.proofReference == this.proofReference &&
           other.receivedAt == this.receivedAt &&
           other.performedBy == this.performedBy);
 }
@@ -26097,12 +26027,10 @@ class GirviCustomerResponsesCompanion
   final Value<String> responseKind;
   final Value<String> contactChannel;
   final Value<String> responseText;
-  final Value<double?> promisedAmount;
   final Value<DateTime?> promiseDueAt;
   final Value<String> status;
   final Value<DateTime?> resolvedAt;
   final Value<String?> resolutionNote;
-  final Value<String?> proofReference;
   final Value<DateTime> receivedAt;
   final Value<String?> performedBy;
   const GirviCustomerResponsesCompanion({
@@ -26115,12 +26043,10 @@ class GirviCustomerResponsesCompanion
     this.responseKind = const Value.absent(),
     this.contactChannel = const Value.absent(),
     this.responseText = const Value.absent(),
-    this.promisedAmount = const Value.absent(),
     this.promiseDueAt = const Value.absent(),
     this.status = const Value.absent(),
     this.resolvedAt = const Value.absent(),
     this.resolutionNote = const Value.absent(),
-    this.proofReference = const Value.absent(),
     this.receivedAt = const Value.absent(),
     this.performedBy = const Value.absent(),
   });
@@ -26134,12 +26060,10 @@ class GirviCustomerResponsesCompanion
     required String responseKind,
     required String contactChannel,
     required String responseText,
-    this.promisedAmount = const Value.absent(),
     this.promiseDueAt = const Value.absent(),
     this.status = const Value.absent(),
     this.resolvedAt = const Value.absent(),
     this.resolutionNote = const Value.absent(),
-    this.proofReference = const Value.absent(),
     this.receivedAt = const Value.absent(),
     this.performedBy = const Value.absent(),
   })  : girviId = Value(girviId),
@@ -26156,12 +26080,10 @@ class GirviCustomerResponsesCompanion
     Expression<String>? responseKind,
     Expression<String>? contactChannel,
     Expression<String>? responseText,
-    Expression<double>? promisedAmount,
     Expression<DateTime>? promiseDueAt,
     Expression<String>? status,
     Expression<DateTime>? resolvedAt,
     Expression<String>? resolutionNote,
-    Expression<String>? proofReference,
     Expression<DateTime>? receivedAt,
     Expression<String>? performedBy,
   }) {
@@ -26175,12 +26097,10 @@ class GirviCustomerResponsesCompanion
       if (responseKind != null) 'response_kind': responseKind,
       if (contactChannel != null) 'contact_channel': contactChannel,
       if (responseText != null) 'response_text': responseText,
-      if (promisedAmount != null) 'promised_amount': promisedAmount,
       if (promiseDueAt != null) 'promise_due_at': promiseDueAt,
       if (status != null) 'status': status,
       if (resolvedAt != null) 'resolved_at': resolvedAt,
       if (resolutionNote != null) 'resolution_note': resolutionNote,
-      if (proofReference != null) 'proof_reference': proofReference,
       if (receivedAt != null) 'received_at': receivedAt,
       if (performedBy != null) 'performed_by': performedBy,
     });
@@ -26196,12 +26116,10 @@ class GirviCustomerResponsesCompanion
       Value<String>? responseKind,
       Value<String>? contactChannel,
       Value<String>? responseText,
-      Value<double?>? promisedAmount,
       Value<DateTime?>? promiseDueAt,
       Value<String>? status,
       Value<DateTime?>? resolvedAt,
       Value<String?>? resolutionNote,
-      Value<String?>? proofReference,
       Value<DateTime>? receivedAt,
       Value<String?>? performedBy}) {
     return GirviCustomerResponsesCompanion(
@@ -26214,12 +26132,10 @@ class GirviCustomerResponsesCompanion
       responseKind: responseKind ?? this.responseKind,
       contactChannel: contactChannel ?? this.contactChannel,
       responseText: responseText ?? this.responseText,
-      promisedAmount: promisedAmount ?? this.promisedAmount,
       promiseDueAt: promiseDueAt ?? this.promiseDueAt,
       status: status ?? this.status,
       resolvedAt: resolvedAt ?? this.resolvedAt,
       resolutionNote: resolutionNote ?? this.resolutionNote,
-      proofReference: proofReference ?? this.proofReference,
       receivedAt: receivedAt ?? this.receivedAt,
       performedBy: performedBy ?? this.performedBy,
     );
@@ -26255,9 +26171,6 @@ class GirviCustomerResponsesCompanion
     if (responseText.present) {
       map['response_text'] = Variable<String>(responseText.value);
     }
-    if (promisedAmount.present) {
-      map['promised_amount'] = Variable<double>(promisedAmount.value);
-    }
     if (promiseDueAt.present) {
       map['promise_due_at'] = Variable<DateTime>(promiseDueAt.value);
     }
@@ -26269,9 +26182,6 @@ class GirviCustomerResponsesCompanion
     }
     if (resolutionNote.present) {
       map['resolution_note'] = Variable<String>(resolutionNote.value);
-    }
-    if (proofReference.present) {
-      map['proof_reference'] = Variable<String>(proofReference.value);
     }
     if (receivedAt.present) {
       map['received_at'] = Variable<DateTime>(receivedAt.value);
@@ -26294,12 +26204,10 @@ class GirviCustomerResponsesCompanion
           ..write('responseKind: $responseKind, ')
           ..write('contactChannel: $contactChannel, ')
           ..write('responseText: $responseText, ')
-          ..write('promisedAmount: $promisedAmount, ')
           ..write('promiseDueAt: $promiseDueAt, ')
           ..write('status: $status, ')
           ..write('resolvedAt: $resolvedAt, ')
           ..write('resolutionNote: $resolutionNote, ')
-          ..write('proofReference: $proofReference, ')
           ..write('receivedAt: $receivedAt, ')
           ..write('performedBy: $performedBy')
           ..write(')'))
@@ -40196,9 +40104,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final Index idxGirviResponseLoanReceived = Index(
       'idx_girvi_response_loan_received',
       'CREATE INDEX idx_girvi_response_loan_received ON girvi_customer_responses (girvi_id, received_at)');
-  late final Index idxGirviResponseOpenPromise = Index(
-      'idx_girvi_response_open_promise',
-      'CREATE INDEX idx_girvi_response_open_promise ON girvi_customer_responses (girvi_id, status, promise_due_at)');
+  late final Index idxGirviResponseOpenFollowUp = Index(
+      'idx_girvi_response_open_follow_up',
+      'CREATE INDEX idx_girvi_response_open_follow_up ON girvi_customer_responses (girvi_id, status, promise_due_at)');
   late final Index idxGirviResponseNoticeAction = Index(
       'idx_girvi_response_notice_action',
       'CREATE INDEX idx_girvi_response_notice_action ON girvi_customer_responses (notice_action_id)');
@@ -40356,7 +40264,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxGirviNoticeActionStage,
         idxGirviNoticeActionType,
         idxGirviResponseLoanReceived,
-        idxGirviResponseOpenPromise,
+        idxGirviResponseOpenFollowUp,
         idxGirviResponseNoticeAction,
         idxGirviNoticeDocumentLoanStage,
         idxGirviNoticeDocumentActionLanguage,
@@ -55451,12 +55359,10 @@ typedef $$GirviCustomerResponsesTableCreateCompanionBuilder
   required String responseKind,
   required String contactChannel,
   required String responseText,
-  Value<double?> promisedAmount,
   Value<DateTime?> promiseDueAt,
   Value<String> status,
   Value<DateTime?> resolvedAt,
   Value<String?> resolutionNote,
-  Value<String?> proofReference,
   Value<DateTime> receivedAt,
   Value<String?> performedBy,
 });
@@ -55471,12 +55377,10 @@ typedef $$GirviCustomerResponsesTableUpdateCompanionBuilder
   Value<String> responseKind,
   Value<String> contactChannel,
   Value<String> responseText,
-  Value<double?> promisedAmount,
   Value<DateTime?> promiseDueAt,
   Value<String> status,
   Value<DateTime?> resolvedAt,
   Value<String?> resolutionNote,
-  Value<String?> proofReference,
   Value<DateTime> receivedAt,
   Value<String?> performedBy,
 });
@@ -55547,10 +55451,6 @@ class $$GirviCustomerResponsesTableFilterComposer
   ColumnFilters<String> get responseText => $composableBuilder(
       column: $table.responseText, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get promisedAmount => $composableBuilder(
-      column: $table.promisedAmount,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<DateTime> get promiseDueAt => $composableBuilder(
       column: $table.promiseDueAt, builder: (column) => ColumnFilters(column));
 
@@ -55562,10 +55462,6 @@ class $$GirviCustomerResponsesTableFilterComposer
 
   ColumnFilters<String> get resolutionNote => $composableBuilder(
       column: $table.resolutionNote,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get proofReference => $composableBuilder(
-      column: $table.proofReference,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get receivedAt => $composableBuilder(
@@ -55648,10 +55544,6 @@ class $$GirviCustomerResponsesTableOrderingComposer
       column: $table.responseText,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get promisedAmount => $composableBuilder(
-      column: $table.promisedAmount,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get promiseDueAt => $composableBuilder(
       column: $table.promiseDueAt,
       builder: (column) => ColumnOrderings(column));
@@ -55664,10 +55556,6 @@ class $$GirviCustomerResponsesTableOrderingComposer
 
   ColumnOrderings<String> get resolutionNote => $composableBuilder(
       column: $table.resolutionNote,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get proofReference => $composableBuilder(
-      column: $table.proofReference,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get receivedAt => $composableBuilder(
@@ -55747,9 +55635,6 @@ class $$GirviCustomerResponsesTableAnnotationComposer
   GeneratedColumn<String> get responseText => $composableBuilder(
       column: $table.responseText, builder: (column) => column);
 
-  GeneratedColumn<double> get promisedAmount => $composableBuilder(
-      column: $table.promisedAmount, builder: (column) => column);
-
   GeneratedColumn<DateTime> get promiseDueAt => $composableBuilder(
       column: $table.promiseDueAt, builder: (column) => column);
 
@@ -55761,9 +55646,6 @@ class $$GirviCustomerResponsesTableAnnotationComposer
 
   GeneratedColumn<String> get resolutionNote => $composableBuilder(
       column: $table.resolutionNote, builder: (column) => column);
-
-  GeneratedColumn<String> get proofReference => $composableBuilder(
-      column: $table.proofReference, builder: (column) => column);
 
   GeneratedColumn<DateTime> get receivedAt => $composableBuilder(
       column: $table.receivedAt, builder: (column) => column);
@@ -55849,12 +55731,10 @@ class $$GirviCustomerResponsesTableTableManager extends RootTableManager<
             Value<String> responseKind = const Value.absent(),
             Value<String> contactChannel = const Value.absent(),
             Value<String> responseText = const Value.absent(),
-            Value<double?> promisedAmount = const Value.absent(),
             Value<DateTime?> promiseDueAt = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<DateTime?> resolvedAt = const Value.absent(),
             Value<String?> resolutionNote = const Value.absent(),
-            Value<String?> proofReference = const Value.absent(),
             Value<DateTime> receivedAt = const Value.absent(),
             Value<String?> performedBy = const Value.absent(),
           }) =>
@@ -55868,12 +55748,10 @@ class $$GirviCustomerResponsesTableTableManager extends RootTableManager<
             responseKind: responseKind,
             contactChannel: contactChannel,
             responseText: responseText,
-            promisedAmount: promisedAmount,
             promiseDueAt: promiseDueAt,
             status: status,
             resolvedAt: resolvedAt,
             resolutionNote: resolutionNote,
-            proofReference: proofReference,
             receivedAt: receivedAt,
             performedBy: performedBy,
           ),
@@ -55887,12 +55765,10 @@ class $$GirviCustomerResponsesTableTableManager extends RootTableManager<
             required String responseKind,
             required String contactChannel,
             required String responseText,
-            Value<double?> promisedAmount = const Value.absent(),
             Value<DateTime?> promiseDueAt = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<DateTime?> resolvedAt = const Value.absent(),
             Value<String?> resolutionNote = const Value.absent(),
-            Value<String?> proofReference = const Value.absent(),
             Value<DateTime> receivedAt = const Value.absent(),
             Value<String?> performedBy = const Value.absent(),
           }) =>
@@ -55906,12 +55782,10 @@ class $$GirviCustomerResponsesTableTableManager extends RootTableManager<
             responseKind: responseKind,
             contactChannel: contactChannel,
             responseText: responseText,
-            promisedAmount: promisedAmount,
             promiseDueAt: promiseDueAt,
             status: status,
             resolvedAt: resolvedAt,
             resolutionNote: resolutionNote,
-            proofReference: proofReference,
             receivedAt: receivedAt,
             performedBy: performedBy,
           ),

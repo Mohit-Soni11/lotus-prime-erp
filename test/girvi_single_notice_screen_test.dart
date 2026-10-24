@@ -265,7 +265,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('notice card offers settlement without a delivery action',
+  testWidgets('notice card waits for PDF issue before delivery confirmation',
       (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final fixture = createNoticeCase();
@@ -290,8 +290,57 @@ void main() {
     addTearDown(db.close);
     await showScreen(tester, controller);
     expect(find.text('Settlement'), findsOneWidget);
-    expect(find.text('Record Customer Delivery'), findsNothing);
-    expect(find.text('Notice PDF not sent yet'), findsOneWidget);
+    expect(find.text('Confirm Delivery'), findsNothing);
+    expect(find.text('Notice PDF not issued yet'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('issued notice asks for delivery evidence before starting timer',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final fixture = createNoticeCase();
+    final approved = GirviNoticeAction(
+      id: 10,
+      girviId: fixture.loan.id,
+      actionType: GirviNoticeActionTypes.noticePrepared,
+      noticeStage: 1,
+      noticeText: 'Compound Interest Breakdown',
+      actionAt: fixture.now,
+      createdAt: fixture.now,
+    );
+    final printed = GirviNoticeAction(
+      id: 11,
+      girviId: fixture.loan.id,
+      actionType: GirviNoticeActionTypes.noticePdfPrinted,
+      noticeActionId: approved.id,
+      actionAt: fixture.now,
+      createdAt: fixture.now,
+    );
+    final item = ContactRecoveryCase(
+      account: fixture.account,
+      noticePeriodDays: 7,
+      now: fixture.now,
+      actionHistory: [printed, approved],
+    );
+    final controller = _NoticeController(db, item);
+    addTearDown(controller.dispose);
+    addTearDown(db.close);
+    await showScreen(tester, controller);
+    expect(find.text('Confirm Delivery'), findsOneWidget);
+    expect(find.text('Confirm delivery to record a response'), findsOneWidget);
+    await tester.tap(find.text('Confirm Delivery'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Confirm Customer Delivery'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Delivery reference'),
+      'HANDOVER-001',
+    );
+    await tester.tap(find.text('Confirm Delivery').last);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(controller.deliveryActionType,
+        GirviNoticeActionTypes.noticeDeliveryRecorded);
+    expect(controller.deliveryReference, 'HANDOVER-001');
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -431,6 +480,7 @@ class _NoticeController extends ContactRecoveryController {
     GirviNoticeLanguage? noticeLanguage,
     int? noticeActionId,
     String? deliveryReference,
+    DateTime? deliveredAt,
   }) async {
     this.deliveryReference = deliveryReference;
     deliveryActionType = actionType;

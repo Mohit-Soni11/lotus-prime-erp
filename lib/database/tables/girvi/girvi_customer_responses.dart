@@ -15,7 +15,7 @@ import 'girvi_notice_actions.dart';
   columns: {#girviId, #receivedAt},
 )
 @TableIndex(
-  name: 'idx_girvi_response_open_promise',
+  name: 'idx_girvi_response_open_follow_up',
   columns: {#girviId, #status, #promiseDueAt},
 )
 @TableIndex(
@@ -36,14 +36,11 @@ class GirviCustomerResponses extends Table with BaseTable {
   TextColumn get contactChannel => text()();
   TextColumn get responseText => text()();
 
-  RealColumn get promisedAmount => real().nullable()();
   DateTimeColumn get promiseDueAt => dateTime().nullable()();
   TextColumn get status => text().withDefault(const Constant('OPEN'))();
   DateTimeColumn get resolvedAt => dateTime().nullable()();
   TextColumn get resolutionNote => text().nullable()();
 
-  /// File path, message export ID, acknowledgement number, etc.
-  TextColumn get proofReference => text().nullable()();
   DateTimeColumn get receivedAt => dateTime().withDefault(currentDateAndTime)();
   TextColumn get performedBy => text().nullable()();
 }

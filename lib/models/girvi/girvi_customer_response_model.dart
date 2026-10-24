@@ -1,21 +1,23 @@
 enum GirviCustomerResponseKind {
   willVisit('WILL_VISIT', 'Will visit the shop', true),
-  fullSettlement('FULL_SETTLEMENT', 'Promises full settlement', true),
-  partialPayment('PARTIAL_PAYMENT', 'Promises partial payment', true),
   extensionRequest('EXTENSION_REQUEST', 'Requests more time', true),
-  amountDispute('AMOUNT_DISPUTE', 'Disputes the account amount', false),
   recoveryRequest('RECOVERY_REQUEST', 'Requests recovery settlement', false),
   noResponse('NO_RESPONSE', 'No response received', false),
-  other('OTHER', 'Other response', false);
+  holdRequest('HOLD_REQUEST', 'Requests account hold', true);
 
-  const GirviCustomerResponseKind(this.dbValue, this.label, this.isPromise);
+  const GirviCustomerResponseKind(
+      this.dbValue, this.label, this.requiresFollowUpDate);
 
   final String dbValue;
   final String label;
-  final bool isPromise;
+  final bool requiresFollowUpDate;
 
-  static GirviCustomerResponseKind fromDb(String value) =>
-      values.firstWhere((kind) => kind.dbValue == value, orElse: () => other);
+  bool get authorisesRecovery => this == recoveryRequest;
+
+  static GirviCustomerResponseKind fromDb(String value) => values.firstWhere(
+        (kind) => kind.dbValue == value,
+        orElse: () => noResponse,
+      );
 }
 
 enum GirviContactChannel {
@@ -40,9 +42,8 @@ enum GirviContactChannel {
 
 enum GirviPromiseStatus {
   open('OPEN', 'Open'),
-  fulfilled('FULFILLED', 'Fulfilled'),
-  partiallyFulfilled('PARTIALLY_FULFILLED', 'Partially fulfilled'),
-  missed('MISSED', 'Missed'),
+  fulfilled('FULFILLED', 'Completed'),
+  missed('MISSED', 'Not kept'),
   cancelled('CANCELLED', 'Cancelled'),
   recorded('RECORDED', 'Recorded');
 
@@ -72,11 +73,9 @@ class GirviCustomerResponse {
     required this.createdAt,
     this.noticeActionId,
     this.noticeStage,
-    this.promisedAmount,
     this.promiseDueAt,
     this.resolvedAt,
     this.resolutionNote,
-    this.proofReference,
     this.performedBy,
     this.updatedAt,
   });
@@ -88,22 +87,20 @@ class GirviCustomerResponse {
   final GirviCustomerResponseKind kind;
   final GirviContactChannel channel;
   final String responseText;
-  final double? promisedAmount;
   final DateTime? promiseDueAt;
   final GirviPromiseStatus status;
   final DateTime? resolvedAt;
   final String? resolutionNote;
-  final String? proofReference;
   final DateTime receivedAt;
   final String? performedBy;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
-  bool get isPromise => kind.isPromise;
+  bool get requiresFollowUpDate => kind.requiresFollowUpDate;
 
   bool isDueOn(DateTime now) =>
       status.isOpen &&
       promiseDueAt != null &&
-      DateTime(now.year, now.month, now.day)
-          .isAfter(DateTime(promiseDueAt!.year, promiseDueAt!.month, promiseDueAt!.day));
+      DateTime(now.year, now.month, now.day).isAfter(
+          DateTime(promiseDueAt!.year, promiseDueAt!.month, promiseDueAt!.day));
 }

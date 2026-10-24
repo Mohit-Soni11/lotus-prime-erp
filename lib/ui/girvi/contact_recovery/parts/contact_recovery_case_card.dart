@@ -7,6 +7,7 @@ class _ContactRecoveryCard extends StatelessWidget {
   final ValueChanged<GirviNoticeAction> onViewNotice;
   final ValueChanged<GirviNoticeAction> onDownloadNotice;
   final ValueChanged<GirviNoticeAction> onPrintNotice;
+  final ValueChanged<GirviNoticeAction> onConfirmDelivery;
   final VoidCallback onSettlement;
   final ValueChanged<GirviNoticeAction> onRecordCustomerResponse;
   final VoidCallback onViewCustomerResponses;
@@ -24,6 +25,7 @@ class _ContactRecoveryCard extends StatelessWidget {
     required this.onViewNotice,
     required this.onDownloadNotice,
     required this.onPrintNotice,
+    required this.onConfirmDelivery,
     required this.onSettlement,
     required this.onRecordCustomerResponse,
     required this.onViewCustomerResponses,
@@ -74,6 +76,7 @@ class _ContactRecoveryCard extends StatelessWidget {
             onViewNotice: onViewNotice,
             onDownloadNotice: onDownloadNotice,
             onPrintNotice: onPrintNotice,
+            onConfirmDelivery: onConfirmDelivery,
             onSettlement: onSettlement,
             onRecordCustomerResponse: onRecordCustomerResponse,
             onViewCustomerResponses: onViewCustomerResponses,

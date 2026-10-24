@@ -271,8 +271,7 @@ class ContactRecoveryController extends ChangeNotifier {
   Future<bool> initiateCollateralRecovery(ContactRecoveryCase item) async {
     if (!item.canInitiateCollateralRecovery) {
       _state = _state.copyWith(
-        inlineMessage:
-            'Collateral recovery can be started only after the notice review period is complete.',
+        inlineMessage: item.recoveryBlockedMessage,
       );
       notifyListeners();
       return false;
@@ -386,6 +385,7 @@ class ContactRecoveryController extends ChangeNotifier {
     GirviNoticeLanguage? noticeLanguage,
     int? noticeActionId,
     String? deliveryReference,
+    DateTime? deliveredAt,
   }) async {
     try {
       await _noticeActionRepository.recordNoticeDeliveryProof(
@@ -398,6 +398,7 @@ class ContactRecoveryController extends ChangeNotifier {
         noticeLanguage: noticeLanguage,
         noticeActionId: noticeActionId,
         deliveryReference: deliveryReference,
+        deliveredAt: deliveredAt,
         performedBy: _operatorIdentity(),
       );
       _state = _state.copyWith(
@@ -423,15 +424,19 @@ class ContactRecoveryController extends ChangeNotifier {
     required GirviCustomerResponseKind kind,
     required GirviContactChannel channel,
     required String responseText,
-    double? promisedAmount,
     DateTime? promiseDueAt,
-    String? proofReference,
   }) async {
     try {
       final stage = notice.resolvedNoticeStage;
       if (!notice.isFormalNoticePreparation || stage != 1) {
         throw StateError(
             'A customer response must be linked to a saved notice.');
+      }
+      if (kind == GirviCustomerResponseKind.noResponse &&
+          !item.isNoticePeriodComplete) {
+        throw StateError(
+          'No response can be recorded only after the notice deadline.',
+        );
       }
       await _customerResponseRepository.record(
         girviId: item.loan.id,
@@ -440,9 +445,7 @@ class ContactRecoveryController extends ChangeNotifier {
         kind: kind,
         channel: channel,
         responseText: responseText,
-        promisedAmount: promisedAmount,
         promiseDueAt: promiseDueAt,
-        proofReference: proofReference,
         performedBy: _operatorIdentity(),
       );
       _state = _state.copyWith(
@@ -461,7 +464,7 @@ class ContactRecoveryController extends ChangeNotifier {
     }
   }
 
-  Future<bool> resolveCustomerPromise({
+  Future<bool> resolveCustomerFollowUp({
     required ContactRecoveryCase item,
     required int responseId,
     required GirviPromiseStatus status,

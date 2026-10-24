@@ -6,6 +6,8 @@ import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/girvi_notice_review_period.dart';
+import '../../models/girvi/girvi_customer_response_model.dart';
+import '../../models/girvi/girvi_recovery_eligibility.dart';
 import '../../logic/girvi/notice/girvi_notice_approval_validator.dart';
 import 'girvi_notice_account_guard.dart';
 
@@ -195,6 +197,7 @@ class GirviNoticeActionRepository {
     String performedBy = 'LOCAL_OPERATOR',
   }) async {
     await ensureSchema();
+    await _db.ensureGirviCustomerResponseSchema();
     return _db.transaction(() async {
       await _accountGuard.requireOutstanding(girviId, _now());
       final approvedNotice = await _recoveryNotice(girviId);
@@ -206,12 +209,9 @@ class GirviNoticeActionRepository {
             ..where((action) =>
                 action.girviId.equals(girviId) &
                 action.noticeActionId.equals(approvedNotice.id) &
-                action.actionType.isIn([
-                  GirviNoticeActionTypes.noticePdfSaved,
-                  GirviNoticeActionTypes.noticePdfPrinted,
-                  GirviNoticeActionTypes.noticePdfShared,
+                action.actionType.equals(
                   GirviNoticeActionTypes.noticeDeliveryRecorded,
-                ])))
+                )))
           .get();
       if (noticeDispatches.isEmpty) {
         throw StateError('Send the notice PDF before recovery.');
@@ -225,8 +225,30 @@ class GirviNoticeActionRepository {
         deliveredAt: firstDelivery,
         fallbackDays: noticePeriodDays,
       )!;
-      if (_now().isBefore(recoveryEligibleAt)) {
-        throw StateError('The notice review period has not completed.');
+      final latestResponse = await (_db.select(_db.girviCustomerResponses)
+            ..where((row) =>
+                row.girviId.equals(girviId) &
+                row.noticeActionId.equals(approvedNotice.id))
+            ..orderBy([
+              (row) => OrderingTerm.desc(row.receivedAt),
+              (row) => OrderingTerm.desc(row.id),
+            ])
+            ..limit(1))
+          .getSingleOrNull();
+      final availableAt = GirviRecoveryEligibility.availableAt(
+        deliveredAt: firstDelivery,
+        noticeDeadline: recoveryEligibleAt,
+        responseKind: latestResponse == null
+            ? null
+            : GirviCustomerResponseKind.fromDb(latestResponse.responseKind),
+        responseStatus: latestResponse == null
+            ? null
+            : GirviPromiseStatus.fromDb(latestResponse.status),
+        followUpDate: latestResponse?.promiseDueAt,
+      );
+      if (availableAt == null || _now().isBefore(availableAt)) {
+        throw StateError(
+            'The notice response or customer follow-up period has not completed.');
       }
       final existing = await (_db.select(_db.girviNoticeActions)
             ..where(
@@ -332,6 +354,14 @@ class GirviNoticeActionRepository {
     DateTime? deliveredAt,
     String performedBy = 'LOCAL_OPERATOR',
   }) async {
+    if (!const [
+      GirviNoticeActionTypes.noticePdfSaved,
+      GirviNoticeActionTypes.noticePdfPrinted,
+      GirviNoticeActionTypes.noticePdfShared,
+      GirviNoticeActionTypes.noticeDeliveryRecorded,
+    ].contains(actionType)) {
+      throw ArgumentError.value(actionType, 'actionType');
+    }
     if (actionType == GirviNoticeActionTypes.noticeDeliveryRecorded &&
         (deliveryStatus.trim() != 'Delivered' ||
             (deliveryReference?.trim().isNotEmpty != true))) {
@@ -367,11 +397,43 @@ class GirviNoticeActionRepository {
             'Delivery proof must use the saved, approved notice version.');
       }
       final deliveryDate = deliveredAt ?? _now();
-      if (actionType == GirviNoticeActionTypes.noticeDeliveryRecorded &&
-          (deliveryDate.isBefore(prepared.actionAt) ||
-              deliveryDate.isAfter(_now()))) {
-        throw StateError(
-            'Delivery date must follow notice approval and cannot be in the future.');
+      if (actionType == GirviNoticeActionTypes.noticeDeliveryRecorded) {
+        final currentNotice = await _recoveryNotice(girviId);
+        if (currentNotice?.id != prepared.id) {
+          throw StateError('Only the current formal notice can be delivered.');
+        }
+        final existingDelivery = await (_db.select(_db.girviNoticeActions)
+              ..where((row) =>
+                  row.girviId.equals(girviId) &
+                  row.noticeActionId.equals(prepared.id) &
+                  row.actionType.equals(
+                    GirviNoticeActionTypes.noticeDeliveryRecorded,
+                  ))
+              ..limit(1))
+            .getSingleOrNull();
+        if (existingDelivery != null) {
+          throw StateError('Delivery is already confirmed for this notice.');
+        }
+        final output = await (_db.select(_db.girviNoticeActions)
+              ..where((row) =>
+                  row.girviId.equals(girviId) &
+                  row.noticeActionId.equals(prepared.id) &
+                  row.actionType.isIn(const [
+                    GirviNoticeActionTypes.noticePdfSaved,
+                    GirviNoticeActionTypes.noticePdfPrinted,
+                    GirviNoticeActionTypes.noticePdfShared,
+                  ]))
+              ..orderBy([(row) => OrderingTerm.asc(row.actionAt)])
+              ..limit(1))
+            .getSingleOrNull();
+        if (output == null) {
+          throw StateError('Issue the notice PDF before confirming delivery.');
+        }
+        if (deliveryDate.isBefore(output.actionAt) ||
+            deliveryDate.isAfter(_now())) {
+          throw StateError(
+              'Delivery date must follow PDF issue and cannot be in the future.');
+        }
       }
       return recordAction(
         girviId: girviId,

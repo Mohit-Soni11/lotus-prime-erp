@@ -5,6 +5,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
   final ValueChanged<GirviNoticeAction> onViewNotice;
   final ValueChanged<GirviNoticeAction> onDownloadNotice;
   final ValueChanged<GirviNoticeAction> onPrintNotice;
+  final ValueChanged<GirviNoticeAction> onConfirmDelivery;
   final VoidCallback onSettlement;
   final ValueChanged<GirviNoticeAction> onRecordCustomerResponse;
   final VoidCallback onViewCustomerResponses;
@@ -14,6 +15,7 @@ class _NoticeDocumentStrip extends StatelessWidget {
     required this.onViewNotice,
     required this.onDownloadNotice,
     required this.onPrintNotice,
+    required this.onConfirmDelivery,
     required this.onSettlement,
     required this.onRecordCustomerResponse,
     required this.onViewCustomerResponses,
@@ -51,8 +53,15 @@ class _NoticeDocumentStrip extends StatelessWidget {
         onView: () => onViewNotice(action),
         onDownload: () => onDownloadNotice(action),
         onPrint: () => onPrintNotice(action),
+        onConfirmDelivery: action.id == activeNotice?.id &&
+                item.latestDeliveryProofForNotice(action) == null &&
+                !needsNewApproval
+            ? () => onConfirmDelivery(action)
+            : null,
         onSettlement: onSettlement,
-        onRecordResponse: () => onRecordCustomerResponse(action),
+        onRecordResponse: item.latestDeliveryProofForNotice(action) == null
+            ? null
+            : () => onRecordCustomerResponse(action),
       );
     }
 
@@ -186,8 +195,9 @@ class _NoticeDocumentCard extends StatelessWidget {
   final VoidCallback onView;
   final VoidCallback onDownload;
   final VoidCallback onPrint;
+  final VoidCallback? onConfirmDelivery;
   final VoidCallback onSettlement;
-  final VoidCallback onRecordResponse;
+  final VoidCallback? onRecordResponse;
 
   const _NoticeDocumentCard({
     required this.action,
@@ -198,6 +208,7 @@ class _NoticeDocumentCard extends StatelessWidget {
     required this.onView,
     required this.onDownload,
     required this.onPrint,
+    required this.onConfirmDelivery,
     required this.onSettlement,
     required this.onRecordResponse,
   });
@@ -215,12 +226,12 @@ class _NoticeDocumentCard extends StatelessWidget {
             .format(proof.deliveredAt ?? proof.actionAt);
     final activityStatus = switch (latestPdfActivity?.actionType) {
       GirviNoticeActionTypes.noticePdfShared =>
-        'WhatsApp sent · customer response pending',
+        'WhatsApp opened · confirm customer delivery',
       GirviNoticeActionTypes.noticePdfPrinted =>
-        'Printed notice · customer response pending',
+        'Printed notice · confirm customer handover',
       GirviNoticeActionTypes.noticePdfSaved =>
-        'PDF downloaded · customer response pending',
-      _ => 'Notice PDF not sent yet',
+        'PDF downloaded · confirm customer handover',
+      _ => 'Notice PDF not issued yet',
     };
     const color = GirviColors.info;
 
@@ -374,6 +385,21 @@ class _NoticeDocumentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 7),
+            if (onConfirmDelivery != null && latestPdfActivity != null) ...[
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onConfirmDelivery,
+                  icon: const Icon(Icons.verified_outlined, size: 16),
+                  label: const Text('Confirm Delivery'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: GirviColors.success,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 7),
+            ],
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -396,7 +422,7 @@ class _NoticeDocumentCard extends StatelessWidget {
 
 class _CustomerResponseStatus extends StatelessWidget {
   final GirviCustomerResponse? response;
-  final VoidCallback onRecordResponse;
+  final VoidCallback? onRecordResponse;
 
   const _CustomerResponseStatus({
     required this.response,
@@ -414,8 +440,10 @@ class _CustomerResponseStatus extends StatelessWidget {
                 ? GirviColors.danger
                 : GirviColors.success;
     final label = value == null
-        ? 'Customer response pending'
-        : value.isPromise
+        ? onRecordResponse == null
+            ? 'Confirm delivery to record a response'
+            : 'Customer response pending'
+        : value.requiresFollowUpDate
             ? '${value.status.label}: ${value.kind.label}'
             : value.kind.label;
     return InkWell(
