@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/girvi/contact_recovery_controller.dart';
+import 'package:lotus_erp/logic/girvi/girvi_account_detail_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_generation_service.dart';
 import 'package:lotus_erp/logic/girvi/girvi_notice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
@@ -681,11 +682,11 @@ void main() {
       expect(activeRecovery.single.isRecoverySettled, isFalse);
       await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
           .write(const GirviLoansCompanion(loanAmount: drift.Value(19000)));
-      final staleAmountClosed = await controller.closeDisposalSettlement(
+      final staleAmountClosed = await controller.completeItemRecovery(
         item: recoveryCase,
-        pledgedValuation: 70000,
         recoveredAmount: 22000,
-        penaltyAmount: 0,
+        paymentMode: 'CASH',
+        dispositionMethod: 'SOLD',
         note: 'Stale amount must be rejected.',
       );
       expect(staleAmountClosed, isFalse);
@@ -701,23 +702,23 @@ void main() {
         loanAmount: drift.Value(20000),
         status: drift.Value('RELEASED'),
       ));
-      final closedLoanSettled = await controller.closeDisposalSettlement(
+      final closedLoanSettled = await controller.completeItemRecovery(
         item: recoveryCase,
-        pledgedValuation: 70000,
         recoveredAmount: 22000,
-        penaltyAmount: 0,
+        paymentMode: 'CASH',
+        dispositionMethod: 'SOLD',
         note: 'Closed account must be rejected.',
       );
       expect(closedLoanSettled, isFalse);
       expect(await db.select(db.cashTransactions).get(), isEmpty);
       await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
           .write(const GirviLoansCompanion(status: drift.Value('OVERDUE')));
-      final closed = await controller.closeDisposalSettlement(
+      final closed = await controller.completeItemRecovery(
         item: recoveryCase,
-        pledgedValuation: 70000,
         recoveredAmount: 22000,
-        penaltyAmount: 0,
-        note: 'Verified auction recovery.',
+        paymentMode: 'CASH',
+        dispositionMethod: 'SOLD',
+        note: 'Verified item sale.',
       );
 
       expect(closed, isTrue);
@@ -750,18 +751,268 @@ void main() {
       );
       expect(recoveryRegister, hasLength(1));
       expect(recoveryRegister.single.isRecoverySettled, isTrue);
-      expect(recoveryRegister.single.recoveryDispositionStatus, 'MELTED');
+      expect(recoveryRegister.single.recoveryDispositionStatus, 'SOLD');
       expect(recoveryRegister.single.recoveredAmount, 22000);
       expect(recoveryRegister.single.recoverySurplus, 2000);
       expect(await riskRepository.fetchDefaulterCount(), 0);
       final pledgedItems = await (db.select(db.girviLoanItems)
             ..where((item) => item.girviId.equals(loanId)))
           .get();
-      expect(pledgedItems.single.recoveryDispositionStatus, 'MELTED');
+      expect(pledgedItems.single.recoveryDispositionStatus, 'SOLD');
       expect(
         pledgedItems.single.recoveryDispositionReference,
         'GIRVI-RECOVERY-GRV-REC-001',
       );
+    });
+
+    test('melting closes the account without recording cash or bank income',
+        () async {
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final customerId = await db.into(db.customers).insert(
+            CustomersCompanion.insert(
+              name: 'Melt Customer',
+              mobile: '9000000010',
+            ),
+          );
+      final now = DateTime.now();
+      final loanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-MELT-001',
+              customerId: customerId,
+              itemDescription: 'Gold ring',
+              loanAmount: const drift.Value(5000),
+              interestRate: const drift.Value(0),
+              startDate: drift.Value(now.subtract(const Duration(days: 90))),
+              maturityDate: drift.Value(now.subtract(const Duration(days: 30))),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      await db.into(db.girviLoanItems).insert(
+            GirviLoanItemsCompanion.insert(
+              girviId: loanId,
+              serialNo: 1,
+              itemName: 'Gold ring',
+              metalType: 'Gold',
+              purity: '22KT',
+            ),
+          );
+      final notices = GirviNoticeActionRepository(db);
+      final noticeId = await notices.recordAction(
+        girviId: loanId,
+        actionType: GirviNoticeType.formal.actionType,
+        noticeStage: 1,
+        noticeText: 'Final notice',
+        actionAt: now.subtract(const Duration(days: 31)),
+        noticeDeadlineAt: now.subtract(const Duration(days: 1)),
+      );
+      await notices.recordAction(
+        girviId: loanId,
+        actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+        noticeActionId: noticeId,
+        actionAt: now.subtract(const Duration(days: 30)),
+        deliveredAt: now.subtract(const Duration(days: 30)),
+        deliveryChannel: 'In person',
+        deliveryStatus: 'Delivered',
+        deliveryReference: 'ACK-MELT-001',
+      );
+      final loan = GirviLoanModel(
+        id: loanId,
+        ticketNo: 'GRV-MELT-001',
+        customerId: customerId,
+        itemDescription: 'Gold ring',
+        itemCount: 1,
+        metalType: 'Gold',
+        metalPurity: '22KT',
+        grossWeight: 5,
+        stoneWeight: 0,
+        netWeight: 5,
+        loanAmount: 5000,
+        interestRate: 0,
+        durationMonths: 2,
+        disbursementMode: 'Cash',
+        startDate: now.subtract(const Duration(days: 90)),
+        maturityDate: now.subtract(const Duration(days: 30)),
+        createdAt: now.subtract(const Duration(days: 90)),
+        status: 'OVERDUE',
+      );
+      final recoveryCase = ContactRecoveryCase(
+        account: GirviLoanWithCustomer(
+          loan: loan,
+          customerName: 'Melt Customer',
+          customerMobile: '9000000010',
+        ),
+        noticePeriodDays: 30,
+        now: now,
+        actionHistory: [
+          GirviNoticeAction(
+            id: 2,
+            girviId: loanId,
+            noticeActionId: noticeId,
+            actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+            actionAt: now.subtract(const Duration(days: 30)),
+            createdAt: now.subtract(const Duration(days: 30)),
+            deliveredAt: now.subtract(const Duration(days: 30)),
+          ),
+          GirviNoticeAction(
+            id: 1,
+            girviId: loanId,
+            actionType: GirviNoticeType.formal.actionType,
+            noticeStage: 1,
+            actionAt: now.subtract(const Duration(days: 31)),
+            createdAt: now.subtract(const Duration(days: 31)),
+          ),
+        ],
+      );
+      final controller = ContactRecoveryController(
+        db: db,
+        ticketNo: loan.ticketNo,
+      );
+      addTearDown(controller.dispose);
+      expect(recoveryCase.canInitiateCollateralRecovery, isTrue);
+
+      final closed = await controller.completeItemRecovery(
+        item: recoveryCase,
+        recoveredAmount: 0,
+        dispositionMethod: 'MELTED',
+      );
+      expect(closed, isTrue);
+      expect(await db.select(db.cashTransactions).get(), isEmpty);
+      expect(await db.select(db.bankTransactions).get(), isEmpty);
+      expect(await db.select(db.customerAccountLedger).get(), isEmpty);
+      final savedLoan = await (db.select(db.girviLoans)
+            ..where((row) => row.id.equals(loanId)))
+          .getSingle();
+      expect(savedLoan.status, 'AUCTIONED');
+      final settlement = (await db.select(db.girviNoticeActions).get())
+          .singleWhere((row) =>
+              row.actionType == GirviNoticeActionTypes.disposalSettled);
+      expect(settlement.recoveredAmount, 0);
+      expect(settlement.settlementTotal, 5000);
+      expect(settlement.customerBalanceDue, 5000);
+      expect(
+          (await db.select(db.girviLoanItems).get())
+              .single
+              .recoveryDispositionStatus,
+          'MELTED');
+      final register = await DefaulterRepository(db: db).fetchAllDefaulters(
+        syncStatuses: false,
+      );
+      expect(register.single.isRecoverySettled, isTrue);
+      expect(register.single.totalDue, 0);
+      final accountController = GirviAccountDetailController(db);
+      addTearDown(accountController.dispose);
+      await accountController.load(loanId);
+      expect(accountController.errorMessage, isNull);
+      expect(accountController.recoveryClosure?.isMelted, isTrue);
+      expect(accountController.recoveryClosure?.actualProceeds, 0);
+      expect(accountController.recoveryClosure?.recoveryDueAtClosure, 5000);
+
+      final soldLoanId = await db.into(db.girviLoans).insert(
+            GirviLoansCompanion.insert(
+              ticketNo: 'GRV-SOLD-001',
+              customerId: customerId,
+              itemDescription: 'Gold pendant',
+              loanAmount: const drift.Value(5000),
+              interestRate: const drift.Value(0),
+              startDate: drift.Value(now.subtract(const Duration(days: 90))),
+              maturityDate: drift.Value(now.subtract(const Duration(days: 30))),
+              status: const drift.Value('OVERDUE'),
+            ),
+          );
+      await db.into(db.girviLoanItems).insert(
+            GirviLoanItemsCompanion.insert(
+              girviId: soldLoanId,
+              serialNo: 1,
+              itemName: 'Gold pendant',
+              metalType: 'Gold',
+              purity: '22KT',
+            ),
+          );
+      final soldNoticeId = await notices.recordAction(
+        girviId: soldLoanId,
+        actionType: GirviNoticeType.formal.actionType,
+        noticeStage: 1,
+        noticeText: 'Final notice',
+        actionAt: now.subtract(const Duration(days: 31)),
+        noticeDeadlineAt: now.subtract(const Duration(days: 1)),
+      );
+      await notices.recordAction(
+        girviId: soldLoanId,
+        actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+        noticeActionId: soldNoticeId,
+        actionAt: now.subtract(const Duration(days: 30)),
+        deliveredAt: now.subtract(const Duration(days: 30)),
+        deliveryChannel: 'In person',
+        deliveryStatus: 'Delivered',
+        deliveryReference: 'ACK-SOLD-001',
+      );
+      final soldLoan = GirviLoanModel(
+        id: soldLoanId,
+        ticketNo: 'GRV-SOLD-001',
+        customerId: customerId,
+        itemDescription: 'Gold pendant',
+        itemCount: 1,
+        metalType: 'Gold',
+        metalPurity: '22KT',
+        grossWeight: 5,
+        stoneWeight: 0,
+        netWeight: 5,
+        loanAmount: 5000,
+        interestRate: 0,
+        durationMonths: 2,
+        disbursementMode: 'Cash',
+        startDate: now.subtract(const Duration(days: 90)),
+        maturityDate: now.subtract(const Duration(days: 30)),
+        createdAt: now.subtract(const Duration(days: 90)),
+        status: 'OVERDUE',
+      );
+      final soldCase = ContactRecoveryCase(
+        account: GirviLoanWithCustomer(
+          loan: soldLoan,
+          customerName: 'Melt Customer',
+          customerMobile: '9000000010',
+        ),
+        noticePeriodDays: 30,
+        now: now,
+        actionHistory: [
+          GirviNoticeAction(
+            id: soldNoticeId + 1,
+            girviId: soldLoanId,
+            noticeActionId: soldNoticeId,
+            actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+            actionAt: now.subtract(const Duration(days: 30)),
+            createdAt: now.subtract(const Duration(days: 30)),
+            deliveredAt: now.subtract(const Duration(days: 30)),
+          ),
+          GirviNoticeAction(
+            id: soldNoticeId,
+            girviId: soldLoanId,
+            actionType: GirviNoticeType.formal.actionType,
+            noticeStage: 1,
+            actionAt: now.subtract(const Duration(days: 31)),
+            createdAt: now.subtract(const Duration(days: 31)),
+          ),
+        ],
+      );
+      final sold = await controller.completeItemRecovery(
+        item: soldCase,
+        recoveredAmount: 4000,
+        dispositionMethod: 'SOLD',
+        paymentMode: 'CASH',
+      );
+      expect(sold, isTrue);
+      final saleSettlement = (await db.select(db.girviNoticeActions).get())
+          .singleWhere((row) =>
+              row.girviId == soldLoanId &&
+              row.actionType == GirviNoticeActionTypes.disposalSettled);
+      expect(saleSettlement.recoveredAmount, 4000);
+      expect(saleSettlement.customerBalanceDue, 1000);
+      expect((await db.select(db.cashTransactions).get()).single.amount, 4000);
+      await accountController.load(soldLoanId);
+      expect(accountController.recoveryClosure?.isMelted, isFalse);
+      expect(accountController.recoveryClosure?.actualProceeds, 4000);
+      expect(accountController.recoveryClosure?.recoveryDueAtClosure, 1000);
     });
 
     test(

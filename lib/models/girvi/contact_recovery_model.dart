@@ -338,6 +338,14 @@ class ContactRecoveryCase {
   bool get hasDisposalSettlement =>
       actionHistory.any((action) => action.isDisposalSettlement);
 
+  DateTime? get recoveryClosedAt {
+    final settlements = actionHistory
+        .where((action) => action.isDisposalSettlement)
+        .toList()
+      ..sort((a, b) => b.actionAt.compareTo(a.actionAt));
+    return settlements.isEmpty ? null : settlements.first.actionAt;
+  }
+
   bool get hasCollateralRecoveryInitiated {
     final notice = formalNoticeAction;
     if (notice == null) return false;
@@ -407,15 +415,19 @@ class ContactRecoveryCase {
             .inDays);
   }
 
-  GirviElapsedPeriod get loanAgePeriod =>
-      GirviLoanModel.elapsedPeriodBetween(loan.startDate, now);
+  GirviElapsedPeriod get loanAgePeriod => GirviLoanModel.elapsedPeriodBetween(
+        loan.startDate,
+        recoveryClosedAt ?? now,
+      );
 
   String get loanAgeLabel => loanAgePeriod.displayLabel;
 
   String get loanAgeMonthsDaysLabel => _monthsDaysLabel(loanAgePeriod);
 
-  int get chargeableInterestMonths =>
-      GirviLoanModel.chargeableMonthsBetween(loan.startDate, now);
+  int get chargeableInterestMonths => GirviLoanModel.chargeableMonthsBetween(
+        loan.startDate,
+        recoveryClosedAt ?? now,
+      );
 
   String get chargeableInterestMonthsLabel {
     final months = chargeableInterestMonths;
@@ -444,7 +456,10 @@ class ContactRecoveryCase {
     if (maturity == null) {
       return const GirviElapsedPeriod(years: 0, months: 0, days: 0);
     }
-    return GirviLoanModel.elapsedPeriodBetween(maturity, now);
+    return GirviLoanModel.elapsedPeriodBetween(
+      maturity,
+      recoveryClosedAt ?? now,
+    );
   }
 
   String get overdueAgeLabel => overdueAgePeriod.displayLabel;

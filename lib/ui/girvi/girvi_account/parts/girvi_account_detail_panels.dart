@@ -177,6 +177,10 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
   }
 
   Widget _buildFinancialOverview(GirviLoanWithCustomer account) {
+    final closure = _controller.recoveryClosure;
+    if (account.loan.girviStatus == GirviStatus.auctioned && closure != null) {
+      return _buildRecoveryClosureOverview(account, closure);
+    }
     final interestQuote = account.interestQuoteAt();
     final principalReceived =
         account.principalPaidTotal + account.legacyPrincipalRepaidTotal;
@@ -436,7 +440,8 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
     final loan = account.loan;
     final disbursements =
         _controller.details?.disbursements ?? const <GirviDisbursement>[];
-    final loanEnd = loan.releaseDate ?? DateTime.now();
+    final closure = _controller.recoveryClosure;
+    final loanEnd = closure?.closedAt ?? loan.releaseDate ?? DateTime.now();
     final periodEnd =
         loanEnd.isBefore(loan.startDate) ? loan.startDate : loanEnd;
     final currentPeriod =
@@ -476,13 +481,13 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
                 '${loan.durationMonths} month${loan.durationMonths == 1 ? '' : 's'}',
               ),
               _AccountInfoRowData(
-                loan.releaseDate == null
+                closure == null && loan.releaseDate == null
                     ? 'Current Loan Period'
                     : 'Loan Period at Settlement',
                 currentPeriod.displayLabel,
               ),
               _AccountInfoRowData('Chargeable Months', '$chargeableMonths'),
-              if (account.netInterestDue > 0.01)
+              if (closure == null && account.netInterestDue > 0.01)
                 _AccountInfoRowData(
                   'Unpaid Interest Period',
                   loan.unpaidInterestElapsedPeriod.displayLabel,

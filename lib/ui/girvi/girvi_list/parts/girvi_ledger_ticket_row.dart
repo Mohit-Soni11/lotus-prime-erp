@@ -128,6 +128,7 @@ class _LedgerTicketRowState extends State<_LedgerTicketRow> {
                         _RegisterAmountPanel(
                           quote: widget.quote,
                           money: widget.money,
+                          closed: loan.isClosed,
                         ),
                       ] else
                         Row(
@@ -140,6 +141,7 @@ class _LedgerTicketRowState extends State<_LedgerTicketRow> {
                               child: _RegisterAmountPanel(
                                 quote: widget.quote,
                                 money: widget.money,
+                                closed: loan.isClosed,
                               ),
                             ),
                           ],

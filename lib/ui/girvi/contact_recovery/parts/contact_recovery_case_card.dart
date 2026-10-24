@@ -15,7 +15,7 @@ class _ContactRecoveryCard extends StatelessWidget {
   final VoidCallback onDownloadInvoice;
   final VoidCallback onViewItemImage;
   final VoidCallback onDownloadItemImage;
-  final VoidCallback? onCloseDisposal;
+  final VoidCallback? onCompleteRecovery;
 
   const _ContactRecoveryCard({
     required this.item,
@@ -32,7 +32,7 @@ class _ContactRecoveryCard extends StatelessWidget {
     required this.onDownloadInvoice,
     required this.onViewItemImage,
     required this.onDownloadItemImage,
-    required this.onCloseDisposal,
+    required this.onCompleteRecovery,
   });
 
   @override
@@ -83,7 +83,7 @@ class _ContactRecoveryCard extends StatelessWidget {
             item: item,
             onOpenAccount: onOpenAccount,
             onPrepareNotice: onPrepareNotice,
-            onCloseDisposal: onCloseDisposal,
+            onCompleteRecovery: onCompleteRecovery,
           );
 
           if (compact) {
@@ -690,6 +690,26 @@ class _CaseAmounts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (item.stage == ContactRecoveryStage.settled) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: GirviColors.successBg,
+          borderRadius: BorderRadius.circular(10),
+          border:
+              Border.all(color: GirviColors.success.withValues(alpha: 0.25)),
+        ),
+        child: Text(
+          'Recovery closed. The fixed recovery due is available in the Girvi Account.',
+          style: GoogleFonts.inter(
+            color: GirviColors.textDark,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      );
+    }
     final account = item.account;
     return LayoutBuilder(
       builder: (context, constraints) {

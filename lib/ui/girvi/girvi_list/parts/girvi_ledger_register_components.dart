@@ -76,10 +76,15 @@ class _RegisterMetaBadge extends StatelessWidget {
 }
 
 class _RegisterAmountPanel extends StatelessWidget {
-  const _RegisterAmountPanel({required this.quote, required this.money});
+  const _RegisterAmountPanel({
+    required this.quote,
+    required this.money,
+    required this.closed,
+  });
 
   final GirviInterestQuote quote;
   final String Function(double) money;
+  final bool closed;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -92,33 +97,44 @@ class _RegisterAmountPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _RegisterAmountLine(
-              label: 'Principal Due',
-              value: money(quote.principalDue),
-              color: quote.principalDue > 0.005
-                  ? GirviColors.danger
-                  : GirviColors.success,
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: GirviColors.divider),
-            const SizedBox(height: 8),
-            _RegisterAmountLine(
-              label: 'Interest Due',
-              value: money(quote.interestOutstanding),
-              color: quote.interestOutstanding > 0.005
-                  ? GirviColors.danger
-                  : GirviColors.success,
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: GirviColors.divider),
-            const SizedBox(height: 8),
-            _RegisterAmountLine(
-              label: 'Net Payable',
-              value: money(quote.totalPayable),
-              color: quote.totalPayable > 0.005
-                  ? GirviColors.danger
-                  : GirviColors.success,
-            ),
+            if (closed)
+              Text(
+                'Account Closed',
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              )
+            else ...[
+              _RegisterAmountLine(
+                label: 'Principal Due',
+                value: money(quote.principalDue),
+                color: quote.principalDue > 0.005
+                    ? GirviColors.danger
+                    : GirviColors.success,
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: GirviColors.divider),
+              const SizedBox(height: 8),
+              _RegisterAmountLine(
+                label: 'Interest Due',
+                value: money(quote.interestOutstanding),
+                color: quote.interestOutstanding > 0.005
+                    ? GirviColors.danger
+                    : GirviColors.success,
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: GirviColors.divider),
+              const SizedBox(height: 8),
+              _RegisterAmountLine(
+                label: 'Net Payable',
+                value: money(quote.totalPayable),
+                color: quote.totalPayable > 0.005
+                    ? GirviColors.danger
+                    : GirviColors.success,
+              ),
+            ],
           ],
         ),
       );

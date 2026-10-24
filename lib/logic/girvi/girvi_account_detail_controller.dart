@@ -1,24 +1,32 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import '../../models/girvi/girvi_recovery_closure_snapshot.dart';
 import '../../repositories/girvi/girvi_details_repository.dart';
+import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class GirviAccountDetailController extends ChangeNotifier {
   GirviAccountDetailController(AppDatabase db)
-      : _repository = GirviRepository(db),
+      : _db = db,
+        _repository = GirviRepository(db),
         _detailsRepository = GirviDetailsRepository(db);
 
+  final AppDatabase _db;
   final GirviRepository _repository;
   final GirviDetailsRepository _detailsRepository;
+  late final GirviNoticeActionRepository _noticeRepository =
+      GirviNoticeActionRepository(_db);
 
   bool _isLoading = true;
   String? _errorMessage;
   GirviLoanWithCustomer? _account;
   GirviLoanDetails? _details;
   List<GirviPaymentModel> _payments = const [];
+  GirviRecoveryClosureSnapshot? _recoveryClosure;
   int _loadVersion = 0;
   bool _disposed = false;
 
@@ -27,6 +35,7 @@ class GirviAccountDetailController extends ChangeNotifier {
   GirviLoanWithCustomer? get account => _account;
   GirviLoanDetails? get details => _details;
   List<GirviPaymentModel> get payments => _payments;
+  GirviRecoveryClosureSnapshot? get recoveryClosure => _recoveryClosure;
 
   Future<void> load(int loanId, {bool showLoading = true}) async {
     if (_disposed) return;
@@ -38,12 +47,16 @@ class GirviAccountDetailController extends ChangeNotifier {
     try {
       await _repository.syncSettlementStatus();
       if (_disposed || loadVersion != _loadVersion) return;
-      final results = await _repository.getLoansWithCustomer(loanId: loanId);
+      final results = await _repository.getLoansWithCustomer(
+        loanId: loanId,
+        includeAuctioned: true,
+      );
       if (_disposed || loadVersion != _loadVersion) return;
       if (results.isEmpty) {
         _account = null;
         _details = null;
         _payments = const [];
+        _recoveryClosure = null;
         _errorMessage = 'Pledge account could not be found.';
         return;
       }
@@ -54,6 +67,25 @@ class GirviAccountDetailController extends ChangeNotifier {
       if (_disposed || loadVersion != _loadVersion) return;
       final loadedPayments = await _repository.getPaymentModelsForLoan(loanId);
       if (_disposed || loadVersion != _loadVersion) return;
+      GirviRecoveryClosureSnapshot? recoveryClosure;
+      if (results.first.loan.girviStatus == GirviStatus.auctioned) {
+        final actions = await _noticeRepository.actionsByGirviIds([loanId]);
+        if (_disposed || loadVersion != _loadVersion) return;
+        final settlement = actions[loanId]
+            ?.where((action) => action.isDisposalSettlement)
+            .firstOrNull;
+        if (settlement != null) {
+          final statuses = loadedDetails?.items
+                  .map((entry) => entry.item.recoveryDispositionStatus)
+                  .whereType<String>()
+                  .toSet() ??
+              <String>{};
+          recoveryClosure = GirviRecoveryClosureSnapshot.fromAction(
+            settlement,
+            disposition: statuses.length == 1 ? statuses.single : '',
+          );
+        }
+      }
       loadedPayments.sort((a, b) {
         final byDate = a.paymentDate.compareTo(b.paymentDate);
         if (byDate != 0) return byDate;
@@ -63,11 +95,13 @@ class GirviAccountDetailController extends ChangeNotifier {
       _account = results.first;
       _details = loadedDetails;
       _payments = List.unmodifiable(loadedPayments);
+      _recoveryClosure = recoveryClosure;
     } catch (error, stackTrace) {
       if (_disposed || loadVersion != _loadVersion) return;
       _account = null;
       _details = null;
       _payments = const [];
+      _recoveryClosure = null;
       _errorMessage = 'Pledge account details could not be loaded.';
       AppLogger.error(
         'GirviAccountDetailController.load failed: $error',

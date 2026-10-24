@@ -983,13 +983,13 @@ class _CaseActions extends StatelessWidget {
   final ContactRecoveryCase item;
   final VoidCallback onOpenAccount;
   final VoidCallback? onPrepareNotice;
-  final VoidCallback? onCloseDisposal;
+  final VoidCallback? onCompleteRecovery;
 
   const _CaseActions({
     required this.item,
     required this.onOpenAccount,
     required this.onPrepareNotice,
-    required this.onCloseDisposal,
+    required this.onCompleteRecovery,
   });
 
   @override
@@ -1003,12 +1003,13 @@ class _CaseActions extends StatelessWidget {
           onTap: onOpenAccount,
         ),
         if (item.stage == ContactRecoveryStage.noticeRequired ||
-            item.stage == ContactRecoveryStage.noticePending) ...[
+            (item.stage == ContactRecoveryStage.noticePending &&
+                onCompleteRecovery == null)) ...[
           const SizedBox(height: 8),
           _ActionButton(
             label: item.stage == ContactRecoveryStage.noticeRequired
                 ? 'Prepare Notice'
-                : 'Record Recovery',
+                : 'Await Response Deadline',
             color: GirviColors.warning,
             onTap: _primaryAction,
           ),
@@ -1021,12 +1022,12 @@ class _CaseActions extends StatelessWidget {
             onTap: onPrepareNotice!,
           ),
         ],
-        if (onCloseDisposal != null) ...[
+        if (onCompleteRecovery != null) ...[
           const SizedBox(height: 8),
           _ActionButton(
-            label: 'Record Recovery',
+            label: 'Complete Item Recovery',
             color: GirviColors.danger,
-            onTap: onCloseDisposal!,
+            onTap: onCompleteRecovery!,
           ),
         ],
         if (item.stage == ContactRecoveryStage.noticePending ||

@@ -34,6 +34,7 @@ import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import 'contact_recovery_app_bar.dart';
+import 'item_recovery/item_recovery_dialog.dart';
 
 part 'parts/contact_recovery_body.dart';
 part 'parts/contact_recovery_case_card.dart';
@@ -43,7 +44,6 @@ part 'parts/contact_recovery_response_dialogs.dart';
 part 'parts/contact_recovery_response_editor.dart';
 part 'parts/contact_recovery_document_components.dart';
 part 'parts/contact_recovery_empty_state.dart';
-part 'parts/contact_recovery_settlement_dialog.dart';
 part 'parts/contact_recovery_notice_dispatch.dart';
 part 'parts/contact_recovery_delivery.dart';
 part 'parts/contact_recovery_account_documents.dart';
@@ -157,7 +157,7 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
                     onDownloadInvoice: _downloadInvoice,
                     onViewItemImage: _viewItemImage,
                     onDownloadItemImage: _downloadItemImage,
-                    onCloseDisposal: _closeDisposalSettlement,
+                    onCompleteRecovery: _completeItemRecovery,
                   ),
           ),
         ],
@@ -307,25 +307,26 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
     );
   }
 
-  Future<void> _closeDisposalSettlement(ContactRecoveryCase item) async {
+  Future<void> _completeItemRecovery(ContactRecoveryCase item) async {
     final bankAccounts = await _controller.loadActiveRecoveryBankAccounts();
+    final pledgedItems =
+        await _controller.loadRecoveryPledgedItems(item.loan.id);
     if (!mounted) return;
-    final result = await showDialog<_DisposalSettlementResult>(
+    final result = await showDialog<ItemRecoveryResult>(
       context: context,
-      builder: (context) => _DisposalSettlementDialog(
+      builder: (context) => ItemRecoveryDialog(
         item: item,
         bankAccounts: bankAccounts,
+        pledgedItems: pledgedItems,
       ),
     );
 
     if (result == null) return;
-    await _controller.closeDisposalSettlement(
+    await _controller.completeItemRecovery(
       item: item,
-      pledgedValuation: result.pledgedValuation,
       recoveredAmount: result.recoveredAmount,
-      penaltyAmount: result.penaltyAmount,
       note: result.note,
-      paymentMode: result.paymentMethod.dbValue,
+      paymentMode: result.paymentMethod?.dbValue,
       dispositionMethod: result.dispositionMethod,
       bankAccountId: result.bankAccountId,
     );

@@ -7,59 +7,55 @@ class _AccountMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metrics = account.isRecoverySettled
-        ? [
-            (
-              'Settlement Total',
-              account.recoverySettlementTotal,
-              DefaulterColors.bodyTextMain,
-              false
-            ),
-            (
-              'Amount Recovered',
-              account.recoveredAmount,
-              DefaulterColors.statReceivedText,
-              true
-            ),
-            (
-              'Balance Due',
-              account.recoveryBalanceDue,
-              DefaulterColors.riskCriticalText,
-              false
-            ),
-            (
-              'Customer Surplus',
-              account.recoverySurplus,
-              DefaulterColors.statReceivedText,
-              false
-            ),
-          ]
-        : [
-            (
-              'Principal Due',
-              account.principalOutstanding,
-              DefaulterColors.statPrincipalText,
-              false
-            ),
-            (
-              'Interest Due',
-              account.interestOutstanding,
-              DefaulterColors.riskCriticalText,
-              false
-            ),
-            (
-              'Total to Collect',
-              account.totalDue,
-              DefaulterColors.riskCriticalText,
-              true
-            ),
-            (
-              'Already Collected',
-              account.totalReceived,
-              DefaulterColors.statReceivedText,
-              false
-            ),
-          ];
+    if (account.isRecoverySettled) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: DefaulterColors.riskMetricBg,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: DefaulterColors.riskMetricBorder),
+        ),
+        child: Text(
+          switch (account.recoveryDispositionStatus) {
+            'MELTED' => 'Item melted · Account closed',
+            'SOLD' => 'Item sold · Account closed',
+            _ => 'Recovery closed',
+          },
+          style: DefaulterStyles.customerCity.copyWith(
+            color: DefaulterColors.bodyTextMain,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      );
+    }
+    final metrics = [
+      (
+        'Principal Due',
+        account.principalOutstanding,
+        DefaulterColors.statPrincipalText,
+        false
+      ),
+      (
+        'Interest Due',
+        account.interestOutstanding,
+        DefaulterColors.riskCriticalText,
+        false
+      ),
+      (
+        'Total to Collect',
+        account.totalDue,
+        DefaulterColors.riskCriticalText,
+        true
+      ),
+      (
+        'Already Collected',
+        account.totalReceived,
+        DefaulterColors.statReceivedText,
+        false
+      ),
+    ];
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 900

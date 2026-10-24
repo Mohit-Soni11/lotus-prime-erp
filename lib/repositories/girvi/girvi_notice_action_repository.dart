@@ -289,9 +289,7 @@ class GirviNoticeActionRepository {
 
   Future<int> recordDisposalSettlement({
     required int girviId,
-    required double pledgedValuation,
     required double recoveredAmount,
-    required double penaltyAmount,
     required double settlementTotal,
     required double customerBalanceDue,
     required double customerSurplus,
@@ -340,9 +338,9 @@ class GirviNoticeActionRepository {
         noticeActionId: approvedNotice.id,
         performedBy: performedBy,
         actionNote: note ?? 'Recovery settlement closed after notice review.',
-        pledgedValuation: pledgedValuation,
+        pledgedValuation: 0,
         recoveredAmount: recoveredAmount,
-        penaltyAmount: penaltyAmount,
+        penaltyAmount: 0,
         settlementTotal: settlementTotal,
         customerBalanceDue: customerBalanceDue,
         customerSurplus: customerSurplus,

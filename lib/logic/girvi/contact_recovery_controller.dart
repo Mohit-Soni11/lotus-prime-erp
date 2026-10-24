@@ -9,6 +9,7 @@ import '../../models/girvi/girvi_customer_response_model.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/contact_recovery_model.dart';
+import '../../models/girvi/recovery_pledged_item_detail.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_customer_response_repository.dart';
 import '../../repositories/girvi/girvi_notice_document_repository.dart';
@@ -16,6 +17,7 @@ import '../../repositories/girvi/girvi_repository.dart';
 import '../../repositories/girvi/girvi_interest_period_snapshot_repository.dart';
 import '../../repositories/setting/billing_setup/girvi_billing_repo.dart';
 import 'girvi_notice_eligibility.dart';
+import 'recovery_completion_note.dart';
 
 class ContactRecoveryController extends ChangeNotifier {
   ContactRecoveryController({
@@ -51,6 +53,25 @@ class ContactRecoveryController extends ChangeNotifier {
       GirviInterestPeriodSnapshotRepository(_db);
 
   AppDatabase get database => _db;
+
+  Future<List<RecoveryPledgedItemDetail>> loadRecoveryPledgedItems(
+    int girviId,
+  ) async {
+    final items = await (_db.select(_db.girviLoanItems)
+          ..where((item) => item.girviId.equals(girviId))
+          ..orderBy([(item) => drift.OrderingTerm.asc(item.serialNo)]))
+        .get();
+    return [
+      for (final item in items)
+        RecoveryPledgedItemDetail(
+          itemName: item.itemName,
+          metalType: item.metalType,
+          purity: item.purity,
+          pieces: item.pieces,
+          netWeight: item.netWeight,
+        ),
+    ];
+  }
 
   Future<List<RecoveryBankAccountOption>>
       loadActiveRecoveryBankAccounts() async {
@@ -455,13 +476,11 @@ class ContactRecoveryController extends ChangeNotifier {
     }
   }
 
-  Future<bool> closeDisposalSettlement({
+  Future<bool> completeItemRecovery({
     required ContactRecoveryCase item,
-    required double pledgedValuation,
     required double recoveredAmount,
-    required double penaltyAmount,
-    required String note,
-    String paymentMode = 'CASH',
+    String note = '',
+    String? paymentMode,
     String dispositionMethod = 'MELTED',
     int? bankAccountId,
   }) async {
@@ -472,32 +491,32 @@ class ContactRecoveryController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    if (!pledgedValuation.isFinite ||
-        !recoveredAmount.isFinite ||
-        !penaltyAmount.isFinite ||
-        pledgedValuation <= 0 ||
-        recoveredAmount <= 0 ||
-        penaltyAmount < 0) {
+    if (!recoveredAmount.isFinite || recoveredAmount < 0) {
       _state = _state.copyWith(
-        inlineMessage:
-            'Enter a valid current collateral value and recovered amount before closing settlement.',
+        inlineMessage: 'Enter a valid actual recovery amount.',
       );
       notifyListeners();
       return false;
     }
 
     try {
-      final normalizedPledgedValuation = _money(pledgedValuation);
       final normalizedRecoveredAmount = _money(recoveredAmount);
-      final normalizedPenaltyAmount = _money(penaltyAmount);
-      final normalizedPaymentMode = paymentMode.trim().toUpperCase();
       final normalizedDispositionMethod =
           dispositionMethod.trim().toUpperCase();
-      if (!_isSupportedRecoveryPaymentMode(normalizedPaymentMode)) {
-        throw ArgumentError.value(paymentMode, 'paymentMode');
-      }
       if (!const {'MELTED', 'SOLD'}.contains(normalizedDispositionMethod)) {
         throw ArgumentError.value(dispositionMethod, 'dispositionMethod');
+      }
+      final isMelted = normalizedDispositionMethod == 'MELTED';
+      final normalizedPaymentMode = paymentMode?.trim().toUpperCase();
+      if (isMelted && normalizedRecoveredAmount != 0) {
+        throw StateError('Melting does not record a cash recovery amount.');
+      }
+      if (!isMelted && normalizedRecoveredAmount <= 0) {
+        throw StateError('Enter the actual sale proceeds received.');
+      }
+      if (!isMelted &&
+          !_isSupportedRecoveryPaymentMode(normalizedPaymentMode ?? '')) {
+        throw ArgumentError.value(paymentMode, 'paymentMode');
       }
 
       await _db.transaction(() async {
@@ -541,19 +560,17 @@ class ContactRecoveryController extends ChangeNotifier {
         if ((currentPayable - _money(item.verifiedTotalPayable)).abs() > 0.01) {
           throw StateError('Recovery balance changed. Refresh and review it.');
         }
-        final settlementTotal =
-            _money(currentPayable + normalizedPenaltyAmount);
-        final balanceDue = normalizedRecoveredAmount >= settlementTotal
+        final recoveryDue = normalizedRecoveredAmount >= currentPayable
             ? 0.0
-            : _money(settlementTotal - normalizedRecoveredAmount);
-        final surplus = normalizedRecoveredAmount > settlementTotal
-            ? _money(normalizedRecoveredAmount - settlementTotal)
+            : _money(currentPayable - normalizedRecoveredAmount);
+        final surplus = normalizedRecoveredAmount > currentPayable
+            ? _money(normalizedRecoveredAmount - currentPayable)
             : 0.0;
 
         final referenceId = 'GIRVI-RECOVERY-${item.loan.ticketNo}';
         final transactionId = _recoveryTransactionId(item.loan.id);
         final settledAt = DateTime.now();
-        if (normalizedPaymentMode == 'CASH') {
+        if (!isMelted && normalizedPaymentMode == 'CASH') {
           await _db.into(_db.cashTransactions).insert(
                 CashTransactionsCompanion.insert(
                   txnId: transactionId,
@@ -561,7 +578,7 @@ class ContactRecoveryController extends ChangeNotifier {
                   type: 'INCOME',
                   category: 'DUE_COLLECTION',
                   amount: drift.Value(normalizedRecoveredAmount),
-                  paymentMode: drift.Value(normalizedPaymentMode),
+                  paymentMode: drift.Value(normalizedPaymentMode!),
                   description: drift.Value(
                     'Girvi recovery proceeds for ${item.loan.ticketNo}',
                   ),
@@ -572,7 +589,7 @@ class ContactRecoveryController extends ChangeNotifier {
                   isVoided: const drift.Value(false),
                 ),
               );
-        } else {
+        } else if (!isMelted) {
           if (bankAccountId == null) {
             throw StateError(
                 'Select an active bank account for non-cash recovery.');
@@ -596,7 +613,7 @@ class ContactRecoveryController extends ChangeNotifier {
                   type: 'CREDIT',
                   category: 'DUE_COLLECTION',
                   amount: drift.Value(normalizedRecoveredAmount),
-                  paymentMode: drift.Value(normalizedPaymentMode),
+                  paymentMode: drift.Value(normalizedPaymentMode!),
                   description: drift.Value(
                     'Girvi recovery proceeds for ${item.loan.ticketNo}',
                   ),
@@ -609,23 +626,6 @@ class ContactRecoveryController extends ChangeNotifier {
               );
         }
 
-        if (balanceDue > 0) {
-          await _db.into(_db.customerAccountLedger).insert(
-                CustomerAccountLedgerCompanion.insert(
-                  customerId: item.loan.customerId,
-                  entryType: 'DEBIT',
-                  sourceType: 'GIRVI_RECOVERY_BALANCE',
-                  sourceReference: drift.Value(referenceId),
-                  amount: drift.Value(balanceDue),
-                  paymentMode: drift.Value(normalizedPaymentMode),
-                  notes: drift.Value(
-                    'Unrecovered balance after recovery settlement for ${item.loan.ticketNo}',
-                  ),
-                  entryDate: drift.Value(settledAt),
-                  isVoided: const drift.Value(false),
-                ),
-              );
-        }
         if (surplus > 0) {
           await _db.into(_db.customerAccountLedger).insert(
                 CustomerAccountLedgerCompanion.insert(
@@ -664,20 +664,26 @@ class ContactRecoveryController extends ChangeNotifier {
 
         await _noticeActionRepository.recordDisposalSettlement(
           girviId: item.loan.id,
-          pledgedValuation: normalizedPledgedValuation,
           recoveredAmount: normalizedRecoveredAmount,
-          penaltyAmount: normalizedPenaltyAmount,
-          settlementTotal: settlementTotal,
-          customerBalanceDue: balanceDue,
+          settlementTotal: currentPayable,
+          customerBalanceDue: recoveryDue,
           customerSurplus: surplus,
-          note: '$normalizedDispositionMethod: $note',
+          note: recoveryCompletionNote(
+            dispositionMethod: normalizedDispositionMethod,
+            ticketNo: item.loan.ticketNo,
+            amountDue: currentPayable,
+            recoveredAmount: normalizedRecoveredAmount,
+            recoveredAt: settledAt,
+            remarks: note,
+          ),
           performedBy: _operatorIdentity(),
         );
       });
 
       _state = _state.copyWith(
-        inlineMessage:
-            'Recovery settlement closed for ticket ${item.loan.ticketNo}.',
+        inlineMessage: normalizedDispositionMethod == 'MELTED'
+            ? 'Item marked melted; account ${item.loan.ticketNo} closed with recovery due recorded.'
+            : 'Item sale recorded and account ${item.loan.ticketNo} closed.',
       );
       notifyListeners();
       await load(keepInlineMessage: true);

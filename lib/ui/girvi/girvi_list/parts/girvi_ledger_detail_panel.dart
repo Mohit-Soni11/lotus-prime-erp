@@ -62,14 +62,20 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
           ),
         ),
         const SizedBox(height: 14),
-        _SettlementFocusBlock(
-          totalPayable: _money(interestQuote.totalPayable),
-          principalDue: _money(interestQuote.principalDue),
-          interestDue: _money(interestQuote.interestOutstanding),
-          totalPayableColor: totalPayableColor,
-          principalDueColor: principalDueColor,
-          interestDueColor: interestDueColor,
-        ),
+        if (loan.isClosed)
+          const _LedgerSurface(
+            child: Text(
+                'Account Closed · Open Girvi Account for the recovery record.'),
+          )
+        else
+          _SettlementFocusBlock(
+            totalPayable: _money(interestQuote.totalPayable),
+            principalDue: _money(interestQuote.principalDue),
+            interestDue: _money(interestQuote.interestOutstanding),
+            totalPayableColor: totalPayableColor,
+            principalDueColor: principalDueColor,
+            interestDueColor: interestDueColor,
+          ),
         const SizedBox(height: 14),
         _AccountTimelinePanel(
           startDate: _date(loan.startDate),
@@ -85,7 +91,7 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
           openingPdf: _openingInvoicePdf,
           status: loan.girviStatus,
           statusLabel: loan.statusLabel,
-          hasDueAmount: interestQuote.totalPayable > 0.005,
+          hasDueAmount: canOpenPayment && interestQuote.totalPayable > 0.005,
           onPreviewPdf: () => _previewGirviInvoicePdf(item),
           onCollect: () => _openInterestEntry(item),
         ),
