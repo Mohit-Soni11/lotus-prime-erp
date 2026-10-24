@@ -291,7 +291,7 @@ void main() {
     await showScreen(tester, controller);
     expect(find.text('Settlement'), findsOneWidget);
     expect(find.text('Confirm Delivery'), findsNothing);
-    expect(find.text('Notice PDF not issued yet'), findsOneWidget);
+    expect(find.text('Notice prepared. PDF not issued yet.'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -326,23 +326,87 @@ void main() {
     final controller = _NoticeController(db, item);
     addTearDown(controller.dispose);
     addTearDown(db.close);
-    await showScreen(tester, controller);
+    await showScreen(tester, controller, darkTheme: true);
     expect(find.text('Confirm Delivery'), findsOneWidget);
     expect(find.text('Confirm delivery to record a response'), findsOneWidget);
     await tester.tap(find.text('Confirm Delivery'));
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('Confirm Customer Delivery'), findsOneWidget);
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Delivery reference'),
-      'HANDOVER-001',
+    expect(find.text('Printed copy'), findsOneWidget);
+    expect(find.text('04 Oct 2026, 12:00 AM'), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.text('NOTICE_PDF_ACTION_11'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    final title = tester.widget<Text>(find.text('Confirm Customer Delivery'));
+    expect(title.style!.color, GirviColors.textDark);
+    final cancel = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Cancel'),
     );
+    expect(cancel.style!.foregroundColor!.resolve({}), GirviColors.textDark);
+    final confirm = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Confirm Delivery'),
+    );
+    expect(confirm.style!.backgroundColor!.resolve({}), GirviColors.shellBg);
     await tester.tap(find.text('Confirm Delivery').last);
     await tester.pump(const Duration(milliseconds: 350));
     expect(controller.deliveryActionType,
         GirviNoticeActionTypes.noticeDeliveryRecorded);
-    expect(controller.deliveryReference, 'HANDOVER-001');
+    expect(controller.deliveryReference, 'NOTICE_PDF_ACTION_11');
+    expect(controller.deliveryChannel, 'Printed copy');
+    expect(controller.deliveredAt, printed.actionAt);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('delivery confirmation uses the latest saved notice method',
+      (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final fixture = createNoticeCase();
+    final prepared = GirviNoticeAction(
+      id: 10,
+      girviId: fixture.loan.id,
+      actionType: GirviNoticeActionTypes.noticePrepared,
+      noticeStage: 1,
+      noticeText: 'Formal notice text',
+      actionAt: fixture.now,
+      createdAt: fixture.now,
+    );
+    final printedAt = fixture.now.add(const Duration(minutes: 1));
+    final sharedAt = fixture.now.add(const Duration(minutes: 2));
+    GirviNoticeAction output(int id, String type, DateTime at) =>
+        GirviNoticeAction(
+          id: id,
+          girviId: fixture.loan.id,
+          actionType: type,
+          noticeActionId: prepared.id,
+          actionAt: at,
+          createdAt: at,
+        );
+    final item = ContactRecoveryCase(
+      account: fixture.account,
+      noticePeriodDays: 7,
+      now: fixture.now,
+      actionHistory: [
+        output(11, GirviNoticeActionTypes.noticePdfPrinted, printedAt),
+        output(12, GirviNoticeActionTypes.noticePdfShared, sharedAt),
+        prepared,
+      ],
+    );
+    final controller = _NoticeController(db, item);
+    addTearDown(controller.dispose);
+    addTearDown(db.close);
+    await showScreen(tester, controller, darkTheme: true);
+    await tester.tap(find.text('Confirm Delivery'));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('WhatsApp'), findsOneWidget);
+    expect(find.text('04 Oct 2026, 12:02 AM'), findsOneWidget);
+    expect(find.text('NOTICE_PDF_ACTION_12'), findsOneWidget);
+    await tester.tap(find.text('Confirm Delivery').last);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(controller.deliveryChannel, 'WhatsApp');
+    expect(controller.deliveredAt, sharedAt);
+    expect(controller.deliveryReference, 'NOTICE_PDF_ACTION_12');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('older simple approval exposes a corrected compound notice',
@@ -437,6 +501,8 @@ class _NoticeController extends ContactRecoveryController {
   GirviNoticeType? savedType;
   int? savedDays;
   String? deliveryReference;
+  String? deliveryChannel;
+  DateTime? deliveredAt;
   String? deliveryActionType;
   String? savedBrandingSnapshot;
   String? inlineMessage;
@@ -483,6 +549,8 @@ class _NoticeController extends ContactRecoveryController {
     DateTime? deliveredAt,
   }) async {
     this.deliveryReference = deliveryReference;
+    this.deliveryChannel = deliveryChannel;
+    this.deliveredAt = deliveredAt;
     deliveryActionType = actionType;
     return true;
   }

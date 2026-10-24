@@ -139,7 +139,7 @@ class GirviNoticeAction {
       case GirviNoticeActionTypes.noticePdfPrinted:
         return 'Notice PDF printed';
       case GirviNoticeActionTypes.noticePdfShared:
-        return 'Notice PDF shared';
+        return 'WhatsApp share opened';
       case GirviNoticeActionTypes.noticeDeliveryRecorded:
         return 'Notice delivery recorded';
       case GirviNoticeActionTypes.collateralRecoveryInitiated:

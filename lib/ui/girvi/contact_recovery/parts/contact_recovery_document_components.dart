@@ -226,12 +226,12 @@ class _NoticeDocumentCard extends StatelessWidget {
             .format(proof.deliveredAt ?? proof.actionAt);
     final activityStatus = switch (latestPdfActivity?.actionType) {
       GirviNoticeActionTypes.noticePdfShared =>
-        'WhatsApp opened · confirm customer delivery',
+        'WhatsApp share opened. Delivery not confirmed.',
       GirviNoticeActionTypes.noticePdfPrinted =>
-        'Printed notice · confirm customer handover',
+        'Notice printed. Delivery not confirmed.',
       GirviNoticeActionTypes.noticePdfSaved =>
-        'PDF downloaded · confirm customer handover',
-      _ => 'Notice PDF not issued yet',
+        'PDF downloaded. Delivery not confirmed.',
+      _ => 'Notice prepared. PDF not issued yet.',
     };
     const color = GirviColors.info;
 
@@ -239,7 +239,7 @@ class _NoticeDocumentCard extends StatelessWidget {
       onTap: onView,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        width: 206,
+        width: 260,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -337,7 +337,7 @@ class _NoticeDocumentCard extends StatelessWidget {
                   fontSize: 12.5,
                   fontWeight: FontWeight.w900,
                 ),
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -393,7 +393,13 @@ class _NoticeDocumentCard extends StatelessWidget {
                   icon: const Icon(Icons.verified_outlined, size: 16),
                   label: const Text('Confirm Delivery'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: GirviColors.success,
+                    foregroundColor: GirviColors.successText,
+                    backgroundColor: const Color(0xFFECFDF5),
+                    side: const BorderSide(color: GirviColors.successText),
+                    textStyle: GoogleFonts.inter(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12.5,
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
@@ -408,7 +414,13 @@ class _NoticeDocumentCard extends StatelessWidget {
                     const Icon(Icons.account_balance_wallet_outlined, size: 16),
                 label: const Text('Settlement'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: GirviColors.info,
+                  foregroundColor: GirviColors.shellBg,
+                  backgroundColor: const Color(0xFFEFF6FF),
+                  side: const BorderSide(color: GirviColors.info),
+                  textStyle: GoogleFonts.inter(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12.5,
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
               ),

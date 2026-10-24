@@ -18,15 +18,17 @@ extension _NoticeDelivery on _ContactRecoveryScreenState {
     GirviNoticeAction notice,
   ) async {
     final currentNotice = item.formalNoticeAction;
+    final pdfActivity = item.latestPdfActivityForNotice(notice);
     if (currentNotice == null ||
         currentNotice.id != notice.id ||
-        item.latestPdfActivityForNotice(notice) == null) {
+        pdfActivity == null) {
       _controller.showInlineMessage('Issue the current notice PDF first.');
       return;
     }
     final confirmation = await showDialog<_NoticeDeliveryConfirmation>(
       context: context,
-      builder: (context) => _ConfirmNoticeDeliveryDialog(notice: notice),
+      builder: (context) =>
+          _ConfirmNoticeDeliveryDialog(pdfActivity: pdfActivity),
     );
     if (confirmation == null || !mounted) return;
     final approvedText = item
@@ -56,88 +58,77 @@ extension _NoticeDelivery on _ContactRecoveryScreenState {
   }
 }
 
-class _ConfirmNoticeDeliveryDialog extends StatefulWidget {
-  const _ConfirmNoticeDeliveryDialog({required this.notice});
+class _ConfirmNoticeDeliveryDialog extends StatelessWidget {
+  const _ConfirmNoticeDeliveryDialog({required this.pdfActivity});
 
-  final GirviNoticeAction notice;
+  final GirviNoticeAction pdfActivity;
 
-  @override
-  State<_ConfirmNoticeDeliveryDialog> createState() =>
-      _ConfirmNoticeDeliveryDialogState();
-}
+  String get _channel => switch (pdfActivity.actionType) {
+        GirviNoticeActionTypes.noticePdfShared => 'WhatsApp',
+        GirviNoticeActionTypes.noticePdfPrinted => 'Printed copy',
+        GirviNoticeActionTypes.noticePdfSaved => 'Downloaded PDF',
+        _ => pdfActivity.deliveryChannel?.trim().isNotEmpty == true
+            ? pdfActivity.deliveryChannel!.trim()
+            : 'Notice PDF',
+      };
 
-class _ConfirmNoticeDeliveryDialogState
-    extends State<_ConfirmNoticeDeliveryDialog> {
-  static const _channels = [
-    'In person',
-    'WhatsApp',
-    'Registered post',
-    'Other',
-  ];
-  final _reference = TextEditingController();
-  late String _channel =
-      widget.notice.actionType == GirviNoticeActionTypes.noticePdfShared
-          ? 'WhatsApp'
-          : 'In person';
-  DateTime _date = DateTime.now();
+  String get _reference => 'NOTICE_PDF_ACTION_${pdfActivity.id}';
 
-  @override
-  void dispose() {
-    _reference.dispose();
-    super.dispose();
-  }
-
-  Future<void> _selectDate() async {
-    final today = DateUtils.dateOnly(DateTime.now());
-    final approvedDay = DateUtils.dateOnly(widget.notice.actionAt);
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: DateUtils.dateOnly(_date),
-      firstDate: approvedDay,
-      lastDate: today,
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: GirviColors.shellBg,
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: Colors.black,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-        ),
-        child: child!,
-      ),
-    );
-    if (selected != null && mounted) {
-      setState(() => _date = selected);
-    }
-  }
-
-  void _confirm() {
-    final reference = _reference.text.trim();
-    if (reference.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Enter a handover or sending reference.'),
-      ));
-      return;
-    }
-    final today = DateUtils.dateOnly(DateTime.now());
-    final selected = DateUtils.dateOnly(_date);
-    final deliveredAt = selected == today
-        ? DateTime.now()
-        : DateTime(selected.year, selected.month, selected.day, 23, 59, 59);
+  void _confirm(BuildContext context) {
     Navigator.of(context).pop(_NoticeDeliveryConfirmation(
       channel: _channel,
-      reference: reference,
-      deliveredAt: deliveredAt,
+      reference: _reference,
+      deliveredAt: pdfActivity.actionAt,
     ));
   }
+
+  Widget _recordedDetail(IconData icon, String label, String value) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: GirviColors.inputBg,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: GirviColors.cardBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 19, color: GirviColors.info),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(value,
+                      style: GoogleFonts.inter(
+                          color: GirviColors.textDark,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
 
   @override
   Widget build(BuildContext context) => AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        title: const Text('Confirm Customer Delivery'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: GirviColors.cardBorder),
+        ),
+        title: Text('Confirm Customer Delivery',
+            style: GoogleFonts.manrope(
+                color: GirviColors.textDark,
+                fontSize: 20,
+                fontWeight: FontWeight.w900)),
         content: SizedBox(
           width: 430,
           child: Column(
@@ -145,41 +136,23 @@ class _ConfirmNoticeDeliveryDialogState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Confirm only after the notice reached the customer. The response period starts from this date.',
+                'Confirm only after the customer received the notice. Its response period will start from the recorded notice time below.',
                 style: TextStyle(
-                    color: Colors.black87, fontWeight: FontWeight.w600),
+                    color: GirviColors.textDark, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _channel,
-                dropdownColor: Colors.white,
-                decoration:
-                    const InputDecoration(labelText: 'Delivery channel'),
-                items: [
-                  for (final channel in _channels)
-                    DropdownMenuItem(value: channel, child: Text(channel)),
-                ],
-                onChanged: (value) {
-                  if (value != null) setState(() => _channel = value);
-                },
+              _recordedDetail(
+                Icons.event_rounded,
+                'Recorded notice time',
+                DateFormat('dd MMM yyyy, hh:mm a').format(pdfActivity.actionAt),
               ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _selectDate,
-                icon: const Icon(Icons.event_rounded),
-                label: Text(
-                  'Delivered on ${DateFormat('dd MMM yyyy').format(_date)}',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _reference,
-                style: const TextStyle(
-                    color: Colors.black, fontWeight: FontWeight.w600),
-                decoration: const InputDecoration(
-                  labelText: 'Delivery reference',
-                  hintText: 'Handover acknowledgment or sent message reference',
-                ),
+              const SizedBox(height: 8),
+              _recordedDetail(Icons.send_rounded, 'Recorded method', _channel),
+              const SizedBox(height: 8),
+              _recordedDetail(
+                Icons.tag_rounded,
+                'Reference from saved notice action',
+                _reference,
               ),
             ],
           ),
@@ -187,10 +160,20 @@ class _ConfirmNoticeDeliveryDialogState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: GirviColors.textDark,
+              backgroundColor: GirviColors.inputBgLocked,
+              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
+            ),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: _confirm,
+            onPressed: () => _confirm(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: GirviColors.shellBg,
+              foregroundColor: Colors.white,
+              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
+            ),
             child: const Text('Confirm Delivery'),
           ),
         ],

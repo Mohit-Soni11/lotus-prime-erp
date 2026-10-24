@@ -46,6 +46,7 @@ class _CustomerResponseTimelineDialog extends StatelessWidget {
             tooltip: 'Close',
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close_rounded),
+            color: GirviColors.textDark,
           ),
         ],
       ),
@@ -89,6 +90,11 @@ class _CustomerResponseTimelineDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            foregroundColor: GirviColors.textDark,
+            backgroundColor: GirviColors.inputBgLocked,
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
+          ),
           child: const Text('Close'),
         ),
       ],
@@ -299,8 +305,18 @@ class _FollowUpResolutionDialogState extends State<_FollowUpResolutionDialog> {
               const SizedBox(height: 14),
               DropdownButtonFormField<GirviPromiseStatus>(
                 initialValue: _status,
+                dropdownColor: Colors.white,
+                iconEnabledColor: GirviColors.textDark,
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontWeight: FontWeight.w800,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Outcome',
+                  labelStyle: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontWeight: FontWeight.w800,
+                  ),
                   filled: true,
                   fillColor: GirviColors.bodyBg,
                   border: OutlineInputBorder(
@@ -315,7 +331,13 @@ class _FollowUpResolutionDialogState extends State<_FollowUpResolutionDialog> {
                     .map(
                       (status) => DropdownMenuItem(
                         value: status,
-                        child: Text(status.label),
+                        child: Text(
+                          status.label,
+                          style: GoogleFonts.inter(
+                            color: GirviColors.textDark,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
                     )
                     .toList(growable: false),
@@ -328,10 +350,22 @@ class _FollowUpResolutionDialogState extends State<_FollowUpResolutionDialog> {
                 controller: _noteController,
                 minLines: 2,
                 maxLines: 4,
+                style: GoogleFonts.inter(
+                  color: GirviColors.textDark,
+                  fontWeight: FontWeight.w700,
+                ),
+                cursorColor: GirviColors.shellBg,
                 decoration: InputDecoration(
                   labelText: 'Resolution note (optional)',
                   hintText:
                       'State what actually happened; do not overwrite the original response.',
+                  labelStyle: GoogleFonts.inter(
+                    color: GirviColors.textDark,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  hintStyle: GoogleFonts.inter(
+                    color: GirviColors.textDark.withValues(alpha: 0.7),
+                  ),
                   filled: true,
                   fillColor: GirviColors.bodyBg,
                   border: OutlineInputBorder(
@@ -345,6 +379,11 @@ class _FollowUpResolutionDialogState extends State<_FollowUpResolutionDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: GirviColors.textDark,
+              backgroundColor: GirviColors.inputBgLocked,
+              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w900),
+            ),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
