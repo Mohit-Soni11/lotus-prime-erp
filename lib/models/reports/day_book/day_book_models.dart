@@ -5,7 +5,7 @@
 // DESCRIPTION : Pure Dart data models — production grade.
 //               All field names match EXACT DB column names from:
 //               CashTransactions, Bills, BillItems, GirviLoans,
-//               GirviPayments, KarigarIssues, KarigarReceipts,
+//               GirviPayments,
 //               SalesOrders, OrderAdvances, StockItems.
 //
 //               GST and Normal sales are tracked separately from bill_type.
@@ -279,9 +279,6 @@ class MetalInflow {
   // BillItems from today's sales WHERE purity in ('22K','18K') — items SOLD
   // are OUT, but items returned come back IN via salesReturnReversal
 
-  // KarigarReceipts.netWeightReceived grouped by issue.metalType + issue.purity
-  final MetalWeight karigarFinishedGoods;
-
   // GirviLoans created today → netWeight pledged
   final MetalWeight girviSecurityDeposit;
 
@@ -296,17 +293,13 @@ class MetalInflow {
   final MetalWeight salesReturnReversal;
 
   const MetalInflow({
-    this.karigarFinishedGoods = const MetalWeight(),
     this.girviSecurityDeposit = const MetalWeight(),
     this.urdPurchase = const MetalWeight(),
     this.salesReturnReversal = const MetalWeight(),
   });
 
   MetalWeight get total =>
-      karigarFinishedGoods +
-      girviSecurityDeposit +
-      urdPurchase +
-      salesReturnReversal;
+      girviSecurityDeposit + urdPurchase + salesReturnReversal;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -316,15 +309,11 @@ class MetalOutflow {
   // BillItems for today's active bills — metal sold
   final MetalWeight retailDispatch;
 
-  // KarigarIssues.netWeightIssued grouped by metalType + purity
-  final MetalWeight karigarIssue;
-
   const MetalOutflow({
     this.retailDispatch = const MetalWeight(),
-    this.karigarIssue = const MetalWeight(),
   });
 
-  MetalWeight get total => retailDispatch + karigarIssue;
+  MetalWeight get total => retailDispatch;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

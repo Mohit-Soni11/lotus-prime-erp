@@ -11,7 +11,7 @@
 // ── 1. ORDER STATUS PIPELINE ─────────────────────────────────────────────────
 enum DeliveryOrderStatus {
   booked('BOOKED'),
-  inMaking('IN_MAKING'),
+  inProduction('IN_PRODUCTION'),
   ready('READY'),
   delivered('DELIVERED'),
   cancelled('CANCELLED');
@@ -29,8 +29,8 @@ enum DeliveryOrderStatus {
     switch (this) {
       case DeliveryOrderStatus.booked:
         return 'Booked';
-      case DeliveryOrderStatus.inMaking:
-        return 'In Making';
+      case DeliveryOrderStatus.inProduction:
+        return 'In Production';
       case DeliveryOrderStatus.ready:
         return 'Ready';
       case DeliveryOrderStatus.delivered:

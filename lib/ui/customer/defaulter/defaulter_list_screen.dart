@@ -136,7 +136,14 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                 totalCount:
                     state.activeFilter == DefaulterFilterBy.collateralRecovery
                         ? state.stats.collateralRecoveryCount
-                        : state.stats.totalRiskAccounts,
+                        : state.activeFilter == DefaulterFilterBy.actionRegister
+                            ? state.allDefaulters
+                                .where((account) =>
+                                    account.isNoticeFollowUpActionDue &&
+                                    !account.isCollateralRecovery &&
+                                    !account.isRecoverySettled)
+                                .length
+                            : state.stats.totalRiskAccounts,
                 activeFilter: state.activeFilter,
                 isLoading: state.isLoading,
                 lastUpdatedAt: state.stats.lastRefreshedAt,
@@ -146,6 +153,8 @@ class _DefaulterListScreenState extends State<DefaulterListScreen>
                   defaulters: state.displayedDefaulters,
                   showRecoveryHistory: state.activeFilter ==
                       DefaulterFilterBy.collateralRecovery,
+                  showActionRegister:
+                      state.activeFilter == DefaulterFilterBy.actionRegister,
                   isLoading: state.isLoading,
                   errorMessage: state.errorMessage,
                   onOpenAccount: _openGirviAccount,
@@ -186,7 +195,9 @@ class _ResultCountBar extends StatelessWidget {
 
     final noun = activeFilter == DefaulterFilterBy.collateralRecovery
         ? 'recovery cases'
-        : 'collection accounts';
+        : activeFilter == DefaulterFilterBy.actionRegister
+            ? 'follow-up actions'
+            : 'collection accounts';
     final String countText = displayedCount == totalCount
         ? 'Showing all $totalCount $noun'
         : 'Showing $displayedCount of $totalCount $noun';

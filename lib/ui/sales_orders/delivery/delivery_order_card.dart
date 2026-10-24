@@ -210,10 +210,10 @@ class _StatusBadge extends StatelessWidget {
           DeliveryColors.statusBookedBg,
           DeliveryIcons.statusBooked
         ),
-      DeliveryOrderStatus.inMaking => (
-          DeliveryColors.statusInMaking,
-          DeliveryColors.statusInMakingBg,
-          DeliveryIcons.statusInMaking
+      DeliveryOrderStatus.inProduction => (
+          DeliveryColors.statusInProduction,
+          DeliveryColors.statusInProductionBg,
+          DeliveryIcons.statusInProduction
         ),
       DeliveryOrderStatus.ready => (
           DeliveryColors.statusReady,

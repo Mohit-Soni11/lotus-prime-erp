@@ -39,18 +39,13 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
           'Customer will visit the shop on ${DateFormat('dd MMM yyyy').format(_promiseDueAt!)}.',
         GirviCustomerResponseKind.extensionRequest =>
           'Customer requested more time until ${DateFormat('dd MMM yyyy').format(_promiseDueAt!)}.',
-        GirviCustomerResponseKind.holdRequest =>
-          'Customer requested the account to be held until ${DateFormat('dd MMM yyyy').format(_promiseDueAt!)}.',
         GirviCustomerResponseKind.recoveryRequest =>
           'Customer requested recovery settlement.',
-        GirviCustomerResponseKind.noResponse =>
-          'No customer response was received by the notice deadline.',
       };
 
   String get _followUpDateLabel => switch (_kind) {
         GirviCustomerResponseKind.willVisit => 'Visit date',
         GirviCustomerResponseKind.extensionRequest => 'Extension until',
-        GirviCustomerResponseKind.holdRequest => 'Hold until',
         _ => 'Follow-up date',
       };
 
@@ -104,11 +99,7 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
   @override
   Widget build(BuildContext context) {
     final noticeLabel = widget.notice.noticeLabel;
-    final kinds = GirviCustomerResponseKind.values
-        .where((kind) =>
-            kind != GirviCustomerResponseKind.noResponse ||
-            widget.item.isNoticePeriodComplete)
-        .toList(growable: false);
+    const kinds = GirviCustomerResponseKind.values;
     return AlertDialog(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
@@ -149,21 +140,16 @@ class _CustomerResponseDialogState extends State<_CustomerResponseDialog> {
                 onChanged: (value) => setState(() {
                   _kind = value;
                   if (!value.requiresFollowUpDate) _promiseDueAt = null;
-                  if (value == GirviCustomerResponseKind.noResponse) {
-                    _channel = GirviContactChannel.other;
-                  }
                 }),
               ),
-              if (_kind != GirviCustomerResponseKind.noResponse) ...[
-                const SizedBox(height: 10),
-                _responseDropdown<GirviContactChannel>(
-                  label: 'Contact channel',
-                  value: _channel,
-                  values: GirviContactChannel.values,
-                  labelOf: (value) => value.label,
-                  onChanged: (value) => setState(() => _channel = value),
-                ),
-              ],
+              const SizedBox(height: 10),
+              _responseDropdown<GirviContactChannel>(
+                label: 'Contact channel',
+                value: _channel,
+                values: GirviContactChannel.values,
+                labelOf: (value) => value.label,
+                onChanged: (value) => setState(() => _channel = value),
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: _responseController,

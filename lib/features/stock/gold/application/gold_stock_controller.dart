@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/gold/application/gold_batch_code_generator.dart';
@@ -851,20 +850,11 @@ class GoldStockController extends AddStockController {
     try {
       final masterProfile =
           await MetalRateRepository().loadProfile(MetalRateMetal.gold);
-      final latestRate = await (_rateDb.select(_rateDb.dailyRates)
-            ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
-            ..limit(1))
-          .getSingleOrNull();
       final masterRate = _gold24kMarketRatePer10g(masterProfile);
-      final latest24kRate =
-          latestRate == null ? 0.0 : _parseGoldRate(latestRate.gold24k);
 
       if (masterRate > 0) {
         _goldRatePer10g = masterRate;
         _goldRateDate = masterProfile.updatedAt;
-      } else if (latest24kRate > 0) {
-        _goldRatePer10g = latest24kRate;
-        _goldRateDate = latestRate!.rateDate;
       } else {
         _goldRatePer10g = 0.0;
         _goldRateDate = null;
@@ -974,11 +964,6 @@ class GoldStockController extends AddStockController {
       return StockSubCategory.earring;
     }
     return StockSubCategory.other;
-  }
-
-  double _parseGoldRate(String raw) {
-    final normalized = raw.replaceAll(',', '').replaceAll('--', '0').trim();
-    return double.tryParse(normalized) ?? 0.0;
   }
 
   double _roundGoldWeight(double value) {

@@ -17,8 +17,6 @@
 //               │ CashTransactions → All income & expense flows            │
 //               │ GirviLoans       → Girvi disbursed + metal pledged       │
 //               │ GirviPayments    → Girvi receipts (INTEREST/FULL_RELEASE)│
-//               │ KarigarIssues    → Metal issued to karigar               │
-//               │ KarigarReceipts  → Finished goods + making charge paid   │
 //               │ ShopProfiles     → Opening cash balance                  │
 //               └─────────────────────────────────────────────────────────┘
 //
@@ -62,28 +60,24 @@ class DayBookRepository {
         _fetchNonGstBills(start, end), // 1: NonGstBillSummary
         _fetchIncomeByCategory(start, end), // 2: Map<String, double>
         _fetchExpenseByCategory(start, end), // 3: Map<String, double>
-        _fetchKarigarFinishedGoods(start, end), // 4: MetalWeight
-        _fetchGirviSecurityDeposit(start, end), // 5: MetalWeight
-        _fetchRetailMetalDispatch(start, end), // 6: MetalWeight
-        _fetchKarigarIssues(start, end), // 7: MetalWeight
-        _fetchOpeningCash(), // 8: double
-        _fetch7DayExpenseAvg(date), // 9: double
-        _fetchPaymentBreakup(start, end), // 10: PaymentBreakup
-        _fetchDueCollectionReceipts(start, end), // 11: double
+        _fetchGirviSecurityDeposit(start, end), // 4: MetalWeight
+        _fetchRetailMetalDispatch(start, end), // 5: MetalWeight
+        _fetchOpeningCash(), // 6: double
+        _fetch7DayExpenseAvg(date), // 7: double
+        _fetchPaymentBreakup(start, end), // 8: PaymentBreakup
+        _fetchDueCollectionReceipts(start, end), // 9: double
       ]);
 
       final gstSales = results[0] as GstBillSummary;
       final nonGstSales = results[1] as NonGstBillSummary;
       final incomeMap = results[2] as Map<String, double>;
       final expenseMap = results[3] as Map<String, double>;
-      final karigarMetal = results[4] as MetalWeight;
-      final girviMetal = results[5] as MetalWeight;
-      final retailMetal = results[6] as MetalWeight;
-      final karigarIssue = results[7] as MetalWeight;
-      final openingCash = results[8] as double;
-      final avgExpense = results[9] as double;
-      final payBreakup = results[10] as PaymentBreakup;
-      final dueCollection = results[11] as double;
+      final girviMetal = results[4] as MetalWeight;
+      final retailMetal = results[5] as MetalWeight;
+      final openingCash = results[6] as double;
+      final avgExpense = results[7] as double;
+      final payBreakup = results[8] as PaymentBreakup;
+      final dueCollection = results[9] as double;
 
       // ── Build CashInflow ───────────────────────────────────────────────────
       final cashIn = CashInflow(
@@ -116,14 +110,8 @@ class DayBookRepository {
       );
 
       // ── Build Metal flows ─────────────────────────────────────────────────
-      final metalIn = MetalInflow(
-        karigarFinishedGoods: karigarMetal,
-        girviSecurityDeposit: girviMetal,
-      );
-      final metalOut = MetalOutflow(
-        retailDispatch: retailMetal,
-        karigarIssue: karigarIssue,
-      );
+      final metalIn = MetalInflow(girviSecurityDeposit: girviMetal);
+      final metalOut = MetalOutflow(retailDispatch: retailMetal);
 
       // ── Anomaly Detection ─────────────────────────────────────────────────
       final anomalies = _detectAnomalies(
@@ -305,44 +293,7 @@ class DayBookRepository {
   }
 
   // ==========================================================================
-  // 5. METAL IN: Karigar Finished Goods
-  // KarigarReceipts WHERE receiptDate in range
   // ==========================================================================
-  Future<MetalWeight> _fetchKarigarFinishedGoods(
-      DateTime start, DateTime end) async {
-    try {
-      final receipts = await (_db.select(_db.karigarReceipts)
-            ..where((r) =>
-                r.receiptDate.isBiggerOrEqualValue(start) &
-                r.receiptDate.isSmallerOrEqualValue(end)))
-          .get();
-
-      if (receipts.isEmpty) return const MetalWeight();
-
-      final totals = <String, double>{};
-
-      for (final receipt in receipts) {
-        final issue = await (_db.select(_db.karigarIssues)
-              ..where((i) => i.id.equals(receipt.issueId)))
-            .getSingleOrNull();
-
-        if (issue == null) continue;
-
-        _addMetal(
-          totals,
-          metalType: issue.metalType,
-          purity: issue.purity,
-          weight: receipt.netWeightReceived,
-        );
-      }
-
-      return MetalWeight.fromEntries(totals);
-    } catch (e) {
-      AppLogger.debug('❌ _fetchKarigarFinishedGoods: $e');
-      return const MetalWeight();
-    }
-  }
-
   // ==========================================================================
   // 6. METAL IN: Girvi Security Deposit
   // GirviLoans WHERE startDate in range AND status='ACTIVE'
@@ -417,37 +368,7 @@ class DayBookRepository {
   }
 
   // ==========================================================================
-  // 8. METAL OUT: Karigar Issue
-  // KarigarIssues WHERE issueDate in range AND status != 'Cancelled'
   // ==========================================================================
-  Future<MetalWeight> _fetchKarigarIssues(DateTime start, DateTime end) async {
-    try {
-      final issues = await (_db.select(_db.karigarIssues)
-            ..where((i) =>
-                i.issueDate.isBiggerOrEqualValue(start) &
-                i.issueDate.isSmallerOrEqualValue(end) &
-                i.status.isNotIn(['Cancelled'])))
-          .get();
-
-      if (issues.isEmpty) return const MetalWeight();
-
-      final totals = <String, double>{};
-      for (final issue in issues) {
-        _addMetal(
-          totals,
-          metalType: issue.metalType,
-          purity: issue.purity,
-          weight: issue.netWeightIssued,
-        );
-      }
-
-      return MetalWeight.fromEntries(totals);
-    } catch (e) {
-      AppLogger.debug('❌ _fetchKarigarIssues: $e');
-      return const MetalWeight();
-    }
-  }
-
   // ==========================================================================
   // 9. OPENING CASH — from ShopProfiles.openingCashBalance
   // ==========================================================================

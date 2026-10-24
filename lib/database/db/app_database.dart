@@ -29,9 +29,6 @@ import '../tables/girvi/girvi_disbursements.dart';
 import '../tables/girvi/girvi_notice_actions.dart';
 import '../tables/girvi/girvi_customer_responses.dart';
 import '../tables/girvi/girvi_notice_documents.dart';
-import '../tables/karigar/karigar_issues.dart';
-import '../tables/karigar/karigar_masters.dart';
-import '../tables/karigar/karigar_receipts.dart';
 import '../tables/loans.dart';
 import '../tables/notifications.dart';
 import '../tables/sales_orders.dart';
@@ -44,6 +41,7 @@ import '../tables/setting/billing/purchase_billing_settings.dart';
 import '../tables/setting/billing/girvi_billing_settings.dart';
 import '../tables/setting/billing/shop_print_information_settings.dart';
 import '../tables/setting/billing/booking_advance_billing_settings.dart';
+import '../tables/setting/metal_rate/metal_rate_ledger_tables.dart';
 import 'migrations/girvi_retired_notice_cleanup.dart';
 
 // ✅ v16: Tax & GST
@@ -71,9 +69,6 @@ part 'app_database.g.dart';
     CashTransactions,
     BankAccounts,
     BankTransactions,
-    KarigarMasters,
-    KarigarIssues,
-    KarigarReceipts,
     GirviLoans,
     GirviPayments,
     GirviLoanItems,
@@ -89,6 +84,8 @@ part 'app_database.g.dart';
     GirviBillingSettings,
     ShopPrintInformationSettings,
     BookingAdvanceBillingSettings,
+    MetalRateProfiles,
+    MetalRateRevisions,
     GoldStockReceipts,
     GoldStockReceiptLines,
     GoldReceiptSettlements,
@@ -190,6 +187,47 @@ class AppDatabase extends _$AppDatabase {
       );
     } catch (error, stackTrace) {
       _handleMigrationError(error, stackTrace);
+    }
+  }
+
+  Future<void> _dropColumnIfPresent({
+    required String tableName,
+    required String columnName,
+  }) async {
+    if (!await _tableExists(tableName)) return;
+    final columns = await _tableColumns(tableName);
+    if (!columns.contains(columnName.toLowerCase())) return;
+    await customStatement(
+      'ALTER TABLE "$tableName" DROP COLUMN "$columnName"',
+    );
+  }
+
+  Future<void> _removeKarigarSchema() async {
+    await _dropColumnIfPresent(
+      tableName: 'delivery_items',
+      columnName: 'karigar_id',
+    );
+    await _dropColumnIfPresent(
+      tableName: 'delivery_items',
+      columnName: 'karigar_name',
+    );
+    await _dropColumnIfPresent(
+      tableName: 'delivery_orders',
+      columnName: 'karigar_id',
+    );
+    await _dropColumnIfPresent(
+      tableName: 'delivery_orders',
+      columnName: 'karigar_name',
+    );
+    await customStatement('DROP TABLE IF EXISTS "karigar_receipts"');
+    await customStatement('DROP TABLE IF EXISTS "karigar_issues"');
+    await customStatement('DROP TABLE IF EXISTS "karigar_masters"');
+    if (await _tableExists('delivery_orders')) {
+      await customStatement('''
+        UPDATE "delivery_orders"
+        SET "status" = 'IN_PRODUCTION'
+        WHERE "status" = 'IN_MAKING'
+      ''');
     }
   }
 
@@ -1109,11 +1147,6 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(bankAccounts);
             await m.createTable(bankTransactions);
           }
-          if (from < 8) {
-            await m.createTable(karigarMasters);
-            await m.createTable(karigarIssues);
-            await m.createTable(karigarReceipts);
-          }
           if (from < 9) {
             await m.createTable(girviLoans);
             await m.createTable(girviPayments);
@@ -1916,6 +1949,19 @@ class AppDatabase extends _$AppDatabase {
             await _upgradeGirviCustomerResponseWorkflow();
             AppLogger.info('v63 Girvi customer response workflow simplified.');
           }
+          if (from < 64) {
+            await _removeKarigarSchema();
+            AppLogger.info('v64 Karigar module permanently removed.');
+          }
+          if (from < 65) {
+            await m.createTable(metalRateProfiles);
+            await m.createTable(metalRateRevisions);
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS "idx_metal_rate_revisions_metal_effective" '
+              'ON "metal_rate_revisions" ("metal_key", "effective_at" DESC)',
+            );
+            AppLogger.info('v65 metal rate ledger enabled.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -1941,6 +1987,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureReturnReversalSchemaInternal();
           await ensureSalesGstPricingSchema();
           await ensureSalesInvoiceSeriesMigration();
+          await _removeKarigarSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
@@ -1986,8 +2033,6 @@ class AppDatabase extends _$AppDatabase {
               "approx_weight" REAL NOT NULL DEFAULT 0.0,
               "locked_rate" REAL NOT NULL DEFAULT 0.0,
               "status" TEXT NOT NULL DEFAULT 'BOOKED',
-              "karigar_id" INTEGER,
-              "karigar_name" TEXT,
               "advance_paid" REAL NOT NULL DEFAULT 0.0,
               "total_amount" REAL NOT NULL DEFAULT 0.0,
               "due_amount" REAL NOT NULL DEFAULT 0.0,
@@ -2016,8 +2061,6 @@ class AppDatabase extends _$AppDatabase {
               "image_path" TEXT,
               "notes" TEXT,
               "item_status" TEXT NOT NULL DEFAULT 'PENDING',
-              "karigar_id" INTEGER,
-              "karigar_name" TEXT,
               "delivered_at" INTEGER,
               "created_at" INTEGER NOT NULL,
               "updated_at" INTEGER NOT NULL,
@@ -2101,9 +2144,15 @@ class AppDatabase extends _$AppDatabase {
   Future<void> _upgradeGirviCustomerResponseWorkflow() async {
     if (!await _tableExists('girvi_customer_responses')) return;
     await customStatement('''
+      UPDATE "girvi_customer_responses"
+      SET "response_kind" = 'EXTENSION_REQUEST'
+      WHERE "response_kind" = 'HOLD_REQUEST'
+        AND "promise_due_at" IS NOT NULL
+    ''');
+    await customStatement('''
       DELETE FROM "girvi_customer_responses"
       WHERE "response_kind" NOT IN (
-        'WILL_VISIT', 'EXTENSION_REQUEST', 'RECOVERY_REQUEST', 'NO_RESPONSE', 'HOLD_REQUEST'
+        'WILL_VISIT', 'EXTENSION_REQUEST', 'RECOVERY_REQUEST'
       )
     ''');
     final columns = await _tableColumns('girvi_customer_responses');

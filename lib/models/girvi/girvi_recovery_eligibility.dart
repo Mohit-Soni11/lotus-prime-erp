@@ -8,7 +8,6 @@ class GirviRecoveryEligibility {
     required DateTime? deliveredAt,
     required DateTime? noticeDeadline,
     GirviCustomerResponseKind? responseKind,
-    GirviPromiseStatus? responseStatus,
     DateTime? followUpDate,
   }) {
     if (deliveredAt == null) return null;
@@ -16,9 +15,7 @@ class GirviRecoveryEligibility {
       return deliveredAt;
     }
     if (noticeDeadline == null) return null;
-    if (responseKind?.requiresFollowUpDate == true &&
-        responseStatus == GirviPromiseStatus.open &&
-        followUpDate != null) {
+    if (followUpDate != null) {
       // A selected calendar date remains protected through the end of that day.
       final afterFollowUpDay = DateTime(
         followUpDate.year,

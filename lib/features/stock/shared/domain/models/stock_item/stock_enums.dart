@@ -142,7 +142,6 @@ enum StockStatus {
   damaged('Damaged'),
   archived('Archived'),
   onOrder('On Order'),
-  withKarigar('With Karigar'),
   repaired('Repaired');
 
   final String label;

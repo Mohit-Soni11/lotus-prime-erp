@@ -38,10 +38,6 @@ class DeliveryItems extends Table with BaseTable {
   // Values: PENDING | READY | DELIVERED
   TextColumn get itemStatus => text().withDefault(const Constant('PENDING'))();
 
-  // ── KARIGAR LINK ──────────────────────────────────────────────────────────
-  IntColumn? get karigarId => integer().nullable()();
-  TextColumn? get karigarName => text().nullable()();
-
   // ── DELIVERY TIMESTAMP ────────────────────────────────────────────────────
   DateTimeColumn? get deliveredAt => dateTime().nullable()();
 }

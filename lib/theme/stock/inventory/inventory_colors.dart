@@ -87,8 +87,6 @@ class InvColors {
   static const Color statusSoldText = Color(0xFF991B1B);
   static const Color statusOrderBg = Color(0xFFFFFBEB);
   static const Color statusOrderText = Color(0xFF92400E);
-  static const Color statusKarigarBg = Color(0xFFF5F3FF);
-  static const Color statusKarigarText = Color(0xFF4C1D95);
 
   // ── SHADOWS ──────────────────────────────────────────────────
   static const Color shadowLight = Color(0x0F000000);

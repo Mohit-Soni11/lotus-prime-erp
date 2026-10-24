@@ -113,6 +113,47 @@ class _RecoveryClosedBadge extends StatelessWidget {
   }
 }
 
+class _PromiseMonitoringBadge extends StatelessWidget {
+  const _PromiseMonitoringBadge();
+
+  @override
+  Widget build(BuildContext context) => const _FollowUpBadge(
+        label: 'PROMISE MONITORING',
+        color: DefaulterColors.riskMediumText,
+      );
+}
+
+class _FollowUpDueBadge extends StatelessWidget {
+  const _FollowUpDueBadge();
+
+  @override
+  Widget build(BuildContext context) => const _FollowUpBadge(
+        label: 'ACTION DUE',
+        color: DefaulterColors.riskCriticalText,
+      );
+}
+
+class _FollowUpBadge extends StatelessWidget {
+  const _FollowUpBadge({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.35)),
+        ),
+        child: Text(
+          label,
+          style: DefaulterStyles.riskBadgeText.copyWith(color: color),
+        ),
+      );
+}
+
 _RiskConfig _riskConfig(DefaulterRiskLevel level) {
   switch (level) {
     case DefaulterRiskLevel.critical:

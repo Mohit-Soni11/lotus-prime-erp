@@ -6,7 +6,6 @@
 //               Loads stock data, injects today's rates, builds summaries.
 // =============================================================================
 
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/setting/metal_rate/metal_rate_model.dart';
@@ -19,13 +18,10 @@ enum MetalCostingState { idle, loading, loaded, error }
 
 class MetalCostingController extends ChangeNotifier {
   final MetalCostingRepository _repo;
-  final AppDatabase _db;
-
   MetalCostingController({
     MetalCostingRepository? repo,
     AppDatabase? db,
-  })  : _repo = repo ?? MetalCostingRepository(AppDatabase()),
-        _db = db ?? AppDatabase() {
+  }) : _repo = repo ?? MetalCostingRepository(db ?? AppDatabase()) {
     loadData();
   }
 
@@ -54,7 +50,7 @@ class MetalCostingController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Get latest daily rate from DB
+      // 1. Resolve all costing rates from the authoritative rate ledger.
       final metalRateProfiles = await MetalRateRepository().loadProfiles();
       final profileRates = {
         for (final profile in metalRateProfiles)
@@ -63,30 +59,12 @@ class MetalCostingController extends ChangeNotifier {
               : 0.0,
       };
 
-      final rateQuery = _db.select(_db.dailyRates)
-        ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
-        ..limit(1);
-      final rates = await rateQuery.get();
-
-      if (rates.isNotEmpty) {
-        final row = rates.first;
-        // DB stores per 10g — ×10 for per 100g
-        final g24 = (double.tryParse(row.gold24k) ?? 0) * 10;
-        final sil = (double.tryParse(row.silverJewellery) ?? 0) * 10;
-        _todayRates = {
-          'gold': _positive(profileRates[MetalRateMetal.gold.key], g24),
-          'silver': _positive(profileRates[MetalRateMetal.silver.key], sil),
-          'platinum': _positive(profileRates[MetalRateMetal.platinum.key], 0),
-          'diamond': _positive(profileRates[MetalRateMetal.diamond.key], 0),
-        };
-      } else {
-        _todayRates = {
-          'gold': profileRates[MetalRateMetal.gold.key] ?? 0.0,
-          'silver': profileRates[MetalRateMetal.silver.key] ?? 0.0,
-          'platinum': profileRates[MetalRateMetal.platinum.key] ?? 0.0,
-          'diamond': profileRates[MetalRateMetal.diamond.key] ?? 0.0,
-        };
-      }
+      _todayRates = {
+        'gold': profileRates[MetalRateMetal.gold.key] ?? 0.0,
+        'silver': profileRates[MetalRateMetal.silver.key] ?? 0.0,
+        'platinum': profileRates[MetalRateMetal.platinum.key] ?? 0.0,
+        'diamond': profileRates[MetalRateMetal.diamond.key] ?? 0.0,
+      };
 
       // 2. Build purity + item summaries from stock DB
       _summaries = await _repo.buildSummary(todayRates: _todayRates);
@@ -126,11 +104,4 @@ class MetalCostingController extends ChangeNotifier {
 
   double getTodayRateForMetal(String metal) =>
       _todayRates[metal.toLowerCase()] ?? 0.0;
-}
-
-double _positive(double? value, double fallback) {
-  if (value != null && value > 0) {
-    return value;
-  }
-  return fallback;
 }

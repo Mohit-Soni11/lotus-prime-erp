@@ -177,16 +177,6 @@ final _summary = DayBookSummary(
     miscExpense: 1250,
   ),
   metalIn: const MetalInflow(
-    karigarFinishedGoods: MetalWeight(
-      gold22k: 248.765,
-      gold18k: 74.450,
-      silver: 860.250,
-      additionalEntries: {
-        'Gold::20K': 18.750,
-        'Platinum::950': 12.400,
-        'Diamond::VS': 3.250,
-      },
-    ),
     girviSecurityDeposit: MetalWeight(
       gold22k: 42.800,
       silver: 320.500,
@@ -204,11 +194,6 @@ final _summary = DayBookSummary(
         'Platinum::950': 4.100,
         'Diamond::VS': 1.200,
       },
-    ),
-    karigarIssue: MetalWeight(
-      gold22k: 92.450,
-      gold18k: 24.775,
-      silver: 180.900,
     ),
   ),
   paymentBreakup: const PaymentBreakup(

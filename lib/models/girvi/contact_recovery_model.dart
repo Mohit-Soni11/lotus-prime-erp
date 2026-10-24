@@ -123,19 +123,23 @@ class ContactRecoveryCase {
   GirviCustomerResponse? get latestCustomerResponse =>
       currentNoticeResponses.isEmpty ? null : currentNoticeResponses.first;
 
-  /// The most recent response controls recovery. A later customer reply can
-  /// replace an earlier visit, hold, or recovery request.
+  /// An explicit recovery request from the latest reply allows immediate
+  /// review; unresolved visit and extension dates otherwise remain protected.
   bool get customerAuthorisedRecovery =>
       latestCustomerResponse?.kind.authorisesRecovery ?? false;
 
   DateTime? get customerFollowUpUntil {
-    final response = latestCustomerResponse;
-    if (response == null ||
-        !response.requiresFollowUpDate ||
-        !response.status.isOpen) {
-      return null;
+    DateTime? latestDate;
+    for (final response in currentNoticeResponses) {
+      final due = response.promiseDueAt;
+      if (!response.requiresFollowUpDate ||
+          !response.status.isOpen ||
+          due == null) {
+        continue;
+      }
+      if (latestDate == null || due.isAfter(latestDate)) latestDate = due;
     }
-    return response.promiseDueAt;
+    return latestDate;
   }
 
   DateTime? get recoveryAvailableAt {
@@ -147,8 +151,7 @@ class ContactRecoveryCase {
       deliveredAt: delivery?.deliveredAt ?? delivery?.actionAt,
       noticeDeadline: recoveryReviewAvailableAt,
       responseKind: response?.kind,
-      responseStatus: response?.status,
-      followUpDate: response?.promiseDueAt,
+      followUpDate: customerFollowUpUntil,
     );
   }
 

@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../logic/customer/defaulter_logic.dart';
 import '../../../models/customer/defaulter_model.dart';
+import '../../../models/girvi/girvi_customer_response_model.dart';
 import '../../../theme/customer/defaulter/defaulter_theme.dart';
 
 part 'defaulter_risk_account_card.dart';
@@ -22,6 +23,7 @@ part 'defaulter_table_states.dart';
 class DefaulterDataTable extends StatelessWidget {
   final List<DefaulterModel> defaulters;
   final bool showRecoveryHistory;
+  final bool showActionRegister;
   final bool isLoading;
   final String? errorMessage;
   final ValueChanged<DefaulterModel> onOpenAccount;
@@ -32,6 +34,7 @@ class DefaulterDataTable extends StatelessWidget {
     super.key,
     required this.defaulters,
     this.showRecoveryHistory = false,
+    this.showActionRegister = false,
     required this.isLoading,
     required this.onOpenAccount,
     required this.onOpenInterestEntry,
@@ -50,6 +53,7 @@ class DefaulterDataTable extends StatelessWidget {
             _QueueHeader(
               count: defaulters.length,
               showRecoveryHistory: showRecoveryHistory,
+              showActionRegister: showActionRegister,
             ),
             Expanded(
               child: _QueueBody(
@@ -71,10 +75,12 @@ class DefaulterDataTable extends StatelessWidget {
 class _QueueHeader extends StatelessWidget {
   final int count;
   final bool showRecoveryHistory;
+  final bool showActionRegister;
 
   const _QueueHeader({
     required this.count,
     required this.showRecoveryHistory,
+    required this.showActionRegister,
   });
 
   @override
@@ -110,14 +116,18 @@ class _QueueHeader extends StatelessWidget {
                 Text(
                   showRecoveryHistory
                       ? 'Recovery Register'
-                      : 'Collection Accounts',
+                      : showActionRegister
+                          ? 'Action Register'
+                          : 'Collection Accounts',
                   style: DefaulterStyles.customerName.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   showRecoveryHistory
                       ? 'Recovery cases in progress and completed settlements'
-                      : 'Review each pledge balance and choose the next action',
+                      : showActionRegister
+                          ? 'Promises due for review and recovery action'
+                          : 'Review each pledge balance and choose the next action',
                   style: DefaulterStyles.customerCity,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -15,7 +15,6 @@ class _ContactRecoveryCard extends StatelessWidget {
   final VoidCallback onDownloadInvoice;
   final VoidCallback onViewItemImage;
   final VoidCallback onDownloadItemImage;
-  final VoidCallback? onInitiateRecovery;
   final VoidCallback? onCloseDisposal;
 
   const _ContactRecoveryCard({
@@ -33,7 +32,6 @@ class _ContactRecoveryCard extends StatelessWidget {
     required this.onDownloadInvoice,
     required this.onViewItemImage,
     required this.onDownloadItemImage,
-    required this.onInitiateRecovery,
     required this.onCloseDisposal,
   });
 
@@ -85,7 +83,6 @@ class _ContactRecoveryCard extends StatelessWidget {
             item: item,
             onOpenAccount: onOpenAccount,
             onPrepareNotice: onPrepareNotice,
-            onInitiateRecovery: onInitiateRecovery,
             onCloseDisposal: onCloseDisposal,
           );
 

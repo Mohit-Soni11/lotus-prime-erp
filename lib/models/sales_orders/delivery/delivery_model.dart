@@ -36,7 +36,6 @@ class DeliveryOrderUiModel {
   final DateTime? actualDeliveryDate;
   final String? imagePath;
   final String? notes;
-  final String? karigarName;
   final String? linkedBillNo;
   final List<DeliveryItemUiModel> items;
   final DateTime createdAt;
@@ -62,7 +61,6 @@ class DeliveryOrderUiModel {
     required this.actualDeliveryDate,
     required this.imagePath,
     required this.notes,
-    required this.karigarName,
     required this.linkedBillNo,
     required this.items,
     required this.createdAt,
@@ -134,7 +132,6 @@ class DeliveryItemUiModel {
   final String? imagePath;
   final String? notes;
   final DeliveryItemStatus itemStatus;
-  final String? karigarName;
   final DateTime? deliveredAt;
 
   const DeliveryItemUiModel({
@@ -149,7 +146,6 @@ class DeliveryItemUiModel {
     required this.imagePath,
     required this.notes,
     required this.itemStatus,
-    required this.karigarName,
     required this.deliveredAt,
   });
 }

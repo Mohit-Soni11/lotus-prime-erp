@@ -3,7 +3,7 @@
 // MODULE      : Billing Setup
 // LAYER       : Theme / Barrel Export
 // DESCRIPTION : Single import barrel — UI files import ONLY this file.
-//               Mirrors karigar_theme.dart pattern.
+//               Shared billing workspace theme.
 // =============================================================================
 
 export 'billing_setup_colors.dart';

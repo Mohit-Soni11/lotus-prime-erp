@@ -9,7 +9,6 @@ class SidebarIcons {
   static IconData get sales => Icons.shopping_cart_outlined;
   static IconData get purchase => Icons.shopping_bag_outlined;
   static IconData get stock => Icons.inventory_2_outlined;
-  static IconData get karigar => Icons.engineering_outlined;
   static IconData get girvi => Icons.lock_outline_rounded;
   static IconData get accounts => Icons.account_balance_wallet_outlined;
   static IconData get reports => Icons.assessment_outlined;

@@ -225,26 +225,35 @@ class GirviNoticeActionRepository {
         deliveredAt: firstDelivery,
         fallbackDays: noticePeriodDays,
       )!;
-      final latestResponse = await (_db.select(_db.girviCustomerResponses)
+      final responses = await (_db.select(_db.girviCustomerResponses)
             ..where((row) =>
                 row.girviId.equals(girviId) &
                 row.noticeActionId.equals(approvedNotice.id))
             ..orderBy([
               (row) => OrderingTerm.desc(row.receivedAt),
               (row) => OrderingTerm.desc(row.id),
-            ])
-            ..limit(1))
-          .getSingleOrNull();
+            ]))
+          .get();
+      final latestResponse = responses.firstOrNull;
+      DateTime? followUpUntil;
+      for (final response in responses) {
+        final kind = GirviCustomerResponseKind.fromDb(response.responseKind);
+        final status = GirviPromiseStatus.fromDb(response.status);
+        final due = response.promiseDueAt;
+        if (!kind.requiresFollowUpDate || !status.isOpen || due == null) {
+          continue;
+        }
+        if (followUpUntil == null || due.isAfter(followUpUntil)) {
+          followUpUntil = due;
+        }
+      }
       final availableAt = GirviRecoveryEligibility.availableAt(
         deliveredAt: firstDelivery,
         noticeDeadline: recoveryEligibleAt,
         responseKind: latestResponse == null
             ? null
             : GirviCustomerResponseKind.fromDb(latestResponse.responseKind),
-        responseStatus: latestResponse == null
-            ? null
-            : GirviPromiseStatus.fromDb(latestResponse.status),
-        followUpDate: latestResponse?.promiseDueAt,
+        followUpDate: followUpUntil,
       );
       if (availableAt == null || _now().isBefore(availableAt)) {
         throw StateError(

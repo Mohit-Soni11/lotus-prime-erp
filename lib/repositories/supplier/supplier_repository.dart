@@ -3,7 +3,7 @@
 // MODULE      : Supplier
 // LAYER       : Repository
 // DESCRIPTION : All DB read/write operations for Suppliers.
-//               Single source of truth — pattern mirrors karigar_repository.dart.
+//               Single source of truth for supplier data access.
 // =============================================================================
 
 import 'dart:convert';

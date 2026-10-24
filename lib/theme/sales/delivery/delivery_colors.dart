@@ -36,8 +36,8 @@ class DeliveryColors {
   // ── STATUS PIPELINE COLORS ────────────────────────────────────────────────
   static const Color statusBooked = Color(0xFF6366F1); // Indigo
   static const Color statusBookedBg = Color(0xFFEEF2FF);
-  static const Color statusInMaking = Color(0xFFF59E0B); // Amber
-  static const Color statusInMakingBg = Color(0xFFFEF3C7);
+  static const Color statusInProduction = Color(0xFFF59E0B); // Amber
+  static const Color statusInProductionBg = Color(0xFFFEF3C7);
   static const Color statusReady = Color(0xFF10B981); // Emerald
   static const Color statusReadyBg = Color(0xFFD1FAE5);
   static const Color statusDelivered = Color(0xFF3B82F6); // Blue
@@ -68,7 +68,7 @@ class DeliveryColors {
 
   // ── ACTION COLORS ─────────────────────────────────────────────────────────
   static const Color actionDeliver = Color(0xFF10B981);
-  static const Color actionInMaking = Color(0xFFF59E0B);
+  static const Color actionInProduction = Color(0xFFF59E0B);
   static const Color actionReady = Color(0xFF6366F1);
   static const Color actionCancel = Color(0xFFEF4444);
   static const Color actionWhatsApp = Color(0xFF25D366);

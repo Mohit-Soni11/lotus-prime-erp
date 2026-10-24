@@ -6,6 +6,7 @@
 // =============================================================================
 
 import 'package:intl/intl.dart';
+import '../girvi/girvi_customer_response_model.dart';
 
 enum DefaulterRiskLevel {
   critical,
@@ -34,6 +35,7 @@ enum DefaulterFilterBy {
   medium,
   low,
   overdue,
+  actionRegister,
   collateralRecovery,
 }
 
@@ -79,8 +81,13 @@ class DefaulterModel {
   final bool hasInterestPaidBeforeMaturity;
   final bool isCollateralRecovery;
   final bool isPaymentMonitoring;
+  final GirviCustomerResponseKind? noticeFollowUpKind;
+  final DateTime? noticePromisedDate;
+  final bool isNoticeFollowUpMonitoring;
+  final bool isNoticeFollowUpActionDue;
   final bool isNoticeEligible;
   final bool isRecoverySettled;
+  final String? recoveryDispositionStatus;
   final double recoveredAmount;
   final double recoverySettlementTotal;
   final double recoveryBalanceDue;
@@ -133,8 +140,13 @@ class DefaulterModel {
     required this.hasInterestPaidBeforeMaturity,
     required this.isCollateralRecovery,
     this.isPaymentMonitoring = false,
+    this.noticeFollowUpKind,
+    this.noticePromisedDate,
+    this.isNoticeFollowUpMonitoring = false,
+    this.isNoticeFollowUpActionDue = false,
     this.isNoticeEligible = false,
     this.isRecoverySettled = false,
+    this.recoveryDispositionStatus,
     this.recoveredAmount = 0,
     this.recoverySettlementTotal = 0,
     this.recoveryBalanceDue = 0,
@@ -258,7 +270,9 @@ class DefaulterStatsModel {
           .length,
       highCount:
           active.where((d) => d.riskLevel == DefaulterRiskLevel.high).length,
-      mediumCount: active.where((d) => d.isPaymentMonitoring).length,
+      mediumCount: active
+          .where((d) => d.isPaymentMonitoring && !d.isNoticeFollowUpActionDue)
+          .length,
       lowCount:
           active.where((d) => d.riskLevel == DefaulterRiskLevel.low).length,
       highestRiskDays: active.fold<int>(

@@ -133,7 +133,15 @@ class DefaulterLogic extends ChangeNotifier {
             .toList();
         break;
       case DefaulterFilterBy.medium:
-        result = result.where((d) => d.isPaymentMonitoring).toList();
+        result = result
+            .where((d) => d.isPaymentMonitoring && !d.isNoticeFollowUpActionDue)
+            .toList();
+        break;
+      case DefaulterFilterBy.actionRegister:
+        result = result
+            .where(
+                (d) => d.isNoticeFollowUpActionDue && !d.isCollateralRecovery)
+            .toList();
         break;
       case DefaulterFilterBy.low:
         result =

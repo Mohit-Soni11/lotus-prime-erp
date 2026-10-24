@@ -3,7 +3,6 @@ import 'package:drift/drift.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/girvi/girvi_customer_response_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
-import 'package:lotus_erp/models/girvi/girvi_notice_review_period.dart';
 
 /// Persistence boundary for customer replies and their recovery effect.
 /// Financial entries remain exclusively owned by the Girvi payment repository.
@@ -86,18 +85,6 @@ class GirviCustomerResponseRepository {
               .isBefore(DateTime(
                   responseAt.year, responseAt.month, responseAt.day))) {
         throw ArgumentError('The follow-up date cannot be in the past.');
-      }
-      if (kind == GirviCustomerResponseKind.noResponse) {
-        final deadline = GirviNoticeReviewPeriod.deadline(
-          approvedAt: linkedNotice.actionAt,
-          approvedDeadline: linkedNotice.noticeDeadlineAt,
-          deliveredAt: deliveredAt,
-          fallbackDays: 7,
-        );
-        if (deadline == null || responseAt.isBefore(deadline)) {
-          throw StateError(
-              'No response can be recorded only after the notice deadline.');
-        }
       }
       final effectiveStage = noticeStage ?? linkedNotice.noticeStage;
       return _db.into(_db.girviCustomerResponses).insert(

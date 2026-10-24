@@ -20,7 +20,6 @@ class _ContactRecoveryBody extends StatelessWidget {
   final ValueChanged<ContactRecoveryCase> onDownloadInvoice;
   final ValueChanged<ContactRecoveryCase> onViewItemImage;
   final ValueChanged<ContactRecoveryCase> onDownloadItemImage;
-  final ValueChanged<ContactRecoveryCase> onInitiateRecovery;
   final ValueChanged<ContactRecoveryCase> onCloseDisposal;
 
   const _ContactRecoveryBody({
@@ -38,7 +37,6 @@ class _ContactRecoveryBody extends StatelessWidget {
     required this.onDownloadInvoice,
     required this.onViewItemImage,
     required this.onDownloadItemImage,
-    required this.onInitiateRecovery,
     required this.onCloseDisposal,
   });
 
@@ -84,11 +82,10 @@ class _ContactRecoveryBody extends StatelessWidget {
         onDownloadInvoice: () => onDownloadInvoice(item),
         onViewItemImage: () => onViewItemImage(item),
         onDownloadItemImage: () => onDownloadItemImage(item),
-        onInitiateRecovery: item.canInitiateCollateralRecovery
-            ? () => onInitiateRecovery(item)
-            : null,
         onCloseDisposal:
-            item.canCloseDisposal ? () => onCloseDisposal(item) : null,
+            item.canInitiateCollateralRecovery || item.canCloseDisposal
+                ? () => onCloseDisposal(item)
+                : null,
       ),
     );
   }

@@ -52,12 +52,6 @@ class AppRoutes {
   static const String stockTransferRoute = '/stock/transfer';
   static const String lowStockAlertRoute = '/stock/low-alert';
 
-  // Karigar
-  static const String issueToKarigarRoute = '/karigar/issue';
-  static const String receiveFromKarigarRoute = '/karigar/receive';
-  static const String pendingJobsRoute = '/karigar/pending';
-  static const String karigarLedgerRoute = '/karigar/ledger';
-
   // Girvi / pawn loan
   static const String newGirviRoute = '/girvi/new';
   static const String girviReleaseRoute = '/girvi/ledger';
@@ -114,10 +108,6 @@ class AppRoutes {
     stockDispositionRoute: 'Inventory Disposition',
     stockTransferRoute: 'Stock Transfer',
     lowStockAlertRoute: 'Low Stock Alerts',
-    issueToKarigarRoute: 'Issue to Karigar',
-    receiveFromKarigarRoute: 'Receive from Karigar',
-    pendingJobsRoute: 'Pending Jobs',
-    karigarLedgerRoute: 'Karigar Ledger',
     newGirviRoute: 'New Pledge Ticket',
     girviReleaseRoute: 'Pledge Ledger',
     interestCalcRoute: 'Interest Entry',
@@ -194,12 +184,6 @@ class RoutePaths {
   static const String stockDisposition = '/app/stock/disposition';
   static const String stockTransfer = '/app/stock/transfer';
   static const String stockLowAlert = '/app/stock/low-alert';
-
-  // Karigar
-  static const String karigarIssue = '/app/karigar/issue';
-  static const String karigarReceive = '/app/karigar/receive';
-  static const String karigarPending = '/app/karigar/pending';
-  static const String karigarLedger = '/app/karigar/ledger';
 
   // Girvi
   static const String girviNew = '/app/girvi/new';
@@ -283,10 +267,6 @@ class RouteMapper {
     AppRoutes.stockDispositionRoute: RoutePaths.stockDisposition,
     AppRoutes.stockTransferRoute: RoutePaths.stockTransfer,
     AppRoutes.lowStockAlertRoute: RoutePaths.stockLowAlert,
-    AppRoutes.issueToKarigarRoute: RoutePaths.karigarIssue,
-    AppRoutes.receiveFromKarigarRoute: RoutePaths.karigarReceive,
-    AppRoutes.pendingJobsRoute: RoutePaths.karigarPending,
-    AppRoutes.karigarLedgerRoute: RoutePaths.karigarLedger,
     AppRoutes.newGirviRoute: RoutePaths.girviNew,
     AppRoutes.girviReleaseRoute: RoutePaths.girviList,
     AppRoutes.interestCalcRoute: RoutePaths.girviInterest,

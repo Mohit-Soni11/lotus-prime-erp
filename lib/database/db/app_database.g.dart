@@ -17067,2406 +17067,6 @@ class BankTransactionsCompanion extends UpdateCompanion<BankTransaction> {
   }
 }
 
-class $KarigarMastersTable extends KarigarMasters
-    with TableInfo<$KarigarMastersTable, KarigarMaster> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KarigarMastersTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-      'updated_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 2, maxTextLength: 150),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
-  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
-  @override
-  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
-      'phone', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 10, maxTextLength: 15),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
-  static const VerificationMeta _alternatePhoneMeta =
-      const VerificationMeta('alternatePhone');
-  @override
-  late final GeneratedColumn<String> alternatePhone = GeneratedColumn<String>(
-      'alternate_phone', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _specializationMeta =
-      const VerificationMeta('specialization');
-  @override
-  late final GeneratedColumn<String> specialization = GeneratedColumn<String>(
-      'specialization', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('All Metals'));
-  static const VerificationMeta _rateTypeMeta =
-      const VerificationMeta('rateType');
-  @override
-  late final GeneratedColumn<String> rateType = GeneratedColumn<String>(
-      'rate_type', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('Per Gram (Rs/g)'));
-  static const VerificationMeta _rateAmountMeta =
-      const VerificationMeta('rateAmount');
-  @override
-  late final GeneratedColumn<double> rateAmount = GeneratedColumn<double>(
-      'rate_amount', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _addressMeta =
-      const VerificationMeta('address');
-  @override
-  late final GeneratedColumn<String> address = GeneratedColumn<String>(
-      'address', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _cityMeta = const VerificationMeta('city');
-  @override
-  late final GeneratedColumn<String> city = GeneratedColumn<String>(
-      'city', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _openingBalanceMeta =
-      const VerificationMeta('openingBalance');
-  @override
-  late final GeneratedColumn<double> openingBalance = GeneratedColumn<double>(
-      'opening_balance', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _isActiveMeta =
-      const VerificationMeta('isActive');
-  @override
-  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
-      'is_active', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
-      defaultValue: const Constant(true));
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
-  @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-      'notes', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        createdAt,
-        updatedAt,
-        name,
-        phone,
-        alternatePhone,
-        specialization,
-        rateType,
-        rateAmount,
-        address,
-        city,
-        openingBalance,
-        isActive,
-        notes
-      ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'karigar_masters';
-  @override
-  VerificationContext validateIntegrity(Insertable<KarigarMaster> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('phone')) {
-      context.handle(
-          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
-    } else if (isInserting) {
-      context.missing(_phoneMeta);
-    }
-    if (data.containsKey('alternate_phone')) {
-      context.handle(
-          _alternatePhoneMeta,
-          alternatePhone.isAcceptableOrUnknown(
-              data['alternate_phone']!, _alternatePhoneMeta));
-    }
-    if (data.containsKey('specialization')) {
-      context.handle(
-          _specializationMeta,
-          specialization.isAcceptableOrUnknown(
-              data['specialization']!, _specializationMeta));
-    }
-    if (data.containsKey('rate_type')) {
-      context.handle(_rateTypeMeta,
-          rateType.isAcceptableOrUnknown(data['rate_type']!, _rateTypeMeta));
-    }
-    if (data.containsKey('rate_amount')) {
-      context.handle(
-          _rateAmountMeta,
-          rateAmount.isAcceptableOrUnknown(
-              data['rate_amount']!, _rateAmountMeta));
-    }
-    if (data.containsKey('address')) {
-      context.handle(_addressMeta,
-          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
-    }
-    if (data.containsKey('city')) {
-      context.handle(
-          _cityMeta, city.isAcceptableOrUnknown(data['city']!, _cityMeta));
-    }
-    if (data.containsKey('opening_balance')) {
-      context.handle(
-          _openingBalanceMeta,
-          openingBalance.isAcceptableOrUnknown(
-              data['opening_balance']!, _openingBalanceMeta));
-    }
-    if (data.containsKey('is_active')) {
-      context.handle(_isActiveMeta,
-          isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KarigarMaster map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KarigarMaster(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      phone: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}phone'])!,
-      alternatePhone: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}alternate_phone']),
-      specialization: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}specialization'])!,
-      rateType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}rate_type'])!,
-      rateAmount: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}rate_amount'])!,
-      address: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}address']),
-      city: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}city']),
-      openingBalance: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}opening_balance'])!,
-      isActive: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
-      notes: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
-    );
-  }
-
-  @override
-  $KarigarMastersTable createAlias(String alias) {
-    return $KarigarMastersTable(attachedDatabase, alias);
-  }
-}
-
-class KarigarMaster extends DataClass implements Insertable<KarigarMaster> {
-  final int id;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final String name;
-  final String phone;
-  final String? alternatePhone;
-
-  /// e.g. Gold Work, Silver Work, Diamond Setting, All Metals
-  final String specialization;
-
-  /// Rate basis — Per Gram (Rs/g) | Per Piece (Rs) | Percentage (%)
-  final String rateType;
-
-  /// Making charge rate (unit depends on rateType)
-  final double rateAmount;
-  final String? address;
-  final String? city;
-
-  /// Opening balance (positive = we owe karigar, negative = karigar owes us)
-  final double openingBalance;
-  final bool isActive;
-  final String? notes;
-  const KarigarMaster(
-      {required this.id,
-      required this.createdAt,
-      this.updatedAt,
-      required this.name,
-      required this.phone,
-      this.alternatePhone,
-      required this.specialization,
-      required this.rateType,
-      required this.rateAmount,
-      this.address,
-      this.city,
-      required this.openingBalance,
-      required this.isActive,
-      this.notes});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || updatedAt != null) {
-      map['updated_at'] = Variable<DateTime>(updatedAt);
-    }
-    map['name'] = Variable<String>(name);
-    map['phone'] = Variable<String>(phone);
-    if (!nullToAbsent || alternatePhone != null) {
-      map['alternate_phone'] = Variable<String>(alternatePhone);
-    }
-    map['specialization'] = Variable<String>(specialization);
-    map['rate_type'] = Variable<String>(rateType);
-    map['rate_amount'] = Variable<double>(rateAmount);
-    if (!nullToAbsent || address != null) {
-      map['address'] = Variable<String>(address);
-    }
-    if (!nullToAbsent || city != null) {
-      map['city'] = Variable<String>(city);
-    }
-    map['opening_balance'] = Variable<double>(openingBalance);
-    map['is_active'] = Variable<bool>(isActive);
-    if (!nullToAbsent || notes != null) {
-      map['notes'] = Variable<String>(notes);
-    }
-    return map;
-  }
-
-  KarigarMastersCompanion toCompanion(bool nullToAbsent) {
-    return KarigarMastersCompanion(
-      id: Value(id),
-      createdAt: Value(createdAt),
-      updatedAt: updatedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(updatedAt),
-      name: Value(name),
-      phone: Value(phone),
-      alternatePhone: alternatePhone == null && nullToAbsent
-          ? const Value.absent()
-          : Value(alternatePhone),
-      specialization: Value(specialization),
-      rateType: Value(rateType),
-      rateAmount: Value(rateAmount),
-      address: address == null && nullToAbsent
-          ? const Value.absent()
-          : Value(address),
-      city: city == null && nullToAbsent ? const Value.absent() : Value(city),
-      openingBalance: Value(openingBalance),
-      isActive: Value(isActive),
-      notes:
-          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
-    );
-  }
-
-  factory KarigarMaster.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KarigarMaster(
-      id: serializer.fromJson<int>(json['id']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
-      name: serializer.fromJson<String>(json['name']),
-      phone: serializer.fromJson<String>(json['phone']),
-      alternatePhone: serializer.fromJson<String?>(json['alternatePhone']),
-      specialization: serializer.fromJson<String>(json['specialization']),
-      rateType: serializer.fromJson<String>(json['rateType']),
-      rateAmount: serializer.fromJson<double>(json['rateAmount']),
-      address: serializer.fromJson<String?>(json['address']),
-      city: serializer.fromJson<String?>(json['city']),
-      openingBalance: serializer.fromJson<double>(json['openingBalance']),
-      isActive: serializer.fromJson<bool>(json['isActive']),
-      notes: serializer.fromJson<String?>(json['notes']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
-      'name': serializer.toJson<String>(name),
-      'phone': serializer.toJson<String>(phone),
-      'alternatePhone': serializer.toJson<String?>(alternatePhone),
-      'specialization': serializer.toJson<String>(specialization),
-      'rateType': serializer.toJson<String>(rateType),
-      'rateAmount': serializer.toJson<double>(rateAmount),
-      'address': serializer.toJson<String?>(address),
-      'city': serializer.toJson<String?>(city),
-      'openingBalance': serializer.toJson<double>(openingBalance),
-      'isActive': serializer.toJson<bool>(isActive),
-      'notes': serializer.toJson<String?>(notes),
-    };
-  }
-
-  KarigarMaster copyWith(
-          {int? id,
-          DateTime? createdAt,
-          Value<DateTime?> updatedAt = const Value.absent(),
-          String? name,
-          String? phone,
-          Value<String?> alternatePhone = const Value.absent(),
-          String? specialization,
-          String? rateType,
-          double? rateAmount,
-          Value<String?> address = const Value.absent(),
-          Value<String?> city = const Value.absent(),
-          double? openingBalance,
-          bool? isActive,
-          Value<String?> notes = const Value.absent()}) =>
-      KarigarMaster(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
-        name: name ?? this.name,
-        phone: phone ?? this.phone,
-        alternatePhone:
-            alternatePhone.present ? alternatePhone.value : this.alternatePhone,
-        specialization: specialization ?? this.specialization,
-        rateType: rateType ?? this.rateType,
-        rateAmount: rateAmount ?? this.rateAmount,
-        address: address.present ? address.value : this.address,
-        city: city.present ? city.value : this.city,
-        openingBalance: openingBalance ?? this.openingBalance,
-        isActive: isActive ?? this.isActive,
-        notes: notes.present ? notes.value : this.notes,
-      );
-  KarigarMaster copyWithCompanion(KarigarMastersCompanion data) {
-    return KarigarMaster(
-      id: data.id.present ? data.id.value : this.id,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      name: data.name.present ? data.name.value : this.name,
-      phone: data.phone.present ? data.phone.value : this.phone,
-      alternatePhone: data.alternatePhone.present
-          ? data.alternatePhone.value
-          : this.alternatePhone,
-      specialization: data.specialization.present
-          ? data.specialization.value
-          : this.specialization,
-      rateType: data.rateType.present ? data.rateType.value : this.rateType,
-      rateAmount:
-          data.rateAmount.present ? data.rateAmount.value : this.rateAmount,
-      address: data.address.present ? data.address.value : this.address,
-      city: data.city.present ? data.city.value : this.city,
-      openingBalance: data.openingBalance.present
-          ? data.openingBalance.value
-          : this.openingBalance,
-      isActive: data.isActive.present ? data.isActive.value : this.isActive,
-      notes: data.notes.present ? data.notes.value : this.notes,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KarigarMaster(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('name: $name, ')
-          ..write('phone: $phone, ')
-          ..write('alternatePhone: $alternatePhone, ')
-          ..write('specialization: $specialization, ')
-          ..write('rateType: $rateType, ')
-          ..write('rateAmount: $rateAmount, ')
-          ..write('address: $address, ')
-          ..write('city: $city, ')
-          ..write('openingBalance: $openingBalance, ')
-          ..write('isActive: $isActive, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      phone,
-      alternatePhone,
-      specialization,
-      rateType,
-      rateAmount,
-      address,
-      city,
-      openingBalance,
-      isActive,
-      notes);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KarigarMaster &&
-          other.id == this.id &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.name == this.name &&
-          other.phone == this.phone &&
-          other.alternatePhone == this.alternatePhone &&
-          other.specialization == this.specialization &&
-          other.rateType == this.rateType &&
-          other.rateAmount == this.rateAmount &&
-          other.address == this.address &&
-          other.city == this.city &&
-          other.openingBalance == this.openingBalance &&
-          other.isActive == this.isActive &&
-          other.notes == this.notes);
-}
-
-class KarigarMastersCompanion extends UpdateCompanion<KarigarMaster> {
-  final Value<int> id;
-  final Value<DateTime> createdAt;
-  final Value<DateTime?> updatedAt;
-  final Value<String> name;
-  final Value<String> phone;
-  final Value<String?> alternatePhone;
-  final Value<String> specialization;
-  final Value<String> rateType;
-  final Value<double> rateAmount;
-  final Value<String?> address;
-  final Value<String?> city;
-  final Value<double> openingBalance;
-  final Value<bool> isActive;
-  final Value<String?> notes;
-  const KarigarMastersCompanion({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.name = const Value.absent(),
-    this.phone = const Value.absent(),
-    this.alternatePhone = const Value.absent(),
-    this.specialization = const Value.absent(),
-    this.rateType = const Value.absent(),
-    this.rateAmount = const Value.absent(),
-    this.address = const Value.absent(),
-    this.city = const Value.absent(),
-    this.openingBalance = const Value.absent(),
-    this.isActive = const Value.absent(),
-    this.notes = const Value.absent(),
-  });
-  KarigarMastersCompanion.insert({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    required String name,
-    required String phone,
-    this.alternatePhone = const Value.absent(),
-    this.specialization = const Value.absent(),
-    this.rateType = const Value.absent(),
-    this.rateAmount = const Value.absent(),
-    this.address = const Value.absent(),
-    this.city = const Value.absent(),
-    this.openingBalance = const Value.absent(),
-    this.isActive = const Value.absent(),
-    this.notes = const Value.absent(),
-  })  : name = Value(name),
-        phone = Value(phone);
-  static Insertable<KarigarMaster> custom({
-    Expression<int>? id,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? name,
-    Expression<String>? phone,
-    Expression<String>? alternatePhone,
-    Expression<String>? specialization,
-    Expression<String>? rateType,
-    Expression<double>? rateAmount,
-    Expression<String>? address,
-    Expression<String>? city,
-    Expression<double>? openingBalance,
-    Expression<bool>? isActive,
-    Expression<String>? notes,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (name != null) 'name': name,
-      if (phone != null) 'phone': phone,
-      if (alternatePhone != null) 'alternate_phone': alternatePhone,
-      if (specialization != null) 'specialization': specialization,
-      if (rateType != null) 'rate_type': rateType,
-      if (rateAmount != null) 'rate_amount': rateAmount,
-      if (address != null) 'address': address,
-      if (city != null) 'city': city,
-      if (openingBalance != null) 'opening_balance': openingBalance,
-      if (isActive != null) 'is_active': isActive,
-      if (notes != null) 'notes': notes,
-    });
-  }
-
-  KarigarMastersCompanion copyWith(
-      {Value<int>? id,
-      Value<DateTime>? createdAt,
-      Value<DateTime?>? updatedAt,
-      Value<String>? name,
-      Value<String>? phone,
-      Value<String?>? alternatePhone,
-      Value<String>? specialization,
-      Value<String>? rateType,
-      Value<double>? rateAmount,
-      Value<String?>? address,
-      Value<String?>? city,
-      Value<double>? openingBalance,
-      Value<bool>? isActive,
-      Value<String?>? notes}) {
-    return KarigarMastersCompanion(
-      id: id ?? this.id,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-      alternatePhone: alternatePhone ?? this.alternatePhone,
-      specialization: specialization ?? this.specialization,
-      rateType: rateType ?? this.rateType,
-      rateAmount: rateAmount ?? this.rateAmount,
-      address: address ?? this.address,
-      city: city ?? this.city,
-      openingBalance: openingBalance ?? this.openingBalance,
-      isActive: isActive ?? this.isActive,
-      notes: notes ?? this.notes,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (phone.present) {
-      map['phone'] = Variable<String>(phone.value);
-    }
-    if (alternatePhone.present) {
-      map['alternate_phone'] = Variable<String>(alternatePhone.value);
-    }
-    if (specialization.present) {
-      map['specialization'] = Variable<String>(specialization.value);
-    }
-    if (rateType.present) {
-      map['rate_type'] = Variable<String>(rateType.value);
-    }
-    if (rateAmount.present) {
-      map['rate_amount'] = Variable<double>(rateAmount.value);
-    }
-    if (address.present) {
-      map['address'] = Variable<String>(address.value);
-    }
-    if (city.present) {
-      map['city'] = Variable<String>(city.value);
-    }
-    if (openingBalance.present) {
-      map['opening_balance'] = Variable<double>(openingBalance.value);
-    }
-    if (isActive.present) {
-      map['is_active'] = Variable<bool>(isActive.value);
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KarigarMastersCompanion(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('name: $name, ')
-          ..write('phone: $phone, ')
-          ..write('alternatePhone: $alternatePhone, ')
-          ..write('specialization: $specialization, ')
-          ..write('rateType: $rateType, ')
-          ..write('rateAmount: $rateAmount, ')
-          ..write('address: $address, ')
-          ..write('city: $city, ')
-          ..write('openingBalance: $openingBalance, ')
-          ..write('isActive: $isActive, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KarigarIssuesTable extends KarigarIssues
-    with TableInfo<$KarigarIssuesTable, KarigarIssue> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KarigarIssuesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-      'updated_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _issueNumberMeta =
-      const VerificationMeta('issueNumber');
-  @override
-  late final GeneratedColumn<String> issueNumber = GeneratedColumn<String>(
-      'issue_number', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
-  static const VerificationMeta _karigarIdMeta =
-      const VerificationMeta('karigarId');
-  @override
-  late final GeneratedColumn<int> karigarId = GeneratedColumn<int>(
-      'karigar_id', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES karigar_masters (id)'));
-  static const VerificationMeta _issueDateMeta =
-      const VerificationMeta('issueDate');
-  @override
-  late final GeneratedColumn<DateTime> issueDate = GeneratedColumn<DateTime>(
-      'issue_date', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _itemDescriptionMeta =
-      const VerificationMeta('itemDescription');
-  @override
-  late final GeneratedColumn<String> itemDescription = GeneratedColumn<String>(
-      'item_description', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 2, maxTextLength: 300),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
-  static const VerificationMeta _itemCategoryMeta =
-      const VerificationMeta('itemCategory');
-  @override
-  late final GeneratedColumn<String> itemCategory = GeneratedColumn<String>(
-      'item_category', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('Ring'));
-  static const VerificationMeta _quantityMeta =
-      const VerificationMeta('quantity');
-  @override
-  late final GeneratedColumn<int> quantity = GeneratedColumn<int>(
-      'quantity', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1));
-  static const VerificationMeta _metalTypeMeta =
-      const VerificationMeta('metalType');
-  @override
-  late final GeneratedColumn<String> metalType = GeneratedColumn<String>(
-      'metal_type', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('Gold'));
-  static const VerificationMeta _purityMeta = const VerificationMeta('purity');
-  @override
-  late final GeneratedColumn<String> purity = GeneratedColumn<String>(
-      'purity', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _grossWeightIssuedMeta =
-      const VerificationMeta('grossWeightIssued');
-  @override
-  late final GeneratedColumn<double> grossWeightIssued =
-      GeneratedColumn<double>('gross_weight_issued', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _netWeightIssuedMeta =
-      const VerificationMeta('netWeightIssued');
-  @override
-  late final GeneratedColumn<double> netWeightIssued = GeneratedColumn<double>(
-      'net_weight_issued', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _expectedDeliveryMeta =
-      const VerificationMeta('expectedDelivery');
-  @override
-  late final GeneratedColumn<DateTime> expectedDelivery =
-      GeneratedColumn<DateTime>('expected_delivery', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-      'status', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('Pending'));
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
-  @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-      'notes', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        createdAt,
-        updatedAt,
-        issueNumber,
-        karigarId,
-        issueDate,
-        itemDescription,
-        itemCategory,
-        quantity,
-        metalType,
-        purity,
-        grossWeightIssued,
-        netWeightIssued,
-        expectedDelivery,
-        status,
-        notes
-      ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'karigar_issues';
-  @override
-  VerificationContext validateIntegrity(Insertable<KarigarIssue> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    }
-    if (data.containsKey('issue_number')) {
-      context.handle(
-          _issueNumberMeta,
-          issueNumber.isAcceptableOrUnknown(
-              data['issue_number']!, _issueNumberMeta));
-    } else if (isInserting) {
-      context.missing(_issueNumberMeta);
-    }
-    if (data.containsKey('karigar_id')) {
-      context.handle(_karigarIdMeta,
-          karigarId.isAcceptableOrUnknown(data['karigar_id']!, _karigarIdMeta));
-    } else if (isInserting) {
-      context.missing(_karigarIdMeta);
-    }
-    if (data.containsKey('issue_date')) {
-      context.handle(_issueDateMeta,
-          issueDate.isAcceptableOrUnknown(data['issue_date']!, _issueDateMeta));
-    } else if (isInserting) {
-      context.missing(_issueDateMeta);
-    }
-    if (data.containsKey('item_description')) {
-      context.handle(
-          _itemDescriptionMeta,
-          itemDescription.isAcceptableOrUnknown(
-              data['item_description']!, _itemDescriptionMeta));
-    } else if (isInserting) {
-      context.missing(_itemDescriptionMeta);
-    }
-    if (data.containsKey('item_category')) {
-      context.handle(
-          _itemCategoryMeta,
-          itemCategory.isAcceptableOrUnknown(
-              data['item_category']!, _itemCategoryMeta));
-    }
-    if (data.containsKey('quantity')) {
-      context.handle(_quantityMeta,
-          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
-    }
-    if (data.containsKey('metal_type')) {
-      context.handle(_metalTypeMeta,
-          metalType.isAcceptableOrUnknown(data['metal_type']!, _metalTypeMeta));
-    }
-    if (data.containsKey('purity')) {
-      context.handle(_purityMeta,
-          purity.isAcceptableOrUnknown(data['purity']!, _purityMeta));
-    }
-    if (data.containsKey('gross_weight_issued')) {
-      context.handle(
-          _grossWeightIssuedMeta,
-          grossWeightIssued.isAcceptableOrUnknown(
-              data['gross_weight_issued']!, _grossWeightIssuedMeta));
-    }
-    if (data.containsKey('net_weight_issued')) {
-      context.handle(
-          _netWeightIssuedMeta,
-          netWeightIssued.isAcceptableOrUnknown(
-              data['net_weight_issued']!, _netWeightIssuedMeta));
-    }
-    if (data.containsKey('expected_delivery')) {
-      context.handle(
-          _expectedDeliveryMeta,
-          expectedDelivery.isAcceptableOrUnknown(
-              data['expected_delivery']!, _expectedDeliveryMeta));
-    }
-    if (data.containsKey('status')) {
-      context.handle(_statusMeta,
-          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KarigarIssue map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KarigarIssue(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
-      issueNumber: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}issue_number'])!,
-      karigarId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}karigar_id'])!,
-      issueDate: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}issue_date'])!,
-      itemDescription: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}item_description'])!,
-      itemCategory: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}item_category'])!,
-      quantity: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity'])!,
-      metalType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}metal_type'])!,
-      purity: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}purity']),
-      grossWeightIssued: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}gross_weight_issued'])!,
-      netWeightIssued: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}net_weight_issued'])!,
-      expectedDelivery: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}expected_delivery']),
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      notes: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
-    );
-  }
-
-  @override
-  $KarigarIssuesTable createAlias(String alias) {
-    return $KarigarIssuesTable(attachedDatabase, alias);
-  }
-}
-
-class KarigarIssue extends DataClass implements Insertable<KarigarIssue> {
-  final int id;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-
-  /// Unique auto-generated number: KGI-YYYYMMDD-NNNN
-  final String issueNumber;
-
-  /// FK → karigar_masters
-  final int karigarId;
-  final DateTime issueDate;
-
-  /// Jewellery item description: "22K Gold Ring for wedding order"
-  final String itemDescription;
-
-  /// Broad category: Ring, Necklace, Bangle, etc.
-  final String itemCategory;
-  final int quantity;
-
-  /// Gold | Silver | Platinum
-  final String metalType;
-
-  /// 22K (916), 925 (Sterling), etc.
-  final String? purity;
-
-  /// Total gross weight issued (grams)
-  final double grossWeightIssued;
-
-  /// Net weight after deducting any stone tare (grams)
-  final double netWeightIssued;
-  final DateTime? expectedDelivery;
-
-  /// Pending | In Progress | Completed | Cancelled
-  final String status;
-  final String? notes;
-  const KarigarIssue(
-      {required this.id,
-      required this.createdAt,
-      this.updatedAt,
-      required this.issueNumber,
-      required this.karigarId,
-      required this.issueDate,
-      required this.itemDescription,
-      required this.itemCategory,
-      required this.quantity,
-      required this.metalType,
-      this.purity,
-      required this.grossWeightIssued,
-      required this.netWeightIssued,
-      this.expectedDelivery,
-      required this.status,
-      this.notes});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || updatedAt != null) {
-      map['updated_at'] = Variable<DateTime>(updatedAt);
-    }
-    map['issue_number'] = Variable<String>(issueNumber);
-    map['karigar_id'] = Variable<int>(karigarId);
-    map['issue_date'] = Variable<DateTime>(issueDate);
-    map['item_description'] = Variable<String>(itemDescription);
-    map['item_category'] = Variable<String>(itemCategory);
-    map['quantity'] = Variable<int>(quantity);
-    map['metal_type'] = Variable<String>(metalType);
-    if (!nullToAbsent || purity != null) {
-      map['purity'] = Variable<String>(purity);
-    }
-    map['gross_weight_issued'] = Variable<double>(grossWeightIssued);
-    map['net_weight_issued'] = Variable<double>(netWeightIssued);
-    if (!nullToAbsent || expectedDelivery != null) {
-      map['expected_delivery'] = Variable<DateTime>(expectedDelivery);
-    }
-    map['status'] = Variable<String>(status);
-    if (!nullToAbsent || notes != null) {
-      map['notes'] = Variable<String>(notes);
-    }
-    return map;
-  }
-
-  KarigarIssuesCompanion toCompanion(bool nullToAbsent) {
-    return KarigarIssuesCompanion(
-      id: Value(id),
-      createdAt: Value(createdAt),
-      updatedAt: updatedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(updatedAt),
-      issueNumber: Value(issueNumber),
-      karigarId: Value(karigarId),
-      issueDate: Value(issueDate),
-      itemDescription: Value(itemDescription),
-      itemCategory: Value(itemCategory),
-      quantity: Value(quantity),
-      metalType: Value(metalType),
-      purity:
-          purity == null && nullToAbsent ? const Value.absent() : Value(purity),
-      grossWeightIssued: Value(grossWeightIssued),
-      netWeightIssued: Value(netWeightIssued),
-      expectedDelivery: expectedDelivery == null && nullToAbsent
-          ? const Value.absent()
-          : Value(expectedDelivery),
-      status: Value(status),
-      notes:
-          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
-    );
-  }
-
-  factory KarigarIssue.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KarigarIssue(
-      id: serializer.fromJson<int>(json['id']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
-      issueNumber: serializer.fromJson<String>(json['issueNumber']),
-      karigarId: serializer.fromJson<int>(json['karigarId']),
-      issueDate: serializer.fromJson<DateTime>(json['issueDate']),
-      itemDescription: serializer.fromJson<String>(json['itemDescription']),
-      itemCategory: serializer.fromJson<String>(json['itemCategory']),
-      quantity: serializer.fromJson<int>(json['quantity']),
-      metalType: serializer.fromJson<String>(json['metalType']),
-      purity: serializer.fromJson<String?>(json['purity']),
-      grossWeightIssued: serializer.fromJson<double>(json['grossWeightIssued']),
-      netWeightIssued: serializer.fromJson<double>(json['netWeightIssued']),
-      expectedDelivery:
-          serializer.fromJson<DateTime?>(json['expectedDelivery']),
-      status: serializer.fromJson<String>(json['status']),
-      notes: serializer.fromJson<String?>(json['notes']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
-      'issueNumber': serializer.toJson<String>(issueNumber),
-      'karigarId': serializer.toJson<int>(karigarId),
-      'issueDate': serializer.toJson<DateTime>(issueDate),
-      'itemDescription': serializer.toJson<String>(itemDescription),
-      'itemCategory': serializer.toJson<String>(itemCategory),
-      'quantity': serializer.toJson<int>(quantity),
-      'metalType': serializer.toJson<String>(metalType),
-      'purity': serializer.toJson<String?>(purity),
-      'grossWeightIssued': serializer.toJson<double>(grossWeightIssued),
-      'netWeightIssued': serializer.toJson<double>(netWeightIssued),
-      'expectedDelivery': serializer.toJson<DateTime?>(expectedDelivery),
-      'status': serializer.toJson<String>(status),
-      'notes': serializer.toJson<String?>(notes),
-    };
-  }
-
-  KarigarIssue copyWith(
-          {int? id,
-          DateTime? createdAt,
-          Value<DateTime?> updatedAt = const Value.absent(),
-          String? issueNumber,
-          int? karigarId,
-          DateTime? issueDate,
-          String? itemDescription,
-          String? itemCategory,
-          int? quantity,
-          String? metalType,
-          Value<String?> purity = const Value.absent(),
-          double? grossWeightIssued,
-          double? netWeightIssued,
-          Value<DateTime?> expectedDelivery = const Value.absent(),
-          String? status,
-          Value<String?> notes = const Value.absent()}) =>
-      KarigarIssue(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
-        issueNumber: issueNumber ?? this.issueNumber,
-        karigarId: karigarId ?? this.karigarId,
-        issueDate: issueDate ?? this.issueDate,
-        itemDescription: itemDescription ?? this.itemDescription,
-        itemCategory: itemCategory ?? this.itemCategory,
-        quantity: quantity ?? this.quantity,
-        metalType: metalType ?? this.metalType,
-        purity: purity.present ? purity.value : this.purity,
-        grossWeightIssued: grossWeightIssued ?? this.grossWeightIssued,
-        netWeightIssued: netWeightIssued ?? this.netWeightIssued,
-        expectedDelivery: expectedDelivery.present
-            ? expectedDelivery.value
-            : this.expectedDelivery,
-        status: status ?? this.status,
-        notes: notes.present ? notes.value : this.notes,
-      );
-  KarigarIssue copyWithCompanion(KarigarIssuesCompanion data) {
-    return KarigarIssue(
-      id: data.id.present ? data.id.value : this.id,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      issueNumber:
-          data.issueNumber.present ? data.issueNumber.value : this.issueNumber,
-      karigarId: data.karigarId.present ? data.karigarId.value : this.karigarId,
-      issueDate: data.issueDate.present ? data.issueDate.value : this.issueDate,
-      itemDescription: data.itemDescription.present
-          ? data.itemDescription.value
-          : this.itemDescription,
-      itemCategory: data.itemCategory.present
-          ? data.itemCategory.value
-          : this.itemCategory,
-      quantity: data.quantity.present ? data.quantity.value : this.quantity,
-      metalType: data.metalType.present ? data.metalType.value : this.metalType,
-      purity: data.purity.present ? data.purity.value : this.purity,
-      grossWeightIssued: data.grossWeightIssued.present
-          ? data.grossWeightIssued.value
-          : this.grossWeightIssued,
-      netWeightIssued: data.netWeightIssued.present
-          ? data.netWeightIssued.value
-          : this.netWeightIssued,
-      expectedDelivery: data.expectedDelivery.present
-          ? data.expectedDelivery.value
-          : this.expectedDelivery,
-      status: data.status.present ? data.status.value : this.status,
-      notes: data.notes.present ? data.notes.value : this.notes,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KarigarIssue(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('issueNumber: $issueNumber, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('issueDate: $issueDate, ')
-          ..write('itemDescription: $itemDescription, ')
-          ..write('itemCategory: $itemCategory, ')
-          ..write('quantity: $quantity, ')
-          ..write('metalType: $metalType, ')
-          ..write('purity: $purity, ')
-          ..write('grossWeightIssued: $grossWeightIssued, ')
-          ..write('netWeightIssued: $netWeightIssued, ')
-          ..write('expectedDelivery: $expectedDelivery, ')
-          ..write('status: $status, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-      id,
-      createdAt,
-      updatedAt,
-      issueNumber,
-      karigarId,
-      issueDate,
-      itemDescription,
-      itemCategory,
-      quantity,
-      metalType,
-      purity,
-      grossWeightIssued,
-      netWeightIssued,
-      expectedDelivery,
-      status,
-      notes);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KarigarIssue &&
-          other.id == this.id &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.issueNumber == this.issueNumber &&
-          other.karigarId == this.karigarId &&
-          other.issueDate == this.issueDate &&
-          other.itemDescription == this.itemDescription &&
-          other.itemCategory == this.itemCategory &&
-          other.quantity == this.quantity &&
-          other.metalType == this.metalType &&
-          other.purity == this.purity &&
-          other.grossWeightIssued == this.grossWeightIssued &&
-          other.netWeightIssued == this.netWeightIssued &&
-          other.expectedDelivery == this.expectedDelivery &&
-          other.status == this.status &&
-          other.notes == this.notes);
-}
-
-class KarigarIssuesCompanion extends UpdateCompanion<KarigarIssue> {
-  final Value<int> id;
-  final Value<DateTime> createdAt;
-  final Value<DateTime?> updatedAt;
-  final Value<String> issueNumber;
-  final Value<int> karigarId;
-  final Value<DateTime> issueDate;
-  final Value<String> itemDescription;
-  final Value<String> itemCategory;
-  final Value<int> quantity;
-  final Value<String> metalType;
-  final Value<String?> purity;
-  final Value<double> grossWeightIssued;
-  final Value<double> netWeightIssued;
-  final Value<DateTime?> expectedDelivery;
-  final Value<String> status;
-  final Value<String?> notes;
-  const KarigarIssuesCompanion({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.issueNumber = const Value.absent(),
-    this.karigarId = const Value.absent(),
-    this.issueDate = const Value.absent(),
-    this.itemDescription = const Value.absent(),
-    this.itemCategory = const Value.absent(),
-    this.quantity = const Value.absent(),
-    this.metalType = const Value.absent(),
-    this.purity = const Value.absent(),
-    this.grossWeightIssued = const Value.absent(),
-    this.netWeightIssued = const Value.absent(),
-    this.expectedDelivery = const Value.absent(),
-    this.status = const Value.absent(),
-    this.notes = const Value.absent(),
-  });
-  KarigarIssuesCompanion.insert({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    required String issueNumber,
-    required int karigarId,
-    required DateTime issueDate,
-    required String itemDescription,
-    this.itemCategory = const Value.absent(),
-    this.quantity = const Value.absent(),
-    this.metalType = const Value.absent(),
-    this.purity = const Value.absent(),
-    this.grossWeightIssued = const Value.absent(),
-    this.netWeightIssued = const Value.absent(),
-    this.expectedDelivery = const Value.absent(),
-    this.status = const Value.absent(),
-    this.notes = const Value.absent(),
-  })  : issueNumber = Value(issueNumber),
-        karigarId = Value(karigarId),
-        issueDate = Value(issueDate),
-        itemDescription = Value(itemDescription);
-  static Insertable<KarigarIssue> custom({
-    Expression<int>? id,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? issueNumber,
-    Expression<int>? karigarId,
-    Expression<DateTime>? issueDate,
-    Expression<String>? itemDescription,
-    Expression<String>? itemCategory,
-    Expression<int>? quantity,
-    Expression<String>? metalType,
-    Expression<String>? purity,
-    Expression<double>? grossWeightIssued,
-    Expression<double>? netWeightIssued,
-    Expression<DateTime>? expectedDelivery,
-    Expression<String>? status,
-    Expression<String>? notes,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (issueNumber != null) 'issue_number': issueNumber,
-      if (karigarId != null) 'karigar_id': karigarId,
-      if (issueDate != null) 'issue_date': issueDate,
-      if (itemDescription != null) 'item_description': itemDescription,
-      if (itemCategory != null) 'item_category': itemCategory,
-      if (quantity != null) 'quantity': quantity,
-      if (metalType != null) 'metal_type': metalType,
-      if (purity != null) 'purity': purity,
-      if (grossWeightIssued != null) 'gross_weight_issued': grossWeightIssued,
-      if (netWeightIssued != null) 'net_weight_issued': netWeightIssued,
-      if (expectedDelivery != null) 'expected_delivery': expectedDelivery,
-      if (status != null) 'status': status,
-      if (notes != null) 'notes': notes,
-    });
-  }
-
-  KarigarIssuesCompanion copyWith(
-      {Value<int>? id,
-      Value<DateTime>? createdAt,
-      Value<DateTime?>? updatedAt,
-      Value<String>? issueNumber,
-      Value<int>? karigarId,
-      Value<DateTime>? issueDate,
-      Value<String>? itemDescription,
-      Value<String>? itemCategory,
-      Value<int>? quantity,
-      Value<String>? metalType,
-      Value<String?>? purity,
-      Value<double>? grossWeightIssued,
-      Value<double>? netWeightIssued,
-      Value<DateTime?>? expectedDelivery,
-      Value<String>? status,
-      Value<String?>? notes}) {
-    return KarigarIssuesCompanion(
-      id: id ?? this.id,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      issueNumber: issueNumber ?? this.issueNumber,
-      karigarId: karigarId ?? this.karigarId,
-      issueDate: issueDate ?? this.issueDate,
-      itemDescription: itemDescription ?? this.itemDescription,
-      itemCategory: itemCategory ?? this.itemCategory,
-      quantity: quantity ?? this.quantity,
-      metalType: metalType ?? this.metalType,
-      purity: purity ?? this.purity,
-      grossWeightIssued: grossWeightIssued ?? this.grossWeightIssued,
-      netWeightIssued: netWeightIssued ?? this.netWeightIssued,
-      expectedDelivery: expectedDelivery ?? this.expectedDelivery,
-      status: status ?? this.status,
-      notes: notes ?? this.notes,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (issueNumber.present) {
-      map['issue_number'] = Variable<String>(issueNumber.value);
-    }
-    if (karigarId.present) {
-      map['karigar_id'] = Variable<int>(karigarId.value);
-    }
-    if (issueDate.present) {
-      map['issue_date'] = Variable<DateTime>(issueDate.value);
-    }
-    if (itemDescription.present) {
-      map['item_description'] = Variable<String>(itemDescription.value);
-    }
-    if (itemCategory.present) {
-      map['item_category'] = Variable<String>(itemCategory.value);
-    }
-    if (quantity.present) {
-      map['quantity'] = Variable<int>(quantity.value);
-    }
-    if (metalType.present) {
-      map['metal_type'] = Variable<String>(metalType.value);
-    }
-    if (purity.present) {
-      map['purity'] = Variable<String>(purity.value);
-    }
-    if (grossWeightIssued.present) {
-      map['gross_weight_issued'] = Variable<double>(grossWeightIssued.value);
-    }
-    if (netWeightIssued.present) {
-      map['net_weight_issued'] = Variable<double>(netWeightIssued.value);
-    }
-    if (expectedDelivery.present) {
-      map['expected_delivery'] = Variable<DateTime>(expectedDelivery.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KarigarIssuesCompanion(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('issueNumber: $issueNumber, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('issueDate: $issueDate, ')
-          ..write('itemDescription: $itemDescription, ')
-          ..write('itemCategory: $itemCategory, ')
-          ..write('quantity: $quantity, ')
-          ..write('metalType: $metalType, ')
-          ..write('purity: $purity, ')
-          ..write('grossWeightIssued: $grossWeightIssued, ')
-          ..write('netWeightIssued: $netWeightIssued, ')
-          ..write('expectedDelivery: $expectedDelivery, ')
-          ..write('status: $status, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KarigarReceiptsTable extends KarigarReceipts
-    with TableInfo<$KarigarReceiptsTable, KarigarReceipt> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KarigarReceiptsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-      'updated_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _receiptNumberMeta =
-      const VerificationMeta('receiptNumber');
-  @override
-  late final GeneratedColumn<String> receiptNumber = GeneratedColumn<String>(
-      'receipt_number', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
-  static const VerificationMeta _issueIdMeta =
-      const VerificationMeta('issueId');
-  @override
-  late final GeneratedColumn<int> issueId = GeneratedColumn<int>(
-      'issue_id', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES karigar_issues (id)'));
-  static const VerificationMeta _karigarIdMeta =
-      const VerificationMeta('karigarId');
-  @override
-  late final GeneratedColumn<int> karigarId = GeneratedColumn<int>(
-      'karigar_id', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'REFERENCES karigar_masters (id)'));
-  static const VerificationMeta _receiptDateMeta =
-      const VerificationMeta('receiptDate');
-  @override
-  late final GeneratedColumn<DateTime> receiptDate = GeneratedColumn<DateTime>(
-      'receipt_date', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _quantityReceivedMeta =
-      const VerificationMeta('quantityReceived');
-  @override
-  late final GeneratedColumn<int> quantityReceived = GeneratedColumn<int>(
-      'quantity_received', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1));
-  static const VerificationMeta _grossWeightReceivedMeta =
-      const VerificationMeta('grossWeightReceived');
-  @override
-  late final GeneratedColumn<double> grossWeightReceived =
-      GeneratedColumn<double>('gross_weight_received', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _stoneWeightMeta =
-      const VerificationMeta('stoneWeight');
-  @override
-  late final GeneratedColumn<double> stoneWeight = GeneratedColumn<double>(
-      'stone_weight', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _netWeightReceivedMeta =
-      const VerificationMeta('netWeightReceived');
-  @override
-  late final GeneratedColumn<double> netWeightReceived =
-      GeneratedColumn<double>('net_weight_received', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _wastageWeightMeta =
-      const VerificationMeta('wastageWeight');
-  @override
-  late final GeneratedColumn<double> wastageWeight = GeneratedColumn<double>(
-      'wastage_weight', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _wastagePercentMeta =
-      const VerificationMeta('wastagePercent');
-  @override
-  late final GeneratedColumn<double> wastagePercent = GeneratedColumn<double>(
-      'wastage_percent', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _makingChargesTypeMeta =
-      const VerificationMeta('makingChargesType');
-  @override
-  late final GeneratedColumn<String> makingChargesType =
-      GeneratedColumn<String>('making_charges_type', aliasedName, false,
-          type: DriftSqlType.string,
-          requiredDuringInsert: false,
-          defaultValue: const Constant('Per Gram (Rs/g)'));
-  static const VerificationMeta _makingChargeRateMeta =
-      const VerificationMeta('makingChargeRate');
-  @override
-  late final GeneratedColumn<double> makingChargeRate = GeneratedColumn<double>(
-      'making_charge_rate', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _makingChargesAmountMeta =
-      const VerificationMeta('makingChargesAmount');
-  @override
-  late final GeneratedColumn<double> makingChargesAmount =
-      GeneratedColumn<double>('making_charges_amount', aliasedName, false,
-          type: DriftSqlType.double,
-          requiredDuringInsert: false,
-          defaultValue: const Constant(0.0));
-  static const VerificationMeta _paymentStatusMeta =
-      const VerificationMeta('paymentStatus');
-  @override
-  late final GeneratedColumn<String> paymentStatus = GeneratedColumn<String>(
-      'payment_status', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('Unpaid'));
-  static const VerificationMeta _paidAmountMeta =
-      const VerificationMeta('paidAmount');
-  @override
-  late final GeneratedColumn<double> paidAmount = GeneratedColumn<double>(
-      'paid_amount', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
-  @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-      'notes', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        createdAt,
-        updatedAt,
-        receiptNumber,
-        issueId,
-        karigarId,
-        receiptDate,
-        quantityReceived,
-        grossWeightReceived,
-        stoneWeight,
-        netWeightReceived,
-        wastageWeight,
-        wastagePercent,
-        makingChargesType,
-        makingChargeRate,
-        makingChargesAmount,
-        paymentStatus,
-        paidAmount,
-        notes
-      ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'karigar_receipts';
-  @override
-  VerificationContext validateIntegrity(Insertable<KarigarReceipt> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    }
-    if (data.containsKey('receipt_number')) {
-      context.handle(
-          _receiptNumberMeta,
-          receiptNumber.isAcceptableOrUnknown(
-              data['receipt_number']!, _receiptNumberMeta));
-    } else if (isInserting) {
-      context.missing(_receiptNumberMeta);
-    }
-    if (data.containsKey('issue_id')) {
-      context.handle(_issueIdMeta,
-          issueId.isAcceptableOrUnknown(data['issue_id']!, _issueIdMeta));
-    } else if (isInserting) {
-      context.missing(_issueIdMeta);
-    }
-    if (data.containsKey('karigar_id')) {
-      context.handle(_karigarIdMeta,
-          karigarId.isAcceptableOrUnknown(data['karigar_id']!, _karigarIdMeta));
-    } else if (isInserting) {
-      context.missing(_karigarIdMeta);
-    }
-    if (data.containsKey('receipt_date')) {
-      context.handle(
-          _receiptDateMeta,
-          receiptDate.isAcceptableOrUnknown(
-              data['receipt_date']!, _receiptDateMeta));
-    } else if (isInserting) {
-      context.missing(_receiptDateMeta);
-    }
-    if (data.containsKey('quantity_received')) {
-      context.handle(
-          _quantityReceivedMeta,
-          quantityReceived.isAcceptableOrUnknown(
-              data['quantity_received']!, _quantityReceivedMeta));
-    }
-    if (data.containsKey('gross_weight_received')) {
-      context.handle(
-          _grossWeightReceivedMeta,
-          grossWeightReceived.isAcceptableOrUnknown(
-              data['gross_weight_received']!, _grossWeightReceivedMeta));
-    }
-    if (data.containsKey('stone_weight')) {
-      context.handle(
-          _stoneWeightMeta,
-          stoneWeight.isAcceptableOrUnknown(
-              data['stone_weight']!, _stoneWeightMeta));
-    }
-    if (data.containsKey('net_weight_received')) {
-      context.handle(
-          _netWeightReceivedMeta,
-          netWeightReceived.isAcceptableOrUnknown(
-              data['net_weight_received']!, _netWeightReceivedMeta));
-    }
-    if (data.containsKey('wastage_weight')) {
-      context.handle(
-          _wastageWeightMeta,
-          wastageWeight.isAcceptableOrUnknown(
-              data['wastage_weight']!, _wastageWeightMeta));
-    }
-    if (data.containsKey('wastage_percent')) {
-      context.handle(
-          _wastagePercentMeta,
-          wastagePercent.isAcceptableOrUnknown(
-              data['wastage_percent']!, _wastagePercentMeta));
-    }
-    if (data.containsKey('making_charges_type')) {
-      context.handle(
-          _makingChargesTypeMeta,
-          makingChargesType.isAcceptableOrUnknown(
-              data['making_charges_type']!, _makingChargesTypeMeta));
-    }
-    if (data.containsKey('making_charge_rate')) {
-      context.handle(
-          _makingChargeRateMeta,
-          makingChargeRate.isAcceptableOrUnknown(
-              data['making_charge_rate']!, _makingChargeRateMeta));
-    }
-    if (data.containsKey('making_charges_amount')) {
-      context.handle(
-          _makingChargesAmountMeta,
-          makingChargesAmount.isAcceptableOrUnknown(
-              data['making_charges_amount']!, _makingChargesAmountMeta));
-    }
-    if (data.containsKey('payment_status')) {
-      context.handle(
-          _paymentStatusMeta,
-          paymentStatus.isAcceptableOrUnknown(
-              data['payment_status']!, _paymentStatusMeta));
-    }
-    if (data.containsKey('paid_amount')) {
-      context.handle(
-          _paidAmountMeta,
-          paidAmount.isAcceptableOrUnknown(
-              data['paid_amount']!, _paidAmountMeta));
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KarigarReceipt map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KarigarReceipt(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
-      receiptNumber: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}receipt_number'])!,
-      issueId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}issue_id'])!,
-      karigarId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}karigar_id'])!,
-      receiptDate: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}receipt_date'])!,
-      quantityReceived: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quantity_received'])!,
-      grossWeightReceived: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}gross_weight_received'])!,
-      stoneWeight: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}stone_weight'])!,
-      netWeightReceived: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}net_weight_received'])!,
-      wastageWeight: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}wastage_weight'])!,
-      wastagePercent: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}wastage_percent'])!,
-      makingChargesType: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}making_charges_type'])!,
-      makingChargeRate: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}making_charge_rate'])!,
-      makingChargesAmount: attachedDatabase.typeMapping.read(
-          DriftSqlType.double,
-          data['${effectivePrefix}making_charges_amount'])!,
-      paymentStatus: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}payment_status'])!,
-      paidAmount: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}paid_amount'])!,
-      notes: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
-    );
-  }
-
-  @override
-  $KarigarReceiptsTable createAlias(String alias) {
-    return $KarigarReceiptsTable(attachedDatabase, alias);
-  }
-}
-
-class KarigarReceipt extends DataClass implements Insertable<KarigarReceipt> {
-  final int id;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-
-  /// Unique auto-generated number: KGR-YYYYMMDD-NNNN
-  final String receiptNumber;
-
-  /// FK → karigar_issues (which issue is being settled)
-  final int issueId;
-
-  /// FK → karigar_masters (denormalized for fast queries)
-  final int karigarId;
-  final DateTime receiptDate;
-
-  /// How many pieces were returned
-  final int quantityReceived;
-
-  /// Total weight of finished goods returned (grams)
-  final double grossWeightReceived;
-
-  /// Stone/diamond tare weight embedded in finished goods (grams)
-  final double stoneWeight;
-
-  /// Net metal weight received = gross - stone (grams)
-  final double netWeightReceived;
-
-  /// Gold loss: issuedNet - receivedNet (grams) — stored for reporting
-  final double wastageWeight;
-
-  /// Wastage as percentage of net issued weight
-  final double wastagePercent;
-
-  /// Per Gram (Rs/g) | Per Piece (Rs) | Percentage (%)
-  final String makingChargesType;
-
-  /// Rate amount (unit depends on makingChargesType)
-  final double makingChargeRate;
-
-  /// Final computed making charges amount (Rs)
-  final double makingChargesAmount;
-
-  /// Unpaid | Partial | Paid
-  final String paymentStatus;
-  final double paidAmount;
-  final String? notes;
-  const KarigarReceipt(
-      {required this.id,
-      required this.createdAt,
-      this.updatedAt,
-      required this.receiptNumber,
-      required this.issueId,
-      required this.karigarId,
-      required this.receiptDate,
-      required this.quantityReceived,
-      required this.grossWeightReceived,
-      required this.stoneWeight,
-      required this.netWeightReceived,
-      required this.wastageWeight,
-      required this.wastagePercent,
-      required this.makingChargesType,
-      required this.makingChargeRate,
-      required this.makingChargesAmount,
-      required this.paymentStatus,
-      required this.paidAmount,
-      this.notes});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || updatedAt != null) {
-      map['updated_at'] = Variable<DateTime>(updatedAt);
-    }
-    map['receipt_number'] = Variable<String>(receiptNumber);
-    map['issue_id'] = Variable<int>(issueId);
-    map['karigar_id'] = Variable<int>(karigarId);
-    map['receipt_date'] = Variable<DateTime>(receiptDate);
-    map['quantity_received'] = Variable<int>(quantityReceived);
-    map['gross_weight_received'] = Variable<double>(grossWeightReceived);
-    map['stone_weight'] = Variable<double>(stoneWeight);
-    map['net_weight_received'] = Variable<double>(netWeightReceived);
-    map['wastage_weight'] = Variable<double>(wastageWeight);
-    map['wastage_percent'] = Variable<double>(wastagePercent);
-    map['making_charges_type'] = Variable<String>(makingChargesType);
-    map['making_charge_rate'] = Variable<double>(makingChargeRate);
-    map['making_charges_amount'] = Variable<double>(makingChargesAmount);
-    map['payment_status'] = Variable<String>(paymentStatus);
-    map['paid_amount'] = Variable<double>(paidAmount);
-    if (!nullToAbsent || notes != null) {
-      map['notes'] = Variable<String>(notes);
-    }
-    return map;
-  }
-
-  KarigarReceiptsCompanion toCompanion(bool nullToAbsent) {
-    return KarigarReceiptsCompanion(
-      id: Value(id),
-      createdAt: Value(createdAt),
-      updatedAt: updatedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(updatedAt),
-      receiptNumber: Value(receiptNumber),
-      issueId: Value(issueId),
-      karigarId: Value(karigarId),
-      receiptDate: Value(receiptDate),
-      quantityReceived: Value(quantityReceived),
-      grossWeightReceived: Value(grossWeightReceived),
-      stoneWeight: Value(stoneWeight),
-      netWeightReceived: Value(netWeightReceived),
-      wastageWeight: Value(wastageWeight),
-      wastagePercent: Value(wastagePercent),
-      makingChargesType: Value(makingChargesType),
-      makingChargeRate: Value(makingChargeRate),
-      makingChargesAmount: Value(makingChargesAmount),
-      paymentStatus: Value(paymentStatus),
-      paidAmount: Value(paidAmount),
-      notes:
-          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
-    );
-  }
-
-  factory KarigarReceipt.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KarigarReceipt(
-      id: serializer.fromJson<int>(json['id']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
-      receiptNumber: serializer.fromJson<String>(json['receiptNumber']),
-      issueId: serializer.fromJson<int>(json['issueId']),
-      karigarId: serializer.fromJson<int>(json['karigarId']),
-      receiptDate: serializer.fromJson<DateTime>(json['receiptDate']),
-      quantityReceived: serializer.fromJson<int>(json['quantityReceived']),
-      grossWeightReceived:
-          serializer.fromJson<double>(json['grossWeightReceived']),
-      stoneWeight: serializer.fromJson<double>(json['stoneWeight']),
-      netWeightReceived: serializer.fromJson<double>(json['netWeightReceived']),
-      wastageWeight: serializer.fromJson<double>(json['wastageWeight']),
-      wastagePercent: serializer.fromJson<double>(json['wastagePercent']),
-      makingChargesType: serializer.fromJson<String>(json['makingChargesType']),
-      makingChargeRate: serializer.fromJson<double>(json['makingChargeRate']),
-      makingChargesAmount:
-          serializer.fromJson<double>(json['makingChargesAmount']),
-      paymentStatus: serializer.fromJson<String>(json['paymentStatus']),
-      paidAmount: serializer.fromJson<double>(json['paidAmount']),
-      notes: serializer.fromJson<String?>(json['notes']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
-      'receiptNumber': serializer.toJson<String>(receiptNumber),
-      'issueId': serializer.toJson<int>(issueId),
-      'karigarId': serializer.toJson<int>(karigarId),
-      'receiptDate': serializer.toJson<DateTime>(receiptDate),
-      'quantityReceived': serializer.toJson<int>(quantityReceived),
-      'grossWeightReceived': serializer.toJson<double>(grossWeightReceived),
-      'stoneWeight': serializer.toJson<double>(stoneWeight),
-      'netWeightReceived': serializer.toJson<double>(netWeightReceived),
-      'wastageWeight': serializer.toJson<double>(wastageWeight),
-      'wastagePercent': serializer.toJson<double>(wastagePercent),
-      'makingChargesType': serializer.toJson<String>(makingChargesType),
-      'makingChargeRate': serializer.toJson<double>(makingChargeRate),
-      'makingChargesAmount': serializer.toJson<double>(makingChargesAmount),
-      'paymentStatus': serializer.toJson<String>(paymentStatus),
-      'paidAmount': serializer.toJson<double>(paidAmount),
-      'notes': serializer.toJson<String?>(notes),
-    };
-  }
-
-  KarigarReceipt copyWith(
-          {int? id,
-          DateTime? createdAt,
-          Value<DateTime?> updatedAt = const Value.absent(),
-          String? receiptNumber,
-          int? issueId,
-          int? karigarId,
-          DateTime? receiptDate,
-          int? quantityReceived,
-          double? grossWeightReceived,
-          double? stoneWeight,
-          double? netWeightReceived,
-          double? wastageWeight,
-          double? wastagePercent,
-          String? makingChargesType,
-          double? makingChargeRate,
-          double? makingChargesAmount,
-          String? paymentStatus,
-          double? paidAmount,
-          Value<String?> notes = const Value.absent()}) =>
-      KarigarReceipt(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
-        receiptNumber: receiptNumber ?? this.receiptNumber,
-        issueId: issueId ?? this.issueId,
-        karigarId: karigarId ?? this.karigarId,
-        receiptDate: receiptDate ?? this.receiptDate,
-        quantityReceived: quantityReceived ?? this.quantityReceived,
-        grossWeightReceived: grossWeightReceived ?? this.grossWeightReceived,
-        stoneWeight: stoneWeight ?? this.stoneWeight,
-        netWeightReceived: netWeightReceived ?? this.netWeightReceived,
-        wastageWeight: wastageWeight ?? this.wastageWeight,
-        wastagePercent: wastagePercent ?? this.wastagePercent,
-        makingChargesType: makingChargesType ?? this.makingChargesType,
-        makingChargeRate: makingChargeRate ?? this.makingChargeRate,
-        makingChargesAmount: makingChargesAmount ?? this.makingChargesAmount,
-        paymentStatus: paymentStatus ?? this.paymentStatus,
-        paidAmount: paidAmount ?? this.paidAmount,
-        notes: notes.present ? notes.value : this.notes,
-      );
-  KarigarReceipt copyWithCompanion(KarigarReceiptsCompanion data) {
-    return KarigarReceipt(
-      id: data.id.present ? data.id.value : this.id,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      receiptNumber: data.receiptNumber.present
-          ? data.receiptNumber.value
-          : this.receiptNumber,
-      issueId: data.issueId.present ? data.issueId.value : this.issueId,
-      karigarId: data.karigarId.present ? data.karigarId.value : this.karigarId,
-      receiptDate:
-          data.receiptDate.present ? data.receiptDate.value : this.receiptDate,
-      quantityReceived: data.quantityReceived.present
-          ? data.quantityReceived.value
-          : this.quantityReceived,
-      grossWeightReceived: data.grossWeightReceived.present
-          ? data.grossWeightReceived.value
-          : this.grossWeightReceived,
-      stoneWeight:
-          data.stoneWeight.present ? data.stoneWeight.value : this.stoneWeight,
-      netWeightReceived: data.netWeightReceived.present
-          ? data.netWeightReceived.value
-          : this.netWeightReceived,
-      wastageWeight: data.wastageWeight.present
-          ? data.wastageWeight.value
-          : this.wastageWeight,
-      wastagePercent: data.wastagePercent.present
-          ? data.wastagePercent.value
-          : this.wastagePercent,
-      makingChargesType: data.makingChargesType.present
-          ? data.makingChargesType.value
-          : this.makingChargesType,
-      makingChargeRate: data.makingChargeRate.present
-          ? data.makingChargeRate.value
-          : this.makingChargeRate,
-      makingChargesAmount: data.makingChargesAmount.present
-          ? data.makingChargesAmount.value
-          : this.makingChargesAmount,
-      paymentStatus: data.paymentStatus.present
-          ? data.paymentStatus.value
-          : this.paymentStatus,
-      paidAmount:
-          data.paidAmount.present ? data.paidAmount.value : this.paidAmount,
-      notes: data.notes.present ? data.notes.value : this.notes,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KarigarReceipt(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('receiptNumber: $receiptNumber, ')
-          ..write('issueId: $issueId, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('receiptDate: $receiptDate, ')
-          ..write('quantityReceived: $quantityReceived, ')
-          ..write('grossWeightReceived: $grossWeightReceived, ')
-          ..write('stoneWeight: $stoneWeight, ')
-          ..write('netWeightReceived: $netWeightReceived, ')
-          ..write('wastageWeight: $wastageWeight, ')
-          ..write('wastagePercent: $wastagePercent, ')
-          ..write('makingChargesType: $makingChargesType, ')
-          ..write('makingChargeRate: $makingChargeRate, ')
-          ..write('makingChargesAmount: $makingChargesAmount, ')
-          ..write('paymentStatus: $paymentStatus, ')
-          ..write('paidAmount: $paidAmount, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-      id,
-      createdAt,
-      updatedAt,
-      receiptNumber,
-      issueId,
-      karigarId,
-      receiptDate,
-      quantityReceived,
-      grossWeightReceived,
-      stoneWeight,
-      netWeightReceived,
-      wastageWeight,
-      wastagePercent,
-      makingChargesType,
-      makingChargeRate,
-      makingChargesAmount,
-      paymentStatus,
-      paidAmount,
-      notes);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KarigarReceipt &&
-          other.id == this.id &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.receiptNumber == this.receiptNumber &&
-          other.issueId == this.issueId &&
-          other.karigarId == this.karigarId &&
-          other.receiptDate == this.receiptDate &&
-          other.quantityReceived == this.quantityReceived &&
-          other.grossWeightReceived == this.grossWeightReceived &&
-          other.stoneWeight == this.stoneWeight &&
-          other.netWeightReceived == this.netWeightReceived &&
-          other.wastageWeight == this.wastageWeight &&
-          other.wastagePercent == this.wastagePercent &&
-          other.makingChargesType == this.makingChargesType &&
-          other.makingChargeRate == this.makingChargeRate &&
-          other.makingChargesAmount == this.makingChargesAmount &&
-          other.paymentStatus == this.paymentStatus &&
-          other.paidAmount == this.paidAmount &&
-          other.notes == this.notes);
-}
-
-class KarigarReceiptsCompanion extends UpdateCompanion<KarigarReceipt> {
-  final Value<int> id;
-  final Value<DateTime> createdAt;
-  final Value<DateTime?> updatedAt;
-  final Value<String> receiptNumber;
-  final Value<int> issueId;
-  final Value<int> karigarId;
-  final Value<DateTime> receiptDate;
-  final Value<int> quantityReceived;
-  final Value<double> grossWeightReceived;
-  final Value<double> stoneWeight;
-  final Value<double> netWeightReceived;
-  final Value<double> wastageWeight;
-  final Value<double> wastagePercent;
-  final Value<String> makingChargesType;
-  final Value<double> makingChargeRate;
-  final Value<double> makingChargesAmount;
-  final Value<String> paymentStatus;
-  final Value<double> paidAmount;
-  final Value<String?> notes;
-  const KarigarReceiptsCompanion({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.receiptNumber = const Value.absent(),
-    this.issueId = const Value.absent(),
-    this.karigarId = const Value.absent(),
-    this.receiptDate = const Value.absent(),
-    this.quantityReceived = const Value.absent(),
-    this.grossWeightReceived = const Value.absent(),
-    this.stoneWeight = const Value.absent(),
-    this.netWeightReceived = const Value.absent(),
-    this.wastageWeight = const Value.absent(),
-    this.wastagePercent = const Value.absent(),
-    this.makingChargesType = const Value.absent(),
-    this.makingChargeRate = const Value.absent(),
-    this.makingChargesAmount = const Value.absent(),
-    this.paymentStatus = const Value.absent(),
-    this.paidAmount = const Value.absent(),
-    this.notes = const Value.absent(),
-  });
-  KarigarReceiptsCompanion.insert({
-    this.id = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    required String receiptNumber,
-    required int issueId,
-    required int karigarId,
-    required DateTime receiptDate,
-    this.quantityReceived = const Value.absent(),
-    this.grossWeightReceived = const Value.absent(),
-    this.stoneWeight = const Value.absent(),
-    this.netWeightReceived = const Value.absent(),
-    this.wastageWeight = const Value.absent(),
-    this.wastagePercent = const Value.absent(),
-    this.makingChargesType = const Value.absent(),
-    this.makingChargeRate = const Value.absent(),
-    this.makingChargesAmount = const Value.absent(),
-    this.paymentStatus = const Value.absent(),
-    this.paidAmount = const Value.absent(),
-    this.notes = const Value.absent(),
-  })  : receiptNumber = Value(receiptNumber),
-        issueId = Value(issueId),
-        karigarId = Value(karigarId),
-        receiptDate = Value(receiptDate);
-  static Insertable<KarigarReceipt> custom({
-    Expression<int>? id,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? receiptNumber,
-    Expression<int>? issueId,
-    Expression<int>? karigarId,
-    Expression<DateTime>? receiptDate,
-    Expression<int>? quantityReceived,
-    Expression<double>? grossWeightReceived,
-    Expression<double>? stoneWeight,
-    Expression<double>? netWeightReceived,
-    Expression<double>? wastageWeight,
-    Expression<double>? wastagePercent,
-    Expression<String>? makingChargesType,
-    Expression<double>? makingChargeRate,
-    Expression<double>? makingChargesAmount,
-    Expression<String>? paymentStatus,
-    Expression<double>? paidAmount,
-    Expression<String>? notes,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (receiptNumber != null) 'receipt_number': receiptNumber,
-      if (issueId != null) 'issue_id': issueId,
-      if (karigarId != null) 'karigar_id': karigarId,
-      if (receiptDate != null) 'receipt_date': receiptDate,
-      if (quantityReceived != null) 'quantity_received': quantityReceived,
-      if (grossWeightReceived != null)
-        'gross_weight_received': grossWeightReceived,
-      if (stoneWeight != null) 'stone_weight': stoneWeight,
-      if (netWeightReceived != null) 'net_weight_received': netWeightReceived,
-      if (wastageWeight != null) 'wastage_weight': wastageWeight,
-      if (wastagePercent != null) 'wastage_percent': wastagePercent,
-      if (makingChargesType != null) 'making_charges_type': makingChargesType,
-      if (makingChargeRate != null) 'making_charge_rate': makingChargeRate,
-      if (makingChargesAmount != null)
-        'making_charges_amount': makingChargesAmount,
-      if (paymentStatus != null) 'payment_status': paymentStatus,
-      if (paidAmount != null) 'paid_amount': paidAmount,
-      if (notes != null) 'notes': notes,
-    });
-  }
-
-  KarigarReceiptsCompanion copyWith(
-      {Value<int>? id,
-      Value<DateTime>? createdAt,
-      Value<DateTime?>? updatedAt,
-      Value<String>? receiptNumber,
-      Value<int>? issueId,
-      Value<int>? karigarId,
-      Value<DateTime>? receiptDate,
-      Value<int>? quantityReceived,
-      Value<double>? grossWeightReceived,
-      Value<double>? stoneWeight,
-      Value<double>? netWeightReceived,
-      Value<double>? wastageWeight,
-      Value<double>? wastagePercent,
-      Value<String>? makingChargesType,
-      Value<double>? makingChargeRate,
-      Value<double>? makingChargesAmount,
-      Value<String>? paymentStatus,
-      Value<double>? paidAmount,
-      Value<String?>? notes}) {
-    return KarigarReceiptsCompanion(
-      id: id ?? this.id,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      receiptNumber: receiptNumber ?? this.receiptNumber,
-      issueId: issueId ?? this.issueId,
-      karigarId: karigarId ?? this.karigarId,
-      receiptDate: receiptDate ?? this.receiptDate,
-      quantityReceived: quantityReceived ?? this.quantityReceived,
-      grossWeightReceived: grossWeightReceived ?? this.grossWeightReceived,
-      stoneWeight: stoneWeight ?? this.stoneWeight,
-      netWeightReceived: netWeightReceived ?? this.netWeightReceived,
-      wastageWeight: wastageWeight ?? this.wastageWeight,
-      wastagePercent: wastagePercent ?? this.wastagePercent,
-      makingChargesType: makingChargesType ?? this.makingChargesType,
-      makingChargeRate: makingChargeRate ?? this.makingChargeRate,
-      makingChargesAmount: makingChargesAmount ?? this.makingChargesAmount,
-      paymentStatus: paymentStatus ?? this.paymentStatus,
-      paidAmount: paidAmount ?? this.paidAmount,
-      notes: notes ?? this.notes,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (receiptNumber.present) {
-      map['receipt_number'] = Variable<String>(receiptNumber.value);
-    }
-    if (issueId.present) {
-      map['issue_id'] = Variable<int>(issueId.value);
-    }
-    if (karigarId.present) {
-      map['karigar_id'] = Variable<int>(karigarId.value);
-    }
-    if (receiptDate.present) {
-      map['receipt_date'] = Variable<DateTime>(receiptDate.value);
-    }
-    if (quantityReceived.present) {
-      map['quantity_received'] = Variable<int>(quantityReceived.value);
-    }
-    if (grossWeightReceived.present) {
-      map['gross_weight_received'] =
-          Variable<double>(grossWeightReceived.value);
-    }
-    if (stoneWeight.present) {
-      map['stone_weight'] = Variable<double>(stoneWeight.value);
-    }
-    if (netWeightReceived.present) {
-      map['net_weight_received'] = Variable<double>(netWeightReceived.value);
-    }
-    if (wastageWeight.present) {
-      map['wastage_weight'] = Variable<double>(wastageWeight.value);
-    }
-    if (wastagePercent.present) {
-      map['wastage_percent'] = Variable<double>(wastagePercent.value);
-    }
-    if (makingChargesType.present) {
-      map['making_charges_type'] = Variable<String>(makingChargesType.value);
-    }
-    if (makingChargeRate.present) {
-      map['making_charge_rate'] = Variable<double>(makingChargeRate.value);
-    }
-    if (makingChargesAmount.present) {
-      map['making_charges_amount'] =
-          Variable<double>(makingChargesAmount.value);
-    }
-    if (paymentStatus.present) {
-      map['payment_status'] = Variable<String>(paymentStatus.value);
-    }
-    if (paidAmount.present) {
-      map['paid_amount'] = Variable<double>(paidAmount.value);
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KarigarReceiptsCompanion(')
-          ..write('id: $id, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('receiptNumber: $receiptNumber, ')
-          ..write('issueId: $issueId, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('receiptDate: $receiptDate, ')
-          ..write('quantityReceived: $quantityReceived, ')
-          ..write('grossWeightReceived: $grossWeightReceived, ')
-          ..write('stoneWeight: $stoneWeight, ')
-          ..write('netWeightReceived: $netWeightReceived, ')
-          ..write('wastageWeight: $wastageWeight, ')
-          ..write('wastagePercent: $wastagePercent, ')
-          ..write('makingChargesType: $makingChargesType, ')
-          ..write('makingChargeRate: $makingChargeRate, ')
-          ..write('makingChargesAmount: $makingChargesAmount, ')
-          ..write('paymentStatus: $paymentStatus, ')
-          ..write('paidAmount: $paidAmount, ')
-          ..write('notes: $notes')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $GirviLoansTable extends GirviLoans
     with TableInfo<$GirviLoansTable, GirviLoan> {
   @override
@@ -26995,18 +24595,6 @@ class $DeliveryOrdersTable extends DeliveryOrders
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('BOOKED'));
-  static const VerificationMeta _karigarIdMeta =
-      const VerificationMeta('karigarId');
-  @override
-  late final GeneratedColumn<int> karigarId = GeneratedColumn<int>(
-      'karigar_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _karigarNameMeta =
-      const VerificationMeta('karigarName');
-  @override
-  late final GeneratedColumn<String> karigarName = GeneratedColumn<String>(
-      'karigar_name', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _advancePaidMeta =
       const VerificationMeta('advancePaid');
   @override
@@ -27090,8 +24678,6 @@ class $DeliveryOrdersTable extends DeliveryOrders
         approxWeight,
         lockedRate,
         status,
-        karigarId,
-        karigarName,
         advancePaid,
         totalAmount,
         dueAmount,
@@ -27192,16 +24778,6 @@ class $DeliveryOrdersTable extends DeliveryOrders
       context.handle(_statusMeta,
           status.isAcceptableOrUnknown(data['status']!, _statusMeta));
     }
-    if (data.containsKey('karigar_id')) {
-      context.handle(_karigarIdMeta,
-          karigarId.isAcceptableOrUnknown(data['karigar_id']!, _karigarIdMeta));
-    }
-    if (data.containsKey('karigar_name')) {
-      context.handle(
-          _karigarNameMeta,
-          karigarName.isAcceptableOrUnknown(
-              data['karigar_name']!, _karigarNameMeta));
-    }
     if (data.containsKey('advance_paid')) {
       context.handle(
           _advancePaidMeta,
@@ -27293,10 +24869,6 @@ class $DeliveryOrdersTable extends DeliveryOrders
           .read(DriftSqlType.double, data['${effectivePrefix}locked_rate'])!,
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      karigarId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}karigar_id']),
-      karigarName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}karigar_name']),
       advancePaid: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}advance_paid'])!,
       totalAmount: attachedDatabase.typeMapping
@@ -27343,8 +24915,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
   final double approxWeight;
   final double lockedRate;
   final String status;
-  final int? karigarId;
-  final String? karigarName;
   final double advancePaid;
   final double totalAmount;
   final double dueAmount;
@@ -27370,8 +24940,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
       required this.approxWeight,
       required this.lockedRate,
       required this.status,
-      this.karigarId,
-      this.karigarName,
       required this.advancePaid,
       required this.totalAmount,
       required this.dueAmount,
@@ -27403,12 +24971,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
     map['approx_weight'] = Variable<double>(approxWeight);
     map['locked_rate'] = Variable<double>(lockedRate);
     map['status'] = Variable<String>(status);
-    if (!nullToAbsent || karigarId != null) {
-      map['karigar_id'] = Variable<int>(karigarId);
-    }
-    if (!nullToAbsent || karigarName != null) {
-      map['karigar_name'] = Variable<String>(karigarName);
-    }
     map['advance_paid'] = Variable<double>(advancePaid);
     map['total_amount'] = Variable<double>(totalAmount);
     map['due_amount'] = Variable<double>(dueAmount);
@@ -27454,12 +25016,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
       approxWeight: Value(approxWeight),
       lockedRate: Value(lockedRate),
       status: Value(status),
-      karigarId: karigarId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(karigarId),
-      karigarName: karigarName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(karigarName),
       advancePaid: Value(advancePaid),
       totalAmount: Value(totalAmount),
       dueAmount: Value(dueAmount),
@@ -27502,8 +25058,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
       approxWeight: serializer.fromJson<double>(json['approxWeight']),
       lockedRate: serializer.fromJson<double>(json['lockedRate']),
       status: serializer.fromJson<String>(json['status']),
-      karigarId: serializer.fromJson<int?>(json['karigarId']),
-      karigarName: serializer.fromJson<String?>(json['karigarName']),
       advancePaid: serializer.fromJson<double>(json['advancePaid']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
       dueAmount: serializer.fromJson<double>(json['dueAmount']),
@@ -27536,8 +25090,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
       'approxWeight': serializer.toJson<double>(approxWeight),
       'lockedRate': serializer.toJson<double>(lockedRate),
       'status': serializer.toJson<String>(status),
-      'karigarId': serializer.toJson<int?>(karigarId),
-      'karigarName': serializer.toJson<String?>(karigarName),
       'advancePaid': serializer.toJson<double>(advancePaid),
       'totalAmount': serializer.toJson<double>(totalAmount),
       'dueAmount': serializer.toJson<double>(dueAmount),
@@ -27567,8 +25119,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
           double? approxWeight,
           double? lockedRate,
           String? status,
-          Value<int?> karigarId = const Value.absent(),
-          Value<String?> karigarName = const Value.absent(),
           double? advancePaid,
           double? totalAmount,
           double? dueAmount,
@@ -27595,8 +25145,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
         approxWeight: approxWeight ?? this.approxWeight,
         lockedRate: lockedRate ?? this.lockedRate,
         status: status ?? this.status,
-        karigarId: karigarId.present ? karigarId.value : this.karigarId,
-        karigarName: karigarName.present ? karigarName.value : this.karigarName,
         advancePaid: advancePaid ?? this.advancePaid,
         totalAmount: totalAmount ?? this.totalAmount,
         dueAmount: dueAmount ?? this.dueAmount,
@@ -27641,9 +25189,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
       lockedRate:
           data.lockedRate.present ? data.lockedRate.value : this.lockedRate,
       status: data.status.present ? data.status.value : this.status,
-      karigarId: data.karigarId.present ? data.karigarId.value : this.karigarId,
-      karigarName:
-          data.karigarName.present ? data.karigarName.value : this.karigarName,
       advancePaid:
           data.advancePaid.present ? data.advancePaid.value : this.advancePaid,
       totalAmount:
@@ -27686,8 +25231,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
           ..write('approxWeight: $approxWeight, ')
           ..write('lockedRate: $lockedRate, ')
           ..write('status: $status, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('karigarName: $karigarName, ')
           ..write('advancePaid: $advancePaid, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('dueAmount: $dueAmount, ')
@@ -27718,8 +25261,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
         approxWeight,
         lockedRate,
         status,
-        karigarId,
-        karigarName,
         advancePaid,
         totalAmount,
         dueAmount,
@@ -27749,8 +25290,6 @@ class DeliveryOrder extends DataClass implements Insertable<DeliveryOrder> {
           other.approxWeight == this.approxWeight &&
           other.lockedRate == this.lockedRate &&
           other.status == this.status &&
-          other.karigarId == this.karigarId &&
-          other.karigarName == this.karigarName &&
           other.advancePaid == this.advancePaid &&
           other.totalAmount == this.totalAmount &&
           other.dueAmount == this.dueAmount &&
@@ -27778,8 +25317,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
   final Value<double> approxWeight;
   final Value<double> lockedRate;
   final Value<String> status;
-  final Value<int?> karigarId;
-  final Value<String?> karigarName;
   final Value<double> advancePaid;
   final Value<double> totalAmount;
   final Value<double> dueAmount;
@@ -27805,8 +25342,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
     this.approxWeight = const Value.absent(),
     this.lockedRate = const Value.absent(),
     this.status = const Value.absent(),
-    this.karigarId = const Value.absent(),
-    this.karigarName = const Value.absent(),
     this.advancePaid = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.dueAmount = const Value.absent(),
@@ -27833,8 +25368,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
     this.approxWeight = const Value.absent(),
     this.lockedRate = const Value.absent(),
     this.status = const Value.absent(),
-    this.karigarId = const Value.absent(),
-    this.karigarName = const Value.absent(),
     this.advancePaid = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.dueAmount = const Value.absent(),
@@ -27865,8 +25398,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
     Expression<double>? approxWeight,
     Expression<double>? lockedRate,
     Expression<String>? status,
-    Expression<int>? karigarId,
-    Expression<String>? karigarName,
     Expression<double>? advancePaid,
     Expression<double>? totalAmount,
     Expression<double>? dueAmount,
@@ -27893,8 +25424,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
       if (approxWeight != null) 'approx_weight': approxWeight,
       if (lockedRate != null) 'locked_rate': lockedRate,
       if (status != null) 'status': status,
-      if (karigarId != null) 'karigar_id': karigarId,
-      if (karigarName != null) 'karigar_name': karigarName,
       if (advancePaid != null) 'advance_paid': advancePaid,
       if (totalAmount != null) 'total_amount': totalAmount,
       if (dueAmount != null) 'due_amount': dueAmount,
@@ -27925,8 +25454,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
       Value<double>? approxWeight,
       Value<double>? lockedRate,
       Value<String>? status,
-      Value<int?>? karigarId,
-      Value<String?>? karigarName,
       Value<double>? advancePaid,
       Value<double>? totalAmount,
       Value<double>? dueAmount,
@@ -27952,8 +25479,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
       approxWeight: approxWeight ?? this.approxWeight,
       lockedRate: lockedRate ?? this.lockedRate,
       status: status ?? this.status,
-      karigarId: karigarId ?? this.karigarId,
-      karigarName: karigarName ?? this.karigarName,
       advancePaid: advancePaid ?? this.advancePaid,
       totalAmount: totalAmount ?? this.totalAmount,
       dueAmount: dueAmount ?? this.dueAmount,
@@ -28012,12 +25537,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
-    if (karigarId.present) {
-      map['karigar_id'] = Variable<int>(karigarId.value);
-    }
-    if (karigarName.present) {
-      map['karigar_name'] = Variable<String>(karigarName.value);
-    }
     if (advancePaid.present) {
       map['advance_paid'] = Variable<double>(advancePaid.value);
     }
@@ -28070,8 +25589,6 @@ class DeliveryOrdersCompanion extends UpdateCompanion<DeliveryOrder> {
           ..write('approxWeight: $approxWeight, ')
           ..write('lockedRate: $lockedRate, ')
           ..write('status: $status, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('karigarName: $karigarName, ')
           ..write('advancePaid: $advancePaid, ')
           ..write('totalAmount: $totalAmount, ')
           ..write('dueAmount: $dueAmount, ')
@@ -28189,18 +25706,6 @@ class $DeliveryItemsTable extends DeliveryItems
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('PENDING'));
-  static const VerificationMeta _karigarIdMeta =
-      const VerificationMeta('karigarId');
-  @override
-  late final GeneratedColumn<int> karigarId = GeneratedColumn<int>(
-      'karigar_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _karigarNameMeta =
-      const VerificationMeta('karigarName');
-  @override
-  late final GeneratedColumn<String> karigarName = GeneratedColumn<String>(
-      'karigar_name', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _deliveredAtMeta =
       const VerificationMeta('deliveredAt');
   @override
@@ -28222,8 +25727,6 @@ class $DeliveryItemsTable extends DeliveryItems
         imagePath,
         notes,
         itemStatus,
-        karigarId,
-        karigarName,
         deliveredAt
       ];
   @override
@@ -28299,16 +25802,6 @@ class $DeliveryItemsTable extends DeliveryItems
           itemStatus.isAcceptableOrUnknown(
               data['item_status']!, _itemStatusMeta));
     }
-    if (data.containsKey('karigar_id')) {
-      context.handle(_karigarIdMeta,
-          karigarId.isAcceptableOrUnknown(data['karigar_id']!, _karigarIdMeta));
-    }
-    if (data.containsKey('karigar_name')) {
-      context.handle(
-          _karigarNameMeta,
-          karigarName.isAcceptableOrUnknown(
-              data['karigar_name']!, _karigarNameMeta));
-    }
     if (data.containsKey('delivered_at')) {
       context.handle(
           _deliveredAtMeta,
@@ -28350,10 +25843,6 @@ class $DeliveryItemsTable extends DeliveryItems
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       itemStatus: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}item_status'])!,
-      karigarId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}karigar_id']),
-      karigarName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}karigar_name']),
       deliveredAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}delivered_at']),
     );
@@ -28379,8 +25868,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
   final String? imagePath;
   final String? notes;
   final String itemStatus;
-  final int? karigarId;
-  final String? karigarName;
   final DateTime? deliveredAt;
   const DeliveryItem(
       {required this.id,
@@ -28396,8 +25883,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       this.imagePath,
       this.notes,
       required this.itemStatus,
-      this.karigarId,
-      this.karigarName,
       this.deliveredAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -28421,12 +25906,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       map['notes'] = Variable<String>(notes);
     }
     map['item_status'] = Variable<String>(itemStatus);
-    if (!nullToAbsent || karigarId != null) {
-      map['karigar_id'] = Variable<int>(karigarId);
-    }
-    if (!nullToAbsent || karigarName != null) {
-      map['karigar_name'] = Variable<String>(karigarName);
-    }
     if (!nullToAbsent || deliveredAt != null) {
       map['delivered_at'] = Variable<DateTime>(deliveredAt);
     }
@@ -28453,12 +25932,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       itemStatus: Value(itemStatus),
-      karigarId: karigarId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(karigarId),
-      karigarName: karigarName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(karigarName),
       deliveredAt: deliveredAt == null && nullToAbsent
           ? const Value.absent()
           : Value(deliveredAt),
@@ -28482,8 +25955,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       notes: serializer.fromJson<String?>(json['notes']),
       itemStatus: serializer.fromJson<String>(json['itemStatus']),
-      karigarId: serializer.fromJson<int?>(json['karigarId']),
-      karigarName: serializer.fromJson<String?>(json['karigarName']),
       deliveredAt: serializer.fromJson<DateTime?>(json['deliveredAt']),
     );
   }
@@ -28504,8 +25975,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       'imagePath': serializer.toJson<String?>(imagePath),
       'notes': serializer.toJson<String?>(notes),
       'itemStatus': serializer.toJson<String>(itemStatus),
-      'karigarId': serializer.toJson<int?>(karigarId),
-      'karigarName': serializer.toJson<String?>(karigarName),
       'deliveredAt': serializer.toJson<DateTime?>(deliveredAt),
     };
   }
@@ -28524,8 +25993,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
           Value<String?> imagePath = const Value.absent(),
           Value<String?> notes = const Value.absent(),
           String? itemStatus,
-          Value<int?> karigarId = const Value.absent(),
-          Value<String?> karigarName = const Value.absent(),
           Value<DateTime?> deliveredAt = const Value.absent()}) =>
       DeliveryItem(
         id: id ?? this.id,
@@ -28541,8 +26008,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
         notes: notes.present ? notes.value : this.notes,
         itemStatus: itemStatus ?? this.itemStatus,
-        karigarId: karigarId.present ? karigarId.value : this.karigarId,
-        karigarName: karigarName.present ? karigarName.value : this.karigarName,
         deliveredAt: deliveredAt.present ? deliveredAt.value : this.deliveredAt,
       );
   DeliveryItem copyWithCompanion(DeliveryItemsCompanion data) {
@@ -28566,9 +26031,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       notes: data.notes.present ? data.notes.value : this.notes,
       itemStatus:
           data.itemStatus.present ? data.itemStatus.value : this.itemStatus,
-      karigarId: data.karigarId.present ? data.karigarId.value : this.karigarId,
-      karigarName:
-          data.karigarName.present ? data.karigarName.value : this.karigarName,
       deliveredAt:
           data.deliveredAt.present ? data.deliveredAt.value : this.deliveredAt,
     );
@@ -28590,8 +26052,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
           ..write('imagePath: $imagePath, ')
           ..write('notes: $notes, ')
           ..write('itemStatus: $itemStatus, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('karigarName: $karigarName, ')
           ..write('deliveredAt: $deliveredAt')
           ..write(')'))
         .toString();
@@ -28612,8 +26072,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
       imagePath,
       notes,
       itemStatus,
-      karigarId,
-      karigarName,
       deliveredAt);
   @override
   bool operator ==(Object other) =>
@@ -28632,8 +26090,6 @@ class DeliveryItem extends DataClass implements Insertable<DeliveryItem> {
           other.imagePath == this.imagePath &&
           other.notes == this.notes &&
           other.itemStatus == this.itemStatus &&
-          other.karigarId == this.karigarId &&
-          other.karigarName == this.karigarName &&
           other.deliveredAt == this.deliveredAt);
 }
 
@@ -28651,8 +26107,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
   final Value<String?> imagePath;
   final Value<String?> notes;
   final Value<String> itemStatus;
-  final Value<int?> karigarId;
-  final Value<String?> karigarName;
   final Value<DateTime?> deliveredAt;
   const DeliveryItemsCompanion({
     this.id = const Value.absent(),
@@ -28668,8 +26122,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
     this.imagePath = const Value.absent(),
     this.notes = const Value.absent(),
     this.itemStatus = const Value.absent(),
-    this.karigarId = const Value.absent(),
-    this.karigarName = const Value.absent(),
     this.deliveredAt = const Value.absent(),
   });
   DeliveryItemsCompanion.insert({
@@ -28686,8 +26138,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
     this.imagePath = const Value.absent(),
     this.notes = const Value.absent(),
     this.itemStatus = const Value.absent(),
-    this.karigarId = const Value.absent(),
-    this.karigarName = const Value.absent(),
     this.deliveredAt = const Value.absent(),
   })  : deliveryOrderId = Value(deliveryOrderId),
         itemName = Value(itemName);
@@ -28705,8 +26155,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
     Expression<String>? imagePath,
     Expression<String>? notes,
     Expression<String>? itemStatus,
-    Expression<int>? karigarId,
-    Expression<String>? karigarName,
     Expression<DateTime>? deliveredAt,
   }) {
     return RawValuesInsertable({
@@ -28723,8 +26171,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
       if (imagePath != null) 'image_path': imagePath,
       if (notes != null) 'notes': notes,
       if (itemStatus != null) 'item_status': itemStatus,
-      if (karigarId != null) 'karigar_id': karigarId,
-      if (karigarName != null) 'karigar_name': karigarName,
       if (deliveredAt != null) 'delivered_at': deliveredAt,
     });
   }
@@ -28743,8 +26189,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
       Value<String?>? imagePath,
       Value<String?>? notes,
       Value<String>? itemStatus,
-      Value<int?>? karigarId,
-      Value<String?>? karigarName,
       Value<DateTime?>? deliveredAt}) {
     return DeliveryItemsCompanion(
       id: id ?? this.id,
@@ -28760,8 +26204,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
       imagePath: imagePath ?? this.imagePath,
       notes: notes ?? this.notes,
       itemStatus: itemStatus ?? this.itemStatus,
-      karigarId: karigarId ?? this.karigarId,
-      karigarName: karigarName ?? this.karigarName,
       deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
@@ -28808,12 +26250,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
     if (itemStatus.present) {
       map['item_status'] = Variable<String>(itemStatus.value);
     }
-    if (karigarId.present) {
-      map['karigar_id'] = Variable<int>(karigarId.value);
-    }
-    if (karigarName.present) {
-      map['karigar_name'] = Variable<String>(karigarName.value);
-    }
     if (deliveredAt.present) {
       map['delivered_at'] = Variable<DateTime>(deliveredAt.value);
     }
@@ -28836,8 +26272,6 @@ class DeliveryItemsCompanion extends UpdateCompanion<DeliveryItem> {
           ..write('imagePath: $imagePath, ')
           ..write('notes: $notes, ')
           ..write('itemStatus: $itemStatus, ')
-          ..write('karigarId: $karigarId, ')
-          ..write('karigarName: $karigarName, ')
           ..write('deliveredAt: $deliveredAt')
           ..write(')'))
         .toString();
@@ -34638,6 +32072,857 @@ class BookingAdvanceBillingSettingsCompanion
   }
 }
 
+class $MetalRateProfilesTable extends MetalRateProfiles
+    with TableInfo<$MetalRateProfilesTable, MetalRateProfileRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MetalRateProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metalKeyMeta =
+      const VerificationMeta('metalKey');
+  @override
+  late final GeneratedColumn<String> metalKey = GeneratedColumn<String>(
+      'metal_key', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _profileJsonMeta =
+      const VerificationMeta('profileJson');
+  @override
+  late final GeneratedColumn<String> profileJson = GeneratedColumn<String>(
+      'profile_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _revisionMeta =
+      const VerificationMeta('revision');
+  @override
+  late final GeneratedColumn<int> revision = GeneratedColumn<int>(
+      'revision', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('Manual'));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, createdAt, updatedAt, metalKey, profileJson, revision, source];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'metal_rate_profiles';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<MetalRateProfileRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('metal_key')) {
+      context.handle(_metalKeyMeta,
+          metalKey.isAcceptableOrUnknown(data['metal_key']!, _metalKeyMeta));
+    } else if (isInserting) {
+      context.missing(_metalKeyMeta);
+    }
+    if (data.containsKey('profile_json')) {
+      context.handle(
+          _profileJsonMeta,
+          profileJson.isAcceptableOrUnknown(
+              data['profile_json']!, _profileJsonMeta));
+    } else if (isInserting) {
+      context.missing(_profileJsonMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(_revisionMeta,
+          revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta));
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MetalRateProfileRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MetalRateProfileRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      metalKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_key'])!,
+      profileJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}profile_json'])!,
+      revision: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}revision'])!,
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+    );
+  }
+
+  @override
+  $MetalRateProfilesTable createAlias(String alias) {
+    return $MetalRateProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class MetalRateProfileRecord extends DataClass
+    implements Insertable<MetalRateProfileRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String metalKey;
+  final String profileJson;
+  final int revision;
+  final String source;
+  const MetalRateProfileRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.metalKey,
+      required this.profileJson,
+      required this.revision,
+      required this.source});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['metal_key'] = Variable<String>(metalKey);
+    map['profile_json'] = Variable<String>(profileJson);
+    map['revision'] = Variable<int>(revision);
+    map['source'] = Variable<String>(source);
+    return map;
+  }
+
+  MetalRateProfilesCompanion toCompanion(bool nullToAbsent) {
+    return MetalRateProfilesCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      metalKey: Value(metalKey),
+      profileJson: Value(profileJson),
+      revision: Value(revision),
+      source: Value(source),
+    );
+  }
+
+  factory MetalRateProfileRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MetalRateProfileRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      metalKey: serializer.fromJson<String>(json['metalKey']),
+      profileJson: serializer.fromJson<String>(json['profileJson']),
+      revision: serializer.fromJson<int>(json['revision']),
+      source: serializer.fromJson<String>(json['source']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'metalKey': serializer.toJson<String>(metalKey),
+      'profileJson': serializer.toJson<String>(profileJson),
+      'revision': serializer.toJson<int>(revision),
+      'source': serializer.toJson<String>(source),
+    };
+  }
+
+  MetalRateProfileRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? metalKey,
+          String? profileJson,
+          int? revision,
+          String? source}) =>
+      MetalRateProfileRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        metalKey: metalKey ?? this.metalKey,
+        profileJson: profileJson ?? this.profileJson,
+        revision: revision ?? this.revision,
+        source: source ?? this.source,
+      );
+  MetalRateProfileRecord copyWithCompanion(MetalRateProfilesCompanion data) {
+    return MetalRateProfileRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      metalKey: data.metalKey.present ? data.metalKey.value : this.metalKey,
+      profileJson:
+          data.profileJson.present ? data.profileJson.value : this.profileJson,
+      revision: data.revision.present ? data.revision.value : this.revision,
+      source: data.source.present ? data.source.value : this.source,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MetalRateProfileRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metalKey: $metalKey, ')
+          ..write('profileJson: $profileJson, ')
+          ..write('revision: $revision, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, createdAt, updatedAt, metalKey, profileJson, revision, source);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MetalRateProfileRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.metalKey == this.metalKey &&
+          other.profileJson == this.profileJson &&
+          other.revision == this.revision &&
+          other.source == this.source);
+}
+
+class MetalRateProfilesCompanion
+    extends UpdateCompanion<MetalRateProfileRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> metalKey;
+  final Value<String> profileJson;
+  final Value<int> revision;
+  final Value<String> source;
+  const MetalRateProfilesCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.metalKey = const Value.absent(),
+    this.profileJson = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.source = const Value.absent(),
+  });
+  MetalRateProfilesCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required String metalKey,
+    required String profileJson,
+    this.revision = const Value.absent(),
+    this.source = const Value.absent(),
+  })  : metalKey = Value(metalKey),
+        profileJson = Value(profileJson);
+  static Insertable<MetalRateProfileRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? metalKey,
+    Expression<String>? profileJson,
+    Expression<int>? revision,
+    Expression<String>? source,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (metalKey != null) 'metal_key': metalKey,
+      if (profileJson != null) 'profile_json': profileJson,
+      if (revision != null) 'revision': revision,
+      if (source != null) 'source': source,
+    });
+  }
+
+  MetalRateProfilesCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? metalKey,
+      Value<String>? profileJson,
+      Value<int>? revision,
+      Value<String>? source}) {
+    return MetalRateProfilesCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      metalKey: metalKey ?? this.metalKey,
+      profileJson: profileJson ?? this.profileJson,
+      revision: revision ?? this.revision,
+      source: source ?? this.source,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (metalKey.present) {
+      map['metal_key'] = Variable<String>(metalKey.value);
+    }
+    if (profileJson.present) {
+      map['profile_json'] = Variable<String>(profileJson.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<int>(revision.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MetalRateProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metalKey: $metalKey, ')
+          ..write('profileJson: $profileJson, ')
+          ..write('revision: $revision, ')
+          ..write('source: $source')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MetalRateRevisionsTable extends MetalRateRevisions
+    with TableInfo<$MetalRateRevisionsTable, MetalRateRevisionRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MetalRateRevisionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metalKeyMeta =
+      const VerificationMeta('metalKey');
+  @override
+  late final GeneratedColumn<String> metalKey = GeneratedColumn<String>(
+      'metal_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _revisionMeta =
+      const VerificationMeta('revision');
+  @override
+  late final GeneratedColumn<int> revision = GeneratedColumn<int>(
+      'revision', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _profileJsonMeta =
+      const VerificationMeta('profileJson');
+  @override
+  late final GeneratedColumn<String> profileJson = GeneratedColumn<String>(
+      'profile_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _changeReasonMeta =
+      const VerificationMeta('changeReason');
+  @override
+  late final GeneratedColumn<String> changeReason = GeneratedColumn<String>(
+      'change_reason', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _effectiveAtMeta =
+      const VerificationMeta('effectiveAt');
+  @override
+  late final GeneratedColumn<DateTime> effectiveAt = GeneratedColumn<DateTime>(
+      'effective_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        createdAt,
+        updatedAt,
+        metalKey,
+        revision,
+        profileJson,
+        source,
+        changeReason,
+        effectiveAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'metal_rate_revisions';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<MetalRateRevisionRecord> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('metal_key')) {
+      context.handle(_metalKeyMeta,
+          metalKey.isAcceptableOrUnknown(data['metal_key']!, _metalKeyMeta));
+    } else if (isInserting) {
+      context.missing(_metalKeyMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(_revisionMeta,
+          revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta));
+    } else if (isInserting) {
+      context.missing(_revisionMeta);
+    }
+    if (data.containsKey('profile_json')) {
+      context.handle(
+          _profileJsonMeta,
+          profileJson.isAcceptableOrUnknown(
+              data['profile_json']!, _profileJsonMeta));
+    } else if (isInserting) {
+      context.missing(_profileJsonMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('change_reason')) {
+      context.handle(
+          _changeReasonMeta,
+          changeReason.isAcceptableOrUnknown(
+              data['change_reason']!, _changeReasonMeta));
+    }
+    if (data.containsKey('effective_at')) {
+      context.handle(
+          _effectiveAtMeta,
+          effectiveAt.isAcceptableOrUnknown(
+              data['effective_at']!, _effectiveAtMeta));
+    } else if (isInserting) {
+      context.missing(_effectiveAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MetalRateRevisionRecord map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MetalRateRevisionRecord(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      metalKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}metal_key'])!,
+      revision: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}revision'])!,
+      profileJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}profile_json'])!,
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source'])!,
+      changeReason: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}change_reason']),
+      effectiveAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}effective_at'])!,
+    );
+  }
+
+  @override
+  $MetalRateRevisionsTable createAlias(String alias) {
+    return $MetalRateRevisionsTable(attachedDatabase, alias);
+  }
+}
+
+class MetalRateRevisionRecord extends DataClass
+    implements Insertable<MetalRateRevisionRecord> {
+  final int id;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String metalKey;
+  final int revision;
+  final String profileJson;
+  final String source;
+  final String? changeReason;
+  final DateTime effectiveAt;
+  const MetalRateRevisionRecord(
+      {required this.id,
+      required this.createdAt,
+      this.updatedAt,
+      required this.metalKey,
+      required this.revision,
+      required this.profileJson,
+      required this.source,
+      this.changeReason,
+      required this.effectiveAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    map['metal_key'] = Variable<String>(metalKey);
+    map['revision'] = Variable<int>(revision);
+    map['profile_json'] = Variable<String>(profileJson);
+    map['source'] = Variable<String>(source);
+    if (!nullToAbsent || changeReason != null) {
+      map['change_reason'] = Variable<String>(changeReason);
+    }
+    map['effective_at'] = Variable<DateTime>(effectiveAt);
+    return map;
+  }
+
+  MetalRateRevisionsCompanion toCompanion(bool nullToAbsent) {
+    return MetalRateRevisionsCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+      metalKey: Value(metalKey),
+      revision: Value(revision),
+      profileJson: Value(profileJson),
+      source: Value(source),
+      changeReason: changeReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(changeReason),
+      effectiveAt: Value(effectiveAt),
+    );
+  }
+
+  factory MetalRateRevisionRecord.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MetalRateRevisionRecord(
+      id: serializer.fromJson<int>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      metalKey: serializer.fromJson<String>(json['metalKey']),
+      revision: serializer.fromJson<int>(json['revision']),
+      profileJson: serializer.fromJson<String>(json['profileJson']),
+      source: serializer.fromJson<String>(json['source']),
+      changeReason: serializer.fromJson<String?>(json['changeReason']),
+      effectiveAt: serializer.fromJson<DateTime>(json['effectiveAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'metalKey': serializer.toJson<String>(metalKey),
+      'revision': serializer.toJson<int>(revision),
+      'profileJson': serializer.toJson<String>(profileJson),
+      'source': serializer.toJson<String>(source),
+      'changeReason': serializer.toJson<String?>(changeReason),
+      'effectiveAt': serializer.toJson<DateTime>(effectiveAt),
+    };
+  }
+
+  MetalRateRevisionRecord copyWith(
+          {int? id,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent(),
+          String? metalKey,
+          int? revision,
+          String? profileJson,
+          String? source,
+          Value<String?> changeReason = const Value.absent(),
+          DateTime? effectiveAt}) =>
+      MetalRateRevisionRecord(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        metalKey: metalKey ?? this.metalKey,
+        revision: revision ?? this.revision,
+        profileJson: profileJson ?? this.profileJson,
+        source: source ?? this.source,
+        changeReason:
+            changeReason.present ? changeReason.value : this.changeReason,
+        effectiveAt: effectiveAt ?? this.effectiveAt,
+      );
+  MetalRateRevisionRecord copyWithCompanion(MetalRateRevisionsCompanion data) {
+    return MetalRateRevisionRecord(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      metalKey: data.metalKey.present ? data.metalKey.value : this.metalKey,
+      revision: data.revision.present ? data.revision.value : this.revision,
+      profileJson:
+          data.profileJson.present ? data.profileJson.value : this.profileJson,
+      source: data.source.present ? data.source.value : this.source,
+      changeReason: data.changeReason.present
+          ? data.changeReason.value
+          : this.changeReason,
+      effectiveAt:
+          data.effectiveAt.present ? data.effectiveAt.value : this.effectiveAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MetalRateRevisionRecord(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metalKey: $metalKey, ')
+          ..write('revision: $revision, ')
+          ..write('profileJson: $profileJson, ')
+          ..write('source: $source, ')
+          ..write('changeReason: $changeReason, ')
+          ..write('effectiveAt: $effectiveAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, createdAt, updatedAt, metalKey, revision,
+      profileJson, source, changeReason, effectiveAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MetalRateRevisionRecord &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.metalKey == this.metalKey &&
+          other.revision == this.revision &&
+          other.profileJson == this.profileJson &&
+          other.source == this.source &&
+          other.changeReason == this.changeReason &&
+          other.effectiveAt == this.effectiveAt);
+}
+
+class MetalRateRevisionsCompanion
+    extends UpdateCompanion<MetalRateRevisionRecord> {
+  final Value<int> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  final Value<String> metalKey;
+  final Value<int> revision;
+  final Value<String> profileJson;
+  final Value<String> source;
+  final Value<String?> changeReason;
+  final Value<DateTime> effectiveAt;
+  const MetalRateRevisionsCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.metalKey = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.profileJson = const Value.absent(),
+    this.source = const Value.absent(),
+    this.changeReason = const Value.absent(),
+    this.effectiveAt = const Value.absent(),
+  });
+  MetalRateRevisionsCompanion.insert({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    required String metalKey,
+    required int revision,
+    required String profileJson,
+    required String source,
+    this.changeReason = const Value.absent(),
+    required DateTime effectiveAt,
+  })  : metalKey = Value(metalKey),
+        revision = Value(revision),
+        profileJson = Value(profileJson),
+        source = Value(source),
+        effectiveAt = Value(effectiveAt);
+  static Insertable<MetalRateRevisionRecord> custom({
+    Expression<int>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? metalKey,
+    Expression<int>? revision,
+    Expression<String>? profileJson,
+    Expression<String>? source,
+    Expression<String>? changeReason,
+    Expression<DateTime>? effectiveAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (metalKey != null) 'metal_key': metalKey,
+      if (revision != null) 'revision': revision,
+      if (profileJson != null) 'profile_json': profileJson,
+      if (source != null) 'source': source,
+      if (changeReason != null) 'change_reason': changeReason,
+      if (effectiveAt != null) 'effective_at': effectiveAt,
+    });
+  }
+
+  MetalRateRevisionsCompanion copyWith(
+      {Value<int>? id,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt,
+      Value<String>? metalKey,
+      Value<int>? revision,
+      Value<String>? profileJson,
+      Value<String>? source,
+      Value<String?>? changeReason,
+      Value<DateTime>? effectiveAt}) {
+    return MetalRateRevisionsCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      metalKey: metalKey ?? this.metalKey,
+      revision: revision ?? this.revision,
+      profileJson: profileJson ?? this.profileJson,
+      source: source ?? this.source,
+      changeReason: changeReason ?? this.changeReason,
+      effectiveAt: effectiveAt ?? this.effectiveAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (metalKey.present) {
+      map['metal_key'] = Variable<String>(metalKey.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<int>(revision.value);
+    }
+    if (profileJson.present) {
+      map['profile_json'] = Variable<String>(profileJson.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (changeReason.present) {
+      map['change_reason'] = Variable<String>(changeReason.value);
+    }
+    if (effectiveAt.present) {
+      map['effective_at'] = Variable<DateTime>(effectiveAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MetalRateRevisionsCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('metalKey: $metalKey, ')
+          ..write('revision: $revision, ')
+          ..write('profileJson: $profileJson, ')
+          ..write('source: $source, ')
+          ..write('changeReason: $changeReason, ')
+          ..write('effectiveAt: $effectiveAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $GoldStockReceiptsTable extends GoldStockReceipts
     with TableInfo<$GoldStockReceiptsTable, GoldStockReceiptRecord> {
   @override
@@ -39923,10 +38208,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BankAccountsTable bankAccounts = $BankAccountsTable(this);
   late final $BankTransactionsTable bankTransactions =
       $BankTransactionsTable(this);
-  late final $KarigarMastersTable karigarMasters = $KarigarMastersTable(this);
-  late final $KarigarIssuesTable karigarIssues = $KarigarIssuesTable(this);
-  late final $KarigarReceiptsTable karigarReceipts =
-      $KarigarReceiptsTable(this);
   late final $GirviLoansTable girviLoans = $GirviLoansTable(this);
   late final $GirviPaymentsTable girviPayments = $GirviPaymentsTable(this);
   late final $GirviLoanItemsTable girviLoanItems = $GirviLoanItemsTable(this);
@@ -39952,6 +38233,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $ShopPrintInformationSettingsTable(this);
   late final $BookingAdvanceBillingSettingsTable bookingAdvanceBillingSettings =
       $BookingAdvanceBillingSettingsTable(this);
+  late final $MetalRateProfilesTable metalRateProfiles =
+      $MetalRateProfilesTable(this);
+  late final $MetalRateRevisionsTable metalRateRevisions =
+      $MetalRateRevisionsTable(this);
   late final $GoldStockReceiptsTable goldStockReceipts =
       $GoldStockReceiptsTable(this);
   late final $GoldStockReceiptLinesTable goldStockReceiptLines =
@@ -40042,28 +38327,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_btxn_cheque ON bank_transactions (cheque_number)');
   late final Index idxBtxnRef = Index('idx_btxn_ref',
       'CREATE INDEX idx_btxn_ref ON bank_transactions (reference_id)');
-  late final Index idxKarigarName = Index('idx_karigar_name',
-      'CREATE INDEX idx_karigar_name ON karigar_masters (name)');
-  late final Index idxKarigarPhone = Index('idx_karigar_phone',
-      'CREATE INDEX idx_karigar_phone ON karigar_masters (phone)');
-  late final Index idxKarigarActive = Index('idx_karigar_active',
-      'CREATE INDEX idx_karigar_active ON karigar_masters (is_active)');
-  late final Index idxIssueKarigar = Index('idx_issue_karigar',
-      'CREATE INDEX idx_issue_karigar ON karigar_issues (karigar_id)');
-  late final Index idxIssueStatus = Index('idx_issue_status',
-      'CREATE INDEX idx_issue_status ON karigar_issues (status)');
-  late final Index idxIssueNumber = Index('idx_issue_number',
-      'CREATE INDEX idx_issue_number ON karigar_issues (issue_number)');
-  late final Index idxIssueDate = Index('idx_issue_date',
-      'CREATE INDEX idx_issue_date ON karigar_issues (issue_date)');
-  late final Index idxReceiptKarigar = Index('idx_receipt_karigar',
-      'CREATE INDEX idx_receipt_karigar ON karigar_receipts (karigar_id)');
-  late final Index idxReceiptIssue = Index('idx_receipt_issue',
-      'CREATE INDEX idx_receipt_issue ON karigar_receipts (issue_id)');
-  late final Index idxReceiptNumber = Index('idx_receipt_number',
-      'CREATE INDEX idx_receipt_number ON karigar_receipts (receipt_number)');
-  late final Index idxReceiptDate = Index('idx_receipt_date',
-      'CREATE INDEX idx_receipt_date ON karigar_receipts (receipt_date)');
   late final Index idxGirviCustomer = Index('idx_girvi_customer',
       'CREATE INDEX idx_girvi_customer ON girvi_loans (customer_id)');
   late final Index idxGirviStatus = Index('idx_girvi_status',
@@ -40174,9 +38437,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         cashTransactions,
         bankAccounts,
         bankTransactions,
-        karigarMasters,
-        karigarIssues,
-        karigarReceipts,
         girviLoans,
         girviPayments,
         girviLoanItems,
@@ -40192,6 +38452,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         girviBillingSettings,
         shopPrintInformationSettings,
         bookingAdvanceBillingSettings,
+        metalRateProfiles,
+        metalRateRevisions,
         goldStockReceipts,
         goldStockReceiptLines,
         goldReceiptSettlements,
@@ -40236,17 +38498,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxBtxnType,
         idxBtxnCheque,
         idxBtxnRef,
-        idxKarigarName,
-        idxKarigarPhone,
-        idxKarigarActive,
-        idxIssueKarigar,
-        idxIssueStatus,
-        idxIssueNumber,
-        idxIssueDate,
-        idxReceiptKarigar,
-        idxReceiptIssue,
-        idxReceiptNumber,
-        idxReceiptDate,
         idxGirviCustomer,
         idxGirviStatus,
         idxGirviTicket,
@@ -49909,1563 +48160,6 @@ typedef $$BankTransactionsTableProcessedTableManager = ProcessedTableManager<
     (BankTransaction, $$BankTransactionsTableReferences),
     BankTransaction,
     PrefetchHooks Function({bool accountId})>;
-typedef $$KarigarMastersTableCreateCompanionBuilder = KarigarMastersCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> createdAt,
-  Value<DateTime?> updatedAt,
-  required String name,
-  required String phone,
-  Value<String?> alternatePhone,
-  Value<String> specialization,
-  Value<String> rateType,
-  Value<double> rateAmount,
-  Value<String?> address,
-  Value<String?> city,
-  Value<double> openingBalance,
-  Value<bool> isActive,
-  Value<String?> notes,
-});
-typedef $$KarigarMastersTableUpdateCompanionBuilder = KarigarMastersCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> createdAt,
-  Value<DateTime?> updatedAt,
-  Value<String> name,
-  Value<String> phone,
-  Value<String?> alternatePhone,
-  Value<String> specialization,
-  Value<String> rateType,
-  Value<double> rateAmount,
-  Value<String?> address,
-  Value<String?> city,
-  Value<double> openingBalance,
-  Value<bool> isActive,
-  Value<String?> notes,
-});
-
-final class $$KarigarMastersTableReferences
-    extends BaseReferences<_$AppDatabase, $KarigarMastersTable, KarigarMaster> {
-  $$KarigarMastersTableReferences(
-      super.$_db, super.$_table, super.$_typedResult);
-
-  static MultiTypedResultKey<$KarigarIssuesTable, List<KarigarIssue>>
-      _karigarIssuesRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.karigarIssues,
-              aliasName: $_aliasNameGenerator(
-                  db.karigarMasters.id, db.karigarIssues.karigarId));
-
-  $$KarigarIssuesTableProcessedTableManager get karigarIssuesRefs {
-    final manager = $$KarigarIssuesTableTableManager($_db, $_db.karigarIssues)
-        .filter((f) => f.karigarId.id($_item.id));
-
-    final cache = $_typedResult.readTableOrNull(_karigarIssuesRefsTable($_db));
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
-  }
-
-  static MultiTypedResultKey<$KarigarReceiptsTable, List<KarigarReceipt>>
-      _karigarReceiptsRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.karigarReceipts,
-              aliasName: $_aliasNameGenerator(
-                  db.karigarMasters.id, db.karigarReceipts.karigarId));
-
-  $$KarigarReceiptsTableProcessedTableManager get karigarReceiptsRefs {
-    final manager =
-        $$KarigarReceiptsTableTableManager($_db, $_db.karigarReceipts)
-            .filter((f) => f.karigarId.id($_item.id));
-
-    final cache =
-        $_typedResult.readTableOrNull(_karigarReceiptsRefsTable($_db));
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
-  }
-}
-
-class $$KarigarMastersTableFilterComposer
-    extends Composer<_$AppDatabase, $KarigarMastersTable> {
-  $$KarigarMastersTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get alternatePhone => $composableBuilder(
-      column: $table.alternatePhone,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get specialization => $composableBuilder(
-      column: $table.specialization,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get rateType => $composableBuilder(
-      column: $table.rateType, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get rateAmount => $composableBuilder(
-      column: $table.rateAmount, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get address => $composableBuilder(
-      column: $table.address, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get city => $composableBuilder(
-      column: $table.city, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get openingBalance => $composableBuilder(
-      column: $table.openingBalance,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<bool> get isActive => $composableBuilder(
-      column: $table.isActive, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnFilters(column));
-
-  Expression<bool> karigarIssuesRefs(
-      Expression<bool> Function($$KarigarIssuesTableFilterComposer f) f) {
-    final $$KarigarIssuesTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.karigarIssues,
-        getReferencedColumn: (t) => t.karigarId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarIssuesTableFilterComposer(
-              $db: $db,
-              $table: $db.karigarIssues,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-
-  Expression<bool> karigarReceiptsRefs(
-      Expression<bool> Function($$KarigarReceiptsTableFilterComposer f) f) {
-    final $$KarigarReceiptsTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.karigarReceipts,
-        getReferencedColumn: (t) => t.karigarId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarReceiptsTableFilterComposer(
-              $db: $db,
-              $table: $db.karigarReceipts,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-}
-
-class $$KarigarMastersTableOrderingComposer
-    extends Composer<_$AppDatabase, $KarigarMastersTable> {
-  $$KarigarMastersTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get alternatePhone => $composableBuilder(
-      column: $table.alternatePhone,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get specialization => $composableBuilder(
-      column: $table.specialization,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get rateType => $composableBuilder(
-      column: $table.rateType, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get rateAmount => $composableBuilder(
-      column: $table.rateAmount, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get address => $composableBuilder(
-      column: $table.address, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get city => $composableBuilder(
-      column: $table.city, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get openingBalance => $composableBuilder(
-      column: $table.openingBalance,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<bool> get isActive => $composableBuilder(
-      column: $table.isActive, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnOrderings(column));
-}
-
-class $$KarigarMastersTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KarigarMastersTable> {
-  $$KarigarMastersTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get phone =>
-      $composableBuilder(column: $table.phone, builder: (column) => column);
-
-  GeneratedColumn<String> get alternatePhone => $composableBuilder(
-      column: $table.alternatePhone, builder: (column) => column);
-
-  GeneratedColumn<String> get specialization => $composableBuilder(
-      column: $table.specialization, builder: (column) => column);
-
-  GeneratedColumn<String> get rateType =>
-      $composableBuilder(column: $table.rateType, builder: (column) => column);
-
-  GeneratedColumn<double> get rateAmount => $composableBuilder(
-      column: $table.rateAmount, builder: (column) => column);
-
-  GeneratedColumn<String> get address =>
-      $composableBuilder(column: $table.address, builder: (column) => column);
-
-  GeneratedColumn<String> get city =>
-      $composableBuilder(column: $table.city, builder: (column) => column);
-
-  GeneratedColumn<double> get openingBalance => $composableBuilder(
-      column: $table.openingBalance, builder: (column) => column);
-
-  GeneratedColumn<bool> get isActive =>
-      $composableBuilder(column: $table.isActive, builder: (column) => column);
-
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
-
-  Expression<T> karigarIssuesRefs<T extends Object>(
-      Expression<T> Function($$KarigarIssuesTableAnnotationComposer a) f) {
-    final $$KarigarIssuesTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.karigarIssues,
-        getReferencedColumn: (t) => t.karigarId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarIssuesTableAnnotationComposer(
-              $db: $db,
-              $table: $db.karigarIssues,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-
-  Expression<T> karigarReceiptsRefs<T extends Object>(
-      Expression<T> Function($$KarigarReceiptsTableAnnotationComposer a) f) {
-    final $$KarigarReceiptsTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.karigarReceipts,
-        getReferencedColumn: (t) => t.karigarId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarReceiptsTableAnnotationComposer(
-              $db: $db,
-              $table: $db.karigarReceipts,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-}
-
-class $$KarigarMastersTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $KarigarMastersTable,
-    KarigarMaster,
-    $$KarigarMastersTableFilterComposer,
-    $$KarigarMastersTableOrderingComposer,
-    $$KarigarMastersTableAnnotationComposer,
-    $$KarigarMastersTableCreateCompanionBuilder,
-    $$KarigarMastersTableUpdateCompanionBuilder,
-    (KarigarMaster, $$KarigarMastersTableReferences),
-    KarigarMaster,
-    PrefetchHooks Function(
-        {bool karigarIssuesRefs, bool karigarReceiptsRefs})> {
-  $$KarigarMastersTableTableManager(
-      _$AppDatabase db, $KarigarMastersTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KarigarMastersTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KarigarMastersTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$KarigarMastersTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> updatedAt = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<String> phone = const Value.absent(),
-            Value<String?> alternatePhone = const Value.absent(),
-            Value<String> specialization = const Value.absent(),
-            Value<String> rateType = const Value.absent(),
-            Value<double> rateAmount = const Value.absent(),
-            Value<String?> address = const Value.absent(),
-            Value<String?> city = const Value.absent(),
-            Value<double> openingBalance = const Value.absent(),
-            Value<bool> isActive = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-          }) =>
-              KarigarMastersCompanion(
-            id: id,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            name: name,
-            phone: phone,
-            alternatePhone: alternatePhone,
-            specialization: specialization,
-            rateType: rateType,
-            rateAmount: rateAmount,
-            address: address,
-            city: city,
-            openingBalance: openingBalance,
-            isActive: isActive,
-            notes: notes,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> updatedAt = const Value.absent(),
-            required String name,
-            required String phone,
-            Value<String?> alternatePhone = const Value.absent(),
-            Value<String> specialization = const Value.absent(),
-            Value<String> rateType = const Value.absent(),
-            Value<double> rateAmount = const Value.absent(),
-            Value<String?> address = const Value.absent(),
-            Value<String?> city = const Value.absent(),
-            Value<double> openingBalance = const Value.absent(),
-            Value<bool> isActive = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-          }) =>
-              KarigarMastersCompanion.insert(
-            id: id,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            name: name,
-            phone: phone,
-            alternatePhone: alternatePhone,
-            specialization: specialization,
-            rateType: rateType,
-            rateAmount: rateAmount,
-            address: address,
-            city: city,
-            openingBalance: openingBalance,
-            isActive: isActive,
-            notes: notes,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$KarigarMastersTableReferences(db, table, e)
-                  ))
-              .toList(),
-          prefetchHooksCallback: (
-              {karigarIssuesRefs = false, karigarReceiptsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (karigarIssuesRefs) db.karigarIssues,
-                if (karigarReceiptsRefs) db.karigarReceipts
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (karigarIssuesRefs)
-                    await $_getPrefetchedData(
-                        currentTable: table,
-                        referencedTable: $$KarigarMastersTableReferences
-                            ._karigarIssuesRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$KarigarMastersTableReferences(db, table, p0)
-                                .karigarIssuesRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.karigarId == item.id),
-                        typedResults: items),
-                  if (karigarReceiptsRefs)
-                    await $_getPrefetchedData(
-                        currentTable: table,
-                        referencedTable: $$KarigarMastersTableReferences
-                            ._karigarReceiptsRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$KarigarMastersTableReferences(db, table, p0)
-                                .karigarReceiptsRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.karigarId == item.id),
-                        typedResults: items)
-                ];
-              },
-            );
-          },
-        ));
-}
-
-typedef $$KarigarMastersTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $KarigarMastersTable,
-    KarigarMaster,
-    $$KarigarMastersTableFilterComposer,
-    $$KarigarMastersTableOrderingComposer,
-    $$KarigarMastersTableAnnotationComposer,
-    $$KarigarMastersTableCreateCompanionBuilder,
-    $$KarigarMastersTableUpdateCompanionBuilder,
-    (KarigarMaster, $$KarigarMastersTableReferences),
-    KarigarMaster,
-    PrefetchHooks Function({bool karigarIssuesRefs, bool karigarReceiptsRefs})>;
-typedef $$KarigarIssuesTableCreateCompanionBuilder = KarigarIssuesCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> createdAt,
-  Value<DateTime?> updatedAt,
-  required String issueNumber,
-  required int karigarId,
-  required DateTime issueDate,
-  required String itemDescription,
-  Value<String> itemCategory,
-  Value<int> quantity,
-  Value<String> metalType,
-  Value<String?> purity,
-  Value<double> grossWeightIssued,
-  Value<double> netWeightIssued,
-  Value<DateTime?> expectedDelivery,
-  Value<String> status,
-  Value<String?> notes,
-});
-typedef $$KarigarIssuesTableUpdateCompanionBuilder = KarigarIssuesCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> createdAt,
-  Value<DateTime?> updatedAt,
-  Value<String> issueNumber,
-  Value<int> karigarId,
-  Value<DateTime> issueDate,
-  Value<String> itemDescription,
-  Value<String> itemCategory,
-  Value<int> quantity,
-  Value<String> metalType,
-  Value<String?> purity,
-  Value<double> grossWeightIssued,
-  Value<double> netWeightIssued,
-  Value<DateTime?> expectedDelivery,
-  Value<String> status,
-  Value<String?> notes,
-});
-
-final class $$KarigarIssuesTableReferences
-    extends BaseReferences<_$AppDatabase, $KarigarIssuesTable, KarigarIssue> {
-  $$KarigarIssuesTableReferences(
-      super.$_db, super.$_table, super.$_typedResult);
-
-  static $KarigarMastersTable _karigarIdTable(_$AppDatabase db) =>
-      db.karigarMasters.createAlias($_aliasNameGenerator(
-          db.karigarIssues.karigarId, db.karigarMasters.id));
-
-  $$KarigarMastersTableProcessedTableManager? get karigarId {
-    if ($_item.karigarId == null) return null;
-    final manager = $$KarigarMastersTableTableManager($_db, $_db.karigarMasters)
-        .filter((f) => f.id($_item.karigarId!));
-    final item = $_typedResult.readTableOrNull(_karigarIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
-
-  static MultiTypedResultKey<$KarigarReceiptsTable, List<KarigarReceipt>>
-      _karigarReceiptsRefsTable(_$AppDatabase db) =>
-          MultiTypedResultKey.fromTable(db.karigarReceipts,
-              aliasName: $_aliasNameGenerator(
-                  db.karigarIssues.id, db.karigarReceipts.issueId));
-
-  $$KarigarReceiptsTableProcessedTableManager get karigarReceiptsRefs {
-    final manager =
-        $$KarigarReceiptsTableTableManager($_db, $_db.karigarReceipts)
-            .filter((f) => f.issueId.id($_item.id));
-
-    final cache =
-        $_typedResult.readTableOrNull(_karigarReceiptsRefsTable($_db));
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
-  }
-}
-
-class $$KarigarIssuesTableFilterComposer
-    extends Composer<_$AppDatabase, $KarigarIssuesTable> {
-  $$KarigarIssuesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get issueNumber => $composableBuilder(
-      column: $table.issueNumber, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get issueDate => $composableBuilder(
-      column: $table.issueDate, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get itemDescription => $composableBuilder(
-      column: $table.itemDescription,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get itemCategory => $composableBuilder(
-      column: $table.itemCategory, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get quantity => $composableBuilder(
-      column: $table.quantity, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get metalType => $composableBuilder(
-      column: $table.metalType, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get purity => $composableBuilder(
-      column: $table.purity, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get grossWeightIssued => $composableBuilder(
-      column: $table.grossWeightIssued,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get netWeightIssued => $composableBuilder(
-      column: $table.netWeightIssued,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get expectedDelivery => $composableBuilder(
-      column: $table.expectedDelivery,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnFilters(column));
-
-  $$KarigarMastersTableFilterComposer get karigarId {
-    final $$KarigarMastersTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.karigarId,
-        referencedTable: $db.karigarMasters,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarMastersTableFilterComposer(
-              $db: $db,
-              $table: $db.karigarMasters,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-
-  Expression<bool> karigarReceiptsRefs(
-      Expression<bool> Function($$KarigarReceiptsTableFilterComposer f) f) {
-    final $$KarigarReceiptsTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.karigarReceipts,
-        getReferencedColumn: (t) => t.issueId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarReceiptsTableFilterComposer(
-              $db: $db,
-              $table: $db.karigarReceipts,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-}
-
-class $$KarigarIssuesTableOrderingComposer
-    extends Composer<_$AppDatabase, $KarigarIssuesTable> {
-  $$KarigarIssuesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get issueNumber => $composableBuilder(
-      column: $table.issueNumber, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get issueDate => $composableBuilder(
-      column: $table.issueDate, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get itemDescription => $composableBuilder(
-      column: $table.itemDescription,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get itemCategory => $composableBuilder(
-      column: $table.itemCategory,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get quantity => $composableBuilder(
-      column: $table.quantity, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get metalType => $composableBuilder(
-      column: $table.metalType, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get purity => $composableBuilder(
-      column: $table.purity, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get grossWeightIssued => $composableBuilder(
-      column: $table.grossWeightIssued,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get netWeightIssued => $composableBuilder(
-      column: $table.netWeightIssued,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get expectedDelivery => $composableBuilder(
-      column: $table.expectedDelivery,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnOrderings(column));
-
-  $$KarigarMastersTableOrderingComposer get karigarId {
-    final $$KarigarMastersTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.karigarId,
-        referencedTable: $db.karigarMasters,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarMastersTableOrderingComposer(
-              $db: $db,
-              $table: $db.karigarMasters,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-}
-
-class $$KarigarIssuesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KarigarIssuesTable> {
-  $$KarigarIssuesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get issueNumber => $composableBuilder(
-      column: $table.issueNumber, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get issueDate =>
-      $composableBuilder(column: $table.issueDate, builder: (column) => column);
-
-  GeneratedColumn<String> get itemDescription => $composableBuilder(
-      column: $table.itemDescription, builder: (column) => column);
-
-  GeneratedColumn<String> get itemCategory => $composableBuilder(
-      column: $table.itemCategory, builder: (column) => column);
-
-  GeneratedColumn<int> get quantity =>
-      $composableBuilder(column: $table.quantity, builder: (column) => column);
-
-  GeneratedColumn<String> get metalType =>
-      $composableBuilder(column: $table.metalType, builder: (column) => column);
-
-  GeneratedColumn<String> get purity =>
-      $composableBuilder(column: $table.purity, builder: (column) => column);
-
-  GeneratedColumn<double> get grossWeightIssued => $composableBuilder(
-      column: $table.grossWeightIssued, builder: (column) => column);
-
-  GeneratedColumn<double> get netWeightIssued => $composableBuilder(
-      column: $table.netWeightIssued, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get expectedDelivery => $composableBuilder(
-      column: $table.expectedDelivery, builder: (column) => column);
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
-
-  $$KarigarMastersTableAnnotationComposer get karigarId {
-    final $$KarigarMastersTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.karigarId,
-        referencedTable: $db.karigarMasters,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarMastersTableAnnotationComposer(
-              $db: $db,
-              $table: $db.karigarMasters,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-
-  Expression<T> karigarReceiptsRefs<T extends Object>(
-      Expression<T> Function($$KarigarReceiptsTableAnnotationComposer a) f) {
-    final $$KarigarReceiptsTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.karigarReceipts,
-        getReferencedColumn: (t) => t.issueId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarReceiptsTableAnnotationComposer(
-              $db: $db,
-              $table: $db.karigarReceipts,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-}
-
-class $$KarigarIssuesTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $KarigarIssuesTable,
-    KarigarIssue,
-    $$KarigarIssuesTableFilterComposer,
-    $$KarigarIssuesTableOrderingComposer,
-    $$KarigarIssuesTableAnnotationComposer,
-    $$KarigarIssuesTableCreateCompanionBuilder,
-    $$KarigarIssuesTableUpdateCompanionBuilder,
-    (KarigarIssue, $$KarigarIssuesTableReferences),
-    KarigarIssue,
-    PrefetchHooks Function({bool karigarId, bool karigarReceiptsRefs})> {
-  $$KarigarIssuesTableTableManager(_$AppDatabase db, $KarigarIssuesTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KarigarIssuesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KarigarIssuesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$KarigarIssuesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> updatedAt = const Value.absent(),
-            Value<String> issueNumber = const Value.absent(),
-            Value<int> karigarId = const Value.absent(),
-            Value<DateTime> issueDate = const Value.absent(),
-            Value<String> itemDescription = const Value.absent(),
-            Value<String> itemCategory = const Value.absent(),
-            Value<int> quantity = const Value.absent(),
-            Value<String> metalType = const Value.absent(),
-            Value<String?> purity = const Value.absent(),
-            Value<double> grossWeightIssued = const Value.absent(),
-            Value<double> netWeightIssued = const Value.absent(),
-            Value<DateTime?> expectedDelivery = const Value.absent(),
-            Value<String> status = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-          }) =>
-              KarigarIssuesCompanion(
-            id: id,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            issueNumber: issueNumber,
-            karigarId: karigarId,
-            issueDate: issueDate,
-            itemDescription: itemDescription,
-            itemCategory: itemCategory,
-            quantity: quantity,
-            metalType: metalType,
-            purity: purity,
-            grossWeightIssued: grossWeightIssued,
-            netWeightIssued: netWeightIssued,
-            expectedDelivery: expectedDelivery,
-            status: status,
-            notes: notes,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> updatedAt = const Value.absent(),
-            required String issueNumber,
-            required int karigarId,
-            required DateTime issueDate,
-            required String itemDescription,
-            Value<String> itemCategory = const Value.absent(),
-            Value<int> quantity = const Value.absent(),
-            Value<String> metalType = const Value.absent(),
-            Value<String?> purity = const Value.absent(),
-            Value<double> grossWeightIssued = const Value.absent(),
-            Value<double> netWeightIssued = const Value.absent(),
-            Value<DateTime?> expectedDelivery = const Value.absent(),
-            Value<String> status = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-          }) =>
-              KarigarIssuesCompanion.insert(
-            id: id,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            issueNumber: issueNumber,
-            karigarId: karigarId,
-            issueDate: issueDate,
-            itemDescription: itemDescription,
-            itemCategory: itemCategory,
-            quantity: quantity,
-            metalType: metalType,
-            purity: purity,
-            grossWeightIssued: grossWeightIssued,
-            netWeightIssued: netWeightIssued,
-            expectedDelivery: expectedDelivery,
-            status: status,
-            notes: notes,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$KarigarIssuesTableReferences(db, table, e)
-                  ))
-              .toList(),
-          prefetchHooksCallback: (
-              {karigarId = false, karigarReceiptsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (karigarReceiptsRefs) db.karigarReceipts
-              ],
-              addJoins: <
-                  T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic>>(state) {
-                if (karigarId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.karigarId,
-                    referencedTable:
-                        $$KarigarIssuesTableReferences._karigarIdTable(db),
-                    referencedColumn:
-                        $$KarigarIssuesTableReferences._karigarIdTable(db).id,
-                  ) as T;
-                }
-
-                return state;
-              },
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (karigarReceiptsRefs)
-                    await $_getPrefetchedData(
-                        currentTable: table,
-                        referencedTable: $$KarigarIssuesTableReferences
-                            ._karigarReceiptsRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$KarigarIssuesTableReferences(db, table, p0)
-                                .karigarReceiptsRefs,
-                        referencedItemsForCurrentItem: (item,
-                                referencedItems) =>
-                            referencedItems.where((e) => e.issueId == item.id),
-                        typedResults: items)
-                ];
-              },
-            );
-          },
-        ));
-}
-
-typedef $$KarigarIssuesTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $KarigarIssuesTable,
-    KarigarIssue,
-    $$KarigarIssuesTableFilterComposer,
-    $$KarigarIssuesTableOrderingComposer,
-    $$KarigarIssuesTableAnnotationComposer,
-    $$KarigarIssuesTableCreateCompanionBuilder,
-    $$KarigarIssuesTableUpdateCompanionBuilder,
-    (KarigarIssue, $$KarigarIssuesTableReferences),
-    KarigarIssue,
-    PrefetchHooks Function({bool karigarId, bool karigarReceiptsRefs})>;
-typedef $$KarigarReceiptsTableCreateCompanionBuilder = KarigarReceiptsCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> createdAt,
-  Value<DateTime?> updatedAt,
-  required String receiptNumber,
-  required int issueId,
-  required int karigarId,
-  required DateTime receiptDate,
-  Value<int> quantityReceived,
-  Value<double> grossWeightReceived,
-  Value<double> stoneWeight,
-  Value<double> netWeightReceived,
-  Value<double> wastageWeight,
-  Value<double> wastagePercent,
-  Value<String> makingChargesType,
-  Value<double> makingChargeRate,
-  Value<double> makingChargesAmount,
-  Value<String> paymentStatus,
-  Value<double> paidAmount,
-  Value<String?> notes,
-});
-typedef $$KarigarReceiptsTableUpdateCompanionBuilder = KarigarReceiptsCompanion
-    Function({
-  Value<int> id,
-  Value<DateTime> createdAt,
-  Value<DateTime?> updatedAt,
-  Value<String> receiptNumber,
-  Value<int> issueId,
-  Value<int> karigarId,
-  Value<DateTime> receiptDate,
-  Value<int> quantityReceived,
-  Value<double> grossWeightReceived,
-  Value<double> stoneWeight,
-  Value<double> netWeightReceived,
-  Value<double> wastageWeight,
-  Value<double> wastagePercent,
-  Value<String> makingChargesType,
-  Value<double> makingChargeRate,
-  Value<double> makingChargesAmount,
-  Value<String> paymentStatus,
-  Value<double> paidAmount,
-  Value<String?> notes,
-});
-
-final class $$KarigarReceiptsTableReferences extends BaseReferences<
-    _$AppDatabase, $KarigarReceiptsTable, KarigarReceipt> {
-  $$KarigarReceiptsTableReferences(
-      super.$_db, super.$_table, super.$_typedResult);
-
-  static $KarigarIssuesTable _issueIdTable(_$AppDatabase db) =>
-      db.karigarIssues.createAlias($_aliasNameGenerator(
-          db.karigarReceipts.issueId, db.karigarIssues.id));
-
-  $$KarigarIssuesTableProcessedTableManager? get issueId {
-    if ($_item.issueId == null) return null;
-    final manager = $$KarigarIssuesTableTableManager($_db, $_db.karigarIssues)
-        .filter((f) => f.id($_item.issueId!));
-    final item = $_typedResult.readTableOrNull(_issueIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
-
-  static $KarigarMastersTable _karigarIdTable(_$AppDatabase db) =>
-      db.karigarMasters.createAlias($_aliasNameGenerator(
-          db.karigarReceipts.karigarId, db.karigarMasters.id));
-
-  $$KarigarMastersTableProcessedTableManager? get karigarId {
-    if ($_item.karigarId == null) return null;
-    final manager = $$KarigarMastersTableTableManager($_db, $_db.karigarMasters)
-        .filter((f) => f.id($_item.karigarId!));
-    final item = $_typedResult.readTableOrNull(_karigarIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
-}
-
-class $$KarigarReceiptsTableFilterComposer
-    extends Composer<_$AppDatabase, $KarigarReceiptsTable> {
-  $$KarigarReceiptsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get receiptNumber => $composableBuilder(
-      column: $table.receiptNumber, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get receiptDate => $composableBuilder(
-      column: $table.receiptDate, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get quantityReceived => $composableBuilder(
-      column: $table.quantityReceived,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get grossWeightReceived => $composableBuilder(
-      column: $table.grossWeightReceived,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get stoneWeight => $composableBuilder(
-      column: $table.stoneWeight, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get netWeightReceived => $composableBuilder(
-      column: $table.netWeightReceived,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get wastageWeight => $composableBuilder(
-      column: $table.wastageWeight, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get wastagePercent => $composableBuilder(
-      column: $table.wastagePercent,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get makingChargesType => $composableBuilder(
-      column: $table.makingChargesType,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get makingChargeRate => $composableBuilder(
-      column: $table.makingChargeRate,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get makingChargesAmount => $composableBuilder(
-      column: $table.makingChargesAmount,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get paymentStatus => $composableBuilder(
-      column: $table.paymentStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get paidAmount => $composableBuilder(
-      column: $table.paidAmount, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnFilters(column));
-
-  $$KarigarIssuesTableFilterComposer get issueId {
-    final $$KarigarIssuesTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.issueId,
-        referencedTable: $db.karigarIssues,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarIssuesTableFilterComposer(
-              $db: $db,
-              $table: $db.karigarIssues,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-
-  $$KarigarMastersTableFilterComposer get karigarId {
-    final $$KarigarMastersTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.karigarId,
-        referencedTable: $db.karigarMasters,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarMastersTableFilterComposer(
-              $db: $db,
-              $table: $db.karigarMasters,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-}
-
-class $$KarigarReceiptsTableOrderingComposer
-    extends Composer<_$AppDatabase, $KarigarReceiptsTable> {
-  $$KarigarReceiptsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get receiptNumber => $composableBuilder(
-      column: $table.receiptNumber,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get receiptDate => $composableBuilder(
-      column: $table.receiptDate, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get quantityReceived => $composableBuilder(
-      column: $table.quantityReceived,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get grossWeightReceived => $composableBuilder(
-      column: $table.grossWeightReceived,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get stoneWeight => $composableBuilder(
-      column: $table.stoneWeight, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get netWeightReceived => $composableBuilder(
-      column: $table.netWeightReceived,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get wastageWeight => $composableBuilder(
-      column: $table.wastageWeight,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get wastagePercent => $composableBuilder(
-      column: $table.wastagePercent,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get makingChargesType => $composableBuilder(
-      column: $table.makingChargesType,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get makingChargeRate => $composableBuilder(
-      column: $table.makingChargeRate,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get makingChargesAmount => $composableBuilder(
-      column: $table.makingChargesAmount,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get paymentStatus => $composableBuilder(
-      column: $table.paymentStatus,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get paidAmount => $composableBuilder(
-      column: $table.paidAmount, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnOrderings(column));
-
-  $$KarigarIssuesTableOrderingComposer get issueId {
-    final $$KarigarIssuesTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.issueId,
-        referencedTable: $db.karigarIssues,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarIssuesTableOrderingComposer(
-              $db: $db,
-              $table: $db.karigarIssues,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-
-  $$KarigarMastersTableOrderingComposer get karigarId {
-    final $$KarigarMastersTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.karigarId,
-        referencedTable: $db.karigarMasters,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarMastersTableOrderingComposer(
-              $db: $db,
-              $table: $db.karigarMasters,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-}
-
-class $$KarigarReceiptsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KarigarReceiptsTable> {
-  $$KarigarReceiptsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get receiptNumber => $composableBuilder(
-      column: $table.receiptNumber, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get receiptDate => $composableBuilder(
-      column: $table.receiptDate, builder: (column) => column);
-
-  GeneratedColumn<int> get quantityReceived => $composableBuilder(
-      column: $table.quantityReceived, builder: (column) => column);
-
-  GeneratedColumn<double> get grossWeightReceived => $composableBuilder(
-      column: $table.grossWeightReceived, builder: (column) => column);
-
-  GeneratedColumn<double> get stoneWeight => $composableBuilder(
-      column: $table.stoneWeight, builder: (column) => column);
-
-  GeneratedColumn<double> get netWeightReceived => $composableBuilder(
-      column: $table.netWeightReceived, builder: (column) => column);
-
-  GeneratedColumn<double> get wastageWeight => $composableBuilder(
-      column: $table.wastageWeight, builder: (column) => column);
-
-  GeneratedColumn<double> get wastagePercent => $composableBuilder(
-      column: $table.wastagePercent, builder: (column) => column);
-
-  GeneratedColumn<String> get makingChargesType => $composableBuilder(
-      column: $table.makingChargesType, builder: (column) => column);
-
-  GeneratedColumn<double> get makingChargeRate => $composableBuilder(
-      column: $table.makingChargeRate, builder: (column) => column);
-
-  GeneratedColumn<double> get makingChargesAmount => $composableBuilder(
-      column: $table.makingChargesAmount, builder: (column) => column);
-
-  GeneratedColumn<String> get paymentStatus => $composableBuilder(
-      column: $table.paymentStatus, builder: (column) => column);
-
-  GeneratedColumn<double> get paidAmount => $composableBuilder(
-      column: $table.paidAmount, builder: (column) => column);
-
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
-
-  $$KarigarIssuesTableAnnotationComposer get issueId {
-    final $$KarigarIssuesTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.issueId,
-        referencedTable: $db.karigarIssues,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarIssuesTableAnnotationComposer(
-              $db: $db,
-              $table: $db.karigarIssues,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-
-  $$KarigarMastersTableAnnotationComposer get karigarId {
-    final $$KarigarMastersTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.karigarId,
-        referencedTable: $db.karigarMasters,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$KarigarMastersTableAnnotationComposer(
-              $db: $db,
-              $table: $db.karigarMasters,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
-}
-
-class $$KarigarReceiptsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $KarigarReceiptsTable,
-    KarigarReceipt,
-    $$KarigarReceiptsTableFilterComposer,
-    $$KarigarReceiptsTableOrderingComposer,
-    $$KarigarReceiptsTableAnnotationComposer,
-    $$KarigarReceiptsTableCreateCompanionBuilder,
-    $$KarigarReceiptsTableUpdateCompanionBuilder,
-    (KarigarReceipt, $$KarigarReceiptsTableReferences),
-    KarigarReceipt,
-    PrefetchHooks Function({bool issueId, bool karigarId})> {
-  $$KarigarReceiptsTableTableManager(
-      _$AppDatabase db, $KarigarReceiptsTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KarigarReceiptsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KarigarReceiptsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$KarigarReceiptsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> updatedAt = const Value.absent(),
-            Value<String> receiptNumber = const Value.absent(),
-            Value<int> issueId = const Value.absent(),
-            Value<int> karigarId = const Value.absent(),
-            Value<DateTime> receiptDate = const Value.absent(),
-            Value<int> quantityReceived = const Value.absent(),
-            Value<double> grossWeightReceived = const Value.absent(),
-            Value<double> stoneWeight = const Value.absent(),
-            Value<double> netWeightReceived = const Value.absent(),
-            Value<double> wastageWeight = const Value.absent(),
-            Value<double> wastagePercent = const Value.absent(),
-            Value<String> makingChargesType = const Value.absent(),
-            Value<double> makingChargeRate = const Value.absent(),
-            Value<double> makingChargesAmount = const Value.absent(),
-            Value<String> paymentStatus = const Value.absent(),
-            Value<double> paidAmount = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-          }) =>
-              KarigarReceiptsCompanion(
-            id: id,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            receiptNumber: receiptNumber,
-            issueId: issueId,
-            karigarId: karigarId,
-            receiptDate: receiptDate,
-            quantityReceived: quantityReceived,
-            grossWeightReceived: grossWeightReceived,
-            stoneWeight: stoneWeight,
-            netWeightReceived: netWeightReceived,
-            wastageWeight: wastageWeight,
-            wastagePercent: wastagePercent,
-            makingChargesType: makingChargesType,
-            makingChargeRate: makingChargeRate,
-            makingChargesAmount: makingChargesAmount,
-            paymentStatus: paymentStatus,
-            paidAmount: paidAmount,
-            notes: notes,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> updatedAt = const Value.absent(),
-            required String receiptNumber,
-            required int issueId,
-            required int karigarId,
-            required DateTime receiptDate,
-            Value<int> quantityReceived = const Value.absent(),
-            Value<double> grossWeightReceived = const Value.absent(),
-            Value<double> stoneWeight = const Value.absent(),
-            Value<double> netWeightReceived = const Value.absent(),
-            Value<double> wastageWeight = const Value.absent(),
-            Value<double> wastagePercent = const Value.absent(),
-            Value<String> makingChargesType = const Value.absent(),
-            Value<double> makingChargeRate = const Value.absent(),
-            Value<double> makingChargesAmount = const Value.absent(),
-            Value<String> paymentStatus = const Value.absent(),
-            Value<double> paidAmount = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-          }) =>
-              KarigarReceiptsCompanion.insert(
-            id: id,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            receiptNumber: receiptNumber,
-            issueId: issueId,
-            karigarId: karigarId,
-            receiptDate: receiptDate,
-            quantityReceived: quantityReceived,
-            grossWeightReceived: grossWeightReceived,
-            stoneWeight: stoneWeight,
-            netWeightReceived: netWeightReceived,
-            wastageWeight: wastageWeight,
-            wastagePercent: wastagePercent,
-            makingChargesType: makingChargesType,
-            makingChargeRate: makingChargeRate,
-            makingChargesAmount: makingChargesAmount,
-            paymentStatus: paymentStatus,
-            paidAmount: paidAmount,
-            notes: notes,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$KarigarReceiptsTableReferences(db, table, e)
-                  ))
-              .toList(),
-          prefetchHooksCallback: ({issueId = false, karigarId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins: <
-                  T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic>>(state) {
-                if (issueId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.issueId,
-                    referencedTable:
-                        $$KarigarReceiptsTableReferences._issueIdTable(db),
-                    referencedColumn:
-                        $$KarigarReceiptsTableReferences._issueIdTable(db).id,
-                  ) as T;
-                }
-                if (karigarId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.karigarId,
-                    referencedTable:
-                        $$KarigarReceiptsTableReferences._karigarIdTable(db),
-                    referencedColumn:
-                        $$KarigarReceiptsTableReferences._karigarIdTable(db).id,
-                  ) as T;
-                }
-
-                return state;
-              },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ));
-}
-
-typedef $$KarigarReceiptsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $KarigarReceiptsTable,
-    KarigarReceipt,
-    $$KarigarReceiptsTableFilterComposer,
-    $$KarigarReceiptsTableOrderingComposer,
-    $$KarigarReceiptsTableAnnotationComposer,
-    $$KarigarReceiptsTableCreateCompanionBuilder,
-    $$KarigarReceiptsTableUpdateCompanionBuilder,
-    (KarigarReceipt, $$KarigarReceiptsTableReferences),
-    KarigarReceipt,
-    PrefetchHooks Function({bool issueId, bool karigarId})>;
 typedef $$GirviLoansTableCreateCompanionBuilder = GirviLoansCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
@@ -56350,8 +53044,6 @@ typedef $$DeliveryOrdersTableCreateCompanionBuilder = DeliveryOrdersCompanion
   Value<double> approxWeight,
   Value<double> lockedRate,
   Value<String> status,
-  Value<int?> karigarId,
-  Value<String?> karigarName,
   Value<double> advancePaid,
   Value<double> totalAmount,
   Value<double> dueAmount,
@@ -56379,8 +53071,6 @@ typedef $$DeliveryOrdersTableUpdateCompanionBuilder = DeliveryOrdersCompanion
   Value<double> approxWeight,
   Value<double> lockedRate,
   Value<String> status,
-  Value<int?> karigarId,
-  Value<String?> karigarName,
   Value<double> advancePaid,
   Value<double> totalAmount,
   Value<double> dueAmount,
@@ -56487,12 +53177,6 @@ class $$DeliveryOrdersTableFilterComposer
 
   ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get karigarId => $composableBuilder(
-      column: $table.karigarId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get karigarName => $composableBuilder(
-      column: $table.karigarName, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get advancePaid => $composableBuilder(
       column: $table.advancePaid, builder: (column) => ColumnFilters(column));
@@ -56636,12 +53320,6 @@ class $$DeliveryOrdersTableOrderingComposer
   ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get karigarId => $composableBuilder(
-      column: $table.karigarId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get karigarName => $composableBuilder(
-      column: $table.karigarName, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<double> get advancePaid => $composableBuilder(
       column: $table.advancePaid, builder: (column) => ColumnOrderings(column));
 
@@ -56762,12 +53440,6 @@ class $$DeliveryOrdersTableAnnotationComposer
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<int> get karigarId =>
-      $composableBuilder(column: $table.karigarId, builder: (column) => column);
-
-  GeneratedColumn<String> get karigarName => $composableBuilder(
-      column: $table.karigarName, builder: (column) => column);
 
   GeneratedColumn<double> get advancePaid => $composableBuilder(
       column: $table.advancePaid, builder: (column) => column);
@@ -56900,8 +53572,6 @@ class $$DeliveryOrdersTableTableManager extends RootTableManager<
             Value<double> approxWeight = const Value.absent(),
             Value<double> lockedRate = const Value.absent(),
             Value<String> status = const Value.absent(),
-            Value<int?> karigarId = const Value.absent(),
-            Value<String?> karigarName = const Value.absent(),
             Value<double> advancePaid = const Value.absent(),
             Value<double> totalAmount = const Value.absent(),
             Value<double> dueAmount = const Value.absent(),
@@ -56928,8 +53598,6 @@ class $$DeliveryOrdersTableTableManager extends RootTableManager<
             approxWeight: approxWeight,
             lockedRate: lockedRate,
             status: status,
-            karigarId: karigarId,
-            karigarName: karigarName,
             advancePaid: advancePaid,
             totalAmount: totalAmount,
             dueAmount: dueAmount,
@@ -56956,8 +53624,6 @@ class $$DeliveryOrdersTableTableManager extends RootTableManager<
             Value<double> approxWeight = const Value.absent(),
             Value<double> lockedRate = const Value.absent(),
             Value<String> status = const Value.absent(),
-            Value<int?> karigarId = const Value.absent(),
-            Value<String?> karigarName = const Value.absent(),
             Value<double> advancePaid = const Value.absent(),
             Value<double> totalAmount = const Value.absent(),
             Value<double> dueAmount = const Value.absent(),
@@ -56984,8 +53650,6 @@ class $$DeliveryOrdersTableTableManager extends RootTableManager<
             approxWeight: approxWeight,
             lockedRate: lockedRate,
             status: status,
-            karigarId: karigarId,
-            karigarName: karigarName,
             advancePaid: advancePaid,
             totalAmount: totalAmount,
             dueAmount: dueAmount,
@@ -57098,8 +53762,6 @@ typedef $$DeliveryItemsTableCreateCompanionBuilder = DeliveryItemsCompanion
   Value<String?> imagePath,
   Value<String?> notes,
   Value<String> itemStatus,
-  Value<int?> karigarId,
-  Value<String?> karigarName,
   Value<DateTime?> deliveredAt,
 });
 typedef $$DeliveryItemsTableUpdateCompanionBuilder = DeliveryItemsCompanion
@@ -57117,8 +53779,6 @@ typedef $$DeliveryItemsTableUpdateCompanionBuilder = DeliveryItemsCompanion
   Value<String?> imagePath,
   Value<String?> notes,
   Value<String> itemStatus,
-  Value<int?> karigarId,
-  Value<String?> karigarName,
   Value<DateTime?> deliveredAt,
 });
 
@@ -57186,12 +53846,6 @@ class $$DeliveryItemsTableFilterComposer
 
   ColumnFilters<String> get itemStatus => $composableBuilder(
       column: $table.itemStatus, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get karigarId => $composableBuilder(
-      column: $table.karigarId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get karigarName => $composableBuilder(
-      column: $table.karigarName, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get deliveredAt => $composableBuilder(
       column: $table.deliveredAt, builder: (column) => ColumnFilters(column));
@@ -57263,12 +53917,6 @@ class $$DeliveryItemsTableOrderingComposer
   ColumnOrderings<String> get itemStatus => $composableBuilder(
       column: $table.itemStatus, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get karigarId => $composableBuilder(
-      column: $table.karigarId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get karigarName => $composableBuilder(
-      column: $table.karigarName, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get deliveredAt => $composableBuilder(
       column: $table.deliveredAt, builder: (column) => ColumnOrderings(column));
 
@@ -57338,12 +53986,6 @@ class $$DeliveryItemsTableAnnotationComposer
   GeneratedColumn<String> get itemStatus => $composableBuilder(
       column: $table.itemStatus, builder: (column) => column);
 
-  GeneratedColumn<int> get karigarId =>
-      $composableBuilder(column: $table.karigarId, builder: (column) => column);
-
-  GeneratedColumn<String> get karigarName => $composableBuilder(
-      column: $table.karigarName, builder: (column) => column);
-
   GeneratedColumn<DateTime> get deliveredAt => $composableBuilder(
       column: $table.deliveredAt, builder: (column) => column);
 
@@ -57404,8 +54046,6 @@ class $$DeliveryItemsTableTableManager extends RootTableManager<
             Value<String?> imagePath = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<String> itemStatus = const Value.absent(),
-            Value<int?> karigarId = const Value.absent(),
-            Value<String?> karigarName = const Value.absent(),
             Value<DateTime?> deliveredAt = const Value.absent(),
           }) =>
               DeliveryItemsCompanion(
@@ -57422,8 +54062,6 @@ class $$DeliveryItemsTableTableManager extends RootTableManager<
             imagePath: imagePath,
             notes: notes,
             itemStatus: itemStatus,
-            karigarId: karigarId,
-            karigarName: karigarName,
             deliveredAt: deliveredAt,
           ),
           createCompanionCallback: ({
@@ -57440,8 +54078,6 @@ class $$DeliveryItemsTableTableManager extends RootTableManager<
             Value<String?> imagePath = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<String> itemStatus = const Value.absent(),
-            Value<int?> karigarId = const Value.absent(),
-            Value<String?> karigarName = const Value.absent(),
             Value<DateTime?> deliveredAt = const Value.absent(),
           }) =>
               DeliveryItemsCompanion.insert(
@@ -57458,8 +54094,6 @@ class $$DeliveryItemsTableTableManager extends RootTableManager<
             imagePath: imagePath,
             notes: notes,
             itemStatus: itemStatus,
-            karigarId: karigarId,
-            karigarName: karigarName,
             deliveredAt: deliveredAt,
           ),
           withReferenceMapper: (p0) => p0
@@ -59962,6 +56596,439 @@ typedef $$BookingAdvanceBillingSettingsTableProcessedTableManager
         ),
         BookingAdvanceBillingSetting,
         PrefetchHooks Function()>;
+typedef $$MetalRateProfilesTableCreateCompanionBuilder
+    = MetalRateProfilesCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required String metalKey,
+  required String profileJson,
+  Value<int> revision,
+  Value<String> source,
+});
+typedef $$MetalRateProfilesTableUpdateCompanionBuilder
+    = MetalRateProfilesCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> metalKey,
+  Value<String> profileJson,
+  Value<int> revision,
+  Value<String> source,
+});
+
+class $$MetalRateProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $MetalRateProfilesTable> {
+  $$MetalRateProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalKey => $composableBuilder(
+      column: $table.metalKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get profileJson => $composableBuilder(
+      column: $table.profileJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get revision => $composableBuilder(
+      column: $table.revision, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+}
+
+class $$MetalRateProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MetalRateProfilesTable> {
+  $$MetalRateProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalKey => $composableBuilder(
+      column: $table.metalKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get profileJson => $composableBuilder(
+      column: $table.profileJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get revision => $composableBuilder(
+      column: $table.revision, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+}
+
+class $$MetalRateProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MetalRateProfilesTable> {
+  $$MetalRateProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get metalKey =>
+      $composableBuilder(column: $table.metalKey, builder: (column) => column);
+
+  GeneratedColumn<String> get profileJson => $composableBuilder(
+      column: $table.profileJson, builder: (column) => column);
+
+  GeneratedColumn<int> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+}
+
+class $$MetalRateProfilesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $MetalRateProfilesTable,
+    MetalRateProfileRecord,
+    $$MetalRateProfilesTableFilterComposer,
+    $$MetalRateProfilesTableOrderingComposer,
+    $$MetalRateProfilesTableAnnotationComposer,
+    $$MetalRateProfilesTableCreateCompanionBuilder,
+    $$MetalRateProfilesTableUpdateCompanionBuilder,
+    (
+      MetalRateProfileRecord,
+      BaseReferences<_$AppDatabase, $MetalRateProfilesTable,
+          MetalRateProfileRecord>
+    ),
+    MetalRateProfileRecord,
+    PrefetchHooks Function()> {
+  $$MetalRateProfilesTableTableManager(
+      _$AppDatabase db, $MetalRateProfilesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MetalRateProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MetalRateProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MetalRateProfilesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> metalKey = const Value.absent(),
+            Value<String> profileJson = const Value.absent(),
+            Value<int> revision = const Value.absent(),
+            Value<String> source = const Value.absent(),
+          }) =>
+              MetalRateProfilesCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            metalKey: metalKey,
+            profileJson: profileJson,
+            revision: revision,
+            source: source,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required String metalKey,
+            required String profileJson,
+            Value<int> revision = const Value.absent(),
+            Value<String> source = const Value.absent(),
+          }) =>
+              MetalRateProfilesCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            metalKey: metalKey,
+            profileJson: profileJson,
+            revision: revision,
+            source: source,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$MetalRateProfilesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $MetalRateProfilesTable,
+    MetalRateProfileRecord,
+    $$MetalRateProfilesTableFilterComposer,
+    $$MetalRateProfilesTableOrderingComposer,
+    $$MetalRateProfilesTableAnnotationComposer,
+    $$MetalRateProfilesTableCreateCompanionBuilder,
+    $$MetalRateProfilesTableUpdateCompanionBuilder,
+    (
+      MetalRateProfileRecord,
+      BaseReferences<_$AppDatabase, $MetalRateProfilesTable,
+          MetalRateProfileRecord>
+    ),
+    MetalRateProfileRecord,
+    PrefetchHooks Function()>;
+typedef $$MetalRateRevisionsTableCreateCompanionBuilder
+    = MetalRateRevisionsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  required String metalKey,
+  required int revision,
+  required String profileJson,
+  required String source,
+  Value<String?> changeReason,
+  required DateTime effectiveAt,
+});
+typedef $$MetalRateRevisionsTableUpdateCompanionBuilder
+    = MetalRateRevisionsCompanion Function({
+  Value<int> id,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+  Value<String> metalKey,
+  Value<int> revision,
+  Value<String> profileJson,
+  Value<String> source,
+  Value<String?> changeReason,
+  Value<DateTime> effectiveAt,
+});
+
+class $$MetalRateRevisionsTableFilterComposer
+    extends Composer<_$AppDatabase, $MetalRateRevisionsTable> {
+  $$MetalRateRevisionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metalKey => $composableBuilder(
+      column: $table.metalKey, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get revision => $composableBuilder(
+      column: $table.revision, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get profileJson => $composableBuilder(
+      column: $table.profileJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get changeReason => $composableBuilder(
+      column: $table.changeReason, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get effectiveAt => $composableBuilder(
+      column: $table.effectiveAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$MetalRateRevisionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MetalRateRevisionsTable> {
+  $$MetalRateRevisionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metalKey => $composableBuilder(
+      column: $table.metalKey, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get revision => $composableBuilder(
+      column: $table.revision, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get profileJson => $composableBuilder(
+      column: $table.profileJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get changeReason => $composableBuilder(
+      column: $table.changeReason,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get effectiveAt => $composableBuilder(
+      column: $table.effectiveAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$MetalRateRevisionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MetalRateRevisionsTable> {
+  $$MetalRateRevisionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get metalKey =>
+      $composableBuilder(column: $table.metalKey, builder: (column) => column);
+
+  GeneratedColumn<int> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+
+  GeneratedColumn<String> get profileJson => $composableBuilder(
+      column: $table.profileJson, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get changeReason => $composableBuilder(
+      column: $table.changeReason, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get effectiveAt => $composableBuilder(
+      column: $table.effectiveAt, builder: (column) => column);
+}
+
+class $$MetalRateRevisionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $MetalRateRevisionsTable,
+    MetalRateRevisionRecord,
+    $$MetalRateRevisionsTableFilterComposer,
+    $$MetalRateRevisionsTableOrderingComposer,
+    $$MetalRateRevisionsTableAnnotationComposer,
+    $$MetalRateRevisionsTableCreateCompanionBuilder,
+    $$MetalRateRevisionsTableUpdateCompanionBuilder,
+    (
+      MetalRateRevisionRecord,
+      BaseReferences<_$AppDatabase, $MetalRateRevisionsTable,
+          MetalRateRevisionRecord>
+    ),
+    MetalRateRevisionRecord,
+    PrefetchHooks Function()> {
+  $$MetalRateRevisionsTableTableManager(
+      _$AppDatabase db, $MetalRateRevisionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MetalRateRevisionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MetalRateRevisionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MetalRateRevisionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            Value<String> metalKey = const Value.absent(),
+            Value<int> revision = const Value.absent(),
+            Value<String> profileJson = const Value.absent(),
+            Value<String> source = const Value.absent(),
+            Value<String?> changeReason = const Value.absent(),
+            Value<DateTime> effectiveAt = const Value.absent(),
+          }) =>
+              MetalRateRevisionsCompanion(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            metalKey: metalKey,
+            revision: revision,
+            profileJson: profileJson,
+            source: source,
+            changeReason: changeReason,
+            effectiveAt: effectiveAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+            required String metalKey,
+            required int revision,
+            required String profileJson,
+            required String source,
+            Value<String?> changeReason = const Value.absent(),
+            required DateTime effectiveAt,
+          }) =>
+              MetalRateRevisionsCompanion.insert(
+            id: id,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            metalKey: metalKey,
+            revision: revision,
+            profileJson: profileJson,
+            source: source,
+            changeReason: changeReason,
+            effectiveAt: effectiveAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$MetalRateRevisionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $MetalRateRevisionsTable,
+    MetalRateRevisionRecord,
+    $$MetalRateRevisionsTableFilterComposer,
+    $$MetalRateRevisionsTableOrderingComposer,
+    $$MetalRateRevisionsTableAnnotationComposer,
+    $$MetalRateRevisionsTableCreateCompanionBuilder,
+    $$MetalRateRevisionsTableUpdateCompanionBuilder,
+    (
+      MetalRateRevisionRecord,
+      BaseReferences<_$AppDatabase, $MetalRateRevisionsTable,
+          MetalRateRevisionRecord>
+    ),
+    MetalRateRevisionRecord,
+    PrefetchHooks Function()>;
 typedef $$GoldStockReceiptsTableCreateCompanionBuilder
     = GoldStockReceiptsCompanion Function({
   Value<int> id,
@@ -63116,12 +60183,6 @@ class $AppDatabaseManager {
       $$BankAccountsTableTableManager(_db, _db.bankAccounts);
   $$BankTransactionsTableTableManager get bankTransactions =>
       $$BankTransactionsTableTableManager(_db, _db.bankTransactions);
-  $$KarigarMastersTableTableManager get karigarMasters =>
-      $$KarigarMastersTableTableManager(_db, _db.karigarMasters);
-  $$KarigarIssuesTableTableManager get karigarIssues =>
-      $$KarigarIssuesTableTableManager(_db, _db.karigarIssues);
-  $$KarigarReceiptsTableTableManager get karigarReceipts =>
-      $$KarigarReceiptsTableTableManager(_db, _db.karigarReceipts);
   $$GirviLoansTableTableManager get girviLoans =>
       $$GirviLoansTableTableManager(_db, _db.girviLoans);
   $$GirviPaymentsTableTableManager get girviPayments =>
@@ -63158,6 +60219,10 @@ class $AppDatabaseManager {
       get bookingAdvanceBillingSettings =>
           $$BookingAdvanceBillingSettingsTableTableManager(
               _db, _db.bookingAdvanceBillingSettings);
+  $$MetalRateProfilesTableTableManager get metalRateProfiles =>
+      $$MetalRateProfilesTableTableManager(_db, _db.metalRateProfiles);
+  $$MetalRateRevisionsTableTableManager get metalRateRevisions =>
+      $$MetalRateRevisionsTableTableManager(_db, _db.metalRateRevisions);
   $$GoldStockReceiptsTableTableManager get goldStockReceipts =>
       $$GoldStockReceiptsTableTableManager(_db, _db.goldStockReceipts);
   $$GoldStockReceiptLinesTableTableManager get goldStockReceiptLines =>

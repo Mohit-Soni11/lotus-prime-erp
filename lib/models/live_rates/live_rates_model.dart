@@ -1,93 +1,69 @@
-// ============================================================
-// 📊 LIVE RATES MODEL
-// UI ko data dene ke liye clean data class
-// ============================================================
+enum LiveRateState { loading, available, missing, error }
 
 class LiveRatesModel {
-  // --- Gold ---
-  final String gold24k;
-  final String gold22k;
-  final String gold18k;
-  final String goldChangePercent;
-  final bool goldIsUp;
-
-  // --- Silver ---
-  final String silverRateKg;
-  final String silverJewellery;
-  final String silverIdols;
-  final String silverChangePercent;
-  final bool silverIsUp;
-
-  // --- Old Gold Buy Rates ---
-  final String oldGold24kBuy;
-  final String oldGold22kBuy;
-  final String oldGold18kBuy;
-  final String oldSilverBuy;
-
-  // --- Meta ---
-  final DateTime rateDate;
-  final String source;
-  final bool isFromDb; // false = fallback/dummy data
-
   const LiveRatesModel({
+    required this.state,
     required this.gold24k,
     required this.gold22k,
     required this.gold18k,
-    required this.goldChangePercent,
-    required this.goldIsUp,
     required this.silverRateKg,
     required this.silverJewellery,
     required this.silverIdols,
-    required this.silverChangePercent,
-    required this.silverIsUp,
     required this.oldGold24kBuy,
     required this.oldGold22kBuy,
     required this.oldGold18kBuy,
     required this.oldSilverBuy,
     required this.rateDate,
     required this.source,
-    required this.isFromDb,
+    this.message,
   });
 
-  // ✅ Fallback / Loading state
-  static final LiveRatesModel loading = LiveRatesModel(
-    gold24k: '--',
-    gold22k: '--',
-    gold18k: '--',
-    goldChangePercent: '+0.0%',
-    goldIsUp: true,
-    silverRateKg: '--',
-    silverJewellery: '--',
-    silverIdols: '--',
-    silverChangePercent: '+0.0%',
-    silverIsUp: true,
-    oldGold24kBuy: '--',
-    oldGold22kBuy: '--',
-    oldGold18kBuy: '--',
-    oldSilverBuy: '--',
-    rateDate: DateTime.now(),
-    source: 'Loading...',
-    isFromDb: false,
-  );
+  final LiveRateState state;
+  final String gold24k;
+  final String gold22k;
+  final String gold18k;
+  final String silverRateKg;
+  final String silverJewellery;
+  final String silverIdols;
+  final String oldGold24kBuy;
+  final String oldGold22kBuy;
+  final String oldGold18kBuy;
+  final String oldSilverBuy;
+  final DateTime? rateDate;
+  final String source;
+  final String? message;
 
-  // ✅ Demo data (jab DB mein koi rate na ho)
-  static final LiveRatesModel demo = LiveRatesModel(
-    gold24k: '72,500',
-    gold22k: '66,200',
-    gold18k: '54,430',
-    goldChangePercent: '+0.5%',
-    goldIsUp: true,
-    silverRateKg: '90,000',
-    silverJewellery: '8,200',
-    silverIdols: '8,500',
-    silverChangePercent: '+0.8%',
-    silverIsUp: true,
-    oldGold24kBuy: '71,000',
-    oldGold22kBuy: '64,500',
-    oldGold18kBuy: '52,200',
-    oldSilverBuy: '85,000',
-    rateDate: DateTime.now(),
-    source: 'Demo Data',
-    isFromDb: false,
-  );
+  bool get isLoading => state == LiveRateState.loading;
+  bool get isAvailable => state == LiveRateState.available;
+
+  factory LiveRatesModel.loading() => _empty(LiveRateState.loading);
+
+  factory LiveRatesModel.missing() => _empty(
+        LiveRateState.missing,
+        message: 'Configure selling rates in Metal Rate Master.',
+      );
+
+  factory LiveRatesModel.error() => _empty(
+        LiveRateState.error,
+        message: 'Rates could not be loaded.',
+      );
+
+  static LiveRatesModel _empty(LiveRateState state, {String? message}) {
+    return LiveRatesModel(
+      state: state,
+      gold24k: '--',
+      gold22k: '--',
+      gold18k: '--',
+      silverRateKg: '--',
+      silverJewellery: '--',
+      silverIdols: '--',
+      oldGold24kBuy: '--',
+      oldGold22kBuy: '--',
+      oldGold18kBuy: '--',
+      oldSilverBuy: '--',
+      rateDate: null,
+      source: '',
+      message: message,
+    );
+  }
 }

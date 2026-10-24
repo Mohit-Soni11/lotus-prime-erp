@@ -60,10 +60,6 @@ class LiveRatesColors {
   // Ambient glow for cards
   static const Color goldGlow = Color(0x1AD4AF37);
   static const Color silverGlow = Color(0x0AB8C5D6);
-
-  // Demo badge
-  static const Color demoBadgeBg = Color(0xFF2D3748);
-  static const Color demoBadgeText = Color(0xFFF6AD55);
 }
 
 // --- STRINGS ---
@@ -86,16 +82,12 @@ class LiveRatesStrings {
   static const String jewellery = 'Jewellery';
   static const String purchaseHeader =
       'OLD GOLD & SILVER â€” PURCHASE / EXCHANGE RATE';
-  static const String priceTrackerHeader = 'PRICE TRACKER TREND';
-  static const String marketAnalysisHeader = 'MARKET ANALYSIS & RATE BREAKDOWN';
   static const String goldBuyLabel = 'GOLD';
   static const String silverBuyLabel = 'SILVER';
   static const String buy24k = '24 KT (Buy)';
   static const String buy22k = '22 KT (Buy)';
   static const String buy18k = '18 KT (Buy)';
   static const String silverBuyRate = 'Silver Buy Rate';
-  static const String demoNote = 'Demo Data â€” Set rates in Settings';
-  static const String setRatesTip = 'Go to Settings â†’ Set Daily Rates';
 }
 
 // --- STYLES ---

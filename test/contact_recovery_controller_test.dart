@@ -600,7 +600,7 @@ void main() {
             ),
           );
       final auditRepository = GirviNoticeActionRepository(db);
-      await auditRepository.recordAction(
+      final noticeId = await auditRepository.recordAction(
         girviId: loanId,
         actionType: GirviNoticeType.formal.actionType,
         noticeStage: 1,
@@ -610,7 +610,13 @@ void main() {
       );
       await auditRepository.recordAction(
         girviId: loanId,
-        actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
+        actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+        noticeActionId: noticeId,
+        actionAt: now.subtract(const Duration(days: 30)),
+        deliveredAt: now.subtract(const Duration(days: 30)),
+        deliveryChannel: 'In person',
+        deliveryStatus: 'Delivered',
+        deliveryReference: 'ACK-REC-001',
       );
       final account = GirviLoanWithCustomer(
         loan: GirviLoanModel(
@@ -644,9 +650,11 @@ void main() {
           GirviNoticeAction(
             id: 2,
             girviId: loanId,
-            actionType: GirviNoticeActionTypes.collateralRecoveryInitiated,
-            actionAt: now,
-            createdAt: now,
+            noticeActionId: noticeId,
+            actionType: GirviNoticeActionTypes.noticeDeliveryRecorded,
+            actionAt: now.subtract(const Duration(days: 30)),
+            createdAt: now.subtract(const Duration(days: 30)),
+            deliveredAt: now.subtract(const Duration(days: 30)),
           ),
           GirviNoticeAction(
             id: 1,
@@ -668,7 +676,8 @@ void main() {
       final activeRecovery = await riskRepository.fetchAllDefaulters(
         syncStatuses: false,
       );
-      expect(activeRecovery.single.isCollateralRecovery, isTrue);
+      expect(recoveryCase.canInitiateCollateralRecovery, isTrue);
+      expect(activeRecovery.single.isCollateralRecovery, isFalse);
       expect(activeRecovery.single.isRecoverySettled, isFalse);
       await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
           .write(const GirviLoansCompanion(loanAmount: drift.Value(19000)));
@@ -681,6 +690,12 @@ void main() {
       );
       expect(staleAmountClosed, isFalse);
       expect(await db.select(db.cashTransactions).get(), isEmpty);
+      expect(
+        (await db.select(db.girviNoticeActions).get()).where((action) =>
+            action.actionType ==
+            GirviNoticeActionTypes.collateralRecoveryInitiated),
+        isEmpty,
+      );
       await (db.update(db.girviLoans)..where((loan) => loan.id.equals(loanId)))
           .write(const GirviLoansCompanion(
         loanAmount: drift.Value(20000),
@@ -716,6 +731,12 @@ void main() {
       expect(ledgerEntries.single.amount, 2000);
       final actions = await db.select(db.girviNoticeActions).get();
       expect(
+        actions.where((row) =>
+            row.actionType ==
+            GirviNoticeActionTypes.collateralRecoveryInitiated),
+        hasLength(1),
+      );
+      expect(
         actions.where(
             (row) => row.actionType == GirviNoticeActionTypes.disposalSettled),
         hasLength(1),
@@ -729,13 +750,14 @@ void main() {
       );
       expect(recoveryRegister, hasLength(1));
       expect(recoveryRegister.single.isRecoverySettled, isTrue);
+      expect(recoveryRegister.single.recoveryDispositionStatus, 'MELTED');
       expect(recoveryRegister.single.recoveredAmount, 22000);
       expect(recoveryRegister.single.recoverySurplus, 2000);
       expect(await riskRepository.fetchDefaulterCount(), 0);
       final pledgedItems = await (db.select(db.girviLoanItems)
             ..where((item) => item.girviId.equals(loanId)))
           .get();
-      expect(pledgedItems.single.recoveryDispositionStatus, 'DISPOSED');
+      expect(pledgedItems.single.recoveryDispositionStatus, 'MELTED');
       expect(
         pledgedItems.single.recoveryDispositionReference,
         'GIRVI-RECOVERY-GRV-REC-001',

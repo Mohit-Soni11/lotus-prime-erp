@@ -22,7 +22,8 @@ class DeliveryIcons {
 
   // ── STATUS PIPELINE ───────────────────────────────────────────────────────
   static const IconData statusBooked = Icons.bookmark_added_rounded;
-  static const IconData statusInMaking = Icons.engineering_rounded;
+  static const IconData statusInProduction =
+      Icons.precision_manufacturing_rounded;
   static const IconData statusReady = Icons.inventory_2_rounded;
   static const IconData statusDelivered = Icons.check_circle_rounded;
   static const IconData statusCancelled = Icons.cancel_rounded;
@@ -37,7 +38,7 @@ class DeliveryIcons {
   // ── ACTIONS ───────────────────────────────────────────────────────────────
   static const IconData deliver = Icons.local_shipping_rounded;
   static const IconData markReady = Icons.check_circle_outline_rounded;
-  static const IconData assignKarigar = Icons.engineering_rounded;
+  static const IconData startProduction = Icons.precision_manufacturing_rounded;
   static const IconData collectPayment = Icons.payments_rounded;
   static const IconData printBill = Icons.print_rounded;
   static const IconData whatsapp = Icons.chat_rounded;
@@ -53,7 +54,6 @@ class DeliveryIcons {
   static const IconData calendar = Icons.calendar_month_rounded;
   static const IconData notes = Icons.edit_note_rounded;
   static const IconData image = Icons.image_rounded;
-  static const IconData karigar = Icons.handyman_rounded;
   static const IconData billLink = Icons.receipt_long_rounded;
 
   // ── FINANCIAL ────────────────────────────────────────────────────────────

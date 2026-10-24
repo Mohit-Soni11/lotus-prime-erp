@@ -14,6 +14,8 @@ import 'package:lotus_erp/models/girvi/girvi_customer_response_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_customer_response_repository.dart';
 import 'package:lotus_erp/repositories/customer/defaulter_repository.dart';
+import 'package:lotus_erp/logic/customer/defaulter_logic.dart';
+import 'package:lotus_erp/models/customer/defaulter_model.dart';
 
 void main() {
   late AppDatabase db;
@@ -181,7 +183,8 @@ void main() {
     await repository.recordCollateralRecoveryInitiated(girviId: loanId);
   });
 
-  test('an open hold protects the whole selected date in UI and database',
+  test(
+      'an open time extension protects the whole selected date in UI and database',
       () async {
     final noticeId = await approve();
     await confirmDelivery(noticeId, english);
@@ -189,9 +192,9 @@ void main() {
     await responses.record(
       girviId: loanId,
       noticeActionId: noticeId,
-      kind: GirviCustomerResponseKind.holdRequest,
+      kind: GirviCustomerResponseKind.extensionRequest,
       channel: GirviContactChannel.phoneCall,
-      responseText: 'Customer requested hold through 28 October.',
+      responseText: 'Customer requested more time through 28 October.',
       promiseDueAt: DateTime(2026, 10, 28),
     );
     clock = DateTime(2026, 10, 28, 15);
@@ -212,7 +215,7 @@ void main() {
     await repository.recordCollateralRecoveryInitiated(girviId: loanId);
   });
 
-  test('a reply requires delivery and no-response requires the full period',
+  test('a reply requires delivery and silence waits for the notice deadline',
       () async {
     final noticeId = await approve();
     final responses = GirviCustomerResponseRepository(db, now: () => clock);
@@ -228,24 +231,74 @@ void main() {
       throwsStateError,
     );
     await confirmDelivery(noticeId, english);
-    await expectLater(
-      responses.record(
-        girviId: loanId,
-        noticeActionId: noticeId,
-        kind: GirviCustomerResponseKind.noResponse,
-        channel: GirviContactChannel.other,
-        responseText: 'No response.',
-      ),
-      throwsStateError,
-    );
+    expect(_case(loanId, clock, await history()).canInitiateCollateralRecovery,
+        isFalse);
     clock = clock.add(const Duration(days: 7));
+    expect(_case(loanId, clock, await history()).canInitiateCollateralRecovery,
+        isTrue);
+    expect((await responses.byGirviIds([loanId]))[loanId], isNull);
+  });
+
+  test('visit promise moves from Monitoring to Action Register after its date',
+      () async {
+    clock = DateTime.now().subtract(const Duration(days: 20));
+    final noticeId = await approve();
+    await confirmDelivery(noticeId, english);
+    final responses = GirviCustomerResponseRepository(db, now: () => clock);
+    final promisedDate = DateTime.now().add(const Duration(days: 2));
     await responses.record(
       girviId: loanId,
       noticeActionId: noticeId,
-      kind: GirviCustomerResponseKind.noResponse,
-      channel: GirviContactChannel.other,
-      responseText: 'No response by the deadline.',
+      kind: GirviCustomerResponseKind.willVisit,
+      channel: GirviContactChannel.phoneCall,
+      responseText: 'Customer will visit the shop.',
+      promiseDueAt: promisedDate,
     );
+
+    final riskRepository = DefaulterRepository(db: db);
+    final logic = DefaulterLogic(repository: riskRepository);
+    addTearDown(logic.dispose);
+    await logic.refresh();
+    logic.setFilter(DefaulterFilterBy.medium);
+    expect(logic.state.displayedDefaulters.single.isNoticeFollowUpMonitoring,
+        isTrue);
+    logic.setFilter(DefaulterFilterBy.actionRegister);
+    expect(logic.state.displayedDefaulters, isEmpty);
+
+    await (db.update(db.girviCustomerResponses)
+          ..where((response) => response.girviId.equals(loanId)))
+        .write(GirviCustomerResponsesCompanion(
+      promiseDueAt: drift.Value(
+        DateTime.now().subtract(const Duration(days: 2)),
+      ),
+    ));
+    await logic.refresh();
+    logic.setFilter(DefaulterFilterBy.medium);
+    expect(logic.state.displayedDefaulters, isEmpty);
+    logic.setFilter(DefaulterFilterBy.actionRegister);
+    expect(logic.state.displayedDefaulters.single.isNoticeFollowUpActionDue,
+        isTrue);
+  });
+
+  test('Action Register waits for the notice deadline when a promise is early',
+      () async {
+    clock = DateTime.now().subtract(const Duration(days: 2));
+    final noticeId = await approve();
+    await confirmDelivery(noticeId, english);
+    await GirviCustomerResponseRepository(db, now: () => clock).record(
+      girviId: loanId,
+      noticeActionId: noticeId,
+      kind: GirviCustomerResponseKind.willVisit,
+      channel: GirviContactChannel.phoneCall,
+      responseText: 'Customer promised to visit yesterday.',
+      promiseDueAt: DateTime.now().subtract(const Duration(days: 1)),
+    );
+
+    final account = (await DefaulterRepository(db: db)
+            .fetchAllDefaulters(syncStatuses: false))
+        .single;
+    expect(account.isNoticeFollowUpMonitoring, isTrue);
+    expect(account.isNoticeFollowUpActionDue, isFalse);
   });
 
   test('a notice cannot be marked delivered twice', () async {
@@ -603,7 +656,7 @@ void main() {
           isEmpty);
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 63);
+      expect(version.read<int>('user_version'), migrationDb.schemaVersion);
       final actionColumns = await migrationDb
           .customSelect('PRAGMA table_info(girvi_notice_actions)')
           .get();
@@ -659,7 +712,45 @@ void main() {
           await migrationDb.select(migrationDb.girviLoans).get(), hasLength(1));
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 63);
+      expect(version.read<int>('user_version'), migrationDb.schemaVersion);
+    } finally {
+      await migrationDb.close();
+      await directory.delete(recursive: true);
+    }
+  });
+
+  test('retired response kinds are removed when an existing database opens',
+      () async {
+    final directory =
+        await Directory.systemTemp.createTemp('response_workflow_upgrade_');
+    final file = File('${directory.path}/responses.sqlite');
+    var migrationDb = AppDatabase.forTesting(NativeDatabase(file));
+    try {
+      final loan = await _seedLoan(migrationDb);
+      Future<void> insert(String kind, DateTime? due) async {
+        await migrationDb.into(migrationDb.girviCustomerResponses).insert(
+              GirviCustomerResponsesCompanion.insert(
+                girviId: loan,
+                responseKind: kind,
+                contactChannel: GirviContactChannel.phoneCall.dbValue,
+                responseText: 'Legacy customer reply',
+                promiseDueAt: drift.Value(due),
+              ),
+            );
+      }
+
+      await insert('HOLD_REQUEST', DateTime(2026, 11, 1));
+      await insert('HOLD_REQUEST', null);
+      await insert('NO_RESPONSE', null);
+      await migrationDb.close();
+      migrationDb = AppDatabase.forTesting(NativeDatabase(file));
+
+      final saved =
+          await migrationDb.select(migrationDb.girviCustomerResponses).get();
+      expect(saved, hasLength(1));
+      expect(saved.single.responseKind,
+          GirviCustomerResponseKind.extensionRequest.dbValue);
+      expect(saved.single.promiseDueAt, DateTime(2026, 11, 1));
     } finally {
       await migrationDb.close();
       await directory.delete(recursive: true);

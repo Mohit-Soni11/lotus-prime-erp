@@ -52,6 +52,7 @@ DefaulterModel _mapRecoveredAccount({
     hasInterestPaidBeforeMaturity: false,
     isCollateralRecovery: true,
     isRecoverySettled: true,
+    recoveryDispositionStatus: itemSnapshot.recoveryDispositionStatus,
     recoveredAmount: settlement.recoveredAmount,
     recoverySettlementTotal: settlement.settlementTotal,
     recoveryBalanceDue: settlement.customerBalanceDue,

@@ -157,7 +157,6 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
                     onDownloadInvoice: _downloadInvoice,
                     onViewItemImage: _viewItemImage,
                     onDownloadItemImage: _downloadItemImage,
-                    onInitiateRecovery: _initiateCollateralRecovery,
                     onCloseDisposal: _closeDisposalSettlement,
                   ),
           ),
@@ -327,12 +326,9 @@ class _ContactRecoveryScreenState extends State<ContactRecoveryScreen> {
       penaltyAmount: result.penaltyAmount,
       note: result.note,
       paymentMode: result.paymentMethod.dbValue,
+      dispositionMethod: result.dispositionMethod,
       bankAccountId: result.bankAccountId,
     );
-  }
-
-  Future<void> _initiateCollateralRecovery(ContactRecoveryCase item) async {
-    await _controller.initiateCollateralRecovery(item);
   }
 
   _SavedNoticeDraft _savedNoticeDraft(

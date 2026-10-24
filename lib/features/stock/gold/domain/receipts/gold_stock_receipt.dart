@@ -5,7 +5,6 @@ import 'money.dart';
 enum GoldReceiptSource {
   supplierPurchase,
   customerBuyback,
-  karigarReturn,
   internalTransfer,
   openingBalance,
 }

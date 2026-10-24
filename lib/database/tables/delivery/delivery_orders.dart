@@ -5,7 +5,7 @@
 // DESCRIPTION : DeliveryOrders table — master record for every order
 //               that enters the delivery pipeline.
 //               Linked to SalesOrders (booking) and Customers.
-//               Tracks full lifecycle: BOOKED → IN_MAKING → READY → DELIVERED
+//               Tracks full lifecycle: BOOKED → IN_PRODUCTION → READY → DELIVERED
 //
 // CHANGELOG:
 //   v1 — Initial table for Delivery Management module.
@@ -41,12 +41,8 @@ class DeliveryOrders extends Table with BaseTable {
   RealColumn get lockedRate => real().withDefault(const Constant(0.0))();
 
   // ── STATUS PIPELINE ───────────────────────────────────────────────────────
-  // Values: BOOKED | IN_MAKING | READY | DELIVERED | CANCELLED
+  // Values: BOOKED | IN_PRODUCTION | READY | DELIVERED | CANCELLED
   TextColumn get status => text().withDefault(const Constant('BOOKED'))();
-
-  // ── KARIGAR LINK (optional — when item is IN_MAKING) ─────────────────────
-  IntColumn? get karigarId => integer().nullable()();
-  TextColumn? get karigarName => text().nullable()();
 
   // ── FINANCIALS ────────────────────────────────────────────────────────────
   RealColumn get advancePaid => real().withDefault(const Constant(0.0))();

@@ -83,12 +83,10 @@ class DayBookStrings {
   static const String purityBreakdown = 'Purity-wise Movement';
   static const String movementSources = 'Movement Sources';
   static const String noMetalMovement = 'No metal movement recorded';
-  static const String karigarReceipts = 'Karigar Receipts';
   static const String girviSecurity = 'Girvi Security';
   static const String oldGoldPurchase = 'Old Gold Purchase';
   static const String salesReturn = 'Sales Return';
   static const String retailDispatch = 'Retail Dispatch';
-  static const String karigarIssue = 'Karigar Issue';
   static const String gold22k = 'Gold 22K';
   static const String gold18k = 'Gold 18K';
   static const String silver = 'Silver';

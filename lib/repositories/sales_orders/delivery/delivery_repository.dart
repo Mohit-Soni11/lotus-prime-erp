@@ -4,7 +4,7 @@
 // LAYER       : Repository / Database
 // DESCRIPTION : All database operations for the Delivery Management module.
 //               Implements the full Order-to-Cash pipeline:
-//               BOOKED ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ IN_MAKING ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ READY ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DELIVERED
+//               BOOKED ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ IN_PRODUCTION ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ READY ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DELIVERED
 //               Partial delivery, payment routing, due ledger.
 //
 // CHANGELOG:
@@ -62,8 +62,6 @@ class DeliveryRepository {
     required String? notes,
     required String? imagePath,
     int? sourceOrderId,
-    int? karigarId,
-    String? karigarName,
     List<Map<String, dynamic>> extraItems = const [],
   }) async {
     return _db.transaction(() async {
@@ -81,8 +79,6 @@ class DeliveryRepository {
               approxWeight: Value(approxWeight),
               lockedRate: Value(lockedRate),
               status: const Value('BOOKED'),
-              karigarId: Value(karigarId),
-              karigarName: Value(karigarName),
               advancePaid: Value(advancePaid),
               totalAmount: const Value(0.0),
               dueAmount: const Value(0.0),
@@ -102,8 +98,6 @@ class DeliveryRepository {
               purity: Value(purity),
               approxWeight: Value(approxWeight),
               itemStatus: const Value('PENDING'),
-              karigarId: Value(karigarId),
-              karigarName: Value(karigarName),
               notes: Value(notes),
               imagePath: Value(imagePath),
             ),
@@ -134,10 +128,10 @@ class DeliveryRepository {
   // READ ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â List queries for each tab
   // ===========================================================================
 
-  /// Tab 1: Active Orders ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BOOKED + IN_MAKING + READY
+  /// Tab 1: Active Orders ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â BOOKED + IN_PRODUCTION + READY
   Future<List<DeliveryOrderUiModel>> getActiveOrders({String? search}) async {
     final query = _db.select(_db.deliveryOrders)
-      ..where((t) => t.status.isIn(['BOOKED', 'IN_MAKING', 'READY']))
+      ..where((t) => t.status.isIn(['BOOKED', 'IN_PRODUCTION', 'READY']))
       ..orderBy([(t) => OrderingTerm(expression: t.expectedDeliveryDate)]);
 
     if (search != null && search.isNotEmpty) {
@@ -157,7 +151,7 @@ class DeliveryRepository {
     final tomorrow = DateTime.now().add(const Duration(days: 2));
     final query = _db.select(_db.deliveryOrders)
       ..where((t) =>
-          t.status.isIn(['BOOKED', 'IN_MAKING', 'READY']) &
+          t.status.isIn(['BOOKED', 'IN_PRODUCTION', 'READY']) &
           t.expectedDeliveryDate.isSmallerOrEqualValue(tomorrow))
       ..orderBy([(t) => OrderingTerm(expression: t.expectedDeliveryDate)]);
     final rows = await query.get();
@@ -215,7 +209,7 @@ class DeliveryRepository {
   Future<DeliverySummaryModel> getSummary() async {
     try {
       final allActive = await (_db.select(_db.deliveryOrders)
-            ..where((t) => t.status.isIn(['BOOKED', 'IN_MAKING', 'READY'])))
+            ..where((t) => t.status.isIn(['BOOKED', 'IN_PRODUCTION', 'READY'])))
           .get();
 
       final now = DateTime.now();
@@ -274,14 +268,11 @@ class DeliveryRepository {
   // UPDATE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Status transitions
   // ===========================================================================
 
-  /// Move order to IN_MAKING (assign karigar)
-  Future<void> markInMaking(int orderId,
-      {int? karigarId, String? karigarName}) async {
+  /// Move order to IN_PRODUCTION.
+  Future<void> markInProduction(int orderId) async {
     await (_db.update(_db.deliveryOrders)..where((t) => t.id.equals(orderId)))
-        .write(DeliveryOrdersCompanion(
-      status: const Value('IN_MAKING'),
-      karigarId: Value(karigarId),
-      karigarName: Value(karigarName),
+        .write(const DeliveryOrdersCompanion(
+      status: Value('IN_PRODUCTION'),
     ));
   }
 
@@ -461,7 +452,6 @@ class DeliveryRepository {
       actualDeliveryDate: row.actualDeliveryDate,
       imagePath: row.imagePath,
       notes: row.notes,
-      karigarName: row.karigarName,
       linkedBillNo: row.linkedBillNo,
       items: items,
       createdAt: row.createdAt,
@@ -482,7 +472,6 @@ class DeliveryRepository {
       imagePath: row.imagePath,
       notes: row.notes,
       itemStatus: DeliveryItemStatus.fromString(row.itemStatus),
-      karigarName: row.karigarName,
       deliveredAt: row.deliveredAt,
     );
   }

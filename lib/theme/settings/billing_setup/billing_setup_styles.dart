@@ -2,7 +2,7 @@
 // FILE        : lib/theme/settings/billing_setup/billing_setup_styles.dart
 // MODULE      : Billing Setup
 // LAYER       : Theme / Styles
-// DESCRIPTION : Typography, decorations, dimensions â€” mirrors KarigarStyles.
+// DESCRIPTION : Typography, decorations, and dimensions for billing workspaces.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -112,7 +112,7 @@ class BillingSetupStyles {
   // DECORATIONS
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  // Dark shell â€” exact KarigarStyles.shellDecoration
+  // Dark workspace shell decoration
   static const BoxDecoration shellDecoration = BoxDecoration(
     color: BillingSetupColors.shellPanelBg,
     border: Border(

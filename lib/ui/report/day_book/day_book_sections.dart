@@ -844,10 +844,6 @@ class _MetalMovementPanelState extends State<MetalMovementPanel> {
     final summary = widget.summary;
     final incoming = <_MetalLedgerData>[
       _MetalLedgerData(
-        DayBookStrings.karigarReceipts,
-        summary.metalIn.karigarFinishedGoods,
-      ),
-      _MetalLedgerData(
         DayBookStrings.girviSecurity,
         summary.metalIn.girviSecurityDeposit,
       ),
@@ -865,10 +861,6 @@ class _MetalMovementPanelState extends State<MetalMovementPanel> {
       _MetalLedgerData(
         DayBookStrings.retailDispatch,
         summary.metalOut.retailDispatch,
-      ),
-      _MetalLedgerData(
-        DayBookStrings.karigarIssue,
-        summary.metalOut.karigarIssue,
       ),
     ].where((item) => _hasWeight(item.weight)).toList();
 

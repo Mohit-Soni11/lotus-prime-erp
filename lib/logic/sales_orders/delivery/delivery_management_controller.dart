@@ -185,7 +185,12 @@ class DeliveryManagementController extends ChangeNotifier {
       case DeliverySortBy.customerName:
         sorted.sort((a, b) => a.customerName.compareTo(b.customerName));
       case DeliverySortBy.statusPipeline:
-        const order = {'BOOKED': 0, 'IN_MAKING': 1, 'READY': 2, 'DELIVERED': 3};
+        const order = {
+          'BOOKED': 0,
+          'IN_PRODUCTION': 1,
+          'READY': 2,
+          'DELIVERED': 3
+        };
         sorted.sort((a, b) => (order[a.status.value] ?? 99)
             .compareTo(order[b.status.value] ?? 99));
     }
@@ -230,11 +235,9 @@ class DeliveryManagementController extends ChangeNotifier {
 
   // ── STATUS TRANSITIONS ─────────────────────────────────────────────────────
 
-  Future<bool> markInMaking(int orderId,
-      {int? karigarId, String? karigarName}) async {
+  Future<bool> markInProduction(int orderId) async {
     return _runAction(() async {
-      await _repo.markInMaking(orderId,
-          karigarId: karigarId, karigarName: karigarName);
+      await _repo.markInProduction(orderId);
       await refreshAll();
     });
   }
@@ -272,7 +275,6 @@ class DeliveryManagementController extends ChangeNotifier {
           actualDeliveryDate: _selectedOrder!.actualDeliveryDate,
           imagePath: _selectedOrder!.imagePath,
           notes: _selectedOrder!.notes,
-          karigarName: _selectedOrder!.karigarName,
           linkedBillNo: _selectedOrder!.linkedBillNo,
           items: items,
           createdAt: _selectedOrder!.createdAt,

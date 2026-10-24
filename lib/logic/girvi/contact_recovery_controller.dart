@@ -268,38 +268,6 @@ class ContactRecoveryController extends ChangeNotifier {
     return _repository.getPaymentModelsForLoans(loanIds);
   }
 
-  Future<bool> initiateCollateralRecovery(ContactRecoveryCase item) async {
-    if (!item.canInitiateCollateralRecovery) {
-      _state = _state.copyWith(
-        inlineMessage: item.recoveryBlockedMessage,
-      );
-      notifyListeners();
-      return false;
-    }
-
-    try {
-      await _noticeActionRepository.recordCollateralRecoveryInitiated(
-        girviId: item.loan.id,
-        noticePeriodDays: item.noticePeriodDays,
-        performedBy: _operatorIdentity(),
-      );
-      _state = _state.copyWith(
-        inlineMessage:
-            'Ticket ${item.loan.ticketNo} moved to collateral recovery.',
-      );
-      notifyListeners();
-      await load(keepInlineMessage: true);
-      return true;
-    } catch (error) {
-      AppLogger.debug('Contact & Recovery initiation failed: $error');
-      _state = _state.copyWith(
-        inlineMessage: 'Collateral recovery could not be started.',
-      );
-      notifyListeners();
-      return false;
-    }
-  }
-
   Future<bool> recordNoticeDraft(
     ContactRecoveryCase item,
     String noticeText,
@@ -432,12 +400,6 @@ class ContactRecoveryController extends ChangeNotifier {
         throw StateError(
             'A customer response must be linked to a saved notice.');
       }
-      if (kind == GirviCustomerResponseKind.noResponse &&
-          !item.isNoticePeriodComplete) {
-        throw StateError(
-          'No response can be recorded only after the notice deadline.',
-        );
-      }
       await _customerResponseRepository.record(
         girviId: item.loan.id,
         noticeActionId: notice.id,
@@ -500,12 +462,12 @@ class ContactRecoveryController extends ChangeNotifier {
     required double penaltyAmount,
     required String note,
     String paymentMode = 'CASH',
+    String dispositionMethod = 'MELTED',
     int? bankAccountId,
   }) async {
-    if (!item.canCloseDisposal) {
+    if (!item.canCloseDisposal && !item.canInitiateCollateralRecovery) {
       _state = _state.copyWith(
-        inlineMessage:
-            'Send this ticket to collateral recovery before closing settlement.',
+        inlineMessage: item.recoveryBlockedMessage,
       );
       notifyListeners();
       return false;
@@ -529,11 +491,23 @@ class ContactRecoveryController extends ChangeNotifier {
       final normalizedRecoveredAmount = _money(recoveredAmount);
       final normalizedPenaltyAmount = _money(penaltyAmount);
       final normalizedPaymentMode = paymentMode.trim().toUpperCase();
+      final normalizedDispositionMethod =
+          dispositionMethod.trim().toUpperCase();
       if (!_isSupportedRecoveryPaymentMode(normalizedPaymentMode)) {
         throw ArgumentError.value(paymentMode, 'paymentMode');
       }
+      if (!const {'MELTED', 'SOLD'}.contains(normalizedDispositionMethod)) {
+        throw ArgumentError.value(dispositionMethod, 'dispositionMethod');
+      }
 
       await _db.transaction(() async {
+        if (!item.canCloseDisposal) {
+          await _noticeActionRepository.recordCollateralRecoveryInitiated(
+            girviId: item.loan.id,
+            noticePeriodDays: item.noticePeriodDays,
+            performedBy: _operatorIdentity(),
+          );
+        }
         final alreadySettled = await (_db.select(_db.girviNoticeActions)
               ..where(
                 (action) =>
@@ -682,7 +656,7 @@ class ContactRecoveryController extends ChangeNotifier {
               ..where((loanItem) => loanItem.girviId.equals(item.loan.id)))
             .write(
           GirviLoanItemsCompanion(
-            recoveryDispositionStatus: const drift.Value('DISPOSED'),
+            recoveryDispositionStatus: drift.Value(normalizedDispositionMethod),
             recoveryDispositionReference: drift.Value(referenceId),
             recoveryDisposedAt: drift.Value(settledAt),
           ),
@@ -696,7 +670,7 @@ class ContactRecoveryController extends ChangeNotifier {
           settlementTotal: settlementTotal,
           customerBalanceDue: balanceDue,
           customerSurplus: surplus,
-          note: note,
+          note: '$normalizedDispositionMethod: $note',
           performedBy: _operatorIdentity(),
         );
       });

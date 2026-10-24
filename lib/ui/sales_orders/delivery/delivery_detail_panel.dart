@@ -143,11 +143,6 @@ class _OrderDetailsSection extends StatelessWidget {
             label: 'Metal',
             value:
                 '${order.metalType} ${order.purity} â€¢ ${order.approxWeight.toStringAsFixed(3)}g'),
-        if (order.karigarName != null)
-          _DetailRow(
-              icon: DeliveryIcons.karigar,
-              label: 'Karigar',
-              value: order.karigarName!),
         if (order.expectedDeliveryDate != null)
           _DetailRow(
             icon: DeliveryIcons.calendar,
@@ -482,7 +477,7 @@ class _ActionSection extends StatelessWidget {
       );
     }
 
-    // Active pipeline â€” BOOKED / IN_MAKING / READY
+    // Active pipeline â€” BOOKED / IN_PRODUCTION / READY
     return _Section(
       title: DeliveryStrings.panelDeliverOrder,
       child: Column(
@@ -491,19 +486,19 @@ class _ActionSection extends StatelessWidget {
           // Status actions row
           if (status == DeliveryOrderStatus.booked)
             _ActionButton(
-              label: DeliveryStrings.btnMarkInMaking,
-              icon: DeliveryIcons.assignKarigar,
-              color: DeliveryColors.actionInMaking,
+              label: DeliveryStrings.btnMarkInProduction,
+              icon: DeliveryIcons.startProduction,
+              color: DeliveryColors.actionInProduction,
               outlined: true,
               onTap: () async {
-                final ok = await ctrl.markInMaking(order.id);
+                final ok = await ctrl.markInProduction(order.id);
                 if (ok && context.mounted) {
-                  _showFeedback(context, DeliveryStrings.feedbackInMaking);
+                  _showFeedback(context, DeliveryStrings.feedbackInProduction);
                 }
               },
             ),
 
-          if (status == DeliveryOrderStatus.inMaking)
+          if (status == DeliveryOrderStatus.inProduction)
             _ActionButton(
               label: DeliveryStrings.btnMarkReady,
               icon: DeliveryIcons.markReady,

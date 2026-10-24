@@ -315,30 +315,13 @@ class AddStockController extends ChangeNotifier {
         }
       }
 
-      final latestRate = await (_db.select(_db.dailyRates)
-            ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
-            ..limit(1))
-          .getSingleOrNull();
-
-      if (latestRate != null) {
-        masterRates.putIfAbsent(
-            '24K', () => AddStockPurityUtils.parseRateText(latestRate.gold24k));
-        masterRates.putIfAbsent(
-            '22K', () => AddStockPurityUtils.parseRateText(latestRate.gold22k));
-        masterRates.putIfAbsent(
-            '18K', () => AddStockPurityUtils.parseRateText(latestRate.gold18k));
-      }
-
       _goldRateByPurityPer10g = masterRates;
       _gold24kRatePer10g = masterRates['24K'] ?? 0.0;
       _gold22kRatePer10g = masterRates['22K'] ?? 0.0;
       _gold18kRatePer10g = masterRates['18K'] ?? 0.0;
       _gold14kRatePer10g = masterRates['14K'] ?? 0.0;
       _gold9kRatePer10g = masterRates['9K'] ?? 0.0;
-      _goldRateDate = masterProfile.updatedAt
-              .isAfter(DateTime.fromMillisecondsSinceEpoch(0))
-          ? masterProfile.updatedAt
-          : latestRate?.rateDate;
+      _goldRateDate = masterProfile.updatedAt;
     } catch (_) {
       _gold24kRatePer10g = 0.0;
       _gold22kRatePer10g = 0.0;

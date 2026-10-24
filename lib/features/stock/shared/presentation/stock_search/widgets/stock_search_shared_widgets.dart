@@ -594,8 +594,6 @@ String _stockLifecycleLabel(String status) {
       return 'Transferred';
     case 'damaged':
       return 'Damaged';
-    case 'with karigar':
-      return 'With Karigar';
     case 'archived':
     case 'deleted':
       return 'Archived';
@@ -619,8 +617,6 @@ Color _stockLifecycleColor(String status) {
     case 'archived':
     case 'deleted':
       return const Color(0xFF64748B);
-    case 'with karigar':
-      return const Color(0xFF7C3AED);
     default:
       return InvColors.success;
   }

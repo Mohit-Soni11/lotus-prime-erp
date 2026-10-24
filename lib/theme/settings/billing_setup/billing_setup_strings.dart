@@ -3,7 +3,7 @@
 // MODULE      : Billing Setup
 // LAYER       : Theme / Strings
 // DESCRIPTION : All display text constants — zero hardcoded strings in UI.
-//               Mirrors KarigarStrings pattern.
+//               Labels for billing setup workspaces.
 //               v14 UPDATE: Metal hub + metal settings strings added.
 // =============================================================================
 

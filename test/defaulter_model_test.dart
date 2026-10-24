@@ -46,6 +46,7 @@ void main() {
     final account = _defaulter(
       isRecoverySettled: true,
       isCollateralRecovery: true,
+      recoveryDispositionStatus: 'MELTED',
     );
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -61,6 +62,7 @@ void main() {
     ));
 
     expect(find.text('RECOVERY CLOSED'), findsOneWidget);
+    expect(find.text('Item melted'), findsOneWidget);
     expect(find.text('Amount Recovered'), findsOneWidget);
     expect(find.text('Balance Due'), findsOneWidget);
     expect(find.text('View Recovery'), findsOneWidget);
@@ -169,6 +171,7 @@ DefaulterModel _defaulter({
   DateTime? lastPaymentDate,
   DefaulterRiskLevel riskLevel = DefaulterRiskLevel.medium,
   bool isRecoverySettled = false,
+  String? recoveryDispositionStatus,
   bool isCollateralRecovery = false,
   bool isPaymentMonitoring = false,
   bool isNoticeEligible = false,
@@ -217,6 +220,7 @@ DefaulterModel _defaulter({
     isPaymentMonitoring: isPaymentMonitoring,
     isNoticeEligible: isNoticeEligible,
     isRecoverySettled: isRecoverySettled,
+    recoveryDispositionStatus: recoveryDispositionStatus,
     recoverySettlementTotal: isRecoverySettled ? 11000 : 0,
     recoveredAmount: isRecoverySettled ? 10500 : 0,
     recoveryBalanceDue: isRecoverySettled ? 500 : 0,

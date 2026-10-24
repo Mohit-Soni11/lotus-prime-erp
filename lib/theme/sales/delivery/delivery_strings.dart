@@ -36,14 +36,13 @@ class DeliveryStrings {
   static const String labelAdvance = 'Advance Paid';
   static const String labelDue = 'Due Amount';
   static const String labelDeliveryDate = 'Delivery Date';
-  static const String labelKarigar = 'Karigar';
   static const String labelBillNo = 'Bill No.';
   static const String labelStatus = 'Status';
   static const String labelPayment = 'Payment';
 
   // ── STATUS LABELS ─────────────────────────────────────────────────────────
   static const String statusBooked = 'Booked';
-  static const String statusInMaking = 'In Making';
+  static const String statusInProduction = 'In Production';
   static const String statusReady = 'Ready';
   static const String statusDelivered = 'Delivered';
   static const String statusCancelled = 'Cancelled';
@@ -67,7 +66,7 @@ class DeliveryStrings {
   static const String panelActions = 'QUICK ACTIONS';
 
   // ── ACTION BUTTONS ────────────────────────────────────────────────────────
-  static const String btnMarkInMaking = 'Mark In Making';
+  static const String btnMarkInProduction = 'Start Production';
   static const String btnMarkReady = 'Mark Ready';
   static const String btnDeliver = 'DELIVER ORDER';
   static const String btnPartialDeliver = 'Partial Deliver';
@@ -126,7 +125,7 @@ class DeliveryStrings {
   // ── FEEDBACK ──────────────────────────────────────────────────────────────
   static const String feedbackDelivered = 'Order delivered successfully.';
   static const String feedbackReadyMarked = 'Order marked as ready.';
-  static const String feedbackInMaking = 'Order moved to in-making.';
+  static const String feedbackInProduction = 'Order moved to production.';
   static const String feedbackDueCollected =
       'Due payment collected successfully.';
   static const String feedbackCancelled = 'Order cancelled successfully.';

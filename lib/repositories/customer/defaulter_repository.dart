@@ -19,10 +19,14 @@ import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
+import '../../models/girvi/girvi_customer_response_model.dart';
+import '../../models/girvi/girvi_notice_review_period.dart';
+import '../../models/girvi/girvi_recovery_eligibility.dart';
 import '../girvi/girvi_repository.dart';
 import '../girvi/girvi_interest_payment_adjustments.dart';
 
 part 'defaulter_recovery_history.dart';
+part 'defaulter_notice_followups.dart';
 
 class DefaulterRepository {
   final AppDatabase _db;
@@ -88,6 +92,7 @@ class DefaulterRepository {
                 itemSnapshot: itemSnapshot,
                 isCollateralRecovery: workflow.recoveryIds.contains(loan.id),
                 hasNoticeWorkflow: workflow.noticeIds.contains(loan.id),
+                noticeFollowUp: workflow.followUps[loan.id],
                 now: now,
               );
         if (account != null) accounts.add(account);
@@ -117,6 +122,7 @@ class DefaulterRepository {
             _db.girviLoans,
             _db.girviPayments,
             _db.girviNoticeActions,
+            _db.girviCustomerResponses,
             _db.customers,
           },
         )
@@ -205,6 +211,7 @@ class DefaulterRepository {
         Set<int> recoveryIds,
         Set<int> noticeIds,
         Map<int, GirviNoticeActionData> settlements,
+        Map<int, _NoticeFollowUpSnapshot> followUps,
       })> _loadNoticeWorkflow(
     List<int> loanIds,
   ) async {
@@ -213,6 +220,7 @@ class DefaulterRepository {
         recoveryIds: <int>{},
         noticeIds: <int>{},
         settlements: <int, GirviNoticeActionData>{},
+        followUps: <int, _NoticeFollowUpSnapshot>{},
       );
     }
 
@@ -241,6 +249,8 @@ class DefaulterRepository {
         }
       }
       noticeIds.addAll(formalNotices.keys);
+      final followUps =
+          await _loadNoticeFollowUps(_db, loanIds, formalNotices, rows);
       for (final row in rows) {
         if (!_isOpenCollateralRecoveryAction(row.actionType)) continue;
         final formal = formalNotices[row.girviId];
@@ -255,6 +265,7 @@ class DefaulterRepository {
         recoveryIds: recoveryIds,
         noticeIds: noticeIds,
         settlements: settlements,
+        followUps: followUps,
       );
     } catch (error) {
       AppLogger.debug(
@@ -264,6 +275,7 @@ class DefaulterRepository {
         recoveryIds: <int>{},
         noticeIds: <int>{},
         settlements: <int, GirviNoticeActionData>{},
+        followUps: <int, _NoticeFollowUpSnapshot>{},
       );
     }
   }
@@ -279,6 +291,7 @@ class DefaulterRepository {
     required _PledgedItemSnapshot itemSnapshot,
     required bool isCollateralRecovery,
     required bool hasNoticeWorkflow,
+    required _NoticeFollowUpSnapshot? noticeFollowUp,
     required DateTime now,
   }) {
     final status = GirviStatus.fromDb(loan.status);
@@ -338,6 +351,8 @@ class DefaulterRepository {
         );
     final staleMonitoring = !paymentMonitoring &&
         assessment.stage == GirviRiskStage.collectionMonitoring;
+    final followUpMonitoring = noticeFollowUp?.isMonitoringAt(now) ?? false;
+    final followUpActionDue = noticeFollowUp?.isActionDueAt(now) ?? false;
 
     final lastActivityAt = _latestDate(
       loan.updatedAt,
@@ -363,11 +378,15 @@ class DefaulterRepository {
       pieces: itemSnapshot.pieces,
       grossWeight: itemSnapshot.grossWeight,
       lessWeight: itemSnapshot.lessWeight,
-      statusLabel: paymentMonitoring
-          ? 'Payment Monitoring'
-          : staleMonitoring
-              ? 'High Follow-up'
-              : assessment.statusLabel,
+      statusLabel: followUpActionDue
+          ? 'Follow-up Due'
+          : followUpMonitoring
+              ? 'Promise Monitoring'
+              : paymentMonitoring
+                  ? 'Payment Monitoring'
+                  : staleMonitoring
+                      ? 'High Follow-up'
+                      : assessment.statusLabel,
       statusValue: status.dbValue,
       principalAmount: originalPrincipal,
       principalOutstanding: principalOutstanding,
@@ -392,7 +411,11 @@ class DefaulterRepository {
       hasInterestPaidBeforeMaturity:
           summary.hasInterestPaidOnOrBefore(maturityDate),
       isCollateralRecovery: isCollateralRecovery,
-      isPaymentMonitoring: paymentMonitoring,
+      isPaymentMonitoring: paymentMonitoring || followUpMonitoring,
+      noticeFollowUpKind: noticeFollowUp?.kind,
+      noticePromisedDate: noticeFollowUp?.promiseDueAt,
+      isNoticeFollowUpMonitoring: followUpMonitoring,
+      isNoticeFollowUpActionDue: followUpActionDue,
       isNoticeEligible: GirviNoticeEligibility.hasMaturedBalance(
         status: status,
         maturityDate: maturityDate,
@@ -401,19 +424,29 @@ class DefaulterRepository {
         asOf: now,
       ),
       hasNoticeWorkflow: hasNoticeWorkflow,
-      riskLevel: paymentMonitoring
+      riskLevel: followUpMonitoring
           ? DefaulterRiskLevel.medium
-          : staleMonitoring
-              ? DefaulterRiskLevel.high
-              : _mapSeverity(assessment.severity),
-      collectionStage: paymentMonitoring
-          ? 'Payment Monitoring'
-          : staleMonitoring
-              ? 'High Follow-up'
-              : assessment.stageLabel,
-      nextActionLabel: paymentMonitoring
-          ? 'Review the remaining balance and follow up'
-          : assessment.nextActionLabel,
+          : paymentMonitoring
+              ? DefaulterRiskLevel.medium
+              : staleMonitoring
+                  ? DefaulterRiskLevel.high
+                  : _mapSeverity(assessment.severity),
+      collectionStage: followUpActionDue
+          ? 'Follow-up Action Due'
+          : followUpMonitoring
+              ? 'Promise Monitoring'
+              : paymentMonitoring
+                  ? 'Payment Monitoring'
+                  : staleMonitoring
+                      ? 'High Follow-up'
+                      : assessment.stageLabel,
+      nextActionLabel: followUpActionDue
+          ? 'Review the missed promise and open Notice & Recovery'
+          : followUpMonitoring
+              ? 'Follow up on the promised date'
+              : paymentMonitoring
+                  ? 'Review the remaining balance and follow up'
+                  : assessment.nextActionLabel,
     );
   }
 
@@ -466,6 +499,7 @@ class _PledgedItemSnapshot {
   final double grossWeight;
   final double lessWeight;
   final double netWeight;
+  final String? recoveryDispositionStatus;
 
   const _PledgedItemSnapshot({
     required this.itemCount,
@@ -476,6 +510,7 @@ class _PledgedItemSnapshot {
     required this.grossWeight,
     required this.lessWeight,
     required this.netWeight,
+    this.recoveryDispositionStatus,
   });
 
   factory _PledgedItemSnapshot.fromItems(List<GirviLoanItem> items) {
@@ -497,6 +532,11 @@ class _PledgedItemSnapshot {
     final first = sorted.first;
     final itemName = _itemDisplayName(first.itemName, fallback: 'Pledged item');
     final suffix = sorted.length > 1 ? ' + ${sorted.length - 1} more' : '';
+    final dispositions = sorted
+        .map((item) => item.recoveryDispositionStatus?.trim().toUpperCase())
+        .whereType<String>()
+        .where((value) => value.isNotEmpty)
+        .toSet();
 
     return _PledgedItemSnapshot(
       itemCount: sorted.length,
@@ -507,6 +547,11 @@ class _PledgedItemSnapshot {
       grossWeight: sorted.fold(0.0, (sum, item) => sum + item.grossWeight),
       lessWeight: sorted.fold(0.0, (sum, item) => sum + item.lessWeight),
       netWeight: sorted.fold(0.0, (sum, item) => sum + item.netWeight),
+      recoveryDispositionStatus: dispositions.length == 1
+          ? dispositions.single
+          : dispositions.isNotEmpty
+              ? 'MIXED'
+              : null,
     );
   }
 

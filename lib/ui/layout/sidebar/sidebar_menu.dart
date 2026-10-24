@@ -82,18 +82,6 @@ class SidebarMenu {
       ],
     ),
 
-    // ── Karigar ─────────────────────────────────────────────────
-    SidebarItem(
-      title: 'Karigar',
-      icon: Icons.engineering_outlined,
-      subItems: [
-        MenuItemData(AppRoutes.issueToKarigarRoute),
-        MenuItemData(AppRoutes.receiveFromKarigarRoute),
-        MenuItemData(AppRoutes.pendingJobsRoute),
-        MenuItemData(AppRoutes.karigarLedgerRoute),
-      ],
-    ),
-
     // ── Pledge Loans ────────────────────────────────────────────
     SidebarItem(
       title: 'Pledge Loans',

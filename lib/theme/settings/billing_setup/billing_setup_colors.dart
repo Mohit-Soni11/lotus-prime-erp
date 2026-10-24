@@ -2,7 +2,7 @@
 // FILE        : lib/theme/settings/billing_setup/billing_setup_colors.dart
 // MODULE      : Billing Setup
 // LAYER       : Theme / Colors
-// DESCRIPTION : Master color palette — mirrors KarigarColors exactly.
+// DESCRIPTION : Master color palette for billing setup workspaces.
 //               Dark shell AppBar + warm cream body. 4 accent families.
 //               v14 UPDATE: Metal-specific accents added for Sales/Purchase hub.
 // =============================================================================

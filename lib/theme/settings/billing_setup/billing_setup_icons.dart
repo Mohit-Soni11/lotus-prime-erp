@@ -3,7 +3,7 @@
 // MODULE      : Billing Setup
 // LAYER       : Theme / Icons
 // DESCRIPTION : All IconData constants — zero hardcoded icons in UI.
-//               Mirrors KarigarIcons pattern exactly.
+//               Icon catalog for billing setup workspaces.
 // =============================================================================
 
 import 'package:flutter/material.dart';

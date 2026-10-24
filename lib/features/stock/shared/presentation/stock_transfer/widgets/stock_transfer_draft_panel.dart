@@ -146,7 +146,6 @@ class _StockTransferDraftPanelState extends State<StockTransferDraftPanel> {
                 'Vault Movement',
                 'Counter Movement',
                 'Exhibition Transfer',
-                'Karigar Issue',
               ])
                 TransferChip(
                   label: type,

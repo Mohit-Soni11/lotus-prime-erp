@@ -1,629 +1,213 @@
-// =============================================================================
-// FILE        : lib/repositories/setting/metal_rate/metal_rate_repository.dart
-// MODULE      : Metal Rate Setting
-// LAYER       : Repository / Data Access
-// DESCRIPTION : Persists daily metal rate profiles and compact history locally.
-// =============================================================================
-
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
-import '../../../models/setting/metal_rate/metal_rate_model.dart';
+import 'package:lotus_erp/models/setting/metal_rate/metal_rate_model.dart';
 
+/// Single database-backed source for rate configuration and its audit history.
+/// SharedPreferences is read once only to import an existing installation.
 class MetalRateRepository {
-  static const String _profilesKey = 'metal_rate_profiles_v2';
-  static const String _historyKey = 'metal_rate_history_v2';
-  static const String _historyTable = 'metal_rate_history';
-  static const String _currentTable = 'metal_rate_current';
-  static const int _historyLimit = 25;
-
-  final AppDatabase _db;
-
   MetalRateRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
+  static const _legacyProfilesKey = 'metal_rate_profiles_v2';
+  static const _historyLimit = 25;
+  final AppDatabase _db;
+
   Future<List<MetalRateProfile>> loadProfiles() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_profilesKey);
-    final profiles = <MetalRateProfile>[];
-
-    if (raw != null && raw.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(raw) as List<dynamic>;
-        profiles.addAll(
-          decoded
-              .whereType<Map>()
-              .map(
-                (item) =>
-                    MetalRateProfile.fromJson(Map<String, dynamic>.from(item)),
-              )
-              .toList(),
-        );
-      } catch (_) {
-        profiles.clear();
-      }
-    }
-
-    final existingKeys = profiles.map((profile) => profile.metal.key).toSet();
-    for (final metal in MetalRateMetal.values) {
-      if (!existingKeys.contains(metal.key)) {
-        profiles.add(MetalRateProfile.defaultFor(metal));
-      }
-    }
-
-    await _mergeLatestDailyRate(profiles);
-    await _mergeCurrentRates(profiles);
-    await _writeProfiles(prefs, profiles);
-    await _syncCurrentTablesForExistingProfiles(profiles);
-    return profiles;
+    await _ensureLedgerInitialised();
+    return _readCurrentProfiles();
   }
 
   Future<MetalRateProfile> loadProfile(MetalRateMetal metal) async {
     final profiles = await loadProfiles();
-    return profiles.firstWhere(
-      (profile) => profile.metal == metal,
-      orElse: () => MetalRateProfile.defaultFor(metal),
-    );
+    return profiles.firstWhere((profile) => profile.metal == metal);
   }
 
-  Future<void> saveProfile(MetalRateProfile profile) async {
-    final prefs = await SharedPreferences.getInstance();
-    final profiles = await loadProfiles();
-    final updatedProfile = profile.copyWith(updatedAt: DateTime.now());
-    final index = profiles.indexWhere((item) => item.metal == profile.metal);
-
-    if (index == -1) {
-      profiles.add(updatedProfile);
-    } else {
-      profiles[index] = updatedProfile;
-    }
-
-    await _writeProfiles(prefs, profiles);
-    await _syncCurrentRates(updatedProfile);
-    await _syncDailyRate(updatedProfile);
-    await _appendHistory(prefs, updatedProfile);
+  Stream<List<MetalRateProfile>> watchProfiles() async* {
+    await _ensureLedgerInitialised();
+    yield await _readCurrentProfiles();
+    yield* _db.select(_db.metalRateProfiles).watch().asyncMap(
+          (_) => _readCurrentProfiles(),
+        );
   }
 
-  Future<void> resetProfile(MetalRateMetal metal) async {
-    await saveProfile(MetalRateProfile.defaultFor(metal));
+  Future<void> saveProfile(
+    MetalRateProfile profile, {
+    String? changeReason,
+  }) async {
+    _validateProfile(profile);
+    final now = DateTime.now();
+    final updated = profile.copyWith(updatedAt: now);
+    final payload = jsonEncode(updated.toJson());
+
+    await _db.transaction(() async {
+      final existing = await (_db.select(_db.metalRateProfiles)
+            ..where((table) => table.metalKey.equals(updated.metal.key)))
+          .getSingleOrNull();
+      final revision = (existing?.revision ?? 0) + 1;
+      final source = _sourceFor(updated);
+
+      if (existing == null) {
+        await _db.into(_db.metalRateProfiles).insert(
+              MetalRateProfilesCompanion.insert(
+                metalKey: updated.metal.key,
+                profileJson: payload,
+                revision: Value(revision),
+                source: Value(source),
+                updatedAt: Value(now),
+              ),
+            );
+      } else {
+        await (_db.update(_db.metalRateProfiles)
+              ..where((table) => table.id.equals(existing.id)))
+            .write(MetalRateProfilesCompanion(
+          profileJson: Value(payload),
+          revision: Value(revision),
+          source: Value(source),
+          updatedAt: Value(now),
+        ));
+      }
+
+      await _db.into(_db.metalRateRevisions).insert(
+            MetalRateRevisionsCompanion.insert(
+              metalKey: updated.metal.key,
+              revision: revision,
+              profileJson: payload,
+              source: source,
+              changeReason: Value(changeReason?.trim().isEmpty ?? true
+                  ? null
+                  : changeReason!.trim()),
+              effectiveAt: now,
+            ),
+          );
+    });
   }
+
+  Future<void> resetProfile(MetalRateMetal metal) => saveProfile(
+        MetalRateProfile.defaultFor(metal),
+        changeReason: 'Restored default profile',
+      );
 
   Future<List<MetalRateHistoryEntry>> loadHistory(MetalRateMetal metal) async {
-    final databaseHistory = await _loadDatabaseHistory(metal);
-    if (databaseHistory.isNotEmpty) {
-      return databaseHistory;
-    }
-
-    final dailyHistory = await _loadDailyRateHistory(metal);
-    if (dailyHistory.isNotEmpty) {
-      return dailyHistory;
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_historyKey);
-    if (raw == null || raw.isEmpty) {
-      return const [];
-    }
-
-    try {
-      final decoded = jsonDecode(raw) as List<dynamic>;
-      final entries = decoded
-          .whereType<Map>()
-          .map(
-            (item) =>
-                MetalRateHistoryEntry.fromJson(Map<String, dynamic>.from(item)),
-          )
-          .where((entry) => entry.profile.metal == metal)
-          .toList();
-      entries.sort((a, b) => b.changedAt.compareTo(a.changedAt));
-      return entries.take(_historyLimit).toList(growable: false);
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<void> _writeProfiles(
-    SharedPreferences prefs,
-    List<MetalRateProfile> profiles,
-  ) {
-    return prefs.setString(
-      _profilesKey,
-      jsonEncode(profiles.map((profile) => profile.toJson()).toList()),
-    );
-  }
-
-  Future<void> _ensureHistoryTable() async {
-    try {
-      await _ensureHistoryTableSchema();
-    } catch (error) {
-      if (!_isRecoverableHistoryError(error)) {
-        rethrow;
-      }
-
-      await _rebuildHistoryTable();
-      await _ensureHistoryTableSchema(runLegacyBackfill: false);
-    }
-  }
-
-  Future<void> _ensureCurrentTable() async {
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS "$_currentTable" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "metal_key" TEXT NOT NULL,
-        "purity_label" TEXT NOT NULL,
-        "purity_percent" REAL NOT NULL DEFAULT 0,
-        "selling_rate_per10g" REAL NOT NULL DEFAULT 0,
-        "buy_rate_per10g" REAL NOT NULL DEFAULT 0,
-        "making_charge_percent" REAL NOT NULL DEFAULT 0,
-        "making_charge_per_gram" REAL NOT NULL DEFAULT 0,
-        "market_parity_per10g" REAL NOT NULL DEFAULT 0,
-        "source" TEXT NOT NULL DEFAULT 'Metal Rate Master',
-        "sort_order" INTEGER NOT NULL DEFAULT 0,
-        "created_at" INTEGER NOT NULL,
-        "updated_at" INTEGER NOT NULL,
-        UNIQUE("metal_key", "purity_label")
-      )
-    ''');
-
-    final columns = await _currentTableColumns();
-
-    Future<void> addMissingColumn(String name, String definition) async {
-      if (columns.contains(name)) {
-        return;
-      }
-      await _db.customStatement(
-        'ALTER TABLE "$_currentTable" ADD COLUMN "$name" $definition',
-      );
-      columns.add(name);
-    }
-
-    await addMissingColumn('metal_key', 'TEXT');
-    await addMissingColumn('purity_label', 'TEXT');
-    await addMissingColumn('purity_percent', 'REAL NOT NULL DEFAULT 0');
-    await addMissingColumn('selling_rate_per10g', 'REAL NOT NULL DEFAULT 0');
-    await addMissingColumn('buy_rate_per10g', 'REAL NOT NULL DEFAULT 0');
-    await addMissingColumn('making_charge_percent', 'REAL NOT NULL DEFAULT 0');
-    await addMissingColumn('making_charge_per_gram', 'REAL NOT NULL DEFAULT 0');
-    await addMissingColumn('market_parity_per10g', 'REAL NOT NULL DEFAULT 0');
-    await addMissingColumn(
-      'source',
-      'TEXT NOT NULL DEFAULT \'Metal Rate Master\'',
-    );
-    await addMissingColumn('sort_order', 'INTEGER NOT NULL DEFAULT 0');
-    await addMissingColumn('created_at', 'INTEGER NOT NULL DEFAULT 0');
-    await addMissingColumn('updated_at', 'INTEGER NOT NULL DEFAULT 0');
-
-    await _db.customStatement(
-      'CREATE UNIQUE INDEX IF NOT EXISTS "idx_${_currentTable}_metal_purity" '
-      'ON "$_currentTable" ("metal_key", "purity_label")',
-    );
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_${_currentTable}_metal_sort" '
-      'ON "$_currentTable" ("metal_key", "sort_order")',
-    );
-  }
-
-  Future<Set<String>> _currentTableColumns() async {
-    final rows = await _db.customSelect(
-      'PRAGMA table_info("$_currentTable")',
-      readsFrom: const {},
-    ).get();
-
-    return rows.map((row) => row.data['name']).whereType<String>().toSet();
-  }
-
-  Future<void> _syncCurrentTablesForExistingProfiles(
-    List<MetalRateProfile> profiles,
-  ) async {
-    for (final profile in profiles) {
-      if (_profileHasRateData(profile)) {
-        await _syncCurrentRates(profile);
-      }
-    }
-  }
-
-  Future<void> _syncCurrentRates(MetalRateProfile profile) async {
-    await _ensureCurrentTable();
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final activeLabels = <String>[];
-
-    for (var index = 0; index < profile.purityPlans.length; index++) {
-      final plan = profile.purityPlans[index];
-      final label = _planKey(plan.label);
-      activeLabels.add(label);
-      final parity =
-          _marketRateForPlan(profile.marketBaseRatePer10g, plan, label);
-      final selling = plan.manualDisplayRatePer10g > 0
-          ? plan.manualDisplayRatePer10g
-          : parity;
-
-      await _db.customStatement(
-        '''
-        INSERT INTO "$_currentTable" (
-          "metal_key",
-          "purity_label",
-          "purity_percent",
-          "selling_rate_per10g",
-          "buy_rate_per10g",
-          "making_charge_percent",
-          "making_charge_per_gram",
-          "market_parity_per10g",
-          "source",
-          "sort_order",
-          "created_at",
-          "updated_at"
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT("metal_key", "purity_label") DO UPDATE SET
-          "purity_percent" = excluded."purity_percent",
-          "selling_rate_per10g" = excluded."selling_rate_per10g",
-          "buy_rate_per10g" = excluded."buy_rate_per10g",
-          "making_charge_percent" = excluded."making_charge_percent",
-          "making_charge_per_gram" = excluded."making_charge_per_gram",
-          "market_parity_per10g" = excluded."market_parity_per10g",
-          "source" = excluded."source",
-          "sort_order" = excluded."sort_order",
-          "updated_at" = excluded."updated_at"
-        ''',
-        [
-          profile.metal.key,
-          label,
-          plan.purityPercent,
-          selling,
-          plan.buyRatePer10g,
-          plan.makingChargePercent,
-          plan.makingChargePerGram,
-          parity,
-          'Metal Rate Master',
-          index,
-          now,
-          now,
-        ],
-      );
-    }
-
-    if (activeLabels.isEmpty) {
-      return;
-    }
-
-    final placeholders = List.filled(activeLabels.length, '?').join(', ');
-    await _db.customStatement(
-      'DELETE FROM "$_currentTable" '
-      'WHERE "metal_key" = ? AND "purity_label" NOT IN ($placeholders)',
-      [profile.metal.key, ...activeLabels],
-    );
-  }
-
-  Future<void> _mergeCurrentRates(List<MetalRateProfile> profiles) async {
-    await _ensureCurrentTable();
-    final rows = await _db.customSelect(
-      'SELECT metal_key, purity_label, selling_rate_per10g, buy_rate_per10g, '
-      'making_charge_percent, making_charge_per_gram, updated_at '
-      'FROM "$_currentTable" ORDER BY metal_key, sort_order',
-      readsFrom: const {},
-    ).get();
-
-    if (rows.isEmpty) {
-      return;
-    }
-
-    final byMetal = <String, Map<String, QueryRow>>{};
-    for (final row in rows) {
-      final metalKey = row.data['metal_key'] as String?;
-      final purityLabel = row.data['purity_label'] as String?;
-      if (metalKey == null || purityLabel == null) {
-        continue;
-      }
-      byMetal.putIfAbsent(metalKey, () => {})[purityLabel] = row;
-    }
-
-    for (var index = 0; index < profiles.length; index++) {
-      final profile = profiles[index];
-      final rowsForMetal = byMetal[profile.metal.key];
-      if (rowsForMetal == null || rowsForMetal.isEmpty) {
-        continue;
-      }
-
-      var updatedAt = profile.updatedAt;
-      final plans = profile.purityPlans.map((plan) {
-        final row = rowsForMetal[_planKey(plan.label)];
-        if (row == null) {
-          return plan;
-        }
-
-        final updatedMs = _toInt(row.data['updated_at']);
-        if (updatedMs > 0) {
-          final rowUpdatedAt = DateTime.fromMillisecondsSinceEpoch(updatedMs);
-          if (rowUpdatedAt.isAfter(updatedAt)) {
-            updatedAt = rowUpdatedAt;
-          }
-        }
-
-        return plan.copyWith(
-          manualDisplayRatePer10g:
-              _toDoubleObject(row.data['selling_rate_per10g']),
-          buyRatePer10g: _toDoubleObject(row.data['buy_rate_per10g']),
-          makingChargePercent:
-              _toDoubleObject(row.data['making_charge_percent']),
-          makingChargePerGram:
-              _toDoubleObject(row.data['making_charge_per_gram']),
-        );
-      }).toList(growable: false);
-
-      profiles[index] = profile.copyWith(
-        marketSource: 'Metal Rate Master',
-        updatedAt: updatedAt,
-        purityPlans: plans,
-      );
-    }
-  }
-
-  Future<Map<String, double>> loadCurrentSellingRates(
-    MetalRateMetal metal,
-  ) async {
-    final profile = await loadProfile(metal);
-    return {
-      for (final plan in profile.purityPlans)
-        _planKey(plan.label): plan.manualDisplayRatePer10g > 0
-            ? plan.manualDisplayRatePer10g
-            : _marketRateForPlan(
-                profile.marketBaseRatePer10g, plan, _planKey(plan.label)),
-    };
-  }
-
-  Future<void> _ensureHistoryTableSchema({
-    bool runLegacyBackfill = true,
-  }) async {
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS "$_historyTable" (
-        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "metal" TEXT NOT NULL,
-        "metal_key" TEXT NOT NULL,
-        "rate_date" INTEGER NOT NULL,
-        "profile_json" TEXT NOT NULL,
-        "snapshot_json" TEXT NOT NULL,
-        "source" TEXT NOT NULL,
-        "created_at" INTEGER NOT NULL,
-        "changed_at" INTEGER NOT NULL
-      )
-    ''');
-
-    final columns = await _historyTableColumns();
-
-    Future<void> addMissingColumn(String name, String definition) async {
-      if (columns.contains(name)) {
-        return;
-      }
-
-      await _db.customStatement(
-        'ALTER TABLE "$_historyTable" ADD COLUMN "$name" $definition',
-      );
-      columns.add(name);
-    }
-
-    await addMissingColumn('metal', 'TEXT');
-    await addMissingColumn('metal_key', 'TEXT');
-    await addMissingColumn('rate_date', 'INTEGER');
-    await addMissingColumn('profile_json', 'TEXT');
-    await addMissingColumn('snapshot_json', 'TEXT');
-    await addMissingColumn('source', 'TEXT');
-    await addMissingColumn('created_at', 'INTEGER');
-    await addMissingColumn('changed_at', 'INTEGER');
-
-    if (runLegacyBackfill &&
-        columns.contains('metal') &&
-        columns.contains('metal_key')) {
-      await _db.customStatement(
-        'UPDATE "$_historyTable" SET "metal" = "metal_key" '
-        'WHERE ("metal" IS NULL OR "metal" = \'\') '
-        'AND "metal_key" IS NOT NULL',
-      );
-      await _db.customStatement(
-        'UPDATE "$_historyTable" SET "metal_key" = "metal" '
-        'WHERE ("metal_key" IS NULL OR "metal_key" = \'\') '
-        'AND "metal" IS NOT NULL',
-      );
-    }
-
-    if (runLegacyBackfill &&
-        columns.contains('profile_json') &&
-        columns.contains('snapshot_json')) {
-      await _db.customStatement(
-        'UPDATE "$_historyTable" SET "profile_json" = "snapshot_json" '
-        'WHERE ("profile_json" IS NULL OR "profile_json" = \'\') '
-        'AND "snapshot_json" IS NOT NULL',
-      );
-      await _db.customStatement(
-        'UPDATE "$_historyTable" SET "snapshot_json" = "profile_json" '
-        'WHERE ("snapshot_json" IS NULL OR "snapshot_json" = \'\') '
-        'AND "profile_json" IS NOT NULL',
-      );
-    }
-
-    if (runLegacyBackfill &&
-        columns.contains('rate_date') &&
-        columns.contains('changed_at')) {
-      await _db.customStatement(
-        'UPDATE "$_historyTable" SET "rate_date" = "changed_at" '
-        'WHERE ("rate_date" IS NULL OR "rate_date" = 0) '
-        'AND "changed_at" IS NOT NULL',
-      );
-      await _db.customStatement(
-        'UPDATE "$_historyTable" SET "changed_at" = "rate_date" '
-        'WHERE ("changed_at" IS NULL OR "changed_at" = 0) '
-        'AND "rate_date" IS NOT NULL',
-      );
-    }
-
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_${_historyTable}_metal_date" '
-      'ON "$_historyTable" ("metal", "rate_date" DESC)',
-    );
-    await _db.customStatement(
-      'CREATE INDEX IF NOT EXISTS "idx_${_historyTable}_metal_key_date" '
-      'ON "$_historyTable" ("metal_key", "rate_date" DESC)',
-    );
-  }
-
-  Future<void> _rebuildHistoryTable() async {
-    final cleanupStatements = [
-      'DROP INDEX IF EXISTS "idx_${_historyTable}_metal_date"',
-      'DROP INDEX IF EXISTS "idx_${_historyTable}_metal_key_date"',
-      'DROP TABLE IF EXISTS "$_historyTable"',
-    ];
-
-    for (final statement in cleanupStatements) {
-      try {
-        await _db.customStatement(statement);
-      } catch (_) {}
-    }
-  }
-
-  Future<Set<String>> _historyTableColumns() async {
-    final rows = await _db.customSelect(
-      'PRAGMA table_info("$_historyTable")',
-      readsFrom: const {},
-    ).get();
-
-    return rows.map((row) => row.data['name']).whereType<String>().toSet();
-  }
-
-  Future<List<MetalRateHistoryEntry>> _loadDatabaseHistory(
-    MetalRateMetal metal,
-  ) async {
-    try {
-      await _ensureHistoryTable();
-      final columns = await _historyTableColumns();
-      final hasMetalKey = columns.contains('metal_key');
-
-      final rows = await _db.customSelect(
-        'SELECT profile_json, snapshot_json, rate_date, changed_at, source '
-        'FROM "$_historyTable" '
-        'WHERE ${hasMetalKey ? '(metal = ? OR metal_key = ?)' : 'metal = ?'} '
-        'ORDER BY rate_date DESC LIMIT ?',
-        variables: [
-          Variable.withString(metal.key),
-          if (hasMetalKey) Variable.withString(metal.key),
-          Variable.withInt(_historyLimit),
-        ],
-      ).get();
-
-      return rows
-          .map((row) {
-            try {
-              final profileJson = (row.data['profile_json'] ??
-                  row.data['snapshot_json']) as String?;
-              if (profileJson == null || profileJson.isEmpty) {
-                return null;
-              }
-              final profile = MetalRateProfile.fromJson(
-                Map<String, dynamic>.from(jsonDecode(profileJson) as Map),
-              );
-              final changedAt =
-                  (row.data['rate_date'] ?? row.data['changed_at']) as int?;
-              return MetalRateHistoryEntry(
-                profile: profile,
-                changedAt: DateTime.fromMillisecondsSinceEpoch(
-                  changedAt ?? DateTime.now().millisecondsSinceEpoch,
-                ),
-                source: row.data['source'] as String? ?? 'Metal Rate Master',
-              );
-            } catch (_) {
-              return null;
-            }
-          })
-          .whereType<MetalRateHistoryEntry>()
-          .toList(growable: false);
-    } catch (error) {
-      if (_isRecoverableHistoryError(error)) {
-        return const [];
-      }
-      rethrow;
-    }
-  }
-
-  Future<void> _mergeLatestDailyRate(List<MetalRateProfile> profiles) async {
-    final latest = await _latestDailyRate();
-    if (latest == null) {
-      return;
-    }
-
-    for (var i = 0; i < profiles.length; i++) {
-      final metal = profiles[i].metal;
-      if (metal == MetalRateMetal.gold || metal == MetalRateMetal.silver) {
-        profiles[i] = _profileFromDailyRate(metal, latest, profiles[i]);
-      }
-    }
-  }
-
-  Future<DailyRate?> _latestDailyRate() {
-    return (_db.select(_db.dailyRates)
-          ..orderBy([(table) => OrderingTerm.desc(table.rateDate)])
-          ..limit(1))
-        .getSingleOrNull();
-  }
-
-  Future<List<MetalRateHistoryEntry>> _loadDailyRateHistory(
-    MetalRateMetal metal,
-  ) async {
-    if (metal != MetalRateMetal.gold && metal != MetalRateMetal.silver) {
-      return const [];
-    }
-
-    final rows = await (_db.select(_db.dailyRates)
-          ..orderBy([(table) => OrderingTerm.desc(table.rateDate)])
+    await _ensureLedgerInitialised();
+    final rows = await (_db.select(_db.metalRateRevisions)
+          ..where((table) => table.metalKey.equals(metal.key))
+          ..orderBy([(table) => OrderingTerm.desc(table.revision)])
           ..limit(_historyLimit))
         .get();
-
     return rows
-        .map(
-          (row) => MetalRateHistoryEntry(
-            profile: _profileFromDailyRate(
-              metal,
-              row,
-              MetalRateProfile.defaultFor(metal),
-            ),
-            changedAt: row.updatedAt ?? row.rateDate,
-            source: row.source,
-          ),
-        )
+        .map((row) => MetalRateHistoryEntry(
+              profile: _profileFromPayload(row.profileJson, metal),
+              changedAt: row.effectiveAt,
+              source: row.source,
+            ))
         .toList(growable: false);
   }
 
-  MetalRateProfile _profileFromDailyRate(
-    MetalRateMetal metal,
-    DailyRate row,
-    MetalRateProfile base,
-  ) {
-    final updatedAt = row.updatedAt ?? row.rateDate;
-    if (metal == MetalRateMetal.gold) {
-      final gold24 = _toDouble(row.gold24k);
-      final gold22 = _toDouble(row.gold22k);
-      final gold18 = _toDouble(row.gold18k);
-      final old24 = _toDouble(row.oldGold24kBuy);
-      final old22 = _toDouble(row.oldGold22kBuy);
-      final old18 = _toDouble(row.oldGold18kBuy);
+  Future<void> _ensureLedgerInitialised() async {
+    final existing =
+        await (_db.select(_db.metalRateProfiles)..limit(1)).getSingleOrNull();
+    if (existing != null) return;
 
+    final imported = await _readLegacyProfiles();
+    final legacyDailyRate = await (_db.select(_db.dailyRates)
+          ..orderBy([(table) => OrderingTerm.desc(table.rateDate)])
+          ..limit(1))
+        .getSingleOrNull();
+    await _db.transaction(() async {
+      final alreadyInitialised =
+          await (_db.select(_db.metalRateProfiles)..limit(1)).getSingleOrNull();
+      if (alreadyInitialised != null) return;
+
+      final now = DateTime.now();
+      for (final metal in MetalRateMetal.values) {
+        final importedProfile = imported[metal] ??
+            _profileFromLegacyDailyRate(metal, legacyDailyRate) ??
+            MetalRateProfile.defaultFor(metal);
+        final profile = importedProfile.copyWith(updatedAt: now);
+        final payload = jsonEncode(profile.toJson());
+        final source = _sourceFor(profile);
+        await _db.into(_db.metalRateProfiles).insert(
+              MetalRateProfilesCompanion.insert(
+                metalKey: metal.key,
+                profileJson: payload,
+                revision: const Value(1),
+                source: Value(source),
+                updatedAt: Value(now),
+              ),
+            );
+        await _db.into(_db.metalRateRevisions).insert(
+              MetalRateRevisionsCompanion.insert(
+                metalKey: metal.key,
+                revision: 1,
+                profileJson: payload,
+                source: source,
+                changeReason: const Value('Migrated to rate ledger'),
+                effectiveAt: now,
+              ),
+            );
+      }
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_legacyProfilesKey);
+  }
+
+  Future<Map<MetalRateMetal, MetalRateProfile>> _readLegacyProfiles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_legacyProfilesKey);
+    if (raw == null || raw.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      final profiles = <MetalRateMetal, MetalRateProfile>{};
+      for (final entry in decoded.whereType<Map>()) {
+        final profile = MetalRateProfile.fromJson(
+          Map<String, dynamic>.from(entry),
+        );
+        profiles[profile.metal] = profile;
+      }
+      return profiles;
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  MetalRateProfile? _profileFromLegacyDailyRate(
+    MetalRateMetal metal,
+    DailyRate? rate,
+  ) {
+    if (rate == null ||
+        (metal != MetalRateMetal.gold && metal != MetalRateMetal.silver)) {
+      return null;
+    }
+
+    final base = MetalRateProfile.defaultFor(metal);
+    if (metal == MetalRateMetal.gold) {
+      final gold24 = _parseRate(rate.gold24k);
+      final gold22 = _parseRate(rate.gold22k);
+      final gold18 = _parseRate(rate.gold18k);
+      if ([gold24, gold22, gold18].every((value) => value <= 0)) return null;
       return base.copyWith(
-        marketSource: row.source,
+        marketSource: rate.source,
         physicalMarketRatePer10g: gold24,
         marketRatePer10g: gold24,
-        updatedAt: updatedAt,
+        updatedAt: rate.updatedAt ?? rate.rateDate,
         purityPlans: base.purityPlans
             .map(
-              (plan) => switch (_planKey(plan.label)) {
+              (plan) => switch (plan.label) {
                 '24K' => plan.copyWith(
                     manualDisplayRatePer10g: gold24,
-                    buyRatePer10g: old24,
+                    buyRatePer10g: _parseRate(rate.oldGold24kBuy),
                   ),
                 '22K' => plan.copyWith(
                     manualDisplayRatePer10g: gold22,
-                    buyRatePer10g: old22,
+                    buyRatePer10g: _parseRate(rate.oldGold22kBuy),
                   ),
                 '18K' => plan.copyWith(
                     manualDisplayRatePer10g: gold18,
-                    buyRatePer10g: old18,
+                    buyRatePer10g: _parseRate(rate.oldGold18kBuy),
                   ),
                 _ => plan,
               },
@@ -632,358 +216,88 @@ class MetalRateRepository {
       );
     }
 
-    final silverKg = _toDouble(row.silverRateKg);
-    final silverJewellery = _toDouble(row.silverJewellery);
-    final silverPer10g = silverJewellery > 0 ? silverJewellery : silverKg / 100;
-    final oldSilver = _toDouble(row.oldSilverBuy);
-
+    final silver999 = _parseRate(rate.silverIdols) > 0
+        ? _parseRate(rate.silverIdols)
+        : _parseRate(rate.silverRateKg) / 100;
+    final silver925 = _parseRate(rate.silverJewellery);
+    if (silver999 <= 0 && silver925 <= 0) return null;
     return base.copyWith(
-      marketSource: row.source,
-      physicalMarketRatePer10g: silverPer10g,
-      marketRatePer10g: silverPer10g,
-      updatedAt: updatedAt,
+      marketSource: rate.source,
+      physicalMarketRatePer10g: silver999 > 0 ? silver999 : silver925,
+      marketRatePer10g: silver999 > 0 ? silver999 : silver925,
+      updatedAt: rate.updatedAt ?? rate.rateDate,
       purityPlans: base.purityPlans
-          .asMap()
-          .entries
           .map(
-            (entry) => entry.key == 0
-                ? entry.value.copyWith(
-                    manualDisplayRatePer10g: silverPer10g,
-                    buyRatePer10g: oldSilver,
-                  )
-                : entry.value,
+            (plan) => switch (plan.label) {
+              '999' => plan.copyWith(
+                  manualDisplayRatePer10g: silver999,
+                  buyRatePer10g: _parseRate(rate.oldSilverBuy),
+                ),
+              '925' => plan.copyWith(manualDisplayRatePer10g: silver925),
+              _ => plan,
+            },
           )
           .toList(growable: false),
     );
   }
 
-  Future<void> _syncDailyRate(MetalRateProfile profile) async {
-    if (profile.metal != MetalRateMetal.gold &&
-        profile.metal != MetalRateMetal.silver) {
-      return;
+  Future<List<MetalRateProfile>> _readCurrentProfiles() async {
+    final rows = await _db.select(_db.metalRateProfiles).get();
+    final byMetal = <MetalRateMetal, MetalRateProfile>{};
+    for (final row in rows) {
+      final metal = MetalRateMetalX.fromKey(row.metalKey);
+      byMetal[metal] = _profileFromPayload(row.profileJson, metal);
     }
-
-    final date = _dateOnly(profile.updatedAt);
-    final updatedAt = DateTime.now();
-
-    if (profile.metal == MetalRateMetal.gold) {
-      await _upsertGoldDailyRate(
-        rateDate: date,
-        updatedAt: updatedAt,
-        gold24: _rateText(_planSellRateOrMarket(profile, '24K')),
-        gold22: _rateText(_planSellRateOrMarket(profile, '22K')),
-        gold18: _rateText(_planSellRateOrMarket(profile, '18K')),
-        oldGold24: _rateText(_planBuyRate(profile, '24K')),
-        oldGold22: _rateText(_planBuyRate(profile, '22K')),
-        oldGold18: _rateText(_planBuyRate(profile, '18K')),
-      );
-      return;
-    }
-
-    final sell = profile.purityPlans.isEmpty
-        ? profile.marketBaseRatePer10g
-        : profile.purityPlans.first.manualDisplayRatePer10g > 0
-            ? profile.purityPlans.first.manualDisplayRatePer10g
-            : profile.marketBaseRatePer10g;
-    final buy = profile.purityPlans.isEmpty
-        ? 0.0
-        : profile.purityPlans.first.buyRatePer10g;
-
-    await _upsertSilverDailyRate(
-      rateDate: date,
-      updatedAt: updatedAt,
-      silverKg: _rateText(sell * 100),
-      silverJewellery: _rateText(sell),
-      silverIdols: _rateText(sell),
-      oldSilver: _rateText(buy),
-    );
+    return MetalRateMetal.values
+        .map((metal) => byMetal[metal] ?? MetalRateProfile.defaultFor(metal))
+        .toList(growable: false);
   }
 
-  Future<void> _upsertGoldDailyRate({
-    required DateTime rateDate,
-    required DateTime updatedAt,
-    required String gold24,
-    required String gold22,
-    required String gold18,
-    required String oldGold24,
-    required String oldGold22,
-    required String oldGold18,
-  }) {
-    return _db.customUpdate(
-      '''
-      INSERT INTO "daily_rates" (
-        "rate_date",
-        "gold24k",
-        "gold22k",
-        "gold18k",
-        "old_gold24k_buy",
-        "old_gold22k_buy",
-        "old_gold18k_buy",
-        "source",
-        "updated_at"
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT("rate_date") DO UPDATE SET
-        "gold24k" = excluded."gold24k",
-        "gold22k" = excluded."gold22k",
-        "gold18k" = excluded."gold18k",
-        "old_gold24k_buy" = excluded."old_gold24k_buy",
-        "old_gold22k_buy" = excluded."old_gold22k_buy",
-        "old_gold18k_buy" = excluded."old_gold18k_buy",
-        "source" = excluded."source",
-        "updated_at" = excluded."updated_at"
-      ''',
-      variables: [
-        Variable.withDateTime(rateDate),
-        Variable.withString(gold24),
-        Variable.withString(gold22),
-        Variable.withString(gold18),
-        Variable.withString(oldGold24),
-        Variable.withString(oldGold22),
-        Variable.withString(oldGold18),
-        Variable.withString('Metal Rate Master'),
-        Variable.withDateTime(updatedAt),
-      ],
-      updates: {_db.dailyRates},
-    ).then((_) {});
-  }
-
-  Future<void> _upsertSilverDailyRate({
-    required DateTime rateDate,
-    required DateTime updatedAt,
-    required String silverKg,
-    required String silverJewellery,
-    required String silverIdols,
-    required String oldSilver,
-  }) {
-    return _db.customUpdate(
-      '''
-      INSERT INTO "daily_rates" (
-        "rate_date",
-        "silver_rate_kg",
-        "silver_jewellery",
-        "silver_idols",
-        "old_silver_buy",
-        "source",
-        "updated_at"
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT("rate_date") DO UPDATE SET
-        "silver_rate_kg" = excluded."silver_rate_kg",
-        "silver_jewellery" = excluded."silver_jewellery",
-        "silver_idols" = excluded."silver_idols",
-        "old_silver_buy" = excluded."old_silver_buy",
-        "source" = excluded."source",
-        "updated_at" = excluded."updated_at"
-      ''',
-      variables: [
-        Variable.withDateTime(rateDate),
-        Variable.withString(silverKg),
-        Variable.withString(silverJewellery),
-        Variable.withString(silverIdols),
-        Variable.withString(oldSilver),
-        Variable.withString('Metal Rate Master'),
-        Variable.withDateTime(updatedAt),
-      ],
-      updates: {_db.dailyRates},
-    ).then((_) {});
-  }
-
-  Future<void> _appendHistory(
-    SharedPreferences prefs,
-    MetalRateProfile profile,
-  ) async {
-    final raw = prefs.getString(_historyKey);
-    final entries = <MetalRateHistoryEntry>[];
-
-    if (raw != null && raw.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(raw) as List<dynamic>;
-        entries.addAll(
-          decoded
-              .whereType<Map>()
-              .map(
-                (item) => MetalRateHistoryEntry.fromJson(
-                  Map<String, dynamic>.from(item),
-                ),
-              )
-              .toList(),
-        );
-      } catch (_) {
-        entries.clear();
-      }
-    }
-
-    entries.insert(
-      0,
-      MetalRateHistoryEntry(
-        profile: profile,
-        changedAt: profile.updatedAt,
-        source: profile.marketSource,
-      ),
-    );
-
-    final compact = entries.take(_historyLimit * MetalRateMetal.values.length);
-    await prefs.setString(
-      _historyKey,
-      jsonEncode(compact.map((entry) => entry.toJson()).toList()),
-    );
-
+  MetalRateProfile _profileFromPayload(String payload, MetalRateMetal metal) {
     try {
-      await _ensureHistoryTable();
-    } catch (error) {
-      if (_isRecoverableHistoryError(error)) {
-        return;
-      }
-      rethrow;
-    }
-
-    final columns = await _historyTableColumns();
-    final profileJson = jsonEncode(profile.toJson());
-    final insertColumns = <String>['metal'];
-    final placeholders = <String>['?'];
-    final values = <Object?>[profile.metal.key];
-
-    if (columns.contains('metal_key')) {
-      insertColumns.add('metal_key');
-      placeholders.add('?');
-      values.add(profile.metal.key);
-    }
-
-    insertColumns.addAll(['rate_date', 'profile_json']);
-    placeholders.addAll(const ['?', '?']);
-    values.addAll([profile.updatedAt.millisecondsSinceEpoch, profileJson]);
-
-    if (columns.contains('snapshot_json')) {
-      insertColumns.add('snapshot_json');
-      placeholders.add('?');
-      values.add(profileJson);
-    }
-
-    if (columns.contains('changed_at')) {
-      insertColumns.add('changed_at');
-      placeholders.add('?');
-      values.add(profile.updatedAt.millisecondsSinceEpoch);
-    }
-
-    insertColumns.addAll(['source', 'created_at']);
-    placeholders.addAll(const ['?', '?']);
-    values.addAll([
-      profile.marketSource,
-      DateTime.now().millisecondsSinceEpoch,
-    ]);
-
-    try {
-      await _db.customStatement(
-        'INSERT INTO "$_historyTable" '
-        '(${insertColumns.map((column) => '"$column"').join(', ')}) '
-        'VALUES (${placeholders.join(', ')})',
-        values,
+      return MetalRateProfile.fromJson(
+        Map<String, dynamic>.from(jsonDecode(payload) as Map),
       );
-    } catch (error) {
-      if (!_isRecoverableHistoryError(error)) {
-        rethrow;
-      }
+    } catch (_) {
+      return MetalRateProfile.defaultFor(metal);
     }
   }
-}
 
-DateTime _dateOnly(DateTime value) =>
-    DateTime(value.year, value.month, value.day);
-
-String _planKey(String label) =>
-    label.trim().toUpperCase().replaceAll('KT', 'K');
-
-double _planSellRateOrMarket(MetalRateProfile profile, String label) {
-  final key = _planKey(label);
-  for (final plan in profile.purityPlans) {
-    if (_planKey(plan.label) == key) {
-      if (plan.manualDisplayRatePer10g > 0) {
-        return plan.manualDisplayRatePer10g;
-      }
-      return _marketRateForPlan(profile.marketBaseRatePer10g, plan, key);
+  void _validateProfile(MetalRateProfile profile) {
+    final values = <double>[
+      profile.mcxRatePer10g,
+      profile.physicalMarketRatePer10g,
+      profile.marketRatePer10g,
+      profile.gstPercent,
+      profile.importDutyPercent,
+      profile.logisticsPercent,
+      profile.wastageBufferPercent,
+      profile.holdingCostPercent,
+      profile.competitiveDiscountPercent,
+      profile.minimumMarginPercent,
+      ...profile.purityPlans.expand((plan) => [
+            plan.purityPercent,
+            plan.supplierPremiumPercent,
+            plan.targetMarginPercent,
+            plan.landedCostOverridePer10g,
+            plan.manualDisplayRatePer10g,
+            plan.buyRatePer10g,
+            plan.supplierBillingPercent,
+            plan.shopMarkupPercent,
+            plan.makingChargePercent,
+            plan.makingChargePerGram,
+          ]),
+    ];
+    if (values.any((value) => !value.isFinite || value < 0)) {
+      throw ArgumentError('Rate profile contains an invalid numeric value.');
     }
   }
-  return 0.0;
-}
 
-double _marketRateForPlan(
-  double base,
-  MetalRatePurityPlan plan,
-  String key,
-) {
-  if (base <= 0) {
-    return 0.0;
-  }
-  if (key == '24K' || key == '999') {
-    return base;
-  }
-  return base * plan.purityFactor;
-}
-
-double _planBuyRate(MetalRateProfile profile, String label) {
-  final key = _planKey(label);
-  for (final plan in profile.purityPlans) {
-    if (_planKey(plan.label) == key) {
-      return plan.buyRatePer10g;
-    }
-  }
-  return 0.0;
-}
-
-double _toDouble(String value) =>
-    double.tryParse(value.replaceAll(',', '')) ?? 0.0;
-
-double _toDoubleObject(Object? value) {
-  if (value is num) {
-    return value.toDouble();
-  }
-  if (value is String) {
-    return double.tryParse(value.replaceAll(',', '').trim()) ?? 0.0;
-  }
-  return 0.0;
-}
-
-int _toInt(Object? value) {
-  if (value is int) {
-    return value;
-  }
-  if (value is num) {
-    return value.toInt();
-  }
-  if (value is String) {
-    return int.tryParse(value) ?? 0;
-  }
-  return 0;
-}
-
-String _rateText(double value) {
-  if (value <= 0) {
-    return '0';
-  }
-  final rounded = value.roundToDouble();
-  return rounded == value ? value.toStringAsFixed(0) : value.toStringAsFixed(2);
-}
-
-bool _isRecoverableHistoryError(Object error) {
-  final message = error.toString().toLowerCase();
-  return message.contains('metal_rate_history') ||
-      message.contains('database disk image is malformed') ||
-      message.contains('code 779') ||
-      message.contains('sqlite_corrupt');
-}
-
-bool _profileHasRateData(MetalRateProfile profile) {
-  if (profile.marketBaseRatePer10g > 0 ||
-      profile.mcxRatePer10g > 0 ||
-      profile.primaryShopRatePer10g > 0 ||
-      profile.primaryBuyRatePer10g > 0) {
-    return true;
+  String _sourceFor(MetalRateProfile profile) {
+    final source = profile.marketSource.trim();
+    return source.isEmpty ? 'Manual' : source;
   }
 
-  return profile.purityPlans.any(
-    (plan) =>
-        plan.manualDisplayRatePer10g > 0 ||
-        plan.buyRatePer10g > 0 ||
-        plan.makingChargePercent > 0 ||
-        plan.makingChargePerGram > 0,
-  );
+  double _parseRate(String value) =>
+      double.tryParse(value.replaceAll(',', '').trim()) ?? 0;
 }

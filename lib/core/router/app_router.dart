@@ -62,11 +62,6 @@ import '../../ui/finance/due_report/due_report_screen.dart';
 import '../../ui/finance/due_receipt_history/due_receipt_history_screen.dart';
 import '../../ui/finance/expense/expense_screen.dart';
 
-import '../../ui/karigar/issue_karigar/issue_karigar_screen.dart';
-import '../../ui/karigar/receive_karigar/receive_karigar_screen.dart';
-import '../../ui/karigar/pending_jobs/pending_jobs_screen.dart';
-import '../../ui/karigar/karigar_hisaab/karigar_hisaab_screen.dart';
-
 import '../../ui/girvi/new_girvi/new_girvi_screen.dart';
 import '../../ui/girvi/girvi_account/girvi_account_detail_screen.dart';
 import '../../ui/girvi/girvi_list/girvi_list_screen.dart';
@@ -574,34 +569,6 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.stockLowAlert,
             builder: (context, state) => LowStockAlertScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.karigarIssue,
-            builder: (_, __) => const IssueKarigarScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.karigarReceive,
-            builder: (context, state) {
-              final issueId = state.uri.queryParameters['issueId'];
-              return ReceiveKarigarScreen(
-                preSelectedIssueId:
-                    issueId != null ? int.tryParse(issueId) : null,
-              );
-            },
-          ),
-          GoRoute(
-            path: RoutePaths.karigarPending,
-            builder: (context, state) => PendingJobsScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              onReceiveGoods: (issueId) =>
-                  context.go('${RoutePaths.karigarReceive}?issueId=$issueId'),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.karigarLedger,
-            builder: (context, state) => KarigarHisaabScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
             ),
           ),

@@ -6,6 +6,7 @@ class _DisposalSettlementResult {
   final double penaltyAmount;
   final String note;
   final RecoverySettlementPaymentMethod paymentMethod;
+  final String dispositionMethod;
   final int? bankAccountId;
 
   const _DisposalSettlementResult({
@@ -14,6 +15,7 @@ class _DisposalSettlementResult {
     required this.penaltyAmount,
     required this.note,
     required this.paymentMethod,
+    required this.dispositionMethod,
     required this.bankAccountId,
   });
 }
@@ -39,6 +41,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
   late final TextEditingController _noteController;
   RecoverySettlementPaymentMethod _paymentMethod =
       RecoverySettlementPaymentMethod.cash;
+  String _dispositionMethod = 'MELTED';
   int? _bankAccountId;
   String? _errorMessage;
 
@@ -325,6 +328,20 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _sectionTitle('Recovery Details', GirviIcons.calculator),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _dispositionMethod,
+            isExpanded: true,
+            dropdownColor: Colors.white,
+            items: const [
+              DropdownMenuItem(value: 'MELTED', child: Text('Item melted')),
+              DropdownMenuItem(value: 'SOLD', child: Text('Item sold')),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _dispositionMethod = value);
+            },
+            decoration: _dropdownDecoration('Item recovery method'),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
@@ -755,6 +772,7 @@ class _DisposalSettlementDialogState extends State<_DisposalSettlementDialog> {
         penaltyAmount: _number(_penaltyController.text),
         note: _noteController.text.trim(),
         paymentMethod: _paymentMethod,
+        dispositionMethod: _dispositionMethod,
         bankAccountId: _bankAccountId,
       ),
     );

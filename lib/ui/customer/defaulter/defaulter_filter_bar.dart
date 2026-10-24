@@ -217,6 +217,11 @@ class _FilterChips extends StatelessWidget {
         DefaulterColors.riskMediumText
       ),
       (
+        DefaulterFilterBy.actionRegister,
+        'Action Register',
+        DefaulterColors.riskHighText
+      ),
+      (
         DefaulterFilterBy.collateralRecovery,
         DefaulterStrings.filterRecovery,
         DefaulterColors.riskHighText

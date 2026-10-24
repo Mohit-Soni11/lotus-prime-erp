@@ -1,9 +1,7 @@
 enum GirviCustomerResponseKind {
   willVisit('WILL_VISIT', 'Will visit the shop', true),
   extensionRequest('EXTENSION_REQUEST', 'Requests more time', true),
-  recoveryRequest('RECOVERY_REQUEST', 'Requests recovery settlement', false),
-  noResponse('NO_RESPONSE', 'No response received', false),
-  holdRequest('HOLD_REQUEST', 'Requests account hold', true);
+  recoveryRequest('RECOVERY_REQUEST', 'Requests recovery settlement', false);
 
   const GirviCustomerResponseKind(
       this.dbValue, this.label, this.requiresFollowUpDate);
@@ -16,7 +14,7 @@ enum GirviCustomerResponseKind {
 
   static GirviCustomerResponseKind fromDb(String value) => values.firstWhere(
         (kind) => kind.dbValue == value,
-        orElse: () => noResponse,
+        orElse: () => throw StateError('Unknown customer response: $value'),
       );
 }
 

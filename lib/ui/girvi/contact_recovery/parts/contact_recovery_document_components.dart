@@ -983,14 +983,12 @@ class _CaseActions extends StatelessWidget {
   final ContactRecoveryCase item;
   final VoidCallback onOpenAccount;
   final VoidCallback? onPrepareNotice;
-  final VoidCallback? onInitiateRecovery;
   final VoidCallback? onCloseDisposal;
 
   const _CaseActions({
     required this.item,
     required this.onOpenAccount,
     required this.onPrepareNotice,
-    required this.onInitiateRecovery,
     required this.onCloseDisposal,
   });
 
@@ -1004,14 +1002,15 @@ class _CaseActions extends StatelessWidget {
           color: GirviColors.shellBg,
           onTap: onOpenAccount,
         ),
-        if (_primaryAction case final action?) ...[
+        if (item.stage == ContactRecoveryStage.noticeRequired ||
+            item.stage == ContactRecoveryStage.noticePending) ...[
           const SizedBox(height: 8),
           _ActionButton(
             label: item.stage == ContactRecoveryStage.noticeRequired
                 ? 'Prepare Notice'
-                : 'Send to Recovery',
+                : 'Record Recovery',
             color: GirviColors.warning,
-            onTap: action,
+            onTap: _primaryAction,
           ),
         ],
         if (item.requiresCorrectedFormalNotice && onPrepareNotice != null) ...[
@@ -1055,7 +1054,6 @@ class _CaseActions extends StatelessWidget {
       case ContactRecoveryStage.noticePending:
         return null;
       case ContactRecoveryStage.disposalReady:
-        return onInitiateRecovery;
       case ContactRecoveryStage.recoveryInProgress:
       case ContactRecoveryStage.settled:
         return null;
@@ -1193,7 +1191,7 @@ class _AmountTile extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   final String label;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _ActionButton({
     required this.label,
@@ -1203,6 +1201,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onTap != null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1210,14 +1209,16 @@ class _ActionButton extends StatelessWidget {
         height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: color,
+          color: enabled ? color : GirviColors.inputBgLocked,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color),
+          border: Border.all(
+            color: enabled ? color : GirviColors.cardBorder,
+          ),
         ),
         child: Text(
           label,
           style: GoogleFonts.inter(
-            color: Colors.white,
+            color: enabled ? Colors.white : GirviColors.textDark,
             fontSize: 12.5,
             fontWeight: FontWeight.w800,
           ),

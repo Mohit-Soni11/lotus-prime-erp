@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/silver/application/silver_batch_code_generator.dart';
@@ -851,19 +850,9 @@ class SilverStockController extends AddStockController {
             : masterProfile.marketBaseRatePer10g * first.purityFactor;
       }
 
-      final latestRate = await (_rateDb.select(_rateDb.dailyRates)
-            ..orderBy([(r) => drift.OrderingTerm.desc(r.rateDate)])
-            ..limit(1))
-          .getSingleOrNull();
-
       if (masterRate > 0) {
         _silverRatePer10g = masterRate;
         _silverRateDate = masterProfile.updatedAt;
-      } else if (latestRate != null) {
-        final jewelleryRate = _parseSilverRate(latestRate.silverJewellery);
-        final kgRate = _parseSilverRate(latestRate.silverRateKg);
-        _silverRatePer10g = jewelleryRate > 0 ? jewelleryRate : kgRate / 100.0;
-        _silverRateDate = latestRate.rateDate;
       } else {
         _silverRatePer10g = 0.0;
         _silverRateDate = null;
@@ -943,11 +932,6 @@ class SilverStockController extends AddStockController {
       return StockSubCategory.earring;
     }
     return StockSubCategory.other;
-  }
-
-  double _parseSilverRate(String raw) {
-    final normalized = raw.replaceAll(',', '').replaceAll('--', '0').trim();
-    return double.tryParse(normalized) ?? 0.0;
   }
 
   void _syncPurchaseValuationRateToRows() {

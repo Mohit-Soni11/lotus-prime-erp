@@ -273,7 +273,7 @@ class AlertRowLogic extends ChangeNotifier {
       mainValue: mainValue,
       subText: subText,
       status: status,
-      routeId: AppRoutes.pendingJobsRoute,
+      routeId: AppRoutes.deliveryManagementRoute,
     );
   }
 
@@ -427,7 +427,7 @@ class AlertRowLogic extends ChangeNotifier {
       inventory: AlertCardModel.loading(
           'inventory', 'Inventory', AppRoutes.inventoryRoute),
       orders: AlertCardModel.loading(
-          'orders', 'Orders', AppRoutes.pendingJobsRoute),
+          'orders', 'Orders', AppRoutes.deliveryManagementRoute),
       collections: AlertCardModel.loading(
           'collections', 'Collections', AppRoutes.dueReportRoute),
       deliveries: AlertCardModel.loading(

@@ -37,14 +37,18 @@ class _AccountIdentity extends StatelessWidget {
                   ),
                   account.isRecoverySettled
                       ? const _RecoveryClosedBadge()
-                      : _RiskBadge(
-                          level: account.riskLevel,
-                          label:
-                              account.riskLevel == DefaulterRiskLevel.medium &&
-                                      !account.isPaymentMonitoring
-                                  ? 'WATCHLIST'
-                                  : null,
-                        ),
+                      : account.isNoticeFollowUpActionDue
+                          ? const _FollowUpDueBadge()
+                          : account.isNoticeFollowUpMonitoring
+                              ? const _PromiseMonitoringBadge()
+                              : _RiskBadge(
+                                  level: account.riskLevel,
+                                  label: account.riskLevel ==
+                                              DefaulterRiskLevel.medium &&
+                                          !account.isPaymentMonitoring
+                                      ? 'WATCHLIST'
+                                      : null,
+                                ),
                 ],
               ),
               const SizedBox(height: 5),
@@ -88,6 +92,23 @@ class _AccountIdentity extends StatelessWidget {
                         ? 'Closed ${DateFormat('dd MMM yyyy').format(account.recoverySettledAt!)}'
                         : account.riskAgeLabel,
                   ),
+                  if (account.isRecoverySettled &&
+                      account.recoveryDispositionStatus != null)
+                    _InfoChip(
+                      icon: Icons.inventory_2_outlined,
+                      label: switch (account.recoveryDispositionStatus) {
+                        'MELTED' => 'Item melted',
+                        'SOLD' => 'Item sold',
+                        _ => 'Item recovered',
+                      },
+                    ),
+                  if (!account.isRecoverySettled &&
+                      account.noticePromisedDate != null)
+                    _InfoChip(
+                      icon: Icons.event_available_rounded,
+                      label:
+                          '${account.noticeFollowUpKind == GirviCustomerResponseKind.willVisit ? 'Visit promised' : 'More time until'} ${DateFormat('dd MMM yyyy').format(account.noticePromisedDate!)}',
+                    ),
                 ],
               ),
             ],
