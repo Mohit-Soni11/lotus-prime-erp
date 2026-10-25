@@ -17,12 +17,9 @@ void _appendLifecycleReceiptPages({
           margin: const pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
           buildForeground: draft.recoveryDisposition != null
               ? (_) => girviRecoveryWatermark(draft.recoveryDisposition!)
-              : draft.isReleaseReceipt
-                  ? (_) => _girviStatusWatermark(
-                        label: 'Released',
-                        subtitle: 'Account settled',
-                        color: _receiptGreen,
-                        opacity: 0.11,
+              : _shouldShowReleasedWatermark(draft)
+                  ? (_) => girviReleaseWatermark(
+                        delivered: draft.deliveredAt != null,
                       )
                   : null,
         ),
@@ -65,14 +62,8 @@ void _appendLifecycleReceiptPages({
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
-          buildForeground: (_) => _girviStatusWatermark(
-            label:
-                draft.deliveredAt == null ? 'Ready for Delivery' : 'Delivered',
-            subtitle: draft.deliveredAt == null
-                ? 'Settlement complete'
-                : 'Item handover complete',
-            color: _receiptGreen,
-            opacity: 0.11,
+          buildForeground: (_) => girviReleaseWatermark(
+            delivered: draft.deliveredAt != null,
           ),
         ),
         footer: (context) => _girviAppendixFooter(

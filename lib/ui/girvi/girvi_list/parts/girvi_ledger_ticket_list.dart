@@ -7,12 +7,19 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
 
   Widget _buildRegisterHeading() {
     final count = _controller.loans.length;
+    final subtitle = switch (_controller.filter) {
+      GirviFilter.actionRegister =>
+        'Notice follow-ups due for review and recovery action',
+      GirviFilter.recoveryRegister =>
+        'Recovery cases in progress and closed by item disposal',
+      _ =>
+        '$count visible account${count == 1 ? '' : 's'} · Open first, closed last',
+    };
     return _LedgerSectionHeader(
       icon: GirviIcons.ticket,
       color: GirviColors.info,
       title: _registerTitle,
-      subtitle:
-          '$count visible account${count == 1 ? '' : 's'} · Open first, released last',
+      subtitle: subtitle,
     );
   }
 
@@ -83,6 +90,7 @@ extension _GirviLedgerTicketList on _GirviListScreenState {
       child: _LedgerTicketRow(
         data: item,
         quote: item.interestQuoteAt(),
+        riskCase: _controller.riskCaseForLoan(item.loan.id),
         selected: _isSelected(item),
         customerMeta: _compactCustomerLocation(item),
         money: _money,

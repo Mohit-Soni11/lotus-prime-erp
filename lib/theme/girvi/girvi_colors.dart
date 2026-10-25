@@ -6,6 +6,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/girvi/girvi_closure_palette.dart';
+
 class GirviColors {
   GirviColors._();
 
@@ -75,8 +77,8 @@ class GirviColors {
   static const Color statusActiveBg = Color(0x1A10B981);
   static const Color statusOverdue = Color(0xFFEF4444);
   static const Color statusOverdueBg = Color(0x1AEF4444);
-  static const Color statusReleased = Color(0xFF3B82F6);
-  static const Color statusReleasedBg = Color(0x1A3B82F6);
+  static const Color statusReleased = Color(GirviClosurePalette.released);
+  static const Color statusReleasedBg = Color(0x1A047857);
   static const Color statusAuctioned = Color(0xFF374151);
   static const Color statusAucBg = Color(0x1A6B7280);
 

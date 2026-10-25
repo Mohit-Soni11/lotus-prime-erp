@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/girvi/girvi_closure_palette.dart';
 import 'girvi_enums.dart';
 import 'girvi_interest_calculator.dart';
 
@@ -346,7 +347,7 @@ class GirviLoanModel {
       case GirviStatus.overdue:
         return const Color(0xFFEF4444);
       case GirviStatus.released:
-        return const Color(0xFF3B82F6);
+        return const Color(GirviClosurePalette.released);
       case GirviStatus.partialRelease:
         return const Color(0xFFF59E0B);
       case GirviStatus.readyForDelivery:

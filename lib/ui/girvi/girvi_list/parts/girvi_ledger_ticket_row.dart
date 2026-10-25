@@ -4,6 +4,7 @@ class _LedgerTicketRow extends StatefulWidget {
   const _LedgerTicketRow({
     required this.data,
     required this.quote,
+    required this.riskCase,
     required this.selected,
     required this.customerMeta,
     required this.money,
@@ -14,6 +15,7 @@ class _LedgerTicketRow extends StatefulWidget {
 
   final GirviLoanWithCustomer data;
   final GirviInterestQuote quote;
+  final DefaulterModel? riskCase;
   final bool selected;
   final String customerMeta;
   final String Function(double) money;
@@ -31,7 +33,28 @@ class _LedgerTicketRowState extends State<_LedgerTicketRow> {
   @override
   Widget build(BuildContext context) {
     final loan = widget.data.loan;
-    final statusColor = loan.statusColor;
+    final recoveryDisposition = widget.riskCase?.recoveryDispositionStatus;
+    final isRecoveryClosed = loan.girviStatus == GirviStatus.auctioned;
+    final actionDue = widget.riskCase?.isNoticeFollowUpActionDue ?? false;
+    final statusColor = isRecoveryClosed
+        ? GirviColors.danger
+        : actionDue
+            ? GirviColors.warning
+            : loan.statusColor;
+    final statusLabel = isRecoveryClosed
+        ? '${recoveryDisposition ?? 'RECOVERY'} · ACCOUNT CLOSED'
+        : actionDue
+            ? 'Action Due'
+            : loan.girviStatus == GirviStatus.released
+                ? loan.deliveredAt == null
+                    ? 'RELEASED · ACCOUNT CLOSED'
+                    : 'DELIVERED · ACCOUNT CLOSED'
+                : loan.statusLabel;
+    final watermark = loan.girviStatus == GirviStatus.released
+        ? (loan.deliveredAt == null ? 'RELEASED' : 'DELIVERED')
+        : isRecoveryClosed && recoveryDisposition != null
+            ? recoveryDisposition
+            : null;
     final age = GirviLoanModel.elapsedPeriodBetween(
       loan.startDate,
       loan.releaseDate ?? DateTime.now(),
@@ -40,7 +63,7 @@ class _LedgerTicketRowState extends State<_LedgerTicketRow> {
     return Semantics(
       button: true,
       selected: widget.selected,
-      label: 'Pledge account ${loan.ticketNo}, ${loan.statusLabel}',
+      label: 'Pledge account ${loan.ticketNo}, $statusLabel',
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOutCubic,
@@ -80,76 +103,103 @@ class _LedgerTicketRowState extends State<_LedgerTicketRow> {
                 setState(() => _hovered = value);
               }
             },
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: LayoutBuilder(
-                builder: (_, constraints) {
-                  final stacked = constraints.maxWidth < 600;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              loan.ticketNo,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GirviStyles.ticketNumber.copyWith(
-                                color: GirviColors.textDark,
-                                fontSize: 17,
-                                letterSpacing: 0.6,
-                              ),
+            child: Stack(
+              fit: StackFit.passthrough,
+              children: [
+                if (watermark != null)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Transform.rotate(
+                          angle: -0.24,
+                          child: Text(
+                            watermark,
+                            style: TextStyle(
+                              color: (isRecoveryClosed
+                                      ? GirviColors.danger
+                                      : GirviColors.statusReleased)
+                                  .withValues(alpha: 0.22),
+                              fontSize: 53,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          _RegisterStatusBadge(
-                            label: loan.statusLabel,
-                            color: statusColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            widget.selected
-                                ? GirviIcons.markDone
-                                : Icons.chevron_right_rounded,
-                            color: widget.selected
-                                ? GirviColors.info
-                                : GirviColors.textMuted,
-                            size: 20,
-                          ),
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      const Divider(height: 1, color: GirviColors.divider),
-                      const SizedBox(height: 11),
-                      if (stacked) ...[
-                        _buildIdentity(loan, age),
-                        const SizedBox(height: 12),
-                        _RegisterAmountPanel(
-                          quote: widget.quote,
-                          money: widget.money,
-                          closed: loan.isClosed,
-                        ),
-                      ] else
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: _buildIdentity(loan, age)),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 208,
-                              child: _RegisterAmountPanel(
-                                quote: widget.quote,
-                                money: widget.money,
-                                closed: loan.isClosed,
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: LayoutBuilder(
+                    builder: (_, constraints) {
+                      final stacked = constraints.maxWidth < 600;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  loan.ticketNo,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GirviStyles.ticketNumber.copyWith(
+                                    color: GirviColors.textDark,
+                                    fontSize: 17,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
                               ),
+                              const SizedBox(width: 8),
+                              _RegisterStatusBadge(
+                                label: statusLabel,
+                                color: statusColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                widget.selected
+                                    ? GirviIcons.markDone
+                                    : Icons.chevron_right_rounded,
+                                color: widget.selected
+                                    ? GirviColors.info
+                                    : GirviColors.textMuted,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Divider(height: 1, color: GirviColors.divider),
+                          const SizedBox(height: 11),
+                          if (stacked) ...[
+                            _buildIdentity(loan, age),
+                            const SizedBox(height: 12),
+                            _RegisterAmountPanel(
+                              quote: widget.quote,
+                              money: widget.money,
+                              closed: loan.isClosed,
                             ),
-                          ],
-                        ),
-                    ],
-                  );
-                },
-              ),
+                          ] else
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(child: _buildIdentity(loan, age)),
+                                const SizedBox(width: 16),
+                                SizedBox(
+                                  width: 208,
+                                  child: _RegisterAmountPanel(
+                                    quote: widget.quote,
+                                    money: widget.money,
+                                    closed: loan.isClosed,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),

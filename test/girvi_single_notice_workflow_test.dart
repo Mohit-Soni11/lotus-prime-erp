@@ -15,7 +15,9 @@ import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart
 import 'package:lotus_erp/repositories/girvi/girvi_customer_response_repository.dart';
 import 'package:lotus_erp/repositories/customer/defaulter_repository.dart';
 import 'package:lotus_erp/logic/customer/defaulter_logic.dart';
+import 'package:lotus_erp/logic/girvi/girvi_controllers.dart';
 import 'package:lotus_erp/models/customer/defaulter_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_enums.dart';
 
 void main() {
   late AppDatabase db;
@@ -278,6 +280,22 @@ void main() {
     logic.setFilter(DefaulterFilterBy.actionRegister);
     expect(logic.state.displayedDefaulters.single.isNoticeFollowUpActionDue,
         isTrue);
+
+    final ledger = GirviListController(db);
+    addTearDown(ledger.dispose);
+    await ledger.load();
+    ledger.setFilter(GirviFilter.actionRegister);
+    expect(ledger.loans.single.loan.id, loanId);
+    ledger.setFilter(GirviFilter.recoveryRegister);
+    expect(ledger.loans, isEmpty);
+
+    clock = DateTime.now();
+    await repository.recordCollateralRecoveryInitiated(girviId: loanId);
+    await ledger.reload();
+    ledger.setFilter(GirviFilter.actionRegister);
+    expect(ledger.loans, isEmpty);
+    ledger.setFilter(GirviFilter.recoveryRegister);
+    expect(ledger.loans.single.loan.id, loanId);
   });
 
   test('Action Register waits for the notice deadline when a promise is early',

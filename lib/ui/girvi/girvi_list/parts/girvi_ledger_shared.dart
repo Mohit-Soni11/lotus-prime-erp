@@ -79,6 +79,10 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
         return GirviColors.info;
       case GirviFilter.released:
         return GirviColors.statusReleased;
+      case GirviFilter.actionRegister:
+        return GirviColors.warning;
+      case GirviFilter.recoveryRegister:
+        return GirviColors.danger;
     }
   }
 
@@ -94,6 +98,10 @@ extension _GirviLedgerFormatters on _GirviListScreenState {
         return GirviIcons.markDone;
       case GirviFilter.released:
         return GirviIcons.released;
+      case GirviFilter.actionRegister:
+        return Icons.notification_important_rounded;
+      case GirviFilter.recoveryRegister:
+        return Icons.inventory_2_rounded;
     }
   }
 

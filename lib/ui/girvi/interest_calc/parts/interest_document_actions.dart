@@ -392,8 +392,9 @@ extension InterestDocumentActions on _InterestCalcScreenState {
                 children: [
                   Positioned.fill(
                     child: PdfPreview(
-                      key: ValueKey(previewScale.toStringAsFixed(2)),
+                      key: ValueKey((pdfBytes, previewScale)),
                       build: (_) async => pdfBytes,
+                      shouldRepaint: true,
                       initialPageFormat: PdfPageFormat.a4,
                       allowPrinting: true,
                       allowSharing: true,

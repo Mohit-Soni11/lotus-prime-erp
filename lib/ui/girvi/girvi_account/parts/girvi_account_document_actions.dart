@@ -40,8 +40,17 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
     final disposition = GirviRecoveryDisposition.fromDb(
       _controller.recoveryClosure?.disposition,
     );
-    if (disposition == null) return savedBytes;
-    return const GirviRecoveryPdfStampService().stamp(savedBytes, disposition);
+    const stamp = GirviRecoveryPdfStampService();
+    if (disposition != null) return stamp.stamp(savedBytes, disposition);
+    if (account.loan.girviStatus == GirviStatus.readyForDelivery ||
+        account.loan.girviStatus == GirviStatus.released ||
+        account.loan.deliveredAt != null) {
+      return stamp.stampReleased(
+        savedBytes,
+        delivered: account.loan.deliveredAt != null,
+      );
+    }
+    return savedBytes;
   }
 
   Future<void> _printGirviInvoice() async {
@@ -88,7 +97,9 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
           children: [
             Positioned.fill(
               child: PdfPreview(
+                key: ValueKey<Uint8List>(pdfBytes),
                 build: (_) async => pdfBytes,
+                shouldRepaint: true,
                 initialPageFormat: PdfPageFormat.a4,
                 allowPrinting: allowPrinting,
                 allowSharing: false,

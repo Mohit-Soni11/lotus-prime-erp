@@ -1,22 +1,29 @@
 import 'package:flutter/foundation.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+
+import '../../models/customer/defaulter_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import '../../repositories/customer/defaulter_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
 import 'girvi_ticket_number_order.dart';
-import 'package:lotus_erp/core/logging/app_logger.dart';
 
 export 'interest_entry/girvi_interest_entry_controller.dart';
 
 /// Manages Girvi list loading, filtering, and overdue settlement sync.
 class GirviListController extends ChangeNotifier {
+  final AppDatabase _db;
   final GirviRepository _repo;
 
-  GirviListController(AppDatabase db) : _repo = GirviRepository(db);
+  GirviListController(AppDatabase db)
+      : _db = db,
+        _repo = GirviRepository(db);
 
   List<GirviLoanWithCustomer> _allLoans = [];
   List<GirviLoanWithCustomer> _filteredLoans = [];
   List<GirviPaymentModel> _selectedPayments = [];
+  Map<int, DefaulterModel> _riskCasesByLoan = const {};
   GirviSummaryModel _summary = GirviSummaryModel.empty();
   GirviFilter _filter = GirviFilter.all;
   String _searchQuery = '';
@@ -27,6 +34,7 @@ class GirviListController extends ChangeNotifier {
 
   List<GirviLoanWithCustomer> get loans => _filteredLoans;
   List<GirviPaymentModel> get selectedPayments => _selectedPayments;
+  DefaulterModel? riskCaseForLoan(int loanId) => _riskCasesByLoan[loanId];
   GirviSummaryModel get summary => _summary;
   GirviFilter get filter => _filter;
   int? get selectedPaymentLoanId => _selectedPaymentLoanId;
@@ -46,7 +54,9 @@ class GirviListController extends ChangeNotifier {
     try {
       await _repo.syncOverdueStatus();
       await _repo.syncSettlementStatus();
-      final accounts = await _repo.getLoansWithCustomer();
+      final accounts = await _repo.getLoansWithCustomer(includeAuctioned: true);
+      final riskCases = await DefaulterRepository(db: _db)
+          .fetchAllDefaulters(syncStatuses: false);
       accounts.sort((a, b) {
         final statusOrder = _registerPriority(a.loan.girviStatus)
             .compareTo(_registerPriority(b.loan.girviStatus));
@@ -58,6 +68,7 @@ class GirviListController extends ChangeNotifier {
         return ticketOrder != 0 ? ticketOrder : b.loan.id.compareTo(a.loan.id);
       });
       _allLoans = accounts;
+      _riskCasesByLoan = {for (final risk in riskCases) risk.loanId: risk};
       _summary = await _repo.getSummary(loans: accounts);
       _applyFilter();
       _syncSelectedPaymentsWithVisibleLoans();
@@ -128,6 +139,14 @@ class GirviListController extends ChangeNotifier {
         return loan.girviStatus == GirviStatus.readyForDelivery;
       case GirviFilter.released:
         return loan.girviStatus == GirviStatus.released;
+      case GirviFilter.actionRegister:
+        final risk = _riskCasesByLoan[loan.id];
+        return risk != null &&
+            risk.isNoticeFollowUpActionDue &&
+            !risk.isCollateralRecovery &&
+            !risk.isRecoverySettled;
+      case GirviFilter.recoveryRegister:
+        return _riskCasesByLoan[loan.id]?.isCollateralRecovery ?? false;
     }
   }
 

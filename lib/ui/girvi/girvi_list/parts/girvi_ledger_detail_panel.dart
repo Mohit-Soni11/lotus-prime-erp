@@ -63,9 +63,14 @@ extension _GirviLedgerDetailPanel on _GirviListScreenState {
         ),
         const SizedBox(height: 14),
         if (loan.isClosed)
-          const _LedgerSurface(
+          _LedgerSurface(
             child: Text(
-                'Account Closed · Open Girvi Account for the recovery record.'),
+              loan.girviStatus == GirviStatus.released
+                  ? loan.deliveredAt == null
+                      ? 'Released · Account closed. Open Girvi Account for the settlement and receipt.'
+                      : 'Delivered · Account closed. Open Girvi Account for the settlement and delivery record.'
+                  : 'Recovery closed · Open Girvi Account for the recovery record.',
+            ),
           )
         else
           _SettlementFocusBlock(

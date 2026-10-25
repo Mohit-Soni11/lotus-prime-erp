@@ -160,7 +160,9 @@ enum GirviFilter {
   active('Open'),
   overdue('Overdue'),
   readyForDelivery('Ready for Delivery'),
-  released('Released');
+  released('Released'),
+  actionRegister('Action Register'),
+  recoveryRegister('Recovery Register');
 
   const GirviFilter(this.displayName);
 

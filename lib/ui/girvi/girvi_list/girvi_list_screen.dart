@@ -5,20 +5,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import 'package:lotus_erp/core/feedback/app_feedback.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../../constants/app_routes.dart';
-import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
 import '../../../logic/girvi/girvi_invoice_document_store.dart';
 import '../../../logic/girvi/girvi_recovery_pdf_stamp_service.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
+import '../../../models/customer/defaulter_model.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import 'girvi_ledger_money_formatter.dart';
 import 'girvi_list_app_bar.dart';
-import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'parts/girvi_ledger_controls.dart';
 part 'parts/girvi_ledger_detail_actions.dart';
@@ -258,10 +259,17 @@ class _GirviListScreenState extends State<GirviListScreen>
           loanId: item.loan.id,
         );
         final disposition = draft?.recoveryDisposition;
-        final previewBytes = disposition == null
-            ? savedBytes
-            : await const GirviRecoveryPdfStampService()
-                .stamp(savedBytes, disposition);
+        const stamp = GirviRecoveryPdfStampService();
+        final previewBytes = disposition != null
+            ? await stamp.stamp(savedBytes, disposition)
+            : item.loan.girviStatus == GirviStatus.readyForDelivery ||
+                    item.loan.girviStatus == GirviStatus.released ||
+                    item.loan.deliveredAt != null
+                ? await stamp.stampReleased(
+                    savedBytes,
+                    delivered: item.loan.deliveredAt != null,
+                  )
+                : savedBytes;
         if (!mounted) return;
         await _showInvoicePdfPreview(
           ticketNo: item.loan.ticketNo,
@@ -402,7 +410,9 @@ class _GirviListScreenState extends State<GirviListScreen>
             ),
             Expanded(
               child: PdfPreview(
+                key: ValueKey<Uint8List>(pdfBytes),
                 build: (_) async => pdfBytes,
+                shouldRepaint: true,
                 initialPageFormat: PdfPageFormat.a4,
                 allowPrinting: true,
                 allowSharing: true,

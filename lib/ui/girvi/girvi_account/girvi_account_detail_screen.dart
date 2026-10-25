@@ -182,9 +182,9 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
 
   Color _accountStatusColor(GirviLoanWithCustomer account) {
     final status = account.loan.girviStatus;
-    if (account.loan.deliveredAt != null) return GirviColors.success;
+    if (account.loan.deliveredAt != null) return GirviColors.statusReleased;
     if (status == GirviStatus.readyForDelivery) return GirviColors.success;
-    if (status == GirviStatus.released) return GirviColors.success;
+    if (status == GirviStatus.released) return GirviColors.statusReleased;
     if (status == GirviStatus.partialRelease) return GirviColors.warning;
     if (status == GirviStatus.auctioned) return GirviColors.danger;
     if (account.loan.isOverdue) return GirviColors.danger;

@@ -153,9 +153,11 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
       );
     }
     if (loan.girviStatus == GirviStatus.released || loan.deliveredAt != null) {
-      return const _AccountStatusBadge(
-        label: 'RELEASED · ACCOUNT CLOSED',
-        color: GirviColors.success,
+      return _AccountStatusBadge(
+        label: loan.deliveredAt != null
+            ? 'DELIVERED · ACCOUNT CLOSED'
+            : 'RELEASED · ACCOUNT CLOSED',
+        color: GirviColors.statusReleased,
       );
     }
 

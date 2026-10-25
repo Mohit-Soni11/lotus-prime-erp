@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../core/pdf/girvi_recovery_watermark.dart';
+import '../../core/pdf/girvi_release_watermark.dart';
 import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../models/girvi/girvi_recovery_disposition.dart';
 
@@ -17,6 +18,18 @@ class GirviRecoveryPdfStampService {
   Future<Uint8List> stamp(
     Uint8List original,
     GirviRecoveryDisposition disposition,
+  ) =>
+      _stamp(original, () => girviRecoveryWatermark(disposition));
+
+  Future<Uint8List> stampReleased(
+    Uint8List original, {
+    required bool delivered,
+  }) =>
+      _stamp(original, () => girviReleaseWatermark(delivered: delivered));
+
+  Future<Uint8List> _stamp(
+    Uint8List original,
+    pw.Widget Function() watermark,
   ) async {
     const dpi = 300.0;
     final document = pw.Document(theme: await LotusPdfTheme.reportTheme());
@@ -36,7 +49,7 @@ class GirviRecoveryPdfStampService {
                 child: pw.Image(image, fit: pw.BoxFit.fill),
               ),
               pw.Positioned.fill(
-                child: girviRecoveryWatermark(disposition),
+                child: watermark(),
               ),
             ],
           ),
