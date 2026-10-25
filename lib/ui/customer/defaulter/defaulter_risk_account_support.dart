@@ -90,23 +90,29 @@ class _RiskBadge extends StatelessWidget {
 }
 
 class _RecoveryClosedBadge extends StatelessWidget {
-  const _RecoveryClosedBadge();
+  const _RecoveryClosedBadge({required this.disposition});
+
+  final String? disposition;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: DefaulterColors.statReceivedBg,
+        color: DefaulterColors.riskCriticalBg,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: DefaulterColors.statReceivedText.withValues(alpha: 0.35),
+          color: DefaulterColors.riskCriticalBorder,
         ),
       ),
       child: Text(
-        'RECOVERY CLOSED',
+        switch (disposition) {
+          'MELTED' => 'MELTED · ACCOUNT CLOSED',
+          'SOLD' => 'SOLD · ACCOUNT CLOSED',
+          _ => 'RECOVERY CLOSED',
+        },
         style: DefaulterStyles.riskBadgeText.copyWith(
-          color: DefaulterColors.statReceivedText,
+          color: DefaulterColors.riskCriticalText,
         ),
       ),
     );

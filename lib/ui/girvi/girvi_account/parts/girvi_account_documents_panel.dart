@@ -24,7 +24,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Account Actions',
+                      'Account PDFs & Actions',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.manrope(
@@ -35,7 +35,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Invoice and settlement',
+                      'Invoice, receipts and notice',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
@@ -55,7 +55,7 @@ extension _GirviAccountDocumentsPanel on _GirviAccountDetailScreenState {
               Expanded(
                 child: _AccountDocumentButton(
                   icon: Icons.visibility_rounded,
-                  label: _openingGirviInvoice ? 'Opening...' : 'Preview PDF',
+                  label: _openingGirviInvoice ? 'Opening...' : 'View PDFs',
                   color: GirviColors.brandGold,
                   onTap: documentBusy ? null : _previewGirviInvoice,
                 ),

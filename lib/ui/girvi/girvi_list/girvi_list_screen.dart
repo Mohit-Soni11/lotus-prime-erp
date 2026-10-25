@@ -10,6 +10,7 @@ import '../../../constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/girvi/girvi_controllers.dart';
 import '../../../logic/girvi/girvi_invoice_document_store.dart';
+import '../../../logic/girvi/girvi_recovery_pdf_stamp_service.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
@@ -251,10 +252,21 @@ class _GirviListScreenState extends State<GirviListScreen>
           : null;
       if (!mounted) return;
       if (savedBytes != null) {
+        final draft =
+            await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
+          customerId: item.loan.customerId,
+          loanId: item.loan.id,
+        );
+        final disposition = draft?.recoveryDisposition;
+        final previewBytes = disposition == null
+            ? savedBytes
+            : await const GirviRecoveryPdfStampService()
+                .stamp(savedBytes, disposition);
+        if (!mounted) return;
         await _showInvoicePdfPreview(
           ticketNo: item.loan.ticketNo,
           customerName: item.customerName,
-          pdfBytes: savedBytes,
+          pdfBytes: previewBytes,
         );
         return;
       }

@@ -7,29 +7,6 @@ class _AccountMetrics extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (account.isRecoverySettled) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: DefaulterColors.riskMetricBg,
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: DefaulterColors.riskMetricBorder),
-        ),
-        child: Text(
-          switch (account.recoveryDispositionStatus) {
-            'MELTED' => 'Item melted · Account closed',
-            'SOLD' => 'Item sold · Account closed',
-            _ => 'Recovery closed',
-          },
-          style: DefaulterStyles.customerCity.copyWith(
-            color: DefaulterColors.bodyTextMain,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      );
-    }
     final metrics = [
       (
         'Principal Due',

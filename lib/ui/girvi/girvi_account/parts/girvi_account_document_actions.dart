@@ -7,17 +7,23 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
 
     _setOpeningGirviInvoice(true);
     try {
-      final bytes = await _buildGirviInvoicePdf(account);
-      if (!mounted) return;
+      final kind = await _chooseAccountPdfKind(account);
+      if (!mounted || kind == null || widget.loanId != account.loan.id) return;
+      final bytes = await _buildAccountPdf(account, kind);
+      if (!mounted || widget.loanId != account.loan.id) return;
 
-      await _showGirviInvoicePreview(pdfBytes: bytes);
+      await _showCleanPdfPreview(
+        pdfBytes: bytes,
+        allowPrinting: false,
+        title: '${kind.title} PDF',
+      );
     } on _IssuedInvoiceMissing {
       if (mounted) {
         _showMessage(
             'The original issued invoice PDF is unavailable. Please restore the saved document.');
       }
     } catch (_) {
-      if (mounted) _showMessage('Girvi invoice could not be opened.');
+      if (mounted) _showMessage('Account PDF could not be opened.');
     } finally {
       _setOpeningGirviInvoice(false);
     }
@@ -26,45 +32,16 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
   Future<Uint8List> _buildGirviInvoicePdf(
     GirviLoanWithCustomer account,
   ) async {
-    if (account.loan.invoiceGenerated) {
-      final savedBytes = await const GirviInvoiceDocumentStore().readInvoice(
-        loanId: account.loan.id,
-        ticketNo: account.loan.ticketNo,
-      );
-      if (savedBytes != null) return savedBytes;
-      throw const _IssuedInvoiceMissing();
-    }
-
-    final draft =
-        await CustomerProfileRepository(db: _db).fetchGirviInvoiceDraft(
-      customerId: account.loan.customerId,
+    final savedBytes = await const GirviInvoiceDocumentStore().readInvoice(
       loanId: account.loan.id,
+      ticketNo: account.loan.ticketNo,
     );
-    if (draft == null) {
-      throw StateError('Girvi invoice draft could not be loaded.');
-    }
-
-    final invoiceController = GirviInvoiceHubController(
-      draft: draft,
-      onFinalize: () async => true,
+    if (savedBytes == null) throw const _IssuedInvoiceMissing();
+    final disposition = GirviRecoveryDisposition.fromDb(
+      _controller.recoveryClosure?.disposition,
     );
-    try {
-      await invoiceController.generatePreview();
-      final bytes = invoiceController.pdfBytes;
-      if (bytes == null) {
-        throw StateError('Girvi invoice PDF could not be generated.');
-      }
-      return bytes;
-    } finally {
-      invoiceController.dispose();
-    }
-  }
-
-  Future<void> _showGirviInvoicePreview({required Uint8List pdfBytes}) async {
-    return _showCleanPdfPreview(
-      pdfBytes: pdfBytes,
-      allowPrinting: false,
-    );
+    if (disposition == null) return savedBytes;
+    return const GirviRecoveryPdfStampService().stamp(savedBytes, disposition);
   }
 
   Future<void> _printGirviInvoice() async {
@@ -73,11 +50,14 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
 
     _setPrintingGirviInvoice(true);
     try {
-      final bytes = await _buildGirviInvoicePdf(account);
-      if (!mounted) return;
+      final kind = await _chooseAccountPdfKind(account, forPrint: true);
+      if (!mounted || kind == null || widget.loanId != account.loan.id) return;
+      final bytes = await _buildAccountPdf(account, kind);
+      if (!mounted || widget.loanId != account.loan.id) return;
 
       await Printing.layoutPdf(
-        name: 'girvi_invoice_${_safePdfName(account.loan.ticketNo)}.pdf',
+        name:
+            'girvi_${kind.fileSuffix}_${_safePdfName(account.loan.ticketNo)}.pdf',
         onLayout: (_) async => bytes,
       );
     } on _IssuedInvoiceMissing {
@@ -86,7 +66,7 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
             'The original issued invoice PDF is unavailable. Please restore the saved document.');
       }
     } catch (_) {
-      if (mounted) _showMessage('Girvi invoice could not be printed.');
+      if (mounted) _showMessage('Account PDF could not be printed.');
     } finally {
       _setPrintingGirviInvoice(false);
     }
@@ -96,6 +76,7 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
     required Uint8List pdfBytes,
     required bool allowPrinting,
     String? fileName,
+    String title = 'Invoice PDF',
   }) {
     return showDialog<void>(
       context: context,
@@ -137,11 +118,12 @@ extension _GirviAccountDocumentActions on _GirviAccountDetailScreenState {
                   color: Colors.black.withValues(alpha: 0.62),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Text(
-                    'Invoice PDF · Double-click a page to zoom',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+                    '$title · Double-click a page to zoom',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
               ),

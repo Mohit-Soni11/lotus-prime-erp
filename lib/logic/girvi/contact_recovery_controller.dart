@@ -10,6 +10,7 @@ import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../models/girvi/contact_recovery_model.dart';
 import '../../models/girvi/recovery_pledged_item_detail.dart';
+import '../../models/girvi/girvi_recovery_disposition.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_customer_response_repository.dart';
 import '../../repositories/girvi/girvi_notice_document_repository.dart';
@@ -175,6 +176,18 @@ class ContactRecoveryController extends ChangeNotifier {
       final photoPaths = await _loadItemPhotoPaths(
         candidateAccounts.map((entry) => entry.loan.id).toList(),
       );
+      final recoveryDispositionByLoan = <int, GirviRecoveryDisposition?>{};
+      for (final account in candidateAccounts.where(
+        (entry) => entry.loan.girviStatus == GirviStatus.auctioned,
+      )) {
+        final items = await (_db.select(_db.girviLoanItems)
+              ..where((row) => row.girviId.equals(account.loan.id)))
+            .get();
+        recoveryDispositionByLoan[account.loan.id] =
+            GirviRecoveryDisposition.fromItemStatuses(
+          items.map((row) => row.recoveryDispositionStatus),
+        );
+      }
       final cases = candidateAccounts
           .map(
             (entry) => ContactRecoveryCase(
@@ -191,6 +204,7 @@ class ContactRecoveryController extends ChangeNotifier {
               interestPeriodSnapshots:
                   interestPeriodSnapshots[entry.loan.id] ?? const [],
               itemPhotoPaths: photoPaths[entry.loan.id] ?? const [],
+              recoveryDisposition: recoveryDispositionByLoan[entry.loan.id],
             ),
           )
           .toList();

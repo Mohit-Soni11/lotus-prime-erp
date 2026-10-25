@@ -2,13 +2,51 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
+import 'package:lotus_erp/logic/girvi/girvi_document_set_service.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_calculator.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
+import 'package:lotus_erp/models/girvi/girvi_recovery_disposition.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 
 void main() {
+  test('shared document set includes interest and release pages', () async {
+    final bytes = await const GirviDocumentSetService().build(_releaseDraft);
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+    expect(_pdfPageCount(bytes), greaterThanOrEqualTo(3));
+  });
+
+  test('closed recovery invoice renders Sold watermark', () async {
+    final draft = GirviInvoiceDraft(
+      ticketNo: _simpleDraft.ticketNo,
+      createdAt: _simpleDraft.createdAt,
+      customerName: _simpleDraft.customerName,
+      customerMobile: _simpleDraft.customerMobile,
+      customerCity: _simpleDraft.customerCity,
+      items: _simpleDraft.items,
+      loanAmount: _simpleDraft.loanAmount,
+      interestRate: _simpleDraft.interestRate,
+      durationMonths: _simpleDraft.durationMonths,
+      startDate: _simpleDraft.startDate,
+      maturityDate: _simpleDraft.maturityDate,
+      payments: _simpleDraft.payments,
+      disbursementSummary: _simpleDraft.disbursementSummary,
+      accountStatus: 'Closed',
+      recoveryDisposition: GirviRecoveryDisposition.sold,
+    );
+    final bytes = await GirviInvoicePdfService().build(
+      draft: draft,
+      format: GirviInvoiceFormat.a4,
+    );
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+    expect(_pdfPageCount(bytes), greaterThanOrEqualTo(1));
+    final previewPath = Platform.environment['GIRVI_CLOSED_INVOICE_PREVIEW'];
+    if (previewPath != null && previewPath.isNotEmpty) {
+      await File(previewPath).writeAsBytes(bytes);
+    }
+  });
+
   test('Girvi receipt uses professional original and reissued labels', () {
     expect(
       GirviInvoicePdfService.documentCopyLabel(

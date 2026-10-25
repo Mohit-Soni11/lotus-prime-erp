@@ -49,16 +49,7 @@ extension InterestReceiptActions on _InterestCalcScreenState {
     );
     if (draft == null) return null;
 
-    final controller = GirviInvoiceHubController(
-      draft: draft,
-      onFinalize: () async => true,
-    );
-    try {
-      await controller.generatePreview();
-      return controller.pdfBytes;
-    } finally {
-      controller.dispose();
-    }
+    return const GirviDocumentSetService().build(draft);
   }
 
   String _girviDocumentSetFileName(String ticketNo) {

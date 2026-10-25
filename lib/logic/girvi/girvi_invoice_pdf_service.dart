@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../core/pdf/girvi_recovery_watermark.dart';
 import '../../core/pdf/lotus_pdf_theme.dart';
 import '../../core/pdf/lotus_pdf_text_renderer.dart';
 import '../../features/print_templates/application/global/lotus_print_template_renderer_registry.dart';
@@ -129,12 +130,15 @@ class GirviInvoicePdfService {
             pageTheme: pw.PageTheme(
               pageFormat: PdfPageFormat.a4,
               margin: const pw.EdgeInsets.fromLTRB(24, 24, 24, 22),
-              buildBackground: _hasWatermark(printable)
-                  ? (_) => _documentWatermark(printable)
-                  : null,
-              buildForeground: _hasWatermark(printable)
-                  ? (_) => _documentWatermark(printable, opacity: 0.08)
-                  : null,
+              buildBackground:
+                  draft.recoveryDisposition == null && _hasWatermark(printable)
+                      ? (_) => _documentWatermark(printable)
+                      : null,
+              buildForeground: draft.recoveryDisposition != null
+                  ? (_) => girviRecoveryWatermark(draft.recoveryDisposition!)
+                  : _hasWatermark(printable)
+                      ? (_) => _documentWatermark(printable, opacity: 0.08)
+                      : null,
             ),
             build: (_) => LotusPrintTemplateRendererRegistry.buildA4(
               templateId: template.id,
@@ -165,6 +169,9 @@ class GirviInvoicePdfService {
               compact ? 18 : 28,
               compact ? 18 : 22,
             ),
+            buildForeground: draft.recoveryDisposition == null
+                ? null
+                : (_) => girviRecoveryWatermark(draft.recoveryDisposition!),
           ),
           footer: (context) => _buildPageFooter(
             context,
@@ -203,7 +210,9 @@ class GirviInvoicePdfService {
     );
     return _girviStatusWatermark(
       label: document.watermarkText,
-      subtitle: 'Final Settlement Complete',
+      subtitle: document.watermarkText == 'Released'
+          ? 'Final Settlement Complete'
+          : 'Account closed',
       color: color,
       opacity: opacity,
     );
@@ -362,7 +371,8 @@ class GirviInvoicePdfService {
       mode: GirviReceiptMode.pledge,
       clearLifecycleFields: true,
     );
-    final watermarkText = _shouldShowReleasedWatermark(draft) ? 'Released' : '';
+    final watermarkText = draft.recoveryDisposition?.dbValue ??
+        (_shouldShowReleasedWatermark(draft) ? 'Released' : '');
 
     return LotusPrintableDocument(
       shopProfile: shopProfile,
@@ -389,7 +399,8 @@ class GirviInvoicePdfService {
       startPolicySectionsOnNewPage: false,
       showLegalSignatureFooter: _showGirviLegalFooter(policySettings),
       watermarkText: watermarkText,
-      watermarkColorValue: 0xFF059669,
+      watermarkColorValue:
+          draft.recoveryDisposition == null ? 0xFF059669 : 0xFFC1121F,
     );
   }
 

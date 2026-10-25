@@ -57,75 +57,99 @@ class _ContactRecoveryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 980;
-          final identity = _CaseIdentity(item: item, maturityLabel: maturity);
-          final amounts = _CaseAmounts(item: item);
-          final documentActions = _CaseDocumentActions(
-            item: item,
-            onViewInvoice: onViewInvoice,
-            onDownloadInvoice: onDownloadInvoice,
-            onViewItemImage: onViewItemImage,
-            onDownloadItemImage: onDownloadItemImage,
-          );
-          final notices = _NoticeDocumentStrip(
-            item: item,
-            onViewNotice: onViewNotice,
-            onDownloadNotice: onDownloadNotice,
-            onPrintNotice: onPrintNotice,
-            onConfirmDelivery: onConfirmDelivery,
-            onSettlement: onSettlement,
-            onRecordCustomerResponse: onRecordCustomerResponse,
-            onViewCustomerResponses: onViewCustomerResponses,
-          );
-          final actions = _CaseActions(
-            item: item,
-            onOpenAccount: onOpenAccount,
-            onPrepareNotice: onPrepareNotice,
-            onCompleteRecovery: onCompleteRecovery,
-          );
-
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                identity,
-                const SizedBox(height: 12),
-                amounts,
-                const SizedBox(height: 12),
-                documentActions,
-                const SizedBox(height: 12),
-                notices,
-                const SizedBox(height: 12),
-                actions,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 6, child: identity),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 8,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    amounts,
-                    const SizedBox(height: 10),
-                    documentActions,
-                    const SizedBox(height: 10),
-                    notices,
-                  ],
+      child: Stack(
+        children: [
+          if (item.recoveryDisposition != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Center(
+                  child: Transform.rotate(
+                    angle: -0.25,
+                    child: Text(
+                      item.recoveryDisposition!.dbValue,
+                      style: TextStyle(
+                        color: GirviColors.success.withValues(alpha: 0.08),
+                        fontSize: 68,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 3,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
-              SizedBox(width: 190, child: actions),
-            ],
-          );
-        },
+            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 980;
+              final identity =
+                  _CaseIdentity(item: item, maturityLabel: maturity);
+              final amounts = _CaseAmounts(item: item);
+              final documentActions = _CaseDocumentActions(
+                item: item,
+                onViewInvoice: onViewInvoice,
+                onDownloadInvoice: onDownloadInvoice,
+                onViewItemImage: onViewItemImage,
+                onDownloadItemImage: onDownloadItemImage,
+              );
+              final notices = _NoticeDocumentStrip(
+                item: item,
+                onViewNotice: onViewNotice,
+                onDownloadNotice: onDownloadNotice,
+                onPrintNotice: onPrintNotice,
+                onConfirmDelivery: onConfirmDelivery,
+                onSettlement: onSettlement,
+                onRecordCustomerResponse: onRecordCustomerResponse,
+                onViewCustomerResponses: onViewCustomerResponses,
+              );
+              final actions = _CaseActions(
+                item: item,
+                onOpenAccount: onOpenAccount,
+                onPrepareNotice: onPrepareNotice,
+                onCompleteRecovery: onCompleteRecovery,
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    identity,
+                    const SizedBox(height: 12),
+                    amounts,
+                    const SizedBox(height: 12),
+                    documentActions,
+                    const SizedBox(height: 12),
+                    notices,
+                    const SizedBox(height: 12),
+                    actions,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 6, child: identity),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        amounts,
+                        const SizedBox(height: 10),
+                        documentActions,
+                        const SizedBox(height: 10),
+                        notices,
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(width: 190, child: actions),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -701,7 +725,7 @@ class _CaseAmounts extends StatelessWidget {
               Border.all(color: GirviColors.success.withValues(alpha: 0.25)),
         ),
         child: Text(
-          'Recovery closed. The fixed recovery due is available in the Girvi Account.',
+          '${item.recoveryDisposition?.dbValue ?? 'RECOVERY CLOSED'} · Account closed. Recovery due is recorded in the Girvi Account.',
           style: GoogleFonts.inter(
             color: GirviColors.textDark,
             fontSize: 13,

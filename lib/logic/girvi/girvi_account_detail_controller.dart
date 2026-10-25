@@ -4,6 +4,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_recovery_closure_snapshot.dart';
+import '../../models/girvi/girvi_notice_action_model.dart';
 import '../../repositories/girvi/girvi_details_repository.dart';
 import '../../repositories/girvi/girvi_notice_action_repository.dart';
 import '../../repositories/girvi/girvi_repository.dart';
@@ -27,6 +28,7 @@ class GirviAccountDetailController extends ChangeNotifier {
   GirviLoanDetails? _details;
   List<GirviPaymentModel> _payments = const [];
   GirviRecoveryClosureSnapshot? _recoveryClosure;
+  GirviNoticeAction? _formalNotice;
   int _loadVersion = 0;
   bool _disposed = false;
 
@@ -36,6 +38,7 @@ class GirviAccountDetailController extends ChangeNotifier {
   GirviLoanDetails? get details => _details;
   List<GirviPaymentModel> get payments => _payments;
   GirviRecoveryClosureSnapshot? get recoveryClosure => _recoveryClosure;
+  GirviNoticeAction? get formalNotice => _formalNotice;
 
   Future<void> load(int loanId, {bool showLoading = true}) async {
     if (_disposed) return;
@@ -57,6 +60,7 @@ class GirviAccountDetailController extends ChangeNotifier {
         _details = null;
         _payments = const [];
         _recoveryClosure = null;
+        _formalNotice = null;
         _errorMessage = 'Pledge account could not be found.';
         return;
       }
@@ -67,13 +71,19 @@ class GirviAccountDetailController extends ChangeNotifier {
       if (_disposed || loadVersion != _loadVersion) return;
       final loadedPayments = await _repository.getPaymentModelsForLoan(loanId);
       if (_disposed || loadVersion != _loadVersion) return;
+      final actions =
+          (await _noticeRepository.actionsByGirviIds([loanId]))[loanId] ??
+              const <GirviNoticeAction>[];
+      if (_disposed || loadVersion != _loadVersion) return;
+      final formalNotice = actions
+          .where((action) =>
+              action.isFormalNoticePreparation &&
+              (action.noticeText?.trim().isNotEmpty ?? false))
+          .firstOrNull;
       GirviRecoveryClosureSnapshot? recoveryClosure;
       if (results.first.loan.girviStatus == GirviStatus.auctioned) {
-        final actions = await _noticeRepository.actionsByGirviIds([loanId]);
-        if (_disposed || loadVersion != _loadVersion) return;
-        final settlement = actions[loanId]
-            ?.where((action) => action.isDisposalSettlement)
-            .firstOrNull;
+        final settlement =
+            actions.where((action) => action.isDisposalSettlement).firstOrNull;
         if (settlement != null) {
           final statuses = loadedDetails?.items
                   .map((entry) => entry.item.recoveryDispositionStatus)
@@ -96,12 +106,14 @@ class GirviAccountDetailController extends ChangeNotifier {
       _details = loadedDetails;
       _payments = List.unmodifiable(loadedPayments);
       _recoveryClosure = recoveryClosure;
+      _formalNotice = formalNotice;
     } catch (error, stackTrace) {
       if (_disposed || loadVersion != _loadVersion) return;
       _account = null;
       _details = null;
       _payments = const [];
       _recoveryClosure = null;
+      _formalNotice = null;
       _errorMessage = 'Pledge account details could not be loaded.';
       AppLogger.error(
         'GirviAccountDetailController.load failed: $error',

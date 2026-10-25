@@ -11,6 +11,7 @@ import 'girvi_notice_action_model.dart';
 import 'girvi_notice_document_record_model.dart';
 import 'girvi_notice_review_period.dart';
 import 'girvi_recovery_eligibility.dart';
+import 'girvi_recovery_disposition.dart';
 
 part 'contact_recovery_state.dart';
 
@@ -62,6 +63,7 @@ class ContactRecoveryCase {
   final List<String> itemPhotoPaths;
   final List<GirviCustomerResponse> customerResponses;
   final List<GirviNoticeDocumentRecord> noticeDocuments;
+  final GirviRecoveryDisposition? recoveryDisposition;
 
   const ContactRecoveryCase({
     required this.account,
@@ -74,6 +76,7 @@ class ContactRecoveryCase {
     this.itemPhotoPaths = const [],
     this.customerResponses = const [],
     this.noticeDocuments = const [],
+    this.recoveryDisposition,
   });
 
   GirviLoanModel get loan => account.loan;
@@ -470,7 +473,8 @@ class ContactRecoveryCase {
       recoveryNoticeAction == null ? 'Not prepared' : 'Approved';
 
   String get noticeProgressLabel => switch (stage) {
-        ContactRecoveryStage.settled => 'Closed',
+        ContactRecoveryStage.settled =>
+          '${recoveryDisposition?.label ?? 'Recovery'} Closed',
         ContactRecoveryStage.recoveryInProgress => 'Recovery',
         ContactRecoveryStage.disposalReady => 'Review due',
         _ => noticeStatusLabel,

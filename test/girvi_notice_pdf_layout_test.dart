@@ -9,6 +9,7 @@ import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_period_snapshot.dart';
 import 'package:lotus_erp/models/girvi/girvi_loan_model.dart';
+import 'package:lotus_erp/models/girvi/girvi_recovery_disposition.dart';
 import 'package:lotus_erp/features/settings/billing_setup/shop_info/domain/shop_print_information.dart';
 
 import 'fixtures/girvi_notice_case_fixture.dart';
@@ -46,6 +47,33 @@ void main() {
     expect(sampleBranding.printHeaderLines.first,
         'Legal Name: Shree Jewellers Private Limited');
     expect(sampleBranding.printShopAddress, '12 Main Market, Jaipur');
+  });
+
+  test('closed recovery notice renders Melted watermark on its pages',
+      () async {
+    final item = createNoticeCase();
+    final noticeText = GirviNoticeGenerationService(
+      now: item.now,
+      shopName: sampleBranding.printShopName,
+    ).build(
+      item: item,
+      noticeType: GirviNoticeType.formal,
+      language: GirviNoticeLanguage.english,
+    );
+    final bytes = await GirviNoticePdfService().buildStoredNotice(
+      ticketNo: item.loan.ticketNo,
+      noticeType: GirviNoticeType.formal,
+      noticeLanguage: GirviNoticeLanguage.english,
+      noticeText: noticeText,
+      savedAt: item.now,
+      branding: sampleBranding,
+      recoveryDisposition: GirviRecoveryDisposition.melted,
+    );
+    expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+    final previewPath = Platform.environment['GIRVI_CLOSED_NOTICE_PREVIEW'];
+    if (previewPath != null && previewPath.isNotEmpty) {
+      await File(previewPath).writeAsBytes(bytes);
+    }
   });
 
   test('long configured shop address supports flowing PDF layout', () async {

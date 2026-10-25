@@ -15,14 +15,16 @@ void _appendLifecycleReceiptPages({
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.fromLTRB(30, 30, 30, 26),
-          buildForeground: draft.isReleaseReceipt
-              ? (_) => _girviStatusWatermark(
-                    label: 'Released',
-                    subtitle: 'Account settled',
-                    color: _receiptGreen,
-                    opacity: 0.11,
-                  )
-              : null,
+          buildForeground: draft.recoveryDisposition != null
+              ? (_) => girviRecoveryWatermark(draft.recoveryDisposition!)
+              : draft.isReleaseReceipt
+                  ? (_) => _girviStatusWatermark(
+                        label: 'Released',
+                        subtitle: 'Account settled',
+                        color: _receiptGreen,
+                        opacity: 0.11,
+                      )
+                  : null,
         ),
         footer: (context) => _girviAppendixFooter(
           context,

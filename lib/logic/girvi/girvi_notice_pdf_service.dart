@@ -7,9 +7,11 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../core/pdf/lotus_pdf_theme.dart';
+import '../../core/pdf/girvi_recovery_watermark.dart';
 import '../../models/girvi/contact_recovery_model.dart';
 import '../../models/girvi/girvi_invoice_branding.dart';
 import '../../models/girvi/girvi_notice_action_model.dart';
+import '../../models/girvi/girvi_recovery_disposition.dart';
 import 'notice_pdf/notice_statement_data.dart';
 import 'notice_pdf/notice_period_display.dart';
 
@@ -42,6 +44,7 @@ class GirviNoticePdfService {
         branding: branding,
         itemPhotoPath: itemPhotoPath,
         originalLoanDurationMonths: item.loan.durationMonths,
+        recoveryDisposition: item.recoveryDisposition,
       );
 
   Future<Uint8List> buildStoredNotice({
@@ -60,6 +63,7 @@ class GirviNoticePdfService {
     int? originalLoanDurationMonths,
     String? verifiedFinancialText,
     DateTime? financialAsOf,
+    GirviRecoveryDisposition? recoveryDisposition,
   }) =>
       _buildDocument(
         ticketNo: ticketNo,
@@ -77,6 +81,7 @@ class GirviNoticePdfService {
         originalLoanDurationMonths: originalLoanDurationMonths,
         verifiedFinancialText: verifiedFinancialText,
         financialAsOf: financialAsOf,
+        recoveryDisposition: recoveryDisposition,
       );
 
   Future<Uint8List> _buildDocument({
@@ -95,6 +100,7 @@ class GirviNoticePdfService {
     int? noticePeriodDays,
     String? verifiedFinancialText,
     DateTime? financialAsOf,
+    GirviRecoveryDisposition? recoveryDisposition,
   }) async {
     if (language != GirviNoticeLanguage.english) {
       throw UnsupportedError('Notice PDFs are available in English only.');
@@ -134,9 +140,12 @@ class GirviNoticePdfService {
     );
     document.addPage(
       pw.MultiPage(
-        pageTheme: const pw.PageTheme(
+        pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.fromLTRB(26, 14, 26, 18),
+          margin: const pw.EdgeInsets.fromLTRB(26, 14, 26, 18),
+          buildForeground: recoveryDisposition == null
+              ? null
+              : (_) => girviRecoveryWatermark(recoveryDisposition),
         ),
         header: (context) =>
             context.pageNumber == 1 ? layout.header(context) : pw.SizedBox(),

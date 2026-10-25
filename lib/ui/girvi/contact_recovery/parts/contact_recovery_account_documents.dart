@@ -45,7 +45,12 @@ extension _AccountDocuments on _ContactRecoveryScreenState {
         loanId: item.loan.id,
         ticketNo: item.loan.ticketNo,
       );
-      if (savedBytes != null) return savedBytes;
+      if (savedBytes != null) {
+        final disposition = item.recoveryDisposition;
+        if (disposition == null) return savedBytes;
+        return const GirviRecoveryPdfStampService()
+            .stamp(savedBytes, disposition);
+      }
     }
 
     final draft = await CustomerProfileRepository(db: _controller.database)

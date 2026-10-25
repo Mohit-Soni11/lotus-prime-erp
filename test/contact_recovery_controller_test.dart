@@ -14,6 +14,7 @@ import 'package:lotus_erp/models/girvi/contact_recovery_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_customer_response_repository.dart';
 import 'package:lotus_erp/repositories/customer/defaulter_repository.dart';
+import 'package:lotus_erp/repositories/customer/customer_profile_repository.dart';
 
 void main() {
   group('ContactRecoveryController', () {
@@ -900,6 +901,12 @@ void main() {
       );
       expect(register.single.isRecoverySettled, isTrue);
       expect(register.single.totalDue, 0);
+      expect(register.single.recoveryDispositionStatus, 'MELTED');
+      expect(controller.state.allCases.single.recoveryDisposition?.dbValue,
+          'MELTED');
+      final invoiceDraft = await CustomerProfileRepository(db: db)
+          .fetchGirviInvoiceDraft(customerId: customerId, loanId: loanId);
+      expect(invoiceDraft?.recoveryDisposition?.dbValue, 'MELTED');
       final accountController = GirviAccountDetailController(db);
       addTearDown(accountController.dispose);
       await accountController.load(loanId);

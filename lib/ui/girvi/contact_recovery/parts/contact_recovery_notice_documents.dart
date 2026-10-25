@@ -230,6 +230,7 @@ extension _NoticeDocuments on _ContactRecoveryScreenState {
       originalLoanDurationMonths: draft.item.loan.durationMonths,
       verifiedFinancialText: verifiedFinancialText,
       financialAsOf: financialAsOf,
+      recoveryDisposition: draft.item.recoveryDisposition,
     );
   }
 

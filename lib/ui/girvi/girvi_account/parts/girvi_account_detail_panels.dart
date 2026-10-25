@@ -143,9 +143,19 @@ extension _GirviAccountDetailPanels on _GirviAccountDetailScreenState {
   Widget _buildAccountStatusOverview(GirviLoanWithCustomer account) {
     final loan = account.loan;
     if (loan.girviStatus == GirviStatus.auctioned) {
+      return _AccountStatusBadge(
+        label: switch (_controller.recoveryClosure?.disposition) {
+          'MELTED' => 'MELTED · ACCOUNT CLOSED',
+          'SOLD' => 'SOLD · ACCOUNT CLOSED',
+          _ => 'RECOVERY · ACCOUNT CLOSED',
+        },
+        color: GirviColors.danger,
+      );
+    }
+    if (loan.girviStatus == GirviStatus.released || loan.deliveredAt != null) {
       return const _AccountStatusBadge(
-        label: 'Account Closed',
-        color: GirviColors.textMuted,
+        label: 'RELEASED · ACCOUNT CLOSED',
+        color: GirviColors.success,
       );
     }
 

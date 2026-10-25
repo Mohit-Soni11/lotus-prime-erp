@@ -12,13 +12,22 @@ import '../../../constants/app_routes.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../logic/girvi/girvi_account_detail_controller.dart';
 import '../../../logic/girvi/girvi_invoice_document_store.dart';
-import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
+import '../../../logic/girvi/girvi_document_set_service.dart';
+import '../../../logic/girvi/girvi_recovery_pdf_stamp_service.dart';
+import '../../../logic/girvi/girvi_notice_pdf_service.dart';
+import '../../../logic/girvi/notice_pdf/notice_item_photo_resolver.dart';
 import '../../../models/girvi/girvi_account_lifecycle_summary.dart';
+import '../../../models/girvi/girvi_account_pdf_catalog.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_loan_model.dart';
 import '../../../models/girvi/girvi_recovery_closure_snapshot.dart';
+import '../../../models/girvi/girvi_recovery_disposition.dart';
+import '../../../models/girvi/girvi_notice_action_model.dart';
+import '../../../models/girvi/girvi_notice_branding_snapshot.dart';
+import '../../../models/girvi/girvi_notice_review_period.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../repositories/girvi/girvi_details_repository.dart';
+import '../../../repositories/girvi/girvi_invoice_branding_repository.dart';
 import '../../../theme/girvi/girvi_theme.dart';
 import '../shared/girvi_shared_widgets.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -31,6 +40,7 @@ part 'parts/girvi_account_detail_payment_history.dart';
 part 'parts/girvi_account_disbursements.dart';
 part 'parts/girvi_account_detail_shared.dart';
 part 'parts/girvi_account_document_actions.dart';
+part 'parts/girvi_account_pdf_catalog_actions.dart';
 part 'parts/girvi_account_documents_panel.dart';
 part 'parts/girvi_account_pledged_photos.dart';
 part 'parts/girvi_account_pledged_item_row.dart';
@@ -158,7 +168,13 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     if (loan.girviStatus == GirviStatus.partialRelease) {
       return 'Partially Settled';
     }
-    if (loan.girviStatus == GirviStatus.auctioned) return 'Closed';
+    if (loan.girviStatus == GirviStatus.auctioned) {
+      return switch (_controller.recoveryClosure?.disposition) {
+        'MELTED' => 'Melted',
+        'SOLD' => 'Sold',
+        _ => 'Recovery Closed',
+      };
+    }
     if (loan.girviStatus == GirviStatus.released) return 'Released';
     if (loan.isOverdue) return 'Overdue';
     return loan.statusLabel;
@@ -168,8 +184,9 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
     final status = account.loan.girviStatus;
     if (account.loan.deliveredAt != null) return GirviColors.success;
     if (status == GirviStatus.readyForDelivery) return GirviColors.success;
+    if (status == GirviStatus.released) return GirviColors.success;
     if (status == GirviStatus.partialRelease) return GirviColors.warning;
-    if (status == GirviStatus.auctioned) return GirviColors.textMuted;
+    if (status == GirviStatus.auctioned) return GirviColors.danger;
     if (account.loan.isOverdue) return GirviColors.danger;
     return account.loan.statusColor;
   }

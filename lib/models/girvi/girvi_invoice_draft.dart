@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'girvi_interest_calculator.dart';
+import 'girvi_recovery_disposition.dart';
 
 enum GirviReceiptMode {
   pledge,
@@ -125,6 +126,7 @@ class GirviInvoiceDraft {
     this.interestAdjustments = const [],
     this.mode = GirviReceiptMode.pledge,
     this.accountStatus = 'Active',
+    this.recoveryDisposition,
     this.releaseDate,
     this.expectedDeliveryDate,
     this.deliveredAt,
@@ -169,6 +171,7 @@ class GirviInvoiceDraft {
   final List<GirviInterestAdjustment> interestAdjustments;
   final GirviReceiptMode mode;
   final String accountStatus;
+  final GirviRecoveryDisposition? recoveryDisposition;
   final DateTime? releaseDate;
   final DateTime? expectedDeliveryDate;
   final DateTime? deliveredAt;
@@ -218,6 +221,7 @@ class GirviInvoiceDraft {
           clearLifecycleFields ? const [] : interestAdjustments,
       mode: mode ?? this.mode,
       accountStatus: clearLifecycleFields ? 'Active' : accountStatus,
+      recoveryDisposition: clearLifecycleFields ? null : recoveryDisposition,
       releaseDate: clearLifecycleFields ? null : releaseDate,
       expectedDeliveryDate: clearLifecycleFields ? null : expectedDeliveryDate,
       deliveredAt: clearLifecycleFields ? null : deliveredAt,

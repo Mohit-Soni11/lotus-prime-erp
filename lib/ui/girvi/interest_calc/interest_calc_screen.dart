@@ -15,6 +15,7 @@ import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../logic/girvi/interest_entry/girvi_interest_entry_controller.dart';
 import '../../../logic/girvi/interest_entry/girvi_ledger_balance_service.dart';
 import '../../../logic/girvi/girvi_interest_period_text.dart';
+import '../../../logic/girvi/girvi_document_set_service.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/girvi/girvi_enums.dart';
 import '../../../models/girvi/girvi_invoice_draft.dart';

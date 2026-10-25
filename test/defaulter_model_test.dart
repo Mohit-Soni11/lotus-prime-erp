@@ -61,10 +61,10 @@ void main() {
       ),
     ));
 
-    expect(find.text('RECOVERY CLOSED'), findsOneWidget);
+    expect(find.text('MELTED · ACCOUNT CLOSED'), findsOneWidget);
     expect(find.text('Item melted'), findsOneWidget);
-    expect(find.text('Amount Recovered'), findsOneWidget);
-    expect(find.text('Balance Due'), findsOneWidget);
+    expect(find.text('Amount Recovered'), findsNothing);
+    expect(find.text('Balance Due'), findsNothing);
     expect(find.text('View Recovery'), findsOneWidget);
     expect(find.text('Collect Payment'), findsNothing);
     expect(tester.takeException(), isNull);

@@ -9,6 +9,11 @@ DefaulterModel _mapRecoveredAccount({
   required String address,
 }) {
   final city = customer.city?.trim();
+  final closureLabel = switch (itemSnapshot.recoveryDispositionStatus) {
+    'MELTED' => 'Melted · Closed',
+    'SOLD' => 'Sold · Closed',
+    _ => 'Recovery Closed',
+  };
   return DefaulterModel(
     loanId: loan.id,
     customerId: customer.id,
@@ -27,7 +32,7 @@ DefaulterModel _mapRecoveredAccount({
     pieces: itemSnapshot.pieces,
     grossWeight: itemSnapshot.grossWeight,
     lessWeight: itemSnapshot.lessWeight,
-    statusLabel: 'Recovery Closed',
+    statusLabel: closureLabel,
     statusValue: loan.status,
     principalAmount: loan.loanAmount + summary.legacyPrincipalRepaid,
     principalOutstanding: 0,
@@ -60,7 +65,7 @@ DefaulterModel _mapRecoveredAccount({
     recoverySettledAt: settlement.actionAt,
     hasNoticeWorkflow: true,
     riskLevel: DefaulterRiskLevel.low,
-    collectionStage: 'Recovery Closed',
+    collectionStage: closureLabel,
     nextActionLabel: 'View recovery record',
   );
 }

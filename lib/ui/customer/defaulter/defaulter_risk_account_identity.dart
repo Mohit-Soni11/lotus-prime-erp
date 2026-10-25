@@ -36,7 +36,9 @@ class _AccountIdentity extends StatelessWidget {
                     ),
                   ),
                   account.isRecoverySettled
-                      ? const _RecoveryClosedBadge()
+                      ? _RecoveryClosedBadge(
+                          disposition: account.recoveryDispositionStatus,
+                        )
                       : account.isNoticeFollowUpActionDue
                           ? const _FollowUpDueBadge()
                           : account.isNoticeFollowUpMonitoring

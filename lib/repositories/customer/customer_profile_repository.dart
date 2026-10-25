@@ -12,6 +12,7 @@ import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_loan_model.dart';
+import '../../models/girvi/girvi_recovery_disposition.dart';
 import '../girvi/girvi_interest_payment_adjustments.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -537,6 +538,11 @@ class CustomerProfileRepository {
         interestAdjustments: interestAdjustments,
         mode: receiptMode,
         accountStatus: status.displayName,
+        recoveryDisposition: status == GirviStatus.auctioned
+            ? GirviRecoveryDisposition.fromItemStatuses(
+                itemRows.map((item) => item.recoveryDispositionStatus),
+              )
+            : null,
         releaseDate: loan.releaseDate,
         expectedDeliveryDate: loan.expectedDeliveryDate,
         deliveredAt: loan.deliveredAt,
