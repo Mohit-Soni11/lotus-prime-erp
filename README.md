@@ -1,7 +1,7 @@
 # Lotus ERP
 
 Lotus ERP is a Flutter-based jewellery billing and operations system for sales,
-girvi, stock, customers, suppliers, finance, karigar workflows, billing setup,
+girvi, stock, customers, suppliers, finance, billing setup,
 and reporting.
 
 ## Technology

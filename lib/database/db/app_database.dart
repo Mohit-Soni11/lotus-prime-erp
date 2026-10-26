@@ -202,7 +202,7 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> _removeKarigarSchema() async {
+  Future<void> _removeRetiredWorkshopSchema() async {
     await _dropColumnIfPresent(
       tableName: 'delivery_items',
       columnName: 'karigar_id',
@@ -1950,8 +1950,7 @@ class AppDatabase extends _$AppDatabase {
             AppLogger.info('v63 Girvi customer response workflow simplified.');
           }
           if (from < 64) {
-            await _removeKarigarSchema();
-            AppLogger.info('v64 Karigar module permanently removed.');
+            await _removeRetiredWorkshopSchema();
           }
           if (from < 65) {
             await m.createTable(metalRateProfiles);
@@ -1987,7 +1986,7 @@ class AppDatabase extends _$AppDatabase {
           await _ensureReturnReversalSchemaInternal();
           await ensureSalesGstPricingSchema();
           await ensureSalesInvoiceSeriesMigration();
-          await _removeKarigarSchema();
+          await _removeRetiredWorkshopSchema();
 
           await customStatement('''
             CREATE TABLE IF NOT EXISTS "bank_accounts" (
