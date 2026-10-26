@@ -31,7 +31,7 @@ class CustomerListIcons {
   static const IconData rupee = Icons.currency_rupee_rounded;
   static const IconData arrowRight = Icons.arrow_forward_ios_rounded;
   static const IconData defaultAvatar = Icons.person_rounded;
-  static const IconData clients = Icons.groups_2_rounded;
+  static const IconData customers = Icons.groups_2_rounded;
   static const IconData active = Icons.verified_rounded;
   static const IconData month = Icons.event_available_rounded;
 

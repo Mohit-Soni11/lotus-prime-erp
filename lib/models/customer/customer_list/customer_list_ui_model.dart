@@ -48,7 +48,7 @@ class CustomerListItemModel {
     required this.createdAt,
     DateTime? lastActivityAt,
     this.lastActivityKind = CustomerActivityKind.profile,
-    this.lastActivityLabel = "Client profile created",
+    this.lastActivityLabel = "Customer profile created",
     this.lastActivityDetail = "No transaction posted yet",
     required this.initials,
   }) : lastActivityAt = lastActivityAt ?? createdAt;

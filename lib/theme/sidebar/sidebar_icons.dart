@@ -12,7 +12,6 @@ class SidebarIcons {
   static IconData get girvi => Icons.lock_outline_rounded;
   static IconData get accounts => Icons.account_balance_wallet_outlined;
   static IconData get reports => Icons.assessment_outlined;
-  static IconData get schemes => Icons.calendar_month_outlined;
 
   // --- System Actions ---
   static IconData get settings => Icons.settings_rounded;

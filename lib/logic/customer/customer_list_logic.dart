@@ -22,6 +22,7 @@ class CustomerListLogic extends ChangeNotifier {
   }
 
   CustomerListState _state = CustomerListState.loading;
+  List<CustomerListItemModel> _sourceCustomers = [];
   List<CustomerListItemModel> _allCustomers = [];
   List<CustomerListItemModel> _filteredList = [];
   CustomerListStatsModel _stats = CustomerListStatsModel.loading();
@@ -30,6 +31,8 @@ class CustomerListLogic extends ChangeNotifier {
   String _searchQuery = "";
   String? _errorMessage;
   Timer? _searchDebounce;
+  int _requestId = 0;
+  bool _isDisposed = false;
 
   CustomerListState get state => _state;
   List<CustomerListItemModel> get customers => _filteredList;
@@ -48,35 +51,15 @@ class CustomerListLogic extends ChangeNotifier {
     await refresh();
   }
 
-  Future<void> _loadCustomers() async {
-    _state = CustomerListState.loading;
-    notifyListeners();
-
-    try {
-      final data = await _repo.getAllCustomers(
-        filter: _activeFilter,
-        sort: _activeSort,
-      );
-
-      _allCustomers = data;
-      _applySearch();
-      _state = _filteredList.isEmpty
-          ? CustomerListState.empty
-          : CustomerListState.loaded;
-      _errorMessage = null;
-    } catch (e) {
-      AppLogger.error("CustomerListLogic load error: $e");
-      _errorMessage = "Failed to load clients. Please try again.";
-      _state = CustomerListState.error;
-    }
-
-    notifyListeners();
-  }
-
   void onSearchChanged(String query) {
     _searchQuery = query.trim();
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 180), () {
+      if (_isDisposed ||
+          _state == CustomerListState.loading ||
+          _state == CustomerListState.error) {
+        return;
+      }
       _applySearch();
       _state = _filteredList.isEmpty
           ? CustomerListState.empty
@@ -88,6 +71,11 @@ class CustomerListLogic extends ChangeNotifier {
   void clearSearch() {
     _searchDebounce?.cancel();
     _searchQuery = "";
+    if (_state == CustomerListState.loading ||
+        _state == CustomerListState.error) {
+      notifyListeners();
+      return;
+    }
     _applySearch();
     _state = _filteredList.isEmpty
         ? CustomerListState.empty
@@ -98,48 +86,71 @@ class CustomerListLogic extends ChangeNotifier {
   void setFilter(CustomerFilter filter) {
     if (_activeFilter == filter) return;
     _activeFilter = filter;
+    _searchDebounce?.cancel();
     _searchQuery = "";
-    _loadCustomers();
+    if (_state == CustomerListState.error) {
+      refresh();
+      return;
+    }
+    if (_state != CustomerListState.loading &&
+        _state != CustomerListState.error) {
+      _rebuildVisibleCustomers();
+    }
+    notifyListeners();
   }
 
   void setSort(CustomerSort sort) {
     if (_activeSort == sort) return;
     _activeSort = sort;
-    _loadCustomers();
+    if (_state == CustomerListState.error) {
+      refresh();
+      return;
+    }
+    if (_state != CustomerListState.loading &&
+        _state != CustomerListState.error) {
+      _rebuildVisibleCustomers();
+    }
+    notifyListeners();
   }
 
   Future<void> refresh() async {
+    final requestId = ++_requestId;
     _state = CustomerListState.loading;
     notifyListeners();
 
     try {
       final allCustomers =
           await _repo.getAllCustomers(sort: CustomerSort.newest);
+      if (_isDisposed || requestId != _requestId) return;
+      _sourceCustomers = allCustomers;
       _stats = CustomerListStatsModel.fromCustomers(allCustomers);
-
-      if (_activeFilter == CustomerFilter.all &&
-          _activeSort == CustomerSort.newest) {
-        _allCustomers = allCustomers;
-      } else {
-        _allCustomers = await _repo.getAllCustomers(
-          filter: _activeFilter,
-          sort: _activeSort,
-        );
-      }
-
-      _applySearch();
-      _state = _filteredList.isEmpty
-          ? CustomerListState.empty
-          : CustomerListState.loaded;
+      _rebuildVisibleCustomers();
       _errorMessage = null;
-    } catch (e) {
-      AppLogger.error("CustomerListLogic refresh error: $e");
+    } catch (error, stackTrace) {
+      if (_isDisposed || requestId != _requestId) return;
+      AppLogger.error(
+        'Customer list refresh failed.',
+        error: error,
+        stackTrace: stackTrace,
+      );
       _stats = CustomerListStatsModel.empty();
-      _errorMessage = "Failed to refresh clients. Please try again.";
+      _errorMessage = "Failed to refresh customers. Please try again.";
       _state = CustomerListState.error;
     }
 
     notifyListeners();
+  }
+
+  void _rebuildVisibleCustomers() {
+    _allCustomers = _repo.filterAndSort(
+      _sourceCustomers,
+      filter: _activeFilter,
+      sort: _activeSort,
+    );
+    _applySearch();
+    _state = _filteredList.isEmpty
+        ? CustomerListState.empty
+        : CustomerListState.loaded;
   }
 
   void _applySearch() {
@@ -162,6 +173,8 @@ class CustomerListLogic extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
+    _requestId++;
     _searchDebounce?.cancel();
     super.dispose();
   }

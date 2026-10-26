@@ -17,6 +17,26 @@ void main() {
     await db.close();
   });
 
+  test('profile gender uses saved customer data, never the name', () async {
+    final unknownId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(name: 'Asha', mobile: '9000000011'),
+        );
+    final femaleId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Zara',
+            mobile: '9000000012',
+            gender: const Value('Female'),
+          ),
+        );
+
+    final repository = CustomerProfileRepository(db: db);
+    final unknown = await repository.fetchProfile(unknownId);
+    final female = await repository.fetchProfile(femaleId);
+
+    expect(unknown!.gender.name, 'unknown');
+    expect(female!.gender.name, 'female');
+  });
+
   test('customer profile reads saved Girvi records from girviLoans', () async {
     final customerId = await db.into(db.customers).insert(
           CustomersCompanion.insert(

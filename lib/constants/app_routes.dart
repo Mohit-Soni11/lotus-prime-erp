@@ -74,10 +74,6 @@ class AppRoutes {
   static const String profitLossRoute = '/reports/pnl';
   static const String gstReportRoute = '/reports/gst';
 
-  // Schemes
-  static const String newSchemeRoute = '/schemes/new';
-  static const String monthlyCollectionRoute = '/schemes/collection';
-
   static const Map<String, String> _titles = {
     dashboardRoute: 'Dashboard',
     settingsRoute: 'Settings',
@@ -125,8 +121,6 @@ class AppRoutes {
     stockSummaryRoute: 'Stock Summary',
     profitLossRoute: 'Profit & Loss',
     gstReportRoute: 'GST Report',
-    newSchemeRoute: 'New Scheme',
-    monthlyCollectionRoute: 'Monthly Collection',
   };
 
   static String getTitle(String routeId) => _titles[routeId] ?? 'Unknown Page';
@@ -215,10 +209,6 @@ class RoutePaths {
   static const String reportPnl = '/app/reports/pnl';
   static const String reportGst = '/app/reports/gst';
 
-  // Schemes
-  static const String schemesNew = '/app/schemes/new';
-  static const String schemesCollection = '/app/schemes/collection';
-
   static String customerProfileFor(int customerId) {
     return '$customerProfileBase/$customerId';
   }
@@ -283,8 +273,6 @@ class RouteMapper {
     AppRoutes.purchaseReportRoute: RoutePaths.reportPurchase,
     AppRoutes.profitLossRoute: RoutePaths.reportPnl,
     AppRoutes.gstReportRoute: RoutePaths.reportGst,
-    AppRoutes.newSchemeRoute: RoutePaths.schemesNew,
-    AppRoutes.monthlyCollectionRoute: RoutePaths.schemesCollection,
   };
 
   static final Map<String, String> _routeIdByPath = {

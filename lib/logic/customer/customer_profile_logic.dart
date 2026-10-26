@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../repositories/customer/customer_profile_repository.dart';
+import 'package:lotus_erp/core/logging/app_logger.dart';
 
 enum ProfileState { loading, loaded, error, deleting, deleted, saving }
 
@@ -29,6 +30,8 @@ class CustomerProfileLogic extends ChangeNotifier {
   ProfileState _state = ProfileState.loading;
   CustomerProfileModel? _profile;
   String? _error;
+  int _loadRequestId = 0;
+  bool _isDisposed = false;
 
   // Due limit edit state. The repository still uses the legacy field name.
   bool _editingCreditLimit = false;
@@ -60,15 +63,29 @@ class CustomerProfileLogic extends ChangeNotifier {
 
   // Load
   Future<void> _load() async {
+    final requestId = ++_loadRequestId;
     _state = ProfileState.loading;
+    _error = null;
     notifyListeners();
 
-    final result = await _repo.fetchProfile(customerId);
-    if (result != null) {
-      _profile = result;
-      _state = ProfileState.loaded;
-    } else {
-      _error = "Customer not found";
+    try {
+      final result = await _repo.fetchProfile(customerId);
+      if (_isDisposed || requestId != _loadRequestId) return;
+      if (result != null) {
+        _profile = result;
+        _state = ProfileState.loaded;
+      } else {
+        _error = 'Customer not found';
+        _state = ProfileState.error;
+      }
+    } catch (error, stackTrace) {
+      if (_isDisposed || requestId != _loadRequestId) return;
+      AppLogger.error(
+        'Customer profile load failed.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _error = 'Failed to load customer profile. Please try again.';
       _state = ProfileState.error;
     }
     notifyListeners();
@@ -148,6 +165,7 @@ class CustomerProfileLogic extends ChangeNotifier {
       state: state,
       pincode: pincode,
     );
+    if (_isDisposed) return false;
 
     if (ok) {
       _profile = _profile!.copyWith(
@@ -190,6 +208,7 @@ class CustomerProfileLogic extends ChangeNotifier {
     notifyListeners();
 
     final ok = await _repo.saveCreditLimit(customerId, newLimit);
+    if (_isDisposed) return false;
     if (ok) {
       _profile = _profile!.copyWith(creditLimit: newLimit);
     }
@@ -211,6 +230,7 @@ class CustomerProfileLogic extends ChangeNotifier {
     notifyListeners();
 
     final result = await _repo.deleteCustomer(customerId);
+    if (_isDisposed) return false;
     if (result.deleted) {
       _state = ProfileState.deleted;
     } else {
@@ -219,5 +239,12 @@ class CustomerProfileLogic extends ChangeNotifier {
     }
     notifyListeners();
     return result.deleted;
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _loadRequestId++;
+    super.dispose();
   }
 }

@@ -133,15 +133,5 @@ class SidebarMenu {
         MenuItemData(AppRoutes.gstReportRoute), // Taxation
       ],
     ),
-
-    // ── Schemes (Kitty) ─────────────────────────────────────────
-    SidebarItem(
-      title: 'Schemes (Kitty)',
-      icon: Icons.calendar_month_outlined,
-      subItems: [
-        MenuItemData(AppRoutes.newSchemeRoute),
-        MenuItemData(AppRoutes.monthlyCollectionRoute),
-      ],
-    ),
   ];
 }

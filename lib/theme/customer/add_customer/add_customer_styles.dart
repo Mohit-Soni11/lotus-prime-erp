@@ -1,6 +1,5 @@
 // -----------------------------------------------------------------------------
 // FILE: add_customer_styles.dart
-// MODULE: Customer â†’ Add New Customer
 // -----------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -9,22 +8,16 @@ import 'add_customer_colors.dart';
 
 class AddCustomerStyles {
   AddCustomerStyles._();
-
-  // â”€â”€ DIMENSIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const double appBarHeight = 70.0;
   static const double inputHeight = 52.0;
   static const double cardRadius = 16.0;
   static const double inputRadius = 10.0;
   static const double sectionIconSize = 20.0;
   static const double sectionIconBox = 38.0;
-
-  // â”€â”€ SPACING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(20, 20, 20, 100);
   static const EdgeInsets cardPadding = EdgeInsets.all(20.0);
   static const EdgeInsets fieldGap = EdgeInsets.only(bottom: 16.0);
   static const EdgeInsets sectionGap = EdgeInsets.only(bottom: 20.0);
-
-  // â”€â”€ APP BAR TYPOGRAPHY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 17,
         fontWeight: FontWeight.w700,
@@ -45,8 +38,6 @@ class AddCustomerStyles {
     fontWeight: FontWeight.w700,
     letterSpacing: 0.8,
   );
-
-  // â”€â”€ SECTION HEADER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get sectionTitle => GoogleFonts.manrope(
         fontSize: 15,
         fontWeight: FontWeight.w700,
@@ -59,8 +50,6 @@ class AddCustomerStyles {
         color: AddCustomerColors.bodyTextMuted,
         letterSpacing: 1.2,
       );
-
-  // â”€â”€ FIELD LABEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldLabel => GoogleFonts.manrope(
         fontSize: 13,
         fontWeight: FontWeight.w700,
@@ -72,8 +61,6 @@ class AddCustomerStyles {
         fontWeight: FontWeight.w700,
         color: AddCustomerColors.inputLabel,
       );
-
-  // â”€â”€ FIELD INPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get fieldText => GoogleFonts.inter(
         fontSize: 15,
         fontWeight: FontWeight.w600,
@@ -84,15 +71,11 @@ class AddCustomerStyles {
         fontSize: 14,
         color: AddCustomerColors.inputHint,
       );
-
-  // â”€â”€ ERROR TEXT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get errorText => GoogleFonts.inter(
         fontSize: 13,
         fontWeight: FontWeight.w500,
         color: AddCustomerColors.error,
       );
-
-  // â”€â”€ CUSTOMER TYPE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get typeTitle => GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w700,
@@ -103,22 +86,16 @@ class AddCustomerStyles {
         fontSize: 13,
         color: AddCustomerColors.bodyTextMuted,
       );
-
-  // â”€â”€ SAVE BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get saveBtnText => GoogleFonts.manrope(
         fontSize: 16,
         fontWeight: FontWeight.w800,
         color: AddCustomerColors.saveBtnText,
         letterSpacing: 0.5,
       );
-
-  // â”€â”€ REQUIRED NOTE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static TextStyle get requiredNote => GoogleFonts.inter(
         fontSize: 13,
         color: AddCustomerColors.bodyTextMuted,
       );
-
-  // â”€â”€ DECORATIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: AddCustomerColors.bodyPanelBg,
         borderRadius: BorderRadius.circular(cardRadius),

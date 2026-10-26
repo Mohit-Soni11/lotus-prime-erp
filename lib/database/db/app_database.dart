@@ -1940,8 +1940,10 @@ class AppDatabase extends _$AppDatabase {
                 'v61 approved Girvi notice branding snapshot applied.');
           }
           if (from < 62 && await _tableExists('girvi_notice_actions')) {
-            for (final sql in retiredGirviNoticeCleanupSql) {
-              await customStatement(sql);
+            for (final cleanup in retiredGirviNoticeCleanupSql) {
+              if (await _tableExists(cleanup.table)) {
+                await customStatement(cleanup.statement);
+              }
             }
             AppLogger.info('v62 retired staged Girvi notices removed.');
           }

@@ -674,18 +674,6 @@ GoRouter createAppRouter() {
             ),
           ),
           GoRoute(
-            path: RoutePaths.schemesNew,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.newSchemeRoute),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.schemesCollection,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.monthlyCollectionRoute),
-            ),
-          ),
-          GoRoute(
             path: RoutePaths.billingSetup,
             builder: (context, state) => const BillingSetupWorkspaceScreen(),
           ),
