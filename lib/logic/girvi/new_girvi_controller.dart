@@ -262,6 +262,14 @@ class NewGirviController extends ChangeNotifier {
         notifyListeners();
         return false;
       }
+      if (details.loan.invoiceGenerated ||
+          details.loan.status != 'ACTIVE' ||
+          details.disbursements.isNotEmpty) {
+        _errorMessage = 'Funded Girvi tickets cannot be edited.';
+        _isLoadingEdit = false;
+        notifyListeners();
+        return false;
+      }
 
       final customer = await (_db.select(_db.customers)
             ..where((row) => row.id.equals(details.loan.customerId)))

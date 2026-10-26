@@ -4,6 +4,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_enums.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import 'girvi_interest_payment_adjustments.dart';
+import 'girvi_financial_posting.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 part 'parts/girvi_repository_payment_numbering.dart';
@@ -328,57 +329,6 @@ class GirviRepository {
         updatedAt: drift.Value(DateTime.now()),
       ),
     );
-  }
-
-  // RELEASE LOAN
-
-  Future<bool> releaseLoan({
-    required int loanId,
-    required double principal,
-    required double interest,
-    required double penalty,
-    required double totalAmount,
-    required String paymentMode,
-    String? notes,
-    String? releasedBy,
-  }) async {
-    return _db.transaction(() async {
-      // 1. Update loan record
-      final loanUpdated = await updateLoan(
-        loanId,
-        GirviLoansCompanion(
-          status: drift.Value(GirviStatus.released.dbValue),
-          releaseDate: drift.Value(DateTime.now()),
-          releasePrincipal: drift.Value(principal),
-          releaseInterest: drift.Value(interest),
-          releasePenalty: drift.Value(penalty),
-          releaseTotalAmount: drift.Value(totalAmount),
-          releasePaymentMode: drift.Value(paymentMode),
-          releaseNotes: drift.Value(notes),
-          releasedBy: drift.Value(releasedBy),
-          expectedDeliveryDate: drift.Value(DateTime.now()),
-          deliveredAt: drift.Value(DateTime.now()),
-          updatedAt: drift.Value(DateTime.now()),
-        ),
-      );
-
-      if (!loanUpdated) return false;
-
-      await _db.into(_db.girviPayments).insert(
-            GirviPaymentsCompanion.insert(
-              girviId: loanId,
-              paymentType: GirviPaymentType.fullRelease.dbValue,
-              amount: drift.Value(totalAmount),
-              paymentMode: drift.Value(paymentMode),
-              balanceAfter: const drift.Value(0.0),
-              principalComponent: drift.Value(principal),
-              interestComponent: drift.Value(interest),
-              notes: const drift.Value('Full release settlement'),
-            ),
-          );
-
-      return true;
-    });
   }
 
   GirviLoanModel _mapLoan(GirviLoan row) {

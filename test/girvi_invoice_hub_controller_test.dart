@@ -1,5 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
+import 'package:lotus_erp/logic/girvi/girvi_invoice_document_store.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_hub_controller.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
@@ -29,6 +33,7 @@ void main() {
         finalizeCalls++;
         return true;
       },
+      documentStore: _SuccessfulDocumentStore(),
     );
     addTearDown(controller.dispose);
 
@@ -187,6 +192,53 @@ void main() {
       isFalse,
     );
   });
+
+  test(
+      'failed original PDF save is reported and retried without recreating loan',
+      () async {
+    var finalizeCalls = 0;
+    final store = _FlakyDocumentStore();
+    final controller = GirviInvoiceHubController(
+      draft: _draft,
+      documentStore: store,
+      onFinalize: () async {
+        finalizeCalls++;
+        return true;
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.generatePreview();
+
+    expect(await controller.finalizeIfNeeded(), isFalse);
+    expect(controller.errorMessage, contains('PDF was not saved'));
+    expect(await controller.finalizeIfNeeded(), isTrue);
+    expect(finalizeCalls, 1);
+    expect(store.attempts, 2);
+  });
+}
+
+class _SuccessfulDocumentStore extends GirviInvoiceDocumentStore {
+  @override
+  Future<File?> saveInvoice({
+    required int? loanId,
+    required String ticketNo,
+    required Uint8List bytes,
+  }) async =>
+      File('test_invoice_saved.pdf');
+}
+
+class _FlakyDocumentStore extends GirviInvoiceDocumentStore {
+  int attempts = 0;
+
+  @override
+  Future<File?> saveInvoice({
+    required int? loanId,
+    required String ticketNo,
+    required Uint8List bytes,
+  }) async {
+    attempts++;
+    return attempts == 1 ? null : File('test_invoice_saved.pdf');
+  }
 }
 
 final _draft = GirviInvoiceDraft(

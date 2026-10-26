@@ -78,7 +78,7 @@ class _ConfirmNoticeDeliveryDialog extends StatelessWidget {
     Navigator.of(context).pop(_NoticeDeliveryConfirmation(
       channel: _channel,
       reference: _reference,
-      deliveredAt: pdfActivity.actionAt,
+      deliveredAt: DateTime.now(),
     ));
   }
 
@@ -136,14 +136,14 @@ class _ConfirmNoticeDeliveryDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Confirm only after the customer received the notice. Its response period will start from the recorded notice time below.',
+                'Confirm only after the customer received the notice. Its response period starts when you confirm delivery.',
                 style: TextStyle(
                     color: GirviColors.textDark, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
               _recordedDetail(
                 Icons.event_rounded,
-                'Recorded notice time',
+                'PDF action time',
                 DateFormat('dd MMM yyyy, hh:mm a').format(pdfActivity.actionAt),
               ),
               const SizedBox(height: 8),

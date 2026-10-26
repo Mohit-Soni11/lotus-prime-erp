@@ -426,15 +426,6 @@ GoRouter createAppRouter() {
                     },
                   ).toString(),
                 ),
-                onEditGirvi: (loanId) => context.go(
-                  Uri(
-                    path: RoutePaths.girviNew,
-                    queryParameters: {
-                      'editLoanId': '$loanId',
-                      'returnCustomerId': '$id',
-                    },
-                  ).toString(),
-                ),
                 onEditAdvance: (orderId) => context.go(
                   Uri(
                     path: RoutePaths.salesBooking,

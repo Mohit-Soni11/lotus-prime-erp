@@ -29,7 +29,6 @@ class CustomerProfileScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final Function(int customerId)? onNewSale;
   final Function(int billId)? onEditBill;
-  final Function(int loanId)? onEditGirvi;
   final Function(int advanceOrderId)? onEditAdvance;
   final Function(int customerId, String billNo)? onCollectDue;
   final VoidCallback? onDeleted;
@@ -45,7 +44,6 @@ class CustomerProfileScreen extends StatefulWidget {
     this.onBack,
     this.onNewSale,
     this.onEditBill,
-    this.onEditGirvi,
     this.onEditAdvance,
     this.onCollectDue,
     this.onDeleted,
@@ -2219,22 +2217,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   void _showGirviActions(CustomerLoanModel loan) {
     _showRecordActionSheet(
       title: 'Girvi Ticket ${loan.loanNo}',
-      subtitle: 'Edit, view, or print this pledged-loan receipt.',
+      subtitle: 'View or print this pledged-loan receipt.',
       actions: [
-        _ProfileRecordAction(
-          icon: Icons.edit_note_rounded,
-          title: 'Edit Girvi Ticket',
-          subtitle:
-              'Continue in the Girvi workspace with this ticket selected.',
-          color: CustomerProfileColors.editText,
-          onTap: () {
-            if (widget.onEditGirvi != null) {
-              widget.onEditGirvi!(loan.id);
-            } else {
-              _showInfoFeedback('Girvi editing is not configured yet.');
-            }
-          },
-        ),
         _ProfileRecordAction(
           icon: Icons.receipt_long_rounded,
           title: 'View Girvi Receipt',

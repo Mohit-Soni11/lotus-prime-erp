@@ -44,6 +44,20 @@ enum GirviInvoiceFormat {
 }
 
 class GirviInvoicePdfService {
+  Future<Uint8List> buildLifecycleAppendix({
+    required GirviInvoiceDraft draft,
+    String templateId = PrintTemplateRegistry.defaultTemplateId,
+  }) async {
+    final pdf = pw.Document(theme: await LotusPdfTheme.reportTheme());
+    _appendLifecycleReceiptPages(
+      pdf: pdf,
+      draft: draft,
+      profile: PrintTemplatePdfProfile.forTemplate(templateId),
+      duplicateCopy: false,
+    );
+    return pdf.save();
+  }
+
   static final _amountFormat = NumberFormat('#,##,##0.00', 'en_IN');
   static final _wholeAmountFormat = NumberFormat('#,##,##0', 'en_IN');
   static final _compactAmountFormat = NumberFormat('#,##,##0', 'en_IN');

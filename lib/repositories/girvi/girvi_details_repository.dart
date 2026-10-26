@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/girvi/girvi_persistence_models.dart';
+import 'girvi_financial_posting.dart';
 
 class GirviLoanItemDetails {
   const GirviLoanItemDetails({
@@ -51,6 +52,21 @@ class GirviDetailsRepository {
         items: items,
         disbursements: disbursements,
       );
+      final savedLoan = await (_db.select(_db.girviLoans)
+            ..where((row) => row.id.equals(loanId)))
+          .getSingle();
+      final customer = await (_db.select(_db.customers)
+            ..where((row) => row.id.equals(savedLoan.customerId)))
+          .getSingle();
+      for (final input in disbursements) {
+        await GirviFinancialPosting(_db).disbursement(
+          loanId: loanId,
+          ticketNo: savedLoan.ticketNo,
+          customerName: customer.name,
+          date: savedLoan.startDate,
+          input: input,
+        );
+      }
       return loanId;
     });
   }
@@ -69,6 +85,29 @@ class GirviDetailsRepository {
     );
 
     return _db.transaction(() async {
+      final existing = await (_db.select(_db.girviLoans)
+            ..where((row) => row.id.equals(loanId)))
+          .getSingleOrNull();
+      if (existing == null) return false;
+      final payments = await (_db.select(_db.girviPayments)
+            ..where((row) => row.girviId.equals(loanId))
+            ..limit(1))
+          .get();
+      final notices = await (_db.select(_db.girviNoticeActions)
+            ..where((row) => row.girviId.equals(loanId))
+            ..limit(1))
+          .get();
+      final postedDisbursements = await (_db.select(_db.girviDisbursements)
+            ..where((row) => row.girviId.equals(loanId))
+            ..limit(1))
+          .get();
+      if (existing.invoiceGenerated ||
+          existing.status != 'ACTIVE' ||
+          payments.isNotEmpty ||
+          notices.isNotEmpty ||
+          postedDisbursements.isNotEmpty) {
+        throw StateError('Funded Girvi tickets cannot be edited.');
+      }
       final updated = await (_db.update(_db.girviLoans)
             ..where((row) => row.id.equals(loanId)))
           .write(

@@ -27,6 +27,7 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   GirviPaymentType _paymentType = GirviPaymentType.interest;
   GirviPaymentMode _paymentMode = GirviPaymentMode.cash;
+  int? _bankAccountId;
   DateTime _paymentDate = DateTime.now();
   String _searchQuery = '';
   String _amountInput = '';
@@ -51,6 +52,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   int? get selectedCustomerId => _selectedCustomerId;
   GirviPaymentType get paymentType => _paymentType;
   GirviPaymentMode get paymentMode => _paymentMode;
+  int? get bankAccountId => _bankAccountId;
   DateTime get paymentDate => _paymentDate;
   String get amountInput => _amountInput;
   String get releasePrincipalInput => _releasePrincipalInput;
@@ -287,6 +289,12 @@ class GirviInterestEntryController extends ChangeNotifier {
 
   void setPaymentMode(GirviPaymentMode value) {
     _paymentMode = value;
+    if (value == GirviPaymentMode.cash) _bankAccountId = null;
+    notifyListeners();
+  }
+
+  void setBankAccountId(int? value) {
+    _bankAccountId = value;
     notifyListeners();
   }
 
@@ -448,6 +456,7 @@ class GirviInterestEntryController extends ChangeNotifier {
             interestReceived: releaseInterestReceived,
             discountAmount: releaseDiscount,
             paymentMode: _paymentMode,
+            bankAccountId: _bankAccountId,
             paymentDate: _paymentDate,
             expectedDeliveryDate: _expectedDeliveryDate,
             receiptNo: _paymentReferenceNo.isEmpty ? null : _paymentReferenceNo,
@@ -464,6 +473,7 @@ class GirviInterestEntryController extends ChangeNotifier {
         await _repo.recordInterestLedgerPayment(
           loanId: selected.loan.id,
           paymentMode: _paymentMode,
+          bankAccountId: _bankAccountId,
           amount: value,
           paymentDate: _paymentDate,
           receiptNo: _paymentReferenceNo.isEmpty ? null : _paymentReferenceNo,
@@ -688,6 +698,7 @@ class GirviInterestEntryController extends ChangeNotifier {
         ? GirviPaymentType.fullRelease
         : GirviPaymentType.interest;
     _paymentMode = GirviPaymentMode.cash;
+    _bankAccountId = null;
     _paymentDate = DateTime.now();
     _amountInput = '';
     _releasePrincipalInput = '';
@@ -701,6 +712,7 @@ class GirviInterestEntryController extends ChangeNotifier {
   void _resetEmptyForm() {
     _paymentType = GirviPaymentType.interest;
     _paymentMode = GirviPaymentMode.cash;
+    _bankAccountId = null;
     _paymentDate = DateTime.now();
     _amountInput = '';
     _releasePrincipalInput = '';

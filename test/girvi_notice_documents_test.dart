@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/config/db_config.dart';
 import 'package:lotus_erp/models/girvi/girvi_notice_action_model.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_action_repository.dart';
 import 'package:lotus_erp/repositories/girvi/girvi_notice_document_repository.dart';
@@ -290,7 +291,7 @@ BEGIN SELECT RAISE(ABORT, 'Simulated document write failure'); END;
           lessThan(10));
       final version =
           await migrationDb.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 63);
+      expect(version.read<int>('user_version'), DbConfig.schemaVersion);
     } finally {
       await migrationDb.close();
       await directory.delete(recursive: true);

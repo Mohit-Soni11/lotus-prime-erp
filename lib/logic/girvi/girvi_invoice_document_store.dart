@@ -17,10 +17,17 @@ class GirviInvoiceDocumentStore {
       final file = await _invoiceFile(loanId: loanId, ticketNo: ticketNo);
       if (await file.exists()) return file.readAsBytes();
 
-      if (loanId == null) {
-        final legacyFile = await _legacyInvoiceFile(ticketNo);
-        if (await legacyFile.exists()) return legacyFile.readAsBytes();
+      // Earlier versions could save before the database id was available.
+      // Keep those issued PDFs available after the loan receives its id.
+      if (loanId != null) {
+        final unlinkedFile = await _invoiceFile(
+          loanId: null,
+          ticketNo: ticketNo,
+        );
+        if (await unlinkedFile.exists()) return unlinkedFile.readAsBytes();
       }
+      final legacyFile = await _legacyInvoiceFile(ticketNo);
+      if (await legacyFile.exists()) return legacyFile.readAsBytes();
       return null;
     } catch (error) {
       AppLogger.debug('Girvi invoice snapshot read failed: $error');

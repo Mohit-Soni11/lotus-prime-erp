@@ -117,7 +117,10 @@ extension _GirviAccountPdfCatalogActions on _GirviAccountDetailScreenState {
     if (draft == null) {
       throw StateError('Account receipt data could not be loaded.');
     }
-    return const GirviDocumentSetService().build(draft);
+    return const GirviDocumentSetService().build(
+      draft,
+      requireSavedInvoice: account.loan.invoiceGenerated,
+    );
   }
 
   Future<Uint8List> _buildFormalNoticePdf(

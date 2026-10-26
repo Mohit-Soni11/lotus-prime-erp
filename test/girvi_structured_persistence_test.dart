@@ -15,9 +15,14 @@ void main() {
     late AppDatabase db;
     late GirviDetailsRepository repository;
 
-    setUp(() {
+    setUp(() async {
       db = AppDatabase.forTesting(NativeDatabase.memory());
       repository = GirviDetailsRepository(db);
+      await db.into(db.bankAccounts).insert(BankAccountsCompanion.insert(
+            accountName: 'Girvi test bank',
+            bankName: 'Test Bank',
+            accountNumber: 'GIRVI-TEST-001',
+          ));
     });
 
     tearDown(() async {
@@ -70,6 +75,36 @@ void main() {
       expect(details.disbursements[0].amount, 10000);
       expect(details.disbursements[1].mode, 'UPI');
       expect(details.disbursements[1].amount, 20000);
+      final cash = await db.select(db.cashTransactions).get();
+      final bank = await db.select(db.bankTransactions).get();
+      expect(cash.single.type, 'EXPENSE');
+      expect(cash.single.category, 'GIRVI_GIVEN');
+      expect(cash.single.amount, 10000);
+      expect(bank.single.type, 'DEBIT');
+      expect(bank.single.amount, 20000);
+    });
+
+    test('non-cash disbursement rolls back when no bank account exists',
+        () async {
+      await db.delete(db.bankAccounts).go();
+      final customerId = await _insertCustomer(db);
+      await expectLater(
+        repository.createLoanWithDetails(
+          loan: _loanInsert(
+            ticketNo: 'GRV-NO-BANK',
+            customerId: customerId,
+            itemDescription: 'Ring and payal',
+            loanAmount: 30000,
+          ),
+          items: _twoItems(),
+          disbursements: _mixedDisbursements(),
+          expectedLoanAmount: 30000,
+        ),
+        throwsStateError,
+      );
+      expect(await db.select(db.girviLoans).get(), isEmpty);
+      expect(await db.select(db.cashTransactions).get(), isEmpty);
+      expect(await db.select(db.bankTransactions).get(), isEmpty);
     });
 
     test('keeps pledged custody items separate from saleable stock inventory',
@@ -98,7 +133,7 @@ void main() {
       expect(stockMovements, isEmpty);
     });
 
-    test('update replaces item, photo and disbursement details together',
+    test('funded ticket cannot replace item, photo or disbursement details',
         () async {
       final customerId = await _insertCustomer(db);
       final loanId = await repository.createLoanWithDetails(
@@ -113,55 +148,54 @@ void main() {
         expectedLoanAmount: 30000,
       );
 
-      final updated = await repository.updateLoanWithDetails(
-        loanId: loanId,
-        loan: const GirviLoansCompanion(
-          itemDescription: drift.Value('Updated chain'),
-          itemCount: drift.Value(1),
-          metalType: drift.Value('Gold'),
-          metalPurity: drift.Value('22K'),
-          grossWeight: drift.Value(12),
-          stoneWeight: drift.Value(1),
-          netWeight: drift.Value(11),
-          loanAmount: drift.Value(25000),
-          disbursementMode: drift.Value('Cheque Rs 25000.00'),
-        ),
-        items: const [
-          GirviLoanItemInput(
-            serialNo: 1,
-            itemName: 'Gold chain',
-            metalType: 'Gold',
-            purity: '22K',
-            purityFactor: 0.916,
-            pieces: 1,
-            grossWeight: 12,
-            lessWeight: 1,
-            netWeight: 11,
-            photoPaths: ['/photos/chain.jpg'],
+      await expectLater(
+          repository.updateLoanWithDetails(
+            loanId: loanId,
+            loan: const GirviLoansCompanion(
+              itemDescription: drift.Value('Updated chain'),
+              itemCount: drift.Value(1),
+              metalType: drift.Value('Gold'),
+              metalPurity: drift.Value('22K'),
+              grossWeight: drift.Value(12),
+              stoneWeight: drift.Value(1),
+              netWeight: drift.Value(11),
+              loanAmount: drift.Value(25000),
+              disbursementMode: drift.Value('Cheque Rs 25000.00'),
+            ),
+            items: const [
+              GirviLoanItemInput(
+                serialNo: 1,
+                itemName: 'Gold chain',
+                metalType: 'Gold',
+                purity: '22K',
+                purityFactor: 0.916,
+                pieces: 1,
+                grossWeight: 12,
+                lessWeight: 1,
+                netWeight: 11,
+                photoPaths: ['/photos/chain.jpg'],
+              ),
+            ],
+            disbursements: const [
+              GirviDisbursementInput(
+                sequenceNo: 1,
+                mode: 'Cheque',
+                displayLabel: 'Cheque',
+                amount: 25000,
+                referenceNo: 'CHQ-55',
+              ),
+            ],
+            expectedLoanAmount: 25000,
           ),
-        ],
-        disbursements: const [
-          GirviDisbursementInput(
-            sequenceNo: 1,
-            mode: 'Cheque',
-            displayLabel: 'Cheque',
-            amount: 25000,
-            referenceNo: 'CHQ-55',
-          ),
-        ],
-        expectedLoanAmount: 25000,
-      );
+          throwsStateError);
 
       final details = await repository.getLoanDetails(loanId);
       final allPhotos = await db.select(db.girviItemPhotos).get();
 
-      expect(updated, isTrue);
-      expect(details!.loan.itemDescription, 'Updated chain');
-      expect(details.items, hasLength(1));
-      expect(details.items.single.item.itemName, 'Gold chain');
-      expect(details.items.single.photos.single.filePath, '/photos/chain.jpg');
-      expect(allPhotos, hasLength(1));
-      expect(details.disbursements.single.referenceNo, 'CHQ-55');
+      expect(details!.loan.itemDescription, 'Original items');
+      expect(details.items, hasLength(2));
+      expect(allPhotos, hasLength(3));
+      expect(details.disbursements, hasLength(2));
     });
 
     test('invalid update leaves the existing structured record untouched',
@@ -240,7 +274,7 @@ void main() {
       expect(savedDetails.disbursements, hasLength(2));
     });
 
-    test('New Girvi controller loads and updates an existing ticket', () async {
+    test('New Girvi controller rejects editing an issued ticket', () async {
       final customerId = await _insertCustomer(db);
       final loanId = await repository.createLoanWithDetails(
         loan: _loanInsert(
@@ -264,62 +298,24 @@ void main() {
       addTearDown(controller.dispose);
 
       final loaded = await controller.initializeForEdit(loanId);
-      controller.onLoanAmountChanged('25000');
-      final saved = await controller.saveLoan(
-        items: const [
-          GirviLoanItemInput(
-            serialNo: 1,
-            itemName: 'Edited gold chain',
-            metalType: 'Gold',
-            purity: '22K',
-            purityFactor: 0.916,
-            pieces: 1,
-            grossWeight: 12,
-            lessWeight: 1,
-            netWeight: 11,
-            photoPaths: ['/photos/edited-chain.jpg'],
-          ),
-        ],
-        disbursements: const [
-          GirviDisbursementInput(
-            sequenceNo: 1,
-            mode: 'Cheque',
-            displayLabel: 'Cheque',
-            amount: 25000,
-            referenceNo: 'EDIT-CHQ-1',
-          ),
-        ],
-        invoiceGenerated: false,
-        idProofNumber: 'AAD-EDIT',
-        idProofImagePath: '/kyc/edited-card.jpg',
-        notes: 'Edited note',
-      );
 
       final loans = await db.select(db.girviLoans).get();
       final details = await repository.getLoanDetails(loanId);
 
-      expect(loaded, isTrue);
+      expect(loaded, isFalse);
       expect(controller.isEditMode, isTrue);
-      expect(controller.ticketNo, 'GRV-EDIT-1');
-      expect(controller.selectedCustomer?.id, customerId);
-      expect(saved, isTrue);
+      expect(controller.errorMessage, contains('cannot be edited'));
       expect(controller.lastSavedLoanId, loanId);
       expect(loans, hasLength(1));
       final updatedDetails = details!;
       expect(updatedDetails.loan.ticketNo, 'GRV-EDIT-1');
-      expect(updatedDetails.loan.itemDescription,
-          contains('Serial Number 1 - Edited gold chain'));
-      expect(updatedDetails.loan.loanAmount, 25000);
+      expect(updatedDetails.loan.itemDescription, 'Original items');
+      expect(updatedDetails.loan.loanAmount, 30000);
       expect(updatedDetails.loan.invoiceGenerated, isTrue);
-      expect(updatedDetails.loan.idProofNumber, 'AAD-EDIT');
-      expect(updatedDetails.loan.notes, 'Edited note');
-      expect(updatedDetails.items, hasLength(1));
-      expect(updatedDetails.items.single.item.itemName, 'Edited gold chain');
-      expect(
-        updatedDetails.items.single.photos.single.filePath,
-        '/photos/edited-chain.jpg',
-      );
-      expect(updatedDetails.disbursements.single.referenceNo, 'EDIT-CHQ-1');
+      expect(updatedDetails.loan.idProofNumber, 'AAD-001');
+      expect(updatedDetails.loan.notes, 'Original note');
+      expect(updatedDetails.items, hasLength(2));
+      expect(updatedDetails.disbursements, hasLength(2));
     });
   });
 

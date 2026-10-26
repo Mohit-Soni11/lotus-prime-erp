@@ -1,9 +1,13 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:printing/printing.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/logic/girvi/girvi_document_set_service.dart';
+import 'package:lotus_erp/logic/girvi/girvi_invoice_document_store.dart';
 import 'package:lotus_erp/logic/girvi/girvi_invoice_pdf_service.dart';
+import 'package:lotus_erp/logic/girvi/girvi_pdf_document_assembler.dart';
 import 'package:lotus_erp/models/girvi/girvi_interest_calculator.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_branding.dart';
 import 'package:lotus_erp/models/girvi/girvi_invoice_draft.dart';
@@ -11,6 +15,54 @@ import 'package:lotus_erp/models/girvi/girvi_recovery_disposition.dart';
 import 'package:lotus_erp/models/setting/billing_setup/girvi_billing_model.dart';
 
 void main() {
+  test('document assembler preserves issued pages before receipt pages',
+      () async {
+    final original = Uint8List.fromList([1]);
+    final receipts = Uint8List.fromList([2]);
+    final sources = <Uint8List>[];
+    final assembler = GirviPdfDocumentAssembler(
+      rasterPages: (bytes, dpi) async* {
+        sources.add(bytes);
+        expect(dpi, 300);
+        final pixels = Uint8List.fromList(
+          List<int>.generate(300 * 420 * 4, (_) => 255),
+        );
+        final count = identical(bytes, original) ? 1 : 2;
+        for (var i = 0; i < count; i++) {
+          yield PdfRaster(300, 420, pixels);
+        }
+      },
+    );
+
+    final pdf = await assembler.assemble(
+      issuedInvoice: original,
+      appendix: receipts,
+      draft: _releaseDraft,
+    );
+
+    expect(sources, [same(original), same(receipts)]);
+    expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
+    expect(_pdfPageCount(pdf), 3);
+  });
+
+  test('account document set starts with the saved issued invoice', () async {
+    final original = Uint8List.fromList([1, 2, 3]);
+    final appendix = Uint8List.fromList([4, 5]);
+    final assembler = _CapturingAssembler();
+    final service = GirviDocumentSetService(
+      documentStore: _SavedInvoiceStore(original),
+      pdfService: _AppendixService(appendix),
+      assembler: assembler,
+    );
+
+    final result =
+        await service.build(_releaseDraft, requireSavedInvoice: true);
+
+    expect(result, [9]);
+    expect(assembler.issuedInvoice, same(original));
+    expect(assembler.appendix, same(appendix));
+  });
+
   test('shared document set includes interest and release pages', () async {
     final bytes = await const GirviDocumentSetService().build(_releaseDraft);
     expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
@@ -767,4 +819,46 @@ String? _previewPhotoPath() {
 int _pdfPageCount(List<int> bytes) {
   final source = String.fromCharCodes(bytes);
   return RegExp(r'/Type\s*/Page\b').allMatches(source).length;
+}
+
+class _SavedInvoiceStore extends GirviInvoiceDocumentStore {
+  const _SavedInvoiceStore(this.bytes);
+
+  final Uint8List bytes;
+
+  @override
+  Future<Uint8List?> readInvoice({
+    required int? loanId,
+    required String ticketNo,
+  }) async =>
+      bytes;
+}
+
+class _AppendixService extends GirviInvoicePdfService {
+  _AppendixService(this.bytes);
+
+  final Uint8List bytes;
+
+  @override
+  Future<Uint8List> buildLifecycleAppendix({
+    required GirviInvoiceDraft draft,
+    String templateId = PrintTemplateRegistry.defaultTemplateId,
+  }) async =>
+      bytes;
+}
+
+class _CapturingAssembler extends GirviPdfDocumentAssembler {
+  Uint8List? issuedInvoice;
+  Uint8List? appendix;
+
+  @override
+  Future<Uint8List> assemble({
+    required Uint8List issuedInvoice,
+    Uint8List? appendix,
+    required GirviInvoiceDraft draft,
+  }) async {
+    this.issuedInvoice = issuedInvoice;
+    this.appendix = appendix;
+    return Uint8List.fromList([9]);
+  }
 }

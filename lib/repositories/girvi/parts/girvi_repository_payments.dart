@@ -1,10 +1,6 @@
 part of '../girvi_repository.dart';
 
 extension GirviRepositoryPayments on GirviRepository {
-  Future<int> addPayment(GirviPaymentsCompanion companion) async {
-    return _db.into(_db.girviPayments).insert(companion);
-  }
-
   Future<GirviSettlementResult> recordReleaseSettlement({
     required int loanId,
     required double principalDue,
@@ -13,6 +9,7 @@ extension GirviRepositoryPayments on GirviRepository {
     required double interestReceived,
     double discountAmount = 0,
     required GirviPaymentMode paymentMode,
+    int? bankAccountId,
     required DateTime paymentDate,
     required DateTime expectedDeliveryDate,
     String? receiptNo,
@@ -115,6 +112,11 @@ extension GirviRepositoryPayments on GirviRepository {
         throw ArgumentError(
             'Expected pickup date cannot be before collection date');
       }
+      final currentInterestDue = _normalizeMoney(
+          account.interestQuoteAt(paymentDate).interestOutstanding);
+      if ((currentInterestDue - interestDueValue).abs() > tolerance) {
+        throw StateError('Interest due changed; refresh the settlement');
+      }
 
       final amountReceived =
           _normalizeMoney(principalReceivedValue + interestReceivedValue);
@@ -154,7 +156,7 @@ extension GirviRepositoryPayments on GirviRepository {
         throw StateError('Unable to update Girvi settlement');
       }
 
-      await _db.into(_db.girviPayments).insert(
+      final paymentId = await _db.into(_db.girviPayments).insert(
             GirviPaymentsCompanion.insert(
               girviId: loanId,
               paymentType: GirviPaymentType.fullRelease.dbValue,
@@ -172,6 +174,16 @@ extension GirviRepositoryPayments on GirviRepository {
               notes: drift.Value(normalizedNotes),
             ),
           );
+      await GirviFinancialPosting(_db).collection(
+        loanId: loanId,
+        paymentId: paymentId,
+        customerName: account.customerName,
+        date: paymentDate,
+        mode: paymentMode.dbValue,
+        principal: principalReceivedValue,
+        interest: interestReceivedValue,
+        bankAccountId: bankAccountId,
+      );
 
       return GirviSettlementResult(
         fullySettled: fullySettled,
@@ -210,6 +222,7 @@ extension GirviRepositoryPayments on GirviRepository {
   Future<int> recordInterestLedgerPayment({
     required int loanId,
     required GirviPaymentMode paymentMode,
+    int? bankAccountId,
     required double amount,
     required DateTime paymentDate,
     int? monthsCovered,
@@ -339,7 +352,7 @@ extension GirviRepositoryPayments on GirviRepository {
         throw StateError('Unable to update girvi loan before payment entry');
       }
 
-      return _db.into(_db.girviPayments).insert(
+      final paymentId = await _db.into(_db.girviPayments).insert(
             GirviPaymentsCompanion.insert(
               girviId: loanId,
               paymentType: GirviPaymentType.interest.dbValue,
@@ -356,6 +369,20 @@ extension GirviRepositoryPayments on GirviRepository {
               notes: drift.Value(normalizedNotes),
             ),
           );
+      final customer = await (_db.select(_db.customers)
+            ..where((row) => row.id.equals(loan.customerId)))
+          .getSingle();
+      await GirviFinancialPosting(_db).collection(
+        loanId: loanId,
+        paymentId: paymentId,
+        customerName: customer.name,
+        date: paymentDate,
+        mode: paymentMode.dbValue,
+        principal: 0,
+        interest: receivedAmount,
+        bankAccountId: bankAccountId,
+      );
+      return paymentId;
     });
   }
 

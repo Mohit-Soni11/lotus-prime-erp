@@ -347,13 +347,16 @@ void main() {
       find.widgetWithText(FilledButton, 'Confirm Delivery'),
     );
     expect(confirm.style!.backgroundColor!.resolve({}), GirviColors.shellBg);
+    final beforeConfirmation = DateTime.now();
     await tester.tap(find.text('Confirm Delivery').last);
     await tester.pump(const Duration(milliseconds: 350));
     expect(controller.deliveryActionType,
         GirviNoticeActionTypes.noticeDeliveryRecorded);
     expect(controller.deliveryReference, 'NOTICE_PDF_ACTION_11');
     expect(controller.deliveryChannel, 'Printed copy');
-    expect(controller.deliveredAt, printed.actionAt);
+    expect(controller.deliveredAt, isNotNull);
+    expect(controller.deliveredAt!.isBefore(beforeConfirmation), isFalse);
+    expect(controller.deliveredAt!.isAfter(DateTime.now()), isFalse);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -401,10 +404,13 @@ void main() {
     expect(find.text('WhatsApp'), findsOneWidget);
     expect(find.text('04 Oct 2026, 12:02 AM'), findsOneWidget);
     expect(find.text('NOTICE_PDF_ACTION_12'), findsOneWidget);
+    final beforeConfirmation = DateTime.now();
     await tester.tap(find.text('Confirm Delivery').last);
     await tester.pump(const Duration(milliseconds: 350));
     expect(controller.deliveryChannel, 'WhatsApp');
-    expect(controller.deliveredAt, sharedAt);
+    expect(controller.deliveredAt, isNotNull);
+    expect(controller.deliveredAt!.isBefore(beforeConfirmation), isFalse);
+    expect(controller.deliveredAt!.isAfter(DateTime.now()), isFalse);
     expect(controller.deliveryReference, 'NOTICE_PDF_ACTION_12');
     expect(tester.takeException(), isNull);
   });

@@ -88,6 +88,7 @@ class _NewGirviScreenState extends State<NewGirviScreen>
   final _upiDisbursementCtrl = TextEditingController();
   final _bankDisbursementCtrl = TextEditingController();
   final _chequeDisbursementCtrl = TextEditingController();
+  int? _selectedDisbursementBankId;
   final _idProofNoCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   String? _itemPhotoPath;

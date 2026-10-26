@@ -8,6 +8,7 @@ extension NewGirviActions on _NewGirviScreenState {
   Future<void> _onSave({bool generateInvoice = false}) async {
     FocusScope.of(context).unfocus();
     if (!_validateGirviEntry()) return;
+    if (!await _chooseDisbursementBankIfNeeded()) return;
 
     if (generateInvoice) {
       await _openGirviInvoiceHub();
@@ -64,6 +65,42 @@ extension NewGirviActions on _NewGirviScreenState {
     );
   }
 
+  Future<bool> _chooseDisbursementBankIfNeeded() async {
+    final needsBank = _visibleDisbursementModes.any(
+      (mode) =>
+          mode != GirviPaymentMode.cash && _disbursementAmountFor(mode) > 0,
+    );
+    if (!needsBank) return true;
+    final accounts = (await _db.select(_db.bankAccounts).get())
+        .where((account) => account.isActive)
+        .toList(growable: false);
+    if (!mounted) return false;
+    if (accounts.isEmpty) {
+      _showError('Add an active bank account before non-cash disbursement.');
+      return false;
+    }
+    if (accounts.length == 1) {
+      _selectedDisbursementBankId = accounts.single.id;
+      return true;
+    }
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Bank account for non-cash disbursement'),
+        children: [
+          for (final account in accounts)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(account.id),
+              child: Text(account.accountName),
+            ),
+        ],
+      ),
+    );
+    if (selected == null) return false;
+    _selectedDisbursementBankId = selected;
+    return true;
+  }
+
   List<GirviLoanItemInput> _buildPersistenceItems() {
     return _pledgedItems
         .map(
@@ -95,6 +132,9 @@ extension NewGirviActions on _NewGirviScreenState {
           mode: mode.dbValue,
           displayLabel: _disbursementModeLabel(mode),
           amount: amount,
+          bankAccountId: mode == GirviPaymentMode.cash
+              ? null
+              : _selectedDisbursementBankId,
         ),
       );
     }

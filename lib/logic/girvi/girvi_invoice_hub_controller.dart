@@ -69,6 +69,7 @@ class GirviInvoiceHubController extends ChangeNotifier {
   bool usePrinterDriverSettings = true;
   LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   bool isFinalized = false;
+  bool _invoiceSnapshotSaved = false;
   bool isFinalizing = false;
   bool isExporting = false;
   bool isSharing = false;
@@ -543,20 +544,24 @@ class GirviInvoiceHubController extends ChangeNotifier {
   }
 
   Future<bool> finalizeIfNeeded() async {
-    if (isFinalized) return true;
+    if (isFinalized && _invoiceSnapshotSaved) return true;
     if (isFinalizing) return false;
 
     isFinalizing = true;
     errorMessage = null;
     notifyListeners();
     try {
-      isFinalized = await _onFinalize();
+      if (!isFinalized) isFinalized = await _onFinalize();
       if (!isFinalized) {
         errorMessage = 'Girvi ticket could not be saved.';
       } else {
-        await _saveFinalizedInvoiceSnapshot();
+        _invoiceSnapshotSaved = await _saveFinalizedInvoiceSnapshot();
+        if (!_invoiceSnapshotSaved) {
+          errorMessage =
+              'Ticket saved, but its original PDF was not saved. Retry to save the PDF.';
+        }
       }
-      return isFinalized;
+      return isFinalized && _invoiceSnapshotSaved;
     } catch (error) {
       errorMessage = 'Girvi ticket could not be saved.';
       AppLogger.debug(
@@ -568,22 +573,24 @@ class GirviInvoiceHubController extends ChangeNotifier {
     }
   }
 
-  Future<void> _saveFinalizedInvoiceSnapshot() async {
+  Future<bool> _saveFinalizedInvoiceSnapshot() async {
     try {
       if (!_settingsLoaded) await _loadSavedSettings();
       _shopPrintState ??= await _loadShopPrintState();
       if (!_brandingLoaded) await _loadShopBranding();
       final bytes = pdfBytes ?? await _buildPdfBytes();
       final loanId = draft.loanId ?? await _finalizedLoanIdResolver?.call();
-      await _documentStore.saveInvoice(
+      final savedFile = await _documentStore.saveInvoice(
         loanId: loanId,
         ticketNo: draft.ticketNo,
         bytes: bytes,
       );
+      return savedFile != null;
     } catch (error) {
       AppLogger.debug(
         'GirviInvoiceHubController: invoice snapshot was not saved: $error',
       );
+      return false;
     }
   }
 

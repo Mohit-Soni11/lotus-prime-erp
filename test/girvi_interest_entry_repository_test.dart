@@ -24,9 +24,14 @@ void main() {
   late AppDatabase db;
   late GirviRepository repository;
 
-  setUp(() {
+  setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
     repository = GirviRepository(db);
+    await db.into(db.bankAccounts).insert(BankAccountsCompanion.insert(
+          accountName: 'Girvi test bank',
+          bankName: 'Test Bank',
+          accountNumber: 'GIRVI-INTEREST-001',
+        ));
   });
 
   tearDown(() async {
@@ -63,6 +68,10 @@ void main() {
     expect(payments.single.balanceAfter, 50000);
     expect(loan!.loanAmount, 50000);
     expect(loan.lastInterestPaidDate, periodTo);
+    final cashEntries = await db.select(db.cashTransactions).get();
+    expect(cashEntries, hasLength(1));
+    expect(cashEntries.single.category, 'INTEREST_RECEIVED');
+    expect(cashEntries.single.amount, 2500);
   });
 
   test('rejects interest payments outside the pledge dates or after settlement',
@@ -656,13 +665,17 @@ void main() {
   test('ready for delivery tickets are not counted as released tickets',
       () async {
     final loanId = await _insertLoan(db);
+    final interestDue = (await repository.getLoansWithCustomer())
+        .single
+        .interestQuoteAt(DateTime.now())
+        .interestOutstanding;
 
     await repository.recordReleaseSettlement(
       loanId: loanId,
       principalDue: 50000,
-      interestDue: 0,
+      interestDue: interestDue,
       principalReceived: 50000,
-      interestReceived: 0,
+      interestReceived: interestDue,
       paymentMode: GirviPaymentMode.cash,
       paymentDate: DateTime.now(),
       expectedDeliveryDate: DateTime.now(),
@@ -807,7 +820,7 @@ void main() {
 
   test('tracks partial release settlement, ready state and final delivery',
       () async {
-    final loanId = await _insertLoan(db);
+    final loanId = await _insertLoan(db, interestRate: 20 / 3);
     final firstPaymentDate = DateTime(2026, 6, 19);
     final promisedPickup = DateTime(2026, 6, 21);
 
@@ -870,6 +883,10 @@ void main() {
     expect(loan.releaseInterest, 20000);
     expect(loan.releaseTotalAmount, 70000);
     expect(payments, hasLength(2));
+    final bankEntries = await db.select(db.bankTransactions).get();
+    expect(bankEntries, hasLength(2));
+    expect(bankEntries.map((entry) => entry.amount).reduce((a, b) => a + b),
+        40000);
 
     final deliveredAt = DateTime(2026, 6, 21, 11, 30);
     final delivered = await repository.markGirviDelivered(
@@ -1009,12 +1026,16 @@ void main() {
   test('final release cannot be recorded twice after full settlement',
       () async {
     final loanId = await _insertLoan(db);
+    final interestDue = (await repository.getLoansWithCustomer())
+        .single
+        .interestQuoteAt(DateTime.now())
+        .interestOutstanding;
     await repository.recordReleaseSettlement(
       loanId: loanId,
       principalDue: 50000,
-      interestDue: 0,
+      interestDue: interestDue,
       principalReceived: 50000,
-      interestReceived: 0,
+      interestReceived: interestDue,
       paymentMode: GirviPaymentMode.cash,
       paymentDate: DateTime.now(),
       expectedDeliveryDate: DateTime.now(),
@@ -1024,9 +1045,9 @@ void main() {
       repository.recordReleaseSettlement(
         loanId: loanId,
         principalDue: 50000,
-        interestDue: 0,
+        interestDue: interestDue,
         principalReceived: 50000,
-        interestReceived: 0,
+        interestReceived: interestDue,
         paymentMode: GirviPaymentMode.cash,
         paymentDate: DateTime.now(),
         expectedDeliveryDate: DateTime.now(),
@@ -1034,6 +1055,31 @@ void main() {
       throwsStateError,
     );
     expect(await repository.getPaymentModelsForLoan(loanId), hasLength(1));
+  });
+
+  test('stale interest quote cannot close a pledge account', () async {
+    final loanId = await _insertLoan(db);
+    final paymentDate = DateTime(2026, 6, 19);
+    final currentDue = (await repository.getLoansWithCustomer())
+        .single
+        .interestQuoteAt(paymentDate)
+        .interestOutstanding;
+
+    await expectLater(
+      repository.recordReleaseSettlement(
+        loanId: loanId,
+        principalDue: 50000,
+        interestDue: currentDue - 1,
+        principalReceived: 50000,
+        interestReceived: currentDue - 1,
+        paymentMode: GirviPaymentMode.cash,
+        paymentDate: paymentDate,
+        expectedDeliveryDate: paymentDate,
+      ),
+      throwsStateError,
+    );
+    expect(await repository.getPaymentModelsForLoan(loanId), isEmpty);
+    expect(await db.select(db.cashTransactions).get(), isEmpty);
   });
 
   test('reconciles legacy zero-principal open loan as ready for delivery',

@@ -19,6 +19,7 @@ extension InterestPaymentActions on _InterestCalcScreenState {
       if (!confirmed) return;
     }
 
+    if (!wasReadyForDelivery && !await _chooseCollectionBankIfNeeded()) return;
     final ok = await _ctrl.recordPayment();
     if (!mounted || !ok) return;
     if ((isFullReleaseSettlement || wasReadyForDelivery) &&
@@ -34,6 +35,43 @@ extension InterestPaymentActions on _InterestCalcScreenState {
         message: _ctrl.successMessage ?? 'Payment entry recorded.',
       );
     }
+  }
+
+  Future<bool> _chooseCollectionBankIfNeeded() async {
+    if (_ctrl.paymentMode == GirviPaymentMode.cash) return true;
+    final accounts = (await _db.select(_db.bankAccounts).get())
+        .where((account) => account.isActive)
+        .toList(growable: false);
+    if (!mounted) return false;
+    if (accounts.isEmpty) {
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: 'Add an active bank account before non-cash collection.',
+      );
+      return false;
+    }
+    if (accounts.length == 1) {
+      _ctrl.setBankAccountId(accounts.single.id);
+      return true;
+    }
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Bank account for this collection'),
+        children: [
+          for (final account in accounts)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(account.id),
+              child: Text(account.accountName),
+            ),
+        ],
+      ),
+    );
+    if (selected == null) return false;
+    _ctrl.setBankAccountId(selected);
+    return true;
   }
 
   Future<bool> _confirmFullReleaseSettlement() async {

@@ -58,6 +58,7 @@ enum BankCreditCategory {
 // ── 3. DEBIT CATEGORIES (Money Going OUT from Bank) ───────────────────────────
 
 enum BankDebitCategory {
+  girviGiven('GIRVI_GIVEN', 'Pledge Advance'),
   supplierPayment('SUPPLIER_PAYMENT', 'Supplier Payment'),
   purchasePayment('PURCHASE_PAYMENT', 'Purchase Payment'),
   staffSalary('STAFF_SALARY', 'Staff Salary'),
