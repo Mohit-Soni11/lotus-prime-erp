@@ -11,6 +11,8 @@ class CustomerLoanModel {
   final String itemDesc;
   final double grossWeight;
   final double loanAmount;
+  final double? originalPrincipalAmount;
+  final double? principalOutstandingAmount;
   final double interestRate;
   final DateTime startDate;
   final DateTime? lastInterestPaidDate;
@@ -23,6 +25,8 @@ class CustomerLoanModel {
     required this.itemDesc,
     required this.grossWeight,
     required this.loanAmount,
+    this.originalPrincipalAmount,
+    this.principalOutstandingAmount,
     required this.interestRate,
     required this.startDate,
     this.lastInterestPaidDate,
@@ -33,6 +37,9 @@ class CustomerLoanModel {
   GirviStatus get lifecycleStatus => GirviStatus.fromDb(status);
   bool get isActive => lifecycleStatus.isOpen;
   bool get isReleased => lifecycleStatus.isClosed;
+  double get originalPrincipal => originalPrincipalAmount ?? loanAmount;
+  double get principalOutstanding =>
+      isActive ? (principalOutstandingAmount ?? loanAmount) : 0;
   String get statusLabel => lifecycleStatus.displayName.toUpperCase();
 
   double get accruedInterest {
@@ -198,7 +205,7 @@ class CustomerDueModel {
     return (totalAmount - paidAmount).clamp(0.0, double.infinity).toDouble();
   }
 
-  String get formattedDue => "\u20B9 ${dueAmount.toStringAsFixed(0)}";
+  String get formattedDue => "₹ ${dueAmount.toStringAsFixed(2)}";
 
   String get formattedDate {
     const months = [

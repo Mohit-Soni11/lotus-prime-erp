@@ -193,7 +193,7 @@ enum InvoiceStatus {
 enum RefundMethod {
   cash,
   upi,
-  accountCredit,
+  refundPayable,
 }
 
 extension RefundMethodExtension on RefundMethod {
@@ -203,8 +203,8 @@ extension RefundMethodExtension on RefundMethod {
         return 'CASH';
       case RefundMethod.upi:
         return 'UPI';
-      case RefundMethod.accountCredit:
-        return 'CUSTOMER ACCOUNT';
+      case RefundMethod.refundPayable:
+        return 'REFUND PAYABLE';
     }
   }
 }

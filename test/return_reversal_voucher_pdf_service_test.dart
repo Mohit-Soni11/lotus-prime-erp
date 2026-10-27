@@ -340,7 +340,7 @@ ReturnReversalState _stateFor({
       processedLineCount: 1,
       returnValue: 8653,
       dueAdjustedAmount: 0,
-      customerCreditAmount: 8653,
+      refundPayableAmount: 8653,
       status: 'POSTED',
     ),
     isLoading: false,

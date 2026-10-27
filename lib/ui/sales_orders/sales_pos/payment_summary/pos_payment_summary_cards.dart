@@ -14,10 +14,10 @@ class PosAmountPayableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isCustomerCredit = amount < 0;
+    final isRefundPayable = amount < 0;
     final accent =
-        isCustomerCredit ? SalesPosColors.success : SalesPosColors.brandGold;
-    final label = isCustomerCredit ? 'CUSTOMER CREDIT' : 'AMOUNT PAYABLE';
+        isRefundPayable ? SalesPosColors.success : SalesPosColors.brandGold;
+    final label = isRefundPayable ? 'REFUND PAYABLE' : 'AMOUNT PAYABLE';
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -40,14 +40,13 @@ class PosAmountPayableCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: SalesPosStyles.fontCaption,
                   fontWeight: FontWeight.w900,
-                  color:
-                      isCustomerCredit ? accent : SalesPosColors.bodyTextMain,
+                  color: isRefundPayable ? accent : SalesPosColors.bodyTextMain,
                   letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                '${isCustomerCredit ? '- ' : ''}Rs ${amount.abs().toStringAsFixed(2)}',
+                '${isRefundPayable ? '- ' : ''}Rs ${amount.abs().toStringAsFixed(2)}',
                 style: SalesPosStyles.grandTotalText.copyWith(color: accent),
               ),
             ],
@@ -180,8 +179,8 @@ class PosPaymentStatusCard extends StatelessWidget {
   }) {
     if (hasIncompleteDraft) return 'INVOICE NEEDS REVIEW';
     if (isSettled) return 'PAYMENT SETTLED';
-    if (isReturn && returnMethod == RefundMethod.accountCredit) {
-      return 'CUSTOMER CREDIT CREATED';
+    if (isReturn && returnMethod == RefundMethod.refundPayable) {
+      return 'REFUND PAYABLE RECORDED';
     }
     if (isReturn && returnMethod != null) {
       return 'CHANGE RETURNED VIA ${returnMethod.displayName}';

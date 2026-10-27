@@ -699,7 +699,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     var voucherNo = '';
     var returnValue = 0.0;
     var dueAdjustedAmount = 0.0;
-    var customerCreditAmount = 0.0;
+    var refundPayableAmount = 0.0;
     var makingReturnedAmount = 0.0;
 
     await _database.transaction(() async {
@@ -726,7 +726,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
                 .toDouble()
             : 0.0,
       );
-      customerCreditAmount = _roundMoney(returnValue - dueAdjustedAmount);
+      refundPayableAmount = _roundMoney(returnValue - dueAdjustedAmount);
 
       await _insertReturnVoucher(
         request: request,
@@ -734,7 +734,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         sourceType: sourceType,
         returnValue: returnValue,
         dueAdjustedAmount: dueAdjustedAmount,
-        customerCreditAmount: customerCreditAmount,
+        refundPayableAmount: refundPayableAmount,
         makingReturnedAmount: makingReturnedAmount,
         nowMs: nowMs,
       );
@@ -774,10 +774,10 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         sourceType: sourceType,
         now: now,
       );
-      await _postCustomerCreditLedger(
+      await _postRefundPayableLedger(
         request: request,
         voucherNo: voucherNo,
-        creditAmount: customerCreditAmount,
+        payableAmount: refundPayableAmount,
         now: now,
       );
     });
@@ -788,7 +788,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       processedLineCount: request.lines.length,
       returnValue: returnValue,
       dueAdjustedAmount: dueAdjustedAmount,
-      customerCreditAmount: customerCreditAmount,
+      refundPayableAmount: refundPayableAmount,
       status: 'POSTED',
     );
   }
@@ -1000,7 +1000,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     required String sourceType,
     required double returnValue,
     required double dueAdjustedAmount,
-    required double customerCreditAmount,
+    required double refundPayableAmount,
     required double makingReturnedAmount,
     required int nowMs,
   }) {
@@ -1018,7 +1018,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       'original_total_amount': request.sourceDocument.finalAmount,
       'return_value': returnValue,
       'due_adjusted_amount': dueAdjustedAmount,
-      'customer_credit_amount': customerCreditAmount,
+      'refund_payable_amount': refundPayableAmount,
       'making_returned_amount': makingReturnedAmount,
       'status': 'POSTED',
       'operator_note': operatorNote.isEmpty ? null : operatorNote,
@@ -1615,26 +1615,26 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     }
   }
 
-  Future<void> _postCustomerCreditLedger({
+  Future<void> _postRefundPayableLedger({
     required ReturnReversalProcessRequest request,
     required String voucherNo,
-    required double creditAmount,
+    required double payableAmount,
     required DateTime now,
   }) async {
     final customerId = request.sourceDocument.customerId;
-    if (creditAmount <= 0.005 || customerId == null) {
+    if (payableAmount <= 0.005 || customerId == null) {
       return;
     }
-    await _database.into(_database.customerAccountLedger).insert(
-          CustomerAccountLedgerCompanion.insert(
+    await _database.into(_database.customerRefundPayables).insert(
+          CustomerRefundPayablesCompanion.insert(
             customerId: customerId,
             entryType: 'CREDIT',
             sourceType: _operationTypeStorage(request.operationType),
             sourceReference: drift.Value(voucherNo),
-            amount: drift.Value(creditAmount),
-            paymentMode: const drift.Value('CUSTOMER_CREDIT'),
+            amount: drift.Value(payableAmount),
+            paymentMode: const drift.Value('REFUND_PAYABLE'),
             notes: drift.Value(
-              '${request.operationType.title} credit against ${request.sourceDocument.documentNo}',
+              '${request.operationType.title} refund payable for ${request.sourceDocument.documentNo}',
             ),
             entryDate: drift.Value(now),
             isVoided: const drift.Value(false),

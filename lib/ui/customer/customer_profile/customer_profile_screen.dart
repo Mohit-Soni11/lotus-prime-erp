@@ -1,22 +1,16 @@
-// -----------------------------------------------------------------------------
-// FILE: customer_profile_screen.dart
-// CHANGE LOG:
-//   - Added: Dues & Pending section (above history tabs)
-//   - Edit button now shows full-form dialog (not just name/mobile/city)
-//   - Advance card: tappable "Convert to Sale" button
-// -----------------------------------------------------------------------------
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
+import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
 import 'customer_profile_components.dart';
+import 'customer_profile_metric_cards.dart';
 import 'customer_profile_document_preview.dart';
 import 'customer_sales_invoice_pdf_builder.dart';
 import 'customer_related_document_pdf_builder.dart';
@@ -29,11 +23,13 @@ part 'customer_profile_girvi_history.dart';
 part 'customer_profile_advance_history.dart';
 part 'customer_profile_dialogs.dart';
 part 'customer_profile_record_actions.dart';
+part 'customer_profile_action_sheet.dart';
 part 'customer_profile_document_actions.dart';
 part 'customer_profile_support_widgets.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
+  final CustomerProfileRepository? repository;
   final int? initialBillId;
   final VoidCallback? onBack;
   final Function(int customerId)? onNewSale;
@@ -49,6 +45,7 @@ class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({
     super.key,
     required this.customerId,
+    this.repository,
     this.initialBillId,
     this.onBack,
     this.onNewSale,
@@ -74,22 +71,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   // Tab controller: Bills | Girvi | Advance Orders
   late final TabController _tabCtrl;
 
-  // Controller for the approved due limit.
-  final TextEditingController _dueLimitCtrl = TextEditingController();
-
-  // Kept temporarily for the legacy dialog code while the profile module is
-  // migrated in stages. The Edit action now opens AddCustomerScreen instead.
-  final TextEditingController _editNameCtrl = TextEditingController();
-  final TextEditingController _editMobileCtrl = TextEditingController();
-  final TextEditingController _editWhatsappCtrl = TextEditingController();
-  final TextEditingController _editEmailCtrl = TextEditingController();
-  final TextEditingController _editCityCtrl = TextEditingController();
-  final TextEditingController _editAddressCtrl = TextEditingController();
-  final TextEditingController _editStateCtrl = TextEditingController();
-  final TextEditingController _editPincodeCtrl = TextEditingController();
-  String _editTypeValue = "Regular";
-
   final ScrollController _scrollCtrl = ScrollController();
+  final GlobalKey _historyKey = GlobalKey();
   bool _deleteNavigationScheduled = false;
   int? _focusedInitialBillId;
 
@@ -98,6 +81,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     super.initState();
     _logic = CustomerProfileLogic(
       customerId: widget.customerId,
+      repo: widget.repository,
       onConvertAdvanceToSale: widget.onConvertAdvanceToSale,
     );
 
@@ -136,15 +120,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     _logic.dispose();
     _pageAnim.dispose();
     _tabCtrl.dispose();
-    _dueLimitCtrl.dispose();
-    _editNameCtrl.dispose();
-    _editMobileCtrl.dispose();
-    _editWhatsappCtrl.dispose();
-    _editEmailCtrl.dispose();
-    _editCityCtrl.dispose();
-    _editAddressCtrl.dispose();
-    _editStateCtrl.dispose();
-    _editPincodeCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -193,8 +168,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             const SizedBox(height: 16),
             _buildContactCard(p),
             const SizedBox(height: 16),
-            _buildAccountSnapshotCard(p),
-            const SizedBox(height: 16),
+            if (p.totalDueAmount > 0 || p.totalLoans > 0) ...[
+              _buildAccountSnapshotCard(p),
+              const SizedBox(height: 16),
+            ],
             if (p.hasDues) ...[
               _buildDuesSection(p),
               const SizedBox(height: 16),

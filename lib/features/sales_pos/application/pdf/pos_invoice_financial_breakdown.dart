@@ -163,7 +163,7 @@ class PosInvoiceFinancialBreakdown {
         ),
       PosInvoiceAmountSummaryEntry(
         label: invoice.netPayable < -posInvoiceDueEpsilon
-            ? 'Customer Credit'
+            ? 'Refund Payable'
             : 'Net Payable',
         amount: invoice.netPayable.abs(),
         isEmphasized: true,

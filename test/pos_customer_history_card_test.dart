@@ -42,7 +42,6 @@ void main() {
       type: 'Regular',
       createdAt: DateTime(2026, 9, 8),
       initials: 'RS',
-      accountCreditBalance: 134480.28,
       outstanding: 2500,
       dues: [
         CustomerDueModel(

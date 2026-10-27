@@ -13,7 +13,7 @@ enum ReturnReversalStockDisposition {
 }
 
 enum ReturnReversalSettlementMode {
-  customerCredit('CUSTOMER_CREDIT');
+  refundPayable('REFUND_PAYABLE');
 
   final String storageValue;
 
@@ -49,7 +49,7 @@ class ReturnReversalProcessRequest {
     required this.operationType,
     required this.sourceDocument,
     required this.lines,
-    this.settlementMode = ReturnReversalSettlementMode.customerCredit,
+    this.settlementMode = ReturnReversalSettlementMode.refundPayable,
     this.operatorNote = '',
   });
 }
@@ -78,7 +78,7 @@ class ReturnReversalProcessResult {
   final int processedLineCount;
   final double returnValue;
   final double dueAdjustedAmount;
-  final double customerCreditAmount;
+  final double refundPayableAmount;
   final String status;
 
   const ReturnReversalProcessResult({
@@ -87,7 +87,7 @@ class ReturnReversalProcessResult {
     required this.processedLineCount,
     required this.returnValue,
     required this.dueAdjustedAmount,
-    required this.customerCreditAmount,
+    required this.refundPayableAmount,
     required this.status,
   });
 }

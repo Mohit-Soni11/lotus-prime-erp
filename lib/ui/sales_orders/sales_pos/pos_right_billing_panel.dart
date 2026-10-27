@@ -1313,15 +1313,15 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: widget.ctrl.canReturnChangeWith(
-                    RefundMethod.accountCredit,
+                    RefundMethod.refundPayable,
                   )
                       ? () => widget.ctrl.setChangeReturnMethod(
-                            RefundMethod.accountCredit,
+                            RefundMethod.refundPayable,
                           )
                       : null,
                   icon: const Icon(SalesPosIcons.advancePayment,
                       size: 18, color: Colors.white),
-                  label: const Text("ADD TO CUSTOMER ACCOUNT",
+                  label: const Text("MARK REFUND PAYABLE",
                       style: TextStyle(
                           fontSize: SalesPosStyles.fontLabel,
                           fontWeight: FontWeight.w900,
@@ -1341,7 +1341,7 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
               if (widget.ctrl.selectedCustomer == null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  "Select a customer to keep excess payment as account credit.",
+                  "Select a customer to record a refund payable.",
                   style: TextStyle(
                     color: SalesPosColors.bodyTextMuted.withValues(alpha: 0.85),
                     fontSize: SalesPosStyles.fontCaption,

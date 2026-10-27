@@ -58,8 +58,8 @@ void main() {
             referenceType: const drift.Value('BILL'),
           ),
         );
-    await db.into(db.customerAccountLedger).insert(
-          CustomerAccountLedgerCompanion.insert(
+    await db.into(db.customerRefundPayables).insert(
+          CustomerRefundPayablesCompanion.insert(
             customerId: customerId,
             entryType: 'CREDIT',
             sourceType: 'POS_CHANGE_CREDIT',
@@ -77,7 +77,7 @@ void main() {
           ..where((tbl) => tbl.id.equals(legacyNormalBillId)))
         .getSingle();
     final cashRow = await db.select(db.cashTransactions).getSingle();
-    final accountRow = await db.select(db.customerAccountLedger).getSingle();
+    final accountRow = await db.select(db.customerRefundPayables).getSingle();
 
     expect(taxBill.billNo, 'AJ-26-001');
     expect(taxBill.billType, 'GST');

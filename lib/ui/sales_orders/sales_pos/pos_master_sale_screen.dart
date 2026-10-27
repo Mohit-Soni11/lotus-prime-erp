@@ -26,11 +26,13 @@ class PosMasterSaleScreen extends StatefulWidget {
     super.key,
     this.editBillId,
     this.convertAdvanceId,
+    this.initialCustomerId,
     this.onBack,
   });
 
   final int? editBillId;
   final int? convertAdvanceId;
+  final int? initialCustomerId;
   final VoidCallback? onBack;
 
   @override
@@ -59,6 +61,10 @@ class _PosMasterSaleScreenState extends State<PosMasterSaleScreen> {
       if (convertAdvanceId != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _loadAdvanceConversion(convertAdvanceId);
+        });
+      } else if (widget.initialCustomerId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _ctrl.selectCustomerById(widget.initialCustomerId!);
         });
       }
     }

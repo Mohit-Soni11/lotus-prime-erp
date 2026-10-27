@@ -58,15 +58,15 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get customerMobile => GoogleFonts.inter(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: CustomerProfileColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: CustomerProfileColors.bodyTextMain,
       );
 
   // Section header
   static TextStyle get sectionTitle => GoogleFonts.manrope(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
+        fontSize: 17,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMain,
       );
 
@@ -80,8 +80,8 @@ class CustomerProfileStyles {
   // Information rows
   static TextStyle get infoLabel => GoogleFonts.inter(
         fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: CustomerProfileColors.bodyTextMuted,
+        fontWeight: FontWeight.w700,
+        color: CustomerProfileColors.bodyTextMain,
       );
 
   static TextStyle get infoValue => GoogleFonts.manrope(
@@ -100,7 +100,8 @@ class CustomerProfileStyles {
 
   static TextStyle get snapshotLabel => GoogleFonts.inter(
         fontSize: 13.5,
-        color: CustomerProfileColors.bodyTextMuted,
+        fontWeight: FontWeight.w700,
+        color: CustomerProfileColors.bodyTextMain,
       );
 
   static TextStyle get snapshotMeta => GoogleFonts.inter(
@@ -126,12 +127,13 @@ class CustomerProfileStyles {
   static TextStyle get billAmount => GoogleFonts.manrope(
         fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: CustomerProfileColors.brandGold,
+        color: CustomerProfileColors.bodyTextMain,
       );
 
   static TextStyle get billDate => GoogleFonts.inter(
         fontSize: 13.5,
-        color: CustomerProfileColors.bodyTextMuted,
+        fontWeight: FontWeight.w700,
+        color: CustomerProfileColors.bodyTextMain,
       );
 
   // Decorations

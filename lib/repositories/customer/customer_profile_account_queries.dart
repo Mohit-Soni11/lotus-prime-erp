@@ -7,26 +7,31 @@ mixin _CustomerProfileAccountQueries {
   ) async {
     try {
       final orderRows = await (_db.select(_db.salesOrders)
-            ..where(
-              (t) =>
-                  t.customerId.equals(customerId) &
-                  (t.status.equals('PENDING') | t.status.equals('READY')),
-            )
+            ..where((t) => t.customerId.equals(customerId))
             ..orderBy([
               (t) =>
                   OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)
             ]))
           .get();
 
+      final ids = orderRows.map((order) => order.id).toList(growable: false);
+      final advances = ids.isEmpty
+          ? const <OrderAdvance>[]
+          : await (_db.select(_db.orderAdvances)
+                ..where((row) => row.orderId.isIn(ids)))
+              .get();
+      final paidByOrder = <int, double>{};
+      for (final advance in advances) {
+        paidByOrder.update(
+          advance.orderId,
+          (total) => total + advance.amountPaid,
+          ifAbsent: () => advance.amountPaid,
+        );
+      }
+
       final List<CustomerAdvanceOrderModel> result = [];
-
       for (final order in orderRows) {
-        final advances = await (_db.select(_db.orderAdvances)
-              ..where((t) => t.orderId.equals(order.id)))
-            .get();
-
-        final totalAdvancePaid =
-            advances.fold(0.0, (sum, advance) => sum + advance.amountPaid);
+        final totalAdvancePaid = paidByOrder[order.id] ?? 0;
 
         final estimatedTotal = order.bookingType == 'LOCKED'
             ? order.approxWeight * order.lockedRate
@@ -55,27 +60,6 @@ mixin _CustomerProfileAccountQueries {
       return result;
     } catch (e) {
       AppLogger.error("Customer advance orders fetch error: $e");
-      rethrow;
-    }
-  }
-
-  Future<double> _fetchCustomerAccountCreditBalance(int customerId) async {
-    try {
-      final rows = await (_db.select(_db.customerAccountLedger)
-            ..where(
-              (t) => t.customerId.equals(customerId) & t.isVoided.equals(false),
-            ))
-          .get();
-
-      return rows.fold<double>(0.0, (sum, entry) {
-        final amount = entry.amount;
-        if (entry.entryType.toUpperCase() == 'DEBIT') {
-          return sum - amount;
-        }
-        return sum + amount;
-      });
-    } catch (e) {
-      AppLogger.error("Customer account credit fetch error: $e");
       rethrow;
     }
   }

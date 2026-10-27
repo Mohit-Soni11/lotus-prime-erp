@@ -19,7 +19,6 @@ extension _CustomerFormInitialization on _AddCustomerScreenState {
     _cityCtrl.text = form.city;
     _pincodeCtrl.text = form.pincode;
     _openBalCtrl.text = _numberText(form.openingBalance);
-    _creditLimCtrl.text = _numberText(form.creditLimit);
     _memberIdCtrl.text = form.membershipId;
     _notesCtrl.text = form.notes;
     _selectedCountry = form.country.trim().isEmpty ? 'India' : form.country;

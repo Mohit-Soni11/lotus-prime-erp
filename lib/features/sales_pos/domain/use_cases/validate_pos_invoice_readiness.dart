@@ -101,7 +101,7 @@ class PosInvoiceReadinessValidator {
         return 'Settle the excess amount before generating the invoice.';
       }
       if (!input.hasConfirmedChangeReturn) {
-        return 'Select or create a customer before adding excess amount to customer account.';
+        return 'Select or create a customer before recording a refund payable.';
       }
     }
 

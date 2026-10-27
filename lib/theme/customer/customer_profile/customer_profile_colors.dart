@@ -19,8 +19,8 @@ class CustomerProfileColors {
   static const Color bodyBg = Color(0xFFF9F6F0);
   static const Color bodyPanelBg = Color(0xFFFFFFFF);
   static const Color bodyBorder = Color(0xFFE8E3DA);
-  static const Color bodyTextMain = Color(0xFF1E293B);
-  static const Color bodyTextMuted = Color(0xFF64748B);
+  static const Color bodyTextMain = Color(0xFF111111);
+  static const Color bodyTextMuted = Color(0xFF111111);
 
   // Brand
   static const Color brandGold = Color(0xFFD4AF37);
@@ -39,10 +39,9 @@ class CustomerProfileColors {
   static const Color dueBorder = Color(0xFFFCD34D);
   static const Color dueIcon = Color(0xFFF59E0B);
 
-  static const Color defaulterBg = Color(0xFFFEE2E2);
-  static const Color defaulterText = Color(0xFF991B1B);
-  static const Color defaulterBorder = Color(0xFFFCA5A5);
-  static const Color defaulterIcon = Color(0xFFEF4444);
+  static const Color cancelledBg = Color(0xFFFEE2E2);
+  static const Color cancelledText = Color(0xFF991B1B);
+  static const Color cancelledBorder = Color(0xFFFCA5A5);
 
   // Customer type
   static const Color vipBg = Color(0xFFFFF8E1);
@@ -70,12 +69,6 @@ class CustomerProfileColors {
   static const Color paidText = Color(0xFF065F46);
   static const Color unpaidBg = Color(0xFFFEE2E2);
   static const Color unpaidText = Color(0xFF991B1B);
-
-  // Due limit bar
-  static const Color progressTrack = Color(0xFFE8E3DA);
-  static const Color progressSafe = Color(0xFF10B981);
-  static const Color progressWarn = Color(0xFFF59E0B);
-  static const Color progressDanger = Color(0xFFEF4444);
 
   static const Color onlineGreen = Color(0xFF00E676);
   static const Color shadowLight = Color(0x0F000000);

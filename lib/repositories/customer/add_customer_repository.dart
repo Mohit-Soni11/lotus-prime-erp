@@ -77,7 +77,6 @@ class AddCustomerRepository {
         city: customer.city ?? '',
         pincode: customer.pincode ?? '',
         openingBalance: customer.openingBalance,
-        creditLimit: customer.creditLimit,
         customerTier: customerTier,
         membershipId: customer.membershipId ?? '',
         ringSize: _optionalEnum(
@@ -201,7 +200,6 @@ class AddCustomerRepository {
       state: drift.Value(_nullable(form.state)),
       pincode: drift.Value(_nullable(form.pincode)),
       openingBalance: drift.Value(form.openingBalance),
-      creditLimit: drift.Value(form.creditLimit),
       customerTier: drift.Value(form.customerTier.label),
       membershipId: drift.Value(_nullable(form.membershipId)),
       ringSize: drift.Value(form.ringSize?.label),

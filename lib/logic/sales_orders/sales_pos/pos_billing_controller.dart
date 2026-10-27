@@ -1614,7 +1614,7 @@ class PosBillingController extends ChangeNotifier {
 
   bool canReturnChangeWith(RefundMethod method) {
     if (!hasChangeReturn) return false;
-    if (method == RefundMethod.accountCredit) {
+    if (method == RefundMethod.refundPayable) {
       return selectedCustomer != null;
     }
     return true;
@@ -2109,6 +2109,9 @@ class PosBillingController extends ChangeNotifier {
     }
     await _holdRepo.saveHeldBills(heldBills);
   }
+
+  Future<void> selectCustomerById(int customerId) =>
+      _restoreSelectedCustomer(customerId);
 
   Future<void> _restoreSelectedCustomer(
     int? customerId, {

@@ -209,7 +209,7 @@ class CustomerLinkedDocumentModel {
   final double returnValue;
   final double makingReturnedAmount;
   final double dueAdjustedAmount;
-  final double customerCreditAmount;
+  final double refundPayableAmount;
 
   const CustomerLinkedDocumentModel({
     required this.id,
@@ -224,7 +224,7 @@ class CustomerLinkedDocumentModel {
     this.returnValue = 0,
     this.makingReturnedAmount = 0,
     this.dueAdjustedAmount = 0,
-    this.customerCreditAmount = 0,
+    this.refundPayableAmount = 0,
   });
 
   String get normalizedOperation => operationType.trim().toUpperCase();
@@ -255,8 +255,8 @@ class CustomerLinkedDocumentModel {
       "\u20B9 ${makingReturnedAmount.toStringAsFixed(2)}";
   String get formattedDueAdjusted =>
       "\u20B9 ${dueAdjustedAmount.toStringAsFixed(2)}";
-  String get formattedCustomerCredit =>
-      "\u20B9 ${customerCreditAmount.toStringAsFixed(2)}";
+  String get formattedRefundPayable =>
+      "\u20B9 ${refundPayableAmount.toStringAsFixed(2)}";
 
   String get formattedDate {
     const months = [

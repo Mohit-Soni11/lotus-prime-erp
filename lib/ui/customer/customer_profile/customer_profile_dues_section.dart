@@ -21,15 +21,21 @@ extension _ProfileDuesSection on _CustomerProfileScreenState {
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Row(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _sectionHeader(
                   icon: CustomerProfileIcons.duesSection,
                   title: CustomerProfileStrings.secDues,
                   color: CustomerProfileColors.duesSectionAccent,
                 ),
-                const Spacer(),
-                // Total due badge
+                Text('${p.dues.length} due invoices',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: CustomerProfileColors.bodyTextMain)),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -48,11 +54,11 @@ extension _ProfileDuesSection on _CustomerProfileScreenState {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        "Total Due: \u20B9${_fmt(p.totalDueAmount)}",
+                        "Total Due: ₹${_fmt(p.totalDueAmount)}",
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.w800,
-                          color: CustomerProfileColors.dueTotalText,
+                          color: CustomerProfileColors.bodyTextMain,
                         ),
                       ),
                     ],
@@ -69,30 +75,20 @@ extension _ProfileDuesSection on _CustomerProfileScreenState {
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(12),
             itemCount: p.dues.length,
-            itemBuilder: (_, i) => _buildDueRow(p.dues[i]),
+            itemBuilder: (_, i) => _buildDueRow(p.dues[i],
+                p.bills.firstWhere((bill) => bill.id == p.dues[i].billId)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDueRow(CustomerDueModel due) {
+  Widget _buildDueRow(CustomerDueModel due, CustomerBillModel bill) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () => _showBillActions(
-          CustomerBillModel(
-            id: due.billId,
-            billNo: due.billNo,
-            totalAmount: due.totalAmount,
-            paidAmount: due.paidAmount,
-            status: due.paidAmount > 0 ? 'PARTIAL' : 'UNPAID',
-            billDate: due.billDate,
-            sourceAdvanceOrderId: due.sourceAdvanceOrderId,
-            sourceAdvanceOrderNo: due.sourceAdvanceOrderNo,
-          ),
-        ),
+        onTap: () => _showBillActions(bill),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -133,8 +129,9 @@ extension _ProfileDuesSection on _CustomerProfileScreenState {
                     Text(
                       "${due.formattedDate} | Open invoice actions",
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: CustomerProfileColors.bodyTextMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: CustomerProfileColors.bodyTextMain,
                       ),
                     ),
                   ],
@@ -148,7 +145,7 @@ extension _ProfileDuesSection on _CustomerProfileScreenState {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: CustomerProfileColors.duesAmount,
+                      color: CustomerProfileColors.bodyTextMain,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -162,7 +159,7 @@ extension _ProfileDuesSection on _CustomerProfileScreenState {
                     child: const Text(
                       "PENDING",
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: CustomerProfileColors.dueText,
                       ),

@@ -1047,7 +1047,7 @@ class PrintTemplatePreviewPdfService {
       default:
         return const [
           'Original bill is required for service, exchange or return workflow.',
-          'Payment breakup, due amount and customer credit will print from the actual invoice ledger.',
+          'Payment breakup, due amount and refunds will print from the actual invoice ledger.',
           'Terms, return policy and footer text will follow sales billing setup.',
         ];
     }

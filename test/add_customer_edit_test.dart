@@ -27,7 +27,6 @@ void main() {
       state: 'Bihar',
       city: 'Gaya',
       pincode: '823001',
-      creditLimit: 50000,
       customerTier: CustomerTier.gold,
       membershipId: 'LTMP-202606-0001',
       ringSize: RingSize.size12,
@@ -49,7 +48,6 @@ void main() {
     final updated = loaded.copyWith(
       firstName: 'Aman Raj',
       city: 'Patna',
-      creditLimit: 75000,
       customerTier: CustomerTier.vip,
       notes: 'Updated from customer profile',
     );
@@ -63,7 +61,6 @@ void main() {
     expect(rows.single.name, 'Aman Raj Kumar');
     expect(rows.single.mobile, '9876543210');
     expect(rows.single.city, 'Patna');
-    expect(rows.single.creditLimit, 75000);
     expect(rows.single.customerTier, 'VIP');
     expect(rows.single.notes, 'Updated from customer profile');
   });

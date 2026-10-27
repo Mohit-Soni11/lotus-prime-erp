@@ -227,7 +227,6 @@ enum ActiveField {
   addressLine2,
   pincode,
   openingBalance,
-  creditLimit,
   membershipId,
   notes,
 }

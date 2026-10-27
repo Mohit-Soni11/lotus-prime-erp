@@ -3,22 +3,33 @@ part of 'customer_profile_screen.dart';
 extension _ProfileBillHistory on _CustomerProfileScreenState {
   Widget _buildHistoryTabs(CustomerProfileModel p) {
     return Container(
+      key: _historyKey,
       decoration: CustomerProfileStyles.cardDecoration,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 16, 18, 10),
+            child: Text('Transaction History',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: CustomerProfileColors.bodyTextMain)),
+          ),
           Container(
-            color: CustomerProfileColors.bodyBg,
+            color: CustomerProfileColors.bodyPanelBg,
             child: TabBar(
               controller: _tabCtrl,
-              labelColor: CustomerProfileColors.brandGold,
-              unselectedLabelColor: CustomerProfileColors.bodyTextMuted,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelColor: CustomerProfileColors.bodyTextMain,
+              unselectedLabelColor: CustomerProfileColors.bodyTextMain,
               indicatorColor: CustomerProfileColors.brandGold,
               indicatorWeight: 3,
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize: 12,
+                fontSize: 14,
               ),
               tabs: [
                 Tab(
@@ -27,7 +38,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
                     children: [
                       const Icon(CustomerProfileIcons.invoice, size: 15),
                       const SizedBox(width: 5),
-                      Text("Bills (${p.totalBills})"),
+                      Text("Sales Bills (${p.totalBills})"),
                     ],
                   ),
                 ),
@@ -37,7 +48,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
                     children: [
                       const Icon(Icons.lock_outline_rounded, size: 15),
                       const SizedBox(width: 5),
-                      Text("Girvi (${p.totalLoans})"),
+                      Text("Girvi Tickets (${p.totalLoans})"),
                     ],
                   ),
                 ),
@@ -47,7 +58,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
                     children: [
                       const Icon(CustomerProfileIcons.advanceOrder, size: 15),
                       const SizedBox(width: 5),
-                      Text("Advance (${p.advanceOrders.length})"),
+                      Text("Advance Orders (${p.advanceOrders.length})"),
                     ],
                   ),
                 ),
@@ -55,7 +66,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
             ),
           ),
           SizedBox(
-            height: 420,
+            height: 480,
             child: TabBarView(
               controller: _tabCtrl,
               children: [
@@ -142,9 +153,9 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
                     Text(
                       "Paid ${bill.formattedPaidAmount} | Due ${bill.formattedDueAmount}",
                       style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: CustomerProfileColors.bodyTextMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: CustomerProfileColors.bodyTextMain,
                       ),
                     ),
                     if (bill.isFromAdvanceOrder) ...[
@@ -266,7 +277,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w900,
               color: CustomerProfileColors.bodyTextMain,
               letterSpacing: 0,

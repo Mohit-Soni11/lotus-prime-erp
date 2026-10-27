@@ -641,8 +641,8 @@ class ContactRecoveryController extends ChangeNotifier {
         }
 
         if (surplus > 0) {
-          await _db.into(_db.customerAccountLedger).insert(
-                CustomerAccountLedgerCompanion.insert(
+          await _db.into(_db.customerRefundPayables).insert(
+                CustomerRefundPayablesCompanion.insert(
                   customerId: item.loan.customerId,
                   entryType: 'CREDIT',
                   sourceType: 'GIRVI_RECOVERY_SURPLUS',

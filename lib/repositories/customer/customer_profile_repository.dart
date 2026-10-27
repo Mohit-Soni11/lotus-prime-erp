@@ -155,27 +155,14 @@ class CustomerProfileRepository
             status: loan.status,
           ),
         for (final loan in girviRows)
-          loan.ticketNo: CustomerLoanModel(
-            id: loan.id,
-            loanNo: loan.ticketNo,
-            itemDesc: loan.itemDescription,
-            grossWeight: loan.grossWeight,
-            loanAmount: loan.loanAmount,
-            interestRate: loan.interestRate,
-            startDate: loan.startDate,
-            lastInterestPaidDate: loan.lastInterestPaidDate,
-            status: loan.status,
-            recordedInterestOutstanding: _girviInterestOutstanding(
-              loan,
-              paymentsByLoan[loan.id] ?? const <GirviPayment>[],
-            ),
+          loan.ticketNo: _projectGirviLoan(
+            loan,
+            paymentsByLoan[loan.id] ?? const <GirviPayment>[],
           ),
       };
       final loans = loansByNumber.values.toList()..sort(_compareCustomerLoans);
 
       final advanceOrders = await _fetchAdvanceOrders(customerId);
-      final accountCreditBalance =
-          await _fetchCustomerAccountCreditBalance(customerId);
       final dues = _buildDues(bills);
 
       return CustomerProfileModel(
@@ -184,12 +171,15 @@ class CustomerProfileRepository
         mobile: CustomerContactValue.displayMobile(cust.mobile),
         whatsapp: cust.whatsapp ?? "",
         city: cust.city ?? "",
+        addressLine1: cust.addressLine1 ?? '',
+        addressLine2: cust.addressLine2 ?? '',
+        state: cust.state ?? '',
+        pincode: cust.pincode ?? '',
+        country: cust.country,
         type: cust.type,
         gender: CustomerGender.fromStored(cust.gender),
         createdAt: cust.createdAt,
-        creditLimit: cust.creditLimit,
         outstanding: outstanding,
-        accountCreditBalance: accountCreditBalance,
         bills: bills,
         loans: loans,
         advanceOrders: advanceOrders,
@@ -204,6 +194,42 @@ class CustomerProfileRepository
       );
       rethrow;
     }
+  }
+
+  CustomerLoanModel _projectGirviLoan(
+    GirviLoan loan,
+    List<GirviPayment> payments,
+  ) {
+    var legacyPrincipalRepaid = 0.0;
+    var releasePrincipalSettled = 0.0;
+    for (final payment in payments) {
+      final type = GirviPaymentType.fromDb(payment.paymentType);
+      if (type == GirviPaymentType.partialPrincipal) {
+        legacyPrincipalRepaid += payment.amount;
+      } else if (type == GirviPaymentType.interest ||
+          type == GirviPaymentType.partialInterest) {
+        legacyPrincipalRepaid += payment.principalComponent;
+      } else if (type == GirviPaymentType.fullRelease) {
+        releasePrincipalSettled +=
+            payment.principalComponent + payment.principalDiscountComponent;
+      }
+    }
+    return CustomerLoanModel(
+      id: loan.id,
+      loanNo: loan.ticketNo,
+      itemDesc: loan.itemDescription,
+      grossWeight: loan.grossWeight,
+      loanAmount: loan.loanAmount,
+      originalPrincipalAmount: loan.loanAmount + legacyPrincipalRepaid,
+      principalOutstandingAmount: (loan.loanAmount - releasePrincipalSettled)
+          .clamp(0.0, double.infinity)
+          .toDouble(),
+      interestRate: loan.interestRate,
+      startDate: loan.startDate,
+      lastInterestPaidDate: loan.lastInterestPaidDate,
+      status: loan.status,
+      recordedInterestOutstanding: _girviInterestOutstanding(loan, payments),
+    );
   }
 
   int _compareCustomerLoans(CustomerLoanModel a, CustomerLoanModel b) {
@@ -224,89 +250,6 @@ class CustomerProfileRepository
     return int.tryParse(match?.group(1) ?? '') ?? 0;
   }
 
-  Future<bool> updateCustomer({
-    required int customerId,
-    required String name,
-    required String mobile,
-    required String city,
-    required String type,
-    String? whatsapp,
-    String? email,
-    String? addressLine1,
-    String? state,
-    String? pincode,
-  }) async {
-    try {
-      final cleanMobile = mobile.replaceAll(RegExp(r'[^0-9]'), '');
-      var storageMobile = CustomerContactValue.storageMobile(cleanMobile);
-
-      if (cleanMobile.isNotEmpty) {
-        final duplicate = await (_db.select(_db.customers)
-              ..where((row) =>
-                  row.mobile.equals(cleanMobile) &
-                  row.id.equals(customerId).not())
-              ..limit(1))
-            .getSingleOrNull();
-        if (duplicate != null) return false;
-      } else {
-        final existing = await (_db.select(_db.customers)
-              ..where((row) => row.id.equals(customerId))
-              ..limit(1))
-            .getSingleOrNull();
-        if (existing != null &&
-            CustomerContactValue.isInternalWalkInKey(existing.mobile)) {
-          storageMobile = existing.mobile;
-        }
-      }
-
-      await (_db.update(_db.customers)..where((t) => t.id.equals(customerId)))
-          .write(
-        CustomersCompanion(
-          name: Value(name.trim()),
-          mobile: Value(storageMobile),
-          city: Value(city.trim().isEmpty ? null : city.trim()),
-          type: Value(type),
-          whatsapp: whatsapp != null
-              ? Value(whatsapp.trim().isEmpty ? null : whatsapp.trim())
-              : const Value.absent(),
-          email: email != null
-              ? Value(email.trim().isEmpty ? null : email.trim())
-              : const Value.absent(),
-          addressLine1: addressLine1 != null
-              ? Value(addressLine1.trim().isEmpty ? null : addressLine1.trim())
-              : const Value.absent(),
-          state: state != null
-              ? Value(state.trim().isEmpty ? null : state.trim())
-              : const Value.absent(),
-          pincode: pincode != null
-              ? Value(pincode.trim().isEmpty ? null : pincode.trim())
-              : const Value.absent(),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
-      return true;
-    } catch (e) {
-      AppLogger.error("Customer update error: $e");
-      return false;
-    }
-  }
-
-  Future<bool> saveCreditLimit(int customerId, double limit) async {
-    try {
-      await (_db.update(_db.customers)..where((t) => t.id.equals(customerId)))
-          .write(
-        CustomersCompanion(
-          creditLimit: Value(limit),
-          updatedAt: Value(DateTime.now()),
-        ),
-      );
-      return true;
-    } catch (e) {
-      AppLogger.error("Customer credit limit save error: $e");
-      return false;
-    }
-  }
-
   Future<CustomerDeleteResult> deleteCustomer(int customerId) async {
     try {
       final blockers = <String>[];
@@ -315,8 +258,8 @@ class CustomerProfileRepository
       final legacyLoanCount = await _countCustomerRows('loans', customerId);
       final salesOrderCount =
           await _countCustomerRows('sales_orders', customerId);
-      final accountLedgerCount =
-          await _countCustomerRows('customer_account_ledger', customerId);
+      final refundPayableCount =
+          await _countCustomerRows('customer_refund_payables', customerId);
 
       if (billCount > 0) {
         blockers.add('$billCount sales invoice${billCount == 1 ? '' : 's'}');
@@ -330,9 +273,9 @@ class CustomerProfileRepository
           '$salesOrderCount advance order${salesOrderCount == 1 ? '' : 's'}',
         );
       }
-      if (accountLedgerCount > 0) {
+      if (refundPayableCount > 0) {
         blockers.add(
-          '$accountLedgerCount account ledger entr${accountLedgerCount == 1 ? 'y' : 'ies'}',
+          '$refundPayableCount refund payable entr${refundPayableCount == 1 ? 'y' : 'ies'}',
         );
       }
 

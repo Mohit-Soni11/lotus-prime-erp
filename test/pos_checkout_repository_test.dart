@@ -627,7 +627,7 @@ void main() {
   );
 
   test(
-    'finalizeSale keeps excess payment as customer account credit',
+    'finalizeSale keeps excess payment as customer refund payable',
     () async {
       final customerId = await _insertCustomer(db);
       final saleItem = _manualSaleItem(grossWeight: 10, rate: 100);
@@ -637,7 +637,7 @@ void main() {
         customerName: 'Reyansh Soni',
         customerMobile: '9304479436',
         cashPaid: 1000,
-        changeSettlementMethod: pos.RefundMethod.accountCredit,
+        changeSettlementMethod: pos.RefundMethod.refundPayable,
         changeSettlementAmount: 25,
         changeSettlementPaymentMode: pos.PaymentMode.cash,
       );
@@ -650,20 +650,20 @@ void main() {
       final bill = await (db.select(db.bills)
             ..where((tbl) => tbl.id.equals(result.billId)))
           .getSingle();
-      final customerCredits = await db.select(db.customerAccountLedger).get();
+      final refundPayables = await db.select(db.customerRefundPayables).get();
       final cashRows = await db.select(db.cashTransactions).get();
 
       expect(bill.finalAmount, 1000);
       expect(bill.paidAmount, 1000);
       expect(bill.paymentStatus, 'PAID');
-      expect(customerCredits, hasLength(1));
-      expect(customerCredits.single.customerId, customerId);
-      expect(customerCredits.single.entryType, 'CREDIT');
-      expect(customerCredits.single.sourceType, 'POS_CHANGE_CREDIT');
-      expect(customerCredits.single.sourceReference,
-          '${result.invoiceNumber}#ACCOUNT_CREDIT');
-      expect(customerCredits.single.amount, 25);
-      expect(customerCredits.single.isVoided, isFalse);
+      expect(refundPayables, hasLength(1));
+      expect(refundPayables.single.customerId, customerId);
+      expect(refundPayables.single.entryType, 'CREDIT');
+      expect(refundPayables.single.sourceType, 'POS_REFUND_PAYABLE');
+      expect(refundPayables.single.sourceReference,
+          '${result.invoiceNumber}#REFUND_PAYABLE');
+      expect(refundPayables.single.amount, 25);
+      expect(refundPayables.single.isVoided, isFalse);
 
       expect(cashRows, hasLength(2));
       final saleCash = cashRows.singleWhere(
@@ -671,7 +671,7 @@ void main() {
       );
       final creditCash = cashRows.singleWhere(
         (row) =>
-            row.referenceId == '${result.invoiceNumber}#ACCOUNT_CREDIT#CASH',
+            row.referenceId == '${result.invoiceNumber}#REFUND_PAYABLE#CASH',
       );
       expect(saleCash.amount, 1000);
       expect(saleCash.category, cash_book.IncomeCategory.sale.dbValue);
@@ -680,7 +680,7 @@ void main() {
         creditCash.category,
         cash_book.IncomeCategory.advanceBooking.dbValue,
       );
-      expect(creditCash.referenceType, 'CUSTOMER_ACCOUNT');
+      expect(creditCash.referenceType, 'CUSTOMER_REFUND_PAYABLE');
 
       _disposeItems(saleItems: [saleItem]);
     },
@@ -1205,7 +1205,7 @@ void main() {
   );
 
   test(
-    'updateSale voids previous customer account credit when excess is removed',
+    'updateSale voids previous customer refund payable when excess is removed',
     () async {
       final customerId = await _insertCustomer(db);
       final saleItem = _manualSaleItem(grossWeight: 10, rate: 100);
@@ -1215,7 +1215,7 @@ void main() {
         customerName: 'Reyansh Soni',
         customerMobile: '9304479436',
         cashPaid: 1000,
-        changeSettlementMethod: pos.RefundMethod.accountCredit,
+        changeSettlementMethod: pos.RefundMethod.refundPayable,
         changeSettlementAmount: 30,
         changeSettlementPaymentMode: pos.PaymentMode.cash,
       );
@@ -1239,12 +1239,12 @@ void main() {
         customerId: customerId,
       );
 
-      final credits = await db.select(db.customerAccountLedger).get();
+      final credits = await db.select(db.customerRefundPayables).get();
       final creditCashRows = (await db.select(db.cashTransactions).get())
           .where(
             (row) =>
                 row.referenceId ==
-                '${result.invoiceNumber}#ACCOUNT_CREDIT#CASH',
+                '${result.invoiceNumber}#REFUND_PAYABLE#CASH',
           )
           .toList();
 

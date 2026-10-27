@@ -74,7 +74,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _cityCtrl = TextEditingController();
   final _pincodeCtrl = TextEditingController();
   final _openBalCtrl = TextEditingController(text: '0');
-  final _creditLimCtrl = TextEditingController(text: '0');
   final _memberIdCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
@@ -93,6 +92,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _addr2Focus = FocusNode();
   final _cityFocus = FocusNode();
   final _pincodeFocus = FocusNode();
+  final _openBalFocus = FocusNode();
   final _notesFocus = FocusNode();
 
   String? _selectedCountry = 'India';
@@ -198,7 +198,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _cityCtrl,
       _pincodeCtrl,
       _openBalCtrl,
-      _creditLimCtrl,
       _memberIdCtrl,
       _notesCtrl,
     ]) {
@@ -220,6 +219,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _addr2Focus,
       _cityFocus,
       _pincodeFocus,
+      _openBalFocus,
       _notesFocus,
     ]) {
       f.dispose();
@@ -327,7 +327,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     }
     _whatsappCtrl.clear();
     _openBalCtrl.text = '0';
-    _creditLimCtrl.text = '0';
     setState(() {
       _selectedCountry = 'India';
       _selectedState = null;
@@ -435,7 +434,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                               _buildSection(
                                 icon: Icons.account_balance_wallet_rounded,
                                 title: 'Account & Billing',
-                                subtitle: 'Credit limit, tier & membership',
+                                subtitle:
+                                    'Opening balance, category & membership',
                                 accent: const Color(0xFF7C3AED),
                                 stepNumber: 5,
                                 child: _buildBillingSection(),

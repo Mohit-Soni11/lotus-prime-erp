@@ -198,7 +198,7 @@ void main() {
     expect(result.status, 'POSTED');
     expect(result.returnValue, 10500);
     expect(result.dueAdjustedAmount, 2000);
-    expect(result.customerCreditAmount, 8500);
+    expect(result.refundPayableAmount, 8500);
 
     final bill = await (database.select(database.bills)
           ..where((table) => table.billNo.equals('INV-RET-0001')))
@@ -215,7 +215,7 @@ void main() {
     expect(unitRow.readNullable<int>('sold_at'), isNull);
 
     final movementCount = await _countRows(database, 'stock_movements');
-    final ledgerCount = await _countRows(database, 'customer_account_ledger');
+    final ledgerCount = await _countRows(database, 'customer_refund_payables');
     expect(movementCount, 1);
     expect(ledgerCount, 1);
 
@@ -343,7 +343,7 @@ void main() {
     expect(result.status, 'POSTED');
     expect(result.returnValue, 3000);
     expect(result.dueAdjustedAmount, 0);
-    expect(result.customerCreditAmount, 3000);
+    expect(result.refundPayableAmount, 3000);
 
     final order = await (database.select(database.salesOrders)
           ..where((table) => table.orderNo.equals('BK-RET-0001')))
@@ -361,7 +361,7 @@ void main() {
     expect(returnLine.read<double>('received_net_weight'), 0);
     expect(returnLine.read<double>('line_return_value'), 3000);
     expect(await _countRows(database, 'stock_movements'), 0);
-    expect(await _countRows(database, 'customer_account_ledger'), 1);
+    expect(await _countRows(database, 'customer_refund_payables'), 1);
   });
 
   test('customer purchase lookup shows posted reversal status', () async {

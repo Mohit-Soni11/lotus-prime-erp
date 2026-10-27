@@ -23,7 +23,6 @@ class AppRoutes {
   static const String customerListRoute = '/customer/list';
   static const String addCustomerRoute = '/customer/add';
   static const String customerProfileRoute = '/customer/profile';
-  static const String creditLimitRoute = '/customer/credit-limit';
   static const String defaulterListRoute = '/customer/defaulters';
 
   // Supplier
@@ -85,7 +84,6 @@ class AppRoutes {
     customerListRoute: 'Customer List',
     addCustomerRoute: 'Add New Customer',
     customerProfileRoute: 'Customer Profile',
-    creditLimitRoute: 'Set Credit Limits',
     defaulterListRoute: 'Risk & Collections',
     supplierListRoute: 'Supplier List',
     addSupplierRoute: 'Add New Supplier',
@@ -148,7 +146,6 @@ class RoutePaths {
   static const String customerAdd = '/app/customer/add';
   static const String customerProfileBase = '/app/customer/profile';
   static const String customerProfile = '$customerProfileBase/:id';
-  static const String customerCreditLimit = '/app/customer/credit-limit';
   static const String customerDefaulters = '/app/customer/defaulters';
 
   // Supplier
@@ -238,7 +235,6 @@ class RouteMapper {
     AppRoutes.metalCostAnalyserRoute: RoutePaths.settingsMetalCostAnalyser,
     AppRoutes.customerListRoute: RoutePaths.customerList,
     AppRoutes.addCustomerRoute: RoutePaths.customerAdd,
-    AppRoutes.creditLimitRoute: RoutePaths.customerCreditLimit,
     AppRoutes.defaulterListRoute: RoutePaths.customerDefaulters,
     AppRoutes.supplierListRoute: RoutePaths.supplierList,
     AppRoutes.addSupplierRoute: RoutePaths.supplierAdd,

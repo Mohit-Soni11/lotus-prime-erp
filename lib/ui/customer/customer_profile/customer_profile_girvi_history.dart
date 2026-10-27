@@ -71,7 +71,8 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
                               color: CustomerProfileColors.bodyTextMuted,
                             )),
                       ],
@@ -86,10 +87,10 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
                     ),
                     child: Text(
                       loan.statusLabel,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: statusColor,
+                        color: CustomerProfileColors.bodyTextMain,
                       ),
                     ),
                   ),

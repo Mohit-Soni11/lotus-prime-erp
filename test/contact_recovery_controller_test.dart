@@ -727,7 +727,7 @@ void main() {
       expect(cashEntries, hasLength(1));
       expect(cashEntries.single.amount, 22000);
       expect(cashEntries.single.referenceType, 'GIRVI_RECOVERY');
-      final ledgerEntries = await db.select(db.customerAccountLedger).get();
+      final ledgerEntries = await db.select(db.customerRefundPayables).get();
       expect(ledgerEntries, hasLength(1));
       expect(ledgerEntries.single.entryType, 'CREDIT');
       expect(ledgerEntries.single.amount, 2000);
@@ -880,7 +880,7 @@ void main() {
       expect(closed, isTrue);
       expect(await db.select(db.cashTransactions).get(), isEmpty);
       expect(await db.select(db.bankTransactions).get(), isEmpty);
-      expect(await db.select(db.customerAccountLedger).get(), isEmpty);
+      expect(await db.select(db.customerRefundPayables).get(), isEmpty);
       final savedLoan = await (db.select(db.girviLoans)
             ..where((row) => row.id.equals(loanId)))
           .getSingle();

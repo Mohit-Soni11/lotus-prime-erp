@@ -3,11 +3,11 @@ import 'package:drift/drift.dart';
 import 'base_table.dart';
 import 'customers.dart';
 
-@DataClassName('CustomerAccountEntry')
-@TableIndex(name: 'idx_customer_account_customer', columns: {#customerId})
-@TableIndex(name: 'idx_customer_account_reference', columns: {#sourceReference})
-@TableIndex(name: 'idx_customer_account_date', columns: {#entryDate})
-class CustomerAccountLedger extends Table with BaseTable {
+@DataClassName('CustomerRefundPayableEntry')
+@TableIndex(name: 'idx_customer_refund_customer', columns: {#customerId})
+@TableIndex(name: 'idx_customer_refund_reference', columns: {#sourceReference})
+@TableIndex(name: 'idx_customer_refund_date', columns: {#entryDate})
+class CustomerRefundPayables extends Table with BaseTable {
   IntColumn get customerId =>
       integer().references(Customers, #id, onDelete: KeyAction.restrict)();
 

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'customer_profile_enums.dart';
 import 'customer_bill_models.dart';
 import 'customer_activity_models.dart';
+import '../customer_enums/customer_list_enums.dart';
+import '../../../features/customer/domain/services/customer_address_formatter.dart';
 
 @immutable
 class CustomerProfileModel {
@@ -11,12 +13,15 @@ class CustomerProfileModel {
   final String mobile;
   final String whatsapp;
   final String city;
+  final String addressLine1;
+  final String addressLine2;
+  final String state;
+  final String pincode;
+  final String country;
   final String type;
   final CustomerGender gender;
   final DateTime createdAt;
-  final double creditLimit;
   final double outstanding;
-  final double accountCreditBalance;
   final List<CustomerBillModel> bills;
   final List<CustomerLoanModel> loans;
   final List<CustomerAdvanceOrderModel> advanceOrders;
@@ -29,12 +34,15 @@ class CustomerProfileModel {
     required this.mobile,
     this.whatsapp = "",
     this.city = "",
+    this.addressLine1 = '',
+    this.addressLine2 = '',
+    this.state = '',
+    this.pincode = '',
+    this.country = 'India',
     this.type = "Regular",
     this.gender = CustomerGender.unknown,
     required this.createdAt,
-    this.creditLimit = 50000.0,
     this.outstanding = 0.0,
-    this.accountCreditBalance = 0.0,
     this.bills = const [],
     this.loans = const [],
     this.advanceOrders = const [],
@@ -43,34 +51,24 @@ class CustomerProfileModel {
   });
 
   bool get isFemale => gender == CustomerGender.female;
-  bool get isVip => type.toLowerCase() == 'vip';
+  CustomerType get customerTier => CustomerType.fromString(type);
+  bool get isVip => customerTier == CustomerType.elite;
 
-  CreditStatus get creditStatus => CreditStatus.calculate(
-        outstanding: outstanding,
-        creditLimit: creditLimit,
+  String? get formattedAddress => CustomerAddressFormatter.format(
+        addressLine1: addressLine1,
+        addressLine2: addressLine2,
+        city: city,
+        state: state,
+        pincode: pincode,
+        country: country,
       );
-
-  CreditStatus get accountStatus => creditStatus;
-
-  double get dueLimit => creditLimit;
-
-  double get availableCredit =>
-      (creditLimit + accountCreditBalance - outstanding)
-          .clamp(0, double.infinity);
-
-  double get netOutstandingAfterCredit =>
-      (outstanding - accountCreditBalance).clamp(0, double.infinity);
-
-  double get usedPercent =>
-      creditLimit > 0 ? (outstanding / creditLimit * 100).clamp(0, 100) : 0;
 
   int get totalBills => bills.length;
   double get totalBillAmount =>
       bills.fold(0.0, (sum, bill) => sum + bill.totalAmount);
   double get totalPaidAmount =>
       bills.fold(0.0, (sum, bill) => sum + bill.paidAmount);
-  int get paidBillsCount => bills.where((bill) => bill.isPaid).length;
-  int get unpaidBillsCount => bills.where((bill) => !bill.isPaid).length;
+  int get dueInvoiceCount => dues.length;
 
   int get totalLoans => loans.length;
   int get activeLoans => loans.where((loan) => loan.isActive).length;
@@ -78,14 +76,14 @@ class CustomerProfileModel {
 
   double get totalActiveLoanAmount => loans
       .where((loan) => loan.isActive)
-      .fold(0.0, (sum, loan) => sum + loan.loanAmount);
+      .fold(0.0, (sum, loan) => sum + loan.principalOutstanding);
 
   double get totalInterestAccrued => loans
       .where((loan) => loan.isActive)
       .fold(0.0, (sum, loan) => sum + loan.accruedInterest);
 
   double get totalLoanAmount =>
-      loans.fold(0.0, (sum, loan) => sum + loan.loanAmount);
+      loans.fold(0.0, (sum, loan) => sum + loan.originalPrincipal);
 
   double get totalGirviReceivable =>
       totalActiveLoanAmount + totalInterestAccrued;
@@ -93,8 +91,9 @@ class CustomerProfileModel {
   int get activeAdvanceCount =>
       advanceOrders.where((order) => order.isPending || order.isReady).length;
 
-  double get totalAdvancePaid =>
-      advanceOrders.fold(0.0, (sum, order) => sum + order.totalAdvancePaid);
+  double get totalAdvancePaid => advanceOrders
+      .where((order) => order.isPending || order.isReady)
+      .fold(0.0, (sum, order) => sum + order.totalAdvancePaid);
 
   double get totalAdvanceRemaining => advanceOrders
       .where((order) => !order.isDelivered && !order.isCancelled)
@@ -128,13 +127,11 @@ class CustomerProfileModel {
   }
 
   CustomerProfileModel copyWith({
-    double? creditLimit,
     String? name,
     String? mobile,
     String? whatsapp,
     String? city,
     String? type,
-    double? accountCreditBalance,
     List<CustomerAdvanceOrderModel>? advanceOrders,
     List<CustomerDueModel>? dues,
   }) {
@@ -144,12 +141,15 @@ class CustomerProfileModel {
       mobile: mobile ?? this.mobile,
       whatsapp: whatsapp ?? this.whatsapp,
       city: city ?? this.city,
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      state: state,
+      pincode: pincode,
+      country: country,
       type: type ?? this.type,
       gender: gender,
       createdAt: createdAt,
-      creditLimit: creditLimit ?? this.creditLimit,
       outstanding: outstanding,
-      accountCreditBalance: accountCreditBalance ?? this.accountCreditBalance,
       bills: bills,
       loans: loans,
       advanceOrders: advanceOrders ?? this.advanceOrders,

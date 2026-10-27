@@ -14,32 +14,6 @@ enum CustomerGender {
   }
 }
 
-enum CreditStatus {
-  clear,
-  due,
-  defaulter;
-
-  String get label {
-    switch (this) {
-      case CreditStatus.clear:
-        return "DUE CLEAR";
-      case CreditStatus.due:
-        return "DUE OPEN";
-      case CreditStatus.defaulter:
-        return "LIMIT EXCEEDED";
-    }
-  }
-
-  static CreditStatus calculate({
-    required double outstanding,
-    required double creditLimit,
-  }) {
-    if (outstanding <= 0) return CreditStatus.clear;
-    if (outstanding <= creditLimit) return CreditStatus.due;
-    return CreditStatus.defaulter;
-  }
-}
-
 enum AdvanceOrderStatus {
   pending,
   ready,

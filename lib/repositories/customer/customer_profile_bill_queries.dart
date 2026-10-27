@@ -207,7 +207,7 @@ mixin _CustomerProfileBillQueries {
           v.return_value,
           v.making_returned_amount,
           v.due_adjusted_amount,
-          v.customer_credit_amount,
+          v.refund_payable_amount,
           COUNT(DISTINCT l.source_line_no) AS line_count,
           COALESCE(SUM(l.received_net_weight), 0.0) AS net_weight
         FROM return_vouchers v
@@ -229,7 +229,7 @@ mixin _CustomerProfileBillQueries {
           v.return_value,
           v.making_returned_amount,
           v.due_adjusted_amount,
-          v.customer_credit_amount
+          v.refund_payable_amount
         ORDER BY v.created_at ASC, v.id ASC
         ''',
         variables: [
@@ -253,7 +253,7 @@ mixin _CustomerProfileBillQueries {
           returnValue: _readDouble(row, 'return_value'),
           makingReturnedAmount: _readDouble(row, 'making_returned_amount'),
           dueAdjustedAmount: _readDouble(row, 'due_adjusted_amount'),
-          customerCreditAmount: _readDouble(row, 'customer_credit_amount'),
+          refundPayableAmount: _readDouble(row, 'refund_payable_amount'),
         );
         result.putIfAbsent(sourceId, () => []).add(document);
       }

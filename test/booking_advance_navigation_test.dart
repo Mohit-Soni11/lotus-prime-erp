@@ -347,7 +347,6 @@ EditableBookingAdvance _samplePreviewBooking() {
       entityType: 'Individual',
       country: 'India',
       openingBalance: 0,
-      creditLimit: 0,
       customerTier: 'Regular',
     ),
     advances: const [],

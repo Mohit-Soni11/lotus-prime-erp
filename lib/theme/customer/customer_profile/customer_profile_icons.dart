@@ -27,14 +27,9 @@ class CustomerProfileIcons {
   static const IconData vip = Icons.workspace_premium_rounded;
 
   // Account snapshot
-  static const IconData dueLimit = Icons.account_balance_wallet_rounded;
   static const IconData dueBills = Icons.pending_actions_rounded;
-  static const IconData accountStatus = Icons.shield_rounded;
   static const IconData clear = Icons.check_circle_rounded;
   static const IconData due = Icons.warning_amber_rounded;
-  static const IconData defaulter = Icons.error_rounded;
-  static const IconData editLimit = Icons.edit_note_rounded;
-  static const IconData saveLimit = Icons.check_rounded;
 
   // Billing activity
   static const IconData invoice = Icons.receipt_rounded;
@@ -43,7 +38,7 @@ class CustomerProfileIcons {
   static const IconData emptyBills = Icons.receipt_long_outlined;
 
   // Advance orders
-  static const IconData advanceOrder = Icons.diamond_outlined;
+  static const IconData advanceOrder = Icons.inventory_2_outlined;
   static const IconData advancePending = Icons.hourglass_top_rounded;
   static const IconData advanceReady = Icons.inventory_2_rounded;
   static const IconData advanceConvert = Icons.swap_horiz_rounded;

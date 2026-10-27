@@ -171,39 +171,20 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
 
   Widget _buildBillingSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-            child: _field(
-                label: 'Opening Balance',
-                icon: Icons.account_balance_rounded,
-                ctrl: _openBalCtrl,
-                focus: FocusNode(),
-                hint: '0.00',
-                prefix: '₹',
-                onChanged: _logic.onOpeningBalanceChanged,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                formatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-            ])),
-        const SizedBox(width: 14),
-        Expanded(
-            child: _field(
-                label: 'Credit Limit (Udhaar)',
-                icon: Icons.credit_score_rounded,
-                ctrl: _creditLimCtrl,
-                focus: FocusNode(),
-                hint: '0.00',
-                prefix: '₹',
-                onChanged: _logic.onCreditLimitChanged,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                formatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-            ])),
-      ]),
+      _field(
+          label: 'Opening Balance',
+          icon: Icons.account_balance_rounded,
+          ctrl: _openBalCtrl,
+          focus: _openBalFocus,
+          hint: '0.00',
+          prefix: '₹',
+          onChanged: _logic.onOpeningBalanceChanged,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          formatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+          ]),
       const SizedBox(height: 20),
-      Text('CLIENT CATEGORY', style: AddCustomerStyles.fieldLabel),
+      Text('CUSTOMER CATEGORY', style: AddCustomerStyles.fieldLabel),
       const SizedBox(height: 10),
       Row(
         children: CustomerTier.values.map((t) {

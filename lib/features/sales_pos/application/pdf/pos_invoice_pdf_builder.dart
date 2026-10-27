@@ -1247,16 +1247,16 @@ class _PosInvoicePdfDocumentBuilder {
     final amount = invoice.changeSettlementAmount;
     final settlementLabel = _changeSettlementLabel(method);
     final sourceLabel = _paymentModeLabel(invoice.changeSettlementPaymentMode);
-    final isAccountCredit = method == RefundMethod.accountCredit;
+    final isRefundPayable = method == RefundMethod.refundPayable;
 
     return pw.Container(
       width: double.infinity,
       padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: pw.BoxDecoration(
-        color: isAccountCredit ? PdfColors.green50 : PdfColors.amber50,
+        color: isRefundPayable ? PdfColors.green50 : PdfColors.amber50,
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
         border: pw.Border.all(
-          color: isAccountCredit ? PdfColors.green700 : PdfColors.amber800,
+          color: isRefundPayable ? PdfColors.green700 : PdfColors.amber800,
           width: 0.65,
         ),
       ),
@@ -1316,8 +1316,8 @@ class _PosInvoicePdfDocumentBuilder {
         return 'Returned to customer in Cash';
       case RefundMethod.upi:
         return 'Returned to customer through UPI';
-      case RefundMethod.accountCredit:
-        return 'Added to Customer Account Credit';
+      case RefundMethod.refundPayable:
+        return 'Added to Customer Refund Payable';
       case null:
         return '';
     }

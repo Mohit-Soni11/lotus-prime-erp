@@ -34,9 +34,9 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
         statusIcon = CustomerProfileIcons.clear;
         break;
       case AdvanceOrderStatus.cancelled:
-        statusBg = CustomerProfileColors.defaulterBg;
-        statusText = CustomerProfileColors.defaulterText;
-        statusBdr = CustomerProfileColors.defaulterBorder;
+        statusBg = CustomerProfileColors.cancelledBg;
+        statusText = CustomerProfileColors.cancelledText;
+        statusBdr = CustomerProfileColors.cancelledBorder;
         statusIcon = Icons.cancel_outlined;
         break;
       default: // pending
@@ -98,7 +98,8 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
                         Text(
                           "${order.itemName} | ${order.metalType} ${order.purity}",
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
                             color: CustomerProfileColors.bodyTextMuted,
                           ),
                         ),
@@ -116,10 +117,10 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
                     ),
                     child: Text(
                       order.status.label,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: const TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: statusText,
+                        color: CustomerProfileColors.bodyTextMain,
                       ),
                     ),
                   ),
@@ -164,29 +165,31 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
+              child: Wrap(
+                spacing: 14,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  const Icon(CustomerProfileIcons.calendar,
-                      size: 12, color: CustomerProfileColors.bodyTextMuted),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Booked ${order.formattedDate}",
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: CustomerProfileColors.bodyTextMuted,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(CustomerProfileIcons.deliveryDate,
-                      size: 12, color: CustomerProfileColors.bodyTextMuted),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Delivery ${order.formattedDelivery}",
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: CustomerProfileColors.bodyTextMuted,
-                    ),
-                  ),
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(CustomerProfileIcons.calendar,
+                        size: 14, color: CustomerProfileColors.bodyTextMain),
+                    const SizedBox(width: 5),
+                    Text('Booked ${order.formattedDate}',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: CustomerProfileColors.bodyTextMain)),
+                  ]),
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(CustomerProfileIcons.deliveryDate,
+                        size: 14, color: CustomerProfileColors.bodyTextMain),
+                    const SizedBox(width: 5),
+                    Text('Delivery ${order.formattedDelivery}',
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: CustomerProfileColors.bodyTextMain)),
+                  ]),
                 ],
               ),
             ),
@@ -213,18 +216,18 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 13,
             color: CustomerProfileColors.bodyTextMuted,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,
-            color: color,
+            color: CustomerProfileColors.bodyTextMain,
           ),
         ),
       ],
@@ -251,7 +254,7 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 10,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
               color: CustomerProfileColors.advanceAccent,
             ),
@@ -267,16 +270,16 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
       children: [
         Text(label,
             style: const TextStyle(
-              fontSize: 10,
+              fontSize: 13,
               color: CustomerProfileColors.bodyTextMuted,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
             )),
         const SizedBox(height: 2),
         Text(value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: CustomerProfileColors.bodyTextMain,
             )),
       ],
     );

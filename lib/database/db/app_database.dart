@@ -13,7 +13,7 @@ import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_t
 import '../tables/bill_items.dart';
 import '../tables/bill_trade_in_items.dart';
 import '../tables/bills.dart';
-import '../tables/customer_account_ledger.dart';
+import '../tables/customer_refund_payables.dart';
 import '../tables/customers.dart';
 import '../tables/daily_rates/daily_rates.dart';
 import '../tables/delivery/delivery_items.dart';
@@ -58,7 +58,7 @@ part 'app_database.g.dart';
     Bills,
     BillItems,
     BillTradeInItems,
-    CustomerAccountLedger,
+    CustomerRefundPayables,
     SalesOrders,
     OrderAdvances,
     Loans,
@@ -395,7 +395,7 @@ class AppDatabase extends _$AppDatabase {
           newBillNo: mapping.newBillNo,
         );
         await _rewriteSalesInvoiceReference(
-          tableName: 'customer_account_ledger',
+          tableName: 'customer_refund_payables',
           columnName: 'source_reference',
           oldBillNo: mapping.oldBillNo,
           newBillNo: mapping.newBillNo,
@@ -710,7 +710,7 @@ class AppDatabase extends _$AppDatabase {
         "original_total_amount" REAL NOT NULL DEFAULT 0.0,
         "return_value" REAL NOT NULL DEFAULT 0.0,
         "due_adjusted_amount" REAL NOT NULL DEFAULT 0.0,
-        "customer_credit_amount" REAL NOT NULL DEFAULT 0.0,
+        "refund_payable_amount" REAL NOT NULL DEFAULT 0.0,
         "making_returned_amount" REAL NOT NULL DEFAULT 0.0,
         "status" TEXT NOT NULL DEFAULT 'POSTED',
         "operator_note" TEXT,
@@ -779,11 +779,11 @@ class AppDatabase extends _$AppDatabase {
       'customer_id': 'INTEGER',
       'customer_name': 'TEXT',
       'mobile': 'TEXT',
-      'settlement_mode': 'TEXT NOT NULL DEFAULT "CUSTOMER_CREDIT"',
+      'settlement_mode': 'TEXT NOT NULL DEFAULT "REFUND_PAYABLE"',
       'original_total_amount': 'REAL NOT NULL DEFAULT 0.0',
       'return_value': 'REAL NOT NULL DEFAULT 0.0',
       'due_adjusted_amount': 'REAL NOT NULL DEFAULT 0.0',
-      'customer_credit_amount': 'REAL NOT NULL DEFAULT 0.0',
+      'refund_payable_amount': 'REAL NOT NULL DEFAULT 0.0',
       'making_returned_amount': 'REAL NOT NULL DEFAULT 0.0',
       'status': 'TEXT NOT NULL DEFAULT "POSTED"',
       'operator_note': 'TEXT',
@@ -1123,7 +1123,6 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(customers, customers.state);
             await m.addColumn(customers, customers.pincode);
             await m.addColumn(customers, customers.openingBalance);
-            await m.addColumn(customers, customers.creditLimit);
             await m.addColumn(customers, customers.customerTier);
             await m.addColumn(customers, customers.membershipId);
           }
@@ -1592,10 +1591,8 @@ class AppDatabase extends _$AppDatabase {
           }
 
           if (from < 29) {
-            await m.createTable(customerAccountLedger);
-            AppLogger.info(
-              'v29 customer account credit ledger applied.',
-            );
+            await m.createTable(customerRefundPayables);
+            AppLogger.info('v29 customer refund payable ledger applied.');
           }
 
           if (from < 32) {
@@ -1963,6 +1960,68 @@ class AppDatabase extends _$AppDatabase {
             );
             AppLogger.info('v65 metal rate ledger enabled.');
           }
+          if (from < 66 && await _tableExists('customer_account_ledger')) {
+            await customStatement(
+              'ALTER TABLE "customer_account_ledger" RENAME TO "customer_refund_payables"',
+            );
+            for (final oldIndex in [
+              'idx_customer_account_customer',
+              'idx_customer_account_reference',
+              'idx_customer_account_date',
+            ]) {
+              await customStatement('DROP INDEX IF EXISTS "$oldIndex"');
+            }
+          }
+          if (from < 66 && await _tableExists('customer_refund_payables')) {
+            await customStatement('''
+              UPDATE "customer_refund_payables"
+              SET "source_type" = 'POS_REFUND_PAYABLE'
+              WHERE "source_type" = 'POS_CHANGE_CREDIT'
+            ''');
+            await customStatement('''
+              UPDATE "customer_refund_payables"
+              SET "payment_mode" = 'REFUND_PAYABLE'
+              WHERE "payment_mode" = 'CUSTOMER_CREDIT'
+            ''');
+            await customStatement('''
+              UPDATE "customer_refund_payables"
+              SET "source_reference" = REPLACE(
+                "source_reference", '#ACCOUNT_CREDIT', '#REFUND_PAYABLE')
+              WHERE "source_reference" LIKE '%#ACCOUNT_CREDIT%'
+            ''');
+          }
+          for (final table in ['cash_transactions', 'bank_transactions']) {
+            if (from >= 66 || !await _tableExists(table)) continue;
+            await customStatement('''
+              UPDATE "$table"
+              SET "reference_type" = 'CUSTOMER_REFUND_PAYABLE',
+                  "reference_id" = REPLACE(
+                    "reference_id", '#ACCOUNT_CREDIT', '#REFUND_PAYABLE')
+              WHERE "reference_type" = 'CUSTOMER_ACCOUNT'
+            ''');
+          }
+          if (from < 66 && await _tableExists('return_vouchers')) {
+            final columns = await _tableColumns('return_vouchers');
+            if (columns.contains('customer_credit_amount')) {
+              await customStatement(
+                'ALTER TABLE "return_vouchers" RENAME COLUMN "customer_credit_amount" TO "refund_payable_amount"',
+              );
+            }
+            await customStatement('''
+              UPDATE "return_vouchers"
+              SET "settlement_mode" = 'REFUND_PAYABLE'
+              WHERE "settlement_mode" = 'CUSTOMER_CREDIT'
+            ''');
+          }
+          if (from < 66 && await _tableExists('customers')) {
+            final columns = await _tableColumns('customers');
+            if (columns.contains('credit_limit')) {
+              await customStatement(
+                'ALTER TABLE "customers" DROP COLUMN "credit_limit"',
+              );
+            }
+            AppLogger.info('v66 retired customer credit limit removed.');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -1981,7 +2040,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureGirviNoticeDocumentSchema();
           await _ensureGirviCollateralRecoverySchema();
           await ensureGirviInterestPeriodSnapshotSchema();
-          await _ensureCustomerAccountLedgerSchema();
+          await _ensureCustomerRefundPayablesSchema();
           await ensureSalesCustomerMetalSettlementSchema();
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockInventorySchemaInternal();
@@ -2255,9 +2314,9 @@ class AppDatabase extends _$AppDatabase {
     ''');
   }
 
-  Future<void> _ensureCustomerAccountLedgerSchema() async {
-    await customStatement(_createCustomerAccountLedgerTableSql);
-    for (final statement in _customerAccountLedgerIndexSql) {
+  Future<void> _ensureCustomerRefundPayablesSchema() async {
+    await customStatement(_createCustomerRefundPayablesTableSql);
+    for (final statement in _customerRefundPayablesIndexSql) {
       await customStatement(statement);
     }
   }
@@ -3181,8 +3240,8 @@ const List<String> _purchaseItemHuidIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_purchase_item_huids_stock_item" ON "purchase_item_huids" ("stock_item_id")',
 ];
 
-const String _createCustomerAccountLedgerTableSql = '''
-CREATE TABLE IF NOT EXISTS "customer_account_ledger" (
+const String _createCustomerRefundPayablesTableSql = '''
+CREATE TABLE IF NOT EXISTS "customer_refund_payables" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   "created_at" INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
   "updated_at" INTEGER,
@@ -3200,10 +3259,10 @@ CREATE TABLE IF NOT EXISTS "customer_account_ledger" (
 )
 ''';
 
-const List<String> _customerAccountLedgerIndexSql = [
-  'CREATE INDEX IF NOT EXISTS "idx_customer_account_customer" ON "customer_account_ledger" ("customer_id")',
-  'CREATE INDEX IF NOT EXISTS "idx_customer_account_reference" ON "customer_account_ledger" ("source_reference")',
-  'CREATE INDEX IF NOT EXISTS "idx_customer_account_date" ON "customer_account_ledger" ("entry_date")',
+const List<String> _customerRefundPayablesIndexSql = [
+  'CREATE INDEX IF NOT EXISTS "idx_customer_refund_customer" ON "customer_refund_payables" ("customer_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_customer_refund_reference" ON "customer_refund_payables" ("source_reference")',
+  'CREATE INDEX IF NOT EXISTS "idx_customer_refund_date" ON "customer_refund_payables" ("entry_date")',
 ];
 
 const String _createGirviNoticeActionsTableSql = '''

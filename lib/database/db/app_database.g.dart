@@ -194,14 +194,6 @@ class $CustomersTable extends Customers
       type: DriftSqlType.double,
       requiredDuringInsert: false,
       defaultValue: const Constant(0.0));
-  static const VerificationMeta _creditLimitMeta =
-      const VerificationMeta('creditLimit');
-  @override
-  late final GeneratedColumn<double> creditLimit = GeneratedColumn<double>(
-      'credit_limit', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
   static const VerificationMeta _customerTierMeta =
       const VerificationMeta('customerTier');
   @override
@@ -282,7 +274,6 @@ class $CustomersTable extends Customers
         state,
         pincode,
         openingBalance,
-        creditLimit,
         customerTier,
         membershipId,
         ringSize,
@@ -445,12 +436,6 @@ class $CustomersTable extends Customers
           openingBalance.isAcceptableOrUnknown(
               data['opening_balance']!, _openingBalanceMeta));
     }
-    if (data.containsKey('credit_limit')) {
-      context.handle(
-          _creditLimitMeta,
-          creditLimit.isAcceptableOrUnknown(
-              data['credit_limit']!, _creditLimitMeta));
-    }
     if (data.containsKey('customer_tier')) {
       context.handle(
           _customerTierMeta,
@@ -562,8 +547,6 @@ class $CustomersTable extends Customers
           .read(DriftSqlType.string, data['${effectivePrefix}pincode']),
       openingBalance: attachedDatabase.typeMapping.read(
           DriftSqlType.double, data['${effectivePrefix}opening_balance'])!,
-      creditLimit: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}credit_limit'])!,
       customerTier: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}customer_tier'])!,
       membershipId: attachedDatabase.typeMapping
@@ -619,7 +602,6 @@ class Customer extends DataClass implements Insertable<Customer> {
   final String? state;
   final String? pincode;
   final double openingBalance;
-  final double creditLimit;
   final String customerTier;
   final String? membershipId;
   final String? ringSize;
@@ -658,7 +640,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       this.state,
       this.pincode,
       required this.openingBalance,
-      required this.creditLimit,
       required this.customerTier,
       this.membershipId,
       this.ringSize,
@@ -741,7 +722,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       map['pincode'] = Variable<String>(pincode);
     }
     map['opening_balance'] = Variable<double>(openingBalance);
-    map['credit_limit'] = Variable<double>(creditLimit);
     map['customer_tier'] = Variable<String>(customerTier);
     if (!nullToAbsent || membershipId != null) {
       map['membership_id'] = Variable<String>(membershipId);
@@ -835,7 +815,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           ? const Value.absent()
           : Value(pincode),
       openingBalance: Value(openingBalance),
-      creditLimit: Value(creditLimit),
       customerTier: Value(customerTier),
       membershipId: membershipId == null && nullToAbsent
           ? const Value.absent()
@@ -894,7 +873,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       state: serializer.fromJson<String?>(json['state']),
       pincode: serializer.fromJson<String?>(json['pincode']),
       openingBalance: serializer.fromJson<double>(json['openingBalance']),
-      creditLimit: serializer.fromJson<double>(json['creditLimit']),
       customerTier: serializer.fromJson<String>(json['customerTier']),
       membershipId: serializer.fromJson<String?>(json['membershipId']),
       ringSize: serializer.fromJson<String?>(json['ringSize']),
@@ -939,7 +917,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       'state': serializer.toJson<String?>(state),
       'pincode': serializer.toJson<String?>(pincode),
       'openingBalance': serializer.toJson<double>(openingBalance),
-      'creditLimit': serializer.toJson<double>(creditLimit),
       'customerTier': serializer.toJson<String>(customerTier),
       'membershipId': serializer.toJson<String?>(membershipId),
       'ringSize': serializer.toJson<String?>(ringSize),
@@ -981,7 +958,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           Value<String?> state = const Value.absent(),
           Value<String?> pincode = const Value.absent(),
           double? openingBalance,
-          double? creditLimit,
           String? customerTier,
           Value<String?> membershipId = const Value.absent(),
           Value<String?> ringSize = const Value.absent(),
@@ -1030,7 +1006,6 @@ class Customer extends DataClass implements Insertable<Customer> {
         state: state.present ? state.value : this.state,
         pincode: pincode.present ? pincode.value : this.pincode,
         openingBalance: openingBalance ?? this.openingBalance,
-        creditLimit: creditLimit ?? this.creditLimit,
         customerTier: customerTier ?? this.customerTier,
         membershipId:
             membershipId.present ? membershipId.value : this.membershipId,
@@ -1097,8 +1072,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       openingBalance: data.openingBalance.present
           ? data.openingBalance.value
           : this.openingBalance,
-      creditLimit:
-          data.creditLimit.present ? data.creditLimit.value : this.creditLimit,
       customerTier: data.customerTier.present
           ? data.customerTier.value
           : this.customerTier,
@@ -1153,7 +1126,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           ..write('state: $state, ')
           ..write('pincode: $pincode, ')
           ..write('openingBalance: $openingBalance, ')
-          ..write('creditLimit: $creditLimit, ')
           ..write('customerTier: $customerTier, ')
           ..write('membershipId: $membershipId, ')
           ..write('ringSize: $ringSize, ')
@@ -1197,7 +1169,6 @@ class Customer extends DataClass implements Insertable<Customer> {
         state,
         pincode,
         openingBalance,
-        creditLimit,
         customerTier,
         membershipId,
         ringSize,
@@ -1240,7 +1211,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           other.state == this.state &&
           other.pincode == this.pincode &&
           other.openingBalance == this.openingBalance &&
-          other.creditLimit == this.creditLimit &&
           other.customerTier == this.customerTier &&
           other.membershipId == this.membershipId &&
           other.ringSize == this.ringSize &&
@@ -1281,7 +1251,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   final Value<String?> state;
   final Value<String?> pincode;
   final Value<double> openingBalance;
-  final Value<double> creditLimit;
   final Value<String> customerTier;
   final Value<String?> membershipId;
   final Value<String?> ringSize;
@@ -1320,7 +1289,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     this.state = const Value.absent(),
     this.pincode = const Value.absent(),
     this.openingBalance = const Value.absent(),
-    this.creditLimit = const Value.absent(),
     this.customerTier = const Value.absent(),
     this.membershipId = const Value.absent(),
     this.ringSize = const Value.absent(),
@@ -1360,7 +1328,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     this.state = const Value.absent(),
     this.pincode = const Value.absent(),
     this.openingBalance = const Value.absent(),
-    this.creditLimit = const Value.absent(),
     this.customerTier = const Value.absent(),
     this.membershipId = const Value.absent(),
     this.ringSize = const Value.absent(),
@@ -1401,7 +1368,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     Expression<String>? state,
     Expression<String>? pincode,
     Expression<double>? openingBalance,
-    Expression<double>? creditLimit,
     Expression<String>? customerTier,
     Expression<String>? membershipId,
     Expression<String>? ringSize,
@@ -1441,7 +1407,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
       if (state != null) 'state': state,
       if (pincode != null) 'pincode': pincode,
       if (openingBalance != null) 'opening_balance': openingBalance,
-      if (creditLimit != null) 'credit_limit': creditLimit,
       if (customerTier != null) 'customer_tier': customerTier,
       if (membershipId != null) 'membership_id': membershipId,
       if (ringSize != null) 'ring_size': ringSize,
@@ -1483,7 +1448,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
       Value<String?>? state,
       Value<String?>? pincode,
       Value<double>? openingBalance,
-      Value<double>? creditLimit,
       Value<String>? customerTier,
       Value<String?>? membershipId,
       Value<String?>? ringSize,
@@ -1522,7 +1486,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
       state: state ?? this.state,
       pincode: pincode ?? this.pincode,
       openingBalance: openingBalance ?? this.openingBalance,
-      creditLimit: creditLimit ?? this.creditLimit,
       customerTier: customerTier ?? this.customerTier,
       membershipId: membershipId ?? this.membershipId,
       ringSize: ringSize ?? this.ringSize,
@@ -1624,9 +1587,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     if (openingBalance.present) {
       map['opening_balance'] = Variable<double>(openingBalance.value);
     }
-    if (creditLimit.present) {
-      map['credit_limit'] = Variable<double>(creditLimit.value);
-    }
     if (customerTier.present) {
       map['customer_tier'] = Variable<String>(customerTier.value);
     }
@@ -1686,7 +1646,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
           ..write('state: $state, ')
           ..write('pincode: $pincode, ')
           ..write('openingBalance: $openingBalance, ')
-          ..write('creditLimit: $creditLimit, ')
           ..write('customerTier: $customerTier, ')
           ..write('membershipId: $membershipId, ')
           ..write('ringSize: $ringSize, ')
@@ -9261,12 +9220,12 @@ class BillTradeInItemsCompanion extends UpdateCompanion<BillTradeInItem> {
   }
 }
 
-class $CustomerAccountLedgerTable extends CustomerAccountLedger
-    with TableInfo<$CustomerAccountLedgerTable, CustomerAccountEntry> {
+class $CustomerRefundPayablesTable extends CustomerRefundPayables
+    with TableInfo<$CustomerRefundPayablesTable, CustomerRefundPayableEntry> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CustomerAccountLedgerTable(this.attachedDatabase, [this._alias]);
+  $CustomerRefundPayablesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -9379,10 +9338,10 @@ class $CustomerAccountLedgerTable extends CustomerAccountLedger
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'customer_account_ledger';
+  static const String $name = 'customer_refund_payables';
   @override
   VerificationContext validateIntegrity(
-      Insertable<CustomerAccountEntry> instance,
+      Insertable<CustomerRefundPayableEntry> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -9459,9 +9418,10 @@ class $CustomerAccountLedgerTable extends CustomerAccountLedger
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  CustomerAccountEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CustomerRefundPayableEntry map(Map<String, dynamic> data,
+      {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return CustomerAccountEntry(
+    return CustomerRefundPayableEntry(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       createdAt: attachedDatabase.typeMapping
@@ -9492,13 +9452,13 @@ class $CustomerAccountLedgerTable extends CustomerAccountLedger
   }
 
   @override
-  $CustomerAccountLedgerTable createAlias(String alias) {
-    return $CustomerAccountLedgerTable(attachedDatabase, alias);
+  $CustomerRefundPayablesTable createAlias(String alias) {
+    return $CustomerRefundPayablesTable(attachedDatabase, alias);
   }
 }
 
-class CustomerAccountEntry extends DataClass
-    implements Insertable<CustomerAccountEntry> {
+class CustomerRefundPayableEntry extends DataClass
+    implements Insertable<CustomerRefundPayableEntry> {
   final int id;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -9512,7 +9472,7 @@ class CustomerAccountEntry extends DataClass
   final DateTime entryDate;
   final bool isVoided;
   final String? voidReason;
-  const CustomerAccountEntry(
+  const CustomerRefundPayableEntry(
       {required this.id,
       required this.createdAt,
       this.updatedAt,
@@ -9555,8 +9515,8 @@ class CustomerAccountEntry extends DataClass
     return map;
   }
 
-  CustomerAccountLedgerCompanion toCompanion(bool nullToAbsent) {
-    return CustomerAccountLedgerCompanion(
+  CustomerRefundPayablesCompanion toCompanion(bool nullToAbsent) {
+    return CustomerRefundPayablesCompanion(
       id: Value(id),
       createdAt: Value(createdAt),
       updatedAt: updatedAt == null && nullToAbsent
@@ -9582,10 +9542,10 @@ class CustomerAccountEntry extends DataClass
     );
   }
 
-  factory CustomerAccountEntry.fromJson(Map<String, dynamic> json,
+  factory CustomerRefundPayableEntry.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return CustomerAccountEntry(
+    return CustomerRefundPayableEntry(
       id: serializer.fromJson<int>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
@@ -9621,7 +9581,7 @@ class CustomerAccountEntry extends DataClass
     };
   }
 
-  CustomerAccountEntry copyWith(
+  CustomerRefundPayableEntry copyWith(
           {int? id,
           DateTime? createdAt,
           Value<DateTime?> updatedAt = const Value.absent(),
@@ -9635,7 +9595,7 @@ class CustomerAccountEntry extends DataClass
           DateTime? entryDate,
           bool? isVoided,
           Value<String?> voidReason = const Value.absent()}) =>
-      CustomerAccountEntry(
+      CustomerRefundPayableEntry(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
@@ -9652,8 +9612,9 @@ class CustomerAccountEntry extends DataClass
         isVoided: isVoided ?? this.isVoided,
         voidReason: voidReason.present ? voidReason.value : this.voidReason,
       );
-  CustomerAccountEntry copyWithCompanion(CustomerAccountLedgerCompanion data) {
-    return CustomerAccountEntry(
+  CustomerRefundPayableEntry copyWithCompanion(
+      CustomerRefundPayablesCompanion data) {
+    return CustomerRefundPayableEntry(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -9678,7 +9639,7 @@ class CustomerAccountEntry extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('CustomerAccountEntry(')
+    return (StringBuffer('CustomerRefundPayableEntry(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -9714,7 +9675,7 @@ class CustomerAccountEntry extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is CustomerAccountEntry &&
+      (other is CustomerRefundPayableEntry &&
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -9730,8 +9691,8 @@ class CustomerAccountEntry extends DataClass
           other.voidReason == this.voidReason);
 }
 
-class CustomerAccountLedgerCompanion
-    extends UpdateCompanion<CustomerAccountEntry> {
+class CustomerRefundPayablesCompanion
+    extends UpdateCompanion<CustomerRefundPayableEntry> {
   final Value<int> id;
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
@@ -9745,7 +9706,7 @@ class CustomerAccountLedgerCompanion
   final Value<DateTime> entryDate;
   final Value<bool> isVoided;
   final Value<String?> voidReason;
-  const CustomerAccountLedgerCompanion({
+  const CustomerRefundPayablesCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -9760,7 +9721,7 @@ class CustomerAccountLedgerCompanion
     this.isVoided = const Value.absent(),
     this.voidReason = const Value.absent(),
   });
-  CustomerAccountLedgerCompanion.insert({
+  CustomerRefundPayablesCompanion.insert({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -9777,7 +9738,7 @@ class CustomerAccountLedgerCompanion
   })  : customerId = Value(customerId),
         entryType = Value(entryType),
         sourceType = Value(sourceType);
-  static Insertable<CustomerAccountEntry> custom({
+  static Insertable<CustomerRefundPayableEntry> custom({
     Expression<int>? id,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -9809,7 +9770,7 @@ class CustomerAccountLedgerCompanion
     });
   }
 
-  CustomerAccountLedgerCompanion copyWith(
+  CustomerRefundPayablesCompanion copyWith(
       {Value<int>? id,
       Value<DateTime>? createdAt,
       Value<DateTime?>? updatedAt,
@@ -9823,7 +9784,7 @@ class CustomerAccountLedgerCompanion
       Value<DateTime>? entryDate,
       Value<bool>? isVoided,
       Value<String?>? voidReason}) {
-    return CustomerAccountLedgerCompanion(
+    return CustomerRefundPayablesCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -9887,7 +9848,7 @@ class CustomerAccountLedgerCompanion
 
   @override
   String toString() {
-    return (StringBuffer('CustomerAccountLedgerCompanion(')
+    return (StringBuffer('CustomerRefundPayablesCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -38195,8 +38156,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $BillItemsTable billItems = $BillItemsTable(this);
   late final $BillTradeInItemsTable billTradeInItems =
       $BillTradeInItemsTable(this);
-  late final $CustomerAccountLedgerTable customerAccountLedger =
-      $CustomerAccountLedgerTable(this);
+  late final $CustomerRefundPayablesTable customerRefundPayables =
+      $CustomerRefundPayablesTable(this);
   late final $OrderAdvancesTable orderAdvances = $OrderAdvancesTable(this);
   late final $LoansTable loans = $LoansTable(this);
   late final $NotificationsTable notifications = $NotificationsTable(this);
@@ -38272,14 +38233,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       'CREATE INDEX idx_bill_items_bill ON bill_items (bill_id)');
   late final Index idxBillTradeInBill = Index('idx_bill_trade_in_bill',
       'CREATE INDEX idx_bill_trade_in_bill ON bill_old_gold_items (bill_id)');
-  late final Index idxCustomerAccountCustomer = Index(
-      'idx_customer_account_customer',
-      'CREATE INDEX idx_customer_account_customer ON customer_account_ledger (customer_id)');
-  late final Index idxCustomerAccountReference = Index(
-      'idx_customer_account_reference',
-      'CREATE INDEX idx_customer_account_reference ON customer_account_ledger (source_reference)');
-  late final Index idxCustomerAccountDate = Index('idx_customer_account_date',
-      'CREATE INDEX idx_customer_account_date ON customer_account_ledger (entry_date)');
+  late final Index idxCustomerRefundCustomer = Index(
+      'idx_customer_refund_customer',
+      'CREATE INDEX idx_customer_refund_customer ON customer_refund_payables (customer_id)');
+  late final Index idxCustomerRefundReference = Index(
+      'idx_customer_refund_reference',
+      'CREATE INDEX idx_customer_refund_reference ON customer_refund_payables (source_reference)');
+  late final Index idxCustomerRefundDate = Index('idx_customer_refund_date',
+      'CREATE INDEX idx_customer_refund_date ON customer_refund_payables (entry_date)');
   late final Index idxOrdersStatus = Index('idx_orders_status',
       'CREATE INDEX idx_orders_status ON sales_orders (status)');
   late final Index idxAdvancesOrder = Index('idx_advances_order',
@@ -38427,7 +38388,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         bills,
         billItems,
         billTradeInItems,
-        customerAccountLedger,
+        customerRefundPayables,
         orderAdvances,
         loans,
         notifications,
@@ -38472,9 +38433,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         idxBillsCustomer,
         idxBillItemsBill,
         idxBillTradeInBill,
-        idxCustomerAccountCustomer,
-        idxCustomerAccountReference,
-        idxCustomerAccountDate,
+        idxCustomerRefundCustomer,
+        idxCustomerRefundReference,
+        idxCustomerRefundDate,
         idxOrdersStatus,
         idxAdvancesOrder,
         idxLoansCustomer,
@@ -38733,7 +38694,6 @@ typedef $$CustomersTableCreateCompanionBuilder = CustomersCompanion Function({
   Value<String?> state,
   Value<String?> pincode,
   Value<double> openingBalance,
-  Value<double> creditLimit,
   Value<String> customerTier,
   Value<String?> membershipId,
   Value<String?> ringSize,
@@ -38773,7 +38733,6 @@ typedef $$CustomersTableUpdateCompanionBuilder = CustomersCompanion Function({
   Value<String?> state,
   Value<String?> pincode,
   Value<double> openingBalance,
-  Value<double> creditLimit,
   Value<String> customerTier,
   Value<String?> membershipId,
   Value<String?> ringSize,
@@ -38818,21 +38777,21 @@ final class $$CustomersTableReferences
         manager.$state.copyWith(prefetchedData: cache));
   }
 
-  static MultiTypedResultKey<$CustomerAccountLedgerTable,
-      List<CustomerAccountEntry>> _customerAccountLedgerRefsTable(
+  static MultiTypedResultKey<$CustomerRefundPayablesTable,
+      List<CustomerRefundPayableEntry>> _customerRefundPayablesRefsTable(
           _$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.customerAccountLedger,
+      MultiTypedResultKey.fromTable(db.customerRefundPayables,
           aliasName: $_aliasNameGenerator(
-              db.customers.id, db.customerAccountLedger.customerId));
+              db.customers.id, db.customerRefundPayables.customerId));
 
-  $$CustomerAccountLedgerTableProcessedTableManager
-      get customerAccountLedgerRefs {
-    final manager = $$CustomerAccountLedgerTableTableManager(
-            $_db, $_db.customerAccountLedger)
+  $$CustomerRefundPayablesTableProcessedTableManager
+      get customerRefundPayablesRefs {
+    final manager = $$CustomerRefundPayablesTableTableManager(
+            $_db, $_db.customerRefundPayables)
         .filter((f) => f.customerId.id($_item.id));
 
     final cache =
-        $_typedResult.readTableOrNull(_customerAccountLedgerRefsTable($_db));
+        $_typedResult.readTableOrNull(_customerRefundPayablesRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -38984,9 +38943,6 @@ class $$CustomersTableFilterComposer
       column: $table.openingBalance,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get creditLimit => $composableBuilder(
-      column: $table.creditLimit, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get customerTier => $composableBuilder(
       column: $table.customerTier, builder: (column) => ColumnFilters(column));
 
@@ -39056,21 +39012,21 @@ class $$CustomersTableFilterComposer
     return f(composer);
   }
 
-  Expression<bool> customerAccountLedgerRefs(
-      Expression<bool> Function($$CustomerAccountLedgerTableFilterComposer f)
+  Expression<bool> customerRefundPayablesRefs(
+      Expression<bool> Function($$CustomerRefundPayablesTableFilterComposer f)
           f) {
-    final $$CustomerAccountLedgerTableFilterComposer composer =
+    final $$CustomerRefundPayablesTableFilterComposer composer =
         $composerBuilder(
             composer: this,
             getCurrentColumn: (t) => t.id,
-            referencedTable: $db.customerAccountLedger,
+            referencedTable: $db.customerRefundPayables,
             getReferencedColumn: (t) => t.customerId,
             builder: (joinBuilder,
                     {$addJoinBuilderToRootComposer,
                     $removeJoinBuilderFromRootComposer}) =>
-                $$CustomerAccountLedgerTableFilterComposer(
+                $$CustomerRefundPayablesTableFilterComposer(
                   $db: $db,
-                  $table: $db.customerAccountLedger,
+                  $table: $db.customerRefundPayables,
                   $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
                   joinBuilder: joinBuilder,
                   $removeJoinBuilderFromRootComposer:
@@ -39247,9 +39203,6 @@ class $$CustomersTableOrderingComposer
       column: $table.openingBalance,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get creditLimit => $composableBuilder(
-      column: $table.creditLimit, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get customerTier => $composableBuilder(
       column: $table.customerTier,
       builder: (column) => ColumnOrderings(column));
@@ -39376,9 +39329,6 @@ class $$CustomersTableAnnotationComposer
   GeneratedColumn<double> get openingBalance => $composableBuilder(
       column: $table.openingBalance, builder: (column) => column);
 
-  GeneratedColumn<double> get creditLimit => $composableBuilder(
-      column: $table.creditLimit, builder: (column) => column);
-
   GeneratedColumn<String> get customerTier => $composableBuilder(
       column: $table.customerTier, builder: (column) => column);
 
@@ -39445,21 +39395,21 @@ class $$CustomersTableAnnotationComposer
     return f(composer);
   }
 
-  Expression<T> customerAccountLedgerRefs<T extends Object>(
-      Expression<T> Function($$CustomerAccountLedgerTableAnnotationComposer a)
+  Expression<T> customerRefundPayablesRefs<T extends Object>(
+      Expression<T> Function($$CustomerRefundPayablesTableAnnotationComposer a)
           f) {
-    final $$CustomerAccountLedgerTableAnnotationComposer composer =
+    final $$CustomerRefundPayablesTableAnnotationComposer composer =
         $composerBuilder(
             composer: this,
             getCurrentColumn: (t) => t.id,
-            referencedTable: $db.customerAccountLedger,
+            referencedTable: $db.customerRefundPayables,
             getReferencedColumn: (t) => t.customerId,
             builder: (joinBuilder,
                     {$addJoinBuilderToRootComposer,
                     $removeJoinBuilderFromRootComposer}) =>
-                $$CustomerAccountLedgerTableAnnotationComposer(
+                $$CustomerRefundPayablesTableAnnotationComposer(
                   $db: $db,
-                  $table: $db.customerAccountLedger,
+                  $table: $db.customerRefundPayables,
                   $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
                   joinBuilder: joinBuilder,
                   $removeJoinBuilderFromRootComposer:
@@ -39546,7 +39496,7 @@ class $$CustomersTableTableManager extends RootTableManager<
     PrefetchHooks Function(
         {bool salesOrdersRefs,
         bool billsRefs,
-        bool customerAccountLedgerRefs,
+        bool customerRefundPayablesRefs,
         bool loansRefs,
         bool girviLoansRefs,
         bool deliveryOrdersRefs})> {
@@ -39590,7 +39540,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             Value<String?> state = const Value.absent(),
             Value<String?> pincode = const Value.absent(),
             Value<double> openingBalance = const Value.absent(),
-            Value<double> creditLimit = const Value.absent(),
             Value<String> customerTier = const Value.absent(),
             Value<String?> membershipId = const Value.absent(),
             Value<String?> ringSize = const Value.absent(),
@@ -39630,7 +39579,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             state: state,
             pincode: pincode,
             openingBalance: openingBalance,
-            creditLimit: creditLimit,
             customerTier: customerTier,
             membershipId: membershipId,
             ringSize: ringSize,
@@ -39670,7 +39618,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             Value<String?> state = const Value.absent(),
             Value<String?> pincode = const Value.absent(),
             Value<double> openingBalance = const Value.absent(),
-            Value<double> creditLimit = const Value.absent(),
             Value<String> customerTier = const Value.absent(),
             Value<String?> membershipId = const Value.absent(),
             Value<String?> ringSize = const Value.absent(),
@@ -39710,7 +39657,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             state: state,
             pincode: pincode,
             openingBalance: openingBalance,
-            creditLimit: creditLimit,
             customerTier: customerTier,
             membershipId: membershipId,
             ringSize: ringSize,
@@ -39729,7 +39675,7 @@ class $$CustomersTableTableManager extends RootTableManager<
           prefetchHooksCallback: (
               {salesOrdersRefs = false,
               billsRefs = false,
-              customerAccountLedgerRefs = false,
+              customerRefundPayablesRefs = false,
               loansRefs = false,
               girviLoansRefs = false,
               deliveryOrdersRefs = false}) {
@@ -39738,7 +39684,7 @@ class $$CustomersTableTableManager extends RootTableManager<
               explicitlyWatchedTables: [
                 if (salesOrdersRefs) db.salesOrders,
                 if (billsRefs) db.bills,
-                if (customerAccountLedgerRefs) db.customerAccountLedger,
+                if (customerRefundPayablesRefs) db.customerRefundPayables,
                 if (loansRefs) db.loans,
                 if (girviLoansRefs) db.girviLoans,
                 if (deliveryOrdersRefs) db.deliveryOrders
@@ -39769,14 +39715,14 @@ class $$CustomersTableTableManager extends RootTableManager<
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.customerId == item.id),
                         typedResults: items),
-                  if (customerAccountLedgerRefs)
+                  if (customerRefundPayablesRefs)
                     await $_getPrefetchedData(
                         currentTable: table,
                         referencedTable: $$CustomersTableReferences
-                            ._customerAccountLedgerRefsTable(db),
+                            ._customerRefundPayablesRefsTable(db),
                         managerFromTypedResult: (p0) =>
                             $$CustomersTableReferences(db, table, p0)
-                                .customerAccountLedgerRefs,
+                                .customerRefundPayablesRefs,
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.customerId == item.id),
@@ -39837,7 +39783,7 @@ typedef $$CustomersTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function(
         {bool salesOrdersRefs,
         bool billsRefs,
-        bool customerAccountLedgerRefs,
+        bool customerRefundPayablesRefs,
         bool loansRefs,
         bool girviLoansRefs,
         bool deliveryOrdersRefs})>;
@@ -43984,8 +43930,8 @@ typedef $$BillTradeInItemsTableProcessedTableManager = ProcessedTableManager<
     (BillTradeInItem, $$BillTradeInItemsTableReferences),
     BillTradeInItem,
     PrefetchHooks Function({bool billId})>;
-typedef $$CustomerAccountLedgerTableCreateCompanionBuilder
-    = CustomerAccountLedgerCompanion Function({
+typedef $$CustomerRefundPayablesTableCreateCompanionBuilder
+    = CustomerRefundPayablesCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
@@ -44000,8 +43946,8 @@ typedef $$CustomerAccountLedgerTableCreateCompanionBuilder
   Value<bool> isVoided,
   Value<String?> voidReason,
 });
-typedef $$CustomerAccountLedgerTableUpdateCompanionBuilder
-    = CustomerAccountLedgerCompanion Function({
+typedef $$CustomerRefundPayablesTableUpdateCompanionBuilder
+    = CustomerRefundPayablesCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
@@ -44017,14 +43963,14 @@ typedef $$CustomerAccountLedgerTableUpdateCompanionBuilder
   Value<String?> voidReason,
 });
 
-final class $$CustomerAccountLedgerTableReferences extends BaseReferences<
-    _$AppDatabase, $CustomerAccountLedgerTable, CustomerAccountEntry> {
-  $$CustomerAccountLedgerTableReferences(
+final class $$CustomerRefundPayablesTableReferences extends BaseReferences<
+    _$AppDatabase, $CustomerRefundPayablesTable, CustomerRefundPayableEntry> {
+  $$CustomerRefundPayablesTableReferences(
       super.$_db, super.$_table, super.$_typedResult);
 
   static $CustomersTable _customerIdTable(_$AppDatabase db) =>
       db.customers.createAlias($_aliasNameGenerator(
-          db.customerAccountLedger.customerId, db.customers.id));
+          db.customerRefundPayables.customerId, db.customers.id));
 
   $$CustomersTableProcessedTableManager? get customerId {
     if ($_item.customerId == null) return null;
@@ -44037,9 +43983,9 @@ final class $$CustomerAccountLedgerTableReferences extends BaseReferences<
   }
 }
 
-class $$CustomerAccountLedgerTableFilterComposer
-    extends Composer<_$AppDatabase, $CustomerAccountLedgerTable> {
-  $$CustomerAccountLedgerTableFilterComposer({
+class $$CustomerRefundPayablesTableFilterComposer
+    extends Composer<_$AppDatabase, $CustomerRefundPayablesTable> {
+  $$CustomerRefundPayablesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -44104,9 +44050,9 @@ class $$CustomerAccountLedgerTableFilterComposer
   }
 }
 
-class $$CustomerAccountLedgerTableOrderingComposer
-    extends Composer<_$AppDatabase, $CustomerAccountLedgerTable> {
-  $$CustomerAccountLedgerTableOrderingComposer({
+class $$CustomerRefundPayablesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CustomerRefundPayablesTable> {
+  $$CustomerRefundPayablesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -44171,9 +44117,9 @@ class $$CustomerAccountLedgerTableOrderingComposer
   }
 }
 
-class $$CustomerAccountLedgerTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CustomerAccountLedgerTable> {
-  $$CustomerAccountLedgerTableAnnotationComposer({
+class $$CustomerRefundPayablesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CustomerRefundPayablesTable> {
+  $$CustomerRefundPayablesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -44237,31 +44183,31 @@ class $$CustomerAccountLedgerTableAnnotationComposer
   }
 }
 
-class $$CustomerAccountLedgerTableTableManager extends RootTableManager<
+class $$CustomerRefundPayablesTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CustomerAccountLedgerTable,
-    CustomerAccountEntry,
-    $$CustomerAccountLedgerTableFilterComposer,
-    $$CustomerAccountLedgerTableOrderingComposer,
-    $$CustomerAccountLedgerTableAnnotationComposer,
-    $$CustomerAccountLedgerTableCreateCompanionBuilder,
-    $$CustomerAccountLedgerTableUpdateCompanionBuilder,
-    (CustomerAccountEntry, $$CustomerAccountLedgerTableReferences),
-    CustomerAccountEntry,
+    $CustomerRefundPayablesTable,
+    CustomerRefundPayableEntry,
+    $$CustomerRefundPayablesTableFilterComposer,
+    $$CustomerRefundPayablesTableOrderingComposer,
+    $$CustomerRefundPayablesTableAnnotationComposer,
+    $$CustomerRefundPayablesTableCreateCompanionBuilder,
+    $$CustomerRefundPayablesTableUpdateCompanionBuilder,
+    (CustomerRefundPayableEntry, $$CustomerRefundPayablesTableReferences),
+    CustomerRefundPayableEntry,
     PrefetchHooks Function({bool customerId})> {
-  $$CustomerAccountLedgerTableTableManager(
-      _$AppDatabase db, $CustomerAccountLedgerTable table)
+  $$CustomerRefundPayablesTableTableManager(
+      _$AppDatabase db, $CustomerRefundPayablesTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CustomerAccountLedgerTableFilterComposer(
+              $$CustomerRefundPayablesTableFilterComposer(
                   $db: db, $table: table),
           createOrderingComposer: () =>
-              $$CustomerAccountLedgerTableOrderingComposer(
+              $$CustomerRefundPayablesTableOrderingComposer(
                   $db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CustomerAccountLedgerTableAnnotationComposer(
+              $$CustomerRefundPayablesTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -44278,7 +44224,7 @@ class $$CustomerAccountLedgerTableTableManager extends RootTableManager<
             Value<bool> isVoided = const Value.absent(),
             Value<String?> voidReason = const Value.absent(),
           }) =>
-              CustomerAccountLedgerCompanion(
+              CustomerRefundPayablesCompanion(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -44308,7 +44254,7 @@ class $$CustomerAccountLedgerTableTableManager extends RootTableManager<
             Value<bool> isVoided = const Value.absent(),
             Value<String?> voidReason = const Value.absent(),
           }) =>
-              CustomerAccountLedgerCompanion.insert(
+              CustomerRefundPayablesCompanion.insert(
             id: id,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -44326,7 +44272,7 @@ class $$CustomerAccountLedgerTableTableManager extends RootTableManager<
           withReferenceMapper: (p0) => p0
               .map((e) => (
                     e.readTable(table),
-                    $$CustomerAccountLedgerTableReferences(db, table, e)
+                    $$CustomerRefundPayablesTableReferences(db, table, e)
                   ))
               .toList(),
           prefetchHooksCallback: ({customerId = false}) {
@@ -44350,9 +44296,9 @@ class $$CustomerAccountLedgerTableTableManager extends RootTableManager<
                   state = state.withJoin(
                     currentTable: table,
                     currentColumn: table.customerId,
-                    referencedTable: $$CustomerAccountLedgerTableReferences
+                    referencedTable: $$CustomerRefundPayablesTableReferences
                         ._customerIdTable(db),
-                    referencedColumn: $$CustomerAccountLedgerTableReferences
+                    referencedColumn: $$CustomerRefundPayablesTableReferences
                         ._customerIdTable(db)
                         .id,
                   ) as T;
@@ -44368,18 +44314,18 @@ class $$CustomerAccountLedgerTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$CustomerAccountLedgerTableProcessedTableManager
+typedef $$CustomerRefundPayablesTableProcessedTableManager
     = ProcessedTableManager<
         _$AppDatabase,
-        $CustomerAccountLedgerTable,
-        CustomerAccountEntry,
-        $$CustomerAccountLedgerTableFilterComposer,
-        $$CustomerAccountLedgerTableOrderingComposer,
-        $$CustomerAccountLedgerTableAnnotationComposer,
-        $$CustomerAccountLedgerTableCreateCompanionBuilder,
-        $$CustomerAccountLedgerTableUpdateCompanionBuilder,
-        (CustomerAccountEntry, $$CustomerAccountLedgerTableReferences),
-        CustomerAccountEntry,
+        $CustomerRefundPayablesTable,
+        CustomerRefundPayableEntry,
+        $$CustomerRefundPayablesTableFilterComposer,
+        $$CustomerRefundPayablesTableOrderingComposer,
+        $$CustomerRefundPayablesTableAnnotationComposer,
+        $$CustomerRefundPayablesTableCreateCompanionBuilder,
+        $$CustomerRefundPayablesTableUpdateCompanionBuilder,
+        (CustomerRefundPayableEntry, $$CustomerRefundPayablesTableReferences),
+        CustomerRefundPayableEntry,
         PrefetchHooks Function({bool customerId})>;
 typedef $$OrderAdvancesTableCreateCompanionBuilder = OrderAdvancesCompanion
     Function({
@@ -60163,8 +60109,9 @@ class $AppDatabaseManager {
       $$BillItemsTableTableManager(_db, _db.billItems);
   $$BillTradeInItemsTableTableManager get billTradeInItems =>
       $$BillTradeInItemsTableTableManager(_db, _db.billTradeInItems);
-  $$CustomerAccountLedgerTableTableManager get customerAccountLedger =>
-      $$CustomerAccountLedgerTableTableManager(_db, _db.customerAccountLedger);
+  $$CustomerRefundPayablesTableTableManager get customerRefundPayables =>
+      $$CustomerRefundPayablesTableTableManager(
+          _db, _db.customerRefundPayables);
   $$OrderAdvancesTableTableManager get orderAdvances =>
       $$OrderAdvancesTableTableManager(_db, _db.orderAdvances);
   $$LoansTableTableManager get loans =>

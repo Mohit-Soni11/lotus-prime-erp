@@ -6,6 +6,7 @@
 
 import '../customer_enums/customer_list_enums.dart';
 import 'package:flutter/foundation.dart';
+import '../../../features/customer/domain/services/customer_address_formatter.dart';
 
 @immutable
 class CustomerListItemModel {
@@ -68,25 +69,14 @@ class CustomerListItemModel {
   bool get hasDueInvoices => dueInvoiceCount > 0;
   bool get hasOpenWork => activeAdvanceCount > 0 || activeGirviCount > 0;
 
-  String? get formattedAddress {
-    if (addressLine1.trim().isEmpty && addressLine2.trim().isEmpty) return null;
-
-    final parts = <String>[
-      addressLine1,
-      addressLine2,
-      city,
-      state,
-      pincode,
-      if (country.trim().toLowerCase() != 'india') country,
-    ];
-    final unique = <String>[];
-    final seen = <String>{};
-    for (final part in parts) {
-      final value = part.trim();
-      if (value.isNotEmpty && seen.add(value.toLowerCase())) unique.add(value);
-    }
-    return unique.join(', ');
-  }
+  String? get formattedAddress => CustomerAddressFormatter.format(
+        addressLine1: addressLine1,
+        addressLine2: addressLine2,
+        city: city,
+        state: state,
+        pincode: pincode,
+        country: country,
+      );
 
   bool get isNewToday {
     final now = DateTime.now();

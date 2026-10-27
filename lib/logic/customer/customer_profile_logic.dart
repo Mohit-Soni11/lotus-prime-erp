@@ -33,33 +33,14 @@ class CustomerProfileLogic extends ChangeNotifier {
   int _loadRequestId = 0;
   bool _isDisposed = false;
 
-  // Due limit edit state. The repository still uses the legacy field name.
-  bool _editingCreditLimit = false;
-  bool _savingCreditLimit = false;
-
-  // Edit mode
-  bool _editMode = false;
-  bool _savingEdit = false;
-  String? _editError;
   String? _deleteError;
-
-  // Active tab for stats
-  int _activeTab = 0;
 
   // Getters
   ProfileState get state => _state;
   CustomerProfileModel? get profile => _profile;
   String? get error => _error;
   bool get isLoading => _state == ProfileState.loading;
-  bool get editingCreditLimit => _editingCreditLimit;
-  bool get savingCreditLimit => _savingCreditLimit;
-  bool get editingDueLimit => _editingCreditLimit;
-  bool get savingDueLimit => _savingCreditLimit;
-  bool get editMode => _editMode;
-  bool get savingEdit => _savingEdit;
-  String? get editError => _editError;
   String? get deleteError => _deleteError;
-  int get activeTab => _activeTab;
 
   // Load
   Future<void> _load() async {
@@ -102,120 +83,6 @@ class CustomerProfileLogic extends ChangeNotifier {
       customerId: customerId,
       loanId: loanId,
     );
-  }
-
-  // Tab navigation
-  void setTab(int index) {
-    _activeTab = index;
-    notifyListeners();
-  }
-
-  // Edit mode
-  void enterEditMode() {
-    _editMode = true;
-    _editError = null;
-    notifyListeners();
-  }
-
-  void cancelEditMode() {
-    _editMode = false;
-    _editError = null;
-    notifyListeners();
-  }
-
-  /// Saves all editable fields from the profile edit dialog.
-  Future<bool> saveEdit({
-    required String name,
-    required String mobile,
-    required String city,
-    required String type,
-    String whatsapp = "",
-    String email = "",
-    String address = "",
-    String state = "",
-    String pincode = "",
-  }) async {
-    if (_profile == null) return false;
-
-    if (name.trim().isEmpty) {
-      _editError = "Name cannot be empty";
-      notifyListeners();
-      return false;
-    }
-    final cleanMobile = mobile.replaceAll(RegExp(r'[^0-9]'), '');
-    if (cleanMobile.isNotEmpty && cleanMobile.length != 10) {
-      _editError = "Mobile must be 10 digits";
-      notifyListeners();
-      return false;
-    }
-
-    _savingEdit = true;
-    _editError = null;
-    notifyListeners();
-
-    final ok = await _repo.updateCustomer(
-      customerId: customerId,
-      name: name,
-      mobile: cleanMobile,
-      city: city,
-      type: type,
-      whatsapp: whatsapp,
-      email: email,
-      addressLine1: address,
-      state: state,
-      pincode: pincode,
-    );
-    if (_isDisposed) return false;
-
-    if (ok) {
-      _profile = _profile!.copyWith(
-        name: name,
-        mobile: cleanMobile,
-        city: city,
-        type: type,
-        whatsapp: whatsapp,
-      );
-      _editMode = false;
-    } else {
-      _editError = "Failed to save. Please try again.";
-    }
-
-    _savingEdit = false;
-    notifyListeners();
-    return ok;
-  }
-
-  // Due limit
-  void startEditDueLimit() => startEditCreditLimit();
-
-  void cancelEditDueLimit() => cancelEditCreditLimit();
-
-  Future<bool> saveDueLimit(double newLimit) => saveCreditLimit(newLimit);
-
-  void startEditCreditLimit() {
-    _editingCreditLimit = true;
-    notifyListeners();
-  }
-
-  void cancelEditCreditLimit() {
-    _editingCreditLimit = false;
-    notifyListeners();
-  }
-
-  Future<bool> saveCreditLimit(double newLimit) async {
-    if (_profile == null) return false;
-    _savingCreditLimit = true;
-    notifyListeners();
-
-    final ok = await _repo.saveCreditLimit(customerId, newLimit);
-    if (_isDisposed) return false;
-    if (ok) {
-      _profile = _profile!.copyWith(creditLimit: newLimit);
-    }
-    _savingCreditLimit = false;
-    _editingCreditLimit = false;
-    notifyListeners();
-    return ok;
   }
 
   // Convert advance to new sale

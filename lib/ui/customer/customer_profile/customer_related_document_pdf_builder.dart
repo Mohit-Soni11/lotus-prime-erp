@@ -34,7 +34,7 @@ class CustomerRelatedDocumentPdfBuilder extends CustomerPdfElements {
             ['Return Value', document.formattedReturnValue],
             ['Making Returned', document.formattedMakingReturned],
             ['Due Adjusted', document.formattedDueAdjusted],
-            ['Customer Credit', document.formattedCustomerCredit],
+            ['Refund Payable', document.formattedRefundPayable],
           ]),
           pw.SizedBox(height: 18),
           pdfSectionTitle('Audit Note'),
@@ -48,7 +48,7 @@ class CustomerRelatedDocumentPdfBuilder extends CustomerPdfElements {
               borderRadius: pw.BorderRadius.circular(10),
             ),
             child: pw.Text(
-              'Original sales invoice remains locked. This linked document records the return settlement, inventory routing, due adjustment, and customer credit impact.',
+              'Original sales invoice remains locked. This linked document records the return settlement, inventory routing, due adjustment, and refund payable.',
               style: const pw.TextStyle(
                 color: PdfColor.fromInt(0xFF111827),
                 fontSize: 10,

@@ -233,11 +233,6 @@ class AddCustomerLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onCreditLimitChanged(String v) {
-    _form = _form.copyWith(creditLimit: double.tryParse(v) ?? 0.0);
-    notifyListeners();
-  }
-
   void setCustomerTier(CustomerTier t) {
     _form = _form.copyWith(customerTier: t);
     notifyListeners();

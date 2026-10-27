@@ -120,7 +120,6 @@ class AddCustomerFormModel {
 
   // ── Billing ────────────────────────────────────────────────────────────────
   final double openingBalance;
-  final double creditLimit;
   final CustomerTier customerTier;
   final String membershipId;
 
@@ -169,7 +168,6 @@ class AddCustomerFormModel {
     this.city = '',
     this.pincode = '',
     this.openingBalance = 0.0,
-    this.creditLimit = 0.0,
     this.customerTier = CustomerTier.regular,
     this.membershipId = '',
     this.ringSize,
@@ -242,7 +240,6 @@ class AddCustomerFormModel {
     String? city,
     String? pincode,
     double? openingBalance,
-    double? creditLimit,
     CustomerTier? customerTier,
     String? membershipId,
     RingSize? ringSize,
@@ -293,7 +290,6 @@ class AddCustomerFormModel {
       city: city ?? this.city,
       pincode: pincode ?? this.pincode,
       openingBalance: openingBalance ?? this.openingBalance,
-      creditLimit: creditLimit ?? this.creditLimit,
       customerTier: customerTier ?? this.customerTier,
       membershipId: membershipId ?? this.membershipId,
       ringSize: clearRingSize ? null : (ringSize ?? this.ringSize),

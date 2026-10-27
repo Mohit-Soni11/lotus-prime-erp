@@ -77,6 +77,35 @@ void main() {
     expect(profile.activeLoans, 2);
   });
 
+  test('Girvi ledger separates capital given from active principal', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+              name: 'Girvi Customer', mobile: '9000000099'),
+        );
+    final loanId = await db.into(db.girviLoans).insert(
+          GirviLoansCompanion.insert(
+            ticketNo: 'GRV-CAPITAL-1',
+            customerId: customerId,
+            itemDescription: 'Gold chain',
+            loanAmount: const Value(25000),
+            interestRate: const Value(2),
+            startDate: Value(DateTime(2026, 9, 1)),
+          ),
+        );
+    await db.into(db.girviPayments).insert(
+          GirviPaymentsCompanion.insert(
+            girviId: loanId,
+            paymentType: GirviPaymentType.partialPrincipal.dbValue,
+            amount: const Value(5000),
+          ),
+        );
+
+    final profile =
+        await CustomerProfileRepository(db: db).fetchProfile(customerId);
+    expect(profile!.totalLoanAmount, 30000);
+    expect(profile.totalActiveLoanAmount, 25000);
+  });
+
   test('customer profile and list count every open Girvi status consistently',
       () async {
     final customerId = await db.into(db.customers).insert(
@@ -222,12 +251,13 @@ void main() {
 
     expect(profile == null, isFalse);
     expect(profile!.advanceOrders.map((order) => order.orderNo), [
+      'AJ-BK-26-0003',
       'AJ-BK-26-0002',
       'AJ-BK-26-0001',
     ]);
     expect(profile.activeAdvanceCount, 2);
     expect(profile.totalAdvancePaid, 17000);
-    expect(profile.advanceOrders.first.totalAdvancePaid, 5000);
+    expect(profile.advanceOrders[1].totalAdvancePaid, 5000);
     expect(profile.advanceOrders.last.estimatedTotal, 65000);
     expect(profile.advanceOrders.last.remainingBalance, 53000);
   });

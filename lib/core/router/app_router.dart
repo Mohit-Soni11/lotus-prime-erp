@@ -274,6 +274,9 @@ GoRouter createAppRouter() {
           final editBillId = int.tryParse(
             state.uri.queryParameters['editBillId'] ?? '',
           );
+          final initialCustomerId = int.tryParse(
+            state.uri.queryParameters['customerId'] ?? '',
+          );
           final convertAdvanceId = int.tryParse(
             state.uri.queryParameters['convertAdvanceId'] ?? '',
           );
@@ -284,6 +287,7 @@ GoRouter createAppRouter() {
           return PosMasterSaleScreen(
             editBillId: editBillId,
             convertAdvanceId: convertAdvanceId,
+            initialCustomerId: initialCustomerId,
             onBack: () {
               if (returnCustomerId != null) {
                 context.go(RoutePaths.customerProfileFor(returnCustomerId));
@@ -416,7 +420,13 @@ GoRouter createAppRouter() {
                 initialBillId: initialBillId,
                 onBack: () => _goBackOr(context, RoutePaths.customerList),
                 onDeleted: () => context.go(RoutePaths.customerList),
-                onNewSale: (_) => context.go(RoutePaths.salesPos),
+                onNewSale: (customerId) => context.go(Uri(
+                  path: RoutePaths.salesPos,
+                  queryParameters: {
+                    'customerId': '$customerId',
+                    'returnCustomerId': '$customerId',
+                  },
+                ).toString()),
                 onEditBill: (billId) => context.go(
                   Uri(
                     path: RoutePaths.salesPos,

@@ -1225,7 +1225,7 @@ class _TestReturnReversalRepository implements ReturnReversalRepository {
       processedLineCount: 1,
       returnValue: 17500,
       dueAdjustedAmount: 2000,
-      customerCreditAmount: 15500,
+      refundPayableAmount: 15500,
       status: 'POSTED',
     );
   }
@@ -1263,7 +1263,7 @@ class _ProcessTrackingReturnReversalRepository
       processedLineCount: 1,
       returnValue: 17500,
       dueAdjustedAmount: 2000,
-      customerCreditAmount: 15500,
+      refundPayableAmount: 15500,
       status: 'POSTED',
     );
   }
@@ -1596,7 +1596,7 @@ class _MixedMetalReturnReversalRepository implements ReturnReversalRepository {
       processedLineCount: 2,
       returnValue: 23500,
       dueAdjustedAmount: 0,
-      customerCreditAmount: 23500,
+      refundPayableAmount: 23500,
       status: 'POSTED',
     );
   }
@@ -1746,7 +1746,7 @@ class _AllSourceTypesReturnReversalRepository
       processedLineCount: 1,
       returnValue: 12000,
       dueAdjustedAmount: 0,
-      customerCreditAmount: 12000,
+      refundPayableAmount: 12000,
       status: 'POSTED',
     );
   }

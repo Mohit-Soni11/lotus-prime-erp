@@ -1,86 +1,28 @@
-// Centralized user-facing copy for the customer profile experience.
-
 class CustomerProfileStrings {
   CustomerProfileStrings._();
 
-  static const String appBarSubtitle = "LOTUS PRIME ERP";
-  static const String appBarTitle = "CUSTOMER PROFILE";
-  static const String moduleName = "PROFILE";
-  static const String moduleStatus = "Customer Details";
+  static const appBarTitle = 'CUSTOMER PROFILE';
+  static const btnNewSale = 'New Sale';
+  static const btnEdit = 'Edit Customer';
+  static const btnHistory = 'Transaction History';
+  static const btnDelete = 'Delete Customer';
 
-  static const String btnNewSale = "New Sale";
-  static const String btnEdit = "Edit";
-  static const String btnHistory = "Transactions";
-  static const String btnDelete = "Delete";
+  static const secContact = 'Contact Information';
+  static const secAccountSnapshot = 'Account Ledgers';
+  static const secDues = 'Pending Dues';
 
-  static const String secContact = "Contact Information";
-  static const String secAccountSnapshot = "Account Snapshot";
-  static const String secBills = "Billing Activity";
-  static const String secAdvance = "Advance Orders";
-  static const String secDues = "Pending Dues";
+  static const noBills = 'No sales bills yet';
+  static const noBillsSub = 'Sales invoices will appear after the first sale.';
+  static const noAdvance = 'No advance orders yet';
+  static const noAdvanceSub = 'Advance bookings will appear once created.';
+  static const convertToSale = 'Convert to Sale';
+  static const totalAdvancePaid = 'Advance Paid';
+  static const remainingBalance = 'Remaining Balance';
 
-  static const String lblMobile = "Mobile";
-  static const String lblWhatsapp = "WhatsApp";
-  static const String lblCity = "City";
-  static const String lblSince = "Member Since";
-  static const String lblType = "Type";
-  static const String lblNa = "N/A";
-
-  static const String lblDueLimit = "Approved Due Limit";
-  static const String lblDueTotal = "Due Amount";
-  static const String lblDueBillValue = "Pending Bill Value";
-  static const String lblGirviTotal = "Total Girvi Principal";
-  static const String lblGirviBalance = "Active Girvi Balance";
-  static const String lblInterestBase = "Interest Principal";
-  static const String lblInterestAccrued = "Accrued Interest";
-  static const String lblGirviReceivable = "Current Receivable";
-  static const String lblUsedPct = "Used";
-
-  static const String statusClear = "DUE CLEAR";
-  static const String statusDue = "DUE OPEN";
-  static const String statusDefaulter = "LIMIT EXCEEDED";
-
-  static const String hintDueLimit = "Enter approved due limit";
-  static const String savedLimit = "Due limit updated successfully.";
-
-  static const String paid = "SETTLED";
-  static const String unpaid = "UNPAID";
-  static const String active = "ACTIVE";
-  static const String noBills = "No billing activity yet";
-  static const String noBillsSub =
-      "Sales invoices will appear here after the first sale.";
-
-  static const String noAdvance = "No advance orders";
-  static const String noAdvanceSub =
-      "Advance bookings will appear here once created.";
-  static const String advancePending = "PENDING";
-  static const String advanceReady = "READY";
-  static const String advanceDelivered = "DELIVERED";
-  static const String advanceCancelled = "CANCELLED";
-  static const String convertToSale = "Convert to Sale";
-  static const String totalAdvancePaid = "Advance Paid";
-  static const String remainingBalance = "Remaining";
-
-  static const String noDues = "No pending dues";
-  static const String noDuesSub = "All payable bills are currently settled.";
-  static const String dueCleared = "Mark as Cleared";
-  static const String totalDue = "Total Due";
-  static const String dueBillCount = "Unpaid Bills";
-
-  static const String deleteTitle = "Delete Customer?";
-  static const String deleteMsg =
-      "Only customers with no invoices, girvi tickets, advance orders, or ledger entries can be deleted. Transaction customers are kept for audit history.";
-  static const String deleteConfirm = "Delete";
-  static const String deleteCancel = "Cancel";
-  static const String deleteSuccess = "Customer deleted successfully.";
-  static const String deleteError =
-      "Cannot delete this customer because linked records exist.";
-
-  static const String editTitle = "Edit Customer";
-  static const String editSave = "Save Changes";
-  static const String editCancel = "Cancel";
-  static const String editSuccess = "Customer updated successfully.";
-  static const String editFail = "Failed to save. Please try again.";
-
-  static const String editComingSoon = "Customer editing is not available yet.";
+  static const deleteTitle = 'Delete Customer?';
+  static const deleteMsg =
+      'Customers with invoices, Girvi tickets, advance orders, or refund records are retained for transaction history.';
+  static const deleteConfirm = 'Delete';
+  static const deleteCancel = 'Cancel';
+  static const deleteError = 'This customer has linked transaction records.';
 }

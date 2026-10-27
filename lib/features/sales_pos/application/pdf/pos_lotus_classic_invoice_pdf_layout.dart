@@ -1128,7 +1128,7 @@ class PosLotusClassicInvoicePdfLayout {
           'Adjusted in Final Bill', _amount(invoice.netPayable.abs()));
     }
     if (invoice.netPayable < -0.5) {
-      return _miniRow('Customer Credit', _amount(invoice.netPayable.abs()));
+      return _miniRow('Refund Payable', _amount(invoice.netPayable.abs()));
     }
     return _miniRow(
       'Payment Status',
@@ -1265,8 +1265,8 @@ class PosLotusClassicInvoicePdfLayout {
         return 'Returned to customer in Cash';
       case RefundMethod.upi:
         return 'Returned to customer through UPI';
-      case RefundMethod.accountCredit:
-        return 'Added to Customer Account Credit';
+      case RefundMethod.refundPayable:
+        return 'Added to Customer Refund Payable';
       case null:
         return '';
     }
@@ -1347,7 +1347,7 @@ class PosLotusClassicInvoicePdfLayout {
       : _isScopedSectionExcess(invoice)
           ? 'SECTION EXCESS'
           : invoice.netPayable < -0.5
-              ? 'CUSTOMER CREDIT'
+              ? 'REFUND PAYABLE'
               : 'NET PAYABLE';
 
   bool _isScopedSectionExcess(PosInvoiceModel invoice) =>

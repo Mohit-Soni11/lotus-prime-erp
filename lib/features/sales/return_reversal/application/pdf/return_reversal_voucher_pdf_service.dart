@@ -343,12 +343,12 @@ class ReturnReversalVoucherPdfService {
         (kind == ReturnReversalVoucherDocumentKind.salesReturn
             ? math.min(document?.dueAmount ?? 0, returnValue)
             : 0);
-    final customerCredit = result?.customerCreditAmount ??
-        math.max(0.0, returnValue - dueAdjusted);
+    final refundPayable =
+        result?.refundPayableAmount ?? math.max(0.0, returnValue - dueAdjusted);
     return _VoucherSettlement(
       returnValue: returnValue,
       dueAdjustedAmount: dueAdjusted,
-      customerCreditAmount: customerCredit,
+      refundPayableAmount: refundPayable,
     );
   }
 
@@ -556,8 +556,8 @@ class ReturnReversalVoucherPdfService {
               label:
                   kind == ReturnReversalVoucherDocumentKind.bookingCancellation
                       ? 'Refund Payable'
-                      : 'Customer Credit',
-              value: _formatMoney(settlement.customerCreditAmount),
+                      : 'Refund Payable',
+              value: _formatMoney(settlement.refundPayableAmount),
               highlight: true,
             ),
           ],
@@ -905,8 +905,7 @@ class ReturnReversalVoucherPdfService {
           _amountRow('Amount Received', sourceDocument.paidAmount, thermal),
           _amountRow('Return / Refund Value', settlement.returnValue, thermal),
           _amountRow('Due Adjusted', settlement.dueAdjustedAmount, thermal),
-          _amountRow(
-              'Customer Credit', settlement.customerCreditAmount, thermal),
+          _amountRow('Refund Payable', settlement.refundPayableAmount, thermal),
         ],
       ),
     );
@@ -1126,12 +1125,12 @@ class _VoucherRow {
 class _VoucherSettlement {
   final double returnValue;
   final double dueAdjustedAmount;
-  final double customerCreditAmount;
+  final double refundPayableAmount;
 
   const _VoucherSettlement({
     required this.returnValue,
     required this.dueAdjustedAmount,
-    required this.customerCreditAmount,
+    required this.refundPayableAmount,
   });
 }
 
