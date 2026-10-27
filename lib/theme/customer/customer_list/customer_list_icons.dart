@@ -21,11 +21,11 @@ class CustomerListIcons {
   static const IconData clearSearch = Icons.close_rounded;
 
   static const IconData phone = Icons.phone_android_rounded;
-  static const IconData city = Icons.location_city_rounded;
+  static const IconData address = Icons.location_on_outlined;
   static const IconData calendar = Icons.calendar_today_outlined;
   static const IconData invoice = Icons.receipt_long_rounded;
   static const IconData due = Icons.account_balance_wallet_rounded;
-  static const IconData advance = Icons.diamond_rounded;
+  static const IconData advance = Icons.pending_actions_rounded;
   static const IconData girvi = Icons.lock_rounded;
   static const IconData activity = Icons.bolt_rounded;
   static const IconData rupee = Icons.currency_rupee_rounded;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +17,55 @@ void main() {
   });
 
   tearDown(() => db.close());
+
+  test('directory formats saved address without treating city alone as one',
+      () async {
+    await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Full Address',
+            mobile: '9000000101',
+            addressLine1: const Value('12 MG Road'),
+            addressLine2: const Value('Near Temple'),
+            city: const Value('Patna'),
+            state: const Value('Bihar'),
+            pincode: const Value('800001'),
+          ),
+        );
+    await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'City Only',
+            mobile: '9000000102',
+            city: const Value('Patna'),
+          ),
+        );
+
+    final customers =
+        await repository.getAllCustomers(sort: CustomerSort.nameAsc);
+    expect(customers.first.formattedAddress, equals(null));
+    expect(customers.last.formattedAddress,
+        '12 MG Road, Near Temple, Patna, Bihar, 800001');
+  });
+
+  test('change watcher observes customer and invoice updates', () async {
+    final changes = StreamIterator<void>(repository.watchChanges());
+    addTearDown(changes.cancel);
+
+    final customerChange = changes.moveNext();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(name: 'Asha', mobile: '9000000001'),
+        );
+    expect(await customerChange.timeout(const Duration(seconds: 2)), isTrue);
+
+    final invoiceChange = changes.moveNext();
+    await db.into(db.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'SALE-1',
+            customerId: Value(customerId),
+          ),
+        );
+    expect(await invoiceChange.timeout(const Duration(seconds: 2)), isTrue);
+  });
 
   test('aggregates bills, advance orders and Girvi without double counting',
       () async {
@@ -78,11 +129,13 @@ void main() {
 
     expect(results.map((customer) => customer.name), ['Asha', 'Zara']);
     expect(asha.billCount, 1);
+    expect(asha.dueInvoiceCount, 1);
     expect(asha.invoiceValue, 1000);
     expect(asha.dueAmount, 600);
     expect(asha.activeAdvanceCount, 1);
     expect(asha.activeGirviCount, 1);
     expect(results.last.billCount, 1);
+    expect(results.last.dueInvoiceCount, 0);
     expect(results.last.invoiceValue, 700);
     expect(results.last.dueAmount, 0);
   });
@@ -134,6 +187,7 @@ void main() {
 
     final customer = (await repository.getAllCustomers()).single;
     expect(customer.billCount, 3);
+    expect(customer.dueInvoiceCount, 2);
     expect(customer.dueAmount, 325);
   });
 

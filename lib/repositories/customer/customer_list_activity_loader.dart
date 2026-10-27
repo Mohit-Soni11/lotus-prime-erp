@@ -47,6 +47,8 @@ class CustomerListActivityLoader {
         FROM bills WHERE customer_id IS NOT NULL
       ), totals AS (
         SELECT customer_id, SUM(posted) AS bill_count,
+          SUM(CASE WHEN posted = 1 AND current_due > 0.005
+            THEN 1 ELSE 0 END) AS due_invoice_count,
           SUM(CASE WHEN posted = 1 THEN final_amount ELSE 0.0 END)
             AS invoice_value,
           SUM(CASE WHEN posted = 1 THEN current_due ELSE 0.0 END)
@@ -54,7 +56,8 @@ class CustomerListActivityLoader {
         FROM ranked GROUP BY customer_id
       )
       SELECT ranked.customer_id, bill_no, source_advance_order_no,
-        activity_at, current_due, posted, bill_count, invoice_value, due_amount
+        activity_at, current_due, posted, bill_count, due_invoice_count,
+        invoice_value, due_amount
       FROM ranked JOIN totals USING (customer_id)
       WHERE activity_rank = 1
     ''').get();
@@ -64,6 +67,7 @@ class CustomerListActivityLoader {
       if (entry == null) continue;
       entry
         ..billCount = row.read<int>('bill_count')
+        ..dueInvoiceCount = row.read<int>('due_invoice_count')
         ..invoiceValue = _number(row, 'invoice_value')
         ..dueAmount = _number(row, 'due_amount');
       final due = _number(row, 'current_due');
@@ -196,6 +200,7 @@ class _CustomerActivity {
 
   final Customer customer;
   int billCount = 0;
+  int dueInvoiceCount = 0;
   int activeAdvanceCount = 0;
   int activeGirviCount = 0;
   double invoiceValue = 0;
@@ -231,12 +236,17 @@ class _CustomerActivity {
       id: customer.id,
       name: name,
       mobile: CustomerContactValue.displayMobile(customer.mobile),
+      addressLine1: customer.addressLine1 ?? '',
+      addressLine2: customer.addressLine2 ?? '',
       city: customer.city ?? '',
       state: customer.state ?? '',
+      pincode: customer.pincode ?? '',
+      country: customer.country,
       gstNumber: customer.gstNumber ?? '',
       panNumber: customer.panNumber ?? '',
       type: CustomerType.fromString(customer.type),
       billCount: billCount,
+      dueInvoiceCount: dueInvoiceCount,
       activeAdvanceCount: activeAdvanceCount,
       activeGirviCount: activeGirviCount,
       invoiceValue: invoiceValue,

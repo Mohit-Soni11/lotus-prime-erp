@@ -1,25 +1,19 @@
-// -----------------------------------------------------------------------------
-// FILE: customer_list_card.dart
-// MODULE: Customer -> Customer List
-// DESCRIPTION: Production customer row with activity, account, and status cues.
-// -----------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 
-import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../../models/customer/customer_list/customer_list_ui_model.dart';
 import '../../../theme/customer/customer_list/customer_list_theme.dart';
 import 'customer_list_card_components.dart';
+import 'customer_list_identity.dart';
 
 class CustomerListCard extends StatefulWidget {
-  final CustomerListItemModel customer;
-  final VoidCallback? onTap;
-
   const CustomerListCard({
     super.key,
     required this.customer,
     this.onTap,
   });
+
+  final CustomerListItemModel customer;
+  final VoidCallback? onTap;
 
   @override
   State<CustomerListCard> createState() => _CustomerListCardState();
@@ -30,47 +24,43 @@ class _CustomerListCardState extends State<CustomerListCard> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: AnimatedScale(
-        scale: _isHovered ? 1.004 : 1,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: _isHovered
-                ? CustomerListStyles.cardDecorationHover
-                : CustomerListStyles.cardDecoration,
-            clipBehavior: Clip.antiAlias,
+    final accent = widget.customer.isVip
+        ? CustomerListColors.brandGold
+        : widget.customer.hasDue
+            ? CustomerListColors.danger
+            : CustomerListColors.info;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: _isHovered
+              ? CustomerListStyles.cardDecorationHover
+              : CustomerListStyles.cardDecoration,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: widget.onTap,
+            onHover: (hovered) => setState(() => _isHovered = hovered),
             child: Stack(
               children: [
-                Positioned.fill(
+                Positioned(
                   left: 0,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: _isHovered ? 5 : 3,
-                      color: _activityAccent,
-                    ),
-                  ),
+                  top: 0,
+                  bottom: 0,
+                  child: Container(width: 4, color: accent),
                 ),
-                Padding(
-                  padding: CustomerListStyles.cardPaddingH,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 880;
-                      return compact
-                          ? _buildCompactLayout()
-                          : _buildWideLayout();
-                    },
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final horizontal = constraints.maxWidth >= 850;
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 18, 14),
+                      child: horizontal
+                          ? _buildHorizontalContent(constraints.maxWidth)
+                          : _buildCompactContent(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -80,360 +70,73 @@ class _CustomerListCardState extends State<CustomerListCard> {
     );
   }
 
-  Widget _buildWideLayout() {
+  Widget _buildHorizontalContent(double width) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildAvatar(),
+        Expanded(
+          flex: 5,
+          child: CustomerListIdentity(customer: widget.customer),
+        ),
         const SizedBox(width: 16),
-        Expanded(flex: 5, child: _buildIdentity()),
-        const SizedBox(width: 18),
-        Expanded(flex: 4, child: _buildActivityPill()),
-        const SizedBox(width: 18),
-        CustomerListMetricRail(customer: widget.customer),
-        const SizedBox(width: 12),
-        _buildOpenArrow(),
+        Expanded(
+          flex: 7,
+          child: CustomerListMetricRail(customer: widget.customer),
+        ),
+        const SizedBox(width: 14),
+        _buildProfileAction(compact: width < 1100),
       ],
     );
   }
 
-  Widget _buildCompactLayout() {
+  Widget _buildCompactContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAvatar(),
-            const SizedBox(width: 14),
-            Expanded(child: _buildIdentity()),
-            _buildOpenArrow(),
+            Expanded(child: CustomerListIdentity(customer: widget.customer)),
+            const SizedBox(width: 10),
+            _buildProfileAction(compact: true),
           ],
         ),
-        const SizedBox(height: 14),
-        _buildActivityPill(),
         const SizedBox(height: 12),
-        CustomerListMetricRail(customer: widget.customer, compact: true),
+        CustomerListMetricRail(customer: widget.customer),
       ],
     );
   }
 
-  Widget _buildAvatar() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: CustomerListStyles.avatarSize,
-          height: CustomerListStyles.avatarSize,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: widget.customer.isVip
-                  ? const [
-                      CustomerListColors.brandGoldBg,
-                      CustomerListColors.vipBadgeBg,
-                    ]
-                  : const [
-                      CustomerListColors.infoBg,
-                      CustomerListColors.bodyPanelBg,
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _activityAccent.withValues(alpha: 0.45)),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            widget.customer.initials,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: widget.customer.isVip
-                  ? CustomerListColors.brandGoldDark
-                  : CustomerListColors.info,
-            ),
-          ),
+  Widget _buildProfileAction({required bool compact}) {
+    return Tooltip(
+      message: CustomerListStrings.viewDetails,
+      child: Container(
+        key: const ValueKey('open-profile-action'),
+        constraints: const BoxConstraints(minHeight: 36, minWidth: 36),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 7 : 11),
+        decoration: BoxDecoration(
+          color: CustomerListColors.brandGoldBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: CustomerListColors.brandGold),
         ),
-        if (widget.customer.isActiveAccount)
-          Positioned(
-            right: -3,
-            bottom: -3,
-            child: Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: CustomerListColors.success,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: CustomerListColors.bodyPanelBg,
-                  width: 3,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildIdentity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(
-              child: Text(
-                widget.customer.name,
-                style: CustomerListStyles.customerName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            if (!compact) ...[
+              Text(
+                CustomerListStrings.viewDetails,
+                style: CustomerListStyles.toolbarButton,
               ),
-            ),
-            const SizedBox(width: 8),
-            _buildTypeBadge(),
-            if (widget.customer.hasDue) ...[
               const SizedBox(width: 6),
-              _buildSmallBadge(
-                "DUE",
-                CustomerListColors.dangerBg,
-                CustomerListColors.dangerText,
-              ),
             ],
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _buildInlineMeta(
-              CustomerListIcons.phone,
-              widget.customer.mobile.isEmpty
-                  ? "No mobile"
-                  : widget.customer.mobile,
-            ),
-            _buildInlineMeta(
-              CustomerListIcons.city,
-              widget.customer.city.isEmpty
-                  ? CustomerListStrings.noCity
-                  : widget.customer.city,
-            ),
-            _buildInlineMeta(
-              CustomerListIcons.calendar,
-              "Since ${widget.customer.formattedDate}",
-              muted: true,
+            const Icon(
+              CustomerListIcons.arrowRight,
+              size: 17,
+              color: CustomerListColors.bodyTextMain,
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildActivityPill() {
-    final colors = _activityPalette;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: CustomerListColors.bodyPanelBg.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(_activityIcon, size: 17, color: colors.accent),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.customer.lastActivityLabel,
-                  style: CustomerListStyles.activityLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  "${widget.customer.activityAgeLabel} - ${widget.customer.lastActivityDetail}",
-                  style: CustomerListStyles.activityMeta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
-  }
-
-  Widget _buildOpenArrow() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: _isHovered
-            ? CustomerListColors.brandGoldBg
-            : CustomerListColors.bodyPanelMuted,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _isHovered
-              ? CustomerListColors.brandGold
-              : CustomerListColors.bodyBorder,
-        ),
-      ),
-      child: Icon(
-        CustomerListIcons.arrowRight,
-        size: 14,
-        color: _isHovered
-            ? CustomerListColors.brandGoldDark
-            : CustomerListColors.bodyTextSoft,
-      ),
-    );
-  }
-
-  Widget _buildInlineMeta(IconData icon, String text, {bool muted = false}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 13,
-          color: muted
-              ? CustomerListColors.bodyTextSoft
-              : CustomerListColors.bodyTextMuted,
-        ),
-        const SizedBox(width: 5),
-        Flexible(
-          child: Text(
-            text,
-            style: muted
-                ? CustomerListStyles.customerSince
-                : CustomerListStyles.customerDetail,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypeBadge() {
-    final tier = widget.customer.type;
-    final Color background;
-    final Color foreground;
-    final Color border;
-    final IconData icon;
-
-    switch (tier) {
-      case CustomerType.elite:
-        background = CustomerListColors.vipBadgeBg;
-        foreground = CustomerListColors.vipBadgeText;
-        border = CustomerListColors.vipBadgeBorder;
-        icon = CustomerListIcons.vipBadge;
-        break;
-      case CustomerType.gold:
-        background = CustomerListColors.brandGoldBg;
-        foreground = CustomerListColors.brandGoldDark;
-        border = CustomerListColors.brandGold;
-        icon = Icons.star_rounded;
-        break;
-      case CustomerType.silver:
-        background = CustomerListColors.bodyPanelMuted;
-        foreground = CustomerListColors.bodyTextMuted;
-        border = CustomerListColors.bodyTextSoft;
-        icon = Icons.star_half_rounded;
-        break;
-      case CustomerType.standard:
-        background = CustomerListColors.regularBadgeBg;
-        foreground = CustomerListColors.regularBadgeText;
-        border = CustomerListColors.regularBadgeBorder;
-        icon = CustomerListIcons.defaultAvatar;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border.withValues(alpha: 0.75)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: foreground),
-          const SizedBox(width: 4),
-          Text(
-            tier.displayLabel.toUpperCase(),
-            style: CustomerListStyles.regularBadge.copyWith(color: foreground),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSmallBadge(String text, Color background, Color foreground) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: CustomerListStyles.regularBadge.copyWith(color: foreground),
-      ),
-    );
-  }
-
-  Color get _activityAccent => _activityPalette.accent;
-
-  IconData get _activityIcon {
-    switch (widget.customer.lastActivityKind) {
-      case CustomerActivityKind.profile:
-        return CustomerListIcons.defaultAvatar;
-      case CustomerActivityKind.invoice:
-        return CustomerListIcons.invoice;
-      case CustomerActivityKind.advance:
-        return CustomerListIcons.advance;
-      case CustomerActivityKind.girvi:
-        return CustomerListIcons.girvi;
-    }
-  }
-
-  CustomerActivityPalette get _activityPalette {
-    switch (widget.customer.lastActivityKind) {
-      case CustomerActivityKind.profile:
-        return const CustomerActivityPalette(
-          accent: CustomerListColors.brandGold,
-          background: CustomerListColors.brandGoldBg,
-        );
-      case CustomerActivityKind.invoice:
-        return const CustomerActivityPalette(
-          accent: CustomerListColors.info,
-          background: CustomerListColors.infoBg,
-        );
-      case CustomerActivityKind.advance:
-        return const CustomerActivityPalette(
-          accent: CustomerListColors.teal,
-          background: CustomerListColors.tealBg,
-        );
-      case CustomerActivityKind.girvi:
-        return const CustomerActivityPalette(
-          accent: CustomerListColors.violet,
-          background: CustomerListColors.violetBg,
-        );
-    }
   }
 }

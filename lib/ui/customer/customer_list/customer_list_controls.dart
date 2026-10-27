@@ -143,7 +143,7 @@ class CustomerListResultPill extends StatelessWidget {
             child: Text(
               label,
               style: CustomerListStyles.resultMeta.copyWith(
-                color: CustomerListColors.info,
+                color: CustomerListColors.bodyTextMain,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -14,13 +14,10 @@ class CustomerListStyles {
 
   static const double appBarHeight = 70.0;
   static const double searchBarHeight = 52.0;
-  static const double filterBarHeight = 44.0;
   static const double cardBorderRadius = 14.0;
   static const double chipBorderRadius = 22.0;
   static const double avatarSize = 54.0;
 
-  static const EdgeInsets cardPaddingH =
-      EdgeInsets.symmetric(horizontal: 18, vertical: 16);
   static const EdgeInsets chipPadding =
       EdgeInsets.symmetric(horizontal: 14, vertical: 9);
 
@@ -31,13 +28,6 @@ class CustomerListStyles {
         letterSpacing: 1.2,
       );
 
-  static const TextStyle systemOnlineText = TextStyle(
-    color: CustomerListColors.onlineGreen,
-    fontSize: 13,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0.5,
-  );
-
   static TextStyle get pageTitle => GoogleFonts.manrope(
         fontSize: 22,
         fontWeight: FontWeight.w900,
@@ -46,9 +36,9 @@ class CustomerListStyles {
       );
 
   static TextStyle get pageSubtitle => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: CustomerListColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get statsValue => GoogleFonts.manrope(
@@ -59,15 +49,15 @@ class CustomerListStyles {
       );
 
   static TextStyle get statsLabel => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: CustomerListColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get statsCaption => GoogleFonts.inter(
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: CustomerListColors.bodyTextSoft,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get searchText => GoogleFonts.inter(
@@ -78,110 +68,68 @@ class CustomerListStyles {
 
   static TextStyle get searchHint => GoogleFonts.inter(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: CustomerListColors.bodyTextMuted,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get chipActive => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: CustomerListColors.brandGoldDark,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get chipInactive => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: CustomerListColors.chipInactive,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get toolbarButton => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get resultTitle => GoogleFonts.manrope(
-        fontSize: 15,
+        fontSize: 18,
         fontWeight: FontWeight.w900,
         color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get resultMeta => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: CustomerListColors.bodyTextMuted,
-      );
-
-  static TextStyle get customerName => GoogleFonts.manrope(
-        fontSize: 16,
-        fontWeight: FontWeight.w900,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMain,
       );
 
-  static TextStyle get customerMobile => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
+  static TextStyle get customerName => GoogleFonts.manrope(
+        fontSize: 18,
+        fontWeight: FontWeight.w900,
         color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get customerDetail => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: CustomerListColors.bodyTextMuted,
-      );
-
-  static TextStyle get customerSince => GoogleFonts.inter(
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: CustomerListColors.bodyTextSoft,
-      );
-
-  static TextStyle get invoiceCount => GoogleFonts.manrope(
-        fontSize: 16,
-        fontWeight: FontWeight.w900,
         color: CustomerListColors.bodyTextMain,
       );
 
-  static TextStyle get invoiceLabel => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w800,
-        color: CustomerListColors.bodyTextMuted,
-      );
-
   static TextStyle get metricValue => GoogleFonts.manrope(
-        fontSize: 14,
+        fontSize: 20,
         fontWeight: FontWeight.w900,
         color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get metricLabel => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w800,
-        color: CustomerListColors.bodyTextMuted,
-      );
-
-  static TextStyle get activityLabel => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
         color: CustomerListColors.bodyTextMain,
       );
 
-  static TextStyle get activityMeta => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w700,
-        color: CustomerListColors.bodyTextMuted,
-      );
-
-  static TextStyle get vipBadge => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w900,
-        color: CustomerListColors.vipBadgeText,
-      );
-
   static TextStyle get regularBadge => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: CustomerListColors.regularBadgeText,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static TextStyle get emptyTitle => GoogleFonts.manrope(
@@ -192,8 +140,8 @@ class CustomerListStyles {
 
   static TextStyle get emptySubtitle => GoogleFonts.inter(
         fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: CustomerListColors.bodyTextMuted,
+        fontWeight: FontWeight.w700,
+        color: CustomerListColors.bodyTextMain,
       );
 
   static BoxDecoration get cardDecoration => BoxDecoration(

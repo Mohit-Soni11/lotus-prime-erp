@@ -17,6 +17,22 @@ class CustomerListRepository {
 
   CustomerListRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
 
+  Stream<void> watchChanges() {
+    return _db
+        .customSelect(
+          'SELECT 1 AS watch_key',
+          readsFrom: {
+            _db.customers,
+            _db.bills,
+            _db.salesOrders,
+            _db.girviLoans,
+          },
+        )
+        .watch()
+        .skip(1)
+        .map((_) {});
+  }
+
   Future<List<CustomerListItemModel>> getAllCustomers({
     CustomerFilter filter = CustomerFilter.all,
     CustomerSort sort = CustomerSort.newest,

@@ -18,7 +18,22 @@ class CustomerListLogic extends ChangeNotifier {
 
   CustomerListLogic({CustomerListRepository? repo})
       : _repo = repo ?? CustomerListRepository() {
-    _init();
+    _changesSubscription = _repo.watchChanges().listen(
+      (_) {
+        _changeDebounce?.cancel();
+        _changeDebounce = Timer(const Duration(milliseconds: 150), () {
+          if (!_isDisposed) refresh(showLoading: false);
+        });
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        AppLogger.error(
+          'Customer change watcher failed.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      },
+    );
+    refresh();
   }
 
   CustomerListState _state = CustomerListState.loading;
@@ -31,6 +46,8 @@ class CustomerListLogic extends ChangeNotifier {
   String _searchQuery = "";
   String? _errorMessage;
   Timer? _searchDebounce;
+  Timer? _changeDebounce;
+  late final StreamSubscription<void> _changesSubscription;
   int _requestId = 0;
   bool _isDisposed = false;
 
@@ -46,10 +63,6 @@ class CustomerListLogic extends ChangeNotifier {
   bool get isEmpty => _state == CustomerListState.empty;
   bool get isSearching => _searchQuery.isNotEmpty;
   int get totalLoadedCount => _allCustomers.length;
-
-  Future<void> _init() async {
-    await refresh();
-  }
 
   void onSearchChanged(String query) {
     _searchQuery = query.trim();
@@ -113,10 +126,12 @@ class CustomerListLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool showLoading = true}) async {
     final requestId = ++_requestId;
-    _state = CustomerListState.loading;
-    notifyListeners();
+    if (showLoading || _state == CustomerListState.error) {
+      _state = CustomerListState.loading;
+      notifyListeners();
+    }
 
     try {
       final allCustomers =
@@ -133,9 +148,11 @@ class CustomerListLogic extends ChangeNotifier {
         error: error,
         stackTrace: stackTrace,
       );
-      _stats = CustomerListStatsModel.empty();
+      if (showLoading) _stats = CustomerListStatsModel.empty();
       _errorMessage = "Failed to refresh customers. Please try again.";
-      _state = CustomerListState.error;
+      if (showLoading || _sourceCustomers.isEmpty) {
+        _state = CustomerListState.error;
+      }
     }
 
     notifyListeners();
@@ -163,11 +180,13 @@ class CustomerListLogic extends ChangeNotifier {
     _filteredList = _allCustomers.where((customer) {
       return customer.name.toLowerCase().contains(query) ||
           customer.mobile.toLowerCase().contains(query) ||
+          customer.addressLine1.toLowerCase().contains(query) ||
+          customer.addressLine2.toLowerCase().contains(query) ||
           customer.city.toLowerCase().contains(query) ||
+          customer.state.toLowerCase().contains(query) ||
+          customer.pincode.toLowerCase().contains(query) ||
           customer.type.value.toLowerCase().contains(query) ||
-          customer.type.displayLabel.toLowerCase().contains(query) ||
-          customer.lastActivityLabel.toLowerCase().contains(query) ||
-          customer.lastActivityDetail.toLowerCase().contains(query);
+          customer.type.displayLabel.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -176,6 +195,8 @@ class CustomerListLogic extends ChangeNotifier {
     _isDisposed = true;
     _requestId++;
     _searchDebounce?.cancel();
+    _changeDebounce?.cancel();
+    _changesSubscription.cancel();
     super.dispose();
   }
 }

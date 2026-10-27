@@ -14,12 +14,17 @@ class CustomerListItemModel {
   final int id;
   final String name;
   final String mobile;
+  final String addressLine1;
+  final String addressLine2;
   final String city;
   final String state;
+  final String pincode;
+  final String country;
   final String gstNumber;
   final String panNumber;
   final CustomerType type;
   final int billCount;
+  final int dueInvoiceCount;
   final int activeAdvanceCount;
   final int activeGirviCount;
   final double invoiceValue;
@@ -35,12 +40,17 @@ class CustomerListItemModel {
     required this.id,
     required this.name,
     required this.mobile,
+    this.addressLine1 = '',
+    this.addressLine2 = '',
     required this.city,
     this.state = '',
+    this.pincode = '',
+    this.country = 'India',
     this.gstNumber = '',
     this.panNumber = '',
     required this.type,
     required this.billCount,
+    this.dueInvoiceCount = 0,
     this.activeAdvanceCount = 0,
     this.activeGirviCount = 0,
     this.invoiceValue = 0,
@@ -55,7 +65,28 @@ class CustomerListItemModel {
 
   bool get isVip => type == CustomerType.elite;
   bool get hasDue => dueAmount > _moneyTolerance;
+  bool get hasDueInvoices => dueInvoiceCount > 0;
   bool get hasOpenWork => activeAdvanceCount > 0 || activeGirviCount > 0;
+
+  String? get formattedAddress {
+    if (addressLine1.trim().isEmpty && addressLine2.trim().isEmpty) return null;
+
+    final parts = <String>[
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      pincode,
+      if (country.trim().toLowerCase() != 'india') country,
+    ];
+    final unique = <String>[];
+    final seen = <String>{};
+    for (final part in parts) {
+      final value = part.trim();
+      if (value.isNotEmpty && seen.add(value.toLowerCase())) unique.add(value);
+    }
+    return unique.join(', ');
+  }
 
   bool get isNewToday {
     final now = DateTime.now();

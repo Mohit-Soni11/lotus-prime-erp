@@ -19,9 +19,9 @@ class CustomerListColors {
   static const Color bodyPanelBg = Color(0xFFFFFFFF);
   static const Color bodyPanelMuted = Color(0xFFFBFAF7);
   static const Color bodyBorder = Color(0xFFE8E1D6);
-  static const Color bodyTextMain = Color(0xFF111827);
-  static const Color bodyTextMuted = Color(0xFF64748B);
-  static const Color bodyTextSoft = Color(0xFF94A3B8);
+  static const Color bodyTextMain = Color(0xFF111111);
+  static const Color bodyTextMuted = Color(0xFF111111);
+  static const Color bodyTextSoft = Color(0xFF111111);
 
   static const Color brandGold = Color(0xFFD4AF37);
   static const Color goldGradientStart = Color(0xFFFFD86B);
@@ -59,7 +59,7 @@ class CustomerListColors {
 
   static const Color chipActive = Color(0xFFD4AF37);
   static const Color chipActiveBg = Color(0xFFFFF7DF);
-  static const Color chipInactive = Color(0xFF64748B);
+  static const Color chipInactive = Color(0xFF111827);
   static const Color chipInactiveBg = Color(0xFFF5F1E8);
 
   static const Color cardHover = Color(0xFFFFFCF5);
