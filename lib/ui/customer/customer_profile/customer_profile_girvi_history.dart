@@ -2,17 +2,18 @@ part of 'customer_profile_screen.dart';
 
 extension _ProfileGirviHistory on _CustomerProfileScreenState {
   Widget _buildGirviList(CustomerProfileModel p) {
-    if (p.loans.isEmpty) {
+    final activeLoans = p.loans.where((loan) => loan.isActive).toList();
+    if (activeLoans.isEmpty) {
       return _emptyState(
         icon: Icons.lock_outline_rounded,
-        title: "No Girvi tickets yet",
-        sub: "Pledge records will appear here after the first Girvi entry.",
+        title: 'No active Girvi tickets',
+        sub: 'Active pledge records will appear here.',
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: p.loans.length,
-      itemBuilder: (_, i) => _buildGirviRow(p.loans[i]),
+      itemCount: activeLoans.length,
+      itemBuilder: (_, i) => _buildGirviRow(activeLoans[i]),
     );
   }
 
@@ -64,15 +65,15 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
                         Text(loan.loanNo,
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13,
+                              fontSize: 14,
                               color: CustomerProfileColors.bodyTextMain,
                             )),
                         Text(loan.itemDesc,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
                               color: CustomerProfileColors.bodyTextMuted,
                             )),
                       ],
@@ -88,7 +89,7 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
                     child: Text(
                       loan.statusLabel,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: CustomerProfileColors.bodyTextMain,
                       ),

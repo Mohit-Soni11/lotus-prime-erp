@@ -24,22 +24,22 @@ class CustomerProfileStyles {
   // App bar
   static TextStyle get appBarTitle => GoogleFonts.inter(
         fontSize: 17,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.shellTextTitle,
         letterSpacing: 0.8,
       );
 
   static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.brandGold,
         letterSpacing: 1.5,
       );
 
   static const TextStyle systemOnlineText = TextStyle(
     color: Color(0xFF10B981),
-    fontSize: 13.5,
-    fontWeight: FontWeight.w700,
+    fontSize: 14,
+    fontWeight: FontWeight.w800,
     letterSpacing: 0.8,
   );
 
@@ -57,12 +57,6 @@ class CustomerProfileStyles {
         letterSpacing: -0.3,
       );
 
-  static TextStyle get customerMobile => GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        color: CustomerProfileColors.bodyTextMain,
-      );
-
   // Section header
   static TextStyle get sectionTitle => GoogleFonts.manrope(
         fontSize: 17,
@@ -71,22 +65,15 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMuted,
         letterSpacing: 1.2,
       );
 
-  // Information rows
-  static TextStyle get infoLabel => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: CustomerProfileColors.bodyTextMain,
-      );
-
   static TextStyle get infoValue => GoogleFonts.manrope(
         fontSize: 14,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMain,
       );
 
@@ -99,27 +86,27 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get snapshotLabel => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMain,
       );
 
   static TextStyle get snapshotMeta => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMuted,
       );
 
   // Action button
   static TextStyle get actionBtnText => GoogleFonts.manrope(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
       );
 
   // Bill card
   static TextStyle get billNo => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMain,
         letterSpacing: 0.3,
       );
@@ -131,8 +118,8 @@ class CustomerProfileStyles {
       );
 
   static TextStyle get billDate => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
         color: CustomerProfileColors.bodyTextMain,
       );
 

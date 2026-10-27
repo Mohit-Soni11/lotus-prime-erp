@@ -63,8 +63,8 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
                         Text(
                           subtitle,
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
                             color: CustomerProfileColors.bodyTextMuted,
                           ),
                         ),
@@ -119,7 +119,7 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
               Text(
                 'Linked Documents',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w900,
                   color: CustomerProfileColors.bodyTextMain,
                   letterSpacing: 0,
@@ -186,7 +186,7 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                           color: CustomerProfileColors.bodyTextMain,
                         ),
@@ -197,8 +197,8 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
                           color: CustomerProfileColors.bodyTextMuted,
                         ),
                       ),
@@ -213,7 +213,7 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
                     Text(
                       document.formattedReturnValue,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w900,
                         color: CustomerProfileColors.bodyTextMain,
                       ),
@@ -303,8 +303,8 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
                       Text(
                         action.subtitle,
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
                           color: CustomerProfileColors.bodyTextMuted,
                         ),
                       ),

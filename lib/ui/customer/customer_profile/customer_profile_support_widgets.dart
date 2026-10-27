@@ -46,39 +46,37 @@ extension _ProfileSupportWidgets on _CustomerProfileScreenState {
         Flexible(child: Text(title, style: CustomerProfileStyles.sectionTitle)),
       ]);
 
-  Widget _infoRow(IconData icon, String label, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 13),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icon, size: 18, color: CustomerProfileColors.bodyTextMain),
-          const SizedBox(width: 10),
-          Expanded(
-              child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: CustomerProfileStyles.infoLabel),
-              const SizedBox(height: 3),
-              SelectableText(value, style: CustomerProfileStyles.infoValue),
-            ],
-          )),
-        ]),
-      );
-
   Widget _buildTypeBadge(CustomerProfileModel profile) {
     final tier = profile.customerTier;
+    final (accent, icon) = switch (tier) {
+      CustomerType.standard => (const Color(0xFF2563EB), Icons.person_rounded),
+      CustomerType.silver => (const Color(0xFF475569), Icons.stars_rounded),
+      CustomerType.gold => (const Color(0xFFB77905), Icons.stars_rounded),
+      CustomerType.elite => (
+          const Color(0xFF7C3AED),
+          Icons.workspace_premium_rounded
+        ),
+    };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
-        color: profile.isVip
-            ? CustomerProfileColors.vipBg
-            : CustomerProfileColors.regularBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: CustomerProfileColors.bodyBorder),
+        gradient: LinearGradient(colors: [
+          accent.withValues(alpha: 0.18),
+          accent.withValues(alpha: 0.08),
+        ]),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.48)),
       ),
-      child: Text('${tier.displayLabel} Customer',
-          style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: CustomerProfileColors.bodyTextMain)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: accent, size: 16),
+        const SizedBox(width: 6),
+        Flexible(
+            child: Text('${tier.displayLabel} Customer',
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: CustomerProfileColors.bodyTextMain))),
+      ]),
     );
   }
 

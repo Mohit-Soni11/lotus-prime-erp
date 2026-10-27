@@ -119,7 +119,7 @@ class CustomerProfileBillStatusChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: CustomerProfileColors.bodyTextMain)),
       );

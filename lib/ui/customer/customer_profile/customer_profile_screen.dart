@@ -7,17 +7,18 @@ import '../../../logic/customer/customer_profile_logic.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
+import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../add_customer/add_customer_screen.dart';
 import 'customer_profile_app_bar.dart';
 import 'customer_profile_components.dart';
 import 'customer_profile_metric_cards.dart';
+import 'customer_profile_information_tiles.dart';
 import 'customer_profile_document_preview.dart';
 import 'customer_sales_invoice_pdf_builder.dart';
 import 'customer_related_document_pdf_builder.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'customer_profile_overview_sections.dart';
-part 'customer_profile_dues_section.dart';
 part 'customer_profile_bill_history.dart';
 part 'customer_profile_girvi_history.dart';
 part 'customer_profile_advance_history.dart';
@@ -68,7 +69,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   late final AnimationController _pageAnim;
   late final Animation<double> _fadeIn;
 
-  // Tab controller: Bills | Girvi | Advance Orders
+  // Sales, due, active Girvi, and active advances.
   late final TabController _tabCtrl;
 
   final ScrollController _scrollCtrl = ScrollController();
@@ -85,7 +86,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       onConvertAdvanceToSale: widget.onConvertAdvanceToSale,
     );
 
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 4, vsync: this);
 
     _pageAnim = AnimationController(
       vsync: this,
@@ -168,12 +169,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
             const SizedBox(height: 16),
             _buildContactCard(p),
             const SizedBox(height: 16),
-            if (p.totalDueAmount > 0 || p.totalLoans > 0) ...[
+            if (p.hasDues || p.activeLoans > 0) ...[
               _buildAccountSnapshotCard(p),
-              const SizedBox(height: 16),
-            ],
-            if (p.hasDues) ...[
-              _buildDuesSection(p),
               const SizedBox(height: 16),
             ],
             _buildHistoryTabs(p),

@@ -11,7 +11,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(18, 16, 18, 10),
-            child: Text('Transaction History',
+            child: Text('Invoice History',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
@@ -23,6 +23,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
               controller: _tabCtrl,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 14),
               labelColor: CustomerProfileColors.bodyTextMain,
               unselectedLabelColor: CustomerProfileColors.bodyTextMain,
               indicatorColor: CustomerProfileColors.brandGold,
@@ -32,36 +33,17 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
                 fontSize: 14,
               ),
               tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(CustomerProfileIcons.invoice, size: 15),
-                      const SizedBox(width: 5),
-                      Text("Sales Bills (${p.totalBills})"),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.lock_outline_rounded, size: 15),
-                      const SizedBox(width: 5),
-                      Text("Girvi Tickets (${p.totalLoans})"),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(CustomerProfileIcons.advanceOrder, size: 15),
-                      const SizedBox(width: 5),
-                      Text("Advance Orders (${p.advanceOrders.length})"),
-                    ],
-                  ),
-                ),
+                _historyTab(CustomerProfileIcons.invoice, 'Sales Bills',
+                    p.totalBills, const Color(0xFF2563EB)),
+                _historyTab(CustomerProfileIcons.dueBills, 'Due Bills',
+                    p.dueInvoiceCount, const Color(0xFFDC2626)),
+                _historyTab(Icons.lock_rounded, 'Active Girvi', p.activeLoans,
+                    const Color(0xFF7C3AED)),
+                _historyTab(
+                    CustomerProfileIcons.advanceOrder,
+                    'Active Advances',
+                    p.activeAdvanceCount,
+                    CustomerProfileColors.advanceAccent),
               ],
             ),
           ),
@@ -71,6 +53,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
               controller: _tabCtrl,
               children: [
                 _buildBillsList(p),
+                _buildBillsList(p, dueOnly: true),
                 _buildGirviList(p),
                 _buildAdvanceList(p),
               ],
@@ -81,18 +64,47 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
     );
   }
 
-  Widget _buildBillsList(CustomerProfileModel p) {
-    if (p.bills.isEmpty) {
+  Widget _historyTab(IconData icon, String title, int count, Color accent) =>
+      Tab(
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 27,
+          height: 27,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: accent),
+        ),
+        const SizedBox(width: 8),
+        Text('$title ($count)',
+            style: const TextStyle(
+                color: CustomerProfileColors.bodyTextMain,
+                fontSize: 14,
+                fontWeight: FontWeight.w900)),
+      ]));
+
+  Widget _buildBillsList(CustomerProfileModel p, {bool dueOnly = false}) {
+    final dueBillIds =
+        dueOnly ? p.dues.map((due) => due.billId).toSet() : const <int>{};
+    final bills = dueOnly
+        ? p.bills.where((bill) => dueBillIds.contains(bill.id)).toList()
+        : p.bills;
+    if (bills.isEmpty) {
       return _emptyState(
-        icon: CustomerProfileIcons.emptyBills,
-        title: CustomerProfileStrings.noBills,
-        sub: CustomerProfileStrings.noBillsSub,
+        icon: dueOnly
+            ? CustomerProfileIcons.dueBills
+            : CustomerProfileIcons.emptyBills,
+        title: dueOnly ? 'No due bills' : CustomerProfileStrings.noBills,
+        sub: dueOnly
+            ? 'Outstanding sales invoices will appear here.'
+            : CustomerProfileStrings.noBillsSub,
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: p.bills.length,
-      itemBuilder: (_, i) => _buildBillRow(p.bills[i]),
+      itemCount: bills.length,
+      itemBuilder: (_, i) => _buildBillRow(bills[i]),
     );
   }
 
@@ -153,8 +165,8 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
                     Text(
                       "Paid ${bill.formattedPaidAmount} | Due ${bill.formattedDueAmount}",
                       style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
                         color: CustomerProfileColors.bodyTextMain,
                       ),
                     ),
@@ -277,7 +289,7 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w900,
               color: CustomerProfileColors.bodyTextMain,
               letterSpacing: 0,

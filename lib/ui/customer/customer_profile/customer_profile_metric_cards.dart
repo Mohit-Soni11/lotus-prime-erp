@@ -22,6 +22,7 @@ class CustomerProfileMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
+      constraints: const BoxConstraints(minHeight: 148),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -71,8 +72,8 @@ class CustomerProfileMetricCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                     color: CustomerProfileColors.bodyTextMain)),
           ],
         ],
@@ -97,51 +98,79 @@ class CustomerProfileLedgerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: CustomerProfileColors.bodyBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(children: [
-            Icon(icon, color: accent, size: 20),
-            const SizedBox(width: 9),
-            Expanded(
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxWidth < 350;
+      final values = [
+        for (final (label, value) in metrics)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: CustomerProfileColors.bodyTextMain)),
+                const SizedBox(height: 4),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: CustomerProfileColors.bodyTextMain)),
+              ],
+            ),
+          ),
+      ];
+      return Container(
+        constraints: BoxConstraints(minHeight: compact ? 148 : 112),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: CustomerProfileColors.bodyBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(children: [
+              Icon(icon, color: accent, size: 20),
+              const SizedBox(width: 9),
+              Expanded(
                 child: Text(title,
                     style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        color: CustomerProfileColors.bodyTextMain))),
-          ]),
-          const SizedBox(height: 14),
-          for (final (label, value) in metrics) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(children: [
-                Expanded(
-                    child: Text(label,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: CustomerProfileColors.bodyTextMain))),
-                const SizedBox(width: 8),
-                Flexible(
-                    child: Text(value,
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            color: CustomerProfileColors.bodyTextMain))),
+                        color: CustomerProfileColors.bodyTextMain)),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            if (compact)
+              for (var index = 0; index < metrics.length; index++) ...[
+                Text(metrics[index].$1,
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: CustomerProfileColors.bodyTextMain)),
+                const SizedBox(height: 3),
+                Text(metrics[index].$2,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: CustomerProfileColors.bodyTextMain)),
+                if (index < metrics.length - 1) const SizedBox(height: 9),
+              ]
+            else
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                for (var index = 0; index < values.length; index++) ...[
+                  if (index > 0) const SizedBox(width: 12),
+                  values[index],
+                ],
               ]),
-            ),
           ],
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 }

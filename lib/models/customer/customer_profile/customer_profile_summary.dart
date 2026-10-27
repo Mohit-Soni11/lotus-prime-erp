@@ -85,9 +85,6 @@ class CustomerProfileModel {
   double get totalLoanAmount =>
       loans.fold(0.0, (sum, loan) => sum + loan.originalPrincipal);
 
-  double get totalGirviReceivable =>
-      totalActiveLoanAmount + totalInterestAccrued;
-
   int get activeAdvanceCount =>
       advanceOrders.where((order) => order.isPending || order.isReady).length;
 
@@ -102,29 +99,7 @@ class CustomerProfileModel {
   double get totalDueAmount =>
       dues.fold(0.0, (sum, due) => sum + due.dueAmount);
 
-  double get totalDueBillAmount =>
-      dues.fold(0.0, (sum, due) => sum + due.totalAmount);
-
   bool get hasDues => dues.isNotEmpty && totalDueAmount > 0;
-
-  String get formattedMemberSince {
-    const months = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return "${months[createdAt.month]} ${createdAt.year}";
-  }
 
   CustomerProfileModel copyWith({
     String? name,

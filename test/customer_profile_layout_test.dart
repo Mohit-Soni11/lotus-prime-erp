@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/models/customer/customer_profile/customer_profile_model.dart';
 import 'package:lotus_erp/repositories/customer/customer_profile_repository.dart';
 import 'package:lotus_erp/ui/customer/customer_profile/customer_profile_screen.dart';
+import 'package:lotus_erp/ui/customer/customer_profile/customer_profile_metric_cards.dart';
+import 'package:lotus_erp/ui/customer/customer_profile/customer_profile_information_tiles.dart';
 
 void main() {
   testWidgets(
@@ -11,19 +13,62 @@ void main() {
     await _pumpProfile(tester, const Size(1280, 900));
 
     expect(find.text('Standard Customer'), findsWidgets);
-    expect(find.text('Full Address'), findsOneWidget);
+    expect(find.text('Mobile Number'), findsNWidgets(2));
+    expect(find.text('Address'), findsNWidgets(2));
+    expect(find.text('Full Address'), findsNothing);
     expect(find.text('Main Road, Patna, Bihar, 800001'), findsWidgets);
+    expect(find.text('Customer Account Overview'), findsOneWidget);
+    expect(find.text('Customer Information'), findsOneWidget);
     expect(find.text('Total Sales Bills'), findsOneWidget);
+    expect(find.textContaining('Sales value'), findsNothing);
     expect(find.text('Due Invoices'), findsWidgets);
-    expect(find.text('Girvi Tickets'), findsWidgets);
     expect(find.text('Active Girvi'), findsOneWidget);
-    expect(find.text('Open Advance Orders'), findsOneWidget);
-    expect(find.text('Total Capital Given'), findsOneWidget);
+    expect(find.text('Active Advance Orders'), findsOneWidget);
+    expect(find.text('Total Capital Given'), findsNothing);
+    expect(find.text('Due Invoice Value'), findsNothing);
     expect(find.text('Active Capital'), findsOneWidget);
     expect(find.text('Active Interest Due'), findsOneWidget);
+    expect(find.text('Pending Dues'), findsNothing);
+    expect(find.text('Customer since'), findsNothing);
     expect(find.text('Settled Bills'), findsNothing);
     expect(find.textContaining('Credit Limit'), findsNothing);
     expect(find.textContaining('Account Credit'), findsNothing);
+    final informationTiles = find.byType(CustomerProfileInformationTile);
+    expect(informationTiles, findsNWidgets(4));
+    final tileSizes = informationTiles
+        .evaluate()
+        .map((element) => tester.getSize(find.byWidget(element.widget)))
+        .toList();
+    expect(tileSizes.every((size) => size == tileSizes.first), isTrue);
+    final positions = informationTiles
+        .evaluate()
+        .map((element) => tester.getTopLeft(find.byWidget(element.widget)))
+        .toList();
+    expect(positions[0].dy, positions[1].dy);
+    expect(positions[2].dy, positions[3].dy);
+    expect(positions[0].dx, positions[2].dx);
+    expect(positions[1].dx, positions[3].dx);
+    final ledgerCards = tester
+        .widgetList<CustomerProfileLedgerCard>(
+            find.byType(CustomerProfileLedgerCard))
+        .toList();
+    expect(ledgerCards, hasLength(3));
+    final heights =
+        tester.getSize(find.byType(CustomerProfileLedgerCard).first).height;
+    for (final card in find.byType(CustomerProfileLedgerCard).evaluate()) {
+      expect(tester.getSize(find.byWidget(card.widget)).height, heights);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('WhatsApp replaces repeated name without changing the grid',
+      (tester) async {
+    await _pumpProfile(tester, const Size(1280, 900),
+        profile: _profile.copyWith(whatsapp: '9304479436'));
+
+    expect(find.byType(CustomerProfileInformationTile), findsNWidgets(4));
+    expect(find.text('WhatsApp Number'), findsOneWidget);
+    expect(find.text('Customer Name'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -31,22 +76,33 @@ void main() {
     await _pumpProfile(tester, const Size(390, 820));
     expect(tester.takeException(), isNull);
 
-    await tester.ensureVisible(find.text('Transaction History').last);
+    await tester.ensureVisible(find.text('Invoice History').last);
     await tester.pump();
-    await tester.ensureVisible(find.text('Girvi Tickets (1)'));
+    await tester.ensureVisible(find.text('Due Bills (1)'));
     await tester.pump();
-    await tester.tap(find.text('Girvi Tickets (1)'));
+    await tester.tap(find.text('Due Bills (1)'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('INV-001'), findsOneWidget);
+    expect(find.text('INV-002'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(find.text('Active Girvi (1)'));
+    await tester.pump();
+    await tester.tap(find.text('Active Girvi (1)'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.text('GRV-001'), findsOneWidget);
+    expect(find.text('GRV-CLOSED'), findsNothing);
     expect(tester.takeException(), isNull);
 
-    await tester.ensureVisible(find.text('Advance Orders (1)'));
+    await tester.ensureVisible(find.text('Active Advances (1)'));
     await tester.pump();
-    await tester.tap(find.text('Advance Orders (1)'));
+    await tester.tap(find.text('Active Advances (1)'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.text('ADV-001'), findsOneWidget);
+    expect(find.text('ADV-DONE'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -64,7 +120,7 @@ void main() {
 
     expect(find.text('Total Sales Bills'), findsOneWidget);
     expect(find.text('Active Girvi'), findsNothing);
-    expect(find.text('Open Advance Orders'), findsNothing);
+    expect(find.text('Active Advance Orders'), findsNothing);
     expect(find.text('Account Ledgers'), findsNothing);
     expect(find.text('Pending Dues'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -110,6 +166,14 @@ final _profile = CustomerProfileModel(
       status: 'PARTIAL',
       billDate: DateTime(2026, 8, 10),
     ),
+    CustomerBillModel(
+      id: 2,
+      billNo: 'INV-002',
+      totalAmount: 1200,
+      paidAmount: 1200,
+      status: 'PAID',
+      billDate: DateTime(2026, 8, 11),
+    ),
   ],
   dues: [
     CustomerDueModel(
@@ -134,6 +198,16 @@ final _profile = CustomerProfileModel(
       status: 'ACTIVE',
       recordedInterestOutstanding: 1000,
     ),
+    CustomerLoanModel(
+      id: 2,
+      loanNo: 'GRV-CLOSED',
+      itemDesc: 'Gold chain',
+      grossWeight: 8,
+      loanAmount: 18000,
+      interestRate: 2,
+      startDate: DateTime(2026, 7, 1),
+      status: 'RELEASED',
+    ),
   ],
   advanceOrders: [
     CustomerAdvanceOrderModel(
@@ -149,6 +223,20 @@ final _profile = CustomerProfileModel(
       totalAdvancePaid: 5000,
       estimatedTotal: 30000,
       createdAt: DateTime(2026, 8, 13),
+    ),
+    CustomerAdvanceOrderModel(
+      id: 2,
+      orderNo: 'ADV-DONE',
+      itemName: 'Pendant',
+      metalType: 'Gold',
+      purity: '22K',
+      approxWeight: 3,
+      lockedRate: 6000,
+      bookingType: 'LOCKED',
+      status: AdvanceOrderStatus.delivered,
+      totalAdvancePaid: 18000,
+      estimatedTotal: 18000,
+      createdAt: DateTime(2026, 7, 15),
     ),
   ],
 );

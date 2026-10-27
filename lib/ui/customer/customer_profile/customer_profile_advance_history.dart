@@ -2,17 +2,20 @@ part of 'customer_profile_screen.dart';
 
 extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
   Widget _buildAdvanceList(CustomerProfileModel p) {
-    if (p.advanceOrders.isEmpty) {
+    final activeOrders = p.advanceOrders
+        .where((order) => order.isPending || order.isReady)
+        .toList();
+    if (activeOrders.isEmpty) {
       return _emptyState(
         icon: CustomerProfileIcons.advanceEmpty,
-        title: CustomerProfileStrings.noAdvance,
-        sub: CustomerProfileStrings.noAdvanceSub,
+        title: 'No active advance orders',
+        sub: 'Open advance bookings will appear here.',
       );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: p.advanceOrders.length,
-      itemBuilder: (_, i) => _buildAdvanceRow(p.advanceOrders[i]),
+      itemCount: activeOrders.length,
+      itemBuilder: (_, i) => _buildAdvanceRow(activeOrders[i]),
     );
   }
 
@@ -98,8 +101,8 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
                         Text(
                           "${order.itemName} | ${order.metalType} ${order.purity}",
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
                             color: CustomerProfileColors.bodyTextMuted,
                           ),
                         ),
@@ -118,7 +121,7 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
                     child: Text(
                       order.status.label,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: CustomerProfileColors.bodyTextMain,
                       ),
@@ -174,21 +177,23 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
                     const Icon(CustomerProfileIcons.calendar,
                         size: 14, color: CustomerProfileColors.bodyTextMain),
                     const SizedBox(width: 5),
-                    Text('Booked ${order.formattedDate}',
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: CustomerProfileColors.bodyTextMain)),
+                    Flexible(
+                        child: Text('Booked ${order.formattedDate}',
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: CustomerProfileColors.bodyTextMain))),
                   ]),
                   Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(CustomerProfileIcons.deliveryDate,
                         size: 14, color: CustomerProfileColors.bodyTextMain),
                     const SizedBox(width: 5),
-                    Text('Delivery ${order.formattedDelivery}',
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: CustomerProfileColors.bodyTextMain)),
+                    Flexible(
+                        child: Text('Delivery ${order.formattedDelivery}',
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: CustomerProfileColors.bodyTextMain))),
                   ]),
                 ],
               ),
@@ -216,16 +221,16 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             color: CustomerProfileColors.bodyTextMuted,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             color: CustomerProfileColors.bodyTextMain,
           ),
@@ -254,7 +259,7 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: CustomerProfileColors.advanceAccent,
             ),
@@ -270,14 +275,14 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
       children: [
         Text(label,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               color: CustomerProfileColors.bodyTextMuted,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             )),
         const SizedBox(height: 2),
         Text(value,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: CustomerProfileColors.bodyTextMain,
             )),

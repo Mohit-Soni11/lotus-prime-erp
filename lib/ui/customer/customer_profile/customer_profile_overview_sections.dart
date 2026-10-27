@@ -6,10 +6,8 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: CustomerProfileStyles.cardDecoration,
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 14,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 64,
@@ -23,28 +21,47 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
             child: Text(profile.initials,
                 style: CustomerProfileStyles.customerName),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Wrap(spacing: 10, runSpacing: 7, children: [
-                Text(profile.name, style: CustomerProfileStyles.customerName),
-                _buildTypeBadge(profile),
-              ]),
-              const SizedBox(height: 8),
-              Wrap(spacing: 15, runSpacing: 6, children: [
-                Text(
-                    profile.mobile.isEmpty
-                        ? 'Mobile not added'
-                        : profile.mobile,
-                    style: CustomerProfileStyles.customerMobile),
-                Text('Customer since ${profile.formattedMemberSince}',
-                    style: CustomerProfileStyles.customerMobile),
-                if (profile.formattedAddress != null)
-                  Text(profile.formattedAddress!,
-                      style: CustomerProfileStyles.customerMobile),
-              ]),
-            ],
+          const SizedBox(width: 16),
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(profile.name,
+                        style: CustomerProfileStyles.customerName),
+                    _buildTypeBadge(profile),
+                  ]),
+              const SizedBox(height: 14),
+              LayoutBuilder(builder: (context, constraints) {
+                const gap = 10.0;
+                final columns = constraints.maxWidth >= 680 ? 2 : 1;
+                final width =
+                    (constraints.maxWidth - (columns - 1) * gap) / columns;
+                return Wrap(spacing: gap, runSpacing: gap, children: [
+                  SizedBox(
+                      width: width,
+                      child: CustomerProfileHeroDetail(
+                        icon: Icons.phone_iphone_rounded,
+                        label: 'Mobile Number',
+                        value: profile.mobile.isEmpty
+                            ? 'Not added'
+                            : profile.mobile,
+                        accent: const Color(0xFF2563EB),
+                      )),
+                  SizedBox(
+                      width: width,
+                      child: CustomerProfileHeroDetail(
+                        icon: Icons.location_on_rounded,
+                        label: 'Address',
+                        value: profile.formattedAddress ?? 'Address not added',
+                        accent: const Color(0xFF0F766E),
+                      )),
+                ]);
+              }),
+            ]),
           ),
         ],
       ),
@@ -118,7 +135,6 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
         value: '${profile.totalBills}',
         icon: CustomerProfileIcons.invoice,
         accent: const Color(0xFF2563EB),
-        detail: 'Sales value ₹${_fmt(profile.totalBillAmount)}',
       ),
       if (profile.dueInvoiceCount > 0)
         CustomerProfileMetricCard(
@@ -127,14 +143,6 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
           icon: CustomerProfileIcons.dueBills,
           accent: const Color(0xFFDC2626),
           detail: 'Outstanding ₹${_fmt(profile.totalDueAmount)}',
-        ),
-      if (profile.totalLoans > 0)
-        CustomerProfileMetricCard(
-          label: 'Girvi Tickets',
-          value: '${profile.totalLoans}',
-          icon: Icons.lock_outline_rounded,
-          accent: const Color(0xFF7C3AED),
-          detail: 'Capital given ₹${_fmt(profile.totalLoanAmount)}',
         ),
       if (profile.activeLoans > 0)
         CustomerProfileMetricCard(
@@ -146,7 +154,7 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
         ),
       if (profile.activeAdvanceCount > 0)
         CustomerProfileMetricCard(
-          label: 'Open Advance Orders',
+          label: 'Active Advance Orders',
           value: '${profile.activeAdvanceCount}',
           icon: CustomerProfileIcons.advanceOrder,
           accent: CustomerProfileColors.advanceAccent,
@@ -155,28 +163,50 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
     ];
     return _buildSectionCard(
       icon: Icons.analytics_outlined,
-      title: 'Customer Portfolio',
+      title: 'Customer Account Overview',
       child: _responsiveCards(cards, minWidth: 220),
     );
   }
 
   Widget _buildContactCard(CustomerProfileModel profile) {
-    final address = profile.formattedAddress;
+    final fields = <Widget>[
+      if (profile.whatsapp.trim().isEmpty)
+        CustomerProfileInformationTile(
+          icon: Icons.person_outline_rounded,
+          label: 'Customer Name',
+          value: profile.name,
+          accent: const Color(0xFF7C3AED),
+        ),
+      CustomerProfileInformationTile(
+        icon: Icons.phone_iphone_rounded,
+        label: 'Mobile Number',
+        value: profile.mobile.isEmpty ? 'Not added' : profile.mobile,
+        accent: const Color(0xFF2563EB),
+      ),
+      if (profile.whatsapp.trim().isNotEmpty)
+        CustomerProfileInformationTile(
+          icon: Icons.chat_bubble_outline_rounded,
+          label: 'WhatsApp Number',
+          value: profile.whatsapp,
+          accent: const Color(0xFF059669),
+        ),
+      CustomerProfileInformationTile(
+        icon: Icons.location_on_rounded,
+        label: 'Address',
+        value: profile.formattedAddress ?? 'Address not added',
+        accent: const Color(0xFF0F766E),
+      ),
+      CustomerProfileInformationTile(
+        icon: Icons.workspace_premium_outlined,
+        label: 'Customer Category',
+        value: '${profile.customerTier.displayLabel} Customer',
+        accent: const Color(0xFFB77905),
+      ),
+    ];
     return _buildSectionCard(
       icon: Icons.contact_phone_outlined,
       title: CustomerProfileStrings.secContact,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _infoRow(CustomerProfileIcons.phone, 'Mobile',
-            profile.mobile.isEmpty ? 'Not added' : profile.mobile),
-        if (profile.whatsapp.trim().isNotEmpty)
-          _infoRow(CustomerProfileIcons.phone, 'WhatsApp', profile.whatsapp),
-        _infoRow(Icons.location_on_outlined, 'Full Address',
-            address ?? 'Address not added'),
-        _infoRow(CustomerProfileIcons.calendar, 'Customer Since',
-            profile.formattedMemberSince),
-        _infoRow(CustomerProfileIcons.type, 'Customer Category',
-            '${profile.customerTier.displayLabel} Customer'),
-      ]),
+      child: _responsiveCards(fields, minWidth: 320, maxColumns: 2),
     );
   }
 
@@ -189,20 +219,17 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
           accent: const Color(0xFFDC2626),
           metrics: [
             ('Total Due Amount', '₹${_fmt(profile.totalDueAmount)}'),
-            ('Due Invoices', '${profile.dues.length}'),
-            ('Due Invoice Value', '₹${_fmt(profile.totalDueBillAmount)}'),
+            ('Due Bills', '${profile.dueInvoiceCount}'),
           ],
         ),
-      if (profile.totalLoans > 0)
+      if (profile.activeLoans > 0)
         CustomerProfileLedgerCard(
           title: 'Girvi Ledger',
           icon: Icons.lock_outline_rounded,
           accent: const Color(0xFF7C3AED),
           metrics: [
-            ('Total Capital Given', '₹${_fmt(profile.totalLoanAmount)}'),
             ('Active Capital', '₹${_fmt(profile.totalActiveLoanAmount)}'),
-            ('Girvi Tickets', '${profile.totalLoans}'),
-            ('Active Tickets', '${profile.activeLoans}'),
+            ('Active Girvi Tickets', '${profile.activeLoans}'),
           ],
         ),
       if (profile.activeLoans > 0)
@@ -212,8 +239,7 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
           accent: const Color(0xFF0F766E),
           metrics: [
             ('Active Interest Due', '₹${_fmt(profile.totalInterestAccrued)}'),
-            ('Active Girvi Invoices', '${profile.activeLoans}'),
-            ('Capital + Interest', '₹${_fmt(profile.totalGirviReceivable)}'),
+            ('Active Girvi Bills', '${profile.activeLoans}'),
           ],
         ),
     ];
@@ -243,11 +269,13 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
     );
   }
 
-  Widget _responsiveCards(List<Widget> cards, {required double minWidth}) {
+  Widget _responsiveCards(List<Widget> cards,
+      {required double minWidth, int? maxColumns}) {
     return LayoutBuilder(builder: (context, constraints) {
+      final columnLimit = (maxColumns ?? cards.length).clamp(1, cards.length);
       final columns = ((constraints.maxWidth + 12) / (minWidth + 12))
           .floor()
-          .clamp(1, cards.length);
+          .clamp(1, columnLimit);
       final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
       return Wrap(
           spacing: 12,
