@@ -54,7 +54,6 @@ class Customers extends Table with BaseTable {
   TextColumn get pincode => text().nullable()();
 
   // ── 6. ACCOUNT & BILLING ─────────────────────────────────────────────────
-  RealColumn get openingBalance => real().withDefault(const Constant(0.0))();
   TextColumn get customerTier =>
       text().withDefault(const Constant('Regular'))();
   TextColumn get membershipId => text().nullable()();

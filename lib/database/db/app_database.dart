@@ -1086,6 +1086,9 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS "idx_customers_membership_id" ON "customers" ("membership_id") WHERE "membership_id" IS NOT NULL',
+          );
           await _ensurePurchaseVoucherSchema();
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockInventorySchemaInternal();
@@ -1122,7 +1125,6 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(customers, customers.country);
             await m.addColumn(customers, customers.state);
             await m.addColumn(customers, customers.pincode);
-            await m.addColumn(customers, customers.openingBalance);
             await m.addColumn(customers, customers.customerTier);
             await m.addColumn(customers, customers.membershipId);
           }
@@ -2021,6 +2023,28 @@ class AppDatabase extends _$AppDatabase {
               );
             }
             AppLogger.info('v66 retired customer credit limit removed.');
+          }
+          if (from < 67 && await _tableExists('customers')) {
+            final columns = await _tableColumns('customers');
+            if (columns.contains('opening_balance')) {
+              await customStatement(
+                'ALTER TABLE "customers" DROP COLUMN "opening_balance"',
+              );
+            }
+            await customStatement('''
+              UPDATE "customers"
+              SET "membership_id" = 'LTMP-MIGRATED-' || "id"
+              WHERE "membership_id" IS NULL
+                OR TRIM("membership_id") = ''
+                OR "id" NOT IN (
+                  SELECT MIN("id") FROM "customers"
+                  WHERE "membership_id" IS NOT NULL
+                  GROUP BY "membership_id"
+                )
+            ''');
+            await customStatement(
+              'CREATE UNIQUE INDEX IF NOT EXISTS "idx_customers_membership_id" ON "customers" ("membership_id") WHERE "membership_id" IS NOT NULL',
+            );
           }
           await _ensureReturnReversalSchemaInternal();
         },

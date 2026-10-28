@@ -1,0 +1,28 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/ui/customer/add_customer/add_customer_screen.dart';
+
+void main() {
+  testWidgets('new customer form keeps all sections and fits desktop width',
+      (tester) async {
+    tester.view.physicalSize = const Size(1100, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(home: AddCustomerScreen(onBack: () {})),
+    );
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.text('Personal Information'), findsOneWidget);
+    expect(find.text('Customer Category'), findsOneWidget);
+    expect(find.text('Assigned after saving'), findsOneWidget);
+    expect(find.text('Opening Balance'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    tester.view.physicalSize = const Size(600, 800);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+}

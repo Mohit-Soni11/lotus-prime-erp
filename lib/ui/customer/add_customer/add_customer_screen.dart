@@ -18,6 +18,7 @@ part 'add_customer_form_fields.dart';
 part 'add_customer_identity_sections.dart';
 part 'add_customer_contact_sections.dart';
 part 'add_customer_form_initialization.dart';
+part 'add_customer_form_actions.dart';
 part 'add_customer_account_sections.dart';
 part 'add_customer_preferences_sections.dart';
 
@@ -73,8 +74,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _stateProvinceCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _pincodeCtrl = TextEditingController();
-  final _openBalCtrl = TextEditingController(text: '0');
-  final _memberIdCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
 
   final _firstNameFocus = FocusNode();
@@ -92,7 +91,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _addr2Focus = FocusNode();
   final _cityFocus = FocusNode();
   final _pincodeFocus = FocusNode();
-  final _openBalFocus = FocusNode();
   final _notesFocus = FocusNode();
 
   String? _selectedCountry = 'India';
@@ -144,7 +142,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
 
   Future<void> _initializeForm() async {
     if (!_isEditMode) {
-      _memberIdCtrl.text = _logic.generateMembershipId();
       _applyInitialValues();
       return;
     }
@@ -172,6 +169,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
     if (mounted) setState(() {});
   }
 
+  void _refreshFormUi(VoidCallback update) {
+    if (mounted) setState(update);
+  }
+
   @override
   void dispose() {
     _logic
@@ -197,8 +198,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _stateProvinceCtrl,
       _cityCtrl,
       _pincodeCtrl,
-      _openBalCtrl,
-      _memberIdCtrl,
       _notesCtrl,
     ]) {
       c.dispose();
@@ -219,144 +218,11 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _addr2Focus,
       _cityFocus,
       _pincodeFocus,
-      _openBalFocus,
       _notesFocus,
     ]) {
       f.dispose();
     }
     super.dispose();
-  }
-  // ACTIONS
-
-  Future<void> _pickImage() async {
-    final src = await showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const CustomerImageSourceSheet(),
-    );
-    if (src == null) return;
-    final file =
-        await _imgPick.pickImage(source: src, imageQuality: 75, maxWidth: 600);
-    if (file != null) _logic.setProfileImagePath(file.path);
-  }
-
-  Future<void> _pickIdDoc() async {
-    final file =
-        await _imgPick.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (file != null) _logic.setIdProofDocPath(file.path);
-  }
-
-  Future<void> _pickDate(BuildContext ctx,
-      {required void Function(DateTime) onPicked,
-      DateTime? firstDate,
-      DateTime? lastDate}) async {
-    final picked = await showDatePicker(
-      context: ctx,
-      initialDate: DateTime.now(),
-      firstDate: firstDate ?? DateTime(1940),
-      lastDate: lastDate ?? DateTime.now(),
-      builder: (ctx, child) => Theme(
-        data: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AddCustomerColors.brandGold,
-            onPrimary: Colors.black,
-            surface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null) onPicked(picked);
-  }
-
-  Future<void> _handleSave() async {
-    FocusScope.of(context).unfocus();
-    final ok = await _logic.saveCustomer();
-    if (!mounted) return;
-    if (ok) {
-      _showFeedback(
-        _isEditMode
-            ? AddCustomerStrings.updateSuccessMsg
-            : AddCustomerStrings.successMsg,
-        isSuccess: true,
-      );
-      await Future.delayed(const Duration(milliseconds: 800));
-      if (!mounted) return;
-      final onSaved = widget.onSaved;
-      if (onSaved != null) {
-        onSaved();
-      } else {
-        widget.onBack?.call();
-      }
-    } else if (_logic.saveState == SaveState.duplicate) {
-      _showFeedback(AddCustomerStrings.duplicateMsg, isSuccess: false);
-    } else {
-      _showFeedback(AddCustomerStrings.errorMsg, isSuccess: false);
-    }
-  }
-
-  void _handleClear() {
-    if (_isEditMode) {
-      _logic.resetForm();
-      _populateControllers(_logic.form);
-      setState(() {});
-      FocusScope.of(context).unfocus();
-      return;
-    }
-
-    for (final c in [
-      _firstNameCtrl,
-      _lastNameCtrl,
-      _companyCtrl,
-      _contactCtrl,
-      _mobileCtrl,
-      _emailCtrl,
-      _altContactCtrl,
-      _panCtrl,
-      _idProofNoCtrl,
-      _gstCtrl,
-      _addr1Ctrl,
-      _addr2Ctrl,
-      _stateProvinceCtrl,
-      _cityCtrl,
-      _pincodeCtrl,
-      _notesCtrl,
-    ]) {
-      c.clear();
-    }
-    _whatsappCtrl.clear();
-    _openBalCtrl.text = '0';
-    setState(() {
-      _selectedCountry = 'India';
-      _selectedState = null;
-    });
-    _logic.resetForm();
-    _memberIdCtrl.text = _logic.generateMembershipId();
-    FocusScope.of(context).unfocus();
-  }
-
-  void _showFeedback(String msg, {required bool isSuccess}) {
-    AppFeedback.show(
-      context,
-      type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
-      message: msg,
-      duration: const Duration(seconds: 3),
-    );
-  }
-
-  void _changeCountry(String? country) {
-    setState(() {
-      _selectedCountry = country;
-      _selectedState = null;
-      _stateProvinceCtrl.clear();
-    });
-    if (country != null) _logic.setCountry(country);
-  }
-
-  void _changeIndianState(IndiaState state) {
-    setState(() => _selectedState = state.label);
-    _logic.setState_(state.label);
   }
   // BUILD
 
@@ -433,9 +299,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                               5,
                               _buildSection(
                                 icon: Icons.account_balance_wallet_rounded,
-                                title: 'Account & Billing',
-                                subtitle:
-                                    'Opening balance, category & membership',
+                                title: 'Customer Category',
+                                subtitle: 'Category and assigned membership ID',
                                 accent: const Color(0xFF7C3AED),
                                 stepNumber: 5,
                                 child: _buildBillingSection(),

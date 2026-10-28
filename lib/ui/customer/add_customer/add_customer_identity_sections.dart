@@ -41,7 +41,8 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
     required Widget child,
     required int stepNumber,
   }) {
-    final lighterAccent = Color.lerp(accent, Colors.white, 0.25)!;
+    final headerAccent = Color.lerp(accent, Colors.white, 0.88)!;
+    final lighterAccent = Color.lerp(accent, Colors.white, 0.96)!;
     return Container(
       decoration: AddCustomerStyles.cardDecoration,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -49,7 +50,7 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [accent, lighterAccent],
+              colors: [headerAccent, lighterAccent],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -61,18 +62,18 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.20),
+                color: accent.withValues(alpha: 0.13),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.30), width: 1),
+                border:
+                    Border.all(color: accent.withValues(alpha: 0.28), width: 1),
               ),
               child: Center(
                   child: Text(
                 stepNumber.toString().padLeft(2, '0'),
                 style: GoogleFonts.inter(
-                  fontSize: 11,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: Colors.black,
                   letterSpacing: 0.5,
                 ),
               )),
@@ -82,10 +83,10 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
+                color: accent.withValues(alpha: 0.13),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: Colors.white, size: 19),
+              child: Icon(icon, color: accent, size: 19),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -96,14 +97,14 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
                     style: GoogleFonts.manrope(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: Colors.black,
                     )),
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
                       letterSpacing: 0.3,
                     )),
               ],
@@ -215,12 +216,12 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
                   ? '✓ Photo uploaded'
                   : 'Avatar will auto-switch based on gender selection.',
               style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   height: 1.5,
                   color: imagePath != null
                       ? AddCustomerColors.success
-                      : AddCustomerColors.bodyTextMuted),
+                      : Colors.black87),
             ),
             const SizedBox(height: 12),
             Row(children: [

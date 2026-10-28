@@ -35,6 +35,7 @@ extension _CustomerContactSections on _AddCustomerScreenState {
             focus: _companyFocus,
             next: _contactFocus,
             hint: 'Enter company / firm name',
+            error: _logic.form.companyNameError,
             onChanged: _logic.onCompanyNameChanged,
             capitalization: TextCapitalization.words),
         const SizedBox(height: 14),
@@ -81,8 +82,10 @@ extension _CustomerContactSections on _AddCustomerScreenState {
                 label: 'Date of Birth',
                 icon: Icons.cake_rounded,
                 value: _logic.form.dateOfBirth,
+                onClear: () => _logic.setDateOfBirth(null),
                 onTap: () => _pickDate(context,
                     onPicked: _logic.setDateOfBirth,
+                    selectedDate: _logic.form.dateOfBirth,
                     lastDate: DateTime.now()))),
         const SizedBox(width: 14),
         Expanded(
@@ -101,8 +104,11 @@ extension _CustomerContactSections on _AddCustomerScreenState {
           label: 'Anniversary Date (Optional)',
           icon: Icons.favorite_rounded,
           value: _logic.form.anniversaryDate,
+          onClear: () => _logic.setAnniversaryDate(null),
           onTap: () => _pickDate(context,
-              onPicked: _logic.setAnniversaryDate, lastDate: DateTime.now())),
+              onPicked: _logic.setAnniversaryDate,
+              selectedDate: _logic.form.anniversaryDate,
+              lastDate: DateTime.now())),
     ]);
   }
   // SECTION 2: CONTACT
@@ -175,6 +181,7 @@ extension _CustomerContactSections on _AddCustomerScreenState {
           focus: _whatsappFocus,
           next: _emailFocus,
           hint: AddCustomerStrings.hintWhatsapp,
+          error: _logic.form.whatsappError,
           onChanged: _logic.onWhatsappChanged,
           enabled: !sameWa,
           keyboardType: TextInputType.number,
@@ -198,6 +205,7 @@ extension _CustomerContactSections on _AddCustomerScreenState {
           ctrl: _altContactCtrl,
           focus: _altFocus,
           hint: 'Secondary number (optional)',
+          error: _logic.form.alternateContactError,
           onChanged: _logic.onAlternateContactChanged,
           keyboardType: TextInputType.phone,
           maxLength: 10,

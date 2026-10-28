@@ -15,6 +15,7 @@ import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_recovery_disposition.dart';
 import '../girvi/girvi_interest_payment_adjustments.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import 'customer_media_store.dart';
 
 part 'customer_profile_bill_queries.dart';
 part 'customer_profile_girvi_queries.dart';
@@ -48,8 +49,11 @@ class CustomerProfileRepository
         _CustomerProfileAccountQueries {
   @override
   final AppDatabase _db;
+  final CustomerMediaStore _mediaStore;
 
-  CustomerProfileRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+  CustomerProfileRepository({AppDatabase? db, CustomerMediaStore? mediaStore})
+      : _db = db ?? AppDatabase(),
+        _mediaStore = mediaStore ?? CustomerMediaStore();
 
   Future<CustomerProfileModel?> fetchProfile(int customerId) async {
     try {
@@ -285,8 +289,18 @@ class CustomerProfileRepository
         );
       }
 
+      final customer = await (_db.select(_db.customers)
+            ..where((t) => t.id.equals(customerId)))
+          .getSingleOrNull();
+      if (customer == null) return const CustomerDeleteResult.failed();
       await (_db.delete(_db.customers)..where((t) => t.id.equals(customerId)))
           .go();
+      try {
+        await _mediaStore.deleteIfOwned(customer.profileImagePath);
+        await _mediaStore.deleteIfOwned(customer.idProofDocPath);
+      } catch (error) {
+        AppLogger.error('Customer media cleanup failed: $error');
+      }
       return const CustomerDeleteResult.success();
     } catch (e) {
       AppLogger.error("Customer delete error: $e");

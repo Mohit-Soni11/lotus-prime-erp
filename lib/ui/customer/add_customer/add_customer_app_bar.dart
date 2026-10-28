@@ -39,60 +39,67 @@ class AddCustomerAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: SafeArea(
         bottom: false,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 1. BACK BUTTON
-            _HoverBackButton(onTap: onBack),
-            const SizedBox(width: 20),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxWidth < 680;
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. BACK BUTTON
+              _HoverBackButton(onTap: onBack),
+              SizedBox(width: compact ? 12 : 20),
 
-            // 2. VERTICAL DIVIDER
-            _buildDivider(),
-            const SizedBox(width: 20),
+              // 2. VERTICAL DIVIDER
+              if (!compact) ...[
+                _buildDivider(),
+                const SizedBox(width: 20),
+              ],
 
-            // 3. LOGO CONTAINER (Premium Gradient)
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AddCustomerColors.goldGradientStart,
-                    AddCustomerColors.brandGold,
+              // 3. LOGO CONTAINER (Premium Gradient)
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AddCustomerColors.goldGradientStart,
+                      AddCustomerColors.brandGold,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AddCustomerColors.brandGold.withValues(alpha: 0.5),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    )
                   ],
                 ),
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: AddCustomerColors.brandGold.withValues(alpha: 0.5),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  )
-                ],
+                child: const Icon(
+                  AddCustomerIcons.moduleIcon,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
-              child: const Icon(
-                AddCustomerIcons.moduleIcon,
-                color: Colors.white,
-                size: 18,
+              const SizedBox(width: 14),
+
+              // 4. MAIN TITLE
+              Expanded(
+                child: Text(
+                  title,
+                  style: AddCustomerStyles.appBarTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
+              const SizedBox(width: 12),
 
-            // 4. MAIN TITLE
-            Text(
-              title,
-              style: AddCustomerStyles.appBarTitle,
-            ),
-
-            // Spacer pushes the radar widget to the far right side
-            const Spacer(),
-
-            // 5. SYSTEM ONLINE BADGE
-            const _RadarStatusWidget(),
-          ],
-        ),
+              // 5. SYSTEM ONLINE BADGE
+              _RadarStatusWidget(compact: compact),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -184,7 +191,9 @@ class _HoverBackButtonState extends State<_HoverBackButton> {
 
 // RADAR STATUS (Fixed hardcoded colors to use AddCustomerColors.onlineGreen)
 class _RadarStatusWidget extends StatefulWidget {
-  const _RadarStatusWidget();
+  const _RadarStatusWidget({required this.compact});
+
+  final bool compact;
 
   @override
   State<_RadarStatusWidget> createState() => _RadarStatusWidgetState();
@@ -211,48 +220,53 @@ class _RadarStatusWidgetState extends State<_RadarStatusWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AddCustomerColors.onlineGreen.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-            color: AddCustomerColors.onlineGreen.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                _wave(0.0),
-                _wave(0.5),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: AddCustomerColors.onlineGreen,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                          color: AddCustomerColors.onlineGreen,
-                          blurRadius: 6,
-                          spreadRadius: 1)
-                    ],
+    return Semantics(
+      label: AddCustomerStrings.systemOnline,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AddCustomerColors.onlineGreen.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+              color: AddCustomerColors.onlineGreen.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  _wave(0.0),
+                  _wave(0.5),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AddCustomerColors.onlineGreen,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: AddCustomerColors.onlineGreen,
+                            blurRadius: 6,
+                            spreadRadius: 1)
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            AddCustomerStrings.systemOnline,
-            style: AddCustomerStyles.systemOnlineText,
-          ),
-        ],
+            if (!widget.compact) ...[
+              const SizedBox(width: 8),
+              const Text(
+                AddCustomerStrings.systemOnline,
+                style: AddCustomerStyles.systemOnlineText,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

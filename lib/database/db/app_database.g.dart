@@ -186,14 +186,6 @@ class $CustomersTable extends Customers
   late final GeneratedColumn<String> pincode = GeneratedColumn<String>(
       'pincode', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _openingBalanceMeta =
-      const VerificationMeta('openingBalance');
-  @override
-  late final GeneratedColumn<double> openingBalance = GeneratedColumn<double>(
-      'opening_balance', aliasedName, false,
-      type: DriftSqlType.double,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0.0));
   static const VerificationMeta _customerTierMeta =
       const VerificationMeta('customerTier');
   @override
@@ -273,7 +265,6 @@ class $CustomersTable extends Customers
         country,
         state,
         pincode,
-        openingBalance,
         customerTier,
         membershipId,
         ringSize,
@@ -430,12 +421,6 @@ class $CustomersTable extends Customers
       context.handle(_pincodeMeta,
           pincode.isAcceptableOrUnknown(data['pincode']!, _pincodeMeta));
     }
-    if (data.containsKey('opening_balance')) {
-      context.handle(
-          _openingBalanceMeta,
-          openingBalance.isAcceptableOrUnknown(
-              data['opening_balance']!, _openingBalanceMeta));
-    }
     if (data.containsKey('customer_tier')) {
       context.handle(
           _customerTierMeta,
@@ -545,8 +530,6 @@ class $CustomersTable extends Customers
           .read(DriftSqlType.string, data['${effectivePrefix}state']),
       pincode: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}pincode']),
-      openingBalance: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}opening_balance'])!,
       customerTier: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}customer_tier'])!,
       membershipId: attachedDatabase.typeMapping
@@ -601,7 +584,6 @@ class Customer extends DataClass implements Insertable<Customer> {
   final String country;
   final String? state;
   final String? pincode;
-  final double openingBalance;
   final String customerTier;
   final String? membershipId;
   final String? ringSize;
@@ -639,7 +621,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       required this.country,
       this.state,
       this.pincode,
-      required this.openingBalance,
       required this.customerTier,
       this.membershipId,
       this.ringSize,
@@ -721,7 +702,6 @@ class Customer extends DataClass implements Insertable<Customer> {
     if (!nullToAbsent || pincode != null) {
       map['pincode'] = Variable<String>(pincode);
     }
-    map['opening_balance'] = Variable<double>(openingBalance);
     map['customer_tier'] = Variable<String>(customerTier);
     if (!nullToAbsent || membershipId != null) {
       map['membership_id'] = Variable<String>(membershipId);
@@ -814,7 +794,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       pincode: pincode == null && nullToAbsent
           ? const Value.absent()
           : Value(pincode),
-      openingBalance: Value(openingBalance),
       customerTier: Value(customerTier),
       membershipId: membershipId == null && nullToAbsent
           ? const Value.absent()
@@ -872,7 +851,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       country: serializer.fromJson<String>(json['country']),
       state: serializer.fromJson<String?>(json['state']),
       pincode: serializer.fromJson<String?>(json['pincode']),
-      openingBalance: serializer.fromJson<double>(json['openingBalance']),
       customerTier: serializer.fromJson<String>(json['customerTier']),
       membershipId: serializer.fromJson<String?>(json['membershipId']),
       ringSize: serializer.fromJson<String?>(json['ringSize']),
@@ -916,7 +894,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       'country': serializer.toJson<String>(country),
       'state': serializer.toJson<String?>(state),
       'pincode': serializer.toJson<String?>(pincode),
-      'openingBalance': serializer.toJson<double>(openingBalance),
       'customerTier': serializer.toJson<String>(customerTier),
       'membershipId': serializer.toJson<String?>(membershipId),
       'ringSize': serializer.toJson<String?>(ringSize),
@@ -957,7 +934,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           String? country,
           Value<String?> state = const Value.absent(),
           Value<String?> pincode = const Value.absent(),
-          double? openingBalance,
           String? customerTier,
           Value<String?> membershipId = const Value.absent(),
           Value<String?> ringSize = const Value.absent(),
@@ -1005,7 +981,6 @@ class Customer extends DataClass implements Insertable<Customer> {
         country: country ?? this.country,
         state: state.present ? state.value : this.state,
         pincode: pincode.present ? pincode.value : this.pincode,
-        openingBalance: openingBalance ?? this.openingBalance,
         customerTier: customerTier ?? this.customerTier,
         membershipId:
             membershipId.present ? membershipId.value : this.membershipId,
@@ -1069,9 +1044,6 @@ class Customer extends DataClass implements Insertable<Customer> {
       country: data.country.present ? data.country.value : this.country,
       state: data.state.present ? data.state.value : this.state,
       pincode: data.pincode.present ? data.pincode.value : this.pincode,
-      openingBalance: data.openingBalance.present
-          ? data.openingBalance.value
-          : this.openingBalance,
       customerTier: data.customerTier.present
           ? data.customerTier.value
           : this.customerTier,
@@ -1125,7 +1097,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           ..write('country: $country, ')
           ..write('state: $state, ')
           ..write('pincode: $pincode, ')
-          ..write('openingBalance: $openingBalance, ')
           ..write('customerTier: $customerTier, ')
           ..write('membershipId: $membershipId, ')
           ..write('ringSize: $ringSize, ')
@@ -1168,7 +1139,6 @@ class Customer extends DataClass implements Insertable<Customer> {
         country,
         state,
         pincode,
-        openingBalance,
         customerTier,
         membershipId,
         ringSize,
@@ -1210,7 +1180,6 @@ class Customer extends DataClass implements Insertable<Customer> {
           other.country == this.country &&
           other.state == this.state &&
           other.pincode == this.pincode &&
-          other.openingBalance == this.openingBalance &&
           other.customerTier == this.customerTier &&
           other.membershipId == this.membershipId &&
           other.ringSize == this.ringSize &&
@@ -1250,7 +1219,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   final Value<String> country;
   final Value<String?> state;
   final Value<String?> pincode;
-  final Value<double> openingBalance;
   final Value<String> customerTier;
   final Value<String?> membershipId;
   final Value<String?> ringSize;
@@ -1288,7 +1256,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     this.country = const Value.absent(),
     this.state = const Value.absent(),
     this.pincode = const Value.absent(),
-    this.openingBalance = const Value.absent(),
     this.customerTier = const Value.absent(),
     this.membershipId = const Value.absent(),
     this.ringSize = const Value.absent(),
@@ -1327,7 +1294,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     this.country = const Value.absent(),
     this.state = const Value.absent(),
     this.pincode = const Value.absent(),
-    this.openingBalance = const Value.absent(),
     this.customerTier = const Value.absent(),
     this.membershipId = const Value.absent(),
     this.ringSize = const Value.absent(),
@@ -1367,7 +1333,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     Expression<String>? country,
     Expression<String>? state,
     Expression<String>? pincode,
-    Expression<double>? openingBalance,
     Expression<String>? customerTier,
     Expression<String>? membershipId,
     Expression<String>? ringSize,
@@ -1406,7 +1371,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
       if (country != null) 'country': country,
       if (state != null) 'state': state,
       if (pincode != null) 'pincode': pincode,
-      if (openingBalance != null) 'opening_balance': openingBalance,
       if (customerTier != null) 'customer_tier': customerTier,
       if (membershipId != null) 'membership_id': membershipId,
       if (ringSize != null) 'ring_size': ringSize,
@@ -1447,7 +1411,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
       Value<String>? country,
       Value<String?>? state,
       Value<String?>? pincode,
-      Value<double>? openingBalance,
       Value<String>? customerTier,
       Value<String?>? membershipId,
       Value<String?>? ringSize,
@@ -1485,7 +1448,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
       country: country ?? this.country,
       state: state ?? this.state,
       pincode: pincode ?? this.pincode,
-      openingBalance: openingBalance ?? this.openingBalance,
       customerTier: customerTier ?? this.customerTier,
       membershipId: membershipId ?? this.membershipId,
       ringSize: ringSize ?? this.ringSize,
@@ -1584,9 +1546,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     if (pincode.present) {
       map['pincode'] = Variable<String>(pincode.value);
     }
-    if (openingBalance.present) {
-      map['opening_balance'] = Variable<double>(openingBalance.value);
-    }
     if (customerTier.present) {
       map['customer_tier'] = Variable<String>(customerTier.value);
     }
@@ -1645,7 +1604,6 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
           ..write('country: $country, ')
           ..write('state: $state, ')
           ..write('pincode: $pincode, ')
-          ..write('openingBalance: $openingBalance, ')
           ..write('customerTier: $customerTier, ')
           ..write('membershipId: $membershipId, ')
           ..write('ringSize: $ringSize, ')
@@ -38693,7 +38651,6 @@ typedef $$CustomersTableCreateCompanionBuilder = CustomersCompanion Function({
   Value<String> country,
   Value<String?> state,
   Value<String?> pincode,
-  Value<double> openingBalance,
   Value<String> customerTier,
   Value<String?> membershipId,
   Value<String?> ringSize,
@@ -38732,7 +38689,6 @@ typedef $$CustomersTableUpdateCompanionBuilder = CustomersCompanion Function({
   Value<String> country,
   Value<String?> state,
   Value<String?> pincode,
-  Value<double> openingBalance,
   Value<String> customerTier,
   Value<String?> membershipId,
   Value<String?> ringSize,
@@ -38938,10 +38894,6 @@ class $$CustomersTableFilterComposer
 
   ColumnFilters<String> get pincode => $composableBuilder(
       column: $table.pincode, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<double> get openingBalance => $composableBuilder(
-      column: $table.openingBalance,
-      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get customerTier => $composableBuilder(
       column: $table.customerTier, builder: (column) => ColumnFilters(column));
@@ -39199,10 +39151,6 @@ class $$CustomersTableOrderingComposer
   ColumnOrderings<String> get pincode => $composableBuilder(
       column: $table.pincode, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get openingBalance => $composableBuilder(
-      column: $table.openingBalance,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get customerTier => $composableBuilder(
       column: $table.customerTier,
       builder: (column) => ColumnOrderings(column));
@@ -39325,9 +39273,6 @@ class $$CustomersTableAnnotationComposer
 
   GeneratedColumn<String> get pincode =>
       $composableBuilder(column: $table.pincode, builder: (column) => column);
-
-  GeneratedColumn<double> get openingBalance => $composableBuilder(
-      column: $table.openingBalance, builder: (column) => column);
 
   GeneratedColumn<String> get customerTier => $composableBuilder(
       column: $table.customerTier, builder: (column) => column);
@@ -39539,7 +39484,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             Value<String> country = const Value.absent(),
             Value<String?> state = const Value.absent(),
             Value<String?> pincode = const Value.absent(),
-            Value<double> openingBalance = const Value.absent(),
             Value<String> customerTier = const Value.absent(),
             Value<String?> membershipId = const Value.absent(),
             Value<String?> ringSize = const Value.absent(),
@@ -39578,7 +39522,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             country: country,
             state: state,
             pincode: pincode,
-            openingBalance: openingBalance,
             customerTier: customerTier,
             membershipId: membershipId,
             ringSize: ringSize,
@@ -39617,7 +39560,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             Value<String> country = const Value.absent(),
             Value<String?> state = const Value.absent(),
             Value<String?> pincode = const Value.absent(),
-            Value<double> openingBalance = const Value.absent(),
             Value<String> customerTier = const Value.absent(),
             Value<String?> membershipId = const Value.absent(),
             Value<String?> ringSize = const Value.absent(),
@@ -39656,7 +39598,6 @@ class $$CustomersTableTableManager extends RootTableManager<
             country: country,
             state: state,
             pincode: pincode,
-            openingBalance: openingBalance,
             customerTier: customerTier,
             membershipId: membershipId,
             ringSize: ringSize,

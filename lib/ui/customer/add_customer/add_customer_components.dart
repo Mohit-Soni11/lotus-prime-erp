@@ -56,8 +56,7 @@ class CustomerEntityChip extends StatelessWidget {
                   : const Color(0xFFE9ECEF),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon,
-                size: 18, color: isSelected ? activeColor : Colors.black54),
+            child: Icon(icon, size: 18, color: activeColor),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -66,14 +65,14 @@ class CustomerEntityChip extends StatelessWidget {
                   children: [
                 Text(label,
                     style: GoogleFonts.manrope(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? activeColor : Colors.black87)),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black)),
                 Text(subtitle,
                     style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black54)),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87)),
               ])),
           if (isSelected)
             Icon(Icons.check_circle_rounded, color: activeColor, size: 18),

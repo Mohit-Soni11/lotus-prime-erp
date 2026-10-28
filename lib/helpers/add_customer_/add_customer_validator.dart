@@ -37,6 +37,9 @@ class AddCustomerValidator {
   static String? validateMobileLive(String v) {
     if (v.isEmpty) return null;
     if (!RegExp(r'^[0-9]*$').hasMatch(v)) return 'Only digits allowed';
+    if (v.length == 10 && !_mobileRx.hasMatch(v)) {
+      return 'Invalid mobile number';
+    }
     return null;
   }
 
@@ -82,7 +85,28 @@ class AddCustomerValidator {
   // ── PINCODE ───────────────────────────────────────────────────────────────
   static String? validatePincode(String? v) {
     if (v == null || v.trim().isEmpty) return null;
-    if (v.trim().length != 6) return 'Enter 6-digit pincode';
+    if (!RegExp(r'^[1-9][0-9]{5}$').hasMatch(v.trim())) {
+      return 'Enter valid 6-digit pincode';
+    }
+    return null;
+  }
+
+  static String? validatePostalCode(String? value, {required String country}) {
+    if (country.trim().toLowerCase() == 'india') {
+      return validatePincode(value);
+    }
+    final code = value?.trim() ?? '';
+    if (code.isEmpty) return null;
+    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9 -]{1,10}[A-Za-z0-9]$')
+        .hasMatch(code)) {
+      return 'Enter valid postal code';
+    }
+    return null;
+  }
+
+  static String? validateIdProof(String number, {required bool hasType}) {
+    if (hasType && number.trim().isEmpty) return 'Enter ID proof number';
+    if (!hasType && number.trim().isNotEmpty) return 'Select ID proof type';
     return null;
   }
 }

@@ -18,17 +18,9 @@ extension _CustomerFormInitialization on _AddCustomerScreenState {
     _stateProvinceCtrl.text = form.state;
     _cityCtrl.text = form.city;
     _pincodeCtrl.text = form.pincode;
-    _openBalCtrl.text = _numberText(form.openingBalance);
-    _memberIdCtrl.text = form.membershipId;
     _notesCtrl.text = form.notes;
     _selectedCountry = form.country.trim().isEmpty ? 'India' : form.country;
     _selectedState = form.state.trim().isEmpty ? null : form.state;
-  }
-
-  String _numberText(double value) {
-    return value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toString();
   }
 
   void _applyInitialValues() {

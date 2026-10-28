@@ -203,6 +203,7 @@ enum IndiaState {
 enum SaveState {
   idle,
   validating,
+  validationError,
   saving,
   success,
   error,
@@ -226,22 +227,6 @@ enum ActiveField {
   addressLine1,
   addressLine2,
   pincode,
-  openingBalance,
   membershipId,
   notes,
-}
-
-// ── LEGACY (kept for old code compatibility) ─────────────────────────────────
-enum NewCustomerType {
-  regular,
-  vip;
-
-  String get value {
-    switch (this) {
-      case NewCustomerType.regular:
-        return 'Regular';
-      case NewCustomerType.vip:
-        return 'VIP';
-    }
-  }
 }

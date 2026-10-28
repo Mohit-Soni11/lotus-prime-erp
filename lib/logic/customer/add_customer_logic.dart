@@ -6,13 +6,12 @@
 // =============================================================================
 
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 
 import '../../models/customer/customer_enums/add_customer_enums.dart';
 import '../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../helpers/add_customer_/add_customer_validator.dart';
+import '../../helpers/add_customer_/add_customer_form_validation.dart';
 import '../../repositories/customer/add_customer_repository.dart';
 
 class AddCustomerLogic extends ChangeNotifier {
@@ -30,14 +29,15 @@ class AddCustomerLogic extends ChangeNotifier {
   SaveState _saveState = SaveState.idle;
   ActiveField _activeField = ActiveField.none;
   Timer? _mobileDebounce;
-  int _membershipSeq = 1;
+  int _mobileCheckVersion = 0;
+  int _familyMemberSequence = 0;
 
   // ── GETTERS ──────────────────────────────────────────────────────────────
   AddCustomerFormModel get form => _form;
   SaveState get saveState => _saveState;
   ActiveField get activeField => _activeField;
   bool get isSaving => _saveState == SaveState.saving;
-  bool get canSave => _form.isReadyToSave && !isSaving;
+  bool get canSave => !isSaving;
   bool get isEditMode => customerId != null;
 
   Future<AddCustomerFormModel?> loadCustomerForEdit() async {
@@ -62,17 +62,22 @@ class AddCustomerLogic extends ChangeNotifier {
 
   // ── ENTITY TYPE ──────────────────────────────────────────────────────────
   void setEntityType(CustomerEntityType t) {
-    _form = _form.copyWith(entityType: t);
+    _form = _form.copyWith(
+      entityType: t,
+      clearFirstNameError: true,
+      clearCompanyNameError: true,
+    );
     notifyListeners();
   }
 
   // ── PERSONAL ─────────────────────────────────────────────────────────────
   void onFirstNameChanged(String v) {
+    final error =
+        v.trim().isEmpty ? null : AddCustomerValidator.validateName(v);
     _form = _form.copyWith(
       firstName: v,
-      clearFirstNameError: v.trim().length >= 2,
-      firstNameError:
-          v.trim().isNotEmpty && v.trim().length < 2 ? 'Name too short' : null,
+      firstNameError: error,
+      clearFirstNameError: error == null,
     );
     notifyListeners();
   }
@@ -83,7 +88,7 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void onCompanyNameChanged(String v) {
-    _form = _form.copyWith(companyName: v);
+    _form = _form.copyWith(companyName: v, clearCompanyNameError: true);
     notifyListeners();
   }
 
@@ -116,23 +121,28 @@ class AddCustomerLogic extends ChangeNotifier {
   // ── CONTACT ───────────────────────────────────────────────────────────────
   void onMobileChanged(String v) {
     final liveErr = AddCustomerValidator.validateMobileLive(v);
+    _mobileDebounce?.cancel();
+    final version = ++_mobileCheckVersion;
     _form = _form.copyWith(
       mobile: v,
       mobileError: liveErr,
+      clearMobileError: liveErr == null,
       whatsapp: _form.sameAsWhatsApp ? v : _form.whatsapp,
+      clearWhatsappError: _form.sameAsWhatsApp,
     );
     notifyListeners();
 
-    _mobileDebounce?.cancel();
-    if (v.trim().length == 10 && liveErr == null) {
+    if (AddCustomerValidator.validateMobile(v) == null && v.trim().isNotEmpty) {
       _mobileDebounce = Timer(const Duration(milliseconds: 600), () async {
-        final isDup = await _repo.isMobileDuplicate(
-          v.trim(),
-          excludeCustomerId: customerId,
-        );
-        if (isDup) {
-          _form = _form.copyWith(mobileError: 'Mobile already registered');
-          notifyListeners();
+        try {
+          final isDup = await _repo.isMobileDuplicate(v.trim(),
+              excludeCustomerId: customerId);
+          if (version == _mobileCheckVersion && isDup) {
+            _form = _form.copyWith(mobileError: 'Mobile already registered');
+            notifyListeners();
+          }
+        } catch (_) {
+          // Save performs the authoritative duplicate check.
         }
       });
     }
@@ -142,12 +152,13 @@ class AddCustomerLogic extends ChangeNotifier {
     _form = _form.copyWith(
       sameAsWhatsApp: val,
       whatsapp: val ? _form.mobile : '',
+      clearWhatsappError: true,
     );
     notifyListeners();
   }
 
   void onWhatsappChanged(String v) {
-    _form = _form.copyWith(whatsapp: v);
+    _form = _form.copyWith(whatsapp: v, clearWhatsappError: true);
     notifyListeners();
   }
 
@@ -159,7 +170,8 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void onAlternateContactChanged(String v) {
-    _form = _form.copyWith(alternateContact: v);
+    _form =
+        _form.copyWith(alternateContact: v, clearAlternateContactError: true);
     notifyListeners();
   }
 
@@ -173,13 +185,13 @@ class AddCustomerLogic extends ChangeNotifier {
 
   void setIdProofType(IdProofType? t) {
     _form = t == null
-        ? _form.copyWith(clearIdProofType: true)
-        : _form.copyWith(idProofType: t);
+        ? _form.copyWith(clearIdProofType: true, clearIdProofError: true)
+        : _form.copyWith(idProofType: t, clearIdProofError: true);
     notifyListeners();
   }
 
   void onIdProofNumberChanged(String v) {
-    _form = _form.copyWith(idProofNumber: v);
+    _form = _form.copyWith(idProofNumber: v, clearIdProofError: true);
     notifyListeners();
   }
 
@@ -191,7 +203,7 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void onGstChanged(String v) {
-    _form = _form.copyWith(gstNumber: v.toUpperCase());
+    _form = _form.copyWith(gstNumber: v.toUpperCase(), clearGstError: true);
     notifyListeners();
   }
 
@@ -223,30 +235,13 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void onPincodeChanged(String v) {
-    _form = _form.copyWith(pincode: v);
-    notifyListeners();
-  }
-
-  // ── BILLING ───────────────────────────────────────────────────────────────
-  void onOpeningBalanceChanged(String v) {
-    _form = _form.copyWith(openingBalance: double.tryParse(v) ?? 0.0);
+    _form = _form.copyWith(pincode: v, clearPincodeError: true);
     notifyListeners();
   }
 
   void setCustomerTier(CustomerTier t) {
     _form = _form.copyWith(customerTier: t);
     notifyListeners();
-  }
-
-  String generateMembershipId() {
-    final now = DateTime.now();
-    final ym = DateFormat('yyyyMM').format(now);
-    final seq = _membershipSeq.toString().padLeft(4, '0');
-    _membershipSeq++;
-    final id = 'LTMP-$ym-$seq';
-    _form = _form.copyWith(membershipId: id);
-    notifyListeners();
-    return id;
   }
 
   // ── PREFERENCES ───────────────────────────────────────────────────────────
@@ -265,7 +260,7 @@ class AddCustomerLogic extends ChangeNotifier {
   }
 
   void addFamilyMember() {
-    final newId = 'fm_${Random().nextInt(99999)}';
+    final newId = 'fm_new_${++_familyMemberSequence}';
     final updated = [..._form.familyMembers, FamilyMember(id: newId)];
     _form = _form.copyWith(familyMembers: updated);
     notifyListeners();
@@ -306,27 +301,13 @@ class AddCustomerLogic extends ChangeNotifier {
 
   // ── SAVE ──────────────────────────────────────────────────────────────────
   Future<bool> saveCustomer() async {
+    _mobileDebounce?.cancel();
+    _mobileCheckVersion++;
     _saveState = SaveState.validating;
     notifyListeners();
-
-    final nameErr = _form.isCorporate
-        ? AddCustomerValidator.validateCompanyName(_form.companyName)
-        : AddCustomerValidator.validateName(_form.firstName);
-    final mobileErr = AddCustomerValidator.validateMobile(_form.mobile);
-    final panErr = AddCustomerValidator.validatePan(_form.panNumber);
-    final emailErr = AddCustomerValidator.validateEmail(_form.email);
-
-    if (nameErr != null ||
-        mobileErr != null ||
-        panErr != null ||
-        emailErr != null) {
-      _form = _form.copyWith(
-        firstNameError: nameErr,
-        mobileError: mobileErr,
-        panError: panErr,
-        emailError: emailErr,
-      );
-      _saveState = SaveState.idle;
+    _form = AddCustomerFormValidation.apply(_form);
+    if (_form.hasErrors) {
+      _saveState = SaveState.validationError;
       notifyListeners();
       return false;
     }
@@ -357,6 +338,8 @@ class AddCustomerLogic extends ChangeNotifier {
 
   // ── RESET ─────────────────────────────────────────────────────────────────
   void resetForm() {
+    _mobileDebounce?.cancel();
+    _mobileCheckVersion++;
     _form = _initialEditForm ?? const AddCustomerFormModel();
     _saveState = SaveState.idle;
     _activeField = ActiveField.none;

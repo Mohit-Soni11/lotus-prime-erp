@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:lotus_erp/database/db/app_database.dart';
 
@@ -5,11 +7,16 @@ import '../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../models/customer/customer_enums/add_customer_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import '../../features/customer/domain/services/customer_contact_value.dart';
+import '../../helpers/add_customer_/add_customer_form_validation.dart';
+import 'customer_media_store.dart';
 
 class AddCustomerRepository {
   final AppDatabase _db;
+  final CustomerMediaStore _mediaStore;
 
-  AddCustomerRepository({AppDatabase? db}) : _db = db ?? AppDatabase();
+  AddCustomerRepository({AppDatabase? db, CustomerMediaStore? mediaStore})
+      : _db = db ?? AppDatabase(),
+        _mediaStore = mediaStore ?? CustomerMediaStore();
 
   Future<AddCustomerFormModel?> fetchCustomerForEdit(int customerId) async {
     try {
@@ -76,7 +83,6 @@ class AddCustomerRepository {
         state: customer.state ?? '',
         city: customer.city ?? '',
         pincode: customer.pincode ?? '',
-        openingBalance: customer.openingBalance,
         customerTier: customerTier,
         membershipId: customer.membershipId ?? '',
         ringSize: _optionalEnum(
@@ -97,9 +103,6 @@ class AddCustomerRepository {
         ),
         notes: customer.notes ?? '',
         profileImagePath: customer.profileImagePath,
-        type: customerTier == CustomerTier.vip
-            ? NewCustomerType.vip
-            : NewCustomerType.regular,
       );
     } catch (e) {
       AppLogger.debug('Customer edit load error: $e');
@@ -111,7 +114,13 @@ class AddCustomerRepository {
     AddCustomerFormModel form, {
     int? customerId,
   }) async {
+    final newlyOwnedPaths = <String>[];
+    String? previousPhoto;
+    String? previousIdProof;
     try {
+      if (AddCustomerFormValidation.apply(form).hasErrors) {
+        return SaveResult.error;
+      }
       final cleanMobile = form.mobile.replaceAll(RegExp(r'[^0-9]'), '');
       final exists = cleanMobile.isNotEmpty &&
           await _checkMobileExists(
@@ -123,37 +132,88 @@ class AddCustomerRepository {
       final displayName = form.isCorporate
           ? form.companyName.trim()
           : '${form.firstName.trim()} ${form.lastName.trim()}'.trim();
-      final companion = _buildCompanion(
-        form,
-        displayName: displayName.isEmpty ? 'Walk-in Customer' : displayName,
-        isUpdate: customerId != null,
-      );
-
-      if (customerId == null) {
-        await _db.into(_db.customers).insert(companion);
-      } else {
-        final affected = await (_db.update(_db.customers)
-              ..where((row) => row.id.equals(customerId)))
-            .write(companion);
-        if (affected == 0) return SaveResult.error;
+      await _db.transaction(() async {
+        final existing = customerId == null
+            ? null
+            : await (_db.select(_db.customers)
+                  ..where((row) => row.id.equals(customerId)))
+                .getSingleOrNull();
+        if (customerId != null && existing == null) {
+          throw StateError('Customer no longer exists');
+        }
+        previousPhoto = existing?.profileImagePath;
+        previousIdProof = existing?.idProofDocPath;
+        final name = displayName.isEmpty ? 'Walk-in Customer' : displayName;
+        final id = customerId ??
+            await _db.into(_db.customers).insert(
+                  _buildCompanion(
+                    form,
+                    displayName: name,
+                    isUpdate: false,
+                    storageMobile: cleanMobile.isEmpty
+                        ? 'WALKIN-TEMP-${Random.secure().nextInt(1 << 32)}-${Random.secure().nextInt(1 << 32)}'
+                        : cleanMobile,
+                  ),
+                );
+        final photo =
+            await _mediaStore.persist(form.profileImagePath, id, 'profile');
+        if (photo != null && photo != form.profileImagePath) {
+          newlyOwnedPaths.add(photo);
+        }
+        final proof =
+            await _mediaStore.persist(form.idProofDocPath, id, 'identity');
+        if (proof != null && proof != form.idProofDocPath) {
+          newlyOwnedPaths.add(proof);
+        }
+        final memberId = existing?.membershipId?.trim().isNotEmpty == true
+            ? existing!.membershipId!
+            : _membershipId(id);
+        await (_db.update(_db.customers)..where((row) => row.id.equals(id)))
+            .write(_buildCompanion(
+          form,
+          displayName: name,
+          isUpdate: true,
+          membershipId: memberId,
+          profileImagePath: photo,
+          idProofDocPath: proof,
+          storageMobile: cleanMobile.isEmpty ? 'WALKIN-$id' : cleanMobile,
+        ));
+      });
+      try {
+        if (previousPhoto != form.profileImagePath) {
+          await _mediaStore.deleteIfOwned(previousPhoto);
+        }
+        if (previousIdProof != form.idProofDocPath) {
+          await _mediaStore.deleteIfOwned(previousIdProof);
+        }
+      } catch (error) {
+        AppLogger.debug('Customer media cleanup failed: $error');
       }
-
       AppLogger.debug(
-        customerId == null
-            ? 'Customer saved: $displayName (${form.mobile})'
-            : 'Customer updated: #$customerId $displayName (${form.mobile})',
-      );
+          customerId == null ? 'Customer created' : 'Customer updated');
       return SaveResult.success;
     } on Exception catch (e) {
+      await _discardNewMedia(newlyOwnedPaths);
       final message = e.toString().toLowerCase();
-      if (message.contains('unique') || message.contains('constraint')) {
+      if (message.contains('unique constraint failed: customers.mobile')) {
         return SaveResult.duplicate;
       }
       AppLogger.debug('Customer save error: $e');
       return SaveResult.error;
     } catch (e) {
+      await _discardNewMedia(newlyOwnedPaths);
       AppLogger.debug('Customer save error: $e');
       return SaveResult.error;
+    }
+  }
+
+  Future<void> _discardNewMedia(List<String> paths) async {
+    for (final path in paths) {
+      try {
+        await _mediaStore.deleteIfOwned(path);
+      } catch (error) {
+        AppLogger.debug('Customer media rollback cleanup failed: $error');
+      }
     }
   }
 
@@ -172,17 +232,24 @@ class AddCustomerRepository {
     AddCustomerFormModel form, {
     required String displayName,
     required bool isUpdate,
+    String? membershipId,
+    String? profileImagePath,
+    String? idProofDocPath,
+    required String storageMobile,
   }) {
     return CustomersCompanion(
       name: drift.Value(displayName),
-      mobile: drift.Value(CustomerContactValue.storageMobile(form.mobile)),
+      mobile: drift.Value(storageMobile),
       city: drift.Value(_nullable(form.city)),
       type: drift.Value(form.customerTier.label),
       entityType: drift.Value(form.entityType.label),
-      firstName: drift.Value(_nullable(form.firstName)),
-      lastName: drift.Value(_nullable(form.lastName)),
-      companyName: drift.Value(_nullable(form.companyName)),
-      contactPersonName: drift.Value(_nullable(form.contactPersonName)),
+      firstName:
+          drift.Value(form.isCorporate ? null : _nullable(form.firstName)),
+      lastName: drift.Value(form.isCorporate ? null : _nullable(form.lastName)),
+      companyName:
+          drift.Value(form.isCorporate ? _nullable(form.companyName) : null),
+      contactPersonName: drift.Value(
+          form.isCorporate ? _nullable(form.contactPersonName) : null),
       dateOfBirth: drift.Value(form.dateOfBirth?.toIso8601String()),
       gender: drift.Value(form.gender?.label),
       anniversaryDate: drift.Value(form.anniversaryDate?.toIso8601String()),
@@ -192,16 +259,15 @@ class AddCustomerRepository {
       panNumber: drift.Value(_nullable(form.panNumber)),
       idProofType: drift.Value(form.idProofType?.label),
       idProofNumber: drift.Value(_nullable(form.idProofNumber)),
-      idProofDocPath: drift.Value(form.idProofDocPath),
+      idProofDocPath: drift.Value(idProofDocPath),
       gstNumber: drift.Value(_nullable(form.gstNumber)),
       addressLine1: drift.Value(_nullable(form.addressLine1)),
       addressLine2: drift.Value(_nullable(form.addressLine2)),
       country: drift.Value(form.country),
       state: drift.Value(_nullable(form.state)),
       pincode: drift.Value(_nullable(form.pincode)),
-      openingBalance: drift.Value(form.openingBalance),
       customerTier: drift.Value(form.customerTier.label),
-      membershipId: drift.Value(_nullable(form.membershipId)),
+      membershipId: drift.Value(membershipId),
       ringSize: drift.Value(form.ringSize?.label),
       bangleSize: drift.Value(form.bangleSize?.label),
       familyDetailsJson: drift.Value(
@@ -211,7 +277,7 @@ class AddCustomerRepository {
       ),
       referralSource: drift.Value(form.referralSource?.label),
       notes: drift.Value(_nullable(form.notes)),
-      profileImagePath: drift.Value(form.profileImagePath),
+      profileImagePath: drift.Value(profileImagePath),
       updatedAt:
           isUpdate ? drift.Value(DateTime.now()) : const drift.Value.absent(),
     );
@@ -231,9 +297,16 @@ class AddCustomerRepository {
         })
         ..limit(1);
       return await query.getSingleOrNull() != null;
-    } catch (_) {
-      return false;
+    } catch (error) {
+      AppLogger.debug('Customer mobile lookup failed: $error');
+      rethrow;
     }
+  }
+
+  String _membershipId(int id) {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    return 'LTMP-${now.year}$month-${id.toString().padLeft(6, '0')}';
   }
 
   String? _nullable(String value) {

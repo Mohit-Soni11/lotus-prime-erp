@@ -118,8 +118,7 @@ class AddCustomerFormModel {
   final String city;
   final String pincode;
 
-  // ── Billing ────────────────────────────────────────────────────────────────
-  final double openingBalance;
+  // ── Customer category ─────────────────────────────────────────────────────
   final CustomerTier customerTier;
   final String membershipId;
 
@@ -135,12 +134,15 @@ class AddCustomerFormModel {
 
   // ── Validation Errors ─────────────────────────────────────────────────────
   final String? firstNameError;
+  final String? companyNameError;
   final String? mobileError;
+  final String? whatsappError;
+  final String? alternateContactError;
   final String? panError;
+  final String? idProofError;
+  final String? gstError;
   final String? emailError;
-
-  // ── Legacy ────────────────────────────────────────────────────────────────
-  final NewCustomerType type;
+  final String? pincodeError;
 
   const AddCustomerFormModel({
     this.entityType = CustomerEntityType.individual,
@@ -167,7 +169,6 @@ class AddCustomerFormModel {
     this.state = '',
     this.city = '',
     this.pincode = '',
-    this.openingBalance = 0.0,
     this.customerTier = CustomerTier.regular,
     this.membershipId = '',
     this.ringSize,
@@ -177,17 +178,28 @@ class AddCustomerFormModel {
     this.notes = '',
     this.profileImagePath,
     this.firstNameError,
+    this.companyNameError,
     this.mobileError,
+    this.whatsappError,
+    this.alternateContactError,
     this.panError,
+    this.idProofError,
+    this.gstError,
     this.emailError,
-    this.type = NewCustomerType.regular,
+    this.pincodeError,
   });
 
   bool get hasErrors =>
       firstNameError != null ||
+      companyNameError != null ||
       mobileError != null ||
+      whatsappError != null ||
+      alternateContactError != null ||
       panError != null ||
-      emailError != null;
+      idProofError != null ||
+      gstError != null ||
+      emailError != null ||
+      pincodeError != null;
 
   bool get isCorporate => entityType == CustomerEntityType.corporate;
 
@@ -202,7 +214,6 @@ class AddCustomerFormModel {
   }
 
   bool get isReadyToSave {
-    if (hasErrors) return false;
     if (isCorporate) {
       return companyName.trim().isNotEmpty;
     }
@@ -239,7 +250,6 @@ class AddCustomerFormModel {
     String? state,
     String? city,
     String? pincode,
-    double? openingBalance,
     CustomerTier? customerTier,
     String? membershipId,
     RingSize? ringSize,
@@ -254,13 +264,24 @@ class AddCustomerFormModel {
     bool clearProfileImage = false,
     String? firstNameError,
     bool clearFirstNameError = false,
+    String? companyNameError,
+    bool clearCompanyNameError = false,
     String? mobileError,
     bool clearMobileError = false,
+    String? whatsappError,
+    bool clearWhatsappError = false,
+    String? alternateContactError,
+    bool clearAlternateContactError = false,
     String? panError,
     bool clearPanError = false,
+    String? idProofError,
+    bool clearIdProofError = false,
+    String? gstError,
+    bool clearGstError = false,
     String? emailError,
     bool clearEmailError = false,
-    NewCustomerType? type,
+    String? pincodeError,
+    bool clearPincodeError = false,
   }) {
     return AddCustomerFormModel(
       entityType: entityType ?? this.entityType,
@@ -289,7 +310,6 @@ class AddCustomerFormModel {
       state: state ?? this.state,
       city: city ?? this.city,
       pincode: pincode ?? this.pincode,
-      openingBalance: openingBalance ?? this.openingBalance,
       customerTier: customerTier ?? this.customerTier,
       membershipId: membershipId ?? this.membershipId,
       ringSize: clearRingSize ? null : (ringSize ?? this.ringSize),
@@ -303,10 +323,22 @@ class AddCustomerFormModel {
           : (profileImagePath ?? this.profileImagePath),
       firstNameError:
           clearFirstNameError ? null : (firstNameError ?? this.firstNameError),
+      companyNameError: clearCompanyNameError
+          ? null
+          : (companyNameError ?? this.companyNameError),
       mobileError: clearMobileError ? null : (mobileError ?? this.mobileError),
+      whatsappError:
+          clearWhatsappError ? null : (whatsappError ?? this.whatsappError),
+      alternateContactError: clearAlternateContactError
+          ? null
+          : (alternateContactError ?? this.alternateContactError),
       panError: clearPanError ? null : (panError ?? this.panError),
+      idProofError:
+          clearIdProofError ? null : (idProofError ?? this.idProofError),
+      gstError: clearGstError ? null : (gstError ?? this.gstError),
       emailError: clearEmailError ? null : (emailError ?? this.emailError),
-      type: type ?? this.type,
+      pincodeError:
+          clearPincodeError ? null : (pincodeError ?? this.pincodeError),
     );
   }
 }

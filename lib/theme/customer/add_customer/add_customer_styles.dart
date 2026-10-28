@@ -39,52 +39,53 @@ class AddCustomerStyles {
     letterSpacing: 0.8,
   );
   static TextStyle get sectionTitle => GoogleFonts.manrope(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-        color: AddCustomerColors.bodyTextMain,
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        color: Colors.black,
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w800,
-        color: AddCustomerColors.bodyTextMuted,
-        letterSpacing: 1.2,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
       );
   static TextStyle get fieldLabel => GoogleFonts.manrope(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: AddCustomerColors.inputLabel,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        color: Colors.black,
       );
 
   static TextStyle get fieldLabelRequired => GoogleFonts.manrope(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: AddCustomerColors.inputLabel,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        color: Colors.black,
       );
   static TextStyle get fieldText => GoogleFonts.inter(
         fontSize: 15,
-        fontWeight: FontWeight.w600,
-        color: AddCustomerColors.inputText,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
       );
 
   static TextStyle get fieldHint => GoogleFonts.inter(
         fontSize: 14,
-        color: AddCustomerColors.inputHint,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
       );
   static TextStyle get errorText => GoogleFonts.inter(
         fontSize: 13,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w700,
         color: AddCustomerColors.error,
       );
   static TextStyle get typeTitle => GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: AddCustomerColors.bodyTextMain,
+        color: Colors.black,
       );
 
   static TextStyle get typeSubtitle => GoogleFonts.inter(
-        fontSize: 13,
-        color: AddCustomerColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
       );
   static TextStyle get saveBtnText => GoogleFonts.manrope(
         fontSize: 16,
@@ -93,8 +94,9 @@ class AddCustomerStyles {
         letterSpacing: 0.5,
       );
   static TextStyle get requiredNote => GoogleFonts.inter(
-        fontSize: 13,
-        color: AddCustomerColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
       );
   static BoxDecoration get cardDecoration => BoxDecoration(
         color: AddCustomerColors.bodyPanelBg,

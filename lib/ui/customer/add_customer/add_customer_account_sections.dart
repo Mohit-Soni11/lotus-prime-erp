@@ -50,6 +50,7 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
                 ctrl: _idProofNoCtrl,
                 focus: _idProofNoFocus,
                 hint: 'ID number',
+                error: _logic.form.idProofError,
                 onChanged: _logic.onIdProofNumberChanged)),
       ]),
       const SizedBox(height: 14),
@@ -67,6 +68,7 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
           ctrl: _gstCtrl,
           focus: _gstFocus,
           hint: '22ABCDE1234F1Z5',
+          error: _logic.form.gstError,
           onChanged: (v) {
             _gstCtrl.value = TextEditingValue(
               text: v.toUpperCase(),
@@ -84,6 +86,13 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
   // SECTION 4: ADDRESS
 
   Widget _buildAddressSection() {
+    IndiaState? selectedIndiaState;
+    for (final state in IndiaState.values) {
+      if (state.label == _selectedState) {
+        selectedIndiaState = state;
+        break;
+      }
+    }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _field(
           label: 'Address Line 1',
@@ -118,11 +127,7 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
               ? _buildDropdown<IndiaState>(
                   label: 'State',
                   icon: Icons.map_outlined,
-                  value: _selectedState != null
-                      ? IndiaState.values.firstWhere(
-                          (s) => s.label == _selectedState,
-                          orElse: () => IndiaState.jh)
-                      : null,
+                  value: selectedIndiaState,
                   items: IndiaState.values,
                   itemLabel: (s) => s.label,
                   onChanged: (s) {
@@ -155,15 +160,26 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
         const SizedBox(width: 14),
         Expanded(
             child: _field(
-                label: 'Pincode',
+                label: _selectedCountry == 'India' ? 'Pincode' : 'Postal Code',
                 icon: Icons.pin_drop_rounded,
                 ctrl: _pincodeCtrl,
                 focus: _pincodeFocus,
-                hint: '6-digit pincode',
+                hint: _selectedCountry == 'India'
+                    ? '6-digit pincode'
+                    : 'Postal or ZIP code',
+                error: _logic.form.pincodeError,
                 onChanged: _logic.onPincodeChanged,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                formatters: [FilteringTextInputFormatter.digitsOnly])),
+                keyboardType: _selectedCountry == 'India'
+                    ? TextInputType.number
+                    : TextInputType.text,
+                maxLength: _selectedCountry == 'India' ? 6 : 12,
+                formatters: [
+              FilteringTextInputFormatter.allow(
+                _selectedCountry == 'India'
+                    ? RegExp(r'[0-9]')
+                    : RegExp(r'[A-Za-z0-9 -]'),
+              ),
+            ])),
       ]),
     ]);
   }
@@ -171,19 +187,6 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
 
   Widget _buildBillingSection() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _field(
-          label: 'Opening Balance',
-          icon: Icons.account_balance_rounded,
-          ctrl: _openBalCtrl,
-          focus: _openBalFocus,
-          hint: '0.00',
-          prefix: '₹',
-          onChanged: _logic.onOpeningBalanceChanged,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          formatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-          ]),
-      const SizedBox(height: 20),
       Text('CUSTOMER CATEGORY', style: AddCustomerStyles.fieldLabel),
       const SizedBox(height: 10),
       Row(
@@ -224,7 +227,7 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.manrope(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: isSelected ? _tierColor(t) : Colors.black87,
                       ),
@@ -236,9 +239,9 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? _tierColor(t) : Colors.black45,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
                       ),
                     ),
                   ],
@@ -267,34 +270,21 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
           Expanded(
               child: Text(
                   _logic.form.membershipId.isEmpty
-                      ? 'LTMP-000000-0001'
+                      ? 'Assigned after saving'
                       : _logic.form.membershipId,
                   style: GoogleFonts.robotoMono(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFB8960C),
+                      color: Colors.black87,
                       letterSpacing: 1.2))),
-          GestureDetector(
-            onTap: () {
-              final id = _logic.generateMembershipId();
-              _memberIdCtrl.text = id;
-            },
-            child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                    color: AddCustomerColors.brandGold.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6)),
-                child: const Icon(Icons.refresh_rounded,
-                    color: AddCustomerColors.brandGold, size: 16)),
-          ),
         ]),
       ),
       const SizedBox(height: 4),
-      Text('Auto-generated. Tap ↻ to regenerate.',
+      Text('A unique membership ID is assigned automatically when saved.',
           style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.black54)),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87)),
     ]);
   }
 

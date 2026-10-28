@@ -414,7 +414,6 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
       firstName: displayName,
       addressLine1: cityCtrl.text.trim().isEmpty ? null : cityCtrl.text.trim(),
       country: 'India',
-      openingBalance: 0,
       customerTier: 'Regular',
     );
   }

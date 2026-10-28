@@ -157,11 +157,13 @@ extension _CustomerFormFields on _AddCustomerScreenState {
           const Icon(AddCustomerIcons.errorIcon,
               color: AddCustomerColors.error, size: 14),
           const SizedBox(width: 5),
-          Text(error,
-              style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AddCustomerColors.error,
-                  fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Text(error,
+                style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AddCustomerColors.error,
+                    fontWeight: FontWeight.w700)),
+          ),
         ]),
       ],
     ]);
@@ -172,6 +174,7 @@ extension _CustomerFormFields on _AddCustomerScreenState {
     required IconData icon,
     required DateTime? value,
     required VoidCallback onTap,
+    VoidCallback? onClear,
   }) {
     final fmt = value != null ? DateFormat('dd MMM yyyy').format(value) : null;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -220,20 +223,10 @@ extension _CustomerFormFields on _AddCustomerScreenState {
                         ? AddCustomerStyles.fieldText
                         : AddCustomerStyles.fieldHint)),
             if (fmt != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: AddCustomerColors.successBg,
-                      borderRadius: BorderRadius.circular(6)),
-                  child: Text('Set',
-                      style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AddCustomerColors.success)),
-                ),
+              IconButton(
+                tooltip: 'Clear date',
+                onPressed: onClear,
+                icon: const Icon(Icons.close_rounded, size: 18),
               )
             else
               const Padding(
@@ -437,7 +430,7 @@ extension _CustomerFormFields on _AddCustomerScreenState {
             Expanded(
                 child: Text(
                     filePath != null
-                        ? filePath.split('/').last
+                        ? filePath.split(RegExp(r'[/\\]')).last
                         : 'Tap to upload document',
                     style: filePath != null
                         ? AddCustomerStyles.fieldText
