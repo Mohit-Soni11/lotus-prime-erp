@@ -5,6 +5,8 @@ import '../../database/local_database/shop_database_helper.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/finance/due_management/domain/services/bill_due_policy.dart';
 import 'package:lotus_erp/features/finance/transactions/domain/services/finance_transaction_numbering.dart';
+import 'package:lotus_erp/features/sales_pos/application/documents/sales_invoice_payment_revision_service.dart';
+import 'package:lotus_erp/core/documents/issued_invoice_archive.dart';
 import '../../models/finance/due_collection_entry/due_collection_entry_model.dart';
 import '../setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
@@ -12,12 +14,20 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 class DueCollectionEntryRepository {
   final AppDatabase _db;
   late final FinanceTransactionNumbering _numbering;
+  late final SalesInvoicePaymentRevisionService _paymentRevisionService;
   final ShopDatabaseHelper _shopDbHelper = ShopDatabaseHelper();
   static const String _legacyAutoCollectionAccountNumber =
       'LOTUS-DUE-COLLECTION-LEDGER';
 
-  DueCollectionEntryRepository({AppDatabase? db}) : _db = db ?? AppDatabase() {
+  DueCollectionEntryRepository({
+    AppDatabase? db,
+    IssuedInvoiceArchive issuedInvoiceArchive = const IssuedInvoiceArchive(),
+  }) : _db = db ?? AppDatabase() {
     _numbering = FinanceTransactionNumbering(_db);
+    _paymentRevisionService = SalesInvoicePaymentRevisionService(
+      database: _db,
+      archive: issuedInvoiceArchive,
+    );
   }
 
   Future<List<DueCollectionBillModel>> fetchDueBills() async {
@@ -199,7 +209,7 @@ class DueCollectionEntryRepository {
     }
 
     try {
-      return await _db.transaction(() async {
+      final result = await _db.transaction(() async {
         final bill = await (_db.select(_db.bills)
               ..where((b) => b.id.equals(billId)))
             .getSingleOrNull();
@@ -296,6 +306,28 @@ class DueCollectionEntryRepository {
               : 'Partial due collected for ${bill.billNo}. Balance Rs ${newDue.toStringAsFixed(2)}.$discountText',
         );
       });
+      if (!result.success) return result;
+
+      try {
+        final bill = await (_db.select(_db.bills)
+              ..where((row) => row.id.equals(billId)))
+            .getSingleOrNull();
+        if (bill == null) return result;
+        await _paymentRevisionService.synchronize(bill.id, bill.billNo);
+        return result;
+      } catch (error, stackTrace) {
+        AppLogger.error(
+          'Due collection saved but sales PDF revision failed.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        return DueCollectionSaveResult(
+          success: true,
+          receiptNo: result.receiptNo,
+          message:
+              '${result.message} Invoice PDF update is pending and will retry when opened.',
+        );
+      }
     } catch (e) {
       AppLogger.debug('DueCollectionEntryRepository.saveCollection error: $e');
       return const DueCollectionSaveResult(

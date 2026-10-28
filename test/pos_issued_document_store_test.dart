@@ -9,9 +9,8 @@ void main() {
   test('the issued PDF is the exact preview snapshot', () async {
     final root = await Directory.systemTemp.createTemp('pos_issued_store_');
     addTearDown(() => root.delete(recursive: true));
-    final store = PosIssuedDocumentStore(
-      archive: IssuedInvoiceArchive(directoryProvider: () async => root),
-    );
+    final archive = IssuedInvoiceArchive(directoryProvider: () async => root);
+    final store = PosIssuedDocumentStore(archive: archive);
     final preview = await (pw.Document()
           ..addPage(pw.Page(build: (_) => pw.Text('Final POS preview'))))
         .save();
@@ -21,12 +20,20 @@ void main() {
       billNo: 'AJ-26-021',
       previewBytes: preview,
       revision: false,
+      templateId: 'lotus-classic',
+      format: 'a4',
+      paidAmount: 100,
+      dueAmount: 50,
     );
 
     expect(issued, orderedEquals(preview));
     expect(
       await store.require(billId: 21, billNo: 'AJ-26-021'),
       orderedEquals(preview),
+    );
+    expect(
+      await archive.readMetadata(IssuedInvoiceKind.sales, 21, 'AJ-26-021'),
+      containsPair('templateId', 'lotus-classic'),
     );
   });
 }

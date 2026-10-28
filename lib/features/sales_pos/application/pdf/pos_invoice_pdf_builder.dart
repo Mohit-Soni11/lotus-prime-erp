@@ -1081,6 +1081,8 @@ class _PosInvoicePdfDocumentBuilder {
       if (invoice.cardPaid > 0) {'label': 'Card', 'amount': invoice.cardPaid},
       if (invoice.advancePaid > 0)
         {'label': 'Advance', 'amount': invoice.advancePaid},
+      if (invoice.dueCollectionPaid > 0)
+        {'label': 'Due Collection', 'amount': invoice.dueCollectionPaid},
     ];
 
     final hasDue = invoice.balanceDue > 0.5;
@@ -2000,6 +2002,9 @@ class _PosInvoicePdfDocumentBuilder {
         if (invoice.advancePaid > 0.5)
           _thermalKeyValue(
               'Advance', _thermalMoney(invoice.advancePaid), fontSize),
+        if (invoice.dueCollectionPaid > 0.5)
+          _thermalKeyValue('Due Collection',
+              _thermalMoney(invoice.dueCollectionPaid), fontSize),
         _thermalKeyValue('Paid', _thermalMoney(invoice.totalPaid), fontSize),
         if (invoice.balanceDue > 0.5)
           _thermalKeyValue(

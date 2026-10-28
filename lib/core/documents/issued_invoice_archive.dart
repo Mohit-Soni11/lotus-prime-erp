@@ -53,6 +53,39 @@ class IssuedInvoiceArchive {
     }
   }
 
+  Future<Map<String, dynamic>?> readMetadata(
+    IssuedInvoiceKind kind,
+    int recordId,
+    String documentNumber,
+  ) async {
+    final file = await _metadataFile(kind, recordId, documentNumber);
+    if (!await file.exists()) return null;
+    final decoded = jsonDecode(await file.readAsString());
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Invalid issued invoice metadata.');
+    }
+    return decoded;
+  }
+
+  Future<void> saveMetadata(
+    IssuedInvoiceKind kind,
+    int recordId,
+    String documentNumber,
+    Map<String, dynamic> metadata,
+  ) async {
+    final file = await _metadataFile(kind, recordId, documentNumber);
+    await file.parent.create(recursive: true);
+    final pending = File(
+      '${file.path}.${DateTime.now().microsecondsSinceEpoch}.tmp',
+    );
+    try {
+      await pending.writeAsString(jsonEncode(metadata), flush: true);
+      await pending.rename(file.path);
+    } finally {
+      if (await pending.exists()) await pending.delete();
+    }
+  }
+
   Future<void> saveIfAbsent(
     IssuedInvoiceKind kind,
     int recordId,
@@ -109,6 +142,15 @@ class IssuedInvoiceArchive {
         'revisions',
         p.basenameWithoutExtension(original.path),
       ));
+
+  Future<File> _metadataFile(
+    IssuedInvoiceKind kind,
+    int recordId,
+    String documentNumber,
+  ) async {
+    final original = await _file(kind, recordId, documentNumber);
+    return File(p.setExtension(original.path, '.json'));
+  }
 
   Future<List<File>> _revisionFiles(File original) async {
     final directory = _revisionDirectory(original);

@@ -3,11 +3,24 @@ part of 'customer_profile_screen.dart';
 extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
   Future<Uint8List?> _loadIssuedSalesInvoice(int billId, String billNo) {
     return _readArchivedDocument(
-      read: () => _issuedInvoiceArchive.read(
-        IssuedInvoiceKind.sales,
-        billId,
-        billNo,
-      ),
+      read: () async {
+        try {
+          await SalesInvoicePaymentRevisionService(
+            archive: _issuedInvoiceArchive,
+          ).synchronize(billId, billNo);
+        } catch (error, stackTrace) {
+          AppLogger.warning(
+            'Sales payment PDF revision could not be synchronized.',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+        return _issuedInvoiceArchive.read(
+          IssuedInvoiceKind.sales,
+          billId,
+          billNo,
+        );
+      },
       unavailableMessage:
           'The original issued PDF is not stored for this bill.',
     );

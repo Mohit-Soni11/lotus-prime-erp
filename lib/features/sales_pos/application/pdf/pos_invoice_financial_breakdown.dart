@@ -91,6 +91,11 @@ class PosInvoiceFinancialBreakdown {
           label: 'Customer Advance',
           amount: invoice.advancePaid,
         ),
+      if (invoice.dueCollectionPaid > posInvoiceMoneyEpsilon)
+        PosInvoicePaymentEntry(
+          label: 'Due Collection',
+          amount: invoice.dueCollectionPaid,
+        ),
     ];
   }
 

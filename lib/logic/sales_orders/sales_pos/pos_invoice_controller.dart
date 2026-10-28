@@ -926,6 +926,10 @@ class PosInvoiceController extends ChangeNotifier {
           billNo: issuedInvoice.invoiceNumber,
           previewBytes: bytes,
           revision: _saleRevisionAwaitingArchive,
+          templateId: selectedTemplateId,
+          format: selectedFormat.name,
+          paidAmount: issuedInvoice.totalPaid,
+          dueAmount: issuedInvoice.balanceDue,
         );
         _newSaleAwaitingArchive = false;
         _saleRevisionAwaitingArchive = false;

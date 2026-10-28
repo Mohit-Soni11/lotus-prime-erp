@@ -15,6 +15,10 @@ class PosIssuedDocumentStore {
     required String billNo,
     required Uint8List previewBytes,
     required bool revision,
+    required String templateId,
+    required String format,
+    required double paidAmount,
+    required double dueAmount,
   }) async {
     if (revision) {
       await _archive.saveRevision(
@@ -31,6 +35,17 @@ class PosIssuedDocumentStore {
         previewBytes,
       );
     }
+    await _archive.saveMetadata(
+      IssuedInvoiceKind.sales,
+      billId,
+      billNo,
+      {
+        'templateId': templateId,
+        'format': format,
+        'paidAmount': paidAmount,
+        'dueAmount': dueAmount,
+      },
+    );
     return require(billId: billId, billNo: billNo);
   }
 

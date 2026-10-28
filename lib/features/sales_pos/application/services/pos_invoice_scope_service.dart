@@ -19,9 +19,9 @@ class PosInvoiceScopeService {
     if (metals.isEmpty) return [source];
 
     final crossAdjustments = _crossMetalAdjustments(source, metals);
-    return metals
+    final scoped = metals
         .map(
-          (metal) => scopedInvoiceForMetal(
+          (metal) => _baseScopedInvoiceForMetal(
             source,
             metal,
             crossMetalAdjustmentDeduction: crossAdjustments[metal] ?? 0.0,
@@ -29,16 +29,26 @@ class PosInvoiceScopeService {
           ),
         )
         .toList(growable: false);
+    return _applyDueCollection(scoped, source.dueCollectionPaid);
   }
 
   PosInvoiceModel scopedInvoiceForMetal(
     PosInvoiceModel source,
-    MetalType? metal, {
+    MetalType? metal,
+  ) {
+    if (metal == null) return source;
+    final metals = collectMetals(source);
+    final index = metals.indexOf(metal);
+    if (index < 0) return source;
+    return scopedInvoicesForAllMetals(source)[index];
+  }
+
+  PosInvoiceModel _baseScopedInvoiceForMetal(
+    PosInvoiceModel source,
+    MetalType metal, {
     double crossMetalAdjustmentDeduction = 0.0,
     bool isMetalScopedCopy = false,
   }) {
-    if (metal == null) return source;
-
     final scopedSaleItems = source.saleItems
         .where((item) => item.metal == metal)
         .toList(growable: false);
@@ -112,6 +122,7 @@ class PosInvoiceScopeService {
       upiPaid: upiPaid,
       cardPaid: cardPaid,
       advancePaid: advancePaid,
+      dueCollectionPaid: 0,
       balanceDue: adjustedScopedNetPayable - scopedPaid,
       changeSettlementMethod: source.changeSettlementMethod,
       changeSettlementAmount:
@@ -119,6 +130,40 @@ class PosInvoiceScopeService {
       totalMakingCharge: scopedMakingCharge,
       isMetalScopedCopy: isMetalScopedCopy,
     );
+  }
+
+  List<PosInvoiceModel> _applyDueCollection(
+    List<PosInvoiceModel> scoped,
+    double collection,
+  ) {
+    if (collection <= 0.005) return scoped;
+    final dueCents = scoped
+        .map((invoice) =>
+            invoice.balanceDue <= 0 ? 0 : (invoice.balanceDue * 100).round())
+        .toList(growable: false);
+    final totalDueCents = dueCents.fold<int>(0, (sum, value) => sum + value);
+    if (totalDueCents == 0) return scoped;
+
+    var remainingCents = (collection * 100).round().clamp(0, totalDueCents);
+    var remainingDueCents = totalDueCents;
+    final revised = <PosInvoiceModel>[];
+    for (var index = 0; index < scoped.length; index++) {
+      final available = dueCents[index];
+      final allocated = available == 0 || remainingDueCents == 0
+          ? 0
+          : index == scoped.length - 1
+              ? remainingCents.clamp(0, available)
+              : (remainingCents * available / remainingDueCents)
+                  .round()
+                  .clamp(0, available);
+      remainingCents -= allocated;
+      remainingDueCents -= available;
+      revised.add(scoped[index].copyWith(
+        dueCollectionPaid: allocated / 100,
+        balanceDue: (available - allocated) / 100,
+      ));
+    }
+    return revised;
   }
 
   PosInvoiceMetalPaymentAllocation? _metalPaymentAllocationFor(

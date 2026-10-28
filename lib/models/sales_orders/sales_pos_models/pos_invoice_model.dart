@@ -156,6 +156,7 @@ class PosInvoiceModel {
   final double upiPaid;
   final double cardPaid;
   final double advancePaid;
+  final double dueCollectionPaid;
   final double balanceDue;
   final RefundMethod? changeSettlementMethod;
   final double changeSettlementAmount;
@@ -166,7 +167,8 @@ class PosInvoiceModel {
   final bool isMetalScopedCopy;
   final List<PosInvoiceMetalPaymentAllocation> metalPaymentAllocations;
 
-  double get totalPaid => cashPaid + upiPaid + cardPaid + advancePaid;
+  double get totalPaid =>
+      cashPaid + upiPaid + cardPaid + advancePaid + dueCollectionPaid;
   double get igst {
     final amount = totalGst - cgst - sgst;
     if (amount.abs() <= 0.005) return 0;
@@ -309,6 +311,7 @@ class PosInvoiceModel {
     required this.upiPaid,
     required this.cardPaid,
     required this.advancePaid,
+    this.dueCollectionPaid = 0,
     required this.balanceDue,
     required this.totalMakingCharge,
     this.changeSettlementMethod,
@@ -362,6 +365,7 @@ class PosInvoiceModel {
     double? upiPaid,
     double? cardPaid,
     double? advancePaid,
+    double? dueCollectionPaid,
     double? balanceDue,
     Object? changeSettlementMethod = _notProvided,
     double? changeSettlementAmount,
@@ -418,6 +422,7 @@ class PosInvoiceModel {
       upiPaid: upiPaid ?? this.upiPaid,
       cardPaid: cardPaid ?? this.cardPaid,
       advancePaid: advancePaid ?? this.advancePaid,
+      dueCollectionPaid: dueCollectionPaid ?? this.dueCollectionPaid,
       balanceDue: balanceDue ?? this.balanceDue,
       changeSettlementMethod: identical(
         changeSettlementMethod,

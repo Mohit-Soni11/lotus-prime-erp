@@ -136,9 +136,9 @@ class PosBillingController extends ChangeNotifier {
   String? _committedInvoiceNumber;
 
   // --- DATABASE ---
-  final AppDatabase _db = AppDatabase();
+  final AppDatabase _db;
   final PosHoldRepository _holdRepo = PosHoldRepository();
-  final PosCheckoutRepository _checkoutRepo = PosCheckoutRepository();
+  final PosCheckoutRepository _checkoutRepo;
   final PosQuickStockRepository _quickStockRepo = PosQuickStockRepository();
   final BookingAdvanceRepository _bookingAdvanceRepo =
       BookingAdvanceRepository();
@@ -331,7 +331,7 @@ class PosBillingController extends ChangeNotifier {
   //  Customer POS history displayed after customer selection.
   CustomerProfileModel? customerHistory;
   bool isLoadingHistory = false;
-  final CustomerProfileRepository _profileRepo = CustomerProfileRepository();
+  final CustomerProfileRepository _profileRepo;
 
   bool get canQuickAddCustomer {
     if (selectedCustomer != null) return false;
@@ -1104,10 +1104,21 @@ class PosBillingController extends ChangeNotifier {
   double _platBhawInput = 0.0;
   double _diaBhawInput = 0.0;
 
-  PosBillingController() {
-    unawaited(_initializeInvoiceNumberPreview());
-    unawaited(_restoreHeldBills());
-    unawaited(_loadTaxGstConfig());
+  PosBillingController({
+    AppDatabase? database,
+    PosCheckoutRepository? checkoutRepository,
+    CustomerProfileRepository? profileRepository,
+    bool initializeWorkspace = true,
+  })  : _db = database ?? AppDatabase(),
+        _checkoutRepo =
+            checkoutRepository ?? PosCheckoutRepository(db: database),
+        _profileRepo =
+            profileRepository ?? CustomerProfileRepository(db: database) {
+    if (initializeWorkspace) {
+      unawaited(_initializeInvoiceNumberPreview());
+      unawaited(_restoreHeldBills());
+      unawaited(_loadTaxGstConfig());
+    }
     discountCtrl.addListener(() {
       _discountInput = _parseSafeNumber(discountCtrl.text);
       _clearChangeReturnMethod();
@@ -1151,7 +1162,9 @@ class PosBillingController extends ChangeNotifier {
       notifyListeners();
     });
     gstCtrl.addListener(_syncPlaceOfSupplyFromGstin);
-    unawaited(_prefillWholesaleBhawFromMaster());
+    if (initializeWorkspace) {
+      unawaited(_prefillWholesaleBhawFromMaster());
+    }
   }
 
   int? editingBillId;
