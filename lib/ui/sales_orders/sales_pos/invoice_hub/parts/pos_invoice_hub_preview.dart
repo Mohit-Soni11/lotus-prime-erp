@@ -17,9 +17,7 @@ extension _PosInvoiceHubPreview on _PosInvoicePreviewScreenState {
       );
     }
 
-    final previewKey = ValueKey(
-      '${_invCtrl.selectedFormat.name}-${_invCtrl.selectedTemplateId}-${_invCtrl.effectiveActiveMetal?.name ?? 'all'}-${_invCtrl.pdfBytes?.length ?? 0}',
-    );
+    final previewKey = ValueKey(_invCtrl.pdfBytes);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 240),
@@ -36,6 +34,8 @@ extension _PosInvoiceHubPreview on _PosInvoicePreviewScreenState {
           canChangePageFormat: false,
           canDebug: false,
           initialPageFormat: _getPageFormat(),
+          maxPageWidth: 1200,
+          dpi: 250,
         ),
       ),
     );

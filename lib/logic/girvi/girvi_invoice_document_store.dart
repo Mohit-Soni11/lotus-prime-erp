@@ -42,6 +42,13 @@ class GirviInvoiceDocumentStore {
   }) async {
     try {
       final file = await _invoiceFile(loanId: loanId, ticketNo: ticketNo);
+      if (await file.exists()) return file;
+      if (loanId != null) {
+        final unlinked = await _invoiceFile(loanId: null, ticketNo: ticketNo);
+        if (await unlinked.exists()) return unlinked;
+      }
+      final legacy = await _legacyInvoiceFile(ticketNo);
+      if (await legacy.exists()) return legacy;
       await file.parent.create(recursive: true);
       await file.writeAsBytes(bytes, flush: true);
       return file;

@@ -4,8 +4,7 @@ extension _PosInvoiceHubActions on _PosInvoicePreviewScreenState {
   Widget _buildActionFooter() {
     final isReady = _invCtrl.genState == InvoiceGenState.ready;
     final hasPhone = _invCtrl.invoice?.customerMobile.isNotEmpty ?? false;
-    final isFinalized =
-        _invCtrl.isSavedToDb || widget.billingCtrl.isCurrentSaleCommitted;
+    final isFinalized = _invCtrl.isIssuedPdfSaved;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
+import '../../../core/documents/issued_invoice_archive.dart';
 import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/booking_advance/booking_advance_controller.dart';
 import '../../../logic/booking_advance/booking_invoice_pdf_service.dart';
@@ -64,7 +65,10 @@ class _BookingInvoicePreviewScreenState
   bool _isPrinted = false;
   bool _isCompleting = false;
   bool _isBookingSaved = false;
+  bool _isBookingArchived = false;
   List<int> _savedOrderIds = const [];
+  final IssuedInvoiceArchive _issuedInvoiceArchive =
+      const IssuedInvoiceArchive();
 
   @override
   void initState() {
@@ -231,8 +235,6 @@ class _BookingInvoicePreviewScreenState
         return;
       }
 
-      await _controller.loadSavedBookings(saveResult.orderIds);
-      if (!mounted) return;
       final printed = await _controller.printInvoice(context);
       if (!mounted) return;
       setState(() {
@@ -300,6 +302,18 @@ class _BookingInvoicePreviewScreenState
         List<int> orderIds,
       })> _finalizeBookingIfNeeded() async {
     if (_isBookingSaved) {
+      if (!_isBookingArchived) {
+        final archived = await _archiveSavedBooking();
+        if (!archived) {
+          return (
+            success: false,
+            message:
+                'Booking saved, but its issued PDF could not be archived. Retry.',
+            bookingNo: _controller.bookingNumber,
+            orderIds: _savedOrderIds,
+          );
+        }
+      }
       return (
         success: true,
         message: 'Booking already saved.',
@@ -321,7 +335,41 @@ class _BookingInvoicePreviewScreenState
     if (result.success) {
       _isBookingSaved = true;
       _savedOrderIds = result.orderIds;
+      if (!await _archiveSavedBooking()) {
+        return (
+          success: false,
+          message:
+              'Booking saved, but its issued PDF could not be archived. Retry.',
+          bookingNo: result.bookingNo,
+          orderIds: result.orderIds,
+        );
+      }
     }
     return result;
+  }
+
+  Future<bool> _archiveSavedBooking() async {
+    try {
+      await _controller.loadSavedBookings(_savedOrderIds);
+      final bytes = _controller.pdfBytes;
+      if (bytes == null) return false;
+      final savedIds = _savedOrderIds.toSet();
+      final savedBookings = _controller.bookings
+          .where((booking) => savedIds.contains(booking.order.id))
+          .toList(growable: false);
+      if (savedBookings.length != savedIds.length) return false;
+      for (final booking in savedBookings) {
+        await _issuedInvoiceArchive.saveIfAbsent(
+          IssuedInvoiceKind.booking,
+          booking.order.id,
+          booking.order.orderNo,
+          bytes,
+        );
+      }
+      _isBookingArchived = true;
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }

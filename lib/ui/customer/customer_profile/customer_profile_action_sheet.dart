@@ -227,7 +227,7 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
                   ],
                 ),
                 IconButton(
-                  tooltip: 'Print linked document',
+                  tooltip: 'Print original return voucher',
                   onPressed: () async {
                     await Navigator.of(sheetContext).maybePop();
                     WidgetsBinding.instance.addPostFrameCallback((_) {

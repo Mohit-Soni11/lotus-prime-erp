@@ -2,6 +2,8 @@ import 'dart:async';
 
 //  Database persistence dependencies
 import 'package:lotus_erp/database/db/app_database.dart';
+import '../../../core/documents/issued_invoice_archive.dart';
+import '../../../features/sales_pos/application/documents/pos_issued_document_store.dart';
 import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
@@ -48,6 +50,7 @@ class PosInvoiceController extends ChangeNotifier {
   final SalesBillingRepo _salesBillingRepo;
   final PosInvoiceScopeService _scopeService = const PosInvoiceScopeService();
   final PosInvoicePdfBuilder _pdfBuilder = const PosInvoicePdfBuilder();
+  final PosIssuedDocumentStore _issuedDocumentStore;
   final PosInvoiceOutputService _outputService =
       const PosInvoiceOutputService();
 
@@ -59,7 +62,10 @@ class PosInvoiceController extends ChangeNotifier {
     AppDatabase? database,
     SalesBillingRepo? salesBillingRepo,
     PosCheckoutRepository? checkoutRepository,
+    IssuedInvoiceArchive issuedInvoiceArchive = const IssuedInvoiceArchive(),
   })  : _db = database ?? AppDatabase(),
+        _issuedDocumentStore =
+            PosIssuedDocumentStore(archive: issuedInvoiceArchive),
         _salesBillingRepo = salesBillingRepo ?? SalesBillingRepo(db: database),
         _checkoutRepo =
             checkoutRepository ?? PosCheckoutRepository(db: database);
@@ -71,7 +77,10 @@ class PosInvoiceController extends ChangeNotifier {
 
   //  Database save state
   bool isSavedToDb = false;
+  bool isIssuedPdfSaved = false;
   int? savedBillDbId;
+  bool _newSaleAwaitingArchive = false;
+  bool _saleRevisionAwaitingArchive = false;
   final AppDatabase _db;
   final PosCheckoutRepository _checkoutRepo;
 
@@ -830,6 +839,7 @@ class PosInvoiceController extends ChangeNotifier {
         customerId: billing.selectedCustomer?.id,
       );
       savedBillDbId = editingBillId;
+      _saleRevisionAwaitingArchive = true;
       invoice = lockedInvoiceNumber == inv.invoiceNumber
           ? inv
           : _copyInvoiceWithNumber(inv, lockedInvoiceNumber);
@@ -860,33 +870,8 @@ class PosInvoiceController extends ChangeNotifier {
     );
 
     savedBillDbId = result.billId;
+    _newSaleAwaitingArchive = true;
 
-    // --- Insert each sale line item. ---
-    /*
-    for (final item in billing.saleItems) {
-      final grossWt = double.tryParse(item.grossCtrl.text) ?? 0.0;
-      final itemName = item.descCtrl.text.isNotEmpty
-          ? item.descCtrl.text
-          : item.metal.displayName;
-
-      await _db.into(_db.billItems).insert(
-            BillItemsCompanion(
-              billId: Value(billId),
-              itemName: Value(itemName),
-              huid: Value(
-                  item.huidCtrl.text.isNotEmpty ? item.huidCtrl.text : null),
-              purity: Value(
-                  item.purityCtrl.text.isNotEmpty ? item.purityCtrl.text : ''),
-              grossWeight: Value(grossWt),
-              netWeight: Value(item.netWt),
-              rate: Value(item.rate),
-              makingCharge: Value(item.makingAmt),
-              itemTotal: Value(item.totalValue),
-            ),
-          );
-    }
-
-    */
     billing.markCurrentSaleCommitted(result.invoiceNumber);
     billing.updateInvoiceSequencePreview(result.invoiceSequence + 1);
     await billing.markConvertedAdvanceDeliveredIfNeeded(result.invoiceNumber);
@@ -921,12 +906,45 @@ class PosInvoiceController extends ChangeNotifier {
     if (invoice == null) {
       await generateInvoice();
     }
-    if (invoice == null) return;
+    if (invoice == null) {
+      throw StateError('The invoice preview could not be prepared.');
+    }
     try {
       await _saveBillToDatabase(invoice!);
+      if (_newSaleAwaitingArchive || _saleRevisionAwaitingArchive) {
+        final billId = savedBillDbId;
+        final issuedInvoice = invoice;
+        if (billId == null || issuedInvoice == null) {
+          throw StateError('The issued invoice could not be archived.');
+        }
+        final bytes = pdfBytes;
+        if (bytes == null) {
+          throw StateError('The final invoice preview is not ready.');
+        }
+        pdfBytes = await _issuedDocumentStore.issue(
+          billId: billId,
+          billNo: issuedInvoice.invoiceNumber,
+          previewBytes: bytes,
+          revision: _saleRevisionAwaitingArchive,
+        );
+        _newSaleAwaitingArchive = false;
+        _saleRevisionAwaitingArchive = false;
+        isIssuedPdfSaved = true;
+        notifyListeners();
+      } else if (savedBillDbId != null) {
+        pdfBytes = await _issuedDocumentStore.require(
+          billId: savedBillDbId!,
+          billNo: invoice!.invoiceNumber,
+        );
+        isIssuedPdfSaved = true;
+        notifyListeners();
+      }
     } catch (e) {
       errorMessage = e.toString();
-      genState = InvoiceGenState.error;
+      isIssuedPdfSaved = false;
+      genState = invoice != null && pdfBytes != null
+          ? InvoiceGenState.ready
+          : InvoiceGenState.error;
       notifyListeners();
       rethrow;
     }
@@ -937,7 +955,10 @@ class PosInvoiceController extends ChangeNotifier {
     errorMessage = null;
     if (!billing.isCurrentSaleCommitted) {
       isSavedToDb = false;
+      isIssuedPdfSaved = false;
       savedBillDbId = null;
+      _newSaleAwaitingArchive = false;
+      _saleRevisionAwaitingArchive = false;
     }
     notifyListeners();
     try {
@@ -949,6 +970,24 @@ class PosInvoiceController extends ChangeNotifier {
       dueDate = billing.promiseDate;
       invoice = _buildInvoiceSnapshot();
       await _loadMetalBillingSettings(invoice!);
+
+      if (billing.isCurrentSaleCommitted && billing.editingBillId == null) {
+        final existingBill = await (_db.select(_db.bills)
+              ..where((bill) => bill.billNo.equals(invoice!.invoiceNumber)))
+            .getSingleOrNull();
+        if (existingBill != null) {
+          savedBillDbId = existingBill.id;
+          isSavedToDb = true;
+          pdfBytes = await _issuedDocumentStore.require(
+            billId: existingBill.id,
+            billNo: existingBill.billNo,
+          );
+          isIssuedPdfSaved = true;
+          genState = InvoiceGenState.ready;
+          notifyListeners();
+          return;
+        }
+      }
 
       await _refreshActivePreviewPdf();
       genState = InvoiceGenState.ready;
@@ -988,11 +1027,20 @@ class PosInvoiceController extends ChangeNotifier {
     final activeMetal = effectiveActiveMetal;
     final format = selectedFormat;
     final templateId = selectedTemplateId;
-    final bytes = await _buildPdf(
-      invoice!,
-      format,
-      activeMetal: activeMetal,
-    );
+    final billId = savedBillDbId;
+    final bytes = isIssuedPdfSaved &&
+            billId != null &&
+            !_newSaleAwaitingArchive &&
+            !_saleRevisionAwaitingArchive
+        ? await _issuedDocumentStore.require(
+            billId: billId,
+            billNo: invoice!.invoiceNumber,
+          )
+        : await _buildPdf(
+            invoice!,
+            format,
+            includeAllMetals: true,
+          );
     if (buildSerial != _previewBuildSerial ||
         activeMetal != effectiveActiveMetal ||
         format != selectedFormat ||
@@ -1063,13 +1111,12 @@ class PosInvoiceController extends ChangeNotifier {
     PrintFormat format, {
     required BuildContext context,
   }) async {
-    await finalizeInvoiceIfNeeded();
-    if (invoice == null) return false;
-    if (format != selectedFormat) {
+    if (!isSavedToDb && format != selectedFormat) {
       selectedFormat = format;
       await _refreshActivePreviewPdf();
-      notifyListeners();
     }
+    await finalizeInvoiceIfNeeded();
+    if (invoice == null) return false;
     final printBytes = await buildPrintPdfBytes(format);
     if (printBytes == null) return false;
     if (!context.mounted) return false;
@@ -1083,15 +1130,13 @@ class PosInvoiceController extends ChangeNotifier {
   }
 
   Future<Uint8List?> buildPrintPdfBytes(PrintFormat format) async {
+    if (!isSavedToDb && format != selectedFormat) {
+      selectedFormat = format;
+      await _refreshActivePreviewPdf();
+    }
     await finalizeInvoiceIfNeeded();
-    final currentInvoice = invoice;
-    if (currentInvoice == null) return null;
-
-    return _buildPdf(
-      currentInvoice,
-      format,
-      includeAllMetals: true,
-    );
+    if (invoice == null) return null;
+    return _readIssuedPdf();
   }
 
   Future<void> shareInvoicePdf() async {
@@ -1099,11 +1144,7 @@ class PosInvoiceController extends ChangeNotifier {
     if (invoice == null) return;
     await _outputService.shareInvoicePdf(
       invoice: invoice!,
-      buildPdfBytes: () => _buildPdf(
-        invoice!,
-        selectedFormat,
-        activeMetal: effectiveActiveMetal,
-      ),
+      buildPdfBytes: _readIssuedPdf,
     );
   }
 
@@ -1111,72 +1152,35 @@ class PosInvoiceController extends ChangeNotifier {
     await shareInvoicePdf();
   }
 
-  Future<Uint8List?> buildExportPdfBytes({
-    MetalType? metal,
-    bool includeAllMetals = false,
-  }) async {
+  Future<Uint8List?> buildExportPdfBytes() async {
     await finalizeInvoiceIfNeeded();
-    final currentInvoice = invoice;
-    if (currentInvoice == null) return null;
-
-    return _buildPdf(
-      currentInvoice,
-      selectedFormat,
-      activeMetal: includeAllMetals ? null : metal ?? effectiveActiveMetal,
-      includeAllMetals: includeAllMetals,
-    );
+    if (invoice == null) return null;
+    return _readIssuedPdf();
   }
 
-  Future<String?> downloadPdf({
-    MetalType? metal,
-    bool includeAllMetals = false,
-  }) async {
+  Future<String?> downloadPdf() async {
     await finalizeInvoiceIfNeeded();
     final currentInvoice = invoice;
     if (currentInvoice == null) return null;
-
-    final targetMetal = includeAllMetals ? null : metal ?? effectiveActiveMetal;
-    final downloadInvoice = includeAllMetals
-        ? currentInvoice
-        : _scopeService.scopedInvoiceForMetal(currentInvoice, targetMetal);
 
     return _outputService.downloadPdf(
-      invoice: downloadInvoice,
-      fileName: _exportFileNameFor(
-        invoice: currentInvoice,
-        metal: targetMetal,
-        includeAllMetals: includeAllMetals,
-      ),
-      buildPdfBytes: () => _buildPdf(
-        currentInvoice,
-        selectedFormat,
-        activeMetal: targetMetal,
-        includeAllMetals: includeAllMetals,
-      ),
+      invoice: currentInvoice,
+      fileName:
+          '${PosInvoiceFileNaming.pdfBaseName(currentInvoice)}_All_Metals.pdf',
+      buildPdfBytes: _readIssuedPdf,
     );
   }
 
-  String _exportFileNameFor({
-    required PosInvoiceModel invoice,
-    required MetalType? metal,
-    required bool includeAllMetals,
-  }) {
-    final baseName = PosInvoiceFileNaming.pdfBaseName(invoice);
-    if (includeAllMetals) {
-      return '${baseName}_All_Metals.pdf';
+  Future<Uint8List> _readIssuedPdf() async {
+    final billId = savedBillDbId;
+    final billNo = invoice?.invoiceNumber;
+    if (billId == null || billNo == null) {
+      throw StateError('The issued invoice has not been saved.');
     }
-    if (metal == null) {
-      return '$baseName.pdf';
-    }
-    return '${baseName}_${_fileToken(metal.displayName)}.pdf';
-  }
-
-  String _fileToken(String value) {
-    final clean = value
-        .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_$'), '');
-    return clean.isEmpty ? 'Invoice' : clean;
+    return _issuedDocumentStore.require(
+      billId: billId,
+      billNo: billNo,
+    );
   }
 
   Future<void> switchFormat(PrintFormat fmt) async {
@@ -1210,6 +1214,7 @@ class PosInvoiceController extends ChangeNotifier {
     pdfBytes = null;
     errorMessage = null;
     isSavedToDb = false;
+    isIssuedPdfSaved = false;
     savedBillDbId = null;
     _previewBuildSerial++;
   }

@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
+import 'package:lotus_erp/core/documents/issued_invoice_archive.dart';
 import 'package:lotus_erp/core/pdf/lotus_pdf_page_counter.dart';
 import 'package:lotus_erp/core/printing/lotus_pdf_print_dispatcher.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/pdf/return_reversal_voucher_pdf_service.dart';
@@ -62,6 +63,8 @@ class _ReturnReversalVoucherPreviewScreenState
   bool _hasPrintedVoucher = false;
   bool _isCompletingWorkspace = false;
   bool _isStartingFreshWorkspace = false;
+  final IssuedInvoiceArchive _issuedInvoiceArchive =
+      const IssuedInvoiceArchive();
 
   @override
   void initState() {

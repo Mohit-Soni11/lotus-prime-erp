@@ -4,6 +4,8 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/core/documents/issued_invoice_archive.dart';
+import 'package:lotus_erp/core/pdf/lotus_pdf_page_counter.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/print_templates/domain/print_template_registry.dart';
 import 'package:lotus_erp/logic/sales_orders/sales_pos/pos_billing_controller.dart';
@@ -16,6 +18,7 @@ import 'package:lotus_erp/models/setting/billing_setup/sales_billing_model.dart'
 import 'package:lotus_erp/repositories/sales_orders/pos/pos_checkout_repository.dart';
 import 'package:lotus_erp/repositories/setting/billing_setup/sales_billing_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -115,7 +118,7 @@ void main() {
     }
   });
 
-  test('export PDF bytes can target one metal or all metals', () async {
+  test('the POS preview contains the complete multi-metal invoice', () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final billing = PosBillingController();
     final controller = _invoiceControllerForTest(billing, db);
@@ -145,31 +148,182 @@ void main() {
         useDriverSettings: false,
       );
 
-      final goldBytes = await controller.buildExportPdfBytes(
-        metal: MetalType.gold,
-      );
-      final allBytes = await controller.buildExportPdfBytes(
-        includeAllMetals: true,
-      );
-      final printBytes = await controller.buildPrintPdfBytes(
-        controller.selectedFormat,
-      );
-
-      expect(goldBytes, isNotNull);
-      expect(allBytes, isNotNull);
-      expect(printBytes, isNotNull);
-      expect(String.fromCharCodes(goldBytes!.take(4)), '%PDF');
-      expect(String.fromCharCodes(allBytes!.take(4)), '%PDF');
-      expect(String.fromCharCodes(printBytes!.take(4)), '%PDF');
+      final previewBytes = controller.pdfBytes;
+      expect(previewBytes, isNotNull);
+      expect(String.fromCharCodes(previewBytes!.take(4)), '%PDF');
+      expect(LotusPdfPageCounter.tryCountPages(previewBytes), greaterThan(1));
       expect(controller.usePrinterDriverSettings, isFalse);
-      expect(allBytes.length, greaterThan(goldBytes.length));
-      expect(printBytes.length, allBytes.length);
     } finally {
       controller.dispose();
       billing.dispose();
       await db.close();
     }
   });
+
+  test('issued all-metals export reuses the archived PDF bytes', () async {
+    final root = await Directory.systemTemp.createTemp('pos_issued_pdf_');
+    final archive = IssuedInvoiceArchive(directoryProvider: () async => root);
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final billing = PosBillingController();
+    final controller = PosInvoiceController(
+      billing: billing,
+      database: db,
+      salesBillingRepo: SalesBillingRepo(db: db),
+      checkoutRepository: PosCheckoutRepository(db: db),
+      issuedInvoiceArchive: archive,
+    );
+    addTearDown(() async {
+      controller.dispose();
+      billing.dispose();
+      await db.close();
+      await root.delete(recursive: true);
+    });
+
+    billing.saleItems.add(SaleItemModel(metal: MetalType.gold));
+    await controller.generateInvoice();
+    final issuedInvoice = controller.invoice!;
+    controller.savedBillDbId = 777;
+    controller.isSavedToDb = true;
+    final issuedBytes = await (pw.Document()
+          ..addPage(pw.Page(build: (_) => pw.Text('Issued PDF'))))
+        .save();
+    await archive.saveIfAbsent(
+      IssuedInvoiceKind.sales,
+      777,
+      issuedInvoice.invoiceNumber,
+      issuedBytes,
+    );
+
+    final exported = await controller.buildExportPdfBytes();
+    final printed = await controller.buildPrintPdfBytes(
+      controller.selectedFormat,
+    );
+    expect(exported, orderedEquals(issuedBytes));
+    expect(printed, orderedEquals(issuedBytes));
+    expect(controller.pdfBytes, orderedEquals(issuedBytes));
+  });
+
+  test('finalizing a sale stores the displayed PDF bytes', () async {
+    final root = await Directory.systemTemp.createTemp('pos_finalize_pdf_');
+    var failArchive = true;
+    final archive = IssuedInvoiceArchive(directoryProvider: () async {
+      if (failArchive) throw const FileSystemException('Archive unavailable');
+      return root;
+    });
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final billing = PosBillingController();
+    final controller = PosInvoiceController(
+      billing: billing,
+      database: db,
+      salesBillingRepo: SalesBillingRepo(db: db),
+      checkoutRepository: PosCheckoutRepository(db: db),
+      issuedInvoiceArchive: archive,
+    );
+    addTearDown(() async {
+      controller.dispose();
+      billing.dispose();
+      await db.close();
+      await root.delete(recursive: true);
+    });
+
+    final item = SaleItemModel(metal: MetalType.gold);
+    item.descCtrl.text = 'Gold Ring';
+    item.purityCtrl.text = '22KT';
+    item.grossCtrl.text = '1';
+    item.lessCtrl.text = '0';
+    item.rateCtrl.text = '1000';
+    item.makingCtrl.text = '0';
+    billing.saleItems.add(item);
+
+    await controller.generateInvoice();
+    await expectLater(
+      controller.finalizeInvoiceIfNeeded(),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(controller.isSavedToDb, isTrue);
+    expect(controller.isIssuedPdfSaved, isFalse);
+    expect(controller.genState, InvoiceGenState.ready);
+
+    failArchive = false;
+    await controller.finalizeInvoiceIfNeeded();
+
+    expect(controller.savedBillDbId, isNotNull);
+    expect(controller.isIssuedPdfSaved, isTrue);
+    expect(await db.select(db.bills).get(), hasLength(1));
+    final saved = await archive.read(
+      IssuedInvoiceKind.sales,
+      controller.savedBillDbId!,
+      controller.invoice!.invoiceNumber,
+    );
+    expect(saved, isNotNull);
+    expect(saved, orderedEquals(controller.pdfBytes!));
+    expect(await controller.buildExportPdfBytes(), orderedEquals(saved!));
+    expect(
+      await controller.buildPrintPdfBytes(controller.selectedFormat),
+      orderedEquals(saved),
+    );
+
+    final reopened = PosInvoiceController(
+      billing: billing,
+      database: db,
+      salesBillingRepo: SalesBillingRepo(db: db),
+      checkoutRepository: PosCheckoutRepository(db: db),
+      issuedInvoiceArchive: archive,
+    );
+    addTearDown(reopened.dispose);
+    await reopened.generateInvoice();
+    expect(reopened.genState, InvoiceGenState.ready);
+    expect(reopened.isIssuedPdfSaved, isTrue);
+    expect(reopened.pdfBytes, orderedEquals(saved));
+  });
+
+  for (final template in PrintTemplateRegistry.forDocument(
+    PrintTemplateDocumentType.salesInvoice,
+  )) {
+    test('${template.shortName} is preserved in the issued sales PDF',
+        () async {
+      final root = await Directory.systemTemp.createTemp('pos_template_pdf_');
+      final archive = IssuedInvoiceArchive(directoryProvider: () async => root);
+      final db = AppDatabase.forTesting(NativeDatabase.memory());
+      final billing = PosBillingController();
+      final controller = PosInvoiceController(
+        billing: billing,
+        database: db,
+        salesBillingRepo: SalesBillingRepo(db: db),
+        checkoutRepository: PosCheckoutRepository(db: db),
+        issuedInvoiceArchive: archive,
+      );
+      addTearDown(() async {
+        controller.dispose();
+        billing.dispose();
+        await db.close();
+        await root.delete(recursive: true);
+      });
+
+      final item = SaleItemModel(metal: MetalType.gold);
+      item.descCtrl.text = 'Gold Ring';
+      item.purityCtrl.text = '22KT';
+      item.grossCtrl.text = '1';
+      item.lessCtrl.text = '0';
+      item.rateCtrl.text = '1000';
+      item.makingCtrl.text = '0';
+      billing.saleItems.add(item);
+
+      await controller.selectPrintTemplate(template.id);
+      await controller.generateInvoice();
+      expect(controller.selectedTemplateId, template.id);
+      await controller.finalizeInvoiceIfNeeded();
+
+      final archived = await archive.read(
+        IssuedInvoiceKind.sales,
+        controller.savedBillDbId!,
+        controller.invoice!.invoiceNumber,
+      );
+      expect(archived, isNotNull);
+      expect(archived, orderedEquals(controller.pdfBytes!));
+      expect(await controller.buildExportPdfBytes(), orderedEquals(archived!));
+    });
+  }
 
   test('PDF preview refreshes policy copy from saved Billing Setup', () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());

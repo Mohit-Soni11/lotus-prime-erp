@@ -152,6 +152,26 @@ extension _ReturnReversalVoucherHubActions
       );
       return false;
     }
+    final issuedVoucher = widget.controller.state.lastProcessResult;
+    if (issuedVoucher == null) return false;
+    try {
+      final bytes = await _voucherCtrl.buildIssuedVoucherPdfBytes();
+      await _issuedInvoiceArchive.saveIfAbsent(
+        IssuedInvoiceKind.returnVoucher,
+        issuedVoucher.voucherId,
+        issuedVoucher.voucherNo,
+        bytes,
+      );
+    } catch (_) {
+      if (mounted) {
+        AppFeedback.error(
+          context,
+          message:
+              'Voucher saved, but its original PDF could not be archived. Retry.',
+        );
+      }
+      return false;
+    }
     await _voucherCtrl.generateVoucher();
     return mounted && _voucherCtrl.isReady;
   }

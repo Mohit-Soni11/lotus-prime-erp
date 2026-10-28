@@ -5,27 +5,13 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
     _showRecordActionSheet(
       title: 'Sales Bill ${bill.billNo}',
       subtitle: bill.hasLinkedDocuments
-          ? 'Original invoice is locked. Linked return documents are tracked below.'
+          ? 'View the issued invoice and its linked return documents.'
           : bill.isFromAdvanceOrder
-              ? 'Converted from ${bill.advanceSourceLabel}. Edit, preview, or print.'
-              : 'Edit the sale, preview the invoice, or print a clean copy.',
+              ? 'Converted from ${bill.advanceSourceLabel}. View the issued PDF.'
+              : 'View or print the issued invoice PDF.',
       linkedDocuments: bill.linkedDocuments,
       actions: [
-        if (bill.hasLinkedDocuments)
-          CustomerProfileRecordAction(
-            icon: Icons.lock_open_rounded,
-            title: 'View Original Invoice',
-            subtitle:
-                'Open the locked posted bill with every original item line.',
-            color: CustomerProfileColors.historyText,
-            onTap: () {
-              _previewBillPdf(
-                bill.id,
-                mode: SalesInvoicePdfMode.postedOriginal,
-              );
-            },
-          )
-        else
+        if (!bill.hasLinkedDocuments)
           CustomerProfileRecordAction(
             icon: Icons.edit_note_rounded,
             title: 'Edit Sales Bill',
@@ -42,35 +28,20 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
           ),
         CustomerProfileRecordAction(
           icon: Icons.visibility_rounded,
-          title: bill.hasLinkedDocuments ? 'View Updated PDF' : 'View Invoice',
-          subtitle: bill.hasLinkedDocuments
-              ? 'Open the latest statement after posted returns.'
-              : 'Open the complete printable invoice preview.',
+          title: 'View PDF',
+          subtitle: 'Open this sales invoice directly.',
           color: CustomerProfileColors.brandGold,
           onTap: () {
-            _previewBillPdf(
-              bill.id,
-              mode: bill.hasLinkedDocuments
-                  ? SalesInvoicePdfMode.currentStatement
-                  : SalesInvoicePdfMode.postedOriginal,
-            );
+            _previewBillPdf(bill.id, bill.billNo);
           },
         ),
         CustomerProfileRecordAction(
           icon: Icons.print_rounded,
-          title:
-              bill.hasLinkedDocuments ? 'Print Updated PDF' : 'Print Invoice',
-          subtitle: bill.hasLinkedDocuments
-              ? 'Print the current return-adjusted statement.'
-              : 'Send the finished invoice directly to the printer.',
+          title: 'Print PDF',
+          subtitle: 'Print this sales invoice.',
           color: CustomerProfileColors.clearIcon,
           onTap: () {
-            _printBillPdf(
-              bill.id,
-              mode: bill.hasLinkedDocuments
-                  ? SalesInvoicePdfMode.currentStatement
-                  : SalesInvoicePdfMode.postedOriginal,
-            );
+            _printBillPdf(bill.id, bill.billNo);
           },
         ),
         if (bill.dueAmount > 0.5)
@@ -102,7 +73,7 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
           subtitle: 'Open the receipt as a clean PDF preview only.',
           color: CustomerProfileColors.brandGold,
           onTap: () {
-            _previewGirviInvoice(loan.id);
+            _previewGirviInvoice(loan);
           },
         ),
         CustomerProfileRecordAction(
@@ -111,7 +82,7 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
           subtitle: 'Print the professional pledge receipt.',
           color: CustomerProfileColors.clearIcon,
           onTap: () {
-            _printGirviInvoice(loan.id);
+            _printGirviInvoice(loan);
           },
         ),
       ],

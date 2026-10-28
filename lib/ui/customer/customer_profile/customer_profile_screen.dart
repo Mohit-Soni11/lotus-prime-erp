@@ -1,11 +1,15 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
+import '../../../core/documents/issued_pdf_preview_dialog.dart';
 import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
-import '../../../logic/girvi/girvi_invoice_hub_controller.dart';
+import '../../../logic/girvi/girvi_invoice_document_store.dart';
+import '../../../logic/girvi/girvi_document_set_service.dart';
+import '../../../logic/booking_advance/booking_invoice_preview_controller.dart';
+import '../../../core/documents/issued_invoice_archive.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../add_customer/add_customer_screen.dart';
@@ -13,9 +17,6 @@ import 'customer_profile_app_bar.dart';
 import 'customer_profile_components.dart';
 import 'customer_profile_metric_cards.dart';
 import 'customer_profile_information_tiles.dart';
-import 'customer_profile_document_preview.dart';
-import 'customer_sales_invoice_pdf_builder.dart';
-import 'customer_related_document_pdf_builder.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'customer_profile_overview_sections.dart';
@@ -26,6 +27,7 @@ part 'customer_profile_dialogs.dart';
 part 'customer_profile_record_actions.dart';
 part 'customer_profile_action_sheet.dart';
 part 'customer_profile_document_actions.dart';
+part 'customer_profile_issued_documents.dart';
 part 'customer_profile_support_widgets.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
@@ -64,8 +66,8 @@ class CustomerProfileScreen extends StatefulWidget {
 class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     with TickerProviderStateMixin {
   late final CustomerProfileLogic _logic;
-  final _salesPdf = CustomerSalesInvoicePdfBuilder();
-  final _relatedPdf = CustomerRelatedDocumentPdfBuilder();
+  final _issuedInvoiceArchive = const IssuedInvoiceArchive();
+  final _girviInvoiceStore = const GirviInvoiceDocumentStore();
   late final AnimationController _pageAnim;
   late final Animation<double> _fadeIn;
 

@@ -247,7 +247,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
         ),
         const SizedBox(height: 18),
         const Text(
-          'INVOICE DISPLAY',
+          'METAL INVOICE SETTINGS',
           style: TextStyle(
             color: SalesPosColors.shellTextMuted,
             fontSize: SalesPosStyles.fontCaption,
@@ -352,7 +352,7 @@ extension _PosInvoiceHubControls on _PosInvoicePreviewScreenState {
             ),
             const SizedBox(width: 7),
             Text(
-              '${metal.displayName} Invoice',
+              '${metal.displayName} Settings',
               style: TextStyle(
                 color: isSelected ? color : SalesPosColors.shellTextTitle,
                 fontSize: SalesPosStyles.fontCaption,

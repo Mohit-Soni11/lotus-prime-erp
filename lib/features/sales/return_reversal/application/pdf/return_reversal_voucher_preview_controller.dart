@@ -443,6 +443,18 @@ class ReturnReversalVoucherPreviewController extends ChangeNotifier {
     };
   }
 
+  Future<Uint8List> buildIssuedVoucherPdfBytes() {
+    final voucherType = documentKind.printTemplateDocumentType;
+    final selectedTemplate = PrintTemplateRegistry.byId(selectedTemplateId);
+    final voucherTemplateId = selectedTemplate.supports(voucherType)
+        ? selectedTemplate.id
+        : PrintTemplateRegistry.forDocument(voucherType).first.id;
+    return ReturnReversalVoucherPdfService.buildVoucherBytes(
+      state: deskController.state,
+      options: options.copyWith(templateId: voucherTemplateId),
+    );
+  }
+
   String get _pdfBaseName {
     final sourceNo =
         deskController.state.selectedSourceDocument?.documentNo ?? 'DRAFT';

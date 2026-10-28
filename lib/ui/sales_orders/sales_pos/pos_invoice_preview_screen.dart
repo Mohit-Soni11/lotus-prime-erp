@@ -22,7 +22,6 @@ import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'invoice_hub/parts/pos_invoice_hub_actions.dart';
 part 'invoice_hub/parts/pos_invoice_hub_controls.dart';
-part 'invoice_hub/parts/pos_invoice_hub_export_picker.dart';
 part 'invoice_hub/parts/pos_invoice_hub_header.dart';
 part 'invoice_hub/parts/pos_invoice_hub_preview.dart';
 
@@ -103,18 +102,22 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
   }
 
   Future<void> _exportPdf() async {
-    final target = await _showInvoiceExportTargetPicker();
-    if (target == null) return;
-    if (!mounted) return;
-
     setState(() => _isSavingPdf = true);
-    final shouldStartNewSaleAfterExport =
-        !_invCtrl.isSavedToDb && !widget.billingCtrl.isCurrentSaleCommitted;
+    final shouldStartNewSaleAfterExport = !_invCtrl.isIssuedPdfSaved &&
+        !widget.billingCtrl.isCurrentSaleCommitted;
 
-    final path = await _invCtrl.downloadPdf(
-      metal: target.metal,
-      includeAllMetals: target.includeAllMetals,
-    );
+    String? path;
+    try {
+      path = await _invCtrl.downloadPdf();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSavingPdf = false);
+      AppFeedback.error(
+        context,
+        message: 'Invoice PDF could not be saved. Please try again.',
+      );
+      return;
+    }
 
     if (path != null && mounted) {
       if (shouldStartNewSaleAfterExport) {
@@ -126,7 +129,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
           context,
           type: AppFeedbackType.success,
           message:
-              '${target.successLabel} exported successfully. POS is ready for the next customer.',
+              'Invoice PDF exported successfully. POS is ready for the next customer.',
           duration: const Duration(seconds: 3),
         );
         return;
@@ -142,7 +145,7 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
       });
       AppFeedback.success(
         context,
-        message: '${target.successLabel} exported successfully.',
+        message: 'Invoice PDF exported successfully.',
       );
       return;
     }
@@ -180,15 +183,43 @@ class _PosInvoicePreviewScreenState extends State<PosInvoicePreviewScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildFormatGrid(),
-                          const SizedBox(height: 24),
-                          _buildTemplateSelector(),
-                          const SizedBox(height: 24),
-                          _buildCategorizedCustomization(),
-                          const SizedBox(height: 24),
-                          //  Due date section shown when a balance remains outstanding.
-                          _buildDueDateSection(),
-                          _buildPrintOptions(),
+                          if (_invCtrl.isIssuedPdfSaved) ...[
+                            const Text(
+                              'ISSUED PDF SAVED',
+                              style: TextStyle(
+                                color: SalesPosColors.success,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Preview, print, share and export now use this saved invoice.',
+                              style: TextStyle(
+                                color: SalesPosColors.shellTextTitle,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                          Opacity(
+                            opacity: _invCtrl.isIssuedPdfSaved ? 0.55 : 1,
+                            child: AbsorbPointer(
+                              absorbing: _invCtrl.isIssuedPdfSaved,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildFormatGrid(),
+                                  const SizedBox(height: 24),
+                                  _buildTemplateSelector(),
+                                  const SizedBox(height: 24),
+                                  _buildCategorizedCustomization(),
+                                  const SizedBox(height: 24),
+                                  _buildDueDateSection(),
+                                  _buildPrintOptions(),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
