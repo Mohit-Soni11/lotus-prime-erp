@@ -8,6 +8,7 @@ import '../../../features/print_templates/domain/print_template_registry.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_pdf_builder.dart';
 import '../../../features/sales_pos/application/pdf/pos_invoice_print_config.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_output_service.dart';
+import '../../../features/sales_pos/application/services/pos_invoice_preview_cache.dart';
 import '../../../features/sales_pos/application/services/pos_invoice_scope_service.dart';
 import '../../../features/sales_pos/domain/services/pos_invoice_file_naming.dart';
 import '../../../features/sales_pos/domain/services/sales_invoice_tax_policy.dart';
@@ -91,9 +92,11 @@ class PosInvoiceController extends ChangeNotifier {
   bool usePrinterDriverSettings = true;
   LotusPrintColorMode printColorMode = LotusPrintColorMode.color;
   MetalType? activePrintMetal;
+  final PosInvoicePreviewCache _previewCache = PosInvoicePreviewCache();
   int _previewBuildSerial = 0;
   int _shopPrintProfileSerial = 0;
   Timer? _previewRefreshDebounce;
+  Timer? _previewPrewarmTimer;
   Timer? _shopPrintProfileDebounce;
   bool _hasWorkspaceTemplateSelection = false;
 
@@ -153,13 +156,15 @@ class PosInvoiceController extends ChangeNotifier {
     return metals.first;
   }
 
+  Map<MetalType, Uint8List> get readyMetalPreviews => _previewCache.ready;
+
   bool get hasMultipleMetalInvoices => presentMetals.length > 1;
 
   Future<void> setActivePrintMetal(MetalType metal) async {
     if (activePrintMetal == metal) return;
     activePrintMetal = metal;
     notifyListeners();
-    await _refreshActivePreviewPdf();
+    await _refreshActivePreviewPdf(reusePreviewCache: true);
     notifyListeners();
   }
 
@@ -917,10 +922,13 @@ class PosInvoiceController extends ChangeNotifier {
         if (billId == null || issuedInvoice == null) {
           throw StateError('The issued invoice could not be archived.');
         }
-        final bytes = pdfBytes;
-        if (bytes == null) {
-          throw StateError('The final invoice preview is not ready.');
-        }
+        // The workspace previews one metal at a time. Issue the complete
+        // invoice so every metal page is preserved in the archived document.
+        final bytes = await _buildPdf(
+          issuedInvoice,
+          selectedFormat,
+          includeAllMetals: true,
+        );
         pdfBytes = await _issuedDocumentStore.issue(
           billId: billId,
           billNo: issuedInvoice.invoiceNumber,
@@ -1025,9 +1033,15 @@ class PosInvoiceController extends ChangeNotifier {
     );
   }
 
-  Future<void> _refreshActivePreviewPdf() async {
+  Future<void> _refreshActivePreviewPdf(
+      {bool reusePreviewCache = false}) async {
     if (invoice == null) return;
+    if (!reusePreviewCache) {
+      _previewPrewarmTimer?.cancel();
+      _previewCache.invalidate();
+    }
     final buildSerial = ++_previewBuildSerial;
+    final previewRevision = _previewCache.revision;
     final activeMetal = effectiveActiveMetal;
     final format = selectedFormat;
     final templateId = selectedTemplateId;
@@ -1040,26 +1054,73 @@ class PosInvoiceController extends ChangeNotifier {
             billId: billId,
             billNo: invoice!.invoiceNumber,
           )
-        : await _buildPdf(
-            invoice!,
-            format,
-            includeAllMetals: true,
-          );
+        : activeMetal == null
+            ? await _buildPdf(invoice!, format)
+            : await _previewCache.load(
+                activeMetal,
+                () => _buildPdf(
+                  invoice!,
+                  format,
+                  activeMetal: activeMetal,
+                ),
+              );
     if (buildSerial != _previewBuildSerial ||
+        previewRevision != _previewCache.revision ||
         activeMetal != effectiveActiveMetal ||
         format != selectedFormat ||
         templateId != selectedTemplateId) {
       return;
     }
     pdfBytes = bytes;
+    _scheduleInactivePreviewPrewarm();
+  }
+
+  void _scheduleInactivePreviewPrewarm() {
+    _previewPrewarmTimer?.cancel();
+    if (isIssuedPdfSaved ||
+        _newSaleAwaitingArchive ||
+        _saleRevisionAwaitingArchive ||
+        presentMetals.length <= 1) {
+      return;
+    }
+    final revision = _previewCache.revision;
+    _previewPrewarmTimer = Timer(const Duration(milliseconds: 350), () {
+      unawaited(_prewarmInactiveMetalPreviews(revision));
+    });
+  }
+
+  Future<void> _prewarmInactiveMetalPreviews(int revision) async {
+    final currentInvoice = invoice;
+    if (currentInvoice == null) return;
+    for (final metal in presentMetals) {
+      if (_isDisposed || revision != _previewCache.revision) return;
+      if (metal == effectiveActiveMetal) continue;
+      try {
+        await _previewCache.load(
+          metal,
+          () => _buildPdf(
+            currentInvoice,
+            selectedFormat,
+            activeMetal: metal,
+          ),
+        );
+        if (!_isDisposed && revision == _previewCache.revision) {
+          notifyListeners();
+        }
+      } catch (_) {
+        // A failed background build can be retried when the metal is selected.
+      }
+    }
   }
 
   void _scheduleActivePreviewPdfRefresh({
     Duration delay = const Duration(milliseconds: 180),
   }) {
     _previewRefreshDebounce?.cancel();
+    _previewPrewarmTimer?.cancel();
+    _previewCache.invalidate();
     _previewRefreshDebounce = Timer(delay, () async {
-      await _refreshActivePreviewPdf();
+      await _refreshActivePreviewPdf(reusePreviewCache: true);
       if (!_isDisposed) {
         notifyListeners();
       }
@@ -1212,7 +1273,9 @@ class PosInvoiceController extends ChangeNotifier {
 
   void _resetState() {
     _previewRefreshDebounce?.cancel();
+    _previewPrewarmTimer?.cancel();
     _shopPrintProfileDebounce?.cancel();
+    _previewCache.invalidate();
     genState = InvoiceGenState.idle;
     invoice = null;
     pdfBytes = null;

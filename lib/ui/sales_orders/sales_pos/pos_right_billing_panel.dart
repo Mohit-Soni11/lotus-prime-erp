@@ -737,6 +737,13 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
 
   Widget _buildDiscountRow() {
     final discAmt = widget.ctrl.discountAmount;
+    if (widget.ctrl.presentPaymentAllocationMetals.length > 1) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: _buildSubtleRow('Metal-wise Discount', discAmt,
+            customVal: '- Rs ${discAmt.toStringAsFixed(2)}'),
+      );
+    }
     final isPercent = widget.ctrl.discountType == DiscountType.percentage;
     // Show a warning when percentage mode exceeds 100%.
     final double inputVal = widget.ctrl.discountInputAmount;
@@ -1231,6 +1238,14 @@ class _PosRightBillingPanelState extends State<PosRightBillingPanel> {
                 allocations: widget.ctrl.metalPaymentAllocations,
                 settleFirstMetals: widget.ctrl.settleFirstMetals,
                 onToggle: widget.ctrl.toggleSettleFirstMetal,
+                metalDiscounts: widget.ctrl.metalDiscounts,
+                onDiscountChanged: widget.ctrl.setMetalDiscount,
+                billId: widget.ctrl.editingBillId,
+                manualMode: widget.ctrl.isManualMetalSettlement,
+                onManualModeChanged: widget.ctrl.setManualMetalSettlement,
+                manualPaidByMetal: widget.ctrl.manualPaidByMetal,
+                onManualPaidChanged: widget.ctrl.setManualMetalPaid,
+                allocationError: widget.ctrl.metalSettlementError,
               ),
               const SizedBox(height: 12),
             ],

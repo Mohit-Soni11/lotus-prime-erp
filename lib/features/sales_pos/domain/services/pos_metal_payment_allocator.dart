@@ -31,6 +31,10 @@ class PosMetalPaymentAllocator {
     required TradeInAdjustMode tradeInMode,
     required double grossAmount,
     required double discountAmount,
+    Map<MetalType, double> metalDiscounts = const {},
+    Map<MetalType, double> metalGstAmounts = const {},
+    Map<MetalType, double> metalGrossAmounts = const {},
+    GstPricingMode gstPricingMode = GstPricingMode.exclusive,
     required double taxableAmount,
     required double totalGst,
     required double roundOffAmount,
@@ -40,6 +44,7 @@ class PosMetalPaymentAllocator {
     required double cardPaid,
     required double advancePaid,
     required Set<MetalType> settleFirstMetals,
+    Map<MetalType, double> manualPaidByMetal = const {},
   }) {
     final metals = collectMetals(
       saleItems: saleItems,
@@ -55,20 +60,44 @@ class PosMetalPaymentAllocator {
       tradeInMode: tradeInMode,
       grossAmount: grossAmount,
       discountAmount: discountAmount,
+      metalDiscounts: metalDiscounts,
+      metalGstAmounts: metalGstAmounts,
+      metalGrossAmounts: metalGrossAmounts,
+      gstPricingMode: gstPricingMode,
       taxableAmount: taxableAmount,
       totalGst: totalGst,
       roundOffAmount: roundOffAmount,
     );
     if (sections.isEmpty) return const [];
+    final sectionTotal =
+        sections.fold(0.0, (sum, section) => sum + section.netPayable);
+    final netDifference = _roundMoney(netPayable - sectionTotal);
+    if (netDifference.abs() > _moneyTolerance) {
+      final index = sections
+          .lastIndexWhere((section) => section.netPayable + netDifference >= 0);
+      if (index >= 0) {
+        sections[index] = sections[index].copyWith(
+          netPayable: _roundMoney(sections[index].netPayable + netDifference),
+        );
+      }
+    }
 
     final paymentByMetal = _allocateTotalsByMetal(
       sections: sections,
       netPayable: netPayable,
       totalPaid: _roundMoney(cashPaid + upiPaid + cardPaid + advancePaid),
       settleFirstMetals: settleFirstMetals,
+      manualPaidByMetal: manualPaidByMetal,
     );
     final modeSplit = _splitModesAcrossMetals(
-      metals: sections.map((section) => section.metal).toList(growable: false),
+      metals: [
+        ...sections
+            .where((section) => settleFirstMetals.contains(section.metal))
+            .map((section) => section.metal),
+        ...sections
+            .where((section) => !settleFirstMetals.contains(section.metal))
+            .map((section) => section.metal),
+      ],
       paymentByMetal: paymentByMetal,
       cashPaid: cashPaid,
       upiPaid: upiPaid,
@@ -80,7 +109,10 @@ class PosMetalPaymentAllocator {
       final modes = modeSplit[section.metal] ?? const _ModeAmounts();
       return PosInvoiceMetalPaymentAllocation(
         metal: section.metal,
+        grossAmount: section.grossAmount,
         netPayable: section.netPayable,
+        discountAmount: section.discountAmount,
+        gstAmount: section.gstAmount,
         cashPaid: modes.cash,
         upiPaid: modes.upi,
         cardPaid: modes.card,
@@ -98,6 +130,10 @@ class PosMetalPaymentAllocator {
     required TradeInAdjustMode tradeInMode,
     required double grossAmount,
     required double discountAmount,
+    required Map<MetalType, double> metalDiscounts,
+    required Map<MetalType, double> metalGstAmounts,
+    required Map<MetalType, double> metalGrossAmounts,
+    required GstPricingMode gstPricingMode,
     required double taxableAmount,
     required double totalGst,
     required double roundOffAmount,
@@ -112,6 +148,10 @@ class PosMetalPaymentAllocator {
           tradeInMode: tradeInMode,
           grossAmount: grossAmount,
           discountAmount: discountAmount,
+          metalDiscounts: metalDiscounts,
+          metalGstAmounts: metalGstAmounts,
+          metalGrossAmounts: metalGrossAmounts,
+          gstPricingMode: gstPricingMode,
           taxableAmount: taxableAmount,
           totalGst: totalGst,
         ),
@@ -127,7 +167,7 @@ class PosMetalPaymentAllocator {
             (crossAdjustments[section.metal] ?? 0) +
             (roundOffAmount * roundOffRatio),
       );
-      return section.copyWith(netPayable: adjustedNet);
+      return section.copyWith(netPayable: adjustedNet < 0 ? 0.0 : adjustedNet);
     }).where((section) {
       return section.grossAmount > _moneyTolerance ||
           section.tradeInDeduction > _moneyTolerance ||
@@ -143,6 +183,10 @@ class PosMetalPaymentAllocator {
     required TradeInAdjustMode tradeInMode,
     required double grossAmount,
     required double discountAmount,
+    required Map<MetalType, double> metalDiscounts,
+    required Map<MetalType, double> metalGstAmounts,
+    required Map<MetalType, double> metalGrossAmounts,
+    required GstPricingMode gstPricingMode,
     required double taxableAmount,
     required double totalGst,
   }) {
@@ -151,18 +195,26 @@ class PosMetalPaymentAllocator {
     final scopedTradeInItems = tradeInItems
         .where((item) => item.metal == metal)
         .toList(growable: false);
-    final scopedGross =
-        scopedSaleItems.fold(0.0, (sum, item) => sum + item.totalValue);
+    final scopedGross = billingMode == BillingMode.wholesale &&
+            metalGrossAmounts.containsKey(metal)
+        ? metalGrossAmounts[metal]!
+        : scopedSaleItems.fold(0.0, (sum, item) => sum + item.totalValue);
     final grossRatio =
         grossAmount.abs() <= _moneyTolerance ? 0.0 : scopedGross / grossAmount;
-    final scopedDiscount = discountAmount * grossRatio;
+    final scopedDiscount = metalDiscounts.isEmpty
+        ? discountAmount * grossRatio
+        : (metalDiscounts[metal] ?? 0.0).clamp(0.0, scopedGross).toDouble();
     final scopedTaxable = scopedGross - scopedDiscount;
     final safeTaxable = scopedTaxable < 0 ? 0.0 : scopedTaxable;
     final taxRatio = taxableAmount.abs() <= _moneyTolerance
         ? grossRatio
         : safeTaxable / taxableAmount;
-    final scopedGst = totalGst * taxRatio;
-    final scopedGrandTotal = safeTaxable + scopedGst;
+    final scopedGst = metalGstAmounts.isEmpty
+        ? totalGst * taxRatio
+        : metalGstAmounts[metal] ?? 0.0;
+    final scopedGrandTotal = gstPricingMode == GstPricingMode.inclusive
+        ? safeTaxable
+        : safeTaxable + scopedGst;
     final tradeInDeduction = tradeInMode == TradeInAdjustMode.cashAdjust
         ? scopedTradeInItems.fold(0.0, (sum, item) => sum + item.totalValue)
         : 0.0;
@@ -175,6 +227,8 @@ class PosMetalPaymentAllocator {
       tradeInDeduction: tradeInDeduction,
       netBeforeCrossAdjustment: _roundMoney(netBeforeCross),
       netPayable: _roundMoney(netBeforeCross),
+      discountAmount: _roundMoney(scopedDiscount),
+      gstAmount: _roundMoney(scopedGst),
     );
   }
 
@@ -210,6 +264,7 @@ class PosMetalPaymentAllocator {
     required double netPayable,
     required double totalPaid,
     required Set<MetalType> settleFirstMetals,
+    required Map<MetalType, double> manualPaidByMetal,
   }) {
     final payableByMetal = {
       for (final section in sections) section.metal: section.netPayable,
@@ -220,6 +275,15 @@ class PosMetalPaymentAllocator {
     final available = totalPaid.clamp(0.0, positivePayable).toDouble();
     var remaining = available;
     final paid = {for (final section in sections) section.metal: 0.0};
+
+    if (manualPaidByMetal.isNotEmpty) {
+      for (final section in sections) {
+        final payable = section.netPayable < 0 ? 0.0 : section.netPayable;
+        paid[section.metal] = _roundMoney(
+            (manualPaidByMetal[section.metal] ?? 0).clamp(0.0, payable));
+      }
+      return paid;
+    }
 
     final priority = [
       ...sections
@@ -336,6 +400,8 @@ class _MetalSection {
   final double tradeInDeduction;
   final double netBeforeCrossAdjustment;
   final double netPayable;
+  final double discountAmount;
+  final double gstAmount;
 
   const _MetalSection({
     required this.metal,
@@ -343,6 +409,8 @@ class _MetalSection {
     required this.tradeInDeduction,
     required this.netBeforeCrossAdjustment,
     required this.netPayable,
+    required this.discountAmount,
+    required this.gstAmount,
   });
 
   _MetalSection copyWith({double? netPayable}) {
@@ -352,6 +420,8 @@ class _MetalSection {
       tradeInDeduction: tradeInDeduction,
       netBeforeCrossAdjustment: netBeforeCrossAdjustment,
       netPayable: netPayable ?? this.netPayable,
+      discountAmount: discountAmount,
+      gstAmount: gstAmount,
     );
   }
 }

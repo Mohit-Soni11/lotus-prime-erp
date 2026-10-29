@@ -28,6 +28,56 @@ void main() {
     await db.close();
   });
 
+  test('checkout reloads the exact metal discounts and payment allocation',
+      () async {
+    final gold = SaleItemModel(metal: pos.MetalType.gold)
+      ..grossCtrl.text = '1'
+      ..rateCtrl.text = '6000';
+    final silver = SaleItemModel(metal: pos.MetalType.silver)
+      ..grossCtrl.text = '1'
+      ..rateCtrl.text = '2000';
+    addTearDown(gold.dispose);
+    addTearDown(silver.dispose);
+    final invoice = _invoice(
+      invoiceNumber: 'AJ-26-101',
+      saleItems: [gold, silver],
+      cashPaid: 6500,
+    ).copyWith(
+      discountAmount: 300,
+      taxableAmount: 7700,
+      grandTotal: 7700,
+      balanceDue: 1200,
+      metalPaymentAllocations: const [
+        PosInvoiceMetalPaymentAllocation(
+          metal: pos.MetalType.gold,
+          grossAmount: 6000,
+          discountAmount: 100,
+          netPayable: 5900,
+          cashPaid: 5900,
+          settleFirst: true,
+        ),
+        PosInvoiceMetalPaymentAllocation(
+          metal: pos.MetalType.silver,
+          grossAmount: 2000,
+          discountAmount: 200,
+          netPayable: 1800,
+          cashPaid: 600,
+        ),
+      ],
+    );
+    final result = await repository.finalizeSale(
+      invoice: invoice,
+      customerId: null,
+    );
+    final saved = await repository.fetchEditableBill(result.billId);
+    expect(saved, isNotNull);
+    expect(saved!.bill.discount, 300);
+    expect(saved.bill.dueAmount, 1200);
+    expect(saved.metalAllocations.map((row) => row.discountAmount), [100, 200]);
+    expect(saved.metalAllocations.map((row) => row.balanceDue), [0, 1200]);
+    expect(saved.metalAllocations.first.settleFirst, isTrue);
+  });
+
   test('sales invoice sequence resets when the financial-year token changes',
       () async {
     await db.into(db.bills).insert(

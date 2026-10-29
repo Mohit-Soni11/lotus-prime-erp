@@ -79,7 +79,10 @@ extension PaymentStatusExt on PaymentStatus {
 
 class PosInvoiceMetalPaymentAllocation {
   final MetalType metal;
+  final double grossAmount;
   final double netPayable;
+  final double discountAmount;
+  final double gstAmount;
   final double cashPaid;
   final double upiPaid;
   final double cardPaid;
@@ -88,7 +91,10 @@ class PosInvoiceMetalPaymentAllocation {
 
   const PosInvoiceMetalPaymentAllocation({
     required this.metal,
+    this.grossAmount = 0,
     required this.netPayable,
+    this.discountAmount = 0,
+    this.gstAmount = 0,
     this.cashPaid = 0,
     this.upiPaid = 0,
     this.cardPaid = 0,

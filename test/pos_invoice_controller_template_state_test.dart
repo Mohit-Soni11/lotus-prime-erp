@@ -118,7 +118,8 @@ void main() {
     }
   });
 
-  test('the POS preview contains the complete multi-metal invoice', () async {
+  test('metal settings show one metal while the full invoice keeps both',
+      () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     final billing = PosBillingController();
     final controller = _invoiceControllerForTest(billing, db);
@@ -142,22 +143,77 @@ void main() {
     try {
       await controller.generateInvoice();
       billing.markCurrentSaleCommitted(controller.invoice!.invoiceNumber);
+      final goldPreview = controller.pdfBytes;
+      expect(goldPreview, isNotNull);
+      expect(String.fromCharCodes(goldPreview!.take(4)), '%PDF');
+      final goldPages = LotusPdfPageCounter.tryCountPages(goldPreview)!;
+      expect(goldPages, greaterThan(0));
+      await controller.setActivePrintMetal(MetalType.silver);
+      expect(controller.effectiveActiveMetal, MetalType.silver);
+      final silverPreview = controller.pdfBytes;
+      expect(silverPreview, isNotNull);
+      final silverPages = LotusPdfPageCounter.tryCountPages(silverPreview!)!;
+      expect(silverPages, greaterThan(0));
+      await controller.setActivePrintMetal(MetalType.gold);
+      expect(identical(controller.pdfBytes, goldPreview), isTrue);
+      final completeInvoice = await controller.generatePreviewPdfBytes();
+      expect(completeInvoice, isNotNull);
+      expect(LotusPdfPageCounter.tryCountPages(completeInvoice!),
+          goldPages + silverPages);
       await controller.updatePrintOptions(
         copies: 1,
         duplicate: false,
         useDriverSettings: false,
       );
-
-      final previewBytes = controller.pdfBytes;
-      expect(previewBytes, isNotNull);
-      expect(String.fromCharCodes(previewBytes!.take(4)), '%PDF');
-      expect(LotusPdfPageCounter.tryCountPages(previewBytes), greaterThan(1));
       expect(controller.usePrinterDriverSettings, isFalse);
     } finally {
       controller.dispose();
       billing.dispose();
       await db.close();
     }
+  });
+
+  test('finalizing from SILVER preview archives both metal pages', () async {
+    final root = await Directory.systemTemp.createTemp('pos_two_metal_pdf_');
+    final archive = IssuedInvoiceArchive(directoryProvider: () async => root);
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final billing = PosBillingController();
+    final controller = PosInvoiceController(
+      billing: billing,
+      database: db,
+      salesBillingRepo: SalesBillingRepo(db: db),
+      checkoutRepository: PosCheckoutRepository(db: db),
+      issuedInvoiceArchive: archive,
+    );
+    addTearDown(() async {
+      controller.dispose();
+      billing.dispose();
+      await db.close();
+      await root.delete(recursive: true);
+    });
+
+    for (final metal in [MetalType.gold, MetalType.silver]) {
+      billing.saleItems.add(SaleItemModel(metal: metal)
+        ..descCtrl.text = '${metal.displayName} item'
+        ..grossCtrl.text = '1'
+        ..rateCtrl.text = '1000');
+    }
+    await controller.generateInvoice();
+    await controller.setActivePrintMetal(MetalType.silver);
+    final silverPreviewPages =
+        LotusPdfPageCounter.tryCountPages(controller.pdfBytes!)!;
+
+    await controller.finalizeInvoiceIfNeeded();
+
+    final saved = await archive.read(
+      IssuedInvoiceKind.sales,
+      controller.savedBillDbId!,
+      controller.invoice!.invoiceNumber,
+    );
+    expect(saved, isNotNull);
+    expect(LotusPdfPageCounter.tryCountPages(saved!),
+        greaterThan(silverPreviewPages));
+    expect(await controller.buildExportPdfBytes(), orderedEquals(saved));
   });
 
   test('issued all-metals export reuses the archived PDF bytes', () async {

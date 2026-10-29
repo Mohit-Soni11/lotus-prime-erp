@@ -43,6 +43,7 @@ import '../tables/setting/billing/shop_print_information_settings.dart';
 import '../tables/setting/billing/booking_advance_billing_settings.dart';
 import '../tables/setting/metal_rate/metal_rate_ledger_tables.dart';
 import 'migrations/girvi_retired_notice_cleanup.dart';
+import 'migrations/sales_metal_settlement_schema.dart';
 
 // ✅ v16: Tax & GST
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
@@ -105,6 +106,10 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => DbConfig.schemaVersion;
+
+  Future<void> ensureSalesMetalSettlementSchema() async {
+    await customStatement(createBillMetalPaymentAllocationsTableSql);
+  }
 
   // ✅ DAO getter — directly use karo: AppDatabase().taxGstDao.fetchConfig()
   TaxGstConfigDao get taxGstDao => TaxGstConfigDao(this);
@@ -1096,6 +1101,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureGirviNoticeActionSchema();
           await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureReturnReversalSchemaInternal();
+          await ensureSalesMetalSettlementSchema();
         },
         onUpgrade: (Migrator m, int from, int to) async {
           AppLogger.info('Migrating database from v$from to v$to');
@@ -2046,6 +2052,7 @@ class AppDatabase extends _$AppDatabase {
               'CREATE UNIQUE INDEX IF NOT EXISTS "idx_customers_membership_id" ON "customers" ("membership_id") WHERE "membership_id" IS NOT NULL',
             );
           }
+          if (from < 68) await ensureSalesMetalSettlementSchema();
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -2066,6 +2073,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureCustomerRefundPayablesSchema();
           await ensureSalesCustomerMetalSettlementSchema();
+          await ensureSalesMetalSettlementSchema();
           await _ensurePurchaseItemHuidSchema();
           await _ensureStockInventorySchemaInternal();
           await _ensureReturnReversalSchemaInternal();

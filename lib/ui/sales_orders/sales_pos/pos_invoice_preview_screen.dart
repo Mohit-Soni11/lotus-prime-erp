@@ -5,7 +5,6 @@
 // ==========================================
 
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 
 import '../../../theme/sales/sales_pos_theme/sales_pos_theme.dart';
@@ -18,6 +17,7 @@ import '../../../core/pdf/lotus_pdf_page_counter.dart';
 import '../../../core/printing/lotus_pdf_print_dispatcher.dart';
 import 'pos_invoice_metal_setup_card.dart';
 import 'pos_invoice_template_selector.dart';
+import 'invoice_hub/pos_invoice_cached_pdf_pane.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'invoice_hub/parts/pos_invoice_hub_actions.dart';

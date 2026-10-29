@@ -17,6 +17,10 @@ extension _PosInvoiceHubPreview on _PosInvoicePreviewScreenState {
       );
     }
 
+    if (_invCtrl.hasMultipleMetalInvoices && !_invCtrl.isIssuedPdfSaved) {
+      return _buildCachedMetalPreviews();
+    }
+
     final previewKey = ValueKey(_invCtrl.pdfBytes);
 
     return AnimatedSwitcher(
@@ -26,18 +30,53 @@ extension _PosInvoiceHubPreview on _PosInvoicePreviewScreenState {
       child: Padding(
         key: previewKey,
         padding: const EdgeInsets.all(32),
-        child: PdfPreview(
-          build: (_) async => _invCtrl.pdfBytes!,
-          allowPrinting: false,
-          allowSharing: false,
-          canChangeOrientation: false,
-          canChangePageFormat: false,
-          canDebug: false,
-          initialPageFormat: _getPageFormat(),
-          maxPageWidth: 1200,
-          dpi: 250,
+        child: PosInvoiceCachedPdfPane(
+          bytes: _invCtrl.pdfBytes!,
+          pageFormat: _getPageFormat(),
         ),
       ),
+    );
+  }
+
+  Widget _buildCachedMetalPreviews() {
+    final previews = _invCtrl.readyMetalPreviews;
+    final metals = _invCtrl.presentMetals
+        .where(previews.containsKey)
+        .toList(growable: false);
+    if (metals.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: SalesPosColors.brandGold),
+      );
+    }
+
+    final selectedMetal = _invCtrl.effectiveActiveMetal;
+    final selectedIndex = metals.indexOf(selectedMetal!);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        IndexedStack(
+          index: selectedIndex < 0 ? 0 : selectedIndex,
+          children: [
+            for (final metal in metals)
+              Padding(
+                key: ValueKey('invoice-preview-${metal.name}'),
+                padding: const EdgeInsets.all(32),
+                child: PosInvoiceCachedPdfPane(
+                  key: ValueKey(previews[metal]),
+                  bytes: previews[metal]!,
+                  pageFormat: _getPageFormat(),
+                ),
+              ),
+          ],
+        ),
+        if (selectedIndex < 0)
+          ColoredBox(
+            color: SalesPosColors.bodyBg.withValues(alpha: 0.92),
+            child: const Center(
+              child: CircularProgressIndicator(color: SalesPosColors.brandGold),
+            ),
+          ),
+      ],
     );
   }
 

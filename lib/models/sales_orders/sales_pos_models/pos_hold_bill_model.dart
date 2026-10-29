@@ -29,6 +29,9 @@ class PosHoldBillModel {
   final DiscountType discountType;
   final DateTime? promiseDate;
   final String discountInput;
+  final Map<MetalType, double> metalDiscounts;
+  final MetalType? settleFirstMetal;
+  final Map<MetalType, double> manualPaidByMetal;
   final String cashInput;
   final String upiInput;
   final String cardInput;
@@ -60,6 +63,9 @@ class PosHoldBillModel {
     required this.discountType,
     required this.promiseDate,
     required this.discountInput,
+    this.metalDiscounts = const {},
+    this.settleFirstMetal,
+    this.manualPaidByMetal = const {},
     required this.cashInput,
     required this.upiInput,
     required this.cardInput,
@@ -95,6 +101,14 @@ class PosHoldBillModel {
       'discountType': discountType.name,
       'promiseDate': promiseDate?.toIso8601String(),
       'discountInput': discountInput,
+      'metalDiscounts': {
+        for (final entry in metalDiscounts.entries) entry.key.name: entry.value,
+      },
+      'settleFirstMetal': settleFirstMetal?.name,
+      'manualPaidByMetal': {
+        for (final entry in manualPaidByMetal.entries)
+          entry.key.name: entry.value,
+      },
       'cashInput': cashInput,
       'upiInput': upiInput,
       'cardInput': cardInput,
@@ -142,6 +156,13 @@ class PosHoldBillModel {
           _discountTypeFromName((json['discountType'] ?? '').toString()),
       promiseDate: DateTime.tryParse((json['promiseDate'] ?? '').toString()),
       discountInput: (json['discountInput'] ?? '').toString(),
+      metalDiscounts: _metalAmountsFromJson(json['metalDiscounts']),
+      settleFirstMetal: MetalType.values
+          .where(
+            (metal) => metal.name == json['settleFirstMetal'],
+          )
+          .firstOrNull,
+      manualPaidByMetal: _metalAmountsFromJson(json['manualPaidByMetal']),
       cashInput: (json['cashInput'] ?? '').toString(),
       upiInput: (json['upiInput'] ?? '').toString(),
       cardInput: (json['cardInput'] ?? '').toString(),
@@ -158,6 +179,15 @@ class PosHoldBillModel {
           .map(PosHoldTradeInSnapshot.fromJson)
           .toList(growable: false),
     );
+  }
+
+  static Map<MetalType, double> _metalAmountsFromJson(Object? value) {
+    if (value is! Map) return const {};
+    return {
+      for (final metal in MetalType.values)
+        if (value[metal.name] is num)
+          metal: (value[metal.name] as num).toDouble(),
+    };
   }
 
   static BillingMode _billingModeFromName(String name) {

@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'pos_metal_settlement_repository.dart';
 
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -50,19 +51,23 @@ class PosEditableBill {
     required this.bill,
     required this.items,
     required this.tradeInItems,
+    required this.metalAllocations,
   });
 
   final Bill bill;
   final List<BillItem> items;
   final List<BillTradeInItem> tradeInItems;
+  final List<PosInvoiceMetalPaymentAllocation> metalAllocations;
 }
 
 class PosCheckoutRepository {
   final AppDatabase _db;
   late final FinanceTransactionNumbering _numbering;
+  late final PosMetalSettlementRepository _metalSettlements;
 
   PosCheckoutRepository({AppDatabase? db}) : _db = db ?? AppDatabase() {
     _numbering = FinanceTransactionNumbering(_db);
+    _metalSettlements = PosMetalSettlementRepository(_db);
   }
 
   Future<int> fetchNextInvoiceSequence({
@@ -85,6 +90,7 @@ class PosCheckoutRepository {
     String? sourceAdvanceOrderNo,
   }) async {
     await _db.ensureSalesCustomerMetalSettlementSchema();
+    await _metalSettlements.ensureSchema();
     return _db.transaction(() async {
       final resolved = await _resolveInvoiceNumber(
         invoicePrefix: _invoicePrefixFromBillNo(invoice.invoiceNumber),
@@ -166,6 +172,7 @@ class PosCheckoutRepository {
               status: const Value('ACTIVE'),
             ),
           );
+      await _metalSettlements.replace(billId, invoice.metalPaymentAllocations);
 
       for (var index = 0; index < invoice.saleItems.length; index++) {
         final item = invoice.saleItems[index];
@@ -260,6 +267,7 @@ class PosCheckoutRepository {
   }
 
   Future<PosEditableBill?> fetchEditableBill(int billId) async {
+    await _metalSettlements.ensureSchema();
     final bill = await (_db.select(_db.bills)
           ..where((tbl) => tbl.id.equals(billId)))
         .getSingleOrNull();
@@ -273,11 +281,13 @@ class PosCheckoutRepository {
           ..where((tbl) => tbl.billId.equals(billId))
           ..orderBy([(tbl) => OrderingTerm.asc(tbl.lineNo)]))
         .get();
+    final metalAllocations = await _metalSettlements.load(billId);
 
     return PosEditableBill(
       bill: bill,
       items: items,
       tradeInItems: tradeInItems,
+      metalAllocations: metalAllocations,
     );
   }
 
@@ -364,6 +374,7 @@ class PosCheckoutRepository {
     required int? customerId,
   }) async {
     await _db.ensureSalesCustomerMetalSettlementSchema();
+    await _metalSettlements.ensureSchema();
     await _db.transaction(() async {
       final existingBill = await (_db.select(_db.bills)
             ..where((tbl) => tbl.id.equals(billId)))
@@ -464,6 +475,7 @@ class PosCheckoutRepository {
           updatedAt: Value(DateTime.now()),
         ),
       );
+      await _metalSettlements.replace(billId, invoice.metalPaymentAllocations);
 
       await (_db.delete(_db.billItems)
             ..where((tbl) => tbl.billId.equals(billId)))
@@ -2594,14 +2606,38 @@ class PosCheckoutRepository {
     PosInvoiceModel invoice,
     _PosInvoiceMoneySnapshot money,
   ) {
+    final metalAllocation = invoice.billingMode == BillingMode.wholesale
+        ? null
+        : invoice.metalPaymentAllocations
+            .where((allocation) => allocation.metal == item.metal)
+            .firstOrNull;
+    final metalGross = invoice.saleItems
+        .where((line) => line.metal == item.metal)
+        .fold(0.0, (sum, line) => sum + line.totalValue);
+    final metalRatio = _allocationRatio(
+      scopedGross: item.totalValue,
+      invoiceGross: metalGross,
+    );
     final ratio = _allocationRatio(
       scopedGross: item.totalValue,
       invoiceGross: money.grossAmount,
     );
-    final taxable = _roundMoney(money.taxableAmount * ratio);
-    final cgst = _roundMoney(money.cgst * ratio);
-    final sgst = _roundMoney(money.sgst * ratio);
-    final igst = _roundMoney(money.igst * ratio);
+    final scopedTaxable = metalAllocation == null
+        ? money.taxableAmount * ratio
+        : invoice.gstPricingMode == GstPricingMode.inclusive
+            ? metalGross -
+                metalAllocation.discountAmount -
+                metalAllocation.gstAmount
+            : metalGross - metalAllocation.discountAmount;
+    final taxable = _roundMoney(
+        metalAllocation == null ? scopedTaxable : scopedTaxable * metalRatio);
+    final scopedGst = metalAllocation?.gstAmount ?? money.totalGst * ratio;
+    final lineGst = _roundMoney(
+        metalAllocation == null ? scopedGst : scopedGst * metalRatio);
+    final cgst = _isInterStateSupply(invoice) ? 0.0 : _roundMoney(lineGst / 2);
+    final sgst =
+        _isInterStateSupply(invoice) ? 0.0 : _roundMoney(lineGst - cgst);
+    final igst = _isInterStateSupply(invoice) ? lineGst : 0.0;
     final totalGst = _roundMoney(cgst + sgst + igst);
     final gstRate = taxable.abs() <= 0.005 ? 0.0 : (totalGst / taxable) * 100;
 

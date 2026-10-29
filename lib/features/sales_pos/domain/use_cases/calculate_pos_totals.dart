@@ -13,6 +13,7 @@ class PosTotalsInput {
     required this.tradeInMode,
     required this.discountType,
     required this.discountInput,
+    this.metalDiscounts = const {},
     required this.cashInput,
     required this.upiInput,
     required this.cardInput,
@@ -36,6 +37,7 @@ class PosTotalsInput {
   final TradeInAdjustMode tradeInMode;
   final DiscountType discountType;
   final double discountInput;
+  final Map<MetalType, double> metalDiscounts;
   final double cashInput;
   final double upiInput;
   final double cardInput;
@@ -315,7 +317,27 @@ class CalculatePosTotals {
     final grossAmount = input.billingMode == BillingMode.wholesale
         ? wholesaleGrossAmount
         : retailGrossAmount;
-    final discountAmount = _roundMoney(_discountAmount(input, grossAmount));
+    final metalGross = input.billingMode == BillingMode.wholesale
+        ? <MetalType, double>{
+            MetalType.gold: goldBhawAmount + goldMakingCharge,
+            MetalType.silver: silverBhawAmount + silverMakingCharge,
+            MetalType.platinum: platinumBhawAmount + platinumMakingCharge,
+            MetalType.diamond: diamondBhawAmount + diamondMakingCharge,
+          }
+        : <MetalType, double>{
+            MetalType.gold: totalGoldAmount,
+            MetalType.silver: totalSilverAmount,
+            MetalType.platinum: totalPlatinumAmount,
+            MetalType.diamond: totalDiamondAmount,
+          };
+    final metalDiscounts = <MetalType, double>{
+      for (final entry in metalGross.entries)
+        entry.key: _roundMoney(
+            (input.metalDiscounts[entry.key] ?? 0).clamp(0.0, entry.value)),
+    };
+    final discountAmount = _roundMoney(input.metalDiscounts.isEmpty
+        ? _discountAmount(input, grossAmount)
+        : metalDiscounts.values.fold(0.0, (sum, value) => sum + value));
     final saleAmountAfterDiscount = _roundMoney(grossAmount - discountAmount);
 
     final goldGst = _metalGst(
@@ -328,6 +350,8 @@ class CalculatePosTotals {
       retailAmount: totalGoldAmount,
       totalMakingCharge: totalMakingCharge,
       metal: MetalType.gold,
+      scopedDiscount:
+          input.metalDiscounts.isEmpty ? null : metalDiscounts[MetalType.gold],
     );
     final silverGst = _metalGst(
       input: input,
@@ -339,6 +363,9 @@ class CalculatePosTotals {
       retailAmount: totalSilverAmount,
       totalMakingCharge: totalMakingCharge,
       metal: MetalType.silver,
+      scopedDiscount: input.metalDiscounts.isEmpty
+          ? null
+          : metalDiscounts[MetalType.silver],
     );
     final platinumGst = _metalGst(
       input: input,
@@ -350,6 +377,9 @@ class CalculatePosTotals {
       retailAmount: totalPlatinumAmount,
       totalMakingCharge: totalMakingCharge,
       metal: MetalType.platinum,
+      scopedDiscount: input.metalDiscounts.isEmpty
+          ? null
+          : metalDiscounts[MetalType.platinum],
     );
     final diamondGst = _metalGst(
       input: input,
@@ -361,6 +391,9 @@ class CalculatePosTotals {
       retailAmount: totalDiamondAmount,
       totalMakingCharge: totalMakingCharge,
       metal: MetalType.diamond,
+      scopedDiscount: input.metalDiscounts.isEmpty
+          ? null
+          : metalDiscounts[MetalType.diamond],
     );
 
     final totalGst =
@@ -489,6 +522,7 @@ class CalculatePosTotals {
     required double retailAmount,
     required double totalMakingCharge,
     required MetalType metal,
+    double? scopedDiscount,
   }) {
     if (input.billType != BillType.gst) {
       return 0;
@@ -497,10 +531,19 @@ class CalculatePosTotals {
     double ratio(double amount) => grossAmount == 0 ? 0 : amount / grossAmount;
 
     if (input.billingMode == BillingMode.wholesale) {
-      final metalTaxable =
-          metalAmount - (discountAmount * ratio(wholesaleTotalMetalAmount));
-      final labourTaxable =
-          makingCharge - (discountAmount * ratio(totalMakingCharge));
+      final sectionGross = metalAmount + makingCharge;
+      final metalTaxable = metalAmount -
+          (scopedDiscount == null
+              ? discountAmount * ratio(metalAmount)
+              : sectionGross == 0
+                  ? 0
+                  : scopedDiscount * metalAmount / sectionGross);
+      final labourTaxable = makingCharge -
+          (scopedDiscount == null
+              ? discountAmount * ratio(makingCharge)
+              : sectionGross == 0
+                  ? 0
+                  : scopedDiscount * makingCharge / sectionGross);
       return _taxAmount(
             input,
             metalTaxable,
@@ -509,7 +552,8 @@ class CalculatePosTotals {
           _taxAmount(input, labourTaxable, input.makingGstRate);
     }
 
-    final retailTaxable = retailAmount - (discountAmount * ratio(retailAmount));
+    final retailTaxable =
+        retailAmount - (scopedDiscount ?? discountAmount * ratio(retailAmount));
     return _taxAmount(
       input,
       retailTaxable,

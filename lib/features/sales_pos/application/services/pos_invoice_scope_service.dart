@@ -60,19 +60,31 @@ class PosInvoiceScopeService {
       return source;
     }
 
-    final scopedGrossAmount =
+    final itemGrossAmount =
         scopedSaleItems.fold(0.0, (sum, item) => sum + item.totalValue);
+    final manualAllocation = _metalPaymentAllocationFor(source, metal);
+    final scopedGrossAmount =
+        manualAllocation != null && manualAllocation.grossAmount > 0
+            ? manualAllocation.grossAmount
+            : itemGrossAmount;
     final grossRatio = source.grossAmount.abs() <= 0.005
         ? 0.0
         : scopedGrossAmount / source.grossAmount;
-    final scopedDiscount = source.discountAmount * grossRatio;
-    final scopedTaxable = scopedGrossAmount - scopedDiscount;
-    final safeTaxable = scopedTaxable < 0 ? 0.0 : scopedTaxable;
+    final scopedDiscount =
+        manualAllocation?.discountAmount ?? source.discountAmount * grossRatio;
+    final amountAfterDiscount = scopedGrossAmount - scopedDiscount;
+    final safeAfterDiscount =
+        amountAfterDiscount < 0 ? 0.0 : amountAfterDiscount;
     final taxRatio = source.taxableAmount.abs() <= 0.005
         ? grossRatio
-        : safeTaxable / source.taxableAmount;
-    final scopedGst = source.totalGst * taxRatio;
-    final scopedGrandTotal = safeTaxable + scopedGst;
+        : safeAfterDiscount / source.taxableAmount;
+    final scopedGst = manualAllocation?.gstAmount ?? source.totalGst * taxRatio;
+    final scopedGrandTotal = source.gstPricingMode == GstPricingMode.inclusive
+        ? safeAfterDiscount
+        : safeAfterDiscount + scopedGst;
+    final scopedTaxable = source.gstPricingMode == GstPricingMode.inclusive
+        ? safeAfterDiscount - scopedGst
+        : safeAfterDiscount;
     final scopedExchangeDeduction =
         source.tradeInMode == TradeInAdjustMode.cashAdjust
             ? scopedOldItems.fold(0.0, (sum, item) => sum + item.totalValue)
@@ -81,9 +93,12 @@ class PosInvoiceScopeService {
         ? scopedGrandTotal
         : scopedGrandTotal - scopedExchangeDeduction;
     final scopedRoundOff = source.roundOffAmount * grossRatio;
-    final adjustedScopedNetPayable =
+    final scopedCrossDeduction =
+        manualAllocation == null || source.billingMode == BillingMode.wholesale
+            ? crossMetalAdjustmentDeduction
+            : scopedNetPayable + scopedRoundOff - manualAllocation.netPayable;
+    final adjustedScopedNetPayable = manualAllocation?.netPayable ??
         scopedNetPayable - crossMetalAdjustmentDeduction + scopedRoundOff;
-    final manualAllocation = _metalPaymentAllocationFor(source, metal);
     final paymentRatio = source.netPayable.abs() <= 0.005
         ? grossRatio
         : adjustedScopedNetPayable / source.netPayable;
@@ -110,12 +125,12 @@ class PosInvoiceScopeService {
       tradeInItems: scopedOldItems,
       grossAmount: scopedGrossAmount,
       discountAmount: scopedDiscount,
-      taxableAmount: safeTaxable,
+      taxableAmount: scopedTaxable,
       cgst: scopedGst / 2,
       sgst: scopedGst / 2,
       totalGst: scopedGst,
       totalTradeInDeduction: scopedExchangeDeduction,
-      crossMetalAdjustmentDeduction: crossMetalAdjustmentDeduction,
+      crossMetalAdjustmentDeduction: scopedCrossDeduction,
       grandTotal: scopedGrandTotal,
       roundOffAmount: scopedRoundOff,
       cashPaid: cashPaid,
@@ -182,6 +197,7 @@ class PosInvoiceScopeService {
   ) {
     if (metals.length <= 1 ||
         source.billingMode == BillingMode.wholesale ||
+        source.metalPaymentAllocations.isNotEmpty ||
         source.netPayable <= 0.005) {
       return const {};
     }
@@ -207,6 +223,8 @@ class PosInvoiceScopeService {
   }
 
   double _sectionNetPayable(PosInvoiceModel source, MetalType metal) {
+    final saved = _metalPaymentAllocationFor(source, metal);
+    if (saved != null) return saved.netPayable;
     final scopedSaleItems = source.saleItems
         .where((item) => item.metal == metal)
         .toList(growable: false);

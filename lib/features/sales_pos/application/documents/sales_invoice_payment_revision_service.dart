@@ -3,6 +3,7 @@ import '../../../../database/db/app_database.dart';
 import '../../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
+import '../../../../repositories/sales_orders/pos/pos_metal_settlement_repository.dart';
 import '../pdf/pos_invoice_pdf_builder.dart';
 
 /// Saves a new issued PDF when a later due collection changes the bill.
@@ -95,6 +96,8 @@ class SalesInvoicePaymentRevisionService {
         shopStateCode: bill.shopStateCodeSnapshot ?? invoice.shopStateCode,
         dueCollectionPaid: laterCollection,
         balanceDue: bill.dueAmount,
+        metalPaymentAllocations:
+            await PosMetalSettlementRepository(_database).load(billId),
       );
       final bytes = await const PosInvoicePdfBuilder().build(
         invoice: revisedInvoice,

@@ -148,6 +148,9 @@ class PosBillingController extends ChangeNotifier {
   final PosMetalPaymentAllocator _metalPaymentAllocator =
       const PosMetalPaymentAllocator();
   final Set<MetalType> _settleFirstMetals = <MetalType>{};
+  final Map<MetalType, double> _metalDiscounts = <MetalType, double>{};
+  final Map<MetalType, double> _manualPaidByMetal = <MetalType, double>{};
+  bool _manualMetalSettlement = false;
 
   static const double _defaultJewelleryGstRate = 0.03;
   static const double _defaultMakingGstRate = 0.05;
@@ -1277,6 +1280,21 @@ class PosBillingController extends ChangeNotifier {
         tradeInItems.add(item);
       }
 
+      if (details.metalAllocations.isNotEmpty) {
+        _metalDiscounts.addEntries(details.metalAllocations.map(
+          (allocation) => MapEntry(allocation.metal, allocation.discountAmount),
+        ));
+        _settleFirstMetals.addAll(details.metalAllocations
+            .where((allocation) => allocation.settleFirst)
+            .map((allocation) => allocation.metal));
+        _manualMetalSettlement = _settleFirstMetals.isEmpty;
+        if (_manualMetalSettlement) {
+          _manualPaidByMetal.addEntries(details.metalAllocations.map(
+            (allocation) => MapEntry(allocation.metal, allocation.totalPaid),
+          ));
+        }
+      }
+
       activeRowIndex = saleItems.isEmpty ? -1 : 0;
       notifyListeners();
       return true;
@@ -1498,6 +1516,7 @@ class PosBillingController extends ChangeNotifier {
         tradeInMode: tradeInMode,
         discountType: discountType,
         discountInput: _discountInput,
+        metalDiscounts: _metalDiscounts,
         cashInput: _cashInput,
         upiInput: _upiInput,
         cardInput: _cardInput,
@@ -1567,6 +1586,43 @@ class PosBillingController extends ChangeNotifier {
   double get roundOffAmount => _totals.roundOffAmount;
   double get finalPayableAmount => _totals.finalPayableAmount;
   double get discountInputAmount => _discountInput;
+  Map<MetalType, double> get metalDiscounts {
+    if (_metalDiscounts.isNotEmpty) return Map.unmodifiable(_metalDiscounts);
+    final gross = grossAmount;
+    if (gross <= _invoiceAmountTolerance || discountAmount <= 0) {
+      return const {};
+    }
+    return {
+      for (final metal in presentPaymentAllocationMetals)
+        metal: discountAmount * _grossForMetal(metal) / gross,
+    };
+  }
+
+  double _grossForMetal(MetalType metal) {
+    if (billingMode == BillingMode.retail) {
+      return saleItems
+          .where((item) => item.metal == metal)
+          .fold(0.0, (sum, item) => sum + item.totalValue);
+    }
+    switch (metal) {
+      case MetalType.gold:
+        return goldBhawAmt + goldMakingCharge;
+      case MetalType.silver:
+        return silverBhawAmt + silverMakingCharge;
+      case MetalType.platinum:
+        return platBhawAmt + platinumMakingCharge;
+      case MetalType.diamond:
+        return diaBhawAmt + diamondMakingCharge;
+    }
+  }
+
+  void setMetalDiscount(MetalType metal, double amount) {
+    if (!presentPaymentAllocationMetals.contains(metal)) return;
+    if (_metalDiscounts.isEmpty) _metalDiscounts.addAll(metalDiscounts);
+    _metalDiscounts[metal] = amount.clamp(0.0, double.infinity).toDouble();
+    notifyListeners();
+  }
+
   double get cashPaidAmount => _totals.cashPaidAmount;
   double get upiPaidAmount => _totals.upiPaidAmount;
   double get cardPaidAmount => _totals.cardPaidAmount;
@@ -1591,8 +1647,11 @@ class PosBillingController extends ChangeNotifier {
   }
 
   Set<MetalType> get settleFirstMetals {
+    if (_manualMetalSettlement) return const {};
     final present = presentPaymentAllocationMetals.toSet();
-    return _settleFirstMetals.where(present.contains).toSet();
+    final selected = _settleFirstMetals.where(present.contains).toSet();
+    if (selected.isNotEmpty || present.isEmpty) return selected;
+    return {presentPaymentAllocationMetals.first};
   }
 
   List<PosInvoiceMetalPaymentAllocation> get metalPaymentAllocations {
@@ -1603,6 +1662,18 @@ class PosBillingController extends ChangeNotifier {
       tradeInMode: tradeInMode,
       grossAmount: grossAmount,
       discountAmount: discountAmount,
+      metalDiscounts: _metalDiscounts,
+      metalGstAmounts: {
+        MetalType.gold: goldGst,
+        MetalType.silver: silverGst,
+        MetalType.platinum: platinumGst,
+        MetalType.diamond: diamondGst,
+      },
+      metalGrossAmounts: {
+        for (final metal in presentPaymentAllocationMetals)
+          metal: _grossForMetal(metal),
+      },
+      gstPricingMode: gstPricingMode,
       taxableAmount: taxableAmount,
       totalGst: totalGst,
       roundOffAmount: roundOffAmount,
@@ -1612,13 +1683,66 @@ class PosBillingController extends ChangeNotifier {
       cardPaid: cardPaidAmount,
       advancePaid: advancePaidAmount,
       settleFirstMetals: settleFirstMetals,
+      manualPaidByMetal: _manualMetalSettlement ? _manualPaidByMetal : const {},
     );
   }
 
   bool get shouldShowMetalPaymentAllocation {
-    return presentPaymentAllocationMetals.length > 1 &&
-        finalPayableAmount > _invoiceAmountTolerance &&
-        invoiceTotalPaid > _invoiceAmountTolerance;
+    return presentPaymentAllocationMetals.length > 1;
+  }
+
+  bool get isManualMetalSettlement => _manualMetalSettlement;
+  Map<MetalType, double> get manualPaidByMetal =>
+      Map.unmodifiable(_manualPaidByMetal);
+
+  void setManualMetalSettlement(bool manual) {
+    if (_manualMetalSettlement == manual) return;
+    if (manual) {
+      _manualPaidByMetal
+        ..clear()
+        ..addEntries(metalPaymentAllocations.map(
+          (allocation) => MapEntry(allocation.metal, allocation.totalPaid),
+        ));
+    } else {
+      _manualPaidByMetal.clear();
+    }
+    _manualMetalSettlement = manual;
+    notifyListeners();
+  }
+
+  void setManualMetalPaid(MetalType metal, double amount) {
+    if (!_manualMetalSettlement ||
+        !presentPaymentAllocationMetals.contains(metal)) {
+      return;
+    }
+    _manualPaidByMetal[metal] = amount.clamp(0.0, double.infinity).toDouble();
+    notifyListeners();
+  }
+
+  String? get metalSettlementError {
+    for (final metal in presentPaymentAllocationMetals) {
+      if ((_metalDiscounts[metal] ?? 0) >
+          _grossForMetal(metal) + _invoiceAmountTolerance) {
+        return '${metal.displayName} discount exceeds its gross amount.';
+      }
+    }
+    if (!_manualMetalSettlement || !shouldShowMetalPaymentAllocation) {
+      return null;
+    }
+    final allocations = metalPaymentAllocations;
+    for (final allocation in allocations) {
+      final payable = allocation.netPayable < 0 ? 0.0 : allocation.netPayable;
+      if ((_manualPaidByMetal[allocation.metal] ?? 0) >
+          payable + _invoiceAmountTolerance) {
+        return '${allocation.metal.displayName} payment exceeds its payable amount.';
+      }
+    }
+    final entered =
+        _manualPaidByMetal.values.fold(0.0, (sum, value) => sum + value);
+    if ((entered - invoiceTotalPaid).abs() > _invoiceAmountTolerance) {
+      return 'Metal payments must total Rs ${invoiceTotalPaid.toStringAsFixed(2)}.';
+    }
+    return null;
   }
 
   PaymentMode? get changeCreditSourcePaymentMode {
@@ -1650,11 +1774,11 @@ class PosBillingController extends ChangeNotifier {
   void toggleSettleFirstMetal(MetalType metal) {
     final present = presentPaymentAllocationMetals.toSet();
     if (!present.contains(metal)) return;
-    if (_settleFirstMetals.contains(metal)) {
-      _settleFirstMetals.remove(metal);
-    } else {
-      _settleFirstMetals.add(metal);
-    }
+    _manualMetalSettlement = false;
+    _manualPaidByMetal.clear();
+    _settleFirstMetals
+      ..clear()
+      ..add(metal);
     notifyListeners();
   }
 
@@ -1665,9 +1789,21 @@ class PosBillingController extends ChangeNotifier {
   }
 
   void _pruneMetalSettlementPreferences() {
-    if (_settleFirstMetals.isEmpty) return;
     final present = presentPaymentAllocationMetals.toSet();
     _settleFirstMetals.removeWhere((metal) => !present.contains(metal));
+    _manualPaidByMetal.removeWhere((metal, _) => !present.contains(metal));
+    _metalDiscounts.removeWhere((metal, _) => !present.contains(metal));
+    if (present.length <= 1) {
+      if (_metalDiscounts.isNotEmpty) {
+        final remaining =
+            _metalDiscounts.values.fold(0.0, (sum, value) => sum + value);
+        discountType = DiscountType.flatAmount;
+        discountCtrl.text = remaining.toStringAsFixed(2);
+        _metalDiscounts.clear();
+      }
+      _manualPaidByMetal.clear();
+      _manualMetalSettlement = false;
+    }
   }
 
   static const double _invoiceWeightTolerance = 0.0005;
@@ -1889,6 +2025,8 @@ class PosBillingController extends ChangeNotifier {
       ),
     );
     if (baseError != null) return baseError;
+    final allocationError = metalSettlementError;
+    if (allocationError != null) return allocationError;
 
     if (isB2BTaxInvoice) {
       if (selectedCustomer == null) {
@@ -2183,6 +2321,11 @@ class PosBillingController extends ChangeNotifier {
       discountType: discountType,
       promiseDate: promiseDate,
       discountInput: discountCtrl.text,
+      metalDiscounts: Map.of(_metalDiscounts),
+      settleFirstMetal:
+          _manualMetalSettlement ? null : settleFirstMetals.firstOrNull,
+      manualPaidByMetal:
+          _manualMetalSettlement ? Map.of(_manualPaidByMetal) : const {},
       cashInput: cashCtrl.text,
       upiInput: upiCtrl.text,
       cardInput: cardCtrl.text,
@@ -2244,6 +2387,13 @@ class PosBillingController extends ChangeNotifier {
       tradeInItems.add(item);
     }
 
+    _metalDiscounts.addAll(holdBill.metalDiscounts);
+    if (holdBill.settleFirstMetal != null) {
+      _settleFirstMetals.add(holdBill.settleFirstMetal!);
+    }
+    _manualPaidByMetal.addAll(holdBill.manualPaidByMetal);
+    _manualMetalSettlement = _manualPaidByMetal.isNotEmpty;
+
     activeRowIndex = saleItems.isEmpty ? -1 : 0;
     unawaited(
       _restoreSelectedCustomer(
@@ -2300,6 +2450,9 @@ class PosBillingController extends ChangeNotifier {
     customerMetalSettlementType =
         CustomerMetalSettlementType.exchangeAdjustment;
     _settleFirstMetals.clear();
+    _metalDiscounts.clear();
+    _manualPaidByMetal.clear();
+    _manualMetalSettlement = false;
     selectedCustomer = null;
     customerSuggestions = [];
     customerNotFound = false;
