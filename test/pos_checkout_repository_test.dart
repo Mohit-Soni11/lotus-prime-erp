@@ -853,6 +853,12 @@ void main() {
         customerId: null,
       );
 
+      final editAudit = await db.customSelect(
+        'SELECT edit_count FROM sales_bill_content_edits WHERE bill_id = ?',
+        variables: [drift.Variable.withInt(result.billId)],
+      ).getSingle();
+      expect(editAudit.read<int>('edit_count'), 1);
+
       firstStock = await _stockById(db, firstStockId);
       final secondStock = await _stockById(db, secondStockId);
       expect(firstStock.quantity, 1);

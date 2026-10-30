@@ -80,6 +80,8 @@ void main() {
       expect(profile!.outstanding, 0);
       expect(profile.dues, isEmpty);
       expect(profile.bills.single.dueAmount, 0);
+      expect(profile.bills.single.paymentLabel, 'SETTLED');
+      expect(profile.bills.single.lifecycleLabel, isEmpty);
 
       final customers = await customerListRepo.getAllCustomers();
       expect(customers.single.dueAmount, 0);

@@ -17,6 +17,31 @@ import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/su
 import 'package:lotus_erp/features/sales/return_reversal/presentation/widgets/workflow/return_reversal_workflow_tabs.dart';
 
 void main() {
+  testWidgets('profile shortcut selects booking cancellation without posting',
+      (tester) async {
+    final repository = _AllSourceTypesReturnReversalRepository();
+    final controller = ReturnReversalController(repository: repository);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(MaterialApp(
+      home: ReturnReversalDeskScreen(
+        onBack: () {},
+        controller: controller,
+        initialBookingOrderNo: 'AJ-BOOK-2026-0001',
+      ),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(controller.state.operationType,
+        ReturnReversalOperationType.bookingCancellation);
+    expect(controller.state.selectedSourceDocument?.documentNo,
+        'AJ-BOOK-2026-0001');
+    expect(controller.state.returnCartLineNumbers, {1});
+    expect(repository.lastRequest, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Return Reversal Desk opens with the ERP module app bar',
       (tester) async {
     var backPressed = false;

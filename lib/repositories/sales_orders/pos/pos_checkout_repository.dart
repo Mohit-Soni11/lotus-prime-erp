@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'pos_metal_settlement_repository.dart';
+import 'sales_bill_edit_audit.dart';
 
 import 'package:lotus_erp/core/tax/gst_jurisdiction.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -64,10 +65,12 @@ class PosCheckoutRepository {
   final AppDatabase _db;
   late final FinanceTransactionNumbering _numbering;
   late final PosMetalSettlementRepository _metalSettlements;
+  late final SalesBillEditAudit _billEditAudit;
 
   PosCheckoutRepository({AppDatabase? db}) : _db = db ?? AppDatabase() {
     _numbering = FinanceTransactionNumbering(_db);
     _metalSettlements = PosMetalSettlementRepository(_db);
+    _billEditAudit = SalesBillEditAudit(_db);
   }
 
   Future<int> fetchNextInvoiceSequence({
@@ -375,6 +378,7 @@ class PosCheckoutRepository {
   }) async {
     await _db.ensureSalesCustomerMetalSettlementSchema();
     await _metalSettlements.ensureSchema();
+    await _billEditAudit.ensureSchema();
     await _db.transaction(() async {
       final existingBill = await (_db.select(_db.bills)
             ..where((tbl) => tbl.id.equals(billId)))
@@ -475,6 +479,7 @@ class PosCheckoutRepository {
           updatedAt: Value(DateTime.now()),
         ),
       );
+      await _billEditAudit.recordEdit(billId, DateTime.now());
       await _metalSettlements.replace(billId, invoice.metalPaymentAllocations);
 
       await (_db.delete(_db.billItems)

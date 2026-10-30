@@ -4,6 +4,7 @@ import 'package:lotus_erp/constants/app_routes.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_controller.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/data/repositories/return_reversal_drift_repository.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/body/return_reversal_desk_body.dart';
 import 'package:lotus_erp/features/sales/return_reversal/presentation/theme/return_reversal_design_tokens.dart';
@@ -12,11 +13,13 @@ import 'package:lotus_erp/ui/shared/lotus_module_app_bar.dart';
 class ReturnReversalDeskScreen extends StatefulWidget {
   final VoidCallback onBack;
   final ReturnReversalController? controller;
+  final String? initialBookingOrderNo;
 
   const ReturnReversalDeskScreen({
     super.key,
     required this.onBack,
     this.controller,
+    this.initialBookingOrderNo,
   });
 
   @override
@@ -38,9 +41,24 @@ class _ReturnReversalDeskScreenState extends State<ReturnReversalDeskScreen> {
           repository: ReturnReversalDriftRepository(AppDatabase()),
         );
     _controller.addListener(_rebuild);
-    if (_ownsController) {
+    final bookingOrderNo = widget.initialBookingOrderNo?.trim();
+    if (bookingOrderNo != null && bookingOrderNo.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openBookingCancellation(bookingOrderNo);
+      });
+    } else if (_ownsController) {
       _controller.load();
     }
+  }
+
+  Future<void> _openBookingCancellation(String orderNo) async {
+    if (_ownsController) await _controller.load();
+    if (!mounted) return;
+    _controller.selectOperationType(
+      ReturnReversalOperationType.bookingCancellation,
+    );
+    _controller.sourceDocumentNumberCtrl.text = orderNo;
+    await _controller.searchRecords();
   }
 
   void _rebuild() {

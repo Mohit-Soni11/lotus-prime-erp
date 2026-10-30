@@ -488,6 +488,15 @@ GoRouter createAppRouter() {
                     },
                   ).toString(),
                 ),
+                onCancelAdvance: (orderNo, customerId) => context.go(
+                  Uri(
+                    path: RoutePaths.salesReturnExchange,
+                    queryParameters: {
+                      'bookingOrderNo': orderNo,
+                      'returnCustomerId': '$customerId',
+                    },
+                  ).toString(),
+                ),
                 onConvertAdvanceToSale: (orderId, customerId) => context.go(
                   Uri(
                     path: RoutePaths.salesPos,
@@ -546,9 +555,20 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.salesReturnExchange,
-            builder: (context, state) => ReturnReversalDeskScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
+            builder: (context, state) {
+              final returnCustomerId = int.tryParse(
+                state.uri.queryParameters['returnCustomerId'] ?? '',
+              );
+              return ReturnReversalDeskScreen(
+                initialBookingOrderNo:
+                    state.uri.queryParameters['bookingOrderNo'],
+                onBack: () => returnCustomerId == null
+                    ? _goBackOr(context, RoutePaths.dashboard)
+                    : context.go(
+                        RoutePaths.customerProfileFor(returnCustomerId),
+                      ),
+              );
+            },
           ),
           GoRoute(
             path: RoutePaths.purchaseEntry,

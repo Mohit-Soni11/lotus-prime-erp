@@ -159,6 +159,109 @@ void main() {
     );
   });
 
+  test('cancellation lookup includes only unconverted active bookings',
+      () async {
+    final database = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = ReturnReversalDriftRepository(database);
+    await database.ensureReturnReversalSchema();
+    final customerId = await _insertCustomer(database);
+    await _insertAdvanceBooking(database, customerId: customerId);
+    await database.into(database.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'BK-READY-0002',
+            customerId: customerId,
+            itemName: 'Ready Ring',
+            status: const drift.Value('READY'),
+          ),
+        );
+    await database.into(database.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'BK-CONVERTED-0003',
+            customerId: customerId,
+            itemName: 'Converted Ring',
+            status: const drift.Value('DELIVERED'),
+          ),
+        );
+    final linkedOrderId = await database.into(database.salesOrders).insert(
+          SalesOrdersCompanion.insert(
+            orderNo: 'BK-LINKED-0004',
+            customerId: customerId,
+            itemName: 'Linked Ring',
+          ),
+        );
+    final billId = await _insertSalesInvoice(
+      database,
+      customerId: customerId,
+    );
+    await (database.update(database.bills)
+          ..where((bill) => bill.id.equals(billId)))
+        .write(BillsCompanion(
+      sourceAdvanceOrderId: drift.Value(linkedOrderId),
+    ));
+
+    final byMobile = await repository.findCustomerHistoryByMobile('9999999999');
+    final byName = await repository.findCustomerHistoryByName('Test Customer');
+    final eligibleOrderNumbers = {
+      'BK-RET-0001',
+      'BK-READY-0002',
+    };
+    expect(byMobile.advanceBookings.map((order) => order.documentNo).toSet(),
+        eligibleOrderNumbers);
+    expect(byName.advanceBookings.map((order) => order.documentNo).toSet(),
+        eligibleOrderNumbers);
+    expect(byMobile.salesInvoices.map((bill) => bill.documentNo),
+        contains('INV-RET-0001'));
+    expect(
+      await repository.findSourceDocumentByNumber('BK-CONVERTED-0003'),
+      isNull,
+    );
+    expect(
+      await repository.findSourceDocumentByNumber('BK-LINKED-0004'),
+      isNull,
+    );
+    expect((await repository.fetchTransactionSummary()).eligibleAdvanceBookings,
+        2);
+  });
+
+  test('stale booking cannot be cancelled after conversion', () async {
+    final database = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = ReturnReversalDriftRepository(database);
+    await database.ensureReturnReversalSchema();
+    final customerId = await _insertCustomer(database);
+    final orderId =
+        await _insertAdvanceBooking(database, customerId: customerId);
+    final source = await repository.findSourceDocumentByNumber('BK-RET-0001');
+    await (database.update(database.salesOrders)
+          ..where((order) => order.id.equals(orderId)))
+        .write(const SalesOrdersCompanion(status: drift.Value('DELIVERED')));
+
+    await expectLater(
+      repository.processReturn(ReturnReversalProcessRequest(
+        operationType: ReturnReversalOperationType.bookingCancellation,
+        sourceDocument: source!,
+        lines: const [
+          ReturnReversalProcessLineInput(
+            sourceLineNo: 1,
+            receivedNetWeight: 0,
+            huidMatched: true,
+            unitMatched: true,
+            includeMakingCharge: false,
+            stockDisposition: ReturnReversalStockDisposition.notApplicable,
+          ),
+        ],
+      )),
+      throwsStateError,
+    );
+    final vouchers = await database
+        .customSelect(
+          "SELECT COUNT(*) AS count FROM return_vouchers WHERE source_type = 'ADVANCE_BOOKING'",
+        )
+        .getSingle();
+    expect(vouchers.read<int>('count'), 0);
+  });
+
   test('processReturn posts voucher, restores linked unit, and credits ledger',
       () async {
     final database = AppDatabase.forTesting(NativeDatabase.memory());

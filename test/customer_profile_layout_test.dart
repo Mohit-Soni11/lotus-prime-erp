@@ -103,6 +103,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 700));
     expect(find.text('ADV-001'), findsOneWidget);
     expect(find.text('ADV-DONE'), findsNothing);
+    expect(find.text('Advance payment progress'), findsNothing);
+    expect(find.text('Convert to Sale'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -222,10 +224,45 @@ void main() {
     expect(openedLoanId, 42);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('active advance opens booking cancellation in the desk',
+      (tester) async {
+    String? selectedOrderNo;
+    int? selectedCustomerId;
+    await _pumpProfile(
+      tester,
+      const Size(1280, 900),
+      onCancelAdvance: (orderNo, customerId) {
+        selectedOrderNo = orderNo;
+        selectedCustomerId = customerId;
+      },
+    );
+    await tester.ensureVisible(find.text('Active Advances (1)'));
+    await tester.pump();
+    await tester.tap(find.text('Active Advances (1)'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.tap(find.text('ADV-001'));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.scrollUntilVisible(
+      find.text('Cancel Advance Order'),
+      240,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Cancel Advance Order'));
+    await tester.pump();
+
+    expect(selectedOrderNo, 'ADV-001');
+    expect(selectedCustomerId, 1);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpProfile(WidgetTester tester, Size size,
-    {CustomerProfileModel? profile, Function(int)? onEditGirvi}) async {
+    {CustomerProfileModel? profile,
+    Function(int)? onEditGirvi,
+    Function(String, int)? onCancelAdvance}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -237,6 +274,7 @@ Future<void> _pumpProfile(WidgetTester tester, Size size,
       repository: _ProfileRepository(profile ?? _profile),
       onBack: () {},
       onEditGirvi: onEditGirvi,
+      onCancelAdvance: onCancelAdvance,
     ),
   ));
   await tester.pump();

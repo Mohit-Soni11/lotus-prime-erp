@@ -44,6 +44,7 @@ class CustomerProfileScreen extends StatefulWidget {
   final Function(int customerId, String ticketNo)? onCollectGirviInterest;
   final Function(int loanId)? onOpenGirviAccount;
   final Function(int advanceOrderId)? onEditAdvance;
+  final Function(String orderNo, int customerId)? onCancelAdvance;
   final Function(int customerId, String billNo)? onCollectDue;
   final VoidCallback? onDeleted;
 
@@ -63,6 +64,7 @@ class CustomerProfileScreen extends StatefulWidget {
     this.onCollectGirviInterest,
     this.onOpenGirviAccount,
     this.onEditAdvance,
+    this.onCancelAdvance,
     this.onCollectDue,
     this.onDeleted,
     this.onConvertAdvanceToSale,

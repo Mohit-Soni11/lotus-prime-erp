@@ -10,6 +10,8 @@ import 'package:lotus_erp/features/sales/return_reversal/domain/services/return_
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_item_unit_profile.dart';
 import 'package:lotus_erp/models/sales_orders/sales_pos_enums/sales_pos_enums.dart';
 
+import 'booking_cancellation_eligibility_sql.dart';
+
 class ReturnReversalDriftRepository implements ReturnReversalRepository {
   final AppDatabase _database;
   static const _maxVoucherPostAttempts = 3;
@@ -60,14 +62,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       '''
       SELECT COUNT(*) AS booking_count
       FROM sales_orders o
-      WHERE o.status NOT IN ('CANCELLED', 'DELIVERED')
-        AND NOT EXISTS (
-          SELECT 1
-          FROM return_vouchers v
-          WHERE v.source_type = 'ADVANCE_BOOKING'
-            AND v.source_id = o.id
-            AND v.status <> 'VOIDED'
-        )
+      WHERE $cancellableBookingPredicate
       ''',
     ).getSingle();
     return ReturnReversalTransactionSummary(
@@ -445,6 +440,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       INNER JOIN customers c ON c.id = o.customer_id
       LEFT JOIN order_advances a ON a.order_id = o.id
       WHERE REPLACE(REPLACE(COALESCE(c.mobile, ''), ' ', ''), '-', '') = ?
+        AND $cancellableBookingPredicate
       GROUP BY o.id
       ORDER BY o.id DESC
       LIMIT 100
@@ -480,6 +476,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       INNER JOIN customers c ON c.id = o.customer_id
       LEFT JOIN order_advances a ON a.order_id = o.id
       WHERE UPPER(TRIM(COALESCE(c.name, ''))) LIKE UPPER(?) ESCAPE '\\'
+        AND $cancellableBookingPredicate
       GROUP BY o.id
       ORDER BY o.id DESC
       LIMIT 100
@@ -515,6 +512,7 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
       INNER JOIN customers c ON c.id = o.customer_id
       LEFT JOIN order_advances a ON a.order_id = o.id
       WHERE UPPER(TRIM(o.order_no)) = UPPER(TRIM(?))
+        AND $cancellableBookingPredicate
       GROUP BY o.id
       LIMIT 1
       ''',
@@ -703,6 +701,9 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
     var makingReturnedAmount = 0.0;
 
     await _database.transaction(() async {
+      if (request.operationType.isBookingCancellation) {
+        await _assertBookingStillCancellable(request.sourceDocument.id);
+      }
       await _assertProcessLinesAvailable(request, sourceType);
       voucherNo = await _nextReturnVoucherNo(request.operationType);
 
@@ -940,6 +941,23 @@ class ReturnReversalDriftRepository implements ReturnReversalRepository {
         throw StateError(
             'Line ${line.sourceLineNo} has already been processed.');
       }
+    }
+  }
+
+  Future<void> _assertBookingStillCancellable(int orderId) async {
+    final row = await _database.customSelect(
+      '''
+      SELECT o.id
+      FROM sales_orders o
+      WHERE o.id = ? AND $cancellableBookingPredicate
+      ''',
+      variables: [drift.Variable.withInt(orderId)],
+    ).getSingleOrNull();
+    if (row == null) {
+      throw StateError(
+        'This booking is no longer active or has been converted to a sale. '
+        'Refresh the Desk before cancelling.',
+      );
     }
   }
 

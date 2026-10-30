@@ -119,7 +119,7 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
   void _showAdvanceActions(CustomerAdvanceOrderModel order) {
     _showRecordActionSheet(
       title: 'Advance Order ${order.orderNo}',
-      subtitle: 'Edit, preview, or print this advance booking record.',
+      subtitle: 'Manage this booking, receipt, sale, or cancellation.',
       actions: [
         CustomerProfileRecordAction(
           icon: Icons.edit_note_rounded,
@@ -162,6 +162,18 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
             onTap: () {
               _logic.triggerConvertAdvanceToSale(order.id);
             },
+          ),
+        if ((order.isPending || order.isReady) &&
+            widget.onCancelAdvance != null)
+          CustomerProfileRecordAction(
+            icon: Icons.event_busy_rounded,
+            title: 'Cancel Advance Order',
+            subtitle: 'Review refund and reversal in Return & Reversal Desk.',
+            color: CustomerProfileColors.deleteText,
+            onTap: () => widget.onCancelAdvance!(
+              order.orderNo,
+              widget.customerId,
+            ),
           ),
       ],
     );

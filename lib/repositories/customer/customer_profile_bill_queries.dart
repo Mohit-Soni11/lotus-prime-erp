@@ -2,6 +2,7 @@ part of 'customer_profile_repository.dart';
 
 mixin _CustomerProfileBillQueries {
   AppDatabase get _db;
+  SalesBillEditAudit get _billEditAudit;
   Future<CustomerBillDetailModel?> fetchBillDetails({
     required int customerId,
     required int billId,
@@ -13,6 +14,7 @@ mixin _CustomerProfileBillQueries {
                 (t) => t.id.equals(billId) & t.customerId.equals(customerId)))
           .getSingleOrNull();
       if (bill == null) return null;
+      final editedBillIds = await _billEditAudit.editedBillIds([bill.id]);
 
       final itemRows = await (_db.select(_db.billItems)
             ..where((t) => t.billId.equals(billId))
@@ -37,7 +39,7 @@ mixin _CustomerProfileBillQueries {
         returnedLineCount: returnMarker?.lineCount ?? 0,
         returnedAmount: returnMarker?.amount ?? 0,
         returnVoucherNo: returnMarker?.voucherNo ?? '',
-        isModified: bill.updatedAt != null,
+        isModified: editedBillIds.contains(bill.id),
         grossAmount: bill.totalAmount,
         discountAmount: bill.discount,
         taxableAmount: bill.taxableAmount,

@@ -14,6 +14,7 @@ import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../models/girvi/girvi_loan_model.dart';
 import '../../models/girvi/girvi_recovery_disposition.dart';
 import '../girvi/girvi_interest_payment_adjustments.dart';
+import '../sales_orders/pos/sales_bill_edit_audit.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'customer_media_store.dart';
 
@@ -50,6 +51,8 @@ class CustomerProfileRepository
   @override
   final AppDatabase _db;
   final CustomerMediaStore _mediaStore;
+  @override
+  late final SalesBillEditAudit _billEditAudit = SalesBillEditAudit(_db);
 
   CustomerProfileRepository({AppDatabase? db, CustomerMediaStore? mediaStore})
       : _db = db ?? AppDatabase(),
@@ -72,6 +75,7 @@ class CustomerProfileRepository
           .get();
 
       final billIds = billRows.map((bill) => bill.id).toList(growable: false);
+      final editedBillIds = await _billEditAudit.editedBillIds(billIds);
       final returnMarkers = await _fetchBillReturnMarkers(billIds);
       final lineCounts = await _fetchBillLineCounts(billIds);
       final linkedDocuments = await _fetchBillLinkedDocuments(billIds);
@@ -93,7 +97,7 @@ class CustomerProfileRepository
             returnedLineCount: returnMarker?.lineCount ?? 0,
             returnedAmount: returnMarker?.amount ?? 0,
             returnVoucherNo: returnMarker?.voucherNo ?? '',
-            isModified: bill.updatedAt != null,
+            isModified: editedBillIds.contains(bill.id),
             grossAmount: bill.totalAmount,
             discountAmount: bill.discount,
             taxableAmount: bill.taxableAmount,
