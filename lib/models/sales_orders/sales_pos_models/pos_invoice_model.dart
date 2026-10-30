@@ -163,6 +163,7 @@ class PosInvoiceModel {
   final double cardPaid;
   final double advancePaid;
   final double dueCollectionPaid;
+  final DateTime? lastDuePaymentAt;
   final double balanceDue;
   final RefundMethod? changeSettlementMethod;
   final double changeSettlementAmount;
@@ -318,6 +319,7 @@ class PosInvoiceModel {
     required this.cardPaid,
     required this.advancePaid,
     this.dueCollectionPaid = 0,
+    this.lastDuePaymentAt,
     required this.balanceDue,
     required this.totalMakingCharge,
     this.changeSettlementMethod,
@@ -372,6 +374,7 @@ class PosInvoiceModel {
     double? cardPaid,
     double? advancePaid,
     double? dueCollectionPaid,
+    Object? lastDuePaymentAt = _notProvided,
     double? balanceDue,
     Object? changeSettlementMethod = _notProvided,
     double? changeSettlementAmount,
@@ -429,6 +432,9 @@ class PosInvoiceModel {
       cardPaid: cardPaid ?? this.cardPaid,
       advancePaid: advancePaid ?? this.advancePaid,
       dueCollectionPaid: dueCollectionPaid ?? this.dueCollectionPaid,
+      lastDuePaymentAt: identical(lastDuePaymentAt, _notProvided)
+          ? this.lastDuePaymentAt
+          : lastDuePaymentAt as DateTime?,
       balanceDue: balanceDue ?? this.balanceDue,
       changeSettlementMethod: identical(
         changeSettlementMethod,

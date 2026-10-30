@@ -738,6 +738,8 @@ class PosLotusClassicInvoicePdfLayout {
 
   pw.Widget _paymentBlock(PosInvoiceModel invoice) {
     final payments = PosInvoiceFinancialBreakdown.payments(invoice);
+    final duePaymentDateLabel =
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(invoice);
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
@@ -777,6 +779,14 @@ class PosLotusClassicInvoicePdfLayout {
                   .map((payment) => _paymentChip(payment.label, payment.amount))
                   .toList(),
             ),
+          if (duePaymentDateLabel != null) ...[
+            pw.SizedBox(height: 8),
+            _miniRow(
+              duePaymentDateLabel,
+              _dateFormat.format(invoice.lastDuePaymentAt!),
+              strong: true,
+            ),
+          ],
           if (invoice.changeSettlementMethod != null &&
               invoice.changeSettlementAmount > 0.5) ...[
             pw.SizedBox(height: 8),
@@ -1142,6 +1152,7 @@ class PosLotusClassicInvoicePdfLayout {
     String value, {
     PdfColor? labelColor,
     PdfColor? valueColor,
+    bool strong = false,
   }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(top: 2.5),
@@ -1150,7 +1161,11 @@ class PosLotusClassicInvoicePdfLayout {
         children: [
           pw.Text(
             label,
-            style: pw.TextStyle(color: labelColor ?? _ink, fontSize: 8),
+            style: pw.TextStyle(
+              color: labelColor ?? _ink,
+              fontSize: 8,
+              fontWeight: strong ? pw.FontWeight.bold : null,
+            ),
           ),
           pw.Text(
             value,

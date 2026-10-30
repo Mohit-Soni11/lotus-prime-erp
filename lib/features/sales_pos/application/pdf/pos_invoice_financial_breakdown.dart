@@ -45,6 +45,14 @@ class PosInvoiceStatusView {
 class PosInvoiceFinancialBreakdown {
   PosInvoiceFinancialBreakdown._();
 
+  static String? duePaymentDateLabel(PosInvoiceModel invoice) {
+    if (invoice.lastDuePaymentAt == null ||
+        invoice.dueCollectionPaid <= posInvoiceMoneyEpsilon) {
+      return null;
+    }
+    return hasDue(invoice) ? 'Last Due Payment' : 'Due Cleared On';
+  }
+
   static PosInvoiceStatusView status(PosInvoiceModel invoice) {
     switch (invoice.paymentStatus) {
       case PaymentStatus.paid:

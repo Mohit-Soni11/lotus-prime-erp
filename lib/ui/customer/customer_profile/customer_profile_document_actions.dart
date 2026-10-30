@@ -2,9 +2,15 @@ part of 'customer_profile_screen.dart';
 
 extension _ProfileDocumentActions on _CustomerProfileScreenState {
   Future<void> _previewBillPdf(int billId, String billNo) async {
-    final bytes = await _loadIssuedSalesInvoice(billId, billNo);
-    if (!mounted || bytes == null) return;
-    await _showCleanPdfPreview(bytes);
+    await showIssuedPdfPreview(
+      context: context,
+      title: 'Sales Bill $billNo',
+      pdfBytesFuture: _loadIssuedSalesInvoice(
+        billId,
+        billNo,
+        notifyUnavailable: false,
+      ),
+    );
   }
 
   Future<void> _printBillPdf(int billId, String billNo) async {

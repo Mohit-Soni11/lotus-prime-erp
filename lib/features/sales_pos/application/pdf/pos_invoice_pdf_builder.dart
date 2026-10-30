@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -1071,6 +1072,8 @@ class _PosInvoicePdfDocumentBuilder {
 
   pw.Widget _pdfPaymentBlock(PosInvoiceModel invoice) {
     final totalCashPaid = invoice.totalPaid;
+    final duePaymentDateLabel =
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(invoice);
     final hasChangeSettlement = invoice.changeSettlementMethod != null &&
         invoice.changeSettlementAmount > 0.5;
 
@@ -1171,6 +1174,25 @@ class _PosInvoicePdfDocumentBuilder {
               }).toList(),
             ),
             pw.SizedBox(height: 10),
+          ],
+          if (duePaymentDateLabel != null) ...[
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(duePaymentDateLabel,
+                    style: pw.TextStyle(
+                        fontSize: _pdfBodySize,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _pdfTextColor)),
+                pw.Text(
+                    DateFormat('dd MMM yyyy').format(invoice.lastDuePaymentAt!),
+                    style: pw.TextStyle(
+                        fontSize: _pdfBodySize,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _pdfTextColor)),
+              ],
+            ),
+            pw.SizedBox(height: 8),
           ],
           if (hasChangeSettlement) ...[
             _pdfChangeSettlementBlock(invoice),
@@ -1988,6 +2010,8 @@ class _PosInvoicePdfDocumentBuilder {
   }
 
   pw.Widget _thermalPayments(PosInvoiceModel invoice, double fontSize) {
+    final duePaymentDateLabel =
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(invoice);
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -2005,6 +2029,12 @@ class _PosInvoicePdfDocumentBuilder {
         if (invoice.dueCollectionPaid > 0.5)
           _thermalKeyValue('Due Collection',
               _thermalMoney(invoice.dueCollectionPaid), fontSize),
+        if (duePaymentDateLabel != null)
+          _thermalKeyValue(
+            duePaymentDateLabel,
+            DateFormat('dd MMM yyyy').format(invoice.lastDuePaymentAt!),
+            fontSize,
+          ),
         _thermalKeyValue('Paid', _thermalMoney(invoice.totalPaid), fontSize),
         if (invoice.balanceDue > 0.5)
           _thermalKeyValue(

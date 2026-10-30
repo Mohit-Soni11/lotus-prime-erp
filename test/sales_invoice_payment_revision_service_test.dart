@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:lotus_erp/core/documents/issued_invoice_archive.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/sales_pos/application/documents/sales_invoice_payment_revision_service.dart';
+import 'package:lotus_erp/features/sales_pos/application/documents/sales_invoice_due_payment_date_repository.dart';
 import 'package:lotus_erp/models/finance/due_collection_entry/due_collection_entry_model.dart';
 import 'package:lotus_erp/repositories/finance/due_collection_entry_repository.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -25,7 +26,9 @@ void main() {
       const MethodChannel('plugins.flutter.io/path_provider'),
       (_) async => root.path,
     );
-    final archive = IssuedInvoiceArchive(directoryProvider: () async => root);
+    final archive = _CountingIssuedInvoiceArchive(
+      directoryProvider: () async => root,
+    );
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(() async {
       await db.close();
@@ -53,7 +56,10 @@ void main() {
             itemName: 'Gold ring',
             itemTotal: const drift.Value(1000),
             rate: const drift.Value(1000),
+            grossWeight: const drift.Value(1),
             netWeight: const drift.Value(1),
+            metalType: const drift.Value('GOLD'),
+            purity: const drift.Value('22KT'),
           ),
         );
     final original = await (pw.Document()
@@ -91,6 +97,9 @@ void main() {
     );
     expect(result.success, isTrue);
     expect(result.message, isNot(contains('pending')));
+    final recordedPaymentDate = await SalesInvoiceDuePaymentDateRepository(db)
+        .latestForBill('AJ-26-099');
+    expect(recordedPaymentDate, isNotNull);
     final service = SalesInvoicePaymentRevisionService(
       database: db,
       archive: archive,
@@ -102,15 +111,20 @@ void main() {
     );
     expect(revised, isNotNull);
     expect(revised, isNot(orderedEquals(original)));
-    expect(
-      await archive.readMetadata(
-        IssuedInvoiceKind.sales,
-        billId,
-        'AJ-26-099',
-      ),
-      containsPair('dueAmount', 0),
+    final metadata = await archive.readMetadata(
+      IssuedInvoiceKind.sales,
+      billId,
+      'AJ-26-099',
     );
+    expect(metadata, containsPair('dueAmount', 0));
+    expect(
+        metadata,
+        containsPair(
+            'lastDuePaymentAt', recordedPaymentDate!.toIso8601String()));
+    expect(metadata, containsPair('paymentRevisionVersion', 3));
+    final readsBeforeNoChange = archive.readCount;
     expect(await service.synchronize(billId, 'AJ-26-099'), isFalse);
+    expect(archive.readCount, readsBeforeNoChange);
 
     await archive.saveMetadata(
       IssuedInvoiceKind.sales,
@@ -157,4 +171,20 @@ void main() {
     expect(await service.synchronize(legacyBillId, 'AJ-26-098'), isTrue);
     expect(await service.synchronize(legacyBillId, 'AJ-26-098'), isFalse);
   });
+}
+
+class _CountingIssuedInvoiceArchive extends IssuedInvoiceArchive {
+  _CountingIssuedInvoiceArchive({required super.directoryProvider});
+
+  int readCount = 0;
+
+  @override
+  Future<Uint8List?> read(
+    IssuedInvoiceKind kind,
+    int recordId,
+    String documentNumber,
+  ) {
+    readCount++;
+    return super.read(kind, recordId, documentNumber);
+  }
 }

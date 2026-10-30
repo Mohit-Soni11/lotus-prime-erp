@@ -4,6 +4,7 @@ import '../../../../logic/sales_orders/sales_pos/pos_billing_controller.dart';
 import '../../../../logic/sales_orders/sales_pos/pos_invoice_controller.dart';
 import '../../../../models/sales_orders/sales_pos_models/pos_invoice_model.dart';
 import '../../../../repositories/sales_orders/pos/pos_metal_settlement_repository.dart';
+import 'sales_invoice_due_payment_date_repository.dart';
 import '../pdf/pos_invoice_pdf_builder.dart';
 
 /// Saves a new issued PDF when a later due collection changes the bill.
@@ -19,13 +20,6 @@ class SalesInvoicePaymentRevisionService {
   final IssuedInvoiceArchive _archive;
 
   Future<bool> synchronize(int billId, String billNo) async {
-    final original = await _archive.read(
-      IssuedInvoiceKind.sales,
-      billId,
-      billNo,
-    );
-    if (original == null) return false;
-
     final bill = await (_database.select(_database.bills)
           ..where((row) => row.id.equals(billId)))
         .getSingleOrNull();
@@ -38,6 +32,11 @@ class SalesInvoicePaymentRevisionService {
     );
     final recordedPaid = (metadata?['paidAmount'] as num?)?.toDouble();
     final recordedDue = (metadata?['dueAmount'] as num?)?.toDouble();
+    final lastDuePaymentAt = await SalesInvoiceDuePaymentDateRepository(
+      _database,
+    ).latestForBill(billNo);
+    final paymentDateText = lastDuePaymentAt?.toIso8601String();
+    final recordedPaymentDate = metadata?['lastDuePaymentAt'] as String?;
     final revisionVersion =
         (metadata?['paymentRevisionVersion'] as num?)?.toInt() ?? 0;
     final issuedPayment =
@@ -49,11 +48,19 @@ class SalesInvoicePaymentRevisionService {
         recordedDue != null &&
         (recordedPaid - bill.paidAmount).abs() < 0.005 &&
         (recordedDue - bill.dueAmount).abs() < 0.005 &&
-        (revisionVersion >= 2 || laterCollection < 0.005)) {
+        (revisionVersion >= 3 || laterCollection < 0.005) &&
+        recordedPaymentDate == paymentDateText) {
       return false;
     }
 
     if (metadata == null && laterCollection < 0.005) return false;
+
+    final issuedPdf = await _archive.read(
+      IssuedInvoiceKind.sales,
+      billId,
+      billNo,
+    );
+    if (issuedPdf == null) return false;
 
     final billing = PosBillingController(
       database: _database,
@@ -95,6 +102,7 @@ class SalesInvoicePaymentRevisionService {
         shopGstin: bill.shopGstinSnapshot ?? invoice.shopGstin,
         shopStateCode: bill.shopStateCodeSnapshot ?? invoice.shopStateCode,
         dueCollectionPaid: laterCollection,
+        lastDuePaymentAt: lastDuePaymentAt,
         balanceDue: bill.dueAmount,
         metalPaymentAllocations:
             await PosMetalSettlementRepository(_database).load(billId),
@@ -125,7 +133,8 @@ class SalesInvoicePaymentRevisionService {
           'format': format.name,
           'paidAmount': bill.paidAmount,
           'dueAmount': bill.dueAmount,
-          'paymentRevisionVersion': 2,
+          'lastDuePaymentAt': paymentDateText,
+          'paymentRevisionVersion': 3,
         },
       );
       return true;

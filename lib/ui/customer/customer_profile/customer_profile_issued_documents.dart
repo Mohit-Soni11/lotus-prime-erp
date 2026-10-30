@@ -1,7 +1,11 @@
 part of 'customer_profile_screen.dart';
 
 extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
-  Future<Uint8List?> _loadIssuedSalesInvoice(int billId, String billNo) {
+  Future<Uint8List?> _loadIssuedSalesInvoice(
+    int billId,
+    String billNo, {
+    bool notifyUnavailable = true,
+  }) {
     return _readArchivedDocument(
       read: () async {
         try {
@@ -23,6 +27,7 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
       },
       unavailableMessage:
           'The original issued PDF is not stored for this bill.',
+      notifyUnavailable: notifyUnavailable,
     );
   }
 
@@ -80,10 +85,13 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
   Future<Uint8List?> _readArchivedDocument({
     required Future<Uint8List?> Function() read,
     required String unavailableMessage,
+    bool notifyUnavailable = true,
   }) async {
     try {
       final bytes = await read();
-      if (bytes == null && mounted) _showInfoFeedback(unavailableMessage);
+      if (bytes == null && mounted && notifyUnavailable) {
+        _showInfoFeedback(unavailableMessage);
+      }
       return bytes;
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -91,7 +99,9 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
         error: error,
         stackTrace: stackTrace,
       );
-      if (mounted) _showInfoFeedback(unavailableMessage);
+      if (mounted && notifyUnavailable) {
+        _showInfoFeedback(unavailableMessage);
+      }
       return null;
     }
   }

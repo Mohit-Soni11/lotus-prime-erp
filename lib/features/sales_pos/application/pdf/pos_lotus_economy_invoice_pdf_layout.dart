@@ -338,6 +338,8 @@ class PosLotusEconomyInvoicePdfLayout {
 
   pw.Widget _totalsAndPayment(PosInvoiceModel invoice) {
     final payments = PosInvoiceFinancialBreakdown.payments(invoice);
+    final duePaymentDateLabel =
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(invoice);
     final status = PosInvoiceFinancialBreakdown.status(invoice);
     final summaryRows = PosInvoiceFinancialBreakdown.summaryRows(
       invoice,
@@ -373,6 +375,12 @@ class PosLotusEconomyInvoicePdfLayout {
                 strong: true,
                 valueColor: statusColor,
               ),
+              if (duePaymentDateLabel != null)
+                _keyLine(
+                  duePaymentDateLabel,
+                  _dateFormat.format(invoice.lastDuePaymentAt!),
+                  strong: true,
+                ),
               if (invoice.balanceDue > 0.005)
                 _keyLine(
                   'Balance Outstanding',

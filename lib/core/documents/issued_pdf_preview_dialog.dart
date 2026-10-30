@@ -6,10 +6,36 @@ import 'package:printing/printing.dart';
 
 Future<void> showIssuedPdfPreview({
   required BuildContext context,
-  required Uint8List pdfBytes,
+  Uint8List? pdfBytes,
+  Future<Uint8List?>? pdfBytesFuture,
   String title = 'Issued Invoice PDF',
 }) {
+  assert((pdfBytes == null) != (pdfBytesFuture == null));
   var scale = 1.0;
+  Widget pdfContent(Uint8List bytes, double readablePageWidth) => PdfPreview(
+        key: ValueKey((bytes, scale)),
+        build: (_) async => bytes,
+        shouldRepaint: true,
+        initialPageFormat: PdfPageFormat.a4,
+        allowPrinting: false,
+        allowSharing: false,
+        canChangeOrientation: false,
+        canChangePageFormat: false,
+        canDebug: false,
+        useActions: false,
+        maxPageWidth: readablePageWidth * scale,
+        dpi: (200 * scale).clamp(200, 300).toDouble(),
+        scrollViewDecoration: const BoxDecoration(
+          color: Color(0xFF111827),
+        ),
+        onError: (_, __) => const Center(
+          child: Text(
+            'PDF preview could not be displayed.',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      );
+
   return showDialog<void>(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.74),
@@ -23,29 +49,49 @@ Future<void> showIssuedPdfPreview({
           child: Stack(
             children: [
               Positioned.fill(
-                child: PdfPreview(
-                  key: ValueKey((pdfBytes, scale)),
-                  build: (_) async => pdfBytes,
-                  shouldRepaint: true,
-                  initialPageFormat: PdfPageFormat.a4,
-                  allowPrinting: false,
-                  allowSharing: false,
-                  canChangeOrientation: false,
-                  canChangePageFormat: false,
-                  canDebug: false,
-                  useActions: false,
-                  maxPageWidth: readablePageWidth * scale,
-                  dpi: (250 * scale).clamp(200, 375).toDouble(),
-                  scrollViewDecoration: const BoxDecoration(
-                    color: Color(0xFF111827),
-                  ),
-                  onError: (_, __) => const Center(
-                    child: Text(
-                      'PDF preview could not be displayed.',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
+                child: pdfBytes != null
+                    ? pdfContent(pdfBytes, readablePageWidth)
+                    : FutureBuilder<Uint8List?>(
+                        future: pdfBytesFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState !=
+                              ConnectionState.done) {
+                            return const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: Color(0xFFD8B331),
+                                  ),
+                                  SizedBox(height: 18),
+                                  Text(
+                                    'Opening issued invoice PDF...',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          final loadedBytes = snapshot.data;
+                          if (snapshot.hasError || loadedBytes == null) {
+                            return const Center(
+                              child: Text(
+                                'Issued invoice PDF could not be opened.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            );
+                          }
+                          return pdfContent(loadedBytes, readablePageWidth);
+                        },
+                      ),
               ),
               Positioned(
                 top: 18,

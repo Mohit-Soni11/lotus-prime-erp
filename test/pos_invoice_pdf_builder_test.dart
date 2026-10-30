@@ -924,6 +924,68 @@ void main() {
   });
 
   group('PosInvoiceFinancialBreakdown', () {
+    test('renders a due clearance date in every sales PDF design', () async {
+      final item = _saleItem(
+        metal: MetalType.gold,
+        description: 'Gold Ring',
+        purity: '22KT',
+        grossWeight: 1,
+        rate: 1000,
+      );
+      final invoice = _invoice(saleItems: [item]).copyWith(
+        cashPaid: 800,
+        dueCollectionPaid: 200,
+        lastDuePaymentAt: DateTime(2026, 10, 29),
+        balanceDue: 0,
+      );
+
+      for (final templateId in [
+        PrintTemplateRegistry.lotusClassic.id,
+        PrintTemplateRegistry.lotusEconomy.id,
+        PrintTemplateRegistry.lotusSignature.id,
+      ]) {
+        final bytes = await const PosInvoicePdfBuilder().build(
+          invoice: invoice,
+          options: PosInvoicePdfBuildOptions(
+            format: PrintFormat.a4,
+            copies: 1,
+            includeDuplicateStamp: false,
+            templateId: templateId,
+            metalPrintSettings: const {},
+          ),
+        );
+        expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+        expect(_pdfPageCount(bytes), greaterThan(0));
+      }
+      item.dispose();
+    });
+
+    test('labels the recorded due payment date by settlement state', () {
+      final paidAt = DateTime(2026, 10, 29);
+      final invoice = _invoice(saleItems: const []);
+      final partial = invoice.copyWith(
+        dueCollectionPaid: 100,
+        lastDuePaymentAt: paidAt,
+        balanceDue: 50,
+      );
+      final cleared = partial.copyWith(balanceDue: 0);
+
+      expect(
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(partial),
+        'Last Due Payment',
+      );
+      expect(
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(cleared),
+        'Due Cleared On',
+      );
+      expect(
+        PosInvoiceFinancialBreakdown.duePaymentDateLabel(
+          cleared.copyWith(lastDuePaymentAt: null),
+        ),
+        isNull,
+      );
+    });
+
     test('uses exact payment modes and due status from invoice data', () {
       final item = _saleItem(
         metal: MetalType.gold,
