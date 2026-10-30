@@ -75,16 +75,16 @@ class CustomerProfileColors {
   static const Color divider = Color(0xFFE8E3DA);
 
   // Advance orders
-  static const Color advanceBg = Color(0xFFF0F9FF);
-  static const Color advanceBorder = Color(0xFFBAE6FD);
-  static const Color advanceAccent = Color(0xFF0284C7);
+  static const Color advanceBg = Color(0xFFFFFBF0);
+  static const Color advanceBorder = Color(0xFFE8D69D);
+  static const Color advanceAccent = Color(0xFF9A6700);
   static const Color advancePendingBg = Color(0xFFFFF7ED);
   static const Color advancePendingText = Color(0xFFC2410C);
   static const Color advancePendingBdr = Color(0xFFFED7AA);
   static const Color advanceReadyBg = Color(0xFFF0FDF4);
   static const Color advanceReadyText = Color(0xFF166534);
   static const Color advanceReadyBdr = Color(0xFFBBF7D0);
-  static const Color advanceConvertBtn = Color(0xFF0284C7);
+  static const Color advanceConvertBtn = Color(0xFFD4AF37);
   static const Color advanceConvertText = Color(0xFFFFFFFF);
   static const Color advanceAmountColor = Color(0xFFD4AF37);
   static const Color advanceRemaining = Color(0xFFEF4444);

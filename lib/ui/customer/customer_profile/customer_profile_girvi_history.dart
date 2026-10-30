@@ -103,6 +103,56 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
                   ),
                 ],
               ),
+              if (loan.interestPaymentCount > 0) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: const Color(0xFF86EFAC)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.payments_rounded,
+                            size: 16,
+                            color: Color(0xFF047857),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Interest activity · ${loan.interestPaymentCount} '
+                            'payment${loan.interestPaymentCount == 1 ? '' : 's'}',
+                            style: const TextStyle(
+                              color: CustomerProfileColors.bodyTextMain,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (loan.lastInterestPaymentAt != null)
+                      Text(
+                        'Last paid ${DateFormat('dd MMM yyyy').format(loan.lastInterestPaymentAt!)}',
+                        style: const TextStyle(
+                          color: CustomerProfileColors.bodyTextMain,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 12),
               const Divider(height: 1, color: CustomerProfileColors.divider),
               const SizedBox(height: 10),
@@ -163,6 +213,43 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _girviDetail(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: CustomerProfileColors.bodyTextMain,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: CustomerProfileColors.bodyTextMain,
+          ),
+        ),
+      ],
     );
   }
 

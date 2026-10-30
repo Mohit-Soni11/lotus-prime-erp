@@ -10,82 +10,90 @@ extension _ProfileActionSheet on _CustomerProfileScreenState {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (sheetContext) {
-        return Container(
-          margin: const EdgeInsets.all(18),
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: CustomerProfileColors.bodyBorder),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.14),
-                blurRadius: 28,
-                offset: const Offset(0, 16),
-              ),
-            ],
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.88,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      color: CustomerProfileColors.brandGold.withValues(
-                        alpha: 0.12,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(
-                      Icons.manage_search_rounded,
-                      color: CustomerProfileColors.brandGold,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: CustomerProfileColors.bodyTextMain,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          subtitle,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: CustomerProfileColors.bodyTextMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(sheetContext).maybePop(),
-                    icon: const Icon(Icons.close_rounded),
+          child: SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.all(18),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: CustomerProfileColors.bodyBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.14),
+                    blurRadius: 28,
+                    offset: const Offset(0, 16),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              if (linkedDocuments.isNotEmpty) ...[
-                _linkedDocumentsPanel(linkedDocuments, sheetContext),
-                const SizedBox(height: 14),
-              ],
-              ...actions.map(
-                (action) => _recordActionTile(action, sheetContext),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        height: 44,
+                        width: 44,
+                        decoration: BoxDecoration(
+                          color: CustomerProfileColors.brandGold.withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.manage_search_rounded,
+                          color: CustomerProfileColors.brandGold,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: CustomerProfileColors.bodyTextMain,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: CustomerProfileColors.bodyTextMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(sheetContext).maybePop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (linkedDocuments.isNotEmpty) ...[
+                    _linkedDocumentsPanel(linkedDocuments, sheetContext),
+                    const SizedBox(height: 14),
+                  ],
+                  ...actions.map(
+                    (action) => _recordActionTile(action, sheetContext),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

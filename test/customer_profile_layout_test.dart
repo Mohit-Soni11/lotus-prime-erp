@@ -123,12 +123,109 @@ void main() {
     expect(find.text('Active Advance Orders'), findsNothing);
     expect(find.text('Account Ledgers'), findsNothing);
     expect(find.text('Pending Dues'), findsNothing);
+    expect(find.textContaining('Sales Bills ('), findsNothing);
+    expect(find.textContaining('Due Bills ('), findsNothing);
+    expect(find.text('No account activity yet'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('settled due disappears from tabs while sales history remains',
+      (tester) async {
+    final settled = CustomerBillModel(
+      id: 1,
+      billNo: 'INV-001',
+      totalAmount: 1000,
+      paidAmount: 1000,
+      status: 'PAID',
+      billDate: DateTime(2026, 8, 10),
+    );
+    await _pumpProfile(
+      tester,
+      const Size(1280, 900),
+      profile: _profile.copyWith(bills: [settled], dues: []),
+    );
+
+    expect(find.text('Sales Bills (1)'), findsOneWidget);
+    expect(find.textContaining('Due Bills ('), findsNothing);
+    expect(find.text('Active Girvi (1)'), findsOneWidget);
+    expect(find.text('Active Advances (1)'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('active Girvi shows recorded interest and relevant actions',
+      (tester) async {
+    final loan = CustomerLoanModel(
+      id: 1,
+      loanNo: 'GRV-001',
+      itemDesc: 'Gold ring',
+      grossWeight: 10,
+      loanAmount: 25000,
+      interestRate: 2,
+      startDate: DateTime(2026, 8, 12),
+      status: 'ACTIVE',
+      isManagedGirvi: true,
+      interestPaymentCount: 1,
+      lastInterestPaymentAt: DateTime(2026, 10, 29),
+    );
+    await _pumpProfile(
+      tester,
+      const Size(1280, 900),
+      profile: _profile.copyWith(loans: [loan]),
+    );
+    await tester.ensureVisible(find.text('Active Girvi (1)'));
+    await tester.tap(find.text('Active Girvi (1)'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(find.text('Interest activity · 1 payment'), findsOneWidget);
+    expect(find.text('Last paid 29 Oct 2026'), findsOneWidget);
+    await tester.tap(find.text('GRV-001'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Open Girvi Account'), findsOneWidget);
+    expect(find.text('Record Interest Payment'), findsOneWidget);
+    expect(find.text('Edit Girvi Ticket'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('editable Girvi ticket opens its edit callback', (tester) async {
+    final loan = CustomerLoanModel(
+      id: 42,
+      loanNo: 'GRV-DRAFT-42',
+      itemDesc: 'Gold chain',
+      grossWeight: 8,
+      loanAmount: 18000,
+      interestRate: 2,
+      startDate: DateTime(2026, 10, 29),
+      status: 'ACTIVE',
+      isManagedGirvi: true,
+      canEditGirvi: true,
+    );
+    int? openedLoanId;
+    await _pumpProfile(
+      tester,
+      const Size(1280, 900),
+      profile: _profile.copyWith(loans: [loan]),
+      onEditGirvi: (loanId) => openedLoanId = loanId,
+    );
+    await tester.ensureVisible(find.text('Active Girvi (1)'));
+    await tester.tap(find.text('Active Girvi (1)'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.tap(find.text('GRV-DRAFT-42'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('Edit Girvi Ticket'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(openedLoanId, 42);
     expect(tester.takeException(), isNull);
   });
 }
 
 Future<void> _pumpProfile(WidgetTester tester, Size size,
-    {CustomerProfileModel? profile}) async {
+    {CustomerProfileModel? profile, Function(int)? onEditGirvi}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -139,6 +236,7 @@ Future<void> _pumpProfile(WidgetTester tester, Size size,
       customerId: 1,
       repository: _ProfileRepository(profile ?? _profile),
       onBack: () {},
+      onEditGirvi: onEditGirvi,
     ),
   ));
   await tester.pump();

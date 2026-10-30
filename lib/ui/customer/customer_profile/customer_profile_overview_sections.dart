@@ -100,7 +100,7 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
               duration: const Duration(milliseconds: 360),
               curve: Curves.easeOutCubic,
               alignment: 0.06);
-          _tabCtrl.animateTo(0);
+          _selectFirstHistoryTab();
         },
       ),
       CustomerProfileActionBtn(

@@ -51,12 +51,14 @@ class GirviAccountDetailScreen extends StatefulWidget {
   final int loanId;
   final VoidCallback onBack;
   final String? returnTo;
+  final int? returnCustomerId;
 
   const GirviAccountDetailScreen({
     super.key,
     required this.loanId,
     required this.onBack,
     this.returnTo,
+    this.returnCustomerId,
   });
 
   @override
@@ -121,9 +123,13 @@ class _GirviAccountDetailScreenState extends State<GirviAccountDetailScreen> {
         queryParameters: {
           'ticketNo': account.loan.ticketNo,
           'returnTo': widget.returnTo == 'riskCollections' ||
-                  widget.returnTo == 'girviNotice'
+                  widget.returnTo == 'girviNotice' ||
+                  widget.returnTo == 'customerProfile'
               ? widget.returnTo!
               : 'girviLedger',
+          if (widget.returnTo == 'customerProfile' &&
+              widget.returnCustomerId != null)
+            'returnCustomerId': '${widget.returnCustomerId}',
         },
       ).toString(),
     );

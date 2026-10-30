@@ -77,6 +77,55 @@ void main() {
     expect(profile.activeLoans, 2);
   });
 
+  test('Girvi activity uses payment date and funded tickets are not editable',
+      () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Girvi Customer',
+            mobile: '9000000088',
+          ),
+        );
+    final loanId = await db.into(db.girviLoans).insert(
+          GirviLoansCompanion.insert(
+            ticketNo: 'GRV-ACTIVITY-1',
+            customerId: customerId,
+            itemDescription: 'Gold ring',
+            loanAmount: const Value(25000),
+            interestRate: const Value(2),
+            startDate: Value(DateTime(2026, 8, 1)),
+            lastInterestPaidDate: Value(DateTime(2026, 9, 1)),
+          ),
+        );
+    final repository = CustomerProfileRepository(db: db);
+    var loan = (await repository.fetchProfile(customerId))!.loans.single;
+    expect(loan.canEditGirvi, isTrue);
+    expect(loan.interestPaymentCount, 0);
+
+    await db.into(db.girviPayments).insert(
+          GirviPaymentsCompanion.insert(
+            girviId: loanId,
+            paymentType: GirviPaymentType.interest.dbValue,
+            paymentDate: Value(DateTime(2026, 10, 29)),
+            amount: const Value(500),
+          ),
+        );
+    await db.into(db.girviDisbursements).insert(
+          GirviDisbursementsCompanion.insert(
+            girviId: loanId,
+            sequenceNo: 1,
+            mode: 'CASH',
+            displayLabel: 'Cash',
+            amount: 25000,
+          ),
+        );
+
+    loan = (await repository.fetchProfile(customerId))!.loans.single;
+    expect(loan.interestPaymentCount, 1);
+    expect(loan.lastInterestPaymentAt, DateTime(2026, 10, 29));
+    expect(loan.lastInterestPaidDate, DateTime(2026, 9, 1));
+    expect(loan.canEditGirvi, isFalse);
+  });
+
   test('Girvi ledger separates capital given from active principal', () async {
     final customerId = await db.into(db.customers).insert(
           CustomersCompanion.insert(

@@ -65,8 +65,35 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
   void _showGirviActions(CustomerLoanModel loan) {
     _showRecordActionSheet(
       title: 'Girvi Ticket ${loan.loanNo}',
-      subtitle: 'View or print this pledged-loan receipt.',
+      subtitle: 'Review the ticket, account activity and interest payments.',
       actions: [
+        if (loan.isManagedGirvi)
+          CustomerProfileRecordAction(
+            icon: Icons.account_balance_wallet_rounded,
+            title: 'Open Girvi Account',
+            subtitle: 'View the complete pledge ledger and account status.',
+            color: const Color(0xFF7C3AED),
+            onTap: () => widget.onOpenGirviAccount?.call(loan.id),
+          ),
+        if (loan.isManagedGirvi && loan.isActive)
+          CustomerProfileRecordAction(
+            icon: Icons.payments_rounded,
+            title: 'Record Interest Payment',
+            subtitle: 'Open Interest Entry with this ticket selected.',
+            color: const Color(0xFF047857),
+            onTap: () => widget.onCollectGirviInterest?.call(
+              widget.customerId,
+              loan.loanNo,
+            ),
+          ),
+        if (loan.isManagedGirvi && loan.canEditGirvi)
+          CustomerProfileRecordAction(
+            icon: Icons.edit_note_rounded,
+            title: 'Edit Girvi Ticket',
+            subtitle: 'Edit this ticket before funds are issued.',
+            color: CustomerProfileColors.editText,
+            onTap: () => widget.onEditGirvi?.call(loan.id),
+          ),
         CustomerProfileRecordAction(
           icon: Icons.receipt_long_rounded,
           title: 'View Girvi Receipt',

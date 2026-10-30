@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 import '../../../core/documents/issued_pdf_preview_dialog.dart';
 import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
@@ -21,6 +22,7 @@ import 'customer_profile_information_tiles.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'customer_profile_overview_sections.dart';
+part 'customer_profile_history_tabs.dart';
 part 'customer_profile_bill_history.dart';
 part 'customer_profile_girvi_history.dart';
 part 'customer_profile_advance_history.dart';
@@ -38,6 +40,9 @@ class CustomerProfileScreen extends StatefulWidget {
   final VoidCallback? onBack;
   final Function(int customerId)? onNewSale;
   final Function(int billId)? onEditBill;
+  final Function(int loanId)? onEditGirvi;
+  final Function(int customerId, String ticketNo)? onCollectGirviInterest;
+  final Function(int loanId)? onOpenGirviAccount;
   final Function(int advanceOrderId)? onEditAdvance;
   final Function(int customerId, String billNo)? onCollectDue;
   final VoidCallback? onDeleted;
@@ -54,6 +59,9 @@ class CustomerProfileScreen extends StatefulWidget {
     this.onBack,
     this.onNewSale,
     this.onEditBill,
+    this.onEditGirvi,
+    this.onCollectGirviInterest,
+    this.onOpenGirviAccount,
     this.onEditAdvance,
     this.onCollectDue,
     this.onDeleted,
@@ -72,9 +80,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   late final AnimationController _pageAnim;
   late final Animation<double> _fadeIn;
 
-  // Sales, due, active Girvi, and active advances.
-  late final TabController _tabCtrl;
-
   final ScrollController _scrollCtrl = ScrollController();
   final GlobalKey _historyKey = GlobalKey();
   bool _deleteNavigationScheduled = false;
@@ -88,8 +93,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
       repo: widget.repository,
       onConvertAdvanceToSale: widget.onConvertAdvanceToSale,
     );
-
-    _tabCtrl = TabController(length: 4, vsync: this);
 
     _pageAnim = AnimationController(
       vsync: this,
@@ -123,7 +126,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     _logic.removeListener(_handleProfileStateChanged);
     _logic.dispose();
     _pageAnim.dispose();
-    _tabCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }
@@ -199,7 +201,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     _focusedInitialBillId = billId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _tabCtrl.animateTo(0);
+      _selectFirstHistoryTab();
       if (_scrollCtrl.hasClients) {
         _scrollCtrl.animateTo(
           _scrollCtrl.position.maxScrollExtent,

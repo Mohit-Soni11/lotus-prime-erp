@@ -137,6 +137,13 @@ class CustomerProfileRepository
           : await (_db.select(_db.girviPayments)
                 ..where((payment) => payment.girviId.isIn(girviIds)))
               .get();
+      final fundedGirviIds = girviIds.isEmpty
+          ? <int>{}
+          : (await (_db.select(_db.girviDisbursements)
+                    ..where((entry) => entry.girviId.isIn(girviIds)))
+                  .get())
+              .map((entry) => entry.girviId)
+              .toSet();
       final paymentsByLoan = <int, List<GirviPayment>>{};
       for (final payment in girviPayments) {
         paymentsByLoan.putIfAbsent(payment.girviId, () => []).add(payment);
@@ -162,6 +169,9 @@ class CustomerProfileRepository
           loan.ticketNo: _projectGirviLoan(
             loan,
             paymentsByLoan[loan.id] ?? const <GirviPayment>[],
+            canEditGirvi: !loan.invoiceGenerated &&
+                loan.status == 'ACTIVE' &&
+                !fundedGirviIds.contains(loan.id),
           ),
       };
       final loans = loansByNumber.values.toList()..sort(_compareCustomerLoans);
@@ -202,10 +212,13 @@ class CustomerProfileRepository
 
   CustomerLoanModel _projectGirviLoan(
     GirviLoan loan,
-    List<GirviPayment> payments,
-  ) {
+    List<GirviPayment> payments, {
+    required bool canEditGirvi,
+  }) {
     var legacyPrincipalRepaid = 0.0;
     var releasePrincipalSettled = 0.0;
+    var interestPaymentCount = 0;
+    DateTime? lastInterestPaymentAt;
     for (final payment in payments) {
       final type = GirviPaymentType.fromDb(payment.paymentType);
       if (type == GirviPaymentType.partialPrincipal) {
@@ -213,6 +226,13 @@ class CustomerProfileRepository
       } else if (type == GirviPaymentType.interest ||
           type == GirviPaymentType.partialInterest) {
         legacyPrincipalRepaid += payment.principalComponent;
+        if (payment.amount > 0.005) {
+          interestPaymentCount++;
+          if (lastInterestPaymentAt == null ||
+              payment.paymentDate.isAfter(lastInterestPaymentAt)) {
+            lastInterestPaymentAt = payment.paymentDate;
+          }
+        }
       } else if (type == GirviPaymentType.fullRelease) {
         releasePrincipalSettled +=
             payment.principalComponent + payment.principalDiscountComponent;
@@ -231,6 +251,10 @@ class CustomerProfileRepository
       interestRate: loan.interestRate,
       startDate: loan.startDate,
       lastInterestPaidDate: loan.lastInterestPaidDate,
+      lastInterestPaymentAt: lastInterestPaymentAt,
+      interestPaymentCount: interestPaymentCount,
+      isManagedGirvi: true,
+      canEditGirvi: canEditGirvi,
       status: loan.status,
       recordedInterestOutstanding: _girviInterestOutstanding(loan, payments),
     );

@@ -179,12 +179,9 @@ GoRouter createAppRouter() {
             key: state.pageKey,
             child: NewGirviScreen(
               editLoanId: editLoanId,
-              onBack: () => WorkspaceNavigation.backTo(
-                context,
-                returnCustomerId == null
-                    ? RoutePaths.dashboard
-                    : RoutePaths.customerProfileFor(returnCustomerId),
-              ),
+              onBack: () => returnCustomerId == null
+                  ? WorkspaceNavigation.backTo(context, RoutePaths.dashboard)
+                  : context.go(RoutePaths.customerProfileFor(returnCustomerId)),
             ),
           );
         },
@@ -193,17 +190,25 @@ GoRouter createAppRouter() {
         path: RoutePaths.girviInterest,
         pageBuilder: (context, state) {
           final returnTo = state.uri.queryParameters['returnTo'];
+          final returnCustomerId = int.tryParse(
+            state.uri.queryParameters['returnCustomerId'] ?? '',
+          );
           final fallbackPath = switch (returnTo) {
             'riskCollections' => RoutePaths.customerDefaulters,
             'girviNotice' => RoutePaths.girviNotice,
             'girviLedger' => RoutePaths.girviList,
+            'customerProfile' when returnCustomerId != null =>
+              RoutePaths.customerProfileFor(returnCustomerId),
             _ => RoutePaths.dashboard,
           };
           return WorkspaceTransitionPage(
             key: state.pageKey,
             child: InterestCalcScreen(
               initialTicketNo: state.uri.queryParameters['ticketNo'],
-              onBack: () => WorkspaceNavigation.backTo(context, fallbackPath),
+              onBack: () =>
+                  returnTo == 'customerProfile' && returnCustomerId != null
+                      ? context.go(fallbackPath)
+                      : WorkspaceNavigation.backTo(context, fallbackPath),
             ),
           );
         },
@@ -229,19 +234,29 @@ GoRouter createAppRouter() {
           final loanId =
               int.tryParse(state.pathParameters['loanId'] ?? '') ?? 0;
           final returnTo = state.uri.queryParameters['returnTo'];
+          final returnCustomerId = int.tryParse(
+            state.uri.queryParameters['returnCustomerId'] ?? '',
+          );
           return WorkspaceTransitionPage(
             key: state.pageKey,
             child: GirviAccountDetailScreen(
               loanId: loanId,
               returnTo: returnTo,
-              onBack: () => WorkspaceNavigation.backTo(
-                context,
-                switch (returnTo) {
+              returnCustomerId: returnCustomerId,
+              onBack: () {
+                final fallbackPath = switch (returnTo) {
                   'riskCollections' => RoutePaths.customerDefaulters,
                   'girviNotice' => RoutePaths.girviNotice,
+                  'customerProfile' when returnCustomerId != null =>
+                    RoutePaths.customerProfileFor(returnCustomerId),
                   _ => RoutePaths.girviList,
-                },
-              ),
+                };
+                if (returnTo == 'customerProfile' && returnCustomerId != null) {
+                  context.go(fallbackPath);
+                } else {
+                  WorkspaceNavigation.backTo(context, fallbackPath);
+                }
+              },
             ),
           );
         },
@@ -432,6 +447,34 @@ GoRouter createAppRouter() {
                     path: RoutePaths.salesPos,
                     queryParameters: {
                       'editBillId': '$billId',
+                      'returnCustomerId': '$id',
+                    },
+                  ).toString(),
+                ),
+                onEditGirvi: (loanId) => context.go(
+                  Uri(
+                    path: RoutePaths.girviNew,
+                    queryParameters: {
+                      'editLoanId': '$loanId',
+                      'returnCustomerId': '$id',
+                    },
+                  ).toString(),
+                ),
+                onCollectGirviInterest: (customerId, ticketNo) => context.go(
+                  Uri(
+                    path: RoutePaths.girviInterest,
+                    queryParameters: {
+                      'ticketNo': ticketNo,
+                      'returnTo': 'customerProfile',
+                      'returnCustomerId': '$customerId',
+                    },
+                  ).toString(),
+                ),
+                onOpenGirviAccount: (loanId) => context.go(
+                  Uri(
+                    path: '${RoutePaths.girviAccountBase}/$loanId',
+                    queryParameters: {
+                      'returnTo': 'customerProfile',
                       'returnCustomerId': '$id',
                     },
                   ).toString(),

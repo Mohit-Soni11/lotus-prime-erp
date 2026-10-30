@@ -16,6 +16,10 @@ class CustomerLoanModel {
   final double interestRate;
   final DateTime startDate;
   final DateTime? lastInterestPaidDate;
+  final DateTime? lastInterestPaymentAt;
+  final int interestPaymentCount;
+  final bool isManagedGirvi;
+  final bool canEditGirvi;
   final String status;
   final double? recordedInterestOutstanding;
 
@@ -30,6 +34,10 @@ class CustomerLoanModel {
     required this.interestRate,
     required this.startDate,
     this.lastInterestPaidDate,
+    this.lastInterestPaymentAt,
+    this.interestPaymentCount = 0,
+    this.isManagedGirvi = false,
+    this.canEditGirvi = false,
     required this.status,
     this.recordedInterestOutstanding,
   });
