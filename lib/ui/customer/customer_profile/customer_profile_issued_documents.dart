@@ -27,23 +27,42 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
     CustomerAdvanceOrderModel order,
   ) {
     return _readArchivedDocument(
-      read: () => _issuedInvoiceArchive.read(
-        IssuedInvoiceKind.booking,
-        order.id,
-        order.orderNo,
-      ),
-      unavailableMessage:
-          'The issued advance PDF is not stored for this order.',
+      read: () async {
+        final saved = await _issuedInvoiceArchive.read(
+          IssuedInvoiceKind.booking,
+          order.id,
+          order.orderNo,
+        );
+        if (saved != null) return saved;
+
+        final controller =
+            BookingInvoicePreviewController(orderIds: [order.id]);
+        try {
+          await controller.load();
+          return controller.pdfBytes;
+        } finally {
+          controller.dispose();
+        }
+      },
+      unavailableMessage: 'Advance receipt PDF could not be opened.',
     );
   }
 
   Future<Uint8List?> _loadIssuedGirviInvoice(CustomerLoanModel loan) {
     return _readArchivedDocument(
-      read: () => _girviInvoiceStore.readInvoice(
-        loanId: loan.id,
-        ticketNo: loan.loanNo,
-      ),
-      unavailableMessage: 'The issued Girvi PDF is not stored for this ticket.',
+      read: () async {
+        if (loan.isManagedGirvi) {
+          final draft = await _logic.fetchGirviInvoiceDraft(loan.id);
+          if (draft != null) {
+            return const GirviDocumentSetService().build(draft);
+          }
+        }
+        return _girviInvoiceStore.readInvoice(
+          loanId: loan.id,
+          ticketNo: loan.loanNo,
+        );
+      },
+      unavailableMessage: 'Girvi receipt PDF could not be opened.',
     );
   }
 

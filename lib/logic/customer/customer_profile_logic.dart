@@ -5,6 +5,7 @@
 
 import 'package:flutter/foundation.dart';
 import '../../models/customer/customer_profile/customer_profile_model.dart';
+import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../repositories/customer/customer_profile_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -68,6 +69,9 @@ class CustomerProfileLogic extends ChangeNotifier {
   }
 
   Future<void> refresh() => _load();
+
+  Future<GirviInvoiceDraft?> fetchGirviInvoiceDraft(int loanId) =>
+      _repo.fetchGirviInvoiceDraft(customerId: customerId, loanId: loanId);
 
   // Delete
   Future<bool> deleteCustomer() async {
