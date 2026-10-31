@@ -44,7 +44,8 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
             _printBillPdf(bill.id, bill.billNo);
           },
         ),
-        if (bill.dueAmount > 0.5)
+        if (BillDuePolicy.isEligibleBillStatus(bill.status) &&
+            bill.dueAmount > BillDuePolicy.financeVisibilityTolerance)
           CustomerProfileRecordAction(
             icon: Icons.payments_rounded,
             title: 'Collect Due',
@@ -160,7 +161,7 @@ extension _ProfileRecordActions on _CustomerProfileScreenState {
             subtitle: 'Carry this booking into the sales workspace.',
             color: CustomerProfileColors.advanceConvertBtn,
             onTap: () {
-              _logic.triggerConvertAdvanceToSale(order.id);
+              widget.onConvertAdvanceToSale?.call(order.id, widget.customerId);
             },
           ),
         if ((order.isPending || order.isReady) &&

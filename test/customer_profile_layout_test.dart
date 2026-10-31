@@ -257,6 +257,43 @@ void main() {
     expect(selectedCustomerId, 1);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('changing customer ID replaces the displayed profile',
+      (tester) async {
+    final repository = _ProfileRepository(_profile);
+    await tester.pumpWidget(MaterialApp(
+      home: CustomerProfileScreen(
+        customerId: 1,
+        repository: repository,
+        onBack: () {},
+      ),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('Reyansh Soni'), findsWidgets);
+
+    final nextProfile = CustomerProfileModel(
+      id: 2,
+      name: 'Second Customer',
+      mobile: '9000000000',
+      createdAt: DateTime(2026, 10, 1),
+      initials: 'SC',
+    );
+    repository.result = nextProfile;
+    await tester.pumpWidget(MaterialApp(
+      home: CustomerProfileScreen(
+        customerId: 2,
+        repository: repository,
+        onBack: () {},
+      ),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('Second Customer'), findsWidgets);
+    expect(find.text('Reyansh Soni'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpProfile(WidgetTester tester, Size size,
@@ -380,7 +417,7 @@ final _profile = CustomerProfileModel(
 class _ProfileRepository extends CustomerProfileRepository {
   _ProfileRepository(this.result);
 
-  final CustomerProfileModel result;
+  CustomerProfileModel result;
 
   @override
   Future<CustomerProfileModel?> fetchProfile(int customerId) async => result;

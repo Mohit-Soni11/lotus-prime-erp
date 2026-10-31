@@ -8,17 +8,9 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
   }) {
     return _readArchivedDocument(
       read: () async {
-        try {
-          await SalesInvoicePaymentRevisionService(
-            archive: _issuedInvoiceArchive,
-          ).synchronize(billId, billNo);
-        } catch (error, stackTrace) {
-          AppLogger.warning(
-            'Sales payment PDF revision could not be synchronized.',
-            error: error,
-            stackTrace: stackTrace,
-          );
-        }
+        await SalesInvoicePaymentRevisionService(
+          archive: _issuedInvoiceArchive,
+        ).synchronize(billId, billNo);
         return _issuedInvoiceArchive.read(
           IssuedInvoiceKind.sales,
           billId,
@@ -26,7 +18,7 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
         );
       },
       unavailableMessage:
-          'The original issued PDF is not stored for this bill.',
+          'The issued sales PDF is unavailable or could not be updated.',
       notifyUnavailable: notifyUnavailable,
     );
   }
@@ -34,38 +26,24 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
   Future<Uint8List?> _loadIssuedBookingInvoice(
     CustomerAdvanceOrderModel order,
   ) {
-    return _readOrBuildDocument(
+    return _readArchivedDocument(
       read: () => _issuedInvoiceArchive.read(
         IssuedInvoiceKind.booking,
         order.id,
         order.orderNo,
       ),
-      build: () async {
-        final controller =
-            BookingInvoicePreviewController(orderIds: [order.id]);
-        try {
-          await controller.load();
-          return controller.pdfBytes;
-        } finally {
-          controller.dispose();
-        }
-      },
-      unavailableMessage: 'Booking invoice PDF could not be opened.',
+      unavailableMessage:
+          'The issued advance PDF is not stored for this order.',
     );
   }
 
   Future<Uint8List?> _loadIssuedGirviInvoice(CustomerLoanModel loan) {
-    return _readOrBuildDocument(
+    return _readArchivedDocument(
       read: () => _girviInvoiceStore.readInvoice(
         loanId: loan.id,
         ticketNo: loan.loanNo,
       ),
-      build: () async {
-        final draft = await _logic.fetchGirviInvoiceDraft(loan.id);
-        if (draft == null) return null;
-        return const GirviDocumentSetService().build(draft);
-      },
-      unavailableMessage: 'Girvi invoice PDF could not be opened.',
+      unavailableMessage: 'The issued Girvi PDF is not stored for this ticket.',
     );
   }
 
@@ -89,6 +67,7 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
   }) async {
     try {
       final bytes = await read();
+      if (bytes != null) IssuedInvoiceArchive.validatePdf(bytes);
       if (bytes == null && mounted && notifyUnavailable) {
         _showInfoFeedback(unavailableMessage);
       }
@@ -102,38 +81,6 @@ extension _ProfileIssuedDocuments on _CustomerProfileScreenState {
       if (mounted && notifyUnavailable) {
         _showInfoFeedback(unavailableMessage);
       }
-      return null;
-    }
-  }
-
-  Future<Uint8List?> _readOrBuildDocument({
-    required Future<Uint8List?> Function() read,
-    required Future<Uint8List?> Function() build,
-    required String unavailableMessage,
-  }) async {
-    try {
-      Uint8List? savedBytes;
-      try {
-        savedBytes = await read();
-      } catch (error, stackTrace) {
-        AppLogger.warning(
-          'Issued PDF archive could not be read.',
-          error: error,
-          stackTrace: stackTrace,
-        );
-      }
-      final bytes = savedBytes ?? await build();
-      if (bytes == null && mounted) {
-        _showInfoFeedback(unavailableMessage);
-      }
-      return bytes;
-    } catch (error, stackTrace) {
-      AppLogger.error(
-        'Customer profile PDF preview could not be loaded.',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      if (mounted) _showInfoFeedback(unavailableMessage);
       return null;
     }
   }

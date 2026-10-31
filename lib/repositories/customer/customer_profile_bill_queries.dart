@@ -2,121 +2,6 @@ part of 'customer_profile_repository.dart';
 
 mixin _CustomerProfileBillQueries {
   AppDatabase get _db;
-  SalesBillEditAudit get _billEditAudit;
-  Future<CustomerBillDetailModel?> fetchBillDetails({
-    required int customerId,
-    required int billId,
-  }) async {
-    try {
-      await _db.ensureReturnReversalSchema();
-      final bill = await (_db.select(_db.bills)
-            ..where(
-                (t) => t.id.equals(billId) & t.customerId.equals(customerId)))
-          .getSingleOrNull();
-      if (bill == null) return null;
-      final editedBillIds = await _billEditAudit.editedBillIds([bill.id]);
-
-      final itemRows = await (_db.select(_db.billItems)
-            ..where((t) => t.billId.equals(billId))
-            ..orderBy([(t) => OrderingTerm(expression: t.lineNo)]))
-          .get();
-
-      final returnMarkers = await _fetchBillReturnMarkers([bill.id]);
-      final returnMarker = returnMarkers[bill.id];
-      final linkedDocuments = await _fetchBillLinkedDocuments([bill.id]);
-      final billModel = CustomerBillModel(
-        id: bill.id,
-        billNo: bill.billNo,
-        totalAmount: bill.finalAmount,
-        paidAmount: bill.paidAmount,
-        recordedDueAmount: _authoritativeBillDueAmount(bill),
-        status: bill.status,
-        paymentStatus: bill.paymentStatus,
-        billDate: bill.billDate,
-        sourceAdvanceOrderId: bill.sourceAdvanceOrderId,
-        sourceAdvanceOrderNo: bill.sourceAdvanceOrderNo,
-        lineCount: itemRows.length,
-        returnedLineCount: returnMarker?.lineCount ?? 0,
-        returnedAmount: returnMarker?.amount ?? 0,
-        returnVoucherNo: returnMarker?.voucherNo ?? '',
-        isModified: editedBillIds.contains(bill.id),
-        grossAmount: bill.totalAmount,
-        discountAmount: bill.discount,
-        taxableAmount: bill.taxableAmount,
-        cgstAmount: bill.cgstAmount,
-        sgstAmount: bill.sgstAmount,
-        igstAmount: bill.igstAmount,
-        gstAmount: bill.gstAmount,
-        makingTotal: bill.makingTotal,
-        roundOffAmount: bill.roundOffAmount,
-        tradeInDeduction: bill.tradeInDeduction,
-        cashPaid: bill.cashPaid,
-        upiPaid: bill.upiPaid,
-        cardPaid: bill.cardPaid,
-        advancePaid: bill.advancePaid,
-        billingMode: bill.billingMode,
-        documentType: bill.documentType,
-        gstPricingMode: bill.gstPricingMode,
-        taxTreatment: bill.taxTreatment,
-        placeOfSupply: bill.placeOfSupplySnapshot ?? '',
-        linkedDocuments: linkedDocuments[bill.id] ?? const [],
-      );
-
-      final returnLineMarkers = await _fetchBillReturnLineMarkers(bill.id);
-      final items = itemRows.map(
-        (item) {
-          final marker = returnLineMarkers[item.lineNo];
-          return CustomerBillLineItemModel(
-            lineNo: item.lineNo,
-            metalType: item.metalType,
-            itemName: item.itemName,
-            hsnCode: item.hsnCode ?? '',
-            huid: item.huid,
-            purity: item.purity,
-            quantity: item.quantity,
-            quantityUnitCode: item.quantityUnitCode,
-            grossWeight: item.grossWeight,
-            lessWeight: item.lessWeight,
-            netWeight: item.netWeight,
-            rate: item.rate,
-            makingChargeType: item.makingChargeType,
-            makingChargeInput: item.makingChargeInput,
-            makingCharge: item.makingCharge,
-            itemTotal: item.itemTotal,
-            taxableAmount: item.taxableAmountSnapshot,
-            gstRate: item.gstRateSnapshot,
-            cgstAmount: item.cgstAmountSnapshot,
-            sgstAmount: item.sgstAmountSnapshot,
-            igstAmount: item.igstAmountSnapshot,
-            gstAmount: item.gstAmountSnapshot,
-            invoiceValue: item.invoiceValueSnapshot,
-            isReturned: marker != null,
-            returnVoucherNo: marker?.voucherNo ?? '',
-            returnedValue: marker?.amount ?? 0,
-          );
-        },
-      ).toList();
-      final existingLineNumbers = itemRows.map((item) => item.lineNo).toSet();
-      items.addAll(
-        await _fetchRecoveredBillItemsFromReturnLines(
-          billId: bill.id,
-          existingLineNumbers: existingLineNumbers,
-        ),
-      );
-      items.sort((a, b) => a.lineNo.compareTo(b.lineNo));
-
-      return CustomerBillDetailModel(
-        bill: billModel,
-        customerName: bill.customerName ?? 'Walk-in Customer',
-        customerMobile: bill.mobile ?? '',
-        items: items,
-      );
-    } catch (e) {
-      AppLogger.error("Customer bill details fetch error: $e");
-      return null;
-    }
-  }
-
   Future<Map<int, _BillReturnMarker>> _fetchBillReturnMarkers(
     List<int> billIds,
   ) async {
@@ -266,111 +151,6 @@ mixin _CustomerProfileBillQueries {
     }
   }
 
-  Future<Map<int, _BillReturnLineMarker>> _fetchBillReturnLineMarkers(
-    int billId,
-  ) async {
-    try {
-      final rows = await _db.customSelect(
-        '''
-        SELECT
-          l.source_line_no,
-          COALESCE(MIN(v.voucher_no), '') AS voucher_no,
-          COALESCE(SUM(l.line_return_value), 0.0) AS returned_amount
-        FROM return_voucher_lines l
-        INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
-        WHERE l.source_type = 'SALES_INVOICE'
-          AND l.source_id = ?
-          AND l.status <> 'VOIDED'
-          AND v.status <> 'VOIDED'
-        GROUP BY l.source_line_no
-        ''',
-        variables: [Variable.withInt(billId)],
-      ).get();
-
-      return {
-        for (final row in rows)
-          row.read<int>('source_line_no'): _BillReturnLineMarker(
-            voucherNo: row.readNullable<String>('voucher_no') ?? '',
-            amount: _readDouble(row, 'returned_amount'),
-          ),
-      };
-    } catch (e) {
-      AppLogger.error("Customer bill return line marker fetch error: $e");
-      rethrow;
-    }
-  }
-
-  Future<List<CustomerBillLineItemModel>>
-      _fetchRecoveredBillItemsFromReturnLines({
-    required int billId,
-    required Set<int> existingLineNumbers,
-  }) async {
-    try {
-      final rows = await _db.customSelect(
-        '''
-        SELECT
-          l.source_line_no,
-          COALESCE(MIN(v.voucher_no), '') AS voucher_no,
-          COALESCE(MAX(l.metal_type), '') AS metal_type,
-          COALESCE(MAX(l.item_description), '') AS item_description,
-          COALESCE(MAX(l.huid), '') AS huid,
-          COALESCE(MAX(l.quantity), 1) AS quantity,
-          COALESCE(MAX(l.quantity_unit_code), 'PCS') AS quantity_unit_code,
-          COALESCE(MAX(l.purity), '') AS purity,
-          COALESCE(MAX(l.sold_net_weight), 0.0) AS sold_net_weight,
-          COALESCE(MAX(l.rate), 0.0) AS rate,
-          COALESCE(MAX(l.sold_item_value), 0.0) AS sold_item_value,
-          COALESCE(MAX(l.available_making_amount), 0.0) AS making_amount,
-          COALESCE(SUM(l.line_return_value), 0.0) AS returned_amount
-        FROM return_voucher_lines l
-        INNER JOIN return_vouchers v ON v.id = l.return_voucher_id
-        WHERE l.source_type = 'SALES_INVOICE'
-          AND l.source_id = ?
-          AND l.status <> 'VOIDED'
-          AND v.status <> 'VOIDED'
-        GROUP BY l.source_line_no
-        ORDER BY l.source_line_no ASC
-        ''',
-        variables: [Variable.withInt(billId)],
-      ).get();
-
-      final recovered = <CustomerBillLineItemModel>[];
-      for (final row in rows) {
-        final lineNo = row.read<int>('source_line_no');
-        if (existingLineNumbers.contains(lineNo)) continue;
-        final itemTotal = _readDouble(row, 'sold_item_value');
-        final netWeight = _readDouble(row, 'sold_net_weight');
-        recovered.add(
-          CustomerBillLineItemModel(
-            lineNo: lineNo,
-            metalType: row.readNullable<String>('metal_type') ?? 'GOLD',
-            itemName:
-                row.readNullable<String>('item_description') ?? 'Invoice Item',
-            hsnCode: '',
-            huid: row.readNullable<String>('huid'),
-            purity: row.readNullable<String>('purity'),
-            quantity: row.readNullable<int>('quantity') ?? 1,
-            quantityUnitCode:
-                row.readNullable<String>('quantity_unit_code') ?? 'PCS',
-            grossWeight: netWeight,
-            netWeight: netWeight,
-            rate: _readDouble(row, 'rate'),
-            makingCharge: _readDouble(row, 'making_amount'),
-            itemTotal: itemTotal,
-            invoiceValue: itemTotal,
-            isReturned: true,
-            returnVoucherNo: row.readNullable<String>('voucher_no') ?? '',
-            returnedValue: _readDouble(row, 'returned_amount'),
-          ),
-        );
-      }
-      return recovered;
-    } catch (e) {
-      AppLogger.error("Recovered returned bill item fetch error: $e");
-      rethrow;
-    }
-  }
-
   double _readDouble(QueryRow row, String column) {
     try {
       return row.readNullable<double>(column) ?? 0;
@@ -393,7 +173,10 @@ mixin _CustomerProfileBillQueries {
 
   List<CustomerDueModel> _buildDues(List<CustomerBillModel> bills) {
     return bills
-        .where((bill) => !bill.isPaid && bill.dueAmount > 0)
+        .where((bill) =>
+            BillDuePolicy.isEligibleBillStatus(bill.status) &&
+            !bill.isPaid &&
+            bill.dueAmount > 0)
         .map(
           (bill) => CustomerDueModel(
             billId: bill.id,
@@ -419,15 +202,5 @@ class _BillReturnMarker {
     required this.lineCount,
     required this.amount,
     required this.voucherNo,
-  });
-}
-
-class _BillReturnLineMarker {
-  final String voucherNo;
-  final double amount;
-
-  const _BillReturnLineMarker({
-    required this.voucherNo,
-    required this.amount,
   });
 }

@@ -5,23 +5,18 @@
 
 import 'package:flutter/foundation.dart';
 import '../../models/customer/customer_profile/customer_profile_model.dart';
-import '../../models/girvi/girvi_invoice_draft.dart';
 import '../../repositories/customer/customer_profile_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
-enum ProfileState { loading, loaded, error, deleting, deleted, saving }
+enum ProfileState { loading, loaded, error, deleting, deleted }
 
 class CustomerProfileLogic extends ChangeNotifier {
   final CustomerProfileRepository _repo;
   final int customerId;
 
-  // Optional callback used when an advance order is converted to a sale.
-  final Function(int advanceOrderId, int customerId)? onConvertAdvanceToSale;
-
   CustomerProfileLogic({
     required this.customerId,
     CustomerProfileRepository? repo,
-    this.onConvertAdvanceToSale,
   }) : _repo = repo ?? CustomerProfileRepository() {
     _load();
   }
@@ -73,22 +68,6 @@ class CustomerProfileLogic extends ChangeNotifier {
   }
 
   Future<void> refresh() => _load();
-
-  Future<CustomerBillDetailModel?> fetchBillDetails(int billId) {
-    return _repo.fetchBillDetails(customerId: customerId, billId: billId);
-  }
-
-  Future<GirviInvoiceDraft?> fetchGirviInvoiceDraft(int loanId) {
-    return _repo.fetchGirviInvoiceDraft(
-      customerId: customerId,
-      loanId: loanId,
-    );
-  }
-
-  // Convert advance to new sale
-  void triggerConvertAdvanceToSale(int advanceOrderId) {
-    onConvertAdvanceToSale?.call(advanceOrderId, customerId);
-  }
 
   // Delete
   Future<bool> deleteCustomer() async {

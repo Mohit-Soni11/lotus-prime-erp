@@ -309,6 +309,127 @@ void main() {
     expect(profile.advanceOrders[1].totalAdvancePaid, 5000);
     expect(profile.advanceOrders.last.estimatedTotal, 65000);
     expect(profile.advanceOrders.last.remainingBalance, 53000);
+
+    await db.into(db.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'AJ-26-001',
+            customerId: Value(customerId),
+            sourceAdvanceOrderId: Value(readyOrderId),
+          ),
+        );
+    final afterConversion =
+        await CustomerProfileRepository(db: db).fetchProfile(customerId);
+    expect(afterConversion!.activeAdvanceCount, 1);
+    expect(afterConversion.totalAdvancePaid, 12000);
+    expect(afterConversion.advanceOrders[1].isConvertedToSale, isTrue);
+    expect(afterConversion.advanceOrders[1].isReady, isFalse);
+  });
+
+  test('cancelled bills do not inflate customer due ledger', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Reyansh Soni',
+            mobile: '9304479436',
+          ),
+        );
+    for (final (billNo, status, due) in [
+      ('AJ-26-001', 'ACTIVE', 200.0),
+      ('AJ-26-002', 'CANCELLED', 100.0),
+    ]) {
+      await db.into(db.bills).insert(
+            BillsCompanion.insert(
+              billNo: billNo,
+              customerId: Value(customerId),
+              finalAmount: Value(due),
+              dueAmount: Value(due),
+              paymentStatus: const Value('DUE'),
+              status: Value(status),
+            ),
+          );
+    }
+
+    final profile =
+        await CustomerProfileRepository(db: db).fetchProfile(customerId);
+    expect(profile!.totalBills, 2);
+    expect(profile.dueInvoiceCount, 1);
+    expect(profile.totalDueAmount, 200);
+    expect(profile.outstanding, 200);
+  });
+
+  test('customer with purchase or return vouchers cannot be deleted', () async {
+    await db.ensureReturnReversalSchema();
+    final purchaseCustomerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Purchase Customer',
+            mobile: '9000000001',
+          ),
+        );
+    await db.customStatement(
+      '''
+      INSERT INTO purchase_vouchers
+        (voucher_no, sequence_no, source_type, customer_id, party_name, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ''',
+      ['CP-001', 1, 'CUSTOMER', purchaseCustomerId, 'Purchase Customer', 1],
+    );
+    final repository = CustomerProfileRepository(db: db);
+    final purchaseResult = await repository.deleteCustomer(purchaseCustomerId);
+    expect(purchaseResult.deleted, isFalse);
+    expect(purchaseResult.message, contains('customer purchase voucher'));
+
+    final returnCustomerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Return Customer',
+            mobile: '9000000002',
+          ),
+        );
+    await db.customStatement(
+      '''
+      INSERT INTO return_vouchers
+        (voucher_no, operation_type, source_type, source_id, source_number,
+         customer_id, settlement_mode, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      [
+        'RV-001',
+        'SALES_RETURN',
+        'SALES_INVOICE',
+        1,
+        'AJ-001',
+        returnCustomerId,
+        'CASH_REFUND',
+        1,
+      ],
+    );
+    final returnResult = await repository.deleteCustomer(returnCustomerId);
+    expect(returnResult.deleted, isFalse);
+    expect(returnResult.message, contains('return voucher'));
+  });
+
+  test('customer with a delivery order cannot be deleted', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Delivery Customer',
+            mobile: '9000000003',
+          ),
+        );
+    await db.customStatement(
+      '''
+      INSERT INTO delivery_orders
+        (delivery_no, customer_id, customer_name, customer_mobile, item_name)
+      VALUES (?, ?, ?, ?, ?)
+      ''',
+      ['DO-001', customerId, 'Delivery Customer', '9000000003', 'Ring'],
+    );
+
+    final result =
+        await CustomerProfileRepository(db: db).deleteCustomer(customerId);
+    expect(result.deleted, isFalse);
+    expect(result.message, contains('delivery order'));
+    final customer = await (db.select(db.customers)
+          ..where((row) => row.id.equals(customerId)))
+        .getSingleOrNull();
+    expect(customer?.id, customerId);
   });
 
   test('customer profile marks bills with posted return vouchers', () async {
@@ -464,162 +585,5 @@ void main() {
     expect(bill.linkedDocuments.single.lineCount, 1);
     expect(bill.linkedDocuments.single.returnValue, 18050);
     expect(bill.linkedDocuments.single.statusLabel, 'POSTED');
-  });
-
-  test('customer bill details recover returned lines missing from bill items',
-      () async {
-    final customerId = await db.into(db.customers).insert(
-          CustomersCompanion.insert(
-            name: 'Reyansh Soni',
-            mobile: '9304479436',
-          ),
-        );
-
-    final billId = await db.into(db.bills).insert(
-          BillsCompanion.insert(
-            billNo: 'AJ-26-008',
-            customerId: Value(customerId),
-            customerName: const Value('Reyansh Soni'),
-            mobile: const Value('9304479436'),
-            totalAmount: const Value(49385.07),
-            discount: const Value(100),
-            taxableAmount: const Value(70001),
-            gstAmount: const Value(2100),
-            finalAmount: const Value(49385.07),
-            paidAmount: const Value(49385.07),
-            cashPaid: const Value(40000),
-            upiPaid: const Value(9385.07),
-            dueAmount: const Value(0),
-            paymentStatus: const Value('PAID'),
-            billDate: Value(DateTime(2026, 8, 22)),
-            status: const Value('PARTIALLY_RETURNED'),
-          ),
-        );
-
-    await db.into(db.billItems).insert(
-          BillItemsCompanion.insert(
-            billId: billId,
-            lineNo: const Value(1),
-            metalType: const Value('GOLD'),
-            itemName: 'NOSE PIN',
-            hsnCode: const Value('71131910'),
-            quantityUnitCode: const Value('PCS'),
-            purity: const Value('18KT'),
-            netWeight: const Value(1.269),
-            rate: const Value(12700),
-            makingChargeType: const Value('PERCENTAGE'),
-            makingChargeInput: const Value(12),
-            makingCharge: const Value(1934),
-            itemTotal: const Value(18050),
-            invoiceValueSnapshot: const Value(18050),
-          ),
-        );
-
-    await db.ensureReturnReversalSchema();
-    final createdAt = DateTime(2026, 9, 2, 11, 32).millisecondsSinceEpoch;
-    await db.customStatement(
-      '''
-      INSERT INTO return_vouchers (
-        voucher_no,
-        operation_type,
-        source_type,
-        source_id,
-        source_number,
-        customer_id,
-        customer_name,
-        mobile,
-        settlement_mode,
-        original_total_amount,
-        return_value,
-        status,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      [
-        'SR-26-00001',
-        'RETURN',
-        'SALES_INVOICE',
-        billId,
-        'AJ-26-008',
-        customerId,
-        'Reyansh Soni',
-        '9304479436',
-        'CASH_REFUND',
-        49385.07,
-        24000,
-        'POSTED',
-        createdAt,
-      ],
-    );
-    final voucherId =
-        (await db.customSelect('SELECT last_insert_rowid() AS id').getSingle())
-            .read<int>('id');
-
-    await db.customStatement(
-      '''
-      INSERT INTO return_voucher_lines (
-        return_voucher_id,
-        source_type,
-        source_id,
-        source_number,
-        source_line_no,
-        stock_disposition,
-        metal_type,
-        item_description,
-        quantity,
-        quantity_unit_code,
-        purity,
-        sold_net_weight,
-        received_net_weight,
-        rate,
-        sold_item_value,
-        adjusted_item_value,
-        available_making_amount,
-        making_returned_amount,
-        metal_return_amount,
-        line_return_value,
-        status,
-        created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      [
-        voucherId,
-        'SALES_INVOICE',
-        billId,
-        'AJ-26-008',
-        2,
-        'MELTING',
-        'SILVER',
-        'PAYAL',
-        1,
-        'PAIR',
-        '60',
-        100,
-        100,
-        220,
-        24000,
-        22000,
-        2000,
-        0,
-        22000,
-        22000,
-        'POSTED',
-        createdAt,
-      ],
-    );
-
-    final detail = await CustomerProfileRepository(db: db).fetchBillDetails(
-      customerId: customerId,
-      billId: billId,
-    );
-
-    expect(detail == null, isFalse);
-    expect(detail!.items.map((item) => item.lineNo), [1, 2]);
-    expect(detail.items.last.itemName, 'PAYAL');
-    expect(detail.items.last.unitLabel, '1 PAIR');
-    expect(detail.items.last.isReturned, isTrue);
-    expect(detail.items.last.returnVoucherNo, 'SR-26-00001');
-    expect(detail.bill.paymentLabel, 'SETTLED');
-    expect(detail.bill.linkedReturnValue, 24000);
   });
 }

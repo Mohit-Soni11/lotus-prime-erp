@@ -15,6 +15,14 @@ mixin _CustomerProfileAccountQueries {
           .get();
 
       final ids = orderRows.map((order) => order.id).toList(growable: false);
+      final convertedOrderIds = ids.isEmpty
+          ? <int>{}
+          : (await (_db.select(_db.bills)
+                    ..where((bill) => bill.sourceAdvanceOrderId.isIn(ids)))
+                  .get())
+              .map((bill) => bill.sourceAdvanceOrderId)
+              .whereType<int>()
+              .toSet();
       final advances = ids.isEmpty
           ? const <OrderAdvance>[]
           : await (_db.select(_db.orderAdvances)
@@ -48,6 +56,7 @@ mixin _CustomerProfileAccountQueries {
             lockedRate: order.lockedRate,
             bookingType: order.bookingType,
             status: AdvanceOrderStatus.fromString(order.status),
+            isConvertedToSale: convertedOrderIds.contains(order.id),
             deliveryDate: order.deliveryDate,
             notes: order.notes,
             totalAdvancePaid: totalAdvancePaid,

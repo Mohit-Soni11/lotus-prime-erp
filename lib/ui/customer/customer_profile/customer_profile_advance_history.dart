@@ -199,8 +199,10 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
                     SizedBox(
                       width: 210,
                       child: CustomerProfileConvertToSaleButton(
-                        onTap: () =>
-                            _logic.triggerConvertAdvanceToSale(order.id),
+                        onTap: () => widget.onConvertAdvanceToSale?.call(
+                          order.id,
+                          widget.customerId,
+                        ),
                       ),
                     ),
                   ],

@@ -51,7 +51,6 @@ class CustomerProfileRepository
   @override
   final AppDatabase _db;
   final CustomerMediaStore _mediaStore;
-  @override
   late final SalesBillEditAudit _billEditAudit = SalesBillEditAudit(_db);
 
   CustomerProfileRepository({AppDatabase? db, CustomerMediaStore? mediaStore})
@@ -98,32 +97,14 @@ class CustomerProfileRepository
             returnedAmount: returnMarker?.amount ?? 0,
             returnVoucherNo: returnMarker?.voucherNo ?? '',
             isModified: editedBillIds.contains(bill.id),
-            grossAmount: bill.totalAmount,
-            discountAmount: bill.discount,
-            taxableAmount: bill.taxableAmount,
-            cgstAmount: bill.cgstAmount,
-            sgstAmount: bill.sgstAmount,
-            igstAmount: bill.igstAmount,
-            gstAmount: bill.gstAmount,
-            makingTotal: bill.makingTotal,
-            roundOffAmount: bill.roundOffAmount,
-            tradeInDeduction: bill.tradeInDeduction,
-            cashPaid: bill.cashPaid,
-            upiPaid: bill.upiPaid,
-            cardPaid: bill.cardPaid,
-            advancePaid: bill.advancePaid,
-            billingMode: bill.billingMode,
-            documentType: bill.documentType,
-            gstPricingMode: bill.gstPricingMode,
-            taxTreatment: bill.taxTreatment,
-            placeOfSupply: bill.placeOfSupplySnapshot ?? '',
             linkedDocuments: linkedDocuments[bill.id] ?? const [],
           );
         },
       ).toList();
 
       final outstanding = bills
-          .where((bill) => !bill.isPaid)
+          .where((bill) =>
+              BillDuePolicy.isEligibleBillStatus(bill.status) && !bill.isPaid)
           .fold(0.0, (sum, bill) => sum + bill.dueAmount);
 
       final girviRows = await (_db.select(_db.girviLoans)
@@ -284,12 +265,19 @@ class CustomerProfileRepository
 
   Future<CustomerDeleteResult> deleteCustomer(int customerId) async {
     try {
+      await _db.ensureReturnReversalSchema();
       final blockers = <String>[];
       final billCount = await _countCustomerRows('bills', customerId);
       final girviCount = await _countCustomerRows('girvi_loans', customerId);
       final legacyLoanCount = await _countCustomerRows('loans', customerId);
       final salesOrderCount =
           await _countCustomerRows('sales_orders', customerId);
+      final deliveryOrderCount =
+          await _countCustomerRows('delivery_orders', customerId);
+      final purchaseVoucherCount =
+          await _countCustomerRows('purchase_vouchers', customerId);
+      final returnVoucherCount =
+          await _countCustomerRows('return_vouchers', customerId);
       final refundPayableCount =
           await _countCustomerRows('customer_refund_payables', customerId);
 
@@ -303,6 +291,21 @@ class CustomerProfileRepository
       if (salesOrderCount > 0) {
         blockers.add(
           '$salesOrderCount advance order${salesOrderCount == 1 ? '' : 's'}',
+        );
+      }
+      if (deliveryOrderCount > 0) {
+        blockers.add(
+          '$deliveryOrderCount delivery order${deliveryOrderCount == 1 ? '' : 's'}',
+        );
+      }
+      if (purchaseVoucherCount > 0) {
+        blockers.add(
+          '$purchaseVoucherCount customer purchase voucher${purchaseVoucherCount == 1 ? '' : 's'}',
+        );
+      }
+      if (returnVoucherCount > 0) {
+        blockers.add(
+          '$returnVoucherCount return voucher${returnVoucherCount == 1 ? '' : 's'}',
         );
       }
       if (refundPayableCount > 0) {

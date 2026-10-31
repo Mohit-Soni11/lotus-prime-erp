@@ -106,6 +106,7 @@ class CustomerAdvanceOrderModel {
   final double lockedRate;
   final String bookingType;
   final AdvanceOrderStatus status;
+  final bool isConvertedToSale;
   final DateTime? deliveryDate;
   final String? notes;
   final double totalAdvancePaid;
@@ -122,6 +123,7 @@ class CustomerAdvanceOrderModel {
     required this.lockedRate,
     required this.bookingType,
     required this.status,
+    this.isConvertedToSale = false,
     required this.totalAdvancePaid,
     required this.estimatedTotal,
     required this.createdAt,
@@ -129,9 +131,11 @@ class CustomerAdvanceOrderModel {
     this.notes,
   });
 
-  bool get isPending => status == AdvanceOrderStatus.pending;
-  bool get isReady => status == AdvanceOrderStatus.ready;
-  bool get isDelivered => status == AdvanceOrderStatus.delivered;
+  bool get isPending =>
+      !isConvertedToSale && status == AdvanceOrderStatus.pending;
+  bool get isReady => !isConvertedToSale && status == AdvanceOrderStatus.ready;
+  bool get isDelivered =>
+      isConvertedToSale || status == AdvanceOrderStatus.delivered;
   bool get isCancelled => status == AdvanceOrderStatus.cancelled;
 
   double get remainingBalance =>

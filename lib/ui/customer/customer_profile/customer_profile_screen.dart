@@ -7,10 +7,9 @@ import '../../../theme/customer/customer_profile/customer_profile_theme.dart';
 import '../../../logic/customer/customer_profile_logic.dart';
 import '../../../repositories/customer/customer_profile_repository.dart';
 import '../../../logic/girvi/girvi_invoice_document_store.dart';
-import '../../../logic/girvi/girvi_document_set_service.dart';
-import '../../../logic/booking_advance/booking_invoice_preview_controller.dart';
 import '../../../core/documents/issued_invoice_archive.dart';
 import '../../../features/sales_pos/application/documents/sales_invoice_payment_revision_service.dart';
+import '../../../features/finance/due_management/domain/services/bill_due_policy.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../models/customer/customer_profile/customer_profile_model.dart';
 import '../../../models/customer/customer_enums/customer_list_enums.dart';
@@ -76,7 +75,7 @@ class CustomerProfileScreen extends StatefulWidget {
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     with TickerProviderStateMixin {
-  late final CustomerProfileLogic _logic;
+  late CustomerProfileLogic _logic;
   final _issuedInvoiceArchive = const IssuedInvoiceArchive();
   final _girviInvoiceStore = const GirviInvoiceDocumentStore();
   late final AnimationController _pageAnim;
@@ -90,19 +89,36 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   @override
   void initState() {
     super.initState();
-    _logic = CustomerProfileLogic(
-      customerId: widget.customerId,
-      repo: widget.repository,
-      onConvertAdvanceToSale: widget.onConvertAdvanceToSale,
-    );
-
     _pageAnim = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
     _fadeIn = CurvedAnimation(parent: _pageAnim, curve: Curves.easeOut);
 
-    _logic.addListener(_handleProfileStateChanged);
+    _createLogic();
+  }
+
+  void _createLogic() {
+    _logic = CustomerProfileLogic(
+      customerId: widget.customerId,
+      repo: widget.repository,
+    )..addListener(_handleProfileStateChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomerProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.customerId == widget.customerId &&
+        oldWidget.repository == widget.repository) {
+      return;
+    }
+    _logic.removeListener(_handleProfileStateChanged);
+    _logic.dispose();
+    _pageAnim.reset();
+    _focusedInitialBillId = null;
+    _deleteNavigationScheduled = false;
+    if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
+    _createLogic();
   }
 
   void _handleProfileStateChanged() {
@@ -201,8 +217,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     if (targetBill == null) return;
 
     _focusedInitialBillId = billId;
+    final customerId = widget.customerId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted ||
+          widget.customerId != customerId ||
+          widget.initialBillId != billId) {
+        return;
+      }
       _selectFirstHistoryTab();
       if (_scrollCtrl.hasClients) {
         _scrollCtrl.animateTo(
