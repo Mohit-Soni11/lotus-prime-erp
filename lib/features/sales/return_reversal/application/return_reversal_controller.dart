@@ -17,6 +17,14 @@ class ReturnReversalController extends ChangeNotifier {
   final TextEditingController sourceDocumentNumberCtrl =
       TextEditingController();
   final TextEditingController customerAddressCtrl = TextEditingController();
+  bool _customerRequestedReturn = false;
+  bool get customerRequestedReturn => _customerRequestedReturn;
+
+  void setCustomerRequestedReturn(bool value) {
+    if (_customerRequestedReturn == value || _state.isProcessing) return;
+    _customerRequestedReturn = value;
+    notifyListeners();
+  }
 
   ReturnReversalController({
     required ReturnReversalRepository repository,
@@ -40,6 +48,7 @@ class ReturnReversalController extends ChangeNotifier {
   }
 
   void startNewWorkspace() {
+    _customerRequestedReturn = false;
     customerMobileCtrl.clear();
     customerNameCtrl.clear();
     sourceDocumentNumberCtrl.clear();
@@ -90,6 +99,7 @@ class ReturnReversalController extends ChangeNotifier {
     }
 
     sourceDocumentNumberCtrl.clear();
+    _customerRequestedReturn = false;
     _setState(
       _state.copyWith(
         operationType: operationType,
@@ -357,6 +367,11 @@ class ReturnReversalController extends ChangeNotifier {
           operationType: _state.operationType,
           sourceDocument: document,
           lines: lineInputs,
+          operatorNote:
+              _state.operationType == ReturnReversalOperationType.salesReturn &&
+                      _customerRequestedReturn
+                  ? 'Customer requested return'
+                  : '',
         ),
       );
       final summary = await _repository.fetchTransactionSummary();

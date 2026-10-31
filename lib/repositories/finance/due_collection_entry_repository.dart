@@ -10,6 +10,7 @@ import 'package:lotus_erp/core/documents/issued_invoice_archive.dart';
 import '../../models/finance/due_collection_entry/due_collection_entry_model.dart';
 import '../setting/shop_setup/shop_session_manager.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
+import '../../features/customer/category/data/customer_due_evidence_store.dart';
 
 class DueCollectionEntryRepository {
   final AppDatabase _db;
@@ -209,6 +210,8 @@ class DueCollectionEntryRepository {
     }
 
     try {
+      final dueEvidence = CustomerDueEvidenceStore(_db);
+      await dueEvidence.ensureSchema();
       final result = await _db.transaction(() async {
         final bill = await (_db.select(_db.bills)
               ..where((b) => b.id.equals(billId)))
@@ -274,6 +277,13 @@ class DueCollectionEntryRepository {
             promiseDate: Value(newDue <= 0.5 ? null : nextPromiseDate),
             updatedAt: Value(now),
           ),
+        );
+        await dueEvidence.recordCollection(
+          billId: bill.id,
+          customerId: bill.customerId,
+          originalPromise: bill.promiseDate,
+          collectedAt: now,
+          settled: newDue <= 0.5,
         );
 
         final receiptNo = mode == DueCollectionPaymentMode.cash

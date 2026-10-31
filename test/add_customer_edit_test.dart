@@ -55,8 +55,8 @@ void main() {
     expect(rows.single.name, 'Aman Raj Kumar');
     expect(rows.single.mobile, '9876543210');
     expect(rows.single.city, 'Patna');
-    expect(rows.single.customerTier, 'Regular');
-    expect(rows.single.type, 'Regular');
+    expect(rows.single.customerTier, 'Standard');
+    expect(rows.single.type, 'Standard');
   });
 
   test('Edit mode blocks a mobile number owned by another customer', () async {

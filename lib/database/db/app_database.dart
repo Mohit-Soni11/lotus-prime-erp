@@ -3245,6 +3245,8 @@ CREATE TABLE IF NOT EXISTS "stock_item_units" (
 
 const List<String> _stockItemUnitsIndexSql = [
   'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_stock_item" ON "stock_item_units" ("stock_item_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_purchase_line" ON "stock_item_units" ("purchase_voucher_item_id")',
+  'CREATE INDEX IF NOT EXISTS "idx_bill_items_stock_unit" ON "bill_items" ("linked_stock_unit_id")',
   'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_huid" ON "stock_item_units" ("huid")',
   'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_status" ON "stock_item_units" ("status")',
   'CREATE INDEX IF NOT EXISTS "idx_stock_item_units_item_name" ON "stock_item_units" ("item_name")',

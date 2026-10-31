@@ -17,6 +17,7 @@ import '../girvi/girvi_interest_payment_adjustments.dart';
 import '../sales_orders/pos/sales_bill_edit_audit.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'customer_media_store.dart';
+import '../../features/customer/category/data/customer_category_repository.dart';
 
 part 'customer_profile_bill_queries.dart';
 part 'customer_profile_girvi_queries.dart';
@@ -64,6 +65,9 @@ class CustomerProfileRepository
             ..where((t) => t.id.equals(customerId)))
           .getSingleOrNull();
       if (cust == null) return null;
+      final categoryRepository = CustomerCategoryRepository(_db);
+      final categoryScore = await categoryRepository.scoreFor(customerId);
+      await categoryRepository.persistCategories({customerId: categoryScore});
 
       final billRows = await (_db.select(_db.bills)
             ..where((t) => t.customerId.equals(customerId))
@@ -175,7 +179,8 @@ class CustomerProfileRepository
         state: cust.state ?? '',
         pincode: cust.pincode ?? '',
         country: cust.country,
-        type: cust.type,
+        type: categoryScore.category.value,
+        categoryScore: categoryScore,
         gender: CustomerGender.fromStored(cust.gender),
         createdAt: cust.createdAt,
         outstanding: outstanding,

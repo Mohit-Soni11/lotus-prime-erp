@@ -131,7 +131,7 @@ void main() {
     expect(
       await repository.saveCustomer(
         const AddCustomerFormModel(
-            firstName: 'First', customerTier: CustomerType.gold),
+            firstName: 'First', customerTier: CustomerType.elite),
       ),
       SaveResult.success,
     );
@@ -143,7 +143,7 @@ void main() {
     );
     final rows = await db.select(db.customers).get();
     expect(rows.every((row) => row.membershipId == null), isTrue);
-    expect(rows.every((row) => row.type == 'Regular'), isTrue);
+    expect(rows.every((row) => row.type == 'Standard'), isTrue);
     final first = rows.first;
     final form = await repository.fetchCustomerForEdit(first.id);
     expect(
@@ -157,10 +157,10 @@ void main() {
           ..where((row) => row.id.equals(first.id)))
         .getSingle();
     expect(updated.membershipId, isNull);
-    expect(updated.customerTier, 'Regular');
+    expect(updated.customerTier, 'Standard');
   });
 
-  test('editing a customer preserves the category already used by the profile',
+  test('editing a customer replaces legacy categories with computed Standard',
       () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
@@ -174,7 +174,7 @@ void main() {
     await (db.update(db.customers)..where((row) => row.id.equals(saved.id)))
         .write(const CustomersCompanion(type: Value('Gold')));
     final loaded = await repository.fetchCustomerForEdit(saved.id);
-    expect(loaded!.customerTier, CustomerType.gold);
+    expect(loaded!.customerTier, CustomerType.standard);
     expect(
         await repository.saveCustomer(
           loaded.copyWith(customerTier: CustomerType.elite),
@@ -182,8 +182,8 @@ void main() {
         ),
         SaveResult.success);
     final updated = await db.select(db.customers).getSingle();
-    expect(updated.type, 'Gold');
-    expect(updated.customerTier, 'Gold');
+    expect(updated.type, 'Standard');
+    expect(updated.customerTier, 'Standard');
   });
 
   test('v67 migration removes opening balance and repairs duplicate IDs',

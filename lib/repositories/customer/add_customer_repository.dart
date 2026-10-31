@@ -10,6 +10,7 @@ import 'package:lotus_erp/core/logging/app_logger.dart';
 import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../helpers/add_customer_/add_customer_form_validation.dart';
 import 'customer_media_store.dart';
+import '../../features/customer/category/data/customer_category_repository.dart';
 
 class AddCustomerRepository {
   final AppDatabase _db;
@@ -45,9 +46,8 @@ class AddCustomerRepository {
               ? customer.name.trim()
               : '';
       final whatsapp = customer.whatsapp?.trim() ?? '';
-      final tierLabel =
-          customer.type.trim().isEmpty ? customer.customerTier : customer.type;
-      final customerTier = CustomerType.fromString(tierLabel);
+      final customerTier =
+          (await CustomerCategoryRepository(_db).scoreFor(customerId)).category;
 
       return AddCustomerFormModel(
         entityType: entityType,
@@ -123,7 +123,8 @@ class AddCustomerRepository {
         }
         final savedTier = existing == null
             ? CustomerType.standard
-            : CustomerType.fromString(existing.type);
+            : (await CustomerCategoryRepository(_db).scoreFor(existing.id))
+                .category;
         final savedForm = form.copyWith(customerTier: savedTier);
         previousPhoto = existing?.profileImagePath;
         previousIdProof = existing?.idProofDocPath;

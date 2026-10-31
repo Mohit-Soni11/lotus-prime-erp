@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../logic/customer/add_customer_logic.dart';
 import '../../../models/customer/customer_enums/add_customer_enums.dart';
+import '../../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../../theme/customer/add_customer/add_customer_theme.dart';
 import 'add_customer_app_bar.dart';

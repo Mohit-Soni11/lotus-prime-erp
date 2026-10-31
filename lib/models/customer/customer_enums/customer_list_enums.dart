@@ -6,9 +6,8 @@
 
 enum CustomerFilter {
   all,
+  alert,
   standard,
-  silver,
-  gold,
   elite,
   today;
 
@@ -16,12 +15,10 @@ enum CustomerFilter {
     switch (this) {
       case CustomerFilter.all:
         return "All";
+      case CustomerFilter.alert:
+        return "Alert";
       case CustomerFilter.standard:
         return "Standard";
-      case CustomerFilter.silver:
-        return "Silver";
-      case CustomerFilter.gold:
-        return "Gold";
       case CustomerFilter.elite:
         return "Elite";
       case CustomerFilter.today:
@@ -62,12 +59,11 @@ enum CustomerListState {
 }
 
 enum CustomerType {
-  standard("Regular", "Standard"),
-  silver("Silver", "Silver"),
-  gold("Gold", "Gold"),
-  elite("VIP", "Elite");
+  standard("Standard", "Standard"),
+  alert("Alert", "Alert"),
+  elite("Elite", "Elite");
 
-  /// Stable database label. Keep this compatible with existing saved records.
+  /// Canonical database label. Legacy labels are accepted by fromString.
   final String value;
   final String displayLabel;
 
@@ -79,10 +75,10 @@ enum CustomerType {
       case 'vip':
       case 'elite':
         return CustomerType.elite;
+      case 'alert':
+        return CustomerType.alert;
       case 'gold':
-        return CustomerType.gold;
       case 'silver':
-        return CustomerType.silver;
       case 'standard':
       case 'regular':
       default:

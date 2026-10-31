@@ -50,34 +50,43 @@ extension _ProfileSupportWidgets on _CustomerProfileScreenState {
     final tier = profile.customerTier;
     final (accent, icon) = switch (tier) {
       CustomerType.standard => (const Color(0xFF2563EB), Icons.person_rounded),
-      CustomerType.silver => (const Color(0xFF475569), Icons.stars_rounded),
-      CustomerType.gold => (const Color(0xFFB77905), Icons.stars_rounded),
+      CustomerType.alert => (
+          const Color(0xFFDC2626),
+          Icons.priority_high_rounded
+        ),
       CustomerType.elite => (
           const Color(0xFF7C3AED),
           Icons.workspace_premium_rounded
         ),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [
-          accent.withValues(alpha: 0.18),
-          accent.withValues(alpha: 0.08),
-        ]),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.48)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, color: accent, size: 16),
-        const SizedBox(width: 6),
-        Flexible(
-            child: Text('${tier.displayLabel} Customer',
-                style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: CustomerProfileColors.bodyTextMain))),
-      ]),
-    );
+    final score = profile.categoryScore;
+    return Tooltip(
+        message: score == null
+            ? '${tier.displayLabel} Customer'
+          : score.explanation,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              accent.withValues(alpha: 0.18),
+              accent.withValues(alpha: 0.08),
+            ]),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: accent.withValues(alpha: 0.48)),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, color: accent, size: 16),
+            const SizedBox(width: 6),
+            Flexible(
+                child: Text(
+                    '${tier.displayLabel} Customer'
+                    '${score == null ? '' : ' • ${score.formattedPoints}/10'}',
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: CustomerProfileColors.bodyTextMain))),
+          ]),
+        ));
   }
 
   Widget _emptyState({

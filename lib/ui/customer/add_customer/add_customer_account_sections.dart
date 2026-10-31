@@ -185,16 +185,27 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
 
   Widget _buildBillingSection() {
     final tier = _logic.form.customerTier;
+    final accent = tier == CustomerType.alert
+        ? const Color(0xFFDC2626)
+        : tier == CustomerType.elite
+            ? const Color(0xFF7C3AED)
+            : const Color(0xFF2563EB);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E7),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE4C86B)),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
       child: Row(children: [
-        const Icon(Icons.workspace_premium_rounded,
-            color: Color(0xFF9C6D00), size: 24),
+        Icon(
+            tier == CustomerType.alert
+                ? Icons.priority_high_rounded
+                : tier == CustomerType.elite
+                    ? Icons.workspace_premium_rounded
+                    : Icons.verified_user_rounded,
+            color: accent,
+            size: 24),
         const SizedBox(width: 14),
         Expanded(
             child: Column(
@@ -208,8 +219,8 @@ extension _CustomerAccountSections on _AddCustomerScreenState {
             const SizedBox(height: 4),
             Text(
                 _isEditMode
-                    ? 'Saved category matches the customer profile.'
-                    : 'New customers start in the Standard category.',
+                    ? 'Category updates automatically from verified account activity.'
+                    : 'New customers start at 5/10 in the Standard category.',
                 style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

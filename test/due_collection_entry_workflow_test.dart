@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/customer/category/data/customer_category_repository.dart';
 import 'package:lotus_erp/models/finance/due_collection_entry/due_collection_entry_model.dart';
 import 'package:lotus_erp/repositories/customer/customer_list_repository.dart';
 import 'package:lotus_erp/repositories/customer/customer_profile_repository.dart';
@@ -16,6 +17,8 @@ void main() {
   test('cash due collection clears the bill across finance and customer flows',
       () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
+    final now = DateTime.now();
+    final originalPromise = now.add(const Duration(days: 5));
     final customerId = await _insertCustomer(db);
     final billId = await _insertDueBill(
       db,
@@ -24,6 +27,7 @@ void main() {
       finalAmount: 8000,
       paidAmount: 7000,
       dueAmount: 1000,
+      promiseDate: originalPromise,
     );
 
     try {
@@ -58,6 +62,14 @@ void main() {
       expect(bill.dueAmount, 0);
       expect(bill.paymentStatus, 'PAID');
       expect(bill.promiseDate, isNull);
+      final dueEvidence = await db.customSelect(
+        'SELECT original_promise_at, settled_at '
+        'FROM customer_due_settlement_evidence WHERE bill_id = ?',
+        variables: [drift.Variable.withInt(billId)],
+      ).getSingle();
+      expect(dueEvidence.read<int>('original_promise_at'),
+          originalPromise.millisecondsSinceEpoch ~/ 1000);
+      expect(dueEvidence.read<int>('settled_at'), isPositive);
 
       expect(
         (await collectionRepo.fetchDueBills()).map((item) => item.billNo),
@@ -90,6 +102,21 @@ void main() {
       expect(cashRows, hasLength(1));
       expect(cashRows.single.category, 'DUE_COLLECTION');
       expect(cashRows.single.referenceId, 'AJ-26-DUE-001#DUE#CASH');
+
+      await (db.update(db.bills)..where((bill) => bill.id.equals(billId)))
+          .write(BillsCompanion(
+        billDate: drift.Value(now.subtract(const Duration(days: 2))),
+      ));
+      await db.into(db.bills).insert(BillsCompanion.insert(
+            billNo: 'AJ-26-SECOND-VISIT',
+            customerId: drift.Value(customerId),
+            billDate: drift.Value(now),
+            paymentStatus: const drift.Value('PAID'),
+          ));
+      final score = await CustomerCategoryRepository(db).scoreFor(customerId);
+      expect(score.visitCount, 2);
+      expect(score.reasons.any((reason) => reason.label == 'Due paid on time'),
+          isTrue);
     } finally {
       await db.close();
     }
@@ -267,6 +294,7 @@ Future<int> _insertDueBill(
   required double dueAmount,
   String paymentStatus = 'PARTIAL',
   String status = 'ACTIVE',
+  DateTime? promiseDate,
 }) {
   return db.into(db.bills).insert(
         BillsCompanion.insert(
@@ -282,6 +310,7 @@ Future<int> _insertDueBill(
           cashPaid: drift.Value(paidAmount),
           dueAmount: drift.Value(dueAmount),
           billDate: drift.Value(DateTime(2026, 8, 23, 10)),
+          promiseDate: drift.Value(promiseDate),
           status: drift.Value(status),
         ),
       );

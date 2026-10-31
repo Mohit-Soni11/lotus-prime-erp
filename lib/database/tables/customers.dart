@@ -19,7 +19,7 @@ class Customers extends Table with BaseTable {
   TextColumn get name => text().withLength(min: 1, max: 200)();
   TextColumn get mobile => text().unique()();
   TextColumn get city => text().nullable()();
-  TextColumn get type => text().withDefault(const Constant('Regular'))();
+  TextColumn get type => text().withDefault(const Constant('Standard'))();
 
   // ── 1. ENTITY TYPE ───────────────────────────────────────────────────────
   TextColumn get entityType =>
@@ -55,7 +55,7 @@ class Customers extends Table with BaseTable {
 
   // ── 6. ACCOUNT & BILLING ─────────────────────────────────────────────────
   TextColumn get customerTier =>
-      text().withDefault(const Constant('Regular'))();
+      text().withDefault(const Constant('Standard'))();
   TextColumn get membershipId => text().nullable()();
 
   // ── 7. PREFERENCES ───────────────────────────────────────────────────────

@@ -493,8 +493,8 @@ class PosBillingController extends ChangeNotifier {
                   Value(placeOfSupplyName.isEmpty ? null : placeOfSupplyName),
               panNumber: Value(_nullableUpper(panCtrl.text)),
               gstNumber: Value(_nullableUpper(gstCtrl.text)),
-              type: const Value('Regular'),
-              customerTier: const Value('Regular'),
+              type: const Value('Standard'),
+              customerTier: const Value('Standard'),
               notes: enteredMobile.isEmpty
                   ? const Value(
                       'Created from New Sales quick add without mobile number.')

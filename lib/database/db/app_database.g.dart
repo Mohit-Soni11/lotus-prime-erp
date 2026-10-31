@@ -58,7 +58,7 @@ class $CustomersTable extends Customers
       'type', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('Regular'));
+      defaultValue: const Constant('Standard'));
   static const VerificationMeta _entityTypeMeta =
       const VerificationMeta('entityType');
   @override
@@ -193,7 +193,7 @@ class $CustomersTable extends Customers
       'customer_tier', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('Regular'));
+      defaultValue: const Constant('Standard'));
   static const VerificationMeta _membershipIdMeta =
       const VerificationMeta('membershipId');
   @override

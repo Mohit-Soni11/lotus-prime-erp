@@ -337,8 +337,8 @@ class PurchaseEntryController extends ChangeNotifier {
               panNumber: Value(identity.panNumber),
               idProofType: Value(identity.idProofType),
               idProofNumber: Value(identity.idProofNumber),
-              type: const Value('Regular'),
-              customerTier: const Value('Regular'),
+              type: const Value('Standard'),
+              customerTier: const Value('Standard'),
               notes: const Value('Created from Customer Metal Purchase.'),
             ),
           );

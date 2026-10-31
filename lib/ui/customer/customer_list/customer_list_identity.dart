@@ -97,31 +97,40 @@ class CustomerListIdentity extends StatelessWidget {
     final tier = customer.type;
     final icon = switch (tier) {
       CustomerType.elite => CustomerListIcons.vipBadge,
-      CustomerType.gold => Icons.star_rounded,
-      CustomerType.silver => Icons.star_half_rounded,
+      CustomerType.alert => Icons.priority_high_rounded,
       CustomerType.standard => CustomerListIcons.defaultAvatar,
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: tier == CustomerType.elite
-            ? CustomerListColors.vipBadgeBg
-            : CustomerListColors.regularBadgeBg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: CustomerListColors.bodyBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: CustomerListColors.bodyTextMain),
-          const SizedBox(width: 5),
-          Text(
-            compact ? tier.displayLabel : '${tier.displayLabel} Customer',
-            style: CustomerListStyles.regularBadge,
+    final accent = tier == CustomerType.alert
+        ? const Color(0xFFDC2626)
+        : tier == CustomerType.elite
+            ? const Color(0xFF7C3AED)
+            : const Color(0xFF2563EB);
+    return Tooltip(
+        message: customer.categoryScore == null
+            ? '${tier.displayLabel} Customer'
+          : customer.categoryScore!.explanation,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: accent.withValues(alpha: 0.45)),
           ),
-        ],
-      ),
-    );
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: accent),
+              const SizedBox(width: 5),
+              Text(
+                compact
+                    ? tier.displayLabel
+                    : '${tier.displayLabel} Customer'
+                        '${customer.categoryScore == null ? '' : ' • ${customer.categoryScore!.formattedPoints}/10'}',
+                style: CustomerListStyles.regularBadge,
+              ),
+            ],
+          ),
+        ));
   }
 
   Widget _buildMeta(

@@ -199,8 +199,13 @@ extension _ProfileOverviewSections on _CustomerProfileScreenState {
       CustomerProfileInformationTile(
         icon: Icons.workspace_premium_outlined,
         label: 'Customer Category',
-        value: '${profile.customerTier.displayLabel} Customer',
-        accent: const Color(0xFFB77905),
+        value: '${profile.customerTier.displayLabel} Customer'
+            '${profile.categoryScore == null ? '' : ' • ${profile.categoryScore!.formattedPoints}/10'}',
+        accent: profile.customerTier == CustomerType.alert
+            ? const Color(0xFFDC2626)
+            : profile.customerTier == CustomerType.elite
+                ? const Color(0xFF7C3AED)
+                : const Color(0xFF2563EB),
       ),
     ];
     return _buildSectionCard(

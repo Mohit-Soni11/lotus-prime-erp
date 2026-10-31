@@ -11,6 +11,7 @@ import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'customer_list_activity_loader.dart';
+import '../../features/customer/category/data/customer_category_repository.dart';
 
 class CustomerListRepository {
   final AppDatabase _db;
@@ -26,6 +27,8 @@ class CustomerListRepository {
             _db.bills,
             _db.salesOrders,
             _db.girviLoans,
+            _db.billItems,
+            _db.girviPayments,
           },
         )
         .watch()
@@ -39,7 +42,11 @@ class CustomerListRepository {
   }) async {
     try {
       final rows = await _db.select(_db.customers).get();
-      final models = await CustomerListActivityLoader(_db).load(rows);
+      final categoryRepository = CustomerCategoryRepository(_db);
+      final scores = await categoryRepository
+          .scoresFor(rows.map((customer) => customer.id));
+      await categoryRepository.persistCategories(scores);
+      final models = await CustomerListActivityLoader(_db).load(rows, scores);
       return filterAndSort(models, filter: filter, sort: sort);
     } catch (error, stackTrace) {
       AppLogger.error(
@@ -66,17 +73,13 @@ class CustomerListRepository {
     CustomerFilter filter,
   ) {
     switch (filter) {
+      case CustomerFilter.alert:
+        return customers
+            .where((customer) => customer.type == CustomerType.alert)
+            .toList();
       case CustomerFilter.standard:
         return customers
             .where((customer) => customer.type == CustomerType.standard)
-            .toList();
-      case CustomerFilter.silver:
-        return customers
-            .where((customer) => customer.type == CustomerType.silver)
-            .toList();
-      case CustomerFilter.gold:
-        return customers
-            .where((customer) => customer.type == CustomerType.gold)
             .toList();
       case CustomerFilter.elite:
         return customers

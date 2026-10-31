@@ -7,6 +7,7 @@
 import '../customer_enums/customer_list_enums.dart';
 import 'package:flutter/foundation.dart';
 import '../../../features/customer/domain/services/customer_address_formatter.dart';
+import '../../../features/customer/category/domain/customer_category_score.dart';
 
 @immutable
 class CustomerListItemModel {
@@ -24,6 +25,7 @@ class CustomerListItemModel {
   final String gstNumber;
   final String panNumber;
   final CustomerType type;
+  final CustomerCategoryScore? categoryScore;
   final int billCount;
   final int dueInvoiceCount;
   final int activeAdvanceCount;
@@ -50,6 +52,7 @@ class CustomerListItemModel {
     this.gstNumber = '',
     this.panNumber = '',
     required this.type,
+    this.categoryScore,
     required this.billCount,
     this.dueInvoiceCount = 0,
     this.activeAdvanceCount = 0,

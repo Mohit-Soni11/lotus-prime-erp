@@ -5,6 +5,7 @@ import 'customer_bill_models.dart';
 import 'customer_activity_models.dart';
 import '../customer_enums/customer_list_enums.dart';
 import '../../../features/customer/domain/services/customer_address_formatter.dart';
+import '../../../features/customer/category/domain/customer_category_score.dart';
 
 @immutable
 class CustomerProfileModel {
@@ -19,6 +20,7 @@ class CustomerProfileModel {
   final String pincode;
   final String country;
   final String type;
+  final CustomerCategoryScore? categoryScore;
   final CustomerGender gender;
   final DateTime createdAt;
   final double outstanding;
@@ -39,7 +41,8 @@ class CustomerProfileModel {
     this.state = '',
     this.pincode = '',
     this.country = 'India',
-    this.type = "Regular",
+    this.type = "Standard",
+    this.categoryScore,
     this.gender = CustomerGender.unknown,
     required this.createdAt,
     this.outstanding = 0.0,
@@ -124,6 +127,7 @@ class CustomerProfileModel {
       pincode: pincode,
       country: country,
       type: type ?? this.type,
+      categoryScore: categoryScore,
       gender: gender,
       createdAt: createdAt,
       outstanding: outstanding,

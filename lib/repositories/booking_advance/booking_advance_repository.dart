@@ -243,8 +243,8 @@ class BookingAdvanceRepository {
             addressLine1: Value(_nullable(address)),
             panNumber: Value(_nullableUpper(panNumber)),
             gstNumber: Value(_nullableUpper(gstNumber)),
-            type: const Value('Regular'),
-            customerTier: const Value('Regular'),
+            type: const Value('Standard'),
+            customerTier: const Value('Standard'),
             notes: cleanMobile.isEmpty
                 ? const Value('Created from Booking & Advance quick entry.')
                 : const Value.absent(),

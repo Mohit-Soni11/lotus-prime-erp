@@ -58,6 +58,34 @@ class _SummaryActions extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ],
+        if (state.operationType == ReturnReversalOperationType.salesReturn &&
+            state.selectedSourceDocument != null &&
+            state.lastProcessResult == null) ...[
+          CheckboxListTile(
+            value: controller.customerRequestedReturn,
+            onChanged: state.isProcessing
+                ? null
+                : (value) =>
+                    controller.setCustomerRequestedReturn(value ?? false),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            activeColor: SalesPosColors.brandGold,
+            title: Text(
+              'Customer requested return',
+              style: SalesPosStyles.bodyText.copyWith(
+                color: SalesPosColors.textDark,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            subtitle: Text(
+              'Mark only when the customer initiated it.',
+              style: SalesPosStyles.bodyText.copyWith(
+                color: SalesPosColors.textDark,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
         _PrimarySummaryButton(
           label: _buttonLabel,
           enabled: canProcess,

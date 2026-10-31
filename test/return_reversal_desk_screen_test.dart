@@ -587,6 +587,11 @@ void main() {
     await controller.searchRecords();
     await tester.pump();
 
+    expect(find.text('Customer requested return'), findsOneWidget);
+    await tester.tap(find.text('Customer requested return'));
+    await tester.pump();
+    expect(controller.customerRequestedReturn, isTrue);
+
     expect(controller.customerMobileCtrl.text, '9304479436');
     expect(controller.customerNameCtrl.text, 'REYANSH SONI');
     expect(find.text('LOADED : AJ-PUR-2026-0006'), findsNothing);
@@ -864,6 +869,7 @@ void main() {
     controller.sourceDocumentNumberCtrl.text = 'AJ-PUR-2026-0006';
     await controller.searchRecords();
     controller.addLineToReturnCart(1);
+    controller.setCustomerRequestedReturn(true);
     await controller.processReturn();
 
     expect(repository.lastRequest, isNotNull);
@@ -873,6 +879,7 @@ void main() {
         repository.lastRequest!.sourceDocument.documentNo, 'AJ-PUR-2026-0006');
     expect(repository.lastRequest!.lines, hasLength(1));
     expect(repository.lastRequest!.lines.single.sourceLineNo, 1);
+    expect(repository.lastRequest!.operatorNote, 'Customer requested return');
     expect(controller.state.returnCartLineItems, isEmpty);
     expect(controller.state.lastProcessResult?.voucherNo, 'SR-26-00099');
     expect(controller.state.processMessage, contains('SR-26-00099 posted'));

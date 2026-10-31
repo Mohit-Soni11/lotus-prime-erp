@@ -4,6 +4,7 @@ import '../../database/db/app_database.dart';
 import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../models/customer/customer_enums/customer_list_enums.dart';
 import '../../models/customer/customer_list/customer_list_ui_model.dart';
+import '../../features/customer/category/domain/customer_category_score.dart';
 
 /// Reads one aggregate row per customer from each transaction source.
 /// Transaction rows stay in SQLite instead of being materialized in Dart.
@@ -12,7 +13,10 @@ class CustomerListActivityLoader {
 
   final AppDatabase _db;
 
-  Future<List<CustomerListItemModel>> load(List<Customer> customers) async {
+  Future<List<CustomerListItemModel>> load(
+    List<Customer> customers,
+    Map<int, CustomerCategoryScore> scores,
+  ) async {
     final activity = {
       for (final customer in customers)
         customer.id: _CustomerActivity(customer),
@@ -22,7 +26,9 @@ class CustomerListActivityLoader {
     await _loadBills(activity);
     await _loadOrders(activity);
     await _loadGirvi(activity);
-    return activity.values.map((entry) => entry.toModel()).toList();
+    return activity.values
+        .map((entry) => entry.toModel(scores[entry.customer.id]))
+        .toList();
   }
 
   Future<void> _loadBills(Map<int, _CustomerActivity> activity) async {
@@ -229,7 +235,7 @@ class _CustomerActivity {
     _lastPriority = priority;
   }
 
-  CustomerListItemModel toModel() {
+  CustomerListItemModel toModel(CustomerCategoryScore? categoryScore) {
     final name =
         customer.name.trim().isEmpty ? 'Unknown Customer' : customer.name;
     return CustomerListItemModel(
@@ -244,7 +250,8 @@ class _CustomerActivity {
       country: customer.country,
       gstNumber: customer.gstNumber ?? '',
       panNumber: customer.panNumber ?? '',
-      type: CustomerType.fromString(customer.type),
+      type: categoryScore?.category ?? CustomerType.standard,
+      categoryScore: categoryScore,
       billCount: billCount,
       dueInvoiceCount: dueInvoiceCount,
       activeAdvanceCount: activeAdvanceCount,

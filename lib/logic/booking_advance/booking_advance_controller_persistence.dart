@@ -409,12 +409,12 @@ extension BookingAdvanceControllerPersistence on BookingAdvanceController {
       createdAt: now,
       name: displayName,
       mobile: cleanMobile,
-      type: 'Regular',
+      type: 'Standard',
       entityType: 'Individual',
       firstName: displayName,
       addressLine1: cityCtrl.text.trim().isEmpty ? null : cityCtrl.text.trim(),
       country: 'India',
-      customerTier: 'Regular',
+      customerTier: 'Standard',
     );
   }
 }
