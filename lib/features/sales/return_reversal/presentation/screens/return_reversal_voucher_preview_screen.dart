@@ -17,6 +17,8 @@ import 'package:lotus_erp/ui/sales_orders/sales_pos/pos_invoice_template_selecto
 
 part 'voucher_hub/parts/return_reversal_voucher_hub_actions.dart';
 part 'voucher_hub/parts/return_reversal_voucher_hub_controls.dart';
+part 'voucher_hub/parts/return_reversal_voucher_hub_format_widgets.dart';
+part 'voucher_hub/parts/return_reversal_voucher_hub_print_widgets.dart';
 part 'voucher_hub/parts/return_reversal_voucher_hub_header.dart';
 part 'voucher_hub/parts/return_reversal_voucher_hub_preview.dart';
 

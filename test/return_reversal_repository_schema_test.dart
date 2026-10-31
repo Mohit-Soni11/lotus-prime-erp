@@ -262,6 +262,52 @@ void main() {
     expect(vouchers.read<int>('count'), 0);
   });
 
+  test('changed sales payment cannot post from an old return snapshot',
+      () async {
+    final database = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = ReturnReversalDriftRepository(database);
+    await database.ensureReturnReversalSchema();
+    final customerId = await _insertCustomer(database);
+    final billId = await _insertSalesInvoice(
+      database,
+      customerId: customerId,
+    );
+    final reviewed =
+        await repository.findSourceDocumentByNumber('INV-RET-0001');
+    await (database.update(database.bills)
+          ..where((bill) => bill.id.equals(billId)))
+        .write(const BillsCompanion(
+      paidAmount: drift.Value(10500),
+      dueAmount: drift.Value(0),
+      paymentStatus: drift.Value('PAID'),
+    ));
+
+    await expectLater(
+      repository.processReturn(ReturnReversalProcessRequest(
+        operationType: ReturnReversalOperationType.salesReturn,
+        sourceDocument: reviewed!,
+        lines: const [
+          ReturnReversalProcessLineInput(
+            sourceLineNo: 1,
+            receivedNetWeight: 10,
+            huidMatched: true,
+            unitMatched: true,
+            includeMakingCharge: true,
+            stockDisposition: ReturnReversalStockDisposition.managerHold,
+          ),
+        ],
+      )),
+      throwsStateError,
+    );
+    final vouchers = await database
+        .customSelect(
+          'SELECT COUNT(*) AS count FROM return_vouchers',
+        )
+        .getSingle();
+    expect(vouchers.read<int>('count'), 0);
+  });
+
   test('processReturn posts voucher, restores linked unit, and credits ledger',
       () async {
     final database = AppDatabase.forTesting(NativeDatabase.memory());

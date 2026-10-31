@@ -1,0 +1,601 @@
+part of 'return_reversal_drift_repository.dart';
+
+extension _ReturnReversalSourceQueries on ReturnReversalDriftRepository {
+  Future<List<ReturnReversalSourceDocument>> _findSalesInvoicesByMobile(
+    String normalizedMobile,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        b.id,
+        b.bill_no,
+        b.customer_id,
+        COALESCE(NULLIF(b.customer_name, ''), c.name, '') AS customer_name,
+        COALESCE(NULLIF(b.mobile, ''), c.mobile, '') AS mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        b.bill_date,
+        b.total_amount,
+        b.discount,
+        b.taxable_amount,
+        b.cgst_amount,
+        b.sgst_amount,
+        b.igst_amount,
+        b.gst_amount,
+        b.making_total,
+        b.round_off_amount,
+        b.final_amount,
+        b.paid_amount,
+        b.cash_paid,
+        b.upi_paid,
+        b.card_paid,
+        b.advance_paid,
+        b.due_amount,
+        b.old_gold_deduction,
+        b.payment_status,
+        b.billing_mode,
+        b.gst_pricing_mode,
+        b.status
+      FROM bills b
+      LEFT JOIN customers c ON c.id = b.customer_id
+      WHERE REPLACE(REPLACE(COALESCE(NULLIF(b.mobile, ''), c.mobile, ''), ' ', ''), '-', '') = ?
+        AND b.status <> 'CANCELLED'
+      ORDER BY b.bill_date DESC, b.id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(normalizedMobile)],
+    ).get();
+
+    final documents = <ReturnReversalSourceDocument>[];
+    for (final row in rows) {
+      documents.add(await _mapSalesInvoice(row));
+    }
+    return documents;
+  }
+
+  Future<List<ReturnReversalSourceDocument>> _findSalesInvoicesByCustomerName(
+    String namePattern,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        b.id,
+        b.bill_no,
+        b.customer_id,
+        COALESCE(NULLIF(b.customer_name, ''), c.name, '') AS customer_name,
+        COALESCE(NULLIF(b.mobile, ''), c.mobile, '') AS mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        b.bill_date,
+        b.total_amount,
+        b.discount,
+        b.taxable_amount,
+        b.cgst_amount,
+        b.sgst_amount,
+        b.igst_amount,
+        b.gst_amount,
+        b.making_total,
+        b.round_off_amount,
+        b.final_amount,
+        b.paid_amount,
+        b.cash_paid,
+        b.upi_paid,
+        b.card_paid,
+        b.advance_paid,
+        b.due_amount,
+        b.old_gold_deduction,
+        b.payment_status,
+        b.billing_mode,
+        b.gst_pricing_mode,
+        b.status
+      FROM bills b
+      LEFT JOIN customers c ON c.id = b.customer_id
+      WHERE UPPER(TRIM(COALESCE(NULLIF(b.customer_name, ''), c.name, ''))) LIKE UPPER(?) ESCAPE '\\'
+        AND b.status <> 'CANCELLED'
+      ORDER BY b.bill_date DESC, b.id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(namePattern)],
+    ).get();
+
+    final documents = <ReturnReversalSourceDocument>[];
+    for (final row in rows) {
+      documents.add(await _mapSalesInvoice(row));
+    }
+    return documents;
+  }
+
+  Future<ReturnReversalSourceDocument?> _findSalesInvoiceByNumber(
+    String documentNumber,
+  ) async {
+    final row = await _database.customSelect(
+      '''
+      SELECT
+        b.id,
+        b.bill_no,
+        b.customer_id,
+        COALESCE(NULLIF(b.customer_name, ''), c.name, '') AS customer_name,
+        COALESCE(NULLIF(b.mobile, ''), c.mobile, '') AS mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        b.bill_date,
+        b.total_amount,
+        b.discount,
+        b.taxable_amount,
+        b.cgst_amount,
+        b.sgst_amount,
+        b.igst_amount,
+        b.gst_amount,
+        b.making_total,
+        b.round_off_amount,
+        b.final_amount,
+        b.paid_amount,
+        b.cash_paid,
+        b.upi_paid,
+        b.card_paid,
+        b.advance_paid,
+        b.due_amount,
+        b.old_gold_deduction,
+        b.payment_status,
+        b.billing_mode,
+        b.gst_pricing_mode,
+        b.status
+      FROM bills b
+      LEFT JOIN customers c ON c.id = b.customer_id
+      WHERE UPPER(TRIM(b.bill_no)) = UPPER(TRIM(?))
+        AND b.status <> 'CANCELLED'
+      LIMIT 1
+      ''',
+      variables: [drift.Variable.withString(documentNumber)],
+    ).getSingleOrNull();
+
+    return row == null ? null : _mapSalesInvoice(row);
+  }
+
+  Future<ReturnReversalSourceDocument> _mapSalesInvoice(
+    drift.QueryRow row,
+  ) async {
+    final billId = row.read<int>('id');
+    final items = await (_database.select(_database.billItems)
+          ..where((table) => table.billId.equals(billId))
+          ..orderBy([(table) => drift.OrderingTerm.asc(table.lineNo)]))
+        .get();
+    final reversalLines = await _reversalLinesFor(
+      sourceType: 'SALES_INVOICE',
+      sourceId: billId,
+    );
+    final billTotal = _readDouble(row, 'total_amount');
+    final billDiscount = _readDouble(row, 'discount');
+    final lines = <ReturnReversalSourceLineItem>[
+      for (final item in items)
+        ReturnReversalSourceLineItem(
+          sourceLineId: item.id,
+          lineNo: item.lineNo,
+          metalType: item.metalType,
+          description: item.itemName,
+          hsnCode: item.hsnCode ?? '',
+          purity: item.purity,
+          quantity: item.quantity,
+          quantityUnitCode: _normalizedUnitCode(
+            storedUnit: item.quantityUnitCode,
+            metalType: item.metalType,
+            itemName: item.itemName,
+          ),
+          grossWeight: item.grossWeight,
+          lessWeight: item.lessWeight,
+          lessWeightPerPiece: item.lessWeightPerPiece,
+          netWeight: item.netWeight,
+          fineWeight: item.fineWeight,
+          rate: item.rate,
+          makingChargeType: item.makingChargeType,
+          makingChargeInput: item.makingChargeInput,
+          makingAmount: item.makingCharge,
+          discountAmount: _allocatedDiscount(
+            lineValue: item.itemTotal,
+            billTotal: billTotal,
+            billDiscount: billDiscount,
+          ),
+          taxableAmount: item.taxableAmountSnapshot,
+          gstAmount: item.gstAmountSnapshot,
+          invoiceValue: item.invoiceValueSnapshot,
+          value: item.itemTotal,
+          huidNumber: item.huid ?? '',
+          linkedStockItemId: item.linkedStockItemId,
+          linkedStockUnitId: item.linkedStockUnitId,
+          linkedStockSku: item.linkedStockSku ?? '',
+          status: row.readNullable<String>('status') ?? 'ACTIVE',
+          reversalStatus: reversalLines[item.lineNo]?.status ?? '',
+          reversalVoucherNo: reversalLines[item.lineNo]?.voucherNo ?? '',
+          reversalDate: reversalLines[item.lineNo]?.createdAt,
+          reversalReceivedNetWeight:
+              reversalLines[item.lineNo]?.receivedNetWeight,
+          reversalHuidMatched: reversalLines[item.lineNo]?.huidMatched,
+          reversalUnitMatched: reversalLines[item.lineNo]?.unitMatched,
+          reversalIncludeMakingCharge:
+              reversalLines[item.lineNo]?.includeMakingCharge,
+          reversalStockDisposition:
+              reversalLines[item.lineNo]?.stockDisposition ?? '',
+          reversalMetalReturnAmount:
+              reversalLines[item.lineNo]?.metalReturnAmount,
+          reversalMakingReturnedAmount:
+              reversalLines[item.lineNo]?.makingReturnedAmount,
+          reversalLineReturnValue: reversalLines[item.lineNo]?.lineReturnValue,
+        ),
+    ];
+    final reversedLineCount =
+        lines.where((line) => line.reversalStatus.isNotEmpty).length;
+
+    return ReturnReversalSourceDocument(
+      id: billId,
+      type: ReturnReversalSourceDocumentType.salesInvoice,
+      documentNo: row.read<String>('bill_no'),
+      customerId: row.readNullable<int>('customer_id'),
+      customerName: row.readNullable<String>('customer_name') ?? '',
+      mobile: row.readNullable<String>('mobile') ?? '',
+      address: _joinAddress(
+        row.readNullable<String>('address_line1'),
+        row.readNullable<String>('address_line2'),
+        row.readNullable<String>('city'),
+      ),
+      documentDate: _readDateTime(row, 'bill_date'),
+      grossValue: _readDouble(row, 'total_amount'),
+      discountAmount: _readDouble(row, 'discount'),
+      taxableAmount: _readDouble(row, 'taxable_amount'),
+      cgstAmount: _readDouble(row, 'cgst_amount'),
+      sgstAmount: _readDouble(row, 'sgst_amount'),
+      igstAmount: _readDouble(row, 'igst_amount'),
+      gstAmount: _readDouble(row, 'gst_amount'),
+      makingTotal: _readDouble(row, 'making_total'),
+      roundOffAmount: _readDouble(row, 'round_off_amount'),
+      finalAmount: _readDouble(row, 'final_amount'),
+      paidAmount: _readDouble(row, 'paid_amount'),
+      cashPaid: _readDouble(row, 'cash_paid'),
+      upiPaid: _readDouble(row, 'upi_paid'),
+      cardPaid: _readDouble(row, 'card_paid'),
+      advancePaid: _readDouble(row, 'advance_paid'),
+      dueAmount: _readDouble(row, 'due_amount'),
+      tradeInDeduction: _readDouble(row, 'old_gold_deduction'),
+      paymentStatus: row.readNullable<String>('payment_status') ?? '',
+      billingMode: row.readNullable<String>('billing_mode') ?? '',
+      gstPricingMode: row.readNullable<String>('gst_pricing_mode') ?? '',
+      netWeight: lines.fold<double>(
+        0,
+        (total, line) => total + line.netWeight,
+      ),
+      lineItems: lines,
+      reversalStatus: _documentReversalStatus(
+        reversedLineCount: reversedLineCount,
+        totalLineCount: lines.length,
+      ),
+      reversalVoucherNo: _firstReversalVoucherNo(reversalLines),
+      reversedLineCount: reversedLineCount,
+    );
+  }
+
+  Future<List<ReturnReversalSourceDocument>> _findAdvanceBookingsByMobile(
+    String normalizedMobile,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        o.id,
+        o.order_no,
+        o.customer_id,
+        c.name AS customer_name,
+        c.mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        COALESCE(o.created_at, 0) AS created_at,
+        o.item_name,
+        o.metal_type,
+        o.approx_weight,
+        o.locked_rate,
+        o.status,
+        COALESCE(SUM(a.amount_paid), 0.0) AS paid_amount
+      FROM sales_orders o
+      INNER JOIN customers c ON c.id = o.customer_id
+      LEFT JOIN order_advances a ON a.order_id = o.id
+      WHERE REPLACE(REPLACE(COALESCE(c.mobile, ''), ' ', ''), '-', '') = ?
+        AND $cancellableBookingPredicate
+      GROUP BY o.id
+      ORDER BY o.id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(normalizedMobile)],
+    ).get();
+
+    return rows.map(_mapAdvanceBooking).toList(growable: false);
+  }
+
+  Future<List<ReturnReversalSourceDocument>> _findAdvanceBookingsByCustomerName(
+    String namePattern,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        o.id,
+        o.order_no,
+        o.customer_id,
+        c.name AS customer_name,
+        c.mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        COALESCE(o.created_at, 0) AS created_at,
+        o.item_name,
+        o.metal_type,
+        o.approx_weight,
+        o.locked_rate,
+        o.status,
+        COALESCE(SUM(a.amount_paid), 0.0) AS paid_amount
+      FROM sales_orders o
+      INNER JOIN customers c ON c.id = o.customer_id
+      LEFT JOIN order_advances a ON a.order_id = o.id
+      WHERE UPPER(TRIM(COALESCE(c.name, ''))) LIKE UPPER(?) ESCAPE '\\'
+        AND $cancellableBookingPredicate
+      GROUP BY o.id
+      ORDER BY o.id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(namePattern)],
+    ).get();
+
+    return rows.map(_mapAdvanceBooking).toList(growable: false);
+  }
+
+  Future<ReturnReversalSourceDocument?> _findAdvanceBookingByNumber(
+    String documentNumber,
+  ) async {
+    final row = await _database.customSelect(
+      '''
+      SELECT
+        o.id,
+        o.order_no,
+        o.customer_id,
+        c.name AS customer_name,
+        c.mobile,
+        COALESCE(c.address_line1, '') AS address_line1,
+        COALESCE(c.address_line2, '') AS address_line2,
+        COALESCE(c.city, '') AS city,
+        COALESCE(o.created_at, 0) AS created_at,
+        o.item_name,
+        o.metal_type,
+        o.approx_weight,
+        o.locked_rate,
+        o.status,
+        COALESCE(SUM(a.amount_paid), 0.0) AS paid_amount
+      FROM sales_orders o
+      INNER JOIN customers c ON c.id = o.customer_id
+      LEFT JOIN order_advances a ON a.order_id = o.id
+      WHERE UPPER(TRIM(o.order_no)) = UPPER(TRIM(?))
+        AND $cancellableBookingPredicate
+      GROUP BY o.id
+      LIMIT 1
+      ''',
+      variables: [drift.Variable.withString(documentNumber)],
+    ).getSingleOrNull();
+
+    return row == null ? null : _mapAdvanceBooking(row);
+  }
+
+  ReturnReversalSourceDocument _mapAdvanceBooking(drift.QueryRow row) {
+    final weight = _readDouble(row, 'approx_weight');
+    final rate = _readDouble(row, 'locked_rate');
+    final paidAmount = _readDouble(row, 'paid_amount');
+    final estimatedOrderValue = rate > 0 && weight > 0 ? weight * rate : 0.0;
+    final lineValue = paidAmount > 0 ? paidAmount : estimatedOrderValue;
+    final status = row.readNullable<String>('status') ?? 'PENDING';
+    final line = ReturnReversalSourceLineItem(
+      lineNo: 1,
+      metalType: row.readNullable<String>('metal_type') ?? 'GOLD',
+      description: row.readNullable<String>('item_name') ?? 'Booked Jewellery',
+      quantity: 1,
+      grossWeight: weight,
+      netWeight: weight,
+      rate: rate,
+      value: lineValue,
+      status: status,
+      reversalStatus: status.toUpperCase() == 'CANCELLED' ? 'CANCELLED' : '',
+    );
+
+    return ReturnReversalSourceDocument(
+      id: row.read<int>('id'),
+      type: ReturnReversalSourceDocumentType.advanceBooking,
+      documentNo: row.read<String>('order_no'),
+      customerId: row.readNullable<int>('customer_id'),
+      customerName: row.readNullable<String>('customer_name') ?? '',
+      mobile: row.readNullable<String>('mobile') ?? '',
+      address: _joinAddress(
+        row.readNullable<String>('address_line1'),
+        row.readNullable<String>('address_line2'),
+        row.readNullable<String>('city'),
+      ),
+      documentDate: _readDateTime(row, 'created_at'),
+      grossValue: lineValue,
+      paidAmount: paidAmount,
+      dueAmount: 0,
+      netWeight: weight,
+      lineItems: [line],
+      reversalStatus: status.toUpperCase() == 'CANCELLED' ? 'CANCELLED' : '',
+      reversedLineCount: status.toUpperCase() == 'CANCELLED' ? 1 : 0,
+    );
+  }
+
+  Future<List<ReturnReversalSourceDocument>> _findCustomerPurchasesByMobile(
+    String normalizedMobile,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        id,
+        voucher_no,
+        customer_id,
+        party_name,
+        mobile,
+        COALESCE(city, '') AS city,
+        created_at,
+        grand_total,
+        total_paid,
+        balance_due,
+        payment_status,
+        status
+      FROM purchase_vouchers
+      WHERE source_type = 'CUSTOMER'
+        AND REPLACE(REPLACE(COALESCE(mobile, ''), ' ', ''), '-', '') = ?
+        AND status <> 'CANCELLED'
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(normalizedMobile)],
+    ).get();
+
+    final documents = <ReturnReversalSourceDocument>[];
+    for (final row in rows) {
+      documents.add(await _mapCustomerPurchase(row));
+    }
+    return documents;
+  }
+
+  Future<List<ReturnReversalSourceDocument>>
+      _findCustomerPurchasesByCustomerName(
+    String namePattern,
+  ) async {
+    final rows = await _database.customSelect(
+      '''
+      SELECT
+        id,
+        voucher_no,
+        customer_id,
+        party_name,
+        mobile,
+        COALESCE(city, '') AS city,
+        created_at,
+        grand_total,
+        total_paid,
+        balance_due,
+        payment_status,
+        status
+      FROM purchase_vouchers
+      WHERE source_type = 'CUSTOMER'
+        AND UPPER(TRIM(COALESCE(party_name, ''))) LIKE UPPER(?) ESCAPE '\\'
+        AND status <> 'CANCELLED'
+      ORDER BY created_at DESC, id DESC
+      LIMIT 100
+      ''',
+      variables: [drift.Variable.withString(namePattern)],
+    ).get();
+
+    final documents = <ReturnReversalSourceDocument>[];
+    for (final row in rows) {
+      documents.add(await _mapCustomerPurchase(row));
+    }
+    return documents;
+  }
+
+  Future<ReturnReversalSourceDocument?> _findCustomerPurchaseByNumber(
+    String documentNumber,
+  ) async {
+    final row = await _database.customSelect(
+      '''
+      SELECT
+        id,
+        voucher_no,
+        customer_id,
+        party_name,
+        mobile,
+        COALESCE(city, '') AS city,
+        created_at,
+        grand_total,
+        total_paid,
+        balance_due,
+        payment_status,
+        status
+      FROM purchase_vouchers
+      WHERE source_type = 'CUSTOMER'
+        AND UPPER(TRIM(voucher_no)) = UPPER(TRIM(?))
+        AND status <> 'CANCELLED'
+      LIMIT 1
+      ''',
+      variables: [drift.Variable.withString(documentNumber)],
+    ).getSingleOrNull();
+
+    return row == null ? null : _mapCustomerPurchase(row);
+  }
+
+  Future<ReturnReversalSourceDocument> _mapCustomerPurchase(
+    drift.QueryRow row,
+  ) async {
+    final voucherId = row.read<int>('id');
+    final reversalLines = await _reversalLinesFor(
+      sourceType: 'CUSTOMER_PURCHASE',
+      sourceId: voucherId,
+    );
+    final itemRows = await _database.customSelect(
+      '''
+      SELECT
+        line_no,
+        metal_type,
+        item_description,
+        quantity,
+        gross_weight,
+        net_weight,
+        rate,
+        line_amount
+      FROM purchase_voucher_items
+      WHERE purchase_voucher_id = ?
+      ORDER BY line_no ASC, id ASC
+      ''',
+      variables: [drift.Variable.withInt(voucherId)],
+    ).get();
+    final lines = [
+      for (final item in itemRows)
+        ReturnReversalSourceLineItem(
+          lineNo: item.read<int>('line_no'),
+          metalType: item.readNullable<String>('metal_type') ?? 'OLD METAL',
+          description:
+              item.readNullable<String>('item_description') ?? 'Old Metal',
+          quantity: item.readNullable<int>('quantity') ?? 1,
+          grossWeight: _readDouble(item, 'gross_weight'),
+          netWeight: _readDouble(item, 'net_weight'),
+          rate: _readDouble(item, 'rate'),
+          value: _readDouble(item, 'line_amount'),
+          status: row.readNullable<String>('payment_status') ?? 'SAVED',
+          reversalStatus:
+              reversalLines[item.read<int>('line_no')]?.status ?? '',
+          reversalVoucherNo:
+              reversalLines[item.read<int>('line_no')]?.voucherNo ?? '',
+        ),
+    ];
+    final reversedLineCount =
+        lines.where((line) => line.reversalStatus.isNotEmpty).length;
+
+    return ReturnReversalSourceDocument(
+      id: voucherId,
+      type: ReturnReversalSourceDocumentType.customerPurchase,
+      documentNo: row.read<String>('voucher_no'),
+      customerId: row.readNullable<int>('customer_id'),
+      customerName: row.readNullable<String>('party_name') ?? '',
+      mobile: row.readNullable<String>('mobile') ?? '',
+      address: row.readNullable<String>('city') ?? '',
+      documentDate: _readDateTime(row, 'created_at'),
+      grossValue: _readDouble(row, 'grand_total'),
+      paidAmount: _readDouble(row, 'total_paid'),
+      dueAmount: _readDouble(row, 'balance_due'),
+      netWeight: lines.fold<double>(
+        0,
+        (total, line) => total + line.netWeight,
+      ),
+      lineItems: lines,
+      reversalStatus: _documentReversalStatus(
+        reversedLineCount: reversedLineCount,
+        totalLineCount: lines.length,
+      ),
+      reversalVoucherNo: _firstReversalVoucherNo(reversalLines),
+      reversedLineCount: reversedLineCount,
+    );
+  }
+}
