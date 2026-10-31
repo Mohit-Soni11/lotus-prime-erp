@@ -10,40 +10,31 @@ extension _CustomerFormActions on _AddCustomerScreenState {
       builder: (_) => const CustomerImageSourceSheet(),
     );
     if (src == null) return;
-    final file =
-        await _imgPick.pickImage(source: src, imageQuality: 75, maxWidth: 600);
-    if (file != null) _logic.setProfileImagePath(file.path);
+    if (!mounted) return;
+    if (src == ImageSource.camera) {
+      final path = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const LiveCameraDialog(
+          title: 'Capture Customer Photo',
+          guidance: 'Position the customer clearly inside the camera frame.',
+        ),
+      );
+      if (mounted && path != null) _logic.setProfileImagePath(path);
+      return;
+    }
+    final file = await _imgPick.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+      maxWidth: 1200,
+    );
+    if (mounted && file != null) _logic.setProfileImagePath(file.path);
   }
 
   Future<void> _pickIdDoc() async {
     final file =
         await _imgPick.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (file != null) _logic.setIdProofDocPath(file.path);
-  }
-
-  Future<void> _pickDate(BuildContext ctx,
-      {required void Function(DateTime) onPicked,
-      DateTime? selectedDate,
-      DateTime? firstDate,
-      DateTime? lastDate}) async {
-    final picked = await showDatePicker(
-      context: ctx,
-      initialDate: selectedDate ?? DateTime.now(),
-      firstDate: firstDate ?? DateTime(1940),
-      lastDate: lastDate ?? DateTime.now(),
-      builder: (ctx, child) => Theme(
-        data: ThemeData.light().copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AddCustomerColors.brandGold,
-            onPrimary: Colors.black,
-            surface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
-        ),
-        child: child!,
-      ),
-    );
-    if (picked != null) onPicked(picked);
+    if (mounted && file != null) _logic.setIdProofDocPath(file.path);
   }
 
   Future<void> _handleSave() async {
@@ -99,7 +90,6 @@ extension _CustomerFormActions on _AddCustomerScreenState {
       _stateProvinceCtrl,
       _cityCtrl,
       _pincodeCtrl,
-      _notesCtrl,
     ]) {
       c.clear();
     }

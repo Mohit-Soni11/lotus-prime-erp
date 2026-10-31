@@ -169,76 +169,6 @@ extension _CustomerFormFields on _AddCustomerScreenState {
     ]);
   }
 
-  Widget _buildDateField({
-    required String label,
-    required IconData icon,
-    required DateTime? value,
-    required VoidCallback onTap,
-    VoidCallback? onClear,
-  }) {
-    final fmt = value != null ? DateFormat('dd MMM yyyy').format(value) : null;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: AddCustomerStyles.fieldLabel),
-      const SizedBox(height: 8),
-      GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          height: 54,
-          decoration: BoxDecoration(
-            color: fmt != null
-                ? AddCustomerColors.brandGold.withValues(alpha: 0.05)
-                : AddCustomerColors.inputBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-                color: fmt != null
-                    ? AddCustomerColors.brandGold.withValues(alpha: 0.4)
-                    : AddCustomerColors.inputBorder,
-                width: fmt != null ? 1.5 : 1),
-          ),
-          child: Row(children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: fmt != null
-                    ? AddCustomerColors.brandGold.withValues(alpha: 0.10)
-                    : const Color(0xFFF0EDE8),
-                borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(11),
-                    bottomLeft: Radius.circular(11)),
-                border: const Border(
-                    right: BorderSide(color: AddCustomerColors.inputBorder)),
-              ),
-              child: Icon(icon,
-                  size: 20,
-                  color: fmt != null
-                      ? AddCustomerColors.brandGold
-                      : Colors.black87),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Text(fmt ?? 'Select date',
-                    style: fmt != null
-                        ? AddCustomerStyles.fieldText
-                        : AddCustomerStyles.fieldHint)),
-            if (fmt != null)
-              IconButton(
-                tooltip: 'Clear date',
-                onPressed: onClear,
-                icon: const Icon(Icons.close_rounded, size: 18),
-              )
-            else
-              const Padding(
-                  padding: EdgeInsets.only(right: 14),
-                  child: Icon(Icons.calendar_month_rounded,
-                      size: 20, color: Colors.black87)),
-          ]),
-        ),
-      ),
-    ]);
-  }
-
   Widget _buildDropdown<T>({
     required String label,
     required IconData icon,
@@ -291,9 +221,12 @@ extension _CustomerFormFields on _AddCustomerScreenState {
               child: DropdownButton<T>(
                 value: value,
                 isExpanded: true,
+                borderRadius: BorderRadius.circular(14),
+                menuMaxHeight: 320,
+                elevation: 10,
                 dropdownColor: Colors.white,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                    color: Colors.black54, size: 22),
+                    color: Colors.black, size: 22),
                 style: AddCustomerStyles.fieldText,
                 hint: Text(hint, style: AddCustomerStyles.fieldHint),
                 items: [
@@ -321,66 +254,17 @@ extension _CustomerFormFields on _AddCustomerScreenState {
     required String? value,
     required List<String> items,
     required void Function(String?) onChanged,
-  }) {
-    final hasValue = value != null;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: AddCustomerStyles.fieldLabel),
-      const SizedBox(height: 8),
-      Container(
-        height: 54,
-        decoration: BoxDecoration(
-          color: hasValue
-              ? AddCustomerColors.brandGold.withValues(alpha: 0.04)
-              : AddCustomerColors.inputBg,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: hasValue
-                  ? AddCustomerColors.brandGold.withValues(alpha: 0.4)
-                  : AddCustomerColors.inputBorder,
-              width: hasValue ? 1.5 : 1),
-        ),
-        child: Row(children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: hasValue
-                  ? AddCustomerColors.brandGold.withValues(alpha: 0.10)
-                  : const Color(0xFFF0EDE8),
-              borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(11),
-                  bottomLeft: Radius.circular(11)),
-              border: const Border(
-                  right: BorderSide(color: AddCustomerColors.inputBorder)),
-            ),
-            child: Icon(icon,
-                size: 20,
-                color: hasValue ? AddCustomerColors.brandGold : Colors.black87),
-          ),
-          Expanded(
-              child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: value,
-                isExpanded: true,
-                dropdownColor: Colors.white,
-                icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                    color: Colors.black54, size: 22),
-                style: AddCustomerStyles.fieldText,
-                items: items
-                    .map((s) => DropdownMenuItem(
-                        value: s,
-                        child: Text(s, style: AddCustomerStyles.fieldText)))
-                    .toList(),
-                onChanged: onChanged,
-              ),
-            ),
-          )),
-        ]),
-      ),
-    ]);
-  }
+  }) =>
+      _buildDropdown<String>(
+        label: label,
+        icon: icon,
+        value: value,
+        items:
+            value != null && !items.contains(value) ? [value, ...items] : items,
+        itemLabel: (item) => item,
+        onChanged: onChanged,
+        hint: 'Select ${label.toLowerCase()}',
+      );
 
   Widget _buildUploadButton({
     required String label,

@@ -18,7 +18,6 @@ extension _CustomerFormInitialization on _AddCustomerScreenState {
     _stateProvinceCtrl.text = form.state;
     _cityCtrl.text = form.city;
     _pincodeCtrl.text = form.pincode;
-    _notesCtrl.text = form.notes;
     _selectedCountry = form.country.trim().isEmpty ? 'India' : form.country;
     _selectedState = form.state.trim().isEmpty ? null : form.state;
   }
@@ -75,6 +74,5 @@ extension _CustomerFormInitialization on _AddCustomerScreenState {
     bind(_addr1Focus, ActiveField.addressLine1);
     bind(_addr2Focus, ActiveField.addressLine2);
     bind(_pincodeFocus, ActiveField.pincode);
-    bind(_notesFocus, ActiveField.notes);
   }
 }

@@ -10,7 +10,6 @@ import 'dart:io';
 //               Staggered animations, ListenableBuilder, zero setState.
 // =============================================================================
 
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -38,11 +37,11 @@ import '../invoice_hub/girvi_invoice_hub_screen.dart';
 import 'new_girvi_app_bar.dart'; // NAYA IMPORT
 import '../shared/girvi_shared_widgets.dart';
 import '../shared/select_customer_dialog.dart';
+import '../../shared/live_camera_dialog.dart';
 
 part 'parts/new_girvi_actions.dart';
 part 'parts/new_girvi_photo_actions.dart';
 part 'parts/new_girvi_invoice_print_actions.dart';
-part 'parts/new_girvi_kyc_camera.dart';
 part 'parts/new_girvi_layout.dart';
 part 'parts/new_girvi_header_layout.dart';
 part 'parts/new_girvi_pledged_items.dart';

@@ -17,8 +17,19 @@ void main() {
 
     expect(find.text('Personal Information'), findsOneWidget);
     expect(find.text('Customer Category'), findsOneWidget);
-    expect(find.text('Assigned after saving'), findsOneWidget);
+    expect(find.text('Standard Customer'), findsOneWidget);
+    expect(find.text('Preferences & CRM'), findsNothing);
+    expect(find.text('Additional Info'), findsNothing);
+    expect(find.text('Date of Birth'), findsNothing);
+    expect(find.text('Anniversary Date (Optional)'), findsNothing);
     expect(find.text('Opening Balance'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Corporate'));
+    await tester.pump();
+    expect(find.text('COMPANY NAME'), findsOneWidget);
+    expect(find.text('KYC & Compliance'), findsOneWidget);
+    expect(find.text('Customer Category'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     tester.view.physicalSize = const Size(600, 800);

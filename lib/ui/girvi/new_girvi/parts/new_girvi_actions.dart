@@ -531,7 +531,10 @@ extension NewGirviActions on _NewGirviScreenState {
     final path = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const _KycCameraDialog(),
+      builder: (_) => const LiveCameraDialog(
+        title: 'Capture KYC Document',
+        guidance: 'Keep the full card visible and text readable.',
+      ),
     );
     if (path == null || path.isEmpty || !mounted) return;
     await _saveKycPhoto(path);

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../logic/customer/add_customer_logic.dart';
@@ -12,6 +11,7 @@ import '../../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../../theme/customer/add_customer/add_customer_theme.dart';
 import 'add_customer_app_bar.dart';
 import 'add_customer_components.dart';
+import '../../shared/live_camera_dialog.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 part 'add_customer_form_fields.dart';
@@ -20,7 +20,7 @@ part 'add_customer_contact_sections.dart';
 part 'add_customer_form_initialization.dart';
 part 'add_customer_form_actions.dart';
 part 'add_customer_account_sections.dart';
-part 'add_customer_preferences_sections.dart';
+part 'add_customer_actions_section.dart';
 
 // =============================================================================
 // MASTER SCREEN
@@ -53,7 +53,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   late final AddCustomerLogic _logic;
   final _imgPick = ImagePicker();
 
-  static const _sectionCount = 8;
+  static const _sectionCount = 6;
   late final List<AnimationController> _anims;
   late final List<Animation<double>> _fades;
   late final List<Animation<Offset>> _slides;
@@ -74,7 +74,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _stateProvinceCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _pincodeCtrl = TextEditingController();
-  final _notesCtrl = TextEditingController();
 
   final _firstNameFocus = FocusNode();
   final _lastNameFocus = FocusNode();
@@ -91,7 +90,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
   final _addr2Focus = FocusNode();
   final _cityFocus = FocusNode();
   final _pincodeFocus = FocusNode();
-  final _notesFocus = FocusNode();
 
   String? _selectedCountry = 'India';
   String? _selectedState;
@@ -198,7 +196,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _stateProvinceCtrl,
       _cityCtrl,
       _pincodeCtrl,
-      _notesCtrl,
     ]) {
       c.dispose();
     }
@@ -218,7 +215,6 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
       _addr2Focus,
       _cityFocus,
       _pincodeFocus,
-      _notesFocus,
     ]) {
       f.dispose();
     }
@@ -278,7 +274,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                               _buildSection(
                                 icon: Icons.verified_user_rounded,
                                 title: 'KYC & Compliance',
-                                subtitle: 'PAN, ID proof & GST details',
+                                subtitle:
+                                    'Optional PAN, ID proof & GST details',
                                 accent: const Color(0xFFD97706),
                                 stepNumber: 3,
                                 child: _buildKycSection(),
@@ -300,35 +297,15 @@ class _AddCustomerScreenState extends State<AddCustomerScreen>
                               _buildSection(
                                 icon: Icons.account_balance_wallet_rounded,
                                 title: 'Customer Category',
-                                subtitle: 'Category and assigned membership ID',
+                                subtitle:
+                                    'Assigned automatically and shown on the profile',
                                 accent: const Color(0xFF7C3AED),
                                 stepNumber: 5,
                                 child: _buildBillingSection(),
                               )),
                           const SizedBox(height: 16),
-                          _anim(
-                              6,
-                              _buildSection(
-                                icon: Icons.favorite_border_rounded,
-                                title: 'Preferences & CRM',
-                                subtitle: 'Sizes, family & personalization',
-                                accent: const Color(0xFFDB2777),
-                                stepNumber: 6,
-                                child: _buildPreferencesSection(),
-                              )),
-                          const SizedBox(height: 16),
-                          _anim(
-                              7,
-                              _buildSection(
-                                icon: AddCustomerIcons.notes,
-                                title: 'Additional Info',
-                                subtitle: 'Referral source & internal notes',
-                                accent: const Color(0xFF475569),
-                                stepNumber: 7,
-                                child: _buildAdditionalSection(),
-                              )),
                           const SizedBox(height: 28),
-                          _anim(7, _buildActionButtons()),
+                          _anim(5, _buildActionButtons()),
                           const SizedBox(height: 8),
                           Center(
                             child: Text(

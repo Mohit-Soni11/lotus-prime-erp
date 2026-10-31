@@ -5,6 +5,7 @@ import 'package:lotus_erp/database/db/app_database.dart';
 
 import '../../models/customer/add_customer/add_customer_form_model.dart';
 import '../../models/customer/customer_enums/add_customer_enums.dart';
+import '../../models/customer/customer_enums/customer_list_enums.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import '../../features/customer/domain/services/customer_contact_value.dart';
 import '../../helpers/add_customer_/add_customer_form_validation.dart';
@@ -44,10 +45,9 @@ class AddCustomerRepository {
               ? customer.name.trim()
               : '';
       final whatsapp = customer.whatsapp?.trim() ?? '';
-      final tierLabel = customer.customerTier.trim().isEmpty
-          ? customer.type
-          : customer.customerTier;
-      final customerTier = CustomerTier.fromLabel(tierLabel);
+      final tierLabel =
+          customer.type.trim().isEmpty ? customer.customerTier : customer.type;
+      final customerTier = CustomerType.fromString(tierLabel);
 
       return AddCustomerFormModel(
         entityType: entityType,
@@ -55,13 +55,11 @@ class AddCustomerRepository {
         lastName: lastName,
         companyName: companyName,
         contactPersonName: customer.contactPersonName ?? '',
-        dateOfBirth: _parseDate(customer.dateOfBirth),
         gender: _optionalEnum(
           customer.gender,
           Gender.values,
           (value) => value.label,
         ),
-        anniversaryDate: _parseDate(customer.anniversaryDate),
         mobile: CustomerContactValue.displayMobile(customer.mobile),
         sameAsWhatsApp: whatsapp.isNotEmpty &&
             whatsapp == CustomerContactValue.displayMobile(customer.mobile),
@@ -84,24 +82,6 @@ class AddCustomerRepository {
         city: customer.city ?? '',
         pincode: customer.pincode ?? '',
         customerTier: customerTier,
-        membershipId: customer.membershipId ?? '',
-        ringSize: _optionalEnum(
-          customer.ringSize,
-          RingSize.values,
-          (value) => value.label,
-        ),
-        bangleSize: _optionalEnum(
-          customer.bangleSize,
-          BangleSize.values,
-          (value) => value.label,
-        ),
-        familyMembers: FamilyMember.decodeList(customer.familyDetailsJson),
-        referralSource: _optionalEnum(
-          customer.referralSource,
-          ReferralSource.values,
-          (value) => value.label,
-        ),
-        notes: customer.notes ?? '',
         profileImagePath: customer.profileImagePath,
       );
     } catch (e) {
@@ -141,13 +121,17 @@ class AddCustomerRepository {
         if (customerId != null && existing == null) {
           throw StateError('Customer no longer exists');
         }
+        final savedTier = existing == null
+            ? CustomerType.standard
+            : CustomerType.fromString(existing.type);
+        final savedForm = form.copyWith(customerTier: savedTier);
         previousPhoto = existing?.profileImagePath;
         previousIdProof = existing?.idProofDocPath;
         final name = displayName.isEmpty ? 'Walk-in Customer' : displayName;
         final id = customerId ??
             await _db.into(_db.customers).insert(
                   _buildCompanion(
-                    form,
+                    savedForm,
                     displayName: name,
                     isUpdate: false,
                     storageMobile: cleanMobile.isEmpty
@@ -165,15 +149,11 @@ class AddCustomerRepository {
         if (proof != null && proof != form.idProofDocPath) {
           newlyOwnedPaths.add(proof);
         }
-        final memberId = existing?.membershipId?.trim().isNotEmpty == true
-            ? existing!.membershipId!
-            : _membershipId(id);
         await (_db.update(_db.customers)..where((row) => row.id.equals(id)))
             .write(_buildCompanion(
-          form,
+          savedForm,
           displayName: name,
           isUpdate: true,
-          membershipId: memberId,
           profileImagePath: photo,
           idProofDocPath: proof,
           storageMobile: cleanMobile.isEmpty ? 'WALKIN-$id' : cleanMobile,
@@ -232,7 +212,6 @@ class AddCustomerRepository {
     AddCustomerFormModel form, {
     required String displayName,
     required bool isUpdate,
-    String? membershipId,
     String? profileImagePath,
     String? idProofDocPath,
     required String storageMobile,
@@ -241,7 +220,7 @@ class AddCustomerRepository {
       name: drift.Value(displayName),
       mobile: drift.Value(storageMobile),
       city: drift.Value(_nullable(form.city)),
-      type: drift.Value(form.customerTier.label),
+      type: drift.Value(form.customerTier.value),
       entityType: drift.Value(form.entityType.label),
       firstName:
           drift.Value(form.isCorporate ? null : _nullable(form.firstName)),
@@ -250,9 +229,7 @@ class AddCustomerRepository {
           drift.Value(form.isCorporate ? _nullable(form.companyName) : null),
       contactPersonName: drift.Value(
           form.isCorporate ? _nullable(form.contactPersonName) : null),
-      dateOfBirth: drift.Value(form.dateOfBirth?.toIso8601String()),
       gender: drift.Value(form.gender?.label),
-      anniversaryDate: drift.Value(form.anniversaryDate?.toIso8601String()),
       whatsapp: drift.Value(_nullable(form.whatsapp)),
       email: drift.Value(_nullable(form.email)),
       alternateContact: drift.Value(_nullable(form.alternateContact)),
@@ -266,17 +243,7 @@ class AddCustomerRepository {
       country: drift.Value(form.country),
       state: drift.Value(_nullable(form.state)),
       pincode: drift.Value(_nullable(form.pincode)),
-      customerTier: drift.Value(form.customerTier.label),
-      membershipId: drift.Value(membershipId),
-      ringSize: drift.Value(form.ringSize?.label),
-      bangleSize: drift.Value(form.bangleSize?.label),
-      familyDetailsJson: drift.Value(
-        form.familyMembers.isEmpty
-            ? null
-            : FamilyMember.encodeList(form.familyMembers),
-      ),
-      referralSource: drift.Value(form.referralSource?.label),
-      notes: drift.Value(_nullable(form.notes)),
+      customerTier: drift.Value(form.customerTier.value),
       profileImagePath: drift.Value(profileImagePath),
       updatedAt:
           isUpdate ? drift.Value(DateTime.now()) : const drift.Value.absent(),
@@ -303,20 +270,9 @@ class AddCustomerRepository {
     }
   }
 
-  String _membershipId(int id) {
-    final now = DateTime.now();
-    final month = now.month.toString().padLeft(2, '0');
-    return 'LTMP-${now.year}$month-${id.toString().padLeft(6, '0')}';
-  }
-
   String? _nullable(String value) {
     final normalized = value.trim();
     return normalized.isEmpty ? null : normalized;
-  }
-
-  DateTime? _parseDate(String? value) {
-    final normalized = value?.trim() ?? '';
-    return normalized.isEmpty ? null : DateTime.tryParse(normalized);
   }
 
   T? _optionalEnum<T>(

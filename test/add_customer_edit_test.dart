@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/models/customer/add_customer/add_customer_form_model.dart';
 import 'package:lotus_erp/models/customer/customer_enums/add_customer_enums.dart';
+import 'package:lotus_erp/models/customer/customer_enums/customer_list_enums.dart';
 import 'package:lotus_erp/repositories/customer/add_customer_repository.dart';
 
 void main() {
@@ -27,10 +28,6 @@ void main() {
       state: 'Bihar',
       city: 'Gaya',
       pincode: '823001',
-      customerTier: CustomerTier.gold,
-      membershipId: 'LTMP-202606-0001',
-      ringSize: RingSize.size12,
-      notes: 'Preferred customer',
     );
 
     expect(await repository.saveCustomer(original), SaveResult.success);
@@ -42,14 +39,11 @@ void main() {
     expect(loaded.lastName, 'Kumar');
     expect(loaded.sameAsWhatsApp, isTrue);
     expect(loaded.idProofNumber, '123456789012');
-    expect(loaded.customerTier, CustomerTier.gold);
-    expect(loaded.ringSize, RingSize.size12);
+    expect(loaded.customerTier, CustomerType.standard);
 
     final updated = loaded.copyWith(
       firstName: 'Aman Raj',
       city: 'Patna',
-      customerTier: CustomerTier.vip,
-      notes: 'Updated from customer profile',
     );
     expect(
       await repository.saveCustomer(updated, customerId: saved.id),
@@ -61,8 +55,8 @@ void main() {
     expect(rows.single.name, 'Aman Raj Kumar');
     expect(rows.single.mobile, '9876543210');
     expect(rows.single.city, 'Patna');
-    expect(rows.single.customerTier, 'VIP');
-    expect(rows.single.notes, 'Updated from customer profile');
+    expect(rows.single.customerTier, 'Regular');
+    expect(rows.single.type, 'Regular');
   });
 
   test('Edit mode blocks a mobile number owned by another customer', () async {

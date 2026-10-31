@@ -2,81 +2,13 @@
 // FILE        : add_customer_form_model.dart
 // MODULE      : Customer → Add New Customer
 // LAYER       : Models
-// DESCRIPTION : Immutable form model + FamilyMember sub-model.
+// DESCRIPTION : Immutable customer registration form.
 // VERSION     : 2.0 — Full expansion
 // =============================================================================
 
-import 'dart:convert';
 import '../customer_enums/add_customer_enums.dart';
+import '../customer_enums/customer_list_enums.dart';
 import 'package:flutter/foundation.dart';
-
-// =============================================================================
-// FAMILY MEMBER MODEL
-// =============================================================================
-
-@immutable
-class FamilyMember {
-  final String id;
-  final String name;
-  final FamilyRelation relation;
-  final DateTime? dateOfBirth;
-
-  const FamilyMember({
-    required this.id,
-    this.name = '',
-    this.relation = FamilyRelation.spouse,
-    this.dateOfBirth,
-  });
-
-  FamilyMember copyWith({
-    String? name,
-    FamilyRelation? relation,
-    DateTime? dateOfBirth,
-    bool clearDob = false,
-  }) {
-    return FamilyMember(
-      id: id,
-      name: name ?? this.name,
-      relation: relation ?? this.relation,
-      dateOfBirth: clearDob ? null : (dateOfBirth ?? this.dateOfBirth),
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'relation': relation.label,
-        'dateOfBirth': dateOfBirth?.toIso8601String(),
-      };
-
-  static FamilyMember fromJson(Map<String, dynamic> json, String id) {
-    return FamilyMember(
-      id: id,
-      name: json['name'] ?? '',
-      relation: FamilyRelation.fromLabel(json['relation'] ?? ''),
-      dateOfBirth: json['dateOfBirth'] != null
-          ? DateTime.tryParse(json['dateOfBirth'])
-          : null,
-    );
-  }
-
-  static String encodeList(List<FamilyMember> members) {
-    return jsonEncode(members.map((m) => m.toJson()).toList());
-  }
-
-  static List<FamilyMember> decodeList(String? json) {
-    if (json == null || json.isEmpty) return [];
-    try {
-      final list = jsonDecode(json) as List;
-      return list
-          .asMap()
-          .entries
-          .map((e) => FamilyMember.fromJson(e.value, 'fm_${e.key}'))
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-}
 
 // =============================================================================
 // MAIN FORM MODEL
@@ -92,9 +24,7 @@ class AddCustomerFormModel {
   final String lastName;
   final String companyName;
   final String contactPersonName;
-  final DateTime? dateOfBirth;
   final Gender? gender;
-  final DateTime? anniversaryDate;
 
   // ── Contact ────────────────────────────────────────────────────────────────
   final String mobile;
@@ -119,17 +49,7 @@ class AddCustomerFormModel {
   final String pincode;
 
   // ── Customer category ─────────────────────────────────────────────────────
-  final CustomerTier customerTier;
-  final String membershipId;
-
-  // ── Preferences ────────────────────────────────────────────────────────────
-  final RingSize? ringSize;
-  final BangleSize? bangleSize;
-  final List<FamilyMember> familyMembers;
-
-  // ── Additional ─────────────────────────────────────────────────────────────
-  final ReferralSource? referralSource;
-  final String notes;
+  final CustomerType customerTier;
   final String? profileImagePath;
 
   // ── Validation Errors ─────────────────────────────────────────────────────
@@ -150,9 +70,7 @@ class AddCustomerFormModel {
     this.lastName = '',
     this.companyName = '',
     this.contactPersonName = '',
-    this.dateOfBirth,
     this.gender,
-    this.anniversaryDate,
     this.mobile = '',
     this.sameAsWhatsApp = false,
     this.whatsapp = '',
@@ -169,13 +87,7 @@ class AddCustomerFormModel {
     this.state = '',
     this.city = '',
     this.pincode = '',
-    this.customerTier = CustomerTier.regular,
-    this.membershipId = '',
-    this.ringSize,
-    this.bangleSize,
-    this.familyMembers = const [],
-    this.referralSource,
-    this.notes = '',
+    this.customerTier = CustomerType.standard,
     this.profileImagePath,
     this.firstNameError,
     this.companyNameError,
@@ -226,12 +138,8 @@ class AddCustomerFormModel {
     String? lastName,
     String? companyName,
     String? contactPersonName,
-    DateTime? dateOfBirth,
-    bool clearDob = false,
     Gender? gender,
     bool clearGender = false,
-    DateTime? anniversaryDate,
-    bool clearAnniversary = false,
     String? mobile,
     bool? sameAsWhatsApp,
     String? whatsapp,
@@ -250,16 +158,7 @@ class AddCustomerFormModel {
     String? state,
     String? city,
     String? pincode,
-    CustomerTier? customerTier,
-    String? membershipId,
-    RingSize? ringSize,
-    bool clearRingSize = false,
-    BangleSize? bangleSize,
-    bool clearBangleSize = false,
-    List<FamilyMember>? familyMembers,
-    ReferralSource? referralSource,
-    bool clearReferralSource = false,
-    String? notes,
+    CustomerType? customerTier,
     String? profileImagePath,
     bool clearProfileImage = false,
     String? firstNameError,
@@ -289,10 +188,7 @@ class AddCustomerFormModel {
       lastName: lastName ?? this.lastName,
       companyName: companyName ?? this.companyName,
       contactPersonName: contactPersonName ?? this.contactPersonName,
-      dateOfBirth: clearDob ? null : (dateOfBirth ?? this.dateOfBirth),
       gender: clearGender ? null : (gender ?? this.gender),
-      anniversaryDate:
-          clearAnniversary ? null : (anniversaryDate ?? this.anniversaryDate),
       mobile: mobile ?? this.mobile,
       sameAsWhatsApp: sameAsWhatsApp ?? this.sameAsWhatsApp,
       whatsapp: whatsapp ?? this.whatsapp,
@@ -311,13 +207,6 @@ class AddCustomerFormModel {
       city: city ?? this.city,
       pincode: pincode ?? this.pincode,
       customerTier: customerTier ?? this.customerTier,
-      membershipId: membershipId ?? this.membershipId,
-      ringSize: clearRingSize ? null : (ringSize ?? this.ringSize),
-      bangleSize: clearBangleSize ? null : (bangleSize ?? this.bangleSize),
-      familyMembers: familyMembers ?? this.familyMembers,
-      referralSource:
-          clearReferralSource ? null : (referralSource ?? this.referralSource),
-      notes: notes ?? this.notes,
       profileImagePath: clearProfileImage
           ? null
           : (profileImagePath ?? this.profileImagePath),

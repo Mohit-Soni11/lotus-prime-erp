@@ -30,7 +30,7 @@ class AddCustomerLogic extends ChangeNotifier {
   ActiveField _activeField = ActiveField.none;
   Timer? _mobileDebounce;
   int _mobileCheckVersion = 0;
-  int _familyMemberSequence = 0;
+  bool _disposed = false;
 
   // ── GETTERS ──────────────────────────────────────────────────────────────
   AddCustomerFormModel get form => _form;
@@ -45,6 +45,7 @@ class AddCustomerLogic extends ChangeNotifier {
     if (id == null) return null;
 
     final loadedForm = await _repo.fetchCustomerForEdit(id);
+    if (_disposed) return null;
     if (loadedForm != null) {
       _form = loadedForm;
       _initialEditForm = loadedForm;
@@ -97,24 +98,10 @@ class AddCustomerLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setDateOfBirth(DateTime? date) {
-    _form = date == null
-        ? _form.copyWith(clearDob: true)
-        : _form.copyWith(dateOfBirth: date);
-    notifyListeners();
-  }
-
   void setGender(Gender? g) {
     _form = g == null
         ? _form.copyWith(clearGender: true)
         : _form.copyWith(gender: g);
-    notifyListeners();
-  }
-
-  void setAnniversaryDate(DateTime? date) {
-    _form = date == null
-        ? _form.copyWith(clearAnniversary: true)
-        : _form.copyWith(anniversaryDate: date);
     notifyListeners();
   }
 
@@ -137,7 +124,7 @@ class AddCustomerLogic extends ChangeNotifier {
         try {
           final isDup = await _repo.isMobileDuplicate(v.trim(),
               excludeCustomerId: customerId);
-          if (version == _mobileCheckVersion && isDup) {
+          if (!_disposed && version == _mobileCheckVersion && isDup) {
             _form = _form.copyWith(mobileError: 'Mobile already registered');
             notifyListeners();
           }
@@ -239,59 +226,6 @@ class AddCustomerLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setCustomerTier(CustomerTier t) {
-    _form = _form.copyWith(customerTier: t);
-    notifyListeners();
-  }
-
-  // ── PREFERENCES ───────────────────────────────────────────────────────────
-  void setRingSize(RingSize? r) {
-    _form = r == null
-        ? _form.copyWith(clearRingSize: true)
-        : _form.copyWith(ringSize: r);
-    notifyListeners();
-  }
-
-  void setBangleSize(BangleSize? b) {
-    _form = b == null
-        ? _form.copyWith(clearBangleSize: true)
-        : _form.copyWith(bangleSize: b);
-    notifyListeners();
-  }
-
-  void addFamilyMember() {
-    final newId = 'fm_new_${++_familyMemberSequence}';
-    final updated = [..._form.familyMembers, FamilyMember(id: newId)];
-    _form = _form.copyWith(familyMembers: updated);
-    notifyListeners();
-  }
-
-  void removeFamilyMember(String id) {
-    final updated = _form.familyMembers.where((m) => m.id != id).toList();
-    _form = _form.copyWith(familyMembers: updated);
-    notifyListeners();
-  }
-
-  void updateFamilyMember(String id, FamilyMember updated) {
-    final list =
-        _form.familyMembers.map((m) => m.id == id ? updated : m).toList();
-    _form = _form.copyWith(familyMembers: list);
-    notifyListeners();
-  }
-
-  // ── ADDITIONAL ────────────────────────────────────────────────────────────
-  void setReferralSource(ReferralSource? r) {
-    _form = r == null
-        ? _form.copyWith(clearReferralSource: true)
-        : _form.copyWith(referralSource: r);
-    notifyListeners();
-  }
-
-  void onNotesChanged(String v) {
-    _form = _form.copyWith(notes: v);
-    notifyListeners();
-  }
-
   void setProfileImagePath(String? path) {
     _form = path == null
         ? _form.copyWith(clearProfileImage: true)
@@ -319,6 +253,7 @@ class AddCustomerLogic extends ChangeNotifier {
       _form,
       customerId: customerId,
     );
+    if (_disposed) return result == SaveResult.success;
     switch (result) {
       case SaveResult.success:
         _saveState = SaveState.success;
@@ -348,6 +283,8 @@ class AddCustomerLogic extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _mobileCheckVersion++;
     _mobileDebounce?.cancel();
     super.dispose();
   }

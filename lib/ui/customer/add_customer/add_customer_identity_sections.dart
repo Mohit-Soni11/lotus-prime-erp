@@ -214,7 +214,7 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
             Text(
               imagePath != null
                   ? '✓ Photo uploaded'
-                  : 'Avatar will auto-switch based on gender selection.',
+                  : 'Capture with the camera or choose from gallery.',
               style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -226,7 +226,7 @@ extension _CustomerIdentitySections on _AddCustomerScreenState {
             const SizedBox(height: 12),
             Row(children: [
               _miniBtn(
-                label: imagePath != null ? 'Change Photo' : 'Upload Photo',
+                label: imagePath != null ? 'Change Photo' : 'Add Photo',
                 icon: Icons.camera_alt_rounded,
                 bg: AddCustomerColors.brandGold,
                 fg: Colors.black87,

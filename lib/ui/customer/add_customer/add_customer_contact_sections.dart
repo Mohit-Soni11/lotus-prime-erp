@@ -75,40 +75,18 @@ extension _CustomerContactSections on _AddCustomerScreenState {
                   capitalization: TextCapitalization.words)),
         ]),
       ],
-      const SizedBox(height: 14),
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-            child: _buildDateField(
-                label: 'Date of Birth',
-                icon: Icons.cake_rounded,
-                value: _logic.form.dateOfBirth,
-                onClear: () => _logic.setDateOfBirth(null),
-                onTap: () => _pickDate(context,
-                    onPicked: _logic.setDateOfBirth,
-                    selectedDate: _logic.form.dateOfBirth,
-                    lastDate: DateTime.now()))),
-        const SizedBox(width: 14),
-        Expanded(
-            child: _buildDropdown<Gender>(
-                label: 'Gender',
-                icon: Icons.people_alt_rounded,
-                value: _logic.form.gender,
-                items: Gender.values,
-                itemLabel: (g) => g.label,
-                onChanged: _logic.setGender,
-                hint: 'Select gender',
-                nullable: true)),
-      ]),
-      const SizedBox(height: 14),
-      _buildDateField(
-          label: 'Anniversary Date (Optional)',
-          icon: Icons.favorite_rounded,
-          value: _logic.form.anniversaryDate,
-          onClear: () => _logic.setAnniversaryDate(null),
-          onTap: () => _pickDate(context,
-              onPicked: _logic.setAnniversaryDate,
-              selectedDate: _logic.form.anniversaryDate,
-              lastDate: DateTime.now())),
+      if (!isCorp) ...[
+        const SizedBox(height: 14),
+        _buildDropdown<Gender>(
+            label: 'Gender (Optional)',
+            icon: Icons.people_alt_rounded,
+            value: _logic.form.gender,
+            items: Gender.values,
+            itemLabel: (g) => g.label,
+            onChanged: _logic.setGender,
+            hint: 'Select gender',
+            nullable: true),
+      ],
     ]);
   }
   // SECTION 2: CONTACT

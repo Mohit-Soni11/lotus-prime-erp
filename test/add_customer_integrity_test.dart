@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
@@ -8,6 +9,7 @@ import 'package:lotus_erp/helpers/add_customer_/add_customer_form_validation.dar
 import 'package:lotus_erp/logic/customer/add_customer_logic.dart';
 import 'package:lotus_erp/models/customer/add_customer/add_customer_form_model.dart';
 import 'package:lotus_erp/models/customer/customer_enums/add_customer_enums.dart';
+import 'package:lotus_erp/models/customer/customer_enums/customer_list_enums.dart';
 import 'package:lotus_erp/repositories/customer/add_customer_repository.dart';
 import 'package:lotus_erp/repositories/customer/customer_media_store.dart';
 import 'package:lotus_erp/repositories/customer/customer_profile_repository.dart';
@@ -53,6 +55,21 @@ void main() {
       ),
     );
     expect(indianForm.pincodeError, isNotNull);
+  });
+
+  test('KYC fields are optional for Individual and Corporate customers', () {
+    for (final entity in CustomerEntityType.values) {
+      final form = AddCustomerFormValidation.apply(AddCustomerFormModel(
+        entityType: entity,
+        firstName: entity == CustomerEntityType.individual ? 'Aman' : '',
+        companyName:
+            entity == CustomerEntityType.corporate ? 'Aman Traders' : '',
+      ));
+      expect(form.panError, isNull);
+      expect(form.idProofError, isNull);
+      expect(form.gstError, isNull);
+      expect(form.hasErrors, isFalse);
+    }
   });
 
   test('repository rejects invalid GST before writing any row', () async {
@@ -106,13 +123,15 @@ void main() {
     expect(logic.form.mobileError, isNull);
   });
 
-  test('membership IDs are unique and stable after edit', () async {
+  test('new customers have an automatic Standard category and no membership ID',
+      () async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
     final repository = AddCustomerRepository(db: db);
     expect(
       await repository.saveCustomer(
-        const AddCustomerFormModel(firstName: 'First'),
+        const AddCustomerFormModel(
+            firstName: 'First', customerTier: CustomerType.gold),
       ),
       SaveResult.success,
     );
@@ -123,8 +142,8 @@ void main() {
       SaveResult.success,
     );
     final rows = await db.select(db.customers).get();
-    expect(rows.map((row) => row.membershipId).toSet(), hasLength(2));
-    expect(rows.every((row) => row.membershipId!.startsWith('LTMP-')), isTrue);
+    expect(rows.every((row) => row.membershipId == null), isTrue);
+    expect(rows.every((row) => row.type == 'Regular'), isTrue);
     final first = rows.first;
     final form = await repository.fetchCustomerForEdit(first.id);
     expect(
@@ -137,7 +156,34 @@ void main() {
     final updated = await (db.select(db.customers)
           ..where((row) => row.id.equals(first.id)))
         .getSingle();
-    expect(updated.membershipId, first.membershipId);
+    expect(updated.membershipId, isNull);
+    expect(updated.customerTier, 'Regular');
+  });
+
+  test('editing a customer preserves the category already used by the profile',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repository = AddCustomerRepository(db: db);
+    expect(
+        await repository.saveCustomer(
+          const AddCustomerFormModel(firstName: 'Aman'),
+        ),
+        SaveResult.success);
+    final saved = await db.select(db.customers).getSingle();
+    await (db.update(db.customers)..where((row) => row.id.equals(saved.id)))
+        .write(const CustomersCompanion(type: Value('Gold')));
+    final loaded = await repository.fetchCustomerForEdit(saved.id);
+    expect(loaded!.customerTier, CustomerType.gold);
+    expect(
+        await repository.saveCustomer(
+          loaded.copyWith(customerTier: CustomerType.elite),
+          customerId: saved.id,
+        ),
+        SaveResult.success);
+    final updated = await db.select(db.customers).getSingle();
+    expect(updated.type, 'Gold');
+    expect(updated.customerTier, 'Gold');
   });
 
   test('v67 migration removes opening balance and repairs duplicate IDs',
@@ -203,7 +249,8 @@ void main() {
     expect(await File(saved.profileImagePath!).exists(), isTrue);
     expect(await mediaStore.isOwned(saved.profileImagePath!), isTrue);
 
-    final replacement = File('${root.path}${Platform.pathSeparator}replacement.png');
+    final replacement =
+        File('${root.path}${Platform.pathSeparator}replacement.png');
     await replacement.writeAsBytes([137, 80, 78, 71, 1]);
     final loaded = await repository.fetchCustomerForEdit(saved.id);
     expect(
