@@ -7,6 +7,64 @@ import 'package:lotus_erp/ui/customer/customer_profile/customer_profile_metric_c
 import 'package:lotus_erp/ui/customer/customer_profile/customer_profile_information_tiles.dart';
 
 void main() {
+  testWidgets('delete confirmation is light and cancel keeps the profile',
+      (tester) async {
+    await _pumpProfile(tester, const Size(1000, 800));
+
+    await tester.tap(find.text('Delete Customer'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.text('Delete Customer?'), findsOneWidget);
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(
+      tester.widgetList<ModalBarrier>(find.byType(ModalBarrier)).any(
+          (barrier) =>
+              barrier.color == const Color(0xFF718096).withValues(alpha: 0.22)),
+      isTrue,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.text('Delete Customer?'), findsNothing);
+    expect(find.text('Reyansh Soni'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('delete confirmation invokes deletion and leaves the profile',
+      (tester) async {
+    final repository = _ProfileRepository(CustomerProfileModel(
+      id: 1,
+      name: 'Unused Customer',
+      mobile: '9000000091',
+      createdAt: DateTime(2026, 10, 1),
+      initials: 'UC',
+    ));
+    var navigatedAway = false;
+    await tester.pumpWidget(MaterialApp(
+      home: CustomerProfileScreen(
+        customerId: 1,
+        repository: repository,
+        onBack: () {},
+        onDeleted: () => navigatedAway = true,
+      ),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    await tester.tap(find.text('Delete Customer'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.tap(find.text('Delete'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(repository.deletedCustomerIds, [1]);
+    expect(navigatedAway, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
       'profile shows full address, matching tier and smart account cards',
       (tester) async {
@@ -418,7 +476,14 @@ class _ProfileRepository extends CustomerProfileRepository {
   _ProfileRepository(this.result);
 
   CustomerProfileModel result;
+  final deletedCustomerIds = <int>[];
 
   @override
   Future<CustomerProfileModel?> fetchProfile(int customerId) async => result;
+
+  @override
+  Future<CustomerDeleteResult> deleteCustomer(int customerId) async {
+    deletedCustomerIds.add(customerId);
+    return const CustomerDeleteResult.success();
+  }
 }

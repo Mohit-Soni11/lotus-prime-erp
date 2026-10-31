@@ -18,7 +18,7 @@ class CustomerProfileStrings {
 
   static const deleteTitle = 'Delete Customer?';
   static const deleteMsg =
-      'Customers with invoices, Girvi tickets, advance orders, or refund records are retained for transaction history.';
+      'Only customers without linked transactions can be deleted. Sales, Girvi, advance, purchase, return, delivery, and refund records stay protected.';
   static const deleteConfirm = 'Delete';
   static const deleteCancel = 'Cancel';
   static const deleteError = 'This customer has linked transaction records.';

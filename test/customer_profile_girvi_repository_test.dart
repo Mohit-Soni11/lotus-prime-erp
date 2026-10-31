@@ -17,6 +17,49 @@ void main() {
     await db.close();
   });
 
+  test('customer deletion removes an unused profile', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Unused Customer',
+            mobile: '9000000091',
+          ),
+        );
+
+    final result =
+        await CustomerProfileRepository(db: db).deleteCustomer(customerId);
+    final remaining = await (db.select(db.customers)
+          ..where((row) => row.id.equals(customerId)))
+        .getSingleOrNull();
+
+    expect(result.deleted, isTrue);
+    expect(remaining, equals(null));
+  });
+
+  test('customer deletion preserves a profile with a sales bill', () async {
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Sales Customer',
+            mobile: '9000000092',
+          ),
+        );
+    await db.into(db.bills).insert(
+          BillsCompanion.insert(
+            billNo: 'AJ-26-091',
+            customerId: Value(customerId),
+          ),
+        );
+
+    final result =
+        await CustomerProfileRepository(db: db).deleteCustomer(customerId);
+    final remaining = await (db.select(db.customers)
+          ..where((row) => row.id.equals(customerId)))
+        .getSingleOrNull();
+
+    expect(result.deleted, isFalse);
+    expect(result.message, contains('sales invoice'));
+    expect(remaining?.id, customerId);
+  });
+
   test('profile gender uses saved customer data, never the name', () async {
     final unknownId = await db.into(db.customers).insert(
           CustomersCompanion.insert(name: 'Asha', mobile: '9000000011'),
