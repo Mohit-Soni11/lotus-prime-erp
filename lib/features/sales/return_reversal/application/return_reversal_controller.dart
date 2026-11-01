@@ -5,6 +5,7 @@ import 'package:lotus_erp/features/sales/return_reversal/application/return_reve
 import 'package:lotus_erp/features/sales/return_reversal/application/return_reversal_workflow_step.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_operation_type.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_process.dart';
+import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_return_reason.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/models/return_reversal_source_document.dart';
 import 'package:lotus_erp/features/sales/return_reversal/domain/repositories/return_reversal_repository.dart';
 
@@ -370,7 +371,7 @@ class ReturnReversalController extends ChangeNotifier {
           operatorNote:
               _state.operationType == ReturnReversalOperationType.salesReturn &&
                       _customerRequestedReturn
-                  ? 'Customer requested return'
+                  ? customerRequestedReturnNote
                   : '',
         ),
       );

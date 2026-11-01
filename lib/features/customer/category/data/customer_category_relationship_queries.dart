@@ -144,12 +144,13 @@ extension _CustomerCategoryRelationshipQueries on CustomerCategoryRepository {
       FROM return_vouchers
       WHERE source_type = 'SALES_INVOICE'
         AND status <> 'VOIDED'
-        AND operator_note = 'Customer requested return'
+        AND operator_note = ?
         AND created_at >= ?
         AND customer_id IS NOT NULL
         ${singleId == null ? '' : 'AND customer_id = ?'}
       GROUP BY customer_id
     ''', variables: [
+      Variable.withString(customerRequestedReturnNote),
       Variable.withInt(since * 1000),
       if (singleId != null) Variable.withInt(singleId),
     ]).get();

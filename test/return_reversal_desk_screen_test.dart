@@ -588,6 +588,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Customer requested return'), findsOneWidget);
+    await tester.ensureVisible(find.text('Customer requested return'));
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.tap(find.text('Customer requested return'));
     await tester.pump();
     expect(controller.customerRequestedReturn, isTrue);

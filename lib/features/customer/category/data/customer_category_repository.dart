@@ -5,6 +5,7 @@ import '../domain/customer_category_engine.dart';
 import '../domain/customer_category_policy.dart';
 import '../domain/customer_category_score.dart';
 import 'customer_due_evidence_store.dart';
+import '../../../sales/return_reversal/domain/models/return_reversal_return_reason.dart';
 
 part 'customer_category_sales_queries.dart';
 part 'customer_category_relationship_queries.dart';
@@ -59,6 +60,10 @@ class CustomerCategoryRepository {
         1000;
     await _db.ensureReturnReversalSchema();
     await CustomerDueEvidenceStore(_db).ensureSchema();
+    await _db.customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_bill_items_stock_unit '
+      'ON bill_items(linked_stock_unit_id)',
+    );
 
     await Future.wait<void>([
       _loadVisits(facts, since),
