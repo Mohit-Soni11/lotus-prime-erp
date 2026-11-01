@@ -1,6 +1,7 @@
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier_profile/supplier_profile_model.dart';
 import 'supplier_repository.dart';
+import 'supplier_batch_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class SupplierProfileRepository {
@@ -17,6 +18,7 @@ class SupplierProfileRepository {
       if (supplier == null || supplier.id == null) return null;
 
       final ledger = await _supplierRepo.getLedgerSnapshot(supplierId);
+      final batches = await SupplierBatchRepository(_db).getBatches(supplierId);
       final purchases = ledger.history
           .map(
             (item) => SupplierProfilePurchaseModel(
@@ -78,19 +80,11 @@ class SupplierProfileRepository {
         oldDueAdjustedTotal: ledger.oldDueAdjustedTotal,
         outstandingDue: ledger.outstandingDue,
         purchases: purchases,
+        batches: batches,
       );
     } catch (e) {
       AppLogger.debug('Supplier profile fetch error: $e');
       return null;
-    }
-  }
-
-  Future<bool> updateSupplier(SupplierProfileModel profile) async {
-    try {
-      return _supplierRepo.updateSupplier(profile.toSupplierModel());
-    } catch (e) {
-      AppLogger.debug('Supplier profile update error: $e');
-      return false;
     }
   }
 

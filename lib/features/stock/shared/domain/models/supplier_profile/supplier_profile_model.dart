@@ -1,29 +1,7 @@
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_enums.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
 import 'package:flutter/foundation.dart';
-
-enum SupplierLedgerHealth {
-  clear,
-  due,
-  watch;
-
-  String get label {
-    switch (this) {
-      case SupplierLedgerHealth.clear:
-        return 'CLEAR';
-      case SupplierLedgerHealth.due:
-        return 'DUE';
-      case SupplierLedgerHealth.watch:
-        return 'WATCH';
-    }
-  }
-
-  static SupplierLedgerHealth calculate(double outstandingDue) {
-    if (outstandingDue <= 0.005) return SupplierLedgerHealth.clear;
-    if (outstandingDue <= 25000) return SupplierLedgerHealth.due;
-    return SupplierLedgerHealth.watch;
-  }
-}
+import 'supplier_stock_batch.dart';
 
 @immutable
 class SupplierProfilePurchaseModel {
@@ -95,7 +73,6 @@ class SupplierProfilePurchaseModel {
   bool get isGstPurchase =>
       purchaseCategory.trim().toUpperCase() == 'GST_PURCHASE' ||
       taxType.trim().toUpperCase() == 'GST';
-  bool get isNonGstPurchase => !isGstPurchase;
   bool get isInputCreditEligible =>
       inputCreditStatus.trim().toUpperCase() == 'ITC_ELIGIBLE';
   bool get hasDue => balanceDue > 0.005 || hasMetalFineDue;
@@ -153,6 +130,7 @@ class SupplierProfileModel {
   final double oldDueAdjustedTotal;
   final double outstandingDue;
   final List<SupplierProfilePurchaseModel> purchases;
+  final List<SupplierStockBatch> batches;
 
   const SupplierProfileModel({
     required this.id,
@@ -178,6 +156,7 @@ class SupplierProfileModel {
     this.oldDueAdjustedTotal = 0.0,
     this.outstandingDue = 0.0,
     this.purchases = const [],
+    this.batches = const [],
   });
 
   String get displayName => businessName.trim().isEmpty ? mobile : businessName;
@@ -185,72 +164,11 @@ class SupplierProfileModel {
   String get typeLabel => supplierType.label;
   String get statusLabel => status.label;
   bool get isActive => status == SupplierStatus.active;
-  bool get hasOutstandingDue => outstandingDue > 0.005;
-  bool get hasOutstandingMetalFineDue => totalMetalFineDue > 0.005;
-  SupplierLedgerHealth get ledgerHealth {
-    if (hasOutstandingMetalFineDue && outstandingDue <= 25000) {
-      return SupplierLedgerHealth.due;
-    }
-    return SupplierLedgerHealth.calculate(outstandingDue);
-  }
+  int get totalBatchCount => batches.length;
+  int get activeBatchCount => batches.where((batch) => batch.isActive).length;
 
-  int get purchaseCount => purchases.length;
-  int get gstPurchaseCount => gstPurchases.length;
-  int get nonGstPurchaseCount => nonGstPurchases.length;
-  int get totalStockEntries =>
-      purchases.fold(0, (sum, item) => sum + item.stockEntryCount);
-  int get dueVoucherCount => purchases.where((item) => item.hasDue).length;
-  int get billPhotoCount => purchases.where((item) => item.hasBillPhoto).length;
-  int get metalSettlementCount =>
-      purchases.where((item) => item.hasMetalSettlement).length;
-
-  double get totalPurchaseValue =>
-      purchases.fold(0.0, (sum, item) => sum + item.grandTotal);
-  double get totalGstPurchaseValue =>
-      gstPurchases.fold(0.0, (sum, item) => sum + item.grandTotal);
-  double get totalNonGstPurchaseValue =>
-      nonGstPurchases.fold(0.0, (sum, item) => sum + item.grandTotal);
-  double get totalPaidValue =>
-      purchases.fold(0.0, (sum, item) => sum + item.totalPaid);
-  double get totalMetalFine =>
-      purchases.fold(0.0, (sum, item) => sum + item.metalPaidFine);
-  double get totalMetalValue =>
-      purchases.fold(0.0, (sum, item) => sum + item.metalPaidValue);
-  double get totalMetalFineDue =>
-      purchases.fold(0.0, (sum, item) => sum + item.metalFineDue);
-
-  List<SupplierProfilePurchaseModel> get duePurchases =>
-      purchases.where((item) => item.hasDue).toList(growable: false);
-  List<SupplierProfilePurchaseModel> get gstPurchases =>
-      purchases.where((item) => item.isGstPurchase).toList(growable: false);
-  List<SupplierProfilePurchaseModel> get nonGstPurchases =>
-      purchases.where((item) => item.isNonGstPurchase).toList(growable: false);
-  List<SupplierProfilePurchaseModel> get metalSettlements => purchases
-      .where((item) => item.hasMetalSettlement)
-      .toList(growable: false);
   List<SupplierProfilePurchaseModel> get billDocuments =>
       purchases.where((item) => item.hasBillPhoto).toList(growable: false);
-
-  String get formattedSince {
-    final date = createdAt;
-    if (date == null) return 'Not recorded';
-    const months = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
-    return '${months[date.month]} ${date.year}';
-  }
 
   String get addressLine {
     final parts = [
@@ -258,14 +176,9 @@ class SupplierProfileModel {
       addressLine2,
       state,
       pincode,
-      country,
     ].where((value) => value != null && value.trim().isNotEmpty);
-    return parts.isEmpty ? 'Not added' : parts.join(', ');
-  }
-
-  String get primaryContactName {
-    final name = contactPersonName?.trim();
-    return name == null || name.isEmpty ? 'Owner / Manager' : name;
+    if (parts.isEmpty) return 'Not added';
+    return [...parts, country].join(', ');
   }
 
   SupplierProfileModel copyWith({
@@ -290,6 +203,7 @@ class SupplierProfileModel {
     double? oldDueAdjustedTotal,
     double? outstandingDue,
     List<SupplierProfilePurchaseModel>? purchases,
+    List<SupplierStockBatch>? batches,
   }) {
     return SupplierProfileModel(
       id: id,
@@ -315,6 +229,7 @@ class SupplierProfileModel {
       oldDueAdjustedTotal: oldDueAdjustedTotal ?? this.oldDueAdjustedTotal,
       outstandingDue: outstandingDue ?? this.outstandingDue,
       purchases: purchases ?? this.purchases,
+      batches: batches ?? this.batches,
     );
   }
 

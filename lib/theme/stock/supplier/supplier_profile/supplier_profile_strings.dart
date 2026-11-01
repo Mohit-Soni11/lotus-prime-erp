@@ -1,22 +1,15 @@
 class SupplierProfileStrings {
   SupplierProfileStrings._();
 
-  static const String appBarSubtitle = 'LOTUS PRIME ERP';
   static const String appBarTitle = 'SUPPLIER PROFILE';
-  static const String moduleStatus = 'Supplier Ledger';
   static const String systemOnline = 'SYSTEM ONLINE';
 
   static const String btnAddStock = 'Add Stock';
   static const String btnEdit = 'Edit';
-  static const String btnLedger = 'Ledger';
   static const String btnDeactivate = 'Deactivate';
 
   static const String secContact = 'Contact Information';
   static const String secBusiness = 'Business & Compliance';
-  static const String secLedger = 'Ledger & Settlement';
-  static const String secDues = 'Open Baki';
-  static const String secPurchases = 'Purchase History';
-  static const String secMetal = 'Metal Settlements';
   static const String secDocuments = 'Bill Documents';
 
   static const String lblMobile = 'Mobile';
@@ -25,22 +18,13 @@ class SupplierProfileStrings {
   static const String lblContactPerson = 'Contact Person';
   static const String lblSupplierType = 'Supplier Type';
   static const String lblStatus = 'Status';
-  static const String lblMemberSince = 'Supplier Since';
-  static const String lblAddress = 'Address';
   static const String lblGst = 'GST Number';
   static const String lblPan = 'PAN Number';
-  static const String lblOpening = 'Opening Balance';
-  static const String lblVoucherDue = 'Voucher Due';
-  static const String lblAdjusted = 'Adjusted';
-  static const String lblCurrentDue = 'Current Baki';
   static const String lblNa = 'N/A';
 
   static const String noPurchases = 'No purchase vouchers yet';
   static const String noPurchasesSub =
-      'Saved supplier stock batches will appear here.';
-  static const String noMetal = 'No metal settlements yet';
-  static const String noMetalSub =
-      'Metal giving rows will appear after settlement entries.';
+      'Saved supplier purchase bills will appear here.';
   static const String noDocuments = 'No bill photos uploaded';
   static const String noDocumentsSub =
       'Supplier rough bill photos will appear here after upload.';

@@ -167,13 +167,22 @@ Widget _addSupplierDropdown<T>({
                 value: value,
                 hint: Text(label, style: AddSupplierStyles.fieldHint),
                 isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                style: AddSupplierStyles.fieldInput,
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                menuMaxHeight: 360,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                    color: Colors.black),
+                style: AddSupplierStyles.fieldInput
+                    .copyWith(color: Colors.black, fontWeight: FontWeight.w800),
                 items: items
                     .map(
                       (item) => DropdownMenuItem<T>(
                         value: item,
-                        child: Text(itemLabel(item)),
+                        child: Text(itemLabel(item),
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700)),
                       ),
                     )
                     .toList(),

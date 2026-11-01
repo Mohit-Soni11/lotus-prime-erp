@@ -8,7 +8,6 @@ class AddSupplierStrings {
 
   static const String appBarTitleAdd = 'ADD NEW SUPPLIER';
   static const String appBarTitleEdit = 'EDIT SUPPLIER';
-  static const String appBarSubtitle = 'LOTUS PRIME ERP';
   static const String systemOnline = 'SYSTEM ONLINE';
 
   static const String secIdentity = 'Supplier Identity';
@@ -22,8 +21,6 @@ class AddSupplierStrings {
   static const String secKycSub = 'GST and PAN details';
   static const String secAddress = 'Address';
   static const String secAddressSub = 'Business billing and delivery address';
-  static const String secFinance = 'Financial Details';
-  static const String secFinanceSub = 'Opening balance and internal notes';
 
   static const String lblBusinessName = 'Business / Company Name';
   static const String lblContactPerson = 'Contact Person Name';
@@ -39,8 +36,6 @@ class AddSupplierStrings {
   static const String lblState = 'State';
   static const String lblCountry = 'Country';
   static const String lblPincode = 'Pincode';
-  static const String lblOpeningBal = 'Opening Balance (Rs)';
-  static const String lblNotes = 'Notes / Remarks';
 
   static const String hintBusinessName = 'e.g. Zaveri Traders Pvt Ltd';
   static const String hintContactPerson = 'Contact person name';
@@ -55,8 +50,6 @@ class AddSupplierStrings {
   static const String hintState = 'State name';
   static const String hintCountry = 'Country';
   static const String hintPincode = '6-digit pincode';
-  static const String hintOpeningBal = '0.00';
-  static const String hintNotes = 'Any remarks about this supplier...';
 
   static const String btnSaveAdd = 'Save Supplier';
   static const String btnSaveEdit = 'Update Supplier';

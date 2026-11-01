@@ -30,8 +30,6 @@ class AddSupplierColors {
   static const Color accentContact = Color(0xFF059669);
   static const Color accentKyc = Color(0xFFD97706);
   static const Color accentAddress = Color(0xFF0284C7);
-  static const Color accentFinance = Color(0xFF7C3AED);
-  static const Color accentNotes = Color(0xFF475569);
 
   static const Color inputBg = Color(0xFFFAFAFA);
   static const Color inputBgFocus = Color(0xFFFFFFFF);

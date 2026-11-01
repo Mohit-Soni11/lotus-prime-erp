@@ -11,6 +11,12 @@ import 'package:lotus_erp/theme/stock/supplier/add_supplier/add_supplier_theme.d
 import 'add_supplier_app_bar.dart';
 
 part 'add_supplier_widgets.dart';
+part 'add_supplier_identity_section.dart';
+part 'add_supplier_business_section.dart';
+part 'add_supplier_contact_section.dart';
+part 'add_supplier_address_section.dart';
+part 'add_supplier_field_bindings.dart';
+part 'add_supplier_actions.dart';
 
 class AddSupplierScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -32,7 +38,7 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     with TickerProviderStateMixin {
   late final AddSupplierLogic _logic;
 
-  static const int _sectionCount = 7;
+  static const int _sectionCount = 6;
   late final List<AnimationController> _anims;
   late final List<Animation<double>> _fades;
   late final List<Animation<Offset>> _slides;
@@ -49,8 +55,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
   final _address2Ctrl = TextEditingController();
   final _stateCtrl = TextEditingController();
   final _pincodeCtrl = TextEditingController();
-  final _openingBalCtrl = TextEditingController(text: '0');
-  final _notesCtrl = TextEditingController();
 
   final _businessNameFocus = FocusNode();
   final _contactPersonFocus = FocusNode();
@@ -64,8 +68,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
   final _address2Focus = FocusNode();
   final _stateFocus = FocusNode();
   final _pincodeFocus = FocusNode();
-  final _openingBalFocus = FocusNode();
-  final _notesFocus = FocusNode();
 
   static const List<String> _countries = [
     'India',
@@ -168,8 +170,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     bind(_address2Focus, SupplierActiveField.addressLine2);
     bind(_stateFocus, SupplierActiveField.state);
     bind(_pincodeFocus, SupplierActiveField.pincode);
-    bind(_openingBalFocus, SupplierActiveField.openingBalance);
-    bind(_notesFocus, SupplierActiveField.notes);
   }
 
   void _syncControllersFromForm() {
@@ -186,8 +186,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
     _address2Ctrl.text = form.addressLine2;
     _stateCtrl.text = form.state;
     _pincodeCtrl.text = form.pincode;
-    _openingBalCtrl.text = form.openingBalance.toStringAsFixed(2);
-    _notesCtrl.text = form.notes;
   }
 
   @override
@@ -211,8 +209,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
       _address2Ctrl,
       _stateCtrl,
       _pincodeCtrl,
-      _openingBalCtrl,
-      _notesCtrl,
     ]) {
       controller.dispose();
     }
@@ -229,8 +225,6 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
       _address2Focus,
       _stateFocus,
       _pincodeFocus,
-      _openingBalFocus,
-      _notesFocus,
     ]) {
       focus.dispose();
     }
@@ -304,24 +298,12 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
                     child: _buildAddressSection(form),
                   ),
                 ),
-                const SizedBox(height: 16),
-                _anim(
-                  5,
-                  _buildSection(
-                    icon: AddSupplierIcons.sectionFinance,
-                    title: AddSupplierStrings.secFinance,
-                    subtitle: AddSupplierStrings.secFinanceSub,
-                    accent: AddSupplierColors.accentFinance,
-                    stepNumber: 5,
-                    child: _buildFinanceSection(form),
-                  ),
-                ),
                 const SizedBox(height: 24),
                 if (_logic.errorMessage != null) ...[
                   _buildErrorBanner(_logic.errorMessage!),
                   const SizedBox(height: 14),
                 ],
-                _anim(6, _buildActionButtons()),
+                _anim(5, _buildActionButtons()),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
@@ -341,637 +323,4 @@ class _AddSupplierScreenState extends State<AddSupplierScreen>
         opacity: _fades[index],
         child: SlideTransition(position: _slides[index], child: child),
       );
-
-  Widget _buildIdentitySection(AddSupplierFormModel form) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: AddSupplierStyles.heroDecoration,
-      child: Row(
-        children: [
-          Container(
-            width: 96,
-            height: 96,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const SweepGradient(
-                colors: [
-                  AddSupplierColors.brandGold,
-                  AddSupplierColors.goldGradientStart,
-                  AddSupplierColors.brandGold,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AddSupplierColors.brandGold.withValues(alpha: 0.24),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Container(
-              width: 86,
-              height: 86,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AddSupplierColors.bodyPanelBg,
-              ),
-              child: Text(
-                form.avatarInitials,
-                style: GoogleFonts.manrope(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: AddSupplierColors.brandGold,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  form.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: AddSupplierColors.bodyTextMain,
-                    letterSpacing: 0,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${form.supplierType.label} | ${form.mobile.isEmpty ? 'Mobile pending' : form.mobile}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AddSupplierColors.bodyTextMuted,
-                    letterSpacing: 0,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoPill(
-                      icon: AddSupplierIcons.supplierType,
-                      label: form.supplierType.label,
-                      color: AddSupplierColors.accentBusiness,
-                    ),
-                    _InfoPill(
-                      icon: AddSupplierIcons.openingBal,
-                      label:
-                          'Opening Rs ${form.openingBalance.toStringAsFixed(2)}',
-                      color: AddSupplierColors.accentFinance,
-                    ),
-                    _InfoPill(
-                      icon: AddSupplierIcons.country,
-                      label: form.country,
-                      color: AddSupplierColors.accentAddress,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(width: 260, child: _buildTypeChips(form)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeChips(AddSupplierFormModel form) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.end,
-      children: SupplierType.values.map((type) {
-        final selected = form.supplierType == type;
-        return InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: () => _logic.setSupplierType(type),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: selected
-                  ? AddSupplierColors.brandGold
-                  : AddSupplierColors.bodyPanelBg,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: selected
-                    ? AddSupplierColors.brandGold
-                    : AddSupplierColors.bodyBorder,
-              ),
-            ),
-            child: Text(
-              type.label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: selected ? Colors.black : AddSupplierColors.bodyTextMain,
-                letterSpacing: 0,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSection({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color accent,
-    required int stepNumber,
-    required Widget child,
-  }) {
-    return _addSupplierSection(
-      icon: icon,
-      title: title,
-      subtitle: subtitle,
-      accent: accent,
-      stepNumber: stepNumber,
-      child: child,
-    );
-  }
-
-  Widget _buildBusinessSection(AddSupplierFormModel form) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblBusinessName,
-                hint: AddSupplierStrings.hintBusinessName,
-                ctrl: _businessNameCtrl,
-                focus: _businessNameFocus,
-                icon: AddSupplierIcons.businessName,
-                errorText: form.businessNameError,
-                onChanged: _logic.onBusinessNameChanged,
-                textCap: TextCapitalization.words,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblContactPerson,
-                hint: AddSupplierStrings.hintContactPerson,
-                ctrl: _contactPersonCtrl,
-                focus: _contactPersonFocus,
-                icon: AddSupplierIcons.contactPerson,
-                onChanged: _logic.onContactPersonChanged,
-                textCap: TextCapitalization.words,
-              ),
-            ),
-          ],
-        ),
-        _buildSupplierTypeDropdown(form),
-      ],
-    );
-  }
-
-  Widget _buildContactSection(AddSupplierFormModel form) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblMobile,
-                hint: AddSupplierStrings.hintMobile,
-                ctrl: _mobileCtrl,
-                focus: _mobileFocus,
-                icon: AddSupplierIcons.mobile,
-                errorText: form.mobileError,
-                onChanged: (value) {
-                  _logic.onMobileChanged(value);
-                  if (_logic.form.sameAsWhatsApp) {
-                    _whatsappCtrl.value = TextEditingValue(
-                      text: value,
-                      selection: TextSelection.collapsed(offset: value.length),
-                    );
-                  }
-                },
-                keyboard: TextInputType.phone,
-                formatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 10,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblWhatsapp,
-                hint: AddSupplierStrings.hintWhatsapp,
-                ctrl: _whatsappCtrl,
-                focus: _whatsappFocus,
-                icon: AddSupplierIcons.whatsapp,
-                errorText: form.whatsappError,
-                onChanged: _logic.onWhatsappChanged,
-                enabled: !form.sameAsWhatsApp,
-                keyboard: TextInputType.phone,
-                formatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 10,
-              ),
-            ),
-          ],
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: _buildCheckboxLine(
-            value: form.sameAsWhatsApp,
-            label: 'Use mobile number as WhatsApp',
-            onChanged: (value) {
-              _logic.setSameAsWhatsApp(value);
-              _whatsappCtrl.text = value ? _mobileCtrl.text : '';
-            },
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblEmail,
-                hint: AddSupplierStrings.hintEmail,
-                ctrl: _emailCtrl,
-                focus: _emailFocus,
-                icon: AddSupplierIcons.email,
-                errorText: form.emailError,
-                onChanged: _logic.onEmailChanged,
-                keyboard: TextInputType.emailAddress,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblAltContact,
-                hint: AddSupplierStrings.hintAltContact,
-                ctrl: _altContactCtrl,
-                focus: _altContactFocus,
-                icon: AddSupplierIcons.altContact,
-                onChanged: _logic.onAlternateContactChanged,
-                keyboard: TextInputType.phone,
-                formatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 10,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildKycSection(AddSupplierFormModel form) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildField(
-            label: AddSupplierStrings.lblGst,
-            hint: AddSupplierStrings.hintGst,
-            ctrl: _gstCtrl,
-            focus: _gstFocus,
-            icon: AddSupplierIcons.gst,
-            errorText: form.gstError,
-            onChanged: _logic.onGstChanged,
-            textCap: TextCapitalization.characters,
-            formatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-              LengthLimitingTextInputFormatter(15),
-              _UpperCaseTextFormatter(),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildField(
-            label: AddSupplierStrings.lblPan,
-            hint: AddSupplierStrings.hintPan,
-            ctrl: _panCtrl,
-            focus: _panFocus,
-            icon: AddSupplierIcons.pan,
-            errorText: form.panError,
-            onChanged: _logic.onPanChanged,
-            textCap: TextCapitalization.characters,
-            formatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-              LengthLimitingTextInputFormatter(10),
-              _UpperCaseTextFormatter(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddressSection(AddSupplierFormModel form) {
-    final isIndia = form.country == 'India';
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildDropdown<String>(
-                label: AddSupplierStrings.lblCountry,
-                icon: AddSupplierIcons.country,
-                value:
-                    _countries.contains(form.country) ? form.country : 'Other',
-                items: _countries,
-                itemLabel: (country) => country,
-                onChanged: _logic.setCountry,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: isIndia
-                  ? _buildDropdown<String>(
-                      label: AddSupplierStrings.lblState,
-                      icon: AddSupplierIcons.state,
-                      value:
-                          _indiaStates.contains(form.state) ? form.state : null,
-                      items: _indiaStates,
-                      itemLabel: (state) => state,
-                      onChanged: _logic.setStateName,
-                    )
-                  : _buildField(
-                      label: AddSupplierStrings.lblState,
-                      hint: AddSupplierStrings.hintState,
-                      ctrl: _stateCtrl,
-                      focus: _stateFocus,
-                      icon: AddSupplierIcons.state,
-                      onChanged: _logic.setStateName,
-                      textCap: TextCapitalization.words,
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblPincode,
-                hint: AddSupplierStrings.hintPincode,
-                ctrl: _pincodeCtrl,
-                focus: _pincodeFocus,
-                icon: AddSupplierIcons.pincode,
-                errorText: form.pincodeError,
-                onChanged: _logic.onPincodeChanged,
-                keyboard: TextInputType.number,
-                formatters: [FilteringTextInputFormatter.digitsOnly],
-                maxLength: 6,
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblAddress1,
-                hint: AddSupplierStrings.hintAddress1,
-                ctrl: _address1Ctrl,
-                focus: _address1Focus,
-                icon: AddSupplierIcons.address,
-                onChanged: _logic.onAddressLine1Changed,
-                textCap: TextCapitalization.words,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildField(
-                label: AddSupplierStrings.lblAddress2,
-                hint: AddSupplierStrings.hintAddress2,
-                ctrl: _address2Ctrl,
-                focus: _address2Focus,
-                icon: AddSupplierIcons.address,
-                onChanged: _logic.onAddressLine2Changed,
-                textCap: TextCapitalization.words,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFinanceSection(AddSupplierFormModel form) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 320,
-          child: _buildField(
-            label: AddSupplierStrings.lblOpeningBal,
-            hint: AddSupplierStrings.hintOpeningBal,
-            ctrl: _openingBalCtrl,
-            focus: _openingBalFocus,
-            icon: AddSupplierIcons.openingBal,
-            errorText: form.openingBalanceError,
-            onChanged: _logic.onOpeningBalanceChanged,
-            keyboard: const TextInputType.numberWithOptions(decimal: true),
-            formatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildField(
-            label: AddSupplierStrings.lblNotes,
-            hint: AddSupplierStrings.hintNotes,
-            ctrl: _notesCtrl,
-            focus: _notesFocus,
-            icon: AddSupplierIcons.notes,
-            onChanged: _logic.onNotesChanged,
-            maxLines: 4,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildField({
-    required String label,
-    required String hint,
-    required TextEditingController ctrl,
-    required FocusNode focus,
-    required IconData icon,
-    required ValueChanged<String> onChanged,
-    String? errorText,
-    TextInputType keyboard = TextInputType.text,
-    TextCapitalization textCap = TextCapitalization.none,
-    List<TextInputFormatter>? formatters,
-    int? maxLength,
-    int maxLines = 1,
-    bool enabled = true,
-  }) {
-    return _addSupplierField(
-      label: label,
-      hint: hint,
-      ctrl: ctrl,
-      focus: focus,
-      icon: icon,
-      onChanged: onChanged,
-      errorText: errorText,
-      keyboard: keyboard,
-      textCap: textCap,
-      formatters: formatters,
-      maxLength: maxLength,
-      maxLines: maxLines,
-      enabled: enabled,
-    );
-  }
-
-  Widget _buildSupplierTypeDropdown(AddSupplierFormModel form) {
-    return _buildDropdown<SupplierType>(
-      label: AddSupplierStrings.lblSupplierType,
-      icon: AddSupplierIcons.supplierType,
-      value: form.supplierType,
-      items: SupplierType.values,
-      itemLabel: (type) => type.label,
-      onChanged: _logic.setSupplierType,
-    );
-  }
-
-  Widget _buildDropdown<T>({
-    required String label,
-    required IconData icon,
-    required T? value,
-    required List<T> items,
-    required String Function(T item) itemLabel,
-    required ValueChanged<T> onChanged,
-  }) {
-    return _addSupplierDropdown<T>(
-      label: label,
-      icon: icon,
-      value: value,
-      items: items,
-      itemLabel: itemLabel,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildCheckboxLine({
-    required bool value,
-    required String label,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return _addSupplierCheckboxLine(
-      value: value,
-      label: label,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildErrorBanner(String message) {
-    return _addSupplierErrorBanner(message);
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        if (!_logic.isEditMode) ...[
-          Expanded(
-            child: SizedBox(
-              height: 56,
-              child: OutlinedButton.icon(
-                onPressed: _logic.isSaving ? null : _handleClear,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AddSupplierColors.bodyTextMain,
-                  side: const BorderSide(color: AddSupplierColors.bodyBorder),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                icon: const Icon(AddSupplierIcons.clear, size: 20),
-                label: Text(
-                  AddSupplierStrings.btnClear,
-                  style: GoogleFonts.manrope(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
-        Expanded(
-          flex: 2,
-          child: SizedBox(
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: _logic.canSave ? _handleSave : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AddSupplierColors.saveBtnBg,
-                disabledBackgroundColor: AddSupplierColors.saveBtnDisabled,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-              icon: _logic.isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.black54,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(
-                      AddSupplierIcons.save,
-                      color: Colors.black87,
-                      size: 22,
-                    ),
-              label: Text(
-                _logic.isSaving
-                    ? AddSupplierStrings.btnSaving
-                    : _logic.isEditMode
-                        ? AddSupplierStrings.btnSaveEdit
-                        : AddSupplierStrings.btnSaveAdd,
-                style: AddSupplierStyles.saveButtonText,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _handleSave() async {
-    FocusScope.of(context).unfocus();
-    final success = await _logic.save();
-    if (!mounted) return;
-
-    if (success) {
-      _showFeedback(_logic.successMessage ?? 'Supplier saved', isSuccess: true);
-      widget.onSaved?.call();
-    } else {
-      _showFeedback('Please check highlighted fields', isSuccess: false);
-    }
-  }
-
-  void _handleClear() {
-    _logic.resetForm();
-    _syncControllersFromForm();
-    _showFeedback('Supplier form cleared', isSuccess: true);
-  }
-
-  void _showFeedback(String message, {required bool isSuccess}) {
-    AppFeedback.show(
-      context,
-      type: isSuccess ? AppFeedbackType.success : AppFeedbackType.error,
-      message: message,
-    );
-  }
 }

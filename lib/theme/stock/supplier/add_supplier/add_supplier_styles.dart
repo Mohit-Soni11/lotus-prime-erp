@@ -24,13 +24,6 @@ class AddSupplierStyles {
         letterSpacing: 0,
       );
 
-  static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600,
-        color: AddSupplierColors.brandGold,
-        letterSpacing: 0,
-      );
-
   static const TextStyle systemOnlineText = TextStyle(
     color: AddSupplierColors.onlineGreen,
     fontSize: 13,
@@ -45,16 +38,16 @@ class AddSupplierStyles {
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: AddSupplierColors.bodyTextMuted,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get fieldLabel => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AddSupplierColors.inputLabel,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
       );
 
   static TextStyle get fieldInput => GoogleFonts.manrope(
@@ -63,8 +56,8 @@ class AddSupplierStyles {
         color: AddSupplierColors.inputText,
       );
 
-  static TextStyle get fieldHint =>
-      GoogleFonts.inter(fontSize: 13, color: AddSupplierColors.inputHint);
+  static TextStyle get fieldHint => GoogleFonts.inter(
+      fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w600);
 
   static TextStyle get saveButtonText => GoogleFonts.manrope(
         fontSize: 15,
@@ -73,9 +66,9 @@ class AddSupplierStyles {
       );
 
   static TextStyle get requiredNote => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AddSupplierColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
       );
 
   static BoxDecoration get sectionCard => BoxDecoration(

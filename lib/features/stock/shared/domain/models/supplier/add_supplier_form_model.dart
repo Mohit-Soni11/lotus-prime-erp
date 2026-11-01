@@ -15,8 +15,6 @@ enum SupplierActiveField {
   addressLine2,
   state,
   pincode,
-  openingBalance,
-  notes,
 }
 
 class AddSupplierFormModel {
@@ -46,7 +44,6 @@ class AddSupplierFormModel {
   final String? panError;
   final String? gstError;
   final String? pincodeError;
-  final String? openingBalanceError;
 
   const AddSupplierFormModel({
     this.id,
@@ -74,7 +71,6 @@ class AddSupplierFormModel {
     this.panError,
     this.gstError,
     this.pincodeError,
-    this.openingBalanceError,
   });
 
   bool get isReadyToSave =>
@@ -86,8 +82,7 @@ class AddSupplierFormModel {
       emailError == null &&
       panError == null &&
       gstError == null &&
-      pincodeError == null &&
-      openingBalanceError == null;
+      pincodeError == null;
 
   String get displayName =>
       businessName.trim().isEmpty ? 'New Supplier' : businessName.trim();
@@ -173,7 +168,6 @@ class AddSupplierFormModel {
     String? panError,
     String? gstError,
     String? pincodeError,
-    String? openingBalanceError,
     bool clearBusinessNameError = false,
     bool clearMobileError = false,
     bool clearWhatsappError = false,
@@ -181,7 +175,6 @@ class AddSupplierFormModel {
     bool clearPanError = false,
     bool clearGstError = false,
     bool clearPincodeError = false,
-    bool clearOpeningBalanceError = false,
   }) {
     return AddSupplierFormModel(
       id: id ?? this.id,
@@ -213,9 +206,6 @@ class AddSupplierFormModel {
       gstError: clearGstError ? null : gstError ?? this.gstError,
       pincodeError:
           clearPincodeError ? null : pincodeError ?? this.pincodeError,
-      openingBalanceError: clearOpeningBalanceError
-          ? null
-          : openingBalanceError ?? this.openingBalanceError,
     );
   }
 }

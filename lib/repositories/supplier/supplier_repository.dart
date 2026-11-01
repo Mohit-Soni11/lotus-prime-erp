@@ -127,26 +127,6 @@ class SupplierRepository {
     );
   }
 
-  /// Stats for header strip
-  Future<SupplierStats> getStats() async {
-    final all = await (_db.select(_db.suppliers)).get();
-    final active = all.where((s) => s.status == 'Active').length;
-    final manufacturer =
-        all.where((s) => s.supplierType == 'Manufacturer').length;
-    final today = DateTime.now();
-    final todayNew = all.where((s) {
-      final d = s.createdAt;
-      return d.year == today.year &&
-          d.month == today.month &&
-          d.day == today.day;
-    }).length;
-    return SupplierStats(
-      total: active,
-      todayCount: todayNew,
-      manufacturerCount: manufacturer,
-    );
-  }
-
   // ── WRITE ───────────────────────────────────────────────────────────────
 
   Future<int> addSupplier(SupplierModel m) async {
@@ -437,24 +417,6 @@ class SupplierRepository {
         status: drift.Value(m.status.label),
         updatedAt: drift.Value(DateTime.now()),
       );
-}
-
-// ── Stats model ───────────────────────────────────────────────────────────────
-
-class SupplierStats {
-  final int total;
-  final int todayCount;
-  final int manufacturerCount;
-  final bool isLoading;
-
-  const SupplierStats({
-    this.total = 0,
-    this.todayCount = 0,
-    this.manufacturerCount = 0,
-    this.isLoading = false,
-  });
-
-  static const loading = SupplierStats(isLoading: true);
 }
 
 class SupplierLedgerSnapshot {

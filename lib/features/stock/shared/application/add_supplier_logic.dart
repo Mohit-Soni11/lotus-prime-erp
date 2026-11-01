@@ -37,6 +37,8 @@ class AddSupplierLogic extends ChangeNotifier {
   String? _errorMessage;
   String? _successMessage;
   Timer? _mobileDebounce;
+  int _mobileCheckVersion = 0;
+  bool _disposed = false;
 
   bool get isEditMode => _isEdit;
   AddSupplierFormModel get form => _form;
@@ -73,6 +75,7 @@ class AddSupplierLogic extends ChangeNotifier {
   }
 
   void onMobileChanged(String value) {
+    final version = ++_mobileCheckVersion;
     final err = AddSupplierValidator.validateMobileLive(value);
     _form = _form.copyWith(
       mobile: value,
@@ -86,15 +89,19 @@ class AddSupplierLogic extends ChangeNotifier {
     final digits = value.replaceAll(RegExp(r'\D'), '');
     if (digits.length == 10 && err == null) {
       _mobileDebounce = Timer(const Duration(milliseconds: 550), () async {
-        final duplicate = await _repo.isMobileDuplicate(
-          value.trim(),
-          excludeSupplierId: _form.id,
-        );
-        if (duplicate) {
-          _form = _form.copyWith(
-            mobileError: 'This mobile number already exists',
+        try {
+          final duplicate = await _repo.isMobileDuplicate(
+            value.trim(),
+            excludeSupplierId: _form.id,
           );
-          notifyListeners();
+          if (!_disposed && version == _mobileCheckVersion && duplicate) {
+            _form = _form.copyWith(
+              mobileError: 'This mobile number already exists',
+            );
+            notifyListeners();
+          }
+        } catch (error) {
+          AppLogger.debug('Supplier mobile lookup failed: $error');
         }
       });
     }
@@ -168,7 +175,8 @@ class AddSupplierLogic extends ChangeNotifier {
   }
 
   void setCountry(String value) {
-    _form = _form.copyWith(country: value, state: '');
+    _form = _form.copyWith(
+        country: value, state: '', pincode: '', clearPincodeError: true);
     notifyListeners();
   }
 
@@ -178,7 +186,8 @@ class AddSupplierLogic extends ChangeNotifier {
   }
 
   void onPincodeChanged(String value) {
-    final err = AddSupplierValidator.validatePincode(value);
+    final err =
+        AddSupplierValidator.validatePostalCode(value, country: _form.country);
     _form = _form.copyWith(
       pincode: value,
       pincodeError: err,
@@ -187,22 +196,9 @@ class AddSupplierLogic extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onOpeningBalanceChanged(String value) {
-    final err = AddSupplierValidator.validateOpeningBalance(value);
-    _form = _form.copyWith(
-      openingBalance: double.tryParse(value.trim()) ?? 0.0,
-      openingBalanceError: err,
-      clearOpeningBalanceError: err == null,
-    );
-    notifyListeners();
-  }
-
-  void onNotesChanged(String value) {
-    _form = _form.copyWith(notes: value);
-    notifyListeners();
-  }
-
   Future<bool> save() async {
+    _mobileDebounce?.cancel();
+    _mobileCheckVersion++;
     _formState = AddSupplierFormState.validating;
     _errorMessage = null;
     _successMessage = null;
@@ -216,7 +212,8 @@ class AddSupplierLogic extends ChangeNotifier {
     final emailErr = AddSupplierValidator.validateEmail(_form.email);
     final panErr = AddSupplierValidator.validatePan(_form.panNumber);
     final gstErr = AddSupplierValidator.validateGst(_form.gstNumber);
-    final pincodeErr = AddSupplierValidator.validatePincode(_form.pincode);
+    final pincodeErr = AddSupplierValidator.validatePostalCode(_form.pincode,
+        country: _form.country);
 
     if (businessErr != null ||
         mobileErr != null ||
@@ -224,8 +221,7 @@ class AddSupplierLogic extends ChangeNotifier {
         emailErr != null ||
         panErr != null ||
         gstErr != null ||
-        pincodeErr != null ||
-        _form.openingBalanceError != null) {
+        pincodeErr != null) {
       _form = _form.copyWith(
         businessNameError: businessErr,
         mobileError: mobileErr,
@@ -240,10 +236,19 @@ class AddSupplierLogic extends ChangeNotifier {
       return false;
     }
 
-    final duplicate = await _repo.isMobileDuplicate(
-      _form.mobile.trim(),
-      excludeSupplierId: _form.id,
-    );
+    bool duplicate;
+    try {
+      duplicate = await _repo.isMobileDuplicate(
+        _form.mobile.trim(),
+        excludeSupplierId: _form.id,
+      );
+    } catch (error) {
+      AppLogger.debug('Supplier duplicate check failed: $error');
+      _errorMessage = 'Could not verify the mobile number. Please retry.';
+      _formState = AddSupplierFormState.error;
+      notifyListeners();
+      return false;
+    }
     if (duplicate) {
       _form = _form.copyWith(mobileError: 'This mobile number already exists');
       _formState = AddSupplierFormState.duplicate;
@@ -280,6 +285,8 @@ class AddSupplierLogic extends ChangeNotifier {
   }
 
   void resetForm() {
+    _mobileDebounce?.cancel();
+    _mobileCheckVersion++;
     _form = const AddSupplierFormModel();
     _formState = AddSupplierFormState.idle;
     _activeField = SupplierActiveField.none;
@@ -299,6 +306,8 @@ class AddSupplierLogic extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    _mobileCheckVersion++;
     _mobileDebounce?.cancel();
     super.dispose();
   }

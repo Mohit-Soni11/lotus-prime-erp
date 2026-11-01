@@ -25,14 +25,11 @@ class AddSupplierIcons {
   static const IconData state = Icons.map_outlined;
   static const IconData country = Icons.public_rounded;
   static const IconData pincode = Icons.pin_drop_outlined;
-  static const IconData openingBal = Icons.account_balance_wallet_outlined;
-  static const IconData notes = Icons.notes_rounded;
 
   static const IconData sectionBasic = Icons.store_rounded;
   static const IconData sectionContact = Icons.contact_phone_rounded;
   static const IconData sectionKyc = Icons.verified_user_outlined;
   static const IconData sectionAddress = Icons.location_on_rounded;
-  static const IconData sectionFinance = Icons.account_balance_wallet_outlined;
 
   static const IconData save = Icons.check_circle_rounded;
   static const IconData clear = Icons.cleaning_services_rounded;

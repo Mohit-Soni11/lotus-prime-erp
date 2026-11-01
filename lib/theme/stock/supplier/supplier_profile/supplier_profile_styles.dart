@@ -21,13 +21,6 @@ class SupplierProfileStyles {
         letterSpacing: 0,
       );
 
-  static TextStyle get appBarSubtitle => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w700,
-        color: SupplierProfileColors.brandGold,
-        letterSpacing: 0,
-      );
-
   static const TextStyle systemOnlineText = TextStyle(
     color: SupplierProfileColors.onlineGreen,
     fontSize: 13,
@@ -38,57 +31,57 @@ class SupplierProfileStyles {
   static TextStyle get supplierName => GoogleFonts.manrope(
         fontSize: 22,
         fontWeight: FontWeight.w800,
-        color: SupplierProfileColors.bodyTextMain,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get supplierMeta => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: SupplierProfileColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get sectionTitle => GoogleFonts.manrope(
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: SupplierProfileColors.bodyTextMain,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get sectionSubtitle => GoogleFonts.inter(
-        fontSize: 13.5,
+        fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: SupplierProfileColors.bodyTextMuted,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get infoLabel => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: SupplierProfileColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get infoValue => GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: SupplierProfileColors.bodyTextMain,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get statValue => GoogleFonts.manrope(
         fontSize: 20,
         fontWeight: FontWeight.w900,
-        color: SupplierProfileColors.bodyTextMain,
+        color: Colors.black,
         height: 1.0,
         letterSpacing: 0,
       );
 
   static TextStyle get statLabel => GoogleFonts.inter(
-        fontSize: 13.5,
-        fontWeight: FontWeight.w700,
-        color: SupplierProfileColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
@@ -101,14 +94,14 @@ class SupplierProfileStyles {
   static TextStyle get historyTitle => GoogleFonts.manrope(
         fontSize: 15,
         fontWeight: FontWeight.w800,
-        color: SupplierProfileColors.bodyTextMain,
+        color: Colors.black,
         letterSpacing: 0,
       );
 
   static TextStyle get historyMeta => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: SupplierProfileColors.bodyTextMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: Colors.black,
         letterSpacing: 0,
       );
 

@@ -1,177 +1,149 @@
-// -----------------------------------------------------------------------------
-// FILE: supplier_list_card.dart
-// MODULE: Supplier â†’ Supplier List
-// DESCRIPTION: Hover card â€” gold border glow on hover, same as CustomerListCard.
-// -----------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
-import 'package:lotus_erp/theme/stock/supplier/supplier_list/supplier_list_theme.dart';
 import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_model.dart';
-import 'package:lotus_erp/features/stock/shared/domain/models/supplier/supplier_enums.dart';
+import 'package:lotus_erp/theme/stock/supplier/supplier_list/supplier_list_theme.dart';
 
-class SupplierListCard extends StatefulWidget {
+class SupplierListCard extends StatelessWidget {
+  const SupplierListCard({
+    super.key,
+    required this.supplier,
+    required this.onTap,
+  });
+
   final SupplierListItemModel supplier;
   final VoidCallback? onTap;
 
-  const SupplierListCard({super.key, required this.supplier, this.onTap});
-
   @override
-  State<SupplierListCard> createState() => _SupplierListCardState();
-}
-
-class _SupplierListCardState extends State<SupplierListCard> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: _isHovered
-              ? SupplierListStyles.cardDecorationHover
-              : SupplierListStyles.cardDecoration,
+  Widget build(BuildContext context) => Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: SupplierListColors.bodyBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
           child: Padding(
-            padding: SupplierListStyles.cardPaddingH,
-            child: Row(
-              children: [
-                _buildAvatar(),
-                const SizedBox(width: 16),
-                Expanded(child: _buildMainInfo()),
-                const SizedBox(width: 12),
-                _buildTypeBadge(),
-                const SizedBox(width: 12),
-                AnimatedOpacity(
-                  opacity: _isHovered ? 1.0 : 0.3,
-                  duration: const Duration(milliseconds: 180),
-                  child: const Icon(SupplierListIcons.arrowRight,
-                      color: SupplierListColors.brandGold, size: 16),
+            padding: const EdgeInsets.all(18),
+            child: LayoutBuilder(builder: (context, constraints) {
+              final compact = constraints.maxWidth < 650;
+              final avatar = Container(
+                width: 54,
+                height: 54,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: SupplierListColors.brandGold.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SupplierListColors.brandGold),
                 ),
-              ],
-            ),
+                child: Text(
+                  supplier.avatarInitial,
+                  style: const TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+              );
+              final information = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    supplier.businessName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  Wrap(spacing: 16, runSpacing: 9, children: [
+                    _typeBadge(),
+                    _detail(Icons.phone_rounded, 'Mobile', supplier.mobile),
+                    if (supplier.contactPersonName?.trim().isNotEmpty == true)
+                      _detail(Icons.person_rounded, 'Contact Person',
+                          supplier.contactPersonName!.trim()),
+                    if (supplier.gstNumber?.trim().isNotEmpty == true)
+                      _detail(Icons.receipt_long_rounded, 'GST',
+                          supplier.gstNumber!.trim()),
+                  ]),
+                ],
+              );
+              final open = OutlinedButton.icon(
+                onPressed: onTap,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  side: const BorderSide(color: SupplierListColors.brandGold),
+                  backgroundColor:
+                      SupplierListColors.brandGold.withValues(alpha: 0.12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+                label: const Text('Open Profile',
+                    style: TextStyle(fontWeight: FontWeight.w800)),
+              );
+              if (compact) {
+                return Column(children: [
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    avatar,
+                    const SizedBox(width: 14),
+                    Expanded(child: information),
+                  ]),
+                  const SizedBox(height: 12),
+                  Align(alignment: Alignment.centerRight, child: open),
+                ]);
+              }
+              return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    avatar,
+                    const SizedBox(width: 16),
+                    Expanded(child: information),
+                    const SizedBox(width: 16),
+                    open,
+                  ]);
+            }),
           ),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildAvatar() {
-    return Container(
-      width: SupplierListStyles.avatarSize,
-      height: SupplierListStyles.avatarSize,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            SupplierListColors.brandGold.withValues(alpha: 0.8),
-            SupplierListColors.brandGold,
-          ],
+  Widget _typeBadge() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: SupplierListColors.brandGold.withValues(alpha: 0.13),
+          borderRadius: BorderRadius.circular(100),
         ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: SupplierListColors.brandGold.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Center(
         child: Text(
-          widget.supplier.avatarInitial,
+          supplier.supplierType.label,
           style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
             color: Colors.black,
           ),
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildMainInfo() {
-    final s = widget.supplier;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(s.businessName,
-            style: SupplierListStyles.supplierName,
-            overflow: TextOverflow.ellipsis),
-        const SizedBox(height: 4),
-        if (s.contactPersonName != null) ...[
-          Text(s.contactPersonName!, style: SupplierListStyles.supplierDetail),
-          const SizedBox(height: 3),
-        ],
-        Row(
-          children: [
-            const Icon(SupplierListIcons.phone,
-                size: 13, color: SupplierListColors.bodyTextMuted),
-            const SizedBox(width: 4),
-            Text(s.mobile, style: SupplierListStyles.supplierMobile),
-            if (s.gstNumber != null) ...[
-              const SizedBox(width: 12),
-              const Icon(SupplierListIcons.gst,
-                  size: 13, color: SupplierListColors.bodyTextMuted),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(s.gstNumber!,
-                    style: SupplierListStyles.supplierGst,
-                    overflow: TextOverflow.ellipsis),
+  Widget _detail(IconData icon, String label, String value) => ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 340),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 16, color: SupplierListColors.brandGold),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '$label: $value',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
               ),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypeBadge() {
-    final s = widget.supplier;
-    Color bg, textC, border;
-    switch (s.supplierType) {
-      case SupplierType.manufacturer:
-        bg = SupplierListColors.manufacturerBg;
-        textC = SupplierListColors.manufacturerText;
-        border = SupplierListColors.manufacturerBorder;
-        break;
-      case SupplierType.wholesaler:
-        bg = SupplierListColors.wholesalerBg;
-        textC = SupplierListColors.wholesalerText;
-        border = SupplierListColors.wholesalerBorder;
-        break;
-      case SupplierType.retailer:
-        bg = SupplierListColors.retailerBg;
-        textC = SupplierListColors.retailerText;
-        border = SupplierListColors.retailerBorder;
-        break;
-      case SupplierType.individual:
-        bg = SupplierListColors.individualBg;
-        textC = SupplierListColors.individualText;
-        border = SupplierListColors.individualBorder;
-        break;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
-      child: Text(
-        s.supplierType.label,
-        style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: textC,
-            letterSpacing: 0.5),
-      ),
-    );
-  }
+            ),
+          ),
+        ]),
+      );
 }

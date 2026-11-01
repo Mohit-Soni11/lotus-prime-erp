@@ -523,7 +523,7 @@ GoRouter createAppRouter() {
             path: RoutePaths.supplierList,
             builder: (context, state) => SupplierListScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),
-              onAddSupplier: () => context.go(RoutePaths.supplierAdd),
+              onAddSupplier: () => context.push(RoutePaths.supplierAdd),
               onSupplierTap: (supplierId) =>
                   context.go(RoutePaths.supplierProfileFor(supplierId)),
             ),
@@ -531,7 +531,7 @@ GoRouter createAppRouter() {
           GoRoute(
             path: RoutePaths.supplierAdd,
             builder: (context, state) => AddSupplierScreen(
-              onBack: () => _goBackOr(context, RoutePaths.supplierList),
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
               onSaved: () => context.go(RoutePaths.supplierList),
             ),
           ),

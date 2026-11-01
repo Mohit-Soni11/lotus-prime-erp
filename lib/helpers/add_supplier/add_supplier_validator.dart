@@ -14,24 +14,27 @@ class AddSupplierValidator {
   }
 
   static String? validateMobile(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return 'Mobile number is required';
-    if (digits.length != 10) return 'Enter a valid 10-digit mobile number';
+    final mobile = value.trim();
+    if (mobile.isEmpty) return 'Mobile number is required';
+    if (!RegExp(r'^[6-9][0-9]{9}$').hasMatch(mobile)) {
+      return 'Enter a valid 10-digit mobile number';
+    }
     return null;
   }
 
   static String? validateMobileLive(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return null;
-    if (digits.length < 10) return 'Mobile number needs 10 digits';
-    if (digits.length > 10) return 'Mobile number cannot exceed 10 digits';
+    if (value.isEmpty) return null;
+    if (!RegExp(r'^[0-9]*$').hasMatch(value)) return 'Only digits allowed';
+    if (value.length > 10) return 'Mobile number cannot exceed 10 digits';
+    if (value.length == 10) return validateMobile(value);
     return null;
   }
 
   static String? validateWhatsapp(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return null;
-    if (digits.length != 10) return 'Enter a valid 10-digit WhatsApp number';
+    if (value.trim().isEmpty) return null;
+    if (!RegExp(r'^[6-9][0-9]{9}$').hasMatch(value.trim())) {
+      return 'Enter a valid 10-digit WhatsApp number';
+    }
     return null;
   }
 
@@ -59,18 +62,21 @@ class AddSupplierValidator {
   }
 
   static String? validatePincode(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return null;
-    if (digits.length != 6) return 'Pincode must be 6 digits';
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    if (!RegExp(r'^[1-9][0-9]{5}$').hasMatch(trimmed)) {
+      return 'Enter a valid 6-digit pincode';
+    }
     return null;
   }
 
-  static String? validateOpeningBalance(String value) {
+  static String? validatePostalCode(String value, {required String country}) {
+    if (country == 'India') return validatePincode(value);
     final trimmed = value.trim();
     if (trimmed.isEmpty) return null;
-    final parsed = double.tryParse(trimmed);
-    if (parsed == null) return 'Enter a valid amount';
-    if (parsed < 0) return 'Opening balance cannot be negative';
-    return null;
+    return RegExp(r'^[A-Za-z0-9][A-Za-z0-9 -]{1,10}[A-Za-z0-9]$')
+            .hasMatch(trimmed)
+        ? null
+        : 'Enter a valid postal code';
   }
 }
