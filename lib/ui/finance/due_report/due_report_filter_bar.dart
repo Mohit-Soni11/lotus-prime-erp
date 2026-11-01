@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../logic/finance/due_report/due_report_controller.dart';
 import '../../../models/finance/due_report/due_report_model.dart';
 import '../../../theme/finance/due_report/due_report_theme.dart';
+import 'due_report_filter_chip.dart';
 
 class DueReportFilterBar extends StatelessWidget {
-  final DueReportController ctrl;
-  final VoidCallback onPrint;
-  final VoidCallback onExport;
-
   const DueReportFilterBar({
     super.key,
     required this.ctrl,
@@ -16,160 +13,68 @@ class DueReportFilterBar extends StatelessWidget {
     required this.onExport,
   });
 
+  final DueReportController ctrl;
+  final VoidCallback onPrint;
+  final VoidCallback onExport;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: DueReportStyles.flatPanel(),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
+      decoration: DueReportStyles.panel(),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 900;
-          return compact
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _SearchBox(ctrl: ctrl),
-                    const SizedBox(height: 10),
-                    _FilterChips(ctrl: ctrl),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(child: _SortMenu(ctrl: ctrl)),
-                        const SizedBox(width: 10),
-                        _ActionButton(
-                          icon: DueReportIcons.print,
-                          label: 'Print',
-                          onTap: onPrint,
-                        ),
-                        const SizedBox(width: 8),
-                        _ActionButton(
-                          icon: DueReportIcons.export,
-                          label: 'Export',
-                          onTap: onExport,
-                        ),
-                      ],
-                    ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    SizedBox(width: 340, child: _SearchBox(ctrl: ctrl)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _FilterChips(ctrl: ctrl)),
-                    const SizedBox(width: 12),
-                    SizedBox(width: 190, child: _SortMenu(ctrl: ctrl)),
-                    const SizedBox(width: 10),
-                    _ActionButton(
-                      icon: DueReportIcons.print,
-                      label: 'Print',
-                      onTap: onPrint,
-                    ),
-                    const SizedBox(width: 8),
-                    _ActionButton(
-                      icon: DueReportIcons.export,
-                      label: 'Export',
-                      onTap: onExport,
-                    ),
-                  ],
-                );
-        },
-      ),
-    );
-  }
-}
-
-class _SearchBox extends StatelessWidget {
-  final DueReportController ctrl;
-  const _SearchBox({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 42,
-      child: TextField(
-        controller: ctrl.searchCtrl,
-        style: DueReportStyles.rowTitle.copyWith(fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          hintText: DueReportStrings.searchHint,
-          hintStyle: DueReportStyles.muted,
-          prefixIcon: const Icon(
-            DueReportIcons.search,
-            color: DueReportColors.textMuted,
-            size: 18,
-          ),
-          suffixIcon: ctrl.searchQuery.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Clear',
-                  icon: const Icon(DueReportIcons.clear, size: 16),
-                  onPressed: ctrl.clearSearch,
-                ),
-          filled: true,
-          fillColor: DueReportColors.panelSoft,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: DueReportColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: DueReportColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: DueReportColors.gold),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChips extends StatelessWidget {
-  final DueReportController ctrl;
-  const _FilterChips({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 42,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: DueReportFilter.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, index) {
-          final filter = DueReportFilter.values[index];
-          final active = ctrl.filter == filter;
-          return InkWell(
-            onTap: () => ctrl.setFilter(filter),
-            borderRadius: BorderRadius.circular(8),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: active
-                    ? DueReportColors.appBarBg
-                    : DueReportColors.panelSoft,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: active ? DueReportColors.gold : DueReportColors.border,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  filter.label,
-                  style: DueReportStyles.label.copyWith(
-                    color: active
-                        ? DueReportColors.textLight
-                        : DueReportColors.textSecondary,
+          final compact = constraints.maxWidth < 760;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (compact) ...[
+                _SearchBox(ctrl: ctrl),
+                if (ctrl.allDueBillCount > 0) ...[
+                  const SizedBox(height: 10),
+                  _ToolsRow(
+                    ctrl: ctrl,
+                    onPrint: onPrint,
+                    onExport: onExport,
                   ),
+                ],
+              ] else
+                Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 640),
+                          child: _SearchBox(ctrl: ctrl),
+                        ),
+                      ),
+                    ),
+                    if (ctrl.allDueBillCount > 0) ...[
+                      const SizedBox(width: 12),
+                      _ToolsRow(
+                        ctrl: ctrl,
+                        onPrint: onPrint,
+                        onExport: onExport,
+                      ),
+                    ],
+                  ],
                 ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final filter in ctrl.availableFilters)
+                    DueReportFilterChip(
+                      filter: filter,
+                      count: ctrl.filterCount(filter),
+                      selected: ctrl.filter == filter,
+                      onSelected: () => ctrl.setFilter(filter),
+                    ),
+                ],
               ),
-            ),
+            ],
           );
         },
       ),
@@ -177,57 +82,125 @@ class _FilterChips extends StatelessWidget {
   }
 }
 
-class _SortMenu extends StatelessWidget {
+class _SearchBox extends StatelessWidget {
+  const _SearchBox({required this.ctrl});
+
   final DueReportController ctrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 46,
+      child: TextField(
+        controller: ctrl.searchCtrl,
+        style: DueReportStyles.label.copyWith(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: DueReportStrings.searchHint,
+          hintStyle: DueReportStyles.label.copyWith(fontSize: 14),
+          prefixIcon: const Icon(
+            DueReportIcons.search,
+            color: DueReportColors.textPrimary,
+            size: 20,
+          ),
+          suffixIcon: ctrl.searchQuery.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Clear search',
+                  icon: const Icon(DueReportIcons.clear, size: 18),
+                  onPressed: ctrl.clearSearch,
+                ),
+          filled: true,
+          fillColor: DueReportColors.panelBg,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+          border: _border(DueReportColors.border),
+          enabledBorder: _border(DueReportColors.border),
+          focusedBorder: _border(DueReportColors.gold),
+        ),
+      ),
+    );
+  }
+
+  OutlineInputBorder _border(Color color) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: color),
+      );
+}
+
+class _ToolsRow extends StatelessWidget {
+  const _ToolsRow({
+    required this.ctrl,
+    required this.onPrint,
+    required this.onExport,
+  });
+
+  final DueReportController ctrl;
+  final VoidCallback onPrint;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        SizedBox(width: 180, child: _SortMenu(ctrl: ctrl)),
+        if (ctrl.visibleGroups.isNotEmpty) ...[
+          _ActionButton(
+            icon: DueReportIcons.print,
+            label: 'Print',
+            onPressed: onPrint,
+          ),
+          _ActionButton(
+            icon: DueReportIcons.export,
+            label: 'Export',
+            onPressed: onExport,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SortMenu extends StatelessWidget {
   const _SortMenu({required this.ctrl});
+
+  final DueReportController ctrl;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: DueReportColors.panelSoft,
-        borderRadius: BorderRadius.circular(8),
+        color: DueReportColors.panelBg,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: DueReportColors.border),
       ),
       child: Row(
         children: [
-          const Icon(
-            DueReportIcons.sort,
-            size: 17,
-            color: DueReportColors.textMuted,
-          ),
+          const Icon(DueReportIcons.sort,
+              size: 18, color: DueReportColors.textPrimary),
           const SizedBox(width: 8),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<DueReportSort>(
                 value: ctrl.sort,
                 isExpanded: true,
-                iconSize: 18,
-                iconEnabledColor: DueReportColors.textMuted,
-                dropdownColor: DueReportColors.panelBg,
                 borderRadius: BorderRadius.circular(10),
-                menuMaxHeight: 280,
-                style: DueReportStyles.label.copyWith(
-                  color: DueReportColors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
+                dropdownColor: DueReportColors.panelBg,
+                iconEnabledColor: DueReportColors.textPrimary,
+                style: DueReportStyles.label.copyWith(fontSize: 14),
                 onChanged: (value) {
                   if (value != null) ctrl.setSort(value);
                 },
-                items: DueReportSort.values
-                    .map(
-                      (sort) => DropdownMenuItem(
-                        value: sort,
-                        child: Text(
-                          sort.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
+                items: [
+                  for (final sort in DueReportSort.values)
+                    DropdownMenuItem(
+                      value: sort,
+                      child: Text(sort.label,
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
               ),
             ),
           ),
@@ -237,63 +210,33 @@ class _SortMenu extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
+class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.onTap,
+    required this.onPressed,
   });
 
-  @override
-  State<_ActionButton> createState() => _ActionButtonState();
-}
-
-class _ActionButtonState extends State<_ActionButton> {
-  bool _hovered = false;
-
-  void _setHovered(bool value) {
-    if (!mounted || _hovered == value) return;
-    setState(() => _hovered = value);
-  }
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => _setHovered(true),
-      onExit: (_) => _setHovered(false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          height: 42,
+    return SizedBox(
+      height: 46,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: DueReportColors.textPrimary,
+          backgroundColor: DueReportColors.panelBg,
+          side: const BorderSide(color: DueReportColors.border),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          textStyle: DueReportStyles.label.copyWith(fontSize: 14),
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color:
-                _hovered ? DueReportColors.goldSoft : DueReportColors.panelSoft,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _hovered ? DueReportColors.gold : DueReportColors.border,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, size: 17, color: DueReportColors.gold),
-              const SizedBox(width: 7),
-              Text(
-                widget.label,
-                style: DueReportStyles.label.copyWith(
-                  color: DueReportColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

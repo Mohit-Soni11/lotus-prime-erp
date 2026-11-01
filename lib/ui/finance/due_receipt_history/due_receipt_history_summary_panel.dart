@@ -21,7 +21,7 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
         icon: DueReceiptHistoryIcons.totalCollected,
         label: DueReceiptHistoryStrings.totalCollected,
         value: DueReceiptHistoryController.formatCompact(stats.totalCollected),
-        sub: 'Updated ${stats.lastRefreshedAt}',
+        sub: 'For the current view',
         color: DueReceiptHistoryColors.success,
         bg: DueReceiptHistoryColors.successSoft,
       ),
@@ -29,7 +29,7 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
         icon: DueReceiptHistoryIcons.receipts,
         label: DueReceiptHistoryStrings.receipts,
         value: stats.receiptCount.toString(),
-        sub: 'Due receipt entries',
+        sub: 'Payment entries',
         color: DueReceiptHistoryColors.gold,
         bg: DueReceiptHistoryColors.goldSoft,
       ),
@@ -37,7 +37,7 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
         icon: DueReceiptHistoryIcons.customers,
         label: DueReceiptHistoryStrings.customers,
         value: stats.customerCount.toString(),
-        sub: 'Unique customers',
+        sub: 'Customers with receipts',
         color: DueReceiptHistoryColors.info,
         bg: DueReceiptHistoryColors.infoSoft,
       ),
@@ -51,10 +51,10 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
       ),
       _SummaryData(
         icon: DueReceiptHistoryIcons.ledgerSplit,
-        label: DueReceiptHistoryStrings.ledgerSplit,
+        label: DueReceiptHistoryStrings.cashCollected,
         value: DueReceiptHistoryController.formatCompact(stats.cashTotal),
         sub:
-            'Bank ${DueReceiptHistoryController.formatCompact(stats.bankTotal)}',
+            'Bank: ${DueReceiptHistoryController.formatCompact(stats.bankTotal)}',
         color: DueReceiptHistoryColors.indigo,
         bg: DueReceiptHistoryColors.indigoSoft,
       ),
@@ -63,14 +63,14 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = width >= 1180
+        final columns = width >= 1400
             ? 5
             : width >= 900
-                ? 4
-                : width >= 640
-                    ? 3
-                    : 2;
-        const gap = 10.0;
+                ? 3
+                : width >= 340
+                    ? 2
+                    : 1;
+        const gap = 12.0;
         final cardWidth = (width - gap * (columns - 1)) / columns;
 
         return Wrap(
@@ -80,7 +80,7 @@ class DueReceiptHistorySummaryPanel extends StatelessWidget {
               .map(
                 (data) => SizedBox(
                   width: cardWidth,
-                  height: 96,
+                  height: 130,
                   child: _SummaryCard(data: data, isLoading: isLoading),
                 ),
               )
@@ -118,53 +118,60 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration:
           DueReceiptHistoryStyles.panel(color: DueReceiptHistoryColors.panelBg),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: data.bg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: data.color.withValues(alpha: 0.18)),
-            ),
-            child: Icon(data.icon, color: data.color, size: 21),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(data.label,
-                    style: DueReceiptHistoryStyles.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 4),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
-                  child: Text(
-                    isLoading ? '...' : data.value,
-                    key: ValueKey('${data.value}-$isLoading'),
-                    style: data.color == DueReceiptHistoryColors.success
-                        ? DueReceiptHistoryStyles.amountSuccess
-                        : DueReceiptHistoryStyles.amount
-                            .copyWith(color: data.color),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: data.bg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: data.color.withValues(alpha: 0.2)),
                 ),
-                const SizedBox(height: 2),
-                Text(data.sub,
-                    style: DueReceiptHistoryStyles.rowSub,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-              ],
+                child: Icon(data.icon, color: data.color, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  data.label,
+                  style: DueReceiptHistoryStyles.label.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: DueReceiptHistoryColors.textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Tooltip(
+            message: data.value,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Text(
+                isLoading ? '—' : data.value,
+                key: ValueKey('${data.label}:${data.value}:$isLoading'),
+                style: DueReceiptHistoryStyles.amount.copyWith(fontSize: 22),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            isLoading ? 'Loading...' : data.sub,
+            style: DueReceiptHistoryStyles.label.copyWith(fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

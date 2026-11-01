@@ -30,40 +30,51 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 54,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          const Icon(
-            DueReportIcons.customers,
-            color: DueReportColors.info,
-            size: 20,
-          ),
-          const SizedBox(width: 9),
-          const Text(
-            DueReportStrings.customerLedger,
-            style: DueReportStyles.sectionTitle,
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: DueReportColors.infoSoft,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: DueReportColors.info.withValues(alpha: 0.14),
-              ),
-            ),
-            child: Text(
-              '${ctrl.groups.length} shown',
-              style: DueReportStyles.label.copyWith(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 420;
+        return Container(
+          height: 54,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Row(
+            children: [
+              const Icon(
+                DueReportIcons.customers,
                 color: DueReportColors.info,
+                size: 20,
               ),
-            ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  compact ? 'Due Customers' : DueReportStrings.customerLedger,
+                  style: DueReportStyles.sectionTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: DueReportColors.infoSoft,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: DueReportColors.info.withValues(alpha: 0.14),
+                  ),
+                ),
+                child: Text(
+                  compact
+                      ? '${ctrl.groups.length}'
+                      : '${ctrl.groups.length} customers',
+                  style: DueReportStyles.label.copyWith(
+                    color: DueReportColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -292,16 +303,20 @@ class _CompactTile extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                Text(
-                  DueReportController.formatCompact(group.totalDue),
-                  style: DueReportStyles.amountDanger.copyWith(fontSize: 16),
+                Expanded(
+                  child: Text(
+                    DueReportController.formatCompact(group.totalDue),
+                    style: DueReportStyles.amountDanger.copyWith(fontSize: 16),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text('${group.billCount} bills', style: DueReportStyles.label),
-                const SizedBox(width: 12),
-                _PromiseText(group: group),
               ],
             ),
+            const SizedBox(height: 5),
+            _PromiseText(group: group),
           ],
         ),
       ),
@@ -366,8 +381,8 @@ class _CustomerCell extends StatelessWidget {
   }
 
   String _subLine(DueCustomerGroupModel group) {
-    final city = group.city.trim().isEmpty ? 'No city' : group.city;
-    return '${group.mobile} | $city';
+    final city = group.city.trim();
+    return city.isEmpty ? group.mobile : '${group.mobile} | $city';
   }
 }
 
@@ -389,7 +404,7 @@ class _StatusBadge extends StatelessWidget {
         config.label,
         style: DueReportStyles.label.copyWith(
           color: config.accent,
-          fontSize: 11,
+          fontSize: 12.5,
         ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,

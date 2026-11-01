@@ -5,68 +5,72 @@ import '../../../models/finance/due_report/due_report_model.dart';
 import '../../../theme/finance/due_report/due_report_theme.dart';
 
 class DueReportSummaryPanel extends StatelessWidget {
-  final DueReportStatsModel stats;
-  final bool isLoading;
-
   const DueReportSummaryPanel({
     super.key,
     required this.stats,
     required this.isLoading,
   });
 
+  final DueReportStatsModel stats;
+  final bool isLoading;
+
   @override
   Widget build(BuildContext context) {
+    final metrics = [
+      _Metric(
+        icon: DueReportIcons.totalDue,
+        label: DueReportStrings.totalDue,
+        value: DueReportController.formatAmount(stats.totalDue),
+        detail: '${stats.billCount} open bills',
+        accent: DueReportColors.danger,
+        soft: DueReportColors.dangerSoft,
+      ),
+      _Metric(
+        icon: DueReportIcons.customers,
+        label: DueReportStrings.customers,
+        value: stats.customerCount.toString(),
+        detail: 'Customers with an outstanding balance',
+        accent: DueReportColors.info,
+        soft: DueReportColors.infoSoft,
+      ),
+      _Metric(
+        icon: DueReportIcons.overdue,
+        label: DueReportStrings.overdue,
+        value: DueReportController.formatAmount(stats.overdueAmount),
+        detail: '${stats.overdueBillCount} overdue bills',
+        accent: DueReportColors.warning,
+        soft: DueReportColors.warningSoft,
+      ),
+      _Metric(
+        icon: DueReportIcons.dueToday,
+        label: DueReportStrings.dueToday,
+        value: stats.dueTodayBillCount.toString(),
+        detail: 'Bills scheduled for today',
+        accent: DueReportColors.teal,
+        soft: DueReportColors.tealSoft,
+      ),
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth < 760 ? 2 : 4;
-        const gap = 10.0;
-        final width = (constraints.maxWidth - (gap * (columns - 1))) / columns;
+        final columns = constraints.maxWidth < 380
+            ? 1
+            : constraints.maxWidth < 1120
+                ? 2
+                : 4;
+        const gap = 12.0;
+        final cardWidth =
+            (constraints.maxWidth - gap * (columns - 1)) / columns;
 
         return Wrap(
           spacing: gap,
           runSpacing: gap,
           children: [
-            _MetricCard(
-              width: width,
-              icon: DueReportIcons.totalDue,
-              label: DueReportStrings.totalDue,
-              value: DueReportController.formatCompact(stats.totalDue),
-              detail: '${stats.billCount} bills pending',
-              accent: DueReportColors.danger,
-              soft: DueReportColors.dangerSoft,
-              isLoading: isLoading,
-            ),
-            _MetricCard(
-              width: width,
-              icon: DueReportIcons.customers,
-              label: DueReportStrings.customers,
-              value: stats.customerCount.toString(),
-              detail:
-                  'Highest ${DueReportController.formatCompact(stats.highestCustomerDue)}',
-              accent: DueReportColors.info,
-              soft: DueReportColors.infoSoft,
-              isLoading: isLoading,
-            ),
-            _MetricCard(
-              width: width,
-              icon: DueReportIcons.overdue,
-              label: DueReportStrings.overdue,
-              value: DueReportController.formatCompact(stats.overdueAmount),
-              detail: '${stats.overdueBillCount} overdue bills',
-              accent: DueReportColors.warning,
-              soft: DueReportColors.warningSoft,
-              isLoading: isLoading,
-            ),
-            _MetricCard(
-              width: width,
-              icon: DueReportIcons.dueToday,
-              label: DueReportStrings.dueToday,
-              value: stats.dueTodayBillCount.toString(),
-              detail: '${stats.noPromiseBillCount} without promise date',
-              accent: DueReportColors.teal,
-              soft: DueReportColors.tealSoft,
-              isLoading: isLoading,
-            ),
+            for (final metric in metrics)
+              SizedBox(
+                width: cardWidth,
+                child: _MetricCard(metric: metric, isLoading: isLoading),
+              ),
           ],
         );
       },
@@ -74,77 +78,90 @@ class DueReportSummaryPanel extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  final double width;
-  final IconData icon;
-  final String label;
-  final String value;
-  final String detail;
-  final Color accent;
-  final Color soft;
-  final bool isLoading;
-
-  const _MetricCard({
-    required this.width,
+class _Metric {
+  const _Metric({
     required this.icon,
     required this.label,
     required this.value,
     required this.detail,
     required this.accent,
     required this.soft,
-    required this.isLoading,
   });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String detail;
+  final Color accent;
+  final Color soft;
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({required this.metric, required this.isLoading});
+
+  final _Metric metric;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        height: 104,
-        decoration: DueReportStyles.panel(),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: soft,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: accent.withValues(alpha: 0.18)),
-              ),
-              child: Icon(icon, color: accent, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: DueReportStyles.label),
-                  const SizedBox(height: 5),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: Text(
-                      isLoading ? '--' : value,
-                      key: ValueKey('$label$value$isLoading'),
-                      style: DueReportStyles.amount.copyWith(color: accent),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+    return Container(
+      height: 136,
+      padding: const EdgeInsets.all(16),
+      decoration: DueReportStyles.panel(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: metric.soft,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: metric.accent.withValues(alpha: 0.22),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    isLoading ? 'Loading...' : detail,
-                    style: DueReportStyles.muted,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                ),
+                child: Icon(metric.icon, color: metric.accent, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  metric.label,
+                  style: DueReportStyles.label.copyWith(
+                    color: DueReportColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Tooltip(
+            message: metric.value,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Text(
+                isLoading ? '--' : metric.value,
+                key: ValueKey('${metric.label}:${metric.value}:$isLoading'),
+                style: DueReportStyles.amount.copyWith(fontSize: 23),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            isLoading ? 'Loading...' : metric.detail,
+            style: DueReportStyles.label.copyWith(fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

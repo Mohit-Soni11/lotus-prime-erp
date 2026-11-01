@@ -2,16 +2,12 @@ class DueReceiptHistoryStrings {
   const DueReceiptHistoryStrings._();
 
   static const String title = 'Due Receipt History';
-  static const String subtitle =
-      'Recovered due payments and receipt audit trail';
-  static const String systemOnline = 'System Online';
-  static const String refresh = 'Refresh';
   static const String searchHint = 'Search receipt, customer, mobile, bill no';
   static const String totalCollected = 'Total Collected';
   static const String receipts = 'Receipts';
   static const String customers = 'Customers';
   static const String today = 'Today';
-  static const String ledgerSplit = 'Cash / Bank';
+  static const String cashCollected = 'Cash Collected';
   static const String receiptLedger = 'Receipt Ledger';
   static const String receiptDetails = 'Receipt Details';
   static const String emptyTitle = 'No receipts found';

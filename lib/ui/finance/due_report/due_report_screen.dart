@@ -11,10 +11,8 @@ import '../../../models/finance/due_report/due_report_model.dart';
 import '../../../theme/finance/due_report/due_report_theme.dart';
 import '../due_collection_entry/due_collection_entry_screen.dart';
 import 'due_report_app_bar.dart';
-import 'due_report_bill_panel.dart';
-import 'due_report_customer_list.dart';
-import 'due_report_filter_bar.dart';
-import 'due_report_summary_panel.dart';
+import 'due_report_body.dart';
+import '../../shared/system_status_badge.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DueReportScreen extends StatefulWidget {
@@ -405,72 +403,17 @@ class _DueReportScreenState extends State<DueReportScreen> {
             backgroundColor: DueReportColors.bodyBg,
             appBar: DueReportAppBar(
               onBack: _handleBack,
-              onRefresh: _ctrl.refresh,
-              isLoading: _ctrl.isLoading,
+              status: _ctrl.isLoading
+                  ? SystemStatus.loading
+                  : _ctrl.errorMessage != null
+                      ? SystemStatus.unavailable
+                      : SystemStatus.online,
             ),
-            body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DueReportSummaryPanel(
-                      stats: _ctrl.stats,
-                      isLoading: _ctrl.isLoading,
-                    ),
-                    const SizedBox(height: 12),
-                    DueReportFilterBar(
-                      ctrl: _ctrl,
-                      onPrint: _handlePrint,
-                      onExport: _handleExportCsv,
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final stacked = constraints.maxWidth < 1040;
-                          if (stacked) {
-                            return Column(
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: DueReportCustomerList(ctrl: _ctrl),
-                                ),
-                                const SizedBox(height: 12),
-                                Expanded(
-                                  flex: 4,
-                                  child: DueReportBillPanel(
-                                    group: _ctrl.selectedGroup,
-                                    onCollectDue: _openDueCollection,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                flex: 7,
-                                child: DueReportCustomerList(ctrl: _ctrl),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 5,
-                                child: DueReportBillPanel(
-                                  group: _ctrl.selectedGroup,
-                                  onCollectDue: _openDueCollection,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            body: DueReportBody(
+              ctrl: _ctrl,
+              onPrint: _handlePrint,
+              onExport: _handleExportCsv,
+              onCollectDue: _openDueCollection,
             ),
           );
         },

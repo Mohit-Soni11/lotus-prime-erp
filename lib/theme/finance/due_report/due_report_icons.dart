@@ -4,7 +4,6 @@ class DueReportIcons {
   const DueReportIcons._();
 
   static const IconData module = Icons.receipt_long_rounded;
-  static const IconData refresh = Icons.refresh_rounded;
   static const IconData back = Icons.arrow_back_rounded;
   static const IconData search = Icons.search_rounded;
   static const IconData clear = Icons.close_rounded;

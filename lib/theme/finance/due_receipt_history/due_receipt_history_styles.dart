@@ -12,20 +12,6 @@ class DueReceiptHistoryStyles {
     letterSpacing: 0,
   );
 
-  static const TextStyle appBarSubtitle = TextStyle(
-    color: DueReceiptHistoryColors.textMuted,
-    fontSize: 13.5,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-  );
-
-  static const TextStyle onlineBadge = TextStyle(
-    color: DueReceiptHistoryColors.onlineGreen,
-    fontSize: 13,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0,
-  );
-
   static const TextStyle sectionTitle = TextStyle(
     color: DueReceiptHistoryColors.textPrimary,
     fontSize: 16,

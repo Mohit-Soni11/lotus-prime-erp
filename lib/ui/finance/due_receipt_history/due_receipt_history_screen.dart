@@ -10,10 +10,8 @@ import '../../../logic/finance/due_receipt_history/due_receipt_history_controlle
 import '../../../models/finance/due_receipt_history/due_receipt_history_model.dart';
 import '../../../theme/finance/due_receipt_history/due_receipt_history_theme.dart';
 import 'due_receipt_history_app_bar.dart';
-import 'due_receipt_history_detail_panel.dart';
-import 'due_receipt_history_filter_bar.dart';
-import 'due_receipt_history_list.dart';
-import 'due_receipt_history_summary_panel.dart';
+import 'due_receipt_history_body.dart';
+import '../../shared/system_status_badge.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class DueReceiptHistoryScreen extends StatefulWidget {
@@ -331,69 +329,17 @@ class _DueReceiptHistoryScreenState extends State<DueReceiptHistoryScreen> {
             backgroundColor: DueReceiptHistoryColors.bodyBg,
             appBar: DueReceiptHistoryAppBar(
               onBack: _handleBack,
-              onRefresh: _ctrl.refresh,
-              isLoading: _ctrl.isLoading,
+              status: _ctrl.isLoading
+                  ? SystemStatus.loading
+                  : _ctrl.errorMessage != null
+                      ? SystemStatus.unavailable
+                      : SystemStatus.online,
             ),
             body: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DueReceiptHistorySummaryPanel(
-                      stats: _ctrl.stats,
-                      isLoading: _ctrl.isLoading,
-                    ),
-                    const SizedBox(height: 12),
-                    DueReceiptHistoryFilterBar(
-                      ctrl: _ctrl,
-                      onPrint: _handlePrint,
-                      onExport: _handleExportCsv,
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final stacked = constraints.maxWidth < 1060;
-                          if (stacked) {
-                            return Column(
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: DueReceiptHistoryList(ctrl: _ctrl),
-                                ),
-                                const SizedBox(height: 12),
-                                Expanded(
-                                  flex: 4,
-                                  child: DueReceiptHistoryDetailPanel(
-                                    receipt: _ctrl.selectedReceipt,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                flex: 8,
-                                child: DueReceiptHistoryList(ctrl: _ctrl),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 4,
-                                child: DueReceiptHistoryDetailPanel(
-                                  receipt: _ctrl.selectedReceipt,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+              child: DueReceiptHistoryBody(
+                ctrl: _ctrl,
+                onPrint: _handlePrint,
+                onExport: _handleExportCsv,
               ),
             ),
           );

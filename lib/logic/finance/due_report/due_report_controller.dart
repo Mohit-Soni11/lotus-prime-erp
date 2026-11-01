@@ -26,6 +26,7 @@ class DueReportController extends ChangeNotifier {
   DueReportFilter _filter = DueReportFilter.all;
   DueReportSort _sort = DueReportSort.latestBill;
   String _searchQuery = '';
+  Map<DueReportFilter, int> _filterCounts = const {};
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -41,6 +42,13 @@ class DueReportController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
   int get allDueBillCount => _allBills.length;
+  int filterCount(DueReportFilter filter) => _filterCounts[filter] ?? 0;
+  List<DueReportFilter> get availableFilters => DueReportFilter.values
+      .where((filter) =>
+          filter == DueReportFilter.all ||
+          filter == _filter ||
+          filterCount(filter) > 0)
+      .toList(growable: false);
 
   static final NumberFormat _amountFmt = NumberFormat('#,##,##0.00', 'en_IN');
   static final NumberFormat _compactFmt = NumberFormat('#,##,##0', 'en_IN');
@@ -120,6 +128,12 @@ class DueReportController extends ChangeNotifier {
     searchCtrl.clear();
   }
 
+  void clearFilters() {
+    _filter = DueReportFilter.all;
+    searchCtrl.clear();
+    _applyViewState();
+  }
+
   void _onSearchChanged() {
     if (_disposed) return;
     _searchQuery = searchCtrl.text.trim();
@@ -131,18 +145,14 @@ class DueReportController extends ChangeNotifier {
     final allGroups = _groupBills(_allBills);
     _stats = DueReportStatsModel.fromGroups(allGroups);
 
-    var visibleBills = _allBills.where(_matchesFilter).toList();
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      visibleBills = visibleBills.where((bill) {
-        return bill.customerName.toLowerCase().contains(q) ||
-            bill.mobile.toLowerCase().contains(q) ||
-            bill.city.toLowerCase().contains(q) ||
-            bill.address.toLowerCase().contains(q) ||
-            bill.billNo.toLowerCase().contains(q) ||
-            bill.statusLabel.toLowerCase().contains(q);
-      }).toList();
-    }
+    final searchedBills = _allBills.where(_matchesSearch).toList();
+    _filterCounts = {
+      for (final filter in DueReportFilter.values)
+        filter:
+            searchedBills.where((bill) => _matchesFilter(bill, filter)).length,
+    };
+    final visibleBills =
+        searchedBills.where((bill) => _matchesFilter(bill, _filter)).toList();
 
     _groups = _groupBills(visibleBills);
     _sortGroups();
@@ -150,8 +160,19 @@ class DueReportController extends ChangeNotifier {
     _notifyListeners();
   }
 
-  bool _matchesFilter(DueBillModel bill) {
-    switch (_filter) {
+  bool _matchesSearch(DueBillModel bill) {
+    if (_searchQuery.isEmpty) return true;
+    final query = _searchQuery.toLowerCase();
+    return bill.customerName.toLowerCase().contains(query) ||
+        bill.mobile.toLowerCase().contains(query) ||
+        bill.city.toLowerCase().contains(query) ||
+        bill.address.toLowerCase().contains(query) ||
+        bill.billNo.toLowerCase().contains(query) ||
+        bill.statusLabel.toLowerCase().contains(query);
+  }
+
+  bool _matchesFilter(DueBillModel bill, DueReportFilter filter) {
+    switch (filter) {
       case DueReportFilter.all:
         return true;
       case DueReportFilter.overdue:

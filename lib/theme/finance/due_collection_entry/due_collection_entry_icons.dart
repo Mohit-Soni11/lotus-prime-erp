@@ -5,7 +5,6 @@ class DueCollectionEntryIcons {
 
   static const IconData module = Icons.account_balance_wallet_rounded;
   static const IconData back = Icons.arrow_back_ios_new_rounded;
-  static const IconData refresh = Icons.refresh_rounded;
   static const IconData reset = Icons.restart_alt_rounded;
   static const IconData search = Icons.search_rounded;
   static const IconData clear = Icons.close_rounded;

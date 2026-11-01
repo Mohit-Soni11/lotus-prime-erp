@@ -153,8 +153,8 @@ class _CustomerHeader extends StatelessWidget {
   }
 
   String _contactLine(DueCustomerGroupModel group) {
-    final city = group.city.trim().isEmpty ? 'No city' : group.city;
-    return '${group.mobile} | $city';
+    final city = group.city.trim();
+    return city.isEmpty ? group.mobile : '${group.mobile} | $city';
   }
 }
 
@@ -249,7 +249,7 @@ class _MiniStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: DueReportStyles.muted.copyWith(fontSize: 11)),
+          Text(label, style: DueReportStyles.label.copyWith(fontSize: 13)),
           const SizedBox(height: 4),
           Text(
             value,
@@ -473,13 +473,13 @@ class _MiniAmount extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: DueReportStyles.muted.copyWith(fontSize: 10)),
+          Text(label, style: DueReportStyles.label.copyWith(fontSize: 12)),
           const SizedBox(height: 3),
           Text(
             DueReportController.formatCompact(value),
             style: DueReportStyles.rowTitle.copyWith(
               color: color,
-              fontSize: 12,
+              fontSize: 14,
             ),
           ),
         ],
@@ -524,13 +524,20 @@ class _PromiseBadge extends StatelessWidget {
         config.label,
         style: DueReportStyles.label.copyWith(
           color: config.accent,
-          fontSize: 10,
+          fontSize: 12,
         ),
       ),
     );
   }
 
   _PromiseConfig _config() {
+    if (bill.promiseDate == null) {
+      return const _PromiseConfig(
+        'No promise',
+        DueReportColors.indigo,
+        DueReportColors.indigoSoft,
+      );
+    }
     if (bill.isOverdue) {
       return _PromiseConfig(
         '${bill.promiseOverdueDays}d late',
@@ -543,13 +550,6 @@ class _PromiseBadge extends StatelessWidget {
         'Today',
         DueReportColors.warning,
         DueReportColors.warningSoft,
-      );
-    }
-    if (bill.promiseDate == null) {
-      return const _PromiseConfig(
-        'No date',
-        DueReportColors.textMuted,
-        DueReportColors.panelSoft,
       );
     }
     return _PromiseConfig(

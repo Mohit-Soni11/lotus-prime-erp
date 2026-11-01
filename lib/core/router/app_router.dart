@@ -570,12 +570,6 @@ GoRouter createAppRouter() {
             ),
           ),
           GoRoute(
-            path: RoutePaths.purchaseReturn,
-            builder: (context, state) => _ComingSoonScreen(
-              pageTitle: AppRoutes.getTitle(AppRoutes.purchaseReturnRoute),
-            ),
-          ),
-          GoRoute(
             path: RoutePaths.stockInventory,
             builder: (context, state) => InventoryScreen(
               onBack: () => _goBackOr(context, RoutePaths.dashboard),

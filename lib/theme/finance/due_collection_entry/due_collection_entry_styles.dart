@@ -13,10 +13,9 @@ class DueCollectionEntryStyles {
   );
 
   static const TextStyle appBarSub = TextStyle(
-    color: DueCollectionEntryColors.shellMuted,
+    color: Color(0xFFE5E7EB),
     fontSize: 13.5,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle sectionTitle = TextStyle(

@@ -3,7 +3,7 @@ class DueReceiptDate {
       DateTime(date.year, date.month, date.day);
 }
 
-enum DueReceiptDateFilter { all, today, last7Days, last30Days, dueMarked }
+enum DueReceiptDateFilter { all, today, last7Days, last30Days }
 
 extension DueReceiptDateFilterX on DueReceiptDateFilter {
   String get label {
@@ -16,8 +16,6 @@ extension DueReceiptDateFilterX on DueReceiptDateFilter {
         return '7 Days';
       case DueReceiptDateFilter.last30Days:
         return '30 Days';
-      case DueReceiptDateFilter.dueMarked:
-        return 'Due Receipts';
     }
   }
 }
@@ -84,7 +82,6 @@ class DueReceiptModel {
   final double billPaid;
   final double currentDue;
   final String billPaymentStatus;
-  final bool isDueMarked;
 
   const DueReceiptModel({
     required this.id,
@@ -110,7 +107,6 @@ class DueReceiptModel {
     required this.billPaid,
     required this.currentDue,
     required this.billPaymentStatus,
-    required this.isDueMarked,
   });
 
   bool get isCashLedger => ledgerSource == 'CASH';
@@ -152,34 +148,28 @@ class DueReceiptModel {
 class DueReceiptStatsModel {
   final int receiptCount;
   final int customerCount;
-  final int dueMarkedCount;
   final double totalCollected;
   final double todayCollected;
   final double cashTotal;
   final double bankTotal;
-  final String lastRefreshedAt;
 
   const DueReceiptStatsModel({
     required this.receiptCount,
     required this.customerCount,
-    required this.dueMarkedCount,
     required this.totalCollected,
     required this.todayCollected,
     required this.cashTotal,
     required this.bankTotal,
-    required this.lastRefreshedAt,
   });
 
   factory DueReceiptStatsModel.empty() {
     return const DueReceiptStatsModel(
       receiptCount: 0,
       customerCount: 0,
-      dueMarkedCount: 0,
       totalCollected: 0,
       todayCollected: 0,
       cashTotal: 0,
       bankTotal: 0,
-      lastRefreshedAt: '--:--',
     );
   }
 
@@ -190,7 +180,6 @@ class DueReceiptStatsModel {
     double todayTotal = 0;
     double cash = 0;
     double bank = 0;
-    int dueMarked = 0;
 
     for (final receipt in receipts) {
       total += receipt.amount;
@@ -202,22 +191,17 @@ class DueReceiptStatsModel {
       } else {
         bank += receipt.amount;
       }
-      if (receipt.isDueMarked) dueMarked++;
       customers.add(
           receipt.customerId?.toString() ?? receipt.customerName.toLowerCase());
     }
 
-    final now = DateTime.now();
     return DueReceiptStatsModel(
       receiptCount: receipts.length,
       customerCount: customers.length,
-      dueMarkedCount: dueMarked,
       totalCollected: total,
       todayCollected: todayTotal,
       cashTotal: cash,
       bankTotal: bank,
-      lastRefreshedAt:
-          '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
     );
   }
 }

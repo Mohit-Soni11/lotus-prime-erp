@@ -8,15 +8,8 @@ class DueReportStyles {
   static const TextStyle appBarTitle = TextStyle(
     color: DueReportColors.textLight,
     fontSize: 18,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0,
-  );
-
-  static const TextStyle appBarSubtitle = TextStyle(
-    color: DueReportColors.textMuted,
-    fontSize: 13.5,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 0.5,
   );
 
   static const TextStyle onlineBadge = TextStyle(
@@ -42,8 +35,8 @@ class DueReportStyles {
 
   static const TextStyle muted = TextStyle(
     color: DueReportColors.textMuted,
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0,
   );
 
@@ -70,7 +63,7 @@ class DueReportStyles {
 
   static const TextStyle rowTitle = TextStyle(
     color: DueReportColors.textPrimary,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: FontWeight.w800,
     letterSpacing: 0,
   );
@@ -78,7 +71,7 @@ class DueReportStyles {
   static const TextStyle rowSub = TextStyle(
     color: DueReportColors.textMuted,
     fontSize: 13.5,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0,
   );
 

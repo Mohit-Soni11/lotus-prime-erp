@@ -60,7 +60,6 @@ class SidebarMenu {
       icon: Icons.shopping_bag_outlined,
       subItems: [
         MenuItemData(AppRoutes.purchaseEntryRoute),
-        MenuItemData(AppRoutes.purchaseReturnRoute),
       ],
     ),
 

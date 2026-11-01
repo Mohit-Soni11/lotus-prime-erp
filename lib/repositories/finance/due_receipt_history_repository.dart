@@ -156,8 +156,6 @@ class DueReceiptHistoryRepository {
       billPaid: bill?.paidAmount ?? 0,
       currentDue: _currentDue(bill),
       billPaymentStatus: bill?.paymentStatus ?? 'RECEIVED',
-      isDueMarked:
-          _hasDueMarker(txn.category, txn.description, txn.referenceId),
     );
   }
 
@@ -197,8 +195,6 @@ class DueReceiptHistoryRepository {
       billPaid: bill?.paidAmount ?? 0,
       currentDue: _currentDue(bill),
       billPaymentStatus: bill?.paymentStatus ?? 'RECEIVED',
-      isDueMarked:
-          _hasDueMarker(txn.category, txn.description, txn.referenceId),
     );
   }
 

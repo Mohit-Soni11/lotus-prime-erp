@@ -4,7 +4,6 @@ class DueReceiptHistoryColors {
   const DueReceiptHistoryColors._();
 
   static const Color appBarBg = Color(0xFF1F2937);
-  static const Color appBarSurface = Color(0xFF111827);
   static const Color appBarBorder = Color(0xFF374151);
   static const Color bodyBg = Color(0xFFF9F6F0);
   static const Color panelBg = Color(0xFFFFFFFF);
@@ -18,7 +17,6 @@ class DueReceiptHistoryColors {
   static const Color textMuted = Color(0xFF111827);
   static const Color textLight = Color(0xFFF9FAFB);
 
-  static const Color onlineGreen = Color(0xFF00E676);
   static const Color gold = Color(0xFFD4AF37);
   static const Color goldBright = Color(0xFFFFD700);
   static const Color goldSoft = Color(0xFFFFF8E1);

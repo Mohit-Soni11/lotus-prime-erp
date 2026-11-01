@@ -174,8 +174,6 @@ class DueReceiptHistoryController extends ChangeNotifier {
         return !receiptDay.isBefore(today.subtract(const Duration(days: 6)));
       case DueReceiptDateFilter.last30Days:
         return !receiptDay.isBefore(today.subtract(const Duration(days: 29)));
-      case DueReceiptDateFilter.dueMarked:
-        return receipt.isDueMarked;
     }
   }
 

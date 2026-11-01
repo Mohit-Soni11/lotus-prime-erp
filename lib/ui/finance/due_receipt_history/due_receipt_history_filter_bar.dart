@@ -54,7 +54,7 @@ class DueReceiptHistoryFilterBar extends StatelessWidget {
                     Expanded(
                       child: _ActionButton(
                         icon: DueReceiptHistoryIcons.export,
-                        label: 'Export CSV',
+                        label: 'Export',
                         onTap: onExport,
                       ),
                     ),

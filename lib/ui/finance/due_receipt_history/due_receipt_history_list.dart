@@ -26,49 +26,139 @@ class DueReceiptHistoryList extends StatelessWidget {
     return Container(
       decoration: DueReceiptHistoryStyles.panel(),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-            child: Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                child: Row(
+                  children: [
+                    const Icon(DueReceiptHistoryIcons.receipts,
+                        size: 19, color: DueReceiptHistoryColors.gold),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        DueReceiptHistoryStrings.receiptLedger,
+                        style: DueReceiptHistoryStyles.sectionTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    _CountBadge(
+                        count: ctrl.receipts.length,
+                        total: ctrl.allReceiptCount),
+                  ],
+                ),
+              ),
+              if (!compact) const _TableHeader(),
+              Expanded(
+                child: ctrl.errorMessage != null
+                    ? _ErrorState(
+                        message: ctrl.errorMessage!, onRetry: ctrl.refresh)
+                    : ctrl.receipts.isEmpty
+                        ? const _EmptyState()
+                        : ListView.builder(
+                            itemCount: ctrl.receipts.length,
+                            itemBuilder: (context, index) {
+                              final receipt = ctrl.receipts[index];
+                              return compact
+                                  ? _CompactReceiptRow(
+                                      receipt: receipt,
+                                      selected: ctrl.selectedReceipt?.id ==
+                                          receipt.id,
+                                      onTap: () => ctrl.selectReceipt(receipt),
+                                    )
+                                  : _ReceiptRow(
+                                      receipt: receipt,
+                                      selected: ctrl.selectedReceipt?.id ==
+                                          receipt.id,
+                                      alternate: index.isOdd,
+                                      onTap: () => ctrl.selectReceipt(receipt),
+                                    );
+                            },
+                          ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CompactReceiptRow extends StatelessWidget {
+  const _CompactReceiptRow({
+    required this.receipt,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final DueReceiptModel receipt;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selected
+              ? DueReceiptHistoryColors.rowSelected
+              : DueReceiptHistoryColors.panelBg,
+          border: const Border(
+              bottom: BorderSide(color: DueReceiptHistoryColors.divider)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                const Icon(DueReceiptHistoryIcons.receipts,
-                    size: 19, color: DueReceiptHistoryColors.gold),
-                const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    DueReceiptHistoryStrings.receiptLedger,
-                    style: DueReceiptHistoryStyles.sectionTitle,
+                    receipt.customerName,
+                    style:
+                        DueReceiptHistoryStyles.rowTitle.copyWith(fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                _CountBadge(
-                    count: ctrl.receipts.length, total: ctrl.allReceiptCount),
+                const SizedBox(width: 8),
+                Text(
+                  DueReceiptHistoryController.formatCompact(receipt.amount),
+                  style: DueReceiptHistoryStyles.amount.copyWith(fontSize: 15),
+                ),
               ],
             ),
-          ),
-          const _TableHeader(),
-          Expanded(
-            child: ctrl.errorMessage != null
-                ? _ErrorState(
-                    message: ctrl.errorMessage!, onRetry: ctrl.refresh)
-                : ctrl.receipts.isEmpty
-                    ? const _EmptyState()
-                    : ListView.builder(
-                        itemCount: ctrl.receipts.length,
-                        itemBuilder: (context, index) {
-                          final receipt = ctrl.receipts[index];
-                          return _ReceiptRow(
-                            receipt: receipt,
-                            selected: ctrl.selectedReceipt?.id == receipt.id,
-                            alternate: index.isOdd,
-                            onTap: () => ctrl.selectReceipt(receipt),
-                          );
-                        },
-                      ),
-          ),
-        ],
+            const SizedBox(height: 7),
+            Text(
+              '${receipt.receiptNo}  •  Bill ${receipt.billNo}',
+              style: DueReceiptHistoryStyles.rowTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(receipt.paymentModeLabel,
+                    style: DueReceiptHistoryStyles.rowSub),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    DueReceiptHistoryController.formatShortDate(
+                        receipt.receiptDate),
+                    style: DueReceiptHistoryStyles.rowSub,
+                    maxLines: 1,
+                  ),
+                ),
+                _StatusBadge(receipt: receipt),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -43,6 +43,7 @@ class DueCollectionEntryController extends ChangeNotifier {
   bool _pendingSelectionApplied = false;
   String _searchQuery = '';
   bool _isLoading = true;
+  bool _isDataUnavailable = false;
   bool _isSaving = false;
   String? _errorMessage;
   String? _successMessage;
@@ -78,6 +79,7 @@ class DueCollectionEntryController extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   bool get hasSearchQuery => _searchQuery.isNotEmpty;
   bool get isLoading => _isLoading;
+  bool get isDataUnavailable => _isDataUnavailable;
   bool get isSaving => _isSaving;
   String? get errorMessage => _errorMessage;
   String? get successMessage => _successMessage;
@@ -166,12 +168,14 @@ class DueCollectionEntryController extends ChangeNotifier {
         if (_disposed) return;
         _allBills = bills;
         _isLoading = false;
+        _isDataUnavailable = false;
         _errorMessage = null;
         _applyViewState();
       },
       onError: (_) {
         if (_disposed) return;
         _isLoading = false;
+        _isDataUnavailable = true;
         _errorMessage = 'Unable to load due bills.';
         _notifyListeners();
       },
@@ -189,6 +193,7 @@ class DueCollectionEntryController extends ChangeNotifier {
   Future<void> refresh() async {
     if (_disposed) return;
     _isLoading = true;
+    _isDataUnavailable = false;
     _errorMessage = null;
     _notifyListeners();
 
@@ -201,6 +206,7 @@ class DueCollectionEntryController extends ChangeNotifier {
     _bankAccounts = results[1] as List<DueCollectionBankAccountModel>;
     _syncSelectedBankAccount();
     _isLoading = false;
+    _isDataUnavailable = false;
     _applyViewState();
   }
 
