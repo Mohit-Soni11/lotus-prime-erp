@@ -29,7 +29,7 @@ class CashBookStrings {
   // ── Transaction List ──────────────────────────────────────────────────────
   static const String noTransactions = 'No transactions found';
   static const String noTransactionsHint =
-      'Add an entry or sync today\'s billing receipts.';
+      'Add a cash entry to start this period\'s ledger.';
   static const String searchHint =
       'Search category, party, invoice, reference, or transaction ID';
 

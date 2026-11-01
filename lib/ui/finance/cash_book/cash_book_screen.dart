@@ -1,38 +1,12 @@
-// =============================================================================
-// FILE        : cash_book_screen.dart
-// MODULE      : Accounts / Cash Book
-// LAYER       : UI â€” Master Screen Assembly
-// DESCRIPTION : Top-level shell connecting all Cash Book components.
-//               Follows the exact same pattern as PurchaseEntryScreen
-//               and PosMasterSaleScreen.
-//
-//               LAYOUT:
-//               â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-//               â”‚  DARK APP BAR (module title, sync, add entry)            â”‚
-//               â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-//               â”‚  LEFT PANEL 330px â”‚  CENTER PANEL (flex)                 â”‚
-//               â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”‚  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚
-//               â”‚  View Toggle      â”‚  Search Bar + Filter Chips            â”‚
-//               â”‚  Date Navigator   â”‚  Grouped Transaction List             â”‚
-//               â”‚  Summary Cards    â”‚  (swipe to void, tap for detail)      â”‚
-//               â”‚  Breakdown        â”‚                                        â”‚
-//               â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-//
-//               âœ… Dark AppBar + Cream body (matches POS / Purchase)
-//               âœ… Left panel fixed 330px | Right panel flex
-//               âœ… ListenableBuilder â€” zero setState in UI layer
-//               âœ… Entry dialog â€” slide-up animated
-//               âœ… Auto-sync on screen open
-// =============================================================================
-
 import 'package:flutter/material.dart';
-import '../../../theme/finance/cash_book/cash_book_theme.dart';
+
+import '../../../core/feedback/app_feedback.dart';
 import '../../../logic/finance/cash_book/cash_book_controller.dart';
+import '../../../theme/finance/cash_book/cash_book_theme.dart';
+import '../../shared/system_status_badge.dart';
 import 'cash_book_app_bar.dart';
-import 'cash_book_left_panel.dart';
-import 'cash_book_transaction_list.dart';
+import 'cash_book_body.dart';
 import 'cash_book_entry_dialog.dart';
-import 'package:lotus_erp/core/feedback/app_feedback.dart';
 
 class CashBookScreen extends StatefulWidget {
   const CashBookScreen({super.key});
@@ -48,10 +22,8 @@ class _CashBookScreenState extends State<CashBookScreen> {
   void initState() {
     super.initState();
     _ctrl = CashBookController();
-
-    // Auto-sync today's POS bills on open
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ctrl.syncTodaysBills();
+      if (mounted) _ctrl.syncTodaysBills();
     });
   }
 
@@ -61,20 +33,15 @@ class _CashBookScreenState extends State<CashBookScreen> {
     super.dispose();
   }
 
-  // â”€â”€ Add Entry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
   void _showAddEntryDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
-      barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => CashBookEntryDialog(ctrl: _ctrl),
     );
   }
 
-  // â”€â”€ Sync Bills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  Future<void> _onSyncBills() async {
+  Future<void> _syncBills() async {
     await _ctrl.syncTodaysBills();
     if (!mounted) return;
     AppFeedback.show(
@@ -85,45 +52,24 @@ class _CashBookScreenState extends State<CashBookScreen> {
     );
   }
 
-  // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
+    return ListenableBuilder(
+      listenable: _ctrl,
+      builder: (context, _) => Scaffold(
         backgroundColor: CashBookColors.bodyBg,
-
-        // â”€â”€ Dark App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         appBar: CashBookAppBar(
-          onBack: () => Navigator.pop(context),
-          ctrl: _ctrl,
+          onBack: () => Navigator.of(context).maybePop(),
+          status: _ctrl.isLoading
+              ? SystemStatus.loading
+              : _ctrl.errorMessage != null
+                  ? SystemStatus.unavailable
+                  : SystemStatus.online,
           onAddEntry: _showAddEntryDialog,
-          onSyncBills: _onSyncBills,
+          onSyncBills: _syncBills,
         ),
-
         body: SafeArea(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // â”€â”€ LEFT PANEL â€” Summary + Navigator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              CashBookLeftPanel(ctrl: _ctrl),
-
-              // â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              Container(
-                width: 1,
-                color: CashBookColors.bodyBorder,
-              ),
-
-              // â”€â”€ CENTER PANEL â€” Transaction List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-              Expanded(
-                child: CashBookTransactionList(
-                  ctrl: _ctrl,
-                  onAddEntry: _showAddEntryDialog,
-                ),
-              ),
-            ],
-          ),
+          child: CashBookBody(ctrl: _ctrl, onAddEntry: _showAddEntryDialog),
         ),
       ),
     );

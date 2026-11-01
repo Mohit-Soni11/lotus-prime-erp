@@ -18,11 +18,12 @@ import '../../../repositories/finance/cash_book_repository.dart';
 import '../../../core/logging/app_logger.dart';
 
 class CashBookController extends ChangeNotifier {
-  CashBookController() {
+  CashBookController({CashBookRepository? repository})
+      : _repository = repository ?? CashBookRepository() {
     _init();
   }
 
-  final CashBookRepository _repository = CashBookRepository();
+  final CashBookRepository _repository;
 
   // ── View State ────────────────────────────────────────────────────────────
   CashBookViewMode _viewMode = CashBookViewMode.daily;
@@ -248,6 +249,13 @@ class CashBookController extends ChangeNotifier {
 
   Future<void> syncTodaysBills() async {
     await _repository.syncBillsToIncome(DateTime.now());
+  }
+
+  void retry() {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    _startWatch();
   }
 
   // ==========================================================================
