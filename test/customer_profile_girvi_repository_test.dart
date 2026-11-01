@@ -449,32 +449,6 @@ void main() {
     expect(returnResult.message, contains('return voucher'));
   });
 
-  test('customer with a delivery order cannot be deleted', () async {
-    final customerId = await db.into(db.customers).insert(
-          CustomersCompanion.insert(
-            name: 'Delivery Customer',
-            mobile: '9000000003',
-          ),
-        );
-    await db.customStatement(
-      '''
-      INSERT INTO delivery_orders
-        (delivery_no, customer_id, customer_name, customer_mobile, item_name)
-      VALUES (?, ?, ?, ?, ?)
-      ''',
-      ['DO-001', customerId, 'Delivery Customer', '9000000003', 'Ring'],
-    );
-
-    final result =
-        await CustomerProfileRepository(db: db).deleteCustomer(customerId);
-    expect(result.deleted, isFalse);
-    expect(result.message, contains('delivery order'));
-    final customer = await (db.select(db.customers)
-          ..where((row) => row.id.equals(customerId)))
-        .getSingleOrNull();
-    expect(customer?.id, customerId);
-  });
-
   test('customer profile marks bills with posted return vouchers', () async {
     final customerId = await db.into(db.customers).insert(
           CustomersCompanion.insert(

@@ -16,7 +16,7 @@ enum AlertStatus {
 
 /// Ek alert card ka complete data snapshot
 class AlertCardModel {
-  final String id; // 'inventory' / 'orders' / 'collections' / 'deliveries'
+  final String id; // 'inventory' / 'orders' / 'collections'
   final String title; // Card header label
   final String mainValue; // Big bold text — "GOLD LOW", "3 PENDING", etc
   final String subText; // Explanation text below main value
@@ -47,20 +47,17 @@ class AlertCardModel {
   bool get isLoading => mainValue == '--';
 }
 
-/// Charon cards ka ek saath snapshot — logic yahi return karega
+/// Dashboard cards ka ek saath snapshot.
 class AlertRowModel {
   final AlertCardModel inventory;
   final AlertCardModel orders;
   final AlertCardModel collections;
-  final AlertCardModel deliveries;
 
   const AlertRowModel({
     required this.inventory,
     required this.orders,
     required this.collections,
-    required this.deliveries,
   });
 
-  List<AlertCardModel> get cards =>
-      [inventory, orders, collections, deliveries];
+  List<AlertCardModel> get cards => [inventory, orders, collections];
 }

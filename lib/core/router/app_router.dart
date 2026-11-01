@@ -33,7 +33,6 @@ import '../../features/settings/billing_setup/presentation/screens/billing_setup
 
 import '../../ui/sales_orders/sales_pos/pos_master_sale_screen.dart';
 import '../../ui/booking_advance/booking_advance_screen.dart';
-import '../../ui/sales_orders/delivery/delivery_management_screen.dart';
 import '../../features/sales/return_reversal/presentation/screens/return_reversal_desk_screen.dart';
 
 import 'package:lotus_erp/features/stock/shared/presentation/add_stock/add_stock_hub_screen.dart';
@@ -546,12 +545,6 @@ GoRouter createAppRouter() {
                 onNewStock: () => context.go(RoutePaths.stockAdd),
               );
             },
-          ),
-          GoRoute(
-            path: RoutePaths.salesDelivery,
-            builder: (context, state) => DeliveryManagementScreen(
-              onBack: () => _goBackOr(context, RoutePaths.dashboard),
-            ),
           ),
           GoRoute(
             path: RoutePaths.salesReturnExchange,

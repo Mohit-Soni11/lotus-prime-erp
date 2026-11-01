@@ -2,7 +2,7 @@
 // FILE        : alert_row_logic.dart
 // MODULE      : Dashboard / Alert Row
 // LAYER       : Logic (Business Logic)
-// DESCRIPTION : Fetches the four dashboard alert cards from Drift.
+// DESCRIPTION : Fetches dashboard alert cards from Drift.
 //               Watches live streams and updates automatically when data changes.
 //
 //               CARD 1 — INVENTORY:
@@ -21,18 +21,11 @@
 //                 Any active → WARNING
 //                 None → SAFE
 //
-//               CARD 4 — DELIVERIES:
-//                 SalesOrders → min(deliveryDate) where PENDING
-//                 Past date → MISSED (CRITICAL)
-//                 Today → TODAY (WARNING)
-//                 Future → ON SCHEDULE (SAFE)
-//
 //               Pattern: ChangeNotifier aligned with ShopCardLogic and BillCardLogic.
 // =============================================================================
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../../models/dashboard/alert_card_model.dart';
@@ -64,7 +57,7 @@ class AlertRowLogic extends ChangeNotifier {
   final List<StreamSubscription> _subs = [];
 
   // ==========================================
-  // MAIN: Start watching all 4 DB streams
+  // MAIN: Start watching the DB streams
   // ==========================================
   void _startLiveWatch() {
     // Watch StockItems for Inventory card
@@ -75,7 +68,7 @@ class AlertRowLogic extends ChangeNotifier {
           ),
     );
 
-    // Watch SalesOrders for Orders + Deliveries cards
+    // Watch SalesOrders for the Orders card
     _subs.add(
       _db.select(_db.salesOrders).watch().listen(
             (_) => _refresh(),
@@ -104,7 +97,7 @@ class AlertRowLogic extends ChangeNotifier {
   }
 
   // ==========================================
-  // Refresh all four alert cards together.
+  // Refresh the alert cards together.
   // ==========================================
   Future<void> _refresh() async {
     try {
@@ -112,14 +105,12 @@ class AlertRowLogic extends ChangeNotifier {
         _buildInventoryCard(),
         _buildOrdersCard(),
         _buildCollectionsCard(),
-        _buildDeliveriesCard(),
       ]);
 
       _data = AlertRowModel(
         inventory: results[0],
         orders: results[1],
         collections: results[2],
-        deliveries: results[3],
       );
       _hasError = false;
       notifyListeners();
@@ -273,7 +264,7 @@ class AlertRowLogic extends ChangeNotifier {
       mainValue: mainValue,
       subText: subText,
       status: status,
-      routeId: AppRoutes.deliveryManagementRoute,
+      routeId: AppRoutes.bookingAdvanceRoute,
     );
   }
 
@@ -339,74 +330,6 @@ class AlertRowLogic extends ChangeNotifier {
   }
 
   // ==========================================
-  // CARD 4 — DELIVERIES
-  // SalesOrders → next delivery date.
-  // ==========================================
-  Future<AlertCardModel> _buildDeliveriesCard() async {
-    // Drift query builder keeps these predicates as separate where clauses.
-    final pendingWithDate = await (_db.select(_db.salesOrders)
-          ..where((t) => t.status.equals('PENDING'))
-          ..where((t) => t.deliveryDate.isNotNull()))
-        .get();
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    String mainValue;
-    String subText;
-    AlertStatus status;
-
-    if (pendingWithDate.isEmpty) {
-      status = AlertStatus.safe;
-      mainValue = 'NO DUE';
-      subText = 'No pending deliveries';
-    } else {
-      // Resolve the nearest pending delivery date.
-      final sortedDates = pendingWithDate
-          .map((o) => DateTime(
-                o.deliveryDate!.year,
-                o.deliveryDate!.month,
-                o.deliveryDate!.day,
-              ))
-          .toList()
-        ..sort();
-
-      final nextDelivery = sortedDates.first;
-      final diff = nextDelivery.difference(today).inDays;
-
-      // Overdue count
-      final overdueCount = sortedDates.where((d) => d.isBefore(today)).length;
-
-      if (diff < 0 || overdueCount > 0) {
-        // Python: delivery_pending_days > 0 → MISSED
-        status = AlertStatus.critical;
-        mainValue = overdueCount > 1 ? '$overdueCount MISSED' : 'MISSED';
-        subText = '$overdueCount delivery overdue';
-      } else if (diff == 0) {
-        // Python: delivery_pending_days == 0 → TODAY
-        status = AlertStatus.warning;
-        mainValue = 'TODAY';
-        subText = '${pendingWithDate.length} delivery due today';
-      } else {
-        // Python: delivery_pending_days < 0 → ON SCHEDULE
-        status = AlertStatus.safe;
-        final formattedDate = DateFormat('dd MMM').format(nextDelivery);
-        mainValue = 'ON SCHEDULE';
-        subText = 'Next: $formattedDate ($diff days)';
-      }
-    }
-
-    return AlertCardModel(
-      id: 'deliveries',
-      title: 'Deliveries',
-      mainValue: mainValue,
-      subText: subText,
-      status: status,
-      routeId: AppRoutes.deliveryManagementRoute,
-    );
-  }
-
-  // ==========================================
   // HELPER — Indian Currency Format
   // ==========================================
   String _formatIndianCurrency(double amount) {
@@ -427,11 +350,9 @@ class AlertRowLogic extends ChangeNotifier {
       inventory: AlertCardModel.loading(
           'inventory', 'Inventory', AppRoutes.inventoryRoute),
       orders: AlertCardModel.loading(
-          'orders', 'Orders', AppRoutes.deliveryManagementRoute),
+          'orders', 'Orders', AppRoutes.bookingAdvanceRoute),
       collections: AlertCardModel.loading(
           'collections', 'Collections', AppRoutes.dueReportRoute),
-      deliveries: AlertCardModel.loading(
-          'deliveries', 'Deliveries', AppRoutes.deliveryManagementRoute),
     );
   }
 

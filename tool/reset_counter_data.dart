@@ -17,8 +17,6 @@ const _tablesToClear = <String>[
   'girvi_item_photos',
   'girvi_loan_items',
   'girvi_loans',
-  'delivery_items',
-  'delivery_orders',
   'bill_trade_in_items',
   'bill_items',
   'bills',

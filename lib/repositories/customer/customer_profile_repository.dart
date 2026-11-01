@@ -277,8 +277,6 @@ class CustomerProfileRepository
       final legacyLoanCount = await _countCustomerRows('loans', customerId);
       final salesOrderCount =
           await _countCustomerRows('sales_orders', customerId);
-      final deliveryOrderCount =
-          await _countCustomerRows('delivery_orders', customerId);
       final purchaseVoucherCount =
           await _countCustomerRows('purchase_vouchers', customerId);
       final returnVoucherCount =
@@ -296,11 +294,6 @@ class CustomerProfileRepository
       if (salesOrderCount > 0) {
         blockers.add(
           '$salesOrderCount advance order${salesOrderCount == 1 ? '' : 's'}',
-        );
-      }
-      if (deliveryOrderCount > 0) {
-        blockers.add(
-          '$deliveryOrderCount delivery order${deliveryOrderCount == 1 ? '' : 's'}',
         );
       }
       if (purchaseVoucherCount > 0) {

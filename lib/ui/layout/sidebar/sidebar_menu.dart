@@ -51,7 +51,6 @@ class SidebarMenu {
         MenuItemData(AppRoutes.newSaleRoute),
         MenuItemData(AppRoutes.salesReturnExchangeRoute),
         MenuItemData(AppRoutes.bookingAdvanceRoute),
-        MenuItemData(AppRoutes.deliveryManagementRoute),
       ],
     ),
 

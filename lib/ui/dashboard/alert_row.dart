@@ -2,7 +2,7 @@
 // FILE        : alert_row.dart
 // MODULE      : Dashboard / Alert Row
 // LAYER       : UI
-// DESCRIPTION : 4 Premium Alert Cards â€” dark gradient design.
+// DESCRIPTION : Dashboard alert cards with a dark gradient design.
 //               BillCard/ShopCard ke saath consistent dark theme.
 //
 //               DESIGN:
@@ -38,7 +38,7 @@ class AlertRow extends StatefulWidget {
 class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
   late final AlertRowLogic _logic;
 
-  // Staggered entry â€” 4 cards
+  // Staggered entry for the active cards.
   late final List<AnimationController> _entryCtrl;
   late final List<Animation<double>> _entrySlide;
   late final List<Animation<double>> _entryFade;
@@ -59,7 +59,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
 
     // Entry animations
     _entryCtrl = List.generate(
-        4,
+        3,
         (_) => AnimationController(
             vsync: this, duration: const Duration(milliseconds: 500)));
 
@@ -89,7 +89,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
   }
 
   Future<void> _playStaggeredEntry() async {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < _entryCtrl.length; i++) {
       await Future.delayed(const Duration(milliseconds: 80));
       if (mounted) _entryCtrl[i].forward();
     }
@@ -121,9 +121,9 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (int i = 0; i < 4; i++) ...[
+                  for (int i = 0; i < cards.length; i++) ...[
                     Expanded(child: _buildAnimatedCard(i, cards[i])),
-                    if (i < 3) const SizedBox(width: 14),
+                    if (i < cards.length - 1) const SizedBox(width: 14),
                   ],
                 ],
               );
@@ -135,11 +135,7 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
                 Expanded(child: _buildAnimatedCard(1, cards[1])),
               ]),
               const SizedBox(height: 12),
-              Row(children: [
-                Expanded(child: _buildAnimatedCard(2, cards[2])),
-                const SizedBox(width: 12),
-                Expanded(child: _buildAnimatedCard(3, cards[3])),
-              ]),
+              _buildAnimatedCard(2, cards[2]),
             ]);
           },
         );
@@ -529,8 +525,6 @@ class _AlertRowState extends State<AlertRow> with TickerProviderStateMixin {
         return AlertRowIcons.orders;
       case 'collections':
         return AlertRowIcons.collections;
-      case 'deliveries':
-        return AlertRowIcons.deliveries;
       default:
         return Icons.info_rounded;
     }

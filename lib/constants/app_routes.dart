@@ -33,7 +33,6 @@ class AppRoutes {
   static const String newSaleRoute = '/sales/pos';
   static const String salesReturnExchangeRoute = '/sales/returns-exchanges';
   static const String bookingAdvanceRoute = '/sales/booking';
-  static const String deliveryManagementRoute = '/sales/delivery';
 
   // Purchase
   static const String purchaseEntryRoute = '/purchase/entry';
@@ -90,7 +89,6 @@ class AppRoutes {
     newSaleRoute: 'New Sale (POS)',
     salesReturnExchangeRoute: 'Return & Reversal Desk',
     bookingAdvanceRoute: 'Booking & Advance',
-    deliveryManagementRoute: 'Delivery Management',
     purchaseEntryRoute: 'Customer Metal Purchase',
     purchaseReturnRoute: 'Purchase Return',
     inventoryRoute: 'Inventory Ledger',
@@ -158,7 +156,6 @@ class RoutePaths {
   static const String salesPos = '/app/sales/pos';
   static const String salesReturnExchange = '/app/sales/returns-exchanges';
   static const String salesBooking = '/app/sales/booking';
-  static const String salesDelivery = '/app/sales/delivery';
 
   // Purchase
   static const String purchaseEntry = '/app/purchase/entry';
@@ -241,7 +238,6 @@ class RouteMapper {
     AppRoutes.newSaleRoute: RoutePaths.salesPos,
     AppRoutes.salesReturnExchangeRoute: RoutePaths.salesReturnExchange,
     AppRoutes.bookingAdvanceRoute: RoutePaths.salesBooking,
-    AppRoutes.deliveryManagementRoute: RoutePaths.salesDelivery,
     AppRoutes.purchaseEntryRoute: RoutePaths.purchaseEntry,
     AppRoutes.purchaseReturnRoute: RoutePaths.purchaseReturn,
     AppRoutes.inventoryRoute: RoutePaths.stockInventory,

@@ -16,8 +16,6 @@ import '../tables/bills.dart';
 import '../tables/customer_refund_payables.dart';
 import '../tables/customers.dart';
 import '../tables/daily_rates/daily_rates.dart';
-import '../tables/delivery/delivery_items.dart';
-import '../tables/delivery/delivery_orders.dart';
 import '../tables/finance/bank_accounts.dart';
 import '../tables/finance/bank_transactions.dart';
 import '../tables/finance/cash_transactions.dart';
@@ -78,8 +76,6 @@ part 'app_database.g.dart';
     GirviNoticeActions,
     GirviCustomerResponses,
     GirviNoticeDocuments,
-    DeliveryOrders,
-    DeliveryItems,
     SalesBillingSettings,
     PurchaseBillingSettings,
     GirviBillingSettings,
@@ -195,45 +191,10 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  Future<void> _dropColumnIfPresent({
-    required String tableName,
-    required String columnName,
-  }) async {
-    if (!await _tableExists(tableName)) return;
-    final columns = await _tableColumns(tableName);
-    if (!columns.contains(columnName.toLowerCase())) return;
-    await customStatement(
-      'ALTER TABLE "$tableName" DROP COLUMN "$columnName"',
-    );
-  }
-
   Future<void> _removeRetiredWorkshopSchema() async {
-    await _dropColumnIfPresent(
-      tableName: 'delivery_items',
-      columnName: 'karigar_id',
-    );
-    await _dropColumnIfPresent(
-      tableName: 'delivery_items',
-      columnName: 'karigar_name',
-    );
-    await _dropColumnIfPresent(
-      tableName: 'delivery_orders',
-      columnName: 'karigar_id',
-    );
-    await _dropColumnIfPresent(
-      tableName: 'delivery_orders',
-      columnName: 'karigar_name',
-    );
     await customStatement('DROP TABLE IF EXISTS "karigar_receipts"');
     await customStatement('DROP TABLE IF EXISTS "karigar_issues"');
     await customStatement('DROP TABLE IF EXISTS "karigar_masters"');
-    if (await _tableExists('delivery_orders')) {
-      await customStatement('''
-        UPDATE "delivery_orders"
-        SET "status" = 'IN_PRODUCTION'
-        WHERE "status" = 'IN_MAKING'
-      ''');
-    }
   }
 
   Future<void> ensureGstFilingWorkflowSchema() async {
@@ -1176,10 +1137,6 @@ class AppDatabase extends _$AppDatabase {
               _handleMigrationError(e, s);
             }
           }
-          if (from < 11) {
-            await m.createTable(deliveryOrders);
-            await m.createTable(deliveryItems);
-          }
           if (from < 12) {
             await _ensurePurchaseVoucherSchema();
           }
@@ -2053,6 +2010,10 @@ class AppDatabase extends _$AppDatabase {
             );
           }
           if (from < 68) await ensureSalesMetalSettlementSchema();
+          if (from < 69) {
+            await customStatement('DROP TABLE IF EXISTS "delivery_items"');
+            await customStatement('DROP TABLE IF EXISTS "delivery_orders"');
+          }
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {
@@ -2109,54 +2070,6 @@ class AppDatabase extends _$AppDatabase {
               "is_voided" INTEGER NOT NULL DEFAULT 0,
               "created_at" INTEGER NOT NULL,
               FOREIGN KEY ("account_id") REFERENCES "bank_accounts" ("id")
-            )
-          ''');
-          await customStatement('''
-            CREATE TABLE IF NOT EXISTS "delivery_orders" (
-              "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-              "delivery_no" TEXT NOT NULL UNIQUE,
-              "customer_id" INTEGER NOT NULL,
-              "source_order_id" INTEGER,
-              "customer_name" TEXT NOT NULL,
-              "customer_mobile" TEXT NOT NULL,
-              "item_name" TEXT NOT NULL,
-              "metal_type" TEXT NOT NULL DEFAULT 'GOLD',
-              "purity" TEXT NOT NULL DEFAULT '22K',
-              "approx_weight" REAL NOT NULL DEFAULT 0.0,
-              "locked_rate" REAL NOT NULL DEFAULT 0.0,
-              "status" TEXT NOT NULL DEFAULT 'BOOKED',
-              "advance_paid" REAL NOT NULL DEFAULT 0.0,
-              "total_amount" REAL NOT NULL DEFAULT 0.0,
-              "due_amount" REAL NOT NULL DEFAULT 0.0,
-              "payment_status" TEXT NOT NULL DEFAULT 'UNPAID',
-              "expected_delivery_date" INTEGER,
-              "actual_delivery_date" INTEGER,
-              "image_path" TEXT,
-              "notes" TEXT,
-              "linked_bill_id" INTEGER,
-              "linked_bill_no" TEXT,
-              "created_at" INTEGER NOT NULL,
-              "updated_at" INTEGER NOT NULL,
-              FOREIGN KEY ("customer_id") REFERENCES "customers" ("id") ON DELETE CASCADE
-            )
-          ''');
-          await customStatement('''
-            CREATE TABLE IF NOT EXISTS "delivery_items" (
-              "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-              "delivery_order_id" INTEGER NOT NULL,
-              "item_name" TEXT NOT NULL,
-              "metal_type" TEXT NOT NULL DEFAULT 'GOLD',
-              "purity" TEXT NOT NULL DEFAULT '22K',
-              "approx_weight" REAL NOT NULL DEFAULT 0.0,
-              "final_weight" REAL NOT NULL DEFAULT 0.0,
-              "quantity" INTEGER NOT NULL DEFAULT 1,
-              "image_path" TEXT,
-              "notes" TEXT,
-              "item_status" TEXT NOT NULL DEFAULT 'PENDING',
-              "delivered_at" INTEGER,
-              "created_at" INTEGER NOT NULL,
-              "updated_at" INTEGER NOT NULL,
-              FOREIGN KEY ("delivery_order_id") REFERENCES "delivery_orders" ("id") ON DELETE CASCADE
             )
           ''');
           await _ensurePurchaseVoucherSchema();
