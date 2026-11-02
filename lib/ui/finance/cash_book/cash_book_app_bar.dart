@@ -8,14 +8,14 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.onBack,
     required this.status,
-    required this.onAddEntry,
-    required this.onSyncBills,
+    this.onExportCsv,
+    this.onPrintPdf,
   });
 
   final VoidCallback onBack;
   final SystemStatus status;
-  final VoidCallback onAddEntry;
-  final VoidCallback onSyncBills;
+  final VoidCallback? onExportCsv;
+  final VoidCallback? onPrintPdf;
 
   @override
   Size get preferredSize => const Size.fromHeight(70);
@@ -87,46 +87,19 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (!compact) ...[
-                  SystemStatusBadge(status: status, showLabel: true),
-                  const SizedBox(width: 16),
-                  OutlinedButton.icon(
-                    onPressed: onSyncBills,
-                    icon: const Icon(CashBookIcons.sync, size: 18),
-                    label: const Text('Sync Bills'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: CashBookColors.shellBorder),
-                      textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 14),
-                    ),
+                if (onExportCsv != null && onPrintPdf != null)
+                  PopupMenuButton<String>(
+                    tooltip: 'Export Cash Book',
+                    icon: const Icon(Icons.ios_share_rounded,
+                        color: Colors.white),
+                    onSelected: (value) =>
+                        value == 'csv' ? onExportCsv!() : onPrintPdf!(),
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'csv', child: Text('Export CSV')),
+                      PopupMenuItem(value: 'pdf', child: Text('Print / PDF')),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  FilledButton.icon(
-                    onPressed: onAddEntry,
-                    icon: const Icon(CashBookIcons.addEntry, size: 18),
-                    label: const Text('Add Entry'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: CashBookColors.brandGold,
-                      foregroundColor: CashBookColors.textDark,
-                      textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 14),
-                    ),
-                  ),
-                ] else ...[
-                  IconButton(
-                    onPressed: onSyncBills,
-                    tooltip: CashBookStrings.syncBills,
-                    icon: const Icon(CashBookIcons.sync, color: Colors.white),
-                  ),
-                  IconButton(
-                    onPressed: onAddEntry,
-                    tooltip: CashBookStrings.addEntry,
-                    icon: const Icon(CashBookIcons.addEntry,
-                        color: CashBookColors.brandGold),
-                  ),
-                  SystemStatusBadge(status: status, showLabel: false),
-                ],
+                SystemStatusBadge(status: status, showLabel: !compact),
               ],
             ),
           ),

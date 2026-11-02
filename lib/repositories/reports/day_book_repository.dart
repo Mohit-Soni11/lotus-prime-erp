@@ -62,7 +62,7 @@ class DayBookRepository {
         _fetchExpenseByCategory(start, end), // 3: Map<String, double>
         _fetchGirviSecurityDeposit(start, end), // 4: MetalWeight
         _fetchRetailMetalDispatch(start, end), // 5: MetalWeight
-        _fetchOpeningCash(), // 6: double
+        _fetchOpeningCash(start), // 6: double
         _fetch7DayExpenseAvg(date), // 7: double
         _fetchPaymentBreakup(start, end), // 8: PaymentBreakup
         _fetchDueCollectionReceipts(start, end), // 9: double
@@ -251,6 +251,7 @@ class DayBookRepository {
             ..where((t) =>
                 t.type.equals('INCOME') &
                 t.isVoided.equals(false) &
+                t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
                 t.txnDate.isSmallerOrEqualValue(end)))
           .get();
@@ -277,6 +278,7 @@ class DayBookRepository {
             ..where((t) =>
                 t.type.equals('EXPENSE') &
                 t.isVoided.equals(false) &
+                t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
                 t.txnDate.isSmallerOrEqualValue(end)))
           .get();
@@ -372,10 +374,18 @@ class DayBookRepository {
   // ==========================================================================
   // 9. OPENING CASH — from ShopProfiles.openingCashBalance
   // ==========================================================================
-  Future<double> _fetchOpeningCash() async {
+  Future<double> _fetchOpeningCash(DateTime date) async {
     try {
       final profile = await (_db.select(_db.shopProfiles)).getSingleOrNull();
-      return profile?.openingCashBalance ?? 0.0;
+      final prior = await _db.customSelect(
+        '''SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount
+            WHEN type = 'EXPENSE' THEN -amount ELSE 0 END), 0) AS movement
+           FROM cash_transactions
+           WHERE is_voided = 0 AND payment_mode = 'CASH' AND txn_date < ?''',
+        variables: [Variable.withDateTime(date)],
+      ).getSingle();
+      return (profile?.openingCashBalance ?? 0.0) +
+          prior.read<double>('movement');
     } catch (e) {
       AppLogger.debug('❌ _fetchOpeningCash: $e');
       return 0.0;
@@ -397,6 +407,7 @@ class DayBookRepository {
             ..where((t) =>
                 t.type.equals('EXPENSE') &
                 t.isVoided.equals(false) &
+                t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
                 t.txnDate.isSmallerOrEqualValue(end)))
           .get();
@@ -594,9 +605,6 @@ class DayBookRepository {
         card: bill.cardPaid,
       );
     }
-    if (bill.paidAmount > 0) {
-      return PaymentBreakup(cash: bill.paidAmount);
-    }
     return const PaymentBreakup();
   }
 
@@ -608,22 +616,13 @@ class DayBookRepository {
                 t.type.equals('INCOME') &
                 t.category.equals('DUE_COLLECTION') &
                 t.isVoided.equals(false) &
-                t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
-          .get();
-
-      final bankRows = await (_db.select(_db.bankTransactions)
-            ..where((t) =>
-                t.type.equals('CREDIT') &
-                t.category.equals('DUE_COLLECTION') &
-                t.isVoided.equals(false) &
+                t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
                 t.txnDate.isSmallerOrEqualValue(end)))
           .get();
 
       final cashTotal = cashRows.fold<double>(0, (sum, r) => sum + r.amount);
-      final bankTotal = bankRows.fold<double>(0, (sum, r) => sum + r.amount);
-      return cashTotal + bankTotal;
+      return cashTotal;
     } catch (e) {
       AppLogger.debug('_fetchDueCollectionReceipts: $e');
       return 0;

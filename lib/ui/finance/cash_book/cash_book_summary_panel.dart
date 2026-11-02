@@ -46,12 +46,16 @@ class CashBookSummaryPanel extends StatelessWidget {
       _Metric(
         CashBookStrings.closingBalance,
         summary.closingBalanceStr,
-        'Net movement: ${summary.netFlowStr}',
+        summary.closingBalance < 0
+            ? 'Negative cash balance — review entries'
+            : 'Net movement: ${summary.netFlowStr}',
         CashBookIcons.closingBalance,
-        summary.isPositive
+        summary.closingBalance >= 0
             ? CashBookColors.incomeText
             : CashBookColors.expenseText,
-        summary.isPositive ? CashBookColors.incomeBg : CashBookColors.expenseBg,
+        summary.closingBalance >= 0
+            ? CashBookColors.incomeBg
+            : CashBookColors.expenseBg,
         null,
       ),
     ];

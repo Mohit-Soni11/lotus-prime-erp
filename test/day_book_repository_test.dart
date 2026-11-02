@@ -118,9 +118,9 @@ void main() {
       expect(summary.cashIn.nonGstSales.totalAmount, 1000);
       expect(summary.cashIn.nonGstSales.payments.card, 250);
 
-      expect(summary.cashIn.retailSalesTotal, 850);
+      expect(summary.cashIn.retailSalesTotal, 100);
       expect(summary.cashIn.dueCollection, 150);
-      expect(summary.cashIn.total, 1000);
+      expect(summary.cashIn.total, 250);
       expect(summary.paymentBreakup.cash, 250);
       expect(summary.paymentBreakup.upi, 500);
       expect(summary.paymentBreakup.card, 250);
@@ -148,12 +148,28 @@ void main() {
 
       expect(summary.cashIn.nonGstSales.payments.cash, 300);
       expect(summary.cashIn.nonGstSales.payments.upi, 200);
-      expect(summary.cashIn.retailSalesTotal, 500);
+      expect(summary.cashIn.retailSalesTotal, 300);
       expect(summary.paymentBreakup.cash, 300);
       expect(summary.paymentBreakup.upi, 200);
       expect(summary.paymentBreakup.total, 500);
     },
   );
+
+  test('unknown legacy payment mode does not become cash', () async {
+    final date = DateTime(2026, 6, 26, 15);
+    await _insertBill(
+      db,
+      billNo: 'INV-UNKNOWN-MODE',
+      billDate: date,
+      billType: 'NORMAL',
+      finalAmount: 500,
+      paidAmount: 500,
+    );
+
+    final summary = await repository.fetchDayBook(date);
+    expect(summary.cashIn.retailSalesTotal, 0);
+    expect(summary.paymentBreakup.total, 0);
+  });
 
   test(
     'fetchDayBook classifies short invoice numbers by stored bill type',

@@ -2,7 +2,8 @@ part of 'cash_book_transaction_list.dart';
 
 class _TxnDetailSheet extends StatelessWidget {
   final CashTransactionModel txn;
-  const _TxnDetailSheet({required this.txn});
+  final double? runningBalance;
+  const _TxnDetailSheet({required this.txn, required this.runningBalance});
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +60,9 @@ class _TxnDetailSheet extends StatelessWidget {
           _DetailRow(
               'Date & Time', '${txn.dateFormatted}  ${txn.timeFormatted}'),
           _DetailRow('Payment Mode', txn.paymentMode.displayLabel),
+          if (runningBalance != null)
+            _DetailRow('Balance After',
+                CashTransactionModel.formatAmount(runningBalance!)),
           if (txn.partyName != null) _DetailRow('Party', txn.partyName!),
           if (txn.description != null)
             _DetailRow('Description', txn.description!),

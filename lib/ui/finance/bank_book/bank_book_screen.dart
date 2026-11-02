@@ -52,11 +52,6 @@ class _BankBookScreenState extends State<BankBookScreen> {
   void initState() {
     super.initState();
     _ctrl = BankBookController();
-
-    // Auto-sync today's bills on open
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ctrl.syncTodaysBills();
-    });
   }
 
   @override
@@ -99,19 +94,26 @@ class _BankBookScreenState extends State<BankBookScreen> {
   // â”€â”€ Sync Bills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   Future<void> _onSyncBills() async {
-    final count = await _ctrl.syncTodaysBills();
-    if (!mounted) return;
-
-    final message = count > 0
-        ? '$count bill(s) synced successfully'
-        : BankBookStrings.syncSuccess;
-
-    AppFeedback.show(
-      context,
-      type: AppFeedbackType.info,
-      message: message,
-      duration: const Duration(seconds: 2),
-    );
+    try {
+      final count = await _ctrl.syncTodaysBills();
+      if (!mounted) return;
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.info,
+        message: count == 0
+            ? 'Bank receipts are already reconciled.'
+            : '$count missing bank receipt(s) restored.',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      AppFeedback.show(
+        context,
+        type: AppFeedbackType.error,
+        message: error is StateError
+            ? error.message.toString()
+            : 'Bank receipt reconciliation failed. No entries were added.',
+      );
+    }
   }
 
   // â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

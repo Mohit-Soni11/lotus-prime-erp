@@ -37,6 +37,7 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
   void initState() {
     super.initState();
     widget.ctrl.resetEntryForm();
+    widget.ctrl.refreshBankAccounts();
 
     _slideCtrl = AnimationController(
       vsync: this,
@@ -161,6 +162,28 @@ class _ExpenseEntryDialogState extends State<ExpenseEntryDialog>
           const _FieldLabel(ExpenseStrings.paymentMode),
           const SizedBox(height: 8),
           _PaymentModeChips(ctrl: ctrl),
+          if (ctrl.entryMode != PaymentMode.cash) ...[
+            const SizedBox(height: 12),
+            if (ctrl.bankAccounts.isEmpty)
+              const Text(
+                'Add an active bank account in Bank Book before recording this payment.',
+                style: TextStyle(color: ExpenseColors.textSecondary),
+              )
+            else
+              DropdownButtonFormField<int>(
+                key: ValueKey(ctrl.selectedBankAccountId),
+                initialValue: ctrl.selectedBankAccountId,
+                decoration: const InputDecoration(labelText: 'Bank account'),
+                items: [
+                  for (final account in ctrl.bankAccounts)
+                    DropdownMenuItem(
+                      value: account.id,
+                      child: Text(account.name),
+                    ),
+                ],
+                onChanged: ctrl.setBankAccount,
+              ),
+          ],
 
           const SizedBox(height: 16),
 
@@ -487,8 +510,10 @@ class _SaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext ctx) {
-    final isDisabled =
-        ctrl.entryNeedsCustomLabel && ctrl.customLabelCtrl.text.trim().isEmpty;
+    final isDisabled = (ctrl.entryNeedsCustomLabel &&
+            ctrl.customLabelCtrl.text.trim().isEmpty) ||
+        (ctrl.entryMode != PaymentMode.cash &&
+            ctrl.selectedBankAccountId == null);
 
     return GestureDetector(
       onTap: (ctrl.isSaving || isDisabled)

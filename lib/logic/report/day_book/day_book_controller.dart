@@ -13,11 +13,12 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../repositories/reports/day_book_repository.dart';
+import '../../../database/db/app_database.dart';
+import '../../../features/finance/ledger/data/finance_day_closure_repository.dart';
 import '../../../core/logging/app_logger.dart';
 
 class DayBookController extends ChangeNotifier {
@@ -26,6 +27,8 @@ class DayBookController extends ChangeNotifier {
   }
 
   final DayBookRepository _repo = DayBookRepository();
+  final FinanceDayClosureRepository _closures =
+      FinanceDayClosureRepository(AppDatabase());
 
   // ── Date ──────────────────────────────────────────────────────────────────
   DateTime _selectedDate = DateTime.now();
@@ -80,10 +83,6 @@ class DayBookController extends ChangeNotifier {
 
   // ── Stream subscription for live updates ──────────────────────────────────
   StreamSubscription<void>? _watchSub;
-
-  // ── Prefs key for day lock ────────────────────────────────────────────────
-  String _lockKey(DateTime d) =>
-      'day_book_locked_${DateFormat('yyyyMMdd').format(d)}';
 
   // ==========================================================================
   // INIT
@@ -144,9 +143,7 @@ class DayBookController extends ChangeNotifier {
     try {
       final data = await _repo.fetchDayBook(_selectedDate);
 
-      // Check day lock from SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final locked = prefs.getBool(_lockKey(_selectedDate)) ?? false;
+      final locked = await _closures.isClosed(_selectedDate);
 
       _summary = DayBookSummary(
         date: data.date,
@@ -321,13 +318,16 @@ class DayBookController extends ChangeNotifier {
 
   // ==========================================================================
   // CLOSE DAY & LOCK LEDGER
-  // Persists lock flag to SharedPreferences
+  // Persists the close in the finance ledger database.
   // ==========================================================================
   Future<bool> closeDay() async {
     if (!isCashMatched) return false;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_lockKey(_selectedDate), true);
+      final closed = await _closures.closeDay(
+        _selectedDate,
+        closingCash: physicalCashAmount,
+      );
+      if (!closed) return false;
       await loadData(silent: true);
       return true;
     } catch (e) {

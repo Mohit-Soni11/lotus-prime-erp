@@ -9,6 +9,7 @@ import '../../config/db_config.dart';
 import '../../config/env_config.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 import 'package:lotus_erp/features/sales_pos/domain/services/pos_invoice_series_formatter.dart';
+import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_schema.dart';
 import 'package:lotus_erp/features/stock/gold/data/receipts/gold_stock_receipt_tables.dart';
 import '../tables/bill_items.dart';
 import '../tables/bill_trade_in_items.dart';
@@ -102,6 +103,20 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => DbConfig.schemaVersion;
+
+  Future<void> _ensureFinanceDayClosureSchema() async {
+    await customStatement(financeDayClosureSchemaSql.first);
+    if (await _tableExists('cash_transactions')) {
+      for (final statement in financeDayClosureSchemaSql.skip(1).take(3)) {
+        await customStatement(statement);
+      }
+    }
+    if (await _tableExists('bank_transactions')) {
+      for (final statement in financeDayClosureSchemaSql.skip(4)) {
+        await customStatement(statement);
+      }
+    }
+  }
 
   Future<void> ensureSalesMetalSettlementSchema() async {
     await customStatement(createBillMetalPaymentAllocationsTableSql);
@@ -1063,6 +1078,7 @@ class AppDatabase extends _$AppDatabase {
           await ensureGirviInterestPeriodSnapshotSchema();
           await _ensureReturnReversalSchemaInternal();
           await ensureSalesMetalSettlementSchema();
+          await _ensureFinanceDayClosureSchema();
         },
         onUpgrade: (Migrator m, int from, int to) async {
           AppLogger.info('Migrating database from v$from to v$to');
@@ -2014,6 +2030,7 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DROP TABLE IF EXISTS "delivery_items"');
             await customStatement('DROP TABLE IF EXISTS "delivery_orders"');
           }
+          if (from < 70) await _ensureFinanceDayClosureSchema();
           await _ensureReturnReversalSchemaInternal();
         },
         beforeOpen: (details) async {

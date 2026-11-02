@@ -688,6 +688,7 @@ class _ActionRow extends StatelessWidget {
   }
 
   void _confirmVoid(BuildContext context) {
+    final reasonController = TextEditingController();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -695,8 +696,21 @@ class _ActionRow extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(BankBookStrings.voidTransaction,
             style: BankBookStyles.labelPrimary),
-        content: Text(BankBookStrings.voidConfirm,
-            style: BankBookStyles.txnSubtitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(BankBookStrings.voidConfirm,
+                style: BankBookStyles.txnSubtitle),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              autofocus: true,
+              maxLength: 200,
+              decoration:
+                  const InputDecoration(labelText: 'Reason for voiding'),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -710,13 +724,17 @@ class _ActionRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
-              Navigator.pop(context);
-              await ctrl.voidTransaction(txn.id);
+              final reason = reasonController.text.trim();
+              if (reason.isEmpty) return;
+              final saved = await ctrl.voidTransaction(txn.id, reason);
               if (context.mounted) {
+                Navigator.pop(context);
                 AppFeedback.show(
                   context,
-                  type: AppFeedbackType.success,
-                  message: BankBookStrings.voidSuccess,
+                  type: saved ? AppFeedbackType.success : AppFeedbackType.error,
+                  message: saved
+                      ? BankBookStrings.voidSuccess
+                      : 'Unable to void this transaction.',
                 );
               }
             },
@@ -725,7 +743,7 @@ class _ActionRow extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(reasonController.dispose);
   }
 }
 

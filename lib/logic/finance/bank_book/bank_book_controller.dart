@@ -350,7 +350,9 @@ class BankBookController extends ChangeNotifier {
 
   Future<int> syncTodaysBills() async {
     final accId = _selectedAccount?.id;
-    if (accId == null) return 0;
+    if (accId == null) {
+      throw StateError('Select a bank account before reconciling bills.');
+    }
     return _repository.syncBillsToBank(accountId: accId, date: DateTime.now());
   }
 
@@ -406,11 +408,12 @@ class BankBookController extends ChangeNotifier {
   }
 
   Future<bool> saveEntry() async {
+    if (_isSaving) return false;
     final amountText = amountCtrl.text.trim();
     if (amountText.isEmpty) return false;
 
     final amount = double.tryParse(amountText);
-    if (amount == null || amount <= 0) return false;
+    if (amount == null || !amount.isFinite || amount <= 0) return false;
 
     final accId = _selectedAccount?.id;
     if (accId == null) return false;
@@ -453,8 +456,8 @@ class BankBookController extends ChangeNotifier {
     return _repository.markReconciled(txnId, note: note);
   }
 
-  Future<bool> voidTransaction(int id) async {
-    return _repository.voidTransaction(id, 'Voided by user');
+  Future<bool> voidTransaction(int id, String reason) async {
+    return _repository.voidTransaction(id, reason);
   }
 
   // ==========================================================================

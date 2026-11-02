@@ -97,17 +97,4 @@ class CashBookStyles {
         fontWeight: FontWeight.w600,
         color: CashBookColors.textDark,
       );
-
-  // ── Toggle chips ──────────────────────────────────────────────────────────
-  static TextStyle get toggleActive => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: CashBookColors.toggleActiveText,
-      );
-
-  static TextStyle get toggleInactive => GoogleFonts.inter(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: CashBookColors.toggleInactiveText,
-      );
 }

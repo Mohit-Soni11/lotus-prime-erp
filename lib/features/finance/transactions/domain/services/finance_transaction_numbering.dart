@@ -6,6 +6,10 @@ enum FinanceTransactionLedger {
     tableName: 'cash_transactions',
     prefix: 'TXN',
   ),
+  expense(
+    tableName: 'cash_transactions',
+    prefix: 'EXP',
+  ),
   bank(
     tableName: 'bank_transactions',
     prefix: 'BTXN',
@@ -31,6 +35,10 @@ class FinanceTransactionNumbering {
 
   Future<String> nextBankTransactionId({int offset = 0}) {
     return _nextTransactionId(FinanceTransactionLedger.bank, offset: offset);
+  }
+
+  Future<String> nextExpenseTransactionId({int offset = 0}) {
+    return _nextTransactionId(FinanceTransactionLedger.expense, offset: offset);
   }
 
   Future<String> _nextTransactionId(

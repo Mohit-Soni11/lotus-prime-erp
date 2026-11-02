@@ -594,47 +594,32 @@ class PosCheckoutRepository {
     }
 
     final preferredBankAccountId = await _findPreferredBankAccountId();
+    if ((invoice.upiPaid > 0 || invoice.cardPaid > 0) &&
+        preferredBankAccountId == null) {
+      throw StateError(
+          'Add an active bank account before recording UPI or card payments.');
+    }
 
     if (invoice.upiPaid > 0) {
-      if (preferredBankAccountId != null) {
-        await _insertBankIncome(
-          accountId: preferredBankAccountId,
-          amount: invoice.upiPaid,
-          paymentMode: bank_book.BankPaymentMode.upi,
-          billNumber: billNumber,
-          partyName: customerName,
-          txnDate: invoice.invoiceDate,
-        );
-      } else {
-        await _insertCashIncome(
-          amount: invoice.upiPaid,
-          paymentMode: cash_book.PaymentMode.upi,
-          billNumber: billNumber,
-          partyName: customerName,
-          txnDate: invoice.invoiceDate,
-        );
-      }
+      await _insertBankIncome(
+        accountId: preferredBankAccountId!,
+        amount: invoice.upiPaid,
+        paymentMode: bank_book.BankPaymentMode.upi,
+        billNumber: billNumber,
+        partyName: customerName,
+        txnDate: invoice.invoiceDate,
+      );
     }
 
     if (invoice.cardPaid > 0) {
-      if (preferredBankAccountId != null) {
-        await _insertBankIncome(
-          accountId: preferredBankAccountId,
-          amount: invoice.cardPaid,
-          paymentMode: bank_book.BankPaymentMode.card,
-          billNumber: billNumber,
-          partyName: customerName,
-          txnDate: invoice.invoiceDate,
-        );
-      } else {
-        await _insertCashIncome(
-          amount: invoice.cardPaid,
-          paymentMode: cash_book.PaymentMode.card,
-          billNumber: billNumber,
-          partyName: customerName,
-          txnDate: invoice.invoiceDate,
-        );
-      }
+      await _insertBankIncome(
+        accountId: preferredBankAccountId!,
+        amount: invoice.cardPaid,
+        paymentMode: bank_book.BankPaymentMode.card,
+        billNumber: billNumber,
+        partyName: customerName,
+        txnDate: invoice.invoiceDate,
+      );
     }
   }
 

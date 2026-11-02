@@ -101,12 +101,6 @@ enum PaymentMode {
 
 // ── 5. VIEW MODE (Date Range Toggle) ─────────────────────────────────────────
 
-enum CashBookViewMode {
-  daily,
-  monthly,
-  yearly,
-}
-
 // ── 6. FILTER STATE ───────────────────────────────────────────────────────────
 
 enum CashBookFilter {

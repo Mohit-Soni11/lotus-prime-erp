@@ -12,10 +12,6 @@ class CashBookStrings {
   static const String moduleSubtitle = 'Cash ledger and counter movement';
 
   // ── View Mode Labels ──────────────────────────────────────────────────────
-  static const String viewDaily = 'Daily';
-  static const String viewMonthly = 'Monthly';
-  static const String viewYearly = 'Yearly';
-
   // ── Summary Panel ─────────────────────────────────────────────────────────
   static const String openingBalance = 'Opening Balance';
   static const String totalIncome = 'Total Income';
@@ -29,22 +25,21 @@ class CashBookStrings {
   // ── Transaction List ──────────────────────────────────────────────────────
   static const String noTransactions = 'No transactions found';
   static const String noTransactionsHint =
-      'Add a cash entry to start this period\'s ledger.';
+      'Cash sales, collections and expenses appear here automatically.';
   static const String searchHint =
-      'Search category, party, invoice, reference, or transaction ID';
+      'Search category, party, invoice, reference, amount, or transaction ID';
 
   // ── Entry Dialog ──────────────────────────────────────────────────────────
-  static const String addEntry = 'Add Entry';
-  static const String addIncome = 'Add Income';
-  static const String addExpense = 'Add Expense';
+  static const String addEntry = 'Add Cash Income';
+  static const String addIncome = 'Add Extra Cash Income';
   static const String amount = 'Amount';
   static const String amountHint = 'Enter amount';
   static const String category = 'Category';
   static const String paymentMode = 'Payment Mode';
-  static const String description = 'Description (Optional)';
-  static const String descriptionHint = 'e.g. Monthly shop rent';
+  static const String description = 'Reason for cash received *';
+  static const String descriptionHint = 'Reason for cash received';
   static const String partyName = 'Party Name (Optional)';
-  static const String partyHint = 'Customer / Supplier name';
+  static const String partyHint = 'Received from';
   static const String date = 'Date';
   static const String saveEntry = 'Save Entry';
   static const String saving = 'Saving...';
@@ -52,11 +47,6 @@ class CashBookStrings {
 
   // ── Badges ────────────────────────────────────────────────────────────────
   static const String autoLabel = 'AUTO';
-
-  // ── Sync ──────────────────────────────────────────────────────────────────
-  static const String syncBills = 'Sync Billing Receipts';
-  static const String syncSuccess = 'Bills synced successfully';
-  static const String syncError = 'Sync failed. Please try again.';
 
   // ── Opening Balance ───────────────────────────────────────────────────────
   static const String editOpeningBalance = 'Edit Opening Balance';

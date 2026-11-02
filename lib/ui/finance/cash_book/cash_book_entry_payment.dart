@@ -1,62 +1,5 @@
 part of 'cash_book_entry_dialog.dart';
 
-class _PaymentModeRow extends StatelessWidget {
-  final CashBookController ctrl;
-  const _PaymentModeRow({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: PaymentMode.values.map((mode) {
-        final isActive = ctrl.entryMode == mode;
-        final icon = switch (mode) {
-          PaymentMode.cash => CashBookIcons.cash,
-          PaymentMode.upi => CashBookIcons.upi,
-          PaymentMode.card => CashBookIcons.card,
-          PaymentMode.bank => CashBookIcons.bank,
-          PaymentMode.cheque => CashBookIcons.cheque,
-        };
-        return GestureDetector(
-          onTap: () => ctrl.setEntryMode(mode),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? CashBookColors.brandGoldLight
-                  : CashBookColors.summaryChipBg,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isActive
-                    ? CashBookColors.brandGold.withValues(alpha: 0.5)
-                    : CashBookColors.bodyBorder,
-              ),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(icon,
-                  size: 14,
-                  color: isActive
-                      ? CashBookColors.brandGold
-                      : CashBookColors.textSecondary),
-              const SizedBox(width: 6),
-              Text(mode.displayLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive
-                        ? CashBookColors.brandGold
-                        : CashBookColors.textSecondary,
-                  )),
-            ]),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
 // â”€â”€ Date Selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _DateSelector extends StatelessWidget {
@@ -70,7 +13,7 @@ class _DateSelector extends StatelessWidget {
         final picked = await showDatePicker(
           context: ctx,
           initialDate: ctrl.entryDate,
-          firstDate: DateTime(2020),
+          firstDate: DateTime(1),
           lastDate: DateTime.now(),
           builder: (_, child) => Theme(
             data: ThemeData.light().copyWith(

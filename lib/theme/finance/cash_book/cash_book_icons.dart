@@ -15,13 +15,9 @@ class CashBookIcons {
   static const IconData openingBalance = Icons.account_balance_wallet_rounded;
   static const IconData closingBalance = Icons.savings_rounded;
   static const IconData addEntry = Icons.add_circle_rounded;
-  static const IconData sync = Icons.sync_rounded;
   static const IconData search = Icons.search_rounded;
   static const IconData filter = Icons.filter_list_rounded;
   static const IconData calendar = Icons.calendar_today_rounded;
-  static const IconData previous = Icons.chevron_left_rounded;
-  static const IconData next = Icons.chevron_right_rounded;
-  static const IconData today = Icons.today_rounded;
   static const IconData exportPdf = Icons.picture_as_pdf_rounded;
   static const IconData void_ = Icons.remove_circle_outline_rounded;
   static const IconData auto = Icons.bolt_rounded;

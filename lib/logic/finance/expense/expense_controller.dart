@@ -67,11 +67,15 @@ class ExpenseController extends ChangeNotifier {
   PaymentMode _entryMode = PaymentMode.cash;
   DateTime _entryDate = DateTime.now();
   bool _isSaving = false;
+  List<ExpenseBankAccountOption> _bankAccounts = const [];
+  int? _selectedBankAccountId;
 
   ExpenseCategory get entryCategory => _entryCategory;
   PaymentMode get entryMode => _entryMode;
   DateTime get entryDate => _entryDate;
   bool get isSaving => _isSaving;
+  List<ExpenseBankAccountOption> get bankAccounts => _bankAccounts;
+  int? get selectedBankAccountId => _selectedBankAccountId;
 
   bool get entryNeedsCustomLabel =>
       _entryCategory == ExpenseCategory.otherExpense;
@@ -87,6 +91,22 @@ class ExpenseController extends ChangeNotifier {
     searchCtrl.addListener(_onSearchChanged);
     customLabelCtrl.addListener(_notify);
     _startWatch();
+    refreshBankAccounts();
+  }
+
+  Future<void> refreshBankAccounts() async {
+    try {
+      _bankAccounts = await _repository.listActiveBankAccounts();
+      if (_bankAccounts.length == 1) {
+        _selectedBankAccountId = _bankAccounts.single.id;
+      } else if (!_bankAccounts
+          .any((account) => account.id == _selectedBankAccountId)) {
+        _selectedBankAccountId = null;
+      }
+      notifyListeners();
+    } catch (error) {
+      AppLogger.debug('Expense bank accounts could not be loaded: $error');
+    }
   }
 
   void _notify() => notifyListeners();
@@ -329,16 +349,25 @@ class ExpenseController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setBankAccount(int? accountId) {
+    _selectedBankAccountId = accountId;
+    notifyListeners();
+  }
+
   void setEntryDate(DateTime date) {
     _entryDate = date;
     notifyListeners();
   }
 
   Future<bool> saveExpense() async {
+    if (_isSaving) return false;
     final amountText = amountCtrl.text.trim();
     final amount = double.tryParse(amountText) ?? 0.0;
 
-    if (amount <= 0) return false;
+    if (!amount.isFinite || amount <= 0) return false;
+    if (_entryMode != PaymentMode.cash && _selectedBankAccountId == null) {
+      return false;
+    }
     if (entryNeedsCustomLabel && customLabelCtrl.text.trim().isEmpty) {
       return false;
     }
@@ -350,6 +379,7 @@ class ExpenseController extends ChangeNotifier {
       category: _entryCategory,
       amount: amount,
       paymentMode: _entryMode,
+      bankAccountId: _selectedBankAccountId,
       expenseDate: _entryDate,
       customLabel: customLabelCtrl.text.trim().isEmpty
           ? null

@@ -12,6 +12,7 @@ import 'config/app_config.dart';
 import 'core/logging/app_logger.dart';
 import 'core/router/app_router.dart';
 import 'database/db/app_database.dart';
+import 'features/finance/ledger/data/finance_day_closure_repository.dart';
 import 'firebase_options.dart';
 import 'theme/dashboard/app/uv.dart';
 
@@ -74,7 +75,7 @@ Future<void> _bootstrapApplication() async {
   );
   initAuthRouting();
 
-  AppDatabase();
+  await FinanceDayClosureRepository(AppDatabase()).migrateLegacyLocks();
 }
 
 String _formatStartupError(Object error) {

@@ -625,7 +625,9 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RoutePaths.financeCashBook,
-            builder: (_, __) => const CashBookScreen(),
+            builder: (context, state) => CashBookScreen(
+              onBack: () => _goBackOr(context, RoutePaths.dashboard),
+            ),
           ),
           GoRoute(
             path: RoutePaths.financeBankBook,

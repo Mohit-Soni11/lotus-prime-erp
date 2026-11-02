@@ -1,0 +1,236 @@
+import 'package:drift/drift.dart' as drift;
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lotus_erp/database/db/app_database.dart';
+import 'package:lotus_erp/features/finance/ledger/data/finance_day_closure_repository.dart';
+import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
+import 'package:lotus_erp/repositories/finance/bank_book_repository.dart';
+import 'package:lotus_erp/repositories/finance/cash_book_repository.dart';
+import 'package:lotus_erp/repositories/finance/expense_repository.dart';
+
+void main() {
+  late AppDatabase db;
+  late CashBookRepository cash;
+  late BankBookRepository bank;
+  late ExpenseRepository expenses;
+
+  setUp(() {
+    db = AppDatabase.forTesting(NativeDatabase.memory());
+    cash = CashBookRepository(db: db);
+    bank = BankBookRepository(db: db);
+    expenses = ExpenseRepository(db: db);
+  });
+
+  tearDown(() async => db.close());
+
+  test('cash balance carries prior cash activity and excludes bank activity',
+      () async {
+    await db.into(db.shopProfiles).insert(const ShopProfilesCompanion(
+          openingCashBalance: drift.Value(100),
+        ));
+    await _cashRow(db, 'C-1', DateTime(2026, 6, 24), 'INCOME', 50);
+    await _cashRow(db, 'C-2', DateTime(2026, 6, 24), 'INCOME', 900,
+        mode: 'UPI');
+    await _cashRow(db, 'C-3', DateTime(2026, 6, 25), 'EXPENSE', 20);
+    await _cashRow(db, 'C-4', DateTime(2026, 6, 25), 'INCOME', 40, mode: 'UPI');
+
+    final summary = await cash.computeSummary(
+      from: DateTime(2026, 6, 25),
+      to: DateTime(2026, 6, 25, 23, 59, 59),
+    );
+    expect(summary.openingBalance, 150);
+    expect(summary.totalIncome, 0);
+    expect(summary.totalExpense, 20);
+    expect(summary.closingBalance, 130);
+    final visible = await cash.fetchTransactions(
+      from: DateTime(2026, 6, 25),
+      to: DateTime(2026, 6, 25, 23, 59, 59),
+    );
+    expect(visible.map((entry) => entry.txnId), ['C-3']);
+  });
+
+  test('bill reconciliation posts only actual cash and is idempotent',
+      () async {
+    final date = DateTime(2026, 6, 25, 12);
+    await _bill(db, 'B-UPI', date, paid: 300, upi: 300);
+    await _bill(db, 'B-MIXED', date, paid: 300, cash: 100, upi: 200);
+
+    expect(await cash.syncBillsToIncome(date), 1);
+    expect(await cash.syncBillsToIncome(date), 0);
+    final rows = await db.select(db.cashTransactions).get();
+    expect(rows, hasLength(1));
+    expect(rows.single.amount, 100);
+    expect(rows.single.referenceId, 'B-MIXED');
+  });
+
+  test('bank reconciliation posts only missing payment split', () async {
+    final date = DateTime(2026, 6, 25, 12);
+    final accountId = await _bankAccount(db);
+    await _bill(db, 'B-MIXED', date, paid: 300, cash: 100, upi: 200);
+
+    expect(await bank.syncBillsToBank(accountId: accountId, date: date), 1);
+    expect(await bank.syncBillsToBank(accountId: accountId, date: date), 0);
+    final rows = await db.select(db.bankTransactions).get();
+    expect(rows, hasLength(1));
+    expect(rows.single.amount, 200);
+    expect(rows.single.referenceId, 'B-MIXED#UPI');
+  });
+
+  test('bank reconciliation keeps valid legacy UPI and restores card',
+      () async {
+    final date = DateTime(2026, 6, 25, 12);
+    final accountId = await _bankAccount(db);
+    await db.into(db.bills).insert(BillsCompanion.insert(
+          billNo: 'B-OLD-BANK',
+          billDate: drift.Value(date),
+          paidAmount: const drift.Value(500),
+          upiPaid: const drift.Value(200),
+          cardPaid: const drift.Value(300),
+        ));
+    await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'B-OLD',
+            accountId: accountId,
+            txnDate: date,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(200),
+            paymentMode: const drift.Value('UPI'),
+            referenceId: const drift.Value('B-OLD-BANK'),
+            referenceType: const drift.Value('BILL'),
+          ),
+        );
+
+    expect(await bank.syncBillsToBank(accountId: accountId, date: date), 1);
+    final rows = await db.select(db.bankTransactions).get();
+    expect(rows.map((row) => row.amount).toSet(), {200.0, 300.0});
+    expect(rows.where((row) => row.paymentMode == 'CARD').single.referenceId,
+        'B-OLD-BANK#CARD');
+  });
+
+  test('cash reconciliation retires an inflated legacy receipt', () async {
+    final date = DateTime(2026, 6, 25, 12);
+    await _bill(db, 'B-LEGACY', date, paid: 300, cash: 100, upi: 200);
+    await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+          txnId: 'OLD-1',
+          txnDate: date,
+          type: 'INCOME',
+          category: 'SALE',
+          amount: const drift.Value(300),
+          referenceId: const drift.Value('B-LEGACY'),
+          referenceType: const drift.Value('BILL'),
+          isAutoGenerated: const drift.Value(true),
+        ));
+
+    expect(await cash.syncBillsToIncome(date), 1);
+    final rows = await db.select(db.cashTransactions).get();
+    expect(rows, hasLength(2));
+    expect(rows.where((row) => !row.isVoided).single.amount, 100);
+    expect(rows.where((row) => row.isVoided).single.voidReason, isNotEmpty);
+  });
+
+  test('bank expense posts and voids both linked ledger records', () async {
+    final accountId = await _bankAccount(db);
+    final date = DateTime(2026, 6, 25, 12);
+    expect(
+      await expenses.saveExpense(
+        category: ExpenseCategory.shopRent,
+        amount: 250,
+        paymentMode: PaymentMode.upi,
+        bankAccountId: accountId,
+        expenseDate: date,
+      ),
+      isTrue,
+    );
+    final source = (await db.select(db.cashTransactions).get()).single;
+    final bankRow = (await db.select(db.bankTransactions).get()).single;
+    expect(source.paymentMode, 'UPI');
+    expect(bankRow.referenceId, source.txnId);
+    expect(bankRow.amount, 250);
+    expect(await cash.voidTransaction(source.id, 'Wrong expense'), isFalse);
+    expect(await expenses.voidExpense(source.id, 'Wrong expense'), isTrue);
+    expect(
+        (await db.select(db.cashTransactions).get()).single.isVoided, isTrue);
+    expect(
+        (await db.select(db.bankTransactions).get()).single.isVoided, isTrue);
+  });
+
+  test('closed day blocks ledger insert and update at database level',
+      () async {
+    final date = DateTime(2026, 6, 25, 12);
+    final cashId = await _cashRow(db, 'C-1', date, 'INCOME', 100);
+    final closure = FinanceDayClosureRepository(db);
+    expect(await closure.closeDay(date, closingCash: 100), isTrue);
+    expect(await closure.isClosed(date), isTrue);
+    await expectLater(
+      _cashRow(db, 'C-2', date, 'INCOME', 50),
+      throwsA(isA<Exception>()),
+    );
+    await expectLater(
+      (db.update(db.cashTransactions)..where((t) => t.id.equals(cashId)))
+          .write(const CashTransactionsCompanion(isVoided: drift.Value(true))),
+      throwsA(isA<Exception>()),
+    );
+    expect(
+        (await db.select(db.cashTransactions).get()).single.isVoided, isFalse);
+  });
+
+  test('closed bank day freezes money but permits later reconciliation',
+      () async {
+    final date = DateTime(2026, 6, 25, 12);
+    final accountId = await _bankAccount(db);
+    final id = await db.into(db.bankTransactions).insert(
+          BankTransactionsCompanion.insert(
+            txnId: 'B-1',
+            accountId: accountId,
+            txnDate: date,
+            type: 'CREDIT',
+            category: 'SALE_PAYMENT',
+            amount: const drift.Value(100),
+          ),
+        );
+    await FinanceDayClosureRepository(db).closeDay(date, closingCash: 0);
+    await expectLater(
+      (db.update(db.bankTransactions)..where((row) => row.id.equals(id)))
+          .write(const BankTransactionsCompanion(amount: drift.Value(200))),
+      throwsA(isA<Exception>()),
+    );
+    expect(
+        await bank.markReconciled(id, note: 'Bank statement matched'), isTrue);
+    final row = (await db.select(db.bankTransactions).get()).single;
+    expect(row.amount, 100);
+    expect(row.isReconciled, isTrue);
+  });
+}
+
+Future<int> _cashRow(
+    AppDatabase db, String id, DateTime date, String type, double amount,
+    {String mode = 'CASH'}) {
+  return db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+        txnId: id,
+        txnDate: date,
+        type: type,
+        category: type == 'INCOME' ? 'SALE' : 'SHOP_RENT',
+        amount: drift.Value(amount),
+        paymentMode: drift.Value(mode),
+      ));
+}
+
+Future<int> _bill(AppDatabase db, String number, DateTime date,
+    {required double paid, double cash = 0, double upi = 0}) {
+  return db.into(db.bills).insert(BillsCompanion.insert(
+        billNo: number,
+        billDate: drift.Value(date),
+        paidAmount: drift.Value(paid),
+        cashPaid: drift.Value(cash),
+        upiPaid: drift.Value(upi),
+      ));
+}
+
+Future<int> _bankAccount(AppDatabase db) {
+  return db.into(db.bankAccounts).insert(BankAccountsCompanion.insert(
+        accountName: 'Primary Current',
+        bankName: 'HDFC Bank',
+        accountNumber: '111122223333',
+      ));
+}

@@ -85,8 +85,6 @@ class _CashBookEntryDialogState extends State<CashBookEntryDialog>
 
   Widget _buildContent() {
     final ctrl = widget.ctrl;
-    final isIncome = ctrl.entryType == CashTransactionType.income;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -99,22 +97,18 @@ class _CashBookEntryDialogState extends State<CashBookEntryDialog>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: isIncome
-                    ? CashBookColors.incomeBg
-                    : CashBookColors.expenseBg,
+                color: CashBookColors.incomeBg,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                isIncome ? CashBookIcons.income : CashBookIcons.expense,
+              child: const Icon(
+                CashBookIcons.income,
                 size: 18,
-                color: isIncome
-                    ? CashBookColors.incomeAccent
-                    : CashBookColors.expenseAccent,
+                color: CashBookColors.incomeAccent,
               ),
             ),
             const SizedBox(width: 12),
             Text(
-              isIncome ? CashBookStrings.addIncome : CashBookStrings.addExpense,
+              CashBookStrings.addIncome,
               style: CashBookStyles.labelPrimary.copyWith(fontSize: 16),
             ),
             const Spacer(),
@@ -136,7 +130,10 @@ class _CashBookEntryDialogState extends State<CashBookEntryDialog>
           const SizedBox(height: 20),
 
           // â”€â”€ Type Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          _TypeToggle(ctrl: ctrl),
+          Text(
+            'Sales, collections and expenses appear automatically from their source modules. Use this form only for other cash received.',
+            style: CashBookStyles.labelSecondary,
+          ),
 
           const SizedBox(height: 16),
 
@@ -167,9 +164,7 @@ class _CashBookEntryDialogState extends State<CashBookEntryDialog>
           const SizedBox(height: 14),
 
           // â”€â”€ Payment Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          const _FieldLabel(CashBookStrings.paymentMode),
-          const SizedBox(height: 6),
-          _PaymentModeRow(ctrl: ctrl),
+          Text('Payment mode: Cash', style: CashBookStyles.labelSecondary),
 
           const SizedBox(height: 14),
 
@@ -198,6 +193,14 @@ class _CashBookEntryDialogState extends State<CashBookEntryDialog>
             hint: CashBookStrings.descriptionHint,
             maxLines: 2,
           ),
+
+          if (ctrl.entryError != null) ...[
+            const SizedBox(height: 10),
+            Text(ctrl.entryError!,
+                style: CashBookStyles.labelSecondary.copyWith(
+                  color: CashBookColors.expenseAccent,
+                )),
+          ],
 
           const SizedBox(height: 24),
 

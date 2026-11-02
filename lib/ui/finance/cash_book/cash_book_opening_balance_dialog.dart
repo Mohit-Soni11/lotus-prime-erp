@@ -58,7 +58,8 @@ class _OpeningBalanceDialogState extends State<_OpeningBalanceDialog> {
     } else {
       setState(() {
         _saving = false;
-        _saveError = 'Opening balance could not be saved. Please try again.';
+        _saveError =
+            'Opening balance can be set only before the first financial entry.';
       });
     }
   }

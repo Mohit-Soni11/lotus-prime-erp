@@ -81,7 +81,7 @@ class _EmptyState extends StatelessWidget {
                     size: 16,
                     color: const Color(0xFF111827)),
                 const SizedBox(width: 8),
-                Text(filtered ? 'Clear Filters' : 'Add First Entry',
+                Text(filtered ? 'Clear Filters' : 'Add Cash Income',
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,

@@ -57,12 +57,6 @@ class CashBookColors {
   static const Color summaryPanelBg = Color(0xFFFFFFFF);
   static const Color summaryChipBg = Color(0xFFF5F0E8);
 
-  // ── View Mode Toggle ─────────────────────────────────────────────────────
-  static const Color toggleActiveBg = Color(0xFFD4AF37);
-  static const Color toggleActiveText = Color(0xFF111827);
-  static const Color toggleInactiveBg = Color(0xFFE8E3D8);
-  static const Color toggleInactiveText = Color(0xFF6B7280);
-
   // ── Search & Filter Bar ───────────────────────────────────────────────────
   static const Color searchBg = Color(0xFFF5F0E8);
   static const Color searchBorder = Color(0xFFE5E0D8);

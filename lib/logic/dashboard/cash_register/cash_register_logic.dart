@@ -39,6 +39,7 @@ class CashRegisterLogic {
 
   StreamSubscription? _incomeSub;
   StreamSubscription? _expenseSub;
+  Timer? _dayRolloverTimer;
 
   // ── Today's range (set once at init, stable for the day) ──────────────────
   late final DateTime _todayStart;
@@ -48,16 +49,36 @@ class CashRegisterLogic {
   double _cachedReceived = 0.0;
   double _cachedExpense = 0.0;
   bool _isComputing = false;
+  bool _recomputePending = false;
 
   // ==========================================
   // INIT
   // ==========================================
 
   void init() {
+    _setCurrentDay();
+    _startLiveWatch();
+    _scheduleDayRollover();
+  }
+
+  void _setCurrentDay() {
     final now = DateTime.now();
     _todayStart = DateTime(now.year, now.month, now.day);
-    _todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    _startLiveWatch();
+    _todayEnd = DateTime(now.year, now.month, now.day + 1);
+  }
+
+  void _scheduleDayRollover() {
+    _dayRolloverTimer?.cancel();
+    final delay = _todayEnd.difference(DateTime.now());
+    _dayRolloverTimer = Timer(delay.isNegative ? Duration.zero : delay, () {
+      _incomeSub?.cancel();
+      _expenseSub?.cancel();
+      _cachedReceived = 0;
+      _cachedExpense = 0;
+      _setCurrentDay();
+      _startLiveWatch();
+      _scheduleDayRollover();
+    });
   }
 
   void _startLiveWatch() {
@@ -67,7 +88,7 @@ class CashRegisterLogic {
           ..where((t) => t.type.equals(CashTransactionType.income.dbValue))
           ..where((t) => t.paymentMode.equals(PaymentMode.cash.dbValue))
           ..where((t) => t.txnDate.isBiggerOrEqualValue(_todayStart))
-          ..where((t) => t.txnDate.isSmallerOrEqualValue(_todayEnd)))
+          ..where((t) => t.txnDate.isSmallerThanValue(_todayEnd)))
         .watch()
         .listen(
       (txns) {
@@ -86,7 +107,7 @@ class CashRegisterLogic {
           ..where((t) => t.type.equals(CashTransactionType.expense.dbValue))
           ..where((t) => t.paymentMode.equals(PaymentMode.cash.dbValue))
           ..where((t) => t.txnDate.isBiggerOrEqualValue(_todayStart))
-          ..where((t) => t.txnDate.isSmallerOrEqualValue(_todayEnd)))
+          ..where((t) => t.txnDate.isSmallerThanValue(_todayEnd)))
         .watch()
         .listen(
       (txns) {
@@ -105,7 +126,11 @@ class CashRegisterLogic {
 
   Future<void> _emitComputed() async {
     // Avoid overlapping calculations when both streams fire at the same time.
-    if (_isComputing || _controller.isClosed) return;
+    if (_controller.isClosed) return;
+    if (_isComputing) {
+      _recomputePending = true;
+      return;
+    }
     _isComputing = true;
 
     try {
@@ -116,6 +141,14 @@ class CashRegisterLogic {
         openingBalance = shop?.openingCashBalance ?? 0.0;
       } catch (_) {}
 
+      final prior = await _db.customSelect(
+        '''SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount
+            WHEN type = 'EXPENSE' THEN -amount ELSE 0 END), 0) AS movement
+           FROM cash_transactions
+           WHERE is_voided = 0 AND payment_mode = 'CASH' AND txn_date < ?''',
+        variables: [Variable.withDateTime(_todayStart)],
+      ).getSingle();
+      openingBalance += prior.read<double>('movement');
       final netCash = openingBalance + _cachedReceived - _cachedExpense;
 
       if (!_controller.isClosed) {
@@ -135,6 +168,10 @@ class CashRegisterLogic {
       _emitFallback();
     } finally {
       _isComputing = false;
+      if (_recomputePending) {
+        _recomputePending = false;
+        _emitComputed();
+      }
     }
   }
 
@@ -161,6 +198,7 @@ class CashRegisterLogic {
   // ==========================================
 
   void dispose() {
+    _dayRolloverTimer?.cancel();
     _incomeSub?.cancel();
     _expenseSub?.cancel();
     _controller.close();

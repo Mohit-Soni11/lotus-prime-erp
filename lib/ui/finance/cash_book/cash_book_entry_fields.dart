@@ -62,71 +62,6 @@ class _OtherLabelField extends StatelessWidget {
 
 // â”€â”€ Type Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-class _TypeToggle extends StatelessWidget {
-  final CashBookController ctrl;
-  const _TypeToggle({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: CashBookColors.summaryChipBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: CashBookColors.bodyBorder),
-      ),
-      child: Row(
-        children: CashTransactionType.values.map((type) {
-          final isActive = ctrl.entryType == type;
-          final isIncome = type == CashTransactionType.income;
-          final color = isIncome
-              ? CashBookColors.incomeAccent
-              : CashBookColors.expenseAccent;
-
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => ctrl.setEntryType(type),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? color.withValues(alpha: 0.12)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(7),
-                  border: isActive
-                      ? Border.all(color: color.withValues(alpha: 0.3))
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isIncome ? CashBookIcons.income : CashBookIcons.expense,
-                      size: 14,
-                      color: isActive ? color : CashBookColors.textMuted,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isIncome ? 'Income' : 'Expense',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight:
-                            isActive ? FontWeight.w700 : FontWeight.w500,
-                        color: isActive ? color : CashBookColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
 // â”€â”€ Category Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CategoryDropdown extends StatelessWidget {
@@ -149,9 +84,8 @@ class _CategoryDropdown extends StatelessWidget {
           style: CashBookStyles.labelPrimary,
           dropdownColor: CashBookColors.bodyPanel,
           items: ctrl.availableCategories.map((dbVal) {
-            final label = ctrl.categoryLabel(dbVal, ctrl.entryType);
-            final isOther = dbVal == IncomeCategory.otherIncome.dbValue ||
-                dbVal == ExpenseCategory.otherExpense.dbValue;
+            final label = ctrl.categoryLabel(dbVal);
+            final isOther = dbVal == IncomeCategory.otherIncome.dbValue;
 
             return DropdownMenuItem(
               value: dbVal,
