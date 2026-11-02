@@ -14,6 +14,7 @@
 3. Manual extra cash income with restricted categories, mandatory reason and repository-level rejection of manual sales or expenses. Existing source-generated expenses remain in the ledger.
 4. Per-transaction running balance, negative balance highlighting, reference/amount search and deterministic ordering for transactions at the same time.
 5. Complete-period CSV export and print/PDF with opening, every movement, running balances and closing. CSV text is escaped and formula-prefixed fields are neutralized.
+6. The calendar keeps the selected day's balance summary and daily export. The ledger below it always shows the selected month, including days other than the selected date, with monthly opening, cash in, cash out and closing. All/Income/Expense filter the monthly rows; the unused Cash Book search field was removed. The header title and summary-view back action return to today's Cash Book home.
 
 ## Next architecture milestones
 

@@ -15,12 +15,10 @@ class CashBookBody extends StatelessWidget {
     super.key,
     required this.ctrl,
     required this.history,
-    required this.onAddEntry,
   });
 
   final CashBookController ctrl;
   final CashBookHistoryController history;
-  final VoidCallback onAddEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +38,7 @@ class CashBookBody extends StatelessWidget {
           onEditOpeningBalance: () =>
               showCashBookOpeningBalanceDialog(context, ctrl),
         );
-        final transactions = CashBookTransactionList(
-          ctrl: ctrl,
-          onAddEntry: onAddEntry,
-        );
+        final transactions = CashBookTransactionList(ctrl: ctrl);
 
         if (desktop) {
           return Padding(

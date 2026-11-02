@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../logic/finance/cash_book/cash_book_controller.dart';
 import '../../../logic/finance/cash_book/cash_book_export_service.dart';
 import '../../../logic/finance/cash_book/cash_book_history_controller.dart';
+import '../../../models/finance/cash_book/cash_book_enums.dart';
 import '../../../theme/finance/cash_book/cash_book_theme.dart';
 import '../../shared/system_status_badge.dart';
 import 'cash_book_add_entry_button.dart';
@@ -47,6 +48,20 @@ class _CashBookScreenState extends State<CashBookScreen> {
     );
   }
 
+  void _goHome() {
+    _history.showDaily();
+    _ctrl.setFilter(CashBookFilter.all);
+    _ctrl.selectDate(DateTime.now());
+  }
+
+  void _handleBack() {
+    if (_history.view == CashBookHistoryView.daily) {
+      widget.onBack();
+    } else {
+      _goHome();
+    }
+  }
+
   Future<void> _exportCsv() async {
     try {
       final path = await CashBookExportService.exportCsv(_ctrl.exportData);
@@ -83,7 +98,9 @@ class _CashBookScreenState extends State<CashBookScreen> {
       builder: (context, _) => Scaffold(
         backgroundColor: CashBookColors.bodyBg,
         appBar: CashBookAppBar(
-          onBack: widget.onBack,
+          onBack: _handleBack,
+          onHome: _goHome,
+          showHomeAction: _history.view != CashBookHistoryView.daily,
           onExportCsv: _history.view != CashBookHistoryView.daily ||
                   _ctrl.isLoading ||
                   _ctrl.errorMessage != null
@@ -109,7 +126,6 @@ class _CashBookScreenState extends State<CashBookScreen> {
           child: CashBookBody(
             ctrl: _ctrl,
             history: _history,
-            onAddEntry: _showAddEntryDialog,
           ),
         ),
         floatingActionButton: CashBookAddEntryButton(

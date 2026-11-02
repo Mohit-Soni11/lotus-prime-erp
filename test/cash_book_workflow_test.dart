@@ -80,8 +80,8 @@ void main() {
 
     controller.selectDate(DateTime(2024, 3, 12));
     await tester.pump();
-    expect(repo.lastFrom, DateTime(2024, 3, 12));
-    expect(repo.lastTo, DateTime(2024, 3, 12, 23, 59, 59));
+    expect(repo.lastFrom, DateTime(2024, 3, 1));
+    expect(repo.lastTo, DateTime(2024, 3, 31, 23, 59, 59));
     expect(find.text('12/03/2024'), findsOneWidget);
   });
 
@@ -207,8 +207,66 @@ void main() {
     expect(controller.runningBalanceFor(receipt.id), 110);
     expect(controller.runningBalanceFor(payment.id), 106);
 
-    controller.searchCtrl.text = 'INV-42';
+    controller.setFilter(CashBookFilter.incomeOnly);
     expect(controller.groups.single.transactions.single.txnId, 'RECEIPT');
+  });
+
+  test('month ledger stays populated when selected day has no transactions',
+      () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    await db.into(db.shopProfiles).insert(const ShopProfilesCompanion(
+          openingCashBalance: drift.Value(100),
+        ));
+    await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+          txnId: 'MARCH-RECEIPT',
+          txnDate: DateTime(2024, 3, 5, 10),
+          type: CashTransactionType.income.dbValue,
+          category: IncomeCategory.miscIncome.dbValue,
+          amount: const drift.Value(10),
+        ));
+    await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+          txnId: 'MARCH-PAYMENT',
+          txnDate: DateTime(2024, 3, 12, 10),
+          type: CashTransactionType.expense.dbValue,
+          category: ExpenseCategory.shopRent.dbValue,
+          amount: const drift.Value(5),
+        ));
+    await db.into(db.cashTransactions).insert(CashTransactionsCompanion.insert(
+          txnId: 'APRIL-RECEIPT',
+          txnDate: DateTime(2024, 4, 2, 10),
+          type: CashTransactionType.income.dbValue,
+          category: IncomeCategory.miscIncome.dbValue,
+          amount: const drift.Value(20),
+        ));
+    final controller =
+        CashBookController(repository: CashBookRepository(db: db));
+    addTearDown(() async {
+      controller.dispose();
+      await db.close();
+    });
+    controller.selectDate(DateTime(2024, 3, 20));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    expect(controller.summary.totalTransactions, 0);
+    expect(controller.monthSummary.totalTransactions, 2);
+    expect(controller.monthSummary.openingBalance, 100);
+    expect(controller.monthSummary.totalIncome, 10);
+    expect(controller.monthSummary.totalExpense, 5);
+    expect(controller.monthSummary.closingBalance, 105);
+    expect(controller.groups, hasLength(2));
+    expect(controller.exportData.transactions, isEmpty);
+    expect(
+        controller
+            .runningBalanceFor(controller.groups.first.transactions.single.id),
+        105);
+
+    controller.setFilter(CashBookFilter.incomeOnly);
+    expect(controller.groups.single.transactions.single.txnId, 'MARCH-RECEIPT');
+    controller.selectDate(DateTime(2024, 4, 2));
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(controller.monthSummary.openingBalance, 105);
+    expect(controller.monthSummary.closingBalance, 125);
+    expect(controller.exportData.transactions.single.txnId, 'APRIL-RECEIPT');
   });
 
   test('CSV and PDF include chronological cash movements and balance',

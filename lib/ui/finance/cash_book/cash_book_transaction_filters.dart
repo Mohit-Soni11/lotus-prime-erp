@@ -17,31 +17,25 @@ class _TopBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search field
-          Container(
-            height: 42,
-            decoration: BoxDecoration(
-              color: CashBookColors.searchBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: CashBookColors.searchBorder),
-            ),
-            child: TextField(
-              controller: ctrl.searchCtrl,
-              style: CashBookStyles.labelPrimary,
-              decoration: InputDecoration(
-                hintText: CashBookStrings.searchHint,
-                hintStyle: CashBookStyles.labelMuted,
-                prefixIcon: const Icon(CashBookIcons.search,
-                    size: 18, color: CashBookColors.searchIcon),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
+          Text(
+            '${DateFormat('MMMM yyyy').format(ctrl.activeDate)} Cash Activity',
+            style: CashBookStyles.sectionTitle,
           ),
-
+          const SizedBox(height: 4),
+          Text('${ctrl.monthSummary.totalTransactions} cash transactions',
+              style: CashBookStyles.labelSecondary),
           const SizedBox(height: 10),
-
-          // Filter chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _MonthMetric('Opening', ctrl.monthSummary.openingBalanceStr),
+              _MonthMetric('Cash In', ctrl.monthSummary.totalIncomeStr),
+              _MonthMetric('Cash Out', ctrl.monthSummary.totalExpenseStr),
+              _MonthMetric('Closing', ctrl.monthSummary.closingBalanceStr),
+            ],
+          ),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -111,6 +105,26 @@ class _TopBar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MonthMetric extends StatelessWidget {
+  const _MonthMetric(this.label, this.value);
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: CashBookColors.bodyPanel,
+        border: Border.all(color: CashBookColors.bodyBorder),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text('$label  $value', style: CashBookStyles.labelSecondary),
     );
   }
 }

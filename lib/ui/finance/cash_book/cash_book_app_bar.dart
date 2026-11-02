@@ -8,11 +8,15 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     required this.onBack,
     required this.status,
+    this.onHome,
+    this.showHomeAction = false,
     this.onExportCsv,
     this.onPrintPdf,
   });
 
   final VoidCallback onBack;
+  final VoidCallback? onHome;
+  final bool showHomeAction;
   final SystemStatus status;
   final VoidCallback? onExportCsv;
   final VoidCallback? onPrintPdf;
@@ -49,9 +53,10 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: InkWell(
                     onTap: onBack,
                     borderRadius: BorderRadius.circular(10),
-                    child: const Tooltip(
-                      message: 'Back',
-                      child: SizedBox(
+                    child: Tooltip(
+                      message:
+                          showHomeAction ? 'Back to Cash Book Home' : 'Back',
+                      child: const SizedBox(
                         width: 42,
                         height: 42,
                         child: Icon(Icons.arrow_back_rounded,
@@ -79,14 +84,27 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 SizedBox(width: compact ? 10 : 14),
                 Expanded(
-                  child: Text(
-                    CashBookStrings.moduleTitle.toUpperCase(),
-                    style: CashBookStyles.appBarTitle.copyWith(
-                        letterSpacing: 0.3, fontWeight: FontWeight.w800),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: InkWell(
+                    onTap: onHome,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Tooltip(
+                      message: 'Cash Book Home',
+                      child: Text(
+                        CashBookStrings.moduleTitle.toUpperCase(),
+                        style: CashBookStyles.appBarTitle.copyWith(
+                            letterSpacing: 0.3, fontWeight: FontWeight.w800),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
                 ),
+                if (showHomeAction && onHome != null)
+                  IconButton(
+                    tooltip: 'Cash Book Home',
+                    onPressed: onHome,
+                    icon: const Icon(Icons.home_rounded, color: Colors.white),
+                  ),
                 if (onExportCsv != null && onPrintPdf != null)
                   PopupMenuButton<String>(
                     tooltip: 'Export Cash Book',

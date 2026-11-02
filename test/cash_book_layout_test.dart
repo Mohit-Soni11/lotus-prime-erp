@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/database/db/app_database.dart';
 import 'package:lotus_erp/logic/finance/cash_book/cash_book_controller.dart';
 import 'package:lotus_erp/logic/finance/cash_book/cash_book_history_controller.dart';
+import 'package:lotus_erp/models/finance/cash_book/cash_book_enums.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_book_period_summary.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_book_summary_model.dart';
 import 'package:lotus_erp/models/finance/cash_book/cash_transaction_model.dart';
@@ -88,6 +89,7 @@ void main() {
     final ctrl = CashBookController(repository: _CashBookFixture(db));
     final history = CashBookHistoryController(repository: _HistoryFixture(db));
     var backTaps = 0;
+    var homeTaps = 0;
     var addTaps = 0;
     var exportTaps = 0;
     addTearDown(() async {
@@ -110,13 +112,24 @@ void main() {
           listenable: Listenable.merge([ctrl, history]),
           builder: (_, __) => Scaffold(
             appBar: CashBookAppBar(
-              onBack: () => backTaps++,
+              onBack: () {
+                if (history.view == CashBookHistoryView.daily) {
+                  backTaps++;
+                } else {
+                  history.showDaily();
+                }
+              },
+              onHome: () {
+                homeTaps++;
+                history.showDaily();
+              },
+              showHomeAction: history.view != CashBookHistoryView.daily,
               onExportCsv: () => exportTaps++,
               onPrintPdf: () {},
               status:
                   ctrl.isLoading ? SystemStatus.loading : SystemStatus.online,
             ),
-            body: CashBookBody(ctrl: ctrl, history: history, onAddEntry: () {}),
+            body: CashBookBody(ctrl: ctrl, history: history),
             floatingActionButton: CashBookAddEntryButton(
               onPressed: () => addTaps++,
             ),
@@ -124,11 +137,13 @@ void main() {
         ),
       ));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(tester.takeException(), isNull, reason: 'Overflow at $size');
       expect(find.text('CASH BOOK'), findsOneWidget);
       expect(find.text('Opening Balance'), findsOneWidget);
       expect(find.text('Cash Ledger Date'), findsOneWidget);
-      expect(find.text('No transactions found'), findsOneWidget);
+      expect(find.text('No cash transactions this month'), findsOneWidget);
+      expect(find.textContaining('Cash Activity'), findsOneWidget);
+      expect(find.text('0 cash transactions'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
       expect(find.text('Monthly'), findsOneWidget);
       expect(find.text('Yearly'), findsOneWidget);
       expect(find.text('Sync Bills'), findsNothing);
@@ -159,20 +174,27 @@ void main() {
       expect(find.text('2 years with transactions'), findsOneWidget);
       expect(tester.takeException(), isNull,
           reason: 'Yearly overflow at $size');
-      history.showDaily();
+      await tester.tap(find.text('CASH BOOK'));
       await tester.pump();
+      expect(history.view, CashBookHistoryView.daily);
+      await tester.tap(find.text('Monthly'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Back to Cash Book Home'));
+      await tester.pump();
+      expect(history.view, CashBookHistoryView.daily);
     }
     expect(addTaps, 3);
     expect(exportTaps, 3);
     expect(backTaps, 3);
+    expect(homeTaps, 3);
 
-    ctrl.searchCtrl.text = 'missing';
+    ctrl.setFilter(CashBookFilter.incomeOnly);
     await tester.pump();
-    expect(find.text('No matching transactions'), findsOneWidget);
+    expect(find.text('No matching transactions this month'), findsOneWidget);
     expect(find.text('Clear Filters'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    ctrl.searchCtrl.clear();
+    ctrl.setFilter(CashBookFilter.all);
     await tester.pump();
     await tester.tap(find.byTooltip('Edit Opening Balance'));
     await tester.pump();

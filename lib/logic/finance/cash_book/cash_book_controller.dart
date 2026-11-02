@@ -35,6 +35,7 @@ class CashBookController extends ChangeNotifier {
 
   // ── Data State ────────────────────────────────────────────────────────────
   CashBookSummaryModel _summary = CashBookSummaryModel.loading();
+  CashBookSummaryModel _monthSummary = CashBookSummaryModel.loading();
   List<CashTransactionGroup> _groups = [];
   List<CashTransactionModel> _allTxns = [];
   Map<int, double> _runningBalances = {};
@@ -42,13 +43,10 @@ class CashBookController extends ChangeNotifier {
   String? _errorMessage;
 
   CashBookSummaryModel get summary => _summary;
+  CashBookSummaryModel get monthSummary => _monthSummary;
   List<CashTransactionGroup> get groups => _groups;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-
-  // ── Search ────────────────────────────────────────────────────────────────
-  final TextEditingController searchCtrl = TextEditingController();
-  String _searchQuery = '';
 
   // ── Entry Form ────────────────────────────────────────────────────────────
   final TextEditingController amountCtrl = TextEditingController();
@@ -79,7 +77,6 @@ class CashBookController extends ChangeNotifier {
   // ==========================================================================
 
   void _init() {
-    searchCtrl.addListener(_onSearchChanged);
     // ✅ BUG FIX: customLabelCtrl changes must trigger ListenableBuilder
     // so the Save button reactively enables/disables as user types
     customLabelCtrl.addListener(_notify);
@@ -95,19 +92,21 @@ class CashBookController extends ChangeNotifier {
   void _startWatch() {
     _watchSub?.cancel();
     final generation = ++_watchGeneration;
-    final range = _dateRange;
+    final range = _monthRange;
+    final dayRange = _dateRange;
 
     _watchSub =
         _repository.watchTransactions(from: range.start, to: range.end).listen(
       (txns) async {
         try {
           final summary = await _repository.computeSummary(
-            from: range.start,
-            to: range.end,
-          );
+              from: dayRange.start, to: dayRange.end);
+          final monthSummary = await _repository.computeSummary(
+              from: range.start, to: range.end);
           if (generation != _watchGeneration) return;
           _allTxns = txns;
           _summary = summary;
+          _monthSummary = monthSummary;
           _computeRunningBalances();
           _isLoading = false;
           _errorMessage = null;
@@ -137,10 +136,16 @@ class CashBookController extends ChangeNotifier {
 
   Future<void> _refreshSummary() async {
     final range = _dateRange;
+    final monthRange = _monthRange;
     _summary = await _repository.computeSummary(
       from: range.start,
       to: range.end,
     );
+    _monthSummary = await _repository.computeSummary(
+      from: monthRange.start,
+      to: monthRange.end,
+    );
+    _computeRunningBalances();
     _isLoading = false;
     _errorMessage = null;
   }
@@ -158,19 +163,6 @@ class CashBookController extends ChangeNotifier {
       txns = txns.where((t) => t.isExpense).toList();
     }
 
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      txns = txns.where((t) {
-        return t.categoryLabel.toLowerCase().contains(q) ||
-            (t.partyName?.toLowerCase().contains(q) ?? false) ||
-            (t.description?.toLowerCase().contains(q) ?? false) ||
-            (t.customLabel?.toLowerCase().contains(q) ?? false) ||
-            (t.referenceId?.toLowerCase().contains(q) ?? false) ||
-            t.amount.toStringAsFixed(2).contains(q) ||
-            t.txnId.toLowerCase().contains(q);
-      }).toList();
-    }
-
     _groups = _groupByDate(txns);
     notifyListeners();
   }
@@ -180,17 +172,22 @@ class CashBookController extends ChangeNotifier {
 
   CashBookExportData get exportData {
     final range = _dateRange;
+    final transactions = _allTxns
+        .where((txn) => DateUtils.isSameDay(txn.txnDate, _activeDate))
+        .toList();
     return CashBookExportData(
       periodStart: range.start,
       periodEnd: range.end,
       summary: _summary,
-      transactions: List.unmodifiable(_allTxns),
-      runningBalances: Map.unmodifiable(_runningBalances),
+      transactions: List.unmodifiable(transactions),
+      runningBalances: Map.unmodifiable({
+        for (final txn in transactions) txn.id: _runningBalances[txn.id]!,
+      }),
     );
   }
 
   void _computeRunningBalances() {
-    var balance = _summary.closingBalance;
+    var balance = _monthSummary.closingBalance;
     final balances = <int, double>{};
     for (final txn in _allTxns) {
       balances[txn.id] = balance;
@@ -250,6 +247,8 @@ class CashBookController extends ChangeNotifier {
   void selectDate(DateTime date) {
     _activeDate = DateTime(date.year, date.month, date.day);
     _isLoading = true;
+    _summary = CashBookSummaryModel.loading();
+    _monthSummary = CashBookSummaryModel.loading();
     notifyListeners();
     _startWatch();
   }
@@ -378,9 +377,12 @@ class CashBookController extends ChangeNotifier {
     );
   }
 
-  void _onSearchChanged() {
-    _searchQuery = searchCtrl.text.trim();
-    _applyFiltersAndGroup();
+  ({DateTime start, DateTime end}) get _monthRange {
+    final nextMonth = DateTime(_activeDate.year, _activeDate.month + 1);
+    return (
+      start: DateTime(_activeDate.year, _activeDate.month),
+      end: nextMonth.subtract(const Duration(seconds: 1)),
+    );
   }
 
   // ==========================================================================
@@ -389,10 +391,9 @@ class CashBookController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _watchGeneration++;
     _watchSub?.cancel();
-    searchCtrl.removeListener(_onSearchChanged);
     customLabelCtrl.removeListener(_notify); // ✅ BUG FIX: cleanup listener
-    searchCtrl.dispose();
     amountCtrl.dispose();
     descriptionCtrl.dispose();
     partyNameCtrl.dispose();

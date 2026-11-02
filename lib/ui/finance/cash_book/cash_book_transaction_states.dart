@@ -25,72 +25,71 @@ class _LoadingShimmer extends StatelessWidget {
 // â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _EmptyState extends StatelessWidget {
-  final VoidCallback onAddEntry;
   final VoidCallback onClear;
   final bool filtered;
   const _EmptyState({
-    required this.onAddEntry,
     required this.onClear,
     required this.filtered,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: CashBookColors.summaryChipBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: CashBookColors.bodyBorder),
-            ),
-            child: const Icon(CashBookIcons.moduleIcon,
-                size: 32, color: CashBookColors.textMuted),
-          ),
-          const SizedBox(height: 16),
-          Text(
-              filtered
-                  ? 'No matching transactions'
-                  : CashBookStrings.noTransactions,
-              style: CashBookStyles.labelPrimary),
-          const SizedBox(height: 6),
-          Text(
-              filtered
-                  ? 'Try another search or filter.'
-                  : CashBookStrings.noTransactionsHint,
-              style: CashBookStyles.labelSecondary,
-              textAlign: TextAlign.center),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: filtered ? onClear : onAddEntry,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                color: CashBookColors.brandGold,
-                borderRadius: BorderRadius.circular(10),
+                color: CashBookColors.summaryChipBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: CashBookColors.bodyBorder),
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(
-                    filtered
-                        ? Icons.filter_alt_off_rounded
-                        : CashBookIcons.addEntry,
-                    size: 16,
-                    color: const Color(0xFF111827)),
-                const SizedBox(width: 8),
-                Text(filtered ? 'Clear Filters' : 'Add Cash Income',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF111827),
-                    )),
-              ]),
+              child: const Icon(CashBookIcons.moduleIcon,
+                  size: 32, color: CashBookColors.textMuted),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+                filtered
+                    ? 'No matching transactions this month'
+                    : 'No cash transactions this month',
+                style: CashBookStyles.labelPrimary),
+            const SizedBox(height: 6),
+            Text(
+                filtered
+                    ? 'Choose All to see every cash movement this month.'
+                    : 'Cash receipts and payments will appear here automatically.',
+                style: CashBookStyles.labelSecondary,
+                textAlign: TextAlign.center),
+            if (filtered) ...[
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: onClear,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: CashBookColors.brandGold,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.filter_alt_off_rounded,
+                        size: 16, color: Color(0xFF111827)),
+                    SizedBox(width: 8),
+                    Text('Clear Filters',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                        )),
+                  ]),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

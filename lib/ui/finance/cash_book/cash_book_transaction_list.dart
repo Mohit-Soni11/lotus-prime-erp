@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../logic/finance/cash_book/cash_book_controller.dart';
@@ -14,12 +15,10 @@ part 'cash_book_transaction_states.dart';
 
 class CashBookTransactionList extends StatelessWidget {
   final CashBookController ctrl;
-  final VoidCallback onAddEntry;
 
   const CashBookTransactionList({
     super.key,
     required this.ctrl,
-    required this.onAddEntry,
   });
 
   @override
@@ -41,13 +40,8 @@ class CashBookTransactionList extends StatelessWidget {
                     )
                   : ctrl.groups.isEmpty
                       ? _EmptyState(
-                          onAddEntry: onAddEntry,
-                          filtered: ctrl.searchCtrl.text.trim().isNotEmpty ||
-                              ctrl.filter != CashBookFilter.all,
-                          onClear: () {
-                            ctrl.searchCtrl.clear();
-                            ctrl.setFilter(CashBookFilter.all);
-                          },
+                          filtered: ctrl.filter != CashBookFilter.all,
+                          onClear: () => ctrl.setFilter(CashBookFilter.all),
                         )
                       : _GroupedList(ctrl: ctrl),
         ),
