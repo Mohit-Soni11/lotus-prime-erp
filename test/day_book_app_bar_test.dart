@@ -3,11 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/report/day_book/day_book_controller.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_app_bar.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_daily_toolbar.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_export_button.dart';
 
 void main() {
   for (final width in [320.0, 1200.0]) {
-    testWidgets(
-        'Day Book header keeps navigation and exports at ${width.toInt()}px',
+    testWidgets('Day Book header and report actions work at ${width.toInt()}px',
         (tester) async {
       tester.view.physicalSize = Size(width, 800);
       tester.view.devicePixelRatio = 1;
@@ -23,22 +24,32 @@ void main() {
         MaterialApp(
           home: Scaffold(
             appBar: DayBookAppBar(
-              compact: width < 760,
               ctrl: controller,
               onBack: () => backCount++,
-              onRefresh: () {},
-              onExportPdf: () => exportCount++,
-              onExportCsv: () {},
-              onSharePdf: () {},
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: ListenableBuilder(
+                listenable: controller,
+                builder: (context, _) => DayBookDailyToolbar(
+                  ctrl: controller,
+                  summary: controller.summary,
+                  onReconcile: () {},
+                  onViewPdf: () => exportCount++,
+                  onExportCsv: () {},
+                  onSharePdf: () {},
+                ),
+              ),
             ),
           ),
         ),
       );
 
-      expect(find.text('Day Book'), findsOneWidget);
+      expect(find.text('DAY BOOK'), findsOneWidget);
+      expect(find.byType(DayBookExportButton), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.byTooltip('Back to previous screen'));
+      await tester.tap(find.byTooltip('Back'));
       expect(backCount, 1);
 
       await tester.tap(find.byTooltip('Previous day'));
@@ -52,12 +63,13 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(controller.isToday, isTrue);
 
-      await tester.tap(find.byTooltip('Export Day Book'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Day Book export options'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(tester.takeException(), isNull);
-      expect(find.text('Export table as CSV'), findsOneWidget);
-      await tester.tap(find.text('Preview PDF'));
-      await tester.pumpAndSettle();
+      expect(find.text('Export CSV'), findsOneWidget);
+      await tester.tap(find.text('View PDF'));
+      await tester.pump(const Duration(milliseconds: 300));
       expect(exportCount, 1);
       expect(tester.takeException(), isNull);
     });
@@ -83,6 +95,9 @@ class _HeaderController extends ChangeNotifier implements DayBookController {
 
   @override
   bool get isLoading => false;
+
+  @override
+  String? get errorMessage => null;
 
   @override
   DayBookSummary get summary => DayBookSummary(date: _date);

@@ -86,7 +86,7 @@ class DayBookSummaryRail extends StatelessWidget {
             Expanded(
               child: _RailMetric(
                 label: DayBookStrings.cashReceived,
-                value: _money(summary.cashIn.total),
+                value: _money(summary.cashReceived),
                 icon: DayBookIcons.cashIn,
                 color: DayBookColors.positive,
                 background: DayBookColors.positiveSoft,
@@ -97,7 +97,7 @@ class DayBookSummaryRail extends StatelessWidget {
             Expanded(
               child: _RailMetric(
                 label: DayBookStrings.cashPaid,
-                value: _money(summary.cashOut.total),
+                value: _money(summary.cashPaid),
                 icon: DayBookIcons.cashOut,
                 color: DayBookColors.negative,
                 background: DayBookColors.negativeSoft,
@@ -213,7 +213,7 @@ class DayBookOverview extends StatelessWidget {
               ),
               _KpiData(
                 label: DayBookStrings.cashReceived,
-                value: _money(summary.cashIn.total),
+                value: _money(summary.cashReceived),
                 icon: DayBookIcons.cashIn,
                 color: DayBookColors.positive,
                 background: DayBookColors.positiveSoft,
@@ -221,7 +221,7 @@ class DayBookOverview extends StatelessWidget {
               ),
               _KpiData(
                 label: DayBookStrings.cashPaid,
-                value: _money(summary.cashOut.total),
+                value: _money(summary.cashPaid),
                 icon: DayBookIcons.cashOut,
                 color: DayBookColors.negative,
                 background: DayBookColors.negativeSoft,
@@ -300,18 +300,7 @@ class DayBookOpeningPosition extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: DayBookColors.shellPanel,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DayBookColors.shellBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: DayBookStyles.panel(),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final columns = constraints.maxWidth >= 720
@@ -337,21 +326,19 @@ class DayBookOpeningPosition extends StatelessWidget {
                   Expanded(
                     child: Text(
                       DayBookStrings.openingPosition,
-                      style: DayBookStyles.labelStrong.copyWith(
-                        color: DayBookColors.shellTitle,
-                      ),
+                      style: DayBookStyles.sectionTitle,
                     ),
                   ),
                   Text(
                     DateFormat('d MMM yyyy').format(summary.date),
-                    style: DayBookStyles.appBarSubtitle,
+                    style: DayBookStyles.labelStrong,
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 DayBookStrings.openingPositionSubtitle,
-                style: DayBookStyles.appBarSubtitle,
+                style: DayBookStyles.labelStrong,
               ),
               const SizedBox(height: 14),
               Wrap(
@@ -1451,9 +1438,9 @@ class _OpeningPositionMetric extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 72),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: DayBookColors.shellBg.withValues(alpha: 0.55),
+        color: DayBookColors.bodySubtle,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: DayBookColors.shellBorder),
+        border: Border.all(color: DayBookColors.bodyBorder),
       ),
       child: Row(
         children: [
@@ -1464,16 +1451,14 @@ class _OpeningPositionMetric extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(data.label, style: DayBookStyles.appBarSubtitle),
+                Text(data.label, style: DayBookStyles.labelStrong),
                 const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
                     data.value,
-                    style: DayBookStyles.value.copyWith(
-                      color: DayBookColors.shellTitle,
-                    ),
+                    style: DayBookStyles.value,
                   ),
                 ),
               ],

@@ -39,6 +39,7 @@ import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_models.dart';
+import 'day_book_money_repository.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DayBookRepository {
@@ -51,7 +52,7 @@ class DayBookRepository {
   // ==========================================================================
   Future<DayBookSummary> fetchDayBook(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day, 0, 0, 0);
-    final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final end = DateTime(date.year, date.month, date.day + 1);
 
     try {
       // ── Run all queries in parallel ────────────────────────────────────────
@@ -78,6 +79,8 @@ class DayBookRepository {
       final avgExpense = results[7] as double;
       final payBreakup = results[8] as PaymentBreakup;
       final dueCollection = results[9] as double;
+      final moneyFlow =
+          await DayBookMoneyRepository(_db).fetch(date, openingCash);
 
       // ── Build CashInflow ───────────────────────────────────────────────────
       final cashIn = CashInflow(
@@ -124,11 +127,12 @@ class DayBookRepository {
       final prediction = _buildPrediction(
         date: date,
         openingCash: openingCash,
-        netSoFar: cashIn.total - cashOut.total,
+        netSoFar: moneyFlow.cashIn - moneyFlow.cashOut,
       );
 
       return DayBookSummary(
         date: date,
+        moneyFlow: moneyFlow,
         openingCash: openingCash,
         cashIn: cashIn,
         cashOut: cashOut,
@@ -153,7 +157,7 @@ class DayBookRepository {
                     b.gstAmount.isBiggerThanValue(0.005)) &
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
-                b.billDate.isSmallerOrEqualValue(end)))
+                b.billDate.isSmallerThanValue(end)))
           .get();
 
       if (rows.isEmpty) return const GstBillSummary();
@@ -211,7 +215,7 @@ class DayBookRepository {
                 b.gstAmount.isSmallerThanValue(0.006) &
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
-                b.billDate.isSmallerOrEqualValue(end)))
+                b.billDate.isSmallerThanValue(end)))
           .get();
 
       if (rows.isEmpty) return const NonGstBillSummary();
@@ -253,7 +257,7 @@ class DayBookRepository {
                 t.isVoided.equals(false) &
                 t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
+                t.txnDate.isSmallerThanValue(end)))
           .get();
 
       final map = <String, double>{};
@@ -280,7 +284,7 @@ class DayBookRepository {
                 t.isVoided.equals(false) &
                 t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
+                t.txnDate.isSmallerThanValue(end)))
           .get();
 
       final map = <String, double>{};
@@ -306,7 +310,7 @@ class DayBookRepository {
       final loans = await (_db.select(_db.girviLoans)
             ..where((l) =>
                 l.startDate.isBiggerOrEqualValue(start) &
-                l.startDate.isSmallerOrEqualValue(end) &
+                l.startDate.isSmallerThanValue(end) &
                 l.status.equals('ACTIVE')))
           .get();
 
@@ -340,7 +344,7 @@ class DayBookRepository {
             ..where((b) =>
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
-                b.billDate.isSmallerOrEqualValue(end)))
+                b.billDate.isSmallerThanValue(end)))
           .get();
 
       if (bills.isEmpty) return const MetalWeight();
@@ -400,8 +404,7 @@ class DayBookRepository {
       final sevenDaysAgo = today.subtract(const Duration(days: 7));
       final start =
           DateTime(sevenDaysAgo.year, sevenDaysAgo.month, sevenDaysAgo.day);
-      final end = DateTime(today.year, today.month, today.day, 0, 0, 0)
-          .subtract(const Duration(seconds: 1));
+      final end = DateTime(today.year, today.month, today.day);
 
       final rows = await (_db.select(_db.cashTransactions)
             ..where((t) =>
@@ -409,7 +412,7 @@ class DayBookRepository {
                 t.isVoided.equals(false) &
                 t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
+                t.txnDate.isSmallerThanValue(end)))
           .get();
 
       if (rows.isEmpty) return 0;
@@ -433,7 +436,7 @@ class DayBookRepository {
             ..where((b) =>
                 b.status.equals('ACTIVE') &
                 b.billDate.isBiggerOrEqualValue(start) &
-                b.billDate.isSmallerOrEqualValue(end)))
+                b.billDate.isSmallerThanValue(end)))
           .get();
       final saleBreakups = await _fetchSalePaymentBreakupsForBills(
         saleBills,
@@ -500,7 +503,7 @@ class DayBookRepository {
               t.isVoided.equals(false) &
               t.referenceType.equals('BILL') &
               t.txnDate.isBiggerOrEqualValue(start) &
-              t.txnDate.isSmallerOrEqualValue(end)))
+              t.txnDate.isSmallerThanValue(end)))
         .get();
 
     for (final row in cashRows) {
@@ -522,7 +525,7 @@ class DayBookRepository {
               t.isVoided.equals(false) &
               t.referenceType.equals('BILL') &
               t.txnDate.isBiggerOrEqualValue(start) &
-              t.txnDate.isSmallerOrEqualValue(end)))
+              t.txnDate.isSmallerThanValue(end)))
         .get();
 
     for (final row in bankRows) {
@@ -618,7 +621,7 @@ class DayBookRepository {
                 t.isVoided.equals(false) &
                 t.paymentMode.equals('CASH') &
                 t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerOrEqualValue(end)))
+                t.txnDate.isSmallerThanValue(end)))
           .get();
 
       final cashTotal = cashRows.fold<double>(0, (sum, r) => sum + r.amount);
@@ -691,29 +694,29 @@ class DayBookRepository {
 
   // ==========================================================================
   // LIVE STREAM — Real-time auto-refresh for today's screen
-  // Watches CashTransactions — any change triggers full rebuild
+  // Relevant ledger and opening-balance changes refresh today's statement.
   // ==========================================================================
   Stream<void> watchTodayChanges() {
     final now = DateTime.now();
     final start = DateTime(now.year, now.month, now.day, 0, 0, 0);
-    final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final end = DateTime(now.year, now.month, now.day + 1);
 
     return _db
         .customSelect(
           '''
           SELECT id FROM cash_transactions
-          WHERE txn_date >= ? AND txn_date <= ?
+          WHERE txn_date >= ? AND txn_date < ?
           UNION ALL
           SELECT id FROM bank_transactions
-          WHERE txn_date >= ? AND txn_date <= ?
+          WHERE txn_date >= ? AND txn_date < ?
           UNION ALL
           SELECT id FROM bills
-          WHERE bill_date >= ? AND bill_date <= ?
+          WHERE bill_date >= ? AND bill_date < ?
           UNION ALL
           SELECT bill_items.id
           FROM bill_items
           INNER JOIN bills ON bills.id = bill_items.bill_id
-          WHERE bills.bill_date >= ? AND bills.bill_date <= ?
+          WHERE bills.bill_date >= ? AND bills.bill_date < ?
           ''',
           variables: [
             Variable.withDateTime(start),
@@ -730,6 +733,10 @@ class DayBookRepository {
             _db.bankTransactions,
             _db.bills,
             _db.billItems,
+            _db.bankAccounts,
+            _db.shopProfiles,
+            _db.girviLoans,
+            _db.girviPayments,
           },
         )
         .watch()

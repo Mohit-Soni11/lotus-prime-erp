@@ -5,7 +5,9 @@ import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
+import 'day_book_daily_toolbar.dart';
 import 'day_book_eod_dialog.dart';
+import 'day_book_primary_grid.dart';
 import 'day_book_sections.dart';
 import '../../../core/logging/app_logger.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -22,7 +24,6 @@ class DayBookScreen extends StatefulWidget {
 class _DayBookScreenState extends State<DayBookScreen> {
   late final DayBookController _ctrl;
   final ScrollController _mainScrollController = ScrollController();
-  final ScrollController _railScrollController = ScrollController();
   bool _exporting = false;
 
   @override
@@ -35,7 +36,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
   void dispose() {
     _ctrl.dispose();
     _mainScrollController.dispose();
-    _railScrollController.dispose();
     super.dispose();
   }
 
@@ -101,12 +101,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
         backgroundColor: DayBookColors.bodyBg,
         appBar: DayBookAppBar(
           onBack: widget.onBack ?? () => Navigator.of(context).pop(),
-          onRefresh: _ctrl.loadData,
-          onExportPdf: _exporting ? null : _previewPdf,
-          onExportCsv: _exporting ? null : _exportCsv,
-          onSharePdf: _exporting ? null : _sharePdf,
           ctrl: _ctrl,
-          compact: MediaQuery.sizeOf(context).width < 760,
         ),
         body: ListenableBuilder(
           listenable: _ctrl,
@@ -127,112 +122,48 @@ class _DayBookScreenState extends State<DayBookScreen> {
               return const _EmptyState();
             }
 
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth >= 1080) {
-                  return _buildDesktop(summary);
-                }
-                return _buildCompact(summary);
-              },
-            );
+            return _buildWorkspace(summary);
           },
         ),
       ),
     );
   }
 
-  Widget _buildDesktop(DayBookSummary summary) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          width: 320,
-          decoration: const BoxDecoration(
-            color: DayBookColors.bodySubtle,
-            border: Border(
-              right: BorderSide(color: DayBookColors.bodyBorder),
-            ),
-          ),
-          child: Scrollbar(
-            controller: _railScrollController,
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              controller: _railScrollController,
-              padding: const EdgeInsets.all(16),
-              child: DayBookSummaryRail(
-                ctrl: _ctrl,
-                onReconcile: _showReconciliation,
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: _buildWorkspace(summary),
-        ),
-      ],
-    );
-  }
-
   Widget _buildWorkspace(DayBookSummary summary) {
+    final compact = MediaQuery.sizeOf(context).width < 800;
     return Scrollbar(
       controller: _mainScrollController,
       thumbVisibility: true,
       child: SingleChildScrollView(
         controller: _mainScrollController,
-        padding: const EdgeInsets.fromLTRB(22, 22, 22, 36),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1320),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Reveal(
-                  delay: 0,
-                  child: DayBookOpeningPosition(summary: summary),
-                ),
-                const SizedBox(height: 16),
-                _Reveal(
-                  delay: 40,
-                  child: DayBookOverview(summary: summary),
-                ),
-                const SizedBox(height: 16),
-                if (summary.anomalies.isNotEmpty) ...[
-                  _Reveal(
-                    delay: 70,
-                    child: DayBookAlerts(ctrl: _ctrl),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                ..._workspaceSections(summary),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompact(DayBookSummary summary) {
-    return Scrollbar(
-      controller: _mainScrollController,
-      thumbVisibility: true,
-      child: SingleChildScrollView(
-        controller: _mainScrollController,
-        padding: const EdgeInsets.fromLTRB(14, 16, 14, 28),
+        padding: EdgeInsets.fromLTRB(
+            compact ? 14 : 20, compact ? 14 : 20, compact ? 14 : 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DayBookOpeningPosition(summary: summary),
-            const SizedBox(height: 12),
-            DayBookSummaryRail(
+            DayBookDailyToolbar(
               ctrl: _ctrl,
+              summary: summary,
               onReconcile: _showReconciliation,
-              compact: true,
+              onViewPdf: _exporting ? null : _previewPdf,
+              onExportCsv: _exporting ? null : _exportCsv,
+              onSharePdf: _exporting ? null : _sharePdf,
             ),
             const SizedBox(height: 16),
+            DayBookPrimaryGrid(summary: summary),
+            const SizedBox(height: 16),
+            if (summary.moneyFlow == null) ...[
+              _Reveal(
+                delay: 40,
+                child: DayBookOverview(summary: summary),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (summary.anomalies.isNotEmpty) ...[
-              DayBookAlerts(ctrl: _ctrl),
+              _Reveal(
+                delay: 70,
+                child: DayBookAlerts(ctrl: _ctrl),
+              ),
               const SizedBox(height: 12),
             ],
             ..._workspaceSections(summary),
@@ -244,11 +175,13 @@ class _DayBookScreenState extends State<DayBookScreen> {
 
   List<Widget> _workspaceSections(DayBookSummary summary) {
     return [
-      _Reveal(
-        delay: 100,
-        child: CashMovementPanel(summary: summary),
-      ),
-      const SizedBox(height: 12),
+      if (summary.moneyFlow == null) ...[
+        _Reveal(
+          delay: 100,
+          child: CashMovementPanel(summary: summary),
+        ),
+        const SizedBox(height: 12),
+      ],
       LayoutBuilder(
         builder: (context, constraints) {
           final stack = constraints.maxWidth < 860;
@@ -281,10 +214,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
         child: MetalMovementPanel(summary: summary),
       ),
       const SizedBox(height: 12),
-      _Reveal(
-        delay: 210,
-        child: DayBookClosingPosition(summary: summary),
-      ),
       if (_ctrl.isToday && summary.prediction != null) ...[
         const SizedBox(height: 12),
         _Reveal(
@@ -292,15 +221,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
           child: ForecastPanel(prediction: summary.prediction!),
         ),
       ],
-      const SizedBox(height: 12),
-      _Reveal(
-        delay: 280,
-        child: DayBookClosePanel(
-          summary: summary,
-          isToday: _ctrl.isToday,
-          onReconcile: _showReconciliation,
-        ),
-      ),
     ];
   }
 }
@@ -332,105 +252,10 @@ class _LoadingState extends StatelessWidget {
   const _LoadingState();
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= 1080) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                width: 320,
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: DayBookColors.bodySubtle,
-                  border: Border(
-                    right: BorderSide(color: DayBookColors.bodyBorder),
-                  ),
-                ),
-                child: const _RailSkeleton(),
-              ),
-              const Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(22),
-                  child: _SkeletonColumn(),
-                ),
-              ),
-            ],
-          );
-        }
-
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(22),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1320),
-              child: const _SkeletonColumn(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RailSkeleton extends StatelessWidget {
-  const _RailSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          width: 180,
-          height: 40,
-          decoration: BoxDecoration(
-            color: DayBookColors.bodyBorder,
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          height: 150,
-          decoration: BoxDecoration(
-            color: DayBookColors.bodyPanel,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: DayBookColors.bodyBorder),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _railBlock()),
-            const SizedBox(width: 8),
-            Expanded(child: _railBlock()),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          height: 128,
-          decoration: BoxDecoration(
-            color: DayBookColors.bodyPanel,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: DayBookColors.bodyBorder),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _railBlock() {
-    return Container(
-      height: 100,
-      decoration: BoxDecoration(
-        color: DayBookColors.bodyPanel,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: DayBookColors.bodyBorder),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: _SkeletonColumn(),
+      );
 }
 
 class _SkeletonColumn extends StatefulWidget {

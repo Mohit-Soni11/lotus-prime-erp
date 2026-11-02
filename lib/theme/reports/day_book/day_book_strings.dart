@@ -64,7 +64,7 @@ class DayBookStrings {
 
   static const String paymentMix = 'Payment Mix';
   static const String paymentMixSubtitle =
-      'How billed revenue was collected across payment channels.';
+      'Invoice and due receipt modes; posted balances use ledger entries.';
   static const String physicalCash = 'Cash';
   static const String upi = 'UPI';
   static const String card = 'Card';

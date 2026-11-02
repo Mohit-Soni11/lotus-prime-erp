@@ -154,6 +154,7 @@ class DayBookController extends ChangeNotifier {
 
       _summary = DayBookSummary(
         date: data.date,
+        moneyFlow: data.moneyFlow,
         openingCash: data.openingCash,
         openingGoldGrams: data.openingGoldGrams,
         openingSilverGrams: data.openingSilverGrams,

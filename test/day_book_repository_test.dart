@@ -125,6 +125,11 @@ void main() {
       expect(summary.paymentBreakup.upi, 500);
       expect(summary.paymentBreakup.card, 250);
       expect(summary.paymentBreakup.total, 1000);
+      expect(summary.moneyFlow?.cashIn, 250);
+      expect(summary.moneyFlow?.bankIn, 750);
+      expect(summary.moneyFlow?.moneyIn, 1000);
+      expect(summary.cashReceived, 250);
+      expect(summary.closingCash, 250);
     },
   );
 
@@ -152,6 +157,9 @@ void main() {
       expect(summary.paymentBreakup.cash, 300);
       expect(summary.paymentBreakup.upi, 200);
       expect(summary.paymentBreakup.total, 500);
+      expect(summary.moneyFlow?.moneyIn, 0);
+      expect(summary.cashReceived, 0);
+      expect(summary.closingCash, 0);
     },
   );
 

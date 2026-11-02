@@ -11,6 +11,8 @@
 //               GST and Normal sales are tracked separately from bill_type.
 // =============================================================================
 
+import 'day_book_money_flow.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Payment Mode Breakup
 // Maps to CashTransactions.paymentMode values: CASH | UPI | CARD | BANK | CHEQUE
@@ -387,6 +389,7 @@ class DenominationCount {
 // ─────────────────────────────────────────────────────────────────────────────
 class DayBookSummary {
   final DateTime date;
+  final DayBookMoneyFlow? moneyFlow;
 
   // Opening balances (from ShopProfile or previous day closing)
   final double openingCash;
@@ -409,6 +412,7 @@ class DayBookSummary {
 
   const DayBookSummary({
     required this.date,
+    this.moneyFlow,
     this.openingCash = 0,
     this.openingGoldGrams = 0,
     this.openingSilverGrams = 0,
@@ -423,7 +427,9 @@ class DayBookSummary {
   });
 
   // ── Computed ──────────────────────────────────────────────────────────────
-  double get netCash => cashIn.total - cashOut.total;
+  double get cashReceived => moneyFlow?.cashIn ?? cashIn.total;
+  double get cashPaid => moneyFlow?.cashOut ?? cashOut.total;
+  double get netCash => cashReceived - cashPaid;
   double get closingCash => openingCash + netCash;
 
   MetalWeight get netMetal => metalIn.total - metalOut.total;
