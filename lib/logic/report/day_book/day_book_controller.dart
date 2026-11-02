@@ -53,6 +53,8 @@ class DayBookController extends ChangeNotifier {
   DayBookSummary? _summary;
   bool _isLoading = true;
   String? _errorMessage;
+  int _loadGeneration = 0;
+  bool _disposed = false;
 
   DayBookSummary? get summary => _summary;
   bool get isLoading => _isLoading;
@@ -134,16 +136,21 @@ class DayBookController extends ChangeNotifier {
   // LOAD DATA
   // ==========================================================================
   Future<void> loadData({bool silent = false}) async {
+    final generation = ++_loadGeneration;
+    final requestedDate = _selectedDate;
     if (!silent) {
       _isLoading = true;
       _errorMessage = null;
+      _summary = null;
       notifyListeners();
     }
 
     try {
-      final data = await _repo.fetchDayBook(_selectedDate);
+      final data = await _repo.fetchDayBook(requestedDate);
+      if (_disposed || generation != _loadGeneration) return;
 
-      final locked = await _closures.isClosed(_selectedDate);
+      final locked = await _closures.isClosed(requestedDate);
+      if (_disposed || generation != _loadGeneration) return;
 
       _summary = DayBookSummary(
         date: data.date,
@@ -162,11 +169,14 @@ class DayBookController extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
+      if (_disposed || generation != _loadGeneration) return;
       _errorMessage = e.toString();
       _summary = null;
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!_disposed && generation == _loadGeneration) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -341,6 +351,8 @@ class DayBookController extends ChangeNotifier {
   // ==========================================================================
   @override
   void dispose() {
+    _disposed = true;
+    _loadGeneration++;
     _watchSub?.cancel();
     denom500Ctrl.dispose();
     denom200Ctrl.dispose();

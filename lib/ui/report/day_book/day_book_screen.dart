@@ -106,6 +106,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
           onExportCsv: _exporting ? null : _exportCsv,
           onSharePdf: _exporting ? null : _sharePdf,
           ctrl: _ctrl,
+          compact: MediaQuery.sizeOf(context).width < 760,
         ),
         body: ListenableBuilder(
           listenable: _ctrl,
