@@ -84,7 +84,7 @@ class QuickActionsLogic extends ChangeNotifier {
     ),
     const QuickActionItemModel(
       id: 'cash_book',
-      label: 'Cash Book',
+      label: 'Account Book',
       icon: Icons.account_balance_wallet_rounded,
       routeId: AppRoutes.cashBookRoute,
       accentColor: Color(0xFFEC4899), // Pink

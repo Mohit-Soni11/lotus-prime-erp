@@ -137,7 +137,7 @@ void main() {
         ),
       ));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('CASH BOOK'), findsOneWidget);
+      expect(find.text('ACCOUNT BOOK'), findsOneWidget);
       expect(find.text('Opening Balance'), findsOneWidget);
       expect(find.text('Cash Ledger Date'), findsOneWidget);
       expect(find.text('No cash transactions this month'), findsOneWidget);
@@ -174,12 +174,12 @@ void main() {
       expect(find.text('2 years with transactions'), findsOneWidget);
       expect(tester.takeException(), isNull,
           reason: 'Yearly overflow at $size');
-      await tester.tap(find.text('CASH BOOK'));
+      await tester.tap(find.text('ACCOUNT BOOK'));
       await tester.pump();
       expect(history.view, CashBookHistoryView.daily);
       await tester.tap(find.text('Monthly'));
       await tester.pump();
-      await tester.tap(find.byTooltip('Back to Cash Book Home'));
+      await tester.tap(find.byTooltip('Back to Account Book Home'));
       await tester.pump();
       expect(history.view, CashBookHistoryView.daily);
     }

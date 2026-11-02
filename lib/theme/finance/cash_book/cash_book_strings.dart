@@ -8,8 +8,8 @@ class CashBookStrings {
   CashBookStrings._();
 
   // ── AppBar ────────────────────────────────────────────────────────────────
-  static const String moduleTitle = 'Cash Book';
-  static const String moduleSubtitle = 'Cash ledger and counter movement';
+  static const String moduleTitle = 'Account Book';
+  static const String moduleSubtitle = 'Cash account activity';
 
   // ── View Mode Labels ──────────────────────────────────────────────────────
   // ── Summary Panel ─────────────────────────────────────────────────────────

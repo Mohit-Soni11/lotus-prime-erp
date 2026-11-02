@@ -102,7 +102,7 @@ class AppRoutes {
     girviReleaseRoute: 'Pledge Ledger',
     interestCalcRoute: 'Interest Entry',
     noticeAuctionRoute: 'Contact & Recovery',
-    cashBookRoute: 'Cash Book',
+    cashBookRoute: 'Account Book',
     bankBookRoute: 'Bank Book',
     expenseEntryRoute: 'Expense Entry',
     journalEntryRoute: 'Journal Entry',

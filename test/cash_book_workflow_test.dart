@@ -324,6 +324,7 @@ void main() {
       runningBalances: const {1: 110, 2: 106},
     );
     final csv = CashBookExportService.buildCsv(data);
+    expect(csv, contains('Lotus ERP Account Book - Cash'));
     expect(csv.indexOf('TXN-1'), lessThan(csv.indexOf('TXN-2')));
     expect(csv, contains('"\'=unsafe"'));
     expect(csv, contains('"100.00"'));

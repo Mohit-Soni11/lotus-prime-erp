@@ -9,6 +9,8 @@
 
 ## Implemented in the current working tree
 
+The finance navigation and screen are labeled **Account Book**. The current view and its export remain explicitly scoped to cash; bank movements will require a separate, reconciled integration.
+
 1. Cash-only source posting, carried opening balance, active-transaction summaries and database-backed day close from the finance ledger correction.
 2. A Cash Ledger Date field matching the POS Promise Date interaction selects any historical day. Separate Monthly and Yearly cards list only periods with recorded cash transactions. Each period shows its opening balance, cash in, cash out, closing balance, net movement and transaction count. Aggregation uses local calendar boundaries and bounded SQL batches.
 3. Manual extra cash income with restricted categories, mandatory reason and repository-level rejection of manual sales or expenses. Existing source-generated expenses remain in the ledger.

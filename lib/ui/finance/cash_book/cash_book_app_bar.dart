@@ -55,7 +55,7 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                     borderRadius: BorderRadius.circular(10),
                     child: Tooltip(
                       message:
-                          showHomeAction ? 'Back to Cash Book Home' : 'Back',
+                          showHomeAction ? 'Back to Account Book Home' : 'Back',
                       child: const SizedBox(
                         width: 42,
                         height: 42,
@@ -88,7 +88,7 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                     onTap: onHome,
                     borderRadius: BorderRadius.circular(8),
                     child: Tooltip(
-                      message: 'Cash Book Home',
+                      message: 'Account Book Home',
                       child: Text(
                         CashBookStrings.moduleTitle.toUpperCase(),
                         style: CashBookStyles.appBarTitle.copyWith(
@@ -101,13 +101,13 @@ class CashBookAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 if (showHomeAction && onHome != null)
                   IconButton(
-                    tooltip: 'Cash Book Home',
+                    tooltip: 'Account Book Home',
                     onPressed: onHome,
                     icon: const Icon(Icons.home_rounded, color: Colors.white),
                   ),
                 if (onExportCsv != null && onPrintPdf != null)
                   PopupMenuButton<String>(
-                    tooltip: 'Export Cash Book',
+                    tooltip: 'Export Account Book Cash Ledger',
                     icon: const Icon(Icons.ios_share_rounded,
                         color: Colors.white),
                     onSelected: (value) =>

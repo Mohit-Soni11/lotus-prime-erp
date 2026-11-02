@@ -45,7 +45,7 @@ class CashBookExportService {
 
   static Future<String?> exportCsv(CashBookExportData data) async {
     final path = await FilePicker.platform.saveFile(
-      dialogTitle: 'Export Cash Book',
+      dialogTitle: 'Export Account Book Cash Ledger',
       fileName: _fileName(data, 'csv'),
       type: FileType.custom,
       allowedExtensions: const ['csv'],
@@ -67,7 +67,7 @@ class CashBookExportService {
 
   static String buildCsv(CashBookExportData data) {
     final rows = <List<String>>[
-      ['Lotus ERP Cash Book', data.periodLabel],
+      ['Lotus ERP Account Book - Cash', data.periodLabel],
       [
         'Date',
         'Transaction ID',
@@ -119,7 +119,7 @@ class CashBookExportService {
 
   static Future<Uint8List> buildPdf(CashBookExportData data) async {
     final document = pw.Document(
-      title: 'Cash Book - ${data.periodLabel}',
+      title: 'Account Book - Cash - ${data.periodLabel}',
       author: 'Lotus ERP',
       theme: await LotusPdfTheme.reportTheme(),
     );
@@ -132,7 +132,7 @@ class CashBookExportService {
             style: const pw.TextStyle(fontSize: 8)),
       ),
       build: (_) => [
-        pw.Text('LOTUS ERP  |  CASH BOOK',
+        pw.Text('LOTUS ERP  |  ACCOUNT BOOK - CASH',
             style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
         pw.SizedBox(height: 4),
         pw.Text(data.periodLabel),
@@ -191,7 +191,7 @@ class CashBookExportService {
   }
 
   static String _fileName(CashBookExportData data, String extension) =>
-      'cash-book-${DateFormat('yyyyMMdd').format(data.periodStart)}-${DateFormat('yyyyMMdd').format(data.periodEnd)}.$extension';
+      'account-book-cash-${DateFormat('yyyyMMdd').format(data.periodStart)}-${DateFormat('yyyyMMdd').format(data.periodEnd)}.$extension';
 
   static String _amount(double value) => value.toStringAsFixed(2);
   static String _money(double value) => 'Rs ${_amount(value)}';

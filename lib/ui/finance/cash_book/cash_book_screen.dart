@@ -67,13 +67,13 @@ class _CashBookScreenState extends State<CashBookScreen> {
       final path = await CashBookExportService.exportCsv(_ctrl.exportData);
       if (mounted && path != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cash Book CSV exported.')),
+          const SnackBar(content: Text('Cash ledger CSV exported.')),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cash Book export failed.')),
+          const SnackBar(content: Text('Cash ledger export failed.')),
         );
       }
     }
@@ -85,7 +85,7 @@ class _CashBookScreenState extends State<CashBookScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cash Book PDF could not be opened.')),
+          const SnackBar(content: Text('Cash ledger PDF could not be opened.')),
         );
       }
     }

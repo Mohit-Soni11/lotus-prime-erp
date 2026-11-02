@@ -9,5 +9,5 @@ class QuickActionsStrings {
   static const String newInvoice = 'New Invoice';
   static const String addStock = 'Add Stock';
   static const String addCustomer = 'Add Customer';
-  static const String cashBook = 'Cash Book';
+  static const String cashBook = 'Account Book';
 }
