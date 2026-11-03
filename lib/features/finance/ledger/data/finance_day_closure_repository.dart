@@ -19,22 +19,55 @@ class FinanceDayClosureRepository {
     return row != null;
   }
 
-  Future<bool> closeDay(DateTime date, {required double closingCash}) async {
-    if (!closingCash.isFinite) return false;
-    final (start, end) = _bounds(date);
-    final changed = await _db.customUpdate(
-      '''INSERT OR IGNORE INTO finance_day_closures
-         (day_key, start_epoch, end_epoch, closing_cash, closed_at)
-         VALUES (?, ?, ?, ?, ?)''',
-      variables: [
-        Variable.withString(_dayKey(date)),
-        Variable.withInt(start),
-        Variable.withInt(end),
-        Variable.withReal(closingCash),
-        Variable.withInt(DateTime.now().millisecondsSinceEpoch ~/ 1000),
-      ],
-    );
-    return changed == 1 || await isClosed(date);
+  Future<bool> closeDay(DateTime date,
+      {required double closingCash, required String closedBy}) async {
+    if (!closingCash.isFinite ||
+        closingCash < 0 ||
+        closedBy.trim().isEmpty) {
+      return false;
+    }
+    return _db.transaction(() async {
+      final recordedClosing = await _recordedCashClosing(date);
+      if ((recordedClosing - closingCash).abs() >= 0.01) {
+        return false;
+      }
+      final (start, end) = _bounds(date);
+      final changed = await _db.customUpdate(
+        '''INSERT OR IGNORE INTO finance_day_closures
+           (day_key, start_epoch, end_epoch, closing_cash, closed_at, closed_by)
+           VALUES (?, ?, ?, ?, ?, ?)''',
+        variables: [
+          Variable.withString(_dayKey(date)),
+          Variable.withInt(start),
+          Variable.withInt(end),
+          Variable.withReal(closingCash),
+          Variable.withInt(DateTime.now().millisecondsSinceEpoch ~/ 1000),
+          Variable.withString(closedBy.trim()),
+        ],
+      );
+      if (changed == 1) return true;
+      final existing = await _db.customSelect(
+        'SELECT closing_cash, closed_by FROM finance_day_closures WHERE day_key = ?',
+        variables: [Variable.withString(_dayKey(date))],
+      ).getSingleOrNull();
+      return existing != null &&
+          (existing.read<double>('closing_cash') - closingCash).abs() < 0.01 &&
+          existing.readNullable<String>('closed_by') == closedBy.trim();
+    });
+  }
+
+  Future<double> _recordedCashClosing(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day + 1);
+    final profile = await _db.select(_db.shopProfiles).getSingleOrNull();
+    final movement = await _db.customSelect(
+      '''SELECT COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount
+          WHEN type = 'EXPENSE' THEN -amount ELSE 0 END), 0) AS amount
+         FROM cash_transactions
+         WHERE is_voided = 0 AND payment_mode = 'CASH' AND txn_date < ?''',
+      variables: [Variable.withDateTime(start)],
+      readsFrom: {_db.cashTransactions},
+    ).getSingle();
+    return (profile?.openingCashBalance ?? 0) + movement.read<double>('amount');
   }
 
   Future<void> migrateLegacyLocks() async {
@@ -48,8 +81,11 @@ class FinanceDayClosureRepository {
         '${text.substring(0, 4)}-${text.substring(4, 6)}-${text.substring(6, 8)}',
       );
       if (date == null) continue;
-      await closeDay(date, closingCash: 0);
-      await preferences.remove(key);
+      final closingCash = await _recordedCashClosing(date);
+      if (await closeDay(date,
+          closingCash: closingCash, closedBy: 'legacy-lock-import')) {
+        await preferences.remove(key);
+      }
     }
   }
 

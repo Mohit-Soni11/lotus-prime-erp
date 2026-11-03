@@ -5,9 +5,13 @@ import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
+import 'day_book_custody_panel.dart';
 import 'day_book_daily_toolbar.dart';
+import 'day_book_document_summary_panel.dart';
 import 'day_book_eod_dialog.dart';
+import 'day_book_expense_panel.dart';
 import 'day_book_primary_grid.dart';
+import 'day_book_stock_movement_panel.dart';
 import 'day_book_sections.dart';
 import '../../../core/logging/app_logger.dart';
 import 'package:lotus_erp/core/feedback/app_feedback.dart';
@@ -152,13 +156,6 @@ class _DayBookScreenState extends State<DayBookScreen> {
             const SizedBox(height: 16),
             DayBookPrimaryGrid(summary: summary),
             const SizedBox(height: 16),
-            if (summary.moneyFlow == null) ...[
-              _Reveal(
-                delay: 40,
-                child: DayBookOverview(summary: summary),
-              ),
-              const SizedBox(height: 16),
-            ],
             if (summary.anomalies.isNotEmpty) ...[
               _Reveal(
                 delay: 70,
@@ -185,7 +182,8 @@ class _DayBookScreenState extends State<DayBookScreen> {
       LayoutBuilder(
         builder: (context, constraints) {
           final stack = constraints.maxWidth < 860;
-          final sales = SalesTaxPanel(summary: summary);
+          final sales =
+              DayBookDocumentSummaryPanel(documents: summary.documents);
           final payments = PaymentMixPanel(summary: summary);
 
           if (stack) {
@@ -209,17 +207,18 @@ class _DayBookScreenState extends State<DayBookScreen> {
         },
       ),
       const SizedBox(height: 12),
+      if (summary.moneyFlow case final flow?) ...[
+        DayBookExpensePanel(flow: flow),
+        const SizedBox(height: 12),
+      ],
       _Reveal(
         delay: 180,
-        child: MetalMovementPanel(summary: summary),
+        child: DayBookStockMovementPanel(movements: summary.stockMovements),
       ),
-      const SizedBox(height: 12),
-      if (_ctrl.isToday && summary.prediction != null) ...[
+      if (summary.custodyPosition case final position?
+          when position.lines.isNotEmpty) ...[
         const SizedBox(height: 12),
-        _Reveal(
-          delay: 230,
-          child: ForecastPanel(prediction: summary.prediction!),
-        ),
+        DayBookCustodyPanel(position: position),
       ],
     ];
   }

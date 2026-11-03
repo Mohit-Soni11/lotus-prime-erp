@@ -43,6 +43,8 @@ import '../tables/setting/billing/booking_advance_billing_settings.dart';
 import '../tables/setting/metal_rate/metal_rate_ledger_tables.dart';
 import 'migrations/girvi_retired_notice_cleanup.dart';
 import 'migrations/sales_metal_settlement_schema.dart';
+import 'migrations/database_migration_backup.dart';
+import 'migrations/day_book_closed_source_guards.dart';
 
 // ✅ v16: Tax & GST
 import '../../database/tables/setting/tax_gst/tax_gst_config_dao.dart';
@@ -113,6 +115,55 @@ class AppDatabase extends _$AppDatabase {
     }
     if (await _tableExists('bank_transactions')) {
       for (final statement in financeDayClosureSchemaSql.skip(4)) {
+        await customStatement(statement);
+      }
+    }
+  }
+
+  Future<void> _ensureDayBookPuritySnapshotSchema() async {
+    if (!await _tableExists('stock_movements')) return;
+    await _addColumnIfMissing(
+      tableName: 'stock_movements',
+      columnName: 'purity_snapshot',
+      declaration: 'TEXT',
+    );
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS stock_movement_purity_snapshot_insert
+      AFTER INSERT ON stock_movements
+      WHEN NEW.purity_snapshot IS NULL
+      BEGIN
+        UPDATE stock_movements
+        SET purity_snapshot = CASE
+          WHEN EXISTS (SELECT 1 FROM stock_item_units u
+                       WHERE u.stock_item_id = NEW.stock_item_id)
+          THEN (SELECT printf('%.3f%%', MIN(u.purity_percent))
+                FROM stock_item_units u
+                WHERE u.stock_item_id = NEW.stock_item_id
+                HAVING COUNT(*) = COUNT(CASE WHEN u.purity_percent > 0 THEN 1 END)
+                   AND COUNT(DISTINCT ROUND(u.purity_percent, 3)) = 1)
+          ELSE (SELECT NULLIF(TRIM(s.purity), '')
+                FROM stock_items s WHERE s.id = NEW.stock_item_id)
+        END
+        WHERE id = NEW.id;
+      END
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS stock_movement_identity_update
+      BEFORE UPDATE ON stock_movements
+      WHEN NEW.source_type != OLD.source_type
+        OR NEW.source_id != OLD.source_id
+        OR NEW.source_line_no IS NOT OLD.source_line_no
+        OR NEW.occurred_at != OLD.occurred_at
+        OR (OLD.purity_snapshot IS NOT NULL
+            AND NEW.purity_snapshot IS NOT OLD.purity_snapshot)
+      BEGIN SELECT RAISE(ABORT, 'Stock movement source is immutable'); END
+    ''');
+  }
+
+  Future<void> _ensureDayBookClosedSourceGuards() async {
+    for (final entry in dayBookClosedSourceGuards.entries) {
+      if (!await _tableExists(entry.key)) continue;
+      for (final statement in entry.value) {
         await customStatement(statement);
       }
     }
@@ -1079,6 +1130,8 @@ class AppDatabase extends _$AppDatabase {
           await _ensureReturnReversalSchemaInternal();
           await ensureSalesMetalSettlementSchema();
           await _ensureFinanceDayClosureSchema();
+          await _ensureDayBookPuritySnapshotSchema();
+          await _ensureDayBookClosedSourceGuards();
         },
         onUpgrade: (Migrator m, int from, int to) async {
           AppLogger.info('Migrating database from v$from to v$to');
@@ -2031,7 +2084,9 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DROP TABLE IF EXISTS "delivery_orders"');
           }
           if (from < 70) await _ensureFinanceDayClosureSchema();
+          if (from < 71) await _ensureDayBookPuritySnapshotSchema();
           await _ensureReturnReversalSchemaInternal();
+          if (from < 71) await _ensureDayBookClosedSourceGuards();
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');
@@ -3036,6 +3091,11 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, DbConfig.dbName));
+    final backup = await DatabaseMigrationBackup.createIfNeeded(
+        file, DbConfig.schemaVersion);
+    if (backup != null) {
+      AppLogger.info('Pre-upgrade database backup: ${backup.path}');
+    }
     return NativeDatabase(
       file,
       logStatements: EnvConfig.enableSqlLogging,

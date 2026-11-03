@@ -11,7 +11,12 @@ class DayBookMoneyEntry {
     required this.transactionId,
     this.accountName,
     this.referenceId,
+    this.referenceType,
     this.isInternalTransfer = false,
+    this.chequeNumber,
+    this.chequeStatus,
+    this.valueDate,
+    this.isReconciled = false,
   });
 
   final DateTime date;
@@ -23,7 +28,18 @@ class DayBookMoneyEntry {
   final String transactionId;
   final String? accountName;
   final String? referenceId;
+  final String? referenceType;
   final bool isInternalTransfer;
+  final String? chequeNumber;
+  final String? chequeStatus;
+  final DateTime? valueDate;
+  final bool isReconciled;
+
+  bool get isUnclearedCheque =>
+      !isCash &&
+      paymentMode.toUpperCase() == 'CHEQUE' &&
+      chequeStatus?.toUpperCase() != 'CLEARED' &&
+      chequeStatus?.toUpperCase() != 'BOUNCED';
 }
 
 /// Posted movements only. Non-cash shadow rows in cash_transactions are ignored.
@@ -59,6 +75,10 @@ class DayBookMoneyFlow {
       _sum((entry) => entry.incoming && entry.isInternalTransfer);
   double get internalOut =>
       _sum((entry) => !entry.incoming && entry.isInternalTransfer);
+  double get unclearedChequeIn =>
+      _sum((entry) => entry.incoming && entry.isUnclearedCheque);
+  double get unclearedChequeOut =>
+      _sum((entry) => !entry.incoming && entry.isUnclearedCheque);
 
   Map<String, double> bySource({required bool incoming}) =>
       _group(incoming: incoming, keyOf: (entry) => _sourceKey(entry.category));
@@ -66,13 +86,36 @@ class DayBookMoneyFlow {
   Map<String, double> byMode({required bool incoming}) =>
       _group(incoming: incoming, keyOf: (entry) => entry.paymentMode);
 
+  Map<String, double> byBankAccount({required bool incoming}) => _group(
+        incoming: incoming,
+        keyOf: (entry) => entry.accountName ?? 'Unassigned Account',
+        bankOnly: true,
+      );
+
+  Map<String, double> byBankReconciliation({required bool incoming}) => _group(
+        incoming: incoming,
+        keyOf: (entry) {
+          if (entry.isUnclearedCheque) return 'Uncleared Cheque';
+          if (entry.chequeStatus?.toUpperCase() == 'BOUNCED') {
+            return 'Bounced Cheque';
+          }
+          return entry.isReconciled ? 'Statement Matched' : 'Unreconciled';
+        },
+        bankOnly: true,
+      );
+
   Map<String, double> _group({
     required bool incoming,
     required String Function(DayBookMoneyEntry) keyOf,
+    bool bankOnly = false,
   }) {
     final values = <String, double>{};
     for (final entry in entries) {
-      if (entry.incoming != incoming || entry.isInternalTransfer) continue;
+      if (entry.incoming != incoming ||
+          entry.isInternalTransfer ||
+          (bankOnly && entry.isCash)) {
+        continue;
+      }
       final key = keyOf(entry);
       values[key] = (values[key] ?? 0) + entry.amount;
     }

@@ -1,45 +1,15 @@
-// =============================================================================
-// FILE        : day_book_repository.dart
-// MODULE      : Reports & Analytics → Day Book
-// LAYER       : Repository / Data Access
-// PATH        : lib/repositories/reports/day_book_repository.dart
-//
-// ✅ THIS IS THE ONLY REPOSITORY — DELETE the old duplicate at:
-//    lib/logic/report/day_book/day_book_repository.dart
-//
-// DESCRIPTION : PRODUCTION GRADE — All Drift queries use EXACT column names
-//               from the actual database tables.
-//
-//               DB Tables used:
-//               ┌─────────────────────────────────────────────────────────┐
-//               │ Bills            → GST & Normal sales by bill_type       │
-//               │ BillItems        → Metal weight dispatched in sales      │
-//               │ CashTransactions → All income & expense flows            │
-//               │ GirviLoans       → Girvi disbursed + metal pledged       │
-//               │ GirviPayments    → Girvi receipts (INTEREST/FULL_RELEASE)│
-//               │ ShopProfiles     → Opening cash balance                  │
-//               └─────────────────────────────────────────────────────────┘
-//
-//               CashTransactions column names (from app_database.dart):
-//               type      → 'INCOME' | 'EXPENSE'
-//               category  → 'ADVANCE' | 'ORDER_DELIVERY' | 'GIRVI_RETURN' |
-//                           'LOAN_RECEIVED' | 'INTEREST_RECEIVED' |
-//                           'MISC_INCOME' | 'OTHER_INCOME' |
-//                           'SHOP_RENT' | 'STAFF_SALARY' | 'ELECTRICITY' |
-//                           'PURCHASE_PAYMENT' | 'GIRVI_GIVEN' |
-//                           'MAINTENANCE' | 'ADVERTISING' | 'TRANSPORT' |
-//                           'BANK_CHARGES' | 'GOVT_FEES' |
-//                           'MISC_EXPENSE' | 'OTHER_EXPENSE'
-//               txnDate   → DateTime of transaction
-//               isVoided  → bool (false = active)
-//               paymentMode → 'CASH' | 'UPI' | 'CARD' | 'BANK' | 'CHEQUE'
-// =============================================================================
+// Daily projections over existing financial, sales, custody, and stock sources.
+// The complete Day Book approval gates are tracked in docs/day_book_rebuild_plan.md.
 
 import 'package:drift/drift.dart';
 
 import 'package:lotus_erp/database/db/app_database.dart';
 import '../../models/reports/day_book/day_book_models.dart';
 import 'day_book_money_repository.dart';
+import 'day_book_stock_movement_repository.dart';
+import 'day_book_custody_repository.dart';
+import 'day_book_document_repository.dart';
+import '../../models/reports/day_book/day_book_document_collection_mapper.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
 class DayBookRepository {
@@ -55,93 +25,89 @@ class DayBookRepository {
     final end = DateTime(date.year, date.month, date.day + 1);
 
     try {
-      // ── Run all queries in parallel ────────────────────────────────────────
-      final results = await Future.wait([
-        _fetchGstBills(start, end), // 0: GstBillSummary
-        _fetchNonGstBills(start, end), // 1: NonGstBillSummary
-        _fetchIncomeByCategory(start, end), // 2: Map<String, double>
-        _fetchExpenseByCategory(start, end), // 3: Map<String, double>
-        _fetchGirviSecurityDeposit(start, end), // 4: MetalWeight
-        _fetchRetailMetalDispatch(start, end), // 5: MetalWeight
-        _fetchOpeningCash(start), // 6: double
-        _fetch7DayExpenseAvg(date), // 7: double
-        _fetchPaymentBreakup(start, end), // 8: PaymentBreakup
-        _fetchDueCollectionReceipts(start, end), // 9: double
-      ]);
+      return await _db.transaction(() async {
+        // ── Run all queries in parallel ────────────────────────────────────────
+        final results = await Future.wait([
+          _fetchGstBills(start, end), // 0: GstBillSummary
+          _fetchNonGstBills(start, end), // 1: NonGstBillSummary
+          _fetchIncomeByCategory(start, end), // 2: Map<String, double>
+          _fetchExpenseByCategory(start, end), // 3: Map<String, double>
+          _fetchOpeningCash(start), // 4: double
+          _fetchPaymentBreakup(start, end), // 5: PaymentBreakup
+          _fetchDueCollectionReceipts(start, end), // 6: double
+        ]);
 
-      final gstSales = results[0] as GstBillSummary;
-      final nonGstSales = results[1] as NonGstBillSummary;
-      final incomeMap = results[2] as Map<String, double>;
-      final expenseMap = results[3] as Map<String, double>;
-      final girviMetal = results[4] as MetalWeight;
-      final retailMetal = results[5] as MetalWeight;
-      final openingCash = results[6] as double;
-      final avgExpense = results[7] as double;
-      final payBreakup = results[8] as PaymentBreakup;
-      final dueCollection = results[9] as double;
-      final moneyFlow =
-          await DayBookMoneyRepository(_db).fetch(date, openingCash);
+        final gstSales = results[0] as GstBillSummary;
+        final nonGstSales = results[1] as NonGstBillSummary;
+        final incomeMap = results[2] as Map<String, double>;
+        final expenseMap = results[3] as Map<String, double>;
+        final openingCash = results[4] as double;
+        final payBreakup = results[5] as PaymentBreakup;
+        final dueCollection = results[6] as double;
+        final custodyPosition = await DayBookCustodyRepository(_db).fetch(date);
+        final custodyReceived = <String, double>{};
+        for (final line in custodyPosition.received) {
+          _addMetal(custodyReceived,
+              metalType: line.metal,
+              purity: line.purity,
+              weight: line.netWeight);
+        }
+        final girviMetal = MetalWeight.fromEntries(custodyReceived);
+        final moneyFlow =
+            await DayBookMoneyRepository(_db).fetch(date, openingCash);
+        final stockMovements =
+            await DayBookStockMovementRepository(_db).fetch(date);
+        final documents = DayBookDocumentCollectionMapper.apply(
+          await DayBookDocumentRepository(_db).fetch(date),
+          moneyFlow,
+        );
 
-      // ── Build CashInflow ───────────────────────────────────────────────────
-      final cashIn = CashInflow(
-        gstSales: gstSales,
-        nonGstSales: nonGstSales,
-        dueCollection: dueCollection,
-        advance: incomeMap['ADVANCE'] ?? 0,
-        orderDelivery: incomeMap['ORDER_DELIVERY'] ?? 0,
-        girviReturn: incomeMap['GIRVI_RETURN'] ?? 0,
-        loanReceived: incomeMap['LOAN_RECEIVED'] ?? 0,
-        interestRec: incomeMap['INTEREST_RECEIVED'] ?? 0,
-        miscIncome: incomeMap['MISC_INCOME'] ?? 0,
-        otherIncome: incomeMap['OTHER_INCOME'] ?? 0,
-      );
+        // ── Build CashInflow ───────────────────────────────────────────────────
+        final cashIn = CashInflow(
+          gstSales: gstSales,
+          nonGstSales: nonGstSales,
+          dueCollection: dueCollection,
+          advance: incomeMap['ADVANCE'] ?? 0,
+          orderDelivery: incomeMap['ORDER_DELIVERY'] ?? 0,
+          girviReturn: incomeMap['GIRVI_RETURN'] ?? 0,
+          loanReceived: incomeMap['LOAN_RECEIVED'] ?? 0,
+          interestRec: incomeMap['INTEREST_RECEIVED'] ?? 0,
+          miscIncome: incomeMap['MISC_INCOME'] ?? 0,
+          otherIncome: incomeMap['OTHER_INCOME'] ?? 0,
+        );
 
-      // ── Build CashOutflow ─────────────────────────────────────────────────
-      final cashOut = CashOutflow(
-        shopRent: expenseMap['SHOP_RENT'] ?? 0,
-        staffSalary: expenseMap['STAFF_SALARY'] ?? 0,
-        electricity: expenseMap['ELECTRICITY'] ?? 0,
-        purchasePayment: expenseMap['PURCHASE_PAYMENT'] ?? 0,
-        girviGiven: expenseMap['GIRVI_GIVEN'] ?? 0,
-        maintenance: expenseMap['MAINTENANCE'] ?? 0,
-        advertising: expenseMap['ADVERTISING'] ?? 0,
-        transport: expenseMap['TRANSPORT'] ?? 0,
-        bankCharges: expenseMap['BANK_CHARGES'] ?? 0,
-        govtFees: expenseMap['GOVT_FEES'] ?? 0,
-        miscExpense: expenseMap['MISC_EXPENSE'] ?? 0,
-        otherExpense: expenseMap['OTHER_EXPENSE'] ?? 0,
-      );
+        // ── Build CashOutflow ─────────────────────────────────────────────────
+        final cashOut = CashOutflow(
+          shopRent: expenseMap['SHOP_RENT'] ?? 0,
+          staffSalary: expenseMap['STAFF_SALARY'] ?? 0,
+          electricity: expenseMap['ELECTRICITY'] ?? 0,
+          purchasePayment: expenseMap['PURCHASE_PAYMENT'] ?? 0,
+          girviGiven: expenseMap['GIRVI_GIVEN'] ?? 0,
+          maintenance: expenseMap['MAINTENANCE'] ?? 0,
+          advertising: expenseMap['ADVERTISING'] ?? 0,
+          transport: expenseMap['TRANSPORT'] ?? 0,
+          bankCharges: expenseMap['BANK_CHARGES'] ?? 0,
+          govtFees: expenseMap['GOVT_FEES'] ?? 0,
+          miscExpense: expenseMap['MISC_EXPENSE'] ?? 0,
+          otherExpense: expenseMap['OTHER_EXPENSE'] ?? 0,
+        );
 
-      // ── Build Metal flows ─────────────────────────────────────────────────
-      final metalIn = MetalInflow(girviSecurityDeposit: girviMetal);
-      final metalOut = MetalOutflow(retailDispatch: retailMetal);
+        // ── Build Metal flows ─────────────────────────────────────────────────
+        final metalIn = MetalInflow(girviSecurityDeposit: girviMetal);
 
-      // ── Anomaly Detection ─────────────────────────────────────────────────
-      final anomalies = _detectAnomalies(
-        todayExpense: cashOut.total,
-        avgExpense: avgExpense,
-        cashInTotal: cashIn.total,
-      );
-
-      // ── Prediction ────────────────────────────────────────────────────────
-      final prediction = _buildPrediction(
-        date: date,
-        openingCash: openingCash,
-        netSoFar: moneyFlow.cashIn - moneyFlow.cashOut,
-      );
-
-      return DayBookSummary(
-        date: date,
-        moneyFlow: moneyFlow,
-        openingCash: openingCash,
-        cashIn: cashIn,
-        cashOut: cashOut,
-        metalIn: metalIn,
-        metalOut: metalOut,
-        paymentBreakup: payBreakup,
-        anomalies: anomalies,
-        prediction: prediction,
-      );
+        return DayBookSummary(
+          date: date,
+          moneyFlow: moneyFlow,
+          stockMovements: stockMovements,
+          documents: documents,
+          custodyPosition: custodyPosition,
+          openingCash: openingCash,
+          cashIn: cashIn,
+          cashOut: cashOut,
+          metalIn: metalIn,
+          paymentBreakup: payBreakup,
+        );
+      });
     } catch (e, stack) {
       AppLogger.debug('❌ DayBookRepository.fetchDayBook: $e\n$stack');
       rethrow;
@@ -155,7 +121,8 @@ class DayBookRepository {
                 (b.billType.equals('GST') |
                     b.billNo.like('TAX-%') |
                     b.gstAmount.isBiggerThanValue(0.005)) &
-                b.status.equals('ACTIVE') &
+                b.status
+                    .isIn(const ['ACTIVE', 'PARTIALLY_RETURNED', 'RETURNED']) &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerThanValue(end)))
           .get();
@@ -171,22 +138,22 @@ class DayBookRepository {
       double taxable = 0;
       double cgst = 0;
       double sgst = 0;
+      double igst = 0;
       double finalTotal = 0;
       var payments = const PaymentBreakup();
 
       for (final b in rows) {
         finalTotal += b.finalAmount;
-        if (b.taxableAmount > 0 || b.cgstAmount > 0 || b.sgstAmount > 0) {
-          taxable += b.taxableAmount;
-          cgst += b.cgstAmount;
-          sgst += b.sgstAmount;
-        } else if (b.finalAmount > 0) {
-          final billTaxable = b.finalAmount / 1.03;
-          final billGst = b.finalAmount - billTaxable;
-          taxable += billTaxable;
-          cgst += billGst / 2;
-          sgst += billGst / 2;
+        if (b.gstAmount > 0.005 &&
+            (b.taxableAmount <= 0 ||
+                b.cgstAmount + b.sgstAmount + b.igstAmount <= 0.005)) {
+          throw StateError(
+              'Invoice ${b.billNo} has incomplete finalized tax data.');
         }
+        taxable += b.taxableAmount;
+        cgst += b.cgstAmount;
+        sgst += b.sgstAmount;
+        igst += b.igstAmount;
         payments += paymentsByBill[b.billNo] ?? const PaymentBreakup();
       }
 
@@ -195,12 +162,13 @@ class DayBookRepository {
         taxableAmount: taxable,
         cgst: cgst,
         sgst: sgst,
+        igst: igst,
         finalAmount: finalTotal,
         payments: payments,
       );
     } catch (e) {
       AppLogger.debug('❌ _fetchGstBills: $e');
-      return const GstBillSummary();
+      rethrow;
     }
   }
 
@@ -213,7 +181,8 @@ class DayBookRepository {
                     b.billNo.like('INV-%') |
                     b.billNo.like('EST-%')) &
                 b.gstAmount.isSmallerThanValue(0.006) &
-                b.status.equals('ACTIVE') &
+                b.status
+                    .isIn(const ['ACTIVE', 'PARTIALLY_RETURNED', 'RETURNED']) &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerThanValue(end)))
           .get();
@@ -240,7 +209,7 @@ class DayBookRepository {
       );
     } catch (e) {
       AppLogger.debug('❌ _fetchNonGstBills: $e');
-      return const NonGstBillSummary();
+      rethrow;
     }
   }
 
@@ -267,7 +236,7 @@ class DayBookRepository {
       return map;
     } catch (e) {
       AppLogger.debug('❌ _fetchIncomeByCategory: $e');
-      return {};
+      rethrow;
     }
   }
 
@@ -294,90 +263,11 @@ class DayBookRepository {
       return map;
     } catch (e) {
       AppLogger.debug('❌ _fetchExpenseByCategory: $e');
-      return {};
+      rethrow;
     }
   }
 
-  // ==========================================================================
-  // ==========================================================================
-  // ==========================================================================
-  // 6. METAL IN: Girvi Security Deposit
-  // GirviLoans WHERE startDate in range AND status='ACTIVE'
-  // ==========================================================================
-  Future<MetalWeight> _fetchGirviSecurityDeposit(
-      DateTime start, DateTime end) async {
-    try {
-      final loans = await (_db.select(_db.girviLoans)
-            ..where((l) =>
-                l.startDate.isBiggerOrEqualValue(start) &
-                l.startDate.isSmallerThanValue(end) &
-                l.status.equals('ACTIVE')))
-          .get();
-
-      if (loans.isEmpty) return const MetalWeight();
-
-      final totals = <String, double>{};
-      for (final loan in loans) {
-        _addMetal(
-          totals,
-          metalType: loan.metalType,
-          purity: loan.metalPurity,
-          weight: loan.netWeight,
-        );
-      }
-
-      return MetalWeight.fromEntries(totals);
-    } catch (e) {
-      AppLogger.debug('❌ _fetchGirviSecurityDeposit: $e');
-      return const MetalWeight();
-    }
-  }
-
-  // ==========================================================================
-  // 7. METAL OUT: Retail Dispatch
-  // BillItems for today's active Bills
-  // ==========================================================================
-  Future<MetalWeight> _fetchRetailMetalDispatch(
-      DateTime start, DateTime end) async {
-    try {
-      final bills = await (_db.select(_db.bills)
-            ..where((b) =>
-                b.status.equals('ACTIVE') &
-                b.billDate.isBiggerOrEqualValue(start) &
-                b.billDate.isSmallerThanValue(end)))
-          .get();
-
-      if (bills.isEmpty) return const MetalWeight();
-
-      final totals = <String, double>{};
-
-      for (final bill in bills) {
-        final items = await (_db.select(_db.billItems)
-              ..where((i) => i.billId.equals(bill.id)))
-            .get();
-
-        for (final item in items) {
-          _addMetal(
-            totals,
-            metalType: item.metalType,
-            purity: item.purity,
-            weight: item.netWeight,
-          );
-        }
-      }
-
-      return MetalWeight.fromEntries(totals);
-    } catch (e) {
-      AppLogger.debug('❌ _fetchRetailMetalDispatch: $e');
-      return const MetalWeight();
-    }
-  }
-
-  // ==========================================================================
-  // ==========================================================================
-  // ==========================================================================
-  // 9. OPENING CASH — from ShopProfiles.openingCashBalance
-  // ==========================================================================
+  // Opening cash includes prior posted cash-only transactions.
   Future<double> _fetchOpeningCash(DateTime date) async {
     try {
       final profile = await (_db.select(_db.shopProfiles)).getSingleOrNull();
@@ -392,35 +282,7 @@ class DayBookRepository {
           prior.read<double>('movement');
     } catch (e) {
       AppLogger.debug('❌ _fetchOpeningCash: $e');
-      return 0.0;
-    }
-  }
-
-  // ==========================================================================
-  // 10. 7-DAY AVERAGE EXPENSE (for anomaly detection)
-  // ==========================================================================
-  Future<double> _fetch7DayExpenseAvg(DateTime today) async {
-    try {
-      final sevenDaysAgo = today.subtract(const Duration(days: 7));
-      final start =
-          DateTime(sevenDaysAgo.year, sevenDaysAgo.month, sevenDaysAgo.day);
-      final end = DateTime(today.year, today.month, today.day);
-
-      final rows = await (_db.select(_db.cashTransactions)
-            ..where((t) =>
-                t.type.equals('EXPENSE') &
-                t.isVoided.equals(false) &
-                t.paymentMode.equals('CASH') &
-                t.txnDate.isBiggerOrEqualValue(start) &
-                t.txnDate.isSmallerThanValue(end)))
-          .get();
-
-      if (rows.isEmpty) return 0;
-      final total = rows.fold(0.0, (sum, r) => sum + r.amount);
-      return total / 7;
-    } catch (e) {
-      AppLogger.debug('❌ _fetch7DayExpenseAvg: $e');
-      return 0;
+      rethrow;
     }
   }
 
@@ -434,7 +296,8 @@ class DayBookRepository {
     try {
       final saleBills = await (_db.select(_db.bills)
             ..where((b) =>
-                b.status.equals('ACTIVE') &
+                b.status
+                    .isIn(const ['ACTIVE', 'PARTIALLY_RETURNED', 'RETURNED']) &
                 b.billDate.isBiggerOrEqualValue(start) &
                 b.billDate.isSmallerThanValue(end)))
           .get();
@@ -459,7 +322,7 @@ class DayBookRepository {
       return total;
     } catch (e) {
       AppLogger.debug('❌ _fetchPaymentBreakup: $e');
-      return const PaymentBreakup();
+      rethrow;
     }
   }
 
@@ -628,68 +491,8 @@ class DayBookRepository {
       return cashTotal;
     } catch (e) {
       AppLogger.debug('_fetchDueCollectionReceipts: $e');
-      return 0;
+      rethrow;
     }
-  }
-
-  // ==========================================================================
-  // ANOMALY DETECTION (30% above 7-day average)
-  // ==========================================================================
-  List<AnomalyAlert> _detectAnomalies({
-    required double todayExpense,
-    required double avgExpense,
-    required double cashInTotal,
-  }) {
-    final alerts = <AnomalyAlert>[];
-    const threshold = 0.30; // 30%
-
-    if (avgExpense > 0 && todayExpense > avgExpense * (1 + threshold)) {
-      final pct = ((todayExpense - avgExpense) / avgExpense * 100);
-      alerts.add(AnomalyAlert(
-        message:
-            'Expenses are ${pct.toStringAsFixed(0)}% above the 7-day average '
-            '(average: INR ${avgExpense.toStringAsFixed(0)}).',
-        category: 'expense',
-        todayValue: todayExpense,
-        avgValue: avgExpense,
-        percentChange: pct,
-      ));
-    }
-
-    return alerts;
-  }
-
-  // ==========================================================================
-  // PREDICTIVE CLOSING (linear projection for today only)
-  // ==========================================================================
-  PredictedClosing? _buildPrediction({
-    required DateTime date,
-    required double openingCash,
-    required double netSoFar,
-  }) {
-    final now = DateTime.now();
-    if (date.day != now.day ||
-        date.month != now.month ||
-        date.year != now.year) {
-      return null; // Only predict for today
-    }
-
-    const shopOpenHour = 10; // 10 AM
-    const shopCloseHour = 20; // 8 PM
-    const totalHours = shopCloseHour - shopOpenHour;
-
-    final elapsedHours = (now.hour - shopOpenHour).clamp(0, totalHours);
-    if (elapsedHours <= 0) return null;
-
-    final projectedNet = (netSoFar / elapsedHours) * totalHours;
-    final predictedClosing =
-        (openingCash + projectedNet).clamp(0.0, double.infinity);
-
-    return PredictedClosing(
-      predictedCash: predictedClosing,
-      vsYesterdayPct: 0,
-      isPositiveTrend: predictedClosing > openingCash,
-    );
   }
 
   // ==========================================================================
@@ -717,6 +520,10 @@ class DayBookRepository {
           FROM bill_items
           INNER JOIN bills ON bills.id = bill_items.bill_id
           WHERE bills.bill_date >= ? AND bills.bill_date < ?
+          UNION ALL
+          SELECT id FROM stock_movements
+          WHERE (occurred_at >= ? AND occurred_at < ?)
+             OR (occurred_at >= ? AND occurred_at < ?)
           ''',
           variables: [
             Variable.withDateTime(start),
@@ -727,6 +534,10 @@ class DayBookRepository {
             Variable.withDateTime(end),
             Variable.withDateTime(start),
             Variable.withDateTime(end),
+            Variable.withInt(start.millisecondsSinceEpoch),
+            Variable.withInt(end.millisecondsSinceEpoch),
+            Variable.withInt(start.millisecondsSinceEpoch ~/ 1000),
+            Variable.withInt(end.millisecondsSinceEpoch ~/ 1000),
           ],
           readsFrom: {
             _db.cashTransactions,
@@ -737,6 +548,7 @@ class DayBookRepository {
             _db.shopProfiles,
             _db.girviLoans,
             _db.girviPayments,
+            _db.stockMovements,
           },
         )
         .watch()

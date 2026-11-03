@@ -5,6 +5,7 @@ import '../../../logic/report/day_book/day_book_controller.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_export_button.dart';
+import 'day_book_overview_cards.dart';
 
 class DayBookDailyToolbar extends StatelessWidget {
   const DayBookDailyToolbar({
@@ -35,41 +36,7 @@ class DayBookDailyToolbar extends StatelessWidget {
           width: narrow ? constraints.maxWidth : 310,
           child: _DateNavigation(ctrl: ctrl),
         );
-        final columns = constraints.maxWidth >= 900
-            ? 3
-            : constraints.maxWidth >= 520
-                ? 2
-                : 1;
-        final metricWidth =
-            (constraints.maxWidth - (columns - 1) * 10) / columns;
-        final metrics = Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            SizedBox(
-                width: metricWidth,
-                child: _DailyMetric(
-                  label: 'Tax Invoices',
-                  value: '${summary.totalGstBills}',
-                  icon: DayBookIcons.tax,
-                )),
-            SizedBox(
-                width: metricWidth,
-                child: _DailyMetric(
-                  label: 'Regular Invoices',
-                  value: '${summary.totalNonGstBills}',
-                  icon: DayBookIcons.regularInvoice,
-                )),
-            SizedBox(
-                width: metricWidth,
-                child: _DailyMetric(
-                  label: 'GST Collected',
-                  value: NumberFormat.currency(locale: 'en_IN', symbol: '₹')
-                      .format(summary.totalGstCollected),
-                  icon: DayBookIcons.tax,
-                )),
-          ],
-        );
+        final metrics = DayBookOverviewCards(summary: summary);
         final action = ctrl.isToday
             ? FilledButton.icon(
                 onPressed: summary.isDayLocked ? null : onReconcile,
@@ -172,39 +139,4 @@ class _DateNavigation extends StatelessWidget {
       ]),
     );
   }
-}
-
-class _DailyMetric extends StatelessWidget {
-  const _DailyMetric(
-      {required this.label, required this.value, required this.icon});
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: DayBookStyles.softPanel(
-          color: DayBookColors.bodySubtle,
-          borderColor: DayBookColors.bodyBorder,
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 20, color: DayBookColors.brandGold),
-          const SizedBox(width: 9),
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(label,
-                  style: DayBookStyles.labelStrong,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
-              Text(value,
-                  style: DayBookStyles.valueLarge,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
-            ]),
-          ),
-        ]),
-      );
 }

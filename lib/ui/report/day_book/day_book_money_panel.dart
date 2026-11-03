@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 import '../../../models/reports/day_book/day_book_money_flow.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
+import 'day_book_transaction_register.dart';
 
 final _currency = NumberFormat.currency(locale: 'en_IN', symbol: 'INR ');
 
@@ -99,6 +99,15 @@ class DayBookMoneyPanel extends StatelessWidget {
               ),
             ),
           ],
+          if (flow.unclearedChequeIn != 0 || flow.unclearedChequeOut != 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Uncleared cheques: received ${_currency.format(flow.unclearedChequeIn)} · issued ${_currency.format(flow.unclearedChequeOut)}. Recorded bank balance includes these entries.',
+              style: DayBookStyles.labelStrong.copyWith(
+                color: DayBookColors.warning,
+              ),
+            ),
+          ],
           if (sourceIn.isNotEmpty || sourceOut.isNotEmpty) ...[
             const SizedBox(height: 18),
             if (sourceIn.isNotEmpty && sourceOut.isNotEmpty)
@@ -133,28 +142,41 @@ class DayBookMoneyPanel extends StatelessWidget {
                 values: modeIn.isNotEmpty ? modeIn : modeOut,
               ),
           ],
-          if (flow.entries.isNotEmpty) ...[
+          if (flow.byBankAccount(incoming: true).isNotEmpty ||
+              flow.byBankAccount(incoming: false).isNotEmpty) ...[
             const SizedBox(height: 12),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              childrenPadding: EdgeInsets.zero,
-              title: Text(
-                'Transactions (${flow.entries.length})',
-                style: DayBookStyles.sectionTitle,
-              ),
+              title: Text('Bank Account & Reconciliation Detail',
+                  style: DayBookStyles.sectionTitle),
               children: [
-                SizedBox(
-                  height: 360,
-                  child: ListView.separated(
-                    itemCount: flow.entries.length,
-                    itemBuilder: (context, index) =>
-                        _TransactionRow(entry: flow.entries[index]),
-                    separatorBuilder: (context, index) => const Divider(
-                        height: 1, color: DayBookColors.bodyBorder),
+                _ResponsivePair(
+                  first: _BreakdownCard(
+                    title: 'Bank In by Account',
+                    values: flow.byBankAccount(incoming: true),
+                  ),
+                  second: _BreakdownCard(
+                    title: 'Bank Out by Account',
+                    values: flow.byBankAccount(incoming: false),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ResponsivePair(
+                  first: _BreakdownCard(
+                    title: 'Bank Receipts by Reconciliation',
+                    values: flow.byBankReconciliation(incoming: true),
+                  ),
+                  second: _BreakdownCard(
+                    title: 'Bank Payments by Reconciliation',
+                    values: flow.byBankReconciliation(incoming: false),
                   ),
                 ),
               ],
             ),
+          ],
+          if (flow.entries.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            DayBookTransactionRegister(entries: flow.entries),
           ],
         ],
       ),
@@ -311,55 +333,6 @@ class _BreakdownCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TransactionRow extends StatelessWidget {
-  const _TransactionRow({required this.entry});
-  final DayBookMoneyEntry entry;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-      message:
-          '${entry.transactionId}${entry.referenceId == null ? '' : ' · ${entry.referenceId}'}',
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        child: Row(children: [
-          Icon(
-            entry.incoming ? DayBookIcons.cashIn : DayBookIcons.cashOut,
-            color: entry.incoming
-                ? DayBookColors.positive
-                : DayBookColors.negative,
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_readable(entry.category),
-                    style: DayBookStyles.labelStrong,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                Text(
-                  '${DateFormat('HH:mm').format(entry.date)} · ${_readable(entry.paymentMode)}${entry.accountName == null ? '' : ' · ${entry.accountName}'}${entry.isInternalTransfer ? ' · Internal transfer' : ''}',
-                  style: DayBookStyles.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              '${entry.incoming ? '+' : '−'}${_currency.format(entry.amount)}',
-              style: DayBookStyles.labelStrong,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ]),
-      ));
 }
 
 String _readable(String value) {

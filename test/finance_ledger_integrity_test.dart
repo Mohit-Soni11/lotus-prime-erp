@@ -160,8 +160,14 @@ void main() {
     final date = DateTime(2026, 6, 25, 12);
     final cashId = await _cashRow(db, 'C-1', date, 'INCOME', 100);
     final closure = FinanceDayClosureRepository(db);
-    expect(await closure.closeDay(date, closingCash: 100), isTrue);
+    expect(await closure.closeDay(date, closingCash: 100, closedBy: 'owner-1'),
+        isTrue);
     expect(await closure.isClosed(date), isTrue);
+    final close = await db.customSelect(
+      'SELECT closed_by FROM finance_day_closures WHERE day_key = ?',
+      variables: [const drift.Variable<String>('20260625')],
+    ).getSingle();
+    expect(close.read<String>('closed_by'), 'owner-1');
     await expectLater(
       _cashRow(db, 'C-2', date, 'INCOME', 50),
       throwsA(isA<Exception>()),
@@ -173,6 +179,24 @@ void main() {
     );
     expect(
         (await db.select(db.cashTransactions).get()).single.isVoided, isFalse);
+  });
+
+  test('day closing rejects a stale or incorrect physical cash amount',
+      () async {
+    final date = DateTime(2026, 6, 26, 12);
+    await _cashRow(db, 'C-CLOSE-1', date, 'INCOME', 125);
+    final closure = FinanceDayClosureRepository(db);
+    expect(await closure.closeDay(date, closingCash: 100, closedBy: 'owner-1'),
+        isFalse);
+    expect(await closure.isClosed(date), isFalse);
+    expect(await closure.closeDay(date, closingCash: 125, closedBy: 'owner-1'),
+        isTrue);
+    expect(await closure.closeDay(date, closingCash: 125, closedBy: 'staff-2'),
+        isFalse);
+    expect(await closure.closeDay(date, closingCash: 100, closedBy: 'owner-1'),
+        isFalse);
+    expect(await closure.closeDay(date, closingCash: 125, closedBy: 'owner-1'),
+        isTrue);
   });
 
   test('closed bank day freezes money but permits later reconciliation',
@@ -189,7 +213,8 @@ void main() {
             amount: const drift.Value(100),
           ),
         );
-    await FinanceDayClosureRepository(db).closeDay(date, closingCash: 0);
+    await FinanceDayClosureRepository(db)
+        .closeDay(date, closingCash: 0, closedBy: 'owner-1');
     await expectLater(
       (db.update(db.bankTransactions)..where((row) => row.id.equals(id)))
           .write(const BankTransactionsCompanion(amount: drift.Value(200))),

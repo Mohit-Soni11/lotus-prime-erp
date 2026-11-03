@@ -19,6 +19,7 @@ class StockMovements extends Table with BaseTable {
   TextColumn get skuSnapshot => text()();
   TextColumn get metalTypeSnapshot => text()();
   TextColumn get itemNameSnapshot => text()();
+  TextColumn get puritySnapshot => text().nullable()();
   IntColumn get quantityDelta => integer()();
   RealColumn get grossWeightDelta => real().withDefault(const Constant(0.0))();
   RealColumn get netWeightDelta => real().withDefault(const Constant(0.0))();

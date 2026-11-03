@@ -1,17 +1,7 @@
-// =============================================================================
-// FILE        : day_book_models.dart
-// MODULE      : Reports & Analytics → Day Book
-// LAYER       : Models
-// DESCRIPTION : Pure Dart data models — production grade.
-//               All field names match EXACT DB column names from:
-//               CashTransactions, Bills, BillItems, GirviLoans,
-//               GirviPayments,
-//               SalesOrders, OrderAdvances, StockItems.
-//
-//               GST and Normal sales are tracked separately from bill_type.
-// =============================================================================
-
 import 'day_book_money_flow.dart';
+import 'day_book_custody_position.dart';
+import 'day_book_document.dart';
+import 'day_book_stock_movement.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Payment Mode Breakup
@@ -46,14 +36,14 @@ class PaymentBreakup {
 // ─────────────────────────────────────────────────────────────────────────────
 // GST Bill Summary
 // Source: Bills WHERE bill_type = 'GST' AND status = 'ACTIVE'
-// GST on jewellery = 3% (1.5% CGST + 1.5% SGST)
-// Bills.finalAmount already INCLUDES GST.
+// Tax components are read from the finalized invoice, without estimating rates.
 // ─────────────────────────────────────────────────────────────────────────────
 class GstBillSummary {
   final int billCount;
-  final double taxableAmount; // finalAmount / 1.03
-  final double cgst; // taxable × 1.5%
-  final double sgst; // taxable × 1.5%
+  final double taxableAmount;
+  final double cgst;
+  final double sgst;
+  final double igst;
   final double finalAmount; // total invoice value (taxable + gst)
   final PaymentBreakup payments;
 
@@ -62,11 +52,12 @@ class GstBillSummary {
     this.taxableAmount = 0,
     this.cgst = 0,
     this.sgst = 0,
+    this.igst = 0,
     this.finalAmount = 0,
     this.payments = const PaymentBreakup(),
   });
 
-  double get gstCollected => cgst + sgst;
+  double get gstCollected => cgst + sgst + igst;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,20 +269,9 @@ class MetalWeight {
 // Metal Inward — Vault Additions
 // ─────────────────────────────────────────────────────────────────────────────
 class MetalInflow {
-  // BillItems from today's sales WHERE purity in ('22K','18K') — items SOLD
-  // are OUT, but items returned come back IN via salesReturnReversal
-
-  // GirviLoans created today → netWeight pledged
+  // Girvi collateral is customer property, never owned stock.
   final MetalWeight girviSecurityDeposit;
-
-  // StockItems created today WHERE source = 'URD' (old gold purchase)
-  // No 'source' column in StockItems — we use supplierName IS NULL logic
-  // Actually: URD purchase = manual stock added with no supplier
-  // For now: sum from CashTransactions category='MISC_INCOME' cross-ref
-  // BEST approach: use StockItems WHERE supplierId IS NULL AND createdAt = today
   final MetalWeight urdPurchase;
-
-  // Future: salesReturnReversal — items returned by customer
   final MetalWeight salesReturnReversal;
 
   const MetalInflow({
@@ -300,8 +280,9 @@ class MetalInflow {
     this.salesReturnReversal = const MetalWeight(),
   });
 
-  MetalWeight get total =>
-      girviSecurityDeposit + urdPurchase + salesReturnReversal;
+  /// Customer collateral is custody, never shop-owned stock.
+  MetalWeight get total => urdPurchase + salesReturnReversal;
+  MetalWeight get custodyReceived => girviSecurityDeposit;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -390,6 +371,10 @@ class DenominationCount {
 class DayBookSummary {
   final DateTime date;
   final DayBookMoneyFlow? moneyFlow;
+  final List<DayBookStockMovement> stockMovements;
+  final DayBookCustodyPosition? custodyPosition;
+  final List<DayBookDocument> documents;
+  final bool metalPositionVerified;
 
   // Opening balances (from ShopProfile or previous day closing)
   final double openingCash;
@@ -413,6 +398,10 @@ class DayBookSummary {
   const DayBookSummary({
     required this.date,
     this.moneyFlow,
+    this.stockMovements = const [],
+    this.custodyPosition,
+    this.documents = const [],
+    this.metalPositionVerified = false,
     this.openingCash = 0,
     this.openingGoldGrams = 0,
     this.openingSilverGrams = 0,

@@ -125,6 +125,7 @@ void main() {
       expect(summary.paymentBreakup.upi, 500);
       expect(summary.paymentBreakup.card, 250);
       expect(summary.paymentBreakup.total, 1000);
+      expect(summary.prediction, isNull);
       expect(summary.moneyFlow?.cashIn, 250);
       expect(summary.moneyFlow?.bankIn, 750);
       expect(summary.moneyFlow?.moneyIn, 1000);
@@ -213,6 +214,80 @@ void main() {
       expect(summary.cashIn.nonGstSales.totalAmount, 1000);
     },
   );
+
+  test('GST summary uses saved IGST instead of estimating tax', () async {
+    final date = DateTime(2026, 6, 25, 14);
+    await _insertBill(
+      db,
+      billNo: 'TAX-IGST-1',
+      billDate: date,
+      billType: 'GST',
+      finalAmount: 1050,
+      paidAmount: 0,
+      taxableAmount: 1000,
+      igstAmount: 50,
+      gstAmount: 50,
+    );
+
+    final summary = await repository.fetchDayBook(date);
+    expect(summary.cashIn.gstSales.taxableAmount, 1000);
+    expect(summary.cashIn.gstSales.igst, 50);
+    expect(summary.totalGstCollected, 50);
+  });
+
+  test('incomplete saved GST data surfaces an error', () async {
+    final date = DateTime(2026, 6, 25, 14);
+    await _insertBill(
+      db,
+      billNo: 'TAX-INCOMPLETE-1',
+      billDate: date,
+      billType: 'GST',
+      finalAmount: 1030,
+      paidAmount: 0,
+      gstAmount: 30,
+    );
+
+    await expectLater(
+        repository.fetchDayBook(date), throwsA(isA<StateError>()));
+  });
+
+  test('released Girvi remains visible on its original custody day', () async {
+    final date = DateTime(2026, 6, 25, 14);
+    final customerId = await db.into(db.customers).insert(
+          CustomersCompanion.insert(
+            name: 'Custody Customer',
+            mobile: '9000000123',
+          ),
+        );
+    await db.into(db.girviLoans).insert(GirviLoansCompanion.insert(
+          ticketNo: 'GRV-HISTORY-1',
+          customerId: customerId,
+          itemDescription: 'Gold ring',
+          metalType: const drift.Value('Gold'),
+          metalPurity: const drift.Value('22K'),
+          netWeight: const drift.Value(25),
+          startDate: drift.Value(date),
+          releaseDate: drift.Value(date.add(const Duration(days: 5))),
+          status: const drift.Value('RELEASED'),
+        ));
+
+    final summary = await repository.fetchDayBook(date);
+    expect(summary.metalIn.custodyReceived.totalGold, 25);
+    expect(summary.closingGold, 0);
+    expect(summary.custodyPosition!.closingVerified, isTrue);
+    final afterRelease =
+        await repository.fetchDayBook(date.add(const Duration(days: 6)));
+    expect(afterRelease.custodyPosition!.closingVerified, isFalse);
+  });
+
+  test('database read failure is reported instead of a zero balance', () async {
+    await db.customStatement('DROP TABLE shop_profiles');
+
+    await expectLater(
+      repository.fetchDayBook(DateTime(2026, 6, 25)),
+      throwsA(isA<Exception>()),
+    );
+  });
 }
 
 Future<int> _insertBankAccount(AppDatabase db) {
@@ -237,6 +312,7 @@ Future<int> _insertBill(
   double taxableAmount = 0,
   double cgstAmount = 0,
   double sgstAmount = 0,
+  double igstAmount = 0,
   double gstAmount = 0,
   double cashPaid = 0,
   double upiPaid = 0,
@@ -255,6 +331,7 @@ Future<int> _insertBill(
           taxableAmount: drift.Value(taxableAmount),
           cgstAmount: drift.Value(cgstAmount),
           sgstAmount: drift.Value(sgstAmount),
+          igstAmount: drift.Value(igstAmount),
           gstAmount: drift.Value(gstAmount),
           finalAmount: drift.Value(finalAmount),
           paidAmount: drift.Value(paidAmount),

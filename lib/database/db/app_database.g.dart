@@ -12682,6 +12682,12 @@ class $StockMovementsTable extends StockMovements
   late final GeneratedColumn<String> itemNameSnapshot = GeneratedColumn<String>(
       'item_name_snapshot', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _puritySnapshotMeta =
+      const VerificationMeta('puritySnapshot');
+  @override
+  late final GeneratedColumn<String> puritySnapshot = GeneratedColumn<String>(
+      'purity_snapshot', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _quantityDeltaMeta =
       const VerificationMeta('quantityDelta');
   @override
@@ -12737,6 +12743,7 @@ class $StockMovementsTable extends StockMovements
         skuSnapshot,
         metalTypeSnapshot,
         itemNameSnapshot,
+        puritySnapshot,
         quantityDelta,
         grossWeightDelta,
         netWeightDelta,
@@ -12831,6 +12838,12 @@ class $StockMovementsTable extends StockMovements
     } else if (isInserting) {
       context.missing(_itemNameSnapshotMeta);
     }
+    if (data.containsKey('purity_snapshot')) {
+      context.handle(
+          _puritySnapshotMeta,
+          puritySnapshot.isAcceptableOrUnknown(
+              data['purity_snapshot']!, _puritySnapshotMeta));
+    }
     if (data.containsKey('quantity_delta')) {
       context.handle(
           _quantityDeltaMeta,
@@ -12902,6 +12915,8 @@ class $StockMovementsTable extends StockMovements
           DriftSqlType.string, data['${effectivePrefix}metal_type_snapshot'])!,
       itemNameSnapshot: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}item_name_snapshot'])!,
+      puritySnapshot: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}purity_snapshot']),
       quantityDelta: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}quantity_delta'])!,
       grossWeightDelta: attachedDatabase.typeMapping.read(
@@ -12936,6 +12951,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
   final String skuSnapshot;
   final String metalTypeSnapshot;
   final String itemNameSnapshot;
+  final String? puritySnapshot;
   final int quantityDelta;
   final double grossWeightDelta;
   final double netWeightDelta;
@@ -12955,6 +12971,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       required this.skuSnapshot,
       required this.metalTypeSnapshot,
       required this.itemNameSnapshot,
+      this.puritySnapshot,
       required this.quantityDelta,
       required this.grossWeightDelta,
       required this.netWeightDelta,
@@ -12982,6 +12999,9 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
     map['sku_snapshot'] = Variable<String>(skuSnapshot);
     map['metal_type_snapshot'] = Variable<String>(metalTypeSnapshot);
     map['item_name_snapshot'] = Variable<String>(itemNameSnapshot);
+    if (!nullToAbsent || puritySnapshot != null) {
+      map['purity_snapshot'] = Variable<String>(puritySnapshot);
+    }
     map['quantity_delta'] = Variable<int>(quantityDelta);
     map['gross_weight_delta'] = Variable<double>(grossWeightDelta);
     map['net_weight_delta'] = Variable<double>(netWeightDelta);
@@ -13013,6 +13033,9 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       skuSnapshot: Value(skuSnapshot),
       metalTypeSnapshot: Value(metalTypeSnapshot),
       itemNameSnapshot: Value(itemNameSnapshot),
+      puritySnapshot: puritySnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(puritySnapshot),
       quantityDelta: Value(quantityDelta),
       grossWeightDelta: Value(grossWeightDelta),
       netWeightDelta: Value(netWeightDelta),
@@ -13039,6 +13062,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       skuSnapshot: serializer.fromJson<String>(json['skuSnapshot']),
       metalTypeSnapshot: serializer.fromJson<String>(json['metalTypeSnapshot']),
       itemNameSnapshot: serializer.fromJson<String>(json['itemNameSnapshot']),
+      puritySnapshot: serializer.fromJson<String?>(json['puritySnapshot']),
       quantityDelta: serializer.fromJson<int>(json['quantityDelta']),
       grossWeightDelta: serializer.fromJson<double>(json['grossWeightDelta']),
       netWeightDelta: serializer.fromJson<double>(json['netWeightDelta']),
@@ -13063,6 +13087,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       'skuSnapshot': serializer.toJson<String>(skuSnapshot),
       'metalTypeSnapshot': serializer.toJson<String>(metalTypeSnapshot),
       'itemNameSnapshot': serializer.toJson<String>(itemNameSnapshot),
+      'puritySnapshot': serializer.toJson<String?>(puritySnapshot),
       'quantityDelta': serializer.toJson<int>(quantityDelta),
       'grossWeightDelta': serializer.toJson<double>(grossWeightDelta),
       'netWeightDelta': serializer.toJson<double>(netWeightDelta),
@@ -13085,6 +13110,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
           String? skuSnapshot,
           String? metalTypeSnapshot,
           String? itemNameSnapshot,
+          Value<String?> puritySnapshot = const Value.absent(),
           int? quantityDelta,
           double? grossWeightDelta,
           double? netWeightDelta,
@@ -13106,6 +13132,8 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
         skuSnapshot: skuSnapshot ?? this.skuSnapshot,
         metalTypeSnapshot: metalTypeSnapshot ?? this.metalTypeSnapshot,
         itemNameSnapshot: itemNameSnapshot ?? this.itemNameSnapshot,
+        puritySnapshot:
+            puritySnapshot.present ? puritySnapshot.value : this.puritySnapshot,
         quantityDelta: quantityDelta ?? this.quantityDelta,
         grossWeightDelta: grossWeightDelta ?? this.grossWeightDelta,
         netWeightDelta: netWeightDelta ?? this.netWeightDelta,
@@ -13140,6 +13168,9 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       itemNameSnapshot: data.itemNameSnapshot.present
           ? data.itemNameSnapshot.value
           : this.itemNameSnapshot,
+      puritySnapshot: data.puritySnapshot.present
+          ? data.puritySnapshot.value
+          : this.puritySnapshot,
       quantityDelta: data.quantityDelta.present
           ? data.quantityDelta.value
           : this.quantityDelta,
@@ -13173,6 +13204,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
           ..write('skuSnapshot: $skuSnapshot, ')
           ..write('metalTypeSnapshot: $metalTypeSnapshot, ')
           ..write('itemNameSnapshot: $itemNameSnapshot, ')
+          ..write('puritySnapshot: $puritySnapshot, ')
           ..write('quantityDelta: $quantityDelta, ')
           ..write('grossWeightDelta: $grossWeightDelta, ')
           ..write('netWeightDelta: $netWeightDelta, ')
@@ -13197,6 +13229,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
       skuSnapshot,
       metalTypeSnapshot,
       itemNameSnapshot,
+      puritySnapshot,
       quantityDelta,
       grossWeightDelta,
       netWeightDelta,
@@ -13219,6 +13252,7 @@ class StockMovement extends DataClass implements Insertable<StockMovement> {
           other.skuSnapshot == this.skuSnapshot &&
           other.metalTypeSnapshot == this.metalTypeSnapshot &&
           other.itemNameSnapshot == this.itemNameSnapshot &&
+          other.puritySnapshot == this.puritySnapshot &&
           other.quantityDelta == this.quantityDelta &&
           other.grossWeightDelta == this.grossWeightDelta &&
           other.netWeightDelta == this.netWeightDelta &&
@@ -13240,6 +13274,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
   final Value<String> skuSnapshot;
   final Value<String> metalTypeSnapshot;
   final Value<String> itemNameSnapshot;
+  final Value<String?> puritySnapshot;
   final Value<int> quantityDelta;
   final Value<double> grossWeightDelta;
   final Value<double> netWeightDelta;
@@ -13259,6 +13294,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
     this.skuSnapshot = const Value.absent(),
     this.metalTypeSnapshot = const Value.absent(),
     this.itemNameSnapshot = const Value.absent(),
+    this.puritySnapshot = const Value.absent(),
     this.quantityDelta = const Value.absent(),
     this.grossWeightDelta = const Value.absent(),
     this.netWeightDelta = const Value.absent(),
@@ -13279,6 +13315,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
     required String skuSnapshot,
     required String metalTypeSnapshot,
     required String itemNameSnapshot,
+    this.puritySnapshot = const Value.absent(),
     required int quantityDelta,
     this.grossWeightDelta = const Value.absent(),
     this.netWeightDelta = const Value.absent(),
@@ -13307,6 +13344,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
     Expression<String>? skuSnapshot,
     Expression<String>? metalTypeSnapshot,
     Expression<String>? itemNameSnapshot,
+    Expression<String>? puritySnapshot,
     Expression<int>? quantityDelta,
     Expression<double>? grossWeightDelta,
     Expression<double>? netWeightDelta,
@@ -13327,6 +13365,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
       if (skuSnapshot != null) 'sku_snapshot': skuSnapshot,
       if (metalTypeSnapshot != null) 'metal_type_snapshot': metalTypeSnapshot,
       if (itemNameSnapshot != null) 'item_name_snapshot': itemNameSnapshot,
+      if (puritySnapshot != null) 'purity_snapshot': puritySnapshot,
       if (quantityDelta != null) 'quantity_delta': quantityDelta,
       if (grossWeightDelta != null) 'gross_weight_delta': grossWeightDelta,
       if (netWeightDelta != null) 'net_weight_delta': netWeightDelta,
@@ -13349,6 +13388,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
       Value<String>? skuSnapshot,
       Value<String>? metalTypeSnapshot,
       Value<String>? itemNameSnapshot,
+      Value<String?>? puritySnapshot,
       Value<int>? quantityDelta,
       Value<double>? grossWeightDelta,
       Value<double>? netWeightDelta,
@@ -13368,6 +13408,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
       skuSnapshot: skuSnapshot ?? this.skuSnapshot,
       metalTypeSnapshot: metalTypeSnapshot ?? this.metalTypeSnapshot,
       itemNameSnapshot: itemNameSnapshot ?? this.itemNameSnapshot,
+      puritySnapshot: puritySnapshot ?? this.puritySnapshot,
       quantityDelta: quantityDelta ?? this.quantityDelta,
       grossWeightDelta: grossWeightDelta ?? this.grossWeightDelta,
       netWeightDelta: netWeightDelta ?? this.netWeightDelta,
@@ -13416,6 +13457,9 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
     if (itemNameSnapshot.present) {
       map['item_name_snapshot'] = Variable<String>(itemNameSnapshot.value);
     }
+    if (puritySnapshot.present) {
+      map['purity_snapshot'] = Variable<String>(puritySnapshot.value);
+    }
     if (quantityDelta.present) {
       map['quantity_delta'] = Variable<int>(quantityDelta.value);
     }
@@ -13452,6 +13496,7 @@ class StockMovementsCompanion extends UpdateCompanion<StockMovement> {
           ..write('skuSnapshot: $skuSnapshot, ')
           ..write('metalTypeSnapshot: $metalTypeSnapshot, ')
           ..write('itemNameSnapshot: $itemNameSnapshot, ')
+          ..write('puritySnapshot: $puritySnapshot, ')
           ..write('quantityDelta: $quantityDelta, ')
           ..write('grossWeightDelta: $grossWeightDelta, ')
           ..write('netWeightDelta: $netWeightDelta, ')
@@ -43927,6 +43972,7 @@ typedef $$StockMovementsTableCreateCompanionBuilder = StockMovementsCompanion
   required String skuSnapshot,
   required String metalTypeSnapshot,
   required String itemNameSnapshot,
+  Value<String?> puritySnapshot,
   required int quantityDelta,
   Value<double> grossWeightDelta,
   Value<double> netWeightDelta,
@@ -43948,6 +43994,7 @@ typedef $$StockMovementsTableUpdateCompanionBuilder = StockMovementsCompanion
   Value<String> skuSnapshot,
   Value<String> metalTypeSnapshot,
   Value<String> itemNameSnapshot,
+  Value<String?> puritySnapshot,
   Value<int> quantityDelta,
   Value<double> grossWeightDelta,
   Value<double> netWeightDelta,
@@ -44018,6 +44065,10 @@ class $$StockMovementsTableFilterComposer
 
   ColumnFilters<String> get itemNameSnapshot => $composableBuilder(
       column: $table.itemNameSnapshot,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get puritySnapshot => $composableBuilder(
+      column: $table.puritySnapshot,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get quantityDelta => $composableBuilder(
@@ -44109,6 +44160,10 @@ class $$StockMovementsTableOrderingComposer
       column: $table.itemNameSnapshot,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get puritySnapshot => $composableBuilder(
+      column: $table.puritySnapshot,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get quantityDelta => $composableBuilder(
       column: $table.quantityDelta,
       builder: (column) => ColumnOrderings(column));
@@ -44194,6 +44249,9 @@ class $$StockMovementsTableAnnotationComposer
   GeneratedColumn<String> get itemNameSnapshot => $composableBuilder(
       column: $table.itemNameSnapshot, builder: (column) => column);
 
+  GeneratedColumn<String> get puritySnapshot => $composableBuilder(
+      column: $table.puritySnapshot, builder: (column) => column);
+
   GeneratedColumn<int> get quantityDelta => $composableBuilder(
       column: $table.quantityDelta, builder: (column) => column);
 
@@ -44269,6 +44327,7 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             Value<String> skuSnapshot = const Value.absent(),
             Value<String> metalTypeSnapshot = const Value.absent(),
             Value<String> itemNameSnapshot = const Value.absent(),
+            Value<String?> puritySnapshot = const Value.absent(),
             Value<int> quantityDelta = const Value.absent(),
             Value<double> grossWeightDelta = const Value.absent(),
             Value<double> netWeightDelta = const Value.absent(),
@@ -44289,6 +44348,7 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             skuSnapshot: skuSnapshot,
             metalTypeSnapshot: metalTypeSnapshot,
             itemNameSnapshot: itemNameSnapshot,
+            puritySnapshot: puritySnapshot,
             quantityDelta: quantityDelta,
             grossWeightDelta: grossWeightDelta,
             netWeightDelta: netWeightDelta,
@@ -44309,6 +44369,7 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             required String skuSnapshot,
             required String metalTypeSnapshot,
             required String itemNameSnapshot,
+            Value<String?> puritySnapshot = const Value.absent(),
             required int quantityDelta,
             Value<double> grossWeightDelta = const Value.absent(),
             Value<double> netWeightDelta = const Value.absent(),
@@ -44329,6 +44390,7 @@ class $$StockMovementsTableTableManager extends RootTableManager<
             skuSnapshot: skuSnapshot,
             metalTypeSnapshot: metalTypeSnapshot,
             itemNameSnapshot: itemNameSnapshot,
+            puritySnapshot: puritySnapshot,
             quantityDelta: quantityDelta,
             grossWeightDelta: grossWeightDelta,
             netWeightDelta: netWeightDelta,

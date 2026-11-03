@@ -26,6 +26,7 @@ class DayBookIcons {
   static const IconData taxInvoice = Icons.receipt_long_rounded;
   static const IconData regularInvoice = Icons.receipt_rounded;
   static const IconData tax = Icons.percent_rounded;
+  static const IconData dueCollection = Icons.receipt_long_outlined;
 
   static const IconData cash = Icons.payments_rounded;
   static const IconData upi = Icons.qr_code_rounded;

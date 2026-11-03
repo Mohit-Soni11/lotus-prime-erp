@@ -60,6 +60,7 @@ class DayBookStrings {
   static const String gstCollected = 'GST Collected';
   static const String cgst = 'CGST';
   static const String sgst = 'SGST';
+  static const String igst = 'IGST';
   static const String invoices = 'invoices';
 
   static const String paymentMix = 'Payment Mix';

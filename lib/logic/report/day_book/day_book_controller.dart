@@ -20,6 +20,7 @@ import '../../../repositories/reports/day_book_repository.dart';
 import '../../../database/db/app_database.dart';
 import '../../../features/finance/ledger/data/finance_day_closure_repository.dart';
 import '../../../core/logging/app_logger.dart';
+import 'day_book_close_authorization.dart';
 
 class DayBookController extends ChangeNotifier {
   DayBookController() {
@@ -29,6 +30,9 @@ class DayBookController extends ChangeNotifier {
   final DayBookRepository _repo = DayBookRepository();
   final FinanceDayClosureRepository _closures =
       FinanceDayClosureRepository(AppDatabase());
+  final DayBookCloseAuthorization _closeAuthorization =
+      DayBookCloseAuthorization();
+  String? closeError;
 
   // ── Date ──────────────────────────────────────────────────────────────────
   DateTime _selectedDate = DateTime.now();
@@ -155,6 +159,10 @@ class DayBookController extends ChangeNotifier {
       _summary = DayBookSummary(
         date: data.date,
         moneyFlow: data.moneyFlow,
+        stockMovements: data.stockMovements,
+        documents: data.documents,
+        custodyPosition: data.custodyPosition,
+        metalPositionVerified: data.metalPositionVerified,
         openingCash: data.openingCash,
         openingGoldGrams: data.openingGoldGrams,
         openingSilverGrams: data.openingSilverGrams,
@@ -288,6 +296,11 @@ class DayBookController extends ChangeNotifier {
       ..removeAt(index);
     _summary = DayBookSummary(
       date: _summary!.date,
+      moneyFlow: _summary!.moneyFlow,
+      stockMovements: _summary!.stockMovements,
+      documents: _summary!.documents,
+      custodyPosition: _summary!.custodyPosition,
+      metalPositionVerified: _summary!.metalPositionVerified,
       openingCash: _summary!.openingCash,
       openingGoldGrams: _summary!.openingGoldGrams,
       openingSilverGrams: _summary!.openingSilverGrams,
@@ -310,6 +323,9 @@ class DayBookController extends ChangeNotifier {
   double get physicalCashAmount => denomination.physicalTotal;
   double get cashDifference => physicalCashAmount - systemCashAmount;
   bool get isCashMatched => cashDifference.abs() < 1.0;
+  bool get isMetalPositionVerified => _summary?.metalPositionVerified == true;
+  bool get isCustodyPositionVerified =>
+      _summary?.custodyPosition?.closingVerified == true;
 
   void resetDenomination() {
     for (final c in [
@@ -332,17 +348,39 @@ class DayBookController extends ChangeNotifier {
   // Persists the close in the finance ledger database.
   // ==========================================================================
   Future<bool> closeDay() async {
-    if (!isCashMatched) return false;
+    closeError = null;
+    if (!isMetalPositionVerified) {
+      closeError =
+          'Owned metal opening and closing are not verified. Day closing is unavailable until stock reconciliation is complete.';
+      return false;
+    }
+    if (!isCustodyPositionVerified) {
+      closeError =
+          'Girvi custody is not verified. Resolve missing handover dates before closing the day.';
+      return false;
+    }
+    if (!isCashMatched) {
+      closeError =
+          'The physical cash count does not match the recorded cash balance.';
+      return false;
+    }
     try {
+      final actorId = await _closeAuthorization.authorizedActorId();
       final closed = await _closures.closeDay(
         _selectedDate,
         closingCash: physicalCashAmount,
+        closedBy: actorId,
       );
-      if (!closed) return false;
+      if (!closed) {
+        closeError =
+            'Cash changed after the count. Refresh and recount before closing.';
+        return false;
+      }
       await loadData(silent: true);
       return true;
     } catch (e) {
       AppLogger.debug('❌ closeDay: $e');
+      closeError = e.toString().replaceFirst('Bad state: ', '');
       return false;
     }
   }

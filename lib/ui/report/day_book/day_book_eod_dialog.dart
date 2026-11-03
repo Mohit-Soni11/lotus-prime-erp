@@ -56,6 +56,24 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
                         _DenominationTable(ctrl: widget.ctrl),
                         const SizedBox(height: 20),
                         _ReconciliationSummary(ctrl: widget.ctrl),
+                        if (!widget.ctrl.isMetalPositionVerified) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            'Day closing is unavailable: owned metal opening and closing require historical stock reconciliation.',
+                            style: DayBookStyles.labelStrong.copyWith(
+                              color: DayBookColors.warning,
+                            ),
+                          ),
+                        ],
+                        if (!widget.ctrl.isCustodyPositionVerified) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Girvi custody is unverified. Resolve missing handover dates before day closing.',
+                            style: DayBookStyles.labelStrong.copyWith(
+                              color: DayBookColors.warning,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -92,7 +110,8 @@ class _DayBookEodDialogState extends State<DayBookEodDialog> {
 
     AppFeedback.warning(
       context,
-      message: 'The cash count must match before closing the day.',
+      message: widget.ctrl.closeError ??
+          'The cash count must match before closing the day.',
     );
   }
 }
@@ -543,7 +562,12 @@ class _DialogActions extends StatelessWidget {
       child: const Text(DayBookStrings.cancel),
     );
     final closeButton = FilledButton.icon(
-      onPressed: ctrl.isCashMatched && !isClosing ? onClose : null,
+      onPressed: ctrl.isCashMatched &&
+              ctrl.isMetalPositionVerified &&
+              ctrl.isCustodyPositionVerified &&
+              !isClosing
+          ? onClose
+          : null,
       icon: isClosing
           ? const SizedBox(
               width: 16,

@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
+import '../../../models/reports/day_book/day_book_expense_classification.dart';
 import '../../../models/reports/day_book/day_book_money_flow.dart';
 import 'package:flutter/foundation.dart';
 
@@ -49,7 +50,6 @@ class DayBookExportService {
       title: 'Day Book - ${_date(summary.date)}',
       author: 'Lotus ERP',
     );
-    final metalRows = _metalRows(summary);
     final flow = summary.moneyFlow;
 
     document.addPage(
@@ -140,6 +140,26 @@ class DayBookExportService {
             _pdfSection('Money Out by Mode', const ['Mode', 'Amount'],
                 _breakdownRows(flow.byMode(incoming: false))),
             pw.SizedBox(height: 14),
+            _pdfSection('Bank In by Account', const ['Account', 'Amount'],
+                _breakdownRows(flow.byBankAccount(incoming: true))),
+            pw.SizedBox(height: 14),
+            _pdfSection('Bank Out by Account', const ['Account', 'Amount'],
+                _breakdownRows(flow.byBankAccount(incoming: false))),
+            pw.SizedBox(height: 14),
+            _pdfSection(
+                'Bank Receipt Reconciliation',
+                const ['Status', 'Amount'],
+                _breakdownRows(flow.byBankReconciliation(incoming: true))),
+            pw.SizedBox(height: 14),
+            _pdfSection('Payment Classification', const [
+              'Purpose',
+              'Amount'
+            ], [
+              for (final entry
+                  in DayBookExpenseClassification.totals(flow).entries)
+                [entry.key.label, _money(entry.value)],
+            ]),
+            pw.SizedBox(height: 14),
           ],
           _pdfSection(
             'Physical Cash and Metal Position',
@@ -150,10 +170,30 @@ class DayBookExportService {
               ['Cash Out', _money(summary.cashPaid)],
               ['Net Cash Flow', _signedMoney(summary.netCash)],
               ['Closing Cash', _money(summary.closingCash)],
-              ['Opening Gold', _weight(summary.openingGoldGrams)],
-              ['Closing Gold', _weight(summary.closingGold)],
-              ['Opening Silver', _weight(summary.openingSilverGrams)],
-              ['Closing Silver', _weight(summary.closingSilver)],
+              [
+                'Opening Gold',
+                summary.metalPositionVerified
+                    ? _weight(summary.openingGoldGrams)
+                    : 'Unverified'
+              ],
+              [
+                'Closing Gold',
+                summary.metalPositionVerified
+                    ? _weight(summary.closingGold)
+                    : 'Unverified'
+              ],
+              [
+                'Opening Silver',
+                summary.metalPositionVerified
+                    ? _weight(summary.openingSilverGrams)
+                    : 'Unverified'
+              ],
+              [
+                'Closing Silver',
+                summary.metalPositionVerified
+                    ? _weight(summary.closingSilver)
+                    : 'Unverified'
+              ],
             ],
           ),
           pw.SizedBox(height: 14),
@@ -172,10 +212,44 @@ class DayBookExportService {
                 _money(summary.cashIn.nonGstSales.totalAmount),
               ],
               ['GST Collected', _money(summary.totalGstCollected)],
+              ['CGST', _money(summary.cashIn.gstSales.cgst)],
+              ['SGST', _money(summary.cashIn.gstSales.sgst)],
+              ['IGST', _money(summary.cashIn.gstSales.igst)],
               ['Due Collection', _money(summary.cashIn.dueCollection)],
             ],
           ),
           pw.SizedBox(height: 14),
+          if (summary.documents.isNotEmpty) ...[
+            _pdfSection(
+              'Source Documents',
+              const [
+                'Kind',
+                'Number',
+                'Status',
+                'Value',
+                'Tax',
+                'Collection',
+                'Outstanding'
+              ],
+              [
+                for (final document in summary.documents)
+                  [
+                    document.kind.label,
+                    document.number,
+                    document.status,
+                    _money(document.amount),
+                    document.tax == null ? '-' : _money(document.tax!),
+                    document.collection == null
+                        ? '-'
+                        : _money(document.collection!),
+                    document.outstanding == null
+                        ? '-'
+                        : _money(document.outstanding!),
+                  ],
+              ],
+            ),
+            pw.SizedBox(height: 14),
+          ],
           _pdfSection(
             'Payment Mix',
             const ['Mode', 'Amount'],
@@ -187,12 +261,74 @@ class DayBookExportService {
               ['Cheque', _money(summary.paymentBreakup.cheque)],
             ],
           ),
-          if (metalRows.isNotEmpty) ...[
+          if (summary.stockMovements.isNotEmpty) ...[
             pw.SizedBox(height: 14),
             _pdfSection(
-              'Metal Movement',
-              const ['Metal', 'Purity', 'Received', 'Issued', 'Net'],
-              metalRows,
+              'Posted Owned Stock Movement (Position Unverified)',
+              const [
+                'Metal',
+                'Purity',
+                'Item',
+                'Source',
+                'Pieces',
+                'Gross',
+                'Net',
+                'Fine'
+              ],
+              [
+                for (final movement in summary.stockMovements)
+                  [
+                    movement.metal,
+                    movement.puritySnapshot ?? 'Unverified',
+                    movement.itemName,
+                    '${movement.sourceNumber ?? movement.sourceId}${movement.sourceLineNo == null ? '' : ' #${movement.sourceLineNo}'}',
+                    movement.quantityDelta.toString(),
+                    _weight(movement.grossWeightDelta),
+                    _weight(movement.netWeightDelta),
+                    _weight(movement.fineWeightDelta),
+                  ],
+              ],
+            ),
+          ],
+          if (summary.custodyPosition case final custody?
+              when custody.lines.isNotEmpty) ...[
+            pw.SizedBox(height: 14),
+            _pdfSection(
+              'Girvi Custody (Customer Property)',
+              const [
+                'Stage',
+                'Ticket',
+                'Metal',
+                'Item',
+                'Pieces',
+                'Gross',
+                'Net',
+                'Fine'
+              ],
+              [
+                for (final (stage, lines) in [
+                  ('Opening', custody.opening),
+                  ('Received', custody.received),
+                  ('Released', custody.released),
+                  (
+                    custody.closingVerified ? 'Closing' : 'Closing Unverified',
+                    custody.closing
+                  ),
+                ])
+                  for (final line in lines)
+                    [
+                      stage,
+                      line.ticketNo,
+                      '${line.metal} ${line.purity}',
+                      line.itemName,
+                      line.pieces.toString(),
+                      _weight(line.grossWeight),
+                      _weight(line.netWeight),
+                      line.fineWeight == null
+                          ? 'Unverified'
+                          : _weight(line.fineWeight!),
+                    ],
+              ],
             ),
           ],
           if (flow != null && flow.entries.isNotEmpty) ...[
@@ -281,34 +417,6 @@ class DayBookExportService {
     );
   }
 
-  static List<List<String>> _metalRows(DayBookSummary summary) {
-    final incoming = summary.metalIn.total;
-    final outgoing = summary.metalOut.total;
-    final metals = <String>{...incoming.metals, ...outgoing.metals}.toList()
-      ..sort();
-    final rows = <List<String>>[];
-
-    for (final metal in metals) {
-      final purities = <String>{
-        ...incoming.puritiesFor(metal).keys,
-        ...outgoing.puritiesFor(metal).keys,
-      }.toList()
-        ..sort();
-      for (final purity in purities) {
-        final received = incoming.puritiesFor(metal)[purity] ?? 0;
-        final issued = outgoing.puritiesFor(metal)[purity] ?? 0;
-        rows.add([
-          metal,
-          purity,
-          _weight(received),
-          _weight(issued),
-          _signedWeight(received - issued),
-        ]);
-      }
-    }
-    return rows;
-  }
-
   static List<List<String>> _breakdownRows(Map<String, double> values) {
     if (values.isEmpty) {
       return [
@@ -331,12 +439,16 @@ class DayBookExportService {
       [
         'Opening Position',
         'Gold (g)',
-        summary.openingGoldGrams.toStringAsFixed(3),
+        summary.metalPositionVerified
+            ? summary.openingGoldGrams.toStringAsFixed(3)
+            : 'Unverified',
       ],
       [
         'Opening Position',
         'Silver (g)',
-        summary.openingSilverGrams.toStringAsFixed(3),
+        summary.metalPositionVerified
+            ? summary.openingSilverGrams.toStringAsFixed(3)
+            : 'Unverified',
       ],
       ['Cash Movement', 'Cash In', summary.cashReceived.toStringAsFixed(2)],
       ['Cash Movement', 'Cash Out', summary.cashPaid.toStringAsFixed(2)],
@@ -348,6 +460,9 @@ class DayBookExportService {
         'GST Collected',
         summary.totalGstCollected.toStringAsFixed(2),
       ],
+      ['Sales', 'CGST', summary.cashIn.gstSales.cgst.toStringAsFixed(2)],
+      ['Sales', 'SGST', summary.cashIn.gstSales.sgst.toStringAsFixed(2)],
+      ['Sales', 'IGST', summary.cashIn.gstSales.igst.toStringAsFixed(2)],
       ['Payment Mix', 'Cash', summary.paymentBreakup.cash.toStringAsFixed(2)],
       ['Payment Mix', 'UPI', summary.paymentBreakup.upi.toStringAsFixed(2)],
       ['Payment Mix', 'Card', summary.paymentBreakup.card.toStringAsFixed(2)],
@@ -360,6 +475,30 @@ class DayBookExportService {
     ];
 
     final flow = summary.moneyFlow;
+    for (final document in summary.documents) {
+      final section = 'Source Document ${document.kind.label}';
+      rows.add([section, '${document.number} Status', document.status]);
+      rows.add([
+        section,
+        '${document.number} Value',
+        document.amount.toStringAsFixed(2)
+      ]);
+      rows.add([
+        section,
+        '${document.number} Tax',
+        document.tax?.toStringAsFixed(2) ?? 'Unverified'
+      ]);
+      rows.add([
+        section,
+        '${document.number} Collection',
+        document.collection?.toStringAsFixed(2) ?? 'Unverified'
+      ]);
+      rows.add([
+        section,
+        '${document.number} Outstanding',
+        document.outstanding?.toStringAsFixed(2) ?? 'Unverified'
+      ]);
+    }
     if (flow != null) {
       rows.addAll([
         ['Money Position', 'Opening Cash', flow.openingCash.toStringAsFixed(2)],
@@ -399,30 +538,96 @@ class DayBookExportService {
           rows, 'Money Out by Source', flow.bySource(incoming: false));
       _appendBreakdown(rows, 'Money In by Mode', flow.byMode(incoming: true));
       _appendBreakdown(rows, 'Money Out by Mode', flow.byMode(incoming: false));
+      _appendBreakdown(
+          rows, 'Bank In by Account', flow.byBankAccount(incoming: true));
+      _appendBreakdown(
+          rows, 'Bank Out by Account', flow.byBankAccount(incoming: false));
+      _appendBreakdown(rows, 'Bank Receipt Reconciliation',
+          flow.byBankReconciliation(incoming: true));
+      _appendBreakdown(rows, 'Bank Payment Reconciliation',
+          flow.byBankReconciliation(incoming: false));
+      for (final entry in DayBookExpenseClassification.totals(flow).entries) {
+        rows.add([
+          'Payment Classification',
+          entry.key.label,
+          entry.value.toStringAsFixed(2)
+        ]);
+      }
       _appendTransactions(rows, flow);
     }
 
-    for (final row in _metalRows(summary)) {
+    for (final movement in summary.stockMovements) {
+      final source =
+          '${movement.sourceNumber ?? movement.sourceId}${movement.sourceLineNo == null ? '' : ' #${movement.sourceLineNo}'}';
+      final key =
+          '${movement.metal} ${movement.puritySnapshot ?? '(purity unverified)'} / ${movement.itemName} / $source';
+      rows.add(
+          ['Owned Stock Movement', '$key Pieces', '${movement.quantityDelta}']);
       rows.add([
-        'Metal Movement',
-        '${row[0]} ${row[1]} Received',
-        row[2],
+        'Owned Stock Movement',
+        '$key Gross (g)',
+        movement.grossWeightDelta.toStringAsFixed(3)
       ]);
       rows.add([
-        'Metal Movement',
-        '${row[0]} ${row[1]} Issued',
-        row[3],
+        'Owned Stock Movement',
+        '$key Net (g)',
+        movement.netWeightDelta.toStringAsFixed(3)
       ]);
-      rows.add(['Metal Movement', '${row[0]} ${row[1]} Net', row[4]]);
+      rows.add([
+        'Owned Stock Movement',
+        '$key Fine (g)',
+        movement.fineWeightDelta.toStringAsFixed(3)
+      ]);
+    }
+
+    if (summary.custodyPosition case final custody?) {
+      for (final (stage, lines) in [
+        ('Opening', custody.opening),
+        ('Received', custody.received),
+        ('Released', custody.released),
+        (
+          custody.closingVerified ? 'Closing' : 'Closing Unverified',
+          custody.closing
+        ),
+      ]) {
+        for (final line in lines) {
+          final key =
+              '${line.ticketNo} / ${line.metal} ${line.purity} / ${line.itemName}';
+          rows.add(['Girvi Custody $stage', '$key Pieces', '${line.pieces}']);
+          rows.add([
+            'Girvi Custody $stage',
+            '$key Gross (g)',
+            line.grossWeight.toStringAsFixed(3)
+          ]);
+          rows.add([
+            'Girvi Custody $stage',
+            '$key Net (g)',
+            line.netWeight.toStringAsFixed(3)
+          ]);
+          rows.add([
+            'Girvi Custody $stage',
+            '$key Fine (g)',
+            line.fineWeight?.toStringAsFixed(3) ?? 'Unverified'
+          ]);
+        }
+      }
     }
 
     rows.addAll([
       ['Closing Position', 'Cash', summary.closingCash.toStringAsFixed(2)],
-      ['Closing Position', 'Gold (g)', summary.closingGold.toStringAsFixed(3)],
+      [
+        'Closing Position',
+        'Gold (g)',
+        summary.metalPositionVerified
+            ? summary.closingGold.toStringAsFixed(3)
+            : 'Unverified'
+      ],
       [
         'Closing Position',
         'Silver (g)',
-        summary.closingSilver.toStringAsFixed(3),
+        summary.metalPositionVerified
+            ? summary.closingSilver.toStringAsFixed(3)
+            : 'Unverified',
       ],
     ]);
 
@@ -477,7 +682,4 @@ class DayBookExportService {
       '${value >= 0 ? '+' : '-'}${_money(value.abs())}';
 
   static String _weight(double value) => '${value.toStringAsFixed(3)} g';
-
-  static String _signedWeight(double value) =>
-      '${value >= 0 ? '+' : '-'}${_weight(value.abs())}';
 }

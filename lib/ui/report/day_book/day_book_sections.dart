@@ -286,13 +286,17 @@ class DayBookOpeningPosition extends StatelessWidget {
       ),
       _PositionMetricData(
         label: DayBookStrings.openingGold,
-        value: _weight(summary.openingGoldGrams),
+        value: summary.metalPositionVerified
+            ? _weight(summary.openingGoldGrams)
+            : 'Unverified',
         icon: DayBookIcons.gold,
         color: DayBookColors.goldMetal,
       ),
       _PositionMetricData(
         label: DayBookStrings.openingSilver,
-        value: _weight(summary.openingSilverGrams),
+        value: summary.metalPositionVerified
+            ? _weight(summary.openingSilverGrams)
+            : 'Unverified',
         icon: DayBookIcons.silver,
         color: DayBookColors.shellMuted,
       ),
@@ -377,13 +381,17 @@ class DayBookClosingPosition extends StatelessWidget {
       ),
       _PositionMetricData(
         label: DayBookStrings.closingGold,
-        value: _weight(summary.closingGold),
+        value: summary.metalPositionVerified
+            ? _weight(summary.closingGold)
+            : 'Unverified',
         icon: DayBookIcons.gold,
         color: DayBookColors.goldMetal,
       ),
       _PositionMetricData(
         label: DayBookStrings.closingSilver,
-        value: _weight(summary.closingSilver),
+        value: summary.metalPositionVerified
+            ? _weight(summary.closingSilver)
+            : 'Unverified',
         icon: DayBookIcons.silver,
         color: DayBookColors.silverMetal,
       ),
@@ -711,6 +719,7 @@ class SalesTaxPanel extends StatelessWidget {
               _ValuePair(DayBookStrings.taxableValue, gst.taxableAmount),
               _ValuePair(DayBookStrings.cgst, gst.cgst),
               _ValuePair(DayBookStrings.sgst, gst.sgst),
+              _ValuePair(DayBookStrings.igst, gst.igst),
               _ValuePair(DayBookStrings.gstCollected, gst.gstCollected),
             ],
           );
@@ -830,10 +839,6 @@ class _MetalMovementPanelState extends State<MetalMovementPanel> {
   Widget build(BuildContext context) {
     final summary = widget.summary;
     final incoming = <_MetalLedgerData>[
-      _MetalLedgerData(
-        DayBookStrings.girviSecurity,
-        summary.metalIn.girviSecurityDeposit,
-      ),
       _MetalLedgerData(
         DayBookStrings.oldGoldPurchase,
         summary.metalIn.urdPurchase,

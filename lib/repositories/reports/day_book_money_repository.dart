@@ -62,6 +62,7 @@ class DayBookMoneyRepository {
             paymentMode: 'CASH',
             transactionId: row.txnId,
             referenceId: row.referenceId,
+            referenceType: row.referenceType,
             isInternalTransfer: _internalCategories.contains(row.category),
           ),
       for (final row in bankRows)
@@ -76,7 +77,12 @@ class DayBookMoneyRepository {
             transactionId: row.txnId,
             accountName: accountNames[row.accountId],
             referenceId: row.referenceId,
+            referenceType: row.referenceType,
             isInternalTransfer: _internalCategories.contains(row.category),
+            chequeNumber: row.chequeNumber,
+            chequeStatus: row.chequeStatus,
+            valueDate: row.valueDate,
+            isReconciled: row.isReconciled,
           ),
     ]..sort((a, b) => b.date.compareTo(a.date));
 
