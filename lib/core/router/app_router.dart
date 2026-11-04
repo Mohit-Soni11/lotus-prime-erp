@@ -429,9 +429,15 @@ GoRouter createAppRouter() {
               final id = int.parse(state.pathParameters['id']!);
               final initialBillId =
                   int.tryParse(state.uri.queryParameters['billId'] ?? '');
+              final initialGirviId =
+                  int.tryParse(state.uri.queryParameters['girviId'] ?? '');
+              final initialAdvanceId =
+                  int.tryParse(state.uri.queryParameters['advanceId'] ?? '');
               return CustomerProfileScreen(
                 customerId: id,
                 initialBillId: initialBillId,
+                initialGirviId: initialGirviId,
+                initialAdvanceId: initialAdvanceId,
                 onBack: () => _goBackOr(context, RoutePaths.customerList),
                 onDeleted: () => context.go(RoutePaths.customerList),
                 onNewSale: (customerId) => context.go(Uri(
@@ -538,8 +544,11 @@ GoRouter createAppRouter() {
             path: RoutePaths.supplierProfile,
             builder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
+              final initialVoucherId =
+                  int.tryParse(state.uri.queryParameters['voucherId'] ?? '');
               return SupplierProfileScreen(
                 supplierId: id,
+                initialVoucherId: initialVoucherId,
                 onBack: () => _goBackOr(context, RoutePaths.supplierList),
                 onDeleted: () => context.go(RoutePaths.supplierList),
                 onNewStock: () => context.go(RoutePaths.stockAdd),

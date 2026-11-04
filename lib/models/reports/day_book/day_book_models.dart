@@ -1,6 +1,8 @@
 import 'day_book_money_flow.dart';
 import 'day_book_custody_position.dart';
 import 'day_book_document.dart';
+import 'day_book_activity_event.dart';
+import 'day_book_expense_record.dart';
 import 'day_book_stock_movement.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -374,6 +376,8 @@ class DayBookSummary {
   final List<DayBookStockMovement> stockMovements;
   final DayBookCustodyPosition? custodyPosition;
   final List<DayBookDocument> documents;
+  final List<DayBookActivityEvent> activityEvents;
+  final List<DayBookExpenseRecord> expenseRecords;
   final bool metalPositionVerified;
 
   // Opening balances (from ShopProfile or previous day closing)
@@ -401,6 +405,8 @@ class DayBookSummary {
     this.stockMovements = const [],
     this.custodyPosition,
     this.documents = const [],
+    this.activityEvents = const [],
+    this.expenseRecords = const [],
     this.metalPositionVerified = false,
     this.openingCash = 0,
     this.openingGoldGrams = 0,

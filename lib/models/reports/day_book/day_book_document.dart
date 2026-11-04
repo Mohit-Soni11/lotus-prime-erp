@@ -2,6 +2,7 @@ enum DayBookDocumentKind {
   regularInvoice('Regular Invoice'),
   gstInvoice('GST Invoice'),
   advanceReceipt('Advance Receipt'),
+  advanceCancellationVoucher('Advance Cancellation'),
   girviTicket('Girvi Ticket'),
   purchaseVoucher('Purchase Voucher'),
   returnVoucher('Return Voucher');
@@ -21,6 +22,11 @@ class DayBookDocument {
     this.tax,
     this.collection,
     this.outstanding,
+    this.customerId,
+    this.sourceType,
+    this.originalSourceId,
+    this.relatedEntityId,
+    this.supplierId,
   });
 
   final DayBookDocumentKind kind;
@@ -32,6 +38,11 @@ class DayBookDocument {
   final double? tax;
   final double? collection;
   final double? outstanding;
+  final int? customerId;
+  final String? sourceType;
+  final int? originalSourceId;
+  final int? relatedEntityId;
+  final int? supplierId;
 
   bool get isVoided =>
       status.toUpperCase() == 'VOID' || status.toUpperCase() == 'VOIDED';

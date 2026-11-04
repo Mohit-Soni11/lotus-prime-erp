@@ -17,7 +17,7 @@ class DayBookDocumentSummaryPanel extends StatelessWidget {
     return Container(
       decoration: DayBookStyles.panel(),
       child: ExpansionTile(
-        initiallyExpanded: true,
+        initiallyExpanded: false,
         title:
             Text('Source Document Summary', style: DayBookStyles.sectionTitle),
         subtitle: Text(

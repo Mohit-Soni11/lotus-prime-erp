@@ -30,36 +30,6 @@ class DayBookMoneyPanel extends StatelessWidget {
             style: DayBookStyles.sectionSubtitle,
           ),
           const SizedBox(height: 16),
-          LayoutBuilder(builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900
-                ? 4
-                : constraints.maxWidth >= 540
-                    ? 2
-                    : 1;
-            final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
-            final metrics = [
-              ('Opening Money', flow.openingTotal, DayBookColors.information),
-              ('Money In', flow.moneyIn, DayBookColors.positive),
-              ('Money Out', flow.moneyOut, DayBookColors.negative),
-              ('Closing Money', flow.closingTotal, DayBookColors.brandGold),
-            ];
-            return Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final metric in metrics)
-                  SizedBox(
-                    width: width,
-                    child: _Metric(
-                      title: metric.$1,
-                      value: metric.$2,
-                      accent: metric.$3,
-                    ),
-                  ),
-              ],
-            );
-          }),
-          const SizedBox(height: 16),
           _ResponsivePair(
             first: _PositionCard(
               title: 'Physical Cash',
@@ -202,38 +172,6 @@ class _ResponsivePair extends StatelessWidget {
                   Expanded(child: second),
                 ],
               ),
-      );
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric(
-      {required this.title, required this.value, required this.accent});
-
-  final String title;
-  final double value;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: accent.withValues(alpha: 0.25)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: DayBookStyles.label),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(_currency.format(value),
-                  style: DayBookStyles.valueLarge),
-            ),
-          ],
-        ),
       );
 }
 

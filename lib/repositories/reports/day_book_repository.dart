@@ -9,6 +9,8 @@ import 'day_book_money_repository.dart';
 import 'day_book_stock_movement_repository.dart';
 import 'day_book_custody_repository.dart';
 import 'day_book_document_repository.dart';
+import 'day_book_activity_repository.dart';
+import 'day_book_expense_repository.dart';
 import '../../models/reports/day_book/day_book_document_collection_mapper.dart';
 import 'package:lotus_erp/core/logging/app_logger.dart';
 
@@ -61,6 +63,9 @@ class DayBookRepository {
           await DayBookDocumentRepository(_db).fetch(date),
           moneyFlow,
         );
+        final activityEvents = await DayBookActivityRepository(_db)
+            .fetch(date, moneyFlow: moneyFlow);
+        final expenseRecords = await DayBookExpenseRepository(_db).fetch(date);
 
         // ── Build CashInflow ───────────────────────────────────────────────────
         final cashIn = CashInflow(
@@ -100,6 +105,8 @@ class DayBookRepository {
           moneyFlow: moneyFlow,
           stockMovements: stockMovements,
           documents: documents,
+          activityEvents: activityEvents,
+          expenseRecords: expenseRecords,
           custodyPosition: custodyPosition,
           openingCash: openingCash,
           cashIn: cashIn,

@@ -2,12 +2,19 @@ part of 'customer_profile_screen.dart';
 
 extension _ProfileGirviHistory on _CustomerProfileScreenState {
   Widget _buildGirviList(CustomerProfileModel p) {
-    final activeLoans = p.loans.where((loan) => loan.isActive).toList();
+    final activeLoans = p.loans
+        .where((loan) => loan.isActive || loan.id == widget.initialGirviId)
+        .toList()
+      ..sort((a, b) => a.id == widget.initialGirviId
+          ? -1
+          : b.id == widget.initialGirviId
+              ? 1
+              : 0);
     if (activeLoans.isEmpty) {
       return _emptyState(
         icon: Icons.lock_outline_rounded,
-        title: 'No active Girvi tickets',
-        sub: 'Active pledge records will appear here.',
+        title: 'No Girvi tickets',
+        sub: 'Pledge records will appear here.',
       );
     }
     return ListView.builder(
@@ -29,14 +36,20 @@ extension _ProfileGirviHistory on _CustomerProfileScreenState {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showGirviActions(loan),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: CustomerProfileColors.bodyBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: active ? statusBorder : CustomerProfileColors.bodyBorder,
+              color: widget.initialGirviId == loan.id && _focusPulse
+                  ? CustomerProfileColors.brandGold
+                  : active
+                      ? statusBorder
+                      : CustomerProfileColors.bodyBorder,
+              width: widget.initialGirviId == loan.id && _focusPulse ? 2 : 1,
             ),
           ),
           child: Column(

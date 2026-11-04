@@ -3,6 +3,7 @@ part of 'supplier_profile_screen.dart';
 extension _SupplierProfileHistorySections on _SupplierProfileScreenState {
   Widget _buildHistoryTabs(SupplierProfileModel profile) {
     return Container(
+      key: _purchaseHistoryKey,
       decoration: SupplierProfileStyles.cardDecoration,
       padding: SupplierProfileStyles.cardPadding,
       child: Column(
@@ -64,7 +65,12 @@ extension _SupplierProfileHistorySections on _SupplierProfileScreenState {
 
   Widget _buildPurchaseList(SupplierProfileModel profile) {
     return _buildPurchaseListFor(
-      items: profile.purchases,
+      items: profile.purchases.toList()
+        ..sort((a, b) => a.voucherId == widget.initialVoucherId
+            ? -1
+            : b.voucherId == widget.initialVoucherId
+                ? 1
+                : 0),
       emptyTitle: SupplierProfileStrings.noPurchases,
       emptySubtitle: SupplierProfileStrings.noPurchasesSub,
       keyValue: 'purchase-list',
@@ -89,7 +95,11 @@ extension _SupplierProfileHistorySections on _SupplierProfileScreenState {
       key: ValueKey(keyValue),
       children: [
         for (final item in items) ...[
-          _PurchaseHistoryCard(item: item),
+          _PurchaseHistoryCard(
+            item: item,
+            highlighted:
+                item.voucherId == widget.initialVoucherId && _voucherPulse,
+          ),
           const SizedBox(height: 10),
         ],
       ],

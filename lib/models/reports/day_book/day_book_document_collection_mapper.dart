@@ -38,6 +38,11 @@ class DayBookDocumentCollectionMapper {
         tax: document.tax,
         collection: collection,
         outstanding: document.outstanding,
+        customerId: document.customerId,
+        sourceType: document.sourceType,
+        originalSourceId: document.originalSourceId,
+        relatedEntityId: document.relatedEntityId,
+        supplierId: document.supplierId,
       );
     }));
   }

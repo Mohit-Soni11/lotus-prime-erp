@@ -6,7 +6,12 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
         dueOnly ? p.dues.map((due) => due.billId).toSet() : const <int>{};
     final bills = dueOnly
         ? p.bills.where((bill) => dueBillIds.contains(bill.id)).toList()
-        : p.bills;
+        : p.bills.toList()
+      ..sort((a, b) => a.id == widget.initialBillId
+          ? -1
+          : b.id == widget.initialBillId
+              ? 1
+              : 0);
     if (bills.isEmpty) {
       return _emptyState(
         icon: dueOnly
@@ -44,13 +49,19 @@ extension _ProfileBillHistory on _CustomerProfileScreenState {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () => _showBillActions(bill),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: CustomerProfileColors.bodyBg,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: CustomerProfileColors.bodyBorder),
+            border: Border.all(
+              color: widget.initialBillId == bill.id && _focusPulse
+                  ? CustomerProfileColors.brandGold
+                  : CustomerProfileColors.bodyBorder,
+              width: widget.initialBillId == bill.id && _focusPulse ? 2 : 1,
+            ),
           ),
           child: Row(
             children: [

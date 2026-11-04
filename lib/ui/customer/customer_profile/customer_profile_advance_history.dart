@@ -3,13 +3,21 @@ part of 'customer_profile_screen.dart';
 extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
   Widget _buildAdvanceList(CustomerProfileModel p) {
     final activeOrders = p.advanceOrders
-        .where((order) => order.isPending || order.isReady)
-        .toList();
+        .where((order) =>
+            order.isPending ||
+            order.isReady ||
+            order.id == widget.initialAdvanceId)
+        .toList()
+      ..sort((a, b) => a.id == widget.initialAdvanceId
+          ? -1
+          : b.id == widget.initialAdvanceId
+              ? 1
+              : 0);
     if (activeOrders.isEmpty) {
       return _emptyState(
         icon: CustomerProfileIcons.advanceEmpty,
-        title: 'No active advance orders',
-        sub: 'Open advance bookings will appear here.',
+        title: 'No advance orders',
+        sub: 'Advance bookings will appear here.',
       );
     }
     return ListView.builder(
@@ -53,12 +61,18 @@ extension _ProfileAdvanceHistory on _CustomerProfileScreenState {
       child: InkWell(
         onTap: () => _showAdvanceActions(order),
         borderRadius: BorderRadius.circular(12),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.only(bottom: 14),
           decoration: BoxDecoration(
             color: CustomerProfileColors.bodyPanelBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: CustomerProfileColors.bodyBorder),
+            border: Border.all(
+              color: widget.initialAdvanceId == order.id && _focusPulse
+                  ? CustomerProfileColors.brandGold
+                  : CustomerProfileColors.bodyBorder,
+              width: widget.initialAdvanceId == order.id && _focusPulse ? 2 : 1,
+            ),
             boxShadow: const [
               BoxShadow(
                 color: CustomerProfileColors.shadowLight,

@@ -6,7 +6,7 @@ import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
 import 'day_book_custody_panel.dart';
-import 'day_book_daily_toolbar.dart';
+import 'day_book_top_section.dart';
 import 'day_book_document_summary_panel.dart';
 import 'day_book_eod_dialog.dart';
 import 'day_book_expense_panel.dart';
@@ -145,7 +145,7 @@ class _DayBookScreenState extends State<DayBookScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DayBookDailyToolbar(
+            DayBookTopSection(
               ctrl: _ctrl,
               summary: summary,
               onReconcile: _showReconciliation,

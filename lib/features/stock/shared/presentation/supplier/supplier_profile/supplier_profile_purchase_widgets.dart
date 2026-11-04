@@ -2,8 +2,9 @@ part of 'supplier_profile_screen.dart';
 
 class _PurchaseHistoryCard extends StatelessWidget {
   final SupplierProfilePurchaseModel item;
+  final bool highlighted;
 
-  const _PurchaseHistoryCard({required this.item});
+  const _PurchaseHistoryCard({required this.item, this.highlighted = false});
 
   @override
   Widget build(BuildContext context) {
@@ -13,9 +14,17 @@ class _PurchaseHistoryCard extends StatelessWidget {
     final taxColor = item.isGstPurchase
         ? SupplierProfileColors.info
         : SupplierProfileColors.bodyTextMuted;
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
       padding: const EdgeInsets.all(14),
-      decoration: SupplierProfileStyles.softPanelDecoration,
+      decoration: highlighted
+          ? SupplierProfileStyles.softPanelDecoration.copyWith(
+              border: Border.all(
+                color: SupplierProfileColors.brandGold,
+                width: 2,
+              ),
+            )
+          : SupplierProfileStyles.softPanelDecoration,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

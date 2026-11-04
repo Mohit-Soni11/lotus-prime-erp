@@ -29,6 +29,7 @@ part 'supplier_profile_feedback.dart';
 
 class SupplierProfileScreen extends StatefulWidget {
   final int supplierId;
+  final int? initialVoucherId;
   final VoidCallback? onBack;
   final VoidCallback? onNewStock;
   final VoidCallback? onDeleted;
@@ -36,6 +37,7 @@ class SupplierProfileScreen extends StatefulWidget {
   const SupplierProfileScreen({
     super.key,
     required this.supplierId,
+    this.initialVoucherId,
     this.onBack,
     this.onNewStock,
     this.onDeleted,
@@ -52,6 +54,9 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
   late final Animation<double> _fadeIn;
   late final TabController _tabCtrl;
   final ScrollController _scrollCtrl = ScrollController();
+  final GlobalKey _purchaseHistoryKey = GlobalKey();
+  bool _voucherFocusScheduled = false;
+  bool _voucherPulse = false;
 
   @override
   void initState() {
@@ -79,6 +84,15 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
       }
       setState(() {});
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant SupplierProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialVoucherId != widget.initialVoucherId) {
+      _voucherFocusScheduled = false;
+      _voucherPulse = false;
+    }
   }
 
   @override
@@ -124,6 +138,7 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
   }
 
   Widget _buildBody(SupplierProfileModel profile) {
+    _scheduleVoucherFocus(profile);
     return RefreshIndicator(
       color: SupplierProfileColors.brandGold,
       onRefresh: _logic.refresh,
@@ -152,5 +167,38 @@ class _SupplierProfileScreenState extends State<SupplierProfileScreen>
         ),
       ),
     );
+  }
+
+  void _scheduleVoucherFocus(SupplierProfileModel profile) {
+    final voucherId = widget.initialVoucherId;
+    if (voucherId == null ||
+        _voucherFocusScheduled ||
+        !profile.purchases.any((item) => item.voucherId == voucherId)) {
+      return;
+    }
+    _voucherFocusScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      _tabCtrl.animateTo(1);
+      _logic.setTab(1);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      if (!mounted || widget.initialVoucherId != voucherId) return;
+      final historyContext = _purchaseHistoryKey.currentContext;
+      if (historyContext != null && historyContext.mounted) {
+        await Scrollable.ensureVisible(
+          historyContext,
+          alignment: 0.05,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      for (var i = 0;
+          i < 6 && mounted && widget.initialVoucherId == voucherId;
+          i++) {
+        setState(() => _voucherPulse = i.isEven);
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      }
+      if (mounted) setState(() => _voucherPulse = false);
+    });
   }
 }

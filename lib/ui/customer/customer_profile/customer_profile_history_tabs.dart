@@ -9,10 +9,13 @@ extension _ProfileHistoryTabs on _CustomerProfileScreenState {
       [
         if (profile.bills.isNotEmpty) _CustomerHistorySection.sales,
         if (profile.dues.isNotEmpty) _CustomerHistorySection.due,
-        if (profile.loans.any((loan) => loan.isActive))
+        if (profile.loans
+            .any((loan) => loan.isActive || loan.id == widget.initialGirviId))
           _CustomerHistorySection.girvi,
-        if (profile.advanceOrders
-            .any((order) => order.isPending || order.isReady))
+        if (profile.advanceOrders.any((order) =>
+            order.isPending ||
+            order.isReady ||
+            order.id == widget.initialAdvanceId))
           _CustomerHistorySection.advances,
       ];
 
@@ -119,15 +122,29 @@ extension _ProfileHistoryTabs on _CustomerProfileScreenState {
         ),
       _CustomerHistorySection.girvi => (
           Icons.lock_rounded,
-          'Active Girvi',
-          profile.loans.where((loan) => loan.isActive).length,
+          profile.loans.any(
+                  (loan) => loan.id == widget.initialGirviId && !loan.isActive)
+              ? 'Girvi History'
+              : 'Active Girvi',
+          profile.loans
+              .where(
+                  (loan) => loan.isActive || loan.id == widget.initialGirviId)
+              .length,
           const Color(0xFF7C3AED),
         ),
       _CustomerHistorySection.advances => (
           CustomerProfileIcons.advanceOrder,
-          'Active Advances',
+          profile.advanceOrders.any((order) =>
+                  order.id == widget.initialAdvanceId &&
+                  !order.isPending &&
+                  !order.isReady)
+              ? 'Advance History'
+              : 'Active Advances',
           profile.advanceOrders
-              .where((order) => order.isPending || order.isReady)
+              .where((order) =>
+                  order.isPending ||
+                  order.isReady ||
+                  order.id == widget.initialAdvanceId)
               .length,
           CustomerProfileColors.advanceAccent,
         ),

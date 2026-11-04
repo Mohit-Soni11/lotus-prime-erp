@@ -85,7 +85,8 @@ void main() {
     expect(
         documents.map((record) => record.kind).toSet(),
         DayBookDocumentKind.values.toSet()
-          ..remove(DayBookDocumentKind.regularInvoice));
+          ..remove(DayBookDocumentKind.regularInvoice)
+          ..remove(DayBookDocumentKind.advanceCancellationVoucher));
     expect(
         documents
             .singleWhere(
@@ -136,5 +137,24 @@ void main() {
     final result = DayBookDocumentCollectionMapper.apply([invoice], flow);
     expect(result.single.amount, 103);
     expect(result.single.collection, 50);
+  });
+
+  test('booking cancellation is not classified as a sales return', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final date = DateTime(2026, 11, 4);
+    await db.customStatement(
+      '''INSERT INTO return_vouchers
+         (voucher_no, operation_type, source_type, source_id, source_number,
+          settlement_mode, return_value, refund_payable_amount, created_at)
+         VALUES ('CAN-1', 'BOOKING_CANCELLATION', 'ADVANCE_BOOKING', 7,
+                 'ORD-7', 'REFUND', 3000, 2500, ?)''',
+      [date.millisecondsSinceEpoch],
+    );
+    final documents = await DayBookDocumentRepository(db).fetch(date);
+    expect(
+        documents.single.kind, DayBookDocumentKind.advanceCancellationVoucher);
+    expect(documents.single.originalSourceId, 7);
+    expect(documents.single.outstanding, 2500);
   });
 }

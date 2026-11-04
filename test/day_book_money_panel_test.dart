@@ -23,6 +23,8 @@ void main() {
     ));
 
     expect(find.text('Physical Cash'), findsOneWidget);
+    expect(find.text('Opening Money'), findsNothing);
+    expect(find.text('Closing Money'), findsNothing);
     expect(find.text('Money In by Source'), findsNothing);
     expect(find.text('Money Out by Mode'), findsNothing);
     expect(find.text('Transactions (0)'), findsNothing);

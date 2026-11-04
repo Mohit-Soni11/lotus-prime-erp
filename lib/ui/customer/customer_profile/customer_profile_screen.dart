@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
@@ -38,6 +39,8 @@ class CustomerProfileScreen extends StatefulWidget {
   final int customerId;
   final CustomerProfileRepository? repository;
   final int? initialBillId;
+  final int? initialGirviId;
+  final int? initialAdvanceId;
   final VoidCallback? onBack;
   final Function(int customerId)? onNewSale;
   final Function(int billId)? onEditBill;
@@ -58,6 +61,8 @@ class CustomerProfileScreen extends StatefulWidget {
     required this.customerId,
     this.repository,
     this.initialBillId,
+    this.initialGirviId,
+    this.initialAdvanceId,
     this.onBack,
     this.onNewSale,
     this.onEditBill,
@@ -87,6 +92,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   final GlobalKey _historyKey = GlobalKey();
   bool _deleteNavigationScheduled = false;
   int? _focusedInitialBillId;
+  String? _focusedRecordKey;
+  bool _focusPulse = false;
+  Timer? _focusTimer;
 
   @override
   void initState() {
@@ -116,8 +124,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
     }
     _logic.removeListener(_handleProfileStateChanged);
     _logic.dispose();
+    _focusTimer?.cancel();
     _pageAnim.reset();
     _focusedInitialBillId = null;
+    _focusedRecordKey = null;
+    _focusPulse = false;
     _deleteNavigationScheduled = false;
     if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
     _createLogic();
@@ -143,6 +154,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
 
   @override
   void dispose() {
+    _focusTimer?.cancel();
     _logic.removeListener(_handleProfileStateChanged);
     _logic.dispose();
     _pageAnim.dispose();
@@ -178,6 +190,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
   // MAIN BODY
   Widget _buildBody(CustomerProfileModel p) {
     _scheduleInitialBillFocus(p);
+    _scheduleInitialActivityFocus(p);
     return FadeTransition(
       opacity: _fadeIn,
       child: SingleChildScrollView(
@@ -226,15 +239,74 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen>
           widget.initialBillId != billId) {
         return;
       }
-      _selectFirstHistoryTab();
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeOutCubic,
-        );
+      _focusHistoryTab(_CustomerHistorySection.sales, p);
+      _revealHistory();
+      _flashRecord('bill:$billId');
+    });
+  }
+
+  void _scheduleInitialActivityFocus(CustomerProfileModel p) {
+    final girviId = widget.initialGirviId;
+    final advanceId = widget.initialAdvanceId;
+    final key = girviId != null
+        ? 'girvi:$girviId'
+        : advanceId != null
+            ? 'advance:$advanceId'
+            : null;
+    if (key == null || _focusedRecordKey == key) return;
+    final exists = girviId != null
+        ? p.loans.any((loan) => loan.id == girviId)
+        : p.advanceOrders.any((order) => order.id == advanceId);
+    if (!exists) return;
+    _focusedRecordKey = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _focusedRecordKey != key) return;
+      _focusHistoryTab(
+        girviId != null
+            ? _CustomerHistorySection.girvi
+            : _CustomerHistorySection.advances,
+        p,
+      );
+      _revealHistory();
+      _flashRecord(key);
+    });
+  }
+
+  void _focusHistoryTab(
+      _CustomerHistorySection section, CustomerProfileModel profile) {
+    final historyContext = _historyKey.currentContext;
+    if (historyContext == null) return;
+    final index = _visibleHistorySections(profile).indexOf(section);
+    if (index >= 0) {
+      DefaultTabController.maybeOf(historyContext)?.animateTo(index);
+    }
+  }
+
+  void _revealHistory() {
+    final historyContext = _historyKey.currentContext;
+    if (historyContext == null) return;
+    Scrollable.ensureVisible(
+      historyContext,
+      alignment: 0.05,
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _flashRecord(String key) {
+    _focusTimer?.cancel();
+    setState(() => _focusPulse = true);
+    var step = 0;
+    _focusTimer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
+      final targetChanged = key.startsWith('bill:')
+          ? widget.initialBillId?.toString() != key.split(':').last
+          : _focusedRecordKey != key;
+      if (!mounted || targetChanged || ++step >= 6) {
+        timer.cancel();
+        if (mounted) setState(() => _focusPulse = false);
+        return;
       }
-      _showBillActions(targetBill!);
+      setState(() => _focusPulse = step.isEven);
     });
   }
 

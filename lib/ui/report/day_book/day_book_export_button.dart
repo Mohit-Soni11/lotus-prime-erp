@@ -48,17 +48,21 @@ class DayBookExportButton extends StatelessWidget {
           ),
         ],
         child: Container(
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: DayBookStyles.softPanel(
-            color: DayBookColors.bodySubtle,
+            color: DayBookColors.bodyPanel,
             borderColor: DayBookColors.bodyBorder,
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.ios_share_rounded,
-                size: 18, color: DayBookColors.textPrimary),
+            const Icon(Icons.ios_share_outlined,
+                size: 17, color: DayBookColors.textPrimary),
             const SizedBox(width: 8),
-            Text('Export', style: DayBookStyles.button.copyWith(fontSize: 14)),
+            Text('Export',
+                style: DayBookStyles.button.copyWith(
+                  fontSize: 13.5,
+                  color: DayBookColors.textPrimary,
+                )),
             const SizedBox(width: 5),
             const Icon(Icons.expand_more_rounded,
                 size: 18, color: DayBookColors.textPrimary),

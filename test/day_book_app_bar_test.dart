@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lotus_erp/logic/report/day_book/day_book_controller.dart';
 import 'package:lotus_erp/models/reports/day_book/day_book_models.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_app_bar.dart';
-import 'package:lotus_erp/ui/report/day_book/day_book_daily_toolbar.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_top_section.dart';
 import 'package:lotus_erp/ui/report/day_book/day_book_export_button.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_overview_panel.dart';
+import 'package:lotus_erp/ui/report/day_book/day_book_workspace_header.dart';
 
 void main() {
   for (final width in [320.0, 1200.0]) {
@@ -19,6 +21,7 @@ void main() {
       addTearDown(controller.dispose);
       var backCount = 0;
       var exportCount = 0;
+      var reconcileCount = 0;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -31,10 +34,10 @@ void main() {
               padding: const EdgeInsets.all(12),
               child: ListenableBuilder(
                 listenable: controller,
-                builder: (context, _) => DayBookDailyToolbar(
+                builder: (context, _) => DayBookTopSection(
                   ctrl: controller,
                   summary: controller.summary,
-                  onReconcile: () {},
+                  onReconcile: () => reconcileCount++,
                   onViewPdf: () => exportCount++,
                   onExportCsv: () {},
                   onSharePdf: () {},
@@ -46,12 +49,41 @@ void main() {
       );
 
       expect(find.text('DAY BOOK'), findsOneWidget);
+      expect(find.text('Day Book'), findsOneWidget);
+      expect(find.text('Daily Overview'), findsOneWidget);
+      expect(find.byType(DayBookWorkspaceHeader), findsOneWidget);
+      expect(find.byType(DayBookOverviewPanel), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byType(DayBookOverviewPanel)).dy,
+        greaterThan(
+            tester.getBottomLeft(find.byType(DayBookWorkspaceHeader)).dy),
+      );
+      expect(find.text('Daily business register for the selected date.'),
+          findsOneWidget);
       expect(find.byType(DayBookExportButton), findsOneWidget);
+      for (final title in [
+        'Total Sales',
+        'Girvi Given',
+        'Advance Received',
+        'Return & Cancellation',
+        'Customer Metal Purchase',
+        "Today's Dues",
+        "Today's Receipts",
+        'Expenses',
+      ]) {
+        expect(find.text(title), findsOneWidget);
+      }
+      expect(find.textContaining('DEMO PREVIEW'), findsOneWidget);
       expect(tester.takeException(), isNull);
+
+      await tester.ensureVisible(find.text('Reconcile Cash'));
+      await tester.tap(find.text('Reconcile Cash'));
+      expect(reconcileCount, 1);
 
       await tester.tap(find.byTooltip('Back'));
       expect(backCount, 1);
 
+      await tester.ensureVisible(find.byTooltip('Previous day'));
       await tester.tap(find.byTooltip('Previous day'));
       await tester.pump();
       expect(tester.takeException(), isNull);

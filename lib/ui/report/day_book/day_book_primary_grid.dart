@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/reports/day_book/day_book_models.dart';
+import 'day_book_metal_position_panel.dart';
 import 'day_book_money_panel.dart';
-import 'day_book_sections.dart';
 
 class DayBookPrimaryGrid extends StatelessWidget {
   const DayBookPrimaryGrid({super.key, required this.summary});
@@ -12,14 +12,7 @@ class DayBookPrimaryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          final position = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DayBookOpeningPosition(summary: summary),
-              const SizedBox(height: 16),
-              DayBookClosingPosition(summary: summary),
-            ],
-          );
+          final position = DayBookMetalPositionPanel(summary: summary);
           final flow = summary.moneyFlow;
           if (flow == null) return position;
 

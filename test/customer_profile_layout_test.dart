@@ -316,6 +316,26 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('targeted closed Girvi is available in customer history',
+      (tester) async {
+    await _pumpProfile(tester, const Size(1280, 900), initialGirviId: 2);
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('Girvi History (2)'), findsOneWidget);
+    expect(find.text('GRV-CLOSED'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('targeted delivered advance is available in customer history',
+      (tester) async {
+    await _pumpProfile(tester, const Size(1280, 900), initialAdvanceId: 2);
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('Advance History (2)'), findsOneWidget);
+    expect(find.text('ADV-DONE'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('changing customer ID replaces the displayed profile',
       (tester) async {
     final repository = _ProfileRepository(_profile);
@@ -357,7 +377,9 @@ void main() {
 Future<void> _pumpProfile(WidgetTester tester, Size size,
     {CustomerProfileModel? profile,
     Function(int)? onEditGirvi,
-    Function(String, int)? onCancelAdvance}) async {
+    Function(String, int)? onCancelAdvance,
+    int? initialGirviId,
+    int? initialAdvanceId}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -370,6 +392,8 @@ Future<void> _pumpProfile(WidgetTester tester, Size size,
       onBack: () {},
       onEditGirvi: onEditGirvi,
       onCancelAdvance: onCancelAdvance,
+      initialGirviId: initialGirviId,
+      initialAdvanceId: initialAdvanceId,
     ),
   ));
   await tester.pump();

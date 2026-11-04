@@ -30,6 +30,10 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Source Document Summary'), findsOneWidget);
+    expect(find.text('GST Invoice'), findsNothing);
+    await tester.tap(find.text('Source Document Summary'));
+    await tester.pumpAndSettle();
+    expect(find.text('GST Invoice'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
