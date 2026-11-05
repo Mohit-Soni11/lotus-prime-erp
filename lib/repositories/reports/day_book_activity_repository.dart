@@ -149,6 +149,9 @@ class DayBookActivityRepository {
             customerId: bill?.customerId,
             partyName: bill?.customerName,
             mobile: bill?.mobile,
+            invoiceValue: bill?.finalAmount,
+            savedPaid: bill?.paidAmount,
+            savedDue: bill?.dueAmount,
           ));
         }
       }

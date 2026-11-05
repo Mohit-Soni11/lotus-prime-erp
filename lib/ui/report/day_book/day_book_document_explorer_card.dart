@@ -61,15 +61,7 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
               const SizedBox(height: 5),
               if (entry.document case final document?)
                 _documentBody(document)
-              else if (entry.money case final money?) ...[
-                _labelValue('Source', money.category.replaceAll('_', ' ')),
-                _labelValue('Payment', money.paymentMode),
-                if (money.accountName != null)
-                  _labelValue('Account', money.accountName!),
-                const Divider(height: 15),
-                _labelValue('Received', dayBookSmartMoney(money.amount),
-                    valueColor: DayBookColors.positive),
-              ] else if (entry.event case final event?) ...[
+              else if (entry.event case final event?) ...[
                 _labelValue('Activity', _activityLabel(event.kind)),
                 if (event.partyName?.isNotEmpty == true)
                   Text(event.partyName!,
@@ -82,22 +74,6 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
                 for (final item in event.items.take(2)) _itemLine(item),
                 const Divider(height: 15),
                 _labelValue('Amount', dayBookSmartMoney(event.amount)),
-              ] else if (entry.expense case final expense?) ...[
-                Text(expense.category,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: DayBookStyles.labelStrong),
-                if (expense.partyName?.isNotEmpty == true)
-                  _labelValue('Party', expense.partyName!),
-                if (expense.description?.isNotEmpty == true)
-                  Text(expense.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: DayBookStyles.label.copyWith(fontSize: 11)),
-                _labelValue('Payment', expense.paymentMode),
-                const Divider(height: 15),
-                _labelValue('Expense', dayBookSmartMoney(expense.amount),
-                    valueColor: DayBookColors.negative),
               ],
             ],
           ),
@@ -326,13 +302,6 @@ class DayBookDocumentExplorerCard extends StatelessWidget {
     }
     if (entry.event case final event?) {
       return dayBookActivityDestination(event);
-    }
-    if (entry.money case final money?) {
-      return dayBookReceiptDestination(
-          money, summary.documents, summary.activityEvents);
-    }
-    if (entry.expense case final expense?) {
-      return dayBookExpenseDestination(expense, summary.date);
     }
     return null;
   }

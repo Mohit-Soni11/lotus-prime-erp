@@ -56,7 +56,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('all eight activity tabs remain available', (tester) async {
+  testWidgets('all six document tabs remain available', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
@@ -74,8 +74,6 @@ void main() {
       'advance',
       'returns',
       'purchase',
-      'expenses',
-      'otherPayments',
     ]) {
       expect(find.byKey(ValueKey('document-tab-$tab')), findsOneWidget);
     }
@@ -118,10 +116,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('GRV-112'), findsOneWidget);
     expect(find.text('Mr. Dev Patel'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('document-tab-expenses')));
-    await tester.pumpAndSettle();
-    expect(find.text('EXP-101'), findsOneWidget);
-    expect(find.text('Shop Rent'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

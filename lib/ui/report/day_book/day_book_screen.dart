@@ -5,11 +5,10 @@ import '../../../logic/report/day_book/day_book_export_service.dart';
 import '../../../models/reports/day_book/day_book_models.dart';
 import '../../../theme/reports/day_book/day_book_theme.dart';
 import 'day_book_app_bar.dart';
-import 'day_book_custody_panel.dart';
 import 'day_book_top_section.dart';
 import 'day_book_document_summary_panel.dart';
 import 'day_book_eod_dialog.dart';
-import 'day_book_expense_panel.dart';
+import 'day_book_receipts_register_panel.dart';
 import 'day_book_primary_grid.dart';
 import 'day_book_stock_movement_panel.dart';
 import 'day_book_sections.dart';
@@ -184,21 +183,15 @@ class _DayBookScreenState extends State<DayBookScreen> {
         showDemoPreview: true,
       ),
       const SizedBox(height: 12),
-      PaymentMixPanel(summary: summary),
+      DayBookReceiptsRegisterPanel(
+        summary: summary,
+        showDemoPreview: true,
+      ),
       const SizedBox(height: 12),
-      if (summary.moneyFlow case final flow?) ...[
-        DayBookExpensePanel(flow: flow),
-        const SizedBox(height: 12),
-      ],
       _Reveal(
         delay: 180,
         child: DayBookStockMovementPanel(movements: summary.stockMovements),
       ),
-      if (summary.custodyPosition case final position?
-          when position.lines.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        DayBookCustodyPanel(position: position),
-      ],
     ];
   }
 }

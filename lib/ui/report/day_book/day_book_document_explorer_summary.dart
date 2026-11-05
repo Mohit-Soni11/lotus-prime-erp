@@ -133,26 +133,6 @@ class DayBookDocumentExplorerSummary extends StatelessWidget {
               Icons.account_balance_wallet_outlined),
           _Metric('Total Due', _money(due), Icons.schedule_outlined),
         ],
-      DayBookExplorerTab.expenses => [
-          countMetric,
-          rangeMetric,
-          _Metric('Total Expense', dayBookSmartMoney(total),
-              Icons.receipt_long_outlined),
-          _Metric('Cash Out', dayBookSmartMoney(_modeTotal(true)),
-              Icons.money_outlined),
-          _Metric('Bank / Digital', dayBookSmartMoney(_modeTotal(false)),
-              Icons.account_balance_outlined),
-        ],
-      DayBookExplorerTab.otherPayments => [
-          countMetric,
-          rangeMetric,
-          _Metric('Other Receipts', dayBookSmartMoney(total),
-              Icons.payments_outlined),
-          _Metric('Cash In', dayBookSmartMoney(_modeTotal(true)),
-              Icons.money_outlined),
-          _Metric('Bank / Digital', dayBookSmartMoney(_modeTotal(false)),
-              Icons.account_balance_outlined),
-        ],
     };
   }
 
@@ -167,13 +147,6 @@ class DayBookDocumentExplorerSummary extends StatelessWidget {
 
   String _money(double? value) =>
       value == null ? '—' : dayBookSmartMoney(value);
-
-  double _modeTotal(bool cash) => entries.fold(0, (double sum, row) {
-        final mode = row.money?.paymentMode ?? row.expense?.paymentMode;
-        return mode != null && (mode.toUpperCase() == 'CASH') == cash
-            ? sum + row.amount
-            : sum;
-      });
 }
 
 class _Metric {

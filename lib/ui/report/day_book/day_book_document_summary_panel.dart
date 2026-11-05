@@ -140,7 +140,7 @@ class _ExplorerTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          final inline = constraints.maxWidth >= 1050;
+          final inline = constraints.maxWidth >= 800;
           final tabs = Row(children: [
             for (final tab in DayBookExplorerTab.values)
               inline
@@ -213,7 +213,5 @@ class _ExplorerTabs extends StatelessWidget {
         DayBookExplorerTab.advance => Icons.layers_outlined,
         DayBookExplorerTab.returns => Icons.keyboard_return_rounded,
         DayBookExplorerTab.purchase => Icons.inventory_2_outlined,
-        DayBookExplorerTab.expenses => Icons.receipt_long_outlined,
-        DayBookExplorerTab.otherPayments => Icons.credit_card_outlined,
       };
 }

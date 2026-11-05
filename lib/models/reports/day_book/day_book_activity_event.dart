@@ -18,6 +18,9 @@ class DayBookActivityEvent {
     this.partyName,
     this.mobile,
     this.items = const [],
+    this.invoiceValue,
+    this.savedPaid,
+    this.savedDue,
   });
 
   final DayBookActivityKind kind;
@@ -29,6 +32,9 @@ class DayBookActivityEvent {
   final String? partyName;
   final String? mobile;
   final List<DayBookDocumentItem> items;
+  final double? invoiceValue;
+  final double? savedPaid;
+  final double? savedDue;
 
   DayBookActivityEvent withParty({String? name, String? phone}) =>
       DayBookActivityEvent(
@@ -41,5 +47,8 @@ class DayBookActivityEvent {
         partyName: name ?? partyName,
         mobile: phone ?? mobile,
         items: items,
+        invoiceValue: invoiceValue,
+        savedPaid: savedPaid,
+        savedDue: savedDue,
       );
 }
